@@ -1,7 +1,7 @@
 namespace eval ::tk {
     ::msgcat::mcset es "&Abort" "&Abortar"
     ::msgcat::mcset es "&About..." "&Acerca de ..."
-    ::msgcat::mcset es "All Files" "Todos los archivos" 
+    ::msgcat::mcset es "All Files" "Todos los archivos"
     ::msgcat::mcset es "Application Error" "Error de la aplicaci\u00f3n"
     ::msgcat::mcset es "&Blue" "&Azul"
     ::msgcat::mcset es "&Cancel" "&Cancelar"
@@ -59,7 +59,7 @@ namespace eval ::tk {
     ::msgcat::mcset es "Tcl Scripts" "Scripts Tcl"
     ::msgcat::mcset es "Tcl for Windows" "Tcl para Windows"
     ::msgcat::mcset es "Text Files" "Archivos de texto"
-    ::msgcat::mcset es "&Yes" "&S\u00ed" 
+    ::msgcat::mcset es "&Yes" "&S\u00ed"
     ::msgcat::mcset es "abort" "abortar"
     ::msgcat::mcset es "blue" "azul"
     ::msgcat::mcset es "cancel" "cancelar"

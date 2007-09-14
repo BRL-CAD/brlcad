@@ -6,7 +6,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH labelframe n 8.4 Tk "Tk Built-In Commands"
 .BS

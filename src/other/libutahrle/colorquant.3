@@ -31,14 +31,14 @@ int flags;
 int accum_hist;
 .PD
 .SH DESCRIPTION
-.I Colorquant 
+.I Colorquant
 performs variance-based color quantization on a given image.
 A representative colormap
 and a table for performing RGB to colormap index mapping are computed.  The
 number of colors to which the image was quantized (the total number
 of colormap entries computed) is returned.
 The arguments to
-.I colorquant 
+.I colorquant
 are:
 .TP
 .I red, green, blue
@@ -69,7 +69,7 @@ significant bits (see \fIflags\fP below).
 Five significant bits usually represents a good tradeoff between image quality
 and running time.  Anything above six significant bits will likely lead to
 excessive paging, as the size of \fIrgbmap\fR and the internal histogram are
-proportional to (2^\fIbits\fR)^3. 
+proportional to (2^\fIbits\fR)^3.
 .TP
 .I rgbmap
 A pointer to an array of unsigned chars of size (2^\fIbits\fR)^3.
@@ -86,7 +86,7 @@ the pixel in question.
 .I flags
 A collection of bit-flags that modify the operation of
 \fIcolorquant\fP.  Currently defined values are \fBCQ_FAST\fP,
-\fBCQ_QUANTIZE\fP, and \fBCQ_NO_RGBMAP\fP.  
+\fBCQ_QUANTIZE\fP, and \fBCQ_NO_RGBMAP\fP.
 .br
 If \fBCQ_FAST\fP is set, the construction of \fIrgbmap\fP will be
 relatively fast.  If not, \fIrgbmap\fR will be built slowly but more
@@ -96,13 +96,13 @@ approximation is barely noticeable.
 If \fBCQ_QUANTIZE\fP is set, the values in \fIred\fP, \fIgreen\fP, and
 \fIblue\fP are taken as 8-bit values and will be quantized to
 \fIbits\fP significant bits by \fIcolorquant\fP.  If not set, these
-values are assumed to be prequantized.  
+values are assumed to be prequantized.
 .br
 If \fBCQ_NO_RGBMAP\fP is set, \fIrgbmap\fP will not be built.
 .TP
 .I accum_hist
 This argument provides a facility to accumulate multiple images into a
-single colormap.  If 
+single colormap.  If
 .I accum_hist
 is zero, the routine works normally.  To build a colormap for several
 images, \fIaccum_hist\fP should have the value 1 for the first image,
@@ -111,7 +111,7 @@ processed, a value of 3 for \fIaccum_hist\fP will compute the
 \fIcolormap\fP and \fIrgbmap\fP.  The values of \fIcolors\fP and
 \fIbits\fP should not change during this process.  The arguments
 \fIcolormap\fP, \fIrgbmap\fP, and \fIfast\fP are ignored if
-\fIaccum_hist\fP is 1 or 2, and 
+\fIaccum_hist\fP is 1 or 2, and
 .IR red ,
 .IR green ,
 .IR blue ,

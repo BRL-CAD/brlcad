@@ -4,7 +4,7 @@
 # It implements a virtual path mecanism to hide the real pathnames from the
 # slave. It runs in a master interpreter and sets up data structure and
 # aliases that will be invoked when used from a slave interpreter.
-# 
+#
 # See the safe.n man page for details.
 #
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
@@ -77,7 +77,7 @@ namespace eval ::safe {
 	    upvar $v $v
 	}
 	set flag [::tcl::OptProcArgGiven -noStatics];
-	if {$flag && (!$noStatics == !$statics) 
+	if {$flag && (!$noStatics == !$statics)
 	          && ([::tcl::OptProcArgGiven -statics])} {
 	    return -code error\
 		    "conflicting values given for -statics and -noStatics"
@@ -98,7 +98,7 @@ namespace eval ::safe {
 	set flag [::tcl::OptProcArgGiven -nestedLoadOk];
 	# note that the test here is the opposite of the "InterpStatics"
 	# one (it is not -noNested... because of the wanted default value)
-	if {$flag && (!$nestedLoadOk != !$nested) 
+	if {$flag && (!$nestedLoadOk != !$nested)
 	          && ([::tcl::OptProcArgGiven -nested])} {
 	    return -code error\
 		    "conflicting values given for -nested and -nestedLoadOk"
@@ -280,7 +280,7 @@ namespace eval ::safe {
     #
     # Returns the slave name.
     #
-    # Optional Arguments : 
+    # Optional Arguments :
     # + slave name : if empty, generated name will be used
     # + access_path: path list controlling where load/source can occur,
     #                if empty: the master auto_path will be used.
@@ -288,10 +288,10 @@ namespace eval ::safe {
     #                      if 1 :static packages are ok.
     # + nestedok: flag, if 0 :no loading to sub-sub interps (load xx xx sub)
     #                      if 1 : multiple levels are ok.
-    
+
     # use the full name and no indent so auto_mkIndex can find us
     proc ::safe::InterpCreate {
-	slave 
+	slave
 	access_path
 	staticsok
 	nestedok
@@ -340,7 +340,7 @@ namespace eval ::safe {
 			[lreplace $access_path $where $where]]
 		Log $slave "tcl_libray was not in first in auto_path,\
 			moved it to front of slave's access_path" NOTICE
-	    
+
 	    }
 
 	    # Add 1st level sub dirs (will searched by auto loading from tcl
@@ -423,7 +423,7 @@ proc ::safe::interpAddToAccessPath {slave path} {
     # interpreter. It is useful when you want to install the safe base
     # aliases into a preexisting safe interpreter.
     proc ::safe::InterpInit {
-	slave 
+	slave
 	access_path
 	staticsok
 	nestedok
@@ -541,7 +541,7 @@ proc ::safe::interpDelete {slave} {
 	return
     }
 
-    # Set (or get) the loging mecanism 
+    # Set (or get) the loging mecanism
 
 proc ::safe::setLogCmd {args} {
     variable Log
@@ -590,7 +590,7 @@ proc ::safe::setLogCmd {args} {
     }
 
     # returns the virtual token for directory number N
-    # if the slave argument is given, 
+    # if the slave argument is given,
     # it will return the corresponding master global variable name
     proc PathToken {n {slave ""}} {
 	if {$slave ne ""} {
@@ -638,7 +638,7 @@ proc ::safe::setLogCmd {args} {
     proc Unset {args} {
 	Toplevel unset {*}$args
     }
-    # test existance 
+    # test existance
     proc Exists {varname} {
 	Toplevel info exists $varname
     }
@@ -720,13 +720,13 @@ proc ::safe::setLogCmd {args} {
 	    return -code error $msg
 	}
 	set file [lindex $args 0]
-	
+
 	# get the real path from the virtual one.
 	if {[catch {set file [TranslatePath $slave $file]} msg]} {
 	    Log $slave $msg
 	    return -code error "permission denied"
 	}
-	
+
 	# check that the path is in the access path of that slave
 	if {[catch {FileInAccessPath $slave $file} msg]} {
 	    Log $slave $msg
@@ -772,7 +772,7 @@ proc ::safe::setLogCmd {args} {
 			disabled (trying to load $package to $target)"
 		return -code error "permission denied (nested load)"
 	    }
-	    
+
 	}
 
 	# Determine what kind of load is requested

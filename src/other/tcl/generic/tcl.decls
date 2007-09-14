@@ -4,13 +4,13 @@
 #	functions that are exported by the Tcl library via the stubs table.
 #	This file is used to generate the tclDecls.h, tclPlatDecls.h,
 #	tclStub.c, and tclPlatStub.c files.
-#	
+#
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # Copyright (c) 2001, 2002 by Kevin B. Kenny.  All rights reserved.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
 library tcl
@@ -116,7 +116,7 @@ declare 24 generic {
 	    CONST char *file, int line)
 }
 declare 25 generic {
-    Tcl_Obj * Tcl_DbNewListObj(int objc, Tcl_Obj *CONST *objv, 
+    Tcl_Obj * Tcl_DbNewListObj(int objc, Tcl_Obj *CONST *objv,
 	    CONST char *file, int line)
 }
 declare 26 generic {
@@ -354,7 +354,7 @@ declare 94 generic {
 }
 declare 95 generic {
     void Tcl_CreateMathFunc(Tcl_Interp *interp, CONST char *name,
-	    int numArgs, Tcl_ValueType *argTypes, 
+	    int numArgs, Tcl_ValueType *argTypes,
 	    Tcl_MathProc *proc, ClientData clientData)
 }
 declare 96 generic {
@@ -968,12 +968,12 @@ declare 272 generic {
 	    CONST char *version, int exact, ClientData *clientDataPtr)
 }
 declare 273 generic {
-    int Tcl_PkgProvide(Tcl_Interp *interp, CONST char *name, 
+    int Tcl_PkgProvide(Tcl_Interp *interp, CONST char *name,
 	    CONST char *version)
 }
 # TIP #268: The internally used new Require function is in slot 573.
 declare 274 generic {
-    CONST84_RETURN char * Tcl_PkgRequire(Tcl_Interp *interp, CONST char *name, 
+    CONST84_RETURN char * Tcl_PkgRequire(Tcl_Interp *interp, CONST char *name,
 	    CONST char *version, int exact)
 }
 declare 275 generic {
@@ -1137,7 +1137,7 @@ declare 316 generic {
     int Tcl_SetSystemEncoding(Tcl_Interp *interp, CONST char *name)
 }
 declare 317 generic {
-    Tcl_Obj * Tcl_SetVar2Ex(Tcl_Interp *interp, CONST char *part1, 
+    Tcl_Obj * Tcl_SetVar2Ex(Tcl_Interp *interp, CONST char *part1,
             CONST char *part2, Tcl_Obj *newValuePtr, int flags)
 }
 declare 318 generic {
@@ -1288,7 +1288,7 @@ declare 361 generic {
 }
 declare 362 generic {
     int Tcl_ParseExpr(Tcl_Interp *interp, CONST char *start, int numBytes,
-	    Tcl_Parse *parsePtr)	 
+	    Tcl_Parse *parsePtr)
 }
 declare 363 generic {
     int Tcl_ParseQuotedString(Tcl_Interp *interp, CONST char *start,
@@ -1697,14 +1697,14 @@ declare 479 generic {
 }
 declare 480 generic {
     void Tcl_FSMountsChanged(Tcl_Filesystem *fsPtr)
-}	  
+}
 # New function due to TIP#56
 declare 481 generic {
     int Tcl_EvalTokensStandard(Tcl_Interp *interp, Tcl_Token *tokenPtr,
 	    int count)
 }
 
-# New export due to TIP#73 
+# New export due to TIP#73
 declare 482 generic {
     void Tcl_GetTime(Tcl_Time* timeBuf)
 }
@@ -2035,7 +2035,7 @@ declare 565 generic {
 # TIP #237 (Additional conversion functions for bignum support)
 
 declare 566 generic {
-    int Tcl_InitBignumFromDouble(Tcl_Interp* interp, double initval, 
+    int Tcl_InitBignumFromDouble(Tcl_Interp* interp, double initval,
 		mp_int *toInit)
 }
 
@@ -2068,7 +2068,7 @@ declare 572 generic {
 
 # TIP#268: Extended version numbers and requirements
 declare 573 generic {
-    int Tcl_PkgRequireProc(Tcl_Interp *interp, CONST char *name, 
+    int Tcl_PkgRequireProc(Tcl_Interp *interp, CONST char *name,
 	    int objc, Tcl_Obj *CONST objv[], ClientData *clientDataPtr)
 }
 
@@ -2138,7 +2138,7 @@ declare 1 macosx {
 ##############################################################################
 
 # Public functions that are not accessible via the stubs table:
-# (listed here _as comments_ so that the 'checkstubs' make target does not 
-# complain about them) 
+# (listed here _as comments_ so that the 'checkstubs' make target does not
+# complain about them)
 
 # void Tcl_Main(int argc, char **argv, Tcl_AppInitProc *appInitProc)

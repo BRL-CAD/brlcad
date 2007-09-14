@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notices are 
+ * modified, and redistributed, provided that the copyright notices are
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * graytorle.c - Create an RLE image from gray pixels.
- * 
+ *
  * Author:	Michael J. Banks
  * 		Computer Science Dept.
  * 		University of Utah
@@ -77,7 +77,7 @@ char *argv[];
     out_hdr = *rle_hdr_init( (rle_hdr *)NULL );
     rle_names( &out_hdr, cmd_name( argv ), oname, 0 );
 
-    /* 
+    /*
      * Get enough file pointers for all input files that are specified,
      * and try to open them.
      */
@@ -101,7 +101,7 @@ char *argv[];
 
     /* Throw away file headers. */
 
-    if ( hflag && (hsize > 0) ) 
+    if ( hflag && (hsize > 0) )
     {
 	trash = (char *)malloc( hsize );
 
@@ -113,7 +113,7 @@ char *argv[];
 
     /* Adjust alpha channnel flag to use as index. */
 
-    if ( aflag ) 
+    if ( aflag )
 	aflag = 1;
     else
 	aflag = 0;

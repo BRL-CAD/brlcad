@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH trace n "8.4" Tcl "Tcl Built-In Commands"
 .BS
@@ -49,8 +49,8 @@ command to an empty string.  Commands are also deleted when the
 interpreter is deleted, but traces will not be invoked because there is no
 interpreter in which to execute them.
 .PP
-When the trace triggers, depending on the operations being traced, a 
-number of arguments are appended to \fIcommand\fR so that the actual 
+When the trace triggers, depending on the operations being traced, a
+number of arguments are appended to \fIcommand\fR so that the actual
 command is as follows:
 .CS
 \fIcommand oldName newName op\fR
@@ -62,7 +62,7 @@ string if this is a 'delete' operation).
 command, and is one of \fBrename\fR or \fBdelete\fR as
 defined above.  The trace operation cannot be used to stop a command
 from being deleted.  Tcl will always remove the command once the trace
-is complete.  Recursive renaming or deleting will not cause further traces 
+is complete.  Recursive renaming or deleting will not cause further traces
 of the same type to be evaluated, so a delete trace which itself
 deletes the command, or a rename trace which itself renames the
 command will not cause further trace evaluations to occur.
@@ -90,31 +90,31 @@ Invoke \fIcommand\fR whenever the command \fIname\fR is executed,
 just after the actual execution takes place.
 .TP
 \fBenterstep\fR
-Invoke \fIcommand\fR for every Tcl command which is executed 
+Invoke \fIcommand\fR for every Tcl command which is executed
 inside the procedure \fIname\fR, just before the actual execution
 takes place.  For example if we have 'proc foo {} { puts "hello" }',
-then an \fIenterstep\fR trace would be 
+then an \fIenterstep\fR trace would be
 invoked just before \fIputs "hello"\fR is executed.
 Setting an \fIenterstep\fR trace on a \fIcommand\fR
 will not result in an error and is simply ignored.
 .TP
 \fBleavestep\fR
-Invoke \fIcommand\fR for every Tcl command which is executed 
+Invoke \fIcommand\fR for every Tcl command which is executed
 inside the procedure \fIname\fR, just after the actual execution
 takes place.
 Setting a \fIleavestep\fR trace on a \fIcommand\fR
 will not result in an error and is simply ignored.
 .PP
-When the trace triggers, depending on the operations being traced, a 
-number of arguments are appended to \fIcommand\fR so that the actual 
+When the trace triggers, depending on the operations being traced, a
+number of arguments are appended to \fIcommand\fR so that the actual
 command is as follows:
 .PP
 For \fBenter\fR and \fBenterstep\fR operations:
 .CS
 \fIcommand command-string op\fR
 .CE
-\fICommand-string\fR gives the complete current command being 
-executed (the traced command for a \fBenter\fR operation, an 
+\fICommand-string\fR gives the complete current command being
+executed (the traced command for a \fBenter\fR operation, an
 arbitrary command for a \fBenterstep\fR operation), including
 all arguments in their fully expanded form.
 \fIOp\fR indicates what operation is being performed on the
@@ -128,15 +128,15 @@ For \fBleave\fR and \fBleavestep\fR operations:
 .CS
 \fIcommand command-string code result op\fR
 .CE
-\fICommand-string\fR gives the complete current command being 
-executed (the traced command for a \fBenter\fR operation, an 
+\fICommand-string\fR gives the complete current command being
+executed (the traced command for a \fBenter\fR operation, an
 arbitrary command for a \fBenterstep\fR operation), including
 all arguments in their fully expanded form.
 \fICode\fR gives the result code of that execution, and \fIresult\fR
 the result string.
 \fIOp\fR indicates what operation is being performed on the
 command execution, and is one of \fBleave\fR or \fBleavestep\fR as
-defined above.  
+defined above.
 Note that the creation of many \fBenterstep\fR or
 \fBleavestep\fR traces can lead to unintuitive results, since the
 invoked commands from one trace can themselves lead to further
@@ -162,7 +162,7 @@ in the reverse order of how the traces were originally created;
 and for \fIleave\fR and \fIleavestep\fR operations, the traced
 commands are invoked in the original order of creation.
 .PP
-The behavior of execution traces is currently undefined for a command 
+The behavior of execution traces is currently undefined for a command
 \fIname\fR imported into another namespace.
 .RE
 .TP
@@ -343,8 +343,8 @@ This is equivalent to \fBtrace add variable \fIname ops command\fR.
 .TP
 \fBtrace vdelete \fIname ops command\fR
 This is equivalent to \fBtrace remove variable \fIname ops command\fR
-.TP 
-\fBtrace vinfo \fIname\fR 
+.TP
+\fBtrace vinfo \fIname\fR
 This is equivalent to \fBtrace info variable \fIname\fR
 .RE
 .PP

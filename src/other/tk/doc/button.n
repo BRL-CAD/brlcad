@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH button n 4.4 Tk "Tk Built-In Commands"
 .BS
@@ -97,7 +97,7 @@ one of the characters may optionally be underlined using the
 \fBunderline\fR option.
 It can display itself in either of three different ways, according
 to
-the \fBstate\fR option; 
+the \fBstate\fR option;
 it can be made to appear raised, sunken, or flat;
 and it can be made to flash.  When a user invokes the
 button (by pressing mouse button 1 with the cursor over the

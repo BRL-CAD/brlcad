@@ -173,7 +173,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     const char *srcpath = NULL;
     int from_installed = 0;
     char *stp = NULL;
-    
+
     Tcl_Obj *tclpath = NULL;
 
     int found_init_tcl = 0;
@@ -372,7 +372,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		Tcl_IncrRefCount(newpath);
 		TclSetLibraryPath(newpath);
 		Tcl_DecrRefCount(newpath);
-		
+
 		/* this really sets it */
 		snprintf(buffer, MAX_BUF, "set tcl_library \"%s\"", srcpath);
 		if (Tcl_Eval(interp, buffer)) {

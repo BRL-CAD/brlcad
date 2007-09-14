@@ -85,7 +85,7 @@ DeleteWatch(watchName)
     for (linkPtr = Blt_ChainFirstLink(&watchChain); linkPtr != NULL;
 	linkPtr = Blt_ChainNextLink(linkPtr)) {
 	infoPtr = Blt_ChainGetValue(linkPtr);
-	if ((infoPtr->name[0] == c) && 
+	if ((infoPtr->name[0] == c) &&
 	    (strcmp(infoPtr->name, watchName) == 0)) {
 	    Blt_Free(infoPtr->name);
 	    Blt_ChainDeleteLink(&watchChain, linkPtr);
@@ -183,7 +183,7 @@ DebugProc(clientData, interp, level, command, proc, cmdClientData,
 	} else {
 	    p++;
 	}
-    }   
+    }
     while (isspace(UCHAR(*lineStart))) {
 	lineStart++;
     }
@@ -223,7 +223,7 @@ DebugProc(clientData, interp, level, command, proc, cmdClientData,
 	} else {
 	    p++;
 	}
-    }   
+    }
     if (lineStart < p) {
 	if (count > 0) {
 	    Tcl_DStringAppend(&dString, "     ", -1);

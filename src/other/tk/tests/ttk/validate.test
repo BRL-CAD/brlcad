@@ -161,7 +161,7 @@ test validate-1.18 {entry widget validation} -constraints coreEntry -body {
     list [.e cget -validate] $::vVals
 } -result {none {.e -1 -1 nextdata newdata {} all forced}}
 # DIFFERENCE: ttk::entry doesn't validate when setting linked -variable
-# DIFFERENCE: ttk::entry doesn't disable validation 
+# DIFFERENCE: ttk::entry doesn't disable validation
 
 proc doval {W d i P s S v V} {
     set ::vVals [list $W $d $i $P $s $S $v $V]

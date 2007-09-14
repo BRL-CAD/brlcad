@@ -4,7 +4,7 @@
 static const char* TypeCodeString( int /*tcode*/ );
 //static void PrintCommentBlock( const char* );
 
-BOOL Dump3dmFile( 
+BOOL Dump3dmFile(
         const char*, // full name of file
         ON_TextLog&
         );
@@ -20,31 +20,31 @@ int main ( int argc, const char* argv[] )
   ON_TextLog dump_to_stdout;
   ON_TextLog* dump = &dump_to_stdout;
   FILE* dump_fp = 0;
-  
+
   dump->SetIndentSize(2);
 
   int argi;
-  if ( argc < 2 ) 
+  if ( argc < 2 )
   {
     printf("Syntax: %s [-out:outputfilename.txt] [-terse] file1.3dm file2.3dm ...\n",argv[0]);
     return 0;
   }
 
-  for ( argi = 1; argi < argc; argi++ ) 
+  for ( argi = 1; argi < argc; argi++ )
   {
     const char* arg = argv[argi];
     if ( 0 == arg )
       continue;
 
     // check for -terse option
-    if ( 0 == strcmp( arg, "-terse" ) ) 
+    if ( 0 == strcmp( arg, "-terse" ) )
     {
       bTerseReport = 1;
       continue;
     }
 
     // check for -out or /out option
-    if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) ) 
+    if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) )
          && arg[5] )
     {
       // change destination of dump file
@@ -94,7 +94,7 @@ static void ErrorReport( size_t offset, const char* msg, ON_TextLog& dump )
   dump.Print("** ERROR near offset %d ** %s\n",i,msg);
 }
 
-static 
+static
 bool Read3dmUserDataHeader( const size_t offset, ON_BinaryArchive& file, ON_TextLog& dump )
 {
   // TCODE_OPENNURBS_CLASS_USERDATA chunks have 2 uuids
@@ -103,11 +103,11 @@ bool Read3dmUserDataHeader( const size_t offset, ON_BinaryArchive& file, ON_Text
   ON_UUID userdata_classid = ON_nil_uuid;
   ON_UUID userdata_itemid = ON_nil_uuid;
   bool rc = file.ReadUuid( userdata_classid );
-  if ( !rc ) 
+  if ( !rc )
   {
      ErrorReport(offset,"ReadUuid() failed to read the user data class id.",dump);
   }
-  else 
+  else
   {
     dump.Print("UserData class id = ");
     dump.Print( userdata_classid );
@@ -123,11 +123,11 @@ bool Read3dmUserDataHeader( const size_t offset, ON_BinaryArchive& file, ON_Text
     dump.Print("\n");
 
     rc = file.ReadUuid( userdata_itemid );
-    if ( !rc ) 
+    if ( !rc )
     {
        ErrorReport(offset,"ReadUuid() failed to read the user data item id.",dump);
     }
-    else 
+    else
     {
       dump.Print("UserData item id = ");
       dump.Print( userdata_itemid );
@@ -180,10 +180,10 @@ unsigned int Dump3dmChunk( ON_BinaryArchive& file, ON_TextLog& dump, int recursi
       {
         dump.Print("%6d: %08X %s: value = %d (%08X)\n", offset0, typecode, TypeCodeString(typecode), value, value );
       }
-      else 
+      else
       {
         // long chunk value = length of chunk data
-        if ( value < 0 ) 
+        if ( value < 0 )
         {
           ErrorReport(offset0,"BeginRead3dmChunk() returned length < 0.",dump);
           file.EndRead3dmChunk();
@@ -195,7 +195,7 @@ unsigned int Dump3dmChunk( ON_BinaryArchive& file, ON_TextLog& dump, int recursi
       int major_userdata_version = -1;
       int minor_userdata_version = -1;
 
-      switch( typecode ) 
+      switch( typecode )
       {
       case TCODE_PROPERTIES_TABLE:
       case TCODE_SETTINGS_TABLE:
@@ -396,7 +396,7 @@ unsigned int Dump3dmChunk( ON_BinaryArchive& file, ON_TextLog& dump, int recursi
             if ( TCODE_OPENNURBS_CLASS_END == opennurbs_object_chunk_typecode ) {
               break;
             }
-            switch( opennurbs_object_chunk_typecode ) 
+            switch( opennurbs_object_chunk_typecode )
             {
             case TCODE_OPENNURBS_CLASS_UUID:
               break;
@@ -492,14 +492,14 @@ unsigned int Dump3dmChunk( ON_BinaryArchive& file, ON_TextLog& dump, int recursi
           if ( !file.ReadUuid( uuid ) ) {
              ErrorReport(offset0,"ReadUuid() failed.",dump);
           }
-          else 
+          else
           {
-            if ( typecode == TCODE_OPENNURBS_CLASS_UUID ) 
+            if ( typecode == TCODE_OPENNURBS_CLASS_UUID )
             {
               dump.Print("OpenNURBS class id = ");
               pClassId = ON_ClassId::ClassId(uuid);
             }
-            else if ( typecode == TCODE_USER_TABLE_UUID ) 
+            else if ( typecode == TCODE_USER_TABLE_UUID )
             {
               dump.Print("User table id = ");
             }
@@ -542,7 +542,7 @@ unsigned int Dump3dmChunk( ON_BinaryArchive& file, ON_TextLog& dump, int recursi
             int sizeof_file = 0;
             file.ReadInt(&sizeof_file);
             dump.Print("current position = %d  stored size = %d\n",
-                       file.CurrentPosition(), 
+                       file.CurrentPosition(),
                        sizeof_file);
           }
           dump.PopIndent();
@@ -553,12 +553,12 @@ unsigned int Dump3dmChunk( ON_BinaryArchive& file, ON_TextLog& dump, int recursi
     }
 
     const size_t offset1 = file.CurrentPosition();
-    if ( !file.EndRead3dmChunk() ) 
+    if ( !file.EndRead3dmChunk() )
     {
       ErrorReport(offset1,"EndRead3dmChunk() failed.",dump);
       rc = FALSE;
     }
-    else if (!bShortChunk) 
+    else if (!bShortChunk)
     {
       const size_t extra = value - (offset1-offset0-8);
       if ( extra < 0 ) {

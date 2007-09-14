@@ -264,7 +264,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 #	Load the tclConfig.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TCL_BIN_DIR
 #
@@ -350,7 +350,7 @@ AC_DEFUN([SC_LOAD_TCLCONFIG], [
 #	Load the tkConfig.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TK_BIN_DIR
 #
@@ -505,7 +505,7 @@ AC_DEFUN([SC_BUILD_TCLSH], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -550,7 +550,7 @@ AC_DEFUN([SC_ENABLE_SHARED], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -598,7 +598,7 @@ AC_DEFUN([SC_ENABLE_FRAMEWORK], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -741,13 +741,13 @@ AC_DEFUN([SC_ENABLE_THREADS], [
 #
 # Arguments:
 #	none
-#	
+#
 #	Requires the following vars to be set in the Makefile:
 #		CFLAGS_DEBUG
 #		CFLAGS_OPTIMIZE
 #		LDFLAGS_DEBUG
 #		LDFLAGS_OPTIMIZE
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -815,7 +815,7 @@ AC_DEFUN([SC_ENABLE_SYMBOLS], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -845,14 +845,14 @@ AC_DEFUN([SC_ENABLE_LANGINFO], [
 	if test $tcl_cv_langinfo_h = yes; then
 	    AC_DEFINE(HAVE_LANGINFO, 1, [Do we have nl_langinfo()?])
 	fi
-    else 
+    else
 	AC_MSG_RESULT([$langinfo_ok])
     fi
 ])
 
 #--------------------------------------------------------------------
 # SC_CONFIG_MANPAGES
-#	
+#
 #	Decide whether to use symlinks for linking the manpages,
 #	whether to compress the manpages after installation, and
 #	whether to add a package name suffix to the installed
@@ -1026,7 +1026,7 @@ AC_DEFUN([SC_CONFIG_SYSTEM], [
 # TCL_SHLIB_LD_EXTRAS - Additional element which are added to SHLIB_LD_LIBS
 #  TK_SHLIB_LD_EXTRAS   for the build of Tcl and Tk, but not recorded in the
 #                       tclConfig.sh, since they are only used for the build
-#                       of Tcl and Tk. 
+#                       of Tcl and Tk.
 #                       Examples: MacOS X records the library version and
 #                       compatibility version in the shared library.  But
 #                       of course the Tcl version of this is only used for Tcl.
@@ -1180,7 +1180,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    if test "$do64bit" = "yes" -a "`uname -v`" -gt "3" ; then
 		if test "$GCC" = "yes" ; then
 		    AC_MSG_WARN([64bit mode not supported with GCC on $system])
-		else 
+		else
 		    do64bit_ok=yes
 		    CFLAGS="$CFLAGS -q64"
 		    LDFLAGS_ARCH="-q64"
@@ -1420,7 +1420,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    SHLIB_SUFFIX=".so"
 
 	    CFLAGS_OPTIMIZE=-O2
-	    # egcs-2.91.66 on Redhat Linux 6.0 generates lots of warnings 
+	    # egcs-2.91.66 on Redhat Linux 6.0 generates lots of warnings
 	    # when you inline the string and math operations.  Turn this off to
 	    # get rid of the warnings.
 	    #CFLAGS_OPTIMIZE="${CFLAGS_OPTIMIZE} -D__NO_STRING_INLINES -D__NO_MATH_INLINES"
@@ -1691,13 +1691,13 @@ dnl AC_CHECK_TOOL(AR, ar)
 			CFLAGS="`echo "$CFLAGS " | sed -e 's/-arch ppc64 / /g' -e 's/-arch x86_64 / /g'`"
 		    fi
 		    LIBS="$LIBS -framework CoreFoundation"
-		    AC_TRY_LINK([#include <CoreFoundation/CoreFoundation.h>], 
-			[CFBundleRef b = CFBundleGetMainBundle();], 
+		    AC_TRY_LINK([#include <CoreFoundation/CoreFoundation.h>],
+			[CFBundleRef b = CFBundleGetMainBundle();],
 			tcl_cv_lib_corefoundation=yes, tcl_cv_lib_corefoundation=no)
 		    LIBS=$hold_libs; CFLAGS=$hold_cflags])
 		if test $tcl_cv_lib_corefoundation = yes; then
 		    LIBS="$LIBS -framework CoreFoundation"
-		    AC_DEFINE(HAVE_COREFOUNDATION, 1, 
+		    AC_DEFINE(HAVE_COREFOUNDATION, 1,
 			[Do we have access to Darwin CoreFoundation.framework?])
 		else
 		    tcl_corefoundation=no
@@ -1706,8 +1706,8 @@ dnl AC_CHECK_TOOL(AR, ar)
 		    AC_CACHE_CHECK([for 64-bit CoreFoundation], tcl_cv_lib_corefoundation_64, [
 			hold_cflags=$CFLAGS
 			CFLAGS="`echo "$CFLAGS " | sed -e 's/-arch ppc / /g' -e 's/-arch i386 / /g'`"
-			AC_TRY_LINK([#include <CoreFoundation/CoreFoundation.h>], 
-			    [CFBundleRef b = CFBundleGetMainBundle();], 
+			AC_TRY_LINK([#include <CoreFoundation/CoreFoundation.h>],
+			    [CFBundleRef b = CFBundleGetMainBundle();],
 			    tcl_cv_lib_corefoundation_64=yes, tcl_cv_lib_corefoundation_64=no)
 			CFLAGS=$hold_cflags])
 		    if test $tcl_cv_lib_corefoundation_64 = no; then
@@ -1737,7 +1737,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    CFLAGS_OPTIMIZE=""		# Optimizer is buggy
 	    AC_DEFINE(_OE_SOCKETS, 1,	# needed in sys/socket.h
 		[Should OS/390 do the right thing with sockets?])
-	    ;;      
+	    ;;
 	OSF1-1.0|OSF1-1.1|OSF1-1.2)
 	    # OSF/1 1.[012] from OSF, and derivatives, including Paragon OSF/1
 	    SHLIB_CFLAGS=""
@@ -1935,7 +1935,7 @@ dnl AC_CHECK_TOOL(AR, ar)
 		    AC_MSG_WARN([64bit mode not supported for $arch])
 		fi
 	    fi
-	    
+
 	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
 	    # symbols when dynamically loaded into tclsh.
 
@@ -2154,7 +2154,7 @@ dnl        esac
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines only one of the following vars:
@@ -2273,7 +2273,7 @@ int main() {
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -2359,7 +2359,7 @@ closedir(d);
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Sets the the following vars:
@@ -2437,13 +2437,13 @@ AC_DEFUN([SC_PATH_X], [
 # SC_BLOCKING_STYLE
 #
 #	The statements below check for systems where POSIX-style
-#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented. 
+#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented.
 #	On these systems (mostly older ones), use the old BSD-style
 #	FIONBIO approach instead.
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -2487,7 +2487,7 @@ AC_DEFUN([SC_BLOCKING_STYLE], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -2559,7 +2559,7 @@ AC_DEFUN([SC_TIME_HANDLER], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Might defines some of the following vars:
@@ -2609,7 +2609,7 @@ AC_DEFUN([SC_BUGGY_STRTOD], [
 #
 # Arguments:
 #	None.
-#	
+#
 # Results:
 #
 #	Might append to the following vars:
@@ -2682,7 +2682,7 @@ AC_DEFUN([SC_TCL_LINK_LIBS], [
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -2728,7 +2728,7 @@ AC_DEFUN([SC_TCL_EARLY_FLAGS],[
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -2750,8 +2750,8 @@ AC_DEFUN([SC_TCL_64BIT_FLAGS], [
 	# See if we should use long anyway  Note that we substitute in the
 	# type that is our current guess for a 64-bit type inside this check
 	# program, so it should be modified only carefully...
-        AC_TRY_COMPILE(,[switch (0) { 
-            case 1: case (sizeof(]${tcl_type_64bit}[)==sizeof(long)): ; 
+        AC_TRY_COMPILE(,[switch (0) {
+            case 1: case (sizeof(]${tcl_type_64bit}[)==sizeof(long)): ;
         }],tcl_cv_type_64bit=${tcl_type_64bit})])
     if test "${tcl_cv_type_64bit}" = none ; then
 	AC_DEFINE(TCL_WIDE_INT_IS_LONG, 1, [Are wide integers to be implemented with C 'long's?])
@@ -2870,7 +2870,7 @@ AC_DEFUN([SC_TCL_CHECK_BROKEN_FUNC],[
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -2937,7 +2937,7 @@ AC_DEFUN([SC_TCL_GETHOSTBYADDR_R], [AC_CHECK_FUNC(gethostbyaddr_r, [
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -3014,7 +3014,7 @@ AC_DEFUN([SC_TCL_GETHOSTBYNAME_R], [AC_CHECK_FUNC(gethostbyname_r, [
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -3074,7 +3074,7 @@ AC_DEFUN([SC_TCL_GETPWUID_R], [AC_CHECK_FUNC(getpwuid_r, [
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -3134,7 +3134,7 @@ AC_DEFUN([SC_TCL_GETPWNAM_R], [AC_CHECK_FUNC(getpwnam_r, [
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -3194,7 +3194,7 @@ AC_DEFUN([SC_TCL_GETGRGID_R], [AC_CHECK_FUNC(getgrgid_r, [
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:

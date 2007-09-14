@@ -8,14 +8,14 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
-# 
+#
 
 # Global variables used by these scripts:
 #
 # state -	state variable that controls action of text proc.
-#				
+#
 # topics -	array indexed by (package,section,topic) with value
 # 		of topic ID.
 #
@@ -147,7 +147,7 @@ proc macro {name args} {
 		KEYWORDS {set state KEY}
 		default {set state OFF}
 	    }
-	    
+
 	}
 	TH {
 	    global state curID curPkg curSect topics keywords
@@ -188,7 +188,7 @@ proc dash {} {
 
 # initGlobals, tab, font, char, macro2 --
 #
-# These procedures do nothing during the first pass. 
+# These procedures do nothing during the first pass.
 #
 # Arguments:
 # None.

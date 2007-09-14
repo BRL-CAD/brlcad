@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rletoabA60.c - Convert rle images into 4:2:2 yuv format for Abekas A60
- * 
+ *
  * Author:	T. Todd Elvins
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Fri June 3 1988
  * Copyright (c) 1988, University of Utah
- * 
+ *
  */
 #if 0
 rletoabA60()			/* For tags. */
@@ -95,14 +95,14 @@ char **argv;
      */
     rle_get_setup_ok( &hdr, NULL, NULL );
 
-    if ( hdr.xmax > LINE_LENGTH || hdr.ymax > FRAME_LENGTH )  {		
+    if ( hdr.xmax > LINE_LENGTH || hdr.ymax > FRAME_LENGTH )  {
 	fprintf( stderr,"%s: rle image too big for Abekas\n", hdr.cmd);
 	exit(3);
     }
     RLE_CLR_BIT( hdr, RLE_ALPHA );
-    for (i = 3 ; i < hdr.ncolors ; i++) 
+    for (i = 3 ; i < hdr.ncolors ; i++)
 	RLE_CLR_BIT( hdr, i );
-	
+
     /*
      * Initialize some variables.
      */
@@ -110,11 +110,11 @@ char **argv;
     bzero( scangrn, LINE_LENGTH * FRAME_LENGTH );
     bzero( scanblu, LINE_LENGTH * FRAME_LENGTH );
 
-    for (i=0; i<3; i++) 
+    for (i=0; i<3; i++)
 	scanbuf[i] = (rle_pixel *) malloc ( LINE_LENGTH * sizeof(rle_pixel));
 
-    /* 
-     * Put the entire rle image into a buffer upside down and centered. 
+    /*
+     * Put the entire rle image into a buffer upside down and centered.
      */
     xrun = hdr.xmax - hdr.xmin + 1;
     yrun = hdr.ymax - hdr.ymin + 1;
@@ -182,16 +182,16 @@ FILE *outfile;
     int y0=0, y1=0, y2=0, y3=0, y4=0;
     int u0=0, u1=0, u2=0, u3=0, u4=0;
     int v0=0, v1=0, v2=0, v3=0, v4=0;
-    
+
     /*
      * Convert the 720x486 rle image to yuv one byte at a time.
      *
      * All arithmetic is performed in "fixed point" integer for speed.
      * The original equations are shown in comments.
      */
-    for( line=0; line < FRAME_LENGTH; line++ )  { 
-	sr = scanred[line];  
-	sg = scangrn[line]; 
+    for( line=0; line < FRAME_LENGTH; line++ )  {
+	sr = scanred[line];
+	sg = scangrn[line];
 	sb = scanblu[line];
 	bp = buf;
 
@@ -223,32 +223,32 @@ FILE *outfile;
 	    }
 
 	    /*
-	     * u = ( (0.14963 * u0) + (0.22010 * u1)  
-	     *      +(0.26054 * u2) + (0.22010 * u3) 
+	     * u = ( (0.14963 * u0) + (0.22010 * u1)
+	     *      +(0.26054 * u2) + (0.22010 * u3)
 	     *      +(0.14963 * u4)) * 224;
 	     */
-	    u = ( (u0 / 66832) + (u1 / 45434)  
-		 +(u2 / 38382) + (u3 / 45434) 
+	    u = ( (u0 / 66832) + (u1 / 45434)
+		 +(u2 / 38382) + (u3 / 45434)
 		 +(u4 / 66832)) * 224 / 80000;
 	    *bp++ = u + 128;
 
-	    /* 
-	     * y = (-(0.05674 * y0) + (0.01883 * y1)  
-	     *      +(1.07582 * y2) + (0.01883 * y3) 
+	    /*
+	     * y = (-(0.05674 * y0) + (0.01883 * y1)
+	     *      +(1.07582 * y2) + (0.01883 * y3)
 	     *      -(0.05674 * y4)) * 219.0;
 	     */
-	    y = (-(y0 / 176243) + (y1 / 531067)  
-		 +(y1 / 9295) + (y3 / 531067) 
+	    y = (-(y0 / 176243) + (y1 / 531067)
+		 +(y1 / 9295) + (y3 / 531067)
 		 -(y4 / 176243)) * 219 / 80000;
 	    *bp++ = y + 16;
- 
+
 	    /*
-	     * v =  ((0.14963 * v0) + (0.22010 * v1)  
-	     *      +(0.26054 * v2) + (0.22010 * v3) 
+	     * v =  ((0.14963 * v0) + (0.22010 * v1)
+	     *      +(0.26054 * v2) + (0.22010 * v3)
 	     *      +(0.14963 * v4)) * 224.0;
 	     */
-	    v = ( (v0 / 66832) + (v1 / 45434)  
-		 +(v2 / 38382) + (v3 / 45434) 
+	    v = ( (v0 / 66832) + (v1 / 45434)
+		 +(v2 / 38382) + (v3 / 45434)
 		 +(v4 / 66832)) * 224 / 80000;
 	    *bp++ = v + 128;
 
@@ -268,8 +268,8 @@ FILE *outfile;
 		shifty( 0 ); shiftu( 0 ); shiftv( 0 );
 	    }
 
-	    y = (-(y0 / 176243) + (y1 / 531067)  
-		 +(y1 / 9295) + (y3 / 531067) 
+	    y = (-(y0 / 176243) + (y1 / 531067)
+		 +(y1 / 9295) + (y3 / 531067)
 		 -(y4 / 176243)) * 219 / 80000;
 	    *bp++ = y + 16;
 	}

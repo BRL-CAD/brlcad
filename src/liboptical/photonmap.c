@@ -938,7 +938,7 @@ void Initialize(int MAP, int MapSize) {
     PMap[MAP]->MaxPhotons= MapSize;
     PMap[MAP]->Root= (struct PNode*)bu_malloc(sizeof(struct PNode), "PNode");
     PMap[MAP]->StoredPhotons= 0;
-    if(MapSize > 0) 
+    if(MapSize > 0)
 	Emit[MAP] = (struct Photon*)bu_malloc(sizeof(struct Photon)*MapSize, "Photon");
     else
 	Emit[MAP] = NULL;

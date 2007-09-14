@@ -14,7 +14,7 @@
  * OPTIONS
  *
  *	Too many to describe.  Type "rleClock -help" for a listing.
- * 
+ *
  * AUTHOR
  *	Bob Brown	    rlb@riacs.edu
  *	RIACS		    415 694 5407
@@ -211,7 +211,7 @@ char	*argv[];
 	    LittleHandValue = (float) ((tm->tm_hour % 12)) + BigHandValue / 60.0;
     }
     /*
-     * Allocate the storage for the raster 
+     * Allocate the storage for the raster
      */
 
     RedLine = (rle_pixel **) rasterAllocate(YSize, XSize);
@@ -221,7 +221,7 @@ char	*argv[];
     Raster = (rle_pixel **) rasterAllocate(YSize, XSize);
 
     /*
-     * Initialize the raster to the background color 
+     * Initialize the raster to the background color
      */
 
     for (i = 0; i < YSize; i++) {
@@ -231,7 +231,7 @@ char	*argv[];
     }
 
     /*
-     * Draw the clock face as a circle with tick marks 
+     * Draw the clock face as a circle with tick marks
      */
 
     for (i = 0; i < 360; i++) {
@@ -246,14 +246,14 @@ char	*argv[];
     /*
      * Compute the RAST_FACE_MASK portion - includes what is inside the
      * dial face plus the dial face itself.  So first flood the inside, and
-     * then OR in the stuff under the face lines 
+     * then OR in the stuff under the face lines
      */
 
     areaFlood(polarToX(0.0, 0.0), polarToY(0.0, 0.0), RAST_FACE_EDGE, 0, RAST_FACE_MASK);
     rasterAddBits(RAST_FACE_EDGE, RAST_FACE_EDGE, RAST_FACE_MASK);
 
     /*
-     * Draw the hands and the text... 
+     * Draw the hands and the text...
      */
 
     drawHand(BigHandValue, BigHandScale, 0.85, RAST_BHAND_MASK, RAST_BHAND_EDGE);
@@ -263,7 +263,7 @@ char	*argv[];
     }
     /*
      * Compose the clock image from the generated raster and program
-     * arguments 
+     * arguments
      */
 
     haveFaceColor = argGiven((char *)&FaceColor);
@@ -300,7 +300,7 @@ char	*argv[];
     }
 
     /*
-     * Dump the raster file to stdout... 
+     * Dump the raster file to stdout...
      */
 
     rasterWrite(stdout);
@@ -361,10 +361,10 @@ polarLine(r0, a0, r1, a1, arg1, arg2)
 double r0, a0, r1, a1;
 int arg1, arg2;
 {
-	lineDots(polarToX(r0, a0), 
-		 polarToY(r0, a0), 
-		 polarToX(r1, a1), 
-		 polarToY(r1, a1), 
+	lineDots(polarToX(r0, a0),
+		 polarToY(r0, a0),
+		 polarToX(r1, a1),
+		 polarToY(r1, a1),
 		 setDot, arg1, arg2);
 }
 
@@ -490,13 +490,13 @@ FILE *fd;
 /*
  * Bresenham's line drawing algorithm based on the general Bresenham
  * line drawing algorithm described in Rogers "Procedural Elements for
- * Computer Graphics" on page 40. 
+ * Computer Graphics" on page 40.
  *
- * Written by	Nancy Blachman 
- *		CS 248A, Winter 
- *		Prof. Leo Guibas 
- *		Stanford University 
- *		January 13, 1987 
+ * Written by	Nancy Blachman
+ *		CS 248A, Winter
+ *		Prof. Leo Guibas
+ *		Stanford University
+ *		January 13, 1987
  *
  * This is why RIACS sent Nancy to grad school!
  */
@@ -575,28 +575,28 @@ struct {
     CONST_DECL char *value;
     bool given;
 } Args[] ={
-    { TRUE,  "-x",  INT,    "Image width in pixels",              (char *)&XSize }, 
+    { TRUE,  "-x",  INT,    "Image width in pixels",              (char *)&XSize },
     { TRUE,  "-cy", INT,    "Clock image height in pixels",       (char *)&YClockSize },
     { TRUE,  "-ty", INT,    "Text image height in pixels",        (char *)&YTextSize },
     { TRUE,  "-help", HELP, "Prints this help message",           NULL },
 
-    { TRUE,  "-bv", FLOAT,  "Big hand value",                     (char *)&BigHandValue }, 
-    { TRUE,  "-bs", FLOAT,  "Big hand full scale value",          (char *)&BigHandScale }, 
+    { TRUE,  "-bv", FLOAT,  "Big hand value",                     (char *)&BigHandValue },
+    { TRUE,  "-bs", FLOAT,  "Big hand full scale value",          (char *)&BigHandScale },
     { TRUE,  "-lv", FLOAT,  "Little hand value",                  (char *)&LittleHandValue },
     { TRUE,  "-ls", FLOAT,  "Little hand full scale value",       (char *)&LittleHandScale },
     { TRUE,  "-t",  INT,    "Number of ticks around the face",    (char *)&Ticks },
     { TRUE,  "-lw", INT,    "Line width in pixels",               (char *)&Dots },
 
-    { TRUE,  "-fc", COLOR,  "Clock face edges color",             (char *)&FaceEdgeColor }, 
-    { TRUE,  "-Fc", COLOR,  "Clock face background color",        (char *)&FaceColor }, 
-    { TRUE,  "",    TEXT,   " - if omitted, then the clock is transparent" },  
+    { TRUE,  "-fc", COLOR,  "Clock face edges color",             (char *)&FaceEdgeColor },
+    { TRUE,  "-Fc", COLOR,  "Clock face background color",        (char *)&FaceColor },
+    { TRUE,  "",    TEXT,   " - if omitted, then the clock is transparent" },
     { TRUE,  "-hc", COLOR,  "Clock hands edges color",            (char *)&HandEdgeColor },
-    { TRUE,  "",    TEXT,   " - if omitted,  no hand edges shown" }, 
-    { TRUE,  "-Hc", COLOR,  "Clock hands fill color",             (char *)&HandColor }, 
-    { TRUE,  "-tc", COLOR,  "Text color",			  (char *)&TextColor}, 
-    { TRUE,  "-Tc", COLOR,  "Text background color",	          (char *)&TextBackColor}, 
-    { TRUE,  "",    TEXT,   " - if omitted, then the text is transparent" },  
-    { TRUE,  "-tf", STRING, "Text area format string", 	          (char *)&FormatString }, 
+    { TRUE,  "",    TEXT,   " - if omitted,  no hand edges shown" },
+    { TRUE,  "-Hc", COLOR,  "Clock hands fill color",             (char *)&HandColor },
+    { TRUE,  "-tc", COLOR,  "Text color",			  (char *)&TextColor},
+    { TRUE,  "-Tc", COLOR,  "Text background color",	          (char *)&TextBackColor},
+    { TRUE,  "",    TEXT,   " - if omitted, then the text is transparent" },
+    { TRUE,  "-tf", STRING, "Text area format string", 	          (char *)&FormatString },
     { FALSE, "-Xm", BOOL,   "Output the alpha channel on RGB",    (char *)&DebugAlpha },
     { FALSE, "-D",  BOOL,   "Turn on debugging",	          (char *)&Debug },
     NULL
@@ -643,8 +643,8 @@ char *argv[];
 	    break;
 	case COLOR:
 	    color = (color_t *)Args[i].value;
-	    if ( arg+3 >= argc || !isdigit(argv[arg+1][0]) 
-	                       || !isdigit(argv[arg+2][0]) 
+	    if ( arg+3 >= argc || !isdigit(argv[arg+1][0])
+	                       || !isdigit(argv[arg+2][0])
 			       || !isdigit(argv[arg+3][0])) {
 		fprintf(stderr, "%s: %s takes three numeric arguments\n", argv[0],
 		    Args[i].arg);

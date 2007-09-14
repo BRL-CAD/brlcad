@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -129,7 +129,7 @@ int get_scanlines()
 
 /********************************************************************
  * get_color_bits() searches the array of comment strings for the substring
- * "color_map_length=" which is added by mcut if it has worked on the 
+ * "color_map_length=" which is added by mcut if it has worked on the
  * file.  If it is found, it sets color_bits to the ceiling of log 2
  * color_map_length.  Otherwise it returns the default value 8.
  ********************************************************************/

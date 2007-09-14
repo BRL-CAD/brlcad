@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -52,9 +52,9 @@ void ON_Font::Defaults()
 
 BOOL ON_Font::IsValid( ON_TextLog* text_log ) const
 {
-  return ( m_font_name.Length() > 0 
-           && m_font_index >= 0 
-           && m_facename[0] > 32 
+  return ( m_font_name.Length() > 0
+           && m_font_index >= 0
+           && m_facename[0] > 32
            && m_facename[64] == 0
            );
 }
@@ -125,7 +125,7 @@ BOOL ON_Font::Read(
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 ) 
+  if ( rc && major_version == 1 )
   {
     int i;
     for(;;)
@@ -219,12 +219,12 @@ const wchar_t* ON_Font::FontName() const
 }
 
 #if defined(ON_OS_WINDOWS_GDI)
-static 
+static
 int CALLBACK ON__IsSymbolFontFaceNameHelper( ENUMLOGFONTEX*, NEWTEXTMETRICEX*, DWORD, LPARAM)
 {
   // If the fontname in the logfont structure has
-  // a corresponding symbol font on the system, 
-  // set the  lfCharSet member to SYMBOL_CHARSET, 
+  // a corresponding symbol font on the system,
+  // set the  lfCharSet member to SYMBOL_CHARSET,
   // otherwise DEFAULT_CHARSET
   // The input logfont structure may be modified.
   return 7;
@@ -238,9 +238,9 @@ bool ON_Font::IsSymbolFontFaceName( const wchar_t* s)
 #if defined(ON_OS_WINDOWS_GDI)
   if( s && s[0])
   {
-    HDC hdc = ::GetDC( NULL);    
+    HDC hdc = ::GetDC( NULL);
     if( hdc)
-    {      
+    {
       LOGFONT logfont;
       memset( &logfont, 0, sizeof( logfont));
       int i;
@@ -252,7 +252,7 @@ bool ON_Font::IsSymbolFontFaceName( const wchar_t* s)
       if( 7 == ::EnumFontFamiliesEx( hdc, &logfont, (FONTENUMPROC)ON__IsSymbolFontFaceNameHelper, 0, 0))
       {
         rc = true;
-      }    
+      }
       ::ReleaseDC( NULL, hdc);
     }
   }
@@ -393,7 +393,7 @@ void ON_Font::SetBold( bool bBold )
 
 /*
 Returns:
-  Height of the 'I' character when the font is drawn 
+  Height of the 'I' character when the font is drawn
   with m_logfont.lfHeight = 256.
 */
 int ON_Font::HeightOfI() const
@@ -403,8 +403,8 @@ int ON_Font::HeightOfI() const
     // Default is height of Arial 'I'.  If we are running
     // on Windows, then we calculate the actual height of
     // an 'I' in the font.
-    //   The ..ON_Font::normal_font_height/256 is here 
-    //   so this code will continue to work correctly 
+    //   The ..ON_Font::normal_font_height/256 is here
+    //   so this code will continue to work correctly
     //   if somebody changes ON_Font::normal_font_height.
     int I_height = (166*ON_Font::normal_font_height)/256;
 
@@ -485,7 +485,7 @@ bool ON_Font::SetLogFont( const LOGFONT& logfont )
   {
     memcpy(&m_logfont,&logfont,sizeof(m_logfont));
   }
-    
+
   // synch persistent fields
   m_font_weight = m_logfont.lfWeight;
   m_font_italic = (m_logfont.lfItalic?true:false);
@@ -493,7 +493,7 @@ bool ON_Font::SetLogFont( const LOGFONT& logfont )
   int i;
   for ( i = 0; i < face_name_size && i < LF_FACESIZE; i++ )
   {
-    m_facename[i] = (wchar_t)m_logfont.lfFaceName[i]; 
+    m_facename[i] = (wchar_t)m_logfont.lfFaceName[i];
   }
   m_facename[face_name_size-1] = 0;
 

@@ -78,7 +78,7 @@ typedef struct {
     int menuBar;		/* Menu bar flag. */
     Tk_Cursor cursor;		/* Cursor for the busy window. */
 
-    Blt_HashEntry *hashPtr;	/* Used the delete the busy window entry 
+    Blt_HashEntry *hashPtr;	/* Used the delete the busy window entry
 				 * out of the global hash table. */
     Blt_HashTable *tablePtr;
 } Busy;
@@ -123,17 +123,17 @@ static Tcl_CmdProc BusyCmd;
 static Tcl_InterpDeleteProc BusyInterpDeleteProc;
 
 static void
-ShowBusyWindow(busyPtr) 
+ShowBusyWindow(busyPtr)
     Busy *busyPtr;
 {
     if (busyPtr->tkBusy != NULL) {
 	Tk_MapWindow(busyPtr->tkBusy);
-	/* 
+	/*
 	 * Always raise the busy window just in case new sibling
 	 * windows have been created in the meantime. Can't use
 	 * Tk_RestackWindow because it doesn't work under Win32.
 	 */
-	XRaiseWindow(Tk_Display(busyPtr->tkBusy), 
+	XRaiseWindow(Tk_Display(busyPtr->tkBusy),
 	     Tk_WindowId(busyPtr->tkBusy));
     }
 #ifdef WIN32
@@ -160,7 +160,7 @@ HideBusyWindow(busyPtr)
     Busy *busyPtr;
 {
     if (busyPtr->tkBusy != NULL) {
-	Tk_UnmapWindow(busyPtr->tkBusy); 
+	Tk_UnmapWindow(busyPtr->tkBusy);
     }
 #ifdef WIN32
     {
@@ -243,7 +243,7 @@ BusyCustodyProc(clientData, tkwin)
 {
     Busy *busyPtr = clientData;
 
-    Tk_DeleteEventHandler(busyPtr->tkBusy, StructureNotifyMask, BusyEventProc, 
+    Tk_DeleteEventHandler(busyPtr->tkBusy, StructureNotifyMask, BusyEventProc,
 	busyPtr);
     HideBusyWindow(busyPtr);
     busyPtr->tkBusy = NULL;
@@ -358,12 +358,12 @@ RefWinEventProc(clientData, eventPtr)
 		}
 	    }
 #if BUSYDEBUG
-	    PurifyPrintf("menubar2: width=%d, height=%d\n", 
+	    PurifyPrintf("menubar2: width=%d, height=%d\n",
 		busyPtr->width, busyPtr->height);
 #endif
 	    if (busyPtr->tkBusy != NULL) {
 #if BUSYDEBUG
-		fprintf(stderr, "busy window %s is at %d,%d %dx%d\n", 
+		fprintf(stderr, "busy window %s is at %d,%d %dx%d\n",
 			Tk_PathName(busyPtr->tkBusy),
 			x, y, busyPtr->width, busyPtr->height);
 #endif
@@ -488,7 +488,7 @@ CreateBusy(interp, tkRef)
 
 	fmt = "%s_Busy";	/* Sibling */
 	tkParent = Tk_Parent(tkRef);
-	for (tkwin = tkRef; (tkwin != NULL) && (!Tk_IsTopLevel(tkwin)); 
+	for (tkwin = tkRef; (tkwin != NULL) && (!Tk_IsTopLevel(tkwin));
 	     tkwin = Tk_Parent(tkwin)) {
 	    if (tkwin == tkParent) {
 		break;
@@ -497,7 +497,7 @@ CreateBusy(interp, tkRef)
 	    y += Tk_Y(tkwin) + Tk_Changes(tkwin)->border_width;
 	}
     }
-    for (tkChild = Blt_FirstChild(tkParent); tkChild != NULL; 
+    for (tkChild = Blt_FirstChild(tkParent); tkChild != NULL;
 	 tkChild = Blt_NextChild(tkChild)) {
 	Tk_MakeWindowExist(tkChild);
     }
@@ -562,7 +562,7 @@ CreateBusy(interp, tkRef)
     Blt_MakeTransparentWindowExist(tkBusy, parent, TRUE);
 
 #if BUSYDEBUG
-    PurifyPrintf("menubar1: width=%d, height=%d\n", busyPtr->width, 
+    PurifyPrintf("menubar1: width=%d, height=%d\n", busyPtr->width,
 	busyPtr->height);
     fprintf(stderr, "busy window %s is at %d,%d %dx%d\n", Tk_PathName(tkBusy),
 	    x, y, busyPtr->width, busyPtr->height);
@@ -718,7 +718,7 @@ HoldBusy(dataPtr, interp, argc, argv)
     busyPtr->tablePtr = &dataPtr->busyTable;
     result = ConfigureBusy(interp, busyPtr, argc - 1, argv + 1);
 
-    /* 
+    /*
      * Don't map the busy window unless the reference window is also
      * currently displayed.
      */
@@ -924,7 +924,7 @@ BusyOp(clientData, interp, argc, argv)
 	if (!busyPtr->isBusy) {
 	    continue;
 	}
-	if ((argc == 2) || 
+	if ((argc == 2) ||
 	    (Tcl_StringMatch(Tk_PathName(busyPtr->tkRef), argv[2]))) {
 	    Tcl_AppendElement(interp, Tk_PathName(busyPtr->tkRef));
 	}
@@ -1058,7 +1058,7 @@ ConfigureOp(clientData, interp, argc, argv)
  *
  * BusyInterpDeleteProc --
  *
- *	This is called when the interpreter hosting the "busy" command 
+ *	This is called when the interpreter hosting the "busy" command
  *	is destroyed.
  *
  * Results:
@@ -1111,7 +1111,7 @@ static Blt_OpSpec busyOps[] =
     {"cget", 2, (Blt_Op)CgetOp, 4, 4, "window option",},
     {"configure", 2, (Blt_Op)ConfigureOp, 3, 0, "window ?options?...",},
     {"forget", 1, (Blt_Op)ForgetOp, 2, 0, "?window?...",},
-    {"hold", 3, (Blt_Op)HoldOp, 3, 0, 
+    {"hold", 3, (Blt_Op)HoldOp, 3, 0,
 	"window ?options?... ?window options?...",},
     {"isbusy", 1, (Blt_Op)BusyOp, 2, 3, "?pattern?",},
     {"names", 1, (Blt_Op)NamesOp, 2, 3, "?pattern?",},
@@ -1146,7 +1146,7 @@ BusyCmd(clientData, interp, argc, argv)
 {
     Blt_Op proc;
     int result;
-    
+
     if ((argc > 1) && (argv[1][0] == '.')) {
 	return HoldOp(clientData, interp, argc, argv);
     }
@@ -1170,7 +1170,7 @@ GetBusyInterpData(interp)
     if (dataPtr == NULL) {
 	dataPtr = Blt_Malloc(sizeof(BusyInterpData));
 	assert(dataPtr);
-	Tcl_SetAssocData(interp, BUSY_THREAD_KEY, BusyInterpDeleteProc, 
+	Tcl_SetAssocData(interp, BUSY_THREAD_KEY, BusyInterpDeleteProc,
 		dataPtr);
 	Blt_InitHashTable(&dataPtr->busyTable, BLT_ONE_WORD_KEYS);
     }

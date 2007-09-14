@@ -2,9 +2,9 @@
 '\" Copyright (c) 1992-1999 by Karl Lehenbauer and Mark Diekhans
 '\" Copyright (c) 2000 by Scriptics Corporation.
 '\" All rights reserved.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH memory n 8.1 Tcl "Tcl Built-In Commands"
 .BS
@@ -33,9 +33,9 @@ If you are running Tcl under a C debugger, it should then enter the debugger
 command mode.
 .TP
 \fBmemory info\fR
-Returns a report containing the total allocations and frees since 
+Returns a report containing the total allocations and frees since
 Tcl began, the current packets allocated (the current
-number of calls to \fBckalloc\fR not met by a corresponding call 
+number of calls to \fBckalloc\fR not met by a corresponding call
 to \fBckfree\fR), the current bytes allocated, and the maximum number
 of packets and bytes allocated.
 .TP
@@ -54,7 +54,7 @@ with it a string-valued tag.  In the lists of allocated memory generated
 by \fBmemory active\fR and \fBmemory onexit\fR, the tag for each packet
 is printed along with other information about the packet.  The
 \fBmemory tag\fR command sets the tag value for subsequent calls
-to \fBckalloc\fR to be \fIstring\fR.  
+to \fBckalloc\fR to be \fIstring\fR.
 .TP
 \fBmemory trace [on|off]\fR
 .br
@@ -78,7 +78,7 @@ being displayed for all allocations and frees.  Since there can be a lot
 of memory activity before a problem occurs, judicious use of this option
 can reduce the slowdown caused by tracing (and the amount of trace information
 produced), if you can identify a number of allocations that occur before
-the problem sets in.  The current number of memory allocations that have 
+the problem sets in.  The current number of memory allocations that have
 occurred since Tcl started is printed on a guard zone failure.
 .TP
 \fBmemory validate [on|off]\fR

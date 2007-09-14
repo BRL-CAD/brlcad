@@ -1,4 +1,4 @@
-/* 
+/*
  * pkgc.c --
  *
  *	This file contains a simple Tcl package "pkgc" that is intended

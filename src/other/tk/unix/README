@@ -72,7 +72,7 @@ How To Compile And Install Tk:
 				should be reachable under several names.
 	--enable-man-compression=PROG
 				Compress the manpages using PROG.
-    Mac OS X only: 
+    Mac OS X only:
 	--enable-framework	package Tk as a framework.
 	--disable-corefoundation disable use of CoreFoundation API.
 	--enable-aqua		use Aqua windowingsystem rather than X11,
@@ -97,7 +97,7 @@ How To Compile And Install Tk:
     for compiling on your system.  If you need to modify Makefile,
     there are comments at the beginning of it that describe the things
     you might want to change and how to change them.
-    
+
 (g) Type "make install" to install Tk's binaries and script files in
     standard places.  You'll need write permission on the installation
     directoryies to do this.  The installation directories are

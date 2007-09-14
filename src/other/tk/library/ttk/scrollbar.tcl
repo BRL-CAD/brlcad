@@ -70,7 +70,7 @@ proc ttk::scrollbar::Press {w x y} {
 proc ttk::scrollbar::Drag {w x y} {
     variable State
     if {![info exists State(first)]} {
-    	# Initial buttonpress was not on the thumb, 
+    	# Initial buttonpress was not on the thumb,
 	# or something screwy has happened.  In either case, ignore:
 	return;
     }

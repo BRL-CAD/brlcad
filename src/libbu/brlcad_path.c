@@ -241,7 +241,7 @@ bu_setprogname(const char *argv0) {
     }
 
     (void)bu_ipwd();
-    
+
     return;
 }
 

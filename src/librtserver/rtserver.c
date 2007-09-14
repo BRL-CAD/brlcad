@@ -605,7 +605,7 @@ rts_open_session()
 	return 0;
 
 #if 0
-	/* Better session management is needed. When a session is opened it needs to be 
+	/* Better session management is needed. When a session is opened it needs to be
 	 * to be associated with an analysis and a run. subsequent open session requests
 	 * should then return the appropriate session bases on a passed in analysis id and run number
 	 */

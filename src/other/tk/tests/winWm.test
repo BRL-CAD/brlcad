@@ -108,7 +108,7 @@ test winWm-2.2 {TkpWmSetState} win {
     update
     lappend result [wm state .t]
     wm deiconify .t
-    update 
+    update
     lappend result [wm state .t]
     destroy .t
     set result
@@ -125,7 +125,7 @@ test winWm-2.3 {TkpWmSetState} win {
     update
     lappend result [wm state .t]
     wm state .t normal
-    update 
+    update
     lappend result [wm state .t]
     destroy .t
     set result
@@ -207,7 +207,7 @@ test winWm-5.1 {UpdateGeometryInfo: menu resizing} win {
     update
     lappend result [winfo height .t]
     destroy .t
-    
+
     set result
 } {50 50 31}
 test winWm-5.2 {UpdateGeometryInfo: menu resizing} win {

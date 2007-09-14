@@ -812,7 +812,7 @@ Tcl_AfterObjCmd(
 	|| objv[1]->typePtr == &tclWideIntType
 #endif
 	|| objv[1]->typePtr == &tclBignumType
-	|| ( Tcl_GetIndexFromObj(NULL, objv[1], afterSubCmds, "", 0, 
+	|| ( Tcl_GetIndexFromObj(NULL, objv[1], afterSubCmds, "", 0,
 				 &index) != TCL_OK )) {
 	index = -1;
 	if (Tcl_GetWideIntFromObj(NULL, objv[1], &ms) != TCL_OK) {
@@ -824,7 +824,7 @@ Tcl_AfterObjCmd(
 	}
     }
 
-    /* 
+    /*
      * At this point, either index = -1 and ms contains the number of ms
      * to wait, or else index is the index of a subcommand.
      */

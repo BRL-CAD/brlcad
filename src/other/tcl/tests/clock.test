@@ -19,7 +19,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 }
 
 if {[testConstraint win]} {
-    if {[catch {package require registry 1.1}] 
+    if {[catch {package require registry 1.1}]
 	&& [catch {load {} Registry}]
 	&& [catch {
 	    ::tcltest::loadTestedCommands
@@ -39,9 +39,9 @@ testConstraint y2038 \
 # TEST PLAN
 
 # clock-1:
-#	[clock format] - tests of bad and empty arguments 
+#	[clock format] - tests of bad and empty arguments
 #
-# clock-2 
+# clock-2
 #	formatting of year, month and day of month
 #
 # clock-3
@@ -199,7 +199,7 @@ namespace eval ::tcl::clock {
 	    l li lii liii liv lv lvi lvii lviii lix
 	    lx lxi lxii lxiii lxiv lxv lxvi lxvii lxviii lxix
 	    lxx lxxi lxxii lxxiii lxxiv lxxv lxxvi lxxvii lxxviii lxxix
-	    lxxx lxxxi lxxxii lxxxiii lxxxiv lxxxv lxxxvi lxxxvii lxxxviii 
+	    lxxx lxxxi lxxxii lxxxiii lxxxiv lxxxv lxxxvi lxxxvii lxxxviii
 	    lxxxix
 	    xc xci xcii xciii xciv xcv xcvi xcvii xcviii xcix
 	    c
@@ -35221,7 +35221,7 @@ test clock-30.25 {clock add seconds at DST conversion} {
 
 test clock-31.1 {system locale} \
     -constraints win \
-    -setup { 
+    -setup {
 	namespace eval ::tcl::clock {
 	    namespace import -force ::testClock::registry
 	}
@@ -35244,7 +35244,7 @@ test clock-31.1 {system locale} \
 
 test clock-31.2 {system locale} \
     -constraints win \
-    -setup { 
+    -setup {
 	namespace eval ::tcl::clock {
 	    namespace import -force ::testClock::registry
 	}
@@ -35267,7 +35267,7 @@ test clock-31.2 {system locale} \
 
 test clock-31.3 {system locale} \
     -constraints win \
-    -setup { 
+    -setup {
 	namespace eval ::tcl::clock {
 	    namespace import -force ::testClock::registry
 	}
@@ -35290,7 +35290,7 @@ test clock-31.3 {system locale} \
 
 test clock-31.4 {system locale} \
     -constraints win \
-    -setup { 
+    -setup {
 	namespace eval ::tcl::clock {
 	    namespace import -force ::testClock::registry
 	}
@@ -35327,7 +35327,7 @@ test clock-31.4 {system locale} \
 
 test clock-31.5 {system locale} \
     -constraints win \
-    -setup { 
+    -setup {
 	namespace eval ::tcl::clock {
 	    namespace import -force ::testClock::registry
 	}
@@ -35364,7 +35364,7 @@ test clock-31.5 {system locale} \
 
 test clock-31.6 {system locale} \
     -constraints win \
-    -setup { 
+    -setup {
 	namespace eval ::tcl::clock {
 	    namespace import -force ::testClock::registry
 	}
@@ -35434,7 +35434,7 @@ test clock-32.1 {scan/format across the Gregorian change} {
     }
     set problems
 } {}
-			 
+
 # Legacy tests
 
 # clock clicks
@@ -35466,7 +35466,7 @@ test clock-33.5 {clock clicks tests, millisecond timing test} {
     # 60 msecs seems to be the max time slice under Windows 95/98
     expr {
 	  ($end > $start) && (($end - $start) <= 60) ?
-	  "ok" : 
+	  "ok" :
 	  "test should have taken 0-60 ms, actually took [expr $end - $start]"}
 } {ok}
 test clock-33.5a {clock tests, millisecond timing test} {
@@ -35476,7 +35476,7 @@ test clock-33.5a {clock tests, millisecond timing test} {
     # 60 msecs seems to be the max time slice under Windows 95/98
     expr {
 	  ($end > $start) && (($end - $start) <= 60) ?
-	  "ok" : 
+	  "ok" :
 	  "test should have taken 0-60 ms, actually took [expr $end - $start]"}
 } {ok}
 test clock-33.6 {clock clicks, milli with too much abbreviation} {
@@ -35920,7 +35920,7 @@ test clock-44.1 {regression test - time zone name containing hyphen } \
 	}
     } \
     -result {12:34:56-0500}
-    
+
 test clock-45.1 {regression test - time zone containing only two digits} \
     -body {
 	clock scan 1985-04-12T10:15:30+04 -format %Y-%m-%dT%H:%M:%S%Z
@@ -35965,7 +35965,7 @@ test clock-48.1 {Bug 1185933: 'i' destroyed by clock init} -setup {
 
 test clock-49.1 {regression test - localtime with negative arg (Bug 1237907)} \
     -body {
-	list [catch { 
+	list [catch {
 	    clock format -86400 -timezone :localtime -format %Y
 	} result] $result
     } \
@@ -36172,7 +36172,7 @@ test clock-56.1 {use of zoneinfo, version 1} {*}{
     }
     -result {2004-01-01 00:00:00 MST}
 }
-	    
+
 test clock-56.2 {use of zoneinfo, version 2} {*}{
     -setup {
 	clock format [clock seconds]
@@ -36222,7 +36222,7 @@ test clock-56.2 {use of zoneinfo, version 2} {*}{
 	removeFile PhoenixTwo $tzdir2
 	removeDirectory Test $tzdir
 	removeDirectory zoneinfo
-    } 
+    }
     -body {
 	clock format 1072940400 -timezone :Test/PhoenixTwo \
 	    -format {%Y-%m-%d %H:%M:%S %Z}
@@ -36432,7 +36432,7 @@ test clock-56.3 {use of zoneinfo, version 2, Y2038 compliance} {*}{
 	removeFile TijuanaTwo $tzdir2
 	removeDirectory Test $tzdir
 	removeDirectory zoneinfo
-    } 
+    }
     -body {
 	clock format 2224738800 -timezone :Test/TijuanaTwo \
 	    -format {%Y-%m-%d %H:%M:%S %Z}
@@ -36447,7 +36447,7 @@ test clock-57.1 {clock scan - abbreviated options} {
 test clock-58.1 {clock l10n - Japanese localisation} {*}{
     -setup {
 	proc backslashify { string } {
-	    
+
 	    set retval {}
 	    foreach char [split $string {}] {
 		scan $char %c ccode

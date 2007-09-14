@@ -40,7 +40,7 @@
 
 #define SEARCH_TRIES	100	/* Maximum number of attempts to check for
 				 * a given window before failing. */
-#define SEARCH_INTERVAL 20	/* Number milliseconds to wait after each 
+#define SEARCH_INTERVAL 20	/* Number milliseconds to wait after each
 				 * attempt to find a window. */
 
 #define SEARCH_TKWIN	(1<<0)	/* Search via Tk window pathname. */
@@ -76,7 +76,7 @@
 #endif
 
 typedef struct SearchInfoStruct SearchInfo;
-typedef void (SearchProc) _ANSI_ARGS_((Display *display, Window window, 
+typedef void (SearchProc) _ANSI_ARGS_((Display *display, Window window,
        SearchInfo *searchPtr));
 
 struct SearchInfoStruct {
@@ -149,10 +149,10 @@ typedef struct {
     int reqWidth, reqHeight;	/* Requested dimensions of the container
 				 * window. */
 
-    Window adopted;		/* X window Id or Win32 handle of adopted 
-				 * window contained by the widget.  If None, 
+    Window adopted;		/* X window Id or Win32 handle of adopted
+				 * window contained by the widget.  If None,
 				 * no window has been reparented. */
-    Tk_Window tkAdopted;	/* Non-NULL if this is a Tk window that's 
+    Tk_Window tkAdopted;	/* Non-NULL if this is a Tk window that's
 				 * been adopted. */
     int adoptedX, adoptedY;	/* Current position of the adopted window. */
     int adoptedWidth;		/* Current width of the adopted window. */
@@ -215,13 +215,13 @@ static Tk_ConfigSpec configSpecs[] =
 	DEF_CONTAINER_HEIGHT, Tk_Offset(Container, reqHeight),
 	TK_CONFIG_DONT_SET_DEFAULT, &bltDistanceOption},
     {TK_CONFIG_COLOR, "-highlightbackground", "highlightBackground",
-	"HighlightBackground", DEF_CONTAINER_HIGHLIGHT_BACKGROUND, 
+	"HighlightBackground", DEF_CONTAINER_HIGHLIGHT_BACKGROUND,
 	Tk_Offset(Container, highlightBgColor), TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_COLOR, "-highlightbackground", "highlightBackground",
-	"HighlightBackground", DEF_CONTAINER_HIGHLIGHT_BG_MONO, 
+	"HighlightBackground", DEF_CONTAINER_HIGHLIGHT_BG_MONO,
 	Tk_Offset(Container, highlightBgColor), TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_COLOR, "-highlightcolor", "highlightColor", "HighlightColor",
-	DEF_CONTAINER_HIGHLIGHT_COLOR, 
+	DEF_CONTAINER_HIGHLIGHT_COLOR,
 	Tk_Offset(Container, highlightColor), 0},
     {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness",
 	"HighlightThickness",
@@ -328,12 +328,12 @@ NameOfId(display, window)
 	/*
 	 * Note:  If the wrapper window is reparented, Tk pretends it's
 	 *        no longer connected to the toplevel, so if you look for
-	 *	  the child of the wrapper tkwin, it's NULL.  
+	 *	  the child of the wrapper tkwin, it's NULL.
 	 */
-	tkwin = Tk_IdToWindow(display, window); 
+	tkwin = Tk_IdToWindow(display, window);
 	if ((tkwin != NULL) && (Tk_PathName(tkwin) != NULL)) {
-	    return Tk_PathName(tkwin); 
-	} 
+	    return Tk_PathName(tkwin);
+	}
 	sprintf(string, "0x%x", (unsigned int)window);
 	return string;
     }
@@ -373,11 +373,11 @@ XGeometryErrorProc(clientData, eventPtr)
  *
  * GetAdoptedWindowGeometry --
  *
- *	Computes the requested geometry of the container using the 
- *	size of adopted window as a reference.  
+ *	Computes the requested geometry of the container using the
+ *	size of adopted window as a reference.
  *
  * Results:
- *	A standard Tcl result. 
+ *	A standard Tcl result.
  *
  * Side Effects:
  *	Sets a flag, indicating an error occurred.
@@ -395,23 +395,23 @@ GetAdoptedWindowGeometry(interp, cntrPtr)
     Tk_ErrorHandler handler;
     int result;
     int any = -1;
-    
+
     width = height = 1;
     xOffset = yOffset = 0;
     if (cntrPtr->adopted != None) {
-	handler = Tk_CreateErrorHandler(cntrPtr->display, any, X_GetGeometry, 
+	handler = Tk_CreateErrorHandler(cntrPtr->display, any, X_GetGeometry,
 		any, XGeometryErrorProc, &result);
 	root = RootWindow(cntrPtr->display, Tk_ScreenNumber(cntrPtr->tkwin));
 	XTranslateCoordinates(cntrPtr->display, cntrPtr->adopted,
 		      root, 0, 0, &xOffset, &yOffset, &dummy);
-	result = XGetGeometry(cntrPtr->display, cntrPtr->adopted, &root, 
+	result = XGetGeometry(cntrPtr->display, cntrPtr->adopted, &root,
 		&x, &y, (unsigned int *)&width, (unsigned int *)&height,
 	      (unsigned int *)&borderWidth, (unsigned int *)&depth);
 	Tk_DeleteErrorHandler(handler);
 	XSync(cntrPtr->display, False);
 	if (result == 0) {
-	    Tcl_AppendResult(interp, "can't get geometry for \"", 
-		     NameOfId(cntrPtr->display, cntrPtr->adopted), "\"", 
+	    Tcl_AppendResult(interp, "can't get geometry for \"",
+		     NameOfId(cntrPtr->display, cntrPtr->adopted), "\"",
 		     (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -449,7 +449,7 @@ GetChildren(display, window)
     unsigned int nChildren;
     Window dummy;
 
-    if (!XQueryTree(display, window, &dummy /*parent*/, &dummy /*root*/, 
+    if (!XQueryTree(display, window, &dummy /*parent*/, &dummy /*root*/,
 		   &children, &nChildren)) {
 	return NULL;
     }
@@ -478,18 +478,18 @@ GetChildren(display, window)
  *
  * NameSearch --
  *
- *	Traverses the entire window hierarchy, searching for windows 
- *	matching the name field in the SearchInfo structure. This 
- *	routine is recursively called for each successive level in 
+ *	Traverses the entire window hierarchy, searching for windows
+ *	matching the name field in the SearchInfo structure. This
+ *	routine is recursively called for each successive level in
  *	the window hierarchy.
  *
  * Results:
  *	None.
  *
  * Side Effects:
- *	The SearchInfo structure will track the number of windows that 
+ *	The SearchInfo structure will track the number of windows that
  *	match the given criteria.
- *	
+ *
  *----------------------------------------------------------------------
  */
 static void
@@ -505,7 +505,7 @@ NameSearch(display, window, searchPtr)
 	/* Compare the name of the window to the search pattern. */
 	if (Tcl_StringMatch(wmName, searchPtr->pattern)) {
 	    if (searchPtr->saveNames) { /* Record names of matching windows. */
-		Tcl_DStringAppendElement(&(searchPtr->dString), 
+		Tcl_DStringAppendElement(&(searchPtr->dString),
 			 NameOfId(display, window));
 		Tcl_DStringAppendElement(&(searchPtr->dString), wmName);
 	    }
@@ -534,8 +534,8 @@ NameSearch(display, window, searchPtr)
  *
  * CmdSearch --
  *
- *	Traverses the entire window hierarchy, searching for windows 
- *	matching the command-line specified in the SearchInfo structure.  
+ *	Traverses the entire window hierarchy, searching for windows
+ *	matching the command-line specified in the SearchInfo structure.
  *	This routine is recursively called for each successive level
  *	in the window hierarchy.
  *
@@ -543,9 +543,9 @@ NameSearch(display, window, searchPtr)
  *	None.
  *
  * Side Effects:
- *	The SearchInfo structure will track the number of windows that 
+ *	The SearchInfo structure will track the number of windows that
  *	match the given command-line.
- *	
+ *
  *----------------------------------------------------------------------
  */
 static void
@@ -565,7 +565,7 @@ CmdSearch(display, window, searchPtr)
 	XFreeStringList(cmdArgv);
 	if (Tcl_StringMatch(string, searchPtr->pattern)) {
 	    if (searchPtr->saveNames) { /* Record names of matching windows. */
-		Tcl_DStringAppendElement(&(searchPtr->dString), 
+		Tcl_DStringAppendElement(&(searchPtr->dString),
 			 NameOfId(display, window));
 		Tcl_DStringAppendElement(&(searchPtr->dString), string);
 	    }
@@ -653,24 +653,24 @@ TestAndWaitForWindow(cntrPtr, searchPtr)
 	    return;
 	}
 	expire = FALSE;
-	/*   
+	/*
 	 * If the X11 application associated with the adopted window
 	 * was just started (via "exec" or "bgexec"), the window may
 	 * not exist yet.  We have to wait a little bit for the program
-	 * to start up.  Create a timer event break us out of an wait 
+	 * to start up.  Create a timer event break us out of an wait
 	 * loop.  We'll wait for a given interval for the adopted window
 	 * to appear.
 	 */
-	timerToken = Tcl_CreateTimerHandler(cntrPtr->timeout, TimeoutProc, 
+	timerToken = Tcl_CreateTimerHandler(cntrPtr->timeout, TimeoutProc,
 		&expire);
 	while (!expire) {
 	    /* Should file events be allowed? */
-	    Tcl_DoOneEvent(TCL_TIMER_EVENTS | TCL_WINDOW_EVENTS | 
+	    Tcl_DoOneEvent(TCL_TIMER_EVENTS | TCL_WINDOW_EVENTS |
 			   TCL_FILE_EVENTS);
 	}
-    }	
+    }
 }
-#else 
+#else
 
 
 /*
@@ -705,11 +705,11 @@ GetChildren(Display *display, Window window)
  *
  * GetAdoptedWindowGeometry --
  *
- *	Computes the requested geometry of the container using the 
- *	size of adopted window as a reference.  
+ *	Computes the requested geometry of the container using the
+ *	size of adopted window as a reference.
  *
  * Results:
- *	A standard Tcl result. 
+ *	A standard Tcl result.
  *
  * Side Effects:
  *	Sets a flag, indicating an error occurred.
@@ -722,7 +722,7 @@ GetAdoptedWindowGeometry(Tcl_Interp *interp, Container *cntrPtr)
     int x, y, width, height;
     int xOffset, yOffset;
     Window root, dummy;
-    
+
     width = height = 1;
     xOffset = yOffset = 0;
     x = y = 0;
@@ -737,8 +737,8 @@ GetAdoptedWindowGeometry(Tcl_Interp *interp, Container *cntrPtr)
 	    width = rect.right - rect.left + 1;
 	    height = rect.bottom - rect.top + 1;
 	} else {
-	    Tcl_AppendResult(interp, "can't get geometry for \"", 
-		     NameOfId(cntrPtr->display, cntrPtr->adopted), "\"", 
+	    Tcl_AppendResult(interp, "can't get geometry for \"",
+		     NameOfId(cntrPtr->display, cntrPtr->adopted), "\"",
 		     (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -767,7 +767,7 @@ GetAdoptedWindowGeometry(Tcl_Interp *interp, Container *cntrPtr)
  *
  *  MapTree --
  *
- *	Maps each window in the hierarchy.  This is needed because 
+ *	Maps each window in the hierarchy.  This is needed because
  *
  *  Results:
  *	None.
@@ -846,7 +846,7 @@ StringToXID(clientData, interp, parent, string, widgRec, offset)
 	Tk_MakeWindowExist(tkwin);
 	window = Blt_GetRealWindowId(tkwin);
 #ifndef WIN32
-    } else if ((flags & SEARCH_XID) && (string[0] == '0') && 
+    } else if ((flags & SEARCH_XID) && (string[0] == '0') &&
 	       (string[1] == 'x')) {
 	int token;
 
@@ -870,13 +870,13 @@ StringToXID(clientData, interp, parent, string, widgRec, offset)
 	    }
 	    TestAndWaitForWindow(cntrPtr, &search);
 	    if (search.nMatches > 1) {
-		Tcl_AppendResult(interp, "more than one window matches \"", 
+		Tcl_AppendResult(interp, "more than one window matches \"",
 			 string, "\"", (char *)NULL);
 		return TCL_ERROR;
 	    }
 	}
 	if (search.nMatches == 0) {
-	    Tcl_AppendResult(interp, "can't find window from pattern \"", 
+	    Tcl_AppendResult(interp, "can't find window from pattern \"",
 			     string, "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -887,11 +887,11 @@ StringToXID(clientData, interp, parent, string, widgRec, offset)
 	Window root;
 
 	root = RootWindow(cntrPtr->display, Tk_ScreenNumber(cntrPtr->tkwin));
-	if (Blt_ReparentWindow(cntrPtr->display, *winPtr, root, 
-		       cntrPtr->origX, cntrPtr->origY) 
+	if (Blt_ReparentWindow(cntrPtr->display, *winPtr, root,
+		       cntrPtr->origX, cntrPtr->origY)
 	    != TCL_OK) {
-	    Tcl_AppendResult(interp, "can't restore \"", 
-			 NameOfId(cntrPtr->display, *winPtr), 
+	    Tcl_AppendResult(interp, "can't restore \"",
+			 NameOfId(cntrPtr->display, *winPtr),
 			"\" window to root", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -938,7 +938,7 @@ XIDToString(clientData, parent, widgRec, offset, freeProcPtr)
 
     if (cntrPtr->tkAdopted != NULL) {
 	return Tk_PathName(cntrPtr->tkAdopted);
-    } 
+    }
     return NameOfId(cntrPtr->display, window);
 }
 
@@ -1071,8 +1071,8 @@ ContainerEventProc(clientData, eventPtr)
  *	Some applications assume that they are always a toplevel
  *	window and play tricks accordingly.  For example, Netscape
  *	positions menus in relation to the toplevel.  But if the
- *	container's toplevel is moved, this positioning is wrong.  
- *	So watch if the toplevel is moved.  
+ *	container's toplevel is moved, this positioning is wrong.
+ *	So watch if the toplevel is moved.
  *
  *	[This would be easier and cleaner if Tk toplevels weren't so
  *	botched by the addition of menubars.  It's not enough to
@@ -1127,7 +1127,7 @@ DestroyContainer(dataPtr)
 	Tk_DeleteGenericHandler(AdoptedWindowEventProc, cntrPtr);
     }
     if (cntrPtr->tkToplevel != NULL) {
-	Tk_DeleteEventHandler(cntrPtr->tkToplevel, StructureNotifyMask, 
+	Tk_DeleteEventHandler(cntrPtr->tkToplevel, StructureNotifyMask,
 		ToplevelEventProc, cntrPtr);
     }
     Tk_FreeOptions(configSpecs, (char *)cntrPtr, cntrPtr->display, 0);
@@ -1180,19 +1180,19 @@ ConfigureContainer(interp, cntrPtr, argc, argv, flags)
     if (GetAdoptedWindowGeometry(interp, cntrPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
-    if (Blt_ConfigModified(configSpecs, "-window", "-name", "-command", 
+    if (Blt_ConfigModified(configSpecs, "-window", "-name", "-command",
 			   (char *)NULL)) {
 	cntrPtr->flags &= ~CONTAINER_MAPPED;
 	if (cntrPtr->adopted != None) {
 	    if (Blt_ReparentWindow(cntrPtr->display, cntrPtr->adopted,
 		    Tk_WindowId(cntrPtr->tkwin), cntrPtr->inset,
 		    cntrPtr->inset) != TCL_OK) {
-		Tcl_AppendResult(interp, "can't adopt window \"", 
-			 NameOfId(cntrPtr->display, cntrPtr->adopted), 
+		Tcl_AppendResult(interp, "can't adopt window \"",
+			 NameOfId(cntrPtr->display, cntrPtr->adopted),
 			 "\"", (char *)NULL);
 		return TCL_ERROR;
 	    }
-	    XSelectInput(cntrPtr->display, cntrPtr->adopted, 
+	    XSelectInput(cntrPtr->display, cntrPtr->adopted,
 		 StructureNotifyMask);
 	    if ((cntrPtr->flags & CONTAINER_INIT) == 0) {
 		Tk_CreateGenericHandler(AdoptedWindowEventProc, cntrPtr);
@@ -1201,15 +1201,15 @@ ConfigureContainer(interp, cntrPtr, argc, argv, flags)
 	}
     }
     /* Add the designated inset to the requested dimensions. */
-    width = cntrPtr->origWidth + 2 * cntrPtr->inset; 
+    width = cntrPtr->origWidth + 2 * cntrPtr->inset;
     height = cntrPtr->origHeight + 2 * cntrPtr->inset;
 
     if (cntrPtr->reqWidth > 0) {
 	width = cntrPtr->reqWidth;
-    } 
+    }
     if (cntrPtr->reqHeight > 0) {
 	height = cntrPtr->reqHeight;
-    } 
+    }
     /* Set the requested width and height for the container. */
     if ((Tk_ReqWidth(cntrPtr->tkwin) != width) ||
 	(Tk_ReqHeight(cntrPtr->tkwin) != height)) {
@@ -1378,9 +1378,9 @@ DisplayContainer(clientData)
 	/* Create an event handler for the toplevel of the container. */
 	tkToplevel = Blt_Toplevel(cntrPtr->tkwin);
 	window = Blt_GetRealWindowId(tkToplevel);
-	cntrPtr->tkToplevel = Tk_IdToWindow(cntrPtr->display, window); 
+	cntrPtr->tkToplevel = Tk_IdToWindow(cntrPtr->display, window);
 	if (cntrPtr->tkToplevel != NULL) {
-	    Tk_CreateEventHandler(cntrPtr->tkToplevel, StructureNotifyMask, 
+	    Tk_CreateEventHandler(cntrPtr->tkToplevel, StructureNotifyMask,
 		ToplevelEventProc, cntrPtr);
 	}
     }
@@ -1388,7 +1388,7 @@ DisplayContainer(clientData)
     if (cntrPtr->adopted != None) {
 #ifndef WIN32
 	if (cntrPtr->flags & CONTAINER_MOVE) {
-	    /* 
+	    /*
 	     * Some applications like Netscape cache its location to
 	     * position its popup menus. But when it's reparented, it
 	     * thinks it's always at the same position.  It doesn't
@@ -1396,7 +1396,7 @@ DisplayContainer(clientData)
 	     * force the application to update its coordinates by
 	     * moving the adopted window (over by 1 pixel and
 	     * then back in case the application is comparing the last
-	     * location).  
+	     * location).
 	     */
 	    XMoveWindow(cntrPtr->display, cntrPtr->adopted,
 			cntrPtr->inset + 1, cntrPtr->inset + 1);
@@ -1409,9 +1409,9 @@ DisplayContainer(clientData)
 	width = Tk_Width(cntrPtr->tkwin) - (2 * cntrPtr->inset);
 	height = Tk_Height(cntrPtr->tkwin) - (2 * cntrPtr->inset);
 
-	if ((cntrPtr->adoptedX != cntrPtr->inset) || 
+	if ((cntrPtr->adoptedX != cntrPtr->inset) ||
 	    (cntrPtr->adoptedY != cntrPtr->inset) ||
-	    (cntrPtr->adoptedWidth != width) || 
+	    (cntrPtr->adoptedWidth != width) ||
 	    (cntrPtr->adoptedHeight != height)) {
 	    /* Resize the window to the new size */
 	    if (width < 1) {
@@ -1497,13 +1497,13 @@ SendOp(cntrPtr, interp, argc, argv)
 	event.xkey.window = event.xkey.subwindow = window;
 	event.xkey.time = CurrentTime;
 	event.xkey.x = event.xkey.x = 100;
-	event.xkey.root = 
-	    RootWindow(cntrPtr->display, Tk_ScreenNumber(cntrPtr->tkwin));	
+	event.xkey.root =
+	    RootWindow(cntrPtr->display, Tk_ScreenNumber(cntrPtr->tkwin));
 	event.xkey.x_root = Tk_X(cntrPtr->tkwin) + cntrPtr->inset;
 	event.xkey.x_root = Tk_Y(cntrPtr->tkwin) + cntrPtr->inset;
 	event.xkey.state = 0;
 	event.xkey.same_screen = TRUE;
-	
+
 	for (p = argv[3]; *p != '\0'; p++) {
 	    if (*p == '\r') {
 		symbol = XStringToKeysym("Return");
@@ -1523,7 +1523,7 @@ SendOp(cntrPtr, interp, argc, argv)
 		fprintf(stderr, "send press event failed\n");
 	    }
 	    event.xkey.type = KeyRelease;
-	    if (!XSendEvent(cntrPtr->display, window, False, KeyRelease, 
+	    if (!XSendEvent(cntrPtr->display, window, False, KeyRelease,
 			    &event)) {
 		fprintf(stderr, "send release event failed\n");
 	    }

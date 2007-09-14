@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH open n 8.3 Tcl "Tcl Built-In Commands"
 .BS
@@ -66,7 +66,7 @@ Set the initial access position  to the end of the file.
 All of the legal \fIaccess\fR values above may have the character
 \fBb\fR added as the second or third character in the value to
 indicate that the opened channel should be configured with the
-\fB-translation binary\fR option, making the channel suitable for 
+\fB-translation binary\fR option, making the channel suitable for
 reading or writing of binary data.
 .VE 8.5
 .PP
@@ -352,15 +352,15 @@ both Tcl and the child application are competing for the console at
 the same time.  If the command pipeline is started from a script, so that Tcl
 is not accessing the console, or if the command pipeline does not use
 standard input or output, but is redirected from or to a file, then the
-above problems do not occur.  
+above problems do not occur.
 .TP
-\fBWindows 95\fR 
+\fBWindows 95\fR
 A command pipeline that executes a 16-bit DOS application cannot be opened
 for both reading and writing, since 16-bit DOS applications that receive
 standard input from a pipe and send standard output to a pipe run
 synchronously.  Command pipelines that do not execute 16-bit DOS
 applications run asynchronously and can be opened for both reading and
-writing.  
+writing.
 .sp
 When running Tcl interactively, there may be some strange interactions
 between the real console, if one is present, and a command pipeline that uses
@@ -373,7 +373,7 @@ occur because both Tcl and the child application are competing for the
 console at the same time.  If the command pipeline is started from a script,
 so that Tcl is not accessing the console, or if the command pipeline does
 not use standard input or output, but is redirected from or to a file, then
-the above problems do not occur.  
+the above problems do not occur.
 .sp
 Whether or not Tcl is running interactively, if a command pipeline is opened
 for reading from a 16-bit DOS application, the call to \fBopen\fR will not
@@ -381,7 +381,7 @@ return until end-of-file has been received from the command pipeline's
 standard output.  If a command pipeline is opened for writing to a 16-bit DOS
 application, no data will be sent to the command pipeline's standard output
 until the pipe is actually closed.  This problem occurs because 16-bit DOS
-applications are run synchronously, as described above.  
+applications are run synchronously, as described above.
 .TP
 \fBUnix\fR\0\0\0\0\0\0\0
 Valid values for \fIfileName\fR to open a serial port are generally of the
@@ -398,7 +398,7 @@ some will be sent to the Tcl evaluator.  This problem only occurs because
 both Tcl and the child application are competing for the console at the
 same time.  If the command pipeline is started from a script, so that Tcl is
 not accessing the console, or if the command pipeline does not use standard
-input, but is redirected from a file, then the above problem does not occur.  
+input, but is redirected from a file, then the above problem does not occur.
 .LP
 See the PORTABILITY ISSUES section of the \fBexec\fR command for additional
 information not specific to command pipelines about executing

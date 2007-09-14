@@ -204,7 +204,7 @@ void TtkArrowSize(int h, ArrowDirection dir, int *widthPtr, int *heightPtr)
  * TtkDrawArrow, TtkFillArrow --
  * 	Draw an arrow in the indicated direction inside the specified box.
  */
-/*public*/ 
+/*public*/
 void TtkFillArrow(
     Display *display, Drawable d, GC gc, Ttk_Box b, ArrowDirection dir)
 {
@@ -214,7 +214,7 @@ void TtkFillArrow(
     XDrawLines(display, d, gc, points, 4, CoordModeOrigin);
 }
 
-/*public*/ 
+/*public*/
 void TtkDrawArrow(
     Display *display, Drawable d, GC gc, Ttk_Box b, ArrowDirection dir)
 {
@@ -297,7 +297,7 @@ BorderElementDraw(
 
     if (defaultState == TTK_BUTTON_DEFAULT_ACTIVE) {
 	GC gc = Tk_GCForColor(borderColor, d);
-	XDrawRectangle(Tk_Display(tkwin), d, gc, 
+	XDrawRectangle(Tk_Display(tkwin), d, gc,
 		b.x, b.y, b.width-1, b.height-1);
     }
     if (defaultState != TTK_BUTTON_DEFAULT_DISABLED) {
@@ -621,9 +621,9 @@ static Ttk_ElementOptionSpec ArrowElementOptions[] =
 {
     { "-arrowsize", TK_OPTION_PIXELS,
 	Tk_Offset(ArrowElement,sizeObj), STRINGIFY(SCROLLBAR_WIDTH) },
-    { "-background", TK_OPTION_BORDER, 
+    { "-background", TK_OPTION_BORDER,
 	Tk_Offset(ArrowElement,borderObj), DEFAULT_BACKGROUND },
-    { "-bordercolor", TK_OPTION_COLOR, 
+    { "-bordercolor", TK_OPTION_COLOR,
 	Tk_Offset(ArrowElement,borderColorObj), "black" },
     { "-relief", TK_OPTION_RELIEF,
 	Tk_Offset(ArrowElement,reliefObj),"raised"},

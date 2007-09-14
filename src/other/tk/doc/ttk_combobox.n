@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
 '\"
 .so man.macros
@@ -18,7 +18,7 @@ ttk_combobox \- text field with popdown selection list
 
 .SH DESCRIPTION
 A \fBttk::combobox\fR combines a text field with a pop-down list of values;
-the user may select the value of the text field from among the 
+the user may select the value of the text field from among the
 values in the list.
 .SO
 \-class	\-cursor	\-takefocus	\-style
@@ -40,14 +40,14 @@ The \fB-postcommand\fR script may specify the \fB-values\fR to display.
 .OP \-state state State
 One of \fBnormal\fR, \fBreadonly\fR, or \fBdisabled\fR.
 In the \fBreadonly\fR state,
-the value may not be edited directly, and 
+the value may not be edited directly, and
 the user can only select one of the \fB-values\fR from the
 dropdown list.
-In the \fBnormal\fR state, 
+In the \fBnormal\fR state,
 the text field is directly editable.
 In the \fBdisabled\fR state, no interaction is possible.
 .OP \-textvariable textVariable TextVariable
-Specifies the name of a variable whose value is linked 
+Specifies the name of a variable whose value is linked
 to the widget value.
 Whenever the variable changes value the widget value is updated,
 and vice versa.
@@ -69,7 +69,7 @@ Modify or query widget options.
 See \fIttk_widget(n)\fR.
 .TP
 \fIpathName \fBcurrent\fR ?\fInewIndex\fR?
-If \fInewIndex\fR is supplied, sets the combobox value 
+If \fInewIndex\fR is supplied, sets the combobox value
 to the element at position \fInewIndex\fR in the list of \fB-values\fR.
 Otherwise, returns the index of the current value in the list of \fB-values\fR
 or \fB-1\fR if the current value does not appear in the list.

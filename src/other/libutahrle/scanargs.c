@@ -1,22 +1,22 @@
-/* 
+/*
  * $Id$
  * 		Version 7 compatible
  * 	Argument scanner, scans argv style argument list.
- * 
+ *
  * 	Some stuff is a kludge because sscanf screws up
- * 
- * 	Gary Newman - 10/4/1979 - Ampex Corp. 
- * 
+ *
+ * 	Gary Newman - 10/4/1979 - Ampex Corp.
+ *
  * 	Modified by Spencer W. Thomas, Univ. of Utah, 5/81 to
  * 	add args introduced by 	a flag, add qscanargs call,
  * 	allow empty flags.
- * 
+ *
  * 	If you make improvements we'd like to get them too.
  * 	Jay Lepreau	lepreau@utah-20, decvax!harpo!utah-cs!lepreau
- * 	Spencer Thomas	thomas@utah-20, decvax!harpo!utah-cs!thomas 
- * 
+ * 	Spencer Thomas	thomas@utah-20, decvax!harpo!utah-cs!thomas
+ *
  *	(I know the code is ugly, but it just grew, you see ...)
- * 
+ *
  * Modified by:	Spencer W. Thomas
  * 	Date:	Feb 25 1983
  * 1. Fixed scanning of optional args.  Now args introduced by a flag
@@ -26,11 +26,11 @@
  *    earlier in the format string.  This implies that flags may not
  *    be conditional upon other flags, and a message will be generated
  *    if this is attempted.
- * 
+ *
  * 2. Usage message can be formatted by inserting newlines, tabs and
  *    spaces into the format string.  This is especially useful for
  *    long argument lists.
- * 
+ *
  * 3. Added n/N types for "numeric" args.  These args are scanned
  *    using the C language conventions - a number starting 0x is
  *    hexadecimal, a number starting with 0 is octal, otherwise it is
@@ -51,7 +51,7 @@
 #endif
 
 typedef char bool;
-/* 
+/*
  * An explicit assumption is made in this code that all pointers look
  * alike, except possible char * pointers.
  */
@@ -61,7 +61,7 @@ typedef int *ptr;
 #define NO 0
 #define ERROR(msg)  {fprintf(stderr, "%s\n", msg); goto error; }
 
-/* 
+/*
  * Storage allocation macros
  */
 #define NEW( type, cnt )	(type *) malloc( (cnt) * sizeof( type ) )
@@ -84,7 +84,7 @@ static int	_do_scanargs( int argc, char **argv, CONST_DECL char *format,
 void		scan_usage( char **, CONST_DECL char * );
 #endif
 
-/* 
+/*
  * Argument list is (argc, argv, format, ... )
  */
 int
@@ -113,8 +113,8 @@ scanargs ( int argc, char **argv, CONST_DECL char *format, ... )
     va_end( argl );
     return retval;
 }
-    
-/* 
+
+/*
  * This routine is necessary because of a pyramid compiler botch that
  * uses parameter registers in a varargs routine.  The extra
  * subroutine call isolates the args on the register stack so they
@@ -197,7 +197,7 @@ va_list argl;
     no_usage = *(format + strlen( format ) - 1) == '&';
 
     cp = format;
-    /* 
+    /*
      * Skip program name
      */
     while ( *cp != ' ' && *cp != '\t' && *cp != '\n' && *cp != '\0' )
@@ -315,7 +315,7 @@ reswitch:				/* after finding '*' or ',' */
 			if (required)
 			    ERROR ("flag argument missing");
 			cp = ncp;
-			/* 
+			/*
 			 * If none of these flags were found, skip any
 			 * optional arguments (in the varargs list, too).
 			 */
@@ -330,7 +330,7 @@ reswitch:				/* after finding '*' or ',' */
 					cp++;
 					(void)va_arg( argl, int * );
 				    }
-				    /* 
+				    /*
 				     * Assume that char * might be a
 				     * different size, but that all
 				     * other pointers are same size.
@@ -387,15 +387,15 @@ reswitch:				/* after finding '*' or ',' */
 				    continue;
 			    else if ( typchr != 's' )
 				continue;	/* not number, keep looking */
-			    
-			    /* 
+
+			    /*
 			     * Otherwise usable argument may already
 			     * be used.  (Must check this after
 			     * checking for flag, though.)
 			     */
 			    if (arg_used[cnt]) continue;
 
-			    /* 
+			    /*
 			     * If it's a comma-and-or-space-separated
 			     * list then count how many, and separate
 			     * the list into an array of strings.
@@ -412,9 +412,9 @@ reswitch:				/* after finding '*' or ',' */
 				strcpy( s, argp );
 				argp = s;
 
-				/* 
+				/*
 				 * On pass 0, just count them.  On
-				 * pass 1, null terminate each string 
+				 * pass 1, null terminate each string
 				 */
 				for ( pass = 0; pass <= 1; pass++ )
 				{
@@ -429,7 +429,7 @@ reswitch:				/* after finding '*' or ',' */
 					    *s = '\0';
 
 					list_cnt++;	/* count separators */
-					/* 
+					/*
 					 * Two commas in a row give a null
 					 * string, but two spaces
 					 * don't.  Also skip spaces
@@ -448,7 +448,7 @@ reswitch:				/* after finding '*' or ',' */
 			    }
 			    else if ( list_of )
 				list_cnt++;   /* getting them one at a time */
-			    /* 
+			    /*
 			     * If it's either type of list, then alloc
 			     * storage space for the returned values
 			     * (except that comma-separated string
@@ -535,7 +535,7 @@ reswitch:				/* after finding '*' or ',' */
 			    {
 				nopt = 0;
 				do {
-				    /* 
+				    /*
 				     * Need to update aptr if parsing
 				     * a comma list
 				     */
@@ -564,7 +564,7 @@ reswitch:				/* after finding '*' or ',' */
 						break;
 					}
 				    }
-				    /* 
+				    /*
 				     * Do conversion for n and N types
 				     */
 				    tmpflg = typchr;
@@ -613,19 +613,19 @@ reswitch:				/* after finding '*' or ',' */
 			if (required)
 			    switch (typchr)
 			    {
-				case 'x': 
-				case 'X': 
+				case 'x':
+				case 'X':
 				    ERROR ("missing hexadecimal argument");
-				case 's': 
+				case 's':
 				    ERROR ("missing string argument");
-				case 'o': 
-				case 'O': 
+				case 'o':
+				case 'O':
 				    ERROR ("missing octal argument");
-				case 'd': 
-				case 'D': 
+				case 'd':
+				case 'D':
 				    ERROR ("missing decimal argument");
-				case 'f': 
-				case 'F': 
+				case 'f':
+				case 'F':
 				    ERROR ("missing floating argument");
 				case 'n':
 				case 'N':
@@ -695,7 +695,7 @@ reswitch:				/* after finding '*' or ',' */
     free(arg_used);
     return 1;
 
-error: 
+error:
     if ( !no_usage )
 	scan_usage( argv, format );
     free(arg_used);
@@ -714,7 +714,7 @@ CONST_DECL char * format;
     {
 	if ( *cp == '%' )
 	{
-	    /* 
+	    /*
 	     * This is bogus, but until everyone can agree on a name
 	     * for (rindex/strrchr) ....
 	     */
@@ -790,9 +790,9 @@ int 	recurse;
 		format = cp;
 		break;
 
-	    case '!': 
+	    case '!':
 		required = YES;
-	    case '%': 
+	    case '%':
 reswitch:
 		switch (*++cp)
 		{
@@ -860,7 +860,7 @@ reswitch:
 			if (!required)
 			    putc (']', stderr);
 			break;
-		    default: 
+		    default:
 			break;
 		}
 		required = NO;
@@ -883,7 +883,7 @@ reswitch:
     return (cp);
 }
 
-/* 
+/*
  * isnum - determine whether a string MIGHT represent a number.
  * typchr indicates the type of argument we are looking for, and
  * determines the legal character set.  If comma_list is YES, then

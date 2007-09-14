@@ -622,14 +622,14 @@ QuadEval(origPts, nOrigPts, intpPts, nIntpPts, m, epsilon)
     if ((nIntpPts == 1) && (end != (nIntpPts - 1))) {
 	goto noExtrapolation;
     }
-    
+
     /*
      * Search locates the interval in which the first in-range
      * point of evaluation lies.
      */
 
     i = Search(origPts, nOrigPts, intpPts[start].x, &found);
-    
+
     n = i + 1;
     if (n >= nOrigPts) {
 	n = nOrigPts - 1;
@@ -649,7 +649,7 @@ QuadEval(origPts, nOrigPts, intpPts, nIntpPts, m, epsilon)
 		return error;
 	    }
 	} while (intpPts[start - 1].x == intpPts[start].x);
-	
+
 	for (;;) {
 	    if (intpPts[start].x < origPts[n].x) {
 		break;	/* Break out of for-loop */
@@ -672,7 +672,7 @@ QuadEval(origPts, nOrigPts, intpPts, nIntpPts, m, epsilon)
      * range of the data.
      */
     if ((i > 0) || (error != 1)) {
-	ncase = QuadSelect(origPts + i, origPts + n, m[i], m[n], 
+	ncase = QuadSelect(origPts + i, origPts + n, m[i], m[n],
 			   epsilon, param);
     }
     for (j = start; j <= end; j++) {
@@ -686,16 +686,16 @@ QuadEval(origPts, nOrigPts, intpPts, nIntpPts, m, epsilon)
 	    continue;
 	} else if (intpPts[j].x > origPts[n].x) {
 	    double delta;
-	    
+
 	    /* Determine that the routine is in the correct part of
 	       the spline. */
 	    do {
 		i++, n++;
 		delta = intpPts[j].x - origPts[n].x;
 	    } while (delta > 0.0);
-	    
+
 	    if (delta < 0.0) {
-		ncase = QuadSelect(origPts + i, origPts + n, m[i], 
+		ncase = QuadSelect(origPts + i, origPts + n, m[i],
 			   m[n], epsilon, param);
 	    } else if (delta == 0.0) {
 		intpPts[j].y = origPts[n].y;
@@ -704,7 +704,7 @@ QuadEval(origPts, nOrigPts, intpPts, nIntpPts, m, epsilon)
 	}
 	QuadSpline(intpPts + j, origPts + i, origPts + n, param, ncase);
     }
-    
+
     if (end == (nIntpPts - 1)) {
 	return error;
     }
@@ -823,7 +823,7 @@ Blt_NaturalSpline(origPts, nOrigPts, intpPts, nIntpPts)
 
     /* Calculate the intermediate results */
     for (i = 0, j = 1; j < n; j++, i++) {
-	alpha = 3.0 * ((origPts[j + 1].y / dx[j]) - (origPts[j].y / dx[i]) - 
+	alpha = 3.0 * ((origPts[j + 1].y / dx[j]) - (origPts[j].y / dx[i]) -
 		       (origPts[j].y / dx[j]) + (origPts[i].y / dx[i]));
 	A[j][0] = 2 * (dx[j] + dx[i]) - dx[i] * A[i][1];
 	A[j][1] = dx[j] / A[j][0];
@@ -863,7 +863,7 @@ Blt_NaturalSpline(origPts, nOrigPts, intpPts, nIntpPts)
 	} else {
 	    i--;
 	    x -= origPts[i].x;
-	    iPtr->y = origPts[i].y + 
+	    iPtr->y = origPts[i].y +
 		x * (eq[i].b + x * (eq[i].c + x * eq[i].d));
 	}
     }
@@ -892,7 +892,7 @@ SplineCmd(clientData, interp, argc, argv)
     register int i;
     Point2D *origPts, *intpPts;
     int nOrigPts, nIntpPts;
-    
+
     proc = Blt_GetOp(interp, nSplineOps, splineOps, BLT_OP_ARG1, argc, argv,0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -947,13 +947,13 @@ SplineCmd(clientData, interp, argc, argv)
     }
     origPts = Blt_Malloc(sizeof(Point2D) * nOrigPts);
     if (origPts == NULL) {
-	Tcl_AppendResult(interp, "can't allocate \"", Blt_Itoa(nOrigPts), 
+	Tcl_AppendResult(interp, "can't allocate \"", Blt_Itoa(nOrigPts),
 		"\" points", (char *)NULL);
 	return TCL_ERROR;
     }
     intpPts = Blt_Malloc(sizeof(Point2D) * nIntpPts);
     if (intpPts == NULL) {
-	Tcl_AppendResult(interp, "can't allocate \"", Blt_Itoa(nIntpPts), 
+	Tcl_AppendResult(interp, "can't allocate \"", Blt_Itoa(nIntpPts),
 		"\" points", (char *)NULL);
 	Blt_Free(origPts);
 	return TCL_ERROR;
@@ -971,7 +971,7 @@ SplineCmd(clientData, interp, argc, argv)
 	intpPts[i].y = yArr[i];
     }
     if (!(*proc) (origPts, nOrigPts, intpPts, nIntpPts)) {
-	Tcl_AppendResult(interp, "error generating spline for \"", 
+	Tcl_AppendResult(interp, "error generating spline for \"",
 		Blt_NameOfVector(splY), "\"", (char *)NULL);
 	Blt_Free(origPts);
 	Blt_Free(intpPts);
@@ -1034,7 +1034,7 @@ typedef struct {
  * (C is upper triangle with unit diagonal, D is diagonal) is calculated.
  * Return TRUE if decomposition exist.
  */
-static int 
+static int
 SolveCubic1(A, n)
     TriDiagonalMatrix A[];
     int n;
@@ -1079,7 +1079,7 @@ SolveCubic1(A, n)
  * decomposition calculated above (in m[][]) and the right side b given
  * in x[]. The solution x overwrites the right side in x[].
  */
-static void 
+static void
 SolveCubic2(A, spline, nIntervals)
     TriDiagonalMatrix A[];
     CubicSpline spline[];
@@ -1103,8 +1103,8 @@ SolveCubic2(A, spline, nIntervals)
     }
     if (n >= 0) {
 	/* C_{n-2,n-1} * x_{n-1} */
-	spline[m].x = x - A[n][0] * spline[n].x; 
-	spline[m].y = y - A[n][0] * spline[n].y; 
+	spline[m].x = x - A[n][0] * spline[n].x;
+	spline[m].y = y - A[n][0] * spline[n].y;
     }
     /* Division by D: b = D^{-1} * b */
     for (i = 0; i < nIntervals; i++) {
@@ -1117,8 +1117,8 @@ SolveCubic2(A, spline, nIntervals)
     y = spline[m].y;
     if (n >= 0) {
 	/* C_{n-2,n-1} * x_{n-1} */
-	spline[n].x -= A[n][0] * x;	
-	spline[n].y -= A[n][0] * y;	
+	spline[n].x -= A[n][0] * x;
+	spline[n].y -= A[n][0] * y;
     }
     for (i = (n - 1); i >= 0; i--) {
 	/* C_{i,i+1} * x_{i+1} + C_{i,n-1} * x_{n-1} */
@@ -1145,7 +1145,7 @@ CubicSlopes(points, nPoints, isClosed, unitX, unitY)
     int n, i;
     double norm, dx, dy;
     TriDiagonalMatrix *A;	/* The tri-diagonal matrix is saved here. */
-    
+
     spline = Blt_Malloc(sizeof(CubicSpline) * nPoints);
     if (spline == NULL) {
 	return NULL;
@@ -1190,8 +1190,8 @@ CubicSlopes(points, nPoints, isClosed, unitX, unitY)
     }
     s1 = spline, s2 = s1 + 1;
     for (i = 0; i < n; i++) {
-	/* Matrix A, mainly tridiagonal with cyclic second index 
-	   ("j = j+n mod n") 
+	/* Matrix A, mainly tridiagonal with cyclic second index
+	   ("j = j+n mod n")
 	*/
 	A[i][0] = s1->t;	/* Off-diagonal element A_{i,i-1} */
 	A[i][1] = 2.0 * (s1->t + s2->t);	/* A_{i,i} */
@@ -1201,10 +1201,10 @@ CubicSlopes(points, nPoints, isClosed, unitX, unitY)
 	s1->x = (s2->x - s1->x) * 6.0;
 	s1->y = (s2->y - s1->y) * 6.0;
 
-	/* 
+	/*
 	 * If the linear stroke shows a cusp of more than 90 degree,
 	 * the right side is reduced to avoid oscillations in the
-	 * spline: 
+	 * spline:
 	 */
 	/*
 	 * The Norm of a linear stroke is calculated in "normal coordinates"
@@ -1248,8 +1248,8 @@ CubicSlopes(points, nPoints, isClosed, unitX, unitY)
 	spline[0].y = spline[n].y;
     } else {
 	/* Third derivative is 0.0 for the first and last interval. */
-	spline[0].x = spline[1].x; 
-	spline[0].y = spline[1].y; 
+	spline[0].x = spline[1].x;
+	spline[0].y = spline[1].y;
 	spline[n + 1].x = spline[n].x;
 	spline[n + 1].y = spline[n].y;
     }
@@ -1286,14 +1286,14 @@ CubicEval(origPts, nOrigPts, intpPts, nIntpPts, spline)
 
     /* The distance between interpolated points */
     tSkip = (1. - 1e-7) * tMax / (nIntpPts - 1);
-    
+
     t = 0.0;			/* Spline parameter value. */
     q = origPts[0];
     count = 0;
 
     intpPts[count++] = q;	/* First point. */
     t += tSkip;
-    
+
     for (i = 0, j = 1; j < nOrigPts; i++, j++) {
 	d = spline[i].t;	/* Interval length */
 	p = q;
@@ -1323,7 +1323,7 @@ CubicEval(origPts, nOrigPts, intpPts, nIntpPts, spline)
  * parameter t is the length of the linear stroke.
  */
 int
-Blt_NaturalParametricSpline(origPts, nOrigPts, extsPtr, isClosed, 
+Blt_NaturalParametricSpline(origPts, nOrigPts, extsPtr, isClosed,
 	intpPts, nIntpPts)
     Point2D origPts[];
     int nOrigPts;
@@ -1354,10 +1354,10 @@ Blt_NaturalParametricSpline(origPts, nOrigPts, extsPtr, isClosed,
     if (unitY < FLT_EPSILON) {
 	unitY = FLT_EPSILON;
     }
-    /* Calculate parameters for cubic spline: 
+    /* Calculate parameters for cubic spline:
      *		t     = arc length of interval.
-     *		dxdt2 = second derivatives of x with respect to t, 
-     *		dydt2 = second derivatives of y with respect to t, 
+     *		dxdt2 = second derivatives of x with respect to t,
+     *		dydt2 = second derivatives of y with respect to t,
      */
     spline = CubicSlopes(origPts, nOrigPts, isClosed, unitX, unitY);
     if (spline == NULL) {

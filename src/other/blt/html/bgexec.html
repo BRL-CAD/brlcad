@@ -7,10 +7,10 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 bgexec - Run programs in the background while
-handling Tk events. 
+handling Tk events.
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <B>blt::bgexec <I>varName</I></B> ?<I>option value</I>?... <I>program</I> ?<I>arg</I>?...
 
@@ -18,7 +18,7 @@ handling Tk events.
 <P>
 The <B>bgexec</B> command executes programs in the background, allowing
 Tk to handle events.  A global Tcl variable <I>varName</I> is set when the program
-has completed. 
+has completed.
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 Tcl's <B>exec</B> command is very useful for gathering
 information from the operating system.  It runs a program and returns the
@@ -37,7 +37,7 @@ command performs the same functions as <B>exec</B>, but also allows Tk to handle
 events.  You can execute a long-running program and the Tk widgets will behave
 normally.  When the program finishes, its output and the exit status are
 written to Tcl variables.  This makes it easy to monitor and save the output
-of a program. 
+of a program.
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 Here is the disk usage example again, this time using
 <B>bgexec</B>. The syntax to invoke "du" is exactly the same as the previous example,
@@ -109,12 +109,12 @@ and <I>args</I> are any extra arguments for <I>program</I>.  The syntax of <I>pr
 etc. (see the <B>exec</B> manual for further information) just like <B>exec</B>.  If the
 last argument is an ampersand (&amp;), the program will be run detached, and
 <B>bgexec</B> will return immediately.  <I>VarName</I> will still be set with the return
-status when <I>program</I> completes. 
+status when <I>program</I> completes.
 <H2><A NAME="sect6" HREF="#toc6">Options</A></H2>
 <I>Option</I> refers to the switch name always
 beginning with a dash (-). <I>Value</I> is the value of the option.  Option-value
 pairs are terminated either by the program name, or double dashes (--). The
-following options are available for <B>bgexec</B>: 
+following options are available for <B>bgexec</B>:
 <DL>
 
 <DT><B>-decodeerror <I>encodingName</I></B>  </DT>
@@ -210,7 +210,7 @@ can not finish until the second program has completed. <P>
 Care must be taken
 to prevent an application from preempting itself by blocking further user-interactions
 (such as button clicks).  The BLT <B>busy</B> command is very useful for just these
-situations. See the <B>busy</B> manual for details. 
+situations. See the <B>busy</B> manual for details.
 <H2><A NAME="sect8" HREF="#toc8">Differences with Fileevent</A></H2>
 Since
 Tk 4.0, a subset of <B>bgexec</B> can be also achieved using the <B>fileevent</B> command.
@@ -249,7 +249,7 @@ data collection is handled in C code, <B>bgexec</B> is faster. You get back to
 the Tk event loop more quickly, making your application seem more responsive.
 
 <H2><A NAME="sect9" HREF="#toc9">See Also</A></H2>
-busy, exec, tkwait 
+busy, exec, tkwait
 <H2><A NAME="sect10" HREF="#toc10">Keywords</A></H2>
 exec, background, busy <P>
 

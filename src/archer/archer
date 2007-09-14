@@ -291,7 +291,7 @@ wm withdraw .
 
 # start splash screen
 createSplashScreen
- 
+
 # do main procedure
 main
 set ::Archer::showWindow 1

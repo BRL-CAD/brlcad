@@ -70,14 +70,14 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  * This might be better just using the f* functions instead of mixing...
  */
 
-/* 
- * Attempt to guess the file type. Understands ImageMagick style 
+/*
+ * Attempt to guess the file type. Understands ImageMagick style
  * FMT:filename as being preferred, but will attempt to guess
  * based on extension as well.
  *
  * I suck. I'll fix this later. Honest.
  */
-static int 
+static int
 guess_file_format(char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
@@ -101,7 +101,7 @@ guess_file_format(char *filename, char *trimmedname)
     return BU_IMAGE_PIX;
 }
 
-static int 
+static int
 png_save(int fd, char *rgb, int width, int height)
 {
     png_structp png_ptr = NULL;
@@ -141,20 +141,20 @@ png_save(int fd, char *rgb, int width, int height)
     return 1;
 }
 
-static int 
+static int
 bmp_save(int fd, char *rgb, int width, int height)
 {
     return 0;
 }
 
-static int 
+static int
 pix_save(int fd, char *rgb, int size) { write(fd, rgb, size); return 2; }
 
-/* size is bytes of PIX data, bw output file will be 1/3 this size. 
+/* size is bytes of PIX data, bw output file will be 1/3 this size.
  * Also happens to munge up the contents of rgb. */
-static int 
-bw_save(int fd, char *rgb, int size) 
-{ 
+static int
+bw_save(int fd, char *rgb, int size)
+{
     int bwsize = size/3, i;
     if(bwsize*3 != size) {
 	printf("Huh, size=%d is not a multiple of 3.\n", size);
@@ -162,7 +162,7 @@ bw_save(int fd, char *rgb, int size)
     }
     /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
     for(i=0;i<bwsize;++i) rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
-    write(fd, rgb, bwsize); 
+    write(fd, rgb, bwsize);
     return 2;
 }
 
@@ -222,7 +222,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     return bif;
 }
 
-int 
+int
 bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
     if(bif==NULL) { printf("trying to write a line with a null bif\n"); return -1; }
@@ -230,7 +230,7 @@ bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
     return 0;
 }
 
-int 
+int
 bu_image_save_close(struct bu_image_file *bif)
 {
     int r = 0;

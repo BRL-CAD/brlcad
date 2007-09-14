@@ -172,7 +172,7 @@ TclFSNormalizeAbsolutePath(
 	    && (dirSep[3] == '/' || dirSep[3] == '\\')) {
 	    /* NT extended path */
 	    dirSep += 4;
-	    
+
 	    if (   (dirSep[0] == 'U' || dirSep[0] == 'u')
 		&& (dirSep[1] == 'N' || dirSep[1] == 'n')
 		&& (dirSep[2] == 'C' || dirSep[2] == 'c')
@@ -351,7 +351,7 @@ TclFSNormalizeAbsolutePath(
 		if ((curLen == 0) && (dirSep[0] != 0)) {
 		    Tcl_SetObjLength(retVal, 0);
 		}
-		
+
 		if (dirSep[0] != 0 && dirSep[1] == '.') {
 		    goto again;
 		}

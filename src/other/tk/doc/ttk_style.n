@@ -1,11 +1,11 @@
 '\"
 '\" Copyright (c) 2004 Joe English
-'\" 
+'\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH ttk_style n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -28,9 +28,9 @@ which specifies the set of elements making up the widget
 and how they are arranged, along with dynamic and default
 settings for element resources.
 By default, the style name is the same as the widget's class;
-this may be overridden by the \fB-style\fR option. 
+this may be overridden by the \fB-style\fR option.
 .PP
-A \fItheme\fR is a collection of elements and styles 
+A \fItheme\fR is a collection of elements and styles
 which controls the overall look and feel of an application.
 .SH DESCRIPTION
 The \fBttk::style\fR command takes the following arguments:
@@ -47,27 +47,27 @@ is used.
 \fBttk::style lookup \fIstyle\fR \fI-option \fR?\fIstate \fR?\fIdefault\fR??
 Returns the value specified for \fI-option\fR in style \fIstyle\fR
 in state \fIstate\fR, using the standard lookup rules for element options.
-\fIstate\fR is a list of state names; if omitted, 
+\fIstate\fR is a list of state names; if omitted,
 it defaults to all bits off (the ``normal'' state).
 If the \fIdefault\fR argument is present, it is used as a fallback
 value in case no specification for \fI-option\fR is found.
-.\" Otherwise -- signal error? return empty string?  Leave unspecified for now. 
+.\" Otherwise -- signal error? return empty string?  Leave unspecified for now.
 .TP
 \fBttk::style layout \fIstyle\fR ?\fIlayoutSpec\fR?
-Define the widget layout for style \fIstyle\fR.  
+Define the widget layout for style \fIstyle\fR.
 See "\fBLAYOUTS\fR" below for the format of \fIlayoutSpec\fR.
 If \fIlayoutSpec\fR is omitted, return the layout specification
 for style \fIstyle\fR.
-.TP 
+.TP
 \fBttk::style element create\fR \fIelementName\fR \fItype\fR ?\fIargs...\fR?
 Creates a new element in the current theme of type \fItype\fR.
 The only built-in element type is \fIimage\fR (see \fIimage(n)\fR),
-although themes may define other element types 
+although themes may define other element types
 (see \fBTtk_RegisterElementFactory\fR).
-.TP 
+.TP
 \fBttk::style element names\fR
 Returns the list of elements defined in the current theme.
-.TP 
+.TP
 \fBttk::style element options \fIelement\fR
 Returns the list of \fIelement\fR's options.
 .TP
@@ -79,7 +79,7 @@ If \fI-settings\fR is present, \fIscript\fR is evaluated in the
 context of the new theme as per \fBttk::style theme settings\fR.
 .TP
 \fBttk::style theme settings \fIthemeName\fR \fIscript\fR
-Temporarily sets the current theme to \fIthemeName\fR, 
+Temporarily sets the current theme to \fIthemeName\fR,
 evaluate \fIscript\fR, then restore the previous theme.
 Typically \fIscript\fR simply defines styles and elements,
 though arbitrary Tcl code may appear.
@@ -97,7 +97,7 @@ The layout mechanism uses a simplified version of the \fBpack\fR
 geometry manager: given an initial cavity,
 each element is allocated a parcel.
 Valid options are:
-.TP 
+.TP
 \fB-side \fIside\fR
 Specifies which side of the cavity to place the element;
 one of \fBleft\fR, \fBright\fR, \fBtop\fR, or \fBbottom\fR.

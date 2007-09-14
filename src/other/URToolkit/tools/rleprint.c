@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rleprint.c - Print all the pixel values in an RLE file.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -44,7 +44,7 @@ char	*argv[];
     int		chan;
     int		rle_cnt, rle_err;
     int         out_alpha = 0, cur_out_alpha, uniq = 0, first;
-    
+
     in_hdr = *rle_hdr_init( NULL );
 
     if ( scanargs( argc, argv, "% a%- u%- infile%s",
@@ -71,7 +71,7 @@ char	*argv[];
 	for ( j = in_hdr.ymin; j <= in_hdr.ymax ; j++ )
 	{
 	    rle_getrow(&in_hdr, rows0 );
-	
+
 	    for ( i = in_hdr.xmin; i <= in_hdr.xmax; i++ )
 	    {
 		if ( uniq && !first )

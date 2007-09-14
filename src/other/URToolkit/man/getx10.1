@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH GETX10 1 "Jan 20, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 getx10 \- get RLE images to an X display
 .SH SYNOPSIS
@@ -32,16 +32,16 @@ getx10 \- get RLE images to an X display
 .B \-g
 .I display_gamma
 ] [
-.B \-l 
+.B \-l
 .I levels
-] [ 
+] [
 .I infile
 ]
 
 .SH DESCRIPTION
 This program displays an
 .IR RLE (5)
-file on an 
+file on an
 .I X Version 10
 display.  It uses a dithering technique to take a
 full-color or gray scale image into the limited number of colors
@@ -61,7 +61,7 @@ The dithering process assumes that the incoming image has a gamma of
 a 100.)  If this is not the case, the input values must be adjusted
 before dithering via the
 .B \-i
-or 
+or
 .B \-I
 option.  The input file may also specify the gamma of the image via a
 picture comment (see below).  The output display is assumed to have a gamma of
@@ -70,7 +70,7 @@ picture comment (see below).  The output display is assumed to have a gamma of
 option if a display with a different gamma is used.
 
 .I Getx10
-uses the standard 
+uses the standard
 .I X
 window creation procedure to create a window with a location and size
 specified by the user, with the restriction that the window must be at
@@ -81,17 +81,17 @@ to be removed.
 .SH OPTIONS
 .TP
 .B \-b
-After displaying the image in a window, 
+After displaying the image in a window,
 .I getx10
 will attempt to set your "root" window background tiling pattern to
 the image.  There are some strict limitations on image size for this
 to work (at least in X10).  A color or gray-scale image must be
-smaller than 256x256, and a black and white 
+smaller than 256x256, and a black and white
 .RB ( \-W )
 image smaller than
 about 720x720.  If the image is larger than this, a strip from the top
 of the image will be displayed in the background.  Note that if you
-kill the 
+kill the
 .I getx10
 window, the color map entries will not be protected; any other program
 that asks for a color map entry will likely get one that is being used
@@ -111,7 +111,7 @@ to load the color map in the image file directly into the display.
 Channel 0 of the image will be treated as a set of indices into the
 color map.  If there are not enough color map entries available in the
 display, as many as fit will be loaded and all other "colors" will be
-mapped to black.  The picture comment 
+mapped to black.  The picture comment
 .BI color_map_length= maplen
 can be used to specify the exact number of relevant color map entries.
 .TP
@@ -125,9 +125,9 @@ Normally,
 .I getx10
 will fork itself after putting the image on the screen, so that the
 parent process may return the shell, leaving an "invisible" child to
-keep the image refreshed.  If 
+keep the image refreshed.  If
 .B \-f
-is specified, 
+is specified,
 .I getx10
 will not exit to the shell until the image is removed.
 .TP
@@ -140,7 +140,7 @@ color map used by the root background.
 tries to copy the image to an off-screen pixmap for quick refresh.  On
 some displays, this will fail if no off-screen memory is available.
 The image will disappear shortly after it is completed when this
-happens.  You should specify 
+happens.  You should specify
 .I \-p
 to prevent the attempt to use a pixmap.
 .TP
@@ -163,18 +163,18 @@ to display the image as a black and white bitmap image.  This is the
 only mode available on monochrome (non gray scale) displays (and is
 the default there).  Black pixels will be displayed with pixel value 0
 and white with pixel value 1 (note that these may not be black and
-white on certain displays, or if they have been modified with 
+white on certain displays, or if they have been modified with
 .IR xset .)
 .TP
 .B \-z
-This flag creates a zoom window for the image.  The new window is created by 
-the standard 
+This flag creates a zoom window for the image.  The new window is created by
+the standard
 .I X
 window creation process.  The mouse can be used in the image window to select
 the area to zoom.  Pressing any button will reset the center of the zoom
 window to be the selected pixel.  A clickdrag in the image window will resize
 the zoom window to enclose the selected region.  Pressing the left button in
-the zoom window will decrease the zoom factor, but will keep the same number 
+the zoom window will decrease the zoom factor, but will keep the same number
 of pixels zoomed.  The right button increases the zoom factor.  If the middle
 button is pressed in the zoom window, position information will be printed
 for the selected zoom pixel.  Note that the info will be printed only if
@@ -185,7 +185,7 @@ option.  One may also resize the zoom window to change the number of pixels
 that are zoomed.
 .TP
 .BI \-d " display"
-Give the name of the 
+Give the name of the
 .I X
 display to display the image on.  Defaults to the value of the
 environment variable
@@ -224,7 +224,7 @@ file of the form
 The command line argument will override the value in the file if specified.
 .TP
 .BI \-g " display_gamma"
-Specify the gamma of the 
+Specify the gamma of the
 .I X
 display monitor.  The default value is 2.5, suitable for most color TV
 monitors (this is the gamma value assumed by the NTSC video standard).
@@ -249,7 +249,7 @@ Spencer W. Thomas, University of Utah
 .SH BUGS
 It gets an X error when displaying an image only one line high.
 .SH DEFICIENCIES
-It totally ignores the 
-.I .Xdefaults 
+It totally ignores the
+.I .Xdefaults
 file.
 

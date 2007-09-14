@@ -2019,14 +2019,14 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    val += count + 1;
 		bu_vls_printf(&o_vls, "%s", val);
 	    }
-	    
+
 	    i = 1;
-	    
+
 	    *vp++ = "-e";
 	    *vp++ = bu_vls_addr(&o_vls);
 	}
     }
-    
+
     if(QRAY_TEXT){
 
 	bu_vls_init(&t_vls);
@@ -2331,7 +2331,7 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #if 1
     char *ptr, buf[256];
     CHECK_DBI_NULL;
-    
+
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #  ifdef _WIN32
@@ -2341,8 +2341,8 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #  endif
 	argv[0] = buf;
     }
-    
-    
+
+
     return dgo_vnirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 #else
     register int i;
@@ -2355,15 +2355,15 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls y_vls;
     struct bu_vls z_vls;
     char **av;
-    
+
     CHECK_DBI_NULL;
-    
+
     if(argc < 3){
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	
+
 	return TCL_ERROR;
     }
 

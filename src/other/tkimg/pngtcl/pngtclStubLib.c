@@ -1,4 +1,4 @@
-/* 
+/*
  * pngtclStubLib.c --
  *
  *	Stub object that will be statically linked into extensions that wish
@@ -60,7 +60,7 @@ Png_InitStubs(interp, version, exact)
 #if ((TCL_MAJOR_VERSION < 8) || ((TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 4)))
 #define UNCONST (char*)
 #else
-#define UNCONST 
+#define UNCONST
 #endif
 
     result = Tcl_PkgRequireEx(interp, PNGTCL_PACKAGE_NAME, UNCONST version, exact,

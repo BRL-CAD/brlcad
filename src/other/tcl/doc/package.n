@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH package n 7.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -91,7 +91,7 @@ provided by a previous \fBpackage provide\fR command.
 If the \fIversion\fR argument is omitted, then the command
 returns the version number that is currently provided, or an
 empty string if no \fBpackage provide\fR command has been
-invoked for \fIpackage\fR in this interpreter.  
+invoked for \fIpackage\fR in this interpreter.
 .TP
 \fBpackage require \fR\fB\-exact\fR \fIpackage \fR\fIversion\fR
 This form of the command is translated to the form below using the

@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -27,7 +27,7 @@ Blt_TreeExists \- Indicates if a tree exists.
 .nf
 \fB#include <bltTree.h>\fR
 .sp
-int 
+int
 \fBBlt_TreeExists\fR(\fIinterp\fR, \fIname\fR)
 .SH ARGUMENTS
 .AS Tcl_Interp *interp
@@ -44,7 +44,7 @@ a given name. The arguments are as follows:
 interp
 Used the determine the current namespace context.
 .TP 1i
-name 
+name
 Name of an existing tree data object.  \fIName\fR can be qualified by
 a namespace such as \f(CWfred::myTree\fR.  If no namespace qualifier
 is used, the current namespace is searched, then the global namespace.

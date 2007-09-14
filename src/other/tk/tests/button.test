@@ -806,7 +806,7 @@ test button-14.1 {size behaviouor} {
     foreach class {label button radiobutton checkbutton} {
 	eval destroy [winfo children .]
 
-	$class .a -text Hej 
+	$class .a -text Hej
 	$class .b -text Hej -width 10 -height 1
 	$class .c -text "" -width 10 -height 1
 
@@ -819,7 +819,7 @@ test button-14.1 {size behaviouor} {
 	    # A one line text should be as high as -height 1
 	    lappend res2 [expr {[winfo reqheight .a] == [winfo reqheight .b]}]
 	    lappend res $res2
-	    
+
 	    # Do the second round with another font
 	    .a configure -font "Arial 20"
 	    .b configure -font "Arial 20"

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -50,12 +50,12 @@ public:
                              // domain for a root.  Returns TRUE if
                              // a root is found.
 
-  // m_t0 and m_t1 specify the domain to search and must satisfy 
+  // m_t0 and m_t1 specify the domain to search and must satisfy
   //
   //          1) m_t0 != m_t1
   //          2) f(m_t0) and f(m_t1) must have different signs
   //             or one must have absolute value <= m_f_tolerance
-  double m_t0, m_t1; 
+  double m_t0, m_t1;
 
   double m_f_tolerance; // (>= 0.0)  If this value is > 0.0, then
                         // the search is terminated when a parameter
@@ -69,26 +69,26 @@ public:
   // m_k[] is either NULL or monotone increasing array of length m_k_count.
   //
   // This zero finder works on continuous piecewise c2 functions.
-  // If the function is c2 on the interior of the domain 
+  // If the function is c2 on the interior of the domain
   //
   //          [min(t0,t1), max(m_t0,m_t1)]
   //
   // then there is no need to initialize m_k[].  If the function
   // is not c2 on the domain in question, then the m_k[m_count] array
-  // is a list of parameters that define the c2 domains.  When m_k[] 
-  // is not NULL, m_count must be >= 2 and m_k[] must be monotone 
-  // increasing and satisfy 
+  // is a list of parameters that define the c2 domains.  When m_k[]
+  // is not NULL, m_count must be >= 2 and m_k[] must be monotone
+  // increasing and satisfy
   //
-  //          m_k[0] <= min(m_t0,m_t1) 
+  //          m_k[0] <= min(m_t0,m_t1)
   //          and
   //          m_k[m_count-1] >= max(m_t0,m_t1).
   //
   // Duplicate values in m_k[] are permitted so that NURBS knot
   // vector arrays may be used directly.
   const double* m_k;
-  
+
   // length of m_k[] array ( 0 or >= 2 ).
-  int m_k_count;     
+  int m_k_count;
 
 private:
   double m_s0, m_f0, m_s1, m_f1;

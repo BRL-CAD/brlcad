@@ -488,12 +488,12 @@ static const unsigned short yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals. */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "tAGO", "tDAY", "tDAYZONE", "tID", 
-  "tMERIDIAN", "tMINUTE_UNIT", "tMONTH", "tMONTH_UNIT", "tSTARDATE", 
-  "tSEC_UNIT", "tSNUMBER", "tUNUMBER", "tZONE", "tEPOCH", "tDST", 
-  "tISOBASE", "tDAY_UNIT", "tNEXT", "':'", "'-'", "','", "'/'", "'.'", 
-  "'+'", "$accept", "spec", "item", "time", "zone", "day", "date", 
-  "ordMonth", "iso", "trek", "relspec", "relunits", "sign", "unit", 
+  "$end", "error", "$undefined", "tAGO", "tDAY", "tDAYZONE", "tID",
+  "tMERIDIAN", "tMINUTE_UNIT", "tMONTH", "tMONTH_UNIT", "tSTARDATE",
+  "tSEC_UNIT", "tSNUMBER", "tUNUMBER", "tZONE", "tEPOCH", "tDST",
+  "tISOBASE", "tDAY_UNIT", "tNEXT", "':'", "'-'", "','", "'/'", "'.'",
+  "'+'", "$accept", "spec", "item", "time", "zone", "day", "date",
+  "ordMonth", "iso", "trek", "relspec", "relunits", "sign", "unit",
   "number", "o_merid", 0
 };
 #endif
@@ -986,7 +986,7 @@ yyparse ()
 #endif
 #endif
 {
-  
+
   register int yystate;
   register int yyn;
   int yyresult;

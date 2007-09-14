@@ -60,7 +60,7 @@ proc ttk::clickToFocus {w} {
 #
 # See also: tk::FocusOK
 #
-# Note: This routine doesn't implement the same fallback heuristics 
+# Note: This routine doesn't implement the same fallback heuristics
 #	as tk::FocusOK.
 #
 proc ttk::takesFocus {w} {
@@ -90,8 +90,8 @@ proc ttk::takesFocus {w} {
 #
 
 proc ttk::focusFirst {w} {
-    if {[ttk::takesFocus $w]} { 
-	return $w 
+    if {[ttk::takesFocus $w]} {
+	return $w
     }
     foreach child [winfo children $w] {
 	if {[set c [ttk::focusFirst $child]] ne ""} {

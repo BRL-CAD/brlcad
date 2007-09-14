@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH pkg_mkIndex n 8.3 Tcl "Tcl Built-In Commands"
 .BS
@@ -49,7 +49,7 @@ interpreter and seeing what packages
 and new commands appear (this is why it is essential to have
 \fBpackage provide\fR commands or \fBTcl_PkgProvide\fR calls
 in the files, as described above).
-If you have a package split among scripts and binary files, 
+If you have a package split among scripts and binary files,
 or if you have dependencies among files,
 you may have to use the \fB\-load\fR option
 or adjust the order in which \fBpkg_mkIndex\fR processes
@@ -134,7 +134,7 @@ version control:  several versions of a package can be made available
 in the index files, with different applications using different
 versions based on \fBpackage require\fR commands.
 In contrast, \fBauto_mkindex\fR does not understand versions so
-it can only handle a single version of each package. 
+it can only handle a single version of each package.
 It is probably not a good idea to index a given package with both
 \fBpkg_mkIndex\fR and \fBauto_mkindex\fR.
 If you use \fBpkg_mkIndex\fR to index a package, its commands cannot

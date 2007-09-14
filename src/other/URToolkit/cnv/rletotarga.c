@@ -64,12 +64,12 @@ struct targafile {
       };
 
 int
-main(argc,argv) 
+main(argc,argv)
 int argc;
 char *argv[];
-{ 
+{
     FILE       *outfile;
-    char       *infname=NULL, 
+    char       *infname=NULL,
     	       *outfname=NULL;
     int        aflag=0;
     unsigned   i, j;

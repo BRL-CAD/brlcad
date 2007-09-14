@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *                        M K _ B R E P
  *
- *  Create a brep in the geometry file. 
+ *  Create a brep in the geometry file.
  */
 int
 mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )

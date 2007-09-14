@@ -161,8 +161,8 @@ test opt-10.1 {ambigous flags} {
     catch {optTest -fL} msg
     set msg
 } {ambigous option "-fL", choose from:
-    -fla      boolflag (false) 
-    -flag2xyz boolflag (false) 
+    -fla      boolflag (false)
+    -flag2xyz boolflag (false)
     -flag3xyz boolflag (false) }
 test opt-10.2 {non ambigous flags} {
     ::tcl::OptProc optTest {{-flag1xyz} {-other} {-flag2xyz} {-flag3xyz}} {
@@ -183,7 +183,7 @@ test opt-10.4 {ambigous flags, not exact match} {
     catch {optTest -fLag1X} msg
     set msg
 } {ambigous option "-fLag1X", choose from:
-    -flag1xy  boolflag (false) 
+    -flag1xy  boolflag (false)
     -flag1xyz boolflag (false) }
 
 # medium size overall test example: (defined once)
@@ -208,7 +208,7 @@ test opt-10.6 {medium size overall test} {
     ------------ ----     -----   ----
     ( -help                       gives this help )
     cmd          choice   (print save delete) sub command to choose
-    -allowBoing  boolean  (true)  
+    -allowBoing  boolean  (true)
     arg2         string   ()      this is help
     ?arg3?       int      (7)     optional number
     -moreflags   boolflag (false) }}

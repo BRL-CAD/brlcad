@@ -1257,7 +1257,7 @@
 
 	* generic/tclRegexp.c:
 	* generic/tclCmdMZ.c: Changed to use new Unicode string interfaces
-	for better performance. 
+	for better performance.
 
 	* generic/tclRegexp.h:
 	* generic/tclRegexp.c:

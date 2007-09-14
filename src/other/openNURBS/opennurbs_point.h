@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ public:
     ON_Interval::ON_Interval( double, double )
   */
   void Set(
-    double t0, 
+    double t0,
     double t1
     );
 
@@ -86,7 +86,7 @@ public:
   Description:
     Convert normalized parameter to interval value, or pair of values.
   Parameters:
-    normalized_parameter - [in] 
+    normalized_parameter - [in]
   Returns:
     Interval parameter
     min*(1.0-normalized_parameter) + max*normalized_parameter
@@ -95,18 +95,18 @@ public:
   */
   double ParameterAt (
     double normalized_parameter
-    ) const; 
+    ) const;
   ON_Interval ParameterAt (
     ON_Interval normalized_interval
-    ) const; 
-  
+    ) const;
+
   /*
   Description:
     Convert interval value, or pair of values, to normalized parameter.
   Parameters:
     interval_parameter - [in] value in interval
   Returns:
-    Normalized parameter x so that 
+    Normalized parameter x so that
     min*(1.0-x) + max*x = interval_parameter.
   See Also:
     ON_Interval::ParameterAt
@@ -133,7 +133,7 @@ public:
   bool IsEmptySet() const;   // returns true if m_t[0] == m_t[1] == ON_UNSET_VALUE
   bool IsValid() const;      // returns ON_IsValid(m_t[0]) && ON_IsValid(m_t[1])
 
-	bool MakeIncreasing();		// returns true if resulting interval IsIncreasing() 
+	bool MakeIncreasing();		// returns true if resulting interval IsIncreasing()
 
   /*
   Returns:
@@ -146,12 +146,12 @@ public:
   */
   int Compare( const ON_Interval& other ) const;
 
-  /* 
+  /*
   Description:
     Test a value t to see if it is inside the interval.
   Parameters:
     t - [in] value to test
-    bTestOpenInterval - [in] 
+    bTestOpenInterval - [in]
         If false, t is tested to see if it satisfies min <= t <= max.
         If true, t is tested to see if it satisfies min < t < max.
   Returns:
@@ -163,7 +163,7 @@ public:
     bool bTestOpenInterval = false
     ) const;
 
-  /* 
+  /*
   Description:
     Test an interval to see if it is contained in this interval.
   Parameters:
@@ -176,7 +176,7 @@ public:
     this->Min() <= other.Min() and other.Max() <= this->Max()
     and at least one of the inequalites is strict.
   */
-  bool Includes( 
+  bool Includes(
     const ON_Interval& other,
     bool bProperSubSet = false
     ) const;
@@ -194,7 +194,7 @@ public:
   void Swap();
 
   //////////
-  // If the intersection is not empty, then 
+  // If the intersection is not empty, then
   // intersection = [max(this.Min(),arg.Min()), min(this.Max(),arg.Max())]
   // Intersection() returns true if the intersection is not empty.
   // The interval [ON_UNSET_VALUE,ON_UNSET_VALUE] is considered to be
@@ -205,14 +205,14 @@ public:
          );
 
   //////////
-  // If the intersection is not empty, then 
+  // If the intersection is not empty, then
   // intersection = [max(argA.Min(),argB.Min()), min(argA.Max(),argB.Max())]
   // Intersection() returns true if the intersection is not empty.
   // The interval [ON_UNSET_VALUE,ON_UNSET_VALUE] is considered to be
   // the empty set interval.  The result of any intersection involving an
   // empty set interval or disjoint intervals is the empty set interval.
   bool Intersection( // this = intersection of two args
-         const ON_Interval&, 
+         const ON_Interval&,
          const ON_Interval&
          );
 
@@ -235,7 +235,7 @@ public:
   // union = [min(argA.Min(),argB.Min()), max(argA.Max(),argB.Max()),]
   // Union() returns true if the union is not empty.
   bool Union( // this = union of two args
-         const ON_Interval&, 
+         const ON_Interval&,
          const ON_Interval&
          );
 
@@ -328,7 +328,7 @@ public:
 
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
-  void Transform( 
+  void Transform(
         const ON_Xform&
         );
 
@@ -424,7 +424,7 @@ public:
 
   int MaximumCoordinateIndex() const;
   double MaximumCoordinate() const; // absolute value of maximum coordinate
-  
+
   int MinimumCoordinateIndex() const;
   double MinimumCoordinate() const; // absolute value of minimum coordinate
 
@@ -434,17 +434,17 @@ public:
 
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
-  void Transform( 
+  void Transform(
         const ON_Xform&
         );
 
-  void Rotate( 
+  void Rotate(
         double angle,             // angle in radians
         const ON_3dVector& axis,  // axis of rotation
         const ON_3dPoint& center  // center of rotation
         );
 
-  void Rotate( 
+  void Rotate(
         double sin_angle,         // sin(angle)
         double cos_angle,         // cos(angle)
         const ON_3dVector& axis,  // axis of rotation
@@ -504,7 +504,7 @@ public:
   double operator*(const ON_4dPoint&) const;
   ON_4dPoint operator*(const ON_Xform&) const;
 
-  // projective comparison 
+  // projective comparison
   // (i.e., [x,y,z,w] == [c*x,c*y,c*z,c*w] is true for nonzero c)
   bool operator==(ON_4dPoint) const;
   bool operator!=(const ON_4dPoint&) const;
@@ -536,7 +536,7 @@ public:
 
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
-  void Transform( 
+  void Transform(
         const ON_Xform&
         );
 };
@@ -591,7 +591,7 @@ public:
   ON_2dVector  operator*(double) const;
   double operator*(const ON_2dVector&) const; // inner (dot) product
   double operator*(const ON_2dPoint&) const; // inner (dot) product (point acting as vector)
-  double operator*(const ON_2fVector&) const; // inner (dot) product	
+  double operator*(const ON_2fVector&) const; // inner (dot) product
 	ON_2dVector  operator/(double) const;
   ON_2dVector  operator+(const ON_2dVector&) const;
   ON_2dPoint   operator+(const ON_2dPoint&) const;
@@ -651,12 +651,12 @@ public:
          double*  // b
          ) const;
 
-  int IsParallelTo( 
+  int IsParallelTo(
         // returns  1: this and other vectors are parallel
         //         -1: this and other vectors are anti-parallel
         //          0: this and other vectors are not parallel
         //             or at least one of the vectors is zero
-        const ON_2dVector& other,                           // other vector     
+        const ON_2dVector& other,                           // other vector
         double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
         ) const;
 
@@ -664,7 +664,7 @@ public:
         // returns true:  this and other vectors are perpendicular
         //         false: this and other vectors are not perpendicular
         //                or at least one of the vectors is zero
-        const ON_2dVector& other,                           // other vector     
+        const ON_2dVector& other,                           // other vector
         double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
         ) const;
 
@@ -691,28 +691,28 @@ public:
   bool IsZero() const;
 
   // set this vector to be perpendicular to another vector
-  bool PerpendicularTo( // Result is not unitized. 
+  bool PerpendicularTo( // Result is not unitized.
                         // returns false if input vector is zero
-        const ON_2dVector& 
+        const ON_2dVector&
         );
 
   // set this vector to be perpendicular to a line defined by 2 points
-  bool PerpendicularTo( 
-        const ON_2dPoint&, 
-        const ON_2dPoint& 
+  bool PerpendicularTo(
+        const ON_2dPoint&,
+        const ON_2dPoint&
         );
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
-  void Transform( 
+  void Transform(
         const ON_Xform& // can use ON_Xform here
         );
 
-  void Rotate( 
+  void Rotate(
         double angle            // angle in radians
         );
 
-  void Rotate( 
+  void Rotate(
         double sin_angle,       // sin(angle)
         double cos_angle        // cos(angle)
         );
@@ -727,42 +727,42 @@ ON_2dVector operator*(double, const ON_2dVector&);
 //
 
 ON_DECL
-double 
-ON_DotProduct( 
-    const ON_2dVector&, 
-    const ON_2dVector& 
+double
+ON_DotProduct(
+    const ON_2dVector&,
+    const ON_2dVector&
     );
 
 ON_DECL
-ON_3dVector 
+ON_3dVector
 ON_CrossProduct(
-    const ON_2dVector&, 
-    const ON_2dVector& 
+    const ON_2dVector&,
+    const ON_2dVector&
     );
 
 ON_DECL
-double			 
+double
 ON_WedgeProduct(		// signed area of the parallelagram.  Volume element.
-    const ON_2dVector& A, // returns A.x * B.y - A.y * B.x 
-    const ON_2dVector& B 
+    const ON_2dVector& A, // returns A.x * B.y - A.y * B.x
+    const ON_2dVector& B
     );
 
 ON_DECL
-bool 
+bool
 ON_IsOrthogonalFrame( // true if X, Y are nonzero and mutually perpindicular
     const ON_2dVector&, // X
     const ON_2dVector&  // Y
     );
 
 ON_DECL
-bool 
+bool
 ON_IsOrthonormalFrame( // true if X, Y are orthogonal and unit length
     const ON_2dVector&, // X
     const ON_2dVector&  // Y
     );
 
 ON_DECL
-bool 
+bool
 ON_IsRightHandFrame( // true if X, Y are orthonormal and right handed
     const ON_2dVector&, // X
     const ON_2dVector&  // Y
@@ -780,7 +780,7 @@ public:
   // Description:
   //   A index driven function to get unit axis vectors.
   // Parameters:
-  //   index - [in] 0 returns (1,0,0), 1 returns (0,1,0), 
+  //   index - [in] 0 returns (1,0,0), 1 returns (0,1,0),
   //                2 returns (0,0,1)
   // Returns:
   //   Unit 3d vector with vector[i] = (i==index)?1:0;
@@ -805,7 +805,7 @@ public:
   ON_3dVector& operator=(const double*); // vector = double[3] support
   ON_3dVector& operator=(const ON_2dVector&);
   ON_3dVector& operator=(const ON_3dPoint&);
-  
+
   ON_3dVector  operator-() const;
 
   ON_3dVector& operator*=(double);
@@ -874,12 +874,12 @@ public:
          double*  // c
          ) const;
 
-  int IsParallelTo( 
+  int IsParallelTo(
         // returns  1: this and other vectors are parallel
         //         -1: this and other vectors are anti-parallel
         //          0: this and other vectors are not parallel
         //             or at least one of the vectors is zero
-        const ON_3dVector& other,                           // other vector     
+        const ON_3dVector& other,                           // other vector
         double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
         ) const;
 
@@ -887,7 +887,7 @@ public:
         // returns true:  this and other vectors are perpendicular
         //         false: this and other vectors are not perpendicular
         //                or at least one of the vectors is zero
-        const ON_3dVector& other,                           // other vector     
+        const ON_3dVector& other,                           // other vector
         double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
         ) const;
 
@@ -916,32 +916,32 @@ public:
   bool IsZero() const;
 
   // set this vector to be perpendicular to another vector
-  bool PerpendicularTo( // Result is not unitized. 
+  bool PerpendicularTo( // Result is not unitized.
                         // returns false if input vector is zero
-        const ON_3dVector& 
+        const ON_3dVector&
         );
 
   // set this vector to be perpendicular to a plane defined by 3 points
   bool PerpendicularTo(
                // about 3 times slower than
-               //    ON_3dVector N = ON_CrossProduct(P1-P0,P2-P0); 
+               //    ON_3dVector N = ON_CrossProduct(P1-P0,P2-P0);
                //    N.Unitize();
                // returns false if points are coincident or colinear
-         const ON_3dPoint&, const ON_3dPoint&, const ON_3dPoint& 
+         const ON_3dPoint&, const ON_3dPoint&, const ON_3dPoint&
          );
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
-  void Transform( 
+  void Transform(
         const ON_Xform& // can use ON_Xform here
         );
 
-  void Rotate( 
+  void Rotate(
         double angle,           // angle in radians
         const ON_3dVector& axis // axis of rotation
         );
 
-  void Rotate( 
+  void Rotate(
         double sin_angle,        // sin(angle)
         double cos_angle,        // cos(angle)
         const ON_3dVector& axis  // axis of rotation
@@ -1032,7 +1032,7 @@ public:
     Get the minimum value of the plane equation
     on a bounding box.
   Parameters:
-    bbox - [in] 
+    bbox - [in]
   Returns:
     Minimum value of the plane equation on the bounding box.
   */
@@ -1043,7 +1043,7 @@ public:
     Get the maximum value of the plane equation
     on a bounding box.
   Parameters:
-    bbox - [in] 
+    bbox - [in]
   Returns:
     Maximum value of the plane equation on the bounding box.
   */
@@ -1055,7 +1055,7 @@ public:
     Get the minimum value of the plane equation
     on a bounding box.
   Parameters:
-    crvleafbox - [in] 
+    crvleafbox - [in]
   Returns:
     Minimum value of the plane equation on the curve leaf box.
   */
@@ -1066,7 +1066,7 @@ public:
     Get the maximum value of the plane equation
     on a bounding box.
   Parameters:
-    crvleafbox - [in] 
+    crvleafbox - [in]
   Returns:
     Maximum value of the plane equation on the curve leaf box.
   */
@@ -1077,7 +1077,7 @@ public:
     Get the minimum value of the plane equation
     on a bounding box.
   Parameters:
-    bbox - [in] 
+    bbox - [in]
   Returns:
     Minimum value of the plane equation on the bounding box.
   */
@@ -1088,7 +1088,7 @@ public:
     Get the maximum value of the plane equation
     on a bounding box.
   Parameters:
-    bbox - [in] 
+    bbox - [in]
   Returns:
     Maximum value of the plane equation on the bounding box.
   */
@@ -1102,12 +1102,12 @@ public:
     bezcrv - [in]
     s0 - [in]
     s1 - [in] the interval from s0 to s1 is tested (s0 < s1)
-    sample_count - [in] number of interior points to test.  
+    sample_count - [in] number of interior points to test.
                 Numbers like 1, 3, 7, 15, ... work best.
-    endpoint_tolerance - [in] If >= 0, then the end points are 
-              tested to see if the distance from the endpoints 
+    endpoint_tolerance - [in] If >= 0, then the end points are
+              tested to see if the distance from the endpoints
               is <= endpoint_tolerance.
-    interior_tolerance - [in] (>=0 and >=endpoint_tolerance) 
+    interior_tolerance - [in] (>=0 and >=endpoint_tolerance)
               This tolerance is used to test the interior sample points.
     smin - [put]  If not NULL, *smin = bezier parameter of nearest
                   test point.
@@ -1119,7 +1119,7 @@ public:
     False if at least one tested point failed the tolerance test.
     (The test terminates when the first failure is encountered.)
   */
-  bool IsNearerThan( 
+  bool IsNearerThan(
           const class ON_BezierCurve& bezcrv,
           double s0,
           double s1,
@@ -1142,37 +1142,37 @@ ON_3dVector operator*(double, const ON_3dVector&);
 //
 
 ON_DECL
-double 
-ON_DotProduct( 
-    const ON_3dVector&, 
-    const ON_3dVector& 
+double
+ON_DotProduct(
+    const ON_3dVector&,
+    const ON_3dVector&
     );
 
 
 ON_DECL
-ON_3dVector 
+ON_3dVector
 ON_CrossProduct(
-    const ON_3dVector&, 
-    const ON_3dVector& 
+    const ON_3dVector&,
+    const ON_3dVector&
     );
 
 ON_DECL
-ON_3dVector 
+ON_3dVector
 ON_CrossProduct( // 3d cross product for old fashioned arrays
     const double*, // array of 3d doubles
     const double*  // array of 3d doubles
     );
 
 ON_DECL
-double 
-ON_TripleProduct( 
+double
+ON_TripleProduct(
     const ON_3dVector&,
     const ON_3dVector&,
     const ON_3dVector&
     );
 
 ON_DECL
-double 
+double
 ON_TripleProduct(  // 3d triple product for old fashioned arrays
     const double*, // array of 3d doubles
     const double*, // array of 3d doubles
@@ -1180,27 +1180,27 @@ ON_TripleProduct(  // 3d triple product for old fashioned arrays
     );
 
 ON_DECL
-bool 
+bool
 ON_IsOrthogonalFrame( // true if X, Y, Z are nonzero and mutually perpindicular
     const ON_3dVector&, // X
     const ON_3dVector&, // Y
-    const ON_3dVector&  // Z 
+    const ON_3dVector&  // Z
     );
 
 ON_DECL
-bool 
+bool
 ON_IsOrthonormalFrame( // true if X, Y, Z are orthogonal and unit length
     const ON_3dVector&, // X
     const ON_3dVector&, // Y
-    const ON_3dVector&  // Z 
+    const ON_3dVector&  // Z
     );
 
 ON_DECL
-bool 
+bool
 ON_IsRightHandFrame( // true if X, Y, Z are orthonormal and right handed
     const ON_3dVector&, // X
     const ON_3dVector&, // Y
-    const ON_3dVector&  // Z 
+    const ON_3dVector&  // Z
     );
 
 ///////////////////////////////////////////////////////////////

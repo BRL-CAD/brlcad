@@ -1,6 +1,6 @@
-/* 
+/*
  * unslice.c - Build a finished frame from a series of slices
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -34,7 +34,7 @@ void do_slice(), copy_scanline();
 
 rle_hdr in_hdr, out_hdr;
 
-/* 
+/*
  * Global raw data structures for copy_scanline.
  */
 rle_op ** out_raw;
@@ -137,7 +137,7 @@ char **argv;
 
 /*****************************************************************
  * TAG( do_slice )
- * 
+ *
  * Read one slice from the given file and write it to the output.
  * Also generate the output header if it's the first file.
  */
@@ -151,13 +151,13 @@ char *filename;
 
     in_hdr.rle_file = rle_open_f(progname, filename, "r");
     rle_names( &in_hdr, progname, filename, 0 );
-    
+
     /*
      * Many sanity checks.  Code must be 3am-proof!
      */
 
     rle_get_setup_ok( &in_hdr, progname, filename );
-    
+
     if (ctlflag &&
        ((start_line[num] > in_hdr.ymax) ||
 	(stop_line[num] < in_hdr.ymin)))
@@ -167,10 +167,10 @@ char *filename;
 	exit(-1);
     }
 
-    /* 
+    /*
      * If this is the first slice, generate the output header.
      */
-    
+
     if (num == 0)
     {
 	FILE *f = out_hdr.rle_file;
@@ -245,7 +245,7 @@ char *filename;
 
 /*****************************************************************
  * TAG( copy_scanline )
- * 
+ *
  * Copy the scanlines using the raw format, if the copy_flag is on.  If
  * copy_flag is false, scanlines are just eaten away from the input file.
  */

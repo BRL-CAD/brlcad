@@ -48,7 +48,7 @@ scriptdir =		$(libdir)/blt$(BLT_VERSION)
 BLT_LIBRARY =		$(libdir)/blt$(BLT_VERSION)
 TCLLIBPATH =		$(libdir)/tcl$(v1)
 
-AUX_LIBS = 
+AUX_LIBS =
 SHLIB_SUFFIX =		.dll
 
 INSTALL =		install -m 0755

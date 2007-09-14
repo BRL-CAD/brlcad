@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rleselect.c - Select images from an RLE file.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -51,7 +51,7 @@ static CONST_DECL char *my_name = "rleselect";
  * 	image-numbers:	A space-separated list of image numbers.
  * 			Images are numbered from 1 in the input file.
  * 			Images in this list will be included in the
- * 			output. 
+ * 			output.
  * 			A negative number in the list means that all
  * 			images from the previous number to the
  * 			absolute value of this number should be
@@ -99,7 +99,7 @@ char **argv;
     rle_hdr 	in_hdr, out_hdr;
     int	       *sorted_list;
     register int i, j;
-    
+
     my_name = cmd_name( argv );
     in_hdr = *rle_hdr_init( NULL );
     out_hdr = *rle_hdr_init( NULL );
@@ -176,7 +176,7 @@ char **argv;
 	fflush( stderr );
     }
 
-	
+
     /* Open the input file.
      * The output file won't be opened until the first image header
      * has been read.  This avoids unnecessarily wiping out a
@@ -230,7 +230,7 @@ char **argv;
 	/* Copy the image. */
 	rle_cp( &in_hdr, &out_hdr );
     }
-    
+
     /* Check for an error.  EOF or EMPTY is ok if at least one image
      * has been read.  Otherwise, print an error message.
      */
@@ -241,7 +241,7 @@ char **argv;
 }
 
 
-static void 
+static void
 insert( sorted_list_p, i, n )
 int **sorted_list_p;
 int i, n;

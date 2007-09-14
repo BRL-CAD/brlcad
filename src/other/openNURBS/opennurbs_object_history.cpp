@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -54,9 +54,9 @@ public:
 
   // The valid id is a nonzero integer the developer
   // assigns to this value.  Developers are responsible
-  // for ensuring the 
+  // for ensuring the
   int m_value_id;
-  
+
   const VALUE_TYPE m_value_type;
 
   ON_Value( VALUE_TYPE );
@@ -144,27 +144,27 @@ public:
 
   ON_SimpleArray<bool> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetBools( const bool*& b ) const;
 };
 
-ON_BoolValue::ON_BoolValue() 
-             : ON_Value(ON_Value::bool_value) 
+ON_BoolValue::ON_BoolValue()
+             : ON_Value(ON_Value::bool_value)
 {
 }
 
@@ -172,31 +172,31 @@ ON_BoolValue::~ON_BoolValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_BoolValue::Duplicate() const
 {
   return new ON_BoolValue(*this);
 }
 
 // virtual
-int ON_BoolValue::Count() const 
+int ON_BoolValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_BoolValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_BoolValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_BoolValue::ReportHelper(ON_TextLog& text_log ) const
 {
   int i, count = m_value.Count();
@@ -210,7 +210,7 @@ bool ON_BoolValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_BoolValue::GetBools( const bool*& b ) const
 {
   b = m_value.Array();
@@ -231,27 +231,27 @@ public:
 
   ON_SimpleArray<int> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetInts( const int*& b ) const;
 };
 
-ON_IntValue::ON_IntValue() 
-             : ON_Value(ON_Value::int_value) 
+ON_IntValue::ON_IntValue()
+             : ON_Value(ON_Value::int_value)
 {
 }
 
@@ -259,31 +259,31 @@ ON_IntValue::~ON_IntValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_IntValue::Duplicate() const
 {
   return new ON_IntValue(*this);
 }
 
 // virtual
-int ON_IntValue::Count() const 
+int ON_IntValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_IntValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_IntValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_IntValue::ReportHelper(ON_TextLog& text_log ) const
 {
   int i, count = m_value.Count();
@@ -297,7 +297,7 @@ bool ON_IntValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_IntValue::GetInts( const int*& b ) const
 {
   b = m_value.Array();
@@ -318,27 +318,27 @@ public:
 
   ON_SimpleArray<double> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetDoubles( const double*& a ) const;
 };
 
-ON_DoubleValue::ON_DoubleValue() 
-             : ON_Value(ON_Value::double_value) 
+ON_DoubleValue::ON_DoubleValue()
+             : ON_Value(ON_Value::double_value)
 {
 }
 
@@ -346,31 +346,31 @@ ON_DoubleValue::~ON_DoubleValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_DoubleValue::Duplicate() const
 {
   return new ON_DoubleValue(*this);
 }
 
 // virtual
-int ON_DoubleValue::Count() const 
+int ON_DoubleValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_DoubleValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_DoubleValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_DoubleValue::ReportHelper(ON_TextLog& text_log ) const
 {
   int i, count = m_value.Count();
@@ -384,7 +384,7 @@ bool ON_DoubleValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_DoubleValue::GetDoubles( const double*& a ) const
 {
   a = m_value.Array();
@@ -404,27 +404,27 @@ public:
 
   ON_SimpleArray<ON_3dPoint> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int Get3dPoints( const ON_3dPoint*& a ) const;
 };
 
-ON_PointValue::ON_PointValue() 
-             : ON_Value(ON_Value::point_value) 
+ON_PointValue::ON_PointValue()
+             : ON_Value(ON_Value::point_value)
 {
 }
 
@@ -432,31 +432,31 @@ ON_PointValue::~ON_PointValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_PointValue::Duplicate() const
 {
   return new ON_PointValue(*this);
 }
 
 // virtual
-int ON_PointValue::Count() const 
+int ON_PointValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_PointValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_PointValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_PointValue::ReportHelper(ON_TextLog& text_log ) const
 {
   int i, count = m_value.Count();
@@ -470,7 +470,7 @@ bool ON_PointValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_PointValue::Get3dPoints( const ON_3dPoint*& a ) const
 {
   a = m_value.Array();
@@ -491,27 +491,27 @@ public:
 
   ON_SimpleArray<ON_3dVector> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int Get3dVectors( const ON_3dVector*& a ) const;
 };
 
-ON_VectorValue::ON_VectorValue() 
-             : ON_Value(ON_Value::vector_value) 
+ON_VectorValue::ON_VectorValue()
+             : ON_Value(ON_Value::vector_value)
 {
 }
 
@@ -519,31 +519,31 @@ ON_VectorValue::~ON_VectorValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_VectorValue::Duplicate() const
 {
   return new ON_VectorValue(*this);
 }
 
 // virtual
-int ON_VectorValue::Count() const 
+int ON_VectorValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_VectorValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_VectorValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_VectorValue::ReportHelper(ON_TextLog& text_log ) const
 {
   text_log.Print("vector value\n");
@@ -557,7 +557,7 @@ bool ON_VectorValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_VectorValue::Get3dVectors( const ON_3dVector*& a ) const
 {
   a = m_value.Array();
@@ -578,27 +578,27 @@ public:
 
   ON_SimpleArray<ON_Xform> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetXforms( const ON_Xform*& a ) const;
 };
 
-ON_XformValue::ON_XformValue() 
-             : ON_Value(ON_Value::xform_value) 
+ON_XformValue::ON_XformValue()
+             : ON_Value(ON_Value::xform_value)
 {
 }
 
@@ -606,31 +606,31 @@ ON_XformValue::~ON_XformValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_XformValue::Duplicate() const
 {
   return new ON_XformValue(*this);
 }
 
 // virtual
-int ON_XformValue::Count() const 
+int ON_XformValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_XformValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_XformValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_XformValue::ReportHelper(ON_TextLog& text_log ) const
 {
   text_log.Print("xform value\n");
@@ -644,7 +644,7 @@ bool ON_XformValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_XformValue::GetXforms( const ON_Xform*& a ) const
 {
   a = m_value.Array();
@@ -665,27 +665,27 @@ public:
 
   ON_SimpleArray<ON_Color> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetColors( const ON_Color*& a ) const;
 };
 
-ON_ColorValue::ON_ColorValue() 
-             : ON_Value(ON_Value::color_value) 
+ON_ColorValue::ON_ColorValue()
+             : ON_Value(ON_Value::color_value)
 {
 }
 
@@ -693,31 +693,31 @@ ON_ColorValue::~ON_ColorValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_ColorValue::Duplicate() const
 {
   return new ON_ColorValue(*this);
 }
 
 // virtual
-int ON_ColorValue::Count() const 
+int ON_ColorValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_ColorValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_ColorValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_ColorValue::ReportHelper(ON_TextLog& text_log ) const
 {
   ON_Color c;
@@ -733,7 +733,7 @@ bool ON_ColorValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_ColorValue::GetColors( const ON_Color*& a ) const
 {
   a = m_value.Array();
@@ -754,27 +754,27 @@ public:
 
   ON_SimpleArray<ON_UUID> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetUuids( const ON_UUID*& a ) const;
 };
 
-ON_UuidValue::ON_UuidValue() 
-             : ON_Value(ON_Value::uuid_value) 
+ON_UuidValue::ON_UuidValue()
+             : ON_Value(ON_Value::uuid_value)
 {
 }
 
@@ -782,31 +782,31 @@ ON_UuidValue::~ON_UuidValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_UuidValue::Duplicate() const
 {
   return new ON_UuidValue(*this);
 }
 
 // virtual
-int ON_UuidValue::Count() const 
+int ON_UuidValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_UuidValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_UuidValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_UuidValue::ReportHelper(ON_TextLog& text_log ) const
 {
   text_log.Print("uuid value\n");
@@ -820,7 +820,7 @@ bool ON_UuidValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_UuidValue::GetUuids( const ON_UUID*& a ) const
 {
   a = m_value.Array();
@@ -840,27 +840,27 @@ public:
 
   ON_ClassArray<ON_wString> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetStrings( ON_ClassArray<ON_wString>& s ) const;
 };
 
-ON_StringValue::ON_StringValue() 
-             : ON_Value(ON_Value::string_value) 
+ON_StringValue::ON_StringValue()
+             : ON_Value(ON_Value::string_value)
 {
 }
 
@@ -868,31 +868,31 @@ ON_StringValue::~ON_StringValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_StringValue::Duplicate() const
 {
   return new ON_StringValue(*this);
 }
 
 // virtual
-int ON_StringValue::Count() const 
+int ON_StringValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_StringValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_StringValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_StringValue::ReportHelper(ON_TextLog& text_log ) const
 {
   text_log.Print("string value\n");
@@ -906,7 +906,7 @@ bool ON_StringValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_StringValue::GetStrings( ON_ClassArray<ON_wString>& s ) const
 {
   s = m_value;
@@ -927,27 +927,27 @@ public:
 
   ON_ClassArray<ON_ObjRef> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetObjRefs( ON_ClassArray<ON_ObjRef>& oref ) const;
 };
 
-ON_ObjRefValue::ON_ObjRefValue() 
-             : ON_Value(ON_Value::objref_value) 
+ON_ObjRefValue::ON_ObjRefValue()
+             : ON_Value(ON_Value::objref_value)
 {
 }
 
@@ -955,31 +955,31 @@ ON_ObjRefValue::~ON_ObjRefValue()
 {
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_ObjRefValue::Duplicate() const
 {
   return new ON_ObjRefValue(*this);
 }
 
 // virtual
-int ON_ObjRefValue::Count() const 
+int ON_ObjRefValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_ObjRefValue::ReadHelper(ON_BinaryArchive& archive )
 {
   return archive.ReadArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_ObjRefValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   return archive.WriteArray(m_value);
 }
 
-// virtual 
+// virtual
 bool ON_ObjRefValue::ReportHelper(ON_TextLog& text_log ) const
 {
   text_log.Print("objref value\n");
@@ -995,7 +995,7 @@ bool ON_ObjRefValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_ObjRefValue::GetObjRefs( ON_ClassArray<ON_ObjRef>& s ) const
 {
   s = m_value;
@@ -1018,27 +1018,27 @@ public:
 
   ON_SimpleArray<ON_Geometry*> m_value;
 
-  // virtual 
+  // virtual
   class ON_Value* Duplicate() const;
 
   // virtual
   int Count() const;
 
-  // virtual 
+  // virtual
   bool ReadHelper(ON_BinaryArchive& archive );
 
-  // virtual 
+  // virtual
   bool WriteHelper(ON_BinaryArchive& archive ) const;
 
-  // virtual 
+  // virtual
   bool ReportHelper(ON_TextLog& text_log ) const;
 
-  // virtual 
+  // virtual
   int GetGeometryPointers( const ON_Geometry* const*& ) const;
 };
 
-ON_GeometryValue::ON_GeometryValue() 
-             : ON_Value(ON_Value::geometry_value) 
+ON_GeometryValue::ON_GeometryValue()
+             : ON_Value(ON_Value::geometry_value)
 {
 }
 
@@ -1094,19 +1094,19 @@ ON_GeometryValue& ON_GeometryValue::operator=(const ON_GeometryValue& src)
   return *this;
 }
 
-// virtual 
+// virtual
 class ON_Value* ON_GeometryValue::Duplicate() const
 {
   return new ON_GeometryValue(*this);
 }
 
 // virtual
-int ON_GeometryValue::Count() const 
+int ON_GeometryValue::Count() const
 {
   return m_value.Count();
 }
 
-// virtual 
+// virtual
 bool ON_GeometryValue::ReadHelper(ON_BinaryArchive& archive )
 {
   int i, count = m_value.Count();
@@ -1127,7 +1127,7 @@ bool ON_GeometryValue::ReadHelper(ON_BinaryArchive& archive )
     rc = archive.ReadInt(&count);
     if (!rc) break;
     m_value.Reserve(count);
-    
+
     for( i = 0; i < count && rc; i++ )
     {
       ON_Object* p=0;
@@ -1154,7 +1154,7 @@ bool ON_GeometryValue::ReadHelper(ON_BinaryArchive& archive )
   return rc;
 }
 
-// virtual 
+// virtual
 bool ON_GeometryValue::WriteHelper(ON_BinaryArchive& archive ) const
 {
   bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
@@ -1165,7 +1165,7 @@ bool ON_GeometryValue::WriteHelper(ON_BinaryArchive& archive ) const
   {
     rc = archive.WriteInt(m_value.Count());
     if (!rc) break;
-    
+
     int i, count = m_value.Count();
     for( i = 0; i < count && rc; i++ )
     {
@@ -1181,7 +1181,7 @@ bool ON_GeometryValue::WriteHelper(ON_BinaryArchive& archive ) const
   return rc;
 }
 
-// virtual 
+// virtual
 bool ON_GeometryValue::ReportHelper(ON_TextLog& text_log ) const
 {
   text_log.Print("geometry value\n");
@@ -1197,7 +1197,7 @@ bool ON_GeometryValue::ReportHelper(ON_TextLog& text_log ) const
   return true;
 }
 
-// virtual 
+// virtual
 int ON_GeometryValue::GetGeometryPointers( const ON_Geometry* const*&a ) const
 {
   a = m_value.Array();
@@ -1264,9 +1264,9 @@ ON_Value* ON_Value::CreateValue( int value_type )
 
 ON_OBJECT_IMPLEMENT(ON_HistoryRecord,ON_Object,"ECD0FD2F-2088-49dc-9641-9CF7A28FFA6B");
 
-ON_HistoryRecord::ON_HistoryRecord() 
+ON_HistoryRecord::ON_HistoryRecord()
                  : m_antecedents(2),
-                   m_descendants(1)                   
+                   m_descendants(1)
 {
   m_command_id    = ON_nil_uuid;
   m_version       = 0;
@@ -1671,7 +1671,7 @@ bool ON_HistoryRecord::SetObjRefValues( int value_id, int count, const ON_ObjRef
     for ( i = 0; i < count; i++ )
     {
       // The call to DecrementProxyReferenceCount() is critical.
-      // It makes sure there are no active runtime pointers 
+      // It makes sure there are no active runtime pointers
       // saved in the history record.  If this call is not here,
       // you will eventually crash and history update will never
       // work right even when it doesn't crash.
@@ -2051,7 +2051,7 @@ void ON_HistoryRecord::Dump( ON_TextLog& text_log ) const
   text_log.Print("\n");
 
   text_log.Print("Record type: %s\n",
-                 (m_record_type == ON_HistoryRecord::feature_parameters) 
+                 (m_record_type == ON_HistoryRecord::feature_parameters)
                  ? "feature parameters" : "history parameters");
 
   // list antededents
@@ -2163,7 +2163,7 @@ BOOL ON_HistoryRecord::Read( ON_BinaryArchive& archive )
       rc = ( 1 == mjvs );
 
       int i, count = 0;
-      if (rc) 
+      if (rc)
         rc = archive.ReadInt(&count);
 
       if (rc)
@@ -2181,20 +2181,20 @@ BOOL ON_HistoryRecord::Read( ON_BinaryArchive& archive )
           if (!rc) break;
           int value_type = ON_Value::no_value_type;
           rc = archive.ReadInt(&value_type);
-          if (!rc) 
+          if (!rc)
             break;
 
           int value_id = 0;
           rc = archive.ReadInt(&value_id);
-          if (!rc) 
+          if (!rc)
             break;
 
           ON_Value* value = ON_Value::CreateValue(value_type);
           if ( value )
-          {        
+          {
             value->m_value_id = value_id;
             rc = value->ReadHelper(archive);
-            if (!rc) 
+            if (!rc)
             {
               delete value;
               break;
@@ -2279,7 +2279,7 @@ BOOL ON_HistoryRecord::Write( ON_BinaryArchive& archive ) const
 
           rc = archive.WriteInt(value ? value->m_value_id : 0 );
           if (!rc) break;
-          
+
           if ( value && value->m_value_type != ON_Value::no_value_type )
             rc = value->WriteHelper(archive);
           if (!rc) break;

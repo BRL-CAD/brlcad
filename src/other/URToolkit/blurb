@@ -62,7 +62,7 @@ The Tools:
   rlehisto   - Generate the histogram of an RLE file.
   rleldmap   - Load a color map into an RLE file from a variety of sources.
   rlemandl   - Generate Mandlebrot sets as RLE files.
-  rlenoise   - Adds random noise to an image.	
+  rlenoise   - Adds random noise to an image.
   rlepatch   - Overlay several smaller images over a larger one.
   rleprint   - Print all pixel values.
   rlequant   - Variance-based color quantization.
@@ -114,7 +114,7 @@ The Tools:
              - [Note display programs for a particular device are
 		simple to add]
 
-  All the tools are designed to pipe together, so they can be used as 
+  All the tools are designed to pipe together, so they can be used as
   filters on images much like the standard Unix tools filter text.
 
 Plus:
@@ -148,7 +148,7 @@ Distribution:
 	weedeater.math.yale.edu (130.132.23.17)
 	freebie.engin.umich.edu (141.212.68.23)
 
-  Although the Raster Toolkit software is copyrighted, it may be freely 
+  Although the Raster Toolkit software is copyrighted, it may be freely
   re-distributed on a "GNU-like" basis.
 
 If you have further questions, please direct them to

@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_CreateMathFunc 3 8.4 Tcl "Tcl Library Procedures"
 .BS
@@ -141,7 +141,7 @@ released by passing it to \fBTcl_Free\fR.  Some functions (the
 standard set implemented in the core, and those defined by placing
 commands in the \fBtcl::mathfunc\fR namespace) do not have
 argument type information; attempting to retrieve values for
-them causes a NULL to be stored in the variable pointed to by 
+them causes a NULL to be stored in the variable pointed to by
 \fIprocPtr\fR and the variable pointed to by \fIclientDataPtr\fR
 will not be modified.  The variable pointed to by \fInumArgsPointer\fR
 will contain -1, and no argument types will be stored in the variable

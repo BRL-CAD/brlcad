@@ -54,7 +54,7 @@ int mp_radix_size (mp_int * a, int radix, int *size)
   }
 
   /* force temp to positive */
-  t.sign = MP_ZPOS; 
+  t.sign = MP_ZPOS;
 
   /* fetch out all of the digits */
   while (mp_iszero (&t) == MP_NO) {
@@ -66,7 +66,7 @@ int mp_radix_size (mp_int * a, int radix, int *size)
   }
   mp_clear (&t);
 
-  /* 
+  /*
    * return digs + 1, the 1 is for the NULL byte that would be required.
    * mp_toradix_n requires a minimum of 3 bytes, so never report less than
    * that.

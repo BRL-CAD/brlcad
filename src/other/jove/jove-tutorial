@@ -42,7 +42,7 @@ The following commands are useful for viewing screenfuls:
 	M-V	Move backward one screenful
 	M- C-L	Clear screen and redisplay everything
 		 putting the text near the cursor at the center.
-	
+
 >> find the cursor and remember what text is near it.
    Then type a M- C-L.
    Find the cursor again and see what text is near it now.
@@ -59,7 +59,7 @@ and next.  As you can imagine these commands (which are given to
 JOVE as C-P, C-B, C-F, and C-N  respectively) move the cursor from
 where it currently is to a new place in the given direction.  Here,
 in a more graphical form are the commands:
- 
+
 			  Previous line, C-P
 				  :
 				  :
@@ -153,7 +153,7 @@ give a command a repeat count is by typing META and then the digits
 before you type the command.  (Remember META is usually called ESCAPE)
 
 For instance, META 8 C-F moves forward eight characters.
-	
+
 >> Try giving a suitable argument to C-N or C-P to come as close
    as you can to this line in one jump.
 

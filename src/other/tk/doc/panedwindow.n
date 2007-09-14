@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH panedwindow n 8.4 Tk "Tk Built-In Commands"
 .BS
@@ -128,7 +128,7 @@ proxy location.
 Remove the proxy from the display.
 .TP
 \fIpathName \fBproxy place \fIx y\fR
-Place the proxy at the given \fIx\fR and \fIy\fR coordinates.  
+Place the proxy at the given \fIx\fR and \fIy\fR coordinates.
 .RE
 .TP
 \fIpathName \fBsash \fI?args?\fR
@@ -206,12 +206,12 @@ dimension for vertical panedwindows.  May be any value accepted by
 .TP
 \fB\-padx \fIn\fR
 Specifies a non-negative value indicating how much extra space to
-leave on each side of the window in the X-direction.  The value may 
+leave on each side of the window in the X-direction.  The value may
 have any of the forms accepted by \fBTk_GetPixels\fR.
 .TP
 \fB\-pady \fIn\fR
 Specifies a non-negative value indicating how much extra space to
-leave on each side of the window in the Y-direction.  The value may 
+leave on each side of the window in the Y-direction.  The value may
 have any of the forms accepted by \fBTk_GetPixels\fR.
 .TP
 \fB\-sticky \fIstyle\fR
@@ -241,11 +241,11 @@ definition:
 This pane will always stretch.
 .TP
 \fBfirst\fR
-Only if this pane is the first pane (left-most or top-most) will it 
+Only if this pane is the first pane (left-most or top-most) will it
 stretch.
 .TP
 \fBlast\fR
-Only if this pane is the last pane (right-most or bottom-most) will it 
+Only if this pane is the last pane (right-most or bottom-most) will it
 stretch.  This is the default value.
 .TP
 \fBmiddle\fR

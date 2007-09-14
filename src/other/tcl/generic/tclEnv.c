@@ -674,7 +674,7 @@ ReplaceString(
 
 	const int growth = 5;
 
-	environCache = (char **) ckrealloc ((char *) environCache, 
+	environCache = (char **) ckrealloc ((char *) environCache,
 		(cacheSize + growth) * sizeof(char *));
 	environCache[cacheSize] = newStr;
 	(void) memset(environCache+cacheSize+1, (int) 0,

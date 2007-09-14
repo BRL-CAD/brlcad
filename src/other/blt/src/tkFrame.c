@@ -238,18 +238,18 @@ int TkCreateFrame _ANSI_ARGS_((ClientData clientData,
 EXTERN void TkSetWindowMenuBar _ANSI_ARGS_((Tcl_Interp *interp, Tk_Window tkwin,
         char *oldMenuName, char *menuName));
 
-EXTERN Tk_Window TkCreateMainWindow _ANSI_ARGS_((Tcl_Interp * interp, 
+EXTERN Tk_Window TkCreateMainWindow _ANSI_ARGS_((Tcl_Interp * interp,
 	char * screenName, char * baseName));
 #if (TK_MAJOR_VERSION == 8) && (TK_MINOR_VERSION > 3)
 #define TkSetClassProcs	Tk_SetClassProcs
-#else 
-EXTERN void TkSetClassProcs _ANSI_ARGS_((Tk_Window tkwin, void *procs, 
+#else
+EXTERN void TkSetClassProcs _ANSI_ARGS_((Tk_Window tkwin, void *procs,
 	ClientData instanceData));
 #endif /* TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION > 3 */
 
 EXTERN void TkpSetMainMenubar _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin,
 	char * menuName));
-EXTERN int TkpUseWindow _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN int TkpUseWindow _ANSI_ARGS_((Tcl_Interp * interp, Tk_Window tkwin,
 	char * string));
 EXTERN void TkpMakeContainer _ANSI_ARGS_((Tk_Window tkwin));
 
@@ -661,7 +661,7 @@ DestroyFrame(memPtr)
     DestroyData *memPtr;	/* Info about frame widget. */
 {
     register Frame *framePtr = (Frame *) memPtr;
-    
+
     Tk_FreeOptions(configSpecs, (char *)framePtr, framePtr->display,
 	framePtr->mask);
     if (framePtr->tile != NULL) {
@@ -828,9 +828,9 @@ DisplayFrame(clientData)
 	    framePtr->borderWidth, framePtr->relief);
     } else {
 	Blt_SetTileOrigin(tkwin, framePtr->tile, 0, 0);
-	Blt_TileRectangle(tkwin, Tk_WindowId(tkwin), framePtr->tile, 0, 0, 
+	Blt_TileRectangle(tkwin, Tk_WindowId(tkwin), framePtr->tile, 0, 0,
 		Tk_Width(tkwin), Tk_Height(tkwin));
-	if ((framePtr->border != NULL) && 
+	if ((framePtr->border != NULL) &&
 	    (framePtr->relief != TK_RELIEF_FLAT)) {
 	    Blt_Draw3DRectangle(tkwin, Tk_WindowId(tkwin),
 		framePtr->border, framePtr->highlightWidth,
@@ -1058,7 +1058,7 @@ MapFrame(clientData)
  *--------------------------------------------------------------
  */
 
-#ifdef notdef	
+#ifdef notdef
 void
 TkInstallFrameMenu(tkwin)
     Tk_Window tkwin;		/* The window that was just created. */

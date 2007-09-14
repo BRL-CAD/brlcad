@@ -275,13 +275,13 @@ PeekOnPipe(
 
 	nAvail = pipePtr->end - pipePtr->start;
 #if PEEK_DEBUG
-	PurifyPrintf("PEEK(%d): Found %d bytes available\n", 
+	PurifyPrintf("PEEK(%d): Found %d bytes available\n",
 		pipePtr->hPipe, nAvail);
 #endif
 	if ((nAvail <= 0) && !(pipePtr->flags & PIPE_EOF)) {
 	    TclWinConvertError(pipePtr->lastError);
 #if PEEK_DEBUG
-	    PurifyPrintf("PEEK(%d): Error = %d\n", 
+	    PurifyPrintf("PEEK(%d): Error = %d\n",
 		pipePtr->hPipe, pipePtr->lastError);
 #endif
 	    nAvail = -1;
@@ -677,7 +677,7 @@ PipeReaderThread(void *clientData)
 
 	if (result) {
 #if READER_DEBUG
-	    PurifyPrintf("READER(%d): after read. status=%d, count=%d\n", 
+	    PurifyPrintf("READER(%d): after read. status=%d, count=%d\n",
 		pipePtr->hPipe, result, count);
 #endif
 	}
@@ -694,7 +694,7 @@ PipeReaderThread(void *clientData)
 		pipePtr->flags |= PIPE_EOF;
 	    }
 #if READER_DEBUG
-	    PurifyPrintf("READER(%d): error is %s\n", 
+	    PurifyPrintf("READER(%d): error is %s\n",
 		pipePtr->hPipe, Blt_LastError());
 #endif
 	}
@@ -821,8 +821,8 @@ TempFileName(char *name)	/* (out) Buffer to hold name of
  */
 static HANDLE
 OpenRedirectFile(
-    const char *path, 
-    DWORD accessFlags, 
+    const char *path,
+    DWORD accessFlags,
     DWORD createFlags)
 {
     HANDLE hFile;
@@ -1155,7 +1155,7 @@ GetFullPath(
 	    continue;		/* Can't find program with that extension */
 	}
 	/*
-	 * Ignore matches on directories or data files. 
+	 * Ignore matches on directories or data files.
 	 * Return when we identify a known program type.
 	 */
 	attr = GetFileAttributesA(fullPath);
@@ -1184,7 +1184,7 @@ GetFullPath(
 	    }
 	}
 	if (*p == NULL) {
-	    Tcl_AppendResult(interp, "can't execute \"", program, 
+	    Tcl_AppendResult(interp, "can't execute \"", program,
 			     "\": no such file or directory", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1220,8 +1220,8 @@ GetFullPath(
  */
 static char *
 ConcatCmdArgs(
-    int argc, 
-    char **argv, 
+    int argc,
+    char **argv,
     Tcl_DString *resultPtr)
 {
     BOOL needQuote;
@@ -1887,7 +1887,7 @@ Blt_CreatePipeline(
 	    }
 	    if (*p == '\0') {
 		if ((i == (lastBar + 1)) || (i == (argc - 1))) {
-		    Tcl_AppendResult(interp, 
+		    Tcl_AppendResult(interp,
 				     "illegal use of | or |& in command",
 				     (char *)NULL);
 		    goto error;

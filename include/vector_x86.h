@@ -22,7 +22,7 @@ struct vec_internal {
 //     : dvec<4>(
 // {
 //     double t[4] VEC_ALIGN = {a, b, c, d};
-    
+
 // }
 
 template<int LEN>
@@ -65,7 +65,7 @@ inline dvec<LEN>::dvec(const vec_internal<LEN>& d)
 }
 
 template<int LEN>
-inline dvec<LEN>& 
+inline dvec<LEN>&
 dvec<LEN>::operator=(const dvec<LEN>& p)
 {
   for (int i = 0; i < LEN/2; i++) {
@@ -75,7 +75,7 @@ dvec<LEN>::operator=(const dvec<LEN>& p)
 }
 
 template<int LEN>
-inline double 
+inline double
 dvec<LEN>::operator[](const int index) const
 {
   double t[2] __attribute__((aligned(16)));
@@ -84,7 +84,7 @@ dvec<LEN>::operator[](const int index) const
 }
 
 template<int LEN>
-inline void 
+inline void
 dvec<LEN>::u_store(double* arr) const
 {
   for (int i = 0; i < LEN/2; i++) {
@@ -93,7 +93,7 @@ dvec<LEN>::u_store(double* arr) const
 }
 
 template<int LEN>
-inline void 
+inline void
 dvec<LEN>::a_store(double* arr) const
 {
   for (int i = 0; i < LEN/2; i++) {
@@ -103,13 +103,13 @@ dvec<LEN>::a_store(double* arr) const
 
 template<int LEN>
 inline bool
-dvec<LEN>::operator==(const dvec<LEN>& b) const 
+dvec<LEN>::operator==(const dvec<LEN>& b) const
 {
   double ta[LEN] VEC_ALIGN;
   double tb[LEN] VEC_ALIGN;
   a_store(ta);
   b.a_store(tb);
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     if (fabs(ta[i]-tb[i]) > VEQUALITY) return false;
   return true;
 }
@@ -121,37 +121,37 @@ dvec<LEN>::operator==(const dvec<LEN>& b) const
   }                                               \
  return dvec<LEN>(result);                        \
 }
-   
+
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
   OP_IMPL(_mm_add_pd)
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator-(const dvec<LEN>& b)
 {
   OP_IMPL(_mm_sub_pd)
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator*(const dvec<LEN>& b)
 {
   OP_IMPL(_mm_mul_pd)
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator/(const dvec<LEN>& b)
 {
   OP_IMPL(_mm_div_pd)
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
   vec_internal<LEN> r;
@@ -165,9 +165,9 @@ dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::madd(const double s, const dvec<LEN>& b)
-{  
+{
   double _t[LEN] VEC_ALIGN;
   for (int i = 0; i < LEN; i++) _t[i] = s;
   dvec<LEN> t(_t,true);
@@ -175,7 +175,7 @@ dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 }
 
 template<int LEN>
-inline double 
+inline double
 dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
 {
     double _t[LEN] VEC_ALIGN;
@@ -188,7 +188,7 @@ dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
 }
 
 template<int LEN>
-inline double 
+inline double
 dvec<LEN>::foldl(double identity, const dvec_op& op, int limit)
 {
     double _t[LEN] VEC_ALIGN;
@@ -223,7 +223,7 @@ operator<<(std::ostream& out, const dvec<LEN>& v)
   out << "<";
   for (int i = 0; i < LEN; i++) {
     out << _t[i];
-    if (i != LEN-1) 
+    if (i != LEN-1)
       out << ",";
   }
   out << ">";
@@ -232,11 +232,11 @@ operator<<(std::ostream& out, const dvec<LEN>& v)
 
 class vec2d {
 public:
-  
-  vec2d() { 
-    _init(0,0); 
+
+  vec2d() {
+    _init(0,0);
   }
-  
+
   vec2d(double x, double y) {
     _init(x,y);
   }
@@ -246,7 +246,7 @@ public:
     _vec = proto._vec;
   }
 
-  vec2d& operator=(const vec2d& b) 
+  vec2d& operator=(const vec2d& b)
   {
     _vec = b._vec;
     return *this;
@@ -260,7 +260,7 @@ public:
 
   void ustore(double* arr) const {
     // assume nothing about the alignment of arr
-    double  v[2] __attribute__((aligned(16)));    
+    double  v[2] __attribute__((aligned(16)));
     _mm_store_pd(v, _vec);
     arr[0] = v[0];
     arr[1] = v[1];
@@ -273,17 +273,17 @@ public:
   {
     return vec2d(_mm_add_pd(_vec,b._vec));
   }
-  
+
   vec2d operator-(const vec2d& b) const
   {
     return vec2d(_mm_sub_pd(vec(),b.vec()));
   }
-  
+
   vec2d operator*(const vec2d& b) const
   {
     return vec2d(_mm_mul_pd(vec(),b.vec()));
   }
-  
+
   vec2d operator/(const vec2d& b) const
   {
     return vec2d(_mm_div_pd(vec(),b.vec()));
@@ -302,25 +302,25 @@ public:
 private:
   //double  v[2] __attribute__((aligned(16)));
   v2df _vec;
-  
-  vec2d(const v2df& result) 
+
+  vec2d(const v2df& result)
   {
     _vec = result;
   }
-   
+
   v2df vec() const { return _vec; }
- 
-  void _init(double x, double y) 
+
+  void _init(double x, double y)
   {
     double  v[2] __attribute__((aligned(16)));
     v[0] = x;
     v[1] = y;
     _vec = _mm_load_pd(v);
-  }    
+  }
 
 };
-  
-inline std::ostream& 
+
+inline std::ostream&
 operator<<(std::ostream& out, const vec2d& v)
 {
   out << "<" << v.x() << "," << v.y() << ">";

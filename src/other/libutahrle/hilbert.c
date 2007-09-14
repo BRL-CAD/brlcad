@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * hilbert.c - Computes Hilbert curve coordinates from position and v.v.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -117,7 +117,7 @@ int n;
 
 /*****************************************************************
  * TAG( hilbert_i2c )
- * 
+ *
  * Convert an index into a Hilbert curve to a set of coordinates.
  * Inputs:
  * 	n:	Number of coordinate axes.
@@ -171,7 +171,7 @@ int a[];
 	tau = sigma ^ 1;
 	if ( parity[tau] )
 	    tau ^= bit[J];
-	
+
 	/* sigmaT[i] is circular shift of sigma[i] by sum of J[0..i-1] */
 	/* tauT[i] is same circular shift of tau[i]. */
 	if ( Jsum > 0 )
@@ -228,7 +228,7 @@ int a[];
 
 /*****************************************************************
  * TAG( hilbert_c2i )
- * 
+ *
  * Convert coordinates of a point on a Hilbert curve to its index.
  * Inputs:
  * 	n:	Number of coordinates.

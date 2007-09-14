@@ -370,7 +370,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	/* mirror */
 	if (state->miraxis != W) {
-	    //	    matrix[state->miraxis * ELEMENTS_PER_PLANE] += 2 * (state->mirpos - 
+	    //	    matrix[state->miraxis * ELEMENTS_PER_PLANE] += 2 * (state->mirpos -
 	}
 	/* translate */
 	if (state->trans[W]) {
@@ -393,7 +393,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 	rt_db_free_internal(&intern, &rt_uniresource);
     } /* end iteration over each copy */
-    
+
     return;
 }
 

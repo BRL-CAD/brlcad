@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -89,7 +89,7 @@ public:
   Parameteters:
     major_angle_radians - [in]
   Returns:
-    A circle with radius = minor_radis, 
+    A circle with radius = minor_radis,
     center = major_circle.PointAt(major_angle_radians), and
     starting point PointAt( major_angle_radians, 0.0 ).
   See Also:
@@ -107,7 +107,7 @@ public:
   Parameteters:
     major_angle_degrees - [in]
   Returns:
-    A circle with radius = minor_radis, 
+    A circle with radius = minor_radis,
     center = major_circle.PointAt(major_angle_degrees*ON_PI/180.0), and
     starting point PointAt( major_angle_degrees*ON_PI/180.0, 0.0 ).
   See Also:
@@ -124,24 +124,24 @@ public:
   double MinorRadius() const;
 
   ON_3dPoint PointAt(
-    double major_angle_radians, 
+    double major_angle_radians,
     double minor_angle_radians
     ) const;
 
   ON_3dVector NormalAt(
-    double major_angle_radians, 
+    double major_angle_radians,
     double minor_angle_radians
     ) const;
 
   // returns parameters of point on torus that is closest to test_point.
-  BOOL ClosestPointTo( 
-         ON_3dPoint test_point, 
-         double* major_angle_radians, 
+  BOOL ClosestPointTo(
+         ON_3dPoint test_point,
+         double* major_angle_radians,
          double* minor_angle_radians
          ) const;
 
   // returns point on torus that is closest to test_point
-  ON_3dPoint ClosestPointTo( 
+  ON_3dPoint ClosestPointTo(
          ON_3dPoint test_point
          ) const;
 

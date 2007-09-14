@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -32,7 +32,7 @@ if { ([info exists tcl_platform]) && ($tcl_platform(platform) == "windows") } {
 
 canvas .c -width 320 -height 320 -background white
 
-blt::table . .c -fill both 
+blt::table . .c -fill both
 
 set lastCell ""
 set cellWidth 1
@@ -61,12 +61,12 @@ proc RedrawWorld { canvas } {
 
     for { set row 0 } { $row < 8 } { incr row } {
 	set y [expr $row * $cellHeight]
-	$canvas create line 0 $y $width $y 
+	$canvas create line 0 $y $width $y
     }
-    
+
     for { set column 0 } { $column < 8 } { incr column } {
 	set x [expr $column * $cellWidth]
-	$canvas create line $x 0 $x $height 
+	$canvas create line $x 0 $x $height
     }
     foreach name [array names cells] {
 	set rc [split $name ,]
@@ -81,26 +81,26 @@ proc RedrawWorld { canvas } {
 	set pi1_2 [expr 3.14159265358979323846/180.0]
 	set points {}
 	switch $type {
-	    hexagon { 
+	    hexagon {
 		lappend points $x [expr $y + $h/2] [expr $x + $w * 1/3] \
 		    $y [expr $x + $w * 2/3] $y [expr $x + $w] [expr $y + $h/2] \
 		    [expr $x + $w * 2/3] [expr $y + $h] \
-		    [expr $x + $w * 1/3] [expr $y + $h] 
+		    [expr $x + $w * 1/3] [expr $y + $h]
 	    }
-	    parallelogram   { 
+	    parallelogram   {
 		lappend points $x [expr $y + $h * 2/3] \
 		    [expr $x + $w * 2/3] $y \
 		    [expr $x + $w] [expr $y + $h * 1/3] \
 		    [expr $x + $w * 1/3] [expr $y + $h]
 	    }
-	    triangle { 
+	    triangle {
 		lappend points \
 		    $x [expr $y + $h] \
 		    [expr $x + $w * 1/2] $y \
-		    [expr $x + $w] [expr $y + $h] 
+		    [expr $x + $w] [expr $y + $h]
 	    }
 	}
-	eval .c create polygon $points -fill $color -outline black 
+	eval .c create polygon $points -fill $color -outline black
     }
 }
 
@@ -143,7 +143,7 @@ for { set i 0 } { $i < 20 } { incr i } {
 }
 
 proc ScreenToCell { widget x y }  {
-    global cellWidth cellHeight 
+    global cellWidth cellHeight
     set column [expr $x / $cellWidth]
     set row [expr $y / $cellHeight]
     return $row,$column
@@ -162,18 +162,18 @@ if { $count == 1 }  {
     toplevel .info
     raise .info
     text .info.text -width 65 -height 12 -font { Helvetica 10 } -bg white \
-	-tabs { 0.25i } 
+	-tabs { 0.25i }
     .info.text insert end {
-	This is a more involved example of the new "dnd" command.  
+	This is a more involved example of the new "dnd" command.
 	Run this script again to get another window. You can then drag
-	and drop symbols between the windows by clicking with the left 
-	mouse button on a symbol.  
+	and drop symbols between the windows by clicking with the left
+	mouse button on a symbol.
 
-	It demonstates how to 
+	It demonstates how to
 		o Drag-and-drop on specific areas (canvas items) of a widget.
 		o How to receive and handle Enter/Leave/Motion events in the target.
 		o How to send drag feedback to the source.
-		o Use a drag threshold. 
+		o Use a drag threshold.
     }
     button .info.quit -text "Dismiss" -command { destroy .info }
     blt::table .info \
@@ -183,9 +183,9 @@ if { $count == 1 }  {
 
 
 # -----------------------------------------------------------------
-# 
+#
 #  Setup finished.  Start of drag-and-drop code here.
-# 
+#
 
 # Set up the entire canvas as a drag&drop source.
 
@@ -213,11 +213,11 @@ proc GetColor { widget args } {
     return [list $color $type]
 }
 
-dnd configure .c -package PackageSample 
+dnd configure .c -package PackageSample
 
 proc PackageSample { widget args } {
     array set info $args
-    
+
     # Check if we're over a canvas item
     set items [$widget find overlapping $info(x) $info(y) $info(x) $info(y)]
     set pickedItem ""
@@ -247,11 +247,11 @@ proc PackageSample { widget args } {
     }
     set tag [ScreenToCell $widget $info(x) $info(y)]
     $info(token).label configure -background $fill -foreground $outline \
-	-text $type 
+	-text $type
     update idletasks
     update
     global itemInfo
-    set itemInfo($info(timestamp)) $pickedItem 
+    set itemInfo($info(timestamp)) $pickedItem
     return 1
 }
 
@@ -263,7 +263,7 @@ dnd configure .c -cursors {
     { @bitmaps/hand/hand03.xbm bitmaps/hand/hand03m.xbm  black white }
     { @bitmaps/hand/hand04.xbm bitmaps/hand/hand04m.xbm  black white }
     { @bitmaps/hand/hand05.xbm bitmaps/hand/hand05m.xbm  black white }
-    { @bitmaps/hand/hand06.xbm bitmaps/hand/hand06m.xbm  black white } 
+    { @bitmaps/hand/hand06.xbm bitmaps/hand/hand06m.xbm  black white }
     { @bitmaps/hand/hand07.xbm bitmaps/hand/hand07m.xbm  black white }
     { @bitmaps/hand/hand08.xbm bitmaps/hand/hand08m.xbm  black white }
     { @bitmaps/hand/hand09.xbm bitmaps/hand/hand09m.xbm  black white }
@@ -278,7 +278,7 @@ dnd configure .c -cursors {
 
 set token [dnd token window .c]
 
-label $token.label -bd 2 -highlightthickness 1  
+label $token.label -bd 2 -highlightthickness 1
 pack $token.label
 dnd token configure .c \
     -borderwidth 2 \
@@ -289,8 +289,8 @@ dnd token configure .c \
 
 dnd configure .c -target yes
 
-dnd setdata .c color { 
-    NewObject 
+dnd setdata .c color {
+    NewObject
 }
 
 proc NewObject { widget args } {
@@ -305,7 +305,7 @@ proc NewObject { widget args } {
 
 }
 
-dnd configure .c -onmotion OnMotion -onenter OnMotion -onleave OnMotion 
+dnd configure .c -onmotion OnMotion -onenter OnMotion -onleave OnMotion
 
 proc OnMotion { widget args } {
     global cells lastCell

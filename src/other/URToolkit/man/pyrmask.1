@@ -1,10 +1,10 @@
 .\" Copyright (c) 1986, University of Utah
 .TH PYRMASK 1 "Nov 8, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 pyrmask \- Blend two images together using Gaussian pyramids.
 .SH SYNOPSIS
-.B pyrmask 
+.B pyrmask
 [
 .B \-l
 .I levels
@@ -20,13 +20,13 @@ separate bandpass images, combining these separate images, and then adding
 the new bandpass images back into a single output image.  This can produce
 very seamless blends of digital images.  The two images
 are combined on the basis of a third "mask" image.  The resulting image
-will contain the 
+will contain the
 .I inmask
-image where the mask contains a maximum value (255) and the 
-.I outmask 
+image where the mask contains a maximum value (255) and the
+.I outmask
 image where the mask contains zeros.  This is done on a channel by channel
 basis, i.e. the maskfile should have data in each channel describing how
-to combine each channel of the 
+to combine each channel of the
 .I inmask
 and
 .I outmask

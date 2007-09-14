@@ -7,19 +7,19 @@
 CFG=opennurbs_vc60 - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "opennurbs_vc60.mak".
-!MESSAGE 
+!MESSAGE
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "opennurbs_vc60.mak" CFG="opennurbs_vc60 - Win32 Debug"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "opennurbs_vc60 - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE "opennurbs_vc60 - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE 
+!MESSAGE
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
@@ -83,7 +83,7 @@ LINK32=link.exe
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib rpcrt4.lib /nologo /dll /incremental:no /pdb:"./Debug_vc60/opennurbs_vc60d.pdb" /debug /machine:I386 /out:"./Debug_vc60/opennurbs_vc60d.dll" /implib:"./Debug_vc60/opennurbs_vc60d.lib" /pdbtype:sept
 # SUBTRACT LINK32 /pdb:none
 
-!ENDIF 
+!ENDIF
 
 # Begin Target
 
@@ -881,7 +881,7 @@ SOURCE=.\zlib\Debug_vc60\zlib_vc60d.lib
 
 !ELSEIF  "$(CFG)" == "opennurbs_vc60 - Win32 Debug"
 
-!ENDIF 
+!ENDIF
 
 # End Source File
 # End Group
@@ -898,7 +898,7 @@ SOURCE=.\zlib\Release_vc60\zlib_vc60.lib
 
 # PROP Exclude_From_Build 1
 
-!ENDIF 
+!ENDIF
 
 # End Source File
 # End Group

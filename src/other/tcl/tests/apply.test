@@ -244,7 +244,7 @@ test apply-8.3 {args treatment} {
     apply [list {x args} $applyBody] 1 2 3
 } {{x 1} {args {2 3}}}
 test apply-8.4 {default values} {
-    apply [list {{x 1} {y 2}} $applyBody] 
+    apply [list {{x 1} {y 2}} $applyBody]
 } {{x 1} {y 2}}
 test apply-8.5 {default values} {
     apply [list {{x 1} {y 2}} $applyBody] 3 4

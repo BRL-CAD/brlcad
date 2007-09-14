@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH GETAP 1 "Feb 3, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 getap \- get RLE images to an Apollo display
 .SH SYNOPSIS
@@ -8,7 +8,7 @@ getap \- get RLE images to an Apollo display
 [
 .B \-b
 ] [
-.B \-g 
+.B \-g
 .I gamma
 ] [
 .B \-l
@@ -16,7 +16,7 @@ getap \- get RLE images to an Apollo display
 .B \-n
 ] [
 .B \-r
-] [ 
+] [
 .BI \-t " text"
 ] [
 .B \-w
@@ -36,7 +36,7 @@ It uses a dithering technique to take a
 full-color or gray scale image into the limited number of colors
 typically available, unless "borrow mode" is specified.  Under
 borrow mode, the 24 bit mode of the Apollo hardware is used (if it's
-available).  On bitmap displays, 
+available).  On bitmap displays,
 .IR getap
 converts the image to black and white and uses bitmap dithering.
 .SH OPTIONS
@@ -62,7 +62,7 @@ Loads a linear color map.
 On black and white displays, this flips the orientation of black and white.
 .TP
 .BI \-t " text"
-Displays the 
+Displays the
 .I text
 string at the bottom of the image.
 .TP
@@ -85,8 +85,8 @@ John W. Peterson
 is pretty sloppy about dealing with the color map, particularly in window
 mode.
 
-Since Apollo workstations now support the X window system, 
+Since Apollo workstations now support the X window system,
 .I getap
-is mostly subsumed by 
+is mostly subsumed by
 .IR getx11 .
 

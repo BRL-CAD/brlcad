@@ -296,7 +296,7 @@ tk::ScreenChanged [winfo screen .]
 
 proc ::tk::EventMotifBindings {n1 dummy dummy} {
     upvar $n1 name
-    
+
     if {$name} {
 	set op delete
     } else {
@@ -304,13 +304,13 @@ proc ::tk::EventMotifBindings {n1 dummy dummy} {
     }
 
     event $op <<Cut>> <Control-Key-w>
-    event $op <<Copy>> <Meta-Key-w> 
+    event $op <<Copy>> <Meta-Key-w>
     event $op <<Paste>> <Control-Key-y>
     event $op <<Undo>> <Control-underscore>
 }
 
 #----------------------------------------------------------------------
-# Define common dialogs on platforms where they are not implemented 
+# Define common dialogs on platforms where they are not implemented
 # using compiled code.
 #----------------------------------------------------------------------
 
@@ -354,7 +354,7 @@ if {![llength [info command tk_chooseDirectory]]} {
 
 switch -- [tk windowingsystem] {
     "x11" {
-	event add <<Cut>> <Control-Key-x> <Key-F20> 
+	event add <<Cut>> <Control-Key-x> <Key-F20>
 	event add <<Copy>> <Control-Key-c> <Key-F16>
 	event add <<Paste>> <Control-Key-v> <Key-F18>
 	event add <<PasteSelection>> <ButtonRelease-2>
@@ -362,7 +362,7 @@ switch -- [tk windowingsystem] {
 	event add <<Redo>> <Control-Key-Z>
 	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym
 	# that is returned when the user presses <Shift-Tab>.  In order for
-	# tab traversal to work, we have to add these keysyms to the 
+	# tab traversal to work, we have to add these keysyms to the
 	# PrevWindow event.
 	# We use catch just in case the keysym isn't recognized.
 	# This is needed for XFree86 systems
@@ -385,7 +385,7 @@ switch -- [tk windowingsystem] {
 	event add <<Redo>> <Control-Key-y>
     }
     "aqua" {
-	event add <<Cut>> <Command-Key-x> <Key-F2> 
+	event add <<Cut>> <Command-Key-x> <Key-F2>
 	event add <<Copy>> <Command-Key-c> <Key-F3>
 	event add <<Paste>> <Command-Key-v> <Key-F4>
 	event add <<PasteSelection>> <ButtonRelease-2>
@@ -439,7 +439,7 @@ proc ::tk::CancelRepeat {} {
 
 # ::tk::TabToWindow --
 # This procedure moves the focus to the given widget.
-# It sends a <<TraverseOut>> virtual event to the previous focus window, 
+# It sends a <<TraverseOut>> virtual event to the previous focus window,
 # if any, before changing the focus, and a <<TraverseIn>> event
 # to the new focus window afterwards.
 #
@@ -483,7 +483,7 @@ proc ::tk::UnderlineAmpersand {text} {
     return [list $text $idx]
 }
 
-# ::tk::SetAmpText -- 
+# ::tk::SetAmpText --
 # Given widget path and text with "magic ampersands",
 # sets -text and -underline options for the widget
 #

@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -27,12 +27,12 @@ Blt_TreeGetToken \- Grabs a token associated with existing tree data object.
 .nf
 \fB#include <bltTree.h>\fR
 .sp
-int 
+int
 \fBBlt_TreeGetToken\fR(\fIinterp\fR, \fIname\fR, \fItokenPtr\fR)
 .SH ARGUMENTS
 .AS Tcl_Interp *interp
 .AP Tcl_Interp *interp in
-Interpreter to report results back to.  
+Interpreter to report results back to.
 .AP "const char" *name  in
 Name of an existing tree data object.  Can be qualified by a namespace.
 .AP Blt_Tree *tokenPtr out
@@ -49,14 +49,14 @@ interp->result will contain an error message.
 .TP 1i
 \fIname\fR
 Name of an existing tree data object.  It's an error if a tree
-\fIname\fR doesn't already exist.  \fIName\fR can be qualified by 
-a namespace such as \f(CWfred::myTree\fR.  If no namespace qualifier 
+\fIname\fR doesn't already exist.  \fIName\fR can be qualified by
+a namespace such as \f(CWfred::myTree\fR.  If no namespace qualifier
 is used, the tree the current namespace is searched, then the global
-namespace. 
+namespace.
 .TP 1i
 \fItokenPtr\fR
 Points to the location where the returned token is stored. A tree
-token is used to work with the tree object.  
+token is used to work with the tree object.
 .PP
 A token for the tree data object is returned.  Tree data objects can
 be shared.  For example, the \fBtree\fR and \fBhiertable\fR commands

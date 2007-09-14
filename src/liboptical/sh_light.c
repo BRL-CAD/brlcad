@@ -158,7 +158,7 @@ struct light_obs_stuff {
  *  This routine is called by bu_struct_parse() if the "aim"
  *  qualifier is encountered, and causes lt_exaim to be set.
  */
-HIDDEN void 
+HIDDEN void
 aim_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
 {
     register struct light_specific *lsp = (struct light_specific *)base;
@@ -1841,7 +1841,7 @@ light_maker(int num, mat_t v2m)
 	    return;
 	}
 
-	if (rdebug & RDEBUG_LIGHT) {  
+	if (rdebug & RDEBUG_LIGHT) {
 	    /* debugging ascii plot commands drawing from point location to origin */
 	    vect_t tmp;
 	    static vect_t pt = {0.0, 0.0, 0.0};

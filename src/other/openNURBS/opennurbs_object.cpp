@@ -5,11 +5,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// When openNURBS is used as a MS Windows DLL, it is possible 
+// When openNURBS is used as a MS Windows DLL, it is possible
 // for new/delete to allocate memory in one executable and delete
-// it in another.  Because MS Windows has incompatible memory 
+// it in another.  Because MS Windows has incompatible memory
 // managers in its plethora of C libraries and the choice of which
-// C library actually gets used depends on the code generation 
+// C library actually gets used depends on the code generation
 // options you choose,  we get lots of support questions asking
 // about hard to trace crashes.
 //
@@ -232,11 +232,11 @@ static void IntToString( int i, char s[7] )
   s[6] = 0;
 }
 
-ON_ClassId::ON_ClassId( const char* sClassName, 
-                        const char* sBaseClassName, 
+ON_ClassId::ON_ClassId( const char* sClassName,
+                        const char* sBaseClassName,
                         ON_Object* (*create)(),
                         const char* sUUID // UUID in registry format from guidgen
-                        ) 
+                        )
                         : m_pNext(0),
                           m_pBaseClassId(0),
                           m_create(create),
@@ -294,7 +294,7 @@ ON_ClassId::ON_ClassId( const char* sClassName,
        || m_sClassName[7] != 'c'
        || m_sClassName[8] != 't'
        || m_sClassName[9] != 0 ) {
-    if ( !m_sBaseClassName[0] ) 
+    if ( !m_sBaseClassName[0] )
     {
       ON_ERROR("ON_ClassId::ON_ClassId() - missing baseclass name.");
       return;
@@ -302,7 +302,7 @@ ON_ClassId::ON_ClassId( const char* sClassName,
   }
 
   g_bDisableDemotion = TRUE;
-  if ( ClassId( m_uuid ) ) 
+  if ( ClassId( m_uuid ) )
   {
     g_bDisableDemotion = FALSE;
     ON_ERROR("ON_ClassId::ON_ClassId() - class uuid already in use.");
@@ -317,7 +317,7 @@ ON_ClassId::ON_ClassId( const char* sClassName,
 
   // see if any derived classes need to be updated because their static
   // members got initialized first
-  if ( m_sClassName[0] ) 
+  if ( m_sClassName[0] )
   {
     this->m_pNext = m_p0;
     m_p0 = this;
@@ -373,13 +373,13 @@ const ON_ClassId* ON_ClassId::ClassId( ON_UUID uuid )
   // static member function
   // search list of class ids for one with a matching typecode
   const ON_ClassId* p;
-  for(p = m_p0; p; p = p->m_pNext) 
+  for(p = m_p0; p; p = p->m_pNext)
   {
     if ( !ON_UuidCompare(&p->m_uuid,&uuid) )
       break;
   }
 
-  if ( !p && !g_bDisableDemotion) 
+  if ( !p && !g_bDisableDemotion)
   {
     // enable OpenNURBS toolkit to read files that contain old uuids even when
     // old class definitions are not loaded.
@@ -446,14 +446,14 @@ public:
   bool Dump( int depth, ON_TextLog& text_log );
 };
 
-ON__ClassIdDumpNode::ON__ClassIdDumpNode() 
+ON__ClassIdDumpNode::ON__ClassIdDumpNode()
 {
   m_class_id=0;
   m_parent_node=0;
   m_depth=0;
 };
 
-ON__ClassIdDumpNode::~ON__ClassIdDumpNode() 
+ON__ClassIdDumpNode::~ON__ClassIdDumpNode()
 {
 }
 
@@ -616,7 +616,7 @@ void ON_ClassId::Dump( ON_TextLog& dump )
 {
   int i, j, count = 0;
   const ON_ClassId* p;
-  for(p = m_p0; p && count < 1000000; p = p->m_pNext) 
+  for(p = m_p0; p && count < 1000000; p = p->m_pNext)
   {
     count++;
   }
@@ -628,7 +628,7 @@ void ON_ClassId::Dump( ON_TextLog& dump )
   {
     ON__ClassIdDumpNode tmp_node;
     ON_ClassArray<ON__ClassIdDumpNode> nodes(count);
-    for(p = m_p0; p; p = p->m_pNext) 
+    for(p = m_p0; p; p = p->m_pNext)
     {
       ON__ClassIdDumpNode& node = nodes.AppendNew();
       node.m_class_id = p;
@@ -652,7 +652,7 @@ void ON_ClassId::Dump( ON_TextLog& dump )
           node.m_parent_node = &base_node;
           base_node.m_child_nodes.Append(&node);
         }
-      }      
+      }
     }
 
     // print class tree
@@ -673,7 +673,7 @@ void ON_ClassId::Dump( ON_TextLog& dump )
     if (!rc)
     {
       // should never happen
-      for(p = m_p0; p; p = p->m_pNext) 
+      for(p = m_p0; p; p = p->m_pNext)
       {
         dump.Print("%s::ClassId: ",p->m_sClassName);
         dump.Print( "mark=%d ",p->m_mark );
@@ -757,11 +757,11 @@ ON_Object::~ON_Object()
 
 void ON_Object::PurgeUserData()
 {
-  if ( m_userdata_list ) 
+  if ( m_userdata_list )
   {
     ON_UserData* p = m_userdata_list;
     ON_UserData* next;
-    while(p) 
+    while(p)
     {
       next = p->m_userdata_next;
       p->m_userdata_owner = 0;
@@ -776,13 +776,13 @@ void ON_Object::PurgeUserData()
 BOOL ON_Object::AttachUserData( ON_UserData* p )
 {
   BOOL rc = FALSE;
-  if ( p 
+  if ( p
        && NULL == p->m_userdata_owner
-       && ON_UuidCompare( &ON_nil_uuid, &p->m_userdata_uuid) 
+       && ON_UuidCompare( &ON_nil_uuid, &p->m_userdata_uuid)
        && NULL == GetUserData( p->m_userdata_uuid )
        ) {
     if ( p->IsUnknownUserData() ) {
-      // make sure we have valid user data - the first beta release of Rhino 2.0 
+      // make sure we have valid user data - the first beta release of Rhino 2.0
       // created empty user data.
       ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
       if (uud)
@@ -793,7 +793,7 @@ BOOL ON_Object::AttachUserData( ON_UserData* p )
     }
     else
       rc = TRUE;
-    if (rc) 
+    if (rc)
     {
       p->m_userdata_owner = this;
       p->m_userdata_next = m_userdata_list;
@@ -806,13 +806,13 @@ BOOL ON_Object::AttachUserData( ON_UserData* p )
 BOOL ON_Object::DetachUserData( ON_UserData* p )
 {
   BOOL rc = FALSE;
-  if ( p && p->m_userdata_owner == this ) 
+  if ( p && p->m_userdata_owner == this )
   {
     ON_UserData* prev = 0;
     ON_UserData* ud = m_userdata_list;
-    while ( ud ) 
+    while ( ud )
     {
-      if ( ud == p ) 
+      if ( ud == p )
       {
         if ( prev )
           prev->m_userdata_next = ud->m_userdata_next;
@@ -835,11 +835,11 @@ ON_UserData* ON_Object::GetUserData( const ON_UUID& userdata_uuid ) const
 {
   ON_UserData* prev = NULL;
   ON_UserData* p;
-  for ( p = m_userdata_list; p; prev = p, p = p->m_userdata_next ) 
+  for ( p = m_userdata_list; p; prev = p, p = p->m_userdata_next )
   {
-    if ( !ON_UuidCompare( &p->m_userdata_uuid, &userdata_uuid ) ) 
+    if ( !ON_UuidCompare( &p->m_userdata_uuid, &userdata_uuid ) )
     {
-      if ( p->IsUnknownUserData() ) 
+      if ( p->IsUnknownUserData() )
       {
         // See if we can convert this unknown user data into something useful.
         // Unknown user data is created when a 3dm archive is read and
@@ -850,19 +850,19 @@ ON_UserData* ON_Object::GetUserData( const ON_UUID& userdata_uuid ) const
         ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
         if ( uud ) {
           ON_UserData* realp = uud->Convert();
-          if ( realp ) 
+          if ( realp )
           {
             // replace unknown user data with the real thing
             if ( prev )
               prev->m_userdata_next = realp;
-            else if ( p == m_userdata_list ) 
+            else if ( p == m_userdata_list )
             {
               // little white lie to attach the "real" user
               // data to the object in place of the unknown
               // user data.
               ON_Object* pNotConst = const_cast<ON_Object*>(this);
               pNotConst->m_userdata_list = realp;
-              realp->m_userdata_owner = pNotConst; // Dale Lear added 22 Jan 2004 to fix I/O bug 
+              realp->m_userdata_owner = pNotConst; // Dale Lear added 22 Jan 2004 to fix I/O bug
             }
             realp->m_userdata_next = p->m_userdata_next;
             p->m_userdata_next = 0;
@@ -875,7 +875,7 @@ ON_UserData* ON_Object::GetUserData( const ON_UUID& userdata_uuid ) const
       break;
     }
   }
-  return p; 
+  return p;
 }
 
 ON_UserData* ON_Object::FirstUserData() const
@@ -927,7 +927,7 @@ void ON_Object::MoveUserData( ON_Object& src )
     }
   }
   else
-  {    
+  {
     // Carefully move userdata an item at a time to
     // avoid conflicts with existing items on "this".
 
@@ -945,9 +945,9 @@ void ON_Object::MoveUserData( ON_Object& src )
       p->m_userdata_owner = this;
     }
 
-    if ( !m_userdata_list ) 
+    if ( !m_userdata_list )
       m_userdata_list = next;
-    else 
+    else
     {
       p = m_userdata_list;
       while ( p->m_userdata_next )
@@ -1061,17 +1061,17 @@ ON__UINT32 ON_Object::DataCRC(ON__UINT32 current_remainder) const
 void ON_Object::Dump( ON_TextLog& dump ) const
 {
   const ON_ClassId* p = ClassId();
-  if ( p ) 
+  if ( p )
   {
     const char* class_name = p->ClassName();
-    if ( 0 == class_name ) 
+    if ( 0 == class_name )
       class_name = "unknown";
     dump.Print("class name: %s\n",class_name);
     dump.Print("class uuid: ");
     dump.Print(p->Uuid());
     dump.Print("\n");
   }
-  else 
+  else
   {
     dump.Print("ON_Object::ClassId() FAILED\n");
   }
@@ -1126,7 +1126,7 @@ void ON_Object::DestroyRuntimeCache( bool bDelete )
 
 void ON_Curve::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_ctree ) 
+  if ( m_ctree )
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )
@@ -1139,7 +1139,7 @@ void ON_Curve::DestroyRuntimeCache( bool bDelete )
 
 void ON_CurveProxy::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_ctree ) 
+  if ( m_ctree )
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )
@@ -1158,7 +1158,7 @@ void ON_CurveProxy::DestroyRuntimeCache( bool bDelete )
 
 void ON_Surface::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_stree ) 
+  if ( m_stree )
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )
@@ -1171,7 +1171,7 @@ void ON_Surface::DestroyRuntimeCache( bool bDelete )
 
 void ON_SurfaceProxy::DestroyRuntimeCache( bool bDelete )
 {
-  if ( m_stree ) 
+  if ( m_stree )
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDelete )

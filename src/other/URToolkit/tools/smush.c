@@ -1,13 +1,13 @@
-/* 
+/*
  * smush.c - Blur an image.  A level 1 smush is just a convolution with
  * a gaussian mask (or given mask).  Higher levels will be more blurry.
- * 
+ *
  * Author:	Rod Bogart
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Wed Oct 15 1986
  * Copyright (c) 1986, University of Utah
- * 
+ *
  */
 #ifndef lint
 static char rcs_ident[] = "$Header$";
@@ -86,7 +86,7 @@ char *argv[];
 	rle_addhist( argv, &in_hdr, &out_hdr );
 
 	/* initialize mask_mult_table */
-	mask_mult_table = (float *) malloc(sizeof(float) * origmasksize * 
+	mask_mult_table = (float *) malloc(sizeof(float) * origmasksize *
 					   origmasksize * 256);
 	RLE_CHECK_ALLOC( progname, mask_mult_table, 0 );
 	for (i=0; i < origmasksize; i++)

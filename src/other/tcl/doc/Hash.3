@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_Hash 3 "" Tcl "Tcl Library Procedures"
 .BS
@@ -129,13 +129,13 @@ The pointer value is the key;  it need not (and usually doesn't)
 actually point to a string.
 .IP \fBTCL_CUSTOM_TYPE_KEYS\fR 25
 Keys are of arbitrary type, and are stored in the entry. Hashing
-and comparison is determined by \fItypePtr\fR. The Tcl_HashKeyType 
-structure is described in the section 
+and comparison is determined by \fItypePtr\fR. The Tcl_HashKeyType
+structure is described in the section
 \fBTHE TCL_HASHKEYTYPE STRUCTURE\fR below.
 .IP \fBTCL_CUSTOM_PTR_KEYS\fR 25
 Keys are pointers to an arbitrary type, and are stored in the entry. Hashing
-and comparison is determined by \fItypePtr\fR. The Tcl_HashKeyType 
-structure is described in the section 
+and comparison is determined by \fItypePtr\fR. The Tcl_HashKeyType
+structure is described in the section
 \fBTHE TCL_HASHKEYTYPE STRUCTURE\fR below.
 .IP \fIother\fR 25
 If \fIkeyType\fR is not one of the above,
@@ -253,13 +253,13 @@ to \fBTCL_HASH_KEY_TYPE_VERSION\fR.
 .PP
 The \fIflags\fR member is one or more of the following values OR'ed together:
 .IP \fBTCL_HASH_KEY_RANDOMIZE_HASH\fR 25
-There are some things, pointers for example which don't hash well 
+There are some things, pointers for example which don't hash well
 because they do not use the lower bits. If this flag is set then the
-hash table will attempt to rectify this by randomizing the bits and 
+hash table will attempt to rectify this by randomizing the bits and
 then using the upper N bits as the index into the table.
 .IP \fBTCL_HASH_KEY_SYSTEM_HASH\fR 25
 .VS 8.5
-This flag forces Tcl to use the memory allocation 
+This flag forces Tcl to use the memory allocation
 procedures provided by the operating system when allocating
 and freeing memory used to store the hash table data structures,
 and not any of Tcl's own customized memory allocation routines.
@@ -269,17 +269,17 @@ that a custom set of allocation routines might depend on, in
 order to avoid any circular dependency.
 .VE 8.5
 .PP
-The \fIhashKeyProc\fR member contains the address of a function 
+The \fIhashKeyProc\fR member contains the address of a function
 called to calculate a hash value for the key.
 .CS
 typedef unsigned int (Tcl_HashKeyProc) (
         Tcl_HashTable *\fItablePtr\fR,
         void *\fIkeyPtr\fR);
 .CE
-If this is NULL then \fIkeyPtr\fR is used and 
+If this is NULL then \fIkeyPtr\fR is used and
 \fBTCL_HASH_KEY_RANDOMIZE_HASH\fR is assumed.
 .PP
-The \fIcompareKeysProc\fR member contains the address of a function 
+The \fIcompareKeysProc\fR member contains the address of a function
 called to compare two keys.
 .CS
 typedef int (Tcl_CompareHashKeysProc) (
@@ -290,7 +290,7 @@ If this is NULL then the \fIkeyPtr\fR pointers are compared.
 If the keys don't match then the function returns 0, otherwise
 it returns 1.
 .PP
-The \fIallocEntryProc\fR member contains the address of a function 
+The \fIallocEntryProc\fR member contains the address of a function
 called to allocate space for an entry and initialize the key.
 .CS
 typedef Tcl_HashEntry *(Tcl_AllocHashEntryProc) (
@@ -299,20 +299,20 @@ typedef Tcl_HashEntry *(Tcl_AllocHashEntryProc) (
 .CE
 If this is NULL then Tcl_Alloc is used to allocate enough space for a
 Tcl_HashEntry and the key pointer is assigned to key.oneWordValue.
-String keys and array keys use this function to allocate enough 
+String keys and array keys use this function to allocate enough
 space for the entry and the key in one block, rather than doing
 it in two blocks. This saves space for a pointer to the key from
-the entry and another memory allocation. Tcl_Obj * keys use this 
-function to allocate enough space for an entry and increment the 
+the entry and another memory allocation. Tcl_Obj * keys use this
+function to allocate enough space for an entry and increment the
 reference count on the object.
-If 
+If
 .PP
-The \fIfreeEntryProc\fR member contains the address of a function 
+The \fIfreeEntryProc\fR member contains the address of a function
 called to free space for an entry.
 .CS
 typedef void (Tcl_FreeHashEntryProc) (Tcl_HashEntry *\fIhPtr\fR);
 .CE
-If this is NULL then Tcl_Free is used to free the space for the 
+If this is NULL then Tcl_Free is used to free the space for the
 entry. Tcl_Obj * keys use this function to decrement the
 reference count on the object.
 .SH KEYWORDS

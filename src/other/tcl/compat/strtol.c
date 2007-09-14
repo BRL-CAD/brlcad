@@ -1,4 +1,4 @@
-/* 
+/*
  * strtol.c --
  *
  *	Source code for the "strtol" library procedure.

@@ -1,11 +1,11 @@
 .\" Copyright (c) 1986, University of Utah
 .\" Template man page.  Taken from wtm's page for getcx3d
 .TH CROP 1 "Nov 12, 1986" 1
-.UC 4 
+.UC 4
 .SH NAME
 crop \- Change the size of an RLE image
 .SH SYNOPSIS
-.B crop 
+.B crop
 [
 .B \-b
 ] [
@@ -14,21 +14,21 @@ crop \- Change the size of an RLE image
 [
 .B \-o
 .I outfile
-] [ 
-.I infile 
-] 
+] [
+.I infile
+]
 .SH DESCRIPTION
-.IR 
+.IR
 Crop changes the size of an RLE image.  The command line numbers
 .I "xmin ymin xmax ymax"
-specify the bounds of the resulting image.  If the resulting image is larger 
-than the original, 
+specify the bounds of the resulting image.  If the resulting image is larger
+than the original,
 .IR crop
 supplies blank pixels, otherwise pixels are thrown away.
 .SH OPTIONS
 .TP
 .B \-b
-The input image is cropped to the enclosing box.  Extra rows and columns of 
+The input image is cropped to the enclosing box.  Extra rows and columns of
 black pixels are removed.  The \fIinfile\fR must be a file; no piped input is
 allowed for this option.
 .TP
@@ -46,7 +46,7 @@ be taken from stdin.
 .SH AUTHOR
 Rod Bogart
 .SH BUGS
-Could be combined with 
+Could be combined with
 .IR repos .
 Does not check to see if the input and output regions are disjoint.
 

@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -92,7 +92,7 @@ as well as entry widgets (sending strings of the form "#rrggbb").
 This introduction was presented as a brief overview of the communication
 process; further details are presented below:
 .TP
-\fBdrag&drop source\fR 
+\fBdrag&drop source\fR
 Returns a list of path names for widgets registered as drag&drop
 sources.  Returns an empty string if no widgets have been registered.
 .TP

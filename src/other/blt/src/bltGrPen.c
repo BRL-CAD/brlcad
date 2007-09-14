@@ -177,7 +177,7 @@ StringToPen(clientData, interp, tkwin, string, widgRec, offset)
     penPtr = NULL;
     graphPtr = Blt_GetGraphFromWindowData(tkwin);
 
-    if (classUid == NULL) {	
+    if (classUid == NULL) {
 	classUid = graphPtr->classUid;
     }
     if ((string != NULL) && (string[0] != '\0')) {
@@ -288,7 +288,7 @@ Blt_CreatePen(graphPtr, penName, classUid, nOpts, options)
     int nOpts;
     char **options;
 {
-    
+
     Pen *penPtr;
     Blt_HashEntry *hPtr;
     unsigned int length, configFlags;
@@ -333,7 +333,7 @@ Blt_CreatePen(graphPtr, penName, classUid, nOpts, options)
 	}
 	if (penPtr->classUid != classUid) {
 	    Tcl_AppendResult(graphPtr->interp, "pen \"", penName,
-		"\" in-use: can't change pen type from \"", penPtr->classUid, 
+		"\" in-use: can't change pen type from \"", penPtr->classUid,
 		"\" to \"", classUid, "\"", (char *)NULL);
 	    return NULL;
 	}
@@ -379,8 +379,8 @@ Blt_GetPen(graphPtr, name, classUid, penPtrPtr)
 	classUid = bltLineElementUid;
     }
     if (penPtr->classUid != classUid) {
-	Tcl_AppendResult(graphPtr->interp, "pen \"", name, 
-		"\" is the wrong type (is \"", penPtr->classUid, "\"", 
+	Tcl_AppendResult(graphPtr->interp, "pen \"", name,
+		"\" is the wrong type (is \"", penPtr->classUid, "\"",
 		", wanted \"", classUid, "\")", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -504,10 +504,10 @@ ConfigureOp(interp, graphPtr, argc, argv)
 	penPtr = NameToPen(graphPtr, argv[i]);
 	flags = TK_CONFIG_ARGV_ONLY | (penPtr->flags & (ACTIVE_PEN|NORMAL_PEN));
 	if (nOpts == 0) {
-	    return Tk_ConfigureInfo(interp, graphPtr->tkwin, 
+	    return Tk_ConfigureInfo(interp, graphPtr->tkwin,
 		    penPtr->configSpecs, (char *)penPtr, (char *)NULL, flags);
 	} else if (nOpts == 1) {
-	    return Tk_ConfigureInfo(interp, graphPtr->tkwin, 
+	    return Tk_ConfigureInfo(interp, graphPtr->tkwin,
 		    penPtr->configSpecs, (char *)penPtr, options[0], flags);
 	}
 	if (Tk_ConfigureWidget(interp, graphPtr->tkwin, penPtr->configSpecs,
@@ -550,7 +550,7 @@ CreateOp(interp, graphPtr, argc, argv)
 {
     Pen *penPtr;
 
-    penPtr = Blt_CreatePen(graphPtr, argv[3], graphPtr->classUid, argc - 4, 
+    penPtr = Blt_CreatePen(graphPtr, argv[3], graphPtr->classUid, argc - 4,
 	argv + 4);
     if (penPtr == NULL) {
 	return TCL_ERROR;

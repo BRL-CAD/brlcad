@@ -213,7 +213,7 @@ test image-8.1 {Tk_ImageCmd procedure, "inuse" option} testImageType {
     image delete myimage2
     set res
 } [list 0 1]
-    
+
 
 test image-9.1 {Tk_ImageChanged procedure} testImageType {
     .c delete all
@@ -402,7 +402,7 @@ test image-15.1 {deleting image does not make widgets forget about it} {
     image create photo foo -width 20 -height 20
     lappend x [.c bbox i1] [image names]
 } {10 10 20 20 foo {} {10 10 30 30} foo}
-    
+
 destroy .c
 eval image delete [image names]
 

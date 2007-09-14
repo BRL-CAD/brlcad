@@ -1,6 +1,6 @@
-/* 
+/*
  * rle_box.c - Common code between rlebox and crop.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan

@@ -311,7 +311,7 @@ MinMathProc(clientData, interp, argsPtr, resultPtr)
     } else {
 	double a, b;
 
-	a = (op1Ptr->type == TCL_INT) 
+	a = (op1Ptr->type == TCL_INT)
 	    ? (double)op1Ptr->intValue : op1Ptr->doubleValue;
 	b = (op2Ptr->type == TCL_INT)
 	    ? (double)op2Ptr->intValue : op2Ptr->doubleValue;
@@ -375,7 +375,7 @@ SetLibraryPath(interp)
 	    DWORD size;
 
 	    /* Query once to get the size of the string needed */
-	    result = RegQueryValueEx(key, "BLT_LIBRARY", NULL, NULL, NULL, 
+	    result = RegQueryValueEx(key, "BLT_LIBRARY", NULL, NULL, NULL,
 		     &size);
 	    if (result == ERROR_SUCCESS) {
 		Tcl_DStringSetLength(&dString, size);
@@ -420,9 +420,9 @@ Blt_Init(interp)
 	}
 	/* Set the "blt_version", "blt_patchLevel", and "blt_libPath" Tcl
 	 * variables. We'll use them in the following script. */
-	if ((Tcl_SetVar(interp, "blt_version", BLT_VERSION, 
+	if ((Tcl_SetVar(interp, "blt_version", BLT_VERSION,
 			TCL_GLOBAL_ONLY) == NULL) ||
-	    (Tcl_SetVar(interp, "blt_patchLevel", BLT_PATCH_LEVEL, 
+	    (Tcl_SetVar(interp, "blt_patchLevel", BLT_PATCH_LEVEL,
 			TCL_GLOBAL_ONLY) == NULL)) {
 	    return TCL_ERROR;
 	}
@@ -432,7 +432,7 @@ Blt_Init(interp)
 	if (Tcl_Eval(interp, initScript) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	nsPtr = Tcl_CreateNamespace(interp, "blt", NULL, 
+	nsPtr = Tcl_CreateNamespace(interp, "blt", NULL,
 				    (Tcl_NamespaceDeleteProc *) NULL);
 	if (nsPtr == NULL) {
 	    return TCL_ERROR;
@@ -453,7 +453,7 @@ Blt_Init(interp)
 	if (Tcl_PkgProvide(interp, "BLT", BLT_VERSION) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL, 
+	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL,
 		(ClientData)(flags | BLT_TCL_CMDS));
     }
 #ifndef TCL_ONLY
@@ -461,22 +461,22 @@ Blt_Init(interp)
 	register Tcl_AppInitProc **p;
 	Tcl_Namespace *nsPtr;
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0))
 	if (Tcl_PkgPresent(interp, "Tk", TK_VERSION, EXACT) == NULL) {
 	    return TCL_OK;
-	} 
+	}
 #else
 	if (Tcl_PkgRequire(interp, "Tk", TK_VERSION, EXACT) == NULL) {
 	    Tcl_ResetResult(interp);
 	    return TCL_OK;
-	} 
+	}
 #endif
-	nsPtr = Tcl_CreateNamespace(interp, "blt::tile", NULL, 
+	nsPtr = Tcl_CreateNamespace(interp, "blt::tile", NULL,
 			    (Tcl_NamespaceDeleteProc *) NULL);
 	if (nsPtr == NULL) {
 	    return TCL_ERROR;
 	}
-	nsPtr = Tcl_FindNamespace(interp, "blt", (Tcl_Namespace *)NULL, 
+	nsPtr = Tcl_FindNamespace(interp, "blt", (Tcl_Namespace *)NULL,
 		TCL_LEAVE_ERR_MSG);
 	if (nsPtr == NULL) {
 	    return TCL_ERROR;
@@ -489,7 +489,7 @@ Blt_Init(interp)
 	    }
 	}
 	Blt_InitEpsCanvasItem(interp);
-	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL, 
+	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL,
 		(ClientData)(flags | BLT_TK_CMDS));
     }
 #endif
@@ -519,9 +519,9 @@ Blt_Init(interp)
 	}
 	/* Set the "blt_version", "blt_patchLevel", and "blt_libPath" Tcl
 	 * variables. We'll use them in the following script. */
-	if ((Tcl_SetVar(interp, "blt_version", BLT_VERSION, 
+	if ((Tcl_SetVar(interp, "blt_version", BLT_VERSION,
 			TCL_GLOBAL_ONLY) == NULL) ||
-	    (Tcl_SetVar(interp, "blt_patchLevel", BLT_PATCH_LEVEL, 
+	    (Tcl_SetVar(interp, "blt_patchLevel", BLT_PATCH_LEVEL,
 			TCL_GLOBAL_ONLY) == NULL)) {
 	    return TCL_ERROR;
 	}
@@ -544,22 +544,22 @@ Blt_Init(interp)
 	if (Tcl_PkgProvide(interp, "BLT", BLT_VERSION) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL, 
+	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL,
 		(ClientData)(flags | BLT_TCL_CMDS));
     }
 #ifndef TCL_ONLY
     if ((flags & BLT_TK_CMDS) == 0) {
 	register Tcl_AppInitProc **p;
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0))
 	if (Tcl_PkgPresent(interp, "Tk", TK_VERSION, EXACT) == NULL) {
 	    return TCL_OK;
-	} 
+	}
 #else
 	if (Tcl_PkgRequire(interp, "Tk", TK_VERSION, EXACT) == NULL) {
 	    Tcl_ResetResult(interp);
 	    return TCL_OK;
-	} 
+	}
 #endif
 	/* Initialize the BLT commands that use Tk too. */
 	for (p = tkCmds; *p != NULL; p++) {
@@ -568,7 +568,7 @@ Blt_Init(interp)
 	    }
 	}
 	Blt_InitEpsCanvasItem(interp);
-	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL, 
+	Tcl_SetAssocData(interp, BLT_THREAD_KEY, NULL,
 		(ClientData)(flags | BLT_TK_CMDS));
     }
 #endif
@@ -700,9 +700,9 @@ Blt_InitObjCmd(interp, nsName, specPtr)
 	Tcl_DStringFree(&dString);
 	return cmdToken;	/* Assume command was already initialized */
     }
-    cmdToken = Tcl_CreateObjCommand(interp, cmdPath, 
-		(Tcl_ObjCmdProc *)specPtr->cmdProc, 
-		specPtr->clientData, 
+    cmdToken = Tcl_CreateObjCommand(interp, cmdPath,
+		(Tcl_ObjCmdProc *)specPtr->cmdProc,
+		specPtr->clientData,
 		specPtr->cmdDeleteProc);
     Tcl_DStringFree(&dString);
 

@@ -29,7 +29,7 @@ CC            =	$(TOOLS32)\bin\bcc32.exe
 rc32          =	$(TOOLS32)\bin\rc.exe
 
 !if ($(WITH_JPEG) == 0)
-EXTRA_DEFINES = 
+EXTRA_DEFINES =
 !endif
 !if ($(WITH_JPEG) == 1)
 EXTRA_DEFINES = -DHAVE_JPEGLIB_H=1
@@ -38,26 +38,26 @@ JPEGLIB =	$(JPEGDIR)\libjpeg.lib
 JPEGINC	      = $(JPEGDIR)
 !endif
 !if ($(WITH_JPEG) == 2)
-EXTRA_DEFINES = -DHAVE_IJL_H=1 
+EXTRA_DEFINES = -DHAVE_IJL_H=1
 JPEGDIR       =	c:\Program\ Files\Intel\IJL
 JPEGLIB	      =	$(JPEGDIR)\lib\ijl15l.lib
 JPEGINC	      = $(JPEGDIR)\Include
 !endif
 
 # ------------------------------------------------------------------------
-# 	C Compiler options 
+# 	C Compiler options
 # ------------------------------------------------------------------------
 
 DEFINES       =	-D__STDC__ -DWIN32 -DCONSOLE -D_MT -DNO_STRICT -D_NO_VCL \
-		$(DEBUG_DEFINES) $(SHLIB_DEFINES) $(EXTRA_DEFINES) 
+		$(DEBUG_DEFINES) $(SHLIB_DEFINES) $(EXTRA_DEFINES)
 
 !if ($(SHARED) == 1)
-SHLIB_DEFINES =	-D_DLL  
+SHLIB_DEFINES =	-D_DLL
 SHLIB_TARGET  =	build-dll
 LIBS          =	$(COMMON_LIBS) $(EXTRA_LIBS)
 !else
-SHLIB_CFLAGS  = 
-SHLIB_DEFINES =	
+SHLIB_CFLAGS  =
+SHLIB_DEFINES =
 LIBS          =	$(COMMON_LIBS) $(EXTRA_LIBS)
 !endif
 
@@ -73,19 +73,19 @@ DEBUG_CFLAGS  =	-v -k -Od -vi- -y -r- -lv -tW -tWM
 #   -v		Turn on source debugging.
 DEBUG_LDFLAGS =	-v
 DEBUG_DEFINES = -DUSE_TCLALLOC=0
-DEBUG_DEFINES = 
+DEBUG_DEFINES =
 TK_LIB        =	$(TKDIR)\win\Debug\tk$(v2)d.lib
 TCL_LIB       =	$(TCLDIR)\win\Debug\tcl$(v2)d.lib
-MSVCRT        =	
+MSVCRT        =
 !else
 #   -v-		Turn off source debugging.
 #   -vi-	Turn off expansion of inline functions.
 #   -O2		Generate fastest code possible.
 DEBUG_CFLAGS  =	-v- -vi- -O2 -D_DEBUG
-DEBUG_LDFLAGS =	
+DEBUG_LDFLAGS =
 TK_LIB        =	$(TKDIR)\win\Release\tk$(v2).lib
 TCL_LIB       =	$(TCLDIR)\win\Release\tcl$(v2).lib
-MSVCRT        =	
+MSVCRT        =
 !endif
 
 # Turn off the following bcc warnings:
@@ -94,7 +94,7 @@ MSVCRT        =
 #   -w-sus 	Suspicious pointer conversion (bltCanvEps.c).
 #   -w-eff	Code has no effect (pure_api.c).
 #
-WARNINGS      =	-w-pro -w-par -w-eff -w-sus 
+WARNINGS      =	-w-pro -w-par -w-eff -w-sus
 
 #   -q		Suppress compiler identification banner.
 #   -g1		Stop after the first warning.
@@ -102,18 +102,18 @@ WARNINGS      =	-w-pro -w-par -w-eff -w-sus
 #   -X		Disable compiler autodependency output.
 #   -ps		Use stdcall calling convention.
 
-EXTRA_CFLAGS  =	-q -g1 -tWC -X 
+EXTRA_CFLAGS  =	-q -g1 -tWC -X
 
 CFLAGS	      = $(WARNINGS) $(DEBUG_CFLAGS) $(SHLIB_CFLAGS) $(EXTRA_CFLAGS)
 
 # ------------------------------------------------------------------------
-# 	Linker flags and options 
+# 	Linker flags and options
 # ------------------------------------------------------------------------
 
 #   -D		Save specified description.
 #   -w		Turn on warnings.
 #   -c		Treate case as significant in symbols.
-#   -x 	        
+#   -x
 #   -Gi		Generate .lib file.
 #   -r		Verbose linking.
 #   -x		Suppresses map creation.
@@ -126,13 +126,13 @@ LDFLAGS =	$(COMMON_LDFLAGS) -x -Tpe -S:2400000
 COMMON_LIBS   =	$(TK_LIB) $(TCL_LIB) import32 cw32
 
 EXTRA_LIBS    =	$(OLELIB) \
-		$(JPEGLIB) 
+		$(JPEGLIB)
 
 TCL_ONLY_COMMON_LIBS = $(TCL_LIB) import32 cw32
 TCL_ONLY_LIBS =	$(TCL_ONLY_COMMON_LIBS) $(EXTRA_LIBS)
 
 # ------------------------------------------------------------------------
-# 	Source and target installation directories 
+# 	Source and target installation directories
 # ------------------------------------------------------------------------
 
 srcdir        =	.
@@ -159,9 +159,9 @@ SHLIB_TCL_ONLY_LIBS =	$(COMMON_LIBS) $(EXTRA_LIBS)
 # ------------------------------------------------------------------------
 
 N_OBJS       =	bltTed.obj
-V3_OBJS       =	bltTri.obj bltGrMt.obj 
+V3_OBJS       =	bltTri.obj bltGrMt.obj
 
-TK_OBJS       =	tkButton.obj tkFrame.obj tkScrollbar.obj 
+TK_OBJS       =	tkButton.obj tkFrame.obj tkScrollbar.obj
 
 GRAPH_OBJS =	bltGrAxis.obj \
 		bltGrBar.obj \
@@ -174,7 +174,7 @@ GRAPH_OBJS =	bltGrAxis.obj \
 		bltGrMisc.obj \
 		bltGrPen.obj \
 		bltGrPs.obj \
-		bltGraph.obj 
+		bltGraph.obj
 
 TCL_ONLY_OBJS =	bltAlloc.obj \
 		bltArrayObj.obj \
@@ -233,14 +233,14 @@ OBJS =		$(GRAPH_OBJS) \
 		bltWindow.obj \
 		bltObjConfig.obj \
 		bltWinop.obj \
-		$(TK_OBJS) $(N_OBJS) 
+		$(TK_OBJS) $(N_OBJS)
 
 NOT_YET       =	bltContainer.obj bltCutBuffer.obj bltColor.obj
 
 HEADERS       =	blt.h bltChain.h bltVector.h bltTree.h bltPool.h bltHash.h
 
 # GNU Make-specific macro
-SRCS          =	$(patsubst %.obj,$(srcdir)\%.c,$(OBJS)) 
+SRCS          =	$(patsubst %.obj,$(srcdir)\%.c,$(OBJS))
 
 shell_name    = bltwish
 version       =	$(BLT_MAJOR_VERSION)$(BLT_MINOR_VERSION)
@@ -249,16 +249,16 @@ bltsh =		bltsh.exe
 
 lib_name =	BLT$(version)
 lib_a =		BLT$(version).lib
-lib_so =	BLT$(version).dll		
+lib_so =	BLT$(version).dll
 tcl_only_lib_a = BLTlite$(version).lib
-tcl_only_lib_so = BLTlite$(version).dll		
+tcl_only_lib_so = BLTlite$(version).dll
 
 CC_SWITCHES   =	$(CFLAGS) $(DEFINES) $(INCLUDES)
 VPATH         =	$(srcdir)
 
 all: build-library build-demos
 
-build-demos: $(bltsh) $(bltwish) 
+build-demos: $(bltsh) $(bltwish)
 
 build-library: $(lib_a) $(tcl_only_lib_a)
 
@@ -270,15 +270,15 @@ $(bltwish): $(lib_a) tkConsole.obj  bltWinMain.c
 		-obltWinMain.obj $(srcdir)\bltWinMain.c
 	$(LD) $(LDFLAGS) -aa $(TOOLS32)\lib\c0w32 \
 		tkConsole.obj bltWinMain.obj, \
-		$(bltwish),, $(lib_a) $(LIBS) 
+		$(bltwish),, $(lib_a) $(LIBS)
 
 $(bltsh): $(tcl_only_lib_a) bltWinMain.c
-	-del $(bltsh) 2>nul 
+	-del $(bltsh) 2>nul
 	$(CC) -c $(CC_SWITCHES) -DTCL_ONLY \
 		-DTCLLIBPATH="\"$(TCLLIBPATH)\"" \
 		-obltWinMain.obj $(srcdir)\bltWinMain.c
 	$(LD) $(LDFLAGS) -ap $(TOOLS32)\lib\c0x32 bltWinMain.obj, \
-		$(bltsh),, $(tcl_only_lib_a) $(TCL_ONLY_LIBS) 
+		$(bltsh),, $(tcl_only_lib_a) $(TCL_ONLY_LIBS)
 
 $(lib_a):  $(lib_so) bltHash.h $(OBJS) bltInit.c
 	-del bltInit.obj 2>nul
@@ -292,7 +292,7 @@ $(lib_so): $(OBJS) bltInit.c
 	$(CC) -c $(CC_SWITCHES) -DBLT_LIBRARY="\"$(BLT_LIBRARY)\"" \
 		-obltInit.obj $(srcdir)\bltInit.c
 	-del $@ 2>nul
-	$(LD) $(SHLIB_LDFLAGS) bltInit.obj $(OBJS), $@,, $(LIBS) 
+	$(LD) $(SHLIB_LDFLAGS) bltInit.obj $(OBJS), $@,, $(LIBS)
 
 $(tcl_only_lib_a):  $(tcl_only_lib_so) bltHash.h $(TCL_ONLY_OBJS) bltInit.c
 	-del bltInit.obj 2>nul
@@ -328,7 +328,7 @@ clean:
 	-del $(bltwish) 2>nul
 	-del $(bltsh) 2>nul
 	-del $(srcdir)\*.bak 2>nul
-	-del $(srcdir)\*~ 2>nul 
+	-del $(srcdir)\*~ 2>nul
 	-del $(srcdir)\"#"* 2>nul
 	-del *.pdb 2>nul
 	-del *.ilf 2>nul

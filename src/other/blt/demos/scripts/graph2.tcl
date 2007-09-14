@@ -26,24 +26,24 @@ set configOptions [subst {
     Postscript.Preview		yes
     Relief			raised
     Shadow			{ navyblue 2 }
-    Title			"Bitmap Symbols" 
+    Title			"Bitmap Symbols"
     degrees.Command		[namespace current]::FormatAxisLabel
     degrees.LimitsFormat	"Deg=%g"
-    degrees.Subdivisions	0 
-    degrees.Title		"Degrees" 
-    degrees.stepSize		90 
+    degrees.Subdivisions	0
+    degrees.Title		"Degrees"
+    degrees.stepSize		90
     temp.LimitsFormat		"Temp=%g"
     temp.Title			"Temperature"
     y.Color			purple2
     y.LimitsFormat		"Y=%g"
-    y.Rotate			90 
-    y.Title			"Y" 
+    y.Rotate			90
+    y.Title			"Y"
     y.loose			no
     y2.Color			magenta3
     y2.Hide			no
     xy2.Rotate			270
     y2.Rotate			0
-    y2.Title			"Y2" 
+    y2.Title			"Y2"
     y2.LimitsFormat		"Y2=%g"
     x2.LimitsFormat		"x2=%g"
 }]
@@ -81,7 +81,7 @@ for { set level 30 } { $level <= 100 } { incr level 10 } {
 
 $graph axis create temp \
     -color lightgreen \
-    -title Temp  
+    -title Temp
 $graph axis create degrees \
     -rotate 90
 $graph xaxis use degrees
@@ -128,7 +128,7 @@ $graph element create line1 \
     -pixels 6m \
     -symbol "@bitmaps/hobbes.xbm @bitmaps/hobbes_mask.xbm" \
     -x x \
-    -y sinX 
+    -y sinX
 
 Blt_ZoomStack $graph
 Blt_Crosshairs $graph

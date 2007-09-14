@@ -122,7 +122,7 @@ int main(int argc, char *argv[]){
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
     struct population pop = {NULL,NULL,NULL,NULL,NULL,0};
-    char dbname[256] = {0}; 
+    char dbname[256] = {0};
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
     int  ac;
@@ -135,11 +135,11 @@ int main(int argc, char *argv[]){
     ac = parse_args(argc, argv, &opts);
     if(argc - ac != 3)
 	usage();
-    
+
 
     /* read source model into fstate.rays */
     fit_prep(&fstate, opts.res, opts.res);
-    fit_store(argv[ac+2], argv[ac+1], &fstate); 
+    fit_store(argv[ac+2], argv[ac+1], &fstate);
 
 
     /* initialize population and spawn initial individuals */
@@ -151,21 +151,21 @@ int main(int argc, char *argv[]){
        pop.db_c = db_create("testdb", 5);
     db_close(pop.db_c);
 
-    
+
     for(g = 1; g < opts.gens; g++ ){
 #ifdef VERBOSE
-	printf("\nGeneration %d:\n" 
+	printf("\nGeneration %d:\n"
 		"--------------\n", g);
 #endif
 
 	total_fitness = 0.0f;
-	best = worst = 0; 
+	best = worst = 0;
 
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop.db_c = db_create(dbname, 5);
 
 	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
- 
+
 
 
 	/* calculate sum of all fitnesses and find
@@ -204,7 +204,7 @@ int main(int argc, char *argv[]){
 	    gop = pop_wrand_gop();
 	    parent1 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 	    /* only need 1 more individual, can't crossover, so reproduce */
-	    if(gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE; 
+	    if(gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE;
 
 	    if(gop & (REPRODUCE | MUTATE)){
 #ifdef VERBOSE
@@ -219,22 +219,22 @@ int main(int argc, char *argv[]){
 		++i;
 		pop.child[i].id = i;
 
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("x(%s, %s) --> (%s, %s)\n", NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), pop.child[i-1].id, pop.child[i].id);
 #endif
 		/* perform the genetic operation and output the children to the cihld database */
 		pop_gop(gop, NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), NL(pop.child[i-1].id), NL(pop.child[i].id),
 			pop.db_p, pop.db_c, &rt_uniresource);
-	    } 
-	    
+	    }
+
 	}
 
 
 
-	/* Close parent db and move children 
+	/* Close parent db and move children
 	 * to parent database and population
 	 * Note: pop size is constant so we
-	 * can keep the storage from the previous 
+	 * can keep the storage from the previous
 	 * pop.parent for the next pop.child*/
 	db_close(pop.db_p);
 	pop.db_p = pop.db_c;
@@ -249,7 +249,7 @@ int main(int argc, char *argv[]){
     printf("\nFINAL POPULATION\n"
 	    "----------------\n");
     for(i = 0; i < pop.size; i++)
-	printf("%s\tf:%.5g\n",NL(pop.child[i].id), 
+	printf("%s\tf:%.5g\n",NL(pop.child[i].id),
 		pop.child[i].fitness);
 #endif
 

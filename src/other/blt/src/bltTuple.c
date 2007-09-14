@@ -114,7 +114,7 @@ Blt_TupleMoveTuple(table, tuple, newPosition);
 /*
  * Blt_TupleObject --
  *
- *	Structure representing a tuple object. 
+ *	Structure representing a tuple object.
  *
  *	Tuple objects are uniquely identified by a combination of
  *	their name and the originating namespace.  Two objects in the
@@ -136,16 +136,16 @@ Blt_TupleMoveTuple(table, tuple, newPosition);
 
 typedef struct {
     Tcl_Interp *interp;		/* Interpreter associated with this
-				 * object. */ 
-     
+				 * object. */
+
     char *name;			/* Name of tuple object. */
-    
+
     Tcl_Namespace *nsPtr;
-    
+
     Blt_HashEntry *hashPtr;	/* Pointer to this object in object
 				 * hash table. */
     Blt_HashTable *tablePtr;
-    
+
     unsigned int columnsAllocated;
     unsigned int rowsAllocated;
     unsigned int nColumns;	/* Number columns in each tuple. */
@@ -157,14 +157,14 @@ typedef struct {
     Blt_HashTable columnTable;	/* Hash table of columns. Supports
 				 * mappings of string names back to
 				 * columns. */
-    
+
     Blt_Pool rowPool;		/* Pool that allocates row containers. */
 
     char *sortCmd;		/* Tcl command to invoke to sort
 				 * entries. */
-    
+
     Blt_Chain *clients;		/* List of clients using this table */
-    
+
     unsigned int flags;		/* Internal flags. See definitions
 				 * below. */
     unsigned int notifyFlags;	/* Notification flags. See definitions
@@ -183,7 +183,7 @@ typedef struct {
  *	allocates this structure which acts as a ticket for using the
  *	table.  Clients can designate notifier routines that are
  *	automatically invoked by the tuple object whenever the object
- *	is changed is specific ways by other clients.  
+ *	is changed is specific ways by other clients.
  */
 struct Blt_TupleClientStruct {
     unsigned int magic;		/* Magic value indicating whether a
@@ -242,19 +242,19 @@ DeleteRow(TupleObject *tupleObjPtr, Row *rowPtr)
  *
  * NewTupleObject --
  *
- *	Creates and initializes a new tuple object. 
+ *	Creates and initializes a new tuple object.
  *
  * Results:
  *	Returns a pointer to the new object is successful, NULL
  *	otherwise.  If a tuple object can't be generated,
  *	interp->result will contain an error message.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static TupleObject *
 NewTupleObject(
-    TupleInterpData *dataPtr, 
-    Tcl_Interp *interp, 
+    TupleInterpData *dataPtr,
+    Tcl_Interp *interp,
     CONST char *name)
 {
     TupleObject *tupleObjPtr;
@@ -293,10 +293,10 @@ NewTupleObject(
  *	object.  The object's entry is removed from the hash table of
  *	tuples.
  *
- * Results: 
+ * Results:
  *	None.
  *
- * ---------------------------------------------------------------------- 
+ * ----------------------------------------------------------------------
  */
 static void
 DestroyTupleObject(TupleObject *tupleObjPtr)
@@ -304,7 +304,7 @@ DestroyTupleObject(TupleObject *tupleObjPtr)
     Blt_ChainLink *linkPtr;
     Trace *tracePtr;
     struct Blt_TupleNotifierStruct *notifyPtr;
-	
+
     tupleObjPtr->flags |= TUPLE_DESTROYED;
 
     for (linkPtr = Blt_ChainFirstLink(tupleObjPtr->traces); linkPtr != NULL;
@@ -338,7 +338,7 @@ DestroyTupleObject(TupleObject *tupleObjPtr)
     Blt_DeleteHashTable(&tupleObjPtr->busyTable);
 
     if (tupleObjPtr->hashPtr != NULL) {
-	Blt_DeleteHashEntry(tupleObjPtr->tablePtr, tupleObjPtr->hashPtr); 
+	Blt_DeleteHashEntry(tupleObjPtr->tablePtr, tupleObjPtr->hashPtr);
     }
     Blt_Free(tupleObjPtr);
 }
@@ -349,7 +349,7 @@ DestroyTupleObject(TupleObject *tupleObjPtr)
  * TupleInterpDeleteProc --
  *
  *	This is called when the interpreter hosting the tree object
- *	is deleted from the interpreter.  
+ *	is deleted from the interpreter.
  *
  * Results:
  *	None.
@@ -370,7 +370,7 @@ TupleInterpDeleteProc(
     Blt_HashEntry *hPtr;
     Blt_HashSearch cursor;
     TupleObject *tupleObjPtr;
-    
+
     for (hPtr = Blt_FirstHashEntry(&dataPtr->instTable, &cursor);
 	 hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	tupleObjPtr = (TupleObject *)Blt_GetHashValue(hPtr);
@@ -389,13 +389,13 @@ TupleInterpDeleteProc(
  *
  *	Creates or retrieves data associated with tuple data objects
  *	for a particular thread.  We're using Tcl_GetAssocData rather
- *	than the Tcl thread routines so BLT can work with pre-8.0 
+ *	than the Tcl thread routines so BLT can work with pre-8.0
  *	Tcl versions that don't have thread support.
  *
  * Results:
  *	Returns a pointer to the tuple interpreter data.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static TupleInterpData *
 GetTupleInterpData(Tcl_Interp *interp)
@@ -421,7 +421,7 @@ GetTupleInterpData(Tcl_Interp *interp)
  *
  * NewTagTable --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static TagTable *
 NewTagTable(void)
@@ -443,7 +443,7 @@ ReleaseTagTable(TagTable *tablePtr)
 	Blt_HashSearch cursor;
 	Blt_TupleTagEntry *tPtr;
 
-	for(hPtr = Blt_FirstHashEntry(&tablePtr->tagTable, &cursor); 
+	for(hPtr = Blt_FirstHashEntry(&tablePtr->tagTable, &cursor);
 	    hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	    tPtr = Blt_GetHashValue(hPtr);
 	    Blt_DeleteHashTable(&tPtr->rowTable);
@@ -459,7 +459,7 @@ static int
 ParseParentheses(
     Tcl_Interp *interp,
     CONST char *string,
-    char **leftPtr, 
+    char **leftPtr,
     char **rightPtr)
 {
     register char *p;
@@ -499,7 +499,7 @@ ParseParentheses(
  *	lookup while names must be hashed.
  *
  * Results:
- *	A standard Tcl result. Returns the index of via *indexPtr.  
+ *	A standard Tcl result. Returns the index of via *indexPtr.
  *	If no column can be found, then TCL_ERROR is returned and
  *	an error message is left in the interpreter result.
  *
@@ -507,15 +507,15 @@ ParseParentheses(
  */
 int
 Blt_TupleGetColumnIndex(
-    Tcl_Interp *interp, 
-    TupleObject *tupleObjPtr, 
-    CONST char *key, 
+    Tcl_Interp *interp,
+    TupleObject *tupleObjPtr,
+    CONST char *key,
     unsigned int *indexPtr)
 {
     char *left, *right;
     Column *columnPtr;
     Blt_HashEntry *hPtr;
-    
+
     if (ParseParentheses(interp, key, &left, &right) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -543,8 +543,8 @@ Blt_TupleGetColumnIndex(
  *
  * CallTraces --
  *
- *	Examines the traces set for each client of the tuple object 
- *	and fires any matching trace.  
+ *	Examines the traces set for each client of the tuple object
+ *	and fires any matching trace.
  *
  *	Traces can match on
  *	     row		if the trace was specified by index.
@@ -578,12 +578,12 @@ CallTraces(
     unsigned int flags)
 {
     Blt_ChainLink *linkPtr;
-    Trace *tracePtr;	
+    Trace *tracePtr;
     TupleObject *tupleObjPtr;	/* Tuple that was changed. */
 
     tupleObjPtr = clientPtr->tupleObjPtr;
     /* For each client, examine its trace handlers. */
-    for(linkPtr = Blt_ChainFirstLink(tupleObjPtr->traces); 
+    for(linkPtr = Blt_ChainFirstLink(tupleObjPtr->traces);
 	linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	tracePtr = Blt_ChainGetValue(linkPtr);
 	if ((tracePtr->tuple != NULL) && (tracePtr->tuple != rowPtr)) {
@@ -592,17 +592,17 @@ CallTraces(
 	if ((tracePtr->mask & flags) == 0) {
 	    continue;	/* Missing the required trace flags. */
 	}
-	if ((tracePtr->table == clientPtr) && 
+	if ((tracePtr->table == clientPtr) &&
 	    (tracePtr->mask & TUPLE_TRACE_FOREIGN_ONLY)) {
 	    continue;	/* This client initiated the action. */
 	}
-	if ((tracePtr->withTag != NULL) && 
+	if ((tracePtr->withTag != NULL) &&
 	    (!Blt_TupleHasTag(tracePtr->table, rowPtr, tracePtr->withTag))){
 	    continue;	/* Tag doesn't match. */
 	}
 	if (tracePtr->keys != NULL) {
 	    register CONST char **p;
-	    
+
 	    for (p = tracePtr->keys; *p != NULL; p++) {
 		if (strcmp(*p, columnPtr->key) == 0) {
 		    break;
@@ -612,7 +612,7 @@ CallTraces(
 		continue;	/* No keys match. */
 	    }
 	}
-	if ((*tracePtr->proc) (tracePtr->clientData, tupleObjPtr->interp, 
+	if ((*tracePtr->proc) (tracePtr->clientData, tupleObjPtr->interp,
 		rowPtr->index, columnPtr->index, flags) != TCL_OK) {
 	    if (interp != NULL) {
 		Tcl_BackgroundError(interp);
@@ -630,9 +630,9 @@ CallTraces(
  *	row and column.  Create and read traces may be fired.
  *
  * Results:
- *	Always returns TCL_OK.  
+ *	Always returns TCL_OK.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static int
 GetValue(
@@ -646,7 +646,7 @@ GetValue(
     BusyKey busy;
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
     int isNew;
-    
+
     busy.rowPtr = rowPtr;
     busy.columnPtr = columnPtr;
     hPtr = Blt_CreateHashEntry(&tupleObjPtr->busyTable, &busy, &isNew);
@@ -669,9 +669,9 @@ GetValue(
  *	and column.  Write traces may be fired.
  *
  * Results:
- *	Always returns TCL_OK.  
+ *	Always returns TCL_OK.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static int
 SetValue(
@@ -724,9 +724,9 @@ SetValue(
  *	row and column.  Unset traces may be fired.
  *
  * Results:
- *	Always returns TCL_OK.  
+ *	Always returns TCL_OK.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static int
 UnsetValue(
@@ -806,7 +806,7 @@ GetArrayValue(
 	    return TCL_ERROR;
 	}
 	objPtr = Blt_GetHashValue(hPtr);
-    } 
+    }
     *objPtrPtr = objPtr;
     return TCL_OK;
 }
@@ -877,7 +877,7 @@ SetArrayValue(
 }
 
 static int
-UnsetArrayValue( 
+UnsetArrayValue(
     Tcl_Interp *interp,
     TupleClient *clientPtr,
     Row *rowPtr,
@@ -936,14 +936,14 @@ ExtendRows(TupleObject *tupleObjPtr, int extra)
     nRows = tupleObjPtr->nRows + extra;
     if (tupleObjPtr->rowsAllocated < nRows) {
 	Row **rows;
-	    
+
 	if (tupleObjPtr->rowsAllocated == 0) {
 	    tupleObjPtr->rowsAllocated = 32;
 	}
 	while (tupleObjPtr->rowsAllocated < nRows) {
 	    tupleObjPtr->rowsAllocated += tupleObjPtr->rowsAllocated;
 	}
-	rows = Blt_Realloc(tupleObjPtr->rows, 
+	rows = Blt_Realloc(tupleObjPtr->rows,
 			   tupleObjPtr->rowsAllocated * sizeof(Row *));
 	if (rows == NULL) {
 	    return -1;
@@ -964,7 +964,7 @@ ExtendColumns(TupleObject *tupleObjPtr, Row *rowPtr)
 	Tcl_Obj **data;
 	int i;
 
-	data = Blt_Realloc(rowPtr->data, 
+	data = Blt_Realloc(rowPtr->data,
 		      tupleObjPtr->columnsAllocated * sizeof(Tcl_Obj *));
 	if (data == NULL) {
 	    return TCL_ERROR;
@@ -1035,14 +1035,14 @@ GetTupleObject(Tcl_Interp *interp, CONST char *name, unsigned int flags)
 
     tupleObjPtr = NULL;
     if (Blt_ParseQualifiedName(interp, name, &nsPtr, &tupleName) != TCL_OK) {
-	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"",
 		(char *)NULL);
 	return NULL;
     }
     dataPtr = GetTupleInterpData(interp);
-    if (nsPtr != NULL) { 
+    if (nsPtr != NULL) {
 	tupleObjPtr = FindTupleObjectInNamespace(dataPtr, nsPtr, tupleName);
-    } else { 
+    } else {
 	if (flags & NS_SEARCH_CURRENT) {
 	    /* Look first in the current namespace. */
 	    nsPtr = Tcl_GetCurrentNamespace(interp);
@@ -1065,12 +1065,12 @@ GetTupleObject(Tcl_Interp *interp, CONST char *name, unsigned int flags)
  *	object.  They individually manage traces and events on tuple
  *	objects.  Returns a pointer to the malloc'ed structure.  This
  *	is passed to the client as a tuple token.
- *	
+ *
  * Results:
  *	A pointer to a TupleClient is returned.  If one can't
- *	be allocated, NULL is returned.  
+ *	be allocated, NULL is returned.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static TupleClient *
 NewTupleClient(TupleObject *tupleObjPtr)
@@ -1096,11 +1096,11 @@ NewTupleClient(TupleObject *tupleObjPtr)
  *	Used to invoke event handler routines at some idle point.
  *	This routine is called from the Tcl event loop.  Errors
  *	generated by the event handler routines are backgrounded.
- *	
+ *
  * Results:
  *	None.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 NotifyIdleProc(ClientData clientData)
@@ -1130,13 +1130,13 @@ NotifyIdleProc(ClientData clientData)
  *
  *	If a matching handler is found, a callback may be called either
  *	immediately or at the next idle time depending upon the
- *	TUPLE_NOTIFY_WHENIDLE bit.  
+ *	TUPLE_NOTIFY_WHENIDLE bit.
  *
  *	Since a handler routine may trigger yet another call to
  *	itself, callbacks are ignored while the event handler is
  *	executing.
- *	
- *---------------------------------------------------------------------- 
+ *
+ *----------------------------------------------------------------------
  */
 static void
 NotifyClients(
@@ -1160,7 +1160,7 @@ NotifyClients(
 	    continue;		/* Ignore callbacks that are generated
 				 * inside of a notify handler routine. */
 	}
-	if ((notifyPtr->table == sourcePtr) && 
+	if ((notifyPtr->table == sourcePtr) &&
 	    (notifyPtr->mask & TUPLE_NOTIFY_FOREIGN_ONLY)) {
 	    continue;		/* Don't notify yourself. */
 	}
@@ -1204,7 +1204,7 @@ NotifyClients(
  * Side Effects:
  *	A new tuple object is created.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 int
 Blt_TupleCreateTable(
@@ -1239,28 +1239,28 @@ Blt_TupleCreateTable(
 	    sprintf(string, "tuple%d", dataPtr->nextId++);
 	} while (GetTupleObject(interp, name, NS_SEARCH_CURRENT) != NULL);
 	name = string;
-    } 
-    /* 
-     * Tear apart and put back together the namespace-qualified name 
+    }
+    /*
+     * Tear apart and put back together the namespace-qualified name
      * of the object.  This is to ensure that naming is consistent.
-     */ 
+     */
     tupleName = name;
     if (Blt_ParseQualifiedName(interp, name, &nsPtr, &tupleName) != TCL_OK) {
-	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"",
 		(char *)NULL);
 	return TCL_ERROR;
     }
     if (nsPtr == NULL) {
-	/* 
+	/*
 	 * Note that unlike Tcl_CreateCommand, an unqualified name
-	 * doesn't imply the global namespace, but the current one.  
+	 * doesn't imply the global namespace, but the current one.
 	 */
 	nsPtr = Tcl_GetCurrentNamespace(interp);
     }
     name = Blt_GetQualifiedName(nsPtr, tupleName, &dString);
     tupleObjPtr = NewTupleObject(dataPtr, interp, name);
     if (tupleObjPtr == NULL) {
-	Tcl_AppendResult(interp, "can't allocate tuple object \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't allocate tuple object \"", name, "\"",
 		(char *)NULL);
 	Tcl_DStringFree(&dString);
 	return TCL_ERROR;
@@ -1268,10 +1268,10 @@ Blt_TupleCreateTable(
     Tcl_DStringFree(&dString);
     if (clientPtrPtr != NULL) {
 	TupleClient *clientPtr;
-	
+
 	clientPtr = NewTupleClient(tupleObjPtr);
 	if (clientPtr == NULL) {
-	    Tcl_AppendResult(interp, "can't allocate tuple token", 
+	    Tcl_AppendResult(interp, "can't allocate tuple token",
 		(char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1292,13 +1292,13 @@ Blt_TupleCreateTable(
  *	the token.
  *
  * Results:
- *	A new token is returned representing the tuple object.  
+ *	A new token is returned representing the tuple object.
  *
  * Side Effects:
  *	If this is the remaining client, then the tuple object itself
  *	is freed.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 int
 Blt_TupleGetTable(
@@ -1311,13 +1311,13 @@ Blt_TupleGetTable(
 
     tupleObjPtr = GetTupleObject(interp, name, NS_SEARCH_BOTH);
     if (tupleObjPtr == NULL) {
-	Tcl_AppendResult(interp, "can't find a tuple object \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't find a tuple object \"", name, "\"",
 		 (char *)NULL);
 	return TCL_ERROR;
     }
     clientPtr = NewTupleClient(tupleObjPtr);
     if (clientPtr == NULL) {
-	Tcl_AppendResult(interp, "can't allocate token for tuple \"", name, 
+	Tcl_AppendResult(interp, "can't allocate token for tuple \"", name,
 		"\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1342,7 +1342,7 @@ Blt_TupleGetTable(
  *	If this is the remaining client, then the tuple object itself
  *	is freed.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_TupleReleaseTable(TupleClient *clientPtr)
@@ -1353,7 +1353,7 @@ Blt_TupleReleaseTable(TupleClient *clientPtr)
     Trace *tracePtr;
 
     if (clientPtr->magic != TUPLE_MAGIC) {
-	fprintf(stderr, "invalid tuple object token 0x%lx\n", 
+	fprintf(stderr, "invalid tuple object token 0x%lx\n",
 		(unsigned long)clientPtr);
 	return;
     }
@@ -1366,7 +1366,7 @@ Blt_TupleReleaseTable(TupleClient *clientPtr)
 	}
     }
     /* Also remove all event handlers created by this client. */
-    for(linkPtr = Blt_ChainFirstLink(tupleObjPtr->notifiers); 
+    for(linkPtr = Blt_ChainFirstLink(tupleObjPtr->notifiers);
 	linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	notifyPtr = Blt_ChainGetValue(linkPtr);
 	if (notifyPtr->table == clientPtr) {
@@ -1400,7 +1400,7 @@ Blt_TupleReleaseTable(TupleClient *clientPtr)
  * Results:
  *	Returns 1 if a tuple object exists and 0 otherwise.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 int
 Blt_TupleTableExists(
@@ -1424,10 +1424,10 @@ Blt_TupleTableExists(
  * Blt_TupleCreateNotifier --
  *
  *	Creates an notifier using the following three pieces of
- *	information: 
- *		1. C function pointer, 
- *		2. one-word of data passed on each call, and 
- *		3. event mask indicating which events are of interest.  
+ *	information:
+ *		1. C function pointer,
+ *		2. one-word of data passed on each call, and
+ *		3. event mask indicating which events are of interest.
  *	If an event already exists matching all of the above criteria,
  *	it is repositioned on the end of the event handler list.  This
  *	means that it will be the last to fire.
@@ -1438,7 +1438,7 @@ Blt_TupleTableExists(
  * Side Effects:
  *	Memory for the event handler is possibly allocated.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 Blt_TupleNotifier
 Blt_TupleCreateNotifier(
@@ -1456,7 +1456,7 @@ Blt_TupleCreateNotifier(
     notifyPtr->mask = mask;
     notifyPtr->notifyPending = FALSE;
     notifyPtr->interp = clientPtr->tupleObjPtr->interp;
-    notifyPtr->linkPtr = Blt_ChainAppend(clientPtr->tupleObjPtr->notifiers, 
+    notifyPtr->linkPtr = Blt_ChainAppend(clientPtr->tupleObjPtr->notifiers,
 	notifyPtr);
     return notifyPtr;
 }
@@ -1486,7 +1486,7 @@ Blt_TupleDeleteNotifier(Notifier *notifyPtr)
 	Tcl_CancelIdleCall(NotifyIdleProc, notifyPtr);
     }
     if (notifyPtr->linkPtr != NULL){
-	Blt_ChainDeleteLink(notifyPtr->table->tupleObjPtr->notifiers, 
+	Blt_ChainDeleteLink(notifyPtr->table->tupleObjPtr->notifiers,
 		    notifyPtr->linkPtr);
 	Blt_Free(notifyPtr);
     }
@@ -1584,7 +1584,7 @@ Blt_TupleGetColumnKey(TupleClient *clientPtr, int columnIndex)
  *	reallocated by doubling its size.  Storage for the tuples
  *	isn't allocated until the tuple is needed.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 unsigned int
 Blt_TupleAddColumn(
@@ -1630,12 +1630,12 @@ Blt_TupleAddColumn(
  *	reallocated by doubling its size.  Storage for the tuples
  *	isn't allocated until the tuple is needed.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 int
 Blt_TupleAddColumns(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
     char **keys)
 {
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
@@ -1649,8 +1649,8 @@ Blt_TupleAddColumns(
     for (p = keys; *p != NULL; p++) {
 	hPtr = Blt_FindHashEntry(&tupleObjPtr->columnTable, *p);
 	if (hPtr != NULL) {
-	    Tcl_AppendResult(interp, "a column \"", *p, 
-			"\" already exists in \"", tupleObjPtr->name, "\"", 
+	    Tcl_AppendResult(interp, "a column \"", *p,
+			"\" already exists in \"", tupleObjPtr->name, "\"",
 			(char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1665,7 +1665,7 @@ Blt_TupleAddColumns(
 	while (nColumns >= columnsAllocated) {
 	    columnsAllocated += columnsAllocated;
 	}
-	columns = Blt_Realloc(tupleObjPtr->columns, 
+	columns = Blt_Realloc(tupleObjPtr->columns,
 		sizeof(Column *) * columnsAllocated);
 	if (columns == NULL) {
 	    return TCL_ERROR;
@@ -1685,7 +1685,7 @@ Blt_TupleAddColumns(
 	columnPtr->index = tupleObjPtr->nColumns;
 	tupleObjPtr->columns[columnPtr->index] = columnPtr;
 	tupleObjPtr->nColumns++;
-    }	
+    }
     for(i = tupleObjPtr->nColumns; i < tupleObjPtr->columnsAllocated; i++) {
 	tupleObjPtr->columns[i] = NULL;
     }
@@ -1696,8 +1696,8 @@ Blt_TupleAddColumns(
 
 int
 Blt_TupleDeleteColumnByIndex(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
     unsigned int column)
 {
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
@@ -1724,7 +1724,7 @@ Blt_TupleDeleteColumnByIndex(
 		    Tcl_DecrRefCount(objPtr);
 		    rowPtr->data[column] = NULL;
 		}
-		for (j = column, k = column + 1; j < rowPtr->nColumns; 
+		for (j = column, k = column + 1; j < rowPtr->nColumns;
 		     j++, k++) {
 		    rowPtr->data[k] = rowPtr->data[j];
 		}
@@ -1744,13 +1744,13 @@ Blt_TupleDeleteColumnByIndex(
 
 int
 Blt_TupleDeleteColumn(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
     CONST char *key)
 {
     unsigned int column;
 
-    if (Blt_TupleGetColumnIndex(interp, clientPtr->tupleObjPtr, key, &column) 
+    if (Blt_TupleGetColumnIndex(interp, clientPtr->tupleObjPtr, key, &column)
 	!= TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1773,8 +1773,8 @@ Blt_TupleDeleteColumn(
  */
 int
 Blt_TupleValueExists(
-    TupleClient *clientPtr, 
-    Row *rowPtr, 
+    TupleClient *clientPtr,
+    Row *rowPtr,
     CONST char *key)
 {
     Blt_HashEntry *hPtr;
@@ -1838,9 +1838,9 @@ Blt_TupleValueExists(
  */
 int
 Blt_TupleGetValue(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
-    Row *rowPtr, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
+    Row *rowPtr,
     CONST char *key,
     Tcl_Obj **objPtrPtr)
 {
@@ -1858,10 +1858,10 @@ Blt_TupleGetValue(
 	hPtr = Blt_FindHashEntry(&tupleObjPtr->columnTable, key);
 	if (hPtr != NULL) {
 	    columnPtr = Blt_GetHashValue(hPtr);
-	    result = GetArrayValue(interp, clientPtr, rowPtr, columnPtr, 
+	    result = GetArrayValue(interp, clientPtr, rowPtr, columnPtr,
 		left + 1, objPtrPtr, TRACE_OK);
 	} else if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't find column \"", key, 
+	    Tcl_AppendResult(interp, "can't find column \"", key,
 		"\" in \"", tupleObjPtr->name, "\"", (char *)NULL);
 	}
 	*left = '(', *right = ')';
@@ -1872,7 +1872,7 @@ Blt_TupleGetValue(
 	hPtr = Blt_FindHashEntry(&tupleObjPtr->columnTable, key);
 	if (hPtr == NULL) {
 	    if (interp != NULL) {
-		Tcl_AppendResult(interp, "can't find column \"", key, 
+		Tcl_AppendResult(interp, "can't find column \"", key,
 			"\" in \"", tupleObjPtr->name, "\"", (char *)NULL);
 	    }
 	    return TCL_ERROR;
@@ -1890,8 +1890,8 @@ Blt_TupleGetValue(
  *
  *	Sets the value at the given row, column index.  If the slot
  *	is currently filled, the old Tcl_Obj is decremented.  The
- *	new Tcl_Obj is incremented.  If no traces are currently active 
- *	on the the slot, then a call to check if any trace should 
+ *	new Tcl_Obj is incremented.  If no traces are currently active
+ *	on the the slot, then a call to check if any trace should
  *	fire is called.  There are two type of traces that may fire:
  *
  *	    TUPLE_TRACE_WRITE		indicates that the slot was
@@ -1909,9 +1909,9 @@ Blt_TupleGetValue(
  */
 int
 Blt_TupleSetValue(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
-    Row *rowPtr, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
+    Row *rowPtr,
     CONST char *key,
     Tcl_Obj *objPtr)
 {
@@ -1929,10 +1929,10 @@ Blt_TupleSetValue(
 	hPtr = Blt_FindHashEntry(&tupleObjPtr->columnTable, key);
 	if (hPtr != NULL) {
 	    columnPtr = Blt_GetHashValue(hPtr);
-	    result = SetArrayValue(interp, clientPtr, rowPtr, columnPtr, 
+	    result = SetArrayValue(interp, clientPtr, rowPtr, columnPtr,
 		left + 1, objPtr);
 	} else if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't find column \"", key, 
+	    Tcl_AppendResult(interp, "can't find column \"", key,
 		"\" in \"", tupleObjPtr->name, "\"", (char *)NULL);
 	}
 	*left = '(', *right = ')';
@@ -1943,7 +1943,7 @@ Blt_TupleSetValue(
 	hPtr = Blt_FindHashEntry(&tupleObjPtr->columnTable, key);
 	if (hPtr == NULL) {
 	    if (interp != NULL) {
-		Tcl_AppendResult(interp, "can't find column \"", key, 
+		Tcl_AppendResult(interp, "can't find column \"", key,
 			"\" in \"", tupleObjPtr->name, "\"", (char *)NULL);
 	    }
 	    return TCL_ERROR;
@@ -1976,9 +1976,9 @@ Blt_TupleSetValue(
  */
 int
 Blt_TupleUnsetValue(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
-    Row *rowPtr, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
+    Row *rowPtr,
     CONST char *key)
 {
     Blt_HashEntry *hPtr;
@@ -1995,10 +1995,10 @@ Blt_TupleUnsetValue(
 	hPtr = Blt_FindHashEntry(&tupleObjPtr->columnTable, key);
 	if (hPtr != NULL) {
 	    columnPtr = Blt_GetHashValue(hPtr);
-	    result = UnsetArrayValue(interp, clientPtr, rowPtr, columnPtr, 
+	    result = UnsetArrayValue(interp, clientPtr, rowPtr, columnPtr,
 		left + 1);
 	} else if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't find column \"", key, 
+	    Tcl_AppendResult(interp, "can't find column \"", key,
 		"\" in \"", tupleObjPtr->name, "\"", (char *)NULL);
 	}
 	*left = '(', *right = ')';
@@ -2009,7 +2009,7 @@ Blt_TupleUnsetValue(
 	hPtr = Blt_FindHashEntry(&tupleObjPtr->columnTable, key);
 	if (hPtr == NULL) {
 	    if (interp != NULL) {
-		Tcl_AppendResult(interp, "can't find column \"", key, 
+		Tcl_AppendResult(interp, "can't find column \"", key,
 			"\" in \"", tupleObjPtr->name, "\"", (char *)NULL);
 	    }
 	    return TCL_ERROR;
@@ -2042,9 +2042,9 @@ Blt_TupleUnsetValue(
  */
 int
 Blt_TupleGetValueByIndex(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
-    unsigned int row, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
+    unsigned int row,
     unsigned int column,
     Tcl_Obj **objPtrPtr)
 {
@@ -2068,8 +2068,8 @@ Blt_TupleGetValueByIndex(
  *
  *	Sets the value at the given row, column index.  If the slot
  *	is currently filled, the old Tcl_Obj is decremented.  The
- *	new Tcl_Obj is incremented.  If no traces are currently active 
- *	on the the slot, then a call to check if any trace should 
+ *	new Tcl_Obj is incremented.  If no traces are currently active
+ *	on the the slot, then a call to check if any trace should
  *	fire is called.  There are two type of traces that may fire:
  *
  *	    TUPLE_TRACE_WRITE		indicates that the slot was
@@ -2089,9 +2089,9 @@ Blt_TupleGetValueByIndex(
  */
 int
 Blt_TupleSetValueByIndex(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
-    unsigned int row, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
+    unsigned int row,
     unsigned int column,
     Tcl_Obj *objPtr)
 {
@@ -2129,9 +2129,9 @@ Blt_TupleSetValueByIndex(
  */
 int
 Blt_TupleUnsetValueByIndex(
-    Tcl_Interp *interp, 
-    TupleClient *clientPtr, 
-    unsigned int row, 
+    Tcl_Interp *interp,
+    TupleClient *clientPtr,
+    unsigned int row,
     unsigned int column)
 {
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
@@ -2151,7 +2151,7 @@ Blt_TupleUnsetValueByIndex(
  *
  * Blt_TupleInsertRows --
  *
- *	Creates a new rows in the table.  The name and position in 
+ *	Creates a new rows in the table.  The name and position in
  *	the parent are also provided.
  *
  *----------------------------------------------------------------------
@@ -2193,8 +2193,8 @@ Blt_TupleInsertRows(
 	for (i = oldRows; i < tupleObjPtr->nRows; i++) {
 	    tupleObjPtr->rows[i] = NewRow(tupleObjPtr, i);
 	}
-    }	
-    /* 
+    }
+    /*
      * Issue callbacks to each client indicating that a new node has
      * been created.
      */
@@ -2215,8 +2215,8 @@ Blt_TupleInsertRows(
 int
 Blt_TupleMoveRows(
     TupleClient *clientPtr,
-    int fromRow, 
-    int toRow, 
+    int fromRow,
+    int toRow,
     int nRows)
 {
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
@@ -2224,12 +2224,12 @@ Blt_TupleMoveRows(
     int i;
 
     /* [ | |a| | | | | | | | |b| | | ] */
-        
+
     fromPtr = tupleObjPtr->rows[fromRow];
     for (i = fromRow; i < tupleObjPtr->nRows; i++) {
 	/* Compress the array. */
     }
-    /* 
+    /*
      * Issue callbacks to each client indicating that a node has
      * been moved.
      */
@@ -2242,7 +2242,7 @@ Blt_TupleMoveRows(
  *
  * Blt_TupleDeleteTuple --
  *
- *	Deletes one or more rows starting at the given index.  
+ *	Deletes one or more rows starting at the given index.
  *	This will cause a single delete event.
  *
  * Results:
@@ -2253,19 +2253,19 @@ Blt_TupleMoveRows(
  */
 void
 Blt_TupleDeleteTuple(
-    TupleClient *clientPtr, 
+    TupleClient *clientPtr,
     Row *rowPtr)
 {
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
     int i, j;
 
     if (!tupleObjPtr->notifyHold) {
-	/* 
+	/*
 	 * Issue callbacks to each client indicating that a tuple will be
 	 * removed.
 	 */
 	NotifyClients(clientPtr, tupleObjPtr, TUPLE_NOTIFY_DELETE_ROW);
-	for (j = tupleObjPtr->nRows - 1, i = j - 1; i >= rowPtr->index; 
+	for (j = tupleObjPtr->nRows - 1, i = j - 1; i >= rowPtr->index;
 	     i--, j--) {
 	    tupleObjPtr->rows[i] = tupleObjPtr->rows[j];
 	    tupleObjPtr->rows[i]->index = i;
@@ -2283,7 +2283,7 @@ Blt_TupleDeleteTuple(
  *
  * Blt_TupleStartDeleteRows --
  *
- *	Deletes one or more rows starting at the given index.  
+ *	Deletes one or more rows starting at the given index.
  *	This will cause a single delete event.
  *
  * Results:
@@ -2305,7 +2305,7 @@ Blt_TupleStartDeleteRows(TupleClient *clientPtr)
  *
  * Blt_TupleEndDeleteRows --
  *
- *	Deletes one or more rows starting at the given index.  
+ *	Deletes one or more rows starting at the given index.
  *	This will cause a single delete event.
  *
  * Results:
@@ -2322,7 +2322,7 @@ Blt_TupleEndDeleteRows(TupleClient *clientPtr)
     int count;
     int i;
 
-    /* 
+    /*
      * Issue callbacks to each client indicating that a tuple will be
      * removed.
      */
@@ -2360,7 +2360,7 @@ Blt_TupleEndDeleteRows(TupleClient *clientPtr)
  * Side Effects:
  *	Memory is allocated for the trace.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 Blt_TupleTrace
 Blt_TupleCreateTrace(
@@ -2387,7 +2387,7 @@ Blt_TupleCreateTrace(
 	CONST char **keys;
 	int nKeys;
 
-	if (Tcl_SplitList(clientPtr->interp, keyList, &nKeys, (char ***)&keys) 
+	if (Tcl_SplitList(clientPtr->interp, keyList, &nKeys, (char ***)&keys)
 	    != TCL_OK) {
 	    Blt_Free(tracePtr);
 	    return NULL;
@@ -2429,7 +2429,7 @@ Blt_TupleCreateTrace(
 void
 Blt_TupleDeleteTrace(Trace *tracePtr)
 {
-    Blt_ChainDeleteLink(tracePtr->table->tupleObjPtr->traces, 
+    Blt_ChainDeleteLink(tracePtr->table->tupleObjPtr->traces,
 		tracePtr->linkPtr);
     if (tracePtr->keys != NULL) {
 	Blt_Free(tracePtr->keys);
@@ -2447,7 +2447,7 @@ Blt_TupleDeleteTrace(Trace *tracePtr)
  *
  *	Adds new rows to the table.  Rows are slots in an array
  *	of Rows.  The array grows by doubling its size, so there
- *	may be more slots than needed (# rows).  
+ *	may be more slots than needed (# rows).
  *
  * Results:
  *	Returns TCL_OK is the tuple is resized and TCL_ERROR if an
@@ -2455,7 +2455,7 @@ Blt_TupleDeleteTrace(Trace *tracePtr)
  *
  * Side Effects:
  *	If more rows are needed, the array which holds the tuples is
- *	reallocated by doubling its size.  
+ *	reallocated by doubling its size.
  *
  *----------------------------------------------------------------------
  */
@@ -2465,7 +2465,7 @@ Blt_TupleExtendRows(TupleClient *clientPtr, unsigned int nRows)
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
     int oldSize;
     int i;
-    
+
     oldSize = tupleObjPtr->nRows;
     if (!ExtendRows(tupleObjPtr, nRows)) {
 	return TCL_ERROR;
@@ -2482,7 +2482,7 @@ int
 Blt_TupleReduceRows(TupleClient *clientPtr, int nRows)
 {
     TupleObject *tupleObjPtr = clientPtr->tupleObjPtr;
-    
+
     if (nRows < tupleObjPtr->nRows) {
 	if (tupleObjPtr->rowsAllocated < nRows) {
 	    Row **rows;
@@ -2490,7 +2490,7 @@ Blt_TupleReduceRows(TupleClient *clientPtr, int nRows)
 	    while (tupleObjPtr->rowsAllocated < nRows) {
 		tupleObjPtr->rowsAllocated += tupleObjPtr->rowsAllocated;
 	    }
-	    rows = Blt_Realloc(tupleObjPtr->rows, 
+	    rows = Blt_Realloc(tupleObjPtr->rows,
 	       tupleObjPtr->rowsAllocated * sizeof(Row *));
 	    if (rows == NULL) {
 		return TCL_ERROR;
@@ -2507,7 +2507,7 @@ Blt_TupleReduceRows(TupleClient *clientPtr, int nRows)
  *
  * Blt_TupleAddTag --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_TupleAddTag(
@@ -2546,7 +2546,7 @@ Blt_TupleAddTag(
  *
  * Blt_TupleClearTags --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_TupleClearTags(TupleClient *clientPtr, Row *rowPtr)
@@ -2570,11 +2570,11 @@ Blt_TupleClearTags(TupleClient *clientPtr, Row *rowPtr)
  *
  * Blt_TupleFirstTag --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 Blt_HashEntry *
 Blt_TupleFirstTag(
-    TupleClient *clientPtr, 
+    TupleClient *clientPtr,
     Blt_HashSearch *cursorPtr)
 {
     return Blt_FirstHashEntry(&clientPtr->tagTablePtr->tagTable, cursorPtr);
@@ -2585,7 +2585,7 @@ Blt_TupleFirstTag(
  *
  * Blt_TupleForgetTag --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_TupleForgetTag(
@@ -2610,7 +2610,7 @@ Blt_TupleForgetTag(
  *
  * Blt_TupleHasTag --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 int
 Blt_TupleHasTag(
@@ -2641,7 +2641,7 @@ Blt_TupleHasTag(
  *
  * Blt_TupleRemoveTag --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_TupleRemoveTag(
@@ -2674,7 +2674,7 @@ Blt_TupleRemoveTag(
  *
  * Blt_TupleTagSetHashTable --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 Blt_HashTable *
 Blt_TupleTagTableHashTable(
@@ -2682,11 +2682,11 @@ Blt_TupleTagTableHashTable(
     CONST char *tagName)
 {
     Blt_HashEntry *hPtr;
-   
+
     hPtr = Blt_FindHashEntry(&clientPtr->tagTablePtr->tagTable, tagName);
     if (hPtr != NULL) {
 	Blt_TupleTagEntry *tPtr;
-	
+
 	tPtr = Blt_GetHashValue(hPtr);
 	return &tPtr->rowTable;
     }
@@ -2697,7 +2697,7 @@ int
 Blt_TupleTagTableIsShared(TupleClient *clientPtr)
 {
     return (clientPtr->tagTablePtr->refCount > 1);
-}   
+}
 
 /*
  *----------------------------------------------------------------------
@@ -2705,9 +2705,9 @@ Blt_TupleTagTableIsShared(TupleClient *clientPtr)
  * Blt_TupleFirstTagged --
  *
  *	Returns the id of the first tuple tagged by the given tag in
- *	objPtr.  
+ *	objPtr.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 Blt_Tuple
 Blt_TupleFirstTagged(
@@ -2728,7 +2728,7 @@ Blt_TupleFirstTagged(
 	    return NULL;
 	}
 	if ((row < 0) || (row >= clientPtr->tupleObjPtr->nRows)) {
-	    Tcl_AppendResult(interp, "row index \"", tagName, 
+	    Tcl_AppendResult(interp, "row index \"", tagName,
 			     "\" is out of range", (char *)NULL);
 	    return NULL;
 	}
@@ -2741,17 +2741,17 @@ Blt_TupleFirstTagged(
 	return clientPtr->tupleObjPtr->rows[0];
     } else {
 	Blt_HashEntry *hPtr;
-	
+
 	hPtr = Blt_FindHashEntry(&clientPtr->tagTablePtr->tagTable, tagName);
 	if (hPtr != NULL) {
 	    Blt_TupleTagEntry *tPtr;
 	    Row *rowPtr;
-	    
+
 	    tPtr = Blt_GetHashValue(hPtr);
 	    cursorPtr->rowTablePtr = &tPtr->rowTable;
 	    cursorPtr->tagType = TAG_TYPE_TAG;
-	    hPtr = Blt_FirstHashEntry(cursorPtr->rowTablePtr, 
-		&cursorPtr->cursor); 
+	    hPtr = Blt_FirstHashEntry(cursorPtr->rowTablePtr,
+		&cursorPtr->cursor);
 	    if (hPtr == NULL) {
 		return NULL;
 	    }
@@ -2759,7 +2759,7 @@ Blt_TupleFirstTagged(
 	    return rowPtr;
 	}
     }
-    Tcl_AppendResult(interp, "can't find tag or id \"", tagName, "\" in ", 
+    Tcl_AppendResult(interp, "can't find tag or id \"", tagName, "\" in ",
 	clientPtr->tupleObjPtr->name, (char *)NULL);
     return NULL;
 }
@@ -2769,7 +2769,7 @@ Blt_TupleFirstTagged(
  *
  * Blt_TupleNextTagged --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 Blt_Tuple
 Blt_TupleNextTagged(Blt_TupleTagSearch *cursorPtr)

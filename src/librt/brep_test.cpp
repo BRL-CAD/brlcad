@@ -21,10 +21,10 @@ main(int argc, char** argv)
 
   { // test correctness
     double _a[8] VEC_ALIGN = {0,1,2,3, 4, 5, 6, 7};
-    double _b[8] VEC_ALIGN = {2,4,6,8,10,12,14,16};    
+    double _b[8] VEC_ALIGN = {2,4,6,8,10,12,14,16};
     dvec<8> a(_a, true);
     dvec<8> b(_b, true);
-    
+
     dvec<8> c = a + b;
     double _c[8] VEC_ALIGN = {2,5,8,11,14,17,20,23};
     assert( c == dvec<8>(_c,true) );
@@ -47,14 +47,14 @@ main(int argc, char** argv)
 
     dvec<8> h = a.madd(2.0,b);
     double _h[8] VEC_ALIGN = {2,6,10,14,18,22,26,30};
-    assert( h == dvec<8>(_h,true) );    
+    assert( h == dvec<8>(_h,true) );
 
     srand(time(NULL));
     double total = 0.0;
     double rval[] = {
       rand()/10000.0,
       rand()/10000.0,
-      rand()/10000.0, 
+      rand()/10000.0,
       rand()/10000.0,
       rand()/10000.0,
       rand()/10000.0,
@@ -69,9 +69,9 @@ main(int argc, char** argv)
       rand()/10000.0,
       rand()/10000.0,
       rand()/10000.0 };
-    
-    clock_t start = clock(); 
-    for (int i = 0; i < COUNT; i++) { 
+
+    clock_t start = clock();
+    for (int i = 0; i < COUNT; i++) {
       double _a[8] VEC_ALIGN = {rval[i%8],rval[i%8+1],rval[i%8+2],rval[i%8+3],
 				rval[i%8+4],rval[i%8+5],rval[i%8+6],rval[i%8+7]};
       double _b[8] VEC_ALIGN = {rval[i%8+1],rval[i%8+2],rval[i%8+3],rval[i%8+4],
@@ -79,7 +79,7 @@ main(int argc, char** argv)
 
       dvec<8> a(_a,true);
       dvec<8> b(_b,true);
-       
+
       dvec<8> c = a + b;
       dvec<8> d = c - a;
       dvec<8> e = d * c;
@@ -97,19 +97,19 @@ main(int argc, char** argv)
 
   vec2d c = a + b;
   assert( vequals(c, vec2d(300.0,-300.0)) );
-  
+
   vec2d d = a - b;
   assert( vequals(d, vec2d(-100.0,100.0)) );
-  
+
   vec2d e = a * b;
   assert( vequals(e, vec2d(20000.0,20000.0)) );
-  
+
   vec2d f = b / a;
   assert( vequals(f, vec2d(2.0,2.0)) );
 
   vec2d g = a.madd(20.0,b);
   assert( vequals(g, vec2d(2200.0, -2200.0)) );
-  
+
   vec2d h = a.madd(d,b);
   assert( vequals(h, vec2d(-9800.0,-10200.0)) );
 
@@ -120,7 +120,7 @@ main(int argc, char** argv)
   double rval[] = {
     rand()/10000.0,
     rand()/10000.0,
-    rand()/10000.0, 
+    rand()/10000.0,
     rand()/10000.0,
     rand()/10000.0,
     rand()/10000.0,
@@ -135,8 +135,8 @@ main(int argc, char** argv)
     rand()/10000.0,
     rand()/10000.0 };
 
-  clock_t start = clock(); 
-  for (int i = 0; i < COUNT; i++) { 
+  clock_t start = clock();
+  for (int i = 0; i < COUNT; i++) {
     vec2d a(rval[i%12], rval[i%12+2]);
     vec2d b(rval[i%12+1], rval[i%12+3]);
 

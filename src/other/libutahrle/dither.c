@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -18,9 +18,9 @@
  *  Modified at BRL 16-May-88 by Mike Muuss to avoid Alliant STDC desire
  *  to have all "void" functions so declared.
  */
-/* 
+/*
  * dither.c - Functions for RGB color dithering.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -50,7 +50,7 @@ static int magic4x4[4][4] =  {
 
 /*****************************************************************
  * TAG( dithermap )
- * 
+ *
  * Create a color dithering map with a specified number of intensity levels.
  * Inputs:
  * 	levels:		Intensity levels per primary.
@@ -89,7 +89,7 @@ int magic[16][16];
     register int i;
     int levelsq, levelsc;
     int gammamap[256];
-    
+
     for ( i = 0; i < 256; i++ )
 	gammamap[i] = (int)(0.5 + 255 * pow( i / 255.0, 1.0/gamma ));
 
@@ -98,7 +98,7 @@ int magic[16][16];
 
     N = 255.0 / (levels - 1);    /* Get size of each step */
 
-    /* 
+    /*
      * Set up the color map entries.
      */
     for(i = 0; i < levelsc; i++) {
@@ -113,7 +113,7 @@ int magic[16][16];
 
 /*****************************************************************
  * TAG( bwdithermap )
- * 
+ *
  * Create a color dithering map with a specified number of intensity levels.
  * Inputs:
  * 	levels:		Intensity levels.
@@ -130,7 +130,7 @@ int magic[16][16];
  *	Compute bwmap for levels entries.
  *	Call make_square to get divN, modN, and magic.
  * Note:
- *	Call ditherbw( x, y, val, divN, modN, magic ) to get index into 
+ *	Call ditherbw( x, y, val, divN, modN, magic ) to get index into
  *	bwmap for a given color/location pair, or use
  *	    row = y % 16; col = x % 16;
  *	    divN[val] + (modN[val]>magic[col][row] ? 1 : 0)
@@ -150,13 +150,13 @@ int magic[16][16];
     double N;
     register int i;
     int gammamap[256];
-    
+
     for ( i = 0; i < 256; i++ )
 	gammamap[i] = (int)(0.5 + 255 * pow( i / 255.0, 1.0/gamma ));
 
     N = 255.0 / (levels - 1);    /* Get size of each step */
 
-    /* 
+    /*
      * Set up the color map entries.
      */
     for(i = 0; i < levels; i++)
@@ -168,7 +168,7 @@ int magic[16][16];
 
 /*****************************************************************
  * TAG( make_square )
- * 
+ *
  * Build the magic square for a given number of levels.
  * Inputs:
  * 	N:		Pixel values per level (255.0 / levels).
@@ -177,7 +177,7 @@ int magic[16][16];
  *	modN:		Integer remainder between pixval and divN[pixval]*N
  *	magic:		Magic square for dithering to N sublevels.
  * Assumptions:
- * 	
+ *
  * Algorithm:
  *	divN[pixval] = (int)(pixval / N) maps pixval to its appropriate level.
  *	modN[pixval] = pixval - (int)(N * divN[pixval]) maps pixval to
@@ -208,7 +208,7 @@ int magic[16][16] ;
     /*
      * Expand 4x4 dither pattern to 16x16.  4x4 leaves obvious patterning,
      * and doesn't give us full intensity range (only 17 sublevels).
-     * 
+     *
      * magicfact is (N - 1)/16 so that we get numbers in the matrix from 0 to
      * N - 1: mod N gives numbers in 0 to N - 1, don't ever want all
      * pixels incremented to the next level (this is reserved for the
@@ -227,7 +227,7 @@ int magic[16][16] ;
 
 /*****************************************************************
  * TAG( dithergb )
- * 
+ *
  * Return dithered RGB value.
  * Inputs:
  * 	x:		X location on screen of this pixel.
@@ -260,7 +260,7 @@ int magic[16][16];
 
 /*****************************************************************
  * TAG( ditherbw )
- * 
+ *
  * Return dithered black & white value.
  * Inputs:
  * 	x:		X location on screen of this pixel.

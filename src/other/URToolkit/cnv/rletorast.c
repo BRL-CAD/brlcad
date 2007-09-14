@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rletorast.c - Convert RLE to sun rasterfile.
- * 
+ *
  * Author:	Rod Bogart, John W. Peterson & Ed Falk (SMI)
  * 		Computer Science Dept.
  * 		University of Utah
@@ -27,8 +27,8 @@
  *   6 September 1990: Clark: fix colormap output when hrle_dflt_dr.ncolors == 1 and
  *                            hrle_dflt_dr.ncmap != 0 (i.e. pseudo_color image).
  *   10 September 1990: Clark: fix bug in pointer calculation (optr = image + ...).
- * 
- * Based on "tobw.c" by Spencer Thomas, and 
+ *
+ * Based on "tobw.c" by Spencer Thomas, and
  * "rps" by Marc Majka (UBC Vision lab)
  *
  * If an input file isn't specified, it reads from stdin.  An output file
@@ -48,7 +48,7 @@ main( argc, argv )
 int argc;
 char **argv;
 {
-    char       *infname = NULL, 
+    char       *infname = NULL,
     	       *outfname = NULL;
     FILE       *outfile = stdout;
     rle_hdr	hdr;
@@ -83,7 +83,7 @@ char **argv;
 
     outfile = rle_open_f( "rletorast", outfname, "w" );
 
-    /* 
+    /*
      * Spencer trick: save space by sliding the input image over to the
      * left margin.
      */

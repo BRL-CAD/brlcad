@@ -1,4 +1,4 @@
-/* 
+/*
  * dlfcn.h --
  *
  *	This file provides a replacement for the header file "dlfcn.h"

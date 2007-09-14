@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -16,7 +16,7 @@
 
 #include "opennurbs.h"
 
-ON_Cylinder::ON_Cylinder() 
+ON_Cylinder::ON_Cylinder()
 {
   height[0] = 0.0;
   height[1] = 0.0;
@@ -89,7 +89,7 @@ double ON_Cylinder::Height() const
   return height[1] - height[0];
 }
 
-ON_Circle ON_Cylinder::CircleAt( 
+ON_Circle ON_Cylinder::CircleAt(
       double t // linear parameter
       ) const
 {
@@ -99,7 +99,7 @@ ON_Circle ON_Cylinder::CircleAt(
   return c;
 }
 
-ON_Line ON_Cylinder::LineAt( 
+ON_Line ON_Cylinder::LineAt(
       double s // angular parameter
       ) const
 {
@@ -124,8 +124,8 @@ ON_3dPoint ON_Cylinder::NormalAt( double s, double t ) const
 }
 
 // returns parameters of point on cylinder that is closest to given point
-bool ON_Cylinder::ClosestPointTo( 
-       ON_3dPoint point, 
+bool ON_Cylinder::ClosestPointTo(
+       ON_3dPoint point,
        double* s, // angular parameter
        double* t  // linear parameter
        ) const
@@ -148,7 +148,7 @@ bool ON_Cylinder::ClosestPointTo(
 }
 
 // returns point on cylinder that is closest to given point
-ON_3dPoint ON_Cylinder::ClosestPointTo( 
+ON_3dPoint ON_Cylinder::ClosestPointTo(
        ON_3dPoint point
        ) const
 {
@@ -221,20 +221,20 @@ int ON_Cylinder::GetNurbForm( ON_NurbsSurface& s ) const
       c1.GetNurbForm(n0);
     }
 
-    if (    n0.m_dim != n1.m_dim 
+    if (    n0.m_dim != n1.m_dim
          || n0.m_is_rat != n1.m_is_rat
-         || n0.m_order != n1.m_order 
+         || n0.m_order != n1.m_order
          || n0.m_cv_count != n1.m_cv_count )
       return 0;
 
     s.Create(3,TRUE, n0.m_order, 2, n0.m_cv_count, 2 );
     if ( height[0] <= height[1] ) {
       s.m_knot[1][0] = height[0];
-      s.m_knot[1][1] = height[1]; 
+      s.m_knot[1][1] = height[1];
     }
     else {
       s.m_knot[1][0] = height[1];
-      s.m_knot[1][1] = height[0]; 
+      s.m_knot[1][1] = height[0];
     }
 
     for ( i = 0; i < n0.KnotCount(); i++ )
@@ -281,7 +281,7 @@ ON_RevSurface* ON_Cylinder::RevSurfaceForm( ON_RevSurface* srf ) const
 }
 
 /*
-// obsolete use ON_BrepCylinder 
+// obsolete use ON_BrepCylinder
 ON_Brep* ON_Cylinder::BrepForm( ON_Brep* brep ) const
 {
   if ( brep )
@@ -294,7 +294,7 @@ ON_Brep* ON_Cylinder::BrepForm( ON_Brep* brep ) const
       pBrep = brep;
     else
       pBrep = new ON_Brep();
-    if ( !pBrep->Create(pRevSurface) ) 
+    if ( !pBrep->Create(pRevSurface) )
     {
       if ( !brep )
         delete pBrep;
@@ -305,7 +305,7 @@ ON_Brep* ON_Cylinder::BrepForm( ON_Brep* brep ) const
         pRevSurface = 0;
       }
     }
-    else 
+    else
     {
       // add caps
       for ( int capcount = 0; capcount < 2; capcount++ )
@@ -315,7 +315,7 @@ ON_Brep* ON_Cylinder::BrepForm( ON_Brep* brep ) const
         if ( capcount == 0 )
           circle.Reverse();
         double radius = circle.radius;
-        ON_NurbsSurface* pCapSurface = ON_NurbsSurfaceQuadrilateral( 
+        ON_NurbsSurface* pCapSurface = ON_NurbsSurfaceQuadrilateral(
           circle.plane.PointAt(-radius,-radius),
           circle.plane.PointAt(+radius,-radius),
           circle.plane.PointAt(+radius,+radius),

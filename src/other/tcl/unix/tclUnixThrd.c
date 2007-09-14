@@ -237,7 +237,7 @@ TclpThreadGetStackSize(void)
     /*
      * On Darwin, the API below does not return the correct stack size for the
      * main thread (which is not a real pthread), so fallback to getrlimit().
-     */  
+     */
     if (!pthread_main_np())
 #endif
     stackSize = pthread_get_stacksize_np(pthread_self());

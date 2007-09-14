@@ -111,11 +111,11 @@ proc SendEventToMsg {parent btn type} {
 set parent .
 
 set specs {
-    {"abortretryignore"  MB_ABORTRETRYIGNORE  3  {"abort"  "retry"  "ignore"}} 
-    {"ok"  		 MB_OK  	      1  {"ok"                      }} 
-    {"okcancel" 	 MB_OKCANCEL 	      2  {"ok"     "cancel"         }} 
-    {"retrycancel" 	 MB_RETRYCANCEL       2  {"retry"  "cancel"         }} 
-    {"yesno" 		 MB_YESNO 	      2  {"yes"    "no"             }} 
+    {"abortretryignore"  MB_ABORTRETRYIGNORE  3  {"abort"  "retry"  "ignore"}}
+    {"ok"  		 MB_OK  	      1  {"ok"                      }}
+    {"okcancel" 	 MB_OKCANCEL 	      2  {"ok"     "cancel"         }}
+    {"retrycancel" 	 MB_RETRYCANCEL       2  {"retry"  "cancel"         }}
+    {"yesno" 		 MB_YESNO 	      2  {"yes"    "no"             }}
     {"yesnocancel" 	 MB_YESNOCANCEL       3  {"yes"    "no"     "cancel"}}
 }
 

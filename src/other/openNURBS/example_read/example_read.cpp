@@ -7,13 +7,13 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 ////////////////////////////////////////////////////////////////
 //
-//  example_read.cpp  
-// 
-//  Example program using the Rhino file IO toolkit.  The program reads in  
-//  a Rhino 3dm model file and describes its contents.  The program is a 
+//  example_read.cpp
+//
+//  Example program using the Rhino file IO toolkit.  The program reads in
+//  a Rhino 3dm model file and describes its contents.  The program is a
 //  console application that takes a filename as a command line argument.
 //
 ////////////////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ int main( int argc, const char *argv[] )
   // to open the file.
 
   int argi;
-  if ( argc < 2 ) 
+  if ( argc < 2 )
   {
     printf("Syntax: %s [-out:outputfilename.txt] file1.3dm file2.3dm ...\n",argv[0] );
     return 0;
@@ -46,12 +46,12 @@ int main( int argc, const char *argv[] )
 
   bool bVerboseTextDump = true;
 
-  for ( argi = 1; argi < argc; argi++ ) 
+  for ( argi = 1; argi < argc; argi++ )
   {
     const char* arg = argv[argi];
 
     // check for -out or /out option
-    if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) ) 
+    if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) )
          && arg[5] )
     {
       // change destination of dump file
@@ -76,7 +76,7 @@ int main( int argc, const char *argv[] )
 
     // open file containing opennurbs archive
     FILE* archive_fp = ON::OpenFile( sFileName, "rb");
-    if ( !archive_fp ) 
+    if ( !archive_fp )
     {
       dump->Print("  Unable to open file.\n" );
       continue;
@@ -125,7 +125,7 @@ int main( int argc, const char *argv[] )
     delete dump;
     ON::CloseFile( dump_fp );
   }
-  
+
   // OPTIONAL: Call just before your application exits to clean
   //           up opennurbs class definition information.
   //           Opennurbs will not work correctly after ON::End()

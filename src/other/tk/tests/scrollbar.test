@@ -24,7 +24,7 @@ proc getTroughSize {w} {
 	    return [expr [winfo height $w] - 2*[testmetrics cyvscroll $w]]
 	} else {
 	    return [expr [winfo width $w] - 2*[testmetrics cxhscroll $w]]
-	}	    
+	}
     } else {
 	if [string match v* [$w cget -orient]] {
 	    return [expr [winfo height $w] \
@@ -47,7 +47,7 @@ proc getTroughSize {w} {
 foreach {width height} [wm minsize .] {
     set height [expr ($height < 200) ? 200 : $height]
     set width [expr ($width < 1) ? 1 : $width]
-} 
+}
 
 frame .f -height $height -width $width
 pack .f -side left
@@ -352,15 +352,15 @@ test scrollbar-3.59 {ScrollbarWidgetCmd procedure, "set" option} {
     set result
 } {0.0 0.3}
 test scrollbar-3.60 {ScrollbarWidgetCmd procedure, "set" option} {
-    .s set 1.1 .4 
+    .s set 1.1 .4
     .s get
 } {1.0 1.0}
 test scrollbar-3.61 {ScrollbarWidgetCmd procedure, "set" option} {
-    .s set .5 -.3 
+    .s set .5 -.3
     .s get
 } {0.5 0.5}
 test scrollbar-3.62 {ScrollbarWidgetCmd procedure, "set" option} {
-    .s set .5 87 
+    .s set .5 87
     .s get
 } {0.5 1.0}
 test scrollbar-3.63 {ScrollbarWidgetCmd procedure, "set" option} {
@@ -384,15 +384,15 @@ test scrollbar-3.67 {ScrollbarWidgetCmd procedure, "set" option} {
     list [catch {.s set 1 2 3 jkl} msg] $msg
 } {1 {expected integer but got "jkl"}}
 test scrollbar-3.68 {ScrollbarWidgetCmd procedure, "set" option} {
-    .s set -10 50 20 30 
+    .s set -10 50 20 30
     .s get
 } {0 50 0 0}
 test scrollbar-3.69 {ScrollbarWidgetCmd procedure, "set" option} {
-    .s set 100 -10 20 30 
+    .s set 100 -10 20 30
     .s get
 } {100 0 20 30}
 test scrollbar-3.70 {ScrollbarWidgetCmd procedure, "set" option} {
-    .s set 100 50 30 20 
+    .s set 100 50 30 20
     .s get
 } {100 50 30 30}
 test scrollbar-3.71 {ScrollbarWidgetCmd procedure, "set" option} {
@@ -463,7 +463,7 @@ test scrollbar-6.12 {ScrollbarPosition procedure} unix {
     .s identify 8 19
 } {arrow1}
 test scrollbar-6.14 {ScrollbarPosition procedure} win {
-    .s identify [expr [winfo width .s] / 2] 0 
+    .s identify [expr [winfo width .s] / 2] 0
 } {arrow1}
 test scrollbar-6.15 {ScrollbarPosition procedure} {testmetrics win} {
     .s identify [expr [winfo width .s] / 2] [expr [testmetrics cyvscroll .s] - 1]
@@ -562,7 +562,7 @@ test scrollbar-6.41 {ScrollbarPosition procedure} unix {
 } {slider}
 test scrollbar-6.43 {ScrollbarPosition procedure} {testmetrics win} {
     .t.s identify [expr int(.4 / [.t.s delta 1 0]) + [testmetrics cxhscroll .t.s] \
-		       - 1] [expr [winfo height .t.s] / 2] 
+		       - 1] [expr [winfo height .t.s] / 2]
 } {slider}
 test scrollbar-6.44 {ScrollbarPosition procedure} unix {
     .t.s identify 100 18

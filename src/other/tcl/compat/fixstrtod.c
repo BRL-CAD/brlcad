@@ -1,4 +1,4 @@
-/* 
+/*
  * fixstrtod.c --
  *
  *	Source code for the "fixstrtod" procedure.  This procedure is

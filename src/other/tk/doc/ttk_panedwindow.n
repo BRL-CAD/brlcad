@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH ttk_panedwindow n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -43,7 +43,7 @@ When the paned window is resized, the extra space is added
 or subracted to each pane proportionally to its \fB-weight\fR.
 
 .SH "WIDGET COMMAND"
-Supports the standard \fBconfigure\fR, \fBcget\fR, \fBstate\fR, 
+Supports the standard \fBconfigure\fR, \fBcget\fR, \fBstate\fR,
 and \fBinstate\fR commands; see \fIttk_widget(n)\fR for details.
 Additional commands:
 .TP
@@ -58,16 +58,16 @@ Removes the specified subpane from the widget.
 .TP
 \fIpathname \fBinsert\fR \fIpos\fR \fIsubwindow\fR \fIoptions...\fR
 Inserts a pane at the specified position.
-\fIpos\fR is either the string \fBend\fR, an integer index, 
+\fIpos\fR is either the string \fBend\fR, an integer index,
 or the name of a managed subwindow.
-If \fIsubwindow\fR is already managed by the paned window, 
+If \fIsubwindow\fR is already managed by the paned window,
 moves it to the specified position.
 See \fBPANE OPTIONS\fR for the list of available options.
 .TP
 \fIpathname \fBpane\fR \fIpane -option \fR?\fIvalue \fR?\fI-option value...\fR
 Query or modify the options of the specified \fIpane\fR,
 where \fIpane\fR is either an integer index or the name of a managed subwindow.
-If no \fI-option\fR is specified, returns a dictionary of the pane 
+If no \fI-option\fR is specified, returns a dictionary of the pane
 option values.
 If one \fI-option\fR is specified, returns the value of that \fIoption\fR.
 Otherwise, sets the \fI-option\fRs to the corresponding \fIvalue\fRs.
@@ -77,7 +77,7 @@ The following routines are used internally by the \fBpaned\fR widget
 binding code.
 .TP
 \fIpathname\fR \fBsashpos\fR \fIindex\fR ?\fInewpos\fR?
-If \fInewpos\fR is specified, sets the sash position 
+If \fInewpos\fR is specified, sets the sash position
 (subject to constraints).
 Returns the position of sash number \fIindex\fR.
 .TP

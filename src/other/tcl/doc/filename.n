@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH filename n 7.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -32,7 +32,7 @@ File names are grouped into three general types based on the starting point
 for the path used to specify the file: absolute, relative, and
 volume-relative.  Absolute names are completely qualified, giving a path to
 the file relative to a particular volume and the root directory on that
-volume.  Relative names are unqualified, giving a path to the file relative 
+volume.  Relative names are unqualified, giving a path to the file relative
 to the current working directory.  Volume-relative names are partially
 qualified, either giving the path relative to the root directory on the
 current volume, or relative to the current directory of the specified
@@ -79,7 +79,7 @@ current directory.
 .TP 15
 \fB\&../foo\fR
 Relative path to the file \fBfoo\fR in the directory above the current
-directory. 
+directory.
 .RE
 .TP
 \fBwindows\fR
@@ -88,7 +88,7 @@ style names.  Both \fB/\fR and \fB\e\fR may be used as directory separators
 in either type of name.  Drive-relative names consist of an optional drive
 specifier followed by an absolute or relative path.  UNC paths follow the
 general form \fB\e\eservername\esharename\epath\efile\fR, but must at
-the very least contain the server and share components, i.e. 
+the very least contain the server and share components, i.e.
 \fB\e\eservername\esharename\fR.  In both forms,
 the file names \fB.\fR and \fB..\fR are special and refer to the current
 directory and the parent of the current directory respectively.  The
@@ -158,7 +158,7 @@ native path names).  Also Windows 3.1 only supports file
 names with a root of no more than 8 characters and an extension of no
 more than 3 characters.
 .PP
-On Windows platforms there are file and path length restrictions. 
+On Windows platforms there are file and path length restrictions.
 Complete paths or filenames longer than about 260 characters will lead
 to errors in most file operations.
 .PP

@@ -5,8 +5,8 @@
  *	by David R. L. Worthington, SRI International,  29 April 1991
  *	to handle TIFF files with only one channel and a possible colormap.
  */
- 
- 
+
+
 #define NO_DECLARE_MALLOC	/* tiffcompat.h declares it. */
 #include "rle.h"
 #undef TIFF			/* Defined by rle_config.h. */
@@ -38,7 +38,7 @@ unsigned char	*tiffbuf;
 static rle_pixel **scan_red;
 static rle_pixel **scan_green;
 static rle_pixel **scan_blue;
- 
+
 int flip = 0;
 unsigned short samplesperpixel = 1;
 unsigned short bitspersample = 8;	/* Ok to assume 8? */
@@ -47,7 +47,7 @@ unsigned char bc4[16] = { 0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
 			  0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xee, 0xff };
 unsigned char bc2[4] = { 0, 0x55, 0xaa, 0xff };
 unsigned char bc1[2] = { 0, 0xff };
- 
+
 void
 main(argc, argv)
 int argc;
@@ -63,7 +63,7 @@ char *argv[];
         int row, i;
         rle_pixel *rows[4];
 	char *infname = NULL, *outfname = NULL;
- 
+
 	the_hdr = *rle_hdr_init( (rle_hdr *)NULL );
 	if ( scanargs( argc, argv, "% o%-outfile.rle!s infile.tiff!s\n(\
 \tConvert TIFF image to URT.)",
@@ -80,9 +80,9 @@ char *argv[];
 	    error("TIFFGetField TIFFTAG_IMAGEWIDTH failed!");
 	if (TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imagelength) == 0)
  	    error("TIFFGetField TIFFTAG_IMAGELENGTH failed!");
-	if (TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel) == 0) 
+	if (TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplesperpixel) == 0)
 	    error("TIFFGetField TIFFTAG_SAMPLESPERPIXEL failed!");
-	if (TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample) == 0) 
+	if (TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspersample) == 0)
 	    error("TIFFGetField TIFFTAG_BITSPERSAMPLE failed!");
         if (TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric) == 0)
 	    error("TIFFGetField TIFFTAG_PHOTOMETRIC failed!");
@@ -124,7 +124,7 @@ char *argv[];
 	    error("TIFFGetField TIFFTAG_PLANARCONFIG failed!");
 	/* Might not be present. */
 	(void)TIFFGetField(tif, TIFFTAG_MATTEING, &matteing );
-	    
+
 	switch ( photometric ) {
 	case PHOTOMETRIC_MINISWHITE:
 	{
@@ -199,10 +199,10 @@ char *argv[];
         the_hdr.xmax = imagewidth - 1;
         the_hdr.ymin = 0;
         the_hdr.ymax = imagelength - 1;
- 
+
 	rle_addhist( argv, (rle_hdr *)NULL, &the_hdr );
         rle_put_setup( &the_hdr );
- 
+
         tiffbuf = (unsigned char*)malloc((unsigned)TIFFScanlineSize(tif));
         if (!tiffbuf) error("can't allocate tiff scanline buffer");
 
@@ -219,11 +219,11 @@ char *argv[];
         }
 }
 
-void 
+void
 get_scanlines()
 {
     int i,j,k,l,n;
- 
+
     scan_red = (rle_pixel**)malloc(sizeof(rle_pixel*)*(the_hdr.ymax+1));
     if (!scan_red)
         error("can't allocate a scan buffer");
@@ -294,8 +294,8 @@ get_scanlines()
 	}
     }
 }
- 
-void 
+
+void
 error(s)
 CONST_DECL char *s;
 {

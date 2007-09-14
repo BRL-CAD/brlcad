@@ -36,7 +36,7 @@ namespace TNT
 {
 
 template <class T>
-class Array1D 
+class Array1D
 {
 
   private:
@@ -51,7 +51,7 @@ class Array1D
 
     void copy_(T* p, const T*  q, int len) const;
     void set_(T* begin,  T* end, const T& val);
- 
+
 
   public:
 
@@ -93,7 +93,7 @@ template <class T>
 Array1D<T>::Array1D() : v_(), n_(0), data_(0) {}
 
 template <class T>
-Array1D<T>::Array1D(const Array1D<T> &A) : v_(A.v_),  n_(A.n_), 
+Array1D<T>::Array1D(const Array1D<T> &A) : v_(A.v_),  n_(A.n_),
 		data_(A.data_)
 {
 #ifdef TNT_DEBUG
@@ -111,7 +111,7 @@ Array1D<T>::Array1D(int n) : v_(n), n_(n), data_(v_.begin())
 }
 
 template <class T>
-Array1D<T>::Array1D(int n, const T &val) : v_(n), n_(n), data_(v_.begin()) 
+Array1D<T>::Array1D(int n, const T &val) : v_(n), n_(n), data_(v_.begin())
 {
 #ifdef TNT_DEBUG
 	std::cout << "Created Array1D(int n, const T& val) \n";
@@ -144,49 +144,49 @@ inline Array1D<T>::operator const T*()
 
 
 template <class T>
-inline T& Array1D<T>::operator[](int i) 
-{ 
+inline T& Array1D<T>::operator[](int i)
+{
 #ifdef TNT_BOUNDS_CHECK
 	assert(i>= 0);
 	assert(i < n_);
 #endif
-	return data_[i]; 
+	return data_[i];
 }
 
 template <class T>
-inline const T& Array1D<T>::operator[](int i) const 
-{ 
+inline const T& Array1D<T>::operator[](int i) const
+{
 #ifdef TNT_BOUNDS_CHECK
 	assert(i>= 0);
 	assert(i < n_);
 #endif
-	return data_[i]; 
+	return data_[i];
 }
 
 
 
 template <class T>
-inline T& Array1D<T>::operator()(int i) 
-{ 
+inline T& Array1D<T>::operator()(int i)
+{
 #ifdef TNT_BOUNDS_CHECK
 	assert(i>= 0);
 	assert(i < n_);
 #endif
-	return data_[i-1]; 
+	return data_[i-1];
 }
 
 template <class T>
-inline const T& Array1D<T>::operator()(int i) const 
-{ 
+inline const T& Array1D<T>::operator()(int i) const
+{
 #ifdef TNT_BOUNDS_CHECK
 	assert(i>= 0);
 	assert(i < n_);
 #endif
-	return data_[i-1]; 
+	return data_[i-1];
 }
 
 
-	
+
 
 template <class T>
 Array1D<T> & Array1D<T>::operator=(const T &a)
@@ -225,8 +225,8 @@ Array1D<T> & Array1D<T>::ref(const Array1D<T> &A)
 	{
 		v_ = A.v_;		/* operator= handles the reference counting. */
 		n_ = A.n_;
-		data_ = A.data_; 
-		
+		data_ = A.data_;
+
 	}
 	return *this;
 }

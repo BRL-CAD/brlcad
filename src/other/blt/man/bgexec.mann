@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Bgexec command created by George Howlett.
 '\"
@@ -35,7 +35,7 @@ allowing Tk to handle events.  A global Tcl variable \fIvarName\fR is
 set when the program has completed.
 .SH INTRODUCTION
 Tcl's \fBexec\fR command is very useful for gathering information from
-the operating system.  It runs a program and returns the output as its 
+the operating system.  It runs a program and returns the output as its
 result.  This works well for Tcl-only applications. But
 for Tk applications, a problem occurs when the program takes time to
 process.  Let's say we want the get the disk usage of a
@@ -135,7 +135,7 @@ The \fBbgexec\fR command takes the following form:
 .sp
 \fB	blt::bgexec \fIvarName\fR ?\fIoption value\fR?... \fIprogram\fR ?\fIarg\fR?...
 .sp
-\fIVarName\fR is the name of a global variable which is set when 
+\fIVarName\fR is the name of a global variable which is set when
 \fIprogram\fR has finished executing.  The exit status of
 will be stored in \fIvarName\fR.  The exit status is a
 list of a status token, the process-id of the program, the exit code,
@@ -157,57 +157,57 @@ with the return status when \fIprogram\fR completes.
 \fIValue\fR is the value of the option.  Option-value pairs are
 terminated either by the program name, or double dashes (\-\-).
 The following options are available for \fBbgexec\fR:
-.TP 
-\fB\-decodeerror \fIencodingName\fR 
+.TP
+\fB\-decodeerror \fIencodingName\fR
 .br
 Specifies the encoding of the stderr channel.
-This affects only data returned to the Tcl interpreter.  No translation 
+This affects only data returned to the Tcl interpreter.  No translation
 is done on file redirection.
 .br
 For example if data is to be converted from Unicode for use in Tcl,
-you would use the "unicode" encoding. The default is that no 
+you would use the "unicode" encoding. The default is that no
 tranlation is performed.
-.TP 
-\fB\-decodeoutput \fIencodingName\fR 
+.TP
+\fB\-decodeoutput \fIencodingName\fR
 .br
 Specifies the encoding of the stdout channels.
-This affects only data returned to the Tcl interpreter.  No translation 
+This affects only data returned to the Tcl interpreter.  No translation
 is done on file redirection.
 .br
 For example if data is to be converted from Unicode for use in Tcl,
-you would use the "unicode" encoding. The default is that no 
+you would use the "unicode" encoding. The default is that no
 tranlation is performed.
-.TP 
-\fB\-error \fIvarName\fR 
+.TP
+\fB\-error \fIvarName\fR
 .br
 Specifies that a global variable \fIvarName\fR is to be set with the
-contents of stderr after the program has completed. 
-.TP 
+contents of stderr after the program has completed.
+.TP
 \fB\-keepnewline \fIboolean\fR
-Specifies that a trailing newline should be retained in the 
+Specifies that a trailing newline should be retained in the
 output. If \fIboolean\fR is true, the trailing newline is truncated
-from the output of the \fB\-onoutput\fR and \fB\-output\fR variables.  
+from the output of the \fB\-onoutput\fR and \fB\-output\fR variables.
 The default value is \f(CWtrue\fR.
-.TP 
+.TP
 \fB\-killsignal \fIsignal\fR
-Specifies the signal to be sent to the program when 
-terminating. This is available only under Unix. 
+Specifies the signal to be sent to the program when
+terminating. This is available only under Unix.
 \fISignal\fR can either be a number (typically 1-32) or
-a mnemonic (such as SIGINT). If \fIsignal\fR is the empty string, 
+a mnemonic (such as SIGINT). If \fIsignal\fR is the empty string,
 then no signal is sent.  The default signal is \f(CW9\fR (SIGKILL).
-.TP 
+.TP
 \fB\-lasterror \fIvarName\fR
 Specifies a variable \fIvarName\fR that is updated whenever data
 becomes available from standard error of the program.
 \fIVarName\fR is a global variable. Unlike the \fB\-error\fR option,
 data is available as soon as it arrives.
-.TP 
-\fB\-lastoutput \fIvarName\fR 
+.TP
+\fB\-lastoutput \fIvarName\fR
 Specifies a variable \fIvarName\fR that is updated whenever data
 becomes available from standard output of the program.
 \fIVarName\fR is a global variable. Unlike the \fB\-output\fR option,
 data is available as soon as it arrives.
-.TP 
+.TP
 \fB\-linebuffered \fIboolean\fR
 Specifies that updates should be made on a line-by-line basis.
 Normally when new data is available \fBbgexec\fR will set the variable
@@ -215,34 +215,34 @@ Normally when new data is available \fBbgexec\fR will set the variable
 command (\fB\-onoutput\fR and \fB\-onerror\fR options) delivering all
 the new data currently available.  If \fIboolean\fR is true, only one
 line at a time will be delivered.  This can be useful when you want to
-process the output on a line-by-line basis.  
+process the output on a line-by-line basis.
 The default value is
 \f(CWfalse\fR.
-.TP 
+.TP
 \fB\-output \fIvarName\fR
 .br
 Specifies that a global variable \fIvarName\fR is to be set with the
-output of the program, once it has completed.  If this option 
+output of the program, once it has completed.  If this option
 is not set, no output will be accumulated.
-.TP 
+.TP
 \fB\-onerror \fIcommand\fR
 Specifies the start of a Tcl command that will be executed
 whenever new data is available from standard error. The data
 is appended to the command as an extra argument before it is
 executed.
-.TP 
-\fB\-onoutput \fIcommand\fR 
+.TP
+\fB\-onoutput \fIcommand\fR
 Specifies the start of a Tcl command that will be executed
 whenever new data is available from standard output. The data
 is appended to the command as an extra argument before it is
 executed.
-.TP 
-\fB\-update \fIvarName\fR 
+.TP
+\fB\-update \fIvarName\fR
 Deprecated. This option is replaced by \fB\-lasterror\fR.
-.TP 
+.TP
 \fB\-\|\-\fR
 This marks the end of the options.  The following argument will
-be considered the name of a program even if it starts with 
+be considered the name of a program even if it starts with
 a dash (\fB\-\fR).
 .SH PREEMPTION
 Because \fBbgexec\fR allows Tk to handle events while a program is
@@ -266,14 +266,14 @@ background are:
 Execute the program with the \fBopen\fR command (using the "|"
 syntax) and save the file handle.
 .CS
-global fileId 
+global fileId
 set fileId [open "|du -s $dir" r]
 .CE
 Next register a Tcl code snippet with \fBfileevent\fR to be run
 whenever output is available on the file handle.  The code snippet
 will read from the file handle and save the output in a variable.
 .CS
-fileevent fileId readable { 
+fileevent fileId readable {
     if { [gets $fileId line] < 0 } {
 	close $fileId
 	set output $temp

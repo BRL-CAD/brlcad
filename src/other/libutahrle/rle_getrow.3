@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH RLE_GETROW 3 2/2/87 3
-.UC 4 
+.UC 4
 .SH NAME
 rle_getrow \- Read a scanline of pixels from an RLE file.
 .SH SYNOPSIS
@@ -18,7 +18,7 @@ rle_pixel ** rows;
 .SH DESCRIPTION
 .I Rle_getrow
 reads information for a single scanline from the input file
-each time it is called.  
+each time it is called.
 .I The_hdr
 should point to the structure initialized by
 .IR rle_get_setup (3).
@@ -39,7 +39,7 @@ Only those channels enabled by
 .IR the_hdr \(-> bits
 will be returned.
 .SH NOTES
-If an alpha channel is present in the input and enabled (by 
+If an alpha channel is present in the input and enabled (by
 .IR RLE_SET_BIT ,
 see
 .IR rle_hdr (3)),
@@ -57,7 +57,7 @@ called.  The calling program should use some other termination criterion
 .IR the_hdr \(-> ymax ,
 or explicitly testing testing for end of file on the input with
 .IR feof(infile) .
-The second test may fail if 
+The second test may fail if
 .I rle_getrow
 has encountered a logical EOF in the file.  The first will always work
 eventually.)
@@ -71,7 +71,7 @@ The code below reads the first two
 	int row, i;
 	rle_dflt_hdr.rle_file = stdin;
 	rle_get_setup( &rle_dflt_hdr );
-	for ( row = 0; row < 2; row++ ) 
+	for ( row = 0; row < 2; row++ )
 	{
 		for ( i = 0; i < 3; i++ )
 			rows[i] = scanline[row][i];

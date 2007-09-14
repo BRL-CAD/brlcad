@@ -1704,12 +1704,12 @@ worker(int cpu, genptr_t arg)
 	pixel_start = cur_pixel;
 	cur_pixel += per_processor_chunk;
 	bu_semaphore_release(RT_SEM_WORKER);
-	
+
 	for (pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++) {
-	    
+
 	    if (pixelnum > last_pixel)
 		return;
-	    
+
 	    do_pixel(cpu, pat_num, pixelnum);
 	}
     }
@@ -1805,11 +1805,11 @@ view_pixel(register struct application *ap)
     {
 	RGBpixel	p;
 	int		npix;
-	
+
 	p[0] = r ;
 	p[1] = g ;
 	p[2] = b ;
-	
+
 	if( outfp != NULL )  {
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    if( fseek( outfp, (ap->a_y*width*3) + (ap->a_x*3), 0 ) != 0 )
@@ -1818,7 +1818,7 @@ view_pixel(register struct application *ap)
 		bu_bomb("pixel fwrite error");
 	    bu_semaphore_release( BU_SEM_SYSCALL);
 	}
-	
+
 	if( fbp != FBIO_NULL )  {
 	    /* Framebuffer output */
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -2198,7 +2198,7 @@ view_2init(register struct application *ap, char *framename)
     ap->a_onehit = a_onehit;
 
     bu_log("Single pixel I/O, unbuffered\n");
-    
+
     ap->a_hit = colorview;
 
     /* If user did not specify any light sources then

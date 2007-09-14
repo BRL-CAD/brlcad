@@ -615,17 +615,17 @@ GetKeyNames(
 	return TCL_ERROR;
     }
 
-    /* 
+    /*
      * Determine how big a buffer is needed for enumerating subkeys, and
      * how many subkeys there are
      */
 
     result = (*regWinProcs->regQueryInfoKeyProc)
-	(key, NULL, NULL, NULL, &subKeyCount, &maxSubKeyLen, NULL, NULL, 
+	(key, NULL, NULL, NULL, &subKeyCount, &maxSubKeyLen, NULL, NULL,
 	 NULL, NULL, NULL, NULL);
     if (result != ERROR_SUCCESS) {
 	Tcl_SetObjResult(interp, Tcl_NewObj());
-	Tcl_AppendResult(interp, "unable to query key \"", 
+	Tcl_AppendResult(interp, "unable to query key \"",
 			 Tcl_GetString(keyNameObj), "\": ", NULL);
 	AppendSystemError(interp, result);
 	RegCloseKey(key);
@@ -1368,7 +1368,7 @@ SetValue(
 
 	Tcl_WinUtfToTChar(Tcl_DStringValue(&data), Tcl_DStringLength(&data)+1,
 		&buf);
-	result = (*regWinProcs->regSetValueExProc)(key, valueName, 0, 
+	result = (*regWinProcs->regSetValueExProc)(key, valueName, 0,
                 (DWORD)type,
 		(BYTE *) Tcl_DStringValue(&buf),
 		(DWORD) Tcl_DStringLength(&buf));
@@ -1389,7 +1389,7 @@ SetValue(
 	}
 	length = Tcl_DStringLength(&buf) + 1;
 
-	result = (*regWinProcs->regSetValueExProc)(key, valueName, 0, 
+	result = (*regWinProcs->regSetValueExProc)(key, valueName, 0,
                 (DWORD)type,
 		(BYTE*)data, (DWORD) length);
 	Tcl_DStringFree(&buf);
@@ -1401,7 +1401,7 @@ SetValue(
 	 */
 
 	data = Tcl_GetByteArrayFromObj(dataObj, &length);
-	result = (*regWinProcs->regSetValueExProc)(key, valueName, 0, 
+	result = (*regWinProcs->regSetValueExProc)(key, valueName, 0,
                 (DWORD)type,
 		(BYTE *)data, (DWORD) length);
     }

@@ -84,9 +84,9 @@
 
 	* library/tcltest/tcltest.tcl (getMatchingFiles,
 	  getMatchingDirectories):
-	* tools/man2html.tcl (doDir): 
-	* tools/man2help.tcl (doDir): 
-	* library/package.tcl (tclPkgUnknown,tclMacPkgSearch): 
+	* tools/man2html.tcl (doDir):
+	* tools/man2help.tcl (doDir):
+	* library/package.tcl (tclPkgUnknown,tclMacPkgSearch):
 	* library/safe.tcl (AddSubDirs): [glob] uses -directory instead of
 	  unsafe [file join] to fix Bug #123313
 
@@ -95,7 +95,7 @@
 	  representation of index objects to fix Bug #119082; fix
 	  shouldn't be visible to outside world...
 
-	* generic/tclTest.c (TestGetIndexFromObjStructObjCmd): 
+	* generic/tclTest.c (TestGetIndexFromObjStructObjCmd):
 	* tests/indexObj.test: (indexObj-6.*) Added to test for presence
 	  of Bug #119082.
 
@@ -165,8 +165,8 @@
 
 2000-11-21  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
 
-	* doc/global.n: 
-	* doc/upvar.n: 
+	* doc/global.n:
+	* doc/upvar.n:
 	* doc/variable.n: Improved documentation to mention that variables
 	  so created are listed in [info locals] and added a few more
 	  cross-links between these commands.  Fixes bug #119387
@@ -221,7 +221,7 @@
 
 	8.4a2 RELEASE
 
-	* unix/Makefile.in (install-libraries, dist): 
+	* unix/Makefile.in (install-libraries, dist):
 	* win/makefile.vc (install-libraries):
 	* win/Makefile.in (install-libraries): updated to install
 	unversioned library directories into versioned directories.
@@ -332,14 +332,14 @@
 2000-10-24  Jennifer Hom  <jenn@ajubasolutions.com>
 
 	* tests/all.tcl: Removed support for tcltest 1.0.
-	
+
 	* tests/tcltest.test:
 	* library/tcltest1.0/tcltest.tcl:
 	* library/tcltest1.0/pkgIndex.tcl:
 	* docs/tcltest.n: Moved tcltest2 code so that it's the standard
 	version of tcltest.  Removed all tcltest2 files
 	(tests/tcltest2.test, library/tcltest1.0/tcltest2.tcl,
-	docs/tcltest2.n). 
+	docs/tcltest2.n).
 
 2000-10-20  Jeff Hobbs  <hobbs@ajubasolutions.com>
 
@@ -613,7 +613,7 @@
  	  change the stacking).
 
 	test suite: failures of iogt-[345].0
-	
+
 2000-07-06  Jeff Hobbs  <hobbs@scriptics.com>
 
 	* tests/iogt.test: new tests for stacked channel stuff based off
@@ -658,7 +658,7 @@
 2000-09-20  Jennifer Hom  <jenn@ajubasolutions.com>
 
 	* library/tcltest1.0/pkgIndex.tcl: Updated to load tcltest 2.0.
-	* library/tcltest1.0/tcltest2.tcl: New version of tcltest.  
+	* library/tcltest1.0/tcltest2.tcl: New version of tcltest.
 	Cleanup of command line parsing: allows users to specify command
 	line arguments through an environment variable named
 	TCLTEST_OPTIONS [RFE: 3748], does not respond to incorrect
@@ -674,7 +674,7 @@
 	respect to temporaryDirectory [Bug: 6001].  Test results from
 	tests run in slave interpreters are now included in test totals
 	[Bug: 1493].  Test files that return error values are now reported.
-	
+
 	* tests/all.tcl: Added code to check for the tcltest version
 	loaded; modified to figure out which tests to run based on the
 	tcltest version loaded.
@@ -688,7 +688,7 @@
 	single interpreter.
 	* tests/socket.test: Fixed two tests that were referencing
 	variables outside of scope.
-	
+
 	* tools/tcl.wse.in: Added code to install tcltest2.tcl.
 
 	* doc/tcltest2.n: New documentation for tcltest version 2.0.
@@ -726,7 +726,7 @@
 	* doc/Alloc.3: Added entries for Tcl_AttemptAlloc, Tcl_AttempRealloc.
 
 	* doc/StringObj.3: Added entry for Tcl_AttemptSetObjLength.
-	
+
 	* generic/tclDecls.h:
 	* generic/tclStubInit.c: Regen'ed stubs files from new tcl.decls.
 
@@ -778,7 +778,7 @@
 	* README:
 	* generic/tcl.h:
 	* library/tcltest1.0/tcltest.tcl:
-	* tools/tcl.wse.in: 
+	* tools/tcl.wse.in:
 	* tools/tcltk-man2html.tcl:
 	* unix/configure.in:
 	* unix/tcl.spec:
@@ -828,8 +828,8 @@
 	not fire for scalar variables.
 
 2000-08-24  Eric Melski  <ericm@ajubasolutions.com>
-	
-	* doc/man.macros: Tweaked tab settings for .SO (Standard Options) 
+
+	* doc/man.macros: Tweaked tab settings for .SO (Standard Options)
 	sections, based on suggestion from Peter Spjuth.
 
 2000-08-24  Mo DeJong  <mdejong@redhat.com>
@@ -838,7 +838,7 @@
 	* unix/configure.in:
 	* unix/tcl.m4 (SC_ENABLE_GCC): Remove --enable-gcc option.
 	* win/README: Add note about building with Cygwin.
-	* win/configure.in: 
+	* win/configure.in:
 	* win/tcl.m4 (SC_ENABLE_GCC): Remove --enable-gcc option.
 	Remove quick hack that provided cross compile support for
 	windows builds.
@@ -863,17 +863,17 @@
 	* generic/tclDecls.h:
 	* generic/tcl.decls: Stub functions for command rename/delete traces.
 
-	* generic/tcl.h: 
+	* generic/tcl.h:
 	* generic/tclInt.h:
 	* generic/tclBasic.c: Support for command traces.
 
 	* generic/tclCmdMZ.c (TclTraceVariableObjCmd): Patched to support
-	new [trace] syntax:  
+	new [trace] syntax:
 	trace {add|remove|list} {variable|command} name ops command
 	Added support for command traces (rename, delete operations).
 	Added support for TCL_TRACE_ARRAY at Tcl level (array operation
 	for variable traces).
-	
+
 2000-08-20  Eric Melski  <ericm@ajubasolutions.com>
 
 	* generic/tclVar.c: Added check for non-arrays for [array statistics]
@@ -904,8 +904,8 @@
 
 2000-08-14  Eric Melski  <ericm@ajubasolutions.com>
 
-	* win/makefile.vc: 
-	* win/Makefile.in: 
+	* win/makefile.vc:
+	* win/Makefile.in:
 	* unix/Makefile.in: Added tclPlatDecls.h to the list of installed
 	headers, for more complete stubs support. [Bug: 5241].
 
@@ -1006,13 +1006,13 @@
 
 2000-07-21  Eric Melski  <ericm@ajubasolutions.com>
 
-	* generic/tclStubInit.c: 
-	* generic/tclObj.c: 
-	* generic/tclInt.h: 
-	* generic/tclHash.c: 
-	* generic/tclDecls.h: 
-	* generic/tcl.h: 
-	* generic/tcl.decls: 
+	* generic/tclStubInit.c:
+	* generic/tclObj.c:
+	* generic/tclInt.h:
+	* generic/tclHash.c:
+	* generic/tclDecls.h:
+	* generic/tcl.h:
+	* generic/tcl.decls:
 	* doc/Hash.3: Reapplied patch from Paul Duffin to extend hash tables
 	to allow custom key types, such as Tcl_Obj *'s, and others.
 
@@ -1028,26 +1028,26 @@
 
 2000-07-20  Eric Melski  <ericm@ajubasolutions.com>
 
-	* generic/tclStubInit.c: 
-	* generic/tclObj.c: 
-	* generic/tclInt.h: 
-	* generic/tclHash.c: 
-	* generic/tclDecls.h: 
-	* generic/tcl.h: 
-	* generic/tcl.decls: 
+	* generic/tclStubInit.c:
+	* generic/tclObj.c:
+	* generic/tclInt.h:
+	* generic/tclHash.c:
+	* generic/tclDecls.h:
+	* generic/tcl.h:
+	* generic/tcl.decls:
 	* doc/Hash.3: Reverted patch from Paul Duffin to extend hash tables
 	to allow custom key types, such as Tcl_Obj *'s, and others; it
 	seems to break Tk.
 
 2000-07-19  Eric Melski  <ericm@ajubasolutions.com>
 
-	* generic/tclStubInit.c: 
-	* generic/tclObj.c: 
-	* generic/tclInt.h: 
-	* generic/tclHash.c: 
-	* generic/tclDecls.h: 
-	* generic/tcl.h: 
-	* generic/tcl.decls: 
+	* generic/tclStubInit.c:
+	* generic/tclObj.c:
+	* generic/tclInt.h:
+	* generic/tclHash.c:
+	* generic/tclDecls.h:
+	* generic/tcl.h:
+	* generic/tcl.decls:
 	* doc/Hash.3: Applied patch from Paul Duffin to extend hash tables
 	to allow custom key types, such as Tcl_Obj *'s, and others.
 
@@ -1074,9 +1074,9 @@
 
 	* library/opt0.4/optparse.tcl: Applied patch from Chris Nelson,
 	which replaces the [Lfirst] function with an inline [lindex ... 0]
-	and [Lrest] with [lrange ... 1 end], for better performance. 
+	and [Lrest] with [lrange ... 1 end], for better performance.
 	[RFE: 6019]
-	
+
 
 2000-07-18  Eric Melski  <ericm@scriptics.com>
 
@@ -1095,8 +1095,8 @@
 
 2000-07-17  Eric Melski  <ericm@scriptics.com>
 
-	* library/msgcat1.0/msgcat.tcl: 
-	* doc/msgcat.n: 
+	* library/msgcat1.0/msgcat.tcl:
+	* doc/msgcat.n:
 	* tests/msgcat.test: Applied patches from Chris Nelson, to provide
 	the mcmset function, which allows the translator to set multiple
 	string translations in a single function call, rather than
@@ -1130,7 +1130,7 @@
 
 2000-07-06  Eric Melski  <ericm@scriptics.com>
 
-	* tests/msgcat.test: 
+	* tests/msgcat.test:
 	* library/msgcat1.0/msgcat.tcl: Applied patch from Christian
 	Krone, to provide extended args support for msgcat::unknown, which
 	is used for strings without a known translation in the current
@@ -1160,14 +1160,14 @@
 	* doc/Hash.3: Added documentation patch for Tcl_Obj *'s as keys in
 	Tcl hash tables [RFE: 5934].
 
-	* generic/tcl.h: 
+	* generic/tcl.h:
 	* generic/tclHash.c: Applied patch from [RFE: 5934], which extends
 	Tcl hash tables to allow Tcl_Obj *'s as the key.
 
 2000-06-20  Eric Melski  <ericm@ajubasolutions.com>
 
 	* tests/opt.test:
-	* library/opt0.4/optparse.tcl: Applied patch from [Bug: 5922], which 
+	* library/opt0.4/optparse.tcl: Applied patch from [Bug: 5922], which
 	corrected an incorrect use of [string match].
 
 	* unix/tclConfig.sh.in:
@@ -1231,10 +1231,10 @@
 	* tests/http.test
 	* doc/http.n
 	* library/http2.3/http.tcl: Fixed bug 5741, where unsuccessful
-	geturl calls sometimes leaked memory and resources (sockets).  
-	Also, switched around some of the logic so that http::wait never 
-	throws an exception.  This is because in an asynchronous geturl, 
-	the command callback will probably end up doing all the error 
+	geturl calls sometimes leaked memory and resources (sockets).
+	Also, switched around some of the logic so that http::wait never
+	throws an exception.  This is because in an asynchronous geturl,
+	the command callback will probably end up doing all the error
 	handling anyway, and in an asynchronous situation, the user
 	expects to check the state when the transaction completes, as
 	opposed to being thrown an exception.	For the http package, this
@@ -1260,7 +1260,7 @@
 	Removed inneffectual STR_RANGE "special" ByteArray support.
 	Optimized STR_MAP algorithm, especially optimized for one-pair case.
 	Fixed possible mem overrun in STR_INDEX bytearray case.
-	
+
 	* generic/tclCompExpr.c: changed INST_STREQ -> INST_STR_EQ,
 	INST_STRNEQ -> INST_STR_NEQ
 	* generic/tclCompile.c: added streq, strneq, strcmp, strlen &
@@ -1301,7 +1301,7 @@
 	* generic/tclExecute.c (TclExecuteByteCode): Added support for the
 	INST_STRLEN opcode.
 
-	* generic/tclCompCmds.c 
+	* generic/tclCompCmds.c
 	(TclCompileStringCmd): Basic implementation of byte-compiled
 	[string] command.  Not all subcommands are implemented; those
 	that are not an out-line compiled.
@@ -1313,7 +1313,7 @@
 
 2000-05-22  Jeff Hobbs  <hobbs@scriptics.com>
 
-	* doc/scan.n: 
+	* doc/scan.n:
 	* doc/array.n: minor doc fixes [Bug: 5396]
 
 	* generic/tclEnv.c: cast cleanup [Bug: 5624]
@@ -1391,14 +1391,14 @@
 
 2000-05-09  Andreas Kupries  <a.kupries@westend.com>
 	operating as proxy for David Gravereaux <davygrvy@pobox.com>
-	
+
 	* win/tclWinThrd.c (TclpInitLock, TclpMasterLock): Added missing
 	  initialization of joinLock.
 
 2000-05-09  Eric Melski  <ericm@scriptics.com>
 
-	* tests/lsearch.test: 
-	* doc/lsearch.n: 
+	* tests/lsearch.test:
+	* doc/lsearch.n:
 	* generic/tclCmdIL.c (Tcl_LsearchObjCmd): Extended [lsearch] to
 	support sorted list searching and typed list searching. [RFE: 4098].
 
@@ -1437,8 +1437,8 @@
 
 2000-05-08  Eric Melski  <ericm@scriptics.com>
 
-	* tests/set-old.test: 
-	* doc/array.n: 
+	* tests/set-old.test:
+	* doc/array.n:
 	* generic/tclVar.c: Added [array statistics] command [RFE: 4557]
 
 2000-05-06  Andreas Kupries <a.kupries@westend.com>
@@ -1613,19 +1613,19 @@
 
 2000-04-25  Eric Melski  <ericm@scriptics.com>
 
-	* unix/mkLinks: 
+	* unix/mkLinks:
 	* doc/AddErrInfo.3: Added information about Tcl_LogCommandInfo
 	[Bug: 1818].
 
 2000-04-24  Eric Melski  <ericm@scriptics.com>
 
-	* unix/mkLinks: 
+	* unix/mkLinks:
 	* doc/OpenFileChnl.3: Added man entry for Tcl_Ungets [Bug: 1834].
 
-	* unix/mkLinks: 
+	* unix/mkLinks:
 	* doc/SourceRCFile.3: Man page for Tcl_SourceRCFile [Bug: 1833].
 
-	* unix/mkLinks: 
+	* unix/mkLinks:
 	* doc/ParseCmd.3: Added documentation for Tcl_ParseVar [Bug: 1828].
 
 2000-04-24  Jeff Hobbs  <hobbs@scriptics.com>
@@ -1675,7 +1675,7 @@
 	* library/http2.1/http.tcl: More thrashing with the "server closes
 	without reading post data" scenario.  Reverted to the previous
 	filevent configuratiuon, which seems to work better with small
-	amounts of post data.  
+	amounts of post data.
 
 2000-04-20  Jeff Hobbs  <hobbs@scriptics.com>
 
@@ -1808,7 +1808,7 @@
 
 	* tests/regexp.test: Added tests for infinite looping in [regexp
 	-all].
-	
+
 	* generic/tclCmdMZ.c: Fixed infinite loop bug with [regexp -all]
 	[Bug: 4981].
 
@@ -1935,13 +1935,13 @@
 	* generic/tclNotify.c: Changed usage of TclFinalizeMutex to
 	Tcl_MutexFinalize.
 
-	* unix/tclUnixNotfy.c: 
+	* unix/tclUnixNotfy.c:
 	* generic/tclThreadTest.c: Changed usages of TclFinalizeCondition to
 	Tcl_ConditionFinalize.
 
 	* generic/tcl.h: Added empty macros for Tcl_MutexFinalize and
 	Tcl_ConditionFinalize, to be used when the core is compiled
-	without threads. 
+	without threads.
 
 	* doc/Thread.3:	Added description the new API's.
 
@@ -1967,8 +1967,8 @@
 
 2000-04-03  Eric Melski  <ericm@scriptics.com>
 
-	* unix/tclUnixFCmd.c (SetGroupAttribute): 
-	* unix/tclUnixFCmd.c (SetOwnerAttribute): Added (uid_t) and (gid_t) 
+	* unix/tclUnixFCmd.c (SetGroupAttribute):
+	* unix/tclUnixFCmd.c (SetOwnerAttribute): Added (uid_t) and (gid_t)
 	casts to avoid compiler warnings.
 
 2000-03-31  Eric Melski  <ericm@scriptics.com>
@@ -2047,7 +2047,7 @@
 	* unix/tclUnixChan.c: Added (off_t) type casts in lseek() call
 	[Bug: 4409].
 
-	* unix/tclLoadAout.c: 
+	* unix/tclLoadAout.c:
 	* unix/tclUnixPipe.c: Added (off_t) type casts in lseek() calls
 	[Bug: 4410].
 
@@ -2182,7 +2182,7 @@
 
 2000-02-09  Jim Ingham	 <jingham@cygnus.com>
 
-	* mac/tclMacSock.c: Don't panic when you get an error closing an async 
+	* mac/tclMacSock.c: Don't panic when you get an error closing an async
 	socket.	 This doesn't seem to hurt anything, and we return the error so
 	the caller can do the right thing.
 
@@ -2198,7 +2198,7 @@
 2000-02-08  Eric Melski  <ericm@scriptics.com>
 
 	* tests/clock.test: Added tests for "next monthname" constructs.
-	* generic/tclDate.c: 
+	* generic/tclDate.c:
 	* generic/tclGetDate.y (Message): Added a grammar rule for "next
 	monthname" so that we can handle "next january" and similar
 	constructs (bug #4146).
@@ -2236,14 +2236,14 @@
 
 2000-02-07  Eric Melski  <ericm@scriptics.com>
 
-	* tests/package.test: 
-	* library/tclIndex: 
+	* tests/package.test:
+	* library/tclIndex:
 	* library/package.tcl: Renamed ::package namespace to ::pkg.
 
 2000-02-03  Eric Melski <ericm@scriptics.com>
 
 	* doc/Package.n:
-	* doc/packagens.n: Renamed Package.n -> packagens.n because Windows 
+	* doc/packagens.n: Renamed Package.n -> packagens.n because Windows
 	can't deal with case-sensitive names.
 
 2000-02-02  Jeff Hobbs  <hobbs@scriptics.com>
@@ -2271,8 +2271,8 @@
 
 2000-01-31  Eric Melski  <ericm@scriptics.com>
 
-	* tests/package.test: 
-	* library/tclIndex: 
+	* tests/package.test:
+	* library/tclIndex:
 	* library/package.tcl: Added ::package namespace and
 	::package::create function.
 
@@ -2289,7 +2289,7 @@
 
 2000-01-28  Eric Melski  <ericm@scriptics.com>
 
-	* tests/pkg/magicchar2.tcl: 
+	* tests/pkg/magicchar2.tcl:
 	* tests/autoMkindex.test: Test for auto loader fix (bug #2480).
 
 	* library/init.tcl: auto_load was using [info commands $name] to
@@ -2297,13 +2297,13 @@
 	had * or [] it, this would fail because info commands uses
 	glob-style matching.  This is fixed.  (Bug #2480).
 
-	* tests/pkg/spacename.tcl: 
+	* tests/pkg/spacename.tcl:
 	* tests/pkgMkIndex.test: Tests for fix for bug #2360.
 
 	* library/package.tcl: Fixed to extract only the first element of
 	the list returned by auto_qualify (bug #2360).
 
-	* tests/pkg/magicchar.tcl: 
+	* tests/pkg/magicchar.tcl:
 	* tests/autoMkindex.test: Test for fix for bug #2611.
 
 	* library/auto.tcl: Fixed the regular expression that performs $
@@ -2313,7 +2313,7 @@
 
 2000-01-27  Eric Melski  <ericm@scriptics.com>
 
-	* tests/autoMkindex.test: 
+	* tests/autoMkindex.test:
 	* library/auto.tcl: Applied patch (with slight modification) from
 	bug #2701:  auto_mkIndex uses platform dependent file paths.
 	Added test for fix.
@@ -2321,7 +2321,7 @@
 2000-01-27  Jennifer Hom  <jenn@scriptics.com>
 
 	* library/tcltest1.0/tcltest.tcl: Changed NormalizePath to
-	normalizePath and exported it as a public proc.  This proc 
+	normalizePath and exported it as a public proc.  This proc
 	creates an absolute path given the name of the variable containing
 	the path to modify.  The path is modified in place.
 	* library/tcltest1.0/pkgIndex.tcl: Added normalizePath.
@@ -2330,9 +2330,9 @@
 2000-01-27  Eric Melski  <ericm@scriptics.com>
 
 	* tests/pkg/samename.tcl: test file for bug #1983
-	
-	* tests/pkgMkIndex.test: 
-	* doc/pkgMkIndex.n: 
+
+	* tests/pkgMkIndex.test:
+	* doc/pkgMkIndex.n:
 	* library/package.tcl: Per rfe #4097, optimized creation of direct
 	load packages to bypass computing the list of commands added by
 	the new package.  Also made direct loading the default, and added
@@ -2346,9 +2346,9 @@
 	* generic/tclNamesp.c: Undid fix for #956, which broke backwards
 	compatibility.
 
-	* doc/variable.n: 
-	* doc/trace.n: 
-	* doc/namespace.n: 
+	* doc/variable.n:
+	* doc/trace.n:
+	* doc/namespace.n:
 	* doc/info.n: Added further information about differences between
 	"namespace which" and "info exists".
 
@@ -2398,7 +2398,7 @@
 
 2000-01-21  Eric Melski  <ericm@scriptics.com>
 
-	* unix/mkLinks: 
+	* unix/mkLinks:
 	* doc/GetHostName.3: Man page for Tcl_GetHostName (bug #1817).
 
 	* doc/lreplace.n: Corrected man page with respect to treatment of
@@ -2412,7 +2412,7 @@
 	* generic/tclNamesp.c: Added check for undefined variables in
 	NamespaceWhichCmd (bug #956).
 
-	* tests/var.test: Added tests for corrected variable behavior 
+	* tests/var.test: Added tests for corrected variable behavior
 	(bug #981).
 
 	* doc/upvar.n: Expanded explanation of upvar behavior with respect to

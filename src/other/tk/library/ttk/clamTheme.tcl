@@ -7,7 +7,7 @@
 #
 
 namespace eval ttk::theme::clam {
-    variable colors 
+    variable colors
     array set colors {
 	-disabledfg	"#999999"
 	-frame  	"#dcdad5"

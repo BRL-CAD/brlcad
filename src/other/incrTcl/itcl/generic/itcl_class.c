@@ -998,7 +998,7 @@ Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
      *    it--as it is being resolved again by the compiler.
      */
     cmdPtr = (Command*)mfunc->accessCmd;
-    
+
     /*
      * The following #if is needed so itcl can be compiled with
      * all versions of Tcl.  The integer "deleted" was renamed to
@@ -1618,7 +1618,7 @@ Itcl_CreateVarDefn(interp, cdefn, name, init, config, vdefnPtr)
     else {
         mcode = NULL;
     }
-        
+
 
     /*
      *  If everything looks good, create the variable definition.

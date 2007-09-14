@@ -78,5 +78,5 @@ Man pages are generally not up to date.
 
 Some programs have not been compiled, as I don't have access to the
 right machines.  I have not linted or 'gcc -ansi' checked the code
-yet. 
+yet.
 

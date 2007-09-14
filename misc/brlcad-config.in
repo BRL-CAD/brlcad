@@ -37,7 +37,7 @@
 #
 # BRL-CAD configuration script for determining compilation
 # characteristics of a given install.
-# 
+#
 # Author -
 #   Christopher Sean Morrison
 ###
@@ -232,7 +232,7 @@ check ( ) {
 	    *)
 		;;
 	esac
-		
+
 	__found=no
 	for already in $__result ; do
 	    if test "x$new" = "x$already" ; then
@@ -244,7 +244,7 @@ check ( ) {
 	    __result="$__result $new"
 	fi
     done
-    echo $__result 
+    echo $__result
 }
 
 
@@ -373,12 +373,12 @@ fi
 if test "x$echo_ldflags" = "xyes"; then
     echo $ECHO_N "-L${libdir} $LDFLAGS $ECHO_C"
     need_newline=yes
-fi      
+fi
 
 if test "x$echo_libs" = "xyes"; then
     echo $ECHO_N "-L${libdir} $cadlibs $LIBS $ECHO_C"
     need_newline=yes
-fi      
+fi
 
 if test "x$need_newline" = "xyes" ; then
     echo ""

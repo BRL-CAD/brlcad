@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH RLECOMP 1 "December 20, 1986" 1
-.UC 4 
+.UC 4
 .SH NAME
 rlecomp \- Digital image compositor
 .SH SYNOPSIS
@@ -9,16 +9,16 @@ rlecomp \- Digital image compositor
 .B \-o
 .I outfile
 ]
-.I Afile operator Bfile 
+.I Afile operator Bfile
 .SH DESCRIPTION
 .IR rlecomp
 implements an image compositor based on presence of an alpha, or matte channel
 the image.  This extra channel usually defines
-a mask which represents a sort of a cookie-cutter for the image.  This is the 
+a mask which represents a sort of a cookie-cutter for the image.  This is the
 case when alpha is 255 (full coverage) for pixels inside the shape, zero
-outside, and between zero and 255 on the boundary.  
-If \fIAfile\fP or \fIBfile\fP is just a single \-, then 
-.IR rlecomp 
+outside, and between zero and 255 on the boundary.
+If \fIAfile\fP or \fIBfile\fP is just a single \-, then
+.IR rlecomp
 reads that file from the standard input.
 
 The operations behave as follows (assuming the operation is
@@ -37,7 +37,7 @@ The result is the same shape as image \fIB\fP, with \fIA\fP obscuring
 \fIB\fP where the image shapes overlap.  Note this differs from
 .B over
 because the portion of \fIA\fP outside \fIB\fP's shape does not appear
-in the result. 
+in the result.
 .TP
 .B out
 The result image is image \fIA\fP with the shape of \fIB\fP cut out.
@@ -78,7 +78,7 @@ p.255
 .SH AUTHORS
 Rod Bogart and John W. Peterson
 .SH BUGS
-The other operations could be optimized as much as 
+The other operations could be optimized as much as
 .B over
 is.
 

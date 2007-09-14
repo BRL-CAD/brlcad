@@ -1,5 +1,5 @@
 
-/* 
+/*
  * bltHash.c --
  *
  *
@@ -59,7 +59,7 @@
 #if (SIZEOF_VOID_P == 8)
 #define RANDOM_INDEX		HashOneWord
 #define DOWNSHIFT_START		62
-#else 
+#else
 
 /*
  * The following macro takes a preliminary integer hash value and
@@ -300,7 +300,7 @@ StringCreate(
  *	64-bit value with the golden ratio (sqrt(5) - 1) / 2.  The
  *	downshift value is 64 - n, when n is the log2 of the size of
  *	the hash table.
- *		
+ *
  * Results:
  *	The return value is a one-word summary of the information in
  *	64 bit word.
@@ -317,38 +317,38 @@ HashOneWord(
 {
     uint64_t a0, a1;
     uint64_t y0, y1;
-    uint64_t y2, y3; 
+    uint64_t y2, y3;
     uint64_t p1, p2;
     uint64_t result;
     /* Compute key * GOLDEN_RATIO in 128-bit arithmetic */
-    a0 = (uint64_t)key & 0x00000000FFFFFFFF; 
+    a0 = (uint64_t)key & 0x00000000FFFFFFFF;
     a1 = (uint64_t)key >> 32;
-    
+
     y0 = a0 * 0x000000007f4a7c13;
-    y1 = a0 * 0x000000009e3779b9; 
+    y1 = a0 * 0x000000009e3779b9;
     y2 = a1 * 0x000000007f4a7c13;
-    y3 = a1 * 0x000000009e3779b9; 
-    y1 += y0 >> 32;		/* Can't carry */ 
+    y3 = a1 * 0x000000009e3779b9;
+    y1 += y0 >> 32;		/* Can't carry */
     y1 += y2;			/* Might carry */
     if (y1 < y2) {
-	y3 += (1LL << 32);	/* Propagate */ 
+	y3 += (1LL << 32);	/* Propagate */
     }
 
     /* 128-bit product: p1 = loword, p2 = hiword */
     p1 = ((y1 & 0x00000000FFFFFFFF) << 32) + (y0 & 0x00000000FFFFFFFF);
     p2 = y3 + (y1 >> 32);
-    
+
     /* Left shift the value downward by the size of the table */
-    if (tablePtr->downShift > 0) { 
-	if (tablePtr->downShift < 64) { 
-	    result = ((p2 << (64 - tablePtr->downShift)) | 
-		      (p1 >> (tablePtr->downShift & 63))); 
-	} else { 
-	    result = p2 >> (tablePtr->downShift & 63); 
-	} 
-    } else { 
+    if (tablePtr->downShift > 0) {
+	if (tablePtr->downShift < 64) {
+	    result = ((p2 << (64 - tablePtr->downShift)) |
+		      (p1 >> (tablePtr->downShift & 63)));
+	} else {
+	    result = p2 >> (tablePtr->downShift & 63);
+	}
+    } else {
 	result = p1;
-    } 
+    }
     /* Finally mask off the high bits */
     return (Blt_Hash)(result & tablePtr->mask);
 }
@@ -370,7 +370,7 @@ HashOneWord(
  * Side effects:
  *	None.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_HashEntry *
 OneWordFind(
@@ -448,7 +448,7 @@ OneWordCreate(
 	hPtr = Blt_PoolAllocItem(tablePtr->hPool, sizeof(Blt_HashEntry));
     } else {
 	hPtr = Blt_Malloc(sizeof(Blt_HashEntry));
-    }	
+    }
     bucketPtr = tablePtr->buckets + hindex;
     hPtr->nextPtr = *bucketPtr;
     hPtr->hval = (Blt_Hash)key;
@@ -473,7 +473,7 @@ OneWordCreate(
 /*
  * --------------------------------------------------------------------
  *
- * MIX32 -- 
+ * MIX32 --
  *
  *      Bob Jenkins, 1996.  Public Domain.
  *
@@ -488,7 +488,7 @@ OneWordCreate(
  *	of 36 single-cycle latency instructions in a structure that
  *	could supported 2x parallelism, like so:
  *
- *		a -= b; 
+ *		a -= b;
  *		a -= c; x = (c>>13);
  *		b -= c; a ^= x;
  *		b -= a; x = (a<<8);
@@ -503,7 +503,7 @@ OneWordCreate(
  *	 could find.  There were about 2^^68 to choose from.  I only
  *	 looked at a billion or so.
  *
- * -------------------------------------------------------------------- 
+ * --------------------------------------------------------------------
  */
 #define MIX32(a,b,c) \
 	a -= b, a -= c, a ^= (c >> 13), \
@@ -536,7 +536,7 @@ OneWordCreate(
  */
 static Blt_Hash
 HashArray(
-    CONST void *key, 
+    CONST void *key,
     size_t length)		/* Length of the key in 32-bit words */
 {
     register uint32_t a, b, c, len;
@@ -553,7 +553,7 @@ HashArray(
 	MIX32(a, b, c);
 	arrayPtr += 3; len -= 3;
     }
-    c += length;		
+    c += length;
     /* And now the last 2 words */
     /* Note that all the case statements fall through */
     switch(len) {
@@ -569,7 +569,7 @@ HashArray(
 
 #if (SIZEOF_VOID_P == 8)
 
-/* 
+/*
  * --------------------------------------------------------------------
  *
  * MIX64 --
@@ -590,7 +590,7 @@ HashArray(
  *	By Bob Jenkins, Jan 4 1997.  bob_jenkins@burtleburtle.net.
  *	You may use this code any way you wish, private, educational,
  *	or commercial, as long as this whole comment accompanies it.
- * 
+ *
  *	See http://burtleburtle.net/bob/hash/evahash.html
  *	Use for hash table lookup, or anything where one collision in
  *	2^^64 * is acceptable.  Do NOT use for cryptographic purposes.
@@ -633,7 +633,7 @@ HashArray(
  */
 static Blt_Hash
 HashArray(
-    CONST void *key, 
+    CONST void *key,
     size_t length)		/* Length of key in 32-bit words. */
 {
     register uint64_t a, b, c, len;
@@ -656,24 +656,24 @@ HashArray(
 	MIX64(a,b,c);
 	iPtr += 6; len -= 6;
     }
-    c += length;		
+    c += length;
     /* And now the last 2 words */
     /* Note that all the case statements fall through */
     switch(len) {
 	/* c is reserved for the length */
-    case 5 : 
-    case 4 : 
+    case 5 :
+    case 4 :
 	a += PACK(iPtr[0], iPtr[1]);
 	b += PACK(iPtr[2], iPtr[3]);
 	iPtr += 4; len -= 4;
 	break;
-    case 3 : 
-    case 2 : 
+    case 3 :
+    case 2 :
 	a += PACK(iPtr[0], iPtr[1]);
 	iPtr += 2; len -= 2;
  /* case 0: nothing left to add */
     }
-    if (len > 0) {		
+    if (len > 0) {
 	b += iPtr[0];
     }
     MIX64(a,b,c);
@@ -795,7 +795,7 @@ ArrayCreate(
      */
     *newPtr = TRUE;
     /* We assume here that the size of the key is at least 2 words */
-    size = sizeof(Blt_HashEntry) + tablePtr->keyType * sizeof(uint32_t) - 
+    size = sizeof(Blt_HashEntry) + tablePtr->keyType * sizeof(uint32_t) -
 	sizeof(Blt_HashKey);
     if (tablePtr->hPool != NULL) {
 	hPtr = Blt_PoolAllocItem(tablePtr->hPool, size);
@@ -807,7 +807,7 @@ ArrayCreate(
     hPtr->hval = hval;
     hPtr->clientData = 0;
     count = tablePtr->keyType;
-    for (iPtr1 = (uint32_t *)key, iPtr2 = (uint32_t *)hPtr->key.words; 
+    for (iPtr1 = (uint32_t *)key, iPtr2 = (uint32_t *)hPtr->key.words;
 	 count > 0; count--, iPtr1++, iPtr2++) {
 	*iPtr2 = *iPtr1;
     }
@@ -915,7 +915,7 @@ RebuildTable(Blt_HashTable *tablePtr) /* Table to enlarge. */
      * hashing constants for new array size.
      */
     tablePtr->numBuckets <<= 2;
-    tablePtr->buckets = Blt_Calloc(tablePtr->numBuckets, 
+    tablePtr->buckets = Blt_Calloc(tablePtr->numBuckets,
 				   sizeof(Blt_HashEntry *));
     tablePtr->rebuildSize <<= 2;
     tablePtr->downShift -= 2;
@@ -923,10 +923,10 @@ RebuildTable(Blt_HashTable *tablePtr) /* Table to enlarge. */
 
     /*
      * Move all of the existing entries into the new bucket array,
-     * based on their hash values.  
+     * based on their hash values.
      */
     if (tablePtr->keyType == BLT_ONE_WORD_KEYS) {
-	/* 
+	/*
 	 * BLT_ONE_WORD_KEYS are handled slightly differently because
 	 * they use the current table size (number of buckets) to be
 	 * distributed.
@@ -986,7 +986,7 @@ Blt_InitHashTable(
 					 * is supplied by the caller. */
     size_t keyType)	                /* Type of keys to use in table. */
 {
-#if (BLT_SMALL_HASH_TABLE != 4) 
+#if (BLT_SMALL_HASH_TABLE != 4)
     Blt_Panic("Blt_InitHashTable: BLT_SMALL_HASH_TABLE is %d, not 4\n",
 	    BLT_SMALL_HASH_TABLE);
 #endif
@@ -1033,7 +1033,7 @@ Blt_InitHashTable(
  * Blt_InitHashTableWithPool --
  *
  *	Given storage for a hash table, set up the fields to prepare
- *	the hash table for use.  The only difference between this 
+ *	the hash table for use.  The only difference between this
  *	routine and Blt_InitHashTable is that is uses a pool allocator
  *	to allocate memory for hash table entries.  The type of pool
  *	is either fixed or variable size (string) keys.
@@ -1092,7 +1092,7 @@ Blt_DeleteHashEntry(
 	hindex = RANDOM_INDEX(tablePtr, (CONST void *)entryPtr->hval);
     } else {
 	hindex = (entryPtr->hval & tablePtr->mask);
-    }	
+    }
     bucketPtr = tablePtr->buckets + hindex;
     if (*bucketPtr == entryPtr) {
 	*bucketPtr = entryPtr->nextPtr;
@@ -1153,7 +1153,7 @@ Blt_DeleteHashTable(Blt_HashTable *tablePtr)	/* Table to delete. */
 	    }
 	}
     }
-    
+
     /*
      * Free up the bucket array, if it was dynamically allocated.
      */
@@ -1301,7 +1301,7 @@ Blt_HashStats(Blt_HashTable *tablePtr) /* Table for which to produce stats. */
 #if SIZEOF_VOID_P == 8
     sprintf(result, "%ld entries in table, %ld buckets\n",
 	    tablePtr->numEntries, tablePtr->numBuckets);
-#else 
+#else
     sprintf(result, "%d entries in table, %d buckets\n",
 	    tablePtr->numEntries, tablePtr->numBuckets);
 #endif
@@ -1310,7 +1310,7 @@ Blt_HashStats(Blt_HashTable *tablePtr) /* Table for which to produce stats. */
 #if SIZEOF_VOID_P == 8
 	sprintf(p, "number of buckets with %ld entries: %ld\n",
 		i, count[i]);
-#else 
+#else
 	sprintf(p, "number of buckets with %d entries: %d\n",
 		i, count[i]);
 #endif
@@ -1319,7 +1319,7 @@ Blt_HashStats(Blt_HashTable *tablePtr) /* Table for which to produce stats. */
 #if SIZEOF_VOID_P == 8
     sprintf(p, "number of buckets with %d or more entries: %ld\n",
 	    NUM_COUNTERS, overflow);
-#else 
+#else
     sprintf(p, "number of buckets with %d or more entries: %d\n",
 	    NUM_COUNTERS, overflow);
 #endif

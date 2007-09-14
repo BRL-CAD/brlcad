@@ -58,7 +58,7 @@ typedef struct Blt_TreeValueStruct Value;
  *	chain of these structures.  Each field contains the key of the
  *	field (Blt_TreeKey) and the value (Tcl_Obj) containing the
  *	actual data representations.
- * 
+ *
  */
 struct Blt_TreeValueStruct {
     Blt_TreeKey key;		/* String identifying the data field */
@@ -81,10 +81,10 @@ static Value *TreeFindValue _ANSI_ARGS_((Blt_TreeNode node,
 static Value *TreeCreateValue _ANSI_ARGS_((Blt_TreeNode node,
 	Blt_TreeKey key, int *newPtr));
 
-static int TreeDeleteValue _ANSI_ARGS_((Blt_TreeNode node, 
+static int TreeDeleteValue _ANSI_ARGS_((Blt_TreeNode node,
 	Blt_TreeValue value));
 
-static Value *TreeFirstValue _ANSI_ARGS_((Blt_TreeNode, 
+static Value *TreeFirstValue _ANSI_ARGS_((Blt_TreeNode,
 	Blt_TreeKeySearch *searchPtr));
 
 static Value *TreeNextValue _ANSI_ARGS_((Blt_TreeKeySearch *srchPtr));
@@ -104,7 +104,7 @@ static Value *TreeNextValue _ANSI_ARGS_((Blt_TreeKeySearch *srchPtr));
 #if (SIZEOF_VOID_P == 8)
 #define RANDOM_INDEX(i)		HashOneWord(mask, downshift, i)
 #define BITSPERWORD		64
-#else 
+#else
 
 /*
  * The following macro takes a preliminary integer hash value and
@@ -118,7 +118,7 @@ static Value *TreeNextValue _ANSI_ARGS_((Blt_TreeKeySearch *srchPtr));
 #define BITSPERWORD		32
 #endif
 
-#define DOWNSHIFT_START		(BITSPERWORD - 2) 
+#define DOWNSHIFT_START		(BITSPERWORD - 2)
 
 /*
  * Procedure prototypes for static procedures in this file:
@@ -172,13 +172,13 @@ typedef struct {
  *
  *	Creates or retrieves data associated with tree data objects
  *	for a particular thread.  We're using Tcl_GetAssocData rather
- *	than the Tcl thread routines so BLT can work with pre-8.0 
+ *	than the Tcl thread routines so BLT can work with pre-8.0
  *	Tcl versions that don't have thread support.
  *
  * Results:
  *	Returns a pointer to the tree interpreter data.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static TreeInterpData *
 GetTreeInterpData(Tcl_Interp *interp)
@@ -206,7 +206,7 @@ GetTreeInterpData(Tcl_Interp *interp)
  *
  *	Creates a new node in the tree without installing it.  The
  *	number of nodes in the tree is incremented and a unique serial
- *	number is generated for the node. 
+ *	number is generated for the node.
  *
  *	Also, all nodes have a label.  If no label was provided (name
  *	is NULL) then automatically generate one in the form "nodeN"
@@ -215,7 +215,7 @@ GetTreeInterpData(Tcl_Interp *interp)
  * Results:
  *	Returns a pointer to the new node.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static Node *
 NewNode(TreeObject *treeObjPtr, CONST char *name, int inode)
@@ -232,7 +232,7 @@ NewNode(TreeObject *treeObjPtr, CONST char *name, int inode)
     nodePtr->next = nodePtr->prev = NULL;
     nodePtr->first = nodePtr->last = NULL;
     nodePtr->nChildren = 0;
-    nodePtr->values = NULL;     
+    nodePtr->values = NULL;
     nodePtr->logSize = 0;
     nodePtr->nValues = 0;
     nodePtr->label = NULL;
@@ -248,7 +248,7 @@ NewNode(TreeObject *treeObjPtr, CONST char *name, int inode)
  *
  * ReleaseTagTable --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 ReleaseTagTable(Blt_TreeTagTable *tablePtr)
@@ -258,7 +258,7 @@ ReleaseTagTable(Blt_TreeTagTable *tablePtr)
 	Blt_HashEntry *hPtr;
 	Blt_HashSearch cursor;
 
-	for(hPtr = Blt_FirstHashEntry(&tablePtr->tagTable, &cursor); 
+	for(hPtr = Blt_FirstHashEntry(&tablePtr->tagTable, &cursor);
 	    hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	    Blt_TreeTagEntry *tPtr;
 
@@ -277,12 +277,12 @@ ReleaseTagTable(Blt_TreeTagTable *tablePtr)
  * ResetDepths --
  *
  *	Called after moving a node, resets the depths of each node
- *	for the entire branch (node and it's decendants).  
+ *	for the entire branch (node and it's decendants).
  *
- * Results: 
+ * Results:
  *	None.
  *
- * ---------------------------------------------------------------------- 
+ * ----------------------------------------------------------------------
  */
 static void
 ResetDepths(
@@ -341,7 +341,7 @@ LinkBefore(
  *
  * UnlinkNode --
  *
- *	Unlinks a link from the chain. The link is not deallocated, 
+ *	Unlinks a link from the chain. The link is not deallocated,
  *	but only removed from the chain.
  *
  * Results:
@@ -390,7 +390,7 @@ UnlinkNode(Node *nodePtr)
  * Results:
  *	None.
  *
- * -------------------------------------------------------------- 
+ * --------------------------------------------------------------
  */
 static void
 FreeNode(TreeObject *treeObjPtr, Node *nodePtr)
@@ -449,7 +449,7 @@ NewTreeObject(TreeInterpData *dataPtr, Tcl_Interp *interp, CONST char *treeName)
     Blt_SetHashValue(hPtr, treeObjPtr->root);
 
     treeObjPtr->tablePtr = &dataPtr->treeTable;
-    treeObjPtr->hashPtr = Blt_CreateHashEntry(treeObjPtr->tablePtr, treeName, 
+    treeObjPtr->hashPtr = Blt_CreateHashEntry(treeObjPtr->tablePtr, treeName,
 	&isNew);
     Blt_SetHashValue(treeObjPtr->hashPtr, treeObjPtr);
 
@@ -500,14 +500,14 @@ GetTreeObject(Tcl_Interp *interp, CONST char *name, int flags)
 
     treeObjPtr = NULL;
     if (Blt_ParseQualifiedName(interp, name, &nsPtr, &treeName) != TCL_OK) {
-	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"",
 		(char *)NULL);
 	return NULL;
     }
     dataPtr = GetTreeInterpData(interp);
-    if (nsPtr != NULL) { 
+    if (nsPtr != NULL) {
 	treeObjPtr = FindTreeInNamespace(dataPtr, nsPtr, treeName);
-    } else { 
+    } else {
 	if (flags & NS_SEARCH_CURRENT) {
 	    /* Look first in the current namespace. */
 	    nsPtr = Tcl_GetCurrentNamespace(interp);
@@ -529,17 +529,17 @@ GetTreeObject(Tcl_Interp *interp, CONST char *name, int flags)
  *	Destroys an entire branch.  This is a special purpose routine
  *	used to speed up the final clean up of the tree.
  *
- * Results: 
+ * Results:
  *	None.
  *
- * ---------------------------------------------------------------------- 
+ * ----------------------------------------------------------------------
  */
 static void
 TeardownTree(TreeObject *treeObjPtr, Node *nodePtr)
 {
     if (nodePtr->first != NULL) {
 	Node *childPtr, *nextPtr;
-	
+
 	for (childPtr = nodePtr->first; childPtr != NULL; childPtr = nextPtr) {
 	    nextPtr = childPtr->next;
 	    TeardownTree(treeObjPtr, childPtr);
@@ -577,7 +577,7 @@ DestroyTreeObject(TreeObject *treeObjPtr)
 
     if (treeObjPtr->hashPtr != NULL) {
 	/* Remove the entry from the global tree table. */
-	Blt_DeleteHashEntry(treeObjPtr->tablePtr, treeObjPtr->hashPtr); 
+	Blt_DeleteHashEntry(treeObjPtr->tablePtr, treeObjPtr->hashPtr);
 	if ((treeObjPtr->tablePtr->numEntries == 0) && (keyTableInitialized)) {
 	    keyTableInitialized = FALSE;
 	    Blt_DeleteHashTable(&keyTable);
@@ -595,7 +595,7 @@ DestroyTreeObject(TreeObject *treeObjPtr)
  * TreeInterpDeleteProc --
  *
  *	This is called when the interpreter hosting the tree object
- *	is deleted from the interpreter.  
+ *	is deleted from the interpreter.
  *
  * Results:
  *	None.
@@ -616,7 +616,7 @@ TreeInterpDeleteProc(
     Blt_HashEntry *hPtr;
     Blt_HashSearch cursor;
     TreeObject *treeObjPtr;
-    
+
     for (hPtr = Blt_FirstHashEntry(&dataPtr->treeTable, &cursor);
 	 hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	treeObjPtr = (TreeObject *)Blt_GetHashValue(hPtr);
@@ -640,11 +640,11 @@ TreeInterpDeleteProc(
  *	Used to invoke event handler routines at some idle point.
  *	This routine is called from the Tcl event loop.  Errors
  *	generated by the event handler routines are backgrounded.
- *	
+ *
  * Results:
  *	None.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 NotifyIdleProc(ClientData clientData)
@@ -674,16 +674,16 @@ NotifyIdleProc(ClientData clientData)
  *
  *	If a matching handler is found, a callback may be called either
  *	immediately or at the next idle time depending upon the
- *	TREE_NOTIFY_WHENIDLE bit.  
+ *	TREE_NOTIFY_WHENIDLE bit.
  *
  *	Since a handler routine may trigger yet another call to
  *	itself, callbacks are ignored while the event handler is
  *	executing.
- *	
+ *
  * Results:
  *	None.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 CheckEventHandlers(
@@ -696,7 +696,7 @@ CheckEventHandlers(
     EventHandler *notifyPtr;
 
     eventPtr->tree = clientPtr;
-    for (linkPtr = Blt_ChainFirstLink(clientPtr->events); 
+    for (linkPtr = Blt_ChainFirstLink(clientPtr->events);
 	linkPtr != NULL; linkPtr = nextPtr) {
 	nextPtr = Blt_ChainNextLink(linkPtr);
 	notifyPtr = Blt_ChainGetValue(linkPtr);
@@ -733,11 +733,11 @@ CheckEventHandlers(
  * NotifyClients --
  *
  *	Traverses the list of clients for a particular tree and
- *	notifies each client that an event occurred.  Clients 
+ *	notifies each client that an event occurred.  Clients
  *	indicate interest in a particular event through a bit
- *	flag.  
+ *	flag.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 NotifyClients(
@@ -754,7 +754,7 @@ NotifyClients(
     event.type = eventFlag;
     event.inode = nodePtr->inode;
 
-    /* 
+    /*
      * Issue callbacks to each client indicating that a new node has
      * been created.
      */
@@ -836,7 +836,7 @@ Blt_TreeCreateNode(
     /* Generate an unique serial number for this node.  */
     do {
 	inode = treeObjPtr->nextInode++;
-	hPtr = Blt_CreateHashEntry(&treeObjPtr->nodeTable,(char *)inode, 
+	hPtr = Blt_CreateHashEntry(&treeObjPtr->nodeTable,(char *)inode,
 		   &isNew);
     } while (!isNew);
     nodePtr = NewNode(treeObjPtr, name, inode);
@@ -853,7 +853,7 @@ Blt_TreeCreateNode(
     }
     LinkBefore(parentPtr, nodePtr, beforePtr);
     nodePtr->depth = parentPtr->depth + 1;
-    /* 
+    /*
      * Issue callbacks to each client indicating that a new node has
      * been created.
      */
@@ -909,7 +909,7 @@ Blt_TreeCreateNodeWithId(
     }
     LinkBefore(parentPtr, nodePtr, beforePtr);
     nodePtr->depth = parentPtr->depth + 1;
-    /* 
+    /*
      * Issue callbacks to each client indicating that a new node has
      * been created.
      */
@@ -930,8 +930,8 @@ Blt_TreeCreateNodeWithId(
 int
 Blt_TreeMoveNode(
     TreeClient *clientPtr,
-    Node *nodePtr, 
-    Node *parentPtr, 
+    Node *nodePtr,
+    Node *parentPtr,
     Node *beforePtr)
 {
     TreeObject *treeObjPtr = nodePtr->treeObject;
@@ -951,17 +951,17 @@ Blt_TreeMoveNode(
 	return TCL_ERROR;
     }
     UnlinkNode(nodePtr);
-    /* 
+    /*
      * Relink the node as a child of the new parent.
      */
     LinkBefore(parentPtr, nodePtr, beforePtr);
     newDepth = parentPtr->depth + 1;
-    if (nodePtr->depth != newDepth) { 
+    if (nodePtr->depth != newDepth) {
 	/* Reset the depths of all descendant nodes. */
 	ResetDepths(nodePtr, newDepth);
     }
 
-    /* 
+    /*
      * Issue callbacks to each client indicating that a node has
      * been moved.
      */
@@ -980,9 +980,9 @@ Blt_TreeDeleteNode(TreeClient *clientPtr, Node *nodePtr)
 	nextPtr = childPtr->next;
 	Blt_TreeDeleteNode(clientPtr, childPtr);
     }
-    /* 
+    /*
      * Issue callbacks to each client indicating that the node can
-     * no longer be used.  
+     * no longer be used.
      */
     NotifyClients(clientPtr, treeObjPtr, nodePtr, TREE_NOTIFY_DELETE);
 
@@ -1052,11 +1052,11 @@ void
 Blt_TreeRelabelNode(TreeClient *clientPtr, Node *nodePtr, CONST char *string)
 {
     nodePtr->label = Blt_TreeGetKey(string);
-    /* 
+    /*
      * Issue callbacks to each client indicating that a new node has
      * been created.
      */
-    NotifyClients(clientPtr, clientPtr->treeObject, nodePtr, 
+    NotifyClients(clientPtr, clientPtr->treeObject, nodePtr,
 		  TREE_NOTIFY_RELABEL);
 }
 
@@ -1071,7 +1071,7 @@ Blt_TreeRelabelNode2(Node *nodePtr, CONST char *string)
  *
  * Blt_TreeFindChild --
  *
- *	Searches for the named node in a parent's chain of siblings.  
+ *	Searches for the named node in a parent's chain of siblings.
  *
  *
  * Results:
@@ -1084,7 +1084,7 @@ Blt_TreeFindChild(Node *parentPtr, CONST char *string)
 {
     Blt_TreeKey label;
     register Node *nodePtr;
-    
+
     label = Blt_TreeGetKey(string);
     for (nodePtr = parentPtr->first; nodePtr != NULL; nodePtr = nodePtr->next) {
 	if (label == nodePtr->label) {
@@ -1115,7 +1115,7 @@ Blt_TreeNodePosition(Node *nodePtr)
     if (parentPtr != NULL) {
 	Node *childPtr;
 
-	for (childPtr = parentPtr->first; childPtr != NULL; 
+	for (childPtr = parentPtr->first; childPtr != NULL;
 	     childPtr = childPtr->next) {
 	    if (nodePtr == childPtr) {
 		break;
@@ -1132,9 +1132,9 @@ Blt_TreeNodePosition(Node *nodePtr)
  *
  * Blt_TreePrevNode --
  *
- *	Returns the "previous" node in the tree.  This node (in 
+ *	Returns the "previous" node in the tree.  This node (in
  *	depth-first order) is its parent, if the node has no siblings
- *	that are previous to it.  Otherwise it is the last descendant 
+ *	that are previous to it.  Otherwise it is the last descendant
  *	of the last sibling.  In this case, descend the sibling's
  *	hierarchy, using the last child at any ancestor, with we
  *	we find a leaf.
@@ -1170,13 +1170,13 @@ Blt_TreePrevNode(Node *rootPtr, Node *nodePtr)
  *
  * Blt_TreeNextNode --
  *
- *	Returns the "next" node in relation to the given node.  
- *	The next node (in depth-first order) is either the first 
+ *	Returns the "next" node in relation to the given node.
+ *	The next node (in depth-first order) is either the first
  *	child of the given node the next sibling if the node has
- *	no children (the node is a leaf).  If the given node is the 
+ *	no children (the node is a leaf).  If the given node is the
  *	last sibling, then try it's parent next sibling.  Continue
- *	until we either find a next sibling for some ancestor or 
- *	we reach the root node.  In this case the current node is 
+ *	until we either find a next sibling for some ancestor or
+ *	we reach the root node.  In this case the current node is
  *	the last node in the tree.
  *
  *----------------------------------------------------------------------
@@ -1191,10 +1191,10 @@ Blt_TreeNextNode(Node *rootPtr, Node *nodePtr)
     if (nextPtr != NULL) {
 	return nextPtr;
     }
-    /* 
-     * Back up until we can find a level where we can pick a 
-     * "next sibling".  For the last entry we'll thread our 
-     * way back to the root.  
+    /*
+     * Back up until we can find a level where we can pick a
+     * "next sibling".  For the last entry we'll thread our
+     * way back to the root.
      */
     while (nodePtr != rootPtr) {
 	nextPtr = nodePtr->next;
@@ -1221,7 +1221,7 @@ Blt_TreeIsBefore(Node *n1Ptr, Node *n2Ptr)
     if (depth == 0) {		/* One of the nodes is root. */
 	return (n1Ptr->parent == NULL);
     }
-    /* 
+    /*
      * Traverse back from the deepest node, until both nodes are at
      * the same depth.  Check if this ancestor node is the same for
      * both nodes.
@@ -1239,11 +1239,11 @@ Blt_TreeIsBefore(Node *n1Ptr, Node *n2Ptr)
 	return TRUE;
     }
 
-    /* 
+    /*
      * First find the mutual ancestor of both nodes.  Look at each
      * preceding ancestor level-by-level for both nodes.  Eventually
      * we'll find a node that's the parent of both ancestors.  Then
-     * find the first ancestor in the parent's list of subnodes.  
+     * find the first ancestor in the parent's list of subnodes.
      */
     for (i = depth; i > 0; i--) {
 	if (n1Ptr->parent == n2Ptr->parent) {
@@ -1252,7 +1252,7 @@ Blt_TreeIsBefore(Node *n1Ptr, Node *n2Ptr)
 	n1Ptr = n1Ptr->parent;
 	n2Ptr = n2Ptr->parent;
     }
-    for (nodePtr = n1Ptr->parent->first; nodePtr != NULL; 
+    for (nodePtr = n1Ptr->parent->first; nodePtr != NULL;
 	 nodePtr = nodePtr->next) {
 	if (nodePtr == n1Ptr) {
 	    return TRUE;
@@ -1277,26 +1277,26 @@ CallTraces(
 {
     Blt_ChainLink *l1Ptr, *l2Ptr;
     TreeClient *clientPtr;
-    TraceHandler *tracePtr;	
+    TraceHandler *tracePtr;
 
-    for(l1Ptr = Blt_ChainFirstLink(treeObjPtr->clients); 
+    for(l1Ptr = Blt_ChainFirstLink(treeObjPtr->clients);
 	l1Ptr != NULL; l1Ptr = Blt_ChainNextLink(l1Ptr)) {
 	clientPtr = Blt_ChainGetValue(l1Ptr);
-	for(l2Ptr = Blt_ChainFirstLink(clientPtr->traces); 
+	for(l2Ptr = Blt_ChainFirstLink(clientPtr->traces);
 	    l2Ptr != NULL; l2Ptr = Blt_ChainNextLink(l2Ptr)) {
 	    tracePtr = Blt_ChainGetValue(l2Ptr);
-	    if ((tracePtr->keyPattern != NULL) && 
+	    if ((tracePtr->keyPattern != NULL) &&
 		(!Tcl_StringMatch(key, tracePtr->keyPattern))) {
 		continue;	/* Key pattern doesn't match. */
 	    }
-	    if ((tracePtr->withTag != NULL) && 
+	    if ((tracePtr->withTag != NULL) &&
 		(!Blt_TreeHasTag(clientPtr, nodePtr, tracePtr->withTag))) {
 		continue;	/* Doesn't have the tag. */
 	    }
 	    if ((tracePtr->mask & flags) == 0) {
 		continue;	/* Flags don't match. */
 	    }
-	    if ((clientPtr == sourcePtr) && 
+	    if ((clientPtr == sourcePtr) &&
 		(tracePtr->mask & TREE_TRACE_FOREIGN_ONLY)) {
 		continue;	/* This client initiated the trace. */
 	    }
@@ -1304,7 +1304,7 @@ CallTraces(
 		continue;	/* Nodes don't match. */
 	    }
 	    nodePtr->flags |= TREE_TRACE_ACTIVE;
-	    if ((*tracePtr->proc) (tracePtr->clientData, treeObjPtr->interp, 
+	    if ((*tracePtr->proc) (tracePtr->clientData, treeObjPtr->interp,
 		nodePtr, key, flags) != TCL_OK) {
 		if (interp != NULL) {
 		    Tcl_BackgroundError(interp);
@@ -1324,17 +1324,17 @@ GetTreeValue(
 {
     register Value *valuePtr;
 
-    valuePtr = TreeFindValue(nodePtr, key); 
+    valuePtr = TreeFindValue(nodePtr, key);
     if (valuePtr == NULL) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't find field \"", key, "\"", 
+	    Tcl_AppendResult(interp, "can't find field \"", key, "\"",
 			     (char *)NULL);
 	}
 	return NULL;
-    }	
+    }
     if ((valuePtr->owner != NULL) && (valuePtr->owner != clientPtr)) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't access private field \"", 
+	    Tcl_AppendResult(interp, "can't access private field \"",
 			     key, "\"", (char *)NULL);
 	}
 	return NULL;
@@ -1351,10 +1351,10 @@ Blt_TreePrivateValue(
 {
     Value *valuePtr;
 
-    valuePtr = TreeFindValue(nodePtr, key); 
+    valuePtr = TreeFindValue(nodePtr, key);
     if (valuePtr == NULL) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't find field \"", key, "\"", 
+	    Tcl_AppendResult(interp, "can't find field \"", key, "\"",
 			     (char *)NULL);
 	}
 	return TCL_ERROR;
@@ -1372,17 +1372,17 @@ Blt_TreePublicValue(
 {
     Value *valuePtr;
 
-    valuePtr = TreeFindValue(nodePtr, key); 
+    valuePtr = TreeFindValue(nodePtr, key);
     if (valuePtr == NULL) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't find field \"", key, "\"", 
+	    Tcl_AppendResult(interp, "can't find field \"", key, "\"",
 			     (char *)NULL);
 	}
 	return TCL_ERROR;
     }
     if (valuePtr->owner != clientPtr) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "not the owner of \"", key, "\"", 
+	    Tcl_AppendResult(interp, "not the owner of \"", key, "\"",
 		     (char *)NULL);
 	}
 	return TCL_ERROR;
@@ -1423,7 +1423,7 @@ Blt_TreeGetValueByKey(
     }
     *objPtrPtr = valuePtr->objPtr;
     if (!(nodePtr->flags & TREE_TRACE_ACTIVE)) {
-	CallTraces(interp, clientPtr, treeObjPtr, nodePtr, key, 
+	CallTraces(interp, clientPtr, treeObjPtr, nodePtr, key,
 		   TREE_TRACE_READ);
     }
     return TCL_OK;
@@ -1446,7 +1446,7 @@ Blt_TreeSetValueByKey(
     valuePtr = TreeCreateValue(nodePtr, key, &isNew);
     if ((valuePtr->owner != NULL) && (valuePtr->owner != clientPtr)) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't set private field \"", 
+	    Tcl_AppendResult(interp, "can't set private field \"",
 			     key, "\"", (char *)NULL);
 	}
 	return TCL_ERROR;
@@ -1463,7 +1463,7 @@ Blt_TreeSetValueByKey(
 	flags |= TREE_TRACE_CREATE;
     }
     if (!(nodePtr->flags & TREE_TRACE_ACTIVE)) {
-	CallTraces(interp, clientPtr, treeObjPtr, nodePtr, valuePtr->key, 
+	CallTraces(interp, clientPtr, treeObjPtr, nodePtr, valuePtr->key,
 		flags);
     }
     return TCL_OK;
@@ -1486,7 +1486,7 @@ Blt_TreeUnsetValueByKey(
     }
     if ((valuePtr->owner != NULL) && (valuePtr->owner != clientPtr)) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't unset private field \"", 
+	    Tcl_AppendResult(interp, "can't unset private field \"",
 			     key, "\"", (char *)NULL);
 	}
 	return TCL_ERROR;
@@ -1500,7 +1500,7 @@ static int
 ParseParentheses(
     Tcl_Interp *interp,
     CONST char *string,
-    char **leftPtr, 
+    char **leftPtr,
     char **rightPtr)
 {
     register char *p;
@@ -1546,11 +1546,11 @@ Blt_TreeGetValue(
     }
     if (left != NULL) {
 	*left = *right = '\0';
-	result = Blt_TreeGetArrayValue(interp, clientPtr, nodePtr, string, 
+	result = Blt_TreeGetArrayValue(interp, clientPtr, nodePtr, string,
 		left + 1, objPtrPtr);
 	*left = '(', *right = ')';
     } else {
-	result = Blt_TreeGetValueByKey(interp, clientPtr, nodePtr, 
+	result = Blt_TreeGetValueByKey(interp, clientPtr, nodePtr,
 		Blt_TreeGetKey(string), objPtrPtr);
     }
     return result;
@@ -1573,11 +1573,11 @@ Blt_TreeSetValue(
     }
     if (left != NULL) {
 	*left = *right = '\0';
-	result = Blt_TreeSetArrayValue(interp, clientPtr, nodePtr, string, 
+	result = Blt_TreeSetArrayValue(interp, clientPtr, nodePtr, string,
 		left + 1, valueObjPtr);
 	*left = '(', *right = ')';
     } else {
-	result = Blt_TreeSetValueByKey(interp, clientPtr, nodePtr, 
+	result = Blt_TreeSetValueByKey(interp, clientPtr, nodePtr,
 			       Blt_TreeGetKey(string), valueObjPtr);
     }
     return result;
@@ -1598,11 +1598,11 @@ Blt_TreeUnsetValue(
     }
     if (left != NULL) {
 	*left = *right = '\0';
-	result = Blt_TreeUnsetArrayValue(interp, clientPtr, nodePtr, string, 
+	result = Blt_TreeUnsetArrayValue(interp, clientPtr, nodePtr, string,
 		left + 1);
 	*left = '(', *right = ')';
     } else {
-	result = Blt_TreeUnsetValueByKey(interp, clientPtr, nodePtr, 
+	result = Blt_TreeUnsetValueByKey(interp, clientPtr, nodePtr,
 		Blt_TreeGetKey(string));
     }
     return result;
@@ -1622,7 +1622,7 @@ Blt_TreeValueExists(TreeClient *clientPtr, Node *nodePtr, CONST char *string)
 	result = Blt_TreeArrayValueExists(clientPtr, nodePtr, string, left + 1);
 	*left = '(', *right = ')';
     } else {
-	result = Blt_TreeValueExistsByKey(clientPtr, nodePtr, 
+	result = Blt_TreeValueExistsByKey(clientPtr, nodePtr,
 		Blt_TreeGetKey(string));
     }
     return result;
@@ -1630,12 +1630,12 @@ Blt_TreeValueExists(TreeClient *clientPtr, Node *nodePtr, CONST char *string)
 
 Blt_TreeKey
 Blt_TreeFirstKey(
-    TreeClient *clientPtr, 
-    Node *nodePtr, 
+    TreeClient *clientPtr,
+    Node *nodePtr,
     Blt_TreeKeySearch *iterPtr)
 {
     Value *valuePtr;
-    
+
     valuePtr = TreeFirstValue(nodePtr, iterPtr);
     if (valuePtr == NULL) {
 	return NULL;
@@ -1713,7 +1713,7 @@ Blt_TreeSortNode(
     if (nodeArr == NULL) {
 	return TCL_ERROR;	/* Out of memory. */
     }
-    for (p = nodeArr, childPtr = nodePtr->first; childPtr != NULL; 
+    for (p = nodeArr, childPtr = nodePtr->first; childPtr != NULL;
 	 childPtr = childPtr->next, p++) {
 	*p = childPtr;
     }
@@ -1751,10 +1751,10 @@ Blt_TreeApply(
 
     for (childPtr = nodePtr->first; childPtr != NULL; childPtr = nextPtr) {
 
-	/* 
+	/*
 	 * Get the next link in the chain before calling Blt_TreeApply
 	 * recursively.  This is because the apply callback may delete
-	 * the node and its link.  
+	 * the node and its link.
 	 */
 
 	nextPtr = childPtr->next;
@@ -1790,10 +1790,10 @@ Blt_TreeApplyDFS(
 	TEST_RESULT(result);
     }
     for (/* empty */; childPtr != NULL; childPtr = nextPtr) {
-	/* 
+	/*
 	 * Get the next link in the chain before calling
-	 * Blt_TreeApply recursively.  This is because the 
-	 * apply callback may delete the node and its link.  
+	 * Blt_TreeApply recursively.  This is because the
+	 * apply callback may delete the node and its link.
 	 */
 	nextPtr = childPtr->next;
 	result = Blt_TreeApplyDFS(childPtr, proc, clientData, order);
@@ -1822,21 +1822,21 @@ Blt_TreeApplyBFS(nodePtr, proc, clientData)
     while (linkPtr != NULL) {
 	nodePtr = Blt_ChainGetValue(linkPtr);
 	/* Add the children to the queue. */
-	for (childPtr = nodePtr->first; childPtr != NULL; 
+	for (childPtr = nodePtr->first; childPtr != NULL;
 	     childPtr = childPtr->next) {
 	    Blt_ChainAppend(queuePtr, childPtr);
 	}
 	/* Process the node. */
 	result = (*proc) (nodePtr, clientData, TREE_BREADTHFIRST);
-	switch (result) { 
-	case TCL_CONTINUE: 
+	switch (result) {
+	case TCL_CONTINUE:
 	    Blt_ChainDestroy(queuePtr);
-	    return TCL_OK; 
-	case TCL_OK: 
-	    break; 
-	default: 
+	    return TCL_OK;
+	case TCL_OK:
+	    break;
+	default:
 	    Blt_ChainDestroy(queuePtr);
-	    return result; 
+	    return result;
 	}
 	/* Remove the node from the queue. */
 	nextPtr = Blt_ChainNextLink(linkPtr);
@@ -1902,20 +1902,20 @@ Blt_TreeCreate(
 	    sprintf(string, "tree%d", dataPtr->nextId++);
 	} while (GetTreeObject(interp, name, NS_SEARCH_CURRENT) != NULL);
 	name = string;
-    } 
-    /* 
-     * Tear apart and put back together the namespace-qualified name 
+    }
+    /*
+     * Tear apart and put back together the namespace-qualified name
      * of the tree. This is to ensure that naming is consistent.
-     */ 
+     */
     treeName = name;
     if (Blt_ParseQualifiedName(interp, name, &nsPtr, &treeName) != TCL_OK) {
-	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't find namespace in \"", name, "\"",
 		(char *)NULL);
 	return TCL_ERROR;
     }
     if (nsPtr == NULL) {
-	/* 
-	 * Note: Unlike Tcl_CreateCommand, an unqualified name 
+	/*
+	 * Note: Unlike Tcl_CreateCommand, an unqualified name
 	 * doesn't imply the global namespace, but the current one.
 	 */
 	nsPtr = Tcl_GetCurrentNamespace(interp);
@@ -1923,7 +1923,7 @@ Blt_TreeCreate(
     name = Blt_GetQualifiedName(nsPtr, treeName, &dString);
     treeObjPtr = NewTreeObject(dataPtr, interp, name);
     if (treeObjPtr == NULL) {
-	Tcl_AppendResult(interp, "can't allocate tree \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't allocate tree \"", name, "\"",
 		(char *)NULL);
 	Tcl_DStringFree(&dString);
 	return TCL_ERROR;
@@ -1931,7 +1931,7 @@ Blt_TreeCreate(
     Tcl_DStringFree(&dString);
     if (clientPtrPtr != NULL) {
 	TreeClient *clientPtr;
-	
+
 	clientPtr = NewTreeClient(treeObjPtr);
 	if (clientPtr == NULL) {
 	    Tcl_AppendResult(interp, "can't allocate tree token",(char *)NULL);
@@ -1953,13 +1953,13 @@ Blt_TreeGetToken(
 
     treeObjPtr = GetTreeObject(interp, name, NS_SEARCH_BOTH);
     if (treeObjPtr == NULL) {
-	Tcl_AppendResult(interp, "can't find a tree object \"", name, "\"", 
+	Tcl_AppendResult(interp, "can't find a tree object \"", name, "\"",
 			 (char *)NULL);
 	return TCL_ERROR;
     }
     clientPtr = NewTreeClient(treeObjPtr);
     if (clientPtr == NULL) {
-	Tcl_AppendResult(interp, "can't allocate token for tree \"", 
+	Tcl_AppendResult(interp, "can't allocate token for tree \"",
 			 name, "\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1976,7 +1976,7 @@ Blt_TreeReleaseToken(TreeClient *clientPtr)
     TraceHandler *tracePtr;
 
     if (clientPtr->magic != TREE_MAGIC) {
-	fprintf(stderr, "invalid tree object token 0x%lx\n", 
+	fprintf(stderr, "invalid tree object token 0x%lx\n",
 		(unsigned long)clientPtr);
 	return;
     }
@@ -1991,7 +1991,7 @@ Blt_TreeReleaseToken(TreeClient *clientPtr)
     }
     Blt_ChainDestroy(clientPtr->traces);
     /* And any event handlers. */
-    for(linkPtr = Blt_ChainFirstLink(clientPtr->events); 
+    for(linkPtr = Blt_ChainFirstLink(clientPtr->events);
 	linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	notifyPtr = Blt_ChainGetValue(linkPtr);
 	if (notifyPtr->notifyPending) {
@@ -2066,10 +2066,10 @@ Blt_TreeCreateEventHandler(
     notifyPtr = NULL;		/* Suppress compiler warning. */
 
     /* Check if the event is already handled. */
-    for(linkPtr = Blt_ChainFirstLink(clientPtr->events); 
+    for(linkPtr = Blt_ChainFirstLink(clientPtr->events);
 	linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	notifyPtr = Blt_ChainGetValue(linkPtr);
-	if ((notifyPtr->proc == proc) && 
+	if ((notifyPtr->proc == proc) &&
 	    (notifyPtr->mask == mask) &&
 	    (notifyPtr->clientData == clientData)) {
 	    break;
@@ -2102,7 +2102,7 @@ Blt_TreeDeleteEventHandler(
     Blt_ChainLink *linkPtr;
     EventHandler *notifyPtr;
 
-    for(linkPtr = Blt_ChainFirstLink(clientPtr->events); 
+    for(linkPtr = Blt_ChainFirstLink(clientPtr->events);
 	linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	notifyPtr = Blt_ChainGetValue(linkPtr);
 	if ((notifyPtr->proc == proc) && (notifyPtr->mask == mask) &&
@@ -2122,7 +2122,7 @@ Blt_TreeDeleteEventHandler(
  *
  * Blt_TreeNodePath --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 char *
 Blt_TreeNodePath(Node *nodePtr, Tcl_DString *resultPtr)
@@ -2140,7 +2140,7 @@ Blt_TreeNodePath(Node *nodePtr, Tcl_DString *resultPtr)
 	nameArr = staticSpace;
     }
     for (i = nLevels - 1; i >= 0; i--) {
-	/* Save the name of each ancestor in the name array. 
+	/* Save the name of each ancestor in the name array.
 	 * Note that we ignore the root. */
 	nameArr[i] = nodePtr->label;
 	nodePtr = nodePtr->parent;
@@ -2160,7 +2160,7 @@ int
 Blt_TreeArrayValueExists(
     TreeClient *clientPtr,
     Node *nodePtr,
-    CONST char *arrayName, 
+    CONST char *arrayName,
     CONST char *elemName)
 {
     Blt_TreeKey key;
@@ -2178,7 +2178,7 @@ Blt_TreeArrayValueExists(
 	valuePtr->objPtr = Tcl_DuplicateObj(valuePtr->objPtr);
 	Tcl_IncrRefCount(valuePtr->objPtr);
     }
-    if (Blt_GetArrayFromObj((Tcl_Interp *)NULL, valuePtr->objPtr, &tablePtr) 
+    if (Blt_GetArrayFromObj((Tcl_Interp *)NULL, valuePtr->objPtr, &tablePtr)
 	!= TCL_OK) {
 	return FALSE;
     }
@@ -2225,7 +2225,7 @@ Blt_TreeGetArrayValue(
 
     /* Reading any element of the array can cause a trace to fire. */
     if (!(nodePtr->flags & TREE_TRACE_ACTIVE)) {
-	CallTraces(interp, clientPtr, nodePtr->treeObject, nodePtr, key, 
+	CallTraces(interp, clientPtr, nodePtr->treeObject, nodePtr, key,
 		   TREE_TRACE_READ);
     }
     return TCL_OK;
@@ -2249,7 +2249,7 @@ Blt_TreeSetArrayValue(
 
     assert(valueObjPtr != NULL);
 
-    /* 
+    /*
      * Search for the array in the list of data fields.  If one
      * doesn't exist, create it.
      */
@@ -2257,7 +2257,7 @@ Blt_TreeSetArrayValue(
     valuePtr = TreeCreateValue(nodePtr, key, &isNew);
     if ((valuePtr->owner != NULL) && (valuePtr->owner != clientPtr)) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't set private field \"", 
+	    Tcl_AppendResult(interp, "can't set private field \"",
 			     key, "\"", (char *)NULL);
 	}
 	return TCL_ERROR;
@@ -2298,7 +2298,7 @@ Blt_TreeSetArrayValue(
      * any element can fire traces for the value.
      */
     if (!(nodePtr->flags & TREE_TRACE_ACTIVE)) {
-	CallTraces(interp, clientPtr, nodePtr->treeObject, nodePtr, 
+	CallTraces(interp, clientPtr, nodePtr->treeObject, nodePtr,
 		valuePtr->key, flags);
     }
     return TCL_OK;
@@ -2325,7 +2325,7 @@ Blt_TreeUnsetArrayValue(
     }
     if ((valuePtr->owner != NULL) && (valuePtr->owner != clientPtr)) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't unset private field \"", 
+	    Tcl_AppendResult(interp, "can't unset private field \"",
 			     key, "\"", (char *)NULL);
 	}
 	return TCL_ERROR;
@@ -2351,7 +2351,7 @@ Blt_TreeUnsetArrayValue(
      * to fire.
      */
     if (!(nodePtr->flags & TREE_TRACE_ACTIVE)) {
-	CallTraces(interp, clientPtr, nodePtr->treeObject, nodePtr, 
+	CallTraces(interp, clientPtr, nodePtr->treeObject, nodePtr,
 		valuePtr->key, TREE_TRACE_WRITE);
     }
     return TCL_OK;
@@ -2386,7 +2386,7 @@ Blt_TreeArrayNames(
 	return TCL_ERROR;
     }
     tablePtr = (Blt_HashTable *)valuePtr->objPtr;
-    for (hPtr = Blt_FirstHashEntry(tablePtr, &cursor); hPtr != NULL; 
+    for (hPtr = Blt_FirstHashEntry(tablePtr, &cursor); hPtr != NULL;
 	 hPtr = Blt_NextHashEntry(&cursor)) {
 	objPtr = Tcl_NewStringObj(Blt_GetHashKey(tablePtr, hPtr), -1);
 	Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
@@ -2399,7 +2399,7 @@ Blt_TreeArrayNames(
  *
  * Blt_TreeShareTagTable --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 int
 Blt_TreeShareTagTable(
@@ -2418,15 +2418,15 @@ int
 Blt_TreeTagTableIsShared(TreeClient *clientPtr)
 {
     return (clientPtr->tagTablePtr->refCount > 1);
-}   
+}
 
 void
 Blt_TreeClearTags(TreeClient *clientPtr, Blt_TreeNode node)
 {
     Blt_HashEntry *hPtr, *h2Ptr;
     Blt_HashSearch cursor;
-    
-    for (hPtr = Blt_FirstHashEntry(&clientPtr->tagTablePtr->tagTable, &cursor); 
+
+    for (hPtr = Blt_FirstHashEntry(&clientPtr->tagTablePtr->tagTable, &cursor);
 	hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	Blt_TreeTagEntry *tPtr;
 
@@ -2441,7 +2441,7 @@ Blt_TreeClearTags(TreeClient *clientPtr, Blt_TreeNode node)
 int
 Blt_TreeHasTag(
     TreeClient *clientPtr,
-    Blt_TreeNode node, 
+    Blt_TreeNode node,
     CONST char *tagName)
 {
     Blt_HashEntry *hPtr;
@@ -2450,7 +2450,7 @@ Blt_TreeHasTag(
     if (strcmp(tagName, "all") == 0) {
 	return TRUE;
     }
-    if ((strcmp(tagName, "root") == 0) && 
+    if ((strcmp(tagName, "root") == 0) &&
 	(node == Blt_TreeRootNode(clientPtr))) {
 	return TRUE;
     }
@@ -2505,11 +2505,11 @@ Blt_TreeForgetTag(TreeClient *clientPtr, CONST char *tagName)
 {
     if ((strcmp(tagName, "all") != 0) && (strcmp(tagName, "root") != 0)) {
 	Blt_HashEntry *hPtr;
-	
+
 	hPtr = Blt_FindHashEntry(&clientPtr->tagTablePtr->tagTable, tagName);
 	if (hPtr != NULL) {
 	    Blt_TreeTagEntry *tPtr;
-	    
+
 	    Blt_DeleteHashEntry(&clientPtr->tagTablePtr->tagTable, hPtr);
 	    tPtr = Blt_GetHashValue(hPtr);
 	    Blt_DeleteHashTable(&tPtr->nodeTable);
@@ -2523,17 +2523,17 @@ Blt_TreeForgetTag(TreeClient *clientPtr, CONST char *tagName)
  *
  * Blt_TreeTagHashTable --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 Blt_HashTable *
 Blt_TreeTagHashTable(TreeClient *clientPtr, CONST char *tagName)
 {
     Blt_HashEntry *hPtr;
-   
+
     hPtr = Blt_FindHashEntry(&clientPtr->tagTablePtr->tagTable, tagName);
     if (hPtr != NULL) {
 	Blt_TreeTagEntry *tPtr;
-	
+
 	tPtr = Blt_GetHashValue(hPtr);
 	return &tPtr->nodeTable;
     }
@@ -2559,7 +2559,7 @@ Blt_TreeFirstTag(TreeClient *clientPtr, Blt_HashSearch *cursorPtr)
  *	64-bit value with the golden ratio (sqrt(5) - 1) / 2.  The
  *	downshift value is 64 - n, when n is the log2 of the size of
  *	the hash table.
- *		
+ *
  * Results:
  *	The return value is a one-word summary of the information in
  *	64 bit word.
@@ -2572,43 +2572,43 @@ Blt_TreeFirstTag(TreeClient *clientPtr, Blt_HashSearch *cursorPtr)
 static Blt_Hash
 HashOneWord(
     uint64_t mask,
-    unsigned int downshift,	        
+    unsigned int downshift,
     CONST void *key)
 {
     uint64_t a0, a1;
     uint64_t y0, y1;
-    uint64_t y2, y3; 
+    uint64_t y2, y3;
     uint64_t p1, p2;
     uint64_t result;
 
     /* Compute key * GOLDEN_RATIO in 128-bit arithmetic */
-    a0 = (uint64_t)key & 0x00000000FFFFFFFF; 
+    a0 = (uint64_t)key & 0x00000000FFFFFFFF;
     a1 = (uint64_t)key >> 32;
-    
+
     y0 = a0 * 0x000000007f4a7c13;
-    y1 = a0 * 0x000000009e3779b9; 
+    y1 = a0 * 0x000000009e3779b9;
     y2 = a1 * 0x000000007f4a7c13;
-    y3 = a1 * 0x000000009e3779b9; 
-    y1 += y0 >> 32;		/* Can't carry */ 
+    y3 = a1 * 0x000000009e3779b9;
+    y1 += y0 >> 32;		/* Can't carry */
     y1 += y2;			/* Might carry */
     if (y1 < y2) {
-	y3 += (1LL << 32);	/* Propagate */ 
+	y3 += (1LL << 32);	/* Propagate */
     }
 
     /* 128-bit product: p1 = loword, p2 = hiword */
     p1 = ((y1 & 0x00000000FFFFFFFF) << 32) + (y0 & 0x00000000FFFFFFFF);
     p2 = y3 + (y1 >> 32);
-    
+
     /* Left shift the value downward by the size of the table */
-    if (downshift > 0) { 
-	if (downshift < 64) { 
-	    result = ((p2 << (64 - downshift)) | (p1 >> (downshift & 63))); 
-	} else { 
-	    result = p2 >> (downshift & 63); 
-	} 
-    } else { 
+    if (downshift > 0) {
+	if (downshift < 64) {
+	    result = ((p2 << (64 - downshift)) | (p1 >> (downshift & 63)));
+	} else {
+	    result = p2 >> (downshift & 63);
+	}
+    } else {
 	result = p1;
-    } 
+    }
     /* Finally mask off the high bits */
     return (Blt_Hash)(result & mask);
 }
@@ -2659,7 +2659,7 @@ RebuildTable(Node *nodePtr)		/* Table to enlarge. */
 
     /*
      * Move all of the existing entries into the new bucket array,
-     * based on their hash values.  
+     * based on their hash values.
      */
     mask = nBuckets - 1;
     downshift = DOWNSHIFT_START - nodePtr->logSize;
@@ -2724,7 +2724,7 @@ TreeDeleteValue(Node *nodePtr, Blt_TreeValue value)
 {
     Value *valuePtr = value;
     register Value *prevPtr;
-    
+
     if (nodePtr->logSize > 0) {
 	Value **bucketPtr;
 	unsigned int downshift;
@@ -2732,7 +2732,7 @@ TreeDeleteValue(Node *nodePtr, Blt_TreeValue value)
 
 	mask = (1 << nodePtr->logSize) - 1;
 	downshift = DOWNSHIFT_START - nodePtr->logSize;
-	
+
 	bucketPtr = (Value **)nodePtr->values + RANDOM_INDEX(valuePtr->key);
 	if (*bucketPtr == valuePtr) {
 	    *bucketPtr = valuePtr->next;
@@ -2749,7 +2749,7 @@ TreeDeleteValue(Node *nodePtr, Blt_TreeValue value)
 	}
     } else {
 	prevPtr = NULL;
-	for (valuePtr = nodePtr->values; valuePtr != NULL; 
+	for (valuePtr = nodePtr->values; valuePtr != NULL;
 	     valuePtr = valuePtr->next) {
 	    if (valuePtr == value) {
 		break;
@@ -2795,7 +2795,7 @@ TreeDestroyValues(Node *nodePtr)
     /*
      * Free up all the entries in the table.
      */
-    if (nodePtr->values != NULL) { 
+    if (nodePtr->values != NULL) {
 	return;
     }
     if (nodePtr->logSize > 0) {
@@ -2959,13 +2959,13 @@ TreeFindValue(
  *
  * Blt_TreeCreateValue --
  *
- *	Find the value with a matching key.  If there is no matching 
+ *	Find the value with a matching key.  If there is no matching
  *	value, then create a new one.
  *
  * Results:
  *	The return value is a pointer to the matching value.  If this
  *	is a newly-created value, then *newPtr will be set to a non-zero
- *	value;  otherwise *newPtr will be set to 0.  
+ *	value;  otherwise *newPtr will be set to 0.
  *
  * Side effects:
  *	A new value may be added to the hash table.
@@ -2981,10 +2981,10 @@ TreeCreateValue(
 				 * entry was created. */
 {
     register Value *valuePtr;
-    
-    /* 
+
+    /*
      * Check if there as so many values that storage should be
-     * converted from a hash table instead of a list. 
+     * converted from a hash table instead of a list.
      */
     if ((nodePtr->logSize == 0) && (nodePtr->nValues > MAX_LIST_VALUES)) {
 	ConvertValues(nodePtr);
@@ -2999,18 +2999,18 @@ TreeCreateValue(
 	mask = nBuckets - 1;
 	downshift = DOWNSHIFT_START - nodePtr->logSize;
 	bucketPtr = (Value **)nodePtr->values + RANDOM_INDEX((void *)key);
-	
+
 	*newPtr = FALSE;
-	for (valuePtr = *bucketPtr; valuePtr != NULL; 
+	for (valuePtr = *bucketPtr; valuePtr != NULL;
 	     valuePtr = valuePtr->next) {
 	    if (valuePtr->key == key) {
 		return valuePtr;
 	    }
 	}
-	
+
 	/* Value not found. Add a new value to the bucket. */
 	*newPtr = TRUE;
-	valuePtr = Blt_PoolAllocItem(nodePtr->treeObject->valuePool, 
+	valuePtr = Blt_PoolAllocItem(nodePtr->treeObject->valuePool,
 		sizeof(Value));
 	valuePtr->key = key;
 	valuePtr->owner = NULL;
@@ -3018,7 +3018,7 @@ TreeCreateValue(
 	valuePtr->objPtr = NULL;
 	*bucketPtr = valuePtr;
 	nodePtr->nValues++;
-	
+
 	/*
 	 * If the table has exceeded a decent size, rebuild it with many
 	 * more buckets.
@@ -3031,7 +3031,7 @@ TreeCreateValue(
 
 	prevPtr = NULL;
 	*newPtr = FALSE;
-	for (valuePtr = nodePtr->values; valuePtr != NULL; 
+	for (valuePtr = nodePtr->values; valuePtr != NULL;
 	     valuePtr = valuePtr->next) {
 	    if (valuePtr->key == key) {
 		return valuePtr;
@@ -3040,7 +3040,7 @@ TreeCreateValue(
 	}
 	/* Value not found. Add a new value to the list. */
 	*newPtr = TRUE;
-	valuePtr = Blt_PoolAllocItem(nodePtr->treeObject->valuePool, 
+	valuePtr = Blt_PoolAllocItem(nodePtr->treeObject->valuePool,
 		sizeof(Value));
 	valuePtr->key = key;
 	valuePtr->owner = NULL;

@@ -2645,7 +2645,7 @@ DrawMenuEntryAccelerator(
 		    CFRelease(cfStr);
 		}
 	    } else {
-		Tk_DrawChars(menuPtr->display, d, gc, tkfont, accel + 
+		Tk_DrawChars(menuPtr->display, d, gc, tkfont, accel +
 			geometryPtr->accelTextStart, mePtr->accelLength -
 			geometryPtr->accelTextStart, leftEdge, baseline);
 	    }

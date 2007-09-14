@@ -225,7 +225,7 @@ bool ON_Sym3x3EigenSolver( double A, double B, double C,
     }
     else
       cos_phi = 1.0/sqrt(1.0 + t*t);
-    
+
     sin_phi = t*cos_phi;
 
     double tau = sin_phi/(1.0 + cos_phi);
@@ -330,7 +330,7 @@ ON_3dVector ON_MassProperties::WorldCoordSecondMoments() const
   return v;
 }
 
-ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix( 
+ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix(
               ON_Matrix* matrix
               ) const
 {
@@ -362,7 +362,7 @@ ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix(
   return matrix;
 }
 
-bool ON_MassProperties::WorldCoordPrincipalMoments( 
+bool ON_MassProperties::WorldCoordPrincipalMoments(
               double* pxx, ON_3dVector& Ax,
               double* pyy, ON_3dVector& Ay,
               double* pzz, ON_3dVector& Az
@@ -461,7 +461,7 @@ ON_3dVector ON_MassProperties::CentroidCoordRadiiOfGyration() const
 
 
 
-ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix( 
+ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix(
               ON_Matrix* matrix
               ) const
 {
@@ -493,7 +493,7 @@ ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix(
   return matrix;
 }
 
-bool ON_MassProperties::CentroidCoordPrincipalMoments( 
+bool ON_MassProperties::CentroidCoordPrincipalMoments(
               double* pxx, ON_3dVector& Ax,
               double* pyy, ON_3dVector& Ay,
               double* pzz, ON_3dVector& Az
@@ -599,10 +599,10 @@ bool ON_MassProperties::Sum(
   ey.Begin();
   z.Begin();
   ez.Begin();
-  
+
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type 
+    if ( 0 != summands[i].m_mass_type
          && summands[i].m_bValidMass
          && summands[i].m_bValidFirstMoments
          )
@@ -651,10 +651,10 @@ bool ON_MassProperties::Sum(
   ey.Begin();
   z.Begin();
   ez.Begin();
-  
+
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type 
+    if ( 0 != summands[i].m_mass_type
          && summands[i].m_bValidMass
          && summands[i].m_bValidCentroid
          && summands[i].m_bValidSecondMoments
@@ -695,7 +695,7 @@ bool ON_MassProperties::Sum(
     m_world_yy_err = m_ccs_yy_err + 2.0*m_y0_err*fabs(m_y0)*m_mass + m_y0*m_y0*m_mass_err;
     m_world_zz = m_ccs_zz + m_z0*m_z0*m_mass;
     m_world_zz_err = m_ccs_zz_err + 2.0*m_z0_err*fabs(m_z0)*m_mass + m_z0*m_z0*m_mass_err;
-    
+
     m_bValidSecondMoments = true;
   }
 
@@ -706,10 +706,10 @@ bool ON_MassProperties::Sum(
   ey.Begin();
   z.Begin();
   ez.Begin();
-  
+
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type 
+    if ( 0 != summands[i].m_mass_type
          && summands[i].m_bValidMass
          && summands[i].m_bValidCentroid
          && summands[i].m_bValidSecondMoments
@@ -750,7 +750,7 @@ bool ON_MassProperties::Sum(
     m_world_yz_err = m_ccs_yz_err + fabs(m_y0_err*m_z0*m_mass) + fabs(m_z0_err*m_y0*m_mass) + fabs(m_y0*m_z0*m_mass_err);
     m_world_zx = m_ccs_zx + m_z0*m_x0*m_mass;
     m_world_zx_err = m_ccs_zx_err + fabs(m_z0_err*m_x0*m_mass) + fabs(m_x0_err*m_z0*m_mass) + fabs(m_z0*m_x0*m_mass_err);
-    
+
     m_bValidProductMoments = true;
   }
 

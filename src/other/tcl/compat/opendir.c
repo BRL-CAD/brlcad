@@ -1,4 +1,4 @@
-/* 
+/*
  * opendir.c --
  *
  *	This file provides dirent-style directory-reading procedures for V7

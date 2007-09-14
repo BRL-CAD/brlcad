@@ -60,7 +60,7 @@ struct PsTokenStruct {
     char scratchArr[PSTOKEN_BUFSIZ+1];
 };
 
-extern PsToken Blt_GetPsToken _ANSI_ARGS_((Tcl_Interp *interp, 
+extern PsToken Blt_GetPsToken _ANSI_ARGS_((Tcl_Interp *interp,
 			   Tk_Window tkwin));
 
 extern void Blt_ReleasePsToken _ANSI_ARGS_((PsToken psToken));
@@ -117,7 +117,7 @@ extern void Blt_PhotoToPostScript _ANSI_ARGS_((PsToken psToken,
 extern void Blt_PolygonToPostScript _ANSI_ARGS_((PsToken psToken,
 	Point2D *screenPts, int nScreenPts));
 
-extern void Blt_LineToPostScript _ANSI_ARGS_((PsToken psToken, 
+extern void Blt_LineToPostScript _ANSI_ARGS_((PsToken psToken,
 	XPoint *pointArr, int nPoints));
 
 extern void Blt_TextToPostScript _ANSI_ARGS_((PsToken psToken, char *string,
@@ -132,7 +132,7 @@ extern void Blt_RegionToPostScript _ANSI_ARGS_((PsToken psToken, double x,
 extern void Blt_RectanglesToPostScript _ANSI_ARGS_((PsToken psToken,
 	XRectangle *rectArr, int nRects));
 
-extern void Blt_BitmapToPostScript _ANSI_ARGS_((PsToken psToken, 
+extern void Blt_BitmapToPostScript _ANSI_ARGS_((PsToken psToken,
 	Display *display, Pixmap bitmap, double scaleX, double scaleY));
 
 extern void Blt_SegmentsToPostScript _ANSI_ARGS_((PsToken psToken,
@@ -148,7 +148,7 @@ extern void Blt_LineAttributesToPostScript _ANSI_ARGS_((PsToken psToken,
 extern int Blt_FileToPostScript _ANSI_ARGS_((PsToken psToken,
 	char *fileName));
 
-extern void Blt_2DSegmentsToPostScript _ANSI_ARGS_((PsToken psToken, 
+extern void Blt_2DSegmentsToPostScript _ANSI_ARGS_((PsToken psToken,
 	Segment2D *segments, int nSegments));
 
 #endif /* BLT_PS_H */

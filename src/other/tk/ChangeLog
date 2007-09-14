@@ -56,7 +56,7 @@
 
 	* macosx/tkMacOSXCarbonEvents.c: add window event target carbon event
 	* macosx/tkMacOSXEvent.c:	 handler for all kEventClassWindow and
-	* macosx/tkMacOSXEvent.h:	 kEventClassMouse events; 
+	* macosx/tkMacOSXEvent.h:	 kEventClassMouse events;
 	* macosx/tkMacOSXNotify.c:	 move all remaining events except for
 	* macosx/tkMacOSXWindowEvent.c:	 kEventClassKeyboard from dispatcher to
 	application event handler; pass event handler callRef downstream; fix
@@ -483,7 +483,7 @@
 
 2007-02-02  Pat Thoyts  <patthoyts@users.sourceforge.net>
 
-	* win/ttkWinXPTheme.c: Support IsAppThemed() call. This is what 
+	* win/ttkWinXPTheme.c: Support IsAppThemed() call. This is what
 	is used when theming is turned off just for an individual application.
 
 2007-01-28  Daniel Steffen  <das@users.sourceforge.net>
@@ -502,7 +502,7 @@
 
 	* generic/tk.h: update location of version numbers in macosx files.
 
-	* macosx/Wish.xcode/project.pbxproj: restore 'tktest' target to working 
+	* macosx/Wish.xcode/project.pbxproj: restore 'tktest' target to working
 	* macosx/Wish.xcode/default.pbxuser: order by replicating applicable
 	changes to Wish.xcodeproj since 2006-07-20.
 
@@ -543,7 +543,7 @@
 
 	* generic/ttk/ttkManager.h, generic/ttk/ttk*.c:
 	Revert addition of contravariant 'const' qualifiers,
-	to keep in sync with Tile codebase (which must remain 
+	to keep in sync with Tile codebase (which must remain
 	compatible with Tk 8.4).
 
 2007-01-03  Jan Nijtmans  <nijtmans@users.sf.net>

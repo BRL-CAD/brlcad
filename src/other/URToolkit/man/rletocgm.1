@@ -1,25 +1,25 @@
 .\" Copyright (c) 1991, Carnegie Mellon University (derived from rleskel.1)
 .TH RLETOCGM 1 "April 16, 1991" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletocgm \- convert RLE images to ANSI/ISO CGM format
 .SH SYNOPSIS
 .B rletocgm
 [
 .B \-v
-] [ 
+] [
 .B \-d
-] [ 
+] [
 .B \-o
 .I outfile
-] [ 
+] [
 .I infile
 ]
 .SH DESCRIPTION
 This program reads an
 .IR RLE (5)
 file converts each image to a CGM
-picture, and writes the result to the specified output file.  All images 
+picture, and writes the result to the specified output file.  All images
 in the input file will be copied.  CGM is an ANSI/ISO standard format
 for 2D images.  Binary-encoded CGM is produced.  The Pittsburgh Supercomputing
 Center
@@ -34,7 +34,7 @@ Print information about the pages converted on the standard error output.
 Print debugging information on the standard error output.
 .TP
 .BI \-o " outfile"
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.

@@ -844,10 +844,10 @@ TclFreeObj(
 	Tcl_Panic("Reference count for %lx was negative", objPtr);
     }
 
-    /* Invalidate the string rep first so we can use the bytes value 
+    /* Invalidate the string rep first so we can use the bytes value
      * for our pointer chain, and signal an obj deletion (as opposed
-     * to shimmering) with 'length == -1' */ 
-    
+     * to shimmering) with 'length == -1' */
+
     TclInvalidateStringRep(objPtr);
     objPtr->length = -1;
 
@@ -889,13 +889,13 @@ void
 TclFreeObj(
     register Tcl_Obj *objPtr)	/* The object to be freed. */
 {
-    /* Invalidate the string rep first so we can use the bytes value 
+    /* Invalidate the string rep first so we can use the bytes value
      * for our pointer chain, and signal an obj deletion (as opposed
-     * to shimmering) with 'length == -1' */ 
+     * to shimmering) with 'length == -1' */
 
     TclInvalidateStringRep(objPtr);
     objPtr->length = -1;
-    
+
     if (!objPtr->typePtr || !objPtr->typePtr->freeIntRepProc) {
 	/*
 	 * objPtr can be freed safely, as it will not attempt to free any

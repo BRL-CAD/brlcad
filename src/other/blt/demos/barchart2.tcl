@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -34,7 +34,7 @@ proc FormatXTicks { w value } {
 
     set index [expr round($value)]
     if { $index != $value } {
-	return $value 
+	return $value
     }
     incr index -1
 
@@ -78,15 +78,15 @@ option add *Grid.hide			no
 option add *Grid.mapX			""
 
 option add *Legend.Font			"-*-helvetica*-bold-r-*-*-12-*-*"
-option add *Legend.activeBorderWidth	2 
-option add *Legend.activeRelief		raised 
-option add *Legend.anchor		ne 
-option add *Legend.borderWidth		0 
+option add *Legend.activeBorderWidth	2
+option add *Legend.activeRelief		raised
+option add *Legend.anchor		ne
+option add *Legend.borderWidth		0
 option add *Legend.position		right
 
 option add *TextMarker.Font		*Helvetica-Bold-R*14*
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual != "staticgray" && $visual != "grayscale" } {
     option add *print.background	yellow
     option add *quit.background		red
@@ -94,7 +94,7 @@ if { $visual != "staticgray" && $visual != "grayscale" } {
 }
 
 htext .title -text {
-    Data points with like x-coordinates, can have their bar segments displayed     
+    Data points with like x-coordinates, can have their bar segments displayed
     in one of the following modes (using the -barmode option):
 }
 htext .header -text {
@@ -102,31 +102,31 @@ htext .header -text {
         radiobutton .header.stacked -text stacked -variable barMode \
             -anchor w -value "stacked" -selectcolor red -command {
             .graph configure -barmode $barMode
-        } 
+        }
         .header append .header.stacked -width 1.5i -anchor w
-    %%      Bars are stacked on top of each other. The overall height is the     
-                                                   sum of the y-coordinates. 
-    %% 
+    %%      Bars are stacked on top of each other. The overall height is the
+                                                   sum of the y-coordinates.
+    %%
         radiobutton .header.aligned -text aligned -variable barMode \
           -anchor w -value "aligned" -selectcolor yellow -command {
             .graph configure -barmode $barMode
         }
         .header append .header.aligned -width 1.5i -fill x
-    %%      Bars are drawn side-by-side at a fraction of their normal width. 
+    %%      Bars are drawn side-by-side at a fraction of their normal width.
     %%
         radiobutton .header.overlap -text "overlap" -variable barMode \
             -anchor w -value "overlap" -selectcolor green -command {
             .graph configure -barmode $barMode
-        } 
+        }
         .header append .header.overlap -width 1.5i -fill x
-    %%      Bars overlap slightly. 
+    %%      Bars overlap slightly.
     %%
         radiobutton .header.normal -text "normal" -variable barMode \
             -anchor w -value "normal" -selectcolor blue -command {
             .graph configure -barmode $barMode
-        } 
+        }
         .header append .header.normal -width 1.5i -fill x
-    %%      Bars are overlayed one on top of the next. 
+    %%      Bars are overlayed one on top of the next.
 }
 
 htext .footer -text {    Hit the %%
@@ -135,41 +135,41 @@ htext .footer -text {    Hit the %%
     $htext(widget) append $htext(widget).quit -pady 2
 %% button when you've seen enough. %%
     label $htext(widget).logo -bitmap BLT
-    $htext(widget) append $htext(widget).logo 
+    $htext(widget) append $htext(widget).logo
 %%}
 
-barchart .graph -tile bgTexture 
+barchart .graph -tile bgTexture
 
 vector X Y0 Y1 Y2 Y3 Y4
 
 X set { 1 2 3 4 5 6 7 8 9 }
-Y0 set { 
-    0.729111111  0.002250000  0.09108333  0.006416667  0.026509167 
-    0.007027778  0.1628611    0.06405278  0.08786667  
+Y0 set {
+    0.729111111  0.002250000  0.09108333  0.006416667  0.026509167
+    0.007027778  0.1628611    0.06405278  0.08786667
 }
 Y1 set {
     0.003120278	 0.004638889  0.01113889  0.048888889  0.001814722
-    0.291388889  0.0503500    0.13876389  0.04513333 
+    0.291388889  0.0503500    0.13876389  0.04513333
 }
 Y2 set {
-    11.534444444 3.879722222  4.54444444  4.460277778  2.334055556 
-    1.262194444  1.8009444    4.12194444  3.24527778  
+    11.534444444 3.879722222  4.54444444  4.460277778  2.334055556
+    1.262194444  1.8009444    4.12194444  3.24527778
 }
 Y3 set {
     1.015750000  0.462888889  0.49394444  0.429166667  1.053694444
-    0.466111111  1.4152500    2.17538889  2.55294444 
+    0.466111111  1.4152500    2.17538889  2.55294444
 }
 Y4 set {
-    0.022018611  0.516333333  0.54772222  0.177638889  0.021703889 
-    0.134305556  0.5189278    0.07957222  0.41155556  
+    0.022018611  0.516333333  0.54772222  0.177638889  0.021703889
+    0.134305556  0.5189278    0.07957222  0.41155556
 }
 
 
 #
-# Element attributes:  
+# Element attributes:
 #
 #    Label     yData	Foreground	Background	Stipple	    Borderwidth
-set attributes { 
+set attributes {
     "Setup"	Y1	lightyellow3	lightyellow1	fdiagonal1	1
     "Read In"	Y0	lightgoldenrod3	lightgoldenrod1	bdiagonal1	1
     "Other"	Y4	lightpink3	lightpink1	fdiagonal1	1

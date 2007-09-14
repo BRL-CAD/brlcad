@@ -1549,7 +1549,7 @@ NativeAccess(
 	return -1;
     }
 
-    if ((mode & W_OK) 
+    if ((mode & W_OK)
       && (tclWinProcs->getFileSecurityProc == NULL)
       && (attr & FILE_ATTRIBUTE_READONLY)) {
 	/*
@@ -1655,7 +1655,7 @@ NativeAccess(
 	    /*
 	     * Unable to perform security impersonation.
 	     */
-	    
+
 	    goto accessError;
 	}
 	if (!(*tclWinProcs->openThreadTokenProc)(GetCurrentThread (),
@@ -1663,12 +1663,12 @@ NativeAccess(
 	    /*
 	     * Unable to get current thread's token.
 	     */
-	    
+
 	    goto accessError;
 	}
-	
+
 	(*tclWinProcs->revertToSelfProc)();
-	
+
 	/*
 	 * Setup desiredAccess according to the access priveleges we are
 	 * checking.
@@ -1689,7 +1689,7 @@ NativeAccess(
 	genMap.GenericWrite = FILE_GENERIC_WRITE;
 	genMap.GenericExecute = FILE_GENERIC_EXECUTE;
 	genMap.GenericAll = FILE_ALL_ACCESS;
-	
+
 	/*
 	 * Perform access check using the token.
 	 */
@@ -2040,7 +2040,7 @@ NativeStat(
      * and if that isn't available, then on even simpler routines.
      */
     fileHandle = (tclWinProcs->createFileProc) (
-	nativePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+	nativePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
 	NULL, OPEN_EXISTING,
 	FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL);
 
@@ -3376,7 +3376,7 @@ TclpUtime(
 
     FromCTime(tval->actime, &lastAccessTime);
     FromCTime(tval->modtime, &lastModTime);
-    
+
     native = (CONST TCHAR *)Tcl_FSGetNativePath(pathPtr);
 
     attr = (*tclWinProcs->getFileAttributesProc)(native);

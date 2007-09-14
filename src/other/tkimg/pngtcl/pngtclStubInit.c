@@ -1,4 +1,4 @@
-/* 
+/*
  * pngtclStubInit.c --
  */
 

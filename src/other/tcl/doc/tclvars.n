@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH tclvars n 8.0 Tcl "Tcl Built-In Commands"
 .BS
@@ -137,7 +137,7 @@ nested Tcl commands that had been invoked at the time of the error.
 This variable holds the name of a directory containing the
 system library of Tcl scripts, such as those used for auto-loading.
 The value of this variable is returned by the \fBinfo library\fR command.
-See the \fBlibrary\fR manual entry for details of the facilities 
+See the \fBlibrary\fR manual entry for details of the facilities
 provided by the Tcl script library.
 Normally each application or package will have its own application-specific
 script library in addition to the Tcl script library;
@@ -192,7 +192,7 @@ predefined elements are:
 .TP
 \fBbyteOrder\fR
 The native byte order of this machine: either \fBlittleEndian\fR or
-\fBbigEndian\fR. 
+\fBbigEndian\fR.
 .TP
 \fBdebug\fR
 If this variable exists, then the interpreter was compiled with and linked
@@ -206,7 +206,7 @@ The instruction set executed by this machine, such as
 \fBintel\fR, \fBPPC\fR, \fB68k\fR, or \fBsun4m\fR.  On UNIX machines, this
 is the value returned by \fBuname -m\fR.
 .TP
-\fBos\fR 
+\fBos\fR
 The name of the operating system running on this machine,
 such as \fBWindows 95\fR, \fBWindows NT\fR, or \fBSunOS\fR.
 On UNIX machines, this is the value returned by \fBuname -s\fR.

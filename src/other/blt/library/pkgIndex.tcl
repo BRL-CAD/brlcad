@@ -8,13 +8,13 @@ proc LoadBLT { version dir } {
 
     # Determine whether to load the full BLT library or
     # the "lite" tcl-only version.
-    
+
     if { [info commands tk] == "tk" } {
         set name ${prefix}BLT${version_no_dots}${suffix}
     } else {
         set name ${prefix}BLTlite${version_no_dots}${suffix}
     }
-    
+
     global tcl_platform
     if { $tcl_platform(platform) == "unix" } {
 	set library [file join $dir $name]

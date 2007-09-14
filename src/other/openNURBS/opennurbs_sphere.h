@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ class ON_RevSurface;
 class ON_CLASS ON_Sphere
 {
 public:
-  
+
   ON_Plane plane; // equitorial plane
   double radius;  // > 0
 
@@ -46,26 +46,26 @@ public:
   double Radius() const;
 
   ON_3dPoint PointAt(
-    double longitude_radians, 
+    double longitude_radians,
     double latitude_radians
     ) const;   // longitude [0,2pi], latitude [-pi/2,pi/2] in radians
 
   ON_3dVector NormalAt(
-    double longitude_radians, 
+    double longitude_radians,
     double latitude_radians
     ) const;   // longitude [0,2pi], latitude [-pi/2,pi/2] in radians
 
   ON_BoundingBox BoundingBox() const;
 
   // returns parameters of point on sphere that is closest to given point
-  bool ClosestPointTo( 
-         ON_3dPoint test_point, 
+  bool ClosestPointTo(
+         ON_3dPoint test_point,
          double* longitude_radians, // longitude  [0,2pi)
          double* latitude_radians // latitude   [-pi/2,pi/2]
          ) const;
 
   // returns point on sphere that is closest to given point
-  ON_3dPoint ClosestPointTo( 
+  ON_3dPoint ClosestPointTo(
          ON_3dPoint test_point
          ) const;
 

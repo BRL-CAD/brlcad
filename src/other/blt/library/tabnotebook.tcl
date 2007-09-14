@@ -38,7 +38,7 @@
 set bltTabnotebook(activate) yes
 
 # ----------------------------------------------------------------------
-# 
+#
 # ButtonPress assignments
 #
 #   <ButtonPress-2>	Starts scan mechanism (pushes the tabs)
@@ -64,16 +64,16 @@ bind Tabnotebook <ButtonRelease-2> {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # KeyPress assignments
 #
-#   <KeyPress-Up>	Moves focus to the tab immediately above the 
+#   <KeyPress-Up>	Moves focus to the tab immediately above the
 #			current.
-#   <KeyPress-Down>	Moves focus to the tab immediately below the 
+#   <KeyPress-Down>	Moves focus to the tab immediately below the
 #			current.
-#   <KeyPress-Left>	Moves focus to the tab immediately left of the 
+#   <KeyPress-Left>	Moves focus to the tab immediately left of the
 #			currently focused tab.
-#   <KeyPress-Right>	Moves focus to the tab immediately right of the 
+#   <KeyPress-Right>	Moves focus to the tab immediately right of the
 #			currently focused tab.
 #   <KeyPress-space>	Invokes the commands associated with the current
 #			tab.
@@ -98,12 +98,12 @@ bind Tabnotebook <KeyPress> {
 #
 # FirstMatchingTab --
 #
-#	Find the first tab (from the tab that currently has focus) 
+#	Find the first tab (from the tab that currently has focus)
 #	starting with the same first letter as the tab.  It searches
 #	in order of the tab positions and wraps around. If no tab
 #	matches, it stops back at the current tab.
 #
-# Arguments:	
+# Arguments:
 #	widget		Tabnotebook widget.
 #	key		ASCII character of key pressed
 #
@@ -129,10 +129,10 @@ proc blt::FindMatchingTab { widget key } {
 #
 # SelectTab --
 #
-#	Invokes the command for the tab.  If the widget associated tab 
+#	Invokes the command for the tab.  If the widget associated tab
 #	is currently torn off, the tearoff is raised.
 #
-# Arguments:	
+# Arguments:
 #	widget		Tabnotebook widget.
 #	x y		Unused.
 #
@@ -155,11 +155,11 @@ proc blt::SelectTab { widget tab } {
 #
 # DestroyTearoff --
 #
-#	Destroys the toplevel window and the container tearoff 
+#	Destroys the toplevel window and the container tearoff
 #	window holding the embedded widget.  The widget is placed
 #	back inside the tab.
 #
-# Arguments:	
+# Arguments:
 #	widget		Tabnotebook widget.
 #	tab		Tab selected.
 #
@@ -181,13 +181,13 @@ proc blt::DestroyTearoff { widget tab } {
 #
 #	Creates a new toplevel window and moves the embedded widget
 #	into it.  The toplevel is placed just below the tab.  The
-#	DELETE WINDOW property is set so that if the toplevel window 
+#	DELETE WINDOW property is set so that if the toplevel window
 #	is requested to be deleted by the window manager, the embedded
-#	widget is placed back inside of the tab.  Note also that 
+#	widget is placed back inside of the tab.  Note also that
 #	if the tabnotebook container is ever destroyed, the toplevel is
-#	also destroyed.  
+#	also destroyed.
 #
-# Arguments:	
+# Arguments:
 #	widget		Tabnotebook widget.
 #	tab		Tab selected.
 #	x y		The coordinates of the mouse pointer.
@@ -225,12 +225,12 @@ proc blt::CreateTearoff { widget tab rootX rootY } {
     wm transient $top $parent
 
     # If the user tries to delete the toplevel, put the window back
-    # into the tab folder.  
+    # into the tab folder.
 
     wm protocol $top WM_DELETE_WINDOW [list blt::DestroyTearoff $widget $tab]
 
     # If the container is ever destroyed, automatically destroy the
-    # toplevel too.  
+    # toplevel too.
 
     bind $top.container <Destroy> [list destroy $top]
 }
@@ -239,11 +239,11 @@ proc blt::CreateTearoff { widget tab rootX rootY } {
 #
 # ToggleTearoff --
 #
-#	Toggles the tab tearoff.  If the tab contains a embedded widget, 
-#	it is placed inside of a toplevel window.  If the widget has 
+#	Toggles the tab tearoff.  If the tab contains a embedded widget,
+#	it is placed inside of a toplevel window.  If the widget has
 #	already been torn off, the widget is replaced back in the tab.
 #
-# Arguments:	
+# Arguments:
 #	widget		tabnotebook widget.
 #	x y		The coordinates of the mouse pointer.
 #
@@ -268,49 +268,49 @@ proc blt::ToggleTearoff { widget x y index } {
 # TabnotebookInit
 #
 #	Invoked from C whenever a new tabnotebook widget is created.
-#	Sets up the default bindings for the all tab entries.  
-#	These bindings are local to the widget, so they can't be 
+#	Sets up the default bindings for the all tab entries.
+#	These bindings are local to the widget, so they can't be
 #	set through the usual widget class bind tags mechanism.
 #
 #	<Enter>		Activates the tab.
 #	<Leave>		Deactivates all tabs.
 #	<ButtonPress-1>	Selects the tab and invokes its command.
-#	<Control-ButtonPress-1>	
+#	<Control-ButtonPress-1>
 #			Toggles the tab tearoff.  If the tab contains
 #			a embedded widget, it is placed inside of a
 #			toplevel window.  If the widget has already
 #			been torn off, the widget is replaced back
 #			in the tab.
 #
-# Arguments:	
+# Arguments:
 #	widget		tabnotebook widget
 #
 # ----------------------------------------------------------------------
 proc blt::TabnotebookInit { widget } {
-    $widget bind all <Enter> { 
+    $widget bind all <Enter> {
 	if { $bltTabnotebook(activate) } {
 	    %W activate current
         }
     }
-    $widget bind all <Leave> { 
-        %W activate "" 
+    $widget bind all <Leave> {
+        %W activate ""
     }
-    $widget bind all <ButtonPress-1> { 
+    $widget bind all <ButtonPress-1> {
 	blt::SelectTab %W "current"
     }
-    $widget bind all <Control-ButtonPress-1> { 
+    $widget bind all <Control-ButtonPress-1> {
 	blt::ToggleTearoff %W %X %Y active
     }
     $widget configure -perforationcommand {
 	blt::ToggleTearoff %W $bltTabnotebook(x) $bltTabnotebook(y) select
     }
-    $widget bind Perforation <Enter> { 
+    $widget bind Perforation <Enter> {
 	%W perforation activate on
     }
-    $widget bind Perforation <Leave> { 
+    $widget bind Perforation <Leave> {
 	%W perforation activate off
     }
-    $widget bind Perforation <ButtonPress-1> { 
+    $widget bind Perforation <ButtonPress-1> {
 	set bltTabnotebook(x) %X
 	set bltTabnotebook(y) %Y
 	%W perforation invoke

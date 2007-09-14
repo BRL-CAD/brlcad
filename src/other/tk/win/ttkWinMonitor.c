@@ -84,7 +84,7 @@ CreateThemeMonitorWindow(
     HWND hwnd = NULL;
     CHAR title[32] = "TtkMonitorWindow";
     CHAR name[32] = "TtkMonitorClass";
-    
+
     wc.cbSize        = sizeof(WNDCLASSEX);
     wc.style         = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc   = (WNDPROC)WndProc;
@@ -97,7 +97,7 @@ CreateThemeMonitorWindow(
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
     wc.lpszMenuName  = name;
     wc.lpszClassName = name;
-    
+
     if (RegisterClassEx(&wc)) {
 	hwnd = CreateWindow(name, title, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -113,7 +113,7 @@ CreateThemeMonitorWindow(
     return hwnd;
 }
 
-static void 
+static void
 DestroyThemeMonitorWindow(
     void *clientData)
 {
@@ -171,7 +171,7 @@ Ttk_WinPlatformInit(
     Tcl_Interp *interp)
 {
     HWND hwnd;
-    
+
     hwnd = CreateThemeMonitorWindow(Tk_GetHINSTANCE(), interp);
     Ttk_RegisterCleanup(interp, (ClientData)hwnd, DestroyThemeMonitorWindow);
 

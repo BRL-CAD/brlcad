@@ -46,18 +46,18 @@
 #include "wdb.h"
 
 #include "population.h"
-#include "beset.h" 
+#include "beset.h"
 
 
 /* FIXME: get rid of globals*/
 float *idx;
-int shape_number; 
+int shape_number;
 
 
 /**
  *	P O P _ I N I T --- initialize a population of a given size
  */
-void 
+void
 pop_init (struct population *p, int size)
 {
     int i;
@@ -66,7 +66,7 @@ pop_init (struct population *p, int size)
     p->size = size;
     p->db_c = p->db_p = DBI_NULL;
     p->name = bu_malloc(sizeof(char **) * size, "names");
-    
+
     /* pre-compute indidvidual names */
     /*
     for(i = 0; i < size; i++){
@@ -84,7 +84,7 @@ pop_init (struct population *p, int size)
 /**
  *	P O P _ C L E A N  --- cleanup population struct
  */
-void 
+void
 pop_clean (struct population *p)
 {
     int i;
@@ -100,19 +100,19 @@ pop_clean (struct population *p)
  *	TODO: generalize/modularize somehow to allow adding more shapes and primitives
  *	also use variable/defined rates, intersection with bounding box, etc...
  */
-void 
+void
 pop_spawn (struct population *p)
 {
     int i,j;
     point_t p1, p2, p3;
     struct wmember wm_hd;
-    double r1, r2, r3; 
+    double r1, r2, r3;
 
     char shape[256];
 
-    p->db_p = db_create("gen000", 5); 
+    p->db_p = db_create("gen000", 5);
     p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
- 
+
     for(i = 0; i < p->size; i++) {
 	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
 	snprintf(p->name[i], 256, "ind%.3d", i);
@@ -173,7 +173,7 @@ pop_spawn (struct population *p)
  *	TODO: Don't overwrite previous parents, one .g file per generation
  */
 /*
-void 
+void
 pop_add(struct individual *i, struct rt_wdb *db_fp)
 {
     switch(i->type)
@@ -216,7 +216,7 @@ pop_rand (void)
  *	P O P _ R A N D _ G O P --- return a random genetic operation
  *	TODO: implement other operations, weighted (like wrand) op selection
  */
-int 
+int
 pop_wrand_gop(void)
 {
     float i = bn_rand0to1(idx);
@@ -239,7 +239,7 @@ struct node *node;
 
 /**
  *	P O P _ F I N D _ N O D E S --- find nodes with equal # of children
- *	note: not part of pop_functree as a lot less arguments are needed 
+ *	note: not part of pop_functree as a lot less arguments are needed
  *	and it eliminates a lot of overhead
  */
 int
@@ -250,7 +250,7 @@ pop_find_nodes(	union tree *tp)
 
     if(!tp)
 	return 0;
-    
+
     switch(tp->tr_op){
 	case OP_DB_LEAF:
 	    return 1;
@@ -280,7 +280,7 @@ pop_find_nodes(	union tree *tp)
 		++num_nodes;
 		}
 	    }
-	    /* include current node as part of the count to 
+	    /* include current node as part of the count to
 	     * mirror the behavior of db_count_tree_nodes() */
 	    return 1+n1 + n2;
     }
@@ -289,16 +289,16 @@ pop_find_nodes(	union tree *tp)
 }
 
 
-void 
+void
 pop_mutate(int type, genptr_t ptr)
 {
     int i;
     switch(type) {
 	case ID_ELL:
-	    VMUTATE(((struct rt_ell_internal *)ptr)->v); 
-	    VMUTATE(((struct rt_ell_internal *)ptr)->a); 
-	    VMUTATE(((struct rt_ell_internal *)ptr)->b); 
-	    VMUTATE(((struct rt_ell_internal *)ptr)->c); 
+	    VMUTATE(((struct rt_ell_internal *)ptr)->v);
+	    VMUTATE(((struct rt_ell_internal *)ptr)->a);
+	    VMUTATE(((struct rt_ell_internal *)ptr)->b);
+	    VMUTATE(((struct rt_ell_internal *)ptr)->c);
 	    break;
 	case ID_TGC:
 	    VMUTATE(((struct rt_tgc_internal *)ptr)->v);
@@ -360,7 +360,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    /* if we aren't crossing over, we copy the individual into the
 	     * new database. If we're mutating, mutate the object after loading
 	     * the internetal object */
-	    
+
 	    if( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
 		bu_bomb("Failed to read parent");
 

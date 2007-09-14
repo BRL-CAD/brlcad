@@ -82,7 +82,7 @@ ShiftCount(mask)
  *	Returns the number of bits set in the given mask.
  *
  *	Reference: Graphics Gems Volume 2.
- *	
+ *
  * Results:
  *      The number of bits to set in the mask.
  *
@@ -94,15 +94,15 @@ CountBits(mask)
     register unsigned long mask; /* 32  1-bit tallies */
 {
     /* 16  2-bit tallies */
-    mask = (mask & 0x55555555) + ((mask >> 1) & (0x55555555));  
+    mask = (mask & 0x55555555) + ((mask >> 1) & (0x55555555));
     /* 8  4-bit tallies */
-    mask = (mask & 0x33333333) + ((mask >> 2) & (0x33333333)); 
+    mask = (mask & 0x33333333) + ((mask >> 2) & (0x33333333));
     /* 4  8-bit tallies */
-    mask = (mask & 0x07070707) + ((mask >> 4) & (0x07070707));  
+    mask = (mask & 0x07070707) + ((mask >> 4) & (0x07070707));
     /* 2 16-bit tallies */
-    mask = (mask & 0x000F000F) + ((mask >> 8) & (0x000F000F));  
+    mask = (mask & 0x000F000F) + ((mask >> 8) & (0x000F000F));
     /* 1 32-bit tally */
-    mask = (mask & 0x0000001F) + ((mask >> 16) & (0x0000001F));  
+    mask = (mask & 0x0000001F) + ((mask >> 16) & (0x0000001F));
     return mask;
 }
 
@@ -465,7 +465,7 @@ Blt_DrawableToColorImage(tkwin, drawable, x, y, width, height, inputGamma)
 
     errHandler = Tk_CreateErrorHandler(Tk_Display(tkwin), BadMatch,
 	X_GetImage, -1, XGetImageErrorProc, &result);
-    imagePtr = XGetImage(Tk_Display(tkwin), drawable, x, y, width, height, 
+    imagePtr = XGetImage(Tk_Display(tkwin), drawable, x, y, width, height,
 	AllPlanes, ZPixmap);
     Tk_DeleteErrorHandler(errHandler);
     XSync(Tk_Display(tkwin), False);
@@ -476,7 +476,7 @@ Blt_DrawableToColorImage(tkwin, drawable, x, y, width, height, inputGamma)
     {
 	register int i;
 	double value;
-	
+
 	for (i = 0; i < 256; i++) {
 	    value = pow(i / 255.0, inputGamma) * 255.0 + 0.5;
 	    lut[i] = (unsigned char)CLAMP(value);
@@ -549,10 +549,10 @@ Blt_DrawableToColorImage(tkwin, drawable, x, y, width, height, inputGamma)
 	}
 	XDestroyImage(imagePtr);
 
-	/* 
+	/*
 	 * Convert the hashtable of pixels into an array of XColors so
 	 * that we can call XQueryColors with it. XQueryColors will
-	 * convert the pixels into their RGB values.  
+	 * convert the pixels into their RGB values.
 	 */
 	nColors = pixelTable.numEntries;
 	colorArr = Blt_Malloc(sizeof(XColor) * nColors);
@@ -567,9 +567,9 @@ Blt_DrawableToColorImage(tkwin, drawable, x, y, width, height, inputGamma)
 	}
 	XQueryColors(Tk_Display(tkwin), Tk_Colormap(tkwin), colorArr, nColors);
 
-	/* 
+	/*
 	 * Go again through the array of pixels, replacing each pixel
-	 * of the image with its RGB value.  
+	 * of the image with its RGB value.
 	 */
 	destPtr = Blt_ColorImageBits(image);
 	endPtr = destPtr + nPixels;
@@ -775,7 +775,7 @@ Blt_RotateBitmap(tkwin, srcBitmap, srcWidth, srcHeight, theta,
 	    for (y = 0; y < destHeight; y++) {
 		sy = destHeight - y - 1;
 		for (x = 0; x < destWidth; x++) {
-		    sx = destWidth - x - 1, 
+		    sx = destWidth - x - 1,
 		    pixel = XGetPixel(src, sx, sy);
 		    if (pixel) {
 			XPutPixel(dest, x, y, pixel);
@@ -927,7 +927,7 @@ Blt_ScaleBitmap(tkwin, srcBitmap, srcWidth, srcHeight, destWidth, destHeight)
     XFillRectangle(display, destBitmap, bitmapGC, 0, 0, destWidth, destHeight);
 
     src = XGetImage(display, srcBitmap, 0, 0, srcWidth, srcHeight, 1, ZPixmap);
-    dest = XGetImage(display, destBitmap, 0, 0, destWidth, destHeight, 1, 
+    dest = XGetImage(display, destBitmap, 0, 0, destWidth, destHeight, 1,
 		     ZPixmap);
 
     /*
@@ -951,7 +951,7 @@ Blt_ScaleBitmap(tkwin, srcBitmap, srcWidth, srcHeight, destWidth, destHeight)
     }
     /* Write the scaled image into the destination bitmap */
 
-    XPutImage(display, destBitmap, bitmapGC, dest, 0, 0, 0, 0, 
+    XPutImage(display, destBitmap, bitmapGC, dest, 0, 0, 0, 0,
 	destWidth, destHeight);
     XDestroyImage(src), XDestroyImage(dest);
     return destBitmap;
@@ -969,10 +969,10 @@ Blt_ScaleBitmap(tkwin, srcBitmap, srcWidth, srcHeight, destWidth, destHeight)
  *	process the entire destination bitmap is only part of it is
  *	showing in the viewport.
  *
- *	This uses a simple rotation/scaling of each pixel in the 
- *	destination image.  For each pixel, the corresponding 
- *	pixel in the source bitmap is used.  This means that 
- *	destination coordinates are first scaled to the size of 
+ *	This uses a simple rotation/scaling of each pixel in the
+ *	destination image.  For each pixel, the corresponding
+ *	pixel in the source bitmap is used.  This means that
+ *	destination coordinates are first scaled to the size of
  *	the rotated source bitmap.  These coordinates are then
  *	rotated back to their original orientation in the source.
  *
@@ -988,14 +988,14 @@ Pixmap
 Blt_ScaleRotateBitmapRegion(
     Tk_Window tkwin,
     Pixmap srcBitmap,		/* Source bitmap. */
-    unsigned int srcWidth, 
+    unsigned int srcWidth,
     unsigned int srcHeight,	/* Size of source bitmap */
-    int regionX, 
+    int regionX,
     int regionY,		/* Offset of region in virtual
 				 * destination bitmap. */
-    unsigned int regionWidth, 
+    unsigned int regionWidth,
     unsigned int regionHeight,	/* Desire size of bitmap region. */
-    unsigned int destWidth,		
+    unsigned int destWidth,
     unsigned int destHeight,	/* Virtual size of destination bitmap. */
     double theta)		/* Angle to rotate bitmap.  */
 {
@@ -1017,7 +1017,7 @@ Blt_ScaleRotateBitmapRegion(
     bitmapGC = Blt_GetBitmapGC(tkwin);
     destBitmap = Tk_GetPixmap(display, root, regionWidth, regionHeight, 1);
     XSetForeground(display, bitmapGC, 0x0);
-    XFillRectangle(display, destBitmap, bitmapGC, 0, 0, regionWidth, 
+    XFillRectangle(display, destBitmap, bitmapGC, 0, 0, regionWidth,
 	regionHeight);
 
     src = XGetImage(display, srcBitmap, 0, 0, srcWidth, srcHeight, 1, ZPixmap);
@@ -1280,7 +1280,7 @@ Blt_JPEGToColorImage(interp, fileName)
 
     /* Make a one-row-high sample array that will go away when done
      * with image */
-    readBuffer = (*jpg.mem->alloc_sarray) ((j_common_ptr)&jpg, JPOOL_IMAGE, 
+    readBuffer = (*jpg.mem->alloc_sarray) ((j_common_ptr)&jpg, JPOOL_IMAGE,
 	row_stride, 1);
     image = Blt_CreateColorImage(imageWidth, imageHeight);
     destPtr = Blt_ColorImageBits(image);
@@ -1315,21 +1315,21 @@ Blt_JPEGToColorImage(interp, fileName)
     jpeg_destroy_decompress(&jpg);
 
 
-    /*  
+    /*
      * After finish_decompress, we can close the input file.  Here we
      * postpone it until after no more JPEG errors are possible, so as
      * to simplify the setjmp error logic above.  (Actually, I don't
      * think that jpeg_destroy can do an error exit, but why assume
-     * anything...)  
+     * anything...)
      */
     fclose(f);
 
-    /* 
+    /*
      * At this point you may want to check to see whether any corrupt-data
      * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
      */
     if (handler.pub.num_warnings > 0) {
-	Tcl_SetErrorCode(interp, "IMAGE", "JPEG", 
+	Tcl_SetErrorCode(interp, "IMAGE", "JPEG",
 		 Tcl_DStringValue(&(handler.dString)), (char *)NULL);
     } else {
 	Tcl_SetErrorCode(interp, "NONE", (char *)NULL);

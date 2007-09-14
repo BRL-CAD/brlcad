@@ -103,7 +103,7 @@ static void ManagerIdleProc(ClientData clientData)
 
     if (mgr->flags & MGR_RESIZE_REQUIRED) {
 	RecomputeSize(mgr);
-    } 
+    }
     if (mgr->flags & MGR_RELAYOUT_REQUIRED) {
 	if (mgr->flags & MGR_UPDATE_PENDING) {
 	    /* RecomputeSize has scheduled another update; relayout later */
@@ -127,7 +127,7 @@ static void ManagerEventHandler(ClientData clientData, XEvent *eventPtr)
     Ttk_Manager *mgr = clientData;
     int i;
 
-    switch (eventPtr->type) 
+    switch (eventPtr->type)
     {
 	case ConfigureNotify:
 	    RecomputeLayout(mgr);
@@ -281,7 +281,7 @@ static void InsertSlave(Ttk_Manager *mgr, Ttk_Slave *slave, int index)
  *
  * NOTES/ASSUMPTIONS:
  *
- * [1] It's safe to call Tk_UnmapWindow / Tk_UnmaintainGeometry even if this 
+ * [1] It's safe to call Tk_UnmapWindow / Tk_UnmaintainGeometry even if this
  * routine is called from the slave's DestroyNotify event handler.
  */
 static void RemoveSlave(Ttk_Manager *mgr, int index)
@@ -437,7 +437,7 @@ void Ttk_UnmapSlave(Ttk_Manager *mgr, int slaveIndex)
     Ttk_Slave *slave = mgr->slaves[slaveIndex];
     Tk_UnmaintainGeometry(slave->slaveWindow, mgr->masterWindow);
     slave->flags &= ~SLAVE_MAPPED;
-    /* Contrary to documentation, Tk_UnmaintainGeometry doesn't always 
+    /* Contrary to documentation, Tk_UnmaintainGeometry doesn't always
      * unmap the slave:
      */
     Tk_UnmapWindow(slave->slaveWindow);
@@ -458,9 +458,9 @@ void Ttk_ManagerSizeChanged(Ttk_Manager *mgr)
 
 /* +++ Accessors.
  */
-int Ttk_NumberSlaves(Ttk_Manager *mgr) 
+int Ttk_NumberSlaves(Ttk_Manager *mgr)
 {
-    return mgr->nSlaves; 
+    return mgr->nSlaves;
 }
 void *Ttk_SlaveData(Ttk_Manager *mgr, int slaveIndex)
 {
@@ -569,7 +569,7 @@ void Ttk_ReorderSlave(Ttk_Manager *mgr, int fromIndex, int toIndex)
 /* ++ Ttk_Maintainable(interp, slave, master) --
  * 	Utility routine.  Verifies that 'master' may be used to maintain
  *	the geometry of 'slave' via Tk_MaintainGeometry:
- * 
+ *
  * 	+ 'master' is either 'slave's parent -OR-
  * 	+ 'master is a descendant of 'slave's parent.
  * 	+ 'slave' is not a toplevel window
@@ -596,7 +596,7 @@ int Ttk_Maintainable(Tcl_Interp *interp, Tk_Window slave, Tk_Window master)
     return 1;
 
 badWindow:
-    Tcl_AppendResult(interp, 
+    Tcl_AppendResult(interp,
 	"can't add ", Tk_PathName(slave),
 	" as slave of ", Tk_PathName(master),
 	NULL);

@@ -319,7 +319,7 @@ static Tk_ConfigSpec configSpecs[] =
 {
     {TK_CONFIG_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_BUTTON_ACTIVE_BACKGROUND, Tk_Offset(Button, activeBorder),
-	BUTTON_MASK | CHECK_BUTTON_MASK | RADIO_BUTTON_MASK | 
+	BUTTON_MASK | CHECK_BUTTON_MASK | RADIO_BUTTON_MASK |
         TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_BUTTON_ACTIVE_BG_MONO, Tk_Offset(Button, activeBorder),
@@ -357,7 +357,7 @@ static Tk_ConfigSpec configSpecs[] =
 	DEF_BUTTON_COMMAND, Tk_Offset(Button, command),
 	BUTTON_MASK | CHECK_BUTTON_MASK | RADIO_BUTTON_MASK | TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-compound", "compound", "Compound",
-	DEF_BUTTON_COMPOUND, Tk_Offset(Button, compound), 
+	DEF_BUTTON_COMPOUND, Tk_Offset(Button, compound),
 	ALL_MASK | TK_CONFIG_NULL_OK},
     {TK_CONFIG_ACTIVE_CURSOR, "-cursor", "cursor", "Cursor",
 	DEF_BUTTON_CURSOR, Tk_Offset(Button, cursor),
@@ -529,8 +529,8 @@ static Tcl_CmdProc ButtonCmd, LabelCmd, CheckbuttonCmd, RadiobuttonCmd;
 EXTERN int TkCopyAndGlobalEval _ANSI_ARGS_((Tcl_Interp *interp, char *script));
 
 #if (TK_MAJOR_VERSION > 4)
-EXTERN void TkComputeAnchor _ANSI_ARGS_((Tk_Anchor anchor, Tk_Window tkwin, 
-	int padX, int padY, int innerWidth, int innerHeight, int *xPtr, 
+EXTERN void TkComputeAnchor _ANSI_ARGS_((Tk_Anchor anchor, Tk_Window tkwin,
+	int padX, int padY, int innerWidth, int innerHeight, int *xPtr,
 	int *yPtr));
 #endif
 
@@ -1710,7 +1710,7 @@ ComputeButtonGeometry(butPtr)
 	if ((butPtr->type >= TYPE_CHECK_BUTTON) && butPtr->indicatorOn) {
 	    butPtr->indicatorDiameter = fm.linespace;
 	    if (butPtr->type == TYPE_CHECK_BUTTON) {
-		butPtr->indicatorDiameter = 
+		butPtr->indicatorDiameter =
 		    (80 * butPtr->indicatorDiameter) / 100;
 	    }
 	    butPtr->indicatorSpace = butPtr->indicatorDiameter + avgWidth;
@@ -1872,7 +1872,7 @@ InvokeButton(butPtr)
 {
     if (butPtr->type == TYPE_CHECK_BUTTON) {
 	if (butPtr->flags & SELECTED) {
-	    if (Tcl_SetVar(butPtr->interp, butPtr->selVarName, 
+	    if (Tcl_SetVar(butPtr->interp, butPtr->selVarName,
 			   butPtr->offValue,
 		    TCL_GLOBAL_ONLY | TCL_LEAVE_ERR_MSG) == NULL) {
 		return TCL_ERROR;

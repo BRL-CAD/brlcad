@@ -71,7 +71,7 @@ typedef enum {
  * break things by writing into the vector when other clients are
  * using it.  Use Blt_ResetVector to get around this.  At least the
  * macros are a reminder it isn't really safe to reset the data
- * fields, except by the API routines.  
+ * fields, except by the API routines.
  */
 #define Blt_VecData(v)		((v)->valueArr)
 #define Blt_VecLength(v)	((v)->numValues)
@@ -119,7 +119,7 @@ EXTERN int Blt_DeleteVector _ANSI_ARGS_((Blt_Vector *vecPtr));
 EXTERN int Blt_ExprVector _ANSI_ARGS_((Tcl_Interp *interp, char *expression,
 	Blt_Vector *vecPtr));
 
-EXTERN void Blt_InstallIndexProc _ANSI_ARGS_((Tcl_Interp *interp, 
+EXTERN void Blt_InstallIndexProc _ANSI_ARGS_((Tcl_Interp *interp,
 	char *indexName, Blt_VectorIndexProc * procPtr));
 
 #endif /* _BLT_VECTOR_H */

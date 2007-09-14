@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH RLE_GET_SETUP 3 2/2/87 3
-.UC 4 
+.UC 4
 .SH NAME
 rle_get_setup \- Read the header from an RLE file.
 .PD 0
@@ -46,7 +46,7 @@ rle_debug( on_off )
 .SH DESCRIPTION
 .PP
 .I Rle_get_setup
-is called to initialize the process of reading an 
+is called to initialize the process of reading an
 .IR RLE (5)
 file.
 It will fill in
@@ -87,19 +87,19 @@ and the program exits with the status code set.
 can be called to print an appropriate error message on the standard
 error output for the failure code returned by
 .IR rle_get_setup .
-The 
-.IR prog_name 
+The
+.IR prog_name
 and
-.IR file_name 
+.IR file_name
 parameters are used for the error message.  If
-.IR file_name 
+.IR file_name
 is NULL or "\-", the string "Standard input" is substituted.
 
 The function
 .I rle_debug
-is used to enable or disable debug printing for the 
+is used to enable or disable debug printing for the
 .I rle_get
-functions.  If 
+functions.  If
 .I on_off
 is non-zero, all input read from any
 .I RLE

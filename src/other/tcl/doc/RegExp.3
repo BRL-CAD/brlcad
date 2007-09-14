@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_RegExpMatch 3 8.1 Tcl "Tcl Library Procedures"
 .BS
@@ -101,7 +101,7 @@ should be stored by \fBTcl_RegExpGetInfo\fR.
 \fBTcl_RegExpMatch\fR determines whether its \fIpattern\fR argument
 matches \fIregexp\fR, where \fIregexp\fR is interpreted
 as a regular expression using the rules in the \fBre_syntax\fR
-reference page. 
+reference page.
 If there is a match then \fBTcl_RegExpMatch\fR returns 1.
 If there is no match then \fBTcl_RegExpMatch\fR returns 0.
 If an error occurs in the matching process (e.g. \fIpattern\fR
@@ -109,7 +109,7 @@ is not a valid regular expression) then \fBTcl_RegExpMatch\fR
 returns \-1 and leaves an error message in the interpreter result.
 \fBTcl_RegExpMatchObj\fR is similar to \fBTcl_RegExpMatch\fR except it
 operates on the Tcl objects \fItextObj\fR and \fIpatObj\fR instead of
-UTF strings. 
+UTF strings.
 \fBTcl_RegExpMatchObj\fR is generally more efficient than
 \fBTcl_RegExpMatch\fR, so it is the preferred interface.
 .PP
@@ -193,7 +193,7 @@ the normal regular expression syntax accepted by the Tcl \fBregexp\fR and
 \fBTCL_REG_EXTENDED\fR
 Compile extended regular expressions (`EREs').  This mode corresponds
 to the regular expression syntax recognized by Tcl 8.0 and earlier
-versions. 
+versions.
 .TP
 \fBTCL_REG_BASIC\fR
 Compile basic regular expressions (`BREs').  This mode corresponds
@@ -329,7 +329,7 @@ character in the string where a match could occur.  If a match was
 found, this will be the same as the beginning of the current match.
 If no match was found, then it indicates the earliest point at which a
 match might occur if additional text is appended to the string.  If it
-is no match is possible even with further text, this field will be set 
+is no match is possible even with further text, this field will be set
 to -1.
 
 .SH "SEE ALSO"

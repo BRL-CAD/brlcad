@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH ttk_dialog n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -18,7 +18,7 @@ ttk_dialog \- create a dialog box
 .BE
 
 .SH DESCRIPTION
-A dialog box is a transient top-level window 
+A dialog box is a transient top-level window
 containing an icon, a short message, an optional, longer, detail message,
 and a row of command buttons.
 When the user presses any of the buttons,
@@ -36,7 +36,7 @@ Specifies the message to display in this dialog.
 Specifies a longer auxilliary message.
 .OP \-command undefined undefined
 Specifies a command prefix to be invoked when the user presses
-one of the command buttons.  
+one of the command buttons.
 The symbolic name of the button is passed as an additional argument
 to the command.
 The dialog is dismissed after invoking the command.
@@ -63,7 +63,7 @@ The symbolic name of the default button.
 The symbolic name of the "cancel" button.
 The cancel button is invoked if the user presses the Escape key
 and when the dialog is closed from the window manager.
-If \fB-cancel\fR is not specified, 
+If \fB-cancel\fR is not specified,
 the dialog ignores window manager close commands (WM_DELETE_WINDOW).
 
 .SH "WIDGET COMMANDS"
@@ -74,9 +74,9 @@ Other widgets may be added to the client frame.
 The client frame appears between the detail message and the command buttons.
 
 .SH "PREDEFINED DIALOG TYPES"
-The \fB-type\fR option, if present, specifies default values 
+The \fB-type\fR option, if present, specifies default values
 for other options.  \fBttk::dialog::define \fItype options...\fR
-specifies a new stock dialog \fItype\fR.  
+specifies a new stock dialog \fItype\fR.
 The following stock dialog types are predefined:
 .CS
 ttk::dialog::define ok \e
@@ -124,7 +124,7 @@ ttk::dialog .saveFileDialog \e
     -icon question \e
     -message "Save file before closing?" \e
     -detail "If you do not save the file, your work will be lost" \e
-    -buttons [list yes no cancel] \e 
+    -buttons [list yes no cancel] \e
     -labels [list yes "Save file" no "Don't save"] \e
     -command saveFileComplete \e
     ;

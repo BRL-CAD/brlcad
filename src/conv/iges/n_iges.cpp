@@ -45,14 +45,14 @@ namespace brlcad {
   Integer::Integer(const string& field) {
       if (field.length() == 0) _val = 0;
       else {
-	  int first = field.find_first_not_of(" \t\n\r");  
+	  int first = field.find_first_not_of(" \t\n\r");
 	  _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0);
       }
   }
   Integer::Integer(const Integer& intg) {
     _val = intg._val;
   }
-  FILE* 
+  FILE*
   Integer::read(FILE* in) {
     return in;
   }
@@ -79,10 +79,10 @@ namespace brlcad {
   Pointer::Pointer(const Pointer& ptr) {
     _val = ptr._val;
   }
-  FILE* 
+  FILE*
   Pointer::read(FILE* in) {
     return in;
-    
+
   }
   string
   Pointer::write(FILE* out) {
@@ -91,15 +91,15 @@ namespace brlcad {
 
   ////////////////////////////////////////////////////////////////////////////////
   Real::Real() { _val = 0.0; }
-  Real::Real(double v) { _val = v; }  
+  Real::Real(double v) { _val = v; }
   Real::Real(const string& field) {
       if (field.length() == 0) _val = 0.0;
       else {
 	  string copy = field;
 	  int first = field.find_first_not_of(" \t\n\r");
 	  int exp = field.find_first_of("DF");
-	  if (exp != string::npos) { 
-	      copy.replace(exp,1,"e");     
+	  if (exp != string::npos) {
+	      copy.replace(exp,1,"e");
 	      debug("Real(" << copy << ")");
 	  }
 	  _val = strtod(copy.substr(first,field.length()-first).c_str(), NULL);
@@ -110,10 +110,10 @@ namespace brlcad {
     _val = r._val;
   }
 
-  FILE* 
+  FILE*
   Real::read(FILE* in) {
     return in;
-    
+
   }
   string
   Real::write(FILE* out) {
@@ -145,10 +145,10 @@ namespace brlcad {
     _val = str;
   }
 
-  FILE* 
+  FILE*
   String::read(FILE* in) {
     return in;
-    
+
   }
   string
   String::write(FILE* out) {
@@ -160,7 +160,7 @@ namespace brlcad {
     _val = false;
   }
   Logical::Logical(const string& field) {
-    int first = field.find_first_not_of(" \t\n\r");  
+    int first = field.find_first_not_of(" \t\n\r");
     _val = strtol(field.substr(first,field.length()-first).c_str(), NULL, 0) != 0;
   }
   Logical::Logical(bool val) {
@@ -170,10 +170,10 @@ namespace brlcad {
     _val = p._val;
   }
 
-  FILE* 
+  FILE*
   Logical::read(FILE* in) {
     return in;
-    
+
   }
   string
   Logical::write(FILE* out) {
@@ -183,10 +183,10 @@ namespace brlcad {
   //--------------------------------------------------------------------------------
   // Record
   int Record::_reclen = -1;
-  
+
   void
   Record::calcRecsize(FILE* in)
-  {    
+  {
     int i,j,k=(-1),recl=0,length[NRECS],ch;
 
     for( j=0 ; j<NRECS ; j++ )
@@ -218,7 +218,7 @@ namespace brlcad {
 
     if( recl == 0 ) /* then LF's were found */ {
       recl = length[1];	/* don't use length[0] */
-      
+
       /* check for consistent record lengths */
       for( j=2 ; j<k ; j++ ) {
 	if( recl != length[j] )
@@ -235,19 +235,19 @@ namespace brlcad {
     _read();
   }
 
-  Record::Record(FILE* in, int paramStart, int record) : _fp(in) {    
+  Record::Record(FILE* in, int paramStart, int record) : _fp(in) {
     if (_reclen < 0) calcRecsize(in);
     _start = ftell(in);
     int pos = (record-1)*_reclen;
     fseek(_fp, paramStart + pos, SEEK_SET);
     _read();
-  }  
+  }
 
   string
   Record::_field(int index) {
     return _line.substr(index*8,8);
   }
-  
+
   bool
   Record::_readLine() {
     char buf[_reclen+1];
@@ -258,13 +258,13 @@ namespace brlcad {
     _type = _line[72];
     return true;
   }
-  
+
   void
   Record::_undoRead(int numLines) {
     fseek(_fp, -(numLines * _reclen), SEEK_CUR);
   }
 
-  void 
+  void
   Record::_read() {
     _readLine();
     switch (_type) {
@@ -276,8 +276,8 @@ namespace brlcad {
     default: _valid=false;
     }
   }
-  
-  void 
+
+  void
   Record::_readStart() {
     // handle what was already read
     _card << _line.substr(0,72);
@@ -290,7 +290,7 @@ namespace brlcad {
     printf("%s", _card.str().c_str());
     _valid = true;
   }
-  
+
   void
   Record::_readGlobal() {
     _card << _line.substr(0,72);
@@ -301,8 +301,8 @@ namespace brlcad {
     printf("Read global section\n");
     _valid = true;
   }
-  
-  void 
+
+  void
   Record::_readDirectory() {
     // each DE is 2 lines - we've read one line
     _card << _line.substr(0,72);
@@ -314,7 +314,7 @@ namespace brlcad {
       return;
     }
     _dirEntries.push_back(_card.str());
-    
+
     int i = 1;
     _card.seekp(0,ios::beg);
     while (_readLine() && isDirectory()) {
@@ -347,8 +347,8 @@ namespace brlcad {
   Record::createGlobalSection() {
     return new GlobalSection(_card.str());
   }
-  
-  void 
+
+  void
   Record::createDirectory(vector<DirectoryEntry*>& dir) {
     for (list<string>::iterator i = _dirEntries.begin(); i != _dirEntries.end(); i++) {
       dir.push_back(new DirectoryEntry(*i));
@@ -361,7 +361,7 @@ namespace brlcad {
   }
 
   //--------------------------------------------------------------------------------
-  // DirectoryEntry definition  
+  // DirectoryEntry definition
   DirectoryEntry::DirectoryEntry(const string& in) : _rawEntry(in) {
     _type = Integer(_field(1));
     _paramData = Pointer(_field(2));
@@ -394,10 +394,10 @@ namespace brlcad {
     stat = atoi(status.substr(4,2).c_str());
     _use = (EntityUse)stat;
     stat = atoi(status.substr(6,2).c_str());
-    _hierarchy = (Hierarchy)stat;    
+    _hierarchy = (Hierarchy)stat;
   }
 
-  string 
+  string
   DirectoryEntry::_field(int index) {
     int xindex = (index > 10) ? index - 1 : index;
     return _rawEntry.substr((xindex-1) * FIELD_WIDTH, FIELD_WIDTH);
@@ -418,18 +418,18 @@ namespace brlcad {
     int start = init;
     int end = str.find_first_of(delim, start);
     while (end != string::npos) {
-      if (end != string::npos) { 
+      if (end != string::npos) {
 	if ((end - start) != 0) {
 	  string s = str.substr(start, end-start);
 	  els.push_back(s);
-	} else 
+	} else
 	  els.push_back("");
-      } 
-      start = end+1;     
+      }
+      start = end+1;
       end = str.find_first_of(delim,start);
     }
   }
-  
+
   GlobalSection::GlobalSection() {
     // XXX: todo
   }
@@ -448,7 +448,7 @@ namespace brlcad {
     // param delimiter
     if (in[0] == ',' && in[1] == ',') {
       _params[0] = ",";
-      _params[1] = ";";      
+      _params[1] = ";";
       index = 2;
     } else if (in[0] == ',') {
       _params[0] = ",";
@@ -466,17 +466,17 @@ namespace brlcad {
       }
     }
     split(fields, in, paramDelim() + recordDelim(), index);
-    
+
     cout << "paramDelim:  " << paramDelim() << endl;
     cout << "recordDelim: " << recordDelim() << endl;
 
     index = 2;
-    for (list<string>::iterator iter = fields.begin(); iter != fields.end(); iter++) {      
+    for (list<string>::iterator iter = fields.begin(); iter != fields.end(); iter++) {
       _params[index] = *iter;
       index++;
     }
-    
-    cout << toString();    
+
+    cout << toString();
   }
 
   //--------------------------------------------------------------------------------
@@ -492,17 +492,17 @@ namespace brlcad {
   ParameterData::getInteger(int index) const {
     return Integer(params[index]);
   }
-  
+
   Logical
   ParameterData::getLogical(int index) const {
     return Logical(params[index]);
   }
-  
+
   String
   ParameterData::getString(int index) const {
     return String(params[index]);
   }
-  
+
   Real
   ParameterData::getReal(int index) const {
     return Real(params[index]);
@@ -517,7 +517,7 @@ namespace brlcad {
   //--------------------------------------------------------------------------------
   // IGES definition
   IGES::IGES() {
-  
+
   }
 
   IGES::IGES(const struct db_i* dbip) {
@@ -526,7 +526,7 @@ namespace brlcad {
 
   IGES::IGES(const string& filename) {
     FILE* in = fopen(filename.c_str(), "r");
-  
+
     readStart(in);
     readGlobal(in);
     readDirectory(in);
@@ -550,7 +550,7 @@ namespace brlcad {
   string
   IGES::getTypeName(IGESEntity ide) const {
     switch (ide) {
-    case Null: return "Null";    
+    case Null: return "Null";
     case CircularArc: return "CircularArc";
     case CompositeCurve: return "CompositeCurve";
     case ConicArc: return "ConicArc";
@@ -647,15 +647,15 @@ namespace brlcad {
     find(ManifoldSolidBRepObject, breps);
     debug("Found " << breps.size() << " breps!");
 
-    for (DEList::iterator i = breps.begin(); i != breps.end(); i++) {      
+    for (DEList::iterator i = breps.begin(); i != breps.end(); i++) {
       handler->extract(this, *i); // should be a BrepHandler subclass, but the code doesn't enforce it
     }
   }
 
-  void 
+  void
   IGES::find(IGESEntity id, DEList& outList) {
     debug("ID: " << id);
-    for (DEVector::iterator i = _dir.begin(); i != _dir.end(); i++) {    
+    for (DEVector::iterator i = _dir.begin(); i != _dir.end(); i++) {
       debug((*i)->toString());
       if (((long)id) == ((long)(*i)->type())) outList.push_back(*i);
     }
@@ -669,10 +669,10 @@ namespace brlcad {
       exit(-1);
     }
   }
-  
+
   void
   IGES::readGlobal(FILE* in) {
-    Record global(in); 
+    Record global(in);
     _global = global.createGlobalSection();
   }
 
@@ -715,10 +715,10 @@ namespace brlcad {
 
   void
   IGES::getTransformation(const Pointer& ptr, mat_t out_xform)
-  {    
+  {
     if (ptr() == 0) return;
     //MAT_IDN(xform);
-    DirectoryEntry* xform_de = getDirectoryEntry(ptr);    
+    DirectoryEntry* xform_de = getDirectoryEntry(ptr);
     ParameterData params;
     getParameter(xform_de->paramData(), params);
 
@@ -740,13 +740,13 @@ namespace brlcad {
   }
 
   //--------------------------------------------------------------------------------
-  // Extractor  
+  // Extractor
   Extractor::~Extractor() {
     for (list<Extractor*>::iterator i = handlers.begin(); i != handlers.end(); i++) {
       delete (*i);
     }
   }
-  
+
   Extractor*
   Extractor::cascadeDelete(Extractor* handler) {
     handlers.push_back(handler);

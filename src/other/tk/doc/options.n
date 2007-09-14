@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH options n 4.4 Tk "Tk Built-In Commands"
 .BS
@@ -260,7 +260,7 @@ traversal (e.g., Tab and Shift-Tab).
 Before setting the focus to a window, the traversal scripts
 consult the value of the \fBtakeFocus\fR option.
 A value of \fB0\fR means that the window should be skipped entirely
-during keyboard traversal. 
+during keyboard traversal.
 \fB1\fR means that the window should receive the input
 focus as long as it is viewable (it and all of its ancestors are mapped).
 An empty value for the option means that the traversal scripts make
@@ -270,7 +270,7 @@ disabled, if it has no key bindings, or if it is not viewable.
 If the value has any other form, then the traversal scripts take
 the value, append the name of the window to it (with a separator space),
 and evaluate the resulting string as a Tcl script.
-The script must return \fB0\fR, \fB1\fR, or an empty string:  a 
+The script must return \fB0\fR, \fB1\fR, or an empty string:  a
 \fB0\fR or \fB1\fR value specifies whether the window will receive
 the input focus, and an empty string results in the default decision
 described above.

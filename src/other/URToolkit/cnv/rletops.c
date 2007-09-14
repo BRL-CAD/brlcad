@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rletops.c - Convert RLE to postscript file.
- * 
+ *
  * Author:	Rod Bogart & John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -30,19 +30,19 @@
  * Date:	June 22, 1990
  * Changes:	50% speedup using putc(), add -C option, translate to page ctr
  *		Fix comments to conform to EPS Version 2.0  (Al Clark)
- * 
- * Based on "tobw.c" by Spencer Thomas, and 
+ *
+ * Based on "tobw.c" by Spencer Thomas, and
  * "rps" by Marc Majka (UBC Vision lab)
  *
  * EPSF code from Mike Zyda (Naval Postgraduate School)
- * 
- * Options: 
+ *
+ * Options:
  * -C   - Generate color PostScript (instead of monochrome)
  * -h X - Image height in inches (default 3", width is found via aspect & size)
  * -s	- Scribe mode: don't generate "showpage", and default center is 3.25
  * -c X - Center image about X inches on the page (or margin if -s is on).
  * -a   - Aspect ratio of image (default 1.0)
- * 
+ *
  * If an input file isn't specified, it reads from stdin.  An output file
  * can be specified with -o (otherwise it writes to stdout).
  */
@@ -64,16 +64,16 @@ main( argc, argv )
 int argc;
 char **argv;
 {
-    char       *infname = NULL, 
+    char       *infname = NULL,
     	       *outfname = NULL;
     FILE       *outfile;
     rle_hdr	hdr;
     int 	sflag = 0,
-    		oflag = 0, 
+    		oflag = 0,
     		cflag = 0;
     int		add_extra_white_line = 0;
-    float 	heightinch = 3.0, 
-    		center = 3.25, 
+    float 	heightinch = 3.0,
+    		center = 3.25,
     		aspect = 1.0;
     int 	nrow, nscan, i, pix, dummy;
     float 	x1, y1, x2, y2, widthinch;
@@ -112,7 +112,7 @@ char **argv;
 
     outfile = rle_open_f(hdr.cmd, outfname, "w");
 
-    /* 
+    /*
      * Spencer trick: save space by sliding the input image over to the
      * left margin.
      */
@@ -153,7 +153,7 @@ char **argv;
     }
     x2 = x1 + widthinch;
     y2 = y1 + heightinch;
-    prologue(outfile,sflag,nscan,nrow,x1,y1,x2,y2);    
+    prologue(outfile,sflag,nscan,nrow,x1,y1,x2,y2);
 
     while ( rle_getrow( &hdr, scan ) <= hdr.ymax )
     {

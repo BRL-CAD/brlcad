@@ -1,4 +1,4 @@
-/* 
+/*
  * strncasecmp.c --
  *
  *	Source code for the "strncasecmp" library routine.

@@ -12,7 +12,7 @@ class MyUserData : public ON_UserData
 public:
   // Note well:
   // 1) All constructors must initialize ON_UserData::m_userdata_uuid to
-  //    the UUID that identifies this kind of user data.  
+  //    the UUID that identifies this kind of user data.
   // 2) All constructors must initialize ON_UserData::m_copy_count to
   //    1 if the user data should be copied when the parent object is
   //    copied.
@@ -24,7 +24,7 @@ public:
   ~MyUserData();
 
   // In order to get your user data to persist in files, you must
-  // override ON_UserData::Archive(), ON_Object::Write() and 
+  // override ON_UserData::Archive(), ON_Object::Write() and
   // ON_Object::Read()
 
   BOOL Write(
@@ -38,7 +38,7 @@ public:
   // Archive() must return true in order for user data to get saved
   // in a file.
   BOOL Archive() const;
-  
+
   // You must override ON_UserData::GetDescription().
   BOOL GetDescription( ON_wString& );
 
@@ -62,7 +62,7 @@ public:
 ON_OBJECT_IMPLEMENT( MyUserData, ON_UserData, "53114529-1CD7-4872-818E-311CB19101FA" );
 
 // {D11E26D2-9A77-4a2f-AEC8-4498F2EABBA1}
-static const ON_UUID my_application_id = 
+static const ON_UUID my_application_id =
 { 0xd11e26d2, 0x9a77, 0x4a2f, { 0xae, 0xc8, 0x44, 0x98, 0xf2, 0xea, 0xbb, 0xa1 } };
 
 MyUserData::MyUserData()
@@ -82,7 +82,7 @@ MyUserData::MyUserData()
   m_application_uuid = my_application_id;
 
   // If you want your user data to be copied when its parent ON_Object
-  // is copied, then your constructor must initialize 
+  // is copied, then your constructor must initialize
   // ON_UserData::m_userdata_copycount to 1.
   // By default, ON_UserData::m_userdata_copycount is zero and the
   // user data is not copied.  See the comments in the ON_UserData
@@ -92,11 +92,11 @@ MyUserData::MyUserData()
   m_my_int = 0;
 }
 
-MyUserData::MyUserData(const MyUserData& src) 
+MyUserData::MyUserData(const MyUserData& src)
           : ON_UserData(src) // critical - be sure to call base class copy constructor
 {
   // The base class copy constructor copies
-  // m_userdata_uuid, m_application_id, m_userdata_copycount, 
+  // m_userdata_uuid, m_application_id, m_userdata_copycount,
   // and m_userdata_xform.  Then if m_userdata_copycount is
   // not zero, it is incremented.
 
@@ -110,7 +110,7 @@ MyUserData& MyUserData::operator=(const MyUserData& src)
   if ( this != &src ) {
     // critical - be sure to call base class operator=()
     ON_UserData::operator=(src);
-    
+
     m_my_int = src.m_my_int;
     m_my_line = src.m_my_line;
     m_my_string = src.m_my_string;
@@ -131,11 +131,11 @@ BOOL MyUserData::Archive() const
 BOOL MyUserData::Read( ON_BinaryArchive& file )
 {
   BOOL rc = TRUE;
-  if ( rc ) 
+  if ( rc )
     rc = file.ReadInt(&m_my_int);
-  if ( rc ) 
+  if ( rc )
     rc = file.ReadLine(m_my_line);
-  if ( rc ) 
+  if ( rc )
     rc = file.ReadString(m_my_string);
   return rc;
 }
@@ -143,11 +143,11 @@ BOOL MyUserData::Read( ON_BinaryArchive& file )
 BOOL MyUserData::Write( ON_BinaryArchive& file ) const
 {
   BOOL rc = TRUE;
-  if ( rc ) 
+  if ( rc )
     rc = file.WriteInt(m_my_int);
-  if ( rc ) 
+  if ( rc )
     rc = file.WriteLine(m_my_line);
-  if ( rc ) 
+  if ( rc )
     rc = file.WriteString(m_my_string);
   return rc;
 }
@@ -221,7 +221,7 @@ int main()
   ud->m_my_string = "my user data";
 
   // This attaches the user data to point.  When the point is destroied,
-  // the user data will be destroyed.  
+  // the user data will be destroyed.
   //
   point.AttachUserData(ud);
 
@@ -230,7 +230,7 @@ int main()
 
   printf("original_ud->m_userdata_copycount = %d\n",original_ud->m_userdata_copycount);
 
-  // When the point is copied, the user data will be copied if 
+  // When the point is copied, the user data will be copied if
   // ud->m_userdata_copycount > 0.
   //
   ON_Point copy_of_point = point;

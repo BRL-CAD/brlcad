@@ -36,7 +36,7 @@ static void NullImageChanged(ClientData clientData,
 
 /* TtkGetImageSpec --
  * 	Constructs a Ttk_ImageSpec * from a Tcl_Obj *.
- * 	Result must be released using TtkFreeImageSpec.  
+ * 	Result must be released using TtkFreeImageSpec.
  *
  * TODO: Need a variant of this that takes a user-specified ImageChanged proc
  */

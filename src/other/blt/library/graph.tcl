@@ -6,7 +6,7 @@ proc Blt_ActiveLegend { graph } {
 }
 
 proc Blt_Crosshairs { graph } {
-    blt::Crosshairs $graph 
+    blt::Crosshairs $graph
 }
 
 proc Blt_ResetCrosshairs { graph state } {
@@ -54,7 +54,7 @@ proc blt::HighlightLegend { graph } {
 proc blt::Crosshairs { graph {event "Any-Motion"} {state "on"}} {
     $graph crosshairs $state
     bind crosshairs-$graph <$event>   {
-	%W crosshairs configure -position @%x,%y 
+	%W crosshairs configure -position @%x,%y
     }
     bind crosshairs-$graph <Leave>   {
 	%W crosshairs off
@@ -84,18 +84,18 @@ proc blt::InitStack { graph } {
 
 proc blt::ZoomStack { graph {start "ButtonPress-1"} {reset "ButtonPress-3"} } {
     global zoomInfo zoomMod
-    
+
     blt::InitStack $graph
-    
+
     if { [info exists zoomMod] } {
 	set modifier $zoomMod
     } else {
 	set modifier ""
     }
     bind zoom-$graph <${modifier}${start}> { blt::SetZoomPoint %W %x %y }
-    bind zoom-$graph <${modifier}${reset}> { 
-	if { [%W inside %x %y] } { 
-	    blt::ResetZoom %W 
+    bind zoom-$graph <${modifier}${reset}> {
+	if { [%W inside %x %y] } {
+	    blt::ResetZoom %W
 	}
     }
     blt::AddBindTag $graph zoom-$graph
@@ -147,14 +147,14 @@ proc blt::FindElement { graph x y } {
 	-text "$info(name): $info(dist)\nindex $info(index)" \
 	-font *lucida*-r-*-10-* \
 	-anchor center -justify left \
-	-yoffset 0 -bg {} 
+	-yoffset 0 -bg {}
 
     set coords [$graph invtransform $x $y]
     set nx [lindex $coords 0]
     set ny [lindex $coords 1]
 
     $graph marker create line -coords "$nx $ny $info(x) $info(y)" \
-	-name line.$markerName 
+	-name line.$markerName
 
     blt::FlashPoint $graph $info(name) $info(index) 10
     blt::FlashPoint $graph $info(name) [expr $info(index) + 1] 10
@@ -162,7 +162,7 @@ proc blt::FindElement { graph x y } {
 
 proc blt::FlashPoint { graph name index count } {
     if { $count & 1 } {
-        $graph element deactivate $name 
+        $graph element deactivate $name
     } else {
         $graph element activate $name $index
     }
@@ -191,10 +191,10 @@ proc blt::MarkPoint { graph index } {
     set x [$graph xaxis invtransform $zoomInfo($graph,$index,x)]
     set y [$graph yaxis invtransform $zoomInfo($graph,$index,y)]
     set marker "zoomText_$index"
-    set text [format "x=%.4g\ny=%.4g" $x $y] 
+    set text [format "x=%.4g\ny=%.4g" $x $y]
 
     if [$graph marker exists $marker] {
-     	$graph marker configure $marker -coords { $x $y } -text $text 
+     	$graph marker configure $marker -coords { $x $y } -text $text
     } else {
     	$graph marker create text -coords { $x $y } -name $marker \
    	    -font *lucida*-r-*-10-* \
@@ -241,14 +241,14 @@ proc blt::PushZoom { graph } {
     set x2 $zoomInfo($graph,B,x)
     set y2 $zoomInfo($graph,B,y)
 
-    if { ($x1 == $x2) || ($y1 == $y2) } { 
+    if { ($x1 == $x2) || ($y1 == $y2) } {
 	# No delta, revert to start
 	return
     }
     set cmd {}
     foreach margin { xaxis yaxis x2axis y2axis } {
 	foreach axis [$graph $margin use] {
-	    set min [$graph axis cget $axis -min] 
+	    set min [$graph axis cget $axis -min]
 	    set max [$graph axis cget $axis -max]
 	    set c [list $graph axis configure $axis -min $min -max $max]
 	    append cmd "$c\n"
@@ -261,7 +261,7 @@ proc blt::PushZoom { graph } {
 	foreach axis [$graph $margin use] {
 	    set min [$graph axis invtransform $axis $x1]
 	    set max [$graph axis invtransform $axis $x2]
-	    if { $min > $max } { 
+	    if { $min > $max } {
 		$graph axis configure $axis -min $max -max $min
 	    } else {
 		$graph axis configure $axis -min $min -max $max
@@ -272,14 +272,14 @@ proc blt::PushZoom { graph } {
 	foreach axis [$graph $margin use] {
 	    set min [$graph axis invtransform $axis $y1]
 	    set max [$graph axis invtransform $axis $y2]
-	    if { $min > $max } { 
+	    if { $min > $max } {
 		$graph axis configure $axis -min $max -max $min
 	    } else {
 		$graph axis configure $axis -min $min -max $max
 	    }
 	}
     }
-    busy hold $graph 
+    busy hold $graph
     update;				# This "update" redraws the graph
     busy release $graph
 }
@@ -290,10 +290,10 @@ proc blt::PushZoom { graph } {
 #
 
 proc blt::ResetZoom { graph } {
-    global zoomInfo 
+    global zoomInfo
 
     if { ![info exists zoomInfo($graph,corner)] } {
-	blt::InitStack $graph 
+	blt::InitStack $graph
     }
     eval $graph marker delete [$graph marker names "zoom*"]
 
@@ -313,7 +313,7 @@ proc blt::ResetZoom { graph } {
     }
 }
 
-option add *zoomTitle.font	  -*-helvetica-medium-R-*-*-18-*-*-*-*-*-*-* 
+option add *zoomTitle.font	  -*-helvetica-medium-R-*-*-18-*-*-*-*-*-*-*
 option add *zoomTitle.shadow	  yellow4
 option add *zoomTitle.foreground  yellow1
 option add *zoomTitle.coords	  "-Inf Inf"
@@ -336,7 +336,7 @@ proc blt::ZoomTitleLast { graph } {
     set level [llength $zoomInfo($graph,stack)]
     if { $level > 0 } {
      	$graph marker create text -name "zoomTitle" -anchor nw \
-	    -text "Zoom #$level" 
+	    -text "Zoom #$level"
     }
 }
 
@@ -352,7 +352,7 @@ proc blt::SetZoomPoint { graph x y } {
     } else {
 	set modifier "Any-"
     }
-    bind select-region-$graph <${modifier}Motion> { 
+    bind select-region-$graph <${modifier}Motion> {
 	blt::GetCoords %W %x %y B
 	#blt::MarkPoint $graph B
 	blt::Box %W
@@ -364,19 +364,19 @@ proc blt::SetZoomPoint { graph x y } {
 	# First corner selected, start watching motion events
 
 	#blt::MarkPoint $graph A
-	blt::ZoomTitleNext $graph 
+	blt::ZoomTitleNext $graph
 
 	blt::AddBindTag $graph select-region-$graph
 	set zoomInfo($graph,corner) B
     } else {
 	# Delete the modal binding
 	blt::RemoveBindTag $graph select-region-$graph
-	blt::PushZoom $graph 
+	blt::PushZoom $graph
 	set zoomInfo($graph,corner) A
     }
 }
 
-option add *zoomOutline.dashes		4	
+option add *zoomOutline.dashes		4
 option add *zoomTitle.anchor		nw
 option add *zoomOutline.lineWidth	2
 option add *zoomOutline.xor		yes
@@ -386,7 +386,7 @@ proc blt::MarchingAnts { graph offset } {
 
     incr offset
     if { [$graph marker exists zoomOutline] } {
-	$graph marker configure zoomOutline -dashoffset $offset 
+	$graph marker configure zoomOutline -dashoffset $offset
 	set interval $zoomInfo($graph,interval)
 	set id [after $interval [list blt::MarchingAnts $graph $offset]]
 	set zoomInfo($graph,afterId) $id
@@ -396,7 +396,7 @@ proc blt::MarchingAnts { graph offset } {
 proc blt::Box { graph } {
     global zoomInfo
 
-    if { $zoomInfo($graph,A,x) > $zoomInfo($graph,B,x) } { 
+    if { $zoomInfo($graph,A,x) > $zoomInfo($graph,B,x) } {
 	set x1 [$graph xaxis invtransform $zoomInfo($graph,B,x)]
 	set y1 [$graph yaxis invtransform $zoomInfo($graph,B,y)]
 	set x2 [$graph xaxis invtransform $zoomInfo($graph,A,x)]
@@ -409,7 +409,7 @@ proc blt::Box { graph } {
     }
     set coords { $x1 $y1 $x2 $y1 $x2 $y2 $x1 $y2 $x1 $y1 }
     if { [$graph marker exists "zoomOutline"] } {
-	$graph marker configure "zoomOutline" -coords $coords 
+	$graph marker configure "zoomOutline" -coords $coords
     } else {
 	set X [lindex [$graph xaxis use] 0]
 	set Y [lindex [$graph yaxis use] 0]
@@ -426,7 +426,7 @@ proc Blt_PostScriptDialog { graph } {
     set top $graph.top
     toplevel $top
 
-    foreach var { center landscape maxpect preview decorations padx 
+    foreach var { center landscape maxpect preview decorations padx
 	pady paperwidth paperheight width height colormode } {
 	global $graph.$var
 	set $graph.$var [$graph postscript cget -$var]
@@ -437,7 +437,7 @@ proc Blt_PostScriptDialog { graph } {
     table $top $top.title -cspan 7
     foreach bool { center landscape maxpect preview decorations } {
 	set w $top.$bool-label
-	label $w -text "-$bool" -font *courier*-r-*12* 
+	label $w -text "-$bool" -font *courier*-r-*12*
 	table $top $row,$col $w -anchor e -pady { 2 0 } -padx { 0 4 }
 	set w $top.$bool-yes
 	global $graph.$bool
@@ -448,7 +448,7 @@ proc Blt_PostScriptDialog { graph } {
 	table $top $row,$col+2 $w -anchor w
 	incr row
     }
-    label $top.modes -text "-colormode" -font *courier*-r-*12* 
+    label $top.modes -text "-colormode" -font *courier*-r-*12*
     table $top $row,0 $top.modes -anchor e  -pady { 2 0 } -padx { 0 4 }
     set col 1
     foreach m { color greyscale } {
@@ -463,7 +463,7 @@ proc Blt_PostScriptDialog { graph } {
     set col 4
     foreach value { padx pady paperwidth paperheight width height } {
 	set w $top.$value-label
-	label $w -text "-$value" -font *courier*-r-*12* 
+	label $w -text "-$value" -font *courier*-r-*12*
 	table $top $row,$col $w -anchor e  -pady { 2 0 } -padx { 0 4 }
 	set w $top.$value-entry
 	global $graph.$value
@@ -481,7 +481,7 @@ proc Blt_PostScriptDialog { graph } {
 }
 
 proc blt::ResetPostScript { graph } {
-    foreach var { center landscape maxpect preview decorations padx 
+    foreach var { center landscape maxpect preview decorations padx
 	pady paperwidth paperheight width height colormode } {
 	global $graph.$var
 	set old [$graph postscript cget -$var]

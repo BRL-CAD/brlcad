@@ -25,7 +25,7 @@ testConstraint wideBiggerThanInt [expr {wide(0x80000000) != int(0x80000000)}]
 test obj-1.1 {Tcl_AppendAllObjTypes, and InitTypeTable, Tcl_RegisterObjType} testobj {
     set r 1
     foreach {t} {
-	{array search} 
+	{array search}
 	bytearray
 	bytecode
 	cmdName
@@ -82,7 +82,7 @@ test obj-6.1 {Tcl_DuplicateObj, object has internal rep} testobj {
     set result ""
     lappend result [testobj freeallvars]
     lappend result [testintobj set 1 47]
-    lappend result [testobj duplicate 1 2]    
+    lappend result [testobj duplicate 1 2]
     lappend result [testintobj get 2]
     lappend result [testobj refcount 1]
     lappend result [testobj refcount 2]
@@ -91,7 +91,7 @@ test obj-6.2 {Tcl_DuplicateObj, "empty string" object} testobj {
     set result ""
     lappend result [testobj freeallvars]
     lappend result [testobj newobj 1]
-    lappend result [testobj duplicate 1 2]    
+    lappend result [testobj duplicate 1 2]
     lappend result [testintobj get 2]
     lappend result [testobj refcount 1]
     lappend result [testobj refcount 2]

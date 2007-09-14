@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ public:
 
 
   // temporary - use ON_ClippingRegion - this function will be removed soon.
-  int IsVisible( 
+  int IsVisible(
     const ON_Xform& bbox2c
     ) const;
 
@@ -53,7 +53,7 @@ public:
     int, // y_index   0 = Min().y, 1 = Max().y
     int  // z_index   0 = Min().z, 1 = Max().z
     ) const;
-  bool GetCorners( 
+  bool GetCorners(
     ON_3dPointArray& box_corners // returns list of 8 corner points
     ) const;
 
@@ -75,7 +75,7 @@ public:
     3     box is a point (degenerate in three directions)
     4     box is not valid
   */
-  int IsDegenerate( 
+  int IsDegenerate(
     double tolerance = ON_UNSET_VALUE
     ) const;
 
@@ -93,7 +93,7 @@ public:
 
   // All of these Set() functions set or expand a box to enclose the points in the arguments
   // If bGrowBox is TRUE, the existing box is expanded, otherwise it is only set to the current point list
-  bool Set(     
+  bool Set(
     int dim,
     int is_rat,
     int count,
@@ -107,40 +107,40 @@ public:
     int bGrowBox = false
     );
 
-  bool Set(     
+  bool Set(
     const ON_SimpleArray<ON_4dPoint>& point_array,
     int bGrowBox = false
     );
 
-  bool Set(     
+  bool Set(
     const ON_SimpleArray<ON_3dPoint>& point_array,
     int bGrowBox = false
     );
 
-  bool Set(     
+  bool Set(
     const ON_SimpleArray<ON_2dPoint>& point_array,
     int bGrowBox = false
     );
 
 	bool IsPointIn(
          const ON_3dPoint& test_point, // point to test
-         int bStrictlyIn = false 
+         int bStrictlyIn = false
                    // TRUE to test for strict ( min < point < max )
                    // FALSE to test for (min <= point <= max)
-                   //       
+                   //
          ) const;
 
   //////////
   // Point on or in the box that is closest to test_point.
   // If test_point is in or on the box, the test_point is returned.
-  ON_3dPoint ClosestPoint( 
+  ON_3dPoint ClosestPoint(
     const ON_3dPoint& test_point
     ) const;
 
 
   /*
   Description:
-    Quickly find a lower bound on the distance 
+    Quickly find a lower bound on the distance
     between the point and this bounding box.
   Parameters:
     P - [in]
@@ -154,12 +154,12 @@ public:
 
   /*
   Description:
-    Quickly find an upper bound on the distance 
+    Quickly find an upper bound on the distance
     between the point and this bounding box.
   Parameters:
     P - [in]
   Returns:
-    A distance that is greater than or equal to the 
+    A distance that is greater than or equal to the
     longest distance from the point P to this bounding box.
     Put another way, if Q is any point in this bounding box,
     then P.DistanceTo(Q) <= MaximumDistanceTo(bbox).
@@ -169,7 +169,7 @@ public:
 
   /*
   Description:
-    Quickly find a lower bound on the distance 
+    Quickly find a lower bound on the distance
     between this and the other bounding box.
   Parameters:
     other - [in]
@@ -184,7 +184,7 @@ public:
 
   /*
   Description:
-    Quickly find an upper bound on the distance 
+    Quickly find an upper bound on the distance
     between this and the other bounding box.
   Parameters:
     other - [in]
@@ -199,7 +199,7 @@ public:
 
   /*
   Description:
-    Quickly find a lower bound on the distance 
+    Quickly find a lower bound on the distance
     between the line segment and this bounding box.
   Parameters:
     line - [in]
@@ -214,7 +214,7 @@ public:
 
   /*
   Description:
-    Quickly find a tight lower bound on the distance 
+    Quickly find a tight lower bound on the distance
     between the plane and this bounding box.
   Parameters:
     plane - [in]
@@ -230,12 +230,12 @@ public:
 
   /*
   Description:
-    Quickly find an upper bound on the distance 
+    Quickly find an upper bound on the distance
     between the line segment and this bounding box.
   Parameters:
     line - [in]
   Returns:
-    A distance that is greater than or equal to the 
+    A distance that is greater than or equal to the
     longest distance from the line to this bounding box.
     Put another way, if Q is any point on the line
     and P is any point in this bounding box, then
@@ -245,15 +245,15 @@ public:
 
   /*
   Description:
-    Quickly find a tight upper bound on the distance 
+    Quickly find a tight upper bound on the distance
     between the plane and this bounding box.
   Parameters:
     plane - [in]
   Returns:
     A distance that is equal to the longest distance from
-    the plane to this bounding box.  Put another way, 
-    if Q is any point on the plane and P is any point 
-    in this bounding box, then 
+    the plane to this bounding box.  Put another way,
+    if Q is any point on the plane and P is any point
+    in this bounding box, then
     P.DistanceTo(Q) <= MaximumDistanceTo(bbox) and there
     is at least one point on the bounding box where the
     distance is equal to the returned value.
@@ -270,10 +270,10 @@ public:
     the point P to the bounding box is greater than d.
   Parameters:
     d - [in] distance (> 0.0)
-    P - [in] 
+    P - [in]
   Returns:
     True if if the shortest distance from the point P
-    to the bounding box is greater than d. 
+    to the bounding box is greater than d.
   */
   bool IsFartherThan( double d, const ON_3dPoint& P ) const;
 
@@ -283,7 +283,7 @@ public:
     to the bounding box is greater than d.
   Parameters:
     d - [in] distance (> 0.0)
-    line - [in] 
+    line - [in]
   Returns:
     True if the shortest distance from the line
     to the bounding box is greater than d. It is not the
@@ -298,7 +298,7 @@ public:
     to the bounding box is greater than d.
   Parameters:
     d - [in] distance (> 0.0)
-    plane - [in] 
+    plane - [in]
   Returns:
     True if the shortest distance from the plane
     to the bounding box is greater than d, and false
@@ -312,7 +312,7 @@ public:
     to the bounding box is greater than d.
   Parameters:
     d - [in] distance (> 0.0)
-    plane_equation - [in] (the first three coefficients 
+    plane_equation - [in] (the first three coefficients
                            are assumed to be a unit vector.
                            If not, adjust your d accordingly.)
   Returns:
@@ -331,7 +331,7 @@ public:
     other - [in] other bounding box
   Returns:
     True if if the shortest distance from this bounding
-    box to the other bounding box is greater than d. 
+    box to the other bounding box is greater than d.
   */
   bool IsFartherThan( double d, const ON_BoundingBox& other ) const;
 
@@ -358,7 +358,7 @@ public:
   // Remarks:
   //   The box is treated as a solid box.  If the intersection
   //   of the line segment, then 3 is returned.
-  int GetClosestPoint( 
+  int GetClosestPoint(
     const ON_Line&, // line
     ON_3dPoint&,    // box_point
     double*,        // t0
@@ -369,7 +369,7 @@ public:
   // Get points on bounding boxes that are closest to each other.
   // If the boxes intersect, then the point at the centroid of the
   // intersection is returned for both points.
-  bool GetClosestPoint( 
+  bool GetClosestPoint(
          const ON_BoundingBox&, // "other" bounding box
          ON_3dPoint&, // point on "this" box that is closest to "other" box
          ON_3dPoint&  // point on "other" box that is closest to "this" box
@@ -377,19 +377,19 @@ public:
 
   //////////
   // Point on the box that is farthest from the test_point.
-  ON_3dPoint FarPoint( 
+  ON_3dPoint FarPoint(
     const ON_3dPoint& // test_point
     ) const;
 
   //////////
   // Get points on bounding boxes that are farthest from each other.
-  bool GetFarPoint( 
+  bool GetFarPoint(
          const ON_BoundingBox&, // "other" bounding box
          ON_3dPoint&, // point on "this" box that is farthest from "other" box
          ON_3dPoint&  // point on "other" box that is farthest from "this" box
          )  const;
 
-  /* 
+  /*
   Description:
     Intersect this with other_bbox and save intersection in this.
   Parameters:
@@ -406,11 +406,11 @@ public:
          const ON_BoundingBox& other_bbox
          );
 
-  /* 
+  /*
   Description:
     Set "this" to the intersection of bbox_A and bbox_B.
   Parameters:
-    bbox_A - [in] 
+    bbox_A - [in]
     bbox_B - [in]
   Returns:
     True if the "this" is a non-empty valid bounding box.
@@ -421,17 +421,17 @@ public:
     the empty set, and false is returned.
   */
   bool Intersection( // this = intersection of two args
-         const ON_BoundingBox& bbox_A, 
+         const ON_BoundingBox& bbox_A,
          const ON_BoundingBox& bbox_B
          );
 
-	bool Intersection(				//Returns TRUE when intersect is non-empty. 
-				 const ON_Line&,		//Infinite Line segment to intersect with 
+	bool Intersection(				//Returns TRUE when intersect is non-empty.
+				 const ON_Line&,		//Infinite Line segment to intersect with
 				 double* =NULL ,			// t0  parameter of first intersection point
-				 double* =NULL       // t1  parameter of last intersection point (t0<=t1)   
-				 ) const;			 
+				 double* =NULL       // t1  parameter of last intersection point (t0<=t1)
+				 ) const;
 
-  /* 
+  /*
   Description:
     Test a box to see if it is contained in this box.
   Parameters:
@@ -444,7 +444,7 @@ public:
     If bProperSubSet is true, then the result is true when
 			the above condition is true and at least one of the inequalities is strict.
   */
-  bool Includes( 
+  bool Includes(
     const ON_BoundingBox& other,
     bool bProperSubSet = false
     ) const;
@@ -460,11 +460,11 @@ public:
          );
 
   bool Union( // this = union of two args
-         const ON_BoundingBox&, 
+         const ON_BoundingBox&,
          const ON_BoundingBox&
          );
-                  
-  /* 
+
+  /*
   Description:
     Test to see if "this" and other_bbox are disjoint (do not intersect).
   Parameters:
@@ -487,7 +487,7 @@ public:
 #if defined(ON_DLL_TEMPLATE)
 
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -611,8 +611,8 @@ double ON_BoundingBoxTolerance(
         );
 
 ON_DECL
-bool ON_WorldBBoxIsInTightBBox( 
-          const ON_BoundingBox& tight_bbox, 
+bool ON_WorldBBoxIsInTightBBox(
+          const ON_BoundingBox& tight_bbox,
           const ON_BoundingBox& world_bbox,
           const ON_Xform* xform
           );

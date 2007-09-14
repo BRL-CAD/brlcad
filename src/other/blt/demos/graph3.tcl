@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -63,10 +63,10 @@ text .header \
     -height 3
 
 set text {
-This is an example of a bitmap marker.  Try zooming in on 
-a region by clicking the left button, moving the pointer, 
-and clicking again.  Notice that the bitmap scales too. 
-To restore the last view, click on the right button.  
+This is an example of a bitmap marker.  Try zooming in on
+a region by clicking the left button, moving the pointer,
+and clicking again.  Notice that the bitmap scales too.
+To restore the last view, click on the right button.
 }
 regsub -all "\n" $text "" text
 .header insert end "$text\n"
@@ -75,10 +75,10 @@ regsub -all "\n" $text "" text
 htext .footer -text {Hit the %%
     set im [image create photo -file ./images/stopsign.gif]
     button $htext(widget).quit -image $im -command { exit }
-    $htext(widget) append $htext(widget).quit 
+    $htext(widget) append $htext(widget).quit
 %% button when you've seen enough. %%
     label $htext(widget).logo -bitmap BLT
-    $htext(widget) append $htext(widget).logo 
+    $htext(widget) append $htext(widget).logo
 %%}
 
 table . \
@@ -90,7 +90,7 @@ table configure . r0 r2 -resize none
 
 source scripts/ps.tcl
 
-bind $graph <Shift-ButtonPress-1> { 
+bind $graph <Shift-ButtonPress-1> {
     MakePsLayout $graph
 }
 

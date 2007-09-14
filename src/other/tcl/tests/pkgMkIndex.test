@@ -239,7 +239,7 @@ proc pkgtest::runCreatedIndex {rv args} {
 	    set result [list 0 [makePkgList [parseIndex $idxFile]]]
 	} err]} {
 	    set result [list 1 $err]
-	} 
+	}
 	file delete $idxFile
     } else {
 	set result $rv
@@ -347,7 +347,7 @@ test pkgMkIndex-4.2 {split package - direct loading} {
 } "0 {{pkg2:1.0 {[list source [file join $fullPkgPath pkg2_a.tcl]]
 [list source [file join $fullPkgPath pkg2_b.tcl]]}}}"
 
-# Add the direct1 directory to auto_path, so that the direct1 package 
+# Add the direct1 directory to auto_path, so that the direct1 package
 # can be found.
 set direct1 [makeDirectory direct1]
 lappend auto_path $direct1
@@ -577,7 +577,7 @@ proc pkga_neq { x } {
 testConstraint exec [llength [info commands ::exec]]
 
 test pkgMkIndex-10.1 {package in DLL and script} [list exec $dll] {
-    # Do all [load]ing of shared libraries in another process, so 
+    # Do all [load]ing of shared libraries in another process, so
     # we can delete the file and not get stuck because we're holding
     # a reference to it.
     set cmd [list pkg_mkIndex -lazy $fullPkgPath [file tail $x] pkga.tcl]
@@ -585,7 +585,7 @@ test pkgMkIndex-10.1 {package in DLL and script} [list exec $dll] {
     pkgtest::runCreatedIndex {0 {}} -lazy $fullPkgPath pkga[info sharedlibextension] pkga.tcl
 } "0 {{Pkga:1.0 {tclPkgSetup {pkga[info sharedlibextension] load {pkga_eq pkga_quote}} {pkga.tcl source pkga_neq}}}}"
 test pkgMkIndex-10.2 {package in DLL hidden by -load} [list exec $dll] {
-    # Do all [load]ing of shared libraries in another process, so 
+    # Do all [load]ing of shared libraries in another process, so
     # we can delete the file and not get stuck because we're holding
     # a reference to it.
     #

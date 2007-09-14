@@ -1,9 +1,9 @@
 '\"
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" All rights reserved.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 '\"
 .so man.macros
 .TH keysyms n 8.3 Tk "Tk Built-In Commands"
@@ -15,7 +15,7 @@ keysyms \- keysyms recognized by Tk
 
 .SH DESCRIPTION
 .PP
-Tk recognizes many keysyms when specifying key bindings (e.g. 
+Tk recognizes many keysyms when specifying key bindings (e.g.
 \fBbind . <Key-\fR\fIkeysym\fR\fB>\fR).  The following list enumerates the
 keysyms that will be recognized by Tk.  Note that not all keysyms will
 be valid on all platforms.  For example, on Unix systems, the presence

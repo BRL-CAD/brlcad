@@ -417,10 +417,10 @@ typedef struct {
 static Tk_ConfigSpec tabConfigSpecs[] =
 {
     {TK_CONFIG_BORDER, "-activebackground", "activeBackground",
-	"ActiveBackground", DEF_TAB_ACTIVE_BG, 
+	"ActiveBackground", DEF_TAB_ACTIVE_BG,
 	Tk_Offset(Tab, activeBorder), TK_CONFIG_NULL_OK},
     {TK_CONFIG_COLOR, "-activeforeground", "activeForeground",
-	"ActiveForeground", DEF_TAB_ACTIVE_FG, 
+	"ActiveForeground", DEF_TAB_ACTIVE_FG,
 	Tk_Offset(Tab, activeFgColor), TK_CONFIG_NULL_OK},
     {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor",
 	DEF_TAB_ANCHOR, Tk_Offset(Tab, anchor), TK_CONFIG_DONT_SET_DEFAULT},
@@ -457,7 +457,7 @@ static Tk_ConfigSpec tabConfigSpecs[] =
 	DEF_TAB_PAD, Tk_Offset(Tab, padX), 0, &bltPadOption},
     {TK_CONFIG_CUSTOM, "-pady", "padY", "PadY",
 	DEF_TAB_PAD, Tk_Offset(Tab, padY), 0, &bltPadOption},
-    {TK_CONFIG_CUSTOM, "-perforationcommand", "perforationcommand", 
+    {TK_CONFIG_CUSTOM, "-perforationcommand", "perforationcommand",
 	"PerforationCommand",
 	DEF_TAB_PERF_COMMAND, Tk_Offset(Tab, perfCommand),
 	TK_CONFIG_NULL_OK, &bltUidOption},
@@ -469,7 +469,7 @@ static Tk_ConfigSpec tabConfigSpecs[] =
 	DEF_TAB_SHADOW, Tk_Offset(Tab, shadow),
 	TK_CONFIG_NULL_OK, &bltShadowOption},
     {TK_CONFIG_CUSTOM, "-state", "state", "State",
-	DEF_TAB_STATE, Tk_Offset(Tab, state), 
+	DEF_TAB_STATE, Tk_Offset(Tab, state),
 	TK_CONFIG_DONT_SET_DEFAULT, &bltStateOption},
     {TK_CONFIG_BITMAP, "-stipple", "stipple", "Stipple",
 	DEF_TAB_STIPPLE, Tk_Offset(Tab, stipple), 0},
@@ -664,10 +664,10 @@ static Tk_ConfigSpec configSpecs[] =
 	DEF_TABSET_ACTIVE_BG_MONO, Tk_Offset(Tabset, defTabStyle.activeBorder),
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_COLOR, "-activeforeground", "activeForeground",
-	"activeForeground", DEF_TABSET_ACTIVE_FOREGROUND, 
+	"activeForeground", DEF_TABSET_ACTIVE_FOREGROUND,
 	Tk_Offset(Tabset, defTabStyle.activeFgColor), TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_COLOR, "-activeforeground", "activeForeground",
-	"activeForeground", DEF_TABSET_ACTIVE_FG_MONO, 
+	"activeForeground", DEF_TABSET_ACTIVE_FG_MONO,
 	Tk_Offset(Tabset, defTabStyle.activeFgColor), TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_BORDER, "-background", "background", "Background",
 	DEF_TABSET_BG_MONO, Tk_Offset(Tabset, border), TK_CONFIG_MONO_ONLY},
@@ -683,11 +683,11 @@ static Tk_ConfigSpec configSpecs[] =
     {TK_CONFIG_CUSTOM, "-dashes", "dashes", "Dashes",
 	DEF_TABSET_DASHES, Tk_Offset(Tabset, defTabStyle.dashes),
 	TK_CONFIG_NULL_OK, &bltDashesOption},
-    {TK_CONFIG_SYNONYM, "-fg", "tabForeground", (char *)NULL, 
+    {TK_CONFIG_SYNONYM, "-fg", "tabForeground", (char *)NULL,
 	(char *)NULL, 0, 0},
     {TK_CONFIG_FONT, "-font", "font", "Font",
 	DEF_TABSET_FONT, Tk_Offset(Tabset, defTabStyle.font), 0},
-    {TK_CONFIG_SYNONYM, "-foreground", "tabForeground", (char *)NULL, 
+    {TK_CONFIG_SYNONYM, "-foreground", "tabForeground", (char *)NULL,
 	(char *)NULL, 0, 0},
     {TK_CONFIG_PIXELS, "-gap", "gap", "Gap",
 	DEF_TABSET_GAP, Tk_Offset(Tabset, gap),
@@ -718,7 +718,7 @@ static Tk_ConfigSpec configSpecs[] =
     {TK_CONFIG_CUSTOM, "-pagewidth", "pageWidth", "PageWidth",
 	DEF_TABSET_PAGE_WIDTH, Tk_Offset(Tabset, reqPageWidth),
 	TK_CONFIG_DONT_SET_DEFAULT, &bltDistanceOption},
-    {TK_CONFIG_STRING, "-perforationcommand", "perforationcommand", 
+    {TK_CONFIG_STRING, "-perforationcommand", "perforationcommand",
 	"PerforationCommand",
 	DEF_TAB_PERF_COMMAND, Tk_Offset(Tabset, defTabStyle.perfCommand),
 	TK_CONFIG_NULL_OK, &bltUidOption},
@@ -1191,7 +1191,7 @@ StringToWindow(clientData, interp, parent, string, widgRec, offset)
 	    return TCL_ERROR;
 	}
 	Tk_ManageGeometry(tkwin, &tabMgrInfo, tabPtr);
-	Tk_CreateEventHandler(tkwin, StructureNotifyMask, 
+	Tk_CreateEventHandler(tkwin, StructureNotifyMask,
 		EmbeddedWidgetEventProc, tabPtr);
 
 	/*
@@ -1206,7 +1206,7 @@ StringToWindow(clientData, interp, parent, string, widgRec, offset)
 	if (tabPtr->container != NULL) {
 	    Tcl_EventuallyFree(tabPtr, DestroyTearoff);
 	}
-	Tk_DeleteEventHandler(old, StructureNotifyMask, 
+	Tk_DeleteEventHandler(old, StructureNotifyMask,
 	      EmbeddedWidgetEventProc, tabPtr);
 	Tk_ManageGeometry(old, (Tk_GeomMgr *) NULL, tabPtr);
 	Tk_UnmapWindow(old);
@@ -1426,14 +1426,14 @@ WorldY(tabPtr)
 }
 
 static int
-TabIndex(setPtr, tabPtr) 
+TabIndex(setPtr, tabPtr)
     Tabset *setPtr;
     Tab *tabPtr;
 {
     Tab *t2Ptr;
     int count;
     Blt_ChainLink *linkPtr;
-    
+
     count = 0;
     for (linkPtr = Blt_ChainFirstLink(setPtr->chainPtr); linkPtr != NULL;
 	linkPtr = Blt_ChainNextLink(linkPtr)) {
@@ -1591,13 +1591,13 @@ PickTab(clientData, x, y, contextPtr)
     Blt_ChainLink *linkPtr;
 
     tabPtr = setPtr->selectPtr;
-    if ((setPtr->tearoff) && (tabPtr != NULL) && 
+    if ((setPtr->tearoff) && (tabPtr != NULL) &&
 	(tabPtr->container == NULL) && (tabPtr->tkwin != NULL)) {
 	int top, bottom, left, right;
 	int sx, sy;
 
 	/* Check first for perforation on the selected tab. */
-	WorldToScreen(setPtr, tabPtr->worldX + 2, 
+	WorldToScreen(setPtr, tabPtr->worldX + 2,
 	      tabPtr->worldY + tabPtr->worldHeight + 4, &sx, &sy);
 	if (setPtr->side & SIDE_HORIZONTAL) {
 	    left = sx - 2;
@@ -1616,7 +1616,7 @@ PickTab(clientData, x, y, contextPtr)
 	    }
 	    return tabPtr;
 	}
-    } 
+    }
     for (linkPtr = Blt_ChainFirstLink(setPtr->chainPtr); linkPtr != NULL;
 	linkPtr = Blt_ChainNextLink(linkPtr)) {
 	tabPtr = Blt_ChainGetValue(linkPtr);
@@ -1645,7 +1645,7 @@ TabLeft(tabPtr)
 	linkPtr = Blt_ChainPrevLink(tabPtr->linkPtr);
 	if (linkPtr != NULL) {
 	    Tab *newPtr;
-	    
+
 	    newPtr = Blt_ChainGetValue(linkPtr);
 	    /* Move only if the next tab is on another tier. */
 	    if (newPtr->tier == tabPtr->tier) {
@@ -1662,11 +1662,11 @@ TabRight(tabPtr)
 {
     if (tabPtr != NULL) {
 	Blt_ChainLink *linkPtr;
-	
+
 	linkPtr = Blt_ChainNextLink(tabPtr->linkPtr);
 	if (linkPtr != NULL) {
 	    Tab *newPtr;
-	    
+
 	    newPtr = Blt_ChainGetValue(linkPtr);
 	    /* Move only if the next tab is on another tier. */
 	    if (newPtr->tier == tabPtr->tier) {
@@ -1690,7 +1690,7 @@ TabUp(tabPtr)
 	worldX = tabPtr->worldX + (tabPtr->worldWidth / 2);
 	worldY = tabPtr->worldY - (setPtr->tabHeight / 2);
 	WorldToScreen(setPtr, worldX, worldY, &x, &y);
-	
+
 	tabPtr = PickTab(setPtr, x, y, NULL);
 	if (tabPtr == NULL) {
 	    /*
@@ -1795,7 +1795,7 @@ GetTabByIndex(setPtr, string, tabPtrPtr, allowNull)
 	linkPtr = Blt_ChainGetNthLink(setPtr->chainPtr, position);
 	if (linkPtr == NULL) {
 	    Tcl_AppendResult(setPtr->interp, "can't find tab \"", string,
-		"\" in \"", Tk_PathName(setPtr->tkwin), "\": no such index", 
+		"\" in \"", Tk_PathName(setPtr->tkwin), "\": no such index",
 		(char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1814,11 +1814,11 @@ GetTabByIndex(setPtr, string, tabPtrPtr, allowNull)
 	case SIDE_RIGHT:
 	    tabPtr = TabLeft(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_BOTTOM:
 	    tabPtr = TabDown(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_TOP:
 	    tabPtr = TabUp(setPtr->focusPtr);
 	    break;
@@ -1829,11 +1829,11 @@ GetTabByIndex(setPtr, string, tabPtrPtr, allowNull)
 	case SIDE_RIGHT:
 	    tabPtr = TabRight(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_BOTTOM:
 	    tabPtr = TabUp(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_TOP:
 	    tabPtr = TabDown(setPtr->focusPtr);
 	    break;
@@ -1843,11 +1843,11 @@ GetTabByIndex(setPtr, string, tabPtrPtr, allowNull)
 	case SIDE_LEFT:
 	    tabPtr = TabUp(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_RIGHT:
 	    tabPtr = TabDown(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_BOTTOM:
 	case SIDE_TOP:
 	    tabPtr = TabLeft(setPtr->focusPtr);
@@ -1858,11 +1858,11 @@ GetTabByIndex(setPtr, string, tabPtrPtr, allowNull)
 	case SIDE_LEFT:
 	    tabPtr = TabDown(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_RIGHT:
 	    tabPtr = TabUp(setPtr->focusPtr);
 	    break;
-	    
+
 	case SIDE_BOTTOM:
 	case SIDE_TOP:
 	    tabPtr = TabRight(setPtr->focusPtr);
@@ -1876,7 +1876,7 @@ GetTabByIndex(setPtr, string, tabPtrPtr, allowNull)
     } else if (c == '@') {
 	int x, y;
 
-	if (Blt_GetXY(setPtr->interp, setPtr->tkwin, string, &x, &y) 
+	if (Blt_GetXY(setPtr->interp, setPtr->tkwin, string, &x, &y)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -1893,7 +1893,7 @@ GetTabByIndex(setPtr, string, tabPtrPtr, allowNull)
 	Tcl_AppendResult(setPtr->interp, "can't find tab \"", string,
 	    "\" in \"", Tk_PathName(setPtr->tkwin), "\"", (char *)NULL);
 	return TCL_ERROR;
-    }	
+    }
     return TCL_OK;
 }
 
@@ -2080,7 +2080,7 @@ DestroyTab(setPtr, tabPtr)
     }
     if (tabPtr->tkwin != NULL) {
 	Tk_ManageGeometry(tabPtr->tkwin, (Tk_GeomMgr *)NULL, tabPtr);
-	Tk_DeleteEventHandler(tabPtr->tkwin, StructureNotifyMask, 
+	Tk_DeleteEventHandler(tabPtr->tkwin, StructureNotifyMask,
 		EmbeddedWidgetEventProc, tabPtr);
 	if (Tk_IsMapped(tabPtr->tkwin)) {
 	    Tk_UnmapWindow(tabPtr->tkwin);
@@ -2390,7 +2390,7 @@ GetReqHeight(tabPtr)
     } else {
 	height = Tk_ReqHeight(tabPtr->tkwin);
     }
-    height += PADDING(tabPtr->padY) + 
+    height += PADDING(tabPtr->padY) +
 	2 * Tk_Changes(tabPtr->tkwin)->border_width;
     if (height < 1) {
 	height = 1;
@@ -2566,7 +2566,7 @@ ArrangeWindow(tkwin, rectPtr, force)
     int force;
 {
     if ((force) ||
-	(rectPtr->x != Tk_X(tkwin)) || 
+	(rectPtr->x != Tk_X(tkwin)) ||
 	(rectPtr->y != Tk_Y(tkwin)) ||
 	(rectPtr->width != Tk_Width(tkwin)) ||
 	(rectPtr->height != Tk_Height(tkwin))) {
@@ -2599,14 +2599,14 @@ GetTags(table, object, context, list)
 	    int nNames;
 	    char **names;
 	    register char **p;
-	    
-	    /* 
+
+	    /*
 	     * This is a space/time trade-off in favor of space.  The tags
 	     * are stored as character strings in a hash table.  That way,
 	     * tabs can share the strings. It's likely that they will.  The
-	     * down side is that the same string is split over an over again. 
+	     * down side is that the same string is split over an over again.
 	     */
-	    if (Tcl_SplitList((Tcl_Interp *)NULL, tabPtr->tags, &nNames, 
+	    if (Tcl_SplitList((Tcl_Interp *)NULL, tabPtr->tags, &nNames,
 		      &names) == TCL_OK) {
 		for (p = names; *p != NULL; p++) {
 		    Blt_ListAppend(list, MakeTag(setPtr, *p), 0);
@@ -2766,7 +2766,7 @@ CreateTabset(interp, tkwin)
     setPtr->slant = SLANT_NONE;
     setPtr->overlap = 0;
     setPtr->tearoff = TRUE;
-    setPtr->bindTable = Blt_CreateBindingTable(interp, tkwin, setPtr, PickTab, 
+    setPtr->bindTable = Blt_CreateBindingTable(interp, tkwin, setPtr, PickTab,
 	GetTags);
     setPtr->chainPtr = Blt_ChainCreate();
     Blt_InitHashTable(&(setPtr->tabTable), BLT_STRING_KEYS);
@@ -2929,7 +2929,7 @@ ActivateOp(setPtr, interp, argc, argv)
 	selPtr = setPtr->selectPtr;
 	redraw = FALSE;
 	if (oldPtr != NULL) {
-	    if ((selPtr != NULL) && 
+	    if ((selPtr != NULL) &&
 		((oldPtr == TabLeft(selPtr)) || (oldPtr == TabRight(selPtr)))) {
 		redraw = TRUE;
 	    }
@@ -2942,7 +2942,7 @@ ActivateOp(setPtr, interp, argc, argv)
 	    }
 	}
 	if ((tabPtr != NULL) && (!redraw)) {
-	    if ((selPtr != NULL) && 
+	    if ((selPtr != NULL) &&
 		((tabPtr == TabLeft(selPtr)) || (tabPtr == TabRight(selPtr)))) {
 		redraw = TRUE;
 	    }
@@ -3082,7 +3082,7 @@ DeleteOp(setPtr, interp, argc, argv)
     if (GetTabByIndex(setPtr, argv[2], &firstPtr, INVALID_FAIL) != TCL_OK) {
 	return TCL_ERROR;
     }
-    if ((argc == 4) && 
+    if ((argc == 4) &&
 	(GetTabByIndex(setPtr, argv[3], &lastPtr, INVALID_FAIL) != TCL_OK)) {
 	return TCL_ERROR;
     }
@@ -3170,7 +3170,7 @@ static int
 IndexOp(setPtr, interp, argc, argv)
     Tabset *setPtr;
     Tcl_Interp *interp;
-    int argc;			
+    int argc;
     char **argv;
 {
     Tab *tabPtr;
@@ -3185,7 +3185,7 @@ IndexOp(setPtr, interp, argc, argv)
 	} else if (strcmp(argv[2], "-name") == 0) {
 	    search = SEARCH_NAMES;
 	} else {
-	    Tcl_AppendResult(interp, "bad switch \"", argv[2], 
+	    Tcl_AppendResult(interp, "bad switch \"", argv[2],
 		     "\": should be \"-index\" or \"-name\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -3203,7 +3203,7 @@ IndexOp(setPtr, interp, argc, argv)
     if (tabPtr == NULL) {
 	Tcl_SetResult(interp, "", TCL_STATIC);
     } else {
-	Tcl_SetResult(interp, Blt_Itoa(TabIndex(setPtr, tabPtr)), 
+	Tcl_SetResult(interp, Blt_Itoa(TabIndex(setPtr, tabPtr)),
 		TCL_VOLATILE);
     }
     return TCL_OK;
@@ -3289,7 +3289,7 @@ InsertOp(setPtr, interp, argc, argv)
     } else {
 	Tab *beforePtr;
 
-	if (GetTabByIndex(setPtr, argv[2], &beforePtr, INVALID_FAIL) 
+	if (GetTabByIndex(setPtr, argv[2], &beforePtr, INVALID_FAIL)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -3619,7 +3619,7 @@ ViewOp(setPtr, interp, argc, argv)
 	return TCL_OK;
     }
     if (Blt_GetScrollInfo(interp, argc - 2, argv + 2, &(setPtr->scrollOffset),
-	    setPtr->worldWidth, width, setPtr->scrollUnits, 
+	    setPtr->worldWidth, width, setPtr->scrollUnits,
 	    BLT_SCROLL_MODE_CANVAS) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -4021,7 +4021,7 @@ static Blt_OpSpec tabOps[] =
     {"cget", 2, (Blt_Op)TabCgetOp, 5, 5, "nameOrIndex option",},
     {"configure", 2, (Blt_Op)TabConfigureOp, 4, 0,
 	"nameOrIndex ?option value?...",},
-    {"dockall", 1, (Blt_Op)TabDockallOp, 3, 3, "" }, 
+    {"dockall", 1, (Blt_Op)TabDockallOp, 3, 3, "" },
     {"names", 1, (Blt_Op)TabNamesOp, 3, 0, "?pattern...?",},
     {"pageheight", 5, (Blt_Op)TabPageHeight, 3, 3, "", },
     {"pagewidth", 5, (Blt_Op)TabPageWidth, 3, 3, "", },
@@ -4112,12 +4112,12 @@ PerforationInvokeOp(setPtr, interp, argc, argv)
 
     if (setPtr->selectPtr != NULL) {
 	char *cmd;
-	
+
 	cmd = GETATTR(setPtr->selectPtr, perfCommand);
 	if (cmd != NULL) {
 	    Tcl_DString dString;
 	    int result;
-	    
+
 	    PercentSubst(setPtr, setPtr->selectPtr, cmd, &dString);
 	    Tcl_Preserve(setPtr);
 	    result = Tcl_GlobalEval(interp, Tcl_DStringValue(&dString));
@@ -4145,7 +4145,7 @@ PerforationInvokeOp(setPtr, interp, argc, argv)
  */
 static Blt_OpSpec perforationOps[] =
 {
-    {"activate", 1, (Blt_Op)PerforationActivateOp, 4, 4, "boolean" }, 
+    {"activate", 1, (Blt_Op)PerforationActivateOp, 4, 4, "boolean" },
     {"invoke", 1, (Blt_Op)PerforationInvokeOp, 3, 3, "",},
 };
 
@@ -4161,7 +4161,7 @@ PerforationOp(setPtr, interp, argc, argv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOp(interp, nPerforationOps, perforationOps, BLT_OP_ARG2, 
+    proc = Blt_GetOp(interp, nPerforationOps, perforationOps, BLT_OP_ARG2,
 	argc, argv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -4263,7 +4263,7 @@ SeeOp(setPtr, interp, argc, argv)
 
 	    setPtr->scrollOffset = tabPtr->worldX + tabPtr->worldWidth -
 		(width - 2 * setPtr->xSelectPad);
-	    linkPtr = Blt_ChainNextLink(tabPtr->linkPtr); 
+	    linkPtr = Blt_ChainNextLink(tabPtr->linkPtr);
 	    if (linkPtr != NULL) {
 		Tab *nextPtr;
 
@@ -4594,7 +4594,7 @@ ComputeLayout(setPtr)
     }
 
     if (setPtr->side & SIDE_VERTICAL) {
-        width = Tk_Height(setPtr->tkwin) - 
+        width = Tk_Height(setPtr->tkwin) -
 		2 * (setPtr->corner + setPtr->xSelectPad);
     } else {
         width = Tk_Width(setPtr->tkwin) - (2 * setPtr->inset) -
@@ -4987,7 +4987,7 @@ DrawPerforation(setPtr, tabPtr, drawable)
     if ((tabPtr->container != NULL) || (tabPtr->tkwin == NULL)) {
 	return;
     }
-    WorldToScreen(setPtr, tabPtr->worldX + 2, 
+    WorldToScreen(setPtr, tabPtr->worldX + 2,
 	  tabPtr->worldY + tabPtr->worldHeight + 2, &x, &y);
     border = GETATTR(tabPtr, selBorder);
     segmentWidth = 3;
@@ -4995,7 +4995,7 @@ DrawPerforation(setPtr, tabPtr, drawable)
 	perfBorder = GETATTR(tabPtr, activeBorder);
     } else {
 	perfBorder = GETATTR(tabPtr, selBorder);
-    }	
+    }
     if (setPtr->side & SIDE_HORIZONTAL) {
 	pointArr[0].x = x;
 	pointArr[0].y = pointArr[1].y = y;
@@ -5415,7 +5415,7 @@ DrawOuterBorders(setPtr, drawable)
 	color = (setPtr->flags & TABSET_FOCUS)
 	    ? setPtr->highlightColor : setPtr->highlightBgColor;
 	gc = Tk_GCForColor(color, drawable);
-	Tk_DrawFocusHighlight(setPtr->tkwin, gc, setPtr->highlightWidth, 
+	Tk_DrawFocusHighlight(setPtr->tkwin, gc, setPtr->highlightWidth,
 	      drawable);
     }
 }
@@ -5736,7 +5736,7 @@ TabsetInstCmd(clientData, interp, argc, argv)
     Tabset *setPtr = clientData;
     int result;
 
-    proc = Blt_GetOp(interp, nTabsetOps, tabsetOps, BLT_OP_ARG1, 
+    proc = Blt_GetOp(interp, nTabsetOps, tabsetOps, BLT_OP_ARG1,
 	argc, argv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;

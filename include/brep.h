@@ -65,7 +65,7 @@ typedef struct _on_brep_placeholder {
 } ON_Brep;
 #endif
 
-    
+
     /* Maximum number of newton iterations on root finding */
 #define BREP_MAX_ITERATIONS 100
     /* Root finding threshold */
@@ -75,13 +75,13 @@ typedef struct _on_brep_placeholder {
 #define BREP_SAME_POINT_TOLERANCE 1e-3
     /* Use vector operations? For debugging */
 #define DO_VECTOR 1
-    
+
 
 #ifndef __cplusplus
 typedef struct _bounding_volume_placeholder {
     int dummy;
 } BrepBoundingVolume;
-#else 
+#else
 /* namespace brlcad { */
 /*     class BBNode; */
 /* }; */

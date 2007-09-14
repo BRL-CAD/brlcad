@@ -156,13 +156,13 @@ brlcad_ident(const char *title)
 {
     static char version[1024] = {0};
     static char label[64] = {0};
-    
+
     if (title) {
 	snprintf(label, 64, "  %s", title);
     }
-	    
+
     if (version[0] == 0) {
-	snprintf(version, 1024, 
+	snprintf(version, 1024,
 		 "BRL-CAD Release %s%s\n"
 		 "    %s, Compilation %d\n"
 		 "    %s@%s:%s\n",

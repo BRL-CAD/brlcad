@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -27,7 +27,7 @@ if { $tcl_version >= 8.0 } {
 source scripts/demo.tcl
 
 if { [ file exists ./images/sample.gif] } {
-    set src [image create photo -file ./images/sample.gif]  
+    set src [image create photo -file ./images/sample.gif]
 } else {
     puts stderr "no image file"
     exit 0

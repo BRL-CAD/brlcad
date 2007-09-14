@@ -291,7 +291,7 @@ test winfo-12.2 {GetDisplayOf procedure} {
 } {1 {bad window path name "bad_window"}}
 
 # Some embedding tests
-# 
+#
 
 proc MakeEmbed {} {
     frame .con -container 1

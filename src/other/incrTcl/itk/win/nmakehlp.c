@@ -135,12 +135,12 @@ CheckForCompilerFeature (const char *option)
     CreatePipe(&Out.pipe, &h, &sa, 0);
 
     /* dupe the write side, make it inheritible, and close the original. */
-    DuplicateHandle(hProcess, h, hProcess, &si.hStdOutput, 
+    DuplicateHandle(hProcess, h, hProcess, &si.hStdOutput,
 	    0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
 
     /* Same as above, but for the error side. */
     CreatePipe(&Err.pipe, &h, &sa, 0);
-    DuplicateHandle(hProcess, h, hProcess, &si.hStdError, 
+    DuplicateHandle(hProcess, h, hProcess, &si.hStdError,
 	    0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
 
     /* base command line */
@@ -226,12 +226,12 @@ CheckForLinkerFeature (const char *option)
     CreatePipe(&Out.pipe, &h, &sa, 0);
 
     /* dupe the write side, make it inheritible, and close the original. */
-    DuplicateHandle(hProcess, h, hProcess, &si.hStdOutput, 
+    DuplicateHandle(hProcess, h, hProcess, &si.hStdOutput,
 	    0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
 
     /* Same as above, but for the error side. */
     CreatePipe(&Err.pipe, &h, &sa, 0);
-    DuplicateHandle(hProcess, h, hProcess, &si.hStdError, 
+    DuplicateHandle(hProcess, h, hProcess, &si.hStdError,
 	    0, TRUE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
 
     /* base command line */

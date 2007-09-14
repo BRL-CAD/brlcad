@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,7 +17,7 @@
 #if !defined(ON_OFFSETSURFACE_INC_)
 #define ON_OFFSETSURFACE_INC_
 
-// This file is to be used in V3 plug-ins.  
+// This file is to be used in V3 plug-ins.
 // In V4, this will be included as part of opennurbs.
 // Ask Dale Lear if you have any questions.
 
@@ -70,7 +70,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -97,7 +97,7 @@ public:
     True if successful.
   */
   bool SetBaseSurface(
-    const ON_Surface* srf 
+    const ON_Surface* srf
     );
 
   /*
@@ -108,7 +108,7 @@ public:
 
   /*
   Description:
-    Use set SetSideTangency if you want the offset 
+    Use set SetSideTangency if you want the offset
     surface and base surface to have the same unit
     normals along a side of the surfaces's parameter
     spaces.
@@ -166,22 +166,22 @@ public:
     s - [in]
     t - [in] (s,t) is a base surface evaluation parameter
   */
-  bool SetPoint( 
-    int index, 
-    double s, 
+  bool SetPoint(
+    int index,
+    double s,
     double t
     );
 
 
   /*
-  Description: 
+  Description:
     Set the offset distance for an existing point
   Parameters:
     index - [in] index of the point to set
     distance - [in] new distance
   */
-  bool SetDistance( 
-    int index, 
+  bool SetDistance(
+    int index,
     double distance);
 
 
@@ -347,7 +347,7 @@ public:
     True if successful.
   */
   bool SetBaseSurface(
-        ON_Surface* base_surface, 
+        ON_Surface* base_surface,
         bool bManage
         );
 

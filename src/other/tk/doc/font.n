@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH font n 8.0 Tk "Tk Built-In Commands"
 .BS
@@ -39,12 +39,12 @@ attributes returned will be those of the specific font used to render
 that character, which will be different from the base font if the base
 font does not contain the given character.  If \fIchar\fR may be a hyphen, it
 should be preceded by \fB--\fR to distinguish it from a misspelt \fIoption\fR.
-.TP 
-\fBfont configure \fIfontname\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?  
+.TP
+\fBfont configure \fIfontname\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 .
 Query or modify the desired attributes for the named font called
 \fIfontname\fR.  If no \fIoption\fR is specified, returns a list describing
-all the options and their values for \fIfontname\fR.  If a single \fIoption\fR 
+all the options and their values for \fIfontname\fR.  If a single \fIoption\fR
 is specified with no \fIvalue\fR, then returns the current value of that
 attribute.  If one or more \fIoption\fR\-\fIvalue\fR pairs are specified,
 then the command modifies the given named font to have the given values; in
@@ -72,11 +72,11 @@ and redisplay themselves using the new attributes of that font.
 .TP
 \fBfont families\fR ?\fB\-displayof \fIwindow\fR?
 .
-The return value is a list of the case-insensitive names of all font families 
+The return value is a list of the case-insensitive names of all font families
 that exist on \fIwindow\fR's display.  If the \fIwindow\fR argument is
 omitted, it defaults to the main window.
 .TP
-\fBfont measure \fIfont\fR ?\fB\-displayof \fIwindow\fR? \fItext\fR 
+\fBfont measure \fIfont\fR ?\fB\-displayof \fIwindow\fR? \fItext\fR
 .
 Measures the amount of space the string \fItext\fR would use in the given
 \fIfont\fR when displayed in \fIwindow\fR.  \fIfont\fR is a font description;
@@ -93,7 +93,7 @@ Returns information about the metrics (the font-specific data), for
 \fIfont\fR when it is used on \fIwindow\fR's display.  \fIfont\fR is a font
 description; see FONT DESCRIPTIONS below.  If the \fIwindow\fR argument is
 omitted, it defaults to the main window.  If \fIoption\fR is specified,
-returns the value of that metric; if it is omitted, the return value is a 
+returns the value of that metric; if it is omitted, the return value is a
 list of all the metrics and their values.  See FONT METRICS below for a list
 of the possible metrics.
 .TP
@@ -105,7 +105,7 @@ The following formats are accepted as a font description anywhere
 \fIfont\fR is specified as an argument above; these same forms are also
 permitted when specifying the \fB\-font\fR option for widgets.
 .TP
-[1] \fIfontname\fR 
+[1] \fIfontname\fR
 .
 The name of a named font, created using the \fBfont create\fR command.  When
 a widget uses a named font, it is guaranteed that this will never cause an
@@ -132,11 +132,11 @@ for the \fIstyle\fR arguments are as follows:
 .RS
 .DS
 .ta 3c 6c 9c
-\fBnormal	bold	roman	italic	
+\fBnormal	bold	roman	italic
 underline	overstrike\fR
 .DE
 .RE
-.TP 
+.TP
 [4] X-font names (XLFD)
 .
 A Unix-centric font name of the form
@@ -166,14 +166,14 @@ platforms and the closest available font will be used.  In some situations
 it may not be possible to find any close font (e.g., the font family was
 a garbage value); in that case, some system-dependant default font is
 chosen.  If the font description does not match any of the above patterns,
-an error is generated.  
+an error is generated.
 .SH "FONT METRICS"
 .
 The following options are used by the \fBfont metrics\fR command to query
 font-specific data determined when the font was created.  These properties are
 for the whole font itself and not for individual characters drawn in that
-font.  In the following definitions, the ``baseline'' of a font is the 
-horizontal line where the bottom of most letters line up; certain letters, 
+font.  In the following definitions, the ``baseline'' of a font is the
+horizontal line where the bottom of most letters line up; certain letters,
 such as lower-case ``g'' stick below the baseline.
 .TP
 \fB\-ascent        \0\fR
@@ -181,7 +181,7 @@ such as lower-case ``g'' stick below the baseline.
 The amount in pixels that the tallest letter sticks up above the baseline of
 the font, plus any extra blank space added by the designer of the font.
 .TP
-\fB\-descent       \0\fR 
+\fB\-descent       \0\fR
 .
 The largest amount in pixels that any letter sticks down below the baseline
 of the font, plus any extra blank space added by the designer of the font.
@@ -197,16 +197,16 @@ above the baseline line plus the descent below the baseline.
 .
 Returns a boolean flag that is ``\fB1\fR'' if this is a fixed-width font,
 where each normal character is the same width as all the other
-characters, or is ``\fB0\fR'' if this is a proportionally-spaced font, where 
-individual characters have different widths.  The widths of control 
-characters, tab characters, and other non-printing characters are not 
+characters, or is ``\fB0\fR'' if this is a proportionally-spaced font, where
+individual characters have different widths.  The widths of control
+characters, tab characters, and other non-printing characters are not
 included when calculating this value.
 .SH "FONT OPTIONS"
 The following options are supported on all platforms, and are used when
 constructing a named font or when specifying a font using style [5] as
 above:
 .TP
-\fB\-family \fIname\fR 
+\fB\-family \fIname\fR
 .
 The case-insensitive font family name.  Tk guarantees to support the font
 families named \fBCourier\fR (a monospaced ``typewriter'' font), \fBTimes\fR
@@ -215,7 +215,7 @@ families named \fBCourier\fR (a monospaced ``typewriter'' font), \fBTimes\fR
 automatically be substituted when one of the above font families is used.
 The \fIname\fR may also be the name of a native, platform-specific font
 family; in that case it will work as desired on one platform but may not
-display correctly on other platforms.  If the family is unspecified or 
+display correctly on other platforms.  If the family is unspecified or
 unrecognized, a platform-specific default font will be chosen.
 .TP
 \fB\-size \fIsize\fR
@@ -225,7 +225,7 @@ number, it is interpreted as a size in points.  If \fIsize\fR is a negative
 number, its absolute value is interpreted as a size in pixels.  If a
 font cannot be displayed at the specified size, a nearby size will be
 chosen.  If \fIsize\fR is unspecified or zero, a platform-dependent default
-size will be chosen.  
+size will be chosen.
 .RS
 .PP
 Sizes should normally be specified in points so the application will remain
@@ -237,7 +237,7 @@ the application starts, based on properties of the installed monitor, but it
 can be overridden by calling the \fBtk scaling\fR command.
 .RE
 .TP
-\fB\-weight \fIweight\fR 
+\fB\-weight \fIweight\fR
 .
 The nominal thickness of the characters in the font.  The value
 \fBnormal\fR specifies a normal weight font, while \fBbold\fR specifies a
@@ -247,7 +247,7 @@ be chosen.  The default weight is \fBnormal\fR.
 \fB\-slant \fIslant\fR
 The amount the characters in the font are slanted away from the
 vertical.  Valid values for slant are \fBroman\fR and \fBitalic\fR.
-A roman font is the normal, upright appearance of a font, while 
+A roman font is the normal, upright appearance of a font, while
 an italic font is one that is tilted some number of degrees from upright.
 The closest available slant to the one specified will be chosen.
 The default slant is \fBroman\fR.
@@ -256,7 +256,7 @@ The default slant is \fBroman\fR.
 The value is a boolean flag that specifies whether characters in this
 font should be underlined.  The default value for underline is \fBfalse\fR.
 .TP
-\fB\-overstrike \fIboolean\fR 
+\fB\-overstrike \fIboolean\fR
 The value is a boolean flag that specifies whether a horizontal line should
 be drawn through the middle of characters in this font.  The default value
 for overstrike is \fBfalse\fR.
@@ -264,7 +264,7 @@ for overstrike is \fBfalse\fR.
 .LP
 The following named system fonts are supported:
 .RS
-.TP 
+.TP
 X Windows:
 All valid X font names, including those listed by xlsfonts(1), are available.
 .TP

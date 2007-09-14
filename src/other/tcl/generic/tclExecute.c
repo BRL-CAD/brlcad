@@ -990,7 +990,7 @@ TclCompEvalObj(
 	 * Increment the code's ref count while it is being executed. If
 	 * afterwards no references to it remain, free the code.
 	 */
-	
+
     runCompiledObj:
 	codePtr->refCount++;
 	result = TclExecuteByteCode(interp, codePtr);
@@ -1001,17 +1001,17 @@ TclCompEvalObj(
 	iPtr->numLevels--;
 	return result;
     }
-	
+
     recompileObj:
     iPtr->errorLine = 1;
-    
+
     /*
      * TIP #280. Remember the invoker for a moment in the interpreter
      * structures so that the byte code compiler can pick it up when
      * initializing the compilation environment, i.e. the extended
      * location information.
      */
-    
+
     iPtr->invokeCmdFramePtr = invoker;
     iPtr->invokeWord        = word;
     result = tclByteCodeType.setFromAnyProc(interp, objPtr);
@@ -1368,13 +1368,13 @@ TclExecuteByteCode(
 
     if ((instructionCount++ & ASYNC_CHECK_COUNT_MASK) == 0) {
 	/*
-	 * Check for asynchronous handlers [Bug 746722]; we do the check every 
+	 * Check for asynchronous handlers [Bug 746722]; we do the check every
 	 * ASYNC_CHECK_COUNT_MASK instruction, of the form (2**n-<1).
 	 */
 
 	if (Tcl_AsyncReady()) {
 	    int localResult;
-	
+
 	    DECACHE_STACK_INFO();
 	    localResult = Tcl_AsyncInvoke(interp, result);
 	    CACHE_STACK_INFO();
@@ -1385,7 +1385,7 @@ TclExecuteByteCode(
 	}
 	if (Tcl_LimitReady(interp)) {
 	    int localResult;
-	    
+
 	    DECACHE_STACK_INFO();
 	    localResult = Tcl_LimitCheck(interp);
 	    CACHE_STACK_INFO();
@@ -1404,7 +1404,7 @@ TclExecuteByteCode(
 	/*
 	 * OBJ_AT_TOS is returnOpts, OBJ_UNDER_TOS is resultObjPtr.
 	 */
-	
+
 	TRACE(("%u %u => ", code, level));
 	result = TclProcessReturn(interp, code, level, OBJ_AT_TOS);
 	if (result == TCL_OK) {
@@ -1441,7 +1441,7 @@ TclExecuteByteCode(
 	     * level and refCount will be handled by "processCatch" or
 	     * "abnormalReturn".
 	     */
-	    
+
 	    Tcl_SetObjResult(interp, OBJ_AT_TOS);
 #ifdef TCL_COMPILE_DEBUG
 	    TRACE_WITH_OBJ(("=> return code=%d, result=", result),
@@ -1514,7 +1514,7 @@ TclExecuteByteCode(
 	 */
 
 	iPtr->cmdCount += TclGetUInt4AtPtr(pc+5);
-	if (!checkInterp) { 
+	if (!checkInterp) {
 	    instStartCmdOK:
 #if 0 && !TCL_COMPILE_DEBUG
 	    /*
@@ -1706,14 +1706,14 @@ TclExecuteByteCode(
 	CACHE_STACK_INFO();
 
 	/*
-	 * Expand the list at stacktop onto the stack; free the list. Knowing 
-	 * that it has a freeIntRepProc we use Tcl_DecrRefCount(). 
+	 * Expand the list at stacktop onto the stack; free the list. Knowing
+	 * that it has a freeIntRepProc we use Tcl_DecrRefCount().
 	 */
 
 	for (i = 0; i < objc; i++) {
 	    PUSH_OBJECT(objv[i]);
 	}
-	
+
 	Tcl_DecrRefCount(valuePtr);
 	NEXT_INST_F(5, 0, 0);
     }
@@ -1827,7 +1827,7 @@ TclExecuteByteCode(
 		/*
 		 * No traces, the interp is ok: avoid the call out to TEOVi
 		 */
-		
+
 		cmdPtr->refCount++;
 		iPtr->cmdCount++;
 		iPtr->ensembleRewrite.sourceObjs = NULL;
@@ -1846,11 +1846,11 @@ TclExecuteByteCode(
 		 * pass to TclEvalObjvInternal; note that a copy of the string
 		 * will be made there to include the ending \0.
 		 */
-		
+
 		bytes = GetSrcInfoForPc(pc, codePtr, &length);
 		result = TclEvalObjvInternal(interp, objc, objv, bytes, length, 0);
 	    }
-	    
+
 	    CACHE_STACK_INFO();
 	    iPtr->cmdFramePtr = iPtr->cmdFramePtr->nextPtr;
 
@@ -2677,7 +2677,7 @@ TclExecuteByteCode(
     case INST_UPVAR: {
 	int opnd;
 	Var *varPtr, *otherPtr;
-	
+
 	TRACE_WITH_OBJ(("upvar "), OBJ_UNDER_TOS);
 
 	{
@@ -2688,7 +2688,7 @@ TclExecuteByteCode(
 		/*
 		 * Locate the other variable
 		 */
-		
+
 		savedFramePtr = iPtr->varFramePtr;
 		iPtr->varFramePtr = framePtr;
 		otherPtr = TclObjLookupVar(interp, OBJ_AT_TOS, NULL,
@@ -2696,27 +2696,27 @@ TclExecuteByteCode(
 			/*createPart1*/ 1, /*createPart2*/ 1, &varPtr);
 		iPtr->varFramePtr = savedFramePtr;
 		if (otherPtr) {
-		    result = TCL_OK;	    
+		    result = TCL_OK;
 		    goto doLinkVars;
 		}
 	    }
 	    result = TCL_ERROR;
 	    goto checkForCatch;
 	}
-	    
+
     case INST_VARIABLE:
-    case INST_NSUPVAR: 
+    case INST_NSUPVAR:
 	TRACE_WITH_OBJ(("nsupvar "), OBJ_UNDER_TOS);
 
 	{
 	    Tcl_Namespace *nsPtr, *savedNsPtr;
-	    
+
 	    result = TclGetNamespaceFromObj(interp, OBJ_UNDER_TOS, &nsPtr);
 	    if ((result == TCL_OK) && nsPtr) {
 		/*
 		 * Locate the other variable
 		 */
-		
+
 		savedNsPtr = (Tcl_Namespace *) iPtr->varFramePtr->nsPtr;
 		iPtr->varFramePtr->nsPtr = (Namespace *) nsPtr;
 		otherPtr = TclObjLookupVar(interp, OBJ_AT_TOS, NULL,
@@ -2727,7 +2727,7 @@ TclExecuteByteCode(
 		    /*
 		     * Do the [variable] magic if necessary
 		     */
-		    
+
 		    if ((*pc == INST_VARIABLE) && !TclIsVarNamespaceVar(otherPtr)) {
 			TclSetVarNamespaceVar(otherPtr);
 			otherPtr->refCount++;
@@ -2735,7 +2735,7 @@ TclExecuteByteCode(
 		} else {
 		    result = TCL_ERROR;
 		    goto checkForCatch;
-		}		
+		}
 	    } else {
 		if (nsPtr == NULL) {
 		    /*
@@ -2748,9 +2748,9 @@ TclExecuteByteCode(
 		}
 		goto checkForCatch;
 	    }
-	    
+
 	}
-	
+
 	doLinkVars:
 
         /*
@@ -2762,7 +2762,7 @@ TclExecuteByteCode(
 	opnd = TclGetInt4AtPtr(pc+1);;
 	varPtr =  &(compiledLocals[opnd]);
 	if ((varPtr != otherPtr) && (varPtr->tracePtr == NULL)
-		&& (TclIsVarUndefined(varPtr) || TclIsVarLink(varPtr))) {	    
+		&& (TclIsVarUndefined(varPtr) || TclIsVarLink(varPtr))) {
 	    if (!TclIsVarUndefined(varPtr)) {
 		/* Then it is a defined link */
 		Var *linkPtr = varPtr->value.linkPtr;
@@ -3034,7 +3034,7 @@ TclExecuteByteCode(
 	     * Select the list item based on the index. Negative operand means
 	     * end-based indexing.
 	     */
-	    
+
 	    if (opnd < -1) {
 		idx = opnd+1 + listc;
 	    } else {
@@ -3045,7 +3045,7 @@ TclExecuteByteCode(
 	    } else {
 		TclNewObj(objResultPtr);
 	    }
-	    
+
 	    TRACE_WITH_OBJ(("\"%.30s\" %d => ", O2S(valuePtr), opnd),
 		    objResultPtr);
 	    NEXT_INST_F(5, 1, 1);
@@ -3107,7 +3107,7 @@ TclExecuteByteCode(
 	 * Get the old value of variable, and remove the stack ref. This is
 	 * safe because the variable still references the object; the ref
 	 * count will never go zero here - we can use the smaller macro
-	 * Tcl_DecrRefCount. 
+	 * Tcl_DecrRefCount.
 	 */
 
 	value2Ptr = POP_OBJECT();
@@ -3134,7 +3134,7 @@ TclExecuteByteCode(
 	    /*
 	     * Set result
 	     */
-	    
+
 	    TRACE(("%d => %s\n", opnd, O2S(objResultPtr)));
 	    NEXT_INST_V(5, (numIdx+1), -1);
 	} else {
@@ -3155,7 +3155,7 @@ TclExecuteByteCode(
 	 * Get the old value of variable, and remove the stack ref. This is
 	 * safe because the variable still references the object; the ref
 	 * count will never go zero here - we can use the smaller macro
-	 * Tcl_DecrRefCount. 
+	 * Tcl_DecrRefCount.
 	 */
 
 	objPtr = POP_OBJECT();
@@ -3182,7 +3182,7 @@ TclExecuteByteCode(
 	    /*
 	     * Set result
 	     */
-	    
+
 	    TRACE(("=> %s\n", O2S(objResultPtr)));
 	    NEXT_INST_F(1, 2, -1);
 	} else {

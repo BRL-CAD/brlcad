@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -39,11 +39,11 @@ tabset .t \
     -scrollincrement 10 \
     -scrollcommand { .s set } \
     -rotate 0 \
-    -selectcommand {  MakePhoto %W %n } 
+    -selectcommand {  MakePhoto %W %n }
 
 
 scrollbar .s -command { .t view } -orient horizontal
- 
+
 option clear
 option add *Tabset.Tab.font -*-helvetica-bold-r-*-*-10-*-*-*-*-*-*-*
 
@@ -65,7 +65,7 @@ proc ResizePhoto { src dest maxSize } {
     set w [expr round($s * $w)]
     set h [expr round($s * $h)]
     $dest configure -width $w -height $h
-    
+
     global horzFilter vertFilter
     winop resample $src $dest $horzFilter $vertFilter
 }
@@ -92,7 +92,7 @@ proc MakePhoto { w name } {
 
 table . \
     .t 0,0 -fill both \
-    .s 1,0 -fill x 
+    .s 1,0 -fill x
 
 table configure . r1 -resize none
 focus .t

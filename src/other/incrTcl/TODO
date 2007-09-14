@@ -93,20 +93,20 @@ itcl "to do" list
 
 To: ig4!att!cas.org!lvirden (Larry W. Virden) (lvirden@cas.org)
 cc: michael.mclennan@att.com
-Subject: Re: Question concerning the Japanese patches for Tcl 7.4 
+Subject: Re: Question concerning the Japanese patches for Tcl 7.4
 In-reply-to: Your message of "Fri, 05 Jan 1996 06:43:46 EST."
-             <9601051143.AA15368@cas.org> 
+             <9601051143.AA15368@cas.org>
 --------
 Your message dated: Fri, 05 Jan 1996 06:43:46 EST
-> 
+>
 > The following instructions refer to the software which enables one to
 > build a KANJI supporting version of Tcl/Tk.  Perhaps a note in the itcl
 > instructions letting folk know this package is also compatible would be
 > useful.
-> 
-> 
+>
+>
 > ----- Begin Included Message -----
-> 
+>
 > >From nisinaka@sra.co.jp  Thu Jan  4 00:09:52 1996
 > Received: from srv07s4m by srv99dr.cas.org (5.65/CAS-1.23)
 > 	id AA29886; Thu, 4 Jan 1996 00:09:52 -0500
@@ -134,7 +134,7 @@ Your message dated: Fri, 05 Jan 1996 06:43:46 EST
 > From: NISHINAKA Yoshiyuki <nisinaka@sra.co.jp>
 > Status: RO
 > X-Lines: 31
-> 
+>
 > > I notice that incr tcl 2.0 has been released with it's own,
 > customized,
 > > version of Tcl 7.4/Tk 4.0.  Do any of you use itcl?  If so, I
@@ -142,40 +142,40 @@ Your message dated: Fri, 05 Jan 1996 06:43:46 EST
 > > had thought of constructing a specialized set of patches which could
 > be
 > > used with itcl.
-> 
+>
 >     I have just got itcl2.0 and tried it with our Japanization
 > patches.  Seems it works fine.
-> 
+>
 >     What I really did was as follows:
-> 
+>
 > (1) Unpack itcl2.0.tar.gz.
-> 
+>
 > (2) Run `configure' at the directory `itcl2.0'.
-> 
+>
 > (3) Apply `tcl7.4p3jp-patch' at the directory `itcl2.0/tcl7.4'.
 >     `Makefile.in.rej' was the only rejected file, so apply it
 >     manually.
-> 
+>
 > (4) Apply `tk4.0p3jp-patch' at the directory `itcl2.0/tk4.0'.
 >     There was no rejected file.
-> 
+>
 > (5) Make symbolic link from `tcl7.4' to `tcl7.4jp'.
-> 
+>
 > (6) Make all.
-> 
-> 
+>
+>
 >     I haven't seriously tested yet though, `make test' was passed
 > and the Japanese translation of `demos/widgets' works fine.
-> 
-> 
+>
+>
 > 			    Yosh Nishinaka (nisinaka@sra.co.jp)
-> 
-> 
+>
+>
 > ----- End Included Message -----
-> 
-> 
-> -- 
+>
+>
+> --
 > :s Larry W. Virden                 INET: lvirden@cas.org
 > :s <URL:http://www.teraform.com/%7Elvirden/> <*>
-> :s Unless explicitly stated to the contrary, nothing in this posting should 
+> :s Unless explicitly stated to the contrary, nothing in this posting should
 > :s be construed as representing my employer's opinions.

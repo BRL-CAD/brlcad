@@ -1,4 +1,4 @@
-/* 
+/*
  * tclMacApplication.r --
  *
  *	This file creates resources for use Tcl Shell application.
@@ -90,7 +90,7 @@ resource 'kind' (128, "Itcl kind", purgeable) {
  * A good example of something you may want to set is: "TCL_LIBRARY=My
  * disk:etc."
  */
- 
+
 resource 'STR#' (128, "Tcl Environment Variables") {
 	{	"SCHEDULE_NAME=Agent Controller Schedule",
 		"SCHEDULE_PATH=Lozoya:System Folder:Tcl Lib:Tcl-Scheduler"

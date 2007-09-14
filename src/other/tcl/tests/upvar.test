@@ -411,7 +411,7 @@ catch {unset a}
 #
 # Tests for 'namespace upvar'. As the implementation is essentially the same as
 # for 'upvar', we only test that the variables are linked correctly. Ie, we
-# assume that the behaviour of variables once the link is established has 
+# assume that the behaviour of variables once the link is established has
 # already been tested above.
 #
 #

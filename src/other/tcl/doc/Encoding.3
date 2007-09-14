@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_GetEncoding 3 "8.1" Tcl "Tcl Library Procedures"
 .BS
@@ -84,7 +84,7 @@ desired.
 .AP "const char" *name in
 Name of encoding to load.
 .AP Tcl_Encoding encoding in
-The encoding to query, free, or use for converting text.  If \fIencoding\fR is 
+The encoding to query, free, or use for converting text.  If \fIencoding\fR is
 NULL, the current system encoding is used.
 .AP Tcl_Obj *objPtr in
 .VS 8.5
@@ -98,17 +98,17 @@ Points to storage where encoding token is to be written.
 For the \fBTcl_ExternalToUtf\fR functions, an array of bytes in the
 specified encoding that are to be converted to UTF-8.  For the
 \fBTcl_UtfToExternal\fR and \fBTcl_WinUtfToTChar\fR functions, an array of
-UTF-8 characters to be converted to the specified encoding.  
+UTF-8 characters to be converted to the specified encoding.
 .AP "const TCHAR" *tsrc in
 An array of Windows TCHAR characters to convert to UTF-8.
-.AP int srcLen in 
-Length of \fIsrc\fR or \fItsrc\fR in bytes.  If the length is negative, the 
+.AP int srcLen in
+Length of \fIsrc\fR or \fItsrc\fR in bytes.  If the length is negative, the
 encoding-specific length of the string is used.
 .AP Tcl_DString *dstPtr out
 Pointer to an uninitialized or free \fBTcl_DString\fR in which the converted
 result will be stored.
 .AP int flags in
-Various flag bits OR-ed together.  
+Various flag bits OR-ed together.
 \fBTCL_ENCODING_START\fR signifies that the
 source buffer is the first block in a (potentially multi-block) input
 stream, telling the conversion routine to reset to an initial state and
@@ -120,7 +120,7 @@ byte is converted and then to reset to an initial state.
 \fBTCL_ENCODING_STOPONERROR\fR signifies that the conversion routine should
 return immediately upon reading a source character that doesn't exist in
 the target encoding; otherwise a default fallback character will
-automatically be substituted.  
+automatically be substituted.
 .AP Tcl_EncodingState *statePtr in/out
 Used when converting a (generally long or indefinite length) byte stream
 in a piece-by-piece fashion.  The conversion routine stores its current
@@ -128,7 +128,7 @@ state in \fI*statePtr\fR after \fIsrc\fR (the buffer containing the
 current piece) has been converted; that state information must be passed
 back when converting the next piece of the stream so the conversion
 routine knows what state it was in when it left off at the end of the
-last piece.  May be NULL, in which case the value specified for \fIflags\fR 
+last piece.  May be NULL, in which case the value specified for \fIflags\fR
 is ignored and the source buffer is assumed to contain the complete string to
 convert.
 .AP char *dst out
@@ -151,13 +151,13 @@ stored in the output buffer.  May be NULL.
 Storage for the prescribed system encoding name.
 .VE 8.5
 .AP "const Tcl_EncodingType" *typePtr in
-Structure that defines a new type of encoding.  
+Structure that defines a new type of encoding.
 .AP Tcl_Obj *searchPath in
 .VS 8.5
 List of filesystem directories in which to search for encoding data files.
 .VE 8.5
 .AP "const char" *path in
-A path to the location of the encoding file.  
+A path to the location of the encoding file.
 .BE
 .SH INTRODUCTION
 .PP
@@ -196,13 +196,13 @@ The first time \fIname\fR is seen, \fBTcl_GetEncoding\fR returns an
 encoding with a reference count of 1.  If the same \fIname\fR is requested
 further times, then the reference count for that encoding is incremented
 without the overhead of allocating a new encoding and all its associated
-data structures.  
+data structures.
 .PP
 When an \fIencoding\fR is no longer needed, \fBTcl_FreeEncoding\fR
 should be called to release it.  When an \fIencoding\fR is no longer in use
 anywhere (i.e., it has been freed as many times as it has been gotten)
 \fBTcl_FreeEncoding\fR will release all storage the encoding was using
-and delete it from the database. 
+and delete it from the database.
 .PP
 .VS 8.5
 \fBTcl_GetEncodingFromObj\fR treats the string representation of
@@ -219,7 +219,7 @@ used.
 .VE 8.5
 .PP
 \fBTcl_ExternalToUtfDString\fR converts a source buffer \fIsrc\fR from the
-specified \fIencoding\fR into UTF-8.  The converted bytes are stored in 
+specified \fIencoding\fR into UTF-8.  The converted bytes are stored in
 \fIdstPtr\fR, which is then null-terminated.  The caller should eventually
 call \fBTcl_DStringFree\fR to free any information stored in \fIdstPtr\fR.
 When converting, if any of the characters in the source buffer cannot be
@@ -245,17 +245,17 @@ sequence, but more bytes were needed to complete this sequence.  A
 subsequent call to the conversion routine should pass a buffer containing
 the unconverted bytes that remained in \fIsrc\fR plus some further bytes
 from the source stream to properly convert the formerly split-up multibyte
-sequence.  
+sequence.
 .IP \fBTCL_CONVERT_SYNTAX\fR 29
 The source buffer contained an invalid character sequence.  This may occur
 if the input stream has been damaged or if the input encoding method was
 misidentified.
 .IP \fBTCL_CONVERT_UNKNOWN\fR 29
 The source buffer contained a character that could not be represented in
-the target encoding and \fBTCL_ENCODING_STOPONERROR\fR was specified.  
+the target encoding and \fBTCL_ENCODING_STOPONERROR\fR was specified.
 .RE
 .LP
-\fBTcl_UtfToExternalDString\fR converts a source buffer \fIsrc\fR from UTF-8 
+\fBTcl_UtfToExternalDString\fR converts a source buffer \fIsrc\fR from UTF-8
 into the specified \fIencoding\fR.  The converted bytes are stored in
 \fIdstPtr\fR, which is then terminated with the appropriate encoding-specific
 null.  The caller should eventually call \fBTcl_DStringFree\fR to free any
@@ -310,7 +310,7 @@ behave identically to \fBTcl_UtfToExternalDString\fR and
 .PP
 \fBTcl_GetEncodingName\fR is roughly the inverse of \fBTcl_GetEncoding\fR.
 Given an \fIencoding\fR, the return value is the \fIname\fR argument that
-was used to create the encoding.  The string returned by 
+was used to create the encoding.  The string returned by
 \fBTcl_GetEncodingName\fR is only guaranteed to persist until the
 \fIencoding\fR is deleted.  The caller must not modify this string.
 .PP
@@ -351,9 +351,9 @@ reference count of 1. If an encoding with the specified \fIname\fR
 already exists, then its entry in the database is replaced with the new
 encoding; the token for the old encoding will remain valid and continue
 to behave as before, but users of the new token will now call the new
-encoding procedures.  
+encoding procedures.
 .PP
-The \fItypePtr\fR argument to \fBTcl_CreateEncoding\fR contains information 
+The \fItypePtr\fR argument to \fBTcl_CreateEncoding\fR contains information
 about the name of the encoding and the procedures that will be called to
 convert between this encoding and UTF-8.  It is defined as follows:
 .PP
@@ -365,7 +365,7 @@ typedef struct Tcl_EncodingType {
         Tcl_EncodingFreeProc *\fIfreeProc\fR;
         ClientData \fIclientData\fR;
         int \fInullSize\fR;
-} Tcl_EncodingType;  
+} Tcl_EncodingType;
 .CE
 .PP
 The \fIencodingName\fR provides a string name for the encoding, by
@@ -395,12 +395,12 @@ type \fBTcl_EncodingConvertProc\fR:
 .CS
 typedef int Tcl_EncodingConvertProc(
         ClientData \fIclientData\fR,
-        const char *\fIsrc\fR, 
-        int \fIsrcLen\fR, 
-        int \fIflags\fR, 
+        const char *\fIsrc\fR,
+        int \fIsrcLen\fR,
+        int \fIflags\fR,
         Tcl_EncodingState *\fIstatePtr\fR,
-        char *\fIdst\fR, 
-        int \fIdstLen\fR, 
+        char *\fIdst\fR,
+        int \fIdstLen\fR,
         int *\fIsrcReadPtr\fR,
         int *\fIdstWrotePtr\fR,
         int *\fIdstCharsPtr\fR);
@@ -416,12 +416,12 @@ documented at the top, to \fBTcl_ExternalToUtf\fR or
 \fBTcl_UtfToExternal\fR, with the following exceptions.  If the
 \fIsrcLen\fR argument to one of those high-level functions is negative,
 the value passed to the callback procedure will be the appropriate
-encoding-specific string length of \fIsrc\fR.  If any of the \fIsrcReadPtr\fR, 
+encoding-specific string length of \fIsrc\fR.  If any of the \fIsrcReadPtr\fR,
 \fIdstWrotePtr\fR, or \fIdstCharsPtr\fR arguments to one of the high-level
 functions is NULL, the corresponding value passed to the callback
 procedure will be a non-NULL location.
 .PP
-The callback procedure \fIfreeProc\fR, if non-NULL, should match the type 
+The callback procedure \fIfreeProc\fR, if non-NULL, should match the type
 \fBTcl_EncodingFreeProc\fR:
 .CS
 typedef void Tcl_EncodingFreeProc(
@@ -430,12 +430,12 @@ typedef void Tcl_EncodingFreeProc(
 .PP
 This \fIfreeProc\fR function is called when the encoding is deleted.  The
 \fIclientData\fR parameter is the same as the \fIclientData\fR field
-specified to \fBTcl_CreateEncoding\fR when the encoding was created.  
+specified to \fBTcl_CreateEncoding\fR when the encoding was created.
 .PP
 .VS 8.5
 \fBTcl_GetEncodingSearchPath\fR and \fBTcl_SetEncodingSearchPath\fR
 are called to access and set the list of filesystem directories searched
-for encoding data files.  
+for encoding data files.
 .PP
 The value returned by \fBTcl_GetEncodingSearchPath\fR
 is the value stored by the last successful call to
@@ -468,7 +468,7 @@ encoding files that can be loaded using the same mechanism.  These
 encoding files contain information about the tables and/or escape
 sequences used to map between an external encoding and Unicode.  The
 external encoding may consist of single-byte, multi-byte, or double-byte
-characters.  
+characters.
 .PP
 Each dynamically-loadable encoding is represented as a text file.  The
 initial line of the file, beginning with a ``#'' symbol, is a comment
@@ -490,9 +490,9 @@ many Japanese computers.
 .IP "[4] \fBE\fR"
 An escape-sequence encoding, specifying that certain sequences of bytes
 do not represent characters, but commands that describe how following bytes
-should be interpreted.  
+should be interpreted.
 .PP
-The rest of the lines in the file depend on the type.  
+The rest of the lines in the file depend on the type.
 .PP
 Cases [1], [2], and [3] are collectively referred to as table-based encoding
 files.  The lines in a table-based encoding file are in the same
@@ -542,7 +542,7 @@ The third line of the file is three numbers.  The first number is the
 fallback character (in base 16) to use when converting from UTF-8 to this
 encoding.  The second number is a \fB1\fR if this file represents the
 encoding for a symbol font, or \fB0\fR otherwise.  The last number (in base
-10) is how many pages of data follow.  
+10) is how many pages of data follow.
 .PP
 Subsequent lines in the example above are pages that describe how to map
 from the encoding into 2-byte Unicode.  The first line in a page identifies

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ class ON_Matrix;
 class ON_CLASS ON_Xform
 {
 public:
-  double m_xform[4][4]; // [i][j] = row i, column j.  I.e., 
+  double m_xform[4][4]; // [i][j] = row i, column j.  I.e.,
                         //
                         //           [0][0] [0][1] [0][2] [0][3]
                         //           [1][0] [1][1] [1][2] [1][3]
@@ -47,23 +47,23 @@ public:
   ON_Xform( double[4][4] );       // from standard double m[4][4]
   ON_Xform( float[4][4] );        // from standard float m[4][4]
 #endif
-  
+
   ON_Xform( const double[4][4] ); // from standard double m[4][4]
   ON_Xform( const float[4][4] );  // from standard float m[4][4]
-  
+
   ON_Xform( const double* );      // from array of 16 doubles (row0,row1,row2,row3)
   ON_Xform( const float* );       // from array of 16 floats (row0,row1,row2,row3)
-  
+
   ON_Xform( const ON_Matrix& ); // from upper left 4x4 of an
                                     // arbitrary matrix.  Any missing
-                                    // rows/columns are set to identity. 
-	ON_Xform(const ON_3dPoint& P,	// as a frame. 
-						const ON_3dVector& X,	
-						const ON_3dVector& Y,	
-						const ON_3dVector& Z); 
+                                    // rows/columns are set to identity.
+	ON_Xform(const ON_3dPoint& P,	// as a frame.
+						const ON_3dVector& X,
+						const ON_3dVector& Y,
+						const ON_3dVector& Z);
 
   // use implicit operator=(const ON_3dVector&), operator==
-  
+
   double* operator[](int);
   const double* operator[](int) const;
 
@@ -80,10 +80,10 @@ public:
   ON_2dPoint operator*( const ON_2dPoint& ) const;
   ON_3dPoint operator*( const ON_3dPoint& ) const;
   ON_4dPoint operator*( const ON_4dPoint& ) const;
-  
+
   ON_2dVector operator*( const ON_2dVector& ) const;
   ON_3dVector operator*( const ON_3dVector& ) const;
-  
+
   ON_Xform operator*( const ON_Xform& /*rhs*/ ) const;
   ON_Xform operator+( const ON_Xform& ) const;
   ON_Xform operator-( const ON_Xform& /*rhs*/ ) const;
@@ -111,7 +111,7 @@ public:
     The test for one is fabs(x-1) <= zero_tolerance.
   */
   bool IsIdentity( double zero_tolerance = 0.0) const;
-  
+
   /*
   Returns:
     true if matrix is the zero transformation
@@ -137,11 +137,11 @@ public:
 
   int Compare( const ON_Xform& other ) const;
 
-  
+
   // matrix operations
   void Transpose(); // transposes 4x4 matrix
 
-  int 
+  int
   Rank( // returns 0 to 4
     double* = NULL // If not NULL, returns minimum pivot
   ) const;
@@ -153,7 +153,7 @@ public:
 
   bool
   Invert( // If matrix is non-singular, returns true,
-          // otherwise returns false and sets matrix to 
+          // otherwise returns false and sets matrix to
           // pseudo inverse.
     double* = NULL // If not NULL, returns minimum pivot
   );
@@ -189,10 +189,10 @@ public:
     needs to be recalculated, then two transforms are required
     to recalcalculate the texture mapping.
   Parameters:
-    P_xform - [out] 
+    P_xform - [out]
       Transform to apply to points before applying the
       texture mapping transformation.
-    N_xform - [out] 
+    N_xform - [out]
       Transform to apply to surface normals before applying
       the texture mapping transformation.
   Returns:
@@ -248,7 +248,7 @@ public:
   void Identity();
 
   // diagonal 3x3 with bottom row = 0,0,0,1
-  void Diagonal(double); 
+  void Diagonal(double);
 
   /*
   Description:
@@ -262,7 +262,7 @@ public:
   Remarks:
     The diagonal is (x_scale_factor, y_scale_factor, z_scale_factor, 1)
   */
-  void Scale( 
+  void Scale(
     double x_scale_factor,
     double y_scale_factor,
     double z_scale_factor
@@ -278,7 +278,7 @@ public:
   Remarks:
     The diagonal is (scale_vector.x, scale_vector.y, scale_vector.z, 1)
   */
-  void Scale( 
+  void Scale(
     const ON_3dVector& scale_vector
     );
 
@@ -332,12 +332,12 @@ public:
     );
 
   // Right column is (d.x, d.y,d.z, 1).
-  void Translation( 
+  void Translation(
     const ON_3dVector& // d
     );
 
   // Right column is (dx, dy, dz, 1).
-  void Translation( 
+  void Translation(
     double, // dx
     double, // dy
     double  // dz
@@ -354,7 +354,7 @@ public:
     const ON_Plane& plane
     );
 
-  // Description: 
+  // Description:
   //   The Rotation() function is overloaded and provides several
   //   ways to compute a rotation transformation.  A positive
   //   rotation angle indicates a counter-clockwise (right hand rule)
@@ -366,26 +366,26 @@ public:
   //   rotation_axis - 3d unit axis of rotation
   //   rotation_center - 3d center of rotation
   //
-  // Remarks: 
-  //   In the overloads that take frames, the frames should 
-  //   be right hand orthonormal frames 
-  //   (unit vectors with Z = X x Y).  
+  // Remarks:
+  //   In the overloads that take frames, the frames should
+  //   be right hand orthonormal frames
+  //   (unit vectors with Z = X x Y).
   //   The resulting rotation fixes
-  //   the origin (0,0,0), maps initial X to 
+  //   the origin (0,0,0), maps initial X to
   //   final X, initial Y to final Y, and initial Z to final Z.
-  //  
-  //   In the overload that takes frames with center points, 
-  //   if the initial and final center are equal, then that 
-  //   center point is the fixed point of the rotation.  If 
+  //
+  //   In the overload that takes frames with center points,
+  //   if the initial and final center are equal, then that
+  //   center point is the fixed point of the rotation.  If
   //   the initial and final point differ, then the resulting
   //   transform is the composition of a rotation fixing P0
-  //   and translation from P0 to P1.  The resulting 
+  //   and translation from P0 to P1.  The resulting
   //   transformation maps P0 to P1, P0+X0 to P1+X1, ...
   //
   //   The rotation transformations that map frames to frames
   //   are not the same as the change of basis transformations
   //   for those frames.  See ON_Xform::ChangeBasis().
-  //   
+  //
   void Rotation(
     double sin_angle,
     double cos_angle,
@@ -406,7 +406,7 @@ public:
   /*
   Description:
     Calculate the minimal transformation that rotates
-    start_dir to end_dir while fixing rotation_center.    
+    start_dir to end_dir while fixing rotation_center.
   */
   void Rotation(
     ON_3dVector start_dir,
@@ -422,7 +422,7 @@ public:
   //   Y1 - final frame Y
   //   Z1 - final frame Z
   //
-  void Rotation( 
+  void Rotation(
     const ON_3dVector& X0,
     const ON_3dVector& Y0,
     const ON_3dVector& Z0,
@@ -440,7 +440,7 @@ public:
   //   X1 - final frame X
   //   Y1 - final frame Y
   //   Z1 - final frame Z
-  void Rotation( 
+  void Rotation(
     const ON_3dPoint& P0,
     const ON_3dVector& X0,
     const ON_3dVector& Y0,
@@ -458,7 +458,7 @@ public:
     plane0 - [in]
     plane1 - [in]
   */
-  void Rotation( 
+  void Rotation(
     const ON_Plane& plane0,
     const ON_Plane& plane1
     );
@@ -479,7 +479,7 @@ public:
     ON_3dVector normal_to_mirror_plane
     );
 
-  // Description: The ChangeBasis() function is overloaded 
+  // Description: The ChangeBasis() function is overloaded
   //   and provides several
   //   ways to compute a change of basis transformation.
   //
@@ -492,19 +492,19 @@ public:
   //   true    success
   //   false   vectors for initial frame are not a basis
   //
-  // Remarks: 
+  // Remarks:
   //   If you have points defined with respect to planes, the
   //   version of ChangeBasis() that takes two planes computes
-  //   the transformation to change coordinates from one plane to 
+  //   the transformation to change coordinates from one plane to
   //   another.  The predefined world plane ON_world_plane can
   //   be used as an argument.
   //
-  //   If P = plane0.Evaluate( a0,b0,c0 ) and 
+  //   If P = plane0.Evaluate( a0,b0,c0 ) and
   //
   //   (a1,b1,c1) = ChangeBasis(plane0,plane1)*ON_3dPoint(a0,b0,c0),
   //
   //   then P = plane1.Evaluate( a1, b1, c1 )
-  //          
+  //
   //   The version of ChangeBasis() that takes six vectors
   //   maps (a0,b0,c0) to (a1,b1,c1) where
   //   a0*X0 + b0*Y0 + c0*Z0 = a1*X1 + b1*Y1 + c1*Z1
@@ -517,7 +517,7 @@ public:
   //   The change of basis transformation is not the same as
   //   the rotation transformation that rotates one orthonormal
   //   frame to another.  See ON_Xform::Rotation().
-  bool ChangeBasis( 
+  bool ChangeBasis(
     const ON_Plane& plane0,
     const ON_Plane& plane1
     );
@@ -536,7 +536,7 @@ public:
   //   are often confused.  This is a change of basis transformation.
   //   If Q = a0*X0 + b0*Y0 + c0*Z0 = a1*X1 + b1*Y1 + c1*Z1
   //   then this transform will map the point (a0,b0,c0) to (a1,b1,c1)
-  bool ChangeBasis( 
+  bool ChangeBasis(
     const ON_3dVector& X0,
     const ON_3dVector& Y0,
     const ON_3dVector& Z0,
@@ -559,7 +559,7 @@ public:
   //   are often confused.  This is a change of basis transformation.
   //   If Q = P0 + a0*X0 + b0*Y0 + c0*Z0 = P1 + a1*X1 + b1*Y1 + c1*Z1
   //   then this transform will map the point (a0,b0,c0) to (a1,b1,c1)
-  bool ChangeBasis( 
+  bool ChangeBasis(
     const ON_3dPoint& P0,
     const ON_3dVector& X0,
     const ON_3dVector& Y0,
@@ -571,13 +571,13 @@ public:
     );
 
   // standard viewing transformations
-  void WorldToCamera( 
+  void WorldToCamera(
          const ON_3dPoint&,  // CameraLocation
          const ON_3dVector&, // unit CameraX vector (right)
          const ON_3dVector&, // unit CameraY vector (up)
          const ON_3dVector&  // unit CameraZ vector (from screen to camera)
          );
-  void CameraToWorld( 
+  void CameraToWorld(
          const ON_3dPoint&,  // CameraLocation
          const ON_3dVector&, // unit CameraX vector (right)
          const ON_3dVector&, // unit CameraY vector (up)
@@ -591,21 +591,21 @@ public:
       );
 
   // maps -1 <= x,y,z <= 1 box to viewport frustum
-  bool ClipToCamera( 
+  bool ClipToCamera(
       int, // true for perspective, false for orthographic
       double, double, // left != right (usually left < right )
       double, double, // bottom != top (usually bottom < top )
       double, double  // near != far an bot are non-zero (usually 0 < near < far )
       );
 
-  // Computes transform that maps the clipping box 
+  // Computes transform that maps the clipping box
   //
-  //           -1<x<1,-1<y<1,-1<z<1 
+  //           -1<x<1,-1<y<1,-1<z<1
   //
   // to the screen box
   //
   //          (left,right) X (bottom,top) X (near,far)
-  bool ClipToScreen(                           
+  bool ClipToScreen(
       double, // left
       double, // right
       double, // bottom
@@ -617,10 +617,10 @@ public:
   // Computes transform that maps the screen box
   //
   //          (left,right) X (bottom,top) X (near,far)
-  //  
-  // to the clipping box 
   //
-  //           -1<x<1,-1<y<1,-1<z<1 
+  // to the clipping box
+  //
+  //           -1<x<1,-1<y<1,-1<z<1
   bool ScreenToClip(
       double, // left
       double, // right
@@ -637,8 +637,8 @@ public:
   // Parameters:
   //   point - [in] 4d homogeneous clipping coordinate point
   //
-  // Returns:  
-  //  @table  
+  // Returns:
+  //  @table
   //   bit      point location
   //   1        x/w < -1
   //   2        x/w > +1
@@ -654,7 +654,7 @@ public:
   // Parameters:
   //   count - [in] number of 4d points
   //   stride - [in] (>=4)
-  //   points - [in] 4d clipping coordinate points 
+  //   points - [in] 4d clipping coordinate points
   //            (array of stride*count doubles)
   //   bTestZ - [in] (default=true) if false, do not test "z" coordinate
   //
@@ -665,7 +665,7 @@ public:
     BOOL = true // bTeztZ
     ) const;
 
-  // Description: 
+  // Description:
   //   Computes 3d point clipping flags and
   //   returns an int with bits set to indicate if the point
   //   is outside of the clipping box.
@@ -673,8 +673,8 @@ public:
   // Parameters:
   //   point - [in] 3d clipping coordinate point
   //
-  // Returns:  
-  //  @table  
+  // Returns:
+  //  @table
   //   bit      point location
   //   1        x < -1
   //   2        x > +1
@@ -694,7 +694,7 @@ public:
   //
   int ClipFlag3d(
     int, // count
-    int, // stride 
+    int, // stride
     const double*, // points
     BOOL = true // bTestZ
     ) const;
@@ -707,8 +707,8 @@ public:
   //   boxmin - [in] 3d boxmin corner
   //   boxmax - [in] 3d boxmax corner
   //
-  // Returns:  
-  //  @table  
+  // Returns:
+  //  @table
   //   bit      box location
   //   1        boxmax x < -1
   //   2        boxmin x > +1
@@ -744,7 +744,7 @@ public:
   ON_ClippingRegion();
 
   // The transformation m_xform transforms the view frustum,
-  // in object coordinates to the (-1,+1)^3 clipping 
+  // in object coordinates to the (-1,+1)^3 clipping
   // coordinate box.
   ON_Xform m_xform;
 
@@ -759,7 +759,7 @@ public:
   };
 
   // Up to 25 additional clipping planes in object coordinates.
-  // The convex region that is the intersection of the positive 
+  // The convex region that is the intersection of the positive
   // side of these planes is the active region.
   int m_clip_plane_count; // (0 <= m_clip_plane_count <= max_clip_plane_count)
   ON_PlaneEquation m_clip_plane[max_clip_plane_count];
@@ -786,22 +786,22 @@ public:
     2 = The entire convex hull of the tested points is in the
         view frustum.
   */
-  int InViewFrustum( 
+  int InViewFrustum(
     ON_3dPoint P
     ) const;
-  int InViewFrustum( 
+  int InViewFrustum(
     const ON_BoundingBox& bbox
     ) const;
-  int InViewFrustum( 
-    int count, 
+  int InViewFrustum(
+    int count,
     const ON_3fPoint* p
     ) const;
-  int InViewFrustum( 
-    int count, 
+  int InViewFrustum(
+    int count,
     const ON_3dPoint* p
     ) const;
-  int InViewFrustum( 
-    int count, 
+  int InViewFrustum(
+    int count,
     const ON_4dPoint* p
     ) const;
 
@@ -827,22 +827,22 @@ public:
     2 = The entire convex hull of the tested points is in the
         clip plane region.
   */
-  int InClipPlaneRegion( 
+  int InClipPlaneRegion(
     ON_3dPoint P
     ) const;
-  int InClipPlaneRegion( 
+  int InClipPlaneRegion(
     const ON_BoundingBox& bbox
     ) const;
-  int InClipPlaneRegion( 
-    int count, 
+  int InClipPlaneRegion(
+    int count,
     const ON_3fPoint* p
     ) const;
-  int InClipPlaneRegion( 
-    int count, 
+  int InClipPlaneRegion(
+    int count,
     const ON_3dPoint* p
     ) const;
-  int InClipPlaneRegion( 
-    int count, 
+  int InClipPlaneRegion(
+    int count,
     const ON_4dPoint* p
     ) const;
 
@@ -863,22 +863,22 @@ public:
     1 = a portion of the object is in the region
     2 = entire object is in clipping region
   */
-  int IsVisible( 
+  int IsVisible(
     ON_3dPoint P
     ) const;
-  int IsVisible( 
+  int IsVisible(
     const ON_BoundingBox& bbox
     ) const;
-  int IsVisible( 
-    int count, 
+  int IsVisible(
+    int count,
     const ON_3fPoint* p
     ) const;
-  int IsVisible( 
-    int count, 
+  int IsVisible(
+    int count,
     const ON_3dPoint* p
     ) const;
-  int IsVisible( 
-    int count, 
+  int IsVisible(
+    int count,
     const ON_4dPoint* p
     ) const;
 
@@ -893,7 +893,7 @@ public:
           be transformed.  In all other cases, the output
           points are transformed by m_xform.
     pflags - [out]
-          0 when the point is in the visible region.  
+          0 when the point is in the visible region.
           Otherwise the bits are set to indicate which planes clip the
           intput point.
           0x01 left of the view frusturm
@@ -930,7 +930,7 @@ public:
     P - [in] point ot transform
     Q - [out] transformed point
   Returns:
-    0 when the point is in the visible region.  
+    0 when the point is in the visible region.
     Otherwise the bits are set to indicate which planes clip the
     intput point.
     0x01 left of the view frusturm
@@ -948,15 +948,15 @@ public:
     0x80000000 transformation created a non-positive weight
   */
   unsigned int TransformPoint(
-                     const ON_4dPoint& P, 
+                     const ON_4dPoint& P,
                      ON_4dPoint& Q
                      ) const;
   unsigned int TransformPoint(
-                     const ON_3dPoint& P, 
+                     const ON_3dPoint& P,
                      ON_3dPoint& Q
                      ) const;
   unsigned int TransformPoint(
-                     const ON_3fPoint& P, 
+                     const ON_3fPoint& P,
                      ON_3dPoint& Q
                      ) const;
 
@@ -973,11 +973,11 @@ public:
     True if some portion of the line is visible and
     0.0 <= *t0 <= *t1 <= 1.0.
   */
-  bool GetLineClipPlaneParamters( 
-         ON_4dPoint P0, 
-         ON_4dPoint P1, 
-         double* t0, 
-         double* t1 
+  bool GetLineClipPlaneParamters(
+         ON_4dPoint P0,
+         ON_4dPoint P1,
+         double* t0,
+         double* t1
          ) const;
 
 };
@@ -999,7 +999,7 @@ public:
   /*
   Descrption:
     Creates a cylindrical localizer.
-    If d = distance from the point to the line, 
+    If d = distance from the point to the line,
     then the localizer has the following behavior:
 
     point distance                localizer value
@@ -1014,14 +1014,14 @@ public:
     D - [in] cylinder axis direction
     r0 - [in]
     r1 - [in]
-      r0 and r1 are radii that control where the localizer is nonzero.  
-      Both r0 and r1 must be postive and the cannot be equal.  
-      If 0 < r0 < r1, then the localizer is zero for points 
+      r0 and r1 are radii that control where the localizer is nonzero.
+      Both r0 and r1 must be postive and the cannot be equal.
+      If 0 < r0 < r1, then the localizer is zero for points
       inside the cylinder of radius r0 and one for points outside
       the cylinder of radius r1.
-      If 0 < r1 < r0, then the localizer is one for points 
+      If 0 < r1 < r0, then the localizer is one for points
       inside the cylinder of radius r1 and zero for points outside
-      the cylinder of radius r0.      
+      the cylinder of radius r0.
 
   Returns:
     True if the input is value and the localizer is initialized.
@@ -1046,7 +1046,7 @@ public:
     N - [in] normal to plane
     h0 - [in]
     h1 - [in]
-      h0 and h1 are signed distances that control where the 
+      h0 and h1 are signed distances that control where the
       localizer is nonzero.
 
   Returns:
@@ -1057,7 +1057,7 @@ public:
   /*
   Descrption:
     Creates a spherical localizer.
-    If d = distance from the point to the center of the sphere, 
+    If d = distance from the point to the center of the sphere,
     then the localizer has the following behavior:
 
     point distance                localizer value
@@ -1071,14 +1071,14 @@ public:
     P - [in] center of sphere
     r0 - [in]
     r1 - [in]
-      r0 and r1 are radii that control where the localizer is nonzero.  
-      Both r0 and r1 must be postive and the cannot be equal.  
-      If 0 < r0 < r1, then the localizer is zero for points 
+      r0 and r1 are radii that control where the localizer is nonzero.
+      Both r0 and r1 must be postive and the cannot be equal.
+      If 0 < r0 < r1, then the localizer is zero for points
       inside the cylinder of radius r0 and one for points outside
       the cylinder of radius r1.
-      If 0 < r1 < r0, then the localizer is one for points 
+      If 0 < r1 < r0, then the localizer is one for points
       inside the cylinder of radius r1 and zero for points outside
-      the cylinder of radius r0.      
+      the cylinder of radius r0.
 
   Returns:
     True if the input is value and the localizer is initialized.
@@ -1141,18 +1141,18 @@ public:
   Parameters:
     point - [in]
   Returns:
-    Morphed point.  
+    Morphed point.
   Remarks:
     If you are morphing simple objects like points and
-    meshes, then you can simply morph the locations. 
-    If you are morphing more complicated objects like 
+    meshes, then you can simply morph the locations.
+    If you are morphing more complicated objects like
     NURBS geometry, then your override should
-    pay attention to the values of m_bQuickPreview, 
+    pay attention to the values of m_bQuickPreview,
     m_bPreserveStructure, and m_tolerance.
   */
   virtual
-  ON_3dPoint MorphPoint( 
-            ON_3dPoint point 
+  ON_3dPoint MorphPoint(
+            ON_3dPoint point
             ) const = 0;
 
   /*
@@ -1187,7 +1187,7 @@ public:
   Returns:
     The default always returns false.  If you override
     this function, then return true when every point
-    in the bounding box is fixed by the morph.  
+    in the bounding box is fixed by the morph.
   */
   virtual
   bool IsIdentity( const ON_BoundingBox& bbox ) const;
@@ -1203,8 +1203,8 @@ public:
     Default morphs euclidean location and preserves weight.
   */
   virtual
-  ON_4dPoint MorphPoint( 
-            ON_4dPoint point 
+  ON_4dPoint MorphPoint(
+            ON_4dPoint point
             ) const;
 
   /*
@@ -1219,9 +1219,9 @@ public:
     Default returns difference of morphed tail+vector and tail.
   */
   virtual
-  ON_3dVector MorphVector( 
-            ON_3dPoint tail_point, 
-            ON_3dVector vector 
+  ON_3dVector MorphVector(
+            ON_3dPoint tail_point,
+            ON_3dVector vector
             ) const;
 
   /*
@@ -1235,9 +1235,9 @@ public:
     point - [in/out]
   */
   void MorphPointList(
-          int dim, 
+          int dim,
           int is_rat,
-          int count, 
+          int count,
           int stride,
           double* point
           ) const;
@@ -1253,9 +1253,9 @@ public:
     point - [in/out]
   */
   void MorphPointList(
-          int dim, 
+          int dim,
           int is_rat,
-          int count, 
+          int count,
           int stride,
           float* point
           ) const;
@@ -1268,7 +1268,7 @@ public:
   Returns:
     3d fitting tolerance.
   Remarks:
-    The default is 0.0 and any value <= 0.0 is 
+    The default is 0.0 and any value <= 0.0 is
     ignored by morphing functions.
     The value returned by Tolerance() does not
     affect the way meshes and points are morphed.
@@ -1280,7 +1280,7 @@ public:
     Set the 3d fitting tolerance used when morphing
     surfaces and breps.
   Parameters:
-    tolerance - [in] values < 0.0 are treated as 0.0.                     
+    tolerance - [in] values < 0.0 are treated as 0.0.
   */
   void SetTolerance(
           double tolerance
@@ -1305,14 +1305,14 @@ public:
   Parameters:
     bQuickPreview - [in]
   */
-  void SetQuickPreview( 
-          bool bQuickPreview 
+  void SetQuickPreview(
+          bool bQuickPreview
           );
 
   /*
   Returns:
     True if the morph should be done in a way that
-    preserves the structure of the geometry.  
+    preserves the structure of the geometry.
     In particular, for NURBS objects, true
     means that only the control points are moved.
   Remarks:
@@ -1328,7 +1328,7 @@ public:
   Parameters:
     bPreserveStructure - [in]
   */
-  void SetPreserveStructure( 
+  void SetPreserveStructure(
           bool bPreserveStructure
           );
 
@@ -1341,7 +1341,7 @@ private:
 #if defined(ON_DLL_TEMPLATE)
 
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )

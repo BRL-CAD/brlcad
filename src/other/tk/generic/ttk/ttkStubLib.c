@@ -64,7 +64,7 @@ error:
 	"Error loading ", packageName, " package",
 	" (requested version '", version,
 	"', loaded version '", actualVersion, "'): ",
-	errMsg, 
+	errMsg,
 	NULL);
     return NULL;
 }

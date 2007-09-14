@@ -231,7 +231,7 @@ test geometry-4.10 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     wm geometry .t +0+0
     tkwait visibility .t
     update
-    frame .t.f 
+    frame .t.f
     pack .t.f
     button .t.quit -text Quit -command exit
     pack .t.quit -in .t.f

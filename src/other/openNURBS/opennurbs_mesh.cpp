@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -167,11 +167,11 @@ void ON_MeshSurfaceHelper(
     // there will be one unused vertex on each singular side
     mesh->CullUnusedVertices();
   }
-  
+
 }
 
-ON_Mesh* ON_MeshSurface( 
-            const ON_Surface& surface, 
+ON_Mesh* ON_MeshSurface(
+            const ON_Surface& surface,
             int u_count,
             const double* u,
             int v_count,
@@ -217,7 +217,7 @@ ON_Mesh* ON_MeshSurface(
       ON_ERROR("ON_MeshSurface - v[] parameters not in surface domain");
       return 0;
     }
-    
+
     for (i = 1; i < u_count; i++ )
     {
       if ( u[i-1] >= u[i] )
@@ -343,7 +343,7 @@ ON_Mesh* ON_MeshSurface(
   return mesh;
 }
 
-ON_Mesh* ON_MeshSurface( const ON_Surface& surface, 
+ON_Mesh* ON_MeshSurface( const ON_Surface& surface,
                          int mesh_density,
                          ON_Mesh* mesh )
 {
@@ -488,7 +488,7 @@ ON_Mesh* ON_MeshSurface( const ON_Surface& surface,
           surface.EvNormal( u, v, P, N, 0, hint );
           mesh->m_V.Append( ON_3fPoint(&P.x) );
           mesh->m_N.Append( ON_3fVector(&N.x) );
-          mesh->m_T.AppendNew().Set( 
+          mesh->m_T.AppendNew().Set(
                     (float)mesh->m_srf_domain[0].NormalizedParameterAt(u),
                     (float)mesh->m_srf_domain[1].NormalizedParameterAt(v)
                     );
@@ -541,7 +541,7 @@ ON_Mesh* ON_MeshSurface( const ON_Surface& surface,
   return mesh;
 }
 
-ON_Mesh* ON_Surface::CreateMesh( 
+ON_Mesh* ON_Surface::CreateMesh(
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
@@ -555,7 +555,7 @@ ON_Mesh* ON_Surface::CreateMesh(
   return ON_MeshSurface( *this, 0, mesh );
 }
 
-ON_Mesh* ON_SurfaceProxy::CreateMesh( 
+ON_Mesh* ON_SurfaceProxy::CreateMesh(
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
@@ -576,7 +576,7 @@ ON_Mesh* ON_SurfaceProxy::CreateMesh(
       ON_Interval tmp = mesh->m_packed_tex_domain[0];
       mesh->m_packed_tex_domain[0] = mesh->m_packed_tex_domain[1];
       mesh->m_packed_tex_domain[1] = tmp;
-      
+
       tmp = mesh->m_srf_domain[0];
       mesh->m_srf_domain[0] = mesh->m_srf_domain[1];
       mesh->m_srf_domain[1] = tmp;
@@ -607,7 +607,7 @@ ON_Mesh* ON_SurfaceProxy::CreateMesh(
         }
       }
     }
-  } 
+  }
   else if ( mesh )
   {
     // no "real" surface to mesh
@@ -617,7 +617,7 @@ ON_Mesh* ON_SurfaceProxy::CreateMesh(
   return mesh;
 }
 
-ON_Mesh* ON_NurbsSurface::CreateMesh( 
+ON_Mesh* ON_NurbsSurface::CreateMesh(
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
@@ -627,7 +627,7 @@ ON_Mesh* ON_NurbsSurface::CreateMesh(
   return ON_Surface::CreateMesh(mp,mesh);
 }
 
-ON_Mesh* ON_PlaneSurface::CreateMesh( 
+ON_Mesh* ON_PlaneSurface::CreateMesh(
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
@@ -638,7 +638,7 @@ ON_Mesh* ON_PlaneSurface::CreateMesh(
 
 }
 
-ON_Mesh* ON_RevSurface::CreateMesh( 
+ON_Mesh* ON_RevSurface::CreateMesh(
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
@@ -648,7 +648,7 @@ ON_Mesh* ON_RevSurface::CreateMesh(
   return ON_Surface::CreateMesh(mp,mesh);
 }
 
-ON_Mesh* ON_SumSurface::CreateMesh( 
+ON_Mesh* ON_SumSurface::CreateMesh(
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
@@ -658,7 +658,7 @@ ON_Mesh* ON_SumSurface::CreateMesh(
   return ON_Surface::CreateMesh(mp,mesh);
 }
 
-ON_Mesh* ON_BrepFace::CreateMesh( 
+ON_Mesh* ON_BrepFace::CreateMesh(
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
@@ -672,12 +672,12 @@ ON_Mesh* ON_BrepFace::CreateMesh(
   return 0;
 }
 
-int ON_Brep::CreateMesh( 
+int ON_Brep::CreateMesh(
   const ON_MeshParameters& mp,
   ON_SimpleArray<ON_Mesh*>& mesh_list
   ) const
 {
-  if ( ON_Brep::m__Mesh ) 
+  if ( ON_Brep::m__Mesh )
   {
     // provided by Rhino SDK
     return ON_Brep::m__Mesh(*this,mp,mesh_list);
@@ -743,16 +743,16 @@ ON_MeshFace::IsValid(int vertex_count) const
            && vi[1] >= 0 && vi[1] < vertex_count
            && vi[2] >= 0 && vi[2] < vertex_count
            && vi[3] >= 0 && vi[3] < vertex_count
-           && vi[0] != vi[1] && vi[1] != vi[2] && vi[2] != vi[0] 
+           && vi[0] != vi[1] && vi[1] != vi[2] && vi[2] != vi[0]
            && (vi[2]==vi[3]||(vi[0] != vi[3] && vi[1] != vi[3])) );
 }
 
 
-ON_Mesh::ON_Mesh() : m_packed_tex_rotate(0), 
+ON_Mesh::ON_Mesh() : m_packed_tex_rotate(0),
                      m_parent(0),
-                     m_mesh_parameters(0), 
-                     m_invalid_count(0), 
-                     m_quad_count(0), 
+                     m_mesh_parameters(0),
+                     m_invalid_count(0),
+                     m_quad_count(0),
                      m_triangle_count(0),
                      m_closed(-1),
                      m_mtree(0)
@@ -782,10 +782,10 @@ ON_Mesh::ON_Mesh(
       m_N(bHasVertexNormals?initial_vertex_capacity:0),
       m_T(bHasTextureCoordinates?initial_vertex_capacity:0),
       m_packed_tex_rotate(0),
-      m_parent(0), 
+      m_parent(0),
       m_mesh_parameters(0),
-      m_invalid_count(0), 
-      m_quad_count(0), 
+      m_invalid_count(0),
+      m_quad_count(0),
       m_triangle_count(0),
       m_closed(-1),
       m_mtree(0)
@@ -802,12 +802,12 @@ ON_Mesh::ON_Mesh(
   m_hidden_count = 0;
 }
 
-ON_Mesh::ON_Mesh( const ON_Mesh& src ) 
+ON_Mesh::ON_Mesh( const ON_Mesh& src )
         : m_packed_tex_rotate(0),
-          m_parent(0), 
-          m_mesh_parameters(0), 
-          m_invalid_count(0), 
-          m_quad_count(0), 
+          m_parent(0),
+          m_mesh_parameters(0),
+          m_invalid_count(0),
+          m_quad_count(0),
           m_triangle_count(0),
           m_closed(-1),
           m_mtree(0)
@@ -837,7 +837,7 @@ unsigned int ON_Mesh::SizeOf() const
   sz += m_T.SizeOfArray();
   sz += m_S.SizeOfArray();
   sz += m_K.SizeOfArray();
-  sz += m_C.SizeOfArray();  
+  sz += m_C.SizeOfArray();
   sz += m_top.m_topv_map.SizeOfArray();
   sz += m_top.m_topv.SizeOfArray();
   sz += m_top.m_tope.SizeOfArray();
@@ -857,7 +857,7 @@ ON__UINT32 ON_Mesh::DataCRC(ON__UINT32 current_remainder) const
 
 ON_Mesh& ON_Mesh::operator=( const ON_Mesh& src )
 {
-  if ( this != &src ) 
+  if ( this != &src )
   {
     Destroy();
     ON_Geometry::operator=(src);
@@ -906,7 +906,7 @@ ON_Mesh& ON_Mesh::operator=( const ON_Mesh& src )
 
     int i;
     for ( i = 0; i < 4; i++ ) {
-      if ( m_kstat[i] ) 
+      if ( m_kstat[i] )
       {
         delete m_kstat[i];
         m_kstat[i] = 0;
@@ -972,7 +972,7 @@ BOOL ON_Mesh::IsValid( ON_TextLog* text_log ) const
   const int vertex_count = VertexCount();
   int fi, vi;
 
-  if (facet_count < 1) 
+  if (facet_count < 1)
   {
     if ( text_log )
     {
@@ -1020,9 +1020,9 @@ BOOL ON_Mesh::IsValid( ON_TextLog* text_log ) const
     return false;
   }
 
-  for ( fi = 0; fi < facet_count; fi++ ) 
+  for ( fi = 0; fi < facet_count; fi++ )
   {
-    if ( !m_F[fi].IsValid( vertex_count ) ) 
+    if ( !m_F[fi].IsValid( vertex_count ) )
     {
       if ( text_log )
       {
@@ -1032,7 +1032,7 @@ BOOL ON_Mesh::IsValid( ON_TextLog* text_log ) const
     }
  }
 
-  if ( HasVertexNormals() ) 
+  if ( HasVertexNormals() )
   {
     float x;
     for ( vi = 0; vi < vertex_count; vi++ ) {
@@ -1058,9 +1058,9 @@ BOOL ON_Mesh::IsValid( ON_TextLog* text_log ) const
       if ( text_log )
       {
         text_log->Print("ON_Mesh.m_vbox is not finite.  Check for invalid vertices\n");
-      }		
+      }
 	    return false;
-    }	
+    }
   }
 
   return true;
@@ -1354,20 +1354,20 @@ bool ON_Mesh::Write_2( int Vcount, ON_BinaryArchive& file ) const
   if ( Vcount > m_V.Count() )
     return false;
 
-  if ( Vcount > 0 ) 
+  if ( Vcount > 0 )
   {
     const int Ncount = (m_V.Count() == m_N.Count()) ? Vcount : 0;
     const int Tcount = (m_V.Count() == m_T.Count()) ? Vcount : 0;
     const int Kcount = (m_V.Count() == m_K.Count()) ? Vcount : 0;
     const int Ccount = (m_V.Count() == m_C.Count()) ? Vcount : 0;
 
-    if ( e == ON::big_endian ) 
+    if ( e == ON::big_endian )
     {
       // These calls temporarily put the m_V[], m_N[], m_T[], m_K[]
       // and m_C[] arrays in little endian byte order because 3dm archives
       // are always in little endian byte order.
       //
-      // This code assumes sizeof(ON_Color)=4, sizeof(float)=4 
+      // This code assumes sizeof(ON_Color)=4, sizeof(float)=4
       // and sizeof(double)=8.
       // If this is not the case, then changing the 4's and 8's below
       // will not work.  You will have to copy the mesh definition
@@ -1385,7 +1385,7 @@ bool ON_Mesh::Write_2( int Vcount, ON_BinaryArchive& file ) const
     if (rc) rc = file.WriteCompressedBuffer( Tcount*sizeof(ON_2fPoint),         m_T.Array() );
     if (rc) rc = file.WriteCompressedBuffer( Kcount*sizeof(ON_SurfaceCurvature),m_K.Array() );
     if (rc) rc = file.WriteCompressedBuffer( Ccount*sizeof(ON_Color),           m_C.Array() );
-    if ( e == ON::big_endian ) 
+    if ( e == ON::big_endian )
     {
       // These calls restore the m_V[], m_N[], m_T[], m_K[] and m_C[] arrays
       // to the correct big endian runtime byte order.  This must be done even
@@ -1409,14 +1409,14 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
   bool rc = true;
 
 
-  if ( vcount > 0 ) 
+  if ( vcount > 0 )
   {
     size_t sz = 0;
     int bFailedCRC;
 
     sz = 0;
     if (rc) rc = file.ReadCompressedBufferSize( &sz );
-    if (rc && sz) 
+    if (rc && sz)
     {
       if ( sz == vcount*sizeof(m_V[0]) )
       {
@@ -1432,7 +1432,7 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
 
     sz = 0;
     if (rc) rc = file.ReadCompressedBufferSize( &sz );
-    if (rc && sz) 
+    if (rc && sz)
     {
       if ( sz == vcount*sizeof(m_N[0]) )
       {
@@ -1445,10 +1445,10 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
         rc = false; // buffer is wrong size
       }
     }
-    
+
     sz = 0;
     if (rc) rc = file.ReadCompressedBufferSize( &sz );
-    if (rc && sz) 
+    if (rc && sz)
     {
       if ( sz == vcount*sizeof(m_T[0]) )
       {
@@ -1461,10 +1461,10 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
         rc = false; // buffer is wrong size
       }
     }
-    
+
     sz = 0;
     if (rc) rc = file.ReadCompressedBufferSize( &sz );
-    if (rc && sz) 
+    if (rc && sz)
     {
       if ( sz == vcount*sizeof(m_K[0]) )
       {
@@ -1477,10 +1477,10 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
         rc = false; // buffer is wrong size
       }
     }
-    
+
     sz = 0;
     if (rc) rc = file.ReadCompressedBufferSize( &sz );
-    if (rc && sz) 
+    if (rc && sz)
     {
       if ( sz == vcount*sizeof(m_C[0]) )
       {
@@ -1493,10 +1493,10 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
         rc = false; // buffer is wrong size
       }
     }
-    
-    if ( e == ON::big_endian ) 
+
+    if ( e == ON::big_endian )
     {
-      // This code assumes sizeof(ON_Color)=4, sizeof(float)=4 
+      // This code assumes sizeof(ON_Color)=4, sizeof(float)=4
       // and sizeof(double)=8.
       // If this is not the case, then changing the 4's and 8's below
       // will not work.  You will have to read the compressed
@@ -1581,17 +1581,17 @@ BOOL ON_Mesh::Write( ON_BinaryArchive& file ) const
 
   // added for minor version 3.3
   file.WriteUuid( m_Ttag.m_mapping_id );
- 
+
   // compressed m_S[]
-  if ( rc && vcount > 0 ) 
+  if ( rc && vcount > 0 )
   {
     const ON::endian e = file.Endian();
-    if ( e == ON::big_endian ) 
+    if ( e == ON::big_endian )
     {
       file.ToggleByteOrder( m_S.Count()*2, 8, m_S.Array(), (void*)m_S.Array() );
     }
     if (rc) rc = file.WriteCompressedBuffer( m_S.Count()*sizeof(ON_2dPoint),m_S.Array() );
-    if ( e == ON::big_endian ) 
+    if ( e == ON::big_endian )
     {
       file.ToggleByteOrder( m_S.Count()*2, 8, m_S.Array(), (void*)m_S.Array() );
     }
@@ -1605,7 +1605,7 @@ BOOL ON_Mesh::Write( ON_BinaryArchive& file ) const
 
 //// This id was used in the ON_Mesh::m_mapping_id
 //// field to indicate the texture coordinates are the
-//// canonical ON_Mesh uv texture coordinates by the 
+//// canonical ON_Mesh uv texture coordinates by the
 //// OpenNURBS parameteric surface meshers like
 //// ON_Surface::CreateMesh() and ON_Brep::CreateMesh().
 //
@@ -1732,20 +1732,20 @@ BOOL ON_TextureMapping::Read(
 
 static
 void GetSurfaceParametersHelper( const ON_Mesh& mesh,
-                                 double tex_x, double tex_y, 
+                                 double tex_x, double tex_y,
                                  double* srf_s, double* srf_t )
 {
   // convert texture coordinates to surface parameters
   // Used to reconstruct m_S[] when old files are read.
   double tex_s, tex_t;
 
-  if ( mesh.m_packed_tex_rotate ) 
+  if ( mesh.m_packed_tex_rotate )
   {
     // undo rotation and normalize
     tex_s =  mesh.m_packed_tex_domain[1].NormalizedParameterAt( tex_y );
     tex_t = 1.0 -  mesh.m_packed_tex_domain[0].NormalizedParameterAt( tex_x );
   }
-  else 
+  else
   {
     // normalize
     tex_s =  mesh.m_packed_tex_domain[0].NormalizedParameterAt( tex_x );
@@ -1764,8 +1764,8 @@ BOOL ON_Mesh::Read( ON_BinaryArchive& file )
   int minor_version = 0;
   int i;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  
-  if (rc && (1 == major_version || 3 == major_version) ) 
+
+  if (rc && (1 == major_version || 3 == major_version) )
   {
     int vcount = 0;
     int fcount = 0;
@@ -1823,7 +1823,7 @@ BOOL ON_Mesh::Read( ON_BinaryArchive& file )
         rc = false;
     }
 
-    if ( minor_version >= 2 ) 
+    if ( minor_version >= 2 )
     {
       int b = m_packed_tex_rotate;
       if (rc) rc = file.ReadInt( &b );
@@ -1838,19 +1838,19 @@ BOOL ON_Mesh::Read( ON_BinaryArchive& file )
         if (rc) rc = file.ReadUuid( m_Ttag.m_mapping_id );
 
         // compressed m_S[]
-        if ( rc && vcount > 0 ) 
+        if ( rc && vcount > 0 )
         {
           size_t sz = 0;
           BOOL bFailedCRC=false;
           if (rc) rc = file.ReadCompressedBufferSize( &sz );
-          if (rc && sz) 
+          if (rc && sz)
           {
             if ( sz == vcount*sizeof(m_S[0]) )
             {
               m_S.SetCapacity(vcount);
               if (rc) rc = file.ReadCompressedBuffer( sz, m_S.Array(), &bFailedCRC );
               if (rc) m_S.SetCount(vcount);
-              if ( ON::big_endian == file.Endian() ) 
+              if ( ON::big_endian == file.Endian() )
               {
                 file.ToggleByteOrder( m_S.Count()*2, 8, m_S.Array(), (void*)m_S.Array() );
               }
@@ -1871,16 +1871,16 @@ BOOL ON_Mesh::Read( ON_BinaryArchive& file )
     if (    0 == m_S.Count()
          && m_V.Count() > 0
          && HasTextureCoordinates()
-         && m_srf_domain[0].IsIncreasing() 
-         && m_srf_domain[1].IsIncreasing() 
+         && m_srf_domain[0].IsIncreasing()
+         && m_srf_domain[1].IsIncreasing()
          && m_packed_tex_domain[0].IsInterval()
          && m_packed_tex_domain[1].IsInterval()
          && 0 == m_Ttag.m_mapping_crc
          && ON_UuidIsNil(m_Ttag.m_mapping_id)
-          ) 
+          )
     {
-      // This is a mesh from an old file - but there is enough 
-      // information to calculate the m_S[] values from the 
+      // This is a mesh from an old file - but there is enough
+      // information to calculate the m_S[] values from the
       // m_T[] values.
       m_S.SetCapacity(vcount);
       m_S.SetCount(0);
@@ -1920,17 +1920,17 @@ BOOL ON_Mesh::GetBBox( // returns true if successful
   BOOL rc = false;
   const int facet_count  = FaceCount();
   const int vertex_count = VertexCount();
-  if ( facet_count >= 1 && vertex_count >= 3 ) 
+  if ( facet_count >= 1 && vertex_count >= 3 )
   {
     ON_BoundingBox vbox;
-    if ( m_vbox[0][0] > m_vbox[1][0] ) 
+    if ( m_vbox[0][0] > m_vbox[1][0] )
     {
       // const lie - cache mesh bounding box
-      rc = ON_GetPointListBoundingBox( 3, 0, 
+      rc = ON_GetPointListBoundingBox( 3, 0,
               vertex_count, 3, &m_V[0].x,
-              const_cast<float*>(&m_vbox[0][0]), 
-              const_cast<float*>(&m_vbox[1][0]), 
-              false 
+              const_cast<float*>(&m_vbox[0][0]),
+              const_cast<float*>(&m_vbox[1][0]),
+              false
               );
     }
     else
@@ -1938,7 +1938,7 @@ BOOL ON_Mesh::GetBBox( // returns true if successful
       rc = true;
     }
 
-    if ( rc ) 
+    if ( rc )
     {
       vbox.m_min.x = m_vbox[0][0];
       vbox.m_min.y = m_vbox[0][1];
@@ -1973,7 +1973,7 @@ bool ON_Mesh::MakeDeformable()
   return true;
 }
 
-BOOL ON_Mesh::Transform( 
+BOOL ON_Mesh::Transform(
        const ON_Xform& xform
        )
 {
@@ -2010,22 +2010,22 @@ BOOL ON_Mesh::Transform(
   }
   else if ( rc )
   {
-    if ( HasVertexNormals() ) 
+    if ( HasVertexNormals() )
     {
       // See http://www.gignews.com/realtime020100.htm or these
       // references.
       //
-      // 1. Hanrahan, Pat, 
-      //    "A Survey of Ray-Surface Intersection Algorithms", 
-      //     chapter 3 in Andrew Glassner (editor), 
-      //     An Introduction to Ray Tracing, 
+      // 1. Hanrahan, Pat,
+      //    "A Survey of Ray-Surface Intersection Algorithms",
+      //     chapter 3 in Andrew Glassner (editor),
+      //     An Introduction to Ray Tracing,
       //     Academic Press Inc., London, 1989.
       //
-      // 2. Turkowski, Ken, 
-      //    "Properties of Surface-Normal Transformations", 
-      //     in Andrew Glassner (editor), 
-      //     Graphics Gems, Academic Press, Inc., 
-      //     pp. 539-547, 1990. 
+      // 2. Turkowski, Ken,
+      //    "Properties of Surface-Normal Transformations",
+      //     in Andrew Glassner (editor),
+      //     Graphics Gems, Academic Press, Inc.,
+      //     pp. 539-547, 1990.
       ON_Xform N_xform;
       double d = xform.GetSurfaceNormalXform(N_xform);
       rc = ON_TransformVectorList( 3, vertex_count, 3, &m_N[0][0], N_xform );
@@ -2036,21 +2036,21 @@ BOOL ON_Mesh::Transform(
       UnitizeVertexNormals();
     }
 
-    if ( rc && HasFaceNormals() ) 
+    if ( rc && HasFaceNormals() )
     {
       ComputeFaceNormals();
     }
   }
 
-  if ( rc && HasPrincipalCurvatures() ) 
+  if ( rc && HasPrincipalCurvatures() )
   {
-    if ( fabs(fabs(d) - 1.0) > ON_SQRT_EPSILON ) 
+    if ( fabs(fabs(d) - 1.0) > ON_SQRT_EPSILON )
     {
       // If it's a uniform scale, handle it, otherwise we can't do it.
       double scale = xform.m_xform[0][0];
       if ( 0.0 != scale && 0.0 != d
-           && scale == xform.m_xform[1][1] 
-           && scale == xform.m_xform[2][2] 
+           && scale == xform.m_xform[1][1]
+           && scale == xform.m_xform[2][2]
            && fabs(d - scale*scale*scale) <= d*ON_SQRT_EPSILON )
       {
         // uniform scale
@@ -2112,7 +2112,7 @@ void ON_Mesh::DestroyRuntimeCache( bool bDelete )
   m_parent = 0;
   //m_material_index = -1;
   m_closed = 0;
-  for ( i = 0; i < 4; i++ ) 
+  for ( i = 0; i < 4; i++ )
   {
     m_kstat[i] = 0;
   }
@@ -2162,7 +2162,7 @@ void ON_Mesh::SetClosed(int b)
   }
 }
 
-static 
+static
 int ON_MeshIsManifold_CompareV( const void* a, const void* b )
 {
   return memcmp(a,b,sizeof(ON_3fPoint));
@@ -2182,28 +2182,28 @@ int ON_MeshIsManifold_CompareV( const void* a, const void* b )
   */
 }
 
-static 
+static
 int ON_MeshGetVertexEdges_Compare2dex( const void* a, const void* b )
 {
   return ON_Compare2dex((const ON_2dex*)a,(const ON_2dex*)b);
 }
 
-static 
+static
 int ON_MeshIsManifold_Compare3dex( const void* a, const void* b )
 {
   return ON_Compare3dex((const ON_3dex*)a,(const ON_3dex*)b);
 }
 
-//static 
+//static
 //int ON_MeshGetVertexEdges_CompareInt( const int* a, const int* b )
 //{
 //  return (*a-*b);
 //}
 
 
-int ON_Mesh::GetVertexEdges( 
+int ON_Mesh::GetVertexEdges(
   int vertex_index_count,
-  const int* vertex_index, 
+  const int* vertex_index,
   bool bNoDuplicates,
   ON_SimpleArray<ON_2dex>& edges
   ) const
@@ -2214,7 +2214,7 @@ int ON_Mesh::GetVertexEdges(
   const int mesh_vcount = m_V.Count();
   const int mesh_fcount = m_V.Count();
 
-  if (   vertex_index_count <= 0 || 0 == vertex_index 
+  if (   vertex_index_count <= 0 || 0 == vertex_index
       || mesh_fcount <= 0 || mesh_vcount <= 3 )
   {
     return 0;
@@ -2225,7 +2225,7 @@ int ON_Mesh::GetVertexEdges(
   ON_2dex edge_ends;
   const ON_MeshFace* f = m_F.Array();
 
-  if (    m_top.m_bIsValid 
+  if (    m_top.m_bIsValid
        && mesh_vcount == m_top.m_topv_map.Count()
        && m_top.m_tope.Count() > 0 )
   {
@@ -2286,7 +2286,7 @@ int ON_Mesh::GetVertexEdges(
     // slow-n-stupid search through all the faces
 
     // Sort vertex_index[] array so we can use a quick
-    // binary search to see if a face is using one of 
+    // binary search to see if a face is using one of
     // the vertices in the list.
     ON_Workspace ws;
     for ( vi = 1; vi < vertex_index_count; vi++ )
@@ -2344,7 +2344,7 @@ int ON_Mesh::GetVertexEdges(
     }
     ON_hsort( edges.Array() + edges_count0,
               edges.Count() - edges_count0,
-              sizeof(edge_ends), 
+              sizeof(edge_ends),
               ON_MeshGetVertexEdges_Compare2dex);
     edge_ends = edges[edges_count0];
     for ( ei = j = edges_count0+1; ei < edges.Count(); ei++ )
@@ -2363,7 +2363,7 @@ int ON_Mesh::GetVertexEdges(
   return (edges.Count() - edges_count0);
 }
 
-int ON_Mesh::GetMeshEdges( 
+int ON_Mesh::GetMeshEdges(
   ON_SimpleArray<ON_2dex>& edges
   ) const
 {
@@ -2396,13 +2396,13 @@ int ON_Mesh::GetMeshEdges(
       }
     }
   }
-  
+
 
   if ( edges.Count() > edges_count0 )
   {
     ON_hsort( edges.Array() + edges_count0,
               edges.Count() - edges_count0,
-              sizeof(e), 
+              sizeof(e),
               ON_MeshGetVertexEdges_Compare2dex);
     e = edges[edges_count0];
     for ( ei = j = edges_count0+1; ei < edges.Count(); ei++ )
@@ -2484,7 +2484,7 @@ bool ON_Mesh::IsManifold(
     for ( i = 0; i < fcount; i++ )
     {
       fvi = (f++)->vi;
-      if (   fvi[0] >= 0 && fvi[0] < vcount 
+      if (   fvi[0] >= 0 && fvi[0] < vcount
           && fvi[1] >= 0 && fvi[1] < vcount
           && fvi[2] >= 0 && fvi[2] < vcount
           && fvi[3] >= 0 && fvi[3] < vcount )
@@ -2721,9 +2721,9 @@ int ON_Mesh::QuadCount() const
 {
   // number of faces that are quads
   if (   m_quad_count     < 0
-      || m_triangle_count < 0 
-      || m_invalid_count  < 0 
-      || m_quad_count + m_triangle_count + m_invalid_count != FaceCount() ) 
+      || m_triangle_count < 0
+      || m_invalid_count  < 0
+      || m_quad_count + m_triangle_count + m_invalid_count != FaceCount() )
   {
     const_cast<ON_Mesh*>(this)->CountQuads();
   }
@@ -2775,7 +2775,7 @@ bool ON_Mesh::HasCachedTextureCoordinates() const
   return false;
 }
 
-const ON_TextureCoordinates* 
+const ON_TextureCoordinates*
 ON_Mesh::CachedTextureCoordinates( const ON_UUID& mapping_id ) const
 {
   const int vertex_count = VertexCount();
@@ -2785,7 +2785,7 @@ ON_Mesh::CachedTextureCoordinates( const ON_UUID& mapping_id ) const
     int tci, tccount = m_TC.Count();
     for ( tci = 0; tci < tccount; tci++ )
     {
-      if (   vertex_count == TC->m_T.Count() 
+      if (   vertex_count == TC->m_T.Count()
           && mapping_id == TC->m_tag.m_mapping_id )
       {
         return TC;
@@ -2930,7 +2930,7 @@ bool ON_Mesh::GetCurvatureStats( // returns true if successful
       break;
   }
   if ( ksi >= 0 && ksi <= 3 && HasPrincipalCurvatures() ) {
-    ON_Mesh* p = (ON_Mesh*)this; // const lie 
+    ON_Mesh* p = (ON_Mesh*)this; // const lie
     if ( !m_kstat[ksi] ) {
       p->m_kstat[ksi] = new ON_MeshCurvatureStats();
       p->m_kstat[ksi]->Set( kappa_style, m_K.Count(), m_K.Array(), m_N.Array() );
@@ -2961,13 +2961,13 @@ void ON_Mesh::DestroyTopology()
 }
 
 bool
-ON_MeshFace::IsTriangle() const 
+ON_MeshFace::IsTriangle() const
 {
   return vi[2]==vi[3];
 }
 
 bool
-ON_MeshFace::IsQuad() const 
+ON_MeshFace::IsQuad() const
 {
   return vi[2]!=vi[3];
 }
@@ -3028,7 +3028,7 @@ int ON_MeshEdge::operator[](int i) const
 }
 */
 
-void 
+void
 ON_Mesh::Flip()
 {
   FlipFaceOrientation();
@@ -3039,7 +3039,7 @@ ON_Mesh::Flip()
   // values here.
 }
 
-void 
+void
 ON_Mesh::FlipVertexNormals()
 {
   int i;
@@ -3051,7 +3051,7 @@ ON_Mesh::FlipVertexNormals()
   }
 }
 
-void 
+void
 ON_Mesh::FlipFaceNormals()
 {
   int i;
@@ -3063,7 +3063,7 @@ ON_Mesh::FlipFaceNormals()
   }
 }
 
-void 
+void
 ON_Mesh::FlipFaceOrientation()
 {
   int i;
@@ -3080,7 +3080,7 @@ ON_Mesh::ComputeFaceNormal( int fi )
 {
   bool rc = false;
   const int fcount = FaceCount();
-  if ( fi >= 0 && fi < fcount && HasFaceNormals() ) 
+  if ( fi >= 0 && fi < fcount && HasFaceNormals() )
   {
     ON_3fVector a, b, n;
     const int* vi = m_F[fi].vi;
@@ -3133,7 +3133,7 @@ static int compareRadial3fPoint( const ON_3fPoint* a, const ON_3fPoint* b )
   return 0;
 }
 
-bool ON_Mesh::CombineCoincidentVertices( 
+bool ON_Mesh::CombineCoincidentVertices(
         const ON_3fVector tolerance,
         double cos_normal_angle // = -1.0  // cosine(break angle) -1.0 will merge all coincident vertices
         )
@@ -3153,7 +3153,7 @@ bool ON_Mesh::CombineCoincidentVertices(
       pmax = p0 + tolerance;
       for ( j = i+1; j < vcount; j++ ) {
         p1 = m_V[j];
-        // TODO        
+        // TODO
       }
     }
   }
@@ -3242,7 +3242,7 @@ static int CompareMeshPoint(const void* a,const void* b,void* ptr)
       }
     }
   }
-  
+
   if ( d < 0.0f )
     return -1;
   if ( d > 0.0f )
@@ -3299,7 +3299,7 @@ bool ON_Mesh::CombineIdenticalVertices(
     for ( k = 0; k < vertex_count; k++ )
       remap[k] = -1;
 
-    ON_Sort( 
+    ON_Sort(
           ON::heap_sort,
           index,
           mp.p0,                 // data buffer
@@ -3583,7 +3583,7 @@ double ON_Mesh::Volume( ON_3dPoint base_point, double* error_estimate ) const
   return mp.m_mass;
 }
 
-ON_3dPoint ON_Mesh::AreaCentroid( 
+ON_3dPoint ON_Mesh::AreaCentroid(
         double* area
         ) const
 {
@@ -3603,7 +3603,7 @@ ON_3dPoint ON_Mesh::AreaCentroid(
 }
 
 
-ON_3dPoint ON_Mesh::VolumeCentroid( 
+ON_3dPoint ON_Mesh::VolumeCentroid(
         ON_3dPoint base_point,
         double* volume
         ) const
@@ -3636,9 +3636,9 @@ bool ON_Mesh::AreaMassProperties(
   // The _MassPropertiesMesh() function is provided by the Rhino SDK.
   if ( 0 != _MassPropertiesMesh )
   {
-    int mprc = _MassPropertiesMesh( 
-            *this, NULL, 2, ON_UNSET_POINT, mp, 
-            bArea, bFirstMoments, bSecondMoments, bProductMoments, 
+    int mprc = _MassPropertiesMesh(
+            *this, NULL, 2, ON_UNSET_POINT, mp,
+            bArea, bFirstMoments, bSecondMoments, bProductMoments,
             ON_UNSET_VALUE, ON_UNSET_VALUE );
     rc = (mprc != 0);
   }
@@ -3647,7 +3647,7 @@ bool ON_Mesh::AreaMassProperties(
 
 
 bool ON_Mesh::VolumeMassProperties(
-  ON_MassProperties& mp, 
+  ON_MassProperties& mp,
   bool bVolume,
   bool bFirstMoments,
   bool bSecondMoments,
@@ -3659,9 +3659,9 @@ bool ON_Mesh::VolumeMassProperties(
   // The _MassPropertiesMesh() function is provided by the Rhino SDK.
   if ( 0 != _MassPropertiesMesh )
   {
-    int mprc = _MassPropertiesMesh( 
-            *this, NULL, 3, base_point, mp, 
-            bVolume, bFirstMoments, bSecondMoments, bProductMoments, 
+    int mprc = _MassPropertiesMesh(
+            *this, NULL, 3, base_point, mp,
+            bVolume, bFirstMoments, bSecondMoments, bProductMoments,
             ON_UNSET_VALUE, ON_UNSET_VALUE );
     rc = (mprc != 0);
   }
@@ -3709,7 +3709,7 @@ double ON_MeshParameters::Tolerance( double density, double actual_size )
     //e = 1.0 + density*4.0;
     //x = 5.0*pow(10.0,-e);
 
-    e = (density < 0.5) 
+    e = (density < 0.5)
       ? 1.0 + density*(6.0 - 4.0*density) // 1.0 + 4.0*density
       : 2.0 + 2.0*density;
     x = pow(10.0,-e);
@@ -3784,7 +3784,7 @@ void ON_MeshParameters::SmoothAndSlowerMeshParameters()
   // the change in this comment so we can keep track of what we are
   // trying to accomplish;
   Default();
-  
+
   bool bRelTolTest = true;
 
   if ( bRelTolTest )
@@ -3847,7 +3847,7 @@ void ON_MeshParameters::DefaultAnalysisMeshParameters()
 
   m_texture_range = 1; // THIS IS REQUIRED - DO NOT CHANGE IT
 
-  // Meshkateers 
+  // Meshkateers
   //   Add your stuff below this line.
   //   Do not change m_texture_range.
 }
@@ -3958,7 +3958,7 @@ void ON_MeshParameters::Set( double density, double min_edge_length )
     //     I think it is a mistake to leave m_grid_aspect_ratio = 0
     //     at all settings.  This will result in long skinny triangles
     //     in areas where the principal curvatures are dramatically
-    //     different.  
+    //     different.
     //
     m_bRefine = (density < 0.65);
     m_bSimplePlanes = (density <= 0.0);
@@ -3986,8 +3986,8 @@ void ON_MeshParameters::Set( double density, double min_edge_length )
     m_grid_angle = 20.0*ON_PI/180.0;
     m_grid_amplification = 1.0;
     m_refine_angle = 20.0*ON_PI/180.0;
- 
-    if ( density <= 0.0) 
+
+    if ( density <= 0.0)
     {
       m_bSimplePlanes = true;
       m_bRefine       = false;
@@ -4003,7 +4003,7 @@ void ON_MeshParameters::Set( double density, double min_edge_length )
     {
       t1 = 2.0*density;
       t0 = 1.0-t1;
-      
+
       m_bRefine = density < 0.10 ? false : true;
 
       m_grid_min_count = 0;
@@ -4013,7 +4013,7 @@ void ON_MeshParameters::Set( double density, double min_edge_length )
 
       m_refine_angle = (t0*65.0 + t1*20.0)*ON_PI/180.0;
     }
-    else if ( density == 0.5 ) 
+    else if ( density == 0.5 )
     {
       m_bRefine       = true;
 
@@ -4030,7 +4030,7 @@ void ON_MeshParameters::Set( double density, double min_edge_length )
       if ( t1 > 1.0 )
         t1 = 1.0;
       t0 = 1.0-t1;
-      
+
       m_bRefine = true;
 
       m_grid_min_count     = 0;
@@ -4198,7 +4198,7 @@ bool ON_MeshParameters::Write( ON_BinaryArchive& file ) const
     if (rc) rc = file.WriteDouble(m_refine_angle);
     if (rc) rc = file.WriteDouble(5.0*ON_PI/180.0); // obsolete m_combine_angle field
     int mft = m_face_type;
-    if ( mft < 0 || mft > 2 ) 
+    if ( mft < 0 || mft > 2 )
     {
       ON_ERROR("ON_MeshParameters::Read() - m_face_type out of bounds.");
       mft = 0;
@@ -4222,7 +4222,7 @@ bool ON_MeshParameters::Read( ON_BinaryArchive& file )
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 ) 
+  if ( rc && major_version == 1 )
   {
     int i;
 
@@ -4257,13 +4257,13 @@ bool ON_MeshParameters::Read( ON_BinaryArchive& file )
     double obsolete_m_combine_angle;
     if (rc) rc = file.ReadDouble(&obsolete_m_combine_angle);
     if (rc) rc = file.ReadInt(&m_face_type);
-    if ( m_face_type < 0 || m_face_type > 2 ) 
+    if ( m_face_type < 0 || m_face_type > 2 )
     {
       ON_ERROR("ON_MeshParameters::Read() - m_face_type out of bounds.");
       m_face_type = 0;
     }
 
-    if ( minor_version >= 1 ) 
+    if ( minor_version >= 1 )
     {
       if (rc) rc = file.ReadInt( &m_texture_range );
       if ( minor_version >= 2 )
@@ -4498,24 +4498,24 @@ bool ON_MeshCurvatureStats::Set( ON::curvature_style kappa_style,
         m_average += kappa[i];
       }
       m_average = m_average/m_count;
-      
+
       // average deviation
       for ( i = 0; i < m_count; i++ ) {
         m_adev += fabs(kappa[i] - m_average);
       }
       m_adev = m_adev/m_count;
-    }  
+    }
   }
-  
-  return rc;  
+
+  return rc;
 }
 
 struct EDGEINFO
 {
   int fi[2]; // m_F[] triangles on either side of the edge
   int vi[4]; // potential m_V[] quad indices
-  int flag; // 0 = available, 
-            // 1 = side of quad, 
+  int flag; // 0 = available,
+            // 1 = side of quad,
             // 2 = bndry or nonmanifold edge,
             // 3 = edge crease angle > angle_tol_radians
             // 4 = edge is not longest side of triangle
@@ -4525,7 +4525,7 @@ struct EDGEINFO
   double length;
 };
 
-bool ON_Mesh::ConvertTrianglesToQuads( 
+bool ON_Mesh::ConvertTrianglesToQuads(
               double angle_tol_radians,
               double min_diagonal_length_ratio
               )
@@ -4581,7 +4581,7 @@ bool ON_Mesh::ConvertTrianglesToQuads(
 
 
   const int face_count = m_F.Count();
-  int* face_flag = ws.GetIntMemory(face_count);  
+  int* face_flag = ws.GetIntMemory(face_count);
   for ( i = 0; i < face_count; i++ )
   {
     f0vi = m_F[i].vi;
@@ -4618,7 +4618,7 @@ bool ON_Mesh::ConvertTrianglesToQuads(
       {
         ei.flag = 3;
       }
-      else 
+      else
       {
         f0vi = m_F[ei.fi[0]].vi;
         f1vi = m_F[ei.fi[1]].vi;
@@ -4627,7 +4627,7 @@ bool ON_Mesh::ConvertTrianglesToQuads(
         {
           for (jj = 0; jj < 3; jj++)
           {
-            if (    f0vi[ii] == f1vi[jj] 
+            if (    f0vi[ii] == f1vi[jj]
                  && f0vi[(ii+1)%3] == f1vi[(jj+2)%3]
                  && f0vi[(ii+2)%3] != f1vi[(jj+1)%3] )
             {
@@ -4709,7 +4709,7 @@ bool ON_Mesh::ConvertTrianglesToQuads(
       memset( m_F[ei.fi[1]].vi, 0xFF,  4*sizeof(ei.vi[0]) );
       m_triangle_count--;
       m_quad_count++;
-    }    
+    }
     CullDegenerateFaces();
   }
 
@@ -4723,7 +4723,7 @@ bool ON_Mesh::ConvertQuadsToTriangles()
   const int vcount = VertexCount();
   int fi;
   double d0, d1;
-  if ( fcount > 0 && QuadCount() > 0 ) 
+  if ( fcount > 0 && QuadCount() > 0 )
   {
     // use SetCapacity() instead of Reserve() because it's unlikely
     // this mesh will have anything else added and we don't want to
@@ -4733,7 +4733,7 @@ bool ON_Mesh::ConvertQuadsToTriangles()
     if ( bHasFaceNormals && m_FN.Capacity() < fcount + m_quad_count )
       m_FN.SetCapacity( fcount + m_quad_count );
 
-    for ( fi = 0; fi < fcount; fi++ ) 
+    for ( fi = 0; fi < fcount; fi++ )
     {
       ON_MeshFace& f0 = m_F[fi];
       if ( f0.IsValid(vcount) && f0.IsQuad() )
@@ -4758,7 +4758,7 @@ bool ON_Mesh::ConvertQuadsToTriangles()
         }
         m_quad_count--;
         m_triangle_count++;
-        if ( bHasFaceNormals ) 
+        if ( bHasFaceNormals )
         {
           m_FN.AppendNew();
           ComputeFaceNormal(fi);
@@ -4924,7 +4924,7 @@ bool ON_Mesh::NormalizeTextureCoordinates()
 
 bool ON_Mesh::TransposeSurfaceParameters()
 {
-	// swap m_srf_domain 
+	// swap m_srf_domain
 	ON_Interval temp = m_srf_domain[0];
 	m_srf_domain[0]  = m_srf_domain[1];
 	m_srf_domain[1]  = temp;
@@ -4975,8 +4975,8 @@ bool ON_Mesh::TransposeTextureCoordinates()
 
   if ( bPackedRegion && bSrfParamTag )
   {
-    // The region of the bitmap the texture uses 
-    // cannot change.  The texture coordinates 
+    // The region of the bitmap the texture uses
+    // cannot change.  The texture coordinates
     // themselves get reflected in the subrectangle
     // about either the lowerleft to upperright
     // diagonal (llur = true) or the lowerright
@@ -4990,8 +4990,8 @@ bool ON_Mesh::TransposeTextureCoordinates()
     ON_Interval TD[2];
   	TD[0] = m_packed_tex_domain[0];
 	  TD[1] = m_packed_tex_domain[1];
-	  TD[0].MakeIncreasing(); 
-	  TD[1].MakeIncreasing(); 
+	  TD[0].MakeIncreasing();
+	  TD[1].MakeIncreasing();
     for( i=0; i<vcnt; i++)
     {
 	    ON_2fPoint tc = m_T[i];
@@ -5001,7 +5001,7 @@ bool ON_Mesh::TransposeTextureCoordinates()
       {
 		    x = 1.0-x;
 		    y = 1.0-y;
-	    }	
+	    }
 	    double s = TD[0].ParameterAt(y);
 	    double t = TD[1].ParameterAt(x);
 	    m_T[i].Set((float)s,(float)t);
@@ -5032,8 +5032,8 @@ bool ON_Mesh::ReverseTextureCoordinates( int dir )
   int i;
   if ( bPackedRegion && bSrfParamTag )
   {
-    // The region of the bitmap the texture uses 
-    // cannot change.  The texture coordinates 
+    // The region of the bitmap the texture uses
+    // cannot change.  The texture coordinates
     // themselves get reflected in the subrectangle
     // about either the lowerleft to upperright
     // diagonal (llur = true) or the lowerright
@@ -5105,9 +5105,9 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
     hint[1] = 0;
     const double smax = srf.Domain(0)[1];
     const double tmax = srf.Domain(1)[1];
-    if ( HasPrincipalCurvatures() ) 
+    if ( HasPrincipalCurvatures() )
     {
-      for ( vi = 0; vi < vcount; vi++ ) 
+      for ( vi = 0; vi < vcount; vi++ )
       {
         //ON_2fPoint& tex = m_T[vi];
         // convert texture coordinates to normalizied texture coordinates
@@ -5120,8 +5120,8 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
         srf.Ev2Der( s, t, point, Ds, Dt, Dss, Dst, Dtt, side, hint );
         ON_EvNormal( side, Ds, Dt, Dss, Dst, Dtt, normal );
         ON_EvPrincipalCurvatures( Ds, Dt, Dss, Dst, Dtt, normal,
-                                  &kgauss, &kmean, 
-                                  &m_K[vi].k1, &m_K[vi].k2, 
+                                  &kgauss, &kmean,
+                                  &m_K[vi].k1, &m_K[vi].k2,
                                   K1, K2 ); //m_K[vi].e1, m_K[vi].e2 );
         m_V[vi] = &point.x; // use ON_3fPoint double* conversion (quiets gcc)
         if ( bHasVertexNormals )
@@ -5129,9 +5129,9 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
       }
       InvalidateCurvatureStats();
     }
-    else if ( bHasVertexNormals ) 
+    else if ( bHasVertexNormals )
     {
-      for ( vi = 0; vi < vcount; vi++ ) 
+      for ( vi = 0; vi < vcount; vi++ )
       {
         //ON_2fPoint& tex = m_T[vi];
         srf_st = &m_S[vi];
@@ -5145,9 +5145,9 @@ bool ON_Mesh::EvaluateMeshGeometry( const ON_Surface& srf )
         m_N[vi] = &normal.x; // use ON_3fVector double* conversion (quiets gcc)
       }
     }
-    else 
+    else
     {
-      for ( vi = 0; vi < vcount; vi++ ) 
+      for ( vi = 0; vi < vcount; vi++ )
       {
         //ON_2fPoint& tex = m_T[vi];
         srf_st = &m_S[vi];
@@ -5193,7 +5193,7 @@ void ON_Mesh::DeleteMeshParameters()
 
 void ON_Mesh::DestroyTree( bool bDeleteTree )
 {
-  if ( m_mtree ) 
+  if ( m_mtree )
   {
 #if defined(OPENNURBS_PLUS_INC_)
     if ( bDeleteTree )
@@ -5218,10 +5218,10 @@ static int compare3fPoint( const ON_3fPoint* a, const ON_3fPoint* b )
 
 typedef int (*ON_COMPAR_LPVOID_LPVOID)(const void*,const void*);
 
-static 
+static
 int GetPointMap( int pt_count, const ON_3fPoint* pt, ON_SimpleArray<int>& pt_map )
 {
-  // Builds a mapping array, pt_map[], such that the length of pt_map[] 
+  // Builds a mapping array, pt_map[], such that the length of pt_map[]
   // is pt_count and pt_map[i] == pt_map[j] if and only if pt[i] == pt[j]
   // as 3d points.  The values in map[] run from 0 to max_pt_index.
   int vt0, vt1;
@@ -5265,19 +5265,19 @@ int ON_Mesh::CullDegenerateFaces()
   ON_MeshFace f;
   int fi;
 
-  if ( fcount > 0 ) 
+  if ( fcount > 0 )
   {
     // use GetTopologyVertexMap() instead of calling Topology() because this mesh
     // may have lots of bogus faces that need to be culled.
     ON_SimpleArray<int> topv_map;
     const int topv_count = GetPointMap( m_V.Count(), m_V.Array(), topv_map );
-    if ( topv_count > 0 && topv_map.Count() == m_V.Count() ) 
+    if ( topv_count > 0 && topv_map.Count() == m_V.Count() )
     {
       ON_Workspace ws;
       const int* vtop = topv_map.Array();
       unsigned char* bBadFace = (unsigned char*)ws.GetMemory(fcount*sizeof(*bBadFace));
       memset( bBadFace, 0, fcount*sizeof(*bBadFace) );
-      for ( fi = 0; fi < fcount; fi++ ) 
+      for ( fi = 0; fi < fcount; fi++ )
       {
         ON_MeshFace& f0 = m_F[fi];
         // set f.vi[] to values of topoligical indices
@@ -5295,7 +5295,7 @@ int ON_Mesh::CullDegenerateFaces()
           f.vi[3] = (f0vi < 0 || f0vi >= vcount) ? -1 : vtop[f0vi];
         }
 
-        if ( !f.IsValid(topv_count) ) 
+        if ( !f.IsValid(topv_count) )
         {
           degenerate_count++;
           //f = m_F[fi];
@@ -5338,7 +5338,7 @@ int ON_Mesh::CullDegenerateFaces()
             f.vi[2] = f.vi[3];
           }
 
-          if ( !f0.IsValid(vcount) || !f.IsValid(topv_count) ) 
+          if ( !f0.IsValid(vcount) || !f.IsValid(topv_count) )
           {
             // face cannot be repaired by juggling vertex indices
             bBadFace[fi] = 1;
@@ -5347,7 +5347,7 @@ int ON_Mesh::CullDegenerateFaces()
         }
       }
 
-      if ( bad_count > 0 ) 
+      if ( bad_count > 0 )
       {
         //  remove bad faces.
         m_FN.SetCount(0);
@@ -5565,7 +5565,7 @@ double ON_SurfaceCurvature::MaximumRadius() const
 //  return NormalCurvature(tangent);
 //}
 
-ON_MeshTopology::ON_MeshTopology() 
+ON_MeshTopology::ON_MeshTopology()
 : m_mesh(0), m_memchunk(0), m_bIsValid(0)
 {
 }
@@ -5634,7 +5634,7 @@ ON_Line ON_MeshTopology::TopEdgeLine( int tope_index ) const
   if ( m_mesh && tope_index >= 0 && tope_index < m_tope.Count() )
   {
     const int* topvi = m_tope[tope_index].m_topvi;
-    if (   topvi[0] >= 0 && topvi[0] < m_topv.Count() 
+    if (   topvi[0] >= 0 && topvi[0] < m_topv.Count()
         && topvi[1] >= 0 && topvi[1] < m_topv.Count() )
     {
       const ON_MeshTopologyVertex& v0 = m_topv[topvi[0]];
@@ -5748,7 +5748,7 @@ bool ON_MeshTopology::SortVertexEdges(int topvi) const
     return true;
 
   // Divide the edges that use this vertex into two sets:
-  //   e1f[] = indices of edges that bound 1 face, 3 or 
+  //   e1f[] = indices of edges that bound 1 face, 3 or
   //           more faces, or no faces (in that order).
   //   e2f[] = indices of edges that bound exactly 2 faces.
   int i, j;
@@ -5777,18 +5777,18 @@ bool ON_MeshTopology::SortVertexEdges(int topvi) const
           efcnt = m_tope[topei].m_topf_count;
           if ( efcnt < 0 )
           {
-            ON_ERROR("ON_MeshTopology::SortVertexEdges(int topvi) - m_tope[topei].m_topf_count < 0"); 
+            ON_ERROR("ON_MeshTopology::SortVertexEdges(int topvi) - m_tope[topei].m_topf_count < 0");
             return false;
           }
           switch(efcnt)
           {
-          case 0: // edge has no faces 
+          case 0: // edge has no faces
             // (never happens if topology is from a valid ON_Mesh.)
-            e0f[e0fcnt++] = topei;                                   
+            e0f[e0fcnt++] = topei;
             break;
 
           case 1: // edge has exactly one face
-            e1f[e1fcnt++] = topei; 
+            e1f[e1fcnt++] = topei;
             break;
 
           case 2: // edge has exactly two faces
@@ -5803,7 +5803,7 @@ bool ON_MeshTopology::SortVertexEdges(int topvi) const
         }
       }
     }
-  
+
     // append list of non-manifold edges (3 or more faces) to e1f[]
     for ( i = 0; i < e3fcnt; i++ )
     {
@@ -6106,7 +6106,7 @@ bool ON_MeshTopology::IsValid() const
       if ( compare3fPoint( &p, &m_mesh->m_V[vi] ) )
         return false; // mesh.m_V[vi] not at same location as topv
       if ( m_topv_map[vi] != topvi )
-        return false; 
+        return false;
       vCheck[vi] = 1;
     }
 
@@ -6214,7 +6214,7 @@ bool ON_MeshTopology::IsValid() const
     tfvi[1] = m_topv_map[f.vi[1]];
     tfvi[2] = m_topv_map[f.vi[2]];
     tfvi[3] = m_topv_map[f.vi[3]];
-    if (    topf.m_topei[0] != 0 || topf.m_topei[1] != 0 
+    if (    topf.m_topei[0] != 0 || topf.m_topei[1] != 0
          || topf.m_topei[2] != 0 || topf.m_topei[3] != 0 ) {
       if ( !f.IsValid(v_count) )
         return false;
@@ -6250,11 +6250,11 @@ bool ON_MeshTopology::IsValid() const
           if ( tope.m_topvi[1] != tfvi[j] )
             return false;
         }
-      }      
+      }
     }
     else {
       // all topf.m_topei[] must be zeros
-      if (    topf.m_topei[0] != 0 || topf.m_topei[1] != 0 
+      if (    topf.m_topei[0] != 0 || topf.m_topei[1] != 0
            || topf.m_topei[2] != 0 || topf.m_topei[3] != 0 )
         return false;
     }
@@ -6379,7 +6379,7 @@ bool ON_MeshTopology::Create()
 
           // 5 August 2003 Dale Lear:
           //    I added this check to avoid passing
-          //    bogus indices to m_topv_map[].  If faces 
+          //    bogus indices to m_topv_map[].  If faces
           //    with invalid vi[] values make it past
           //    this point, you will crash on the m_topv_map[]
           //    lines.
@@ -6390,12 +6390,12 @@ bool ON_MeshTopology::Create()
           f.vi[1] = m_topv_map[f.vi[1]];
           f.vi[2] = m_topv_map[f.vi[2]];
           f.vi[3] = m_topv_map[f.vi[3]];
-//	Greg Arden 29 April 2003.  Fixes TRR#9271.  The below block used to be in an else clause:  
-//						          if ( f.IsValid(topv_count) ) 			
+//	Greg Arden 29 April 2003.  Fixes TRR#9271.  The below block used to be in an else clause:
+//						          if ( f.IsValid(topv_count) )
 //								Since edges of the mesh could have been collapsed
 //								it isn't right to expect the face to be valid after the m_topv_map has been applied
 //								to the vertex indices.
-          {			
+          {
             vi = f.vi;
             vi1 = vi[3];
             for ( fvi = 0; fvi < 4; fvi++ ) {
@@ -6408,7 +6408,7 @@ bool ON_MeshTopology::Create()
               //   The test removed on 29 April prevented crashes when
               //   vi0 and vi1 were bogus.  I'm adding this test in
               //   to fix a crash reading fsv_r4.3dm.
-              if (   vi0 < 0 || vi0 >= topv_count 
+              if (   vi0 < 0 || vi0 >= topv_count
                   || vi1 < 0 || vi1 >= topv_count)
                 continue;
 
@@ -6563,18 +6563,18 @@ bool ON_MeshTopology::Create()
           for ( fi = 0; fi < fcount; fi++ ) {
             ON_MeshTopologyFace& f = m_topf[fi];
             bool bIsGood = false;
-            if (    f.m_topei[0] >= 0 && f.m_topei[1] >= 0 && f.m_topei[2] >=0 
-                 && f.m_topei[0] != f.m_topei[1] 
-                 && f.m_topei[1] != f.m_topei[2] 
-                 && f.m_topei[2] != f.m_topei[0] 
+            if (    f.m_topei[0] >= 0 && f.m_topei[1] >= 0 && f.m_topei[2] >=0
+                 && f.m_topei[0] != f.m_topei[1]
+                 && f.m_topei[1] != f.m_topei[2]
+                 && f.m_topei[2] != f.m_topei[0]
                  ) {
               if ( m_mesh->m_F[fi].IsTriangle() ) {
                 bIsGood = true;
                 f.m_topei[3] = f.m_topei[2];
               }
-              else if (   f.m_topei[3] >= 0 
-                       && f.m_topei[0] != f.m_topei[3] 
-                       && f.m_topei[1] != f.m_topei[3] 
+              else if (   f.m_topei[3] >= 0
+                       && f.m_topei[0] != f.m_topei[3]
+                       && f.m_topei[1] != f.m_topei[3]
                        && f.m_topei[2] != f.m_topei[3] ) {
                 bIsGood = true;
               }
@@ -6756,21 +6756,21 @@ bool ON_MeshPartition_IsValid( const ON_MeshPartition& p, const ON_Mesh& mesh )
   return rc;
 }
 
-const ON_MeshPartition* ON_Mesh::CreatePartition( 
+const ON_MeshPartition* ON_Mesh::CreatePartition(
               int partition_max_vertex_count, // maximum number of vertices in a partition
               int partition_max_triangle_count // maximum number of triangles in a partition
               )
 {
   ON_Workspace ws;
   bool bNeedFaceSort = true;
-  if ( m_partition ) 
+  if ( m_partition )
   {
     bNeedFaceSort = false;
     if (   m_partition->m_partition_max_triangle_count > partition_max_triangle_count
         || m_partition->m_partition_max_vertex_count > partition_max_vertex_count )
         DestroyPartition();
   }
-  if ( !m_partition ) 
+  if ( !m_partition )
   {
     // TODO: create one
     struct ON_MeshPart p;
@@ -6783,8 +6783,8 @@ const ON_MeshPartition* ON_Mesh::CreatePartition(
       k = vertex_count/partition_max_vertex_count;
     k++;
     m_partition->m_part.Reserve(k);
-    if ( vertex_count   <= partition_max_vertex_count && 
-         triangle_count <= partition_max_triangle_count ) 
+    if ( vertex_count   <= partition_max_vertex_count &&
+         triangle_count <= partition_max_triangle_count )
     {
       m_partition->m_partition_max_vertex_count = vertex_count;
       m_partition->m_partition_max_triangle_count = triangle_count;
@@ -6797,7 +6797,7 @@ const ON_MeshPartition* ON_Mesh::CreatePartition(
       p.triangle_count = triangle_count;
       m_partition->m_part.Append(p);
     }
-    else 
+    else
     {
       int fi;
       int* fvi;
@@ -6846,7 +6846,7 @@ const ON_MeshPartition* ON_Mesh::CreatePartition(
           fpt[fi].z = (int)floor(vzdom.NormalizedParameterAt(fcenter.z)*100);
         }
       }
-      fpt.Sort( ON::heap_sort, fmap, compare_fpt ); 
+      fpt.Sort( ON::heap_sort, fmap, compare_fpt );
       m_F.Permute( fmap );
       if ( m_FN.Count() == face_count )
         m_FN.Permute( fmap );
@@ -6858,15 +6858,15 @@ const ON_MeshPartition* ON_Mesh::CreatePartition(
       int fi0, fi1, partition_mark, partition_vertex_count, partition_triangle_count;
       fi1 = 0;
       fi0 = 0;
-      for ( partition_mark = 3, fi0 = 0; fi0 < face_count; fi0 = fi1, partition_mark += 2 ) 
+      for ( partition_mark = 3, fi0 = 0; fi0 < face_count; fi0 = fi1, partition_mark += 2 )
       {
         partition_vertex_count = 0;
         partition_triangle_count = 0;
-        for ( fi1 = fi0; 
+        for ( fi1 = fi0;
               fi1 < face_count
               && partition_triangle_count+2 <= partition_max_triangle_count
               && partition_vertex_count+4 <= partition_max_vertex_count;
-              fi1++ ) 
+              fi1++ )
         {
           fvi = m_F[fi1].vi;
           partition_triangle_count++;
@@ -6934,9 +6934,9 @@ const ON_MeshPartition* ON_Mesh::CreatePartition(
         vi0 = vi2;
         vi1 = vi3;
         m = 2*pi + 4;
-        for ( vi2 = vi3; vi2 < vertex_count && pmark[vi2] <  m; vi2++) 
+        for ( vi2 = vi3; vi2 < vertex_count && pmark[vi2] <  m; vi2++)
         {/*empty for body*/}
-        for ( vi3 = vi2; vi3 < vertex_count && pmark[vi3] <= m; vi3++) 
+        for ( vi3 = vi2; vi3 < vertex_count && pmark[vi3] <= m; vi3++)
         {/*empty for body*/}
         m_partition->m_part[pi].vi[0] = vi0;
         m_partition->m_part[pi].vi[1] = vi3;
@@ -7076,7 +7076,7 @@ BOOL ON_MeshVertexRef::IsValid( ON_TextLog* text_log ) const
         {
           text_log->Print("m_mesh_vi=%d is not in m_top->m_topv[m_top_vi=%d].m_vi[] array.\n",
                           m_mesh_vi,m_top_vi);
-          
+
         }
         return false;
       }
@@ -7134,7 +7134,7 @@ BOOL ON_MeshVertexRef::GetBBox(
   return rc;
 }
 
-BOOL ON_MeshVertexRef::Transform( 
+BOOL ON_MeshVertexRef::Transform(
        const ON_Xform& xform
        )
 {
@@ -7270,7 +7270,7 @@ BOOL ON_MeshEdgeRef::GetBBox(
   return rc;
 }
 
-BOOL ON_MeshEdgeRef::Transform( 
+BOOL ON_MeshEdgeRef::Transform(
        const ON_Xform& xform
        )
 {
@@ -7416,7 +7416,7 @@ BOOL ON_MeshFaceRef::GetBBox(
   return rc;
 }
 
-BOOL ON_MeshFaceRef::Transform( 
+BOOL ON_MeshFaceRef::Transform(
        const ON_Xform& xform
        )
 {
@@ -7543,7 +7543,7 @@ ON_MeshVertexRef ON_MeshTopology::VertexRef(ON_COMPONENT_INDEX ci) const
   ON_MeshVertexRef vr;
   if (ci.m_index >= 0) {
     switch(ci.m_type) {
-      
+
       case ON_COMPONENT_INDEX::mesh_vertex:
 	if (m_mesh) {
 	  vr = m_mesh->VertexRef(ci);
@@ -7565,7 +7565,7 @@ ON_MeshVertexRef ON_MeshTopology::VertexRef(ON_COMPONENT_INDEX ci) const
 	break;
     }
   }
-  return vr;  
+  return vr;
 }
 
 ON_MeshVertexRef ON_MeshTopology::VertexRef(int topv_index) const
@@ -7716,27 +7716,27 @@ ON_Geometry* ON_Mesh::MeshComponent(ON_COMPONENT_INDEX ci) const
   ON_Geometry* component = 0;
   if (ci.m_index >= 0) {
     switch (ci.m_type) {
-      case ON_COMPONENT_INDEX::mesh_vertex: 
+      case ON_COMPONENT_INDEX::mesh_vertex:
 	{
 	  ON_MeshVertexRef r = VertexRef(ci);
 	  component = new ON_MeshVertexRef(r);
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::meshtop_vertex:
 	{
 	  ON_MeshVertexRef r = Topology().VertexRef(ci);
 	  component = new ON_MeshVertexRef(r);
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::meshtop_edge:
 	{
 	  ON_MeshEdgeRef r = EdgeRef(ci);
 	  component = new ON_MeshEdgeRef(r);
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::mesh_face:
 	{
 	  ON_MeshFaceRef r = FaceRef(ci);
@@ -7753,7 +7753,7 @@ ON_Geometry* ON_Mesh::MeshComponent(ON_COMPONENT_INDEX ci) const
 }
 
 static
-bool ON_ClosestPointToTriangleHelper( 
+bool ON_ClosestPointToTriangleHelper(
         ON_3dPoint A, ON_3dPoint B, ON_3dPoint C,
         ON_3dPoint P,
         double* a, double* b, double* c
@@ -7797,7 +7797,7 @@ bool ON_ClosestPointToTriangleHelper(
 
 
 
-bool ON_ClosestPointToTriangle( 
+bool ON_ClosestPointToTriangle(
         ON_3dPoint A, ON_3dPoint B, ON_3dPoint C,
         ON_3dPoint P,
         double* a, double* b, double* c
@@ -7831,7 +7831,7 @@ bool ON_ClosestPointToTriangle(
   y = P.y-C.y;
   z = P.z-C.z;
   x = x*x + y*y + z*z;
- 
+
   if ( x < d )
   {
     // C is closest to P
@@ -7850,9 +7850,9 @@ bool ON_ClosestPointToTriangle(
   return rc;
 }
 
-bool ON_ClosestPointToTriangleFast( const ON_3dPoint& R, 
-                                    const ON_3dPoint& S, 
-                                    const ON_3dPoint& T, 
+bool ON_ClosestPointToTriangleFast( const ON_3dPoint& R,
+                                    const ON_3dPoint& S,
+                                    const ON_3dPoint& T,
                                     ON_3dPoint Q,
                                     double* r, double* s, double* t
                                     )
@@ -7989,7 +7989,7 @@ int ON_LineTriangleIntersect(
         const ON_3dPoint& C,
         const ON_3dPoint& P,
         const ON_3dPoint& Q,
-        double abc[2][3], 
+        double abc[2][3],
         double t[2],
         double tol
         )
@@ -8010,7 +8010,7 @@ int ON_LineTriangleIntersect(
     q = pdepth-qdepth;
     if ( fabs(q) <= ON_DBL_MIN )
     {
-      // line is parallel to triangle's plane 
+      // line is parallel to triangle's plane
       return 0;
     }
     // infinte line intersects plane in a single point
@@ -8055,7 +8055,7 @@ int ON_LineTriangleIntersect(
       T.x = tri.x*A.x + tri.y*B.x + tri.z*C.x;
       T.y = tri.x*A.y + tri.y*B.y + tri.z*C.y;
       T.z = tri.x*A.z + tri.y*B.z + tri.z*C.z;
-      
+
       qdepth = T.DistanceTo(L);
 
       // find point on line closest to T;
@@ -8160,7 +8160,7 @@ void ON_Mesh::SetVertexHiddenFlag( int meshvi, bool bHidden )
 bool ON_Mesh::VertexIsHidden(int meshvi) const
 {
   const int vcount = m_V.Count();
-  return ((m_hidden_count > 0 && meshvi >= 0 && meshvi < vcount && vcount == m_H.Count()) 
+  return ((m_hidden_count > 0 && meshvi >= 0 && meshvi < vcount && vcount == m_H.Count())
           ? m_H[meshvi]
           : false);
 }
@@ -8265,7 +8265,7 @@ void ON_MappingTag::SetDefaultSurfaceParameterMappingTag()
   ON_TextureMapping srfp_mapping;
   srfp_mapping.m_type = ON_TextureMapping::srfp_mapping;
   srfp_mapping.m_mapping_id = ON_nil_uuid;
-  Set(srfp_mapping); 
+  Set(srfp_mapping);
 }
 
 void ON_MappingTag::Set(const ON_TextureMapping& mapping)
@@ -8305,7 +8305,7 @@ void ON_MappingTag::Default()
   m_mesh_xform.m_xform[3][3] = 1.0;
 }
 
-int ON_MappingTag::Compare( 
+int ON_MappingTag::Compare(
              const ON_MappingTag& other,
              bool bCompareId,
              bool bCompareCRC,
@@ -8354,7 +8354,7 @@ bool ON_MappingTag::Write(ON_BinaryArchive& archive) const
 
   if ( !archive.EndWrite3dmChunk() )
     rc = false;
-  
+
   return rc;
 }
 
@@ -8395,7 +8395,7 @@ bool ON_MappingTag::Read(ON_BinaryArchive& archive)
 
   if ( !archive.EndRead3dmChunk() )
     rc = false;
-  
+
   return rc;
 }
 

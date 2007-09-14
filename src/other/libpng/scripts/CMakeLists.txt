@@ -1,4 +1,4 @@
-                                             
+
 project(PNG)
 
 # Copyright (C) 2007 Glenn Randers-Pehrson

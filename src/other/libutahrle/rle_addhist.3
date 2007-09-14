@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, Curtin University of Technology
 .TH RLE_ADDHIST 3 9/9/88 3
-.UC 4 
+.UC 4
 
 .SH NAME
 rle_addhist \- add a history comment to an RLE file.
@@ -21,7 +21,7 @@ rle_hdr *in_hdr, *out_hdr;
 .SH DESCRIPTION
 
 .I rle_addhist
-is used to add history comments to the 
+is used to add history comments to the
 .IR RLE (5)
 file in the form:
 .br
@@ -36,7 +36,7 @@ as follows:
 .br
 	rle_addhist(argv,(rle_hdr *)0,&out_hdr);
 .br
-Programs which filter \fIRLE\fP files should call 
+Programs which filter \fIRLE\fP files should call
 .I rle_addhist
 as:
 .br

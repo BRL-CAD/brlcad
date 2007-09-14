@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_CreateSlave 3 7.6 Tcl "Tcl Library Procedures"
 .BS
@@ -122,8 +122,8 @@ is either \fBTCL_OK\fR or \fBTCL_ERROR\fR. If \fBTCL_ERROR\fR is returned
 then the \fBresult\fR field of the interpreter contains an error message.
 .PP
 \fBTcl_CreateSlave\fR creates a new interpreter as a slave of \fIinterp\fR.
-It also creates a slave command named \fIslaveName\fR in \fIinterp\fR which 
-allows \fIinterp\fR to manipulate the new slave. 
+It also creates a slave command named \fIslaveName\fR in \fIinterp\fR which
+allows \fIinterp\fR to manipulate the new slave.
 If \fIisSafe\fR is zero, the command creates a trusted slave in which Tcl
 code has access to all the Tcl commands.
 If it is \fB1\fR, the command creates a ``safe'' slave in which Tcl code
@@ -173,7 +173,7 @@ created by \fBTcl_CreateSlave\fR) between \fIslaveInterp\fR and
 \fItargetInterp\fR. Any two interpreters can be used, without any
 restrictions on how they are related.
 .PP
-\fBTcl_CreateAliasObj\fR is similar to \fBTcl_CreateAlias\fR except 
+\fBTcl_CreateAliasObj\fR is similar to \fBTcl_CreateAlias\fR except
 that it takes a vector of objects to pass as additional arguments instead
 of a vector of strings.
 .PP
@@ -191,7 +191,7 @@ strings.
 \fBTcl_ExposeCommand\fR moves the command named \fIhiddenCmdName\fR from
 the set of hidden commands to the set of exposed commands, putting
 it under the name
-\fIcmdName\fR. 
+\fIcmdName\fR.
 \fIHiddenCmdName\fR must be the name of an existing hidden
 command, or the operation will return \fBTCL_ERROR\fR and leave an error
 message in the \fIresult\fR field in \fIinterp\fR.

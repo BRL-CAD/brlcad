@@ -7,12 +7,12 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 tabset - Create and manipulate tabset widgets
 
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
-<B>tabset</B> <I>pathName </I>?<I>options</I>? 
+<B>tabset</B> <I>pathName </I>?<I>options</I>?
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The <B>tabset</B> widget displays
 a series of overlapping folders. Only the contents of one folder at a time
@@ -24,7 +24,7 @@ can be tiered or scrolled.  Pages (i.e. embedded widgets) can be torn off
 and displayed in another toplevel widget, and also restored.  A tabset can
 also be used as just a set of tabs, without a displaying any pages.  You
 can bind events to individual tabs, so it's easy to add features like "balloon
-help". 
+help".
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 Notebooks are a popular graphical paradigm.  They allow
 you to organize many windows in a single widget.  For example, you might
@@ -44,7 +44,7 @@ them out, and then replace them when you are finished. <P>
 A tabset may contain
 an unlimited number of folders.  If there are too many tabs to view, you
 can arrange them as multiple tiers or scroll the tabs. The tabset uses the
-conventional Tk scrollbar syntax, so you can attach a scrollbar too.  
+conventional Tk scrollbar syntax, so you can attach a scrollbar too.
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 You
 create a tabset widget with the <B>tabset</B> command. <BR>
@@ -135,7 +135,7 @@ When first created, a new tabset contains
 no tabs.  Tabs are added or deleted using widget operations described below.
 It is not necessary for all the tabs to be displayed in the tabset window
 at once; commands described below may be used to change the view in the
-window. Tabsets allow scrolling of tabs using the <B>-scrollcommand</B> option. 
+window. Tabsets allow scrolling of tabs using the <B>-scrollcommand</B> option.
 They also support scanning (see the <B>scan</B> operation). Tabs may be arranged
 along any side of the tabset window using the <B>-side</B> option. <P>
 The size of the
@@ -145,11 +145,11 @@ the width of the folder. The tallest determines the height.  If no folders
 contain an embedded widget, the size is detemined solely by the size of
 the tabs.   <P>
 You can override either dimension with the tabset's <B>-width</B> and
-<B>-height</B> options. 
+<B>-height</B> options.
 <H2><A NAME="sect6" HREF="#toc6">Tabset Indices</A></H2>
 Indices refer to individual tabs/folders in
 the tabset.  Many of the operations for tabset widgets take one or more
-indices as arguments.  An index may take several forms: 
+indices as arguments.  An index may take several forms:
 <DL>
 
 <DT><I>number</I>  </DT>
@@ -174,7 +174,7 @@ typically changed by moving the mouse pointer over a tab or using the widget's
 <B>activate</B> operation. There can be only one active tab at a time. If there
 is no tab located under the mouse pointer, the index is ignored. </DD>
 
-<DT><B>focus</B> 
+<DT><B>focus</B>
 </DT>
 <DD>Tab that currently has the widget's focus. This tab is displayed with a dashed
 line around its label.  You can change this using the <B>focus</B> operation. If
@@ -207,7 +207,7 @@ tabset then the index is ignored. </DD>
 <P>
 Some indices may not always be available.
  For example, if the mouse is not over any tab, "active" does not have
-an index.  For most tabset operations this is harmless and ignored.   
+an index.  For most tabset operations this is harmless and ignored.
 <H2><A NAME="sect7" HREF="#toc7">Tabset
 Operations</A></H2>
 All <B>tabset</B> operations are invoked by specifying the widget's pathname,
@@ -218,7 +218,7 @@ form is: <P>
 <CODE><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<I>pathName operation </I>?<I>arg arg ...</I>?<BR>
 <P>
 </CODE><P><I>Operation</I> and the <I>arg</I>s determine the exact behavior of the command.  The
-following operations are available for tabset widgets: 
+following operations are available for tabset widgets:
 <DL>
 
 <DT><I>pathName <B>activate</B></I>
@@ -266,7 +266,7 @@ command returns an empty string. <I>Option</I> and <I>value</I> are described be
 <DT><B>-activebackground
 <I>color</I></B> </DT>
 <DD>Sets the default active background color for tabs.  A tab is active
-when the mouse is positioned over it or set by the <B>activate</B> operation. 
+when the mouse is positioned over it or set by the <B>activate</B> operation.
 Individual tabs may override this option by setting the  tab's <B>-activebackground</B>
 option.  </DD>
 
@@ -366,8 +366,8 @@ be the same width.  If true, each tab will be as wide as the widest tab.
 <DT><B>-scrollcommand <I>string</I></B> </DT>
 <DD>Specifies the prefix for a command
 for communicating with  scrollbars.  Whenever the view in the widget's window
- changes, the widget will generate a Tcl command by concatenating the 
-scroll command and two numbers.  If this option is not specified, then 
+ changes, the widget will generate a Tcl command by concatenating the
+scroll command and two numbers.  If this option is not specified, then
 no command will be executed.  </DD>
 
 <DT><B>-scrollincrement <I>pixels</I></B> </DT>
@@ -522,7 +522,7 @@ deleted. </DD>
 described in the section <FONT SIZE=-1><B>TABSET INDICES</B></FONT>
   </DD>
 
-<DT><I>pathName <B>index</B></I> ?<I>flag</I>? <I>string</I> 
+<DT><I>pathName <B>index</B></I> ?<I>flag</I>? <I>string</I>
 </DT>
 <DD>Returns the node id of the tab specified by <I>string</I>.  If <I>flag</I> is <B>-name</B>, then
 <I>string</I> is the name of a tab. If <I>flag</I> is <B>-index</B>, <I>string</I> is an index such as
@@ -595,7 +595,7 @@ window. </DD>
 <DD>This command queries or changes the position of the tabset in the
 widget's window.  It can take any of the following forms: <blockquote></DD>
 
-<DT><I>pathName <B>view</B></I> 
+<DT><I>pathName <B>view</B></I>
 </DT>
 <DD>Returns a list of two numbers between 0.0 and 1.0 that describe the amount
 and position of the tabset that is visible in the window.  For example,
@@ -614,7 +614,7 @@ must be a number between 0.0 and 1.0. </DD>
 command shifts the view in the window (left/top or right/bottom) according
 to <I>number</I> and <I>what</I>.  <I>Number</I> must be an integer. <I>What</I> must be either <B>units</B>
 or <B>pages</B> or an abbreviation of these.  If <I>what</I> is <B>units</B>, the view adjusts
-left or right by <I>number</I> scroll units (see the <B>-scrollincrement</B> option). 
+left or right by <I>number</I> scroll units (see the <B>-scrollincrement</B> option).
 ; if it is <B>pages</B> then the view adjusts by <I>number</I> widget windows.  If <I>number</I>
 is negative then tabs farther to the left become visible; if it is positive
 then tabs farther to the right become visible. </DD>
@@ -685,7 +685,7 @@ always the first tag in the list.  The default value is <I>all</I>. </DD>
 <DT><B>-command <I>string</I></B>
 </DT>
 <DD>Specifies a Tcl script to be associated with <I>nameOrIndex</I>.  This command
-is typically invoked when left mouse button is released over  the tab. 
+is typically invoked when left mouse button is released over  the tab.
 Setting this option overrides the widget's <B>-selectcommand</B> option.  </DD>
 
 <DT><B>-data <I>string</I></B>
@@ -820,7 +820,7 @@ current parent of the embedded widget is returned. </DD>
 BLT automatically
 generates class bindings that supply tabsets their default behaviors. The
 following event sequences are set by default  for tabsets (via the class
-bind tag <I>Tabset</I>): 
+bind tag <I>Tabset</I>):
 <DL>
 
 <DT><B>&lt;ButtonPress-2&gt;</B></DT>
@@ -863,7 +863,7 @@ is selected, it's command is invoked and the  embedded widget is mapped.
 </DL>
 <P>
 Each tab, by default, also has a set of bindings (via the tag <I>all</I>).  These
-bindings may be reset using the tabset's  <B>bind</B> operation. 
+bindings may be reset using the tabset's  <B>bind</B> operation.
 <DL>
 
 <DT><B>&lt;Enter&gt;</B></DT>
@@ -912,7 +912,7 @@ command  in a binding script terminates that script, and a break command
  just as for the bind command. <P>
 The <B>-bindtags</B> option for tabs controls addition
 tag names that can be matched.  Implicitly the first tag for each tab is
-its name. Setting the value of the <B>-bindtags</B> option doesn't change this. 
+its name. Setting the value of the <B>-bindtags</B> option doesn't change this.
 <H2><A NAME="sect11" HREF="#toc11">Keywords</A></H2>
 tabset,
 widget <P>

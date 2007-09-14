@@ -1,6 +1,6 @@
-/* 
+/*
  * mergechan.c - Merge channels from multiple RLE images
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -50,7 +50,7 @@ char ** argv;
     in_hdr = (rle_hdr *) malloc( sizeof( rle_hdr )
 					    * nfiles );
     RLE_CHECK_ALLOC( cmd_nm, in_hdr, "file headers" );
-    
+
     in_rows = (rle_op ***) malloc( sizeof( rle_op ** ) * nfiles );
     RLE_CHECK_ALLOC( cmd_nm, in_rows, "input data" );
     in_counts = (int **) malloc( sizeof( int * ) * nfiles );
@@ -62,7 +62,7 @@ char ** argv;
     RLE_CHECK_ALLOC( cmd_nm, out_rows, "output data" );
     out_count = (int *) malloc( sizeof( int ) * nfiles );
     RLE_CHECK_ALLOC( cmd_nm, out_count, 0 );
-				  
+
     /* Open all the files, and check consistancy */
 
     for (i = 0; i < nfiles; i++)
@@ -148,7 +148,7 @@ char ** argv;
 
 	out_hdr.ncolors = nfiles - alpha_flag;
 	out_hdr.alpha = alpha_flag;
-    
+
 	/* Set background color appropriately. */
 	if ( out_hdr.ncolors > 0 )
 	{
@@ -237,7 +237,7 @@ char ** argv;
 		    out_count[i] = 0;
 		}
 	    }
-	
+
 	    rle_putraw( out_rows, out_count, &out_hdr );
 
 	    for (i = -alpha_flag; i < out_hdr.ncolors; i++)

@@ -208,8 +208,8 @@ extern Blt_ColorImage Blt_ConvolveColorImage _ANSI_ARGS_((
 
 extern Blt_ColorImage Blt_CreateColorImage _ANSI_ARGS_((int width,int height));
 
-extern Blt_ColorImage Blt_DrawableToColorImage _ANSI_ARGS_((Tk_Window tkwin, 
-	Drawable drawable, int x, int y, int width, int height, 
+extern Blt_ColorImage Blt_DrawableToColorImage _ANSI_ARGS_((Tk_Window tkwin,
+	Drawable drawable, int x, int y, int width, int height,
 	double inputGamma));
 
 extern int Blt_GetResampleFilter _ANSI_ARGS_((Tcl_Interp *interp,
@@ -228,11 +228,11 @@ extern Blt_ColorImage Blt_PhotoToColorImage _ANSI_ARGS_((
 extern Blt_ColorImage Blt_PhotoRegionToColorImage _ANSI_ARGS_((
 	Tk_PhotoHandle photo, int x, int y, int width, int height));
 
-extern int Blt_QuantizeColorImage _ANSI_ARGS_((Blt_ColorImage src, 
+extern int Blt_QuantizeColorImage _ANSI_ARGS_((Blt_ColorImage src,
         Blt_ColorImage dest, int nColors));
 
 extern Blt_ColorImage Blt_ResampleColorImage _ANSI_ARGS_((Blt_ColorImage image,
-	int destWidth, int destHeight, ResampleFilter *horzFilterPtr, 
+	int destWidth, int destHeight, ResampleFilter *horzFilterPtr,
 	ResampleFilter *vertFilterPtr));
 
 extern void Blt_ResamplePhoto _ANSI_ARGS_((Tk_PhotoHandle srcPhoto,
@@ -255,13 +255,13 @@ extern int Blt_SnapPhoto _ANSI_ARGS_((Tcl_Interp *interp, Tk_Window tkwin,
 	Drawable drawable, int x, int y, int width, int height, int destWidth,
 	int destHeight, char *photoName, double inputGamma));
 
-extern void Blt_ImageRegion _ANSI_ARGS_((Blt_ColorImage image, 
+extern void Blt_ImageRegion _ANSI_ARGS_((Blt_ColorImage image,
 	Region2D *regionPtr));
 
-extern Region2D *Blt_ColorImageRegion _ANSI_ARGS_((Blt_ColorImage image, 
+extern Region2D *Blt_ColorImageRegion _ANSI_ARGS_((Blt_ColorImage image,
 	Region2D *regionPtr));
 
-extern Region2D *Blt_SetRegion _ANSI_ARGS_((int x, int y, int width, 
+extern Region2D *Blt_SetRegion _ANSI_ARGS_((int x, int y, int width,
 	int height, Region2D *regionPtr));
 
 extern ColorTable Blt_CreateColorTable _ANSI_ARGS_((Tk_Window tkwin));
@@ -289,7 +289,7 @@ extern int Blt_DestroyTemporaryImage _ANSI_ARGS_((Tcl_Interp *interp,
 	Tk_Image tkImage));
 
 extern GC Blt_GetBitmapGC _ANSI_ARGS_((Tk_Window tkwin));
-extern Pixmap Blt_PhotoImageMask _ANSI_ARGS_((Tk_Window tkwin, 
+extern Pixmap Blt_PhotoImageMask _ANSI_ARGS_((Tk_Window tkwin,
 	Tk_PhotoImageBlock src));
 
 extern Pixmap Blt_RotateBitmap _ANSI_ARGS_((Tk_Window tkwin, Pixmap bitmap,
@@ -299,9 +299,9 @@ extern Pixmap Blt_ScaleBitmap _ANSI_ARGS_((Tk_Window tkwin, Pixmap srcBitmap,
 	int srcWidth, int srcHeight, int scaledWidth, int scaledHeight));
 
 extern Pixmap Blt_ScaleRotateBitmapRegion _ANSI_ARGS_((Tk_Window tkwin,
-	Pixmap srcBitmap, unsigned int srcWidth, unsigned int srcHeight, 
-	int regionX, int regionY, unsigned int regionWidth, 
-	unsigned int regionHeight, unsigned int virtWidth, 
+	Pixmap srcBitmap, unsigned int srcWidth, unsigned int srcHeight,
+	int regionX, int regionY, unsigned int regionWidth,
+	unsigned int regionHeight, unsigned int virtWidth,
 	unsigned int virtHeight, double theta));
 
 #endif /*_BLT_IMAGE_H*/

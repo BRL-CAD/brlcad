@@ -584,7 +584,7 @@ else
 	_version="0.0.0"
     fi
     $ECHO "Found GNU Automake version $_version"
-    version_check "$AUTOMAKE_VERSION" "$_version" 
+    version_check "$AUTOMAKE_VERSION" "$_version"
     if [ $? -ne 0 ] ; then
 	_report_error=yes
     fi
@@ -686,7 +686,7 @@ else
 	_version="0.0.0"
     fi
     $ECHO "Found GNU Libtool version $_version"
-    version_check "$LIBTOOL_VERSION" "$_version" 
+    version_check "$LIBTOOL_VERSION" "$_version"
     if [ $? -ne 0 ] ; then
 	_report_error=yes
     fi
@@ -1208,7 +1208,7 @@ manual_autogen ( ) {
 	    libtoolize_output="`$LIBTOOLIZE $LIBTOOLIZE_OPTIONS 2>&1`"
 	    ret=$?
 	    $VERBOSE_ECHO "$libtoolize_output"
-	    
+
 	    if [ ! $ret = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
 	else
 	    if [ "x$HAVE_ALT_LIBTOOLIZE" = "xyes" ] ; then
@@ -1216,7 +1216,7 @@ manual_autogen ( ) {
 		libtoolize_output="`$LIBTOOLIZE $ALT_LIBTOOLIZE_OPTIONS 2>&1`"
 		ret=$?
 		$VERBOSE_ECHO "$libtoolize_output"
-		
+
 		if [ ! $ret = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
 	    fi
 	fi
@@ -1264,7 +1264,7 @@ manual_autogen ( ) {
 	macros_to_search=""
 	ac_major="`echo ${AUTOCONF_VERSION}. | cut -d. -f1 | sed 's/[^0-9]//g'`"
 	ac_minor="`echo ${AUTOCONF_VERSION}. | cut -d. -f2 | sed 's/[^0-9]//g'`"
-	
+
 	if [ $ac_major -lt 2 ] ; then
 	    macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
 	else
@@ -1382,7 +1382,7 @@ EOF
 	automake_output="`$AUTOMAKE $AUTOMAKE_OPTIONS 2>&1`"
 	ret=$?
 	$VERBOSE_ECHO "$automake_output"
-	
+
 	if [ ! $ret = 0 ] ; then
 
 	    ###################
@@ -1394,7 +1394,7 @@ EOF
 	    automake_output="`$AUTOMAKE $ALT_AUTOMAKE_OPTIONS 2>&1`"
 	    ret=$?
 	    $VERBOSE_ECHO "$automake_output"
-	    
+
 	    if [ ! $ret = 0 ] ; then
 	 	# test if libtool is busted
 		libtool_failure "$automake_output"

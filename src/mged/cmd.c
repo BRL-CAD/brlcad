@@ -1954,7 +1954,7 @@ mged_global_variable_teardown(Tcl_Interp *interp)
     Tcl_UnlinkVar(interp, "mged_default(db_warn)");
     Tcl_UnlinkVar(interp, "mged_default(db_upgrade)");
     Tcl_UnlinkVar(interp, "mged_default(db_version)");
-    
+
     Tcl_UnlinkVar(interp, "edit_class");
     Tcl_UnlinkVar(interp, "edit_solid_flag");
     Tcl_UnlinkVar(interp, "edit_object_flag");

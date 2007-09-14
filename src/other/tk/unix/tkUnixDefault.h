@@ -40,8 +40,8 @@
 /*
  * The definitions below provide symbolic names for the default fonts.
  * NORMAL_FONT -	Normal font
- * BOLD_FONT -		Bold font 
- * FIXED_FONT -		Fixed-width font 
+ * BOLD_FONT -		Bold font
+ * FIXED_FONT -		Fixed-width font
  */
 
 #if HAVE_XFT

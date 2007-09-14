@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 
     int arg_count;
     const int MIN_NUM_OF_ARGS = 2;
-    
+
     bu_setlinebuf( stderr );
 
     rt_init_resource(&rt_uniresource, 0, NULL);
@@ -218,7 +218,7 @@ main(int argc, char *argv[])
     init_state.ts_tol = &tol;
     init_state.ts_ttol = &ttol;
     bu_avs_init(&init_state.ts_attrs, 1, "avs in tree_state");
-    
+
     optind++;
 
     /* Walk the trees named on the command line
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 	    char csgOp;
 
 	    tokenize(g_CsgBoolExp[i],csgTokens," ");
-               
+
 	    cout << "DEBUG " << csgTokens.size() << endl;
 
 	    for (int j = 0; j < csgTokens.size(); j++) {
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 			}
 			else {
 			    region_bodies+=from_bodies;
-			} 
+			}
 			break;
 		    default:
 			// do nothing -- should get here
@@ -331,14 +331,14 @@ main(int argc, char *argv[])
 
     cout << "*** CSG DEBUG END ***" << endl;
 
-    // Make entities list. 
+    // Make entities list.
     DLIList<RefEntity*> parent_entities;
-    
+
     CAST_LIST_TO_PARENT(all_region_bodies, parent_entities);
-    
+
     int size = parent_entities.size();
     cout << "Number of bodies to be exported: " << size << endl;
-    
+
     // Export geometry
     if (size != 0) {
 	status = gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
@@ -346,13 +346,13 @@ main(int argc, char *argv[])
     else {
 	usage( "No geometry to convert.\n" );
     }
-    
+
     CGMApp::instance()->shutdown();
-    
+
     cout << "Number of primitives processed: " << g_body_cnt << endl;
     cout << "GOT HERE!" << endl;
     abort();
-    
+
     return 0;
 }
 
@@ -1254,7 +1254,7 @@ make_bot( nmgregion *r,
 
     if (status != CUBIT_FAILURE) {
 	cout << "make_bot made a Body!" << endl;
-	gmt->regularize_body(BotBody, RegBotBody); 
+	gmt->regularize_body(BotBody, RegBotBody);
     }
     else {
 	cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
@@ -1262,9 +1262,9 @@ make_bot( nmgregion *r,
 	double bb_width = fabs(bot_max[0] - bot_min[0]);
 	double bb_depth = fabs(bot_max[1] - bot_min[1]);
 	double bb_height = fabs(bot_max[2] - bot_min[2]);
- 
+
 	gmt->brick(bb_width, bb_depth, bb_height);
-           
+
 	VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
 	VADD2(bot_cp, bot_cp, bot_min);
 	CubitVector bbox_cp( V3ARGS(bot_cp) );

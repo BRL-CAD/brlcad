@@ -27,7 +27,7 @@ proc copyDir { d1 d2 } {
 
     file delete -force -- $d2
     file mkdir $d2
-    
+
     foreach ftail [glob -directory $d1 -nocomplain -tails *] {
 	set f [file join $d1 $ftail]
 	if { [file isdirectory $f] && [string compare CVS $ftail] } {
@@ -41,13 +41,13 @@ proc copyDir { d1 d2 } {
 	    }
 	}
     }
-	    
+
     if { $::tcl_platform(platform) eq {unix} } {
 	file attributes $d2 -permissions 0755
     } else {
 	file attributes $d2 -readonly 1
     }
 
-}	
-    
+}
+
 copyDir [lindex $argv 0] [lindex $argv 1]

@@ -23,9 +23,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -87,7 +87,7 @@ public:
   Description:
     Controls layer visibility
   Parameters:
-    bVisible - [in] true to make layer visible, 
+    bVisible - [in] true to make layer visible,
                     false to make layer invisible
   See Also:
     ON_Layer::IsVisible
@@ -125,11 +125,11 @@ public:
   */
   bool IsVisibleAndLocked() const;
 
-  // OBSOLETE - DO NOT USE 
+  // OBSOLETE - DO NOT USE
   //__declspec(deprecated) bool IsChangeable() const; // TRUE if objects on layer can be changed (normal)
 
 
-  // OBSOLETE - DO NOT USE 
+  // OBSOLETE - DO NOT USE
   //__declspec(deprecated) bool IsSelectable() const; // TRUE if objects on layer are selectable (normal and reference)
 
   //////////
@@ -170,10 +170,10 @@ public:
 
   int m_layer_index;       // index of this layer
   ON_UUID m_layer_id;
-  ON_UUID m_parent_layer_id; // Layers are origanized in a hierarchical 
+  ON_UUID m_parent_layer_id; // Layers are origanized in a hierarchical
                              // structure (like file folders).
-                             // If a layer is in a parent layer, 
-                             // then m_parent_layer_id is the id of 
+                             // If a layer is in a parent layer,
+                             // then m_parent_layer_id is the id of
                              // the parent layer.
 
   int m_iges_level;        // IGES level number if this layer was made during IGES import
@@ -181,24 +181,24 @@ public:
 
 
   // Rendering material:
-  //   If you want something simple and fast, set 
-  //   m_material_index to the index of your rendering material 
+  //   If you want something simple and fast, set
+  //   m_material_index to the index of your rendering material
   //   and ignore m_rendering_attributes.
   //   If you are developing a fancy plug-in renderer, and a user is
   //   assigning one of your fabulous rendering materials to this
-  //   layer, then add rendering material information to the 
-  //   m_rendering_attributes.m_materials[] array. 
+  //   layer, then add rendering material information to the
+  //   m_rendering_attributes.m_materials[] array.
   //
   // Developers:
   //   As soon as m_rendering_attributes.m_materials[] is not empty,
   //   rendering material queries slow down.  Do not populate
-  //   m_rendering_attributes.m_materials[] when setting 
+  //   m_rendering_attributes.m_materials[] when setting
   //   m_material_index will take care of your needs.
-  int m_material_index; 
+  int m_material_index;
   ON_RenderingAttributes m_rendering_attributes;
-  
+
   int m_linetype_index;    // index of linetype
-  
+
   // Layer display attributes.
   //   If m_display_material_id is nil, then m_color is the layer color
   //   and defaults are used for all other display attributes.

@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_Eval 3 8.1 Tcl "Tcl Library Procedures"
 .BS
@@ -112,7 +112,7 @@ of the words for the Tcl command, one word in each object in
 a completion code and result just like \fBTcl_EvalObjEx\fR.
 The caller of \fBTcl_EvalObjv\fR has to manage the reference count of the
 elements of \fIobjv\fR, insuring that the objects are valid until
-\fBTcl_EvalObjv\fR returns.  
+\fBTcl_EvalObjv\fR returns.
 .PP
 \fBTcl_Eval\fR is similar to \fBTcl_EvalObjEx\fR except that the script to
 be executed is supplied as a string instead of an object and no compilation
@@ -123,7 +123,7 @@ might be a UTF-8 special code.  The string is parsed and executed directly
 (using \fBTcl_EvalObjv\fR) instead of compiling it and executing the
 bytecodes.  In situations where it is known that the script will never be
 executed again, \fBTcl_Eval\fR may be faster than \fBTcl_EvalObjEx\fR.
- \fBTcl_Eval\fR returns a completion code and result just like 
+ \fBTcl_Eval\fR returns a completion code and result just like
 \fBTcl_EvalObjEx\fR.  Note: for backward compatibility with versions before
 Tcl 8.0, \fBTcl_Eval\fR copies the object result in \fIinterp\fR to
 \fIinterp->result\fR (use is deprecated) where it can be accessed directly.

@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -58,7 +58,7 @@ option add *x.Font			*Times-Medium-R*10*
 option add *y.Title			"Y Axis"
 option add *LineMarker.Foreground	yellow
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual != "staticgray" && $visual != "grayscale" } {
     option add *print.background yellow
     option add *quit.background red
@@ -66,18 +66,18 @@ if { $visual != "staticgray" && $visual != "grayscale" } {
 }
 
 htext .header -text \
-{   This is an example of the barchart widget.  The barchart has 
-    many components; x and y axis, legend, crosshairs, elements, etc.  
+{   This is an example of the barchart widget.  The barchart has
+    many components; x and y axis, legend, crosshairs, elements, etc.
     To create a postscript file "bar.ps", press the %%
     set w $htext(widget)
     button $w.print -text {Print} -command {
-	$graph postscript output bar.ps 
-    } 
+	$graph postscript output bar.ps
+    }
     $w append $w.print
 
-%% button.  
+%% button.
 }
-barchart $graph 
+barchart $graph
 $graph xaxis configure -rotate 90 -stepsize 0
 
 htext .footer -text {    Hit the %%
@@ -86,20 +86,20 @@ htext .footer -text {    Hit the %%
     $htext(widget) append $htext(widget).quit -pady 2
 %% button when you've seen enough. %%
     label $htext(widget).logo -bitmap BLT
-    $htext(widget) append $htext(widget).logo 
+    $htext(widget) append $htext(widget).logo
 %%}
 
-set attributes { 
+set attributes {
     red		bdiagonal1
     orange	bdiagonal2
     yellow	fdiagonal1
     green	fdiagonal2
-    blue	hline1 
+    blue	hline1
     cyan	hline2
-    magenta	vline1 
+    magenta	vline1
     violetred	vline2
     purple	crossdiag
-    lightblue 	hobbes	
+    lightblue 	hobbes
 }
 
 set count 0
@@ -125,7 +125,7 @@ table . \
     2,0 .footer -fill x
 
 table configure . r0 r2 -resize none
-	
+
 wm min . 0 0
 
 Blt_ZoomStack $graph

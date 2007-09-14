@@ -1746,7 +1746,7 @@ Tcl_ForeachObjCmd(
 
     maxj = 0;
     for (i=0 ; i<numLists ; i++) {
-	
+
 	vCopyList[i] = TclListObjCopy(interp, objv[1+i*2]);
 	if (vCopyList[i] == NULL) {
 	    result = TCL_ERROR;

@@ -155,7 +155,7 @@ Current interpreter. (can be NULL)
 .AP "const char" *optionName in
 Name of the invalid option.
 .AP "const char" *optionList in
-Specific options list (space separated words, without "-") 
+Specific options list (space separated words, without "-")
 to append to the standard generic options list.
 Can be NULL for generic options error message only.
 
@@ -653,13 +653,13 @@ called to set them, e.g. \fB-blockmode\fR. Other options are specific to
 each channel type and the \fIsetOptionProc\fR procedure of the channel
 driver will get called to implement them. The \fIsetOptionProc\fR field can
 be NULL, which indicates that this channel type supports no type specific
-options. 
+options.
 .PP
 If the option value is successfully modified to the new value, the function
 returns \fBTCL_OK\fR.
 It should call \fBTcl_BadChannelOption\fR which itself returns
 \fBTCL_ERROR\fR if the \fIoptionName\fR is
-unrecognized. 
+unrecognized.
 If \fInewValue\fR specifies a value for the option that
 is not supported or if a system call error occurs,
 the function should leave an error message in the
@@ -688,7 +688,7 @@ channel. If the option name is not NULL, the function stores its current
 value, as a string, in the Tcl dynamic string \fIoptionValue\fR.
 If \fIoptionName\fR is NULL, the function stores in \fIoptionValue\fR an
 alternating list of all supported options and their current values.
-On success, the function returns \fBTCL_OK\fR. 
+On success, the function returns \fBTCL_OK\fR.
 It should call \fBTcl_BadChannelOption\fR which itself returns
 \fBTCL_ERROR\fR if the \fIoptionName\fR is
 unrecognized. If a system call error occurs,
@@ -851,7 +851,7 @@ which returns a pointer to the function.
 .SH TCL_BADCHANNELOPTION
 .PP
 This procedure generates a "bad option" error message in an
-(optional) interpreter.  It is used by channel drivers when 
+(optional) interpreter.  It is used by channel drivers when
 an invalid Set/Get option is requested. Its purpose is to concatenate
 the generic options list to the specific ones and factorize
 the generic options error message string.
@@ -862,7 +862,7 @@ An error message is generated in \fIinterp\fR's result object to
 indicate that a command was invoked with a bad option.
 The message has the form
 .CS
-    bad option "blah": should be one of 
+    bad option "blah": should be one of
     <...generic options...>+<...specific options...>
 .CE
 so you get for instance:

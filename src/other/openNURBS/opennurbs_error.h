@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -40,10 +40,10 @@ ON_BEGIN_EXTERNC
 // that is appropriate for debugging your application.
 */
 ON_DECL
-void ON_ErrorMessage( 
+void ON_ErrorMessage(
        int,         /* 0 = warning message, 1 = serious error message, 2 = assert failure */
-       const char*  
-       ); 
+       const char*
+       );
 
 ON_DECL
 int     ON_GetErrorCount(void);

@@ -1,6 +1,6 @@
 .\" Copyright (c) 1990, University of Michigan
 .TH RLEQUANT 1 "June 12, 1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 rlequant \- variance based color quantization for RLE images
 .SH SYNOPSIS
@@ -29,19 +29,19 @@ rlequant \- variance based color quantization for RLE images
 ] [
 .B \-o
 .I outfile
-] [ 
+] [
 .I infile
-] 
+]
 .SH DESCRIPTION
 This program quantizes the colors in an RLE image using a
-variance-based method.  See 
+variance-based method.  See
 .IR colorquant (3)
 for more details on the method.
 .TP
 .BI \-b " bits"
 The colors in the input image will be "prequantized" to this many bits
 before applying the variance-based method.  Two internal tables of
-size 
+size
 .BR "2^(3*" bits ")"
 are allocated, so values of
 .I bits
@@ -52,9 +52,9 @@ is 5.  It must be less than or equal to 8 and greater than 0.
 .TP
 .B \-c
 Only the color map will be output; the image will not be digitized.
-The output file will be a 0x0 
+The output file will be a 0x0
 .IR RLE
-file with a color map, suitable for input to 
+file with a color map, suitable for input to
 .IR rleldmap (1),
 .IR rledither (1),
 or
@@ -80,7 +80,7 @@ representative colors.
 .B \-m
 Computes a single color map suitable for quantizing all the input
 images.  This is useful when the quantized images will be used as a
-"movie" (e.g., with the 
+"movie" (e.g., with the
 .B \-m
 flag of
 .IR getx11 (1)).
@@ -137,14 +137,14 @@ Quantizes \fIfile.rle\fP to 256 colors using a 5-bit pre-quantization.
 If \fIfile.rle\fP has multiple images, they will all be used to choose
 the color map, and will all be quantized to the same color map.
 .TP
-cat *.rle | rlequant \-m \-c >map.rle ; 
-	cat *.rle | rlequant \-n 0 \-r map.rle 
+cat *.rle | rlequant \-m \-c >map.rle ;
+	cat *.rle | rlequant \-n 0 \-r map.rle
 .br
 Computes a single colormap based on all the images in the files
 \fI*.rle\fP, then quantizes each image to that color map.  The output
 is the stream of quantized images.
 .TP
-rlequant -i 4 -d file.rle 
+rlequant -i 4 -d file.rle
 Compute 192 representative colors for each image in \fIfile.rle\fP,
 add a 4x4x4 color cube to the resulting color map, and then quantize
 the image to the resulting set of colors with dithering.

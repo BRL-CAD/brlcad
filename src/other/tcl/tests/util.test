@@ -518,7 +518,7 @@ test util-9.1.3 {TclGetIntForIndex} {
 } k
 test util-9.2.0 {TclGetIntForIndex} {
     string index abcd end
-} d 
+} d
 test util-9.2.1 {TclGetIntForIndex} -body {
     string index abcd { end}
 } -returnCodes error -match glob -result *

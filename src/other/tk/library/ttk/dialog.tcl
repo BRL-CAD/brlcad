@@ -11,7 +11,7 @@
 # TODO: routines to selectively enable/disable individual command buttons
 # TODO: use megawidgetoid API [$dlg dismiss] vs. [ttk::dialog::dismiss $dlg]
 # TODO: MAYBE: option for app-modal dialogs
-# TODO: MAYBE: [wm withdraw] dialog on dismiss instead of self-destructing 
+# TODO: MAYBE: [wm withdraw] dialog on dismiss instead of self-destructing
 #
 
 namespace eval ttk::dialog {
@@ -67,7 +67,7 @@ namespace eval ttk::dialog {
 }
 
 ## ttk::dialog::nop --
-#	Do nothing (used as a default callback command). 
+#	Do nothing (used as a default callback command).
 #
 proc ttk::dialog::nop {args} { }
 
@@ -81,7 +81,7 @@ proc ttk::dialog::Constructor {dlg args} {
     variable ButtonOptions
     variable DialogTypes
 
-    # 
+    #
     # Option processing:
     #
     array set defaults {
@@ -130,7 +130,7 @@ proc ttk::dialog::Constructor {dlg args} {
     # Determine default transient parent.
     #
     # NB: menus (including menubars) are considered toplevels,
-    # so skip over those. 
+    # so skip over those.
     #
     if {$options(-parent) eq "#AUTO"} {
 	set parent [winfo toplevel [winfo parent $dlg]]
@@ -149,9 +149,9 @@ proc ttk::dialog::Constructor {dlg args} {
     wm title $dlg $options(-title)
     wm protocol $dlg WM_DELETE_WINDOW { }
 
-    set f [ttk::frame $dlg.f] 
+    set f [ttk::frame $dlg.f]
 
-    ttk::label $f.icon 
+    ttk::label $f.icon
     if {$options(-icon) ne ""} {
 	$f.icon configure -image [ttk::stockIcon dialog/$options(-icon)]
     }
@@ -228,7 +228,7 @@ proc ttk::dialog::Constructor {dlg args} {
 #	Returns the widget path of the dialog client frame,
 #	creating and managing it if necessary.
 #
-proc ttk::dialog::clientframe {dlg} { 
+proc ttk::dialog::clientframe {dlg} {
     variable Config
     set client $dlg.f.client
     if {![winfo exists $client]} {
@@ -236,7 +236,7 @@ proc ttk::dialog::clientframe {dlg} {
 		-pady $Config(margin) -padx $Config(margin)
 	lower $client	;# so it's first in keyboard traversal order
     }
-    return $client 
+    return $client
 }
 
 ## ttk::dialog::Done --

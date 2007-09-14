@@ -484,7 +484,7 @@ main(int argc, char **argv)
 		    waiting = 0;
 		    break;
 		case Expose:
-		    
+
 		default:
 		    printf("unhandled event: %d\n", event.type);
 	    }

@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_DoubleObj 3 8.0 Tcl "Tcl Library Procedures"
 .BS
@@ -30,7 +30,7 @@ A double-precision floating-point value used to initialize or set a Tcl object.
 For \fBTcl_SetDoubleObj\fR, this points to the object in which to store a
 double value.
 For \fBTcl_GetDoubleFromObj\fR, this refers to the object
-from which to retrieve a double value. 
+from which to retrieve a double value.
 .AP Tcl_Interp *interp in/out
 When non-NULL, an error message is left here when double value retrieval fails.
 .AP double *doublePtr out
@@ -58,7 +58,7 @@ returned, and the double value is written to the storage pointed to by
 \fIdoublePtr\fR.  If the attempt fails, then \fBTCL_ERROR\fR is returned,
 and if \fIinterp\fR is non-NULL, an error message is left in \fIinterp\fR.
 The \fBTcl_ObjType\fR of \fIobjPtr\fR may be changed to make subsequent
-calls to \fBTcl_GetDoubleFromObj\fR more efficient. 
+calls to \fBTcl_GetDoubleFromObj\fR more efficient.
 '\" TODO: add discussion of treatment of NaN value
 .SH "SEE ALSO"
 Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount, Tcl_GetObjResult

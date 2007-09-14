@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@ class ON_3fVectorArray;
 // construction, destruction, or copy operators.
 //
 // By default, ON_SimpleArray<> uses onrealloc() to manage
-// the dynamic array memory. If you want to use something 
+// the dynamic array memory. If you want to use something
 // besides onrealloc() to manage the array memory, then override
 // ON_SimpleArray::Realloc().
 
@@ -62,7 +62,7 @@ public:
   // Assignment operator
   virtual
   ON_SimpleArray<T>& operator=( const ON_SimpleArray<T>& );
-  
+
   // emergency bailout ///////////////////////////////////////////////////
   void EmergencyDestroy(void); // call only when memory used by this array
                                // may have become invalid for reasons beyond
@@ -71,9 +71,9 @@ public:
                                // ~ON_SimpleArray() to crash.
 
   // query ///////////////////////////////////////////////////////////////
-  
+
 	int Count() const;      // number of elements in array
-	
+
 	int Capacity() const;  // capacity of array
 
   unsigned int SizeOfArray() const; // amount of memory in the m_a[] array
@@ -100,10 +100,10 @@ public:
   T* Last();
   const T* Last() const;             // returns NULL if count = 0
 
-  
+
   // array operations ////////////////////////////////////////////////////
 
-  T& AppendNew();                    // Most efficient way to add a new element 
+  T& AppendNew();                    // Most efficient way to add a new element
                                      // to the array.  Increases count by 1.
 
   void Append( const T& );           // Append copy of element.
@@ -134,19 +134,19 @@ public:
 
   //////////
   // Search( e ) does a SLOW search of the array starting at array[0]
-  // and returns the index "i" of the first element that satisfies 
-  // e == array[i]. (== is really memcmp()).  If the search is not 
-  // successful, then Search() returns -1.  For Search(T) to work 
+  // and returns the index "i" of the first element that satisfies
+  // e == array[i]. (== is really memcmp()).  If the search is not
+  // successful, then Search() returns -1.  For Search(T) to work
   // correctly, T must be a simple type.  Use Search(p,compare())
   // for Ts that are structs/classes that contain pointers.  Search()
-  // is only suitable for performing infrequent searchs of small 
+  // is only suitable for performing infrequent searchs of small
   // arrays.  Sort the array and use BinarySearch() for performing
   // efficient searches.
   int Search( const T& ) const;
 
   //////////
   // Search( p, compare ) does a SLOW search of the array starting
-  // at array[0] and returns the index "i" of the first element 
+  // at array[0] and returns the index "i" of the first element
   // that satisfies  compare(p,&array[i])==0.  If the search is not
   // successful, then Search() returns -1.  Search() is only suitable
   // for performing infrequent searches of small arrays.  Sort the
@@ -157,7 +157,7 @@ public:
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
   // and returns the smallest index "i" of the element that satisifies
-  // 0==compare(p,&array[i]).  If the search is successful, 
+  // 0==compare(p,&array[i]).  If the search is successful,
   // BinarySearch() returns the index of the element (>=0).
   // If the search is not successful, BinarySearch() returns -1.  Use
   // HeapSort( compare ) or QuickSort( compare ) to sort the array.
@@ -177,18 +177,18 @@ public:
   // Sort() computes fills in the index[] array so that
   // array[index[i]] <= array[index[i+1]].  The array is not
   // modified
-  bool Sort( ON::sort_algorithm, int* /* index[] */ , int (*)(const T*,const T*) ) const; 
+  bool Sort( ON::sort_algorithm, int* /* index[] */ , int (*)(const T*,const T*) ) const;
 
   /*
   Description:
-    Sort() fills in the index[] array so that 
-    array[index[i]] <= array[index[i+1]].  
-    The array is not modified.  
+    Sort() fills in the index[] array so that
+    array[index[i]] <= array[index[i+1]].
+    The array is not modified.
 
   Parameters:
     sa - [in] ON::heap_sort or  ON::quick_sort
     index - [out] an array of length Count() that is returned with
-        some permutation of (0,1,...,Count()-1). 
+        some permutation of (0,1,...,Count()-1).
     compare - [in] compare function compare(a,b,p) should return
         <0 if a<b, 0, if a==b, and >0 if a>b.
     p - [in] pointer passed as third argument to compare.
@@ -196,12 +196,12 @@ public:
   Returns:
     true if successful
   */
-  bool Sort( 
+  bool Sort(
     ON::sort_algorithm, // sa
-    int*, // index[] 
+    int*, // index[]
     int (*)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
     void* // p
-    ) const; 
+    ) const;
 
   //////////
   // Permutes the array so that output[i] = input[index[i]].
@@ -209,15 +209,15 @@ public:
   bool Permute( const int* /*index[]*/ );
 
   //////////
-  // Zeros all array memory. 
+  // Zeros all array memory.
   // Count and capacity are not changed.
   void Zero();
 
   //////////
-  // Sets all bytes in array memory to value. 
+  // Sets all bytes in array memory to value.
   // Count and capacity are not changed.
-  void MemSet(unsigned char); 
-  
+  void MemSet(unsigned char);
+
   // memory managment ////////////////////////////////////////////////////
 
   void Reserve( int );    // increase capacity to at least the requested value
@@ -225,33 +225,33 @@ public:
   void Shrink();          // remove unused capacity
 
   void Destroy();         // onfree any memory and set count and capacity to zero
-    
+
   // low level memory managment //////////////////////////////////////////
 
   // By default, ON_SimpleArray<> uses onrealloc() to manage
-  // the dynamic array memory. If you want to use something 
-  // besides onrealloc() to manage the array memory, then override 
+  // the dynamic array memory. If you want to use something
+  // besides onrealloc() to manage the array memory, then override
   // Realloc(). The T* Realloc(ptr, capacity) should do the following:
   //
   // 1) If ptr and capacity are zero, return NULL.
-  // 2) If ptr is NULL, an capacity > 0, allocate a memory block of 
+  // 2) If ptr is NULL, an capacity > 0, allocate a memory block of
   //    capacity*sizeof(T) bytes and return a pointer to this block.
   //    If the allocation request fails, return NULL.
   // 3) If ptr is not NULL and capacity is 0, free the memory block
   //    pointed to by ptr and return NULL.
   // 4) If ptr is not NULL and capacity > 0, then reallocate the memory
-  //    block and return a pointer to the reallocated block.  If the 
+  //    block and return a pointer to the reallocated block.  If the
   //    reallocation request fails, return NULL.
   //
-  // NOTE WELL: 
+  // NOTE WELL:
   //    Microsoft's VC 6.0 realloc() contains a bug that can cause
   //    crashes and should be avoided. See MSDN Knowledge Base article
   //    ID Q225099 for more information.
   virtual
   T* Realloc(T*,int); // (re)allocated capacity*sizeof(T) bytes
 
-  T* Array();                         // The Array() function return the 
-  
+  T* Array();                         // The Array() function return the
+
   const T* Array() const;             // m_a pointer value.
 
   void SetCount( int );               // If value is <= Capacity(), then
@@ -272,7 +272,7 @@ public:
 
   /*
   Description:
-    Expert user tool to set m_a = T. 
+    Expert user tool to set m_a = T.
   Parameters:
     T* pointer - [in]
        m_a is set to T*.  It is critical that the pointer
@@ -295,7 +295,7 @@ protected:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -436,7 +436,7 @@ public:
     const float* points
     );
 
-  // Description: 
+  // Description:
   //   Get 3d axis aligned bounding box.
   // Returns:
   //   3d bounding box of point list.
@@ -447,13 +447,13 @@ public:
   //   of the input box with the point list's bounding box.
   // Parameters:
   //   bbox - [in/out] 3d axis aligned bounding box
-  //   bGrowBox - [in] (default=false) 
-  //     If true, then the union of the input bbox and the 
-  //     point list's bounding box is returned in bbox.  
+  //   bGrowBox - [in] (default=false)
+  //     If true, then the union of the input bbox and the
+  //     point list's bounding box is returned in bbox.
   //     If false, the point list's bounding box is returned in bbox.
   // Returns:
   //   true if successful.
-  bool GetBoundingBox( 
+  bool GetBoundingBox(
     ON_BoundingBox& bbox,
     int bGrowBox = false
     ) const;
@@ -463,8 +463,8 @@ public:
   // Parameters:
   //   boxmin - [in/out] array of 3 doubles
   //   boxmax - [in/out] array of 3 doubles
-  //   bGrowBox - [in] (default=false) 
-  //     If true, then the union of the input bounding box and the 
+  //   bGrowBox - [in] (default=false)
+  //     If true, then the union of the input bounding box and the
   //     object's bounding box is returned.
   //     If false, the object's bounding box is returned.
   // Returns:
@@ -480,19 +480,19 @@ public:
     Get tight bounding box of the point list.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       tight bounding box of the point list.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
       point list is calculated.  The point list is not modified.
 	Returns:
-    True if the returned tight_bbox is set to a valid 
+    True if the returned tight_bbox is set to a valid
     bounding box.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -503,8 +503,8 @@ public:
   //   xform - [in] transformation matrix
   // Returns:
   //   true if successful.
-  bool Transform( 
-    const ON_Xform& xform 
+  bool Transform(
+    const ON_Xform& xform
     );
 
   // Description:
@@ -585,7 +585,7 @@ public:
     ON_GetClosestPointInPointList
     ON_PointCloud::GetClosestPoint
   */
-  bool GetClosestPoint( 
+  bool GetClosestPoint(
           ON_3dPoint P,
           int* closest_point_index,
           double maximum_distance = 0.0
@@ -748,7 +748,7 @@ public:
 // robust operator=().
 //
 // By default, ON_ClassArray<> uses onrealloc() to manage
-// the dynamic array memory. If you want to use something 
+// the dynamic array memory. If you want to use something
 // besides onrealloc() to manage the array memory, then override
 // ON_ClassArray::Realloc().  In practice this means that if your
 // class has members with back-pointers, then you cannot use
@@ -759,7 +759,7 @@ template <class T> class ON_ClassArray
 {
 public:
   // construction ////////////////////////////////////////////////////////
-  ON_ClassArray(); 
+  ON_ClassArray();
   ON_ClassArray( int ); // int = initial capacity
 
   // Copy constructor
@@ -770,7 +770,7 @@ public:
 
   // Assignment operator
   ON_ClassArray<T>& operator=( const ON_ClassArray<T>& );
-  
+
   // emergency bailout ///////////////////////////////////////////////////
   void EmergencyDestroy(void); // call only when memory used by this array
                                // may have become invalid for reasons beyond
@@ -779,9 +779,9 @@ public:
                                // ~ON_ClassArray() to crash.
 
   // query ///////////////////////////////////////////////////////////////
-  
+
 	int Count() const;      // number of elements in array
-	
+
 	int Capacity() const;  // capacity of array
 
   unsigned int SizeOfArray() const; // amount of memory in the m_a[] array
@@ -805,10 +805,10 @@ public:
   T* Last();
   const T* Last() const;             // returns NULL if count = 0
 
-  
+
   // array operations ////////////////////////////////////////////////////
 
-  T& AppendNew();                    // Most efficient way to add a new class 
+  T& AppendNew();                    // Most efficient way to add a new class
                                      // to the array.  Increases count by 1.
 
   void Append( const T& );           // Append copy of element.
@@ -837,7 +837,7 @@ public:
 
   //////////
   // Search( p, compare ) does a SLOW search of the array starting
-  // at array[0] and returns the index "i" of the first element 
+  // at array[0] and returns the index "i" of the first element
   // that satisfies  compare(p,&array[i])==0.  If the search is not
   // successful, then Search() returns -1.  Search() is only suitable
   // for performing infrequent searches of small arrays.  Sort the
@@ -847,7 +847,7 @@ public:
   //////////
   // BinarySearch( p, compare ) does a fast search of a sorted array
   // and returns the smallest index "i" of the element that satisifies
-  // 0==compare(p,&array[i]).  If the search is successful, 
+  // 0==compare(p,&array[i]).  If the search is successful,
   // BinarySearch() returns the index of the element (>=0).
   // If the search is not successful, BinarySearch() returns -1.  Use
   // HeapSort( compare ) or QuickSort( compare ) to sort the array.
@@ -869,18 +869,18 @@ public:
   // Sort() computes fills in the index[] array so that
   // array[index[i]] <= array[index[i+1]].  The array is not
   // modified
-  bool Sort( ON::sort_algorithm, int* /* index[] */ , int (*)(const T*,const T*) ) const; 
+  bool Sort( ON::sort_algorithm, int* /* index[] */ , int (*)(const T*,const T*) ) const;
 
   /*
   Description:
-    Sort() fills in the index[] array so that 
-    array[index[i]] <= array[index[i+1]].  
-    The array is not modified.  
+    Sort() fills in the index[] array so that
+    array[index[i]] <= array[index[i+1]].
+    The array is not modified.
 
   Parameters:
     sa - [in] ON::heap_sort or  ON::quick_sort
     index - [out] an array of length Count() that is returned with
-        some permutation of (0,1,...,Count()-1). 
+        some permutation of (0,1,...,Count()-1).
     compare - [in] compare function compare(a,b,p) should return
         <0 if a<b, 0, if a==b, and >0 if a>b.
     p - [in] pointer passed as third argument to compare.
@@ -888,12 +888,12 @@ public:
   Returns:
     true if successful
   */
-  bool Sort( 
+  bool Sort(
     ON::sort_algorithm, // sa
-    int*, // index[] 
+    int*, // index[]
     int (*)(const T*,const T*,void*), // int compare(const T*,const T*,void* p)
     void* // p
-    ) const; 
+    ) const;
 
   //////////
   // Permutes the array so that output[i] = input[index[i]].
@@ -913,33 +913,33 @@ public:
   void Shrink();       // remove unused capacity
 
   void Destroy();      // onfree any memory and set count and capacity to zero
-    
+
   // low level memory managment ///////////////////////////////////////
 
   // By default, ON_ClassArray<> uses onrealloc() to manage
-  // the dynamic array memory. If you want to use something 
-  // besides onrealloc() to manage the array memory, then override 
+  // the dynamic array memory. If you want to use something
+  // besides onrealloc() to manage the array memory, then override
   // Realloc(). The T* Realloc(ptr, capacity) should do the following:
   //
   // 1) If ptr and capacity are zero, return NULL.
-  // 2) If ptr is NULL, an capacity > 0, allocate a memory block of 
+  // 2) If ptr is NULL, an capacity > 0, allocate a memory block of
   //    capacity*sizeof(T) bytes and return a pointer to this block.
   //    If the allocation request fails, return NULL.
   // 3) If ptr is not NULL and capacity is 0, free the memory block
   //    pointed to by ptr and return NULL.
   // 4) If ptr is not NULL and capacity > 0, then reallocate the memory
-  //    block and return a pointer to the reallocated block.  If the 
+  //    block and return a pointer to the reallocated block.  If the
   //    reallocation request fails, return NULL.
   //
-  // NOTE WELL: 
+  // NOTE WELL:
   //    Microsoft's VC 6.0 realloc() contains a bug that can cause
   //    crashes and should be avoided. See MSDN Knowledge Base article
   //    ID Q225099 for more information.
   virtual
   T* Realloc(T*,int); // (re)allocated capacity*sizeof(T) bytes
 
-  T* Array();                         // The Array() function return the 
-  
+  T* Array();                         // The Array() function return the
+
   const T* Array() const;             // m_a pointer value.
 
   void SetCount( int );               // If value is <= Capacity(), then
@@ -962,7 +962,7 @@ public:
 
   /*
   Description:
-    Expert user tool to set m_a = T. 
+    Expert user tool to set m_a = T.
   Parameters:
     T* pointer - [in]
        m_a is set to T*.  It is critical that the pointer
@@ -993,7 +993,7 @@ Description:
 template <class T> class ON_ObjectArray : public ON_ClassArray<T>
 {
 public:
-  ON_ObjectArray(); 
+  ON_ObjectArray();
   ~ON_ObjectArray(); // override for struct member deallocation, etc.
   ON_ObjectArray( int ); // int = initial capacity
   ON_ObjectArray( const ON_ObjectArray<T>& );
@@ -1001,17 +1001,17 @@ public:
 
   ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
 
-  // virtual ON_ClassArray<T> override that 
+  // virtual ON_ClassArray<T> override that
   // calls MemoryRelocate on each element after
   // the reallocation.
   T* Realloc(T*,int);
 
-  // virtual ON_ClassArray<T> override that 
+  // virtual ON_ClassArray<T> override that
   // calls MemoryRelocate on each element after
   // the heap sort.
   bool HeapSort( int (*)(const T*,const T*) );
 
-  // virtual ON_ClassArray<T> override that 
+  // virtual ON_ClassArray<T> override that
   // calls MemoryRelocate on each element after
   // the quick sort.
   bool QuickSort( int (*)(const T*,const T*) );
@@ -1024,21 +1024,21 @@ public:
   Description:
     Compares m_uuid[0] and ignores m_uuid[1]
   */
-  static 
+  static
   int CompareFirstUuid(const class ON_UuidPair*,const class ON_UuidPair*);
 
   /*
   Description:
     Compares m_uuid[1] and ignores m_uuid[0]
   */
-  static 
+  static
   int CompareSecondUuid(const class ON_UuidPair*,const class ON_UuidPair*);
 
   /*
   Description:
     Compares m_uuid[0] first and then m_uuid[1].
   */
-  static 
+  static
   int Compare(const class ON_UuidPair*,const class ON_UuidPair*);
 
   ON_UuidPair();
@@ -1048,7 +1048,7 @@ public:
 #if defined(ON_DLL_TEMPLATE)
 
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -1065,9 +1065,9 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_PlaneEquation>;
 
 /*
 Description:
-  The ON_UuidList class provides a tool to efficiently 
-  maintain a list of uuids and determine if a uuid is 
-  in the list. This class is based on the premise that 
+  The ON_UuidList class provides a tool to efficiently
+  maintain a list of uuids and determine if a uuid is
+  in the list. This class is based on the premise that
   there are no duplicate uuids in the list.
 */
 class ON_CLASS ON_UuidList : private ON_SimpleArray<ON_UUID>
@@ -1123,7 +1123,7 @@ public:
   Description:
     Makes the uuid list as efficent as possible in both search
     speed and memory usage.  Use Compact() when a uuid list
-    will be in use but is not likely to be modifed.  A list 
+    will be in use but is not likely to be modifed.  A list
     that has been compacted can still be modified.
   */
   void Compact();
@@ -1172,8 +1172,8 @@ public:
   Returns:
     true if write was successful.
   */
-  bool Write( 
-    class ON_BinaryArchive& archive 
+  bool Write(
+    class ON_BinaryArchive& archive
     ) const;
 
   /*
@@ -1184,8 +1184,8 @@ public:
   Returns:
     true if the read was successful.
   */
-  bool Read( 
-    class ON_BinaryArchive& archive 
+  bool Read(
+    class ON_BinaryArchive& archive
     );
 
   /*
@@ -1202,15 +1202,15 @@ public:
 
   /*
   Description:
-    This tool is used in rare situations when the object ids 
+    This tool is used in rare situations when the object ids
     stored in the uuid list need to be remapped.
   Parameters:
     uuid_remap - [in]
       Is it critical that uuid_remap[] be sorted with respect
       to ON_UuidPair::CompareFirstUuid.
   */
-  void RemapUuids( 
-    const ON_SimpleArray<ON_UuidPair>& uuid_remap 
+  void RemapUuids(
+    const ON_SimpleArray<ON_UuidPair>& uuid_remap
     );
 
 private:
@@ -1268,8 +1268,8 @@ public:
     because it is already in the collection.
   */
   bool AddUuidIndex(
-    ON_UUID uuid, 
-    int index, 
+    ON_UUID uuid,
+    int index,
     bool bCheckForDupicates=true);
 
   /*
@@ -1331,8 +1331,8 @@ public:
   Returns:
     true if write was successful.
   */
-  bool Write( 
-    class ON_BinaryArchive& archive 
+  bool Write(
+    class ON_BinaryArchive& archive
     ) const;
 
   /*
@@ -1343,8 +1343,8 @@ public:
   Returns:
     true if the read was successful.
   */
-  bool Read( 
-    class ON_BinaryArchive& archive 
+  bool Read(
+    class ON_BinaryArchive& archive
     );
 
   /*
@@ -1399,7 +1399,7 @@ public:
   Description:
     Searches for an element with a matching i
     and returns its j value.  If no matching
-    element is found, then not_found_rc is returned. 
+    element is found, then not_found_rc is returned.
   Parameters:
     i - [in]
        value of i to search for
@@ -1408,8 +1408,8 @@ public:
   Returns:
     j value
   */
-  int FindIndex( 
-          int i, 
+  int FindIndex(
+          int i,
           int not_found_rc
           ) const;
 
@@ -1423,8 +1423,8 @@ public:
   Returns:
     True if and element it added.
   */
-  bool AddIndex( 
-          int i, 
+  bool AddIndex(
+          int i,
           int j
           );
 
@@ -1439,8 +1439,8 @@ public:
   Returns:
     True if and element exists and was set.
   */
-  bool SetIndex( 
-          int i, 
+  bool SetIndex(
+          int i,
           int j
           );
 
@@ -1452,8 +1452,8 @@ public:
     i - [in]
     j - [in]
   */
-  void SetOrAddIndex( 
-          int i, 
+  void SetOrAddIndex(
+          int i,
           int j
           );
 
@@ -1467,7 +1467,7 @@ public:
   Returns:
     True if the element was removed
   */
-  bool RemoveIndex( 
+  bool RemoveIndex(
           int i
           );
 
@@ -1477,25 +1477,25 @@ private:
   bool m_bSorted;
 };
 
-/* 
+/*
 Description:
 	Compare function for Sort and Search methods.
 Returns:
    -1 if *a < *b is true
     1 if *b < *a is true
-    0 if niether *a <*b nor *b<*a is true 
+    0 if niether *a <*b nor *b<*a is true
 Details:
 	Use this template functions to sort ON_SimpleArray and
   ON_ClassArray objects into increasing order.  The elements
   of the arrays must be a type with an operator < defined.
-	In particular it works with built in types like double, 
+	In particular it works with built in types like double,
   int and pointers.
 Example:
 
           ON_SimpleArray<int> A;
           A = ...;
           // Sort A in increasing order
-          A.QuickSort( ON_CompareIncreasing<double> );		
+          A.QuickSort( ON_CompareIncreasing<double> );
 
 See Also:
   ON_CompareDecreasing
@@ -1503,18 +1503,18 @@ See Also:
 template< class T>
 int ON_CompareIncreasing( const T* a, const T* b);
 
-/* 
+/*
 Description:
 	Compare function for Sort and Search methods.
 Returns:
    -1 if *b < *a is true
     1 if *a < *b is true
-    0 if niether *a < *b nor *b < *a is true 
+    0 if niether *a < *b nor *b < *a is true
 Details:
 	Use this template functions to sort ON_SimpleArray and
   ON_ClassArray objects into decreasing order.  The elements
   of the arrays must be a type with an operator < defined.
-	In particular it works with built in types like double, 
+	In particular it works with built in types like double,
   int and pointers.
 Example:
 
@@ -1528,7 +1528,7 @@ Example:
           ON_ClassArray<C> A;
           A = ...;
           // Sort A in descrasing order
-          A.QuickSort( ON_CompareDecreasing<C> );		
+          A.QuickSort( ON_CompareDecreasing<C> );
 
 See Also:
   ON_CompareIncreasing

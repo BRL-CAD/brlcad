@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_IntObj 3 8.5 Tcl "Tcl Library Procedures"
 .BS
@@ -89,7 +89,7 @@ library.
 .PP
 .VS 8.5
 These procedures are used to create, modify, and read Tcl objects
-that hold integral values.  
+that hold integral values.
 .PP
 The different routines exist to accomodate different integral types in C
 with which values might be exchanged.  The C integral types for which Tcl
@@ -101,7 +101,7 @@ typedef defined to be whatever signed integral type covers at least the
 on the platform and the C compiler, the actual type might be
 \fBlong int\fR, \fBlong long int\fR, \fBint64\fR, or something else.
 The \fBmp_int\fR type is a multiple-precision integer type defined
-by the LibTomMath multiple-precision integer library.  
+by the LibTomMath multiple-precision integer library.
 .PP
 The \fBTcl_NewIntObj\fR, \fBTcl_NewLongObj\fR, \fBTcl_NewWideIntObj\fR,
 and \fBTcl_NewBignumObj\fR routines each create and return a new

@@ -1866,7 +1866,7 @@ TraceExecutionProc(
 	    traceCode = Tcl_Eval(interp, Tcl_DStringValue(&cmd));
 	    tcmdPtr->flags &= ~TCL_TRACE_EXEC_IN_PROGRESS;
 
-	    /* 
+	    /*
 	     * Restore the interp tracing flag to prevent cmd traces
 	     * from affecting interp traces.
 	     */

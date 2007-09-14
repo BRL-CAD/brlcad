@@ -587,7 +587,7 @@ if {$tcl_platform(platform) == "windows"} {
 test textDisp-4.6 {UpdateDisplayInfo, tiny window} {
     # This test was failing on Windows because the title bar on .
     # was a certain minimum size and it was interfering with the size
-    # requested.  The "overrideredirect" gets rid of the titlebar so 
+    # requested.  The "overrideredirect" gets rid of the titlebar so
     # the toplevel can shrink to the appropriate size.  On Unix, setting
     # the overrideredirect on "." confuses the window manager and
     # causes subsequent tests to fail.
@@ -615,7 +615,7 @@ update
 test textDisp-4.7 {UpdateDisplayInfo, filling in extra vertical space} {
     # This test was failing on Windows because the title bar on .
     # was a certain minimum size and it was interfering with the size
-    # requested.  The "overrideredirect" gets rid of the titlebar so 
+    # requested.  The "overrideredirect" gets rid of the titlebar so
     # the toplevel can shrink to the appropriate size.  On Unix, setting
     # the overrideredirect on "." confuses the window manager and
     # causes subsequent tests to fail.
@@ -631,7 +631,7 @@ test textDisp-4.7 {UpdateDisplayInfo, filling in extra vertical space} {
     update
     set x [list [.t index @0,0] $tk_textRelayout $tk_textRedraw]
     wm overrideredirect . 0
-    update 
+    update
     set x
 } {8.0 {16.0 17.0 15.0 14.0 13.0 12.0 11.0 10.0 9.0 8.0} {8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0}}
 test textDisp-4.8 {UpdateDisplayInfo, filling in extra vertical space} {
@@ -1675,7 +1675,7 @@ test textDisp-14.14 {TkTextXviewCmd procedure} {
     .t insert end "a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 c0 c1 c2 c3 c4 c5 c6 c7 c8 c9 c0 c1 c2 c3 c4 c5 c6 c7 c8 c9\n"
     .t insert end "xxxx xxxxxxxxx xxxxxxxxxxxxx"
     .t xview moveto 0
-    .t xview scroll 21 u  
+    .t xview scroll 21 u
     set x [.t index @0,22]
     .t xview scroll -1 u
     lappend x [.t index @0,22]
@@ -2059,7 +2059,7 @@ test textDisp-17.8 {TkTextScanCmd procedure} {textfonts} {
     .t xview moveto 0
     .t scan mark 0 60
     .t scan dragto 30 100
-    .t scan dragto 25 95 
+    .t scan dragto 25 95
     .t index @0,0
 } {4.7}
 test textDisp-17.9 {TkTextScanCmd procedure} {textfonts} {
@@ -2610,7 +2610,7 @@ test textDisp-21.4 {count -displaylines regression} {
 Use the Up (cursor) key to scroll up one line at a time.  At the second press, the cursor either gets locked or jumps several lines.
 
 Connect with Tkcon.  The command
-.u count -displaylines \ 
+.u count -displaylines \
 3.10 2.173
 should give answer -1; it gives me 5.
 
@@ -3463,7 +3463,7 @@ test textDisp-29.2.5 {miscellaneous: can show last character} {
     set iWidth [lindex [.t2.t bbox end-2c] 2]
     .t2.t xview scroll 2 units
     set iWidth2 [lindex [.t2.t bbox end-2c] 2]
-    
+
     if {($iWidth == $iWidth2) && $iWidth >= 2} {
 	set result "correct"
     } else {
@@ -3675,7 +3675,7 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
+
     # hide tag 1, remaining text should not be indented, since
     # the indented tag and character is hidden.
     .tt tag configure testtag1 -elide 1 ; update
@@ -3683,7 +3683,7 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
+
     # reset
     .tt tag configure testtag1 -lmargin1 0
     .tt tag configure testtag1 -elide 0
@@ -3695,7 +3695,7 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
+
     # hide tag 1, remaining text should now be indented, but
     # the bbox of 1.0 should have zero width and zero indent,
     # since it is elided at that position.
@@ -3704,7 +3704,7 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
+
     # reset
     .tt tag configure testtag2 -lmargin1 {}
     .tt tag configure testtag1 -elide 0
@@ -3718,7 +3718,7 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
+
     # hide tag 1, remaining text should still be indented,
     # since it still has testtag3 on it.  Again the
     # bbox of 1.0 should have 0.
@@ -3727,14 +3727,14 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
+
     .tt tag configure testtag3 -lmargin1 {} -elide 0
     .tt tag configure testtag1 -elide 1 -lmargin1 20
     #7
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
+
     destroy .tt
     set res
 } {{1.0 20 20} {1.29 0 0} {1.0 0 0} {1.29 0 20}\

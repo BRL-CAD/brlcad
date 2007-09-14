@@ -21,11 +21,11 @@
 using namespace std;
 
 
-namespace brlcad {  
+namespace brlcad {
 
   //--------------------------------------------------------------------------------
   // SurfaceTree
-  SurfaceTree::SurfaceTree(ON_BrepFace* face) 
+  SurfaceTree::SurfaceTree(ON_BrepFace* face)
     : m_face(face)
   {
     // build the surface bounding volume hierarchy
@@ -38,12 +38,12 @@ namespace brlcad {
     TRACE("v: [" << v[0] << "," << v[1] << "]");
     TRACE("m_root: " << m_root);
   }
-  
+
   SurfaceTree::~SurfaceTree() {
     delete m_root;
   }
 
-  BBNode* 
+  BBNode*
   SurfaceTree::getRootNode() const {
     return m_root;
   }
@@ -75,7 +75,7 @@ namespace brlcad {
     const ON_Surface* surf = m_face->SurfaceOf();
 
     double uq = u.Length()*0.25;
-    double vq = v.Length()*0.25;   
+    double vq = v.Length()*0.25;
     if (!surf->EvPoint(u.Min()-BBOX_GROW,v.Min()-BBOX_GROW,corners[0]) ||
 	!surf->EvPoint(u.Max()+BBOX_GROW,v.Min()-BBOX_GROW,corners[1]) ||
 	!surf->EvPoint(u.Max()+BBOX_GROW,v.Max()+BBOX_GROW,corners[2]) ||
@@ -92,13 +92,13 @@ namespace brlcad {
     point_t min, max;
     VSETALL(min, MAX_FASTF);
     VSETALL(max, -MAX_FASTF);
-    for (int i = 0; i < 9; i++) 
+    for (int i = 0; i < 9; i++)
       VMINMAX(min,max,((double*)corners[i]));
     vect_t grow;
     VSETALL(grow,0.5); // grow the box a bit
     VSUB2(min, min, grow);
     VADD2(max, max, grow);
-            
+
     // calculate the estimate point on the surface: i.e. use the point
     // on the surface defined by (u.Mid(), v.Mid()) as a heuristic for
     // finding the uv domain bounding a portion of the surface close
@@ -109,15 +109,15 @@ namespace brlcad {
       bu_bomb("Could not evaluate estimate point on surface");
     }
     BBNode* node;
-    if (isLeaf) {      
-      TRACE("creating leaf: u(" << u.Min() << "," << u.Max() << 
+    if (isLeaf) {
+      TRACE("creating leaf: u(" << u.Min() << "," << u.Max() <<
 	    ") v(" << v.Min() << "," << v.Max() << ")");
       node = new SubsurfaceBBNode(ON_BoundingBox(ON_3dPoint(min),
-						 ON_3dPoint(max)), 
-				  m_face, 
+						 ON_3dPoint(max)),
+				  m_face,
 				  u, v);
     }
-    else 
+    else
       node = new BBNode(ON_BoundingBox(ON_3dPoint(min),
 				       ON_3dPoint(max)));
     node->m_estimate = estimate;
@@ -131,14 +131,14 @@ namespace brlcad {
     ON_3dPoint estimate;
     if (!surf->EvPoint(surf->Domain(0).Mid(),surf->Domain(1).Mid(),estimate)) {
       bu_bomb("Could not evaluate estimate point on surface");
-    }    
+    }
     node->m_estimate = estimate;
     return node;
   }
 
   BBNode*
-  SurfaceTree::subdivideSurface(const ON_Interval& u, 
-				const ON_Interval& v, 
+  SurfaceTree::subdivideSurface(const ON_Interval& u,
+				const ON_Interval& v,
 				int depth)
   {
     const ON_Surface* surf = m_face->SurfaceOf();
@@ -156,7 +156,7 @@ namespace brlcad {
 
       for (int i = 0; i < 4; i++)
 	parent->addChild(quads[i]);
-      
+
       return parent;
     }
   }
@@ -182,7 +182,7 @@ namespace brlcad {
    *	 |                         |
    *	 +-------------------------+
    *                  U
-   *                     
+   *
    * The "+" indicates the normal sample.
    */
 
@@ -193,10 +193,10 @@ namespace brlcad {
   bool
   SurfaceTree::isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
   {
-    ON_3dVector normals[8];    
+    ON_3dVector normals[8];
 
     bool fail = false;
-    
+
     if (surf->IsAtSingularity(u.Min(), v.Min()) ||
 	surf->IsAtSingularity(u.Max(), v.Min()) ||
 	surf->IsAtSingularity(u.Max(), v.Max()) ||
@@ -208,7 +208,7 @@ namespace brlcad {
       TRACE("vmax: " << v.Max());
     }
 
-    // corners    
+    // corners
     if (!surf->EvNormal(u.Min(),v.Min(),normals[0], SW) ||
 	!surf->EvNormal(u.Max(),v.Min(),normals[1], SE) ||
 	!surf->EvNormal(u.Max(),v.Max(),normals[2], NE) ||
@@ -223,8 +223,8 @@ namespace brlcad {
     }
 
     double product = 1.0;
-    
-#ifdef DO_VECTOR    
+
+#ifdef DO_VECTOR
     double ax[4] VEC_ALIGN;
     double ay[4] VEC_ALIGN;
     double az[4] VEC_ALIGN;
@@ -235,7 +235,7 @@ namespace brlcad {
 
     distribute(4, normals, ax, ay, az);
     distribute(4, &normals[1], bx, by, bz);
-    
+
     // how to get the normals in here?
     {
       dvec<4> xa(ax);
@@ -247,15 +247,15 @@ namespace brlcad {
       dvec<4> dots = xa * xb + ya * yb + za * zb;
       product *= dots.foldr(1,dvec<4>::mul());
       if (product < 0.0) return false;
-    }    
+    }
     // try the next set of normals
     {
       distribute(3, &normals[4], ax, ay, az);
       distribute(3, &normals[5], bx, by, bz);
       dvec<4> xa(ax);
       dvec<4> xb(bx);
-      dvec<4> ya(ay); 
-      dvec<4> yb(by); 
+      dvec<4> ya(ay);
+      dvec<4> yb(by);
       dvec<4> za(az);
       dvec<4> zb(bz);
       dvec<4> dots = xa * xb + ya * yb + za * zb;
@@ -288,15 +288,15 @@ namespace brlcad {
 
   bool
   gcp_gradient(pt2d_t out_grad, GCPData& data, pt2d_t uv) {
-    bool evaluated = data.surf->Ev2Der(uv[0], 
-				       uv[1], 
-				       data.S, 
-				       data.du, 
-				       data.dv, 
-				       data.duu, 
-				       data.duv, 
+    bool evaluated = data.surf->Ev2Der(uv[0],
+				       uv[1],
+				       data.S,
+				       data.du,
+				       data.dv,
+				       data.duu,
+				       data.duv,
 				       data.dvv); // calc S(u,v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
-    if (!evaluated) return false;   
+    if (!evaluated) return false;
     out_grad[0] = 2 * (data.du * (data.S - data.pt));
     out_grad[1] = 2 * (data.dv * (data.S - data.pt));
     return true;
@@ -308,7 +308,7 @@ namespace brlcad {
     double g1du = 2 * (data.duu  * delta) + 2 * (data.du * data.du);
     double g2du = 2 * (data.duv  * delta) + 2 * (data.dv * data.du);
     double g1dv = g2du;
-    double g2dv = 2 * (data.dvv  * delta) + 2 * (data.dv * data.dv); 
+    double g2dv = 2 * (data.dvv  * delta) + 2 * (data.dv * data.dv);
     mat2d_t jacob = { g1du, g1dv,
 		      g2du, g2dv };
     mat2d_t inv_jacob;
@@ -320,7 +320,7 @@ namespace brlcad {
     } else {
       cerr << "inverse failed!" << endl; // XXX fix the error handling
       return false;
-    }   
+    }
   }
 
   bool
@@ -353,14 +353,14 @@ namespace brlcad {
     pt2d_t uv = { est[0], est[1] };
     pt2d_t orig_uv = {est[0],est[1]};
 
-    // do the newton iterations 
+    // do the newton iterations
     // terminates on 1 of 3 conditions:
     // 1. if the gradient falls below an epsilon (preferred :-)
     // 2. if the gradient diverges
     // 3. iterated MAX_FCP_ITERATIONS
   try_again:
     int diverge_count = 0;
-    for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {       
+    for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {
       assert(gcp_gradient(curr_grad, data, uv));
 
       ON_3dPoint p = data.surf->PointAt(uv[0],uv[1]);
@@ -372,11 +372,11 @@ namespace brlcad {
       } else if (d > d_last) {
 	TRACE("diverged!");
 	diverge_count++;
-      }      
+      }
       gcp_newton_iteration(new_uv, data, curr_grad, uv);
       move(uv, new_uv);
       d_last = d;
-    }    
+    }
     if (found) {
       // check to see if we've left the surface domain
       double l, h;
@@ -386,7 +386,7 @@ namespace brlcad {
       data.surf->GetDomain(1,&l,&h);
       if (uv[1] < l) uv[1] = l;
       if (uv[1] > h) uv[1] = h;
-      
+
       outpt[0] = uv[0];
       outpt[1] = uv[1];
     } else {
@@ -417,7 +417,7 @@ namespace brlcad {
     ON_2dPointArray samples;
   } PBCData;
 
-  typedef struct _bspline {  
+  typedef struct _bspline {
     int p; // degree
     int m; // num_knots-1
     int n; // num_samples-1 (aka number of control points)
@@ -432,7 +432,7 @@ namespace brlcad {
     return line.DistanceTo(ON_3dPoint(m)) <= flatness;
   }
 
-  bool 
+  bool
   toUV(PBCData& data, ON_2dPoint& out_pt, double t) {
     ON_3dPoint pointOnCurve = data.curve->PointAt(t);
     return get_closest_point(out_pt, data.face, pointOnCurve, data.tree);
@@ -449,17 +449,17 @@ namespace brlcad {
     double random_pos = rand() * (RANGE_HI - RANGE_LO) / (RAND_MAX + 1.) + RANGE_LO;
 #endif
 
-    double newt = random_pos * (hi - lo) + lo; 
+    double newt = random_pos * (hi - lo) + lo;
     assert(newt >= lo && newt <= hi);
     assert(toUV(data, out, newt));
     return newt;
   }
 
-  bool 
-  sample(PBCData& data, 
-	 double t1, 
-	 double t2, 
-	 const ON_2dPoint& p1, 
+  bool
+  sample(PBCData& data,
+	 double t1,
+	 double t2,
+	 const ON_2dPoint& p1,
 	 const ON_2dPoint& p2)
   {
     ON_2dPoint m;
@@ -472,7 +472,7 @@ namespace brlcad {
     }
     return true;
   }
-  
+
   // this is uniform knot generation, not recommended for use with
   // chord-length parameter method... but we're not using
   // that. considering using the average method described at
@@ -482,7 +482,7 @@ namespace brlcad {
     int num_knots = bspline.m + 1;
     bspline.knots.resize(num_knots);
     for (int i = 0; i <= bspline.p; i++) {
-      bspline.knots[i] = 0.0;    
+      bspline.knots[i] = 0.0;
       TRACE("knot: " << bspline.knots[i]);
     }
     for (int i = 1; i <= bspline.n-bspline.p; i++) {
@@ -490,15 +490,15 @@ namespace brlcad {
       TRACE("knot: " << bspline.knots[bspline.p+i]);
     }
     for (int i = bspline.m-bspline.p; i <= bspline.m; i++) {
-      bspline.knots[i] = 1.0;    
+      bspline.knots[i] = 1.0;
       TRACE("knot: " << bspline.knots[i]);
     }
     TRACE("knot size: " << bspline.knots.size());
   }
 
-  int 
+  int
   getKnotInterval(BSpline& bspline, double u) {
-    int k = 0; 
+    int k = 0;
     while (u >= bspline.knots[k]) k++;
     k = (k == 0) ? k : k-1;
     return k;
@@ -557,7 +557,7 @@ namespace brlcad {
 	  max = f;
 	  if (j == UNIVERSAL_SAMPLE_COUNT-1) bspline.params[i] = t;
 	} else if (f < max) {
-	  bspline.params[i] = lastT;	  
+	  bspline.params[i] = lastT;
 	  break;
 	}
 	lastT = t;
@@ -575,7 +575,7 @@ namespace brlcad {
 	printf("% 5.5f ", m[i][j]);
       }
       printf("\n");
-    }  
+    }
   }
 
   void
@@ -591,14 +591,14 @@ namespace brlcad {
       bigD[i][0] = data.samples[i].x;
       bigD[i][1] = data.samples[i].y;
     }
-  
+
     printMatrix(bigD);
     printMatrix(bigN);
 
     JAMA::LU<double> lu(bigN);
     assert(lu.isNonsingular() > 0);
     Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
-  
+
     // extract the control points
     for (int i = 0; i < bspline.n+1; i++) {
       ON_2dPoint& p = bspline.controls.AppendNew();
@@ -622,7 +622,7 @@ namespace brlcad {
 
     // truly - i don't know WTF openNURBS is doing here
     // when it prints out the knots, they only have multiplicity 3,
-    // but yet the order of the curve is 4!!! 
+    // but yet the order of the curve is 4!!!
     int num_knots = spline.knots.size() - 2;
     for (int i = 0; i < num_knots; i++) {
       double knot = spline.knots[i+1];
@@ -630,7 +630,7 @@ namespace brlcad {
       c->SetKnot(i,knot);
     }
     //c->ClampEnd(2);
-  
+
     for (int i = 0; i < spline.controls.Count(); i++) {
       c->SetCV(i, ON_3dPoint(spline.controls[i]));
     }
@@ -638,7 +638,7 @@ namespace brlcad {
     return c;
   }
 
-  ON_Curve* 
+  ON_Curve*
   interpolateCurve(PBCData& data) {
     ON_Curve* curve;
     if (data.samples.Count() == 2) {
@@ -655,7 +655,7 @@ namespace brlcad {
       generateParameters(spline);
       generateControlPoints(spline, data);
       assert(spline.controls.Count() >= 4);
-      curve = newNURBSCurve(spline);    
+      curve = newNURBSCurve(spline);
       // XXX - attempt to simplify here!
     }
     ON_TextLog tl;
@@ -669,12 +669,12 @@ namespace brlcad {
   pullback_curve(ON_BrepFace* face,
 		 const ON_Curve* curve,
 		 SurfaceTree* tree,
-		 double tolerance, 
+		 double tolerance,
 		 double flatness) {
     PBCData data;
     data.tolerance = tolerance;
     double len;
-    curve->GetLength(&len);    
+    curve->GetLength(&len);
     data.flatness = (len < 1.0) ? flatness : flatness * len;
 
     data.curve = curve;

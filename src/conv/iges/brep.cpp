@@ -94,7 +94,7 @@ int entityno;
 	ON_Brep* outer = ON_Brep::New();
 	if (Get_outer_brep(outer, (shell_de - 1)/2, orient))
 	  goto err;
-	      
+
 
 	/* Put voids in */
 	for( i=0 ; i<num_of_voids ; i++ )

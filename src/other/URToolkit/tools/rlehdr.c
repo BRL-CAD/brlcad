@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rlehdr.c - Print header from an RLE file.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -43,7 +43,7 @@ void print_hdr(), print_map(), print_codes(), print_brief_hdr();
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Read and print in human readable form the header of an RLE file.
  *
  * Usage:
@@ -74,7 +74,7 @@ char **argv;
     CONST_DECL char ** fname = NULL;
     CONST_DECL char *stdname = "-";
     char **comment_names = NULL;
-    int     	brief = 0, 
+    int     	brief = 0,
 		cflag = 0,
     		hflag = 0,
     		num_hdr = 1,
@@ -170,7 +170,7 @@ char **argv;
 
 /*****************************************************************
  * TAG( print_hdr )
- * 
+ *
  * Print the RLE header information given.
  *
  * Inputs:
@@ -228,14 +228,14 @@ rle_hdr *the_hdr;
 
 /*****************************************************************
  * TAG( print_brief_hdr )
- * 
+ *
  * Print the RLE header information on one line.
  *
  * Inputs:
  *	the_hdr:	Header information.
  *	ncomment:   	Number of comment names to test.
  *	comment_names:	Print the first line of the first matching
- *	    	    	comment found. 
+ *	    	    	comment found.
  * Outputs:
  * 	Prints info on stdout.
  * Assumptions:
@@ -307,7 +307,7 @@ char **comment_names;
 
 /*****************************************************************
  * TAG( print_map )
- * 
+ *
  * Print the color map from a the_hdr structure.
  * Inputs:
  * 	the_hdr:	Sv_hdr structure containing color map.
@@ -368,14 +368,14 @@ int mflag;
 
 /*****************************************************************
  * TAG( print_codes )
- * 
+ *
  * Print the RLE opcodes in an RLE file.
  * Inputs:
  * 	the_hdr:		Header for RLE file (already open).
  * Outputs:
  * 	Prints file contents on stderr.
  * Assumptions:
- * 	
+ *
  * Algorithm:
  *	[None]
  */
@@ -389,7 +389,7 @@ rle_hdr *the_hdr;
 	RLE_CHECK_ALLOC( "rlehdr", 0, 0 );
 
     rle_debug(1);
-    while ( !feof( the_hdr->rle_file ) && 
+    while ( !feof( the_hdr->rle_file ) &&
 	    !the_hdr->priv.get.is_eof )
 	rle_getrow( the_hdr, scans );
 

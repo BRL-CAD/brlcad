@@ -2821,8 +2821,8 @@ BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
 		     int depth));
 
 BU_EXPORT BU_EXTERN(int bu_image_save_writeline,
-		    (struct bu_image_file *bif, 
-		     int y, 
+		    (struct bu_image_file *bif,
+		     int y,
 		     unsigned char *data));
 
 BU_EXPORT BU_EXTERN(int bu_image_save_close,

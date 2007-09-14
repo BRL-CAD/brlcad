@@ -435,7 +435,7 @@ proc handleLocaleFile { localeName fileName msgFileName } {
 
 	if { ![info exists format($localeName,TIME_FORMAT)] } {
 	    for { set i 3 } { $i >= 0 } { incr i -1 } {
-		if { [regexp H [lindex $items(DateTimePatterns) $i]] 
+		if { [regexp H [lindex $items(DateTimePatterns) $i]]
 		     && [regexp s [lindex $items(DateTimePatterns) $i]] } {
 		    break
 		}
@@ -467,7 +467,7 @@ proc handleLocaleFile { localeName fileName msgFileName } {
 
 	if { ![info exists format($localeName,TIME_FORMAT_12)] } {
 	    for { set i 3 } { $i >= 0 } { incr i -1 } {
-		if { [regexp h [lindex $items(DateTimePatterns) $i]] 
+		if { [regexp h [lindex $items(DateTimePatterns) $i]]
 		     && [regexp s [lindex $items(DateTimePatterns) $i]] } {
 		    break
 		}
@@ -492,7 +492,7 @@ proc handleLocaleFile { localeName fileName msgFileName } {
 
     # Date and time... Prefer 24-hour format to 12-hour format.
 
-    if { ![info exists format($localeName,DATE_TIME_FORMAT)] 
+    if { ![info exists format($localeName,DATE_TIME_FORMAT)]
 	 && [info exists format($localeName,DATE_FORMAT)]
 	 && [info exists format($localeName,TIME_FORMAT)]} {
 	set format($localeName,DATE_TIME_FORMAT) \
@@ -500,7 +500,7 @@ proc handleLocaleFile { localeName fileName msgFileName } {
 	append format($localeName,DATE_TIME_FORMAT) \
 	    " " $format($localeName,TIME_FORMAT) " %z"
     }
-    if { ![info exists format($localeName,DATE_TIME_FORMAT)] 
+    if { ![info exists format($localeName,DATE_TIME_FORMAT)]
 	 && [info exists format($localeName,DATE_FORMAT)]
 	 && [info exists format($localeName,TIME_FORMAT_12)]} {
 	set format($localeName,DATE_TIME_FORMAT) \
@@ -520,7 +520,7 @@ proc handleLocaleFile { localeName fileName msgFileName } {
 
     # Write the string sets to the file.
 
-    foreach key { 
+    foreach key {
 	LOCALE_NUMERALS LOCALE_DATE_FORMAT LOCALE_TIME_FORMAT
 	LOCALE_DATE_TIME_FORMAT LOCALE_ERAS LOCALE_YEAR_FORMAT
     } {

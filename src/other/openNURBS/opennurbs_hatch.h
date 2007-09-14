@@ -5,7 +5,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ public:
     Pointer to loop's 2d curve
   */
   const ON_Curve* Curve() const;
- 
+
   /*
   Description:
     Specify the 2d loop curve in the hatch's plane coordinates
@@ -119,9 +119,9 @@ protected:
   Angle is the direction of the line CCW from the x axis
   The first line origin is at base
   Each line repetition is offset by offset from the previous line
-    offset.x is parallel to the line and 
+    offset.x is parallel to the line and
     offset.y is perpendicular to the line
-  The base and offset values are rotated by the line's angle to 
+  The base and offset values are rotated by the line's angle to
     produce a location in the hatch pattern's coordinate system
   There can be gaps and dashes specified for drawing the line
 
@@ -136,9 +136,9 @@ public:
   ON_HatchLine();
   // C++ default copy construction and operator= work fine.
 
-  ON_HatchLine( 
-    double angle, 
-    const ON_2dPoint& base, 
+  ON_HatchLine(
+    double angle,
+    const ON_2dPoint& base,
     const ON_2dVector& offset,
     const ON_SimpleArray<double> dashes);
 
@@ -172,7 +172,7 @@ public:
   Return:
   */
   void SetAngle( double angle);
-  
+
   /*
   Description:
     Get this line's 2d basepoint
@@ -189,7 +189,7 @@ public:
   Return:
   */
   void SetBase( const ON_2dPoint& base);
-  
+
   /*
   Description:
     Get this line's 2d offset for line repetitions
@@ -249,7 +249,7 @@ public:
 
   /*
   Description:
-    Get the line's angle, base, offset and dashes 
+    Get the line's angle, base, offset and dashes
     in one function call
   Parameters:
     angle  - [out] angle in radians CCW from x-axis
@@ -259,9 +259,9 @@ public:
   Return:
   */
   void GetLineData(
-    double& angle, 
-    ON_2dPoint& base, 
-    ON_2dVector& offset, 
+    double& angle,
+    ON_2dPoint& base,
+    ON_2dVector& offset,
     ON_SimpleArray<double>& dashes) const;
 
   /*
@@ -285,7 +285,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -300,7 +300,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_HatchLine>;
   /////////////////////////////////////////////////////////////////
   Fill definition for a hatch
 
-  The hatch  will be one of 
+  The hatch  will be one of
     ON_Hatch::ftLines     - pat file style definition
     ON_Hatch::ftGradient  - uses a color function
     ON_Hatch::ftSolid     - uses entity color
@@ -362,7 +362,7 @@ public:
   */
   void SetName( const wchar_t* pName);
   void SetName( const char* pName);
-  
+
   /*
   Description:
     Get the name of the pattern
@@ -388,7 +388,7 @@ public:
   */
   void SetDescription( const wchar_t* pDescription);
   void SetDescription( const char* pDescription);
-  
+
   /*
   Description:
     Get a short description of the pattern
@@ -481,7 +481,7 @@ public:
 
   /*
   Description:
-    Set all of the hatch lines at once. 
+    Set all of the hatch lines at once.
     Existing hatchlines are deleted.
   Parameters:
     lines - [in] Array of lines to add.  Lines are copied
@@ -494,14 +494,14 @@ public:
   int m_hatchpattern_index;         // Index in the hatch pattern table
   ON_wString m_hatchpattern_name;   // String name of the pattern
   ON_UUID m_hatchpattern_id;
-  
+
   eFillType m_type;
-  
+
   ON_wString m_description;  // String description of the pattern
 
   // Represents a collection of ON_HatchLine's to make a complete pattern
   // This is the definition of a hatch pattern.
-  // Simple solid line hatches with fixed angle and spacing are also 
+  // Simple solid line hatches with fixed angle and spacing are also
   // represented with this type of hatch
   ON_ClassArray<ON_HatchLine> m_lines; // used by line hatches
 };
@@ -509,7 +509,7 @@ public:
 /*
   class ON_Hatch
   /////////////////////////////////////////////////////////////////
-  Represents a hatch in planar boundary loop or loops 
+  Represents a hatch in planar boundary loop or loops
   This is a 2d entity with a plane defining a local coordinate system
   The loops, patterns, angles, etc are all in this local coordinate system
 
@@ -567,19 +567,19 @@ public:
     Get tight bounding box of the hatch.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       tight bounding box of the hatch.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
       hatch is calculated.  The hatch is not modified.
 	Returns:
-    True if the returned tight_bbox is set to a valid 
+    True if the returned tight_bbox is set to a valid
     bounding box.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -615,9 +615,9 @@ public:
     true = success, false = failure
   */
   bool Create( const ON_Plane& plane,
-               const ON_SimpleArray<const ON_Curve*> loops, 
-               int pattern_index, 
-               double pattern_rotation, 
+               const ON_SimpleArray<const ON_Curve*> loops,
+               int pattern_index,
+               double pattern_rotation,
                double pattern_scale);
 
   /*
@@ -637,10 +637,10 @@ public:
   Returns:
   */
   void SetPlane( const ON_Plane& plane);
-  
+
   /*
   Description:
-    Gets the rotation applied to the hatch pattern 
+    Gets the rotation applied to the hatch pattern
     when it is mapped to the hatch's plane
   Returns:
     The rotation in radians
@@ -652,7 +652,7 @@ public:
 
 /*
   Description:
-    Sets the rotation applied to the hatch pattern 
+    Sets the rotation applied to the hatch pattern
     when it is mapped to the hatch's plane
   Parameters:
     rotation - [in] The rotation in radians
@@ -661,10 +661,10 @@ public:
     the hatch's plane origin by this value
   */
   void SetPatternRotation( double rotation);
-  
+
   /*
   Description:
-    Gets the scale applied to the hatch pattern 
+    Gets the scale applied to the hatch pattern
     when it is mapped to the hatch's plane
   Returns:
     The scale
@@ -676,7 +676,7 @@ public:
 
 /*
   Description:
-    Sets the scale applied to the hatch pattern 
+    Sets the scale applied to the hatch pattern
     when it is mapped to the hatch's plane
   Parameters:
     scale - [in] The scale
@@ -685,7 +685,7 @@ public:
     the hatch's plane origin by this value
   */
   void SetPatternScale( double scale);
-  
+
   /*
   Description:
     Get the number of loops used by this hatch

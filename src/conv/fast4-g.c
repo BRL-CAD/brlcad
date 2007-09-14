@@ -3430,7 +3430,7 @@ make_regions(void)
 
 #define COLOR_LINE_LEN 256
 
-static void 
+static void
 read_fast4_colors(char *color_file)
 {
     FILE *fp;

@@ -5,9 +5,9 @@ different file formats, or we may not have written a conversion
 program for your favorite format, this file contains a few words on
 customizing the directory and rolling your own.
 
-If you do write a conversion program for a file format that is not 
+If you do write a conversion program for a file format that is not
 supported in this distribution, please send it to us, so we can add
-it to the distribution, and others will not have to duplicate your 
+it to the distribution, and others will not have to duplicate your
 hard work.  Similarly, if you are thinking of writing a conversion
 program, you might send us a note and see if anyone else has already
 done one.

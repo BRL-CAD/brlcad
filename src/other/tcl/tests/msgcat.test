@@ -51,7 +51,7 @@ namespace eval ::msgcat::test {
     variable body
     variable result
     variable setVars
-    foreach setVars [PowerSet $envVars] { 
+    foreach setVars [PowerSet $envVars] {
 	set result [string tolower [lindex $setVars 0]]
 	if {[string length $result] == 0} {
 	    if {[info exists ::tcl::mac::locale]} {
@@ -85,7 +85,7 @@ namespace eval ::msgcat::test {
 	incr count
     }
     catch {unset result}
-    
+
     # Could add tests of initialization from Windows registry here.
     # Use a fake registry package.
 
@@ -285,11 +285,11 @@ namespace eval ::msgcat::test {
     variable count 2
     variable result
     array set result {
-	foo,ov0 ov0_ROOT foo,ov1 ov1_foo foo,ov2 ov2_foo 
+	foo,ov0 ov0_ROOT foo,ov1 ov1_foo foo,ov2 ov2_foo
         foo,ov3 ov3_foo foo,ov4 ov4
-	foo_BAR,ov0 ov0_ROOT foo_BAR,ov1 ov1_foo foo_BAR,ov2 ov2_foo_BAR 
-        foo_BAR,ov3 ov3_foo_BAR	foo_BAR,ov4 ov4 
-        foo_BAR_baz,ov0 ov0_ROOT foo_BAR_baz,ov1 ov1_foo 
+	foo_BAR,ov0 ov0_ROOT foo_BAR,ov1 ov1_foo foo_BAR,ov2 ov2_foo_BAR
+        foo_BAR,ov3 ov3_foo_BAR	foo_BAR,ov4 ov4
+        foo_BAR_baz,ov0 ov0_ROOT foo_BAR_baz,ov1 ov1_foo
         foo_BAR_baz,ov2 ov2_foo_BAR
 	foo_BAR_baz,ov3 ov3_foo_BAR_baz foo_BAR_baz,ov4 ov4
     }
@@ -504,7 +504,7 @@ namespace eval ::msgcat::test {
     # Tests msgcat-6.*: [mcset], [mc] namespace inheritance
 #
 # Test mcset and mc, ensuring that resolution for messages
-# proceeds from the current ns to its parent and so on to the 
+# proceeds from the current ns to its parent and so on to the
 # global ns.
 #
 # Do this for the 12 permutations of
@@ -548,7 +548,7 @@ namespace eval ::msgcat::test {
 			    ::msgcat::mcset foo ov3 "ov3_foo_bar_baz"
 			}
 		    }
-		    
+
 		}
 		variable locale [mclocale]
 		mclocale foo

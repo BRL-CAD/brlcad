@@ -1,6 +1,6 @@
-/* 
+/*
  * rlespiff.c - Spiff up an image by stretching the contrast.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -27,7 +27,7 @@ void copy_raw();
  * darkest pixel maps to black and the lightest to white.  For color
  * images, the determination is done on the min and max of the RGB
  * values.
- * 
+ *
  * Usage:
  * 	rlespiff [-t threshold] [-b blacklevel] [-w whitelevel] [-s] [-v]
  * 		 [-o outfile] [infile]
@@ -101,12 +101,12 @@ char **argv;
 		   &wflag, &whitelevel,
 		   &sflag, &verbose, &oflag, &outfname, &infname ) == 0 )
 	exit( 1 );
-    
+
     /* Open the files */
     in_hdr.rle_file = rle_open_f( cmd_name( argv ), infname, "r" );
     rle_names( &in_hdr, cmd_name( argv ), infname, 0 );
     rle_names( &out_hdr, in_hdr.cmd, outfname, 0 );
-	
+
     /* Loop over all images in input file */
     for ( rle_cnt = 0;
 	  (rle_err = rle_get_setup( &in_hdr )) == RLE_SUCCESS;
@@ -158,7 +158,7 @@ char **argv;
 	    copy_raw( &in_hdr, y, scan, nraw, save_scan, save_nraw );
 	}
 
-        
+
 	/* Determine min & max */
 	thresh = (((double)threshold * (in_hdr.xmax - in_hdr.xmin + 1) *
 		  (in_hdr.ymax - in_hdr.ymin + 1) +
@@ -186,7 +186,7 @@ char **argv;
 
 	    if ( verbose )
 	    {
-		fprintf( stderr, "%s image %d", 
+		fprintf( stderr, "%s image %d",
 			 in_hdr.rle_file == stdin ? "Standard input" : infname,
 			 rle_cnt );
 		if ( sflag )
@@ -273,7 +273,7 @@ char **argv;
 
 /*****************************************************************
  * TAG( copy_raw )
- * 
+ *
  * Copy the raw scan data into a save area.
  * Inputs:
  * 	the_hdr:	Header describing input file.

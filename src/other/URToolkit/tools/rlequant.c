@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rlequant.c - Quantize an image to a given number of colors.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
  * Date:	Tue Jun 12 1990
  * Copyright (c) 1990, University of Michigan
- * History:  
+ * History:
  *   13 September 1990: Clark: Fix problem with cropped images.
  */
 #ifndef lint
@@ -228,7 +228,7 @@ char **argv;
 		 MY_NAME );
 	exit( 1 );
     }
-    
+
     /* If number of colors not given, compute default. */
     if ( !nflag )
     {
@@ -362,7 +362,7 @@ char **argv;
 		colors = colorquant( red, green, blue, entries,
 				     colormap, colors_in, bits,
 				     rgbmap, fflag, state );
-		
+
 	    /* Advance state machine. */
 	    if ( state == INIT_HIST )
 		state = USE_HIST;
@@ -424,7 +424,7 @@ char **argv;
 	    free_mem( &in_hdr, dflag, red, green, blue, alpha,
 		      img_red, img_green, img_blue, rows, outrows );
 	}
-    
+
 	/* Check for an error.  EOF or EMPTY is ok if at least one image
 	 * has been read.  Otherwise, print an error message.
 	 */
@@ -459,7 +459,7 @@ char **argv;
 		add_cube( colormap, colors, cubeside );
 		colors += cubesize;
 		cubesize = 0;
-		
+
 		/* Write the setup information, only. */
 		setup_output( &out_hdr, colors, colormap );
 		rle_puteof( &out_hdr );
@@ -540,7 +540,7 @@ rle_pixel **img_red, **img_green, **img_blue;
 		 MY_NAME );
 	exit( RLE_NO_SPACE );
     }
-	
+
     /* Allocate image memory for prequantized image. */
     CHECK_MALLOC( rle_pixel, *red, entries, "input image" );
     if ( hdr->ncolors > 1 )
@@ -606,7 +606,7 @@ rle_pixel **rows;
     {
 	/* Read a scanline. */
 	rle_getrow( hdr, rows );
-	    
+
 	/* Prequantize the pixels. */
 	for ( x = 0; x < width; x++ )
 	{

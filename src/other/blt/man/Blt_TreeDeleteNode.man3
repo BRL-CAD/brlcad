@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -38,13 +38,13 @@ Node to be deleted.
 .BE
 .SH DESCRIPTION
 This procedure deletes a given node and all it descendants from a tree
-data object.  
+data object.
 .PP
 The arguments are as follows:
 .TP 1i
 \fItree\fR
 The tree containing the parent node.
-.TP 
+.TP
 \fInode\fR
 Node to be deleted.  The node and its descendant nodes are deleted.
 Each node's data values are deleted also.   The reference count of
@@ -67,7 +67,7 @@ Blt_TreeDeleteNode(token, root);
 .CE
 .SH NOTIFICATIONS
 \fBBlt_TreeDeleteNode\fR can trigger tree notify events.
-You can be notified whenever a node is deleted by using the 
+You can be notified whenever a node is deleted by using the
 \fBBlt_TreeCreateNotifyHandler\fR.  A callback routine is registered
 that will be automatically invoked whenever a node is deleted
 via \fBBlt_TreeDeleteNode\fR to the tree.

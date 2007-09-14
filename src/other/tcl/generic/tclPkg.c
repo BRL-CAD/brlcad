@@ -374,7 +374,7 @@ Tcl_PkgRequireProc(
 	    break;
 	}
 
-	/* 
+	/*
 	 * Check whether we're already attempting to load some version
 	 * of this package (circular dependency detection).
 	 */

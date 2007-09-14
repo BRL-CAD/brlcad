@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -42,9 +42,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -75,8 +75,8 @@ public:
   //
   // Interface
 
-  enum 
-  { 
+  enum
+  {
 
 #if defined(ON_ON_WINDOWS_GDI)
 
@@ -108,10 +108,10 @@ public:
 #endif
 
     normal_font_height = 256
-  }; 
+  };
 
   // Ratio of linefeed to character height (1.6)
-  static 
+  static
   const double m_default_linefeed_ratio;
 
   static
@@ -124,13 +124,13 @@ public:
     True if the font's character set should be SYMBOL_CHARSET;
   */
   static
-  bool IsSymbolFontFaceName( 
+  bool IsSymbolFontFaceName(
           const wchar_t* facename
           );
 
   void SetFontName( const wchar_t* );
   void SetFontName( const char* );
-  
+
   void GetFontName( ON_wString& ) const;
   const wchar_t* FontName() const;
 
@@ -147,7 +147,7 @@ public:
 
   bool SetFontFaceName( const wchar_t* );
   bool SetFontFaceName( const char* );
-  
+
   void GetFontFaceName( ON_wString& ) const;
   const wchar_t* FontFaceName() const;
 
@@ -164,21 +164,21 @@ public:
 
   /*
   Returns:
-    Height of the 'I' character when the font is drawn 
+    Height of the 'I' character when the font is drawn
     with m_logfont.lfHeight = ON_Font::normal_font_height.
   */
   int HeightOfI() const;
 
   /*
   Returns:
-    Height of a linefeed when the font is drawn 
+    Height of a linefeed when the font is drawn
     with m_logfont.lfHeight = ON_Font::normal_font_height.
   */
   int HeightOfLinefeed() const;
 
   /*
     Description:
-      Returns the ratio of the height of a typical upper case letter 
+      Returns the ratio of the height of a typical upper case letter
       to the height of a whole character cell.
 
   Parameters:
@@ -201,7 +201,7 @@ public:
   double     m_linefeed_ratio; // defaults to static s_linefeed_ratio.
   int        m_font_index;     // font index in Rhino font table
   ON_UUID    m_font_id;
-  wchar_t    m_facename[face_name_size]; // same as m_logfont.lfFaceName ( 
+  wchar_t    m_facename[face_name_size]; // same as m_logfont.lfFaceName (
 
 public:
 #if defined(ON_OS_WINDOWS_GDI)
@@ -210,7 +210,7 @@ public:
 
 private:
   // volitile - can be changed by ON_Font::HeightOfI() const.
-  int m_I_height; // height of the 'I' character when the font is drawn 
+  int m_I_height; // height of the 'I' character when the font is drawn
                   // with m_logfont.lfHeight = 256.
 };
 

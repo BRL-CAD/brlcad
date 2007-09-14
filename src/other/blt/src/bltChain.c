@@ -37,7 +37,7 @@
  *
  * Blt_ChainCreate --
  *
- *	Creates a new linked list (chain) structure and initializes 
+ *	Creates a new linked list (chain) structure and initializes
  *	its pointers;
  *
  * Results:
@@ -62,7 +62,7 @@ Blt_ChainCreate()
  *
  * Blt_ChainAllocLink --
  *
- *	Creates a new chain link.  Unlink Blt_ChainNewLink, this 
+ *	Creates a new chain link.  Unlink Blt_ChainNewLink, this
  *	routine also allocates extra memory in the node for data.
  *
  * Results:
@@ -123,7 +123,7 @@ Blt_ChainNewLink()
  * Results:
  *	None.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_ChainReset(chainPtr)
@@ -272,7 +272,7 @@ Blt_ChainLinkBefore(chainPtr, linkPtr, beforePtr)
  *
  * Blt_ChainUnlinkLink --
  *
- *	Unlinks a link from the chain. The link is not deallocated, 
+ *	Unlinks a link from the chain. The link is not deallocated,
  *	but only removed from the chain.
  *
  * Results:
@@ -396,7 +396,7 @@ Blt_ChainGetNthLink(chainPtr, position)
  *
  * Blt_ChainSort --
  *
- *	Sorts the chain according to the given comparison routine.  
+ *	Sorts the chain according to the given comparison routine.
  *
  * Results:
  *	None.
@@ -423,8 +423,8 @@ Blt_ChainSort(chainPtr, proc)
 	return;			/* Out of memory. */
     }
     i = 0;
-    for (linkPtr = chainPtr->headPtr; linkPtr != NULL; 
-	 linkPtr = linkPtr->nextPtr) { 
+    for (linkPtr = chainPtr->headPtr; linkPtr != NULL;
+	 linkPtr = linkPtr->nextPtr) {
 	linkArr[i++] = linkPtr;
     }
     qsort((char *)linkArr, chainPtr->nLinks, sizeof(Blt_ChainLink *),

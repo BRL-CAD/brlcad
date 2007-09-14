@@ -44,9 +44,9 @@
 #include "bltVecInt.h"
 #include <ctype.h>
 
-#if (TCL_MAJOR_VERSION > 7) 
+#if (TCL_MAJOR_VERSION > 7)
 
-static 
+static
 int GetDouble(interp, objPtr, valuePtr)
     Tcl_Interp *interp;
     Tcl_Obj *objPtr;
@@ -67,30 +67,30 @@ int GetDouble(interp, objPtr, valuePtr)
 
 static Tcl_Obj *
 GetValues(VectorObject *vPtr, int first, int last)
-{ 
-    register int i; 
+{
+    register int i;
     Tcl_Obj *listObjPtr;
 
     listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **)NULL);
-    for (i = first; i <= last; i++) { 
-	Tcl_ListObjAppendElement(vPtr->interp, listObjPtr, 
+    for (i = first; i <= last; i++) {
+	Tcl_ListObjAppendElement(vPtr->interp, listObjPtr,
 				 Tcl_NewDoubleObj(vPtr->valueArr[i]));
-    } 
+    }
     return listObjPtr;
 }
 
 static void
-ReplicateValue(vPtr, first, last, value) 
+ReplicateValue(vPtr, first, last, value)
     VectorObject *vPtr;
     int first, last;
     double value;
-{ 
+{
     register int i;
- 
-    for (i = first; i <= last; i++) { 
-	vPtr->valueArr[i] = value; 
-    } 
-    vPtr->notifyFlags |= UPDATE_RANGE; 
+
+    for (i = first; i <= last; i++) {
+	vPtr->valueArr[i] = value;
+    }
+    vPtr->notifyFlags |= UPDATE_RANGE;
 }
 
 static int
@@ -193,7 +193,7 @@ AppendOp(vPtr, interp, objc, objv)
     VectorObject *v2Ptr;
 
     for (i = 2; i < objc; i++) {
-	v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr, 
+	v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr,
 	       Tcl_GetString(objv[i]), (char **)NULL, NS_SEARCH_BOTH);
 	if (v2Ptr != NULL) {
 	    result = AppendVector(vPtr, v2Ptr);
@@ -201,7 +201,7 @@ AppendOp(vPtr, interp, objc, objv)
 	    int nElem;
 	    Tcl_Obj **elemObjArr;
 
-	    if (Tcl_ListObjGetElements(interp, objv[i], &nElem, &elemObjArr) 
+	    if (Tcl_ListObjGetElements(interp, objv[i], &nElem, &elemObjArr)
 		!= TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -286,7 +286,7 @@ DeleteOp(vPtr, interp, objc, objv)
 	return TCL_OK;
     }
     /*
-     * Allocate an "unset" bitmap the size of the vector.  
+     * Allocate an "unset" bitmap the size of the vector.
      */
     unsetArr = Blt_Calloc(sizeof(unsigned char), (vPtr->length + 7) / 8);
     assert(unsetArr);
@@ -298,8 +298,8 @@ DeleteOp(vPtr, interp, objc, objv)
 
     for (i = 2; i < objc; i++) {
 	string = Tcl_GetString(objv[i]);
-	if (Blt_VectorGetIndexRange(interp, vPtr, string, 
-		(INDEX_COLON | INDEX_CHECK), (Blt_VectorIndexProc **) NULL) 
+	if (Blt_VectorGetIndexRange(interp, vPtr, string,
+		(INDEX_COLON | INDEX_CHECK), (Blt_VectorIndexProc **) NULL)
 		!= TCL_OK) {
 	    Blt_Free(unsetArr);
 	    return TCL_ERROR;
@@ -404,7 +404,7 @@ IndexOp(vPtr, interp, objc, objv)
     char *string;
 
     string = Tcl_GetString(objv[2]);
-    if (Blt_VectorGetIndexRange(interp, vPtr, string, INDEX_ALL_FLAGS, 
+    if (Blt_VectorGetIndexRange(interp, vPtr, string, INDEX_ALL_FLAGS,
 		(Blt_VectorIndexProc **) NULL) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -475,7 +475,7 @@ LengthOp(vPtr, interp, objc, objv)
 	    return TCL_ERROR;
 	}
 	if (size < 0) {
-	    Tcl_AppendResult(interp, "bad vector size \"", 
+	    Tcl_AppendResult(interp, "bad vector size \"",
 		Tcl_GetString(objv[2]), "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -515,7 +515,7 @@ MapOp(vPtr, interp, objc, objv)
     Tcl_Obj *CONST *objv;
 {
     if (objc > 2) {
-	if (Blt_VectorMapVariable(interp, vPtr, Tcl_GetString(objv[2])) 
+	if (Blt_VectorMapVariable(interp, vPtr, Tcl_GetString(objv[2]))
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -554,7 +554,7 @@ MergeOp(vPtr, interp, objc, objv)
     int refSize, length, nElem;
     register int i;
     double *valuePtr, *valueArr;
-    
+
     /* Allocate an array of vector pointers of each vector to be
      * merged in the current vector.  */
     vecArr = Blt_Malloc(sizeof(VectorObject *) * objc);
@@ -587,7 +587,7 @@ MergeOp(vPtr, interp, objc, objv)
 
     valueArr = Blt_Malloc(sizeof(double) * nElem);
     if (valueArr == NULL) {
-	Tcl_AppendResult(vPtr->interp, "not enough memory to allocate ", 
+	Tcl_AppendResult(vPtr->interp, "not enough memory to allocate ",
 		 Blt_Itoa(nElem), " vector elements", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -635,7 +635,7 @@ NormalizeOp(vPtr, interp, objc, objv)
 	char *string;
 
 	string = Tcl_GetString(objv[2]);
-	v2Ptr = Blt_VectorCreate(vPtr->dataPtr, string, string, string, 
+	v2Ptr = Blt_VectorCreate(vPtr->dataPtr, string, string, string,
 				 &isNew);
 	if (v2Ptr == NULL) {
 	    return TCL_ERROR;
@@ -660,7 +660,7 @@ NormalizeOp(vPtr, interp, objc, objv)
 	listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **)NULL);
 	for (i = 0; i < vPtr->length; i++) {
 	    norm = (vPtr->valueArr[i] - vPtr->min) / range;
-	    Tcl_ListObjAppendElement(interp, listObjPtr, 
+	    Tcl_ListObjAppendElement(interp, listObjPtr,
 		Tcl_NewDoubleObj(norm));
 	}
 	Tcl_SetObjResult(interp, listObjPtr);
@@ -699,7 +699,7 @@ NotifyOp(vPtr, interp, objc, objv)
     int option;
     int bool;
     enum optionIndices {
-	OPTION_ALWAYS, OPTION_NEVER, OPTION_WHENIDLE, 
+	OPTION_ALWAYS, OPTION_NEVER, OPTION_WHENIDLE,
 	OPTION_NOW, OPTION_CANCEL, OPTION_PENDING
     };
     static char *optionArr[] = {
@@ -737,7 +737,7 @@ NotifyOp(vPtr, interp, objc, objv)
 	bool = (vPtr->notifyFlags & NOTIFY_PENDING);
 	Tcl_SetObjResult(interp, Tcl_NewBooleanObj(bool));
 	break;
-    }	
+    }
     return TCL_OK;
 }
 
@@ -783,7 +783,7 @@ PopulateOp(vPtr, interp, objc, objv)
 	return TCL_ERROR;
     }
     if (density < 1) {
-	Tcl_AppendResult(interp, "bad density \"", Tcl_GetString(objv[3]), 
+	Tcl_AppendResult(interp, "bad density \"", Tcl_GetString(objv[3]),
 		"\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -840,9 +840,9 @@ RangeOp(vPtr, interp, objc, objv)
     int first, last;
     register int i;
 
-    if ((Blt_VectorGetIndex(interp, vPtr, Tcl_GetString(objv[2]), &first, 
+    if ((Blt_VectorGetIndex(interp, vPtr, Tcl_GetString(objv[2]), &first,
 		INDEX_CHECK, (Blt_VectorIndexProc **) NULL) != TCL_OK) ||
-	(Blt_VectorGetIndex(interp, vPtr, Tcl_GetString(objv[3]), &last, 
+	(Blt_VectorGetIndex(interp, vPtr, Tcl_GetString(objv[3]), &last,
 		INDEX_CHECK, (Blt_VectorIndexProc **) NULL) != TCL_OK)) {
 	return TCL_ERROR;
     }
@@ -850,12 +850,12 @@ RangeOp(vPtr, interp, objc, objv)
     if (first > last) {
 	/* Return the list reversed */
 	for (i = last; i <= first; i++) {
-	    Tcl_ListObjAppendElement(interp, listObjPtr, 
+	    Tcl_ListObjAppendElement(interp, listObjPtr,
 		Tcl_NewDoubleObj(vPtr->valueArr[i]));
 	}
     } else {
 	for (i = first; i <= last; i++) {
-	    Tcl_ListObjAppendElement(interp, listObjPtr, 
+	    Tcl_ListObjAppendElement(interp, listObjPtr,
 		Tcl_NewDoubleObj(vPtr->valueArr[i]));
 	}
     }
@@ -878,7 +878,7 @@ RangeOp(vPtr, interp, objc, objv)
  *	Please note, min cannot be greater than max.
  *
  * Results:
- *	If the value is within of the interval [min..max], 1 is 
+ *	If the value is within of the interval [min..max], 1 is
  *	returned; 0 otherwise.
  *
  * ----------------------------------------------------------------------
@@ -980,7 +980,7 @@ GetBinaryFormat(interp, string, sizePtr)
 	    (char *)NULL);
 	return FMT_UNKNOWN;
     }
-    Tcl_AppendResult(interp, "can't handle format \"", string, "\"", 
+    Tcl_AppendResult(interp, "can't handle format \"", string, "\"",
 		     (char *)NULL);
     return FMT_UNKNOWN;
 }
@@ -1144,7 +1144,7 @@ BinreadOp(vPtr, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (value < 0) {
-		Tcl_AppendResult(interp, "count can't be negative", 
+		Tcl_AppendResult(interp, "count can't be negative",
 				 (char *)NULL);
 		return TCL_ERROR;
 	    }
@@ -1177,7 +1177,7 @@ BinreadOp(vPtr, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    string = Tcl_GetString(objv[i]);
-	    if (Blt_VectorGetIndex(interp, vPtr, string, &first, 0, 
+	    if (Blt_VectorGetIndex(interp, vPtr, string, &first, 0,
 			 (Blt_VectorIndexProc **)NULL) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -1288,7 +1288,7 @@ SearchOp(vPtr, interp, objc, objv)
     if (wantValue) {
 	for (i = 0; i < vPtr->length; i++) {
 	    if (InRange(vPtr->valueArr[i], min, max)) {
-		Tcl_ListObjAppendElement(interp, listObjPtr, 
+		Tcl_ListObjAppendElement(interp, listObjPtr,
 			Tcl_NewDoubleObj(vPtr->valueArr[i]));
 	    }
 	}
@@ -1466,15 +1466,15 @@ SetOp(vPtr, interp, objc, objv)
 
     /* The source can be either a list of numbers or another vector.  */
 
-    v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr, 
+    v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr,
 	   Tcl_GetString(objv[2]), (char **)NULL, NS_SEARCH_BOTH);
     if (v2Ptr != NULL) {
 	if (vPtr == v2Ptr) {
 	    VectorObject *tmpPtr;
-	    /* 
+	    /*
 	     * Source and destination vectors are the same.  Copy the
 	     * source first into a temporary vector to avoid memory
-	     * overlaps. 
+	     * overlaps.
 	     */
 	    tmpPtr = Blt_VectorNew(vPtr->dataPtr);
 	    result = Blt_VectorDuplicate(tmpPtr, v2Ptr);
@@ -1485,7 +1485,7 @@ SetOp(vPtr, interp, objc, objv)
 	} else {
 	    result = Blt_VectorDuplicate(vPtr, v2Ptr);
 	}
-    } else if (Tcl_ListObjGetElements(interp, objv[2], &nElem, &elemObjArr) 
+    } else if (Tcl_ListObjGetElements(interp, objv[2], &nElem, &elemObjArr)
 	       == TCL_OK) {
 	result = CopyList(vPtr, nElem, elemObjArr);
     } else {
@@ -1515,7 +1515,7 @@ SetOp(vPtr, interp, objc, objv)
  *	vectors.
  *
  * Results:
- *	A standard Tcl result.  
+ *	A standard Tcl result.
  *
  * -----------------------------------------------------------------------
  */
@@ -1531,7 +1531,7 @@ SplitOp(vPtr, interp, objc, objv)
 
     nVectors = objc - 2;
     if ((vPtr->length % nVectors) != 0) {
-	Tcl_AppendResult(interp, "can't split vector \"", vPtr->name, 
+	Tcl_AppendResult(interp, "can't split vector \"", vPtr->name,
 	   "\" into ", Blt_Itoa(nVectors), " even parts.", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1612,7 +1612,7 @@ Blt_VectorSortIndex(vPtrPtr, nVectors)
     }
     sortVectorArr = vPtrPtr;
     nSortVectors = nVectors;
-    qsort((char *)indexArr, length, sizeof(int), 
+    qsort((char *)indexArr, length, sizeof(int),
 	  (QSortCompareProc *)CompareVectors);
     return indexArr;
 }
@@ -1781,7 +1781,7 @@ InstExprOp(vPtr, interp, objc, objv)
     Tcl_Obj *CONST *objv;
 {
 
-    if (Blt_ExprVector(interp, Tcl_GetString(objv[2]), (Blt_Vector *) vPtr) 
+    if (Blt_ExprVector(interp, Tcl_GetString(objv[2]), (Blt_Vector *) vPtr)
 	!= TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1823,7 +1823,7 @@ ArithOp(vPtr, interp, objc, objv)
     Tcl_Obj *listObjPtr;
     char *string;
 
-    v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr, 
+    v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr,
 		Tcl_GetString(objv[2]), (char **)NULL, NS_SEARCH_BOTH);
     if (v2Ptr != NULL) {
 	register int j;
@@ -1831,8 +1831,8 @@ ArithOp(vPtr, interp, objc, objv)
 
 	length = v2Ptr->last - v2Ptr->first + 1;
 	if (length != vPtr->length) {
-	    Tcl_AppendResult(interp, "vectors \"", Tcl_GetString(objv[0]), 
-		"\" and \"", Tcl_GetString(objv[2]), 
+	    Tcl_AppendResult(interp, "vectors \"", Tcl_GetString(objv[0]),
+		"\" and \"", Tcl_GetString(objv[2]),
 		"\" are not the same length", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -2018,7 +2018,7 @@ Blt_VectorVarTrace(clientData, interp, part1, part2, flags)
 	}
 	return NULL;
     }
-    if (Blt_VectorGetIndexRange(interp, vPtr, part2, INDEX_ALL_FLAGS, 
+    if (Blt_VectorGetIndexRange(interp, vPtr, part2, INDEX_ALL_FLAGS,
 		&indexProc) != TCL_OK) {
 	goto error;
     }
@@ -2109,7 +2109,7 @@ Blt_VectorVarTrace(clientData, interp, part1, part2, flags)
     Tcl_ResetResult(interp);
     return NULL;
 
- error: 
+ error:
     strncpy(message, Tcl_GetStringResult(interp), MAX_ERR_MSG);
     message[MAX_ERR_MSG] = '\0';
     return message;

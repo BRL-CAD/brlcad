@@ -37,76 +37,76 @@
 /DrawSymbolProc 0 def			% Routine to draw symbol outline/fill
 /StippleProc 0 def			% Stipple routine (bar segments)
 /DashesProc 0 def			% Dashes routine (line segments)
-  
-% Define the array ISOLatin1Encoding (which specifies how characters are 
-% encoded for ISO-8859-1 fonts), if it isn't already present (Postscript 
-% level 2 is supposed to define it, but level 1 doesn't). 
- 
-systemdict /ISOLatin1Encoding known not { 
-  /ISOLatin1Encoding [ 
-    /space /space /space /space /space /space /space /space 
-    /space /space /space /space /space /space /space /space 
-    /space /space /space /space /space /space /space /space 
-    /space /space /space /space /space /space /space /space 
-    /space /exclam /quotedbl /numbersign /dollar /percent /ampersand 
-    /quoteright 
-    /parenleft /parenright /asterisk /plus /comma /minus /period /slash 
-    /zero /one /two /three /four /five /six /seven 
-    /eight /nine /colon /semicolon /less /equal /greater /question 
-    /at /A /B /C /D /E /F /G 
-    /H /I /J /K /L /M /N /O 
-    /P /Q /R /S /T /U /V /W 
-    /X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore 
-    /quoteleft /a /b /c /d /e /f /g 
-    /h /i /j /k /l /m /n /o 
-    /p /q /r /s /t /u /v /w 
-    /x /y /z /braceleft /bar /braceright /asciitilde /space 
-    /space /space /space /space /space /space /space /space 
-    /space /space /space /space /space /space /space /space 
-    /dotlessi /grave /acute /circumflex /tilde /macron /breve /dotaccent 
-    /dieresis /space /ring /cedilla /space /hungarumlaut /ogonek /caron 
-    /space /exclamdown /cent /sterling /currency /yen /brokenbar /section 
-    /dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen 
-    /registered /macron 
-    /degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph 
-    /periodcentered 
-    /cedillar /onesuperior /ordmasculine /guillemotright /onequarter 
-    /onehalf /threequarters /questiondown 
-    /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla 
-    /Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex 
-    /Idieresis 
-    /Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply 
-    /Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn 
-    /germandbls 
-    /agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla 
-    /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex 
-    /idieresis 
-    /eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide 
-    /oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn 
-    /ydieresis 
-  ] def 
-} if 
 
-% font ISOEncode font 
-% This procedure changes the encoding of a font from the default 
-% Postscript encoding to ISOLatin1.  It is typically invoked just 
-% before invoking "setfont".  The body of this procedure comes from 
-% Section 5.6.1 of the Postscript book. 
+% Define the array ISOLatin1Encoding (which specifies how characters are
+% encoded for ISO-8859-1 fonts), if it isn't already present (Postscript
+% level 2 is supposed to define it, but level 1 doesn't).
 
-/ISOEncode { 
+systemdict /ISOLatin1Encoding known not {
+  /ISOLatin1Encoding [
+    /space /space /space /space /space /space /space /space
+    /space /space /space /space /space /space /space /space
+    /space /space /space /space /space /space /space /space
+    /space /space /space /space /space /space /space /space
+    /space /exclam /quotedbl /numbersign /dollar /percent /ampersand
+    /quoteright
+    /parenleft /parenright /asterisk /plus /comma /minus /period /slash
+    /zero /one /two /three /four /five /six /seven
+    /eight /nine /colon /semicolon /less /equal /greater /question
+    /at /A /B /C /D /E /F /G
+    /H /I /J /K /L /M /N /O
+    /P /Q /R /S /T /U /V /W
+    /X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore
+    /quoteleft /a /b /c /d /e /f /g
+    /h /i /j /k /l /m /n /o
+    /p /q /r /s /t /u /v /w
+    /x /y /z /braceleft /bar /braceright /asciitilde /space
+    /space /space /space /space /space /space /space /space
+    /space /space /space /space /space /space /space /space
+    /dotlessi /grave /acute /circumflex /tilde /macron /breve /dotaccent
+    /dieresis /space /ring /cedilla /space /hungarumlaut /ogonek /caron
+    /space /exclamdown /cent /sterling /currency /yen /brokenbar /section
+    /dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen
+    /registered /macron
+    /degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph
+    /periodcentered
+    /cedillar /onesuperior /ordmasculine /guillemotright /onequarter
+    /onehalf /threequarters /questiondown
+    /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla
+    /Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex
+    /Idieresis
+    /Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply
+    /Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn
+    /germandbls
+    /agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla
+    /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex
+    /idieresis
+    /eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide
+    /oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn
+    /ydieresis
+  ] def
+} if
+
+% font ISOEncode font
+% This procedure changes the encoding of a font from the default
+% Postscript encoding to ISOLatin1.  It is typically invoked just
+% before invoking "setfont".  The body of this procedure comes from
+% Section 5.6.1 of the Postscript book.
+
+/ISOEncode {
   dup length dict
-  begin 
-    {1 index /FID ne {def} {pop pop} ifelse} forall 
-    /Encoding ISOLatin1Encoding def 
-    currentdict 
-  end 
+  begin
+    {1 index /FID ne {def} {pop pop} ifelse} forall
+    /Encoding ISOLatin1Encoding def
+    currentdict
+  end
 
-  % I'm not sure why it's necessary to use "definefont" on this new 
-  % font, but it seems to be important; just use the name "Temporary" 
-  % for the font. 
+  % I'm not sure why it's necessary to use "definefont" on this new
+  % font, but it seems to be important; just use the name "Temporary"
+  % for the font.
 
-  /Temporary exch definefont 
-} bind def 
+  /Temporary exch definefont
+} bind def
 
 /Stroke {
   gsave
@@ -120,7 +120,7 @@ systemdict /ISOLatin1Encoding known not {
   grestore
 } def
 
-/SetFont { 	
+/SetFont {
   % Stack: pointSize fontName
   findfont exch scalefont ISOEncode setfont
 } def
@@ -137,23 +137,23 @@ systemdict /ISOLatin1Encoding known not {
 
 /SetFgColor {
   % Stack: red green blue
-  CL 0 eq { 
-    pop pop pop 0 0 0 
+  CL 0 eq {
+    pop pop pop 0 0 0
   } if
   setrgbcolor
-  CL 1 eq { 
-    currentgray setgray 
+  CL 1 eq {
+    currentgray setgray
   } if
 } def
 
 /SetBgColor {
   % Stack: red green blue
-  CL 0 eq { 
-    pop pop pop 1 1 1 
+  CL 0 eq {
+    pop pop pop 1 1 1
   } if
   setrgbcolor
-  CL 1 eq { 
-    currentgray setgray 
+  CL 1 eq {
+    currentgray setgray
   } if
 } def
 
@@ -283,25 +283,25 @@ systemdict /ISOLatin1Encoding known not {
   gsave
     6 -2 roll translate			% Translate to center of bounding box
     4 1 roll neg rotate			% Rotate by theta
-    
+
     % Find upperleft corner of bounding box
-    
+
     2 copy -.5 mul exch -.5 mul exch translate
     2 copy scale			% Make pixel unit scale
     newpath
     0 0 moveto 0 1 lineto 1 1 lineto 1 0 lineto
     closepath
-    
+
     % Fill rectangle with background color
-    
-    4 -1 roll { 
-      gsave 
-	4 -1 roll exec fill 
-      grestore 
+
+    4 -1 roll {
+      gsave
+	4 -1 roll exec fill
+      grestore
     } if
-    
+
     % Paint the image string into the unit rectangle
-    
+
     2 copy true 3 -1 roll 0 0 5 -1 roll 0 0 6 array astore 5 -1 roll
     imagemask
   grestore
@@ -410,7 +410,7 @@ systemdict /ISOLatin1Encoding known not {
     3 1 roll translate 45 rotate 0 0 3 -1 roll Sq
   grestore
 } def
-    
+
 % Triangle
 /Tr {
   % Stack: x y symbolSize
@@ -422,7 +422,7 @@ systemdict /ISOLatin1Encoding known not {
     newpath moveto			% point 1;  b2
     dup 30 sin 30 cos div mul		% h2 = height below center point
     2 copy lineto			% point 2;  b2 h2
-    exch neg exch lineto		% 
+    exch neg exch lineto		%
     closepath
     DrawSymbolProc
   grestore
@@ -440,7 +440,7 @@ systemdict /ISOLatin1Encoding known not {
     dup 30 sin 30 cos div mul		% h2 = height below center point
     neg					% -h2 b2
     2 copy lineto			% point 2;  b2 h2
-    exch neg exch lineto		% 
+    exch neg exch lineto		%
     closepath
     DrawSymbolProc
   grestore

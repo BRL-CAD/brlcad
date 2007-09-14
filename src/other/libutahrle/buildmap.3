@@ -18,11 +18,11 @@ rle_hdr * the_hdr;
 .B
 int minmap;
 .br
-.B 
+.B
 double orig_gamma, new_gamma;
 .PD
 .SH DESCRIPTION
-The color map in the 
+The color map in the
 .IR rle_hdr (3)
 structure is not in the most easily used form.  The function
 .I buildmap
@@ -37,11 +37,11 @@ then an identity map of the minimum size will be returned.
 The returned color map will have at least
 .I minmap
 rows or channels, each of which is at least 256 entries long (so that
-indexing into the color map with an 8 bit 
+indexing into the color map with an 8 bit
 .I rle_pixel
 value will always succeed.)
 
-The color map from 
+The color map from
 .IR the_hdr
 will be composed with a gamma compensation curve to account for the
 gamma of the display for which the input color map was presumably computed.
@@ -50,9 +50,9 @@ The argument
 specifies the gamma of the compensation curve.  It would typically be
 the gamma of the original display.
 
-If 
+If
 .I gamma
-is 0, then if a picture comment 
+is 0, then if a picture comment
 .I image_gamma=i_gamma
 is present, \fIgamma\fP will be set to \fI1.0/i_gamma\fP.
 Otherwise, if a comment
@@ -64,7 +64,7 @@ If this color map will be used directly for another display, the gamma
 of this new display should be passed in
 .IR new_gamma .
 
-The returned value is a pointer to an array of pointers to arrays of 
+The returned value is a pointer to an array of pointers to arrays of
 .I rle_pixel
 values.  It may be doubly indexed in C code, so that if
 .I cmap
@@ -78,7 +78,7 @@ display gamma (e.g., as with the \fB\-i\fP or \fB\-I\fP flags of
 .IR getx11 (1),
 you should pass 0 for
 .IR orig_gamma .
-This lets 
+This lets
 .I buildmap
 use the value from \fIthe_hdr\fP, if it is present.
 
@@ -88,9 +88,9 @@ be dithered,
 should always be 1.0, and the display gamma (\fB-g\fP in
 .IR getx11 )
 should be passed to
-.IR dithermap (3).  
+.IR dithermap (3).
 If you are not planning to dither, then pass the
-user supplied display gamma as 
+user supplied display gamma as
 .IR new_gamma .
 
 The color map storage allocated by \fIbuildmap\fP can be released by

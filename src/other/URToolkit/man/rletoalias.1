@@ -1,7 +1,7 @@
 .\" -*- Text -*-
 .\" Copyright (c) 1992, University of Michigan
 .TH RLETOALIAS 1 "March, 1992" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletoalias \- Convert RLE image to Alias\(tm pix format.
 .SH SYNOPSIS
@@ -9,20 +9,20 @@ rletoalias \- Convert RLE image to Alias\(tm pix format.
 [
 .B \-v
 ] [
-.B \-o 
+.B \-o
 .I outfile
 ] [
-.I infile 
+.I infile
 ]
 .SH DESCRIPTION
-This program converts an image in 
+This program converts an image in
 .IR RLE (5)
 format to Alias\(tm "pix" format.  Since "pix" and \fIRLE\fP differ on
 the origin location, the program flips the image top to bottom.
 .SH OPTIONS
 .TP
 .BI \-o " outfile"
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.

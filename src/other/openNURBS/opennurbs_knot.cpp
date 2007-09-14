@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -36,7 +36,7 @@ double ON_DomainTolerance( double a, double b )
 // Computes tolerance associated with knot[i]
 //
 
-double ON_KnotTolerance( int order, int cv_count, const double* knot, 
+double ON_KnotTolerance( int order, int cv_count, const double* knot,
                                     int knot_index )
 {
   const int knot_count = ON_KnotCount( order, cv_count );
@@ -183,12 +183,12 @@ int ON_NurbsSpanIndex(
           )
 {
   int j, len;
-  
+
   // shift knot so that domain is knot[0] to knot[len]
   knot += (order-2);
   len = cv_count-order+2;
-  
-  // see if hint helps 
+
+  // see if hint helps
   if (hint > 0 && hint < len-1) {
     while(hint > 0 && knot[hint-1] == knot[hint]) hint--;
     if (hint > 0) {
@@ -198,7 +198,7 @@ int ON_NurbsSpanIndex(
         hint = 0;
       }
       else {
-        if (side < 0 && t == knot[hint]) 
+        if (side < 0 && t == knot[hint])
           hint--;
         knot += hint;
         len -= hint;
@@ -207,7 +207,7 @@ int ON_NurbsSpanIndex(
   }
   else
     hint = 0;
-  
+
   j = ON_SearchMonotoneArray(knot,len,t);
   if (j < 0)
     j = 0;
@@ -216,7 +216,7 @@ int ON_NurbsSpanIndex(
   else if (side < 0) {
     // if user wants limit from below and t = an internal knot,
     // back up to prevous span
-    while(j > 0 && t == knot[j]) 
+    while(j > 0 && t == knot[j])
       j--;
   }
   return (j + hint);
@@ -227,7 +227,7 @@ int ON_NextNurbsSpanIndex( int order, int cv_count, const double* knot, int span
 
 /*
 Get index of next non-degenerate NURBS span
- 
+
 INPUT:
   order, cv_count, knot
     knot vector
@@ -240,7 +240,7 @@ OUTPUT:
                        was cv_count-or
                        knot[i+order-2] < knot[i+order-1]
    <0: failure
-   
+
 COMMENTS:
   The first span in a NURBS has span_index = 0.  The last span in a NURBS
   has span_index = cv_count-order.
@@ -249,7 +249,7 @@ COMMENTS:
     {knot[span_index], ..., knot[span_index+2*d-1]}
   and
     {CV[span_index], ..., CV[span_index + d]}
-  The domain of the span is 
+  The domain of the span is
     [ knot[span_index+order-2], knot[span_index+order-1] ].
 
 EXAMPLE:
@@ -280,23 +280,23 @@ EXAMPLE:
     do {
       span_index++;
     }
-    while ( span_index < cv_count-order && 
+    while ( span_index < cv_count-order &&
             knot[span_index+order-2] == knot[span_index+order-1] );
   }
   return span_index;
 }
 
 
-int ON_GetSpanIndices(int order, 
-                            int cv_count, 
-                            const double* knot, 
+int ON_GetSpanIndices(int order,
+                            int cv_count,
+                            const double* knot,
                             int* span_indices)
 
-/* span_indices should have size greater than the number of 
+/* span_indices should have size greater than the number of
    spans (cv_count is big enough).
 
   returns span count.
-  fills in span_indices with index of last in each bunch of multiple knots at 
+  fills in span_indices with index of last in each bunch of multiple knots at
   start of span, and first in buch at end of nurb.
 
 
@@ -311,11 +311,11 @@ int ON_GetSpanIndices(int order,
     span_index = next_span_index;
     span_indices[j] = span_index + order - 2;
     next_span_index = ON_NextNurbsSpanIndex(order, cv_count, knot, span_index);
-    if (next_span_index < 0) 
+    if (next_span_index < 0)
       return next_span_index;
     j++;
-  } 
-  
+  }
+
   span_indices[j] = span_index + order - 1;
 
   return j;
@@ -327,7 +327,7 @@ int ON_GetSpanIndices(int order,
 // Computes value for superfluous knot used in systems like OpenGL and 3dsMax
 //
 
-double ON_SuperfluousKnot( 
+double ON_SuperfluousKnot(
                     int order, int cv_count, const double* knot,
                     int end )
 {
@@ -369,12 +369,12 @@ bool ON_IsKnotVectorPeriodic(
     ON_ERROR("ON_IsKnotVectorPeriodic(): illegal input");
     return false;
   }
-  
+
   if ( order == 2 )
     return false; // convention is that degree 1 curves cannot be periodic.
 
   if (order <= 4) {
-    if (cv_count < order+2) 
+    if (cv_count < order+2)
       return false;
   }
   else if ( cv_count < 2*order-2 ) {
@@ -382,7 +382,7 @@ bool ON_IsKnotVectorPeriodic(
   }
 
   tol = fabs(knot[order-1] - knot[order-3])* ON_SQRT_EPSILON;
-  if (tol < fabs(knot[cv_count-1] - knot[order-2])* ON_SQRT_EPSILON) 
+  if (tol < fabs(knot[cv_count-1] - knot[order-2])* ON_SQRT_EPSILON)
     tol = fabs(knot[cv_count-1] - knot[order-2])* ON_SQRT_EPSILON;
   k1 = knot+cv_count-order+1;
   i = 2*(order-2);
@@ -420,7 +420,7 @@ bool ON_IsKnotVectorClamped(
 bool ON_IsKnotVectorUniform(
           int order,
           int cv_count,
-          const double* knot 
+          const double* knot
           )
 {
   bool rc = (order >= 2 && cv_count >= order && 0 != knot);
@@ -467,9 +467,9 @@ bool ON_KnotVectorHasBezierSpans(
   int span_count = ON_KnotVectorSpanCount( order, cv_count, knot );
   if ( span_count < 1 )
     return false;
-  if ( order >= 2 && 
-       cv_count >= order && 
-       knot_count == (span_count+1)*(order-1) && 
+  if ( order >= 2 &&
+       cv_count >= order &&
+       knot_count == (span_count+1)*(order-1) &&
        knot[0] == knot[order-2] && knot[cv_count-1] == knot[knot_count-1])
     return true;
   return false;
@@ -480,7 +480,7 @@ bool ON_KnotVectorHasBezierSpans(
 // Used to determine properties of knot vector
 //
 
-ON::knot_style ON_KnotVectorStyle( 
+ON::knot_style ON_KnotVectorStyle(
        int order,
        int cv_count,
        const double* knot
@@ -510,7 +510,7 @@ ON::knot_style ON_KnotVectorStyle(
           const int degree = order-1;
           for ( i = order-1; i < cv_count-1; i += degree ) {
             if ( knot[i] != knot[i+degree-1] )
-              break; 
+              break;
           }
           if ( i >= cv_count-1 )
             s = ON::piecewise_bezier_knots;
@@ -526,7 +526,7 @@ ON::knot_style ON_KnotVectorStyle(
         }
       }
       if ( i >= knot_count )
-        s = ON::uniform_knots; 
+        s = ON::uniform_knots;
     }
   }
   return s;
@@ -545,8 +545,8 @@ bool ON_SetKnotVectorDomain( int order, int cv_count, double* knot, double t0, d
   {
     ON_ERROR("ON_SetKnotVectorDomain - invalid input");
   }
-  else if (    knot[order-2] >= knot[cv_count-1] 
-            || !ON_IsValid(knot[order-2]) 
+  else if (    knot[order-2] >= knot[cv_count-1]
+            || !ON_IsValid(knot[order-2])
             || !ON_IsValid(knot[cv_count-2]) )
   {
     ON_ERROR("ON_SetKnotVectorDomain - invalid input knot vector");
@@ -619,7 +619,7 @@ bool ON_ReverseKnotVector(
 // Used to compare knot vectors
 //
 
-int ON_CompareKnotVector( // returns 
+int ON_CompareKnotVector( // returns
                                       // -1: first < second
                                       //  0: first == second
                                       // +1: first > second
@@ -802,7 +802,7 @@ bool ON_MakeKnotVectorPeriodic(
 {
   double *k0, *k1;
   int i;
-  
+
   if ( order < 2 || cv_count < order || !knot ) {
     ON_ERROR("ON_MakePeriodicKnotVector(): illegal input");
     return false;
@@ -844,7 +844,7 @@ bool ON_MakeKnotVectorPeriodic(
   i = order-2;
   while (i--) {
     k0[-1] = k1[-1] - k1[0] + k0[0];
-    k0--; 
+    k0--;
     k1--;
   }
   return true;
@@ -878,7 +878,7 @@ bool ON_MakeClampedUniformKnotVector(
 //   order - [in] (>=2) order (degree+1) of the NURBS
 //   cv_count - [in] (>=order) total number of control points
 //       in the NURBS.
-//   knot - [in/out] Input is an array with room for 
+//   knot - [in/out] Input is an array with room for
 //       ON_KnotCount(order,cv_count) doubles.  Output is
 //       a periodic uniform knot vector with domain
 //       (0, (1+cv_count-order)*delta).
@@ -945,18 +945,18 @@ bool ON_GetGrevilleAbcissae( // get Greville abcissa from knots
           )
 {
   // Grevielle abscissae for a given knot vector
-  double x, t0; 
+  double x, t0;
   int gi, periodic_check;
 
   if ( order < 2 || cv_count < order || !knot || !g )
     return false;
-  
+
   const int g_count = (bPeriodic) ? cv_count-order+1 : cv_count;
-  
+
   if (order == 2) {
     // g[i] = knot[i] in degree 1 case
     memcpy( g, knot, g_count*sizeof(*g) );
-  }    
+  }
   else {
     // g = (knot[i]+...+knot[i+degree-1])/degree
     t0 = knot[order-2];
@@ -972,19 +972,19 @@ bool ON_GetGrevilleAbcissae( // get Greville abcissa from knots
       g[gi++] = x;
     }
   }
-  
+
   return true;
 }
 
 
 bool ON_GetGrevilleKnotVector( // get knots from Greville abcissa
-          int g_stride,     
-          const double *g,  // if not periodic, g[cv_count], 
+          int g_stride,
+          const double *g,  // if not periodic, g[cv_count],
                             // if periodic, g[cv_count-order+2]
                             // usually, g[0] = 0, g[i] = |P[i]-P[i-1]|^q
           bool bPeriodic,
-          int order, 
-          int cv_count, 
+          int order,
+          int cv_count,
           double* knot
           )
 {
@@ -1029,7 +1029,7 @@ bool ON_GetGrevilleKnotVector( // get knots from Greville abcissa
     // step 2: set new p[i] = old (p[i] + ... + p[i+degree-1]) / degree
     for ( j = 0; j < g_count+order; j++ ) {
       k = p[j];
-      for ( ki = 1; ki < degree; ki++ ) 
+      for ( ki = 1; ki < degree; ki++ )
         k += p[j+ki];
       k *= dd;
       if ( half_degree ) {
@@ -1097,9 +1097,9 @@ bool ON_GetGrevilleKnotVector( // get knots from Greville abcissa
 
 bool ON_ClampKnotVector(
         int cv_dim,   // dimension of cv's = ( = dim+1 for rational cvs )
-        int order, 
+        int order,
         int cv_count,
-        int cv_stride, 
+        int cv_stride,
         double* cv,   // NULL or cv array with room for at least knot_multiplicity new cvs
         double* knot, // knot array with room for at least knot_multiplicity new knots
         int end       // 0 = clamp start, 1 = clamp end, 2 = clamp both ends
@@ -1136,8 +1136,8 @@ bool ON_ClampKnotVector(
 }
 
 
-static bool ON_InsertSingleKnot( int cv_dim, int order, 
-                             int cv_stride, 
+static bool ON_InsertSingleKnot( int cv_dim, int order,
+                             int cv_stride,
                              double *cv,   // NULL or array of length at least order*cv_stride+cv_dim
                              double *knot, // array of length at least 2*order-1 and existing knot values in
                                            // knot[0], ..., knot[2*order-3]
@@ -1167,10 +1167,10 @@ static bool ON_InsertSingleKnot( int cv_dim, int order,
   k1 = knot + 2*degree;
   k0 = k1-1;
   i = degree;
-  while (i--) 
+  while (i--)
     *k1-- = *k0--;
 
-  // insert new knot value 
+  // insert new knot value
   *k1 = knot_value;
 
   if ( cv ) {
@@ -1215,17 +1215,17 @@ static bool ON_InsertSingleKnot( int cv_dim, int order,
       }
     }
   }
-    
+
   return true;
 }
 
-int ON_InsertKnot( 
-        double knot_value, 
-        int knot_multiplicity, 
+int ON_InsertKnot(
+        double knot_value,
+        int knot_multiplicity,
         int cv_dim,   // dimension of cv's = ( = dim+1 for rational cvs )
-        int order, 
+        int order,
         int cv_count,
-        int cv_stride, 
+        int cv_stride,
         double* cv,   // NULL or cv array with room for at least knot_multiplicity new cvs
         double* knot, // knot array with room for at least knot_multiplicity new knots
         int* hint     // optional hint about where to search for span to add knots to
@@ -1234,22 +1234,22 @@ int ON_InsertKnot(
 {
   int rc = 0; // return code = number of knots added
 
-  if ( order < 2 || cv_count < order || !knot ) 
+  if ( order < 2 || cv_count < order || !knot )
   {
     ON_ERROR("ON_InsertKnot(): illegal input" );
     return 0;
   }
 
-  if ( cv ) 
+  if ( cv )
   {
-    if ( cv_dim < 1 || cv_stride < cv_dim ) 
+    if ( cv_dim < 1 || cv_stride < cv_dim )
     {
       ON_ERROR("ON_InsertKnot(): illegal input" );
       return 0;
     }
   }
 
-  if ( knot_multiplicity >= order ) 
+  if ( knot_multiplicity >= order )
   {
     ON_ERROR("ON_InsertKnot(): requested knot_multiplicity > degree" );
     return 0;
@@ -1265,20 +1265,20 @@ int ON_InsertKnot(
   const double knot_tolerance = ON_SpanTolerance( order, cv_count, knot, 0 );
 
   // check that knot_value is interior to NURBS domain
-  if ( span_index == 0 ) 
+  if ( span_index == 0 )
   {
-    if ( knot_value < knot[order-1] ) 
+    if ( knot_value < knot[order-1] )
     {
-      if ( knot_value <= knot[order-2] + knot_tolerance ) 
+      if ( knot_value <= knot[order-2] + knot_tolerance )
       {
         ON_ERROR("ON_InsertKnot(): requested knot_value at start of NURBS domain" );
         return 0;
       }
     }
   }
-  if ( span_index == cv_count-order ) 
+  if ( span_index == cv_count-order )
   {
-    if ( knot_value > knot[order-2] && knot_value >= knot[order-1] - knot_tolerance ) 
+    if ( knot_value > knot[order-2] && knot_value >= knot[order-1] - knot_tolerance )
     {
       ON_ERROR("ON_InsertKnot(): requested knot_value at end of NURBS domain" );
       return 0;
@@ -1296,7 +1296,7 @@ int ON_InsertKnot(
   const int degree = order-1;
 
   // set m = number of knots to add
-  int m = 0; 
+  int m = 0;
   int j;
   if ( knot_value == knot[order-2] ) {
     for ( j = order-2; m < knot_multiplicity && knot[j-m] == knot_value; m++ )
@@ -1334,8 +1334,8 @@ int ON_InsertKnot(
       break;
     m--;
     if ( new_cv )
-      new_cv += cv_stride; 
-    new_knot++; 
+      new_cv += cv_stride;
+    new_knot++;
     rc++;
   }
   new_knot -= rc;
@@ -1348,7 +1348,7 @@ int ON_InsertKnot(
     int j  = (cv_count-order);
     while (j--)
       knot[i1--] = knot[i0--];
-    
+
     // update knot vector
     memcpy ( knot+degree, new_knot+degree, (degree+rc)*sizeof(*new_knot) );
 

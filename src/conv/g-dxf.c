@@ -495,7 +495,7 @@ main(argc, argv)
     if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 	perror(argv[0]);
 	exit(1);
-    } 
+    }
 
     if( db_dirbuild( dbip ) ) {
 	bu_log( "db_dirbuild failed\n" );

@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * to8.c - Convert color images to 8 bit dithered.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Fri Feb 28 1986
  * Copyright (c) 1986, University of Utah
- * 
+ *
  */
 #ifndef lint
 static char rcs_ident[] = "$Header$";
@@ -50,9 +50,9 @@ double img_gam = 1.0;
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage: to8 [-{iI} gamma] [-g gamma] [-o outfile] [infile]
- * 
+ *
  * Inputs:
  *	-i gamma:	Specify gamma of image. (default 1.0)
  *	-I gamma:	Specify gamma of display image was computed for.
@@ -61,7 +61,7 @@ double img_gam = 1.0;
  *	image_gamma=	gamma of image (equivalent to -i)
  *	display_gamma=	gamma of display image was computed for.
  *			Command line arguments override values in the file.
- *		
+ *
  *	-g gamma:	Specify gamma of display. (default 2.5)
  * 	infile:		Input (color) RLE file.  Stdin used if not
  *			specified.

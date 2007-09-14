@@ -15,13 +15,13 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Busy command created by George Howlett.
 '\"
 .so man.macros
 .TH busy n BLT_VERSION BLT "BLT Built-In Commands"
-.BS 
+.BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 busy \- Make Tk widgets busy, temporarily blocking user interactions.
@@ -38,7 +38,7 @@ busy \- Make Tk widgets busy, temporarily blocking user interactions.
 .sp
 \fBbusy names \fR?\fIpattern\fR?
 .sp
-\fBbusy status \fIwindow\fR 
+\fBbusy status \fIwindow\fR
 .BE
 .SH DESCRIPTION
 .PP
@@ -84,7 +84,7 @@ pack .top
 busy hold .top
 update
 .CE
-All the widgets within \f(CW.top\fR (including \f(CW.top\fR) are now busy.  
+All the widgets within \f(CW.top\fR (including \f(CW.top\fR) are now busy.
 Using \fBupdate\fR insures that \fBbusy\fR command will take effect before
 any other user events can occur.
 .PP
@@ -102,7 +102,7 @@ cursor using the \fBconfigure\fR operation.
 \f(CW	busy configure .top -cursor "watch"\fR
 
 .fi
-Finally, when you no longer need to the busy window, 
+Finally, when you no longer need to the busy window,
 invoke the \fBforget\fR operation to free any resources it allocated.
 .nf
 
@@ -134,7 +134,7 @@ The default cursor is \f(CWwatch\fR.
 .RE
 .TP
 \fBbusy configure \fIwindow\fR ?\fIoption value\fR?...
-Queries or modifies the \fBbusy\fR command configuration options for 
+Queries or modifies the \fBbusy\fR command configuration options for
 \fIwindow\fR. \fIWindow\fR must be the path name of a widget previously
 made busy by the \fBhold\fR operation.  If no options are
 specified, a list describing all of the available options for
@@ -146,11 +146,11 @@ the value returned if no \fIoption\fR is specified).  If one or more
 \fIoption\-value\fR pairs are specified, then the command modifies the
 given widget option(s) to have the given value(s); in this case the
 command returns the empty string.  \fIOption\fR may have any of the
-values accepted by the \fBhold\fR operation.  
+values accepted by the \fBhold\fR operation.
 .sp
 Please note that the
-option database is referenced through \fIwindow\fR.  For example, if 
-the widget \f(CW.frame\fR is to be made busy, the busy 
+option database is referenced through \fIwindow\fR.  For example, if
+the widget \f(CW.frame\fR is to be made busy, the busy
 cursor can be specified for it by either \fBoption\fR command:
 .nf
 
@@ -161,14 +161,14 @@ cursor can be specified for it by either \fBoption\fR command:
 .TP
 \fBbusy forget \fIwindow\fR ?\fIwindow\fR?...
 Releases resources allocated by the busy command for \fIwindow\fR,
-including the busy window.  User events will again be received again 
+including the busy window.  User events will again be received again
 by \fIwindow\fR.  Resources are also released when \fIwindow\fR
-is destroyed. \fIWindow\fR must be the name of a widget specified 
+is destroyed. \fIWindow\fR must be the name of a widget specified
 in the \fBhold\fR operation, otherwise an error is reported.
 .TP
 \fBbusy isbusy \fR?\fIpattern\fR?
 Returns the pathnames of all widgets that are currently busy.
-If a \fIpattern\fR is given, the path names of busy widgets 
+If a \fIpattern\fR is given, the path names of busy widgets
 matching \fIpattern\fR are returned.
 .TP
 \fBbusy names \fR?\fIpattern\fR?
@@ -179,10 +179,10 @@ not.  If a \fIpattern\fR is given, the path names of busy widgets
 matching \fIpattern\fR are returned.
 .TP
 \fBbusy release \fIwindow\fR ?\fIwindow\fR?...
-Restores user interactions to the widget \fIwindow\fR again. 
-This differs from the \fBforget\fR operation in that the busy window 
-is not destroyed, but simply unmapped.  
-\fIWindow\fR must be the name of a widget specified 
+Restores user interactions to the widget \fIwindow\fR again.
+This differs from the \fBforget\fR operation in that the busy window
+is not destroyed, but simply unmapped.
+\fIWindow\fR must be the name of a widget specified
 in a \fBhold\fR operation, otherwise an error is reported.
 .TP
 \fBbusy status \fIwindow\fR
@@ -201,7 +201,7 @@ widget names in the Tk window hierarchy.  This means that you can use
 the \fBbind\fR command, to handle events in the busy window.
 .CS
 busy hold .frame.canvas
-bind .frame.canvas_Busy <Enter> { ... } 
+bind .frame.canvas_Busy <Enter> { ... }
 .CE
 .PP
 Normally the busy window is a sibling of the widget.  The
@@ -215,7 +215,7 @@ is the name of the toplevel widget.  In the following example, the
 pathname of the busy window is "\f(CW._Busy\fR"
 .CS
 busy hold .
-bind ._Busy <Enter> { ... } 
+bind ._Busy <Enter> { ... }
 .CE
 .SH ENTER/LEAVE EVENTS
 Mapping and unmapping busy windows generates Enter/Leave events for

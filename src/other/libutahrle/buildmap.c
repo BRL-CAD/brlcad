@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * buildmap.c - Build a color map from the RLE file color map.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -32,7 +32,7 @@
 
 /*****************************************************************
  * TAG( buildmap )
- * 
+ *
  * Returns a color map that can easily be used to map the pixel values in
  * an RLE file.  Map is built from the color map in the input file.
  * Inputs:
@@ -43,7 +43,7 @@
  *	new_gamma:	Gamma of new display.
  * Outputs:
  * 	Returns an array of pointers to arrays of rle_pixels.  The array
- *	of pointers contains max(ncolors, ncmap) elements, each 
+ *	of pointers contains max(ncolors, ncmap) elements, each
  *	array of pixels contains 2^cmaplen elements.  The pixel arrays
  *	should be considered read-only.
  * Assumptions:
@@ -92,13 +92,13 @@ double new_gamma;
 	    nmap = the_hdr->ncmap;
 	if ( nmap < the_hdr->ncolors )
 	    nmap = the_hdr->ncolors;
-	
+
 	/* Allocate memory for the map and secondary pointers. */
 	cmap = (rle_pixel **)malloc( nmap * sizeof(rle_pixel *) );
 	cmap[0] = (rle_pixel *)malloc( nmap * maplen * sizeof(rle_pixel) );
 	for ( i = 1; i < nmap; i++ )
 	    cmap[i] = cmap[0] + i * maplen;
-	
+
 	/* Fill it in. */
 	for ( i = 0; i < maplen; i++ )
 	{
@@ -111,7 +111,7 @@ double new_gamma;
 		cmap[j][i] = cmap[j-1][i];
 	}
     }
-    
+
     /* Gamma compensate if requested */
     if ( orig_gamma == 0 )
     {

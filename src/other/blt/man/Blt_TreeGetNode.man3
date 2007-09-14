@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -34,12 +34,12 @@ Blt_TreeNode
 .AP Blt_Tree tree in
 Tree containing the requested node.
 .AP "unsigned int" number in
-Serial number of the requested node.  
+Serial number of the requested node.
 .BE
 .SH DESCRIPTION
-This procedure returns a node in a tree object 
-based upon a give serial number.  
-The node is searched using the serial number.  
+This procedure returns a node in a tree object
+based upon a give serial number.
+The node is searched using the serial number.
 .PP
 The arguments are as follows:
 .TP 1i

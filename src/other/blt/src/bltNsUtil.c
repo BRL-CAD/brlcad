@@ -307,8 +307,8 @@ struct VarStruct {
     int flags;
 };
 
-extern Var *TclLookupVar _ANSI_ARGS_((Tcl_Interp *interp, CONST char *part1, 
-	CONST char *part2, int flags, char *mesg, int p1Flags, int p2Flags, 
+extern Var *TclLookupVar _ANSI_ARGS_((Tcl_Interp *interp, CONST char *part1,
+	CONST char *part2, int flags, char *mesg, int p1Flags, int p2Flags,
 	Var ** varPtrPtr));
 
 #define VAR_SCALAR		0x1
@@ -348,7 +348,7 @@ Blt_GetVariableNamespace(interp, name)
 {
     Var *varPtr;
 
-    varPtr = (Var *)Tcl_FindNamespaceVar(interp, (char *)name, 
+    varPtr = (Var *)Tcl_FindNamespaceVar(interp, (char *)name,
 	(Tcl_Namespace *)NULL, 0);
     if (varPtr == NULL) {
 	return NULL;
@@ -423,7 +423,7 @@ Blt_ParseQualifiedName(interp, qualName, nsPtrPtr, namePtrPtr)
     if (qualName[0] == '\0') {
 	nsPtr = Tcl_GetGlobalNamespace(interp);
     } else {
-	nsPtr = Tcl_FindNamespace(interp, (char *)qualName, 
+	nsPtr = Tcl_FindNamespace(interp, (char *)qualName,
 		(Tcl_Namespace *)NULL, 0);
     }
     *colon = ':';
@@ -545,7 +545,7 @@ Blt_CreateNsDeleteNotify(interp, nsPtr, clientData, deleteProc)
     strcat(string, NS_DELETE_CMD);
     if (!Tcl_GetCommandInfo(interp, string, &cmdInfo)) {
 	list = Blt_ListCreate(BLT_ONE_WORD_KEYS);
-	Blt_CreateCommand(interp, string, NamespaceDeleteCmd, list, 
+	Blt_CreateCommand(interp, string, NamespaceDeleteCmd, list,
 		NamespaceDeleteNotify);
     } else {
 	list = (Blt_List)cmdInfo.clientData;
@@ -557,7 +557,7 @@ Blt_CreateNsDeleteNotify(interp, nsPtr, clientData, deleteProc)
 
 #endif /* TCL_MAJOR_VERSION > 7 */
 
-#if (TCL_VERSION_NUMBER < _VERSION(8,0,0)) 
+#if (TCL_VERSION_NUMBER < _VERSION(8,0,0))
 
 /*
  *----------------------------------------------------------------------
@@ -588,7 +588,7 @@ Blt_CreateCommand(interp, cmdName, proc, clientData, deleteProc)
 				/* If not NULL, gives a procedure to call
 				 * when this command is deleted. */
 {
-    return Tcl_CreateCommand(interp, (char *)cmdName, proc, clientData, 
+    return Tcl_CreateCommand(interp, (char *)cmdName, proc, clientData,
 	deleteProc);
 }
 
@@ -612,7 +612,7 @@ Tcl_FindCommand(interp, cmdName, nsPtr, flags)
 
 #endif /* TCL_MAJOR_VERSION <= 7 */
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0))
 /*
  *----------------------------------------------------------------------
  *
@@ -667,7 +667,7 @@ Blt_CreateCommand(interp, cmdName, proc, clientData, deleteProc)
 	Tcl_DStringFree(&dString);
 	return cmdToken;
     }
-    return Tcl_CreateCommand(interp, (char *)cmdName, proc, clientData, 
+    return Tcl_CreateCommand(interp, (char *)cmdName, proc, clientData,
 	deleteProc);
 }
 
@@ -719,12 +719,12 @@ Blt_CreateCommandObj(interp, cmdName, proc, clientData, deleteProc)
 	Tcl_DStringAppend(&dString, nsPtr->fullName, -1);
 	Tcl_DStringAppend(&dString, "::", -1);
 	Tcl_DStringAppend(&dString, cmdName, -1);
-	cmdToken = Tcl_CreateObjCommand(interp, Tcl_DStringValue(&dString), 
+	cmdToken = Tcl_CreateObjCommand(interp, Tcl_DStringValue(&dString),
 		proc, clientData, deleteProc);
 	Tcl_DStringFree(&dString);
 	return cmdToken;
     }
-    return Tcl_CreateObjCommand(interp, (char *)cmdName, proc, clientData, 
+    return Tcl_CreateObjCommand(interp, (char *)cmdName, proc, clientData,
 	deleteProc);
 }
 #endif /* TCL_VERSION_NUMBER < 8.0.0 */

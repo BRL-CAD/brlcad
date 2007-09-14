@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -60,10 +60,10 @@ public:
   const ON_3dVector& Axis() const;
   const ON_3dPoint& Center() const;
   double Height() const; // returns 0 for infinite cylinder
-  ON_Circle CircleAt( 
+  ON_Circle CircleAt(
         double // linear parameter
         ) const;
-  ON_Line LineAt( 
+  ON_Line LineAt(
         double // angular parameter
         ) const;
 
@@ -78,14 +78,14 @@ public:
     ) const;
 
   // returns parameters of point on cylinder that is closest to given point
-  bool ClosestPointTo( 
-         ON_3dPoint, 
+  bool ClosestPointTo(
+         ON_3dPoint,
          double*, // angular parameter [0,2pi]
          double*  // linear parameter (height from base circle's plane)
          ) const;
   // returns point on cylinder that is closest to given point
-  ON_3dPoint ClosestPointTo( 
-         ON_3dPoint 
+  ON_3dPoint ClosestPointTo(
+         ON_3dPoint
          ) const;
 
   // For intersections see ON_Intersect();
@@ -127,7 +127,7 @@ public:
   Parameters:
     srf - [in] if not NULL, then this srf is used.
   Result:
-    A surface of revolution or NULL if the cylinder is not 
+    A surface of revolution or NULL if the cylinder is not
     valid or is infinite.
   */
   ON_RevSurface* RevSurfaceForm( ON_RevSurface* srf = NULL ) const;
@@ -136,14 +136,14 @@ public: // members left public
   // base circle
   ON_Circle  circle;
 
-  
+
   // If height[0] = height[1], the cylinder is infinite,
   // Otherwise, height[0] < height[1] and the center of
-  // the "bottom" cap is 
+  // the "bottom" cap is
   //
   //          circle.plane.origin + height[0]*circle.plane.zaxis,
   //
-  // and the center of the top cap is 
+  // and the center of the top cap is
   //
   //          circle.plane.origin + height[1]*circle.plane.zaxis.
   double height[2];

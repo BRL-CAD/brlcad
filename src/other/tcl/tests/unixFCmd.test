@@ -128,7 +128,7 @@ test unixFCmd-1.7 {TclpRenameFile: EXDEV} {unix notRoot} {
     list $catchResult $msg
 } {1 { permission denied}}
 test unixFCmd-1.8 {Checking EINTR Bug} {unix notRoot nonPortable} {
-    testalarm 
+    testalarm
     after 2000
     list [testgotsig] [testgotsig]
 } {1 0}
@@ -141,7 +141,7 @@ test unixFCmd-1.9 {Checking EINTR Bug} {unix notRoot nonPortable} {
 	exit 0
     }
     close $f
-    testalarm 
+    testalarm
     set pipe [open "|[info nameofexecutable] tfalarm" r+]
     set line [read $pipe 1]
     catch {close $pipe}

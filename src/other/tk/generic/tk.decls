@@ -4,13 +4,13 @@
 #	functions that are exported by the Tk library via the stubs table.
 #	This file is used to generate the tkDecls.h, tkPlatDecls.h,
 #	tkStub.c, and tkPlatStub.c files.
-#	
+#
 #
 # Copyright (c) 1998-2000 Ajuba Solutions.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
 library tk
@@ -524,7 +524,7 @@ declare 102 generic {
 }
 
 declare 103 generic {
-    Tk_Uid Tk_GetOption (Tk_Window tkwin, CONST char *name, 
+    Tk_Uid Tk_GetOption (Tk_Window tkwin, CONST char *name,
 	    CONST char *className)
 }
 
@@ -1320,7 +1320,7 @@ declare 0 aqua {
 	    Tk_MacOSXEmbedGetClipProc *getClipProc, \
 	    Tk_MacOSXEmbedGetOffsetInParentProc *getOffsetProc)
 }
- 
+
 declare 1 aqua {
     void Tk_MacOSXTurnOffMenus (void)
 }

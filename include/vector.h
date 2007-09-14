@@ -6,12 +6,12 @@
 
 extern "C++" {
 #include <iostream>
-  
+
   const double VEQUALITY = 0.0000001;
 
   template<int LEN>
   struct vec_internal;
-  
+
   template<int LEN>
   class dvec;
 
@@ -24,29 +24,29 @@ extern "C++" {
   };
 
   class dvec_op {
-  public:   
+  public:
     virtual double operator()(double a, double b) const = 0;
   };
-  
+
   template<int LEN>
   class dvec {
   public:
     dvec(double s);
     dvec(const double* vals, bool aligned=true);
     dvec(const dvec<LEN>& p);
-    
+
     dvec<LEN>& operator=(const dvec<LEN>& p);
     double operator[](int index) const;
     void u_store(double* arr) const;
     void a_store(double* arr) const;
-    
+
     bool operator==(const dvec<LEN>& b) const;
 
     dvec<LEN> operator+(const dvec<LEN>& b);
     dvec<LEN> operator-(const dvec<LEN>& b);
     dvec<LEN> operator*(const dvec<LEN>& b);
     dvec<LEN> operator/(const dvec<LEN>& b);
-    
+
     dvec<LEN> madd(const dvec<LEN>& s, const dvec<LEN>& b);
     dvec<LEN> madd(const double s, const dvec<LEN>& b);
 
@@ -55,7 +55,7 @@ extern "C++" {
     double foldl(double proto, const dvec_op& operation, int limit = LEN);
 
     class mul : public dvec_op {
-    public: 
+    public:
       double operator()(double a, double b) const { return a * b; }
     };
 
@@ -77,10 +77,10 @@ extern "C++" {
     vec_internal<LEN> data;
 
     dvec(const vec_internal<LEN>& d);
-  };  
+  };
 
   //#define DVEC4(V,t,a,b,c,d) double v#t[4] VEC_ALIGN = {(a),(b),(c),(d)}; V(v#t)
-  
+
   // use this to create 16-byte aligned memory on platforms that support it
 #define VEC_ALIGN
 
@@ -92,9 +92,9 @@ extern "C++" {
 #define __fpu_vector__
 #include "vector_fpu.h"
 #endif
-  
+
   inline bool vequals(const vec2d& a, const vec2d& b) {
-    return 
+    return
       (fabs(a.x()-b.x()) < VEQUALITY) &&
       (fabs(a.y()-b.y()) < VEQUALITY);
   }
@@ -103,7 +103,7 @@ extern "C++" {
   // MATH / VECTOR ops
   // XXX put in VMATH?
   typedef fastf_t pt2d_t[2] VEC_ALIGN;
-  typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major 
+  typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major
   inline
   bool mat2d_inverse(mat2d_t inv, mat2d_t m) {
     pt2d_t _a = {m[0],m[1]};
@@ -121,7 +121,7 @@ extern "C++" {
     r.a_store(inv);
     return true;
   }
-  inline 
+  inline
   void mat2d_pt2d_mul(pt2d_t r, mat2d_t m, pt2d_t p) {
     pt2d_t _a = {m[0],m[2]};
     pt2d_t _b = {m[1],m[3]};
@@ -139,7 +139,7 @@ extern "C++" {
     dvec<2> vr = va - vb;
     vr.a_store(r);
   }
-  
+
   inline
   fastf_t v2mag(pt2d_t p) {
     dvec<2> a(p);
@@ -150,7 +150,7 @@ extern "C++" {
   void move(pt2d_t a, const pt2d_t b) {
     a[0] = b[0];
     a[1] = b[1];
-  }    
+  }
 }
 
 #endif

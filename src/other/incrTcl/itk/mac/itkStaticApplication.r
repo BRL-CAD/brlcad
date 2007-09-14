@@ -5,7 +5,7 @@
  *  pkgIndex tclIndex and itk's Tcl code files.
  *
  * Jim Ingham for Itcl 2.2
- * 
+ *
  * Copyright (c) 1996 Lucent Technologies
  *
  * See the file "license.terms" for information on usage and redistribution
@@ -25,5 +25,5 @@ data 'TEXT' (ITK_LIBRARY_RESOURCES+6,"itk:pkgIndex",purgeable, preload) {
 	"# Tcl package index file, version 1.0\n"
 	"package ifneeded Itk 2.2 {load {} Itk}\n"
 };
-read 'TEXT' (ITK_LIBRARY_RESOURCES+2, "Itk:tclIndex", purgeable) 
+read 'TEXT' (ITK_LIBRARY_RESOURCES+2, "Itk:tclIndex", purgeable)
 	"::mac:tclIndex";

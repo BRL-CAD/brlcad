@@ -75,7 +75,7 @@ find them.  Tcl looks in one of following places for the library files:
 	   directory containing the currently running .exe.
 
 Note that in order to run tclsh85.exe, you must ensure that tcl85.dll
-and tclpip85.dll are on your path, in the system directory, or in the 
+and tclpip85.dll are on your path, in the system directory, or in the
 directory containing tclsh84.exe.
 
 Note: Tcl no longer provides support for Win32s.

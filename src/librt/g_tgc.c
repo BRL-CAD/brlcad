@@ -252,7 +252,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	tgc->tgc_D = mag_d;
 
 	if(RT_G_DEBUG&DEBUG_SOLIDS)
-	    bu_log("%s: a is %.20f, b is %.20f, c is %.20f, d is %.20f\n", 
+	    bu_log("%s: a is %.20f, b is %.20f, c is %.20f, d is %.20f\n",
 		    stp->st_name, magsq_a, magsq_b, magsq_c, magsq_d);
 
 	/* Part of computing ALPHA() */

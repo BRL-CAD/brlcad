@@ -36,20 +36,20 @@
 
   tuple move node after|before|into t2@node
 
-  $t apply -recurse $root command arg arg			
+  $t apply -recurse $root command arg arg
 
-  $t attach tuplename				
+  $t attach tuplename
 
   $t children $n
-  t0 copy node1 node2 node3 node4 node5 destName 
-  $t delete $n...				
-  $t delete 0 
+  t0 copy node1 node2 node3 node4 node5 destName
+  $t delete $n...
+  $t delete 0
   $t delete 0 10
   $t delete all
   $t depth $n
   $t dump $root
   $t dumpfile $root fileName
-  $t dup $t2		
+  $t dup $t2
   $t find $root -name pat -name pattern
   $t firstchild $n
   $t get $n $key
@@ -73,7 +73,7 @@
   $t set $n $key $value ?$key $value?
   $t size $n
   $t slink $n $t2@$node				???
-  $t sort -recurse $root		
+  $t sort -recurse $root
 
   $t tag delete tag1 tag2 tag3...
   $t tag names
@@ -81,24 +81,24 @@
   $t tag set $n tag1 tag2 tag3...
   $t tag unset $n tag1 tag2 tag3...
 
-  $t trace create $n $key how command		
+  $t trace create $n $key how command
   $t trace delete id1 id2 id3...
   $t trace names
   $t trace info $id
 
   $t unset $n key1 key2 key3...
-  
-  $t notify create -oncreate -ondelete -onmove command 
-  $t notify create -oncreate -ondelete -onmove -onsort command arg arg arg 
+
+  $t notify create -oncreate -ondelete -onmove command
+  $t notify create -oncreate -ondelete -onmove -onsort command arg arg arg
   $t notify delete id1 id2 id3
   $t notify names
   $t notify info id
 
-  for { set n [$t firstchild $node] } { $n >= 0 } { 
+  for { set n [$t firstchild $node] } { $n >= 0 } {
         set n [$t nextsibling $n] } {
   }
-  foreach n [$t children $node] { 
-	  
+  foreach n [$t children $node] {
+
   }
   set n [$t next $node]
   set n [$t previous $node]
@@ -106,8 +106,8 @@
 */
 
 /*
- * Rows as tokens.  
- * 
+ * Rows as tokens.
+ *
  */
 
 #include <bltInt.h>
@@ -176,29 +176,29 @@ typedef struct {
     int mask;
 } NotifyData;
 
-static Blt_SwitchSpec notifySwitches[] = 
+static Blt_SwitchSpec notifySwitches[] =
 {
-    {BLT_SWITCH_FLAG, "-create", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-create", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_CREATE},
-    {BLT_SWITCH_FLAG, "-createrow", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-createrow", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_CREATE_ROW},
-    {BLT_SWITCH_FLAG, "-createcolumn", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-createcolumn", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_CREATE_COLUMN},
-    {BLT_SWITCH_FLAG, "-delete", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-delete", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_DELETE},
-    {BLT_SWITCH_FLAG, "-deleterow", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-deleterow", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_DELETE_ROW},
-    {BLT_SWITCH_FLAG, "-deletecolumn", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-deletecolumn", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_DELETE_COLUMN},
-    {BLT_SWITCH_FLAG, "-move", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-move", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_MOVE},
-    {BLT_SWITCH_FLAG, "-sort", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-sort", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_SORT},
-    {BLT_SWITCH_FLAG, "-relabel", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-relabel", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_RELABEL},
-    {BLT_SWITCH_FLAG, "-allevents", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-allevents", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_ALL},
-    {BLT_SWITCH_FLAG, "-whenidle", Blt_Offset(NotifyData, mask), 0, 0, 
+    {BLT_SWITCH_FLAG, "-whenidle", Blt_Offset(NotifyData, mask), 0, 0,
 	TUPLE_NOTIFY_WHENIDLE},
     {BLT_SWITCH_END, NULL, 0, 0}
 };
@@ -226,9 +226,9 @@ typedef struct {
     Blt_TupleNode parent;
 } InsertData;
 
-static Blt_SwitchSpec insertSwitches[] = 
+static Blt_SwitchSpec insertSwitches[] =
 {
-    {BLT_SWITCH_CUSTOM, "-after", Blt_Offset(InsertData, insertPos), 0, 
+    {BLT_SWITCH_CUSTOM, "-after", Blt_Offset(InsertData, insertPos), 0,
 	&afterSwitch},
     {BLT_SWITCH_INT_NONNEGATIVE, "-at", Blt_Offset(InsertData, insertPos), 0},
     {BLT_SWITCH_CUSTOM, "-before", Blt_Offset(InsertData, insertPos), 0,
@@ -252,9 +252,9 @@ static Blt_SwitchSpec insertSwitches[] =
 
 typedef struct {
     TupleCmd *cmdPtr;		/* Tuple to examine. */
-    Tcl_Obj *listObjPtr;	/* List to accumulate the indices of 
+    Tcl_Obj *listObjPtr;	/* List to accumulate the indices of
 				 * matching nodes. */
-    Tcl_Obj **objv;		/* Command converted into an array of 
+    Tcl_Obj **objv;		/* Command converted into an array of
 				 * Tcl_Obj's. */
     int objc;			/* Number of Tcl_Objs in above array. */
 
@@ -304,7 +304,7 @@ static Blt_SwitchCustom exactSwitch =
 };
 
 
-static Blt_SwitchSpec findSwitches[] = 
+static Blt_SwitchSpec findSwitches[] =
 {
     {BLT_SWITCH_STRING, "-addtag", Blt_Offset(FindData, addTag), 0},
     {BLT_SWITCH_INT_NONNEGATIVE, "-count", Blt_Offset(FindData, maxMatches), 0},
@@ -312,25 +312,25 @@ static Blt_SwitchSpec findSwitches[] =
     {BLT_SWITCH_CUSTOM, "-exact", Blt_Offset(FindData, patternList), 0,
         &exactSwitch},
     {BLT_SWITCH_LIST, "-exec", Blt_Offset(FindData, command), 0},
-    {BLT_SWITCH_CUSTOM, "-glob", Blt_Offset(FindData, patternList), 0, 
+    {BLT_SWITCH_CUSTOM, "-glob", Blt_Offset(FindData, patternList), 0,
 	&globSwitch},
-    {BLT_SWITCH_FLAG, "-invert", Blt_Offset(FindData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-invert", Blt_Offset(FindData, flags), 0, 0,
 	MATCH_INVERT},
     {BLT_SWITCH_CUSTOM, "-key", Blt_Offset(FindData, keyList), 0, &exactSwitch},
-    {BLT_SWITCH_CUSTOM, "-keyexact", Blt_Offset(FindData, keyList), 0, 
+    {BLT_SWITCH_CUSTOM, "-keyexact", Blt_Offset(FindData, keyList), 0,
 	&exactSwitch},
-    {BLT_SWITCH_CUSTOM, "-keyglob", Blt_Offset(FindData, keyList), 0, 
+    {BLT_SWITCH_CUSTOM, "-keyglob", Blt_Offset(FindData, keyList), 0,
 	&globSwitch},
-    {BLT_SWITCH_CUSTOM, "-keyregexp", Blt_Offset(FindData, keyList), 0, 
+    {BLT_SWITCH_CUSTOM, "-keyregexp", Blt_Offset(FindData, keyList), 0,
 	&regexpSwitch},
-    {BLT_SWITCH_FLAG, "-leafonly", Blt_Offset(FindData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-leafonly", Blt_Offset(FindData, flags), 0, 0,
 	MATCH_LEAFONLY},
-    {BLT_SWITCH_FLAG, "-nocase", Blt_Offset(FindData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-nocase", Blt_Offset(FindData, flags), 0, 0,
 	MATCH_NOCASE},
     {BLT_SWITCH_CUSTOM, "-order", Blt_Offset(FindData, order), 0, &orderSwitch},
-    {BLT_SWITCH_FLAG, "-path", Blt_Offset(FindData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-path", Blt_Offset(FindData, flags), 0, 0,
 	MATCH_PATHNAME},
-    {BLT_SWITCH_CUSTOM, "-regexp", Blt_Offset(FindData, patternList), 0, 
+    {BLT_SWITCH_CUSTOM, "-regexp", Blt_Offset(FindData, patternList), 0,
 	&regexpSwitch},
     {BLT_SWITCH_STRING, "-tag", Blt_Offset(FindData, withTag), 0},
     {BLT_SWITCH_END, NULL, 0, 0}
@@ -348,7 +348,7 @@ typedef struct {
     int movePos;
 } MoveData;
 
-static Blt_SwitchSpec moveSwitches[] = 
+static Blt_SwitchSpec moveSwitches[] =
 {
     {BLT_SWITCH_CUSTOM, "-after", Blt_Offset(MoveData, node), 0, &nodeSwitch},
     {BLT_SWITCH_INT_NONNEGATIVE, "-at", Blt_Offset(MoveData, movePos), 0},
@@ -368,25 +368,25 @@ typedef struct {
 #define COPY_TAGS	(1<<1)
 #define COPY_OVERWRITE	(1<<2)
 
-static Blt_SwitchSpec copySwitches[] = 
+static Blt_SwitchSpec copySwitches[] =
 {
     {BLT_SWITCH_STRING, "-label", Blt_Offset(CopyData, label), 0},
-    {BLT_SWITCH_FLAG, "-recurse", Blt_Offset(CopyData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-recurse", Blt_Offset(CopyData, flags), 0, 0,
 	COPY_RECURSE},
-    {BLT_SWITCH_FLAG, "-tags", Blt_Offset(CopyData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-tags", Blt_Offset(CopyData, flags), 0, 0,
 	COPY_TAGS},
-    {BLT_SWITCH_FLAG, "-overwrite", Blt_Offset(CopyData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-overwrite", Blt_Offset(CopyData, flags), 0, 0,
 	COPY_OVERWRITE},
     {BLT_SWITCH_END, NULL, 0, 0}
 };
 
 typedef struct {
     TupleCmd *cmdPtr;		/* Tuple to examine. */
-    Tcl_Obj **preObjv;		/* Command converted into an array of 
+    Tcl_Obj **preObjv;		/* Command converted into an array of
 				 * Tcl_Obj's. */
     int preObjc;		/* Number of Tcl_Objs in above array. */
 
-    Tcl_Obj **postObjv;		/* Command converted into an array of 
+    Tcl_Obj **postObjv;		/* Command converted into an array of
 				 * Tcl_Obj's. */
     int postObjc;		/* Number of Tcl_Objs in above array. */
 
@@ -403,30 +403,30 @@ typedef struct {
     char *withTag;
 } ApplyData;
 
-static Blt_SwitchSpec applySwitches[] = 
+static Blt_SwitchSpec applySwitches[] =
 {
     {BLT_SWITCH_LIST, "-precommand", Blt_Offset(ApplyData, preCmd), 0},
     {BLT_SWITCH_LIST, "-postcommand", Blt_Offset(ApplyData, postCmd), 0},
     {BLT_SWITCH_INT_NONNEGATIVE, "-depth", Blt_Offset(ApplyData, maxDepth), 0},
     {BLT_SWITCH_CUSTOM, "-exact", Blt_Offset(ApplyData, patternList), 0,
 	&exactSwitch},
-    {BLT_SWITCH_CUSTOM, "-glob", Blt_Offset(ApplyData, patternList), 0, 
+    {BLT_SWITCH_CUSTOM, "-glob", Blt_Offset(ApplyData, patternList), 0,
 	&globSwitch},
-    {BLT_SWITCH_FLAG, "-invert", Blt_Offset(ApplyData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-invert", Blt_Offset(ApplyData, flags), 0, 0,
 	MATCH_INVERT},
-    {BLT_SWITCH_CUSTOM, "-key", Blt_Offset(ApplyData, keyList), 0, 
+    {BLT_SWITCH_CUSTOM, "-key", Blt_Offset(ApplyData, keyList), 0,
 	&exactSwitch},
-    {BLT_SWITCH_CUSTOM, "-keyexact", Blt_Offset(ApplyData, keyList), 0, 
+    {BLT_SWITCH_CUSTOM, "-keyexact", Blt_Offset(ApplyData, keyList), 0,
 	&exactSwitch},
-    {BLT_SWITCH_CUSTOM, "-keyglob", Blt_Offset(ApplyData, keyList), 0, 
+    {BLT_SWITCH_CUSTOM, "-keyglob", Blt_Offset(ApplyData, keyList), 0,
 	&globSwitch},
-    {BLT_SWITCH_CUSTOM, "-keyregexp", Blt_Offset(ApplyData, keyList), 0, 
+    {BLT_SWITCH_CUSTOM, "-keyregexp", Blt_Offset(ApplyData, keyList), 0,
 	&regexpSwitch},
-    {BLT_SWITCH_FLAG, "-leafonly", Blt_Offset(ApplyData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-leafonly", Blt_Offset(ApplyData, flags), 0, 0,
 	MATCH_LEAFONLY},
-    {BLT_SWITCH_FLAG, "-nocase", Blt_Offset(ApplyData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-nocase", Blt_Offset(ApplyData, flags), 0, 0,
 	MATCH_NOCASE},
-    {BLT_SWITCH_FLAG, "-path", Blt_Offset(ApplyData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-path", Blt_Offset(ApplyData, flags), 0, 0,
 	MATCH_PATHNAME},
     {BLT_SWITCH_CUSTOM, "-regexp", Blt_Offset(ApplyData, patternList), 0,
 	&regexpSwitch},
@@ -442,11 +442,11 @@ typedef struct {
 #define RESTORE_NO_TAGS		(1<<0)
 #define RESTORE_OVERWRITE	(1<<1)
 
-static Blt_SwitchSpec restoreSwitches[] = 
+static Blt_SwitchSpec restoreSwitches[] =
 {
-    {BLT_SWITCH_FLAG, "-notags", Blt_Offset(RestoreData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-notags", Blt_Offset(RestoreData, flags), 0, 0,
 	RESTORE_NO_TAGS},
-    {BLT_SWITCH_FLAG, "-overwrite", Blt_Offset(RestoreData, flags), 0, 0, 
+    {BLT_SWITCH_FLAG, "-overwrite", Blt_Offset(RestoreData, flags), 0, 0,
 	RESTORE_OVERWRITE},
     {BLT_SWITCH_END, NULL, 0, 0}
 };
@@ -459,7 +459,7 @@ static Blt_SwitchCustom formatSwitch =
 
 typedef struct {
     int sort;			/* If non-zero, sort the tuples.  */
-    int withParent;		/* If non-zero, add the parent node id 
+    int withParent;		/* If non-zero, add the parent node id
 				 * to the output of the command.*/
     int withId;			/* If non-zero, echo the node id in the
 				 * output of the command. */
@@ -467,7 +467,7 @@ typedef struct {
 
 #define POSITION_SORTED		(1<<0)
 
-static Blt_SwitchSpec positionSwitches[] = 
+static Blt_SwitchSpec positionSwitches[] =
 {
     {BLT_SWITCH_FLAG, "-sort", Blt_Offset(PositionData, sort), 0, 0,
        POSITION_SORTED},
@@ -503,26 +503,26 @@ static int GetTuple(TupleCmd *cmdPtr, Tcl_Obj *objPtr, Blt_Tuple *tuplePtr);
  *	command structure and a new Tcl command is created (same as
  *	the instance name).  All tuple commands have hash table
  *	entries in a global (interpreter-specific) registry.
- *	
+ *
  * Results:
  *	Returns a pointer to the newly allocated tuple command structure.
  *
  * Side Effects:
  *	Memory is allocated for the structure and a hash table entry is
- *	added.  
+ *	added.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static TupleCmd *
 NewTupleCmd(
-    Tcl_Interp *interp, 
+    Tcl_Interp *interp,
     TupleCmdInterpData *interpDataPtr,
-    Blt_TupleTable table, 
+    Blt_TupleTable table,
     CONST char *instName)
 {
     int isNew;
     TupleCmd *cmdPtr;
-    
+
     cmdPtr = Blt_Calloc(1, sizeof(TupleCmd));
     assert(cmdPtr);
     cmdPtr->table = table;
@@ -530,7 +530,7 @@ NewTupleCmd(
 
     Blt_InitHashTable(&(cmdPtr->traceTable), BLT_STRING_KEYS);
     Blt_InitHashTable(&(cmdPtr->notifyTable), BLT_STRING_KEYS);
-    cmdPtr->cmdToken = Tcl_CreateObjCommand(interp, (char *)instName, 
+    cmdPtr->cmdToken = Tcl_CreateObjCommand(interp, (char *)instName,
 	(Tcl_ObjCmdProc *)TupleInstObjCmd, cmdPtr, TupleInstDeleteProc);
     cmdPtr->instTablePtr = &interpDataPtr->instTable;
     cmdPtr->hashPtr = Blt_CreateHashEntry(cmdPtr->instTablePtr, (char *)cmdPtr,
@@ -547,7 +547,7 @@ NewTupleCmd(
  *
  * GetTupleCmdInterpData --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static TupleCmdInterpData *
 GetTupleCmdInterpData(Tcl_Interp *interp)
@@ -575,10 +575,10 @@ GetTupleCmdInterpData(Tcl_Interp *interp)
  * GenerateName --
  *
  *	Generates an unique tuple command name.  Tuple names are in
- *	the form "tupleN", where N is a non-negative integer. Check 
+ *	the form "tupleN", where N is a non-negative integer. Check
  *	each name generated to see if it is already a tuple. We want
  *	to recycle names if possible.
- *	
+ *
  * Results:
  *	Returns the unique name.  The string itself is stored in the
  *	dynamic string passed into the routine.
@@ -588,7 +588,7 @@ GetTupleCmdInterpData(Tcl_Interp *interp)
 static CONST char *
 GenerateName(
     Tcl_Interp *interp,
-    CONST char *prefix, 
+    CONST char *prefix,
     CONST char *suffix,
     Tcl_DString *resultPtr)
 {
@@ -600,9 +600,9 @@ GenerateName(
     Tcl_DString dString;
     CONST char *instName, *name;
 
-    /* 
+    /*
      * Parse the command and put back so that it's in a consistent
-     * format.  
+     * format.
      *
      *	t1         <current namespace>::t1
      *	n1::t1     <current namespace>::n1::t1
@@ -617,9 +617,9 @@ GenerateName(
 	Tcl_DStringAppend(&dString, string, -1);
 	Tcl_DStringAppend(&dString, suffix, -1);
 	instName = Tcl_DStringValue(&dString);
-	if (Blt_ParseQualifiedName(interp, instName, &nsPtr, &name) 
+	if (Blt_ParseQualifiedName(interp, instName, &nsPtr, &name)
 	    != TCL_OK) {
-	    Tcl_AppendResult(interp, "can't find namespace in \"", instName, 
+	    Tcl_AppendResult(interp, "can't find namespace in \"", instName,
 		"\"", (char *)NULL);
 	    return NULL;
 	}
@@ -627,17 +627,17 @@ GenerateName(
 	    nsPtr = Tcl_GetCurrentNamespace(interp);
 	}
 	instName = Blt_GetQualifiedName(nsPtr, name, resultPtr);
-	/* 
-	 * Check if the command already exists. 
+	/*
+	 * Check if the command already exists.
 	 */
 	if (Tcl_GetCommandInfo(interp, (char *)instName, &cmdInfo)) {
 	    continue;
 	}
 	if (!Blt_TupleTableExists(interp, instName)) {
-	    /* 
+	    /*
 	     * We want the name of the tuple command and the underlying
 	     * tuple object to be the same. Check that the free command
-	     * name isn't an already a tuple object name.  
+	     * name isn't an already a tuple object name.
 	     */
 	    break;
 	}
@@ -652,8 +652,8 @@ GenerateName(
  * GetTupleCmd --
  *
  *	Find the tuple command associated with the Tcl command "string".
- *	
- *	We have to perform multiple lookups to get this right.  
+ *
+ *	We have to perform multiple lookups to get this right.
  *
  *	The first step is to generate a canonical command name.  If an
  *	unqualified command name (i.e. no namespace qualifier) is
@@ -661,11 +661,11 @@ GenerateName(
  *	the global one.  Most Tcl commands (like Tcl_GetCmdInfo) look
  *	only at the global namespace.
  *
- *	Next check if the string is 
- *		a) a Tcl command and 
- *		b) really is a command for a tuple object.  
- *	Tcl_GetCommandInfo will get us the objClientData field that 
- *	should be a cmdPtr.  We verify that by searching our hashtable 
+ *	Next check if the string is
+ *		a) a Tcl command and
+ *		b) really is a command for a tuple object.
+ *	Tcl_GetCommandInfo will get us the objClientData field that
+ *	should be a cmdPtr.  We verify that by searching our hashtable
  *	of cmdPtr addresses.
  *
  * Results:
@@ -673,12 +673,12 @@ GenerateName(
  *	can be found, NULL is returned.  It's up to the calling routines
  *	to generate an error message.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static TupleCmd *
 GetTupleCmd(
-    TupleCmdInterpData *interpDataPtr, 
-    Tcl_Interp *interp, 
+    TupleCmdInterpData *interpDataPtr,
+    Tcl_Interp *interp,
     CONST char *string)
 {
     CONST char *name;
@@ -705,7 +705,7 @@ GetTupleCmd(
     if (!result) {
 	return NULL;
     }
-    hPtr = Blt_FindHashEntry(&interpDataPtr->instTable, 
+    hPtr = Blt_FindHashEntry(&interpDataPtr->instTable,
 		(char *)(cmdInfo.objClientData));
     if (hPtr == NULL) {
 	return NULL;
@@ -725,7 +725,7 @@ GetTupleCmd(
  * Results:
  *	The trace mask is returned.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 GetTraceFlags(char *string)
@@ -769,7 +769,7 @@ GetTraceFlags(char *string)
  * Side Effects:
  *	The bitflag information is written to the provided string.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 PrintTraceFlags(unsigned int flags, char *string)
@@ -779,16 +779,16 @@ PrintTraceFlags(unsigned int flags, char *string)
     p = string;
     if (flags & TUPLE_TRACE_READ) {
 	*p++ = 'r';
-    } 
+    }
     if (flags & TUPLE_TRACE_WRITE) {
 	*p++ = 'w';
-    } 
+    }
     if (flags & TUPLE_TRACE_UNSET) {
 	*p++ = 'u';
-    } 
+    }
     if (flags & TUPLE_TRACE_CREATE) {
 	*p++ = 'c';
-    } 
+    }
     *p = '\0';
 }
 
@@ -807,12 +807,12 @@ PrintTraceFlags(unsigned int flags, char *string)
  * Side Effects:
  *	The tuple information is appended to the dynamic string.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 PrintTuple(
-    TupleCmd *cmdPtr, 
-    Blt_Tuple tuple, 
+    TupleCmd *cmdPtr,
+    Blt_Tuple tuple,
     Tcl_DString *resultPtr)
 {
     /* Tuple index */
@@ -823,34 +823,34 @@ PrintTuple(
 	int column, nColumns;
 	CONST char *key;
 	Tcl_Obj *valueObjPtr;
-	
+
 	Tcl_DStringStartSublist(resultPtr);
 	nColumns = Blt_TupleTableWidth(cmdPtr->table);
 	for (column = 0; column < nColumns; column++) {
 	    key = Blt_TupleGetColumnKey(cmdPtr->table, column);
-	    if (Blt_TupleGetValue((Tcl_Interp *)NULL, cmdPtr->table, tuple, 
+	    if (Blt_TupleGetValue((Tcl_Interp *)NULL, cmdPtr->table, tuple,
 			key, &valueObjPtr) == TCL_OK) {
 		Tcl_DStringAppendElement(resultPtr, key);
 		if (valueObjPtr != NULL) {
-		    Tcl_DStringAppendElement(resultPtr, 
+		    Tcl_DStringAppendElement(resultPtr,
 			Tcl_GetString(valueObjPtr));
 		} else {
 		    Tcl_DStringAppendElement(resultPtr, "NA");
 		}
 	    }
-	}	    
+	}
 	Tcl_DStringEndSublist(resultPtr);
     }
 
-    
+
     /* Tags */
-    {				
+    {
 	Blt_HashEntry *hPtr;
 	Blt_HashSearch cursor;
 	Blt_TupleTagEntry *tPtr;
 
 	Tcl_DStringStartSublist(resultPtr);
-	for (hPtr = Blt_TupleFirstTag(cmdPtr->table, &cursor); hPtr != NULL; 
+	for (hPtr = Blt_TupleFirstTag(cmdPtr->table, &cursor); hPtr != NULL;
 	     hPtr = Blt_NextHashEntry(&cursor)) {
 	    tPtr = Blt_GetHashValue(hPtr);
 	    Tcl_DStringAppendElement(resultPtr, tPtr->tagName);
@@ -873,19 +873,19 @@ PrintTuple(
  *	the new value TCL_ERROR is returned and an error message is
  *	left in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 UnsetValues(
-    TupleCmd *cmdPtr, 
-    Blt_Tuple tuple, 
-    int objc, 
+    TupleCmd *cmdPtr,
+    Blt_Tuple tuple,
+    int objc,
     Tcl_Obj *CONST *objv)
 {
     register int i;
 
     for (i = 0; i < objc; i ++) {
-	if (Blt_TupleUnsetValue(cmdPtr->interp, cmdPtr->table, tuple, 
+	if (Blt_TupleUnsetValue(cmdPtr->interp, cmdPtr->table, tuple,
 		Tcl_GetString(objv[i])) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -907,10 +907,10 @@ UnsetValues(
  *	None.
  *
  * Side Effects:
- *	Memory is deallocated and the notitifer is no longer 
+ *	Memory is deallocated and the notitifer is no longer
  *	active.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 DeleteNotifier(NotifyInfo *notifyPtr)
@@ -940,7 +940,7 @@ DeleteNotifier(NotifyInfo *notifyPtr)
  * Side Effects:
  *	Memory is deallocated and the trace is no longer active.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 DeleteTrace(TraceInfo *tracePtr)
@@ -960,7 +960,7 @@ DeleteTrace(TraceInfo *tracePtr)
  *
  * TupleTraceProc --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -971,7 +971,7 @@ TupleTraceProc(
     unsigned int column,	/* Field that's updated. */
     unsigned int flags)
 {
-    TraceInfo *tracePtr = clientData; 
+    TraceInfo *tracePtr = clientData;
     char string[5];
     CONST char *key;
     int result;
@@ -999,21 +999,21 @@ TupleTraceProc(
  *
  * TupleEventProc --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TupleEventProc(ClientData clientData, Blt_TupleNotifyEvent *eventPtr)
 {
-    NotifyInfo *notifyPtr = clientData; 
+    NotifyInfo *notifyPtr = clientData;
     int result;
     int i;
     char *string;
-    
+
     switch (eventPtr->type) {
     case TUPLE_NOTIFY_CREATE_ROW:
 	string = "-createrow";
 	break;
-	
+
     case TUPLE_NOTIFY_CREATE_COLUMN:
 	string = "-createcolumn";
 	break;
@@ -1025,31 +1025,31 @@ TupleEventProc(ClientData clientData, Blt_TupleNotifyEvent *eventPtr)
     case TUPLE_NOTIFY_DELETE_COLUMN:
 	string = "-deletecolumn";
 	break;
-	
+
     case TUPLE_NOTIFY_MOVE:
 	string = "-move";
 	break;
-	
+
     case TUPLE_NOTIFY_SORT:
 	string = "-sort";
 	break;
-	
+
     case TUPLE_NOTIFY_RELABEL:
 	string = "-relabel";
 	break;
-	
+
     default:
 	/* empty */
 	string = "???";
 	break;
-    }	
-    
+    }
+
     i = notifyPtr->objc;
     notifyPtr->objv[i] = Tcl_NewStringObj(string, -1);
     notifyPtr->objv[i+1] = Tcl_NewIntObj(eventPtr->row);
     Tcl_IncrRefCount(notifyPtr->objv[i]);
     Tcl_IncrRefCount(notifyPtr->objv[i+1]);
-    result = Tcl_EvalObjv(notifyPtr->cmdPtr->interp, notifyPtr->objc + 3, 
+    result = Tcl_EvalObjv(notifyPtr->cmdPtr->interp, notifyPtr->objc + 3,
 			  notifyPtr->objv, 0);
     Tcl_DecrRefCount(notifyPtr->objv[i+1]);
     Tcl_DecrRefCount(notifyPtr->objv[i]);
@@ -1066,9 +1066,9 @@ TupleEventProc(ClientData clientData, Blt_TupleNotifyEvent *eventPtr)
  *
  * GetTuple --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
-static int 
+static int
 GetTuple(TupleCmd *cmdPtr, Tcl_Obj *objPtr, Blt_Tuple *tuplePtr)
 {
     char c;
@@ -1092,8 +1092,8 @@ GetTuple(TupleCmd *cmdPtr, Tcl_Obj *objPtr, Blt_Tuple *tuplePtr)
     }  else if (cmdPtr != NULL) {
 	if (strcmp(string, "all") == 0) {
 	    if (Blt_TupleTableLength(cmdPtr->table) > 1) {
-		Tcl_AppendResult(cmdPtr->interp, 
-			"more than one node tagged as \"", string, "\"", 
+		Tcl_AppendResult(cmdPtr->interp,
+			"more than one node tagged as \"", string, "\"",
 			(char *)NULL);
 		return TCL_ERROR;
 	    }
@@ -1108,12 +1108,12 @@ GetTuple(TupleCmd *cmdPtr, Tcl_Obj *objPtr, Blt_Tuple *tuplePtr)
 	    result = TCL_ERROR;
 	    tablePtr = Blt_TupleTagHashTable(cmdPtr->table, string);
 	    if (tablePtr == NULL) {
-		Tcl_AppendResult(cmdPtr->interp, "can't find tag or index \"", 
-			string, "\" in ", Blt_TupleTableName(cmdPtr->table), 
+		Tcl_AppendResult(cmdPtr->interp, "can't find tag or index \"",
+			string, "\" in ", Blt_TupleTableName(cmdPtr->table),
 			(char *)NULL);
 	    } else if (tablePtr->numEntries > 1) {
-		Tcl_AppendResult(cmdPtr->interp, 
-			"more than one node tagged as \"", string, "\"", 
+		Tcl_AppendResult(cmdPtr->interp,
+			"more than one node tagged as \"", string, "\"",
 			(char *)NULL);
 	    } else if (tablePtr->numEntries > 0) {
 		hPtr = Blt_FirstHashEntry(tablePtr, &cursor);
@@ -1129,7 +1129,7 @@ GetTuple(TupleCmd *cmdPtr, Tcl_Obj *objPtr, Blt_Tuple *tuplePtr)
 	    return TCL_OK;
 	}
     }
-    Tcl_AppendResult(cmdPtr->interp, "can't find tag or index \"", string, 
+    Tcl_AppendResult(cmdPtr->interp, "can't find tag or index \"", string,
 		"\" in ", Blt_TupleTableName(cmdPtr->table), (char *)NULL);
     return TCL_ERROR;
 }
@@ -1139,7 +1139,7 @@ GetTuple(TupleCmd *cmdPtr, Tcl_Obj *objPtr, Blt_Tuple *tuplePtr)
  *
  * AttachOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 AttachOp(
@@ -1157,9 +1157,9 @@ AttachOp(
 	int result;
 
 	objName = Tcl_GetString(objv[2]);
-	if (Blt_ParseQualifiedName(interp, objName, &nsPtr, &name) 
+	if (Blt_ParseQualifiedName(interp, objName, &nsPtr, &name)
 	    != TCL_OK) {
-	    Tcl_AppendResult(interp, "can't find namespace in \"", objName, 
+	    Tcl_AppendResult(interp, "can't find namespace in \"", objName,
 			     "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1177,17 +1177,17 @@ AttachOp(
 	    Blt_HashSearch cursor;
 	    TraceInfo *tracePtr;
 	    NotifyInfo *notifyPtr;
-	    
+
 	    Blt_TupleReleaseTable(cmdPtr->table);
 	    /* Dump the current set of tags, traces, and notifiers. */
-	    for (hPtr = Blt_FirstHashEntry(&cmdPtr->traceTable, &cursor); 
+	    for (hPtr = Blt_FirstHashEntry(&cmdPtr->traceTable, &cursor);
 		 hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 		tracePtr = Blt_GetHashValue(hPtr);
 		DeleteTrace(tracePtr);
 	    }
 	    Blt_DeleteHashTable(&cmdPtr->traceTable);
 	    Blt_InitHashTable(&cmdPtr->traceTable, TCL_STRING_KEYS);
-	    for (hPtr = Blt_FirstHashEntry(&cmdPtr->notifyTable, &cursor); 
+	    for (hPtr = Blt_FirstHashEntry(&cmdPtr->notifyTable, &cursor);
 		hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 		notifyPtr = Blt_GetHashValue(hPtr);
 		DeleteNotifier(notifyPtr);
@@ -1197,7 +1197,7 @@ AttachOp(
 	}
 	cmdPtr->table = table;
     }
-    Tcl_SetResult(interp, (char *)Blt_TupleTableName(cmdPtr->table), 
+    Tcl_SetResult(interp, (char *)Blt_TupleTableName(cmdPtr->table),
 	TCL_VOLATILE);
     return TCL_OK;
 }
@@ -1209,12 +1209,12 @@ AttachOp(
  *
  *	Parses the given command line and calls one of several
  *	column-specific operations.
- *	
+ *
  * Results:
- *	Returns a standard Tcl result.  It is the result of 
+ *	Returns a standard Tcl result.  It is the result of
  *	operation called.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec columnOps[] =
 {
@@ -1243,7 +1243,7 @@ ColumnOp(
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nColumnOps, columnOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nColumnOps, columnOps, BLT_OP_ARG2, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1261,8 +1261,8 @@ ColumnOp(
  *
  *	Deletes one or more tuples from the table.  Tuples may be
  *	specified by their index or a tag.
- *	
- *---------------------------------------------------------------------- 
+ *
+ *----------------------------------------------------------------------
  */
 static int
 DeleteOp(
@@ -1296,7 +1296,7 @@ DeleteOp(
  *
  * ExistsOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 ExistsOp(
@@ -1307,21 +1307,21 @@ ExistsOp(
 {
     Blt_Tuple tuple;
     int bool;
-    
+
     bool = TRUE;
     if (GetTuple(cmdPtr, objv[2], &tuple) != TCL_OK) {
 	bool = FALSE;
-    } else if (objc == 4) { 
+    } else if (objc == 4) {
 	Tcl_Obj *valueObjPtr;
 	char *key;
-	
+
 	key = Tcl_GetString(objv[3]);
-	if (Blt_TupleGetValue((Tcl_Interp *)NULL, cmdPtr->table, tuple, 
+	if (Blt_TupleGetValue((Tcl_Interp *)NULL, cmdPtr->table, tuple,
 			     key, &valueObjPtr) != TCL_OK) {
 	    bool = FALSE;
 	}
 	bool = (valueObjPtr != NULL);
-    } 
+    }
     Tcl_SetObjResult(interp, Tcl_NewBooleanObj(bool));
     return TCL_OK;
 }
@@ -1337,24 +1337,24 @@ ExistsOp(
  *	pairs in the tuple are returned.  If a value is empty (the
  *	Tcl_Obj value is NULL), then the tuple command's "empty"
  *	string representation will be used.
- *	
+ *
  *	A third argument may be provided as the default return value.
  *	If no value exists for the given key, then this value is
  *	returned.
- * 
- * Results:
- *	A standard Tcl result. If the tag or index is invalid, 
- *	TCL_ERROR is returned and an error message is left in the 
- *	interpreter result.
- *	
  *
- *---------------------------------------------------------------------- 
+ * Results:
+ *	A standard Tcl result. If the tag or index is invalid,
+ *	TCL_ERROR is returned and an error message is left in the
+ *	interpreter result.
+ *
+ *
+ *----------------------------------------------------------------------
  */
 static int
 GetOp(
-    TupleCmd *cmdPtr, 
-    Tcl_Interp *interp, 
-    int objc, 
+    TupleCmd *cmdPtr,
+    Tcl_Interp *interp,
+    int objc,
     Tcl_Obj *CONST *objv)
 {
     Blt_Tuple tuple;
@@ -1371,7 +1371,7 @@ GetOp(
 	listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 	row = Blt_TupleRowIndex(tuple);
 	for (column = 0; column < Blt_TupleTableWidth(cmdPtr->table); column++){
-	    if (Blt_TupleGetValueByIndex((Tcl_Interp *)NULL, cmdPtr->table, 
+	    if (Blt_TupleGetValueByIndex((Tcl_Interp *)NULL, cmdPtr->table,
 			 row, column, &valueObjPtr) == TCL_OK) {
 		if (valueObjPtr != NULL) {
 		    Tcl_Obj *objPtr;
@@ -1383,7 +1383,7 @@ GetOp(
 		    Tcl_ListObjAppendElement(interp, listObjPtr, valueObjPtr);
 		}
 	    }
-	}	    
+	}
 	Tcl_SetObjResult(interp, listObjPtr);
 	return TCL_OK;
     } else {
@@ -1392,25 +1392,25 @@ GetOp(
 	int row, column;
 
 	row = Blt_TupleRowIndex(tuple);
-	
-	key = Tcl_GetString(objv[3]); 
-	if (Blt_TupleGetColumnIndex(interp, cmdPtr->table, key, &column) 
+
+	key = Tcl_GetString(objv[3]);
+	if (Blt_TupleGetColumnIndex(interp, cmdPtr->table, key, &column)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if (Blt_TupleGetValueByIndex((Tcl_Interp *)NULL, cmdPtr->table, row, 
+	if (Blt_TupleGetValueByIndex((Tcl_Interp *)NULL, cmdPtr->table, row,
 		column, &valueObjPtr) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	if (valueObjPtr == NULL) {
 	    if (objc == 4) {
-		Tcl_AppendResult(interp, "tuple "\", Tcl_GetString(objv[2]), 
-			 "\" in table \"", Tcl_GetString(objv[0]), 
+		Tcl_AppendResult(interp, "tuple "\", Tcl_GetString(objv[2]),
+			 "\" in table \"", Tcl_GetString(objv[0]),
 			 "\" is empty.", (char *)NULL);
 		return TCL_ERROR;
 	    }
 	    valueObjPtr = objv[4];
-	} 
+	}
 	Tcl_SetObjResult(interp, valueObjPtr);
     }
     return TCL_OK;
@@ -1423,11 +1423,11 @@ GetOp(
  * NotifyCreateOp --
  *
  *	Creates a notifier for this instance.  Notifiers represent
- *	a bitmask of events and a command prefix to be invoked 
- *	when a matching event occurs.  
+ *	a bitmask of events and a command prefix to be invoked
+ *	when a matching event occurs.
  *
  *	The command prefix is parsed and saved in an array of
- *	Tcl_Objs. Extra slots are allocated for the 
+ *	Tcl_Objs. Extra slots are allocated for the
  *
  * Results:
  *	A standard Tcl result.  The name of the new notifier is
@@ -1438,7 +1438,7 @@ GetOp(
  * Example:
  *	tuple0 notify create ?flags? command arg
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 NotifyCreateOp(
@@ -1466,7 +1466,7 @@ NotifyCreateOp(
     }
     data.mask = 0;
     /* Process switches  */
-    if (Blt_ProcessObjSwitches(interp, notifySwitches, count, objv + 3, 
+    if (Blt_ProcessObjSwitches(interp, notifySwitches, count, objv + 3,
 	     (char *)&data, 0) < 0) {
 	return TCL_ERROR;
     }
@@ -1488,7 +1488,7 @@ NotifyCreateOp(
     sprintf(idString, "notify%d", cmdPtr->notifyCounter++);
     hPtr = Blt_CreateHashEntry(&cmdPtr->notifyTable, idString, &isNew);
     Blt_SetHashValue(hPtr, notifyPtr);
-    notifyPtr->notifier = Blt_TupleCreateNotifier(cmdPtr->table, 
+    notifyPtr->notifier = Blt_TupleCreateNotifier(cmdPtr->table,
 	 data.mask, TupleEventProc, notifyPtr);
     Tcl_SetStringObj(Tcl_GetObjResult(interp), idString, -1);
     return TCL_OK;
@@ -1499,14 +1499,14 @@ NotifyCreateOp(
  *
  * NotifyDeleteOp --
  *
- *	Deletes one or more notifiers.  
+ *	Deletes one or more notifiers.
  *
  * Results:
  *	A standard Tcl result.  If a name given doesn't represent
  *	a notifier, then TCL_ERROR is returned and an error message
  *	is left in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 NotifyDeleteOp(
@@ -1525,7 +1525,7 @@ NotifyDeleteOp(
 	string = Tcl_GetString(objv[i]);
 	hPtr = Blt_FindHashEntry(&(cmdPtr->notifyTable), string);
 	if (hPtr == NULL) {
-	    Tcl_AppendResult(interp, "unknown notify name \"", string, "\"", 
+	    Tcl_AppendResult(interp, "unknown notify name \"", string, "\"",
 			     (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1550,7 +1550,7 @@ NotifyDeleteOp(
  *	a notifier, then TCL_ERROR is returned and an error message
  *	is left in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -1570,7 +1570,7 @@ NotifyInfoOp(
     string = Tcl_GetString(objv[3]);
     hPtr = Blt_FindHashEntry(&(cmdPtr->notifyTable), string);
     if (hPtr == NULL) {
-	Tcl_AppendResult(interp, "unknown notify name \"", string, "\"", 
+	Tcl_AppendResult(interp, "unknown notify name \"", string, "\"",
 			 (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1615,13 +1615,13 @@ NotifyInfoOp(
  *
  *	Returns the names of all the notifiers in use by this
  *	instance.  Notifiers issues by other instances or object
- *	clients are not reported.  
+ *	clients are not reported.
  *
  * Results:
  *	Always TCL_OK.  A list of notifier names is left in the
  *	interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -1654,12 +1654,12 @@ NotifyNamesOp(
  *
  *	Parses the given command line and calls one of several
  *	notifier-specific operations.
- *	
+ *
  * Results:
- *	Returns a standard Tcl result.  It is the result of 
+ *	Returns a standard Tcl result.  It is the result of
  *	operation called.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec notifyOps[] =
 {
@@ -1681,7 +1681,7 @@ NotifyOp(
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nNotifyOps, notifyOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nNotifyOps, notifyOps, BLT_OP_ARG2, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1697,12 +1697,12 @@ NotifyOp(
  *
  *	Parses the given command line and calls one of several
  *	column-specific operations.
- *	
+ *
  * Results:
- *	Returns a standard Tcl result.  It is the result of 
+ *	Returns a standard Tcl result.  It is the result of
  *	operation called.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec columnOps[] =
 {
@@ -1731,7 +1731,7 @@ SelectOp(
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nColumnOps, columnOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nColumnOps, columnOps, BLT_OP_ARG2, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1750,13 +1750,13 @@ SelectOp(
  *	already exist, the columns will be automatically created.  The
  *	same holds true for rows.  If a row index is beyond the end of
  *	the table (tags are always in range), new rows are allocated.
- * 
+ *
  * Results:
- *	A standard Tcl result. If the tag or index is invalid, 
- *	TCL_ERROR is returned and an error message is left in the 
+ *	A standard Tcl result. If the tag or index is invalid,
+ *	TCL_ERROR is returned and an error message is left in the
  *	interpreter result.
- *	
- *---------------------------------------------------------------------- 
+ *
+ *----------------------------------------------------------------------
  */
 static int
 SetOp(
@@ -1781,7 +1781,7 @@ SetOp(
 	}
 	/* Extend the array of tuples if necessary */
 	extra = row - Blt_TupleTableLength(cmdPtr->table);
-	if ((extra > 0) && 
+	if ((extra > 0) &&
 	    (Blt_TupleExtendRows(cmdPtr->table, extra) != TCL_OK)) {
 	    return TCL_ERROR;
 	}
@@ -1791,11 +1791,11 @@ SetOp(
 	    column = Blt_TupleAddColumn(cmdPtr->table, key, &isNew);
 	    i++;
 	    if (i == objc) {
-		Tcl_AppendResult(cmdPtr->interp, "missing value for field \"", 
+		Tcl_AppendResult(cmdPtr->interp, "missing value for field \"",
 			key, "\"", (char *)NULL);
 		return TCL_ERROR;
 	    }
-	    if (Blt_TupleSetValue(interp, cmdPtr->table, tuple, key, objv[i]) 
+	    if (Blt_TupleSetValue(interp, cmdPtr->table, tuple, key, objv[i])
 		!= TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -1819,7 +1819,7 @@ SetOp(
 	    values[n].column = Blt_TupleAddColumn(cmdPtr->table, key, &isNew);
 	    i++;
 	    if (i == objc) {
-		Tcl_AppendResult(cmdPtr->interp, "missing value for field \"", 
+		Tcl_AppendResult(cmdPtr->interp, "missing value for field \"",
 			key, "\"", (char *)NULL);
 		goto error;
 	    }
@@ -1828,8 +1828,8 @@ SetOp(
 	}
 	for (/* empty */; tuple != NULL; tuple = Blt_TupleNextTagged(&cursor)) {
 	    for (i = 0; i < n; i++) {
-		if (Blt_TupleSetValueByIndex(cmdPtr->interp, cmdPtr->table, 
-			Blt_TupleRowIndex(tuple), values[i].column, 
+		if (Blt_TupleSetValueByIndex(cmdPtr->interp, cmdPtr->table,
+			Blt_TupleRowIndex(tuple), values[i].column,
 			values[i].objPtr) != TCL_OK) {
 		    goto error;
 		}
@@ -1851,13 +1851,13 @@ SetOp(
  *	Adds a tag to one or more tuples. A tuple may already have the
  *	tag. Tag names can not start with a digit.  It's also an error
  *	to try to add the reserved tag "all".
- *  
+ *
  * Results:
  *	A standard Tcl result.  If a tag isn't valid then TCL_ERROR is
  *	returned and an error message is left in the interpreter
  *	result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagAddOp(
@@ -1873,12 +1873,12 @@ TagAddOp(
 
     tagName = Tcl_GetString(objv[3]);
     if (isdigit(UCHAR(tagName[0]))) {
-	Tcl_AppendResult(interp, "bad tag \"", tagName, 
+	Tcl_AppendResult(interp, "bad tag \"", tagName,
 		 "\": can't start with a digit", (char *)NULL);
 	return TCL_ERROR;
     }
     if (strcmp(tagName, "all") == 0) {
-	Tcl_AppendResult(cmdPtr->interp, "can't add reserved tag \"", tagName, 
+	Tcl_AppendResult(cmdPtr->interp, "can't add reserved tag \"", tagName,
 		"\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1902,13 +1902,13 @@ TagAddOp(
  *	Deletes a tag from one or more tuples. It's an error to try to
  *	remove the tag "all".  It's not an error is the tuple doesn't
  *	currently have the tag.
- *  
+ *
  * Results:
  *	A standard Tcl result.  If a tag isn't valid then TCL_ERROR is
  *	returned and an error message is left in the interpreter
  *	result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagDeleteOp(
@@ -1924,11 +1924,11 @@ TagDeleteOp(
 
     tagName = Tcl_GetString(objv[3]);
     if (strcmp(tagName, "all") == 0) {
-	Tcl_AppendResult(interp, "can't delete reserved tag \"", tagName, "\"", 
+	Tcl_AppendResult(interp, "can't delete reserved tag \"", tagName, "\"",
 			 (char *)NULL);
         return TCL_ERROR;
     }
-      
+
     for (i = 4; i < objc; i++) {
 	tuple = Blt_TupleFirstTagged(interp, cmdPtr->table, objv[i], &cursor);
 	if (tuple == NULL) {
@@ -1947,14 +1947,14 @@ TagDeleteOp(
  * TagDumpOp --
  *
  *	Reports information about the tuples tagged with the given
- *	tags.  
- *  
+ *	tags.
+ *
  * Results:
  *	A standard Tcl result.  If a tag isn't valid then TCL_ERROR is
  *	returned and an error message is left in the interpreter
  *	result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagDumpOp(
@@ -1993,11 +1993,11 @@ TagDumpOp(
  *	Deletes one or more tags.  The tuples currently associated
  *	with the tag remain otherwise intact.  It's not an error if
  *	the tag doesn't currently exist.
- *  
+ *
  * Results:
  *	Always TCL_OK.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -2022,13 +2022,13 @@ TagForgetOp(
  *
  *	Returns a list of the unique tags for the given tuples.  If no
  *	tuples are given, then all tags are reported.
- *  
+ *
  * Results:
  *	A standard Tcl result.  If a tag or index of a tuple isn't
  *	valid then TCL_ERROR is returned and an error message is left
  *	in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagNamesOp(
@@ -2047,7 +2047,7 @@ TagNamesOp(
     if (objc == 3) {
 	Blt_HashEntry *hPtr;
 
-	for (hPtr = Blt_TupleFirstTag(cmdPtr->table, &cursor); hPtr != NULL; 
+	for (hPtr = Blt_TupleFirstTag(cmdPtr->table, &cursor); hPtr != NULL;
 	     hPtr = Blt_NextHashEntry(&cursor)) {
 	    tPtr = Blt_GetHashValue(hPtr);
 	    objPtr = Tcl_NewStringObj(tPtr->tagName, -1);
@@ -2096,13 +2096,13 @@ TagNamesOp(
  *	Adds a tag to a range of tuples. A tuple may already have the
  *	tag. Tag names can not start with a digit.  It's also an error
  *	to try to add the reserved tag "all".
- *  
+ *
  * Results:
  *	A standard Tcl result.  If a tag isn't valid then TCL_ERROR is
  *	returned and an error message is left in the interpreter
  *	result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagRangeOp(
@@ -2116,12 +2116,12 @@ TagRangeOp(
 
     tagName = Tcl_GetString(objv[3]);
     if (isdigit(UCHAR(tagName[0]))) {
-	Tcl_AppendResult(interp, "bad tag \"", tagName, 
+	Tcl_AppendResult(interp, "bad tag \"", tagName,
 		 "\": can't start with a digit", (char *)NULL);
 	return TCL_ERROR;
     }
     if (strcmp(tagName, "all") == 0) {
-	Tcl_AppendResult(cmdPtr->interp, "can't add reserved tag \"", tagName, 
+	Tcl_AppendResult(cmdPtr->interp, "can't add reserved tag \"", tagName,
 		"\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -2147,13 +2147,13 @@ TagRangeOp(
  *
  *	Returns a list of unique tuple indices associated with the
  *	tags given.
- *  
+ *
  * Results:
  *	A standard Tcl result.  If a tag isn't valid then TCL_ERROR is
  *	returned and an error message is left in the interpreter
  *	result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagTuplesOp(
@@ -2171,7 +2171,7 @@ TagTuplesOp(
     char *tagName;
     int isNew;
     register int i;
-	
+
     Blt_InitHashTable(&uniqTable, BLT_ONE_WORD_KEYS);
     for (i = 3; i < objc; i++) {
 	tagName = Tcl_GetString(objv[i]);
@@ -2179,10 +2179,10 @@ TagTuplesOp(
 	    break;
 	} else {
 	    Blt_HashTable *tablePtr;
-	    
+
 	    tablePtr = Blt_TupleTagHashTable(cmdPtr->table, tagName);
 	    if (tablePtr != NULL) {
-		for (hPtr = Blt_FirstHashEntry(tablePtr, &cursor); 
+		for (hPtr = Blt_FirstHashEntry(tablePtr, &cursor);
 		     hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 		    tuple = Blt_GetHashValue(hPtr);
 		    Blt_CreateHashEntry(&uniqTable, (char *)tuple, &isNew);
@@ -2195,7 +2195,7 @@ TagTuplesOp(
 	goto error;
     }
     listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
-    for (hPtr = Blt_FirstHashEntry(&uniqTable, &cursor); hPtr != NULL; 
+    for (hPtr = Blt_FirstHashEntry(&uniqTable, &cursor); hPtr != NULL;
 	 hPtr = Blt_NextHashEntry(&cursor)) {
 	tuple = (Blt_Tuple)Blt_GetHashKey(&uniqTable, hPtr);
 	objPtr = Tcl_NewIntObj(Blt_TupleRowIndex(tuple));
@@ -2223,7 +2223,7 @@ TagTuplesOp(
  * Side effects:
  *	See the user documentation.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec tagOps[] = {
     {"add", 1, (Blt_Op)TagAddOp, 5, 0, "tag tagOrIdx...",},
@@ -2247,7 +2247,7 @@ TagOp(
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nTagOps, tagOps, BLT_OP_ARG2, objc, objv, 
+    proc = Blt_GetOpFromObj(interp, nTagOps, tagOps, BLT_OP_ARG2, objc, objv,
 	0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -2262,8 +2262,8 @@ TagOp(
  * TraceCreateOp --
  *
  *	Creates a trace for this instance.  Traces represent
- *	list of keys, a bitmask of trace flags, and a command prefix 
- *	to be invoked when a matching trace event occurs.  
+ *	list of keys, a bitmask of trace flags, and a command prefix
+ *	to be invoked when a matching trace event occurs.
  *
  *	The command prefix is parsed and saved in an array of
  *	Tcl_Objs. The qualified name of the instance is saved
@@ -2275,7 +2275,7 @@ TagOp(
  *	to parse a switch, then TCL_ERROR is returned and an error
  *	message is left in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -2309,14 +2309,14 @@ TraceCreateOp(
     string = Tcl_GetString(objv[5]);
     flags = GetTraceFlags(string);
     if (flags < 0) {
-	Tcl_AppendResult(interp, "unknown flag in \"", string, "\"", 
+	Tcl_AppendResult(interp, "unknown flag in \"", string, "\"",
 		     (char *)NULL);
 	return TCL_ERROR;
     }
     if (Tcl_ListObjGetElements(interp, objv[6], &nArgs, &args) != TCL_OK) {
 	return TCL_ERROR;
     }
-    tPtr = Blt_TupleCreateTrace(cmdPtr->table, tuple, keyList, tagName, 
+    tPtr = Blt_TupleCreateTrace(cmdPtr->table, tuple, keyList, tagName,
 	      flags, TupleTraceProc, tracePtr);
     if (tPtr == NULL) {
 	return TCL_ERROR;
@@ -2326,7 +2326,7 @@ TraceCreateOp(
     tracePtr->cmdPtr = cmdPtr;
     tracePtr->trace = tPtr;
     sprintf(idString, "trace%d", cmdPtr->traceCounter++);
-    tracePtr->hashPtr = Blt_CreateHashEntry(&cmdPtr->traceTable, idString, 
+    tracePtr->hashPtr = Blt_CreateHashEntry(&cmdPtr->traceTable, idString,
 	&isNew);
     Blt_SetHashValue(tracePtr->hashPtr, tracePtr);
     Tcl_SetStringObj(Tcl_GetObjResult(interp), idString, -1);
@@ -2342,7 +2342,7 @@ TraceCreateOp(
 
 	Tcl_DStringInit(&dString);
 	qualName = Blt_GetQualifiedName(
-		Blt_GetCommandNamespace(interp, cmdPtr->cmdToken), 
+		Blt_GetCommandNamespace(interp, cmdPtr->cmdToken),
 		Tcl_GetCommandName(interp, cmdPtr->cmdToken), &dString);
 	tracePtr->objv[i] = Tcl_NewStringObj(qualName, -1);
 	Tcl_IncrRefCount(tracePtr->objv[i]);
@@ -2357,14 +2357,14 @@ TraceCreateOp(
  *
  * TraceDeleteOp --
  *
- *	Deletes one or more traces.  
+ *	Deletes one or more traces.
  *
  * Results:
  *	A standard Tcl result.  If a name given doesn't represent
  *	a trace, then TCL_ERROR is returned and an error message
  *	is left in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TraceDeleteOp(
@@ -2382,12 +2382,12 @@ TraceDeleteOp(
 	name = Tcl_GetString(objv[i]);
 	hPtr = Blt_FindHashEntry(&cmdPtr->traceTable, name);
 	if (hPtr == NULL) {
-	    Tcl_AppendResult(interp, "unknown trace \"", name, "\"", 
+	    Tcl_AppendResult(interp, "unknown trace \"", name, "\"",
 			     (char *)NULL);
 	    return TCL_ERROR;
 	}
 	tracePtr = Blt_GetHashValue(hPtr);
-	Blt_DeleteHashEntry(&cmdPtr->traceTable, hPtr); 
+	Blt_DeleteHashEntry(&cmdPtr->traceTable, hPtr);
 	DeleteTrace(tracePtr);
     }
     return TCL_OK;
@@ -2408,7 +2408,7 @@ TraceDeleteOp(
  *	a trace, then TCL_ERROR is returned and an error message
  *	is left in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -2431,7 +2431,7 @@ TraceInfoOp(
     idString = Tcl_GetString(objv[3]);
     hPtr = Blt_FindHashEntry(&cmdPtr->traceTable, idString);
     if (hPtr == NULL) {
-	Tcl_AppendResult(interp, "unknown trace \"", idString, "\"", 
+	Tcl_AppendResult(interp, "unknown trace \"", idString, "\"",
 		(char *)NULL);
 	return TCL_ERROR;
     }
@@ -2448,7 +2448,7 @@ TraceInfoOp(
     }
     Tcl_DStringAppendElement(&dString, withTag);
     Tcl_DStringAppendElement(&dString, "row");
-    Tcl_DStringAppendElement(&dString, 
+    Tcl_DStringAppendElement(&dString,
 		Blt_Itoa(Blt_TupleRowIndex(tPtr->tuple)));
 
     Tcl_DStringAppendElement(&dString, "keys");
@@ -2483,7 +2483,7 @@ TraceInfoOp(
  *	Always TCL_OK.  A list of trace names is left in the
  *	interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -2516,7 +2516,7 @@ TraceNamesOp(
  * Side effects:
  *	See the user documentation.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec traceOps[] =
 {
@@ -2538,7 +2538,7 @@ TraceOp(
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nTraceOps, traceOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nTraceOps, traceOps, BLT_OP_ARG2, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -2558,13 +2558,13 @@ TraceOp(
  *	(columns) doesn't exist.  The same holds true for rows.  If a
  *	row index is beyond the end of the table (tags are always in
  *	range), it is also ignored.
- * 
+ *
  * Results:
- *	A standard Tcl result. If the tag or index is invalid, 
- *	TCL_ERROR is returned and an error message is left in the 
+ *	A standard Tcl result. If the tag or index is invalid,
+ *	TCL_ERROR is returned and an error message is left in the
  *	interpreter result.
- *	
- *---------------------------------------------------------------------- 
+ *
+ *----------------------------------------------------------------------
  */
 static int
 UnsetOp(
@@ -2575,7 +2575,7 @@ UnsetOp(
 {
     Blt_Tuple tuple;
     char *string;
-	
+
     string = Tcl_GetString(objv[2]);
     if (isdigit(UCHAR(*string))) {
 	if (GetTuple(cmdPtr, objv[2], &tuple) != TCL_OK) {
@@ -2631,7 +2631,7 @@ static Blt_OpSpec tupleOps[] =
     {"-ancestor", 2, (Blt_Op)AncestorOp, 4, 4, "node1 node2",},
     {"-apply", 1, (Blt_Op)ApplyOp, 3, 0, "first last ?switches?",},
     {"column", 2, (Blt_Op)ColumnOp, 2, 0, "args...", },
-    {"copy", 2, (Blt_Op)CopyOp, 4, 0, 
+    {"copy", 2, (Blt_Op)CopyOp, 4, 0,
 	"srcNode ?destTuple? destNode ?switches?",},
     {"dump", 4, (Blt_Op)DumpOp, 3, 3, "first ?last?",},
     {"dumpfile", 5, (Blt_Op)DumpfileOp, 4, 4, "first ?last? fileName",},
@@ -2668,7 +2668,7 @@ TupleInstObjCmd(
     TupleCmd *cmdPtr = clientData;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nTupleOps, tupleOps, BLT_OP_ARG1, objc, 
+    proc = Blt_GetOpFromObj(interp, nTupleOps, tupleOps, BLT_OP_ARG1, objc,
 	objv, BLT_OP_LINEAR_SEARCH);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -2736,19 +2736,19 @@ TupleInstDeleteProc(ClientData clientData)
  *	object that already exists.  And because each instance has a
  *	Tcl command associated with it that is used to access the
  *	object, we also check more generally that is it also not the
- *	name of an existing Tcl command.  
+ *	name of an existing Tcl command.
  *
  *	Instance names as namespace-qualified.  If no namespace is
  *	designated, it is assumed that instance is to be created in
  *	the current namespace (not the global namespace).
- *	
+ *
  * Results:
  *	A standard Tcl result.  If the instance is successfully created,
  *	the namespace-qualified name of the instance is returned. If not,
- *	then TCL_ERROR is returned and an error message is left in the 
+ *	then TCL_ERROR is returned and an error message is left in the
  *	interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -2784,16 +2784,16 @@ TupleCreateOp(
 	    Tcl_Namespace *nsPtr;
 
 	    nsPtr = NULL;
-	    /* 
+	    /*
 	     * Parse the command and put back so that it's in a consistent
-	     * format.  
+	     * format.
 	     *
 	     *	t1         <current namespace>::t1
 	     *	n1::t1     <current namespace>::n1::t1
 	     *	::t1	   ::t1
 	     *  ::n1::t1   ::n1::t1
 	     */
-	    if (Blt_ParseQualifiedName(interp, instName, &nsPtr, &name) 
+	    if (Blt_ParseQualifiedName(interp, instName, &nsPtr, &name)
 		!= TCL_OK) {
 		Tcl_AppendResult(interp, "can't find namespace in \"", instName,
 			 "\"", (char *)NULL);
@@ -2803,8 +2803,8 @@ TupleCreateOp(
 		nsPtr = Tcl_GetCurrentNamespace(interp);
 	    }
 	    instName = Blt_GetQualifiedName(nsPtr, name, &dString);
-	    /* 
-	     * Check if the command already exists. 
+	    /*
+	     * Check if the command already exists.
 	     */
 	    if (Tcl_GetCommandInfo(interp, (char *)instName, &cmdInfo)) {
 		Tcl_AppendResult(interp, "a command \"", instName,
@@ -2812,12 +2812,12 @@ TupleCreateOp(
 		goto error;
 	    }
 	    if (Blt_TupleTableExists(interp, instName)) {
-		Tcl_AppendResult(interp, "a tuple \"", instName, 
+		Tcl_AppendResult(interp, "a tuple \"", instName,
 			"\" already exists", (char *)NULL);
 		goto error;
 	    }
-	} 
-    } 
+	}
+    }
     if (instName == NULL) {
 	goto error;
     }
@@ -2841,14 +2841,14 @@ TupleCreateOp(
  *
  *	Deletes one or more instances of tuple objects.  The deletion
  *	process is done by deleting the Tcl command associated with
- *	the object.  
- *	
+ *	the object.
+ *
  * Results:
  *	A standard Tcl result.  If one of the names given doesn't
  *	represent an instance, TCL_ERROR is returned and an error
  *	message is left in the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TupleDestroyOp(
@@ -2884,12 +2884,12 @@ TupleDestroyOp(
  *	given pattern.  If no pattern argument is provided, then all
  *	object names are returned.  The names returned are namespace
  *	qualified.
- *	
+ *
  * Results:
  *	Always returns TCL_OK.  The names of the matching objects is
  *	returned via the interpreter result.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -2913,7 +2913,7 @@ TupleNamesOp(
 	 hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	cmdPtr = Blt_GetHashValue(hPtr);
 	qualName = Blt_GetQualifiedName(
-		Blt_GetCommandNamespace(interp, cmdPtr->cmdToken), 
+		Blt_GetCommandNamespace(interp, cmdPtr->cmdToken),
 		Tcl_GetCommandName(interp, cmdPtr->cmdToken), &dString);
 	if (objc == 3) {
 	    if (!Tcl_StringMatch(qualName, Tcl_GetString(objv[2]))) {
@@ -2933,7 +2933,7 @@ TupleNamesOp(
  *
  * TupleObjCmd --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec tupleCmdOps[] =
 {
@@ -2954,7 +2954,7 @@ TupleObjCmd(
 {
     Blt_Op proc;
 
-    proc = Blt_GetOpFromObj(interp, nCmdOps, tupleCmdOps, BLT_OP_ARG1, objc, 
+    proc = Blt_GetOpFromObj(interp, nCmdOps, tupleCmdOps, BLT_OP_ARG1, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -3014,8 +3014,8 @@ int
 Blt_TupleInit(Tcl_Interp *interp)
 {
     TupleCmdInterpData *interpDataPtr;	/* Interpreter-specific data. */
-    static Blt_ObjCmdSpec cmdSpec = { 
-	"tuple", TupleObjCmd, 
+    static Blt_ObjCmdSpec cmdSpec = {
+	"tuple", TupleObjCmd,
     };
     interpDataPtr = GetTupleCmdInterpData(interp);
     cmdSpec.clientData = interpDataPtr;

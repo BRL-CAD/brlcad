@@ -1,4 +1,4 @@
-/* 
+/*
  * pkgua.c --
  *
  *	This file contains a simple Tcl package "pkgua" that is intended
@@ -51,7 +51,7 @@ PkguaInitTokensHashTable(void)
     interpTokenMapInitialised = 1;
 }
 
-void 
+void
 PkguaFreeTokensHashTable(void)
 {
     Tcl_HashSearch search;

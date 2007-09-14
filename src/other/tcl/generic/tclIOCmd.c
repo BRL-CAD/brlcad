@@ -1621,8 +1621,8 @@ Tcl_FcopyObjCmd(
  *
  * TclChanPendingObjCmd --
  *
- *	This function is invoked to process the Tcl "chan pending" 
- *	command (TIP #287). See the user documentation for details on 
+ *	This function is invoked to process the Tcl "chan pending"
+ *	command (TIP #287). See the user documentation for details on
  *	what it does.
  *
  * Results:
@@ -1655,7 +1655,7 @@ TclChanPendingObjCmd(
 	return TCL_ERROR;
     }
 
-    if (Tcl_GetIndexFromObj(interp, objv[1], options, "mode", 0, 
+    if (Tcl_GetIndexFromObj(interp, objv[1], options, "mode", 0,
 	    &index) != TCL_OK) {
 	return TCL_ERROR;
     }

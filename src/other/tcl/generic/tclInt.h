@@ -119,7 +119,7 @@ typedef int ptrdiff_t;
  */
 
 #if !defined(INT2PTR) && !defined(PTR2INT)
-#   if defined(HAVE_INTPTR_T) || defined(intptr_t)	
+#   if defined(HAVE_INTPTR_T) || defined(intptr_t)
 #	define INT2PTR(p) ((void*)(intptr_t)(p))
 #	define PTR2INT(p) ((int)(intptr_t)(p))
 #   else
@@ -347,7 +347,7 @@ struct NamespacePathEntry {
 /*
  * Flags passed to TclGetNamespaceForQualName:
  *
- * TCL_GLOBAL_ONLY		- (see tcl.h) Look only in the global ns. 
+ * TCL_GLOBAL_ONLY		- (see tcl.h) Look only in the global ns.
  * TCL_NAMESPACE_ONLY		- (see tcl.h) Look only in the context ns.
  * TCL_CREATE_NS_IF_UNKNOWN	- Create unknown namespaces.
  * TCL_FIND_ONLY_NS		- The name sought is a namespace name.
@@ -1021,7 +1021,7 @@ typedef struct CmdFrame {
  * TCL_LOCATION_EVAL      : Frame is for a script evaluated by EvalEx.
  * TCL_LOCATION_EVAL_LIST : Frame is for a script evaluated by the list
  *                          optimization path of EvalObjEx.
- * TCL_LOCATION_BC        : Frame is for bytecode. 
+ * TCL_LOCATION_BC        : Frame is for bytecode.
  * TCL_LOCATION_PREBC     : Frame is for precompiled bytecode.
  * TCL_LOCATION_SOURCE    : Frame is for a script evaluated by EvalEx,
  *                          from a sourced file.
@@ -1505,7 +1505,7 @@ typedef struct Interp {
     CallFrame *varFramePtr;	/* Points to the call frame whose variables
 				 * are currently in use (same as framePtr
 				 * unless an "uplevel" command is
-				 * executing). */ 
+				 * executing). */
     ActiveVarTrace *activeVarTracePtr;
 				/* First in list of active traces for interp,
 				 * or NULL if no active traces. */
@@ -3135,7 +3135,7 @@ MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr);
 /*
  *----------------------------------------------------------------
  * Macro used by the Tcl core to get a Tcl_WideInt value out of a Tcl_Obj of
- * the "wideInt" type.  
+ * the "wideInt" type.
  *----------------------------------------------------------------
  */
 

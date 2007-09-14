@@ -2023,7 +2023,7 @@ class Sketch_bezier {
 	set vlist [$editor get_vlist]
 	set coords ""
 	set count 0
-	
+
 	# scale the control point coordinates
 	foreach index $index_list {
 	    set pt [lindex $vlist $index]

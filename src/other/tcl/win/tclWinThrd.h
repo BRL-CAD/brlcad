@@ -10,7 +10,7 @@
  *
  * SCCS: @(#) tclWinThrd.h 1.2 98/01/27 11:48:05
  */
- 
+
 #ifndef _TCLWINTHRD
 #define _TCLWINTHRD
 

@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
-.TH FANT 1 "Dec 4, 1990" 
-.UC 4 
+.TH FANT 1 "Dec 4, 1990"
+.UC 4
 .SH NAME
 fant \- perform simple spatial transforms on an image
 .SH SYNOPSIS
@@ -10,7 +10,7 @@ fant \- perform simple spatial transforms on an image
 [
 .B \-a
 .I "angle"
-] 
+]
 [
 .B \-b blurfactor
 ]
@@ -23,7 +23,7 @@ fant \- perform simple spatial transforms on an image
 .I "xoff yoff"
 ]
 [
-.B \-s 
+.B \-s
 .I "xscale yscale"
 ]
 [
@@ -33,17 +33,17 @@ fant \- perform simple spatial transforms on an image
 [
 .B \-v
 ]
-[ 
+[
 .I infile
-] 
+]
 .SH DESCRIPTION
 .IR Fant
 rotates or scales an image by an arbitrary amount.  It does this by
 using pixel integration (if the image size is reduced) or pixel interpolation
 if the image size is increased.  Because it works with subpixel precision,
-aliasing artifacts are not introduced (hah! see BUGS).  
+aliasing artifacts are not introduced (hah! see BUGS).
 .I Fant
-uses a two-pass 
+uses a two-pass
 sampling technique to perform the transformation.  If
 .I infile
 is "\-" or absent, input is read from the standard input.
@@ -55,7 +55,7 @@ numbers rotate clockwise).  Use rleflip(1) first to rotate an image by larger
 amounts.
 .TP
 .BI \-b " blur_factor"
-Control the amount of blurring in the output image.  
+Control the amount of blurring in the output image.
 If the blur factor is greater than one, image blurring will increase.
 If the blur factor is smaller than one, image blurring will decrease
 but aliasing artifacts may be visible.
@@ -77,12 +77,12 @@ useful for correcting the aspect of an image for display on a frame
 buffer with non square pixels.  For this use, the origin should be
 specified as 0, 0 (see \fB\-p\fP above).  If an image is only scaled
 in Y and no rotation is performed,
-.IR fant 
+.IR fant
 only uses one sampling pass over the image, cutting the computation time
 in half.
 .TP
 .BI \-S " xsize ysize"
-An alternate method of specifying the scale factors.  
+An alternate method of specifying the scale factors.
 .I xsize
 and
 .I ysize
@@ -96,7 +96,7 @@ or \fB\-s\fP.
 Verbose output.  Primarily for debugging.
 .LP
 .SH SEE ALSO
-.IR avg4 (1), 
+.IR avg4 (1),
 .IR rleflip (1),
 .IR rlezoom (1),
 .IR urt (1),

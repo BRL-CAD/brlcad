@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -18,7 +18,7 @@
 /* rlesplice.c - Splice two RLE files together horizontally or vertically.
  * 		 Pad smaller dimensioned image with its background color or
  * 		 black.
- *          
+ *
  * Author:	Martin R. Friedmann (martin@media-lab.media.mit.edu)
  * 		Vision and Modeling Group
  * 		Massachusetts Institute of Technology
@@ -67,7 +67,7 @@ rle_pixel *scanline[];
 {
     int nc;
     rle_pixel bg_color[255];
-    
+
     if ( the_hdr->alpha && RLE_BIT( *the_hdr, -1 ) )
 	bfill( (char *)scanline[-1], the_hdr->xmax + 1, 0 );
 
@@ -105,7 +105,7 @@ char	*argv[];
 		  &hvflag, &cflag, &oflag, &outfname,
 		  &infname1, &infname2 ) == 0 )
 	exit( 1 );
-    
+
     in_hdr1.rle_file = rle_open_f( progname, infname1, "r" );
     in_hdr2.rle_file = rle_open_f( progname, infname2, "r" );
     rle_names( &in_hdr1, progname, infname1, 0 );
@@ -178,18 +178,18 @@ char	*argv[];
 	if ( hvflag == HORIZ_FLAG ) {
 	    int diff = height1 - height2 ;
 	    start_scan1 = start_scan2 = pad1 = pad2 = 0;
-	    if ( height1 < height2 ) 
+	    if ( height1 < height2 )
 		start_scan1 = (cflag) ? -diff/2 : new_ylen - height1;
-	    else if ( height2 < height1 ) 
+	    else if ( height2 < height1 )
 		start_scan2 = (cflag) ? diff/2 : new_ylen - height2;
 	} else {
 	    /* upside down remember */
 	    start_scan2 = pad1 = pad2 = 0;
 	    start_scan1 = height2;
-	    
-	    if ( width1 < width2 ) 
+
+	    if ( width1 < width2 )
 		pad1 = (cflag) ? (width2 - width1)/2 : 0;
-	    else if (width2 < width1 ) 
+	    else if (width2 < width1 )
 		pad2 = (cflag) ? (width1 - width2)/2 : 0;
 	}
 
@@ -202,7 +202,7 @@ char	*argv[];
 		rle_getrow(&in_hdr1, rows1 );
 	    if ( start_scan2 <= j )
 		rle_getrow(&in_hdr2, rows2 );
-	    
+
 	    for (chan = RLE_ALPHA; chan < in_hdr1.ncolors; chan++)
 	    {
 		if ((chan == RLE_ALPHA) && (!in_hdr1.alpha))
@@ -210,18 +210,18 @@ char	*argv[];
 		ptr1 = &(rows1[chan][in_hdr1.xmin]);
 		ptr2 = &(rows2[chan][in_hdr2.xmin]);
 		ptrout = rowsout[chan];
-		
+
 		if ( start_scan1 <= j )
 		    bcopy( ptr1, ptrout + pad1, width1 );
 		if ( start_scan2 <= j )
 		    bcopy( ptr2,((char *)ptrout) + pad2 +
 			  ((hvflag == VERT_FLAG) ? 0 : width1), width2 );
-		
+
 	    }
 	    rle_putrow( rowsout, new_xlen, &out_hdr );
 	}
 	rle_puteof( &out_hdr );
-	
+
 	rle_row_free( &in_hdr1, rows1 );
 	rle_row_free( &in_hdr2, rows2 );
 	rle_row_free( &out_hdr, rowsout );

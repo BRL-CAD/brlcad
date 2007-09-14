@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH tk n 8.4 Tk "Tk Built-In Commands"
 .BS
@@ -62,7 +62,7 @@ Sets and queries the current scaling factor used by Tk to convert between
 physical units (for example, points, inches, or millimeters) and pixels.  The
 \fInumber\fR argument is a floating point number that specifies the number of
 pixels per point on \fIwindow\fR's display.  If the \fIwindow\fR argument is
-omitted, it defaults to the main window.  If the \fInumber\fR argument is 
+omitted, it defaults to the main window.  If the \fInumber\fR argument is
 omitted, the current value of the scaling factor is returned.
 .RS
 .PP

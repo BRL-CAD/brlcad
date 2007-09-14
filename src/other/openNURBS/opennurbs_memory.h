@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -52,10 +52,10 @@ unsigned char* onmbsdup( const unsigned char* );
 
 ON_DECL
 size_t onmemoryusecount(
-          size_t* malloc_count, 
-          size_t* realloc_count, 
-          size_t* free_count, 
-          size_t* pool_count 
+          size_t* malloc_count,
+          size_t* realloc_count,
+          size_t* free_count,
+          size_t* pool_count
           );
 
 

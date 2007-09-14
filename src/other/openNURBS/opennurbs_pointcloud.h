@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -85,14 +85,14 @@ public:
          ) const;
 
   // virtual ON_Geometry override
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
 
   // virtual ON_Geometry override
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform&
          );
 
@@ -130,7 +130,7 @@ public:
   See Also:
     ON_GetClosestPointInPointList
   */
-  bool GetClosestPoint( 
+  bool GetClosestPoint(
           ON_3dPoint P,
           int* closest_point_index,
           double maximum_distance = 0.0
@@ -139,7 +139,7 @@ public:
 
   /////////////////////////////////////////////////////////////////
   // Interface
-  // 
+  //
   int PointCount() const;
   void AppendPoint( const ON_3dPoint& );
   void InvalidateBoundingBox(); // call if you change values of points
@@ -229,7 +229,7 @@ public:
   /////////////////////////////////////////////////////////////////
   // Implementation - RUNTIME point visibility - not saved in 3dm files.
   //    If m_H.Count() = m_P.Count(), then
-  //    m_H[j] is true if the point m_P[j] 
+  //    m_H[j] is true if the point m_P[j]
   //    is hidden.  Otherwise, all points are visible.
   //    m_hidden_count = number of true values in the m_H[] array.
   ON_SimpleArray<bool> m_H;

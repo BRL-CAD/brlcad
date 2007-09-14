@@ -1247,7 +1247,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, s
 }
 
 /* quell the output of nmg_booltree_evaluate() to bu_log. */
-int nmg_bool_eval_silent=0; 
+int nmg_bool_eval_silent=0;
 /**
  *			N M G _ B O O L T R E E _ E V A L U A T E
  *

@@ -418,7 +418,7 @@ rt_binunif_export5( struct bu_external		*ep,
 		    }
 		} else {
 		    memcpy((char *) ep->ext_buf,
-			   (char *) bip->u.uint8, 
+			   (char *) bip->u.uint8,
 			   ep->ext_nbytes );
 		}
 		break;

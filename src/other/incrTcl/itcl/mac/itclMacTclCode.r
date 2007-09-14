@@ -9,7 +9,7 @@
  *  Lucent Technologies 1996
  *
  */
- 
+
 #include <Types.r>
 #include <SysTypes.r>
 
@@ -17,7 +17,7 @@
 
 #define ITCL_LIBRARY_RESOURCES 2500
 
-/* 
+/*
  * The mechanisim below loads Tcl source into the resource fork of the
  * application.  The example below creates a TEXT resource named
  * "Init" from the file "init.tcl".  This allows applications to use

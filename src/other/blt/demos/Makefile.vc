@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------
-# 	Makefile for demos 
+# 	Makefile for demos
 # ------------------------------------------------------------------------
 
 include ../win/makedefs
@@ -40,31 +40,31 @@ demos 	=	barchart1.tcl barchart2.tcl barchart3.tcl barchart4.tcl \
 
 all:
 
-install: inst-dirs inst-bitmaps inst-images inst-scripts 
+install: inst-dirs inst-bitmaps inst-images inst-scripts
 
-inst-scripts: 
+inst-scripts:
 	for i in $(srcdir)/scripts/*.tcl ; do \
             $(INSTALL) $$i $(destdir)/scripts ; \
-	done 
+	done
 	for i in $(demos) ; do \
             $(INSTALL) $(srcdir)/$$i $(destdir)/$$i ; \
-	done 
+	done
 
-inst-bitmaps: 
+inst-bitmaps:
 	for i in $(srcdir)/bitmaps/*.xbm ; do \
 	    $(INSTALL_DATA) $$i $(destdir)/bitmaps ; \
-	done 
+	done
 	for i in $(srcdir)/bitmaps/hand/*.xbm ; do \
 	    $(INSTALL_DATA) $$i $(destdir)/bitmaps/hand ; \
-	done 
+	done
 	for i in $(srcdir)/bitmaps/fish/*.xbm ; do \
 	    $(INSTALL_DATA) $$i $(destdir)/bitmaps/fish ; \
-	done 
+	done
 
-inst-images: 
+inst-images:
 	for i in $(srcdir)/images/*.gif $(srcdir)/images/*.ps ; do \
 	    $(INSTALL_DATA) $$i $(destdir)/images ; \
-	done 
+	done
 
 inst-dirs:
 	@for i in $(instdirs) ; do \
@@ -72,7 +72,7 @@ inst-dirs:
         done
 
 clean:
-	$(RM) $(srcdir)/*.bak $(srcdir)/*\~ $(srcdir)/"#"* 
+	$(RM) $(srcdir)/*.bak $(srcdir)/*\~ $(srcdir)/"#"*
 
 distclean: clean
 	$(RM) *.ps Makefile

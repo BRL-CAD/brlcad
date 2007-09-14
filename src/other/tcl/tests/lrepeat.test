@@ -43,7 +43,7 @@ test lrepeat-1.4 {error cases} {
 	lrepeat -3 1
     }
     -returnCodes 1
-    -result {must have a count of at least 1} 
+    -result {must have a count of at least 1}
 }
 test lrepeat-1.5 {error cases} {
     -body {
@@ -57,7 +57,7 @@ test lrepeat-1.6 {error cases} {
 	lrepeat 3.5 1
     }
     -returnCodes 1
-    -result {expected integer but got "3.5"} 
+    -result {expected integer but got "3.5"}
 }
 
 ## Okay

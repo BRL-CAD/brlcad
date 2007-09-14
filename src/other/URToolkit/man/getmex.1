@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH GETMEX 1 "Jan 20, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 getmex \- get RLE images to an Iris display under the window manager
 .SH SYNOPSIS
@@ -12,9 +12,9 @@ getmex \- get RLE images to an Iris display under the window manager
 ] [
 .B \-D
 ] [
-.B \-m 
+.B \-m
 .I mapstart
-] [ 
+] [
 .I infile
 ]
 .SH DESCRIPTION
@@ -37,7 +37,7 @@ white display.  Several
 processes running simultaneously will share color map entries.
 
 .I getmex
-uses the standard 
+uses the standard
 window creation procedure to create a window with a location and size
 specified by the user, with the restriction that the window will be no larger
 than the input image.  If the window is smaller than the image, the center of
@@ -46,7 +46,7 @@ the image will be visible in the window.
 You can "pan" a small window around in an image by attaching the mouse to
 the window using
 .IR mex
-or 
+or
 .I 4Sight
 and clicking the
 .I left mouse button
@@ -66,7 +66,7 @@ Normally,
 .I getmex
 will fork itself after putting the image on the screen, so that the
 parent process may return the shell, leaving an "invisible" child to
-keep the image refreshed.  If 
+keep the image refreshed.  If
 .B \-f
 is specified, getmex will remain attached to the shell, whence it may
 be killed with an interrupt signal or via

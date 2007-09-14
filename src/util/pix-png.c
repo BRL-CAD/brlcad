@@ -211,7 +211,7 @@ main(int argc, char **argv)
 	png_destroy_write_struct(&png_p, &info_p);
 	bu_free(scanbuf, "scanbuf");
 	bu_free(rows, "rows");
-	
+
 	(void)fclose(infp);
 	(void)fclose(outfp);
 

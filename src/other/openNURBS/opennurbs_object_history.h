@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -184,7 +184,7 @@ public:
     Determine if object is an antecedent (input) in this
     history record.
   Parameters:
-    object_uuid - [in] 
+    object_uuid - [in]
   Returns:
     Returns true if object_uuid is the id of an input
     object.
@@ -209,7 +209,7 @@ public:
 
   // A YYYYMMDDn version number that gets updated when
   // a command changes.  This version is checked so that
-  // new versions of a command's ReplayHistory don't 
+  // new versions of a command's ReplayHistory don't
   // attempt to use information saved in old files.
   int m_version;
 
@@ -237,13 +237,13 @@ public:
   // when the record is added to Rhino's history record table.
   ON_UUID m_record_id;
 
-  // List of object id values of antecedent objects that 
+  // List of object id values of antecedent objects that
   // are referenced in the list of input events in m_value[].
   // These were the command's "input" objects.
   ON_UuidList m_antecedents;
 
-  // List of object id values of descendant objects that 
-  // were created.  These were the command's "output" objects 
+  // List of object id values of descendant objects that
+  // were created.  These were the command's "output" objects
   ON_UuidList m_descendants;
 
   // Information needed to update the descendant objects
@@ -252,7 +252,7 @@ public:
 
   /*
   Description:
-    This tool is used in rare situations when the object ids 
+    This tool is used in rare situations when the object ids
     stored in the uuid list need to be remapped.
   Parameters:
     uuid_remap - [in]

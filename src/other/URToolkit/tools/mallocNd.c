@@ -8,6 +8,9 @@
 ** $Date$
 ** $Locker$
 ** $Log$
+** Revision 1.4  2006/04/07 08:23:57  brlcad
+** dont use the k&r-style malloc extern now that the file correctly includes/presumes stdlib.h for it
+**
 ** Revision 1.3  2006/04/05 19:21:56  brlcad
 ** more header/warning cleanup from Intel compiler warnings on Altix
 **
@@ -25,10 +28,10 @@
 **
  * Revision 1.1  89/02/08  12:48:33  jamie
  * Initial revision
- * 
+ *
 */
 
-/* 
+/*
 ** Synopsis:
 **   extern char *mallocNd();
 **   'SomeDataType' *...*A;
@@ -51,7 +54,7 @@
 
 /*
  **  MallocNd allocates memory for an N-d array.  The array is stored
- **  contiguously (for linear access) but may be referenced through an 
+ **  contiguously (for linear access) but may be referenced through an
  **  indirection table which is returned.  If not enough memory is available
  **  NULL is returned.
  **
@@ -63,8 +66,8 @@
  **   Elements of A can be referenced as A[i][j][k] as you would for an
  **   ordinary 3-d array.  The base address of A can be found by:
  **    &(A[0][0][0]) or alternatively, just A[0][0].  Note that A itself is
- **   actually the address of the (double) indirection table; A[i] is 
- **   the address of a single indirection table; and  A[i][j] is the address 
+ **   actually the address of the (double) indirection table; A[i] is
+ **   the address of a single indirection table; and  A[i][j] is the address
  **   of one row of data.
  **
  **   Note that there is some space overhead for the indirection table.
@@ -104,7 +107,7 @@ main()
       abort();
     }
 
-  /* Fill with values so that the i'th dimension index is reflected in the 
+  /* Fill with values so that the i'th dimension index is reflected in the
   ** i'th base 10 digit of the value.
   */
   for(i=0; i<2; i++)
@@ -115,7 +118,7 @@ main()
 	  A[0][i][j][k][l] = val;
 	}
 
-  
+
 
   /* Print the array in linear order (tests that the array is really
   ** contiguous).
@@ -139,7 +142,7 @@ char *mallocNd( nDim, Dims, sizeofelt )
   int i;
   char *ptr, *tableBase, *arrayBase, *nextFreeArray, *nextFreeTable;
   unsigned int arrayBytesNeeded, tableBytesNeeded, dimProduct, slop;
-  
+
   /* Count up the space needed for the indirection tables.
    **  It's sizeof(pointer) * Dim[0] * ( 1 + Dim[1] * ( 1 + Dim[2] ... ))
    */
@@ -150,30 +153,30 @@ char *mallocNd( nDim, Dims, sizeofelt )
       dimProduct *= Dims[i];
       tableBytesNeeded += dimProduct*sizeof(char *);
     }
-  
+
   /* Add in extra space to force alignment of the array */
   slop = (tableBytesNeeded % sizeofelt);
-  if (slop != 0) 
+  if (slop != 0)
     slop = sizeofelt - slop;
 
   /*  Add in the space for the array itself */
   dimProduct *= Dims[i];
   arrayBytesNeeded = dimProduct*sizeofelt;
-  
+
   /* Get the memory for the whole thing */
   ptr = malloc( tableBytesNeeded + slop + arrayBytesNeeded );
   if (ptr == NULL) return (char *) NULL;
-  
+
   /* Set up the base address of the actual array and the indirection table */
   tableBase = ptr;
   arrayBase = ptr + slop + tableBytesNeeded;
-  
+
   /* Set up the next free pointers for the table space and the array space */
   nextFreeTable = tableBase;
   nextFreeArray = arrayBase;
-  
+
   /* Build the indirection tables recursively */
-  (void) BuildIndirectionTable( nDim, Dims,  (char ***)&nextFreeTable, 
+  (void) BuildIndirectionTable( nDim, Dims,  (char ***)&nextFreeTable,
 			       &nextFreeArray, sizeofelt );
 
   /* Do a sanity check to be sure we haven't run off the end of the allocated
@@ -190,7 +193,7 @@ char *mallocNd( nDim, Dims, sizeofelt )
 
 
 
-char * BuildIndirectionTable( nDim, Dims, nextFreeTable, nextFreeArray, 
+char * BuildIndirectionTable( nDim, Dims, nextFreeTable, nextFreeArray,
 			     sizeofelt )
      unsigned nDim;
      unsigned Dims[];
@@ -199,19 +202,19 @@ char * BuildIndirectionTable( nDim, Dims, nextFreeTable, nextFreeArray,
 {
   int i;
   char *ReturnValue, **table;
-  
+
   if (nDim  == 1) { /* Base case, indirection table unneeded */
     ReturnValue =  *nextFreeArray;
     *nextFreeArray += sizeofelt * Dims[0];
-  } else {	
-    /* Allocate the 1'st level indirection table and fill it in 
+  } else {
+    /* Allocate the 1'st level indirection table and fill it in
     **  calling ourselves recursively for the others.
      */
     table =  *nextFreeTable;
     *nextFreeTable += Dims[0];
     for(i=0; i<Dims[0]; i++)
       {
-	table[i] = BuildIndirectionTable( nDim-1, Dims+1, nextFreeTable, 
+	table[i] = BuildIndirectionTable( nDim-1, Dims+1, nextFreeTable,
 					 nextFreeArray, sizeofelt );
       }
     ReturnValue = (char *) table;
@@ -220,7 +223,7 @@ char * BuildIndirectionTable( nDim, Dims, nextFreeTable, nextFreeArray,
 }
 
 
-/* 
+/*
 **  Special case for 2-d arrays
 */
 char *

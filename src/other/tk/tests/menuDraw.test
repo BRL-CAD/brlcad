@@ -53,7 +53,7 @@ test menuDraw-5.2 {TkMenuConfigureDrawOptions - old menu} {
 test menuDraw-5.3 {TkMenuConfigureDrawOptions - no disabledFg} {
 	catch {destroy .m1}
 	list [menu .m1 -disabledforeground ""] [destroy .m1]
-} {.m1 {}}	
+} {.m1 {}}
 
 test menuDraw-6.1 {TkMenuConfigureEntryDrawOptions - no tkfont specified} {
     catch {destroy .m1}

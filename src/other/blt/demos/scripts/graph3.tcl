@@ -18,15 +18,15 @@ set configOptions [subst {
     Legend.Font			{ Helvetica 24 }
     Legend.Position		plotarea
     Relief			sunken
-    Title			"Sine and Cosine Functions" 
+    Title			"Sine and Cosine Functions"
     x.Command			[namespace current]::FormatAxisLabel
-    x.StepSize			90 
-    x.Subdivisions		0 
-    x.Title			"X" 
+    x.StepSize			90
+    x.Subdivisions		0
+    x.Title			"X"
     y.Color			purple2
     y.Loose			no
-    y.Title			"Y" 
-    y.rotate			90 
+    y.Title			"Y"
+    y.rotate			90
     y2.color			magenta3
 }]
 
@@ -50,13 +50,13 @@ $graph element create line1 \
     -fill orange \
     -color black \
     -x x \
-    -y sinX  
+    -y sinX
 $graph element create line2 \
     -label "cos(x)" \
     -color yellow4 \
     -fill yellow \
     -x x \
-    -y cosX 
+    -y cosX
 
 Blt_ZoomStack $graph
 Blt_Crosshairs $graph

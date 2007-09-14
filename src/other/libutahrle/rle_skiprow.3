@@ -15,7 +15,7 @@ rle_hdr * the_hdr;
 .B
 int nrow;
 .SH DESCRIPTION
-This routine is used to output blank (background) scanlines to an 
+This routine is used to output blank (background) scanlines to an
 .IR RLE (5)
 file.  It is used in conjunction with
 .IR rle_putrow (3)
@@ -39,7 +39,7 @@ Spencer W. Thomas
 University of Utah
 .SH BUGS
 .I Rle_skiprow
-should not be called when creating an \fIRLE\fP file with 
+should not be called when creating an \fIRLE\fP file with
 .IR the_hdr \(-> background
 set to zero.  The specified number of rows will indeed be skipped, but
 they will not be filled with background when the file is read.

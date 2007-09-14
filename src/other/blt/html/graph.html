@@ -7,17 +7,17 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 graph -  2D graph for plotting X-Y coordinate data.
 
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
-<B>graph<I> <I>pathName </I></I></B>?<I>option value</I>?... 
+<B>graph<I> <I>pathName </I></I></B>?<I>option value</I>?...
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The <B>graph</B> command creates
 a graph for plotting two-dimensional data (X-Y coordinates). It has many configurable
 components: coordinate axes, elements, legend, grid lines, cross hairs,
-etc.  They allow you to customize the look and feel of the graph. 
+etc.  They allow you to customize the look and feel of the graph.
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 The
 <B>graph</B> command creates a new window for plotting two-dimensional data (X-Y
@@ -28,7 +28,7 @@ legend is displayed in the right margin.  The title is displayed in top
 margin. <P>
 The <B>graph</B> widget is composed of several components: coordinate axes,
 data elements, legend, grid, cross hairs, pens, postscript, and annotation
-markers. 
+markers.
 <DL>
 
 <DT><I>axis</I>  </DT>
@@ -56,7 +56,7 @@ major and minor ticks of the X-axis and/or Y-axis across the  plotting area.
  </DD>
 
 <DT><I>legend</I>  </DT>
-<DD>The legend displays the name and symbol of each data element. 
+<DD>The legend displays the name and symbol of each data element.
 The legend can be drawn in any margin or in the plotting area. </DD>
 
 <DT><I>marker</I> </DT>
@@ -68,7 +68,7 @@ bitmaps, connected line  segments, images, polygons, or embedded widgets.
 </DD>
 
 <DT><I>pen</I>  </DT>
-<DD>Pens define attributes (both symbol and line style) for elements. 
+<DD>Pens define attributes (both symbol and line style) for elements.
 Data elements use pens to specify how they should be drawn.  A data  element
 may use many pens at once.  Here, the particular pen  used for a data point
 is determined from each element's weight  vector (see the element's <B>-weight</B>
@@ -108,7 +108,7 @@ The command can also be used to access components of the graph.
 </CODE><P>The operation, now located after the name of the component, is the function
 to be performed on that component. Each component has its own set of operations
 that manipulate that component.  They will be described below in their own
-sections. 
+sections.
 <H2><A NAME="sect5" HREF="#toc5">Example</A></H2>
 The <B>graph</B> command creates a new graph.   <BR>
 <CODE># Create a new graph.  Plotting area is black.<BR>
@@ -237,7 +237,7 @@ to get hardcopy of the graph, use the <B>postscript</B> component. <BR>
 the graph.  The option <B>-maxpect</B> says to scale the plot to the size of the
 page.  Turning off the <B>-decorations</B> option denotes that no borders or color
 backgrounds should be drawn (i.e. the background of the margins, legend,
-and plotting area will be white). 
+and plotting area will be white).
 <H2><A NAME="sect6" HREF="#toc6">Graph Operations</A></H2>
 
 <DL>
@@ -492,7 +492,7 @@ of several components: coordinate axes, data elements, legend, grid, cross
 hairs, postscript, and annotation markers. Instead of one big set of configuration
 options and operations, the graph is partitioned, where each component
 has its own configuration options and operations that specifically control
-that aspect or part of the graph.  
+that aspect or part of the graph.
 <H3><A NAME="sect8" HREF="#toc8">Axis Components</A></H3>
 Four coordinate axes are
 automatically created: two X-coordinate axes (<I>x</I> and <I>x2</I>) and two Y-coordinate
@@ -665,7 +665,7 @@ computed. The default is <I>""</I>. </DD>
 
 <DT><B>-max <I>value</I></B> </DT>
 <DD>Sets the maximum limit of <I>axisName</I>.
- Any data point greater  than <I>value</I> is not displayed.  If <I>value</I> is <I>""</I>, 
+ Any data point greater  than <I>value</I> is not displayed.  If <I>value</I> is <I>""</I>,
 the maximum limit is calculated using the largest data value. The default
 is <I>""</I>. </DD>
 
@@ -792,7 +792,7 @@ exactly the operations of the <B>axis</B> component.  The <I>axis</I> argument m
 <B>xaxis</B>, <B>x2axis</B>, <B>yaxis</B>, or <B>y2axis</B>.  This feature is deprecated since more
 than one axis can now be used a margin.  You should only use the <B>xaxis</B>,
 <B>x2axis</B>, <B>yaxis</B>, and <B>y2axis</B> components with the <B>use</B> operation. For all other
-operations, use the general <B>axis</B> component instead. 
+operations, use the general <B>axis</B> component instead.
 <DL>
 
 <DT><I>pathName <I>axis <B>cget <I>option</I></B></I></I>
@@ -827,7 +827,7 @@ mouse in relation to the coordinate axes.  Cross hairs differ from line
 markers in that they are implemented using XOR drawing primitives. This
 means that they can be quickly drawn and erased without redrawing the entire
 graph. <P>
-The following operations are available for cross hairs: 
+The following operations are available for cross hairs:
 <DL>
 
 <DT><I>pathName
@@ -887,7 +887,7 @@ option add *Graph.Crosshairs.Color     red<BR>
 on</B></I> </DT>
 <DD>Turns on the display of the cross hairs. </DD>
 
-<DT><I>pathName <B>crosshairs toggle</B></I> 
+<DT><I>pathName <B>crosshairs toggle</B></I>
 </DT>
 <DD>Toggles the current state of the cross hairs, alternately mapping and unmapping
 the cross hairs. </DD>
@@ -903,7 +903,7 @@ When new data elements are created,
 they are automatically added to a list of displayed elements.   The display
 list controls what elements are drawn and in what order.   <P>
 The following
-operations are available for elements. 
+operations are available for elements.
 <DL>
 
 <DT><I>pathName <B>element activate <I>elemName
@@ -1014,7 +1014,7 @@ line.  Each number must be between 1 and 255.  If <I>dashList</I> is <I>""</I>, 
 will be solid. </DD>
 
 <DT><B>-data <I>coordList</I></B> </DT>
-<DD>Specifies the X-Y coordinates of the data. 
+<DD>Specifies the X-Y coordinates of the data.
 <I>CoordList</I> is a list of numeric expressions representing the X-Y coordinate
 pairs of each data point. </DD>
 
@@ -1185,7 +1185,7 @@ string <I>"bar"</I>, otherwise it returns <I>"line"</I>. </DD>
 Grid lines extend
 from the major and minor ticks of each axis horizontally or vertically
 across the plotting area.  The following operations are available for grid
-lines. 
+lines.
 <DL>
 
 <DT><I>pathName <B>grid cget <I>option</I></B></I> </DT>
@@ -1263,7 +1263,7 @@ The legend displays a list of the data elements.
 in any margin (the default location is in the right margin).  It can also
 be positioned anywhere within the plotting area. <P>
 The following operations
-are valid for the legend. 
+are valid for the legend.
 <DL>
 
 <DT><I>pathName <B>legend activate <I>pattern</I></B></I>... </DT>
@@ -1329,7 +1329,7 @@ legend, relative to the surface of the legend.  The default is <I>flat</I>. </DD
 <DT><B>-anchor
 <I>anchor</I></B> </DT>
 <DD>Tells how to position the legend relative to the positioning point
-for the legend.  This is dependent on the value of the <B>-position</B> option. 
+for the legend.  This is dependent on the value of the <B>-position</B> option.
 The default is <I>center</I>. <blockquote></DD>
 
 <DT><I>left</I> or <I>right</I> </DT>
@@ -1511,7 +1511,7 @@ not <I>value</I>, then a list describing <I>option</I> is returned.  If one or m
 and <I>value</I> pairs are specified, then for each pair, the pen option <I>option</I>
 is set to <I>value</I>.  The following options are valid for pens. <blockquote></DD>
 
-<DT><B>-color <I>color</I></B> 
+<DT><B>-color <I>color</I></B>
 </DT>
 <DD>Sets the color of the traces connecting the data points.   </DD>
 
@@ -1551,7 +1551,7 @@ the width of the outline bordering each symbol.  If <I>pixels</I> is <I>0</I>, n
 will be drawn. The default is <I>1</I>. </DD>
 
 <DT><B>-pixels <I>pixels</I></B> </DT>
-<DD>Sets the size of symbols. 
+<DD>Sets the size of symbols.
 If <I>pixels</I> is <I>0</I>, no symbols will be drawn.  The default is <I>0.125i</I>. </DD>
 
 <DT><B>-symbol <I>symbol</I></B>
@@ -1602,7 +1602,7 @@ be generated.  You can change the page dimensions and borders.  The plot
 itself can be scaled, centered, or rotated to landscape.  The PostScript
 output can be written directly to a file or returned through the interpreter.
 <P>
-The following postscript operations are available. 
+The following postscript operations are available.
 <DL>
 
 <DT><I>pathName <B>postscript cget
@@ -1747,7 +1747,7 @@ by <I>-Inf</I> and <I>Inf</I> respectively) that translate into the minimum or m
 limit of the axis.  For example, you can place a marker so it always remains
 in the lower left corner of the plotting area, by using the coordinates
 <I>-Inf</I>,<I>-Inf</I>. <P>
-The following operations are available for markers. 
+The following operations are available for markers.
 <DL>
 
 <DT><I>pathName <B>marker
@@ -1802,13 +1802,13 @@ below. <blockquote></DD>
 <DT><B>-bindtags <I>tagList</I></B> </DT>
 <DD>Specifies the binding tags for the marker.  <I>TagList</I>
 is a list of binding tag names.  The tags and their order will determine
-how events for markers are handled.  Each tag in the list matching the 
-current event sequence will have its Tcl command executed.  Implicitly 
+how events for markers are handled.  Each tag in the list matching the
+current event sequence will have its Tcl command executed.  Implicitly
 the name of the marker is always the first tag in the list. The default
 value is <I>all</I>. </DD>
 
 <DT><B>-coords <I>coordList</I></B> </DT>
-<DD>Specifies the coordinates of the marker. 
+<DD>Specifies the coordinates of the marker.
 <I>CoordList</I> is  a list of graph coordinates.  The number of coordinates required
 is dependent on the type of marker.  Text, image, and window markers need
 only two coordinates (an X-Y coordinate).   Bitmap markers can take either
@@ -1872,7 +1872,7 @@ option add *Graph.m1.Background     blue<BR>
 
 <DT></CODE><P><I>pathName <B>marker create <I>type</I></B></I> ?<I>option value</I>?... </DT>
 <DD>Creates a marker of the selected
-type. <I>Type</I> may be either <I>text</I>, <I>line</I>, <I>bitmap</I>, <I>image</I>, <I>polygon</I>, or <I>window</I>. 
+type. <I>Type</I> may be either <I>text</I>, <I>line</I>, <I>bitmap</I>, <I>image</I>, <I>polygon</I>, or <I>window</I>.
 This command returns the marker identifier,  used as the <I>markerId</I> argument
 in the other marker-related commands.  If the <B>-name</B> option is used, this overrides
 the normal marker identifier.  If the name provided is already used for
@@ -1960,7 +1960,7 @@ in the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the marker's <B>configure</B>
 operation. <P>
-The following options are specific to image markers: 
+The following options are specific to image markers:
 <DL>
 
 <DT><B>-anchor <I>anchor</I></B>
@@ -1986,7 +1986,7 @@ the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the marker's <B>configure</B>
 operation. <P>
-The following options are specific to line markers: 
+The following options are specific to line markers:
 <DL>
 
 <DT><B>-dashes <I>dashList</I></B>
@@ -2027,7 +2027,7 @@ markers are created using the marker <B>create</B> operation in the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the <B>marker configure</B>
 command to change the marker's configuration. The following options are supported
-for polygon markers: 
+for polygon markers:
 <DL>
 
 <DT><B>-dashes <I>dashList</I></B> </DT>
@@ -2071,7 +2071,7 @@ in the form: <BR>
 for the text marker.   These same <I>option</I>-<I>value</I> pairs may be used with the
  marker's <B>configure</B> operation.   <P>
 The following options are specific to text
-markers: 
+markers:
 <DL>
 
 <DT><B>-anchor <I>anchor</I></B> </DT>
@@ -2143,7 +2143,7 @@ with the marker's <B>create</B> operation in the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the marker's <B>configure</B>
 command. <P>
-The following options are specific to window markers: 
+The following options are specific to window markers:
 <DL>
 
 <DT><B>-anchor <I>anchor</I></B>
@@ -2197,7 +2197,7 @@ remaining scripts for the event,  just as for the bind command. <P>
 The <B>-bindtags</B>
 option for these components controls addition tag names which can be matched.
  Implicitly elements and markers always have tags matching their names.
- Setting the value of the <B>-bindtags</B> option doesn't change this. 
+ Setting the value of the <B>-bindtags</B> option doesn't change this.
 <H2><A NAME="sect23" HREF="#toc23">C Language
 API</A></H2>
 You can manipulate data elements from the C language.  There may be situations
@@ -2238,7 +2238,7 @@ if ((Blt_ResetVector(xVec, x, 50, 50, TCL_VOLATILE) != TCL_OK) ||<BR>
     (Blt_ResetVector(yVec, y, 50, 50, TCL_VOLATILE) != TCL_OK)) {<BR>
    return TCL_ERROR;<BR>
 }<BR>
-</CODE><P>See the <B>vector</B> manual page for more details. 
+</CODE><P>See the <B>vector</B> manual page for more details.
 <H2><A NAME="sect24" HREF="#toc24">Speed Tips</A></H2>
 There may be cases
 where the graph needs to be drawn and updated as quickly as possible.  If
@@ -2271,7 +2271,7 @@ scaled. <P>
 The PostScript output generated for polygons with more than 1500
 points may exceed the limits of some printers (See PostScript Language
 Reference Manual, page 568).  The work-around is to break the polygon into
-separate pieces. 
+separate pieces.
 <H2><A NAME="sect26" HREF="#toc26">Keywords</A></H2>
 graph, widget <P>
 

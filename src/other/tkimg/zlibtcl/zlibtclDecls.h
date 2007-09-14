@@ -31,10 +31,10 @@ EXTERN CONST char*	zlibVersion _ANSI_ARGS_((void));
 /* 1 */
 EXTERN CONST char*	zError _ANSI_ARGS_((int err));
 /* 2 */
-EXTERN uLong		crc32 _ANSI_ARGS_((uLong crc, const Bytef * buf, 
+EXTERN uLong		crc32 _ANSI_ARGS_((uLong crc, const Bytef * buf,
 				uInt len));
 /* 3 */
-EXTERN uLong		adler32 _ANSI_ARGS_((uLong adler, const Bytef * buf, 
+EXTERN uLong		adler32 _ANSI_ARGS_((uLong adler, const Bytef * buf,
 				uInt len));
 /* Slot 4 is reserved */
 /* Slot 5 is reserved */
@@ -43,77 +43,77 @@ EXTERN uLong		adler32 _ANSI_ARGS_((uLong adler, const Bytef * buf,
 /* Slot 8 is reserved */
 /* Slot 9 is reserved */
 /* 10 */
-EXTERN int		deflateInit_ _ANSI_ARGS_((z_streamp stream, 
-				int level, const char* version, 
+EXTERN int		deflateInit_ _ANSI_ARGS_((z_streamp stream,
+				int level, const char* version,
 				int stream_size));
 /* 11 */
-EXTERN int		deflateInit2_ _ANSI_ARGS_((z_streamp stream, 
-				int level, int method, int windowBits, 
-				int memLevel, int strategy, 
+EXTERN int		deflateInit2_ _ANSI_ARGS_((z_streamp stream,
+				int level, int method, int windowBits,
+				int memLevel, int strategy,
 				const char* version, int stream_size));
 /* 12 */
 EXTERN int		deflate _ANSI_ARGS_((z_streamp stream, int flush));
 /* 13 */
 EXTERN int		deflateEnd _ANSI_ARGS_((z_streamp stream));
 /* 14 */
-EXTERN int		deflateSetDictionary _ANSI_ARGS_((z_streamp stream, 
+EXTERN int		deflateSetDictionary _ANSI_ARGS_((z_streamp stream,
 				CONST Bytef* dict, uInt dictLength));
 /* 15 */
-EXTERN int		deflateCopy _ANSI_ARGS_((z_streamp dst, 
+EXTERN int		deflateCopy _ANSI_ARGS_((z_streamp dst,
 				z_streamp src));
 /* 16 */
 EXTERN int		deflateReset _ANSI_ARGS_((z_streamp stream));
 /* 17 */
-EXTERN int		deflateParams _ANSI_ARGS_((z_streamp stream, 
+EXTERN int		deflateParams _ANSI_ARGS_((z_streamp stream,
 				int level, int strategy));
 /* 18 */
-EXTERN int		compress _ANSI_ARGS_((Bytef * dest, uLongf * destLen, 
+EXTERN int		compress _ANSI_ARGS_((Bytef * dest, uLongf * destLen,
 				CONST Bytef * source, uLong sourceLen));
 /* 19 */
-EXTERN int		compress2 _ANSI_ARGS_((Bytef * dest, 
-				uLongf * destLen, CONST Bytef * source, 
+EXTERN int		compress2 _ANSI_ARGS_((Bytef * dest,
+				uLongf * destLen, CONST Bytef * source,
 				uLong sourceLen, int level));
 /* 20 */
-EXTERN int		inflateInit_ _ANSI_ARGS_((z_streamp stream, 
+EXTERN int		inflateInit_ _ANSI_ARGS_((z_streamp stream,
 				const char* version, int stream_size));
 /* 21 */
-EXTERN int		inflateInit2_ _ANSI_ARGS_((z_streamp stream, 
-				int windowBits, const char* version, 
+EXTERN int		inflateInit2_ _ANSI_ARGS_((z_streamp stream,
+				int windowBits, const char* version,
 				int stream_size));
 /* 22 */
 EXTERN int		inflate _ANSI_ARGS_((z_streamp stream, int flush));
 /* 23 */
 EXTERN int		inflateEnd _ANSI_ARGS_((z_streamp stream));
 /* 24 */
-EXTERN int		inflateSetDictionary _ANSI_ARGS_((z_streamp stream, 
+EXTERN int		inflateSetDictionary _ANSI_ARGS_((z_streamp stream,
 				CONST Bytef* dict, uInt dictLength));
 /* 25 */
 EXTERN int		inflateSync _ANSI_ARGS_((z_streamp stream));
 /* 26 */
 EXTERN int		inflateReset _ANSI_ARGS_((z_streamp stream));
 /* 27 */
-EXTERN int		uncompress _ANSI_ARGS_((Bytef * dest, 
-				uLongf * destLen, CONST Bytef * source, 
+EXTERN int		uncompress _ANSI_ARGS_((Bytef * dest,
+				uLongf * destLen, CONST Bytef * source,
 				uLong sourceLen));
 /* Slot 28 is reserved */
 /* Slot 29 is reserved */
 /* 30 */
-EXTERN gzFile		gzopen _ANSI_ARGS_((const char * path, 
+EXTERN gzFile		gzopen _ANSI_ARGS_((const char * path,
 				const char * mode));
 /* 31 */
 EXTERN gzFile		gzdopen _ANSI_ARGS_((int fd, const char * mode));
 /* 32 */
-EXTERN int		gzsetparams _ANSI_ARGS_((gzFile file, int level, 
+EXTERN int		gzsetparams _ANSI_ARGS_((gzFile file, int level,
 				int strategy));
 /* 33 */
-EXTERN int		gzread _ANSI_ARGS_((gzFile file, voidp buf, 
+EXTERN int		gzread _ANSI_ARGS_((gzFile file, voidp buf,
 				unsigned len));
 /* 34 */
 #if defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1200
-EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidpc buf, 
+EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidpc buf,
 				unsigned len));
 #else
-EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidp buf, 
+EXTERN int		gzwrite _ANSI_ARGS_((gzFile file, const voidp buf,
 				unsigned len));
 #endif
 /* Slot 35 is reserved */
@@ -128,7 +128,7 @@ EXTERN int		gzgetc _ANSI_ARGS_((gzFile file));
 /* 40 */
 EXTERN int		gzflush _ANSI_ARGS_((gzFile file, int flush));
 /* 41 */
-EXTERN z_off_t		gzseek _ANSI_ARGS_((gzFile file, z_off_t offset, 
+EXTERN z_off_t		gzseek _ANSI_ARGS_((gzFile file, z_off_t offset,
 				int whence));
 /* 42 */
 EXTERN int		gzrewind _ANSI_ARGS_((gzFile file));

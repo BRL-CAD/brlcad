@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH tclsh 1 "" Tcl "Tcl Applications"
 .BS
@@ -36,7 +36,7 @@ just before reading the first command from standard input.
 .VS 8.5
 If \fBtclsh\fR is invoked with arguments then the first few arguments
 specify the name of a script file, and, optionally, the encoding of
-the text data stored in that script file. 
+the text data stored in that script file.
 .VE 8.5
 Any additional arguments
 are made available to the script as variables (see below).
@@ -48,7 +48,7 @@ the medium, or by the character, '\\032' ('\\u001a', control-Z).
 If this character is present in the file, the \fBtclsh\fR application
 will read text up to but not including the character.  An application
 that requires this character in the file may safely encode it as
-``\\032'', ``\\x1a'', or ``\\u001a''; or may generate it by use of commands 
+``\\032'', ``\\x1a'', or ``\\u001a''; or may generate it by use of commands
 such as \fBformat\fR or \fBbinary\fR.
 There is no automatic evaluation of \fB.tclshrc\fR when the name
 of a script file is presented on the \fBtclsh\fR command

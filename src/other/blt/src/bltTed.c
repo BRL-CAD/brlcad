@@ -37,7 +37,7 @@ typedef struct TedStruct Ted;
 #define TABLE_THREAD_KEY	"BLT Table Data"
 
 typedef struct {
-    Blt_HashTable tableTable;	/* Hash table of table structures keyed by 
+    Blt_HashTable tableTable;	/* Hash table of table structures keyed by
 				 * the address of the reference Tk window */
 } TableData;
 
@@ -146,8 +146,8 @@ struct TedStruct {
 				 * been queued to redraw the window */
 #define LAYOUT_PENDING	(1<<1)
 
-/*  
- * 
+/*
+ *
  *
  *	|Cavity|1|2|
  *
@@ -655,7 +655,7 @@ DisplayEntry(clientData)
 	(2 * tedPtr->cavityPad);
 
 
-    if ((Tk_X(tkwin) != x) || (Tk_Y(tkwin) != y) || 
+    if ((Tk_X(tkwin) != x) || (Tk_Y(tkwin) != y) ||
 	(Tk_Width(tkwin) != width) || (Tk_Height(tkwin) != height)) {
 	Tk_MoveResizeWindow(tkwin, x, y, width, height);
 	Tk_RestackWindow(tkwin, Above, (Tk_Window)NULL);
@@ -859,7 +859,7 @@ ConfigureTed(tedPtr, argc, argv, flags)
 	Blt_FreePrivateGC(tedPtr->display, tedPtr->drawGC);
     }
     if (LineIsDashed(tedPtr->dashes)) {
-	XSetDashes(tedPtr->display, newGC, 0, 
+	XSetDashes(tedPtr->display, newGC, 0,
 		   (CONST char *)tedPtr->dashes.values,
 		   strlen((char *)tedPtr->dashes.values));
     }
@@ -1010,7 +1010,7 @@ LayoutGrid(tedPtr)
 	rcPtr = Blt_ChainGetValue(linkPtr);
 	segArr[count].x1 = startX;
 	segArr[count].x2 = endX;
-	segArr[count].y1 = segArr[count].y2 = rcPtr->offset - 
+	segArr[count].y1 = segArr[count].y2 = rcPtr->offset -
 	    tedPtr->gridLineWidth;
 	count++;
     }
@@ -1024,7 +1024,7 @@ LayoutGrid(tedPtr)
 	rcPtr = Blt_ChainGetValue(linkPtr);
 	segArr[count].y1 = startY;
 	segArr[count].y2 = endY;
-	segArr[count].x1 = segArr[count].x2 = rcPtr->offset - 
+	segArr[count].x1 = segArr[count].x2 = rcPtr->offset -
 	    tedPtr->gridLineWidth;
 	count++;
     }

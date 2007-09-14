@@ -113,8 +113,8 @@ test panedwindow-2.end "Cleanup" -body { destroy .pw }
 #
 test panedwindow-3.0 "configure pane" -body {
     ttk::panedwindow .pw
-    .pw add [listbox .pw.lb1] 
-    .pw add [listbox .pw.lb2] 
+    .pw add [listbox .pw.lb1]
+    .pw add [listbox .pw.lb2]
     .pw pane 1 -weight 2
     .pw pane 1 -weight
 } -result 2

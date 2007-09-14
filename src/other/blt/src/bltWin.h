@@ -125,7 +125,7 @@ extern int Blt_EndPrintJob(Tcl_Interp *interp, Drawable drawable);
 #endif
 #endif /* __BORLANDC__ || _MSC_VER */
 
-#ifdef __GNUC__ 
+#ifdef __GNUC__
 #include <wingdi.h>
 #include <windowsx.h>
 #undef Status
@@ -134,7 +134,7 @@ extern int Blt_EndPrintJob(Tcl_Interp *interp, Drawable drawable);
 /*
  * Add definitions missing from windgi.h, windowsx.h, and winspool.h
  */
-#include <missing.h> 
+#include <missing.h>
 #endif /* __GNUC__ */
 
 #define XCopyArea		Blt_EmulateXCopyArea

@@ -163,7 +163,7 @@ proc ttk::treeview::Select {w x y op} {
     }
 }
 
-## DoubleClick -- Double-ButtonPress-1 binding.  
+## DoubleClick -- Double-ButtonPress-1 binding.
 #
 proc ttk::treeview::DoubleClick {w x y} {
     if {[set row [$w identify row $x $y]] ne ""} {
@@ -261,7 +261,7 @@ proc ttk::treeview::heading.release {w} {
 #
 
 ## SelectOp $w $item [ choose | extend | toggle ] --
-#	Dispatch to appropriate selection operation 
+#	Dispatch to appropriate selection operation
 #	depending on current value of -selectmode.
 #
 proc ttk::treeview::SelectOp {w item op} {
@@ -282,10 +282,10 @@ proc ttk::treeview::select.extend.browse {w item} { BrowseTo $w $item }
 
 ## -selectmode multiple:
 #
-proc ttk::treeview::select.choose.extended {w item} { 
+proc ttk::treeview::select.choose.extended {w item} {
     BrowseTo $w $item
 }
-proc ttk::treeview::select.toggle.extended {w item} { 
+proc ttk::treeview::select.toggle.extended {w item} {
     $w selection toggle $item
 }
 proc ttk::treeview::select.extend.extended {w item} {
@@ -304,7 +304,7 @@ proc ttk::treeview::select.extend.extended {w item} {
 #	in preorder traversal order.  $item1 and $item2 may be
 #	in either order.
 #
-# NOTES: 
+# NOTES:
 #	This routine is O(N) in the size of the tree.
 #	There's probably a way to do this that's O(N) in the number
 #	of items returned, but I'm not clever enough to figure it out.

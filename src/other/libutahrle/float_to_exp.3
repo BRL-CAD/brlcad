@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH FLOAT_TO_EXP 3 "November 10, 1987" 3
-.UC 4 
+.UC 4
 .SH NAME
 .HP
 float_to_exp \- Convert floating point values into "exponential" pixels.
@@ -22,16 +22,16 @@ rle_pixel * pixels;
 .SH DESCRIPTION
 The function
 .I float_to_exp
-converts 
+converts
 .I count
-floating point numbers (pointed to by 
-.IR floats ) 
-into 
-.I count+1 
-bytes (pointed to by 
-.I pixels) 
+floating point numbers (pointed to by
+.IR floats )
+into
+.I count+1
+bytes (pointed to by
+.I pixels)
 using an "exponential" format.
-This format generates 
+This format generates
 .I count
 pixels as eight bit "mantissa" values, and another byte containing a
 common exponent for all of the data values.  This format has a wider
@@ -47,7 +47,7 @@ mapping is
 Files containing exponential data may be converted into displayable images
 using the
 .IR unexp (1)
-command.  
+command.
 .I Unexp
 should be used before using any tools that perform arithmetic
 on pixel values, or displaying the image.

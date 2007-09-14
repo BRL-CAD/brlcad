@@ -35,12 +35,12 @@
 #define SHOW_BOTH	3
 
 #define SEARCH_POINTS	0	/* Search for closest data point. */
-#define SEARCH_TRACES	1	/* Search for closest point on trace. 
+#define SEARCH_TRACES	1	/* Search for closest point on trace.
 				 * Interpolate the connecting line segments
 				 * if necessary. */
 #define SEARCH_AUTO	2	/* Automatically determine whether to search
 				 * for data points or traces.  Look for
-				 * traces if the linewidth is > 0 and if 
+				 * traces if the linewidth is > 0 and if
 				 * there is more than one data point. */
 
 #define	ELEM_ACTIVE	(1<<8)	/* Non-zero indicates that the element
@@ -78,20 +78,20 @@ typedef struct {
 #define SetWeight(l, lo, hi) \
 	((l).min = (lo), (l).max = (hi), SetRange(l))
 
-/* 
+/*
  * An element has one or more vectors plus several attributes, such as
  * line style, thickness, color, and symbol type.  It has an
- * identifier which distinguishes it among the list of all elements.  
+ * identifier which distinguishes it among the list of all elements.
  */
 typedef struct {
     Weight weight;		/* Weight range where this pen is valid. */
 
     Pen *penPtr;		/* Pen to use. */
 
-    Segment2D *xErrorBars;	/* Point to start of this pen's X-error bar 
+    Segment2D *xErrorBars;	/* Point to start of this pen's X-error bar
 				 * segments in the element's array. */
 
-    Segment2D *yErrorBars;	/* Point to start of this pen's Y-error bar 
+    Segment2D *yErrorBars;	/* Point to start of this pen's Y-error bar
 				 * segments in the element's array. */
 
     int xErrorBarCnt;		/* # of error bars for this pen. */
@@ -119,15 +119,15 @@ typedef struct {
 				 * can be from the sample window
 				 * coordinate */
 
-    int mode;			/* Indicates whether to find the closest 
-				 * data point or the closest point on the 
+    int mode;			/* Indicates whether to find the closest
+				 * data point or the closest point on the
 				 * trace by interpolating the line segments.
-				 * Can also be SEARCH_AUTO, indicating to 
+				 * Can also be SEARCH_AUTO, indicating to
 				 * choose how to search.*/
 
     int x, y;			/* Screen coordinates of test point */
 
-    int along;			/* Indicates to let search run along a 
+    int along;			/* Indicates to let search run along a
 				 * particular axis: x, y, or both. */
 
     /* Output */
@@ -143,17 +143,17 @@ typedef struct {
 
 typedef void (ElementDrawProc) _ANSI_ARGS_((Graph *graphPtr, Drawable drawable,
 	Element *elemPtr));
-typedef void (ElementToPostScriptProc) _ANSI_ARGS_((Graph *graphPtr, 
+typedef void (ElementToPostScriptProc) _ANSI_ARGS_((Graph *graphPtr,
 	PsToken psToken, Element *elemPtr));
-typedef void (ElementDestroyProc) _ANSI_ARGS_((Graph *graphPtr, 
+typedef void (ElementDestroyProc) _ANSI_ARGS_((Graph *graphPtr,
 	Element *elemPtr));
-typedef int (ElementConfigProc) _ANSI_ARGS_((Graph *graphPtr, 
+typedef int (ElementConfigProc) _ANSI_ARGS_((Graph *graphPtr,
 	Element *elemPtr));
 typedef void (ElementMapProc) _ANSI_ARGS_((Graph *graphPtr,
 	Element *elemPtr));
 typedef void (ElementExtentsProc) _ANSI_ARGS_((Element *elemPtr,
 	Extents2D *extsPtr));
-typedef void (ElementClosestProc) _ANSI_ARGS_((Graph *graphPtr, 
+typedef void (ElementClosestProc) _ANSI_ARGS_((Graph *graphPtr,
 	Element *elemPtr, ClosestSearch *searchPtr));
 typedef void (ElementDrawSymbolProc) _ANSI_ARGS_((Graph *graphPtr,
 	Drawable drawable, Element *elemPtr, int x, int y, int symbolSize));
@@ -174,10 +174,10 @@ typedef struct {
     ElementMapProc *mapProc;
 } ElementProcs;
 
-/* 
+/*
  * The data structure below contains information pertaining to a line
  * vector.  It consists of an array of floating point data values and
- * for convenience, the number and minimum/maximum values.  
+ * for convenience, the number and minimum/maximum values.
  */
 
 typedef struct {
@@ -251,9 +251,9 @@ struct ElementStruct {
 
     Tk_ConfigSpec *specsPtr;	/* Configuration specifications. */
 
-    Segment2D *xErrorBars;	/* Point to start of this pen's X-error bar 
+    Segment2D *xErrorBars;	/* Point to start of this pen's X-error bar
 				 * segments in the element's array. */
-    Segment2D *yErrorBars;	/* Point to start of this pen's Y-error bar 
+    Segment2D *yErrorBars;	/* Point to start of this pen's Y-error bar
 				 * segments in the element's array. */
     int xErrorBarCnt;		/* # of error bars for this pen. */
     int yErrorBarCnt;		/* # of error bars for this pen. */
@@ -289,7 +289,7 @@ extern int Blt_GetPenStyle _ANSI_ARGS_((Graph *graphPtr, char *name,
 	Blt_Uid classUid, PenStyle *stylePtr));
 extern void Blt_FreePalette _ANSI_ARGS_((Graph *graphPtr, Blt_Chain *palette));
 extern PenStyle **Blt_StyleMap _ANSI_ARGS_((Element *elemPtr));
-extern void Blt_MapErrorBars _ANSI_ARGS_((Graph *graphPtr, Element *elemPtr, 
+extern void Blt_MapErrorBars _ANSI_ARGS_((Graph *graphPtr, Element *elemPtr,
 	       PenStyle **dataToStyle));
 
 #endif /* _BLT_GR_ELEM_H */

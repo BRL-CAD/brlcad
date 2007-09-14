@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, University of Utah
 .TH GETX11 1 "Jan 28, 1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 getx11 \- get RLE images to an X11 display
 .SH SYNOPSIS
@@ -39,13 +39,13 @@ getx11 \- get RLE images to an X11 display
 .B \-{wW}
 ] [
 .BI \-x " visualtype"
-] [ 
+] [
 .I infile ...
 ]
 .SH DESCRIPTION
 This program displays an
 .IR RLE (5)
-file on an 
+file on an
 .I X11
 display.  It uses a dithering technique to take a
 full-color or gray scale image into the limited number of colors
@@ -59,17 +59,17 @@ processes running simultaneously with the same color resolution will
 share color map entries.
 .PP
 .I Getx11
-uses the standard 
+uses the standard
 .I X
 window creation procedure to create a window with a location and size
 specified by the user, with the restriction that the window must be at
 least as large as the input image.  If the window is turned into an
-icon, a smaller version of the image will be displayed in the icon. 
+icon, a smaller version of the image will be displayed in the icon.
 
 If the input image has only a single channel, and has a color map, then
 this color map will be loaded directly (if possible) instead of using
 the normal dithering process.  Many images will look better if
-pre-processed by 
+pre-processed by
 .IR mcut (1)
 or
 .IR rlequant (1),
@@ -93,7 +93,7 @@ size of the image.
 "As is", suppress dithering.
 .TP
 .BI \-d " display"
-Give the name of the 
+Give the name of the
 .I X
 display to display the image on.  Defaults to the value of the
 environment variable
@@ -109,12 +109,12 @@ file will be printed as they are read.
 .I getx11
 will fork itself after putting the image on the screen, so that the
 parent process may return the shell, leaving an "invisible" child to
-keep the image refreshed.  If 
+keep the image refreshed.  If
 .B \-f
 is specified, getx11 will not exit to the shell until the image is removed.
 .TP
 .BI \-g " display_gamma"
-Specify the gamma of the 
+Specify the gamma of the
 .I X
 display monitor.  The default value is 2.5, suitable for most color TV
 monitors (this is the gamma value assumed by the NTSC video standard).
@@ -178,7 +178,7 @@ mode, where the pixmaps are necessary for reasonable performance).
 .TP
 .BI \-t " title"
 The window name for an image window normally comes from the input file
-name or a 
+name or a
 .BI "image_title=" title
 comment in the RLE file.  The window name can be forced to a
 particular string with this option.
@@ -215,13 +215,13 @@ white on certain displays, or when they have been modified by the user.)
 .BI \-x " visual_type"
 Specify X visual type to be used.  The value may be a string or a number.
 This number is assumed to be an integer
-between 0 and 5, denoting 
-.BR staticgray (0), grayscale (1), 
-.BR pseudocolor (2), staticcolor (3), 
-.BR truecolor (4), 
-or 
+between 0 and 5, denoting
+.BR staticgray (0), grayscale (1),
+.BR pseudocolor (2), staticcolor (3),
+.BR truecolor (4),
+or
 .BR directcolor (5).
-The string must match one of these visual types 
+The string must match one of these visual types
 (any capitalization is ignored).
 .TP
 .I infile ...
@@ -283,7 +283,7 @@ forwards, ...
 c,C:
 Run move continuously.  "c" runs it forward, "C" runs it backward.
 When the movie reaches the "end", it will immediately restart from the
-beginning. 
+beginning.
 .LP
 All continuing movie action can be halted by pressing a key or mouse button.
 .SH SEE ALSO
@@ -294,7 +294,7 @@ Spencer W. Thomas, University of Utah (X10 version)
 .PP
 Andrew F. Vesper, Digital Equipment Corp. (X11 modifications)
 .PP
-Martin R. Friedmann, University of Michigan (better X11, flipbook, 
+Martin R. Friedmann, University of Michigan (better X11, flipbook,
 magnification, info)
 .SH BUGS
 Display to a 24-bit visual is somewhat optimized, but could be faster.

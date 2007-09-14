@@ -2722,7 +2722,7 @@ DisplayLineBackground(
 		    rightX2 + xOffset, y, sValuePtr->borderWidth,
 		    sValuePtr->borderWidth, 1, sValuePtr->relief);
 	    Tk_3DHorizontalBevel(textPtr->tkwin, pixmap, sValuePtr->border,
-		    leftX + xOffset, y, rightX2 + sValuePtr->borderWidth - 
+		    leftX + xOffset, y, rightX2 + sValuePtr->borderWidth -
 		    leftX, sValuePtr->borderWidth, leftXIn, 0, 1,
 		    sValuePtr->relief);
 	}

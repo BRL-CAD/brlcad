@@ -21,7 +21,7 @@
 #endif
 
 /* this function is less generic than mp_n_root, simpler and faster */
-int mp_sqrt(mp_int *arg, mp_int *ret) 
+int mp_sqrt(mp_int *arg, mp_int *ret)
 {
   int res;
   mp_int t1,t2;
@@ -41,13 +41,13 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
     mp_zero(ret);
     return MP_OKAY;
   }
-  
+
   i = (arg->used / 2) - 1;
   j = 2 * i;
   if ((res = mp_init_size(&t1, i+2)) != MP_OKAY) {
       return res;
   }
-  
+
   if ((res = mp_init(&t2)) != MP_OKAY) {
     goto E2;
   }
@@ -55,7 +55,7 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
   for (k = 0; k < i; ++k) {
       t1.dp[k] = (mp_digit) 0;
   }
-      
+
 #ifndef NO_FLOATING_POINT
 
   /* Estimate the square root using the hardware floating point unit. */
@@ -91,7 +91,7 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
 
 #endif
 
-  /* t1 > 0  */ 
+  /* t1 > 0  */
   if ((res = mp_div(arg,&t1,&t2,NULL)) != MP_OKAY) {
     goto E1;
   }
@@ -102,7 +102,7 @@ int mp_sqrt(mp_int *arg, mp_int *ret)
     goto E1;
   }
   /* And now t1 > sqrt(arg) */
-  do { 
+  do {
     if ((res = mp_div(arg,&t1,&t2,NULL)) != MP_OKAY) {
       goto E1;
     }

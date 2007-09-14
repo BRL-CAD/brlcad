@@ -24,7 +24,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 proc evalInProc { script } {
     proc testProc {} $script
     set status [catch {
-	testProc 
+	testProc
     } result]
     rename testProc {}
     return $result
@@ -43,7 +43,7 @@ test regexpComp-1.2 {basic regexp operation} {
     }
 } 1
 test regexpComp-1.3 {basic regexp operation} {
-    evalInProc {    
+    evalInProc {
 	regexp ab*c ab
     }
 } 0
@@ -545,7 +545,7 @@ test regexpComp-11.8 {regsub errors, -start bad int check} {
 } {1 {bad index "bogus": must be integer?[+-]integer? or end?[+-]integer?}}
 
 # This test crashes on the Mac unless you increase the Stack Space to about 1
-# Meg.  This is probably bigger than most users want... 
+# Meg.  This is probably bigger than most users want...
 # 8.2.3 regexp reduced stack space requirements, but this should be
 # tested again
 test regexpComp-12.1 {Tcl_RegExpExec: large number of subexpressions} {macCrash} {
@@ -732,10 +732,10 @@ test regexpComp-19.1 {regsub null replacement} {
 test regexpComp-20.1 {regsub shared object shimmering} {
     evalInProc {
 	# Bug #461322
-	set a abcdefghijklmnopqurstuvwxyz 
-	set b $a 
-	set c abcdefghijklmnopqurstuvwxyz0123456789 
-	regsub $a $c $b d 
+	set a abcdefghijklmnopqurstuvwxyz
+	set b $a
+	set c abcdefghijklmnopqurstuvwxyz0123456789
+	regsub $a $c $b d
 	list $d [string length $d] [string bytelength $d]
     }
 } [list abcdefghijklmnopqurstuvwxyz0123456789 37 37]

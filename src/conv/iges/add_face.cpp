@@ -35,7 +35,7 @@
 void
 Add_face_to_brep(ON_Brep* brep, int entityno, int face_orient)
 {
-    
+
 }
 
 struct faceuse *

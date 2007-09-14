@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -36,7 +36,7 @@ public:
 
 	ON_LineCurve& operator=(const ON_LineCurve&);
 	ON_LineCurve& operator=(const ON_Line&);
-  
+
   /////////////////////////////////////////////////////////////////
   // ON_Object overrides
 
@@ -54,9 +54,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -93,24 +93,24 @@ public:
     Get tight bounding box of the line.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       line's tight bounding box.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
       line is calculated.  The line is not modified.
 	Returns:
-    True if the returned tight_bbox is set to a valid 
+    True if the returned tight_bbox is set to a valid
     bounding box.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
 
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform&
          );
 
@@ -142,9 +142,9 @@ public:
   //   t1 - [in] new domain will be [t0,t1]
   // Returns:
   //   TRUE if successful.
-  BOOL SetDomain( 
-        double t0, 
-        double t1 
+  BOOL SetDomain(
+        double t0,
+        double t1
         );
 
   bool ChangeDimension(
@@ -153,13 +153,13 @@ public:
 
   int SpanCount() const; // number of smooth spans in curve
 
-  BOOL GetSpanVector( // span "knots" 
-         double* // array of length SpanCount() + 1 
-         ) const; // 
+  BOOL GetSpanVector( // span "knots"
+         double* // array of length SpanCount() + 1
+         ) const; //
 
-  int Degree( // returns maximum algebraic degree of any span 
+  int Degree( // returns maximum algebraic degree of any span
                   // ( or a good estimate if curve spans are not algebraic )
-    ) const; 
+    ) const;
 
   BOOL IsLinear( // TRUE if curve locus is a line segment between
                  // between specified points
@@ -213,9 +213,9 @@ public:
                   // periodic.)
 
   BOOL IsPeriodic(  // TRUE if curve is a single periodic segment
-        void 
+        void
         ) const;
-  
+
   /*
   Description:
     Force the curve to start at a specified point.
@@ -264,7 +264,7 @@ public:
          double*,        // array of length stride*(ndir+1)
          int = 0,        // optional - determines which side to evaluate from
                          //         0 = default
-                         //      <  0 to evaluate from below, 
+                         //      <  0 to evaluate from below,
                          //      >  0 to evaluate from above
          int* = 0        // optional - evaluation hint (int) used to speed
                          //            repeated evaluations
@@ -273,7 +273,7 @@ public:
   //////////
   // Find parameter of the point on a curve that is closest to test_point.
   // If the maximum_distance parameter is > 0, then only points whose distance
-  // to the given point is <= maximum_distance will be returned.  Using a 
+  // to the given point is <= maximum_distance will be returned.  Using a
   // positive value of maximum_distance can substantially speed up the search.
   // If the sub_domain parameter is not NULL, then the search is restricted
   // to the specified portion of the curve.
@@ -287,8 +287,8 @@ public:
           ) const;
 
   //////////
-  // Find parameter of the point on a curve that is locally closest to 
-  // the test_point.  The search for a local close point starts at 
+  // Find parameter of the point on a curve that is locally closest to
+  // the test_point.  The search for a local close point starts at
   // seed_parameter. If the sub_domain parameter is not NULL, then
   // the search is restricted to the specified portion of the curve.
   //
@@ -301,7 +301,7 @@ public:
           ) const;
 
   // virtual ON_Curve override
-  int IntersectSelf( 
+  int IntersectSelf(
           ON_SimpleArray<ON_X_EVENT>& x,
           double intersection_tolerance = 0.0,
           const ON_Interval* curve_domain = 0
@@ -335,7 +335,7 @@ public:
   Parameters:
     tolerance - [in] (>=0)
     sub_domain - [in] If not NULL, the test is performed
-      on the interval that is the intersection of 
+      on the interval that is the intersection of
       sub_domain with Domain().
   Returns:
     True if the length of the curve is <= tolerance.
@@ -350,7 +350,7 @@ public:
 
   // Description:
   //   virtual ON_Curve::GetNormalizedArcLengthPoint override.
-  //   Get the parameter of the point on the line that is a 
+  //   Get the parameter of the point on the line that is a
   //   prescribed distance from the start of the line
   // Parameters:
   //   s - [in] normalized arc length parameter.  E.g., 0 = start
@@ -373,13 +373,13 @@ public:
   /*
   Description:
     virtual ON_Curve::GetNormalizedArcLengthPoints override.
-    Get the parameter of the point on the curve that is a 
+    Get the parameter of the point on the curve that is a
     prescribed arc length from the start of the curve.
   Parameters:
     count - [in] number of parameters in s.
     s - [in] array of normalized arc length parameters. E.g., 0 = start
          of curve, 1/2 = midpoint of curve, 1 = end of curve.
-    t - [out] array of curve parameters such that the length of the 
+    t - [out] array of curve parameters such that the length of the
        curve from its start to t[i] is s[i]*curve_length.
     absolute_tolerance - [in] if absolute_tolerance > 0, then the difference
         between (s[i+1]-s[i])*curve_length and the length of the curve
@@ -417,10 +417,10 @@ public:
   // Description:
   //   Where possible, analytically extends curve to include domain.
   // Parameters:
-  //   domain - [in] if domain is not included in curve domain, 
-  //   curve will be extended so that its domain includes domain.  
+  //   domain - [in] if domain is not included in curve domain,
+  //   curve will be extended so that its domain includes domain.
   //   Original curve is identical
-  //   to the restriction of the resulting curve to the original curve domain, 
+  //   to the restriction of the resulting curve to the original curve domain,
   // Returns:
   //   true if successful.
   bool Extend(
@@ -469,9 +469,9 @@ public:
   //       matches the curve's to wthe desired accuracy
   //   2   success - returned NURBS point locus matches
   //       the curve's to the desired accuracy but, on
-  //       the interior of the curve's domain, the 
+  //       the interior of the curve's domain, the
   //       curve's parameterization and the NURBS
-  //       parameterization may not match to the 
+  //       parameterization may not match to the
   //       desired accuracy.
   int GetNurbForm(
         ON_NurbsCurve&,
@@ -490,9 +490,9 @@ public:
   //       matches the curve's to wthe desired accuracy
   //   2   success - returned NURBS point locus matches
   //       the curve's to the desired accuracy but, on
-  //       the interior of the curve's domain, the 
+  //       the interior of the curve's domain, the
   //       curve's parameterization and the NURBS
-  //       parameterization may not match to the 
+  //       parameterization may not match to the
   //       desired accuracy.
   int HasNurbForm(
         ) const;

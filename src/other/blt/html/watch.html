@@ -10,7 +10,7 @@
 
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 watch - call Tcl procedures before and after each
-command 
+command
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <B>watch create</B> <I>watchName</I> ?<I>options</I>? <P>
 <B>watch activate</B> <I>watchName</I>
@@ -20,15 +20,15 @@ command
 <B>watch configure</B> <I>watchName</I>
 ?<I>options</I> <P>
 <B>watch info</B> <I>watchName</I> <P>
-<B>watch names</B>  
+<B>watch names</B>
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The <B>watch</B> command
 arranges for Tcl procedures to be invoked before and after the execution
-of each Tcl command. 
+of each Tcl command.
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 When an error occurs in Tcl, the global
 variable <I>errorInfo</I> will contain a stack-trace of the active procedures when
-the error occured. Sometimes, however, the stack trace is insufficient. 
+the error occured. Sometimes, however, the stack trace is insufficient.
 You may need to know exactly where in the program's execution the error
 occured.  In cases like this, a more general tracing facility would be useful.
 <P>
@@ -36,7 +36,7 @@ The <B>watch</B> command lets you designate Tcl procedures to be invoked before
 and after the execution of each Tcl command.  This means you can display
 the command line and its results for each command as it executes.  Another
 use is to profile your Tcl commands. You can profile any Tcl command (like
-<B>if</B> and <B>set</B>), not just Tcl procedures. 
+<B>if</B> and <B>set</B>), not just Tcl procedures.
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 The following example use <B>watch</B>
 to trace Tcl commands  (printing to standard error) both before and after

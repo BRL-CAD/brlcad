@@ -41,11 +41,11 @@ array set bltHierbox {
     y       0
 }
 
-catch { 
-    namespace eval blt::Hierbox {} 
+catch {
+    namespace eval blt::Hierbox {}
 }
 
-# 
+#
 # ButtonPress assignments
 #
 #	B1-Enter	start auto-scrolling
@@ -71,7 +71,7 @@ bind Hierbox <ButtonRelease-2> {
 
 bind Hierbox <B1-Leave> {
     if { $bltHierbox(scroll) } {
-	blt::Hierbox::AutoScroll %W 
+	blt::Hierbox::AutoScroll %W
     }
 }
 
@@ -80,10 +80,10 @@ bind Hierbox <B1-Enter> {
 }
 
 
-# 
+#
 # KeyPress assignments
 #
-#	Up			
+#	Up
 #	Down
 #	Shift-Up
 #	Shift-Down
@@ -148,7 +148,7 @@ bind Hierbox <KeyPress-space> {
     set bltHierbox(space) on
 }
 
-bind Hierbox <KeyRelease-space> { 
+bind Hierbox <KeyRelease-space> {
     set bltHierbox(space) off
 }
 
@@ -157,7 +157,7 @@ bind Hierbox <KeyPress-Return> {
     set bltHierbox(space) on
 }
 
-bind Hierbox <KeyRelease-Return> { 
+bind Hierbox <KeyRelease-Return> {
     set bltHierbox(space) off
 }
 
@@ -178,7 +178,7 @@ bind Hierbox <KeyPress-F1> {
 }
 
 bind Hierbox <KeyPress-F2> {
-    eval %W close -r [%W entry children root 0 end] 
+    eval %W close -r [%W entry children root 0 end]
 }
 
 # ----------------------------------------------------------------------
@@ -241,7 +241,7 @@ proc blt::Hierbox::MovePage { widget where } {
 #
 #  Edit mode assignments
 #
-#	ButtonPress-3   Enables/disables edit mode on entry.  Sets focus to 
+#	ButtonPress-3   Enables/disables edit mode on entry.  Sets focus to
 #			entry.
 #
 #  KeyPress
@@ -260,7 +260,7 @@ proc blt::Hierbox::MovePage { widget where } {
 #	Ctrl-X		Cut
 #	Ctrl-V		Copy
 #	Ctrl-P		Paste
-#	
+#
 #  KeyRelease
 #
 #  ButtonPress-1	Start selection if in entry, otherwise clear selection.
@@ -271,7 +271,7 @@ proc blt::Hierbox::MovePage { widget where } {
 #  ButtonPress-2	Same as above.
 #  B2-Motion		Same as above.
 #  ButtonRelease-2	Same as above.
-#	
+#
 # All bindings in editting mode will "break" to override other bindings.
 #
 #
@@ -287,11 +287,11 @@ proc blt::Hierbox::Init { widget } {
     #
     # Active entry bindings
     #
-    $widget bind Entry <Enter> { 
-	%W entry highlight current 
+    $widget bind Entry <Enter> {
+	%W entry highlight current
     }
-    $widget bind Entry <Leave> { 
-	%W entry highlight "" 
+    $widget bind Entry <Leave> {
+	%W entry highlight ""
     }
 
     #
@@ -320,8 +320,8 @@ proc blt::Hierbox::Init { widget } {
     #	5. Sets the selection anchor to this entry, just in case
     #	   this is "multiple" mode.
     #
-    
-    $widget bind Entry <ButtonPress-1> { 	
+
+    $widget bind Entry <ButtonPress-1> {
 	blt::Hierbox::SetSelectionAnchor %W current
 	set bltHierbox(scroll) 1
     }
@@ -336,7 +336,7 @@ proc blt::Hierbox::Init { widget } {
     #	For "multiple" mode only.  Saves the current location of the
     #	pointer for auto-scrolling.
     #
-    $widget bind Entry <B1-Motion> { 
+    $widget bind Entry <B1-Motion> {
 	set bltHierbox(x) %x
 	set bltHierbox(y) %y
 	set index [%W nearest %x %y]
@@ -344,18 +344,18 @@ proc blt::Hierbox::Init { widget } {
 	    %W selection mark $index
 	} else {
 	    blt::Hierbox::SetSelectionAnchor %W $index
-	}	    
+	}
     }
 
     #
     # ButtonRelease-1
     #
-    #	For "multiple" mode only.  
+    #	For "multiple" mode only.
     #
-    $widget bind Entry <ButtonRelease-1> { 
+    $widget bind Entry <ButtonRelease-1> {
 	if { [%W cget -selectmode] == "multiple" } {
 	    %W selection anchor current
-	} 
+	}
 	after cancel $bltHierbox(afterId)
 	set bltHierbox(scroll) 0
     }
@@ -365,7 +365,7 @@ proc blt::Hierbox::Init { widget } {
     #
     #	For "multiple" mode only.
     #
-    $widget bind Entry <Shift-ButtonPress-1> { 
+    $widget bind Entry <Shift-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" && [%W selection present] }  {
 	    if { [%W index anchor] == "" } {
 		%W selection anchor current
@@ -377,10 +377,10 @@ proc blt::Hierbox::Init { widget } {
 	    blt::Hierbox::SetSelectionAnchor %W current
 	}
     }
-    $widget bind Entry <Shift-B1-Motion> { 
+    $widget bind Entry <Shift-B1-Motion> {
 	# do nothing
     }
-    $widget bind Entry <Shift-ButtonRelease-1> { 
+    $widget bind Entry <Shift-ButtonRelease-1> {
 	after cancel $bltHierbox(afterId)
 	set bltHierbox(scroll) 0
     }
@@ -388,9 +388,9 @@ proc blt::Hierbox::Init { widget } {
     #
     # Control-ButtonPress-1
     #
-    #	For "multiple" mode only.  
+    #	For "multiple" mode only.
     #
-    $widget bind Entry <Control-ButtonPress-1> { 
+    $widget bind Entry <Control-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" } {
 	    set index [%W index current]
 	    %W selection toggle $index
@@ -399,19 +399,19 @@ proc blt::Hierbox::Init { widget } {
 	    blt::Hierbox::SetSelectionAnchor %W current
 	}
     }
-    $widget bind Entry <Control-B1-Motion> { 
+    $widget bind Entry <Control-B1-Motion> {
 	# do nothing
     }
-    $widget bind Entry <Control-ButtonRelease-1> { 
+    $widget bind Entry <Control-ButtonRelease-1> {
 	after cancel $bltHierbox(afterId)
 	set bltHierbox(scroll) 0
     }
     #
     # Control-Shift-ButtonPress-1
     #
-    #	For "multiple" mode only.  
+    #	For "multiple" mode only.
     #
-    $widget bind Entry <Control-Shift-ButtonPress-1> { 
+    $widget bind Entry <Control-Shift-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" && [%W selection present] } {
 	    if { [%W index anchor] == "" } {
 		%W selection anchor current
@@ -426,7 +426,7 @@ proc blt::Hierbox::Init { widget } {
 	    blt::Hierbox::SetSelectionAnchor %W current
 	}
     }
-    $widget bind Entry <Control-Shift-B1-Motion> { 
+    $widget bind Entry <Control-Shift-B1-Motion> {
 	# do nothing
     }
 }

@@ -18,19 +18,19 @@ instdirs =	$(prefix) $(exec_prefix) $(bindir) $(libdir) $(includedir)
 
 subdirs =	src demos library html
 
-all:  
-	(cd src; $(MAKE) -f Makefile.vc all) 
-	(cd demos; $(MAKE) -f Makefile.vc all) 
-	(cd library; $(MAKE) -f Makefile.vc all) 
-	(cd html; $(MAKE) -f Makefile.vc all) 
+all:
+	(cd src; $(MAKE) -f Makefile.vc all)
+	(cd demos; $(MAKE) -f Makefile.vc all)
+	(cd library; $(MAKE) -f Makefile.vc all)
+	(cd html; $(MAKE) -f Makefile.vc all)
 
 install: install-dirs install-all install-readme
 
-install-all: 
-	(cd src; $(MAKE) -f Makefile.vc install) 
-	(cd demos; $(MAKE) -f Makefile.vc install) 
-	(cd library; $(MAKE) -f Makefile.vc install) 
-	(cd html; $(MAKE) -f Makefile.vc install) 
+install-all:
+	(cd src; $(MAKE) -f Makefile.vc install)
+	(cd demos; $(MAKE) -f Makefile.vc install)
+	(cd library; $(MAKE) -f Makefile.vc install)
+	(cd html; $(MAKE) -f Makefile.vc install)
 
 install-dirs:
 	@for i in $(instdirs) ; do \
@@ -46,18 +46,18 @@ install-readme:
 	$(INSTALL_DATA) $(srcdir)/NEWS $(scriptdir)
 
 clean:
-	(cd src; $(MAKE) -f Makefile.vc clean) 
-	(cd demos; $(MAKE) -f Makefile.vc clean) 
-	(cd library; $(MAKE) -f Makefile.vc clean) 
-	(cd html; $(MAKE) -f Makefile.vc clean) 
+	(cd src; $(MAKE) -f Makefile.vc clean)
+	(cd demos; $(MAKE) -f Makefile.vc clean)
+	(cd library; $(MAKE) -f Makefile.vc clean)
+	(cd html; $(MAKE) -f Makefile.vc clean)
 	$(RM) *.bak *\~ "#"* *pure* .pure*
 
 GENERATED_FILES = \
-	config.status config.cache config.log Makefile 
+	config.status config.cache config.log Makefile
 
 distclean: clean
-	(cd src; $(MAKE) -f Makefile.vc distclean) 
-	(cd demos; $(MAKE) -f Makefile.vc distclean) 
-	(cd library; $(MAKE) -f Makefile.vc distclean) 
-	(cd html; $(MAKE) -f Makefile.vc distclean) 
+	(cd src; $(MAKE) -f Makefile.vc distclean)
+	(cd demos; $(MAKE) -f Makefile.vc distclean)
+	(cd library; $(MAKE) -f Makefile.vc distclean)
+	(cd html; $(MAKE) -f Makefile.vc distclean)
 	$(RM) $(GENERATED_FILES)

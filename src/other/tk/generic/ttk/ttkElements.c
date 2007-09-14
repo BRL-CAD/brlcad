@@ -108,11 +108,11 @@ typedef struct {
 
 static Ttk_ElementOptionSpec BorderElementOptions[] =
 {
-    { "-background", TK_OPTION_BORDER, 
+    { "-background", TK_OPTION_BORDER,
 	Tk_Offset(BorderElement,borderObj), DEFAULT_BACKGROUND },
-    { "-borderwidth", TK_OPTION_PIXELS, 
+    { "-borderwidth", TK_OPTION_PIXELS,
 	Tk_Offset(BorderElement,borderWidthObj), DEFAULT_BORDERWIDTH },
-    { "-relief", TK_OPTION_RELIEF, 
+    { "-relief", TK_OPTION_RELIEF,
 	Tk_Offset(BorderElement,reliefObj), "flat" },
     {NULL}
 };
@@ -213,7 +213,7 @@ static Ttk_ElementSpec FieldElementSpec =
  *
  * This element has no visual representation, only geometry.
  * It adds a (possibly non-uniform) internal border.
- * In addition, if "-shiftrelief" is specified, 
+ * In addition, if "-shiftrelief" is specified,
  * adds additional pixels to shift child elements "in" or "out"
  * depending on the -relief.
  */
@@ -742,7 +742,7 @@ typedef struct
 
 static Ttk_ElementOptionSpec ArrowElementOptions[] =
 {
-    { "-background", TK_OPTION_BORDER, 
+    { "-background", TK_OPTION_BORDER,
 	Tk_Offset(ArrowElement,borderObj), DEFAULT_BACKGROUND },
     { "-relief",TK_OPTION_RELIEF,
 	Tk_Offset(ArrowElement,reliefObj),"raised"},
@@ -750,7 +750,7 @@ static Ttk_ElementOptionSpec ArrowElementOptions[] =
 	Tk_Offset(ArrowElement,borderWidthObj), "1" },
     { "-arrowcolor",TK_OPTION_COLOR,
 	Tk_Offset(ArrowElement,colorObj),"black"},
-    { "-arrowsize", TK_OPTION_PIXELS, 
+    { "-arrowsize", TK_OPTION_PIXELS,
 	Tk_Offset(ArrowElement,sizeObj), "14" },
     { NULL }
 };
@@ -1057,7 +1057,7 @@ static Ttk_ElementSpec SliderElementSpec =
  *
  *	-thickness specifies the size along the short axis of the bar.
  *	-length specifies the default size along the long axis;
- *	the bar will be this long in indeterminate mode. 
+ *	the bar will be this long in indeterminate mode.
  */
 
 #define DEFAULT_PBAR_THICKNESS "15"
@@ -1406,9 +1406,9 @@ void TtkElements_Init(Tcl_Interp *interp)
 
     Ttk_RegisterElement(interp, theme, "separator",
 	    &SeparatorElementSpec, NULL);
-    Ttk_RegisterElement(interp, theme, "hseparator", 
+    Ttk_RegisterElement(interp, theme, "hseparator",
 	    &HorizontalSeparatorElementSpec, NULL);
-    Ttk_RegisterElement(interp, theme, "vseparator", 
+    Ttk_RegisterElement(interp, theme, "vseparator",
 	    &VerticalSeparatorElementSpec, NULL);
 
     Ttk_RegisterElement(interp, theme, "sizegrip", &SizegripElementSpec, NULL);

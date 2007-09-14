@@ -122,15 +122,15 @@ Blt_ColorImageToPixmap2(
     width = Blt_ColorImageWidth(image);
     height = Blt_ColorImageHeight(image);
 
-    /* 
+    /*
      * Copy the color image RGB data into the DIB. The DIB scanlines
      * are stored bottom-to-top and the order of the RGB color
      * components is BGR. Who says Win32 GDI programming isn't
-     * backwards?  
+     * backwards?
      */
     bits = Blt_Malloc(width * height * sizeof(unsigned char));
     assert(bits);
-    srcPtr = Blt_ColorImageBits(image);    
+    srcPtr = Blt_ColorImageBits(image);
     for (y = height - 1; y >= 0; y--) {
 	destPtr = bits + (y * width);
 	for (x = 0; x < width; x++) {
@@ -245,11 +245,11 @@ Blt_DrawableToColorImage(
 	}
     }
 
-    /* 
+    /*
      * Copy the DIB RGB data into the color image. The DIB scanlines
      * are stored bottom-to-top and the order of the RGB color
      * components is BGR. Who says Win32 GDI programming isn't
-     * backwards?  
+     * backwards?
      */
 
     for (y = height - 1; y >= 0; y--) {
@@ -323,7 +323,7 @@ Blt_PhotoImageMask(
 	twdPtr->handle = hBitmap;
 	twdPtr->depth = 1;
 	if (Tk_WindowId(tkwin) == None) {
-	    twdPtr->colormap = DefaultColormap(Tk_Display(tkwin), 
+	    twdPtr->colormap = DefaultColormap(Tk_Display(tkwin),
 			 DefaultScreen(Tk_Display(tkwin)));
 	} else {
 	    twdPtr->colormap = Tk_Colormap(tkwin);
@@ -384,7 +384,7 @@ Blt_ColorImageMask(
 	twdPtr->handle = hBitmap;
 	twdPtr->depth = 1;
 	if (Tk_WindowId(tkwin) == None) {
-	    twdPtr->colormap = DefaultColormap(Tk_Display(tkwin), 
+	    twdPtr->colormap = DefaultColormap(Tk_Display(tkwin),
 			 DefaultScreen(Tk_Display(tkwin)));
 	} else {
 	    twdPtr->colormap = Tk_Colormap(tkwin);
@@ -420,10 +420,10 @@ Pixmap
 Blt_RotateBitmap(
     Tk_Window tkwin,
     Pixmap srcBitmap,		/* Source bitmap to be rotated */
-    int srcWidth, 
+    int srcWidth,
     int srcHeight,		/* Width and height of the source bitmap */
     double theta,		/* Right angle rotation to perform */
-    int *destWidthPtr, 
+    int *destWidthPtr,
     int *destHeightPtr)
 {
     Display *display;		/* X display */
@@ -593,7 +593,7 @@ Blt_RotateBitmap(
     mb.colors[0].rgbBlue = mb.colors[0].rgbRed = mb.colors[0].rgbGreen = 0x0;
     mb.colors[1].rgbBlue = mb.colors[1].rgbRed = mb.colors[1].rgbGreen = 0xFF;
     hDC = TkWinGetDrawableDC(display, destBitmap, &state);
-    result = SetDIBits(hDC, hBitmap, 0, destHeight, (LPVOID)destBits, 
+    result = SetDIBits(hDC, hBitmap, 0, destHeight, (LPVOID)destBits,
 	(BITMAPINFO *)&mb, DIB_RGB_COLORS);
     TkWinReleaseDrawableDC(destBitmap, hDC, &state);
     if (!result) {
@@ -619,7 +619,7 @@ Blt_RotateBitmap(
  *
  * Blt_ScaleBitmap --
  *
- *	Creates a new scaled bitmap from another bitmap. 
+ *	Creates a new scaled bitmap from another bitmap.
  *
  * Results:
  *	The new scaled bitmap is returned.
@@ -633,9 +633,9 @@ Pixmap
 Blt_ScaleBitmap(
     Tk_Window tkwin,
     Pixmap srcBitmap,
-    int srcWidth, 
-    int srcHeight, 
-    int destWidth, 
+    int srcWidth,
+    int srcHeight,
+    int destWidth,
     int destHeight)
 {
     TkWinDCState srcState, destState;
@@ -674,10 +674,10 @@ Blt_ScaleBitmap(
  *	process the entire destination bitmap is only part of it is
  *	showing in the viewport.
  *
- *	This uses a simple rotation/scaling of each pixel in the 
- *	destination image.  For each pixel, the corresponding 
- *	pixel in the source bitmap is used.  This means that 
- *	destination coordinates are first scaled to the size of 
+ *	This uses a simple rotation/scaling of each pixel in the
+ *	destination image.  For each pixel, the corresponding
+ *	pixel in the source bitmap is used.  This means that
+ *	destination coordinates are first scaled to the size of
  *	the rotated source bitmap.  These coordinates are then
  *	rotated back to their original orientation in the source.
  *
@@ -693,14 +693,14 @@ Pixmap
 Blt_ScaleRotateBitmapRegion(
     Tk_Window tkwin,
     Pixmap srcBitmap,		/* Source bitmap. */
-    unsigned int srcWidth, 
+    unsigned int srcWidth,
     unsigned int srcHeight,	/* Size of source bitmap */
-    int regionX, 
+    int regionX,
     int regionY,		/* Offset of region in virtual
 				 * destination bitmap. */
-    unsigned int regionWidth, 
+    unsigned int regionWidth,
     unsigned int regionHeight,	/* Desire size of bitmap region. */
-    unsigned int virtWidth,		
+    unsigned int virtWidth,
     unsigned int virtHeight,	/* Virtual size of destination bitmap. */
     double theta)		/* Angle to rotate bitmap.  */
 {
@@ -857,7 +857,7 @@ Blt_ScaleRotateBitmapRegion(
 		 * bigger than the source.
 		 */
 
-		if ((sx >= (int)srcWidth) || (sx < 0) || 
+		if ((sx >= (int)srcWidth) || (sx < 0) ||
 		    (sy >= (int)srcHeight) || (sy < 0)) {
 		    continue;
 		}
@@ -881,7 +881,7 @@ Blt_ScaleRotateBitmapRegion(
     mb.colors[0].rgbBlue = mb.colors[0].rgbRed = mb.colors[0].rgbGreen = 0x0;
     mb.colors[1].rgbBlue = mb.colors[1].rgbRed = mb.colors[1].rgbGreen = 0xFF;
     hDC = TkWinGetDrawableDC(display, destBitmap, &state);
-    result = SetDIBits(hDC, hBitmap, 0, regionHeight, (LPVOID)destBits, 
+    result = SetDIBits(hDC, hBitmap, 0, regionHeight, (LPVOID)destBits,
 	(BITMAPINFO *)&mb, DIB_RGB_COLORS);
     TkWinReleaseDrawableDC(destBitmap, hDC, &state);
     if (!result) {
@@ -936,7 +936,7 @@ Blt_BlendColorImage(
     register int x, y;
 
     if (regionPtr == NULL) {
-	regionPtr = Blt_SetRegion(0, 0, ColorImageWidth(image), 
+	regionPtr = Blt_SetRegion(0, 0, ColorImageWidth(image),
 		ColorImageHeight(image), &region);
     }
     if (regionPtr->left < 0) {
@@ -977,7 +977,7 @@ Blt_BlendColorImage(
     }
     image = NULL;
     /* Copy the window contents to the memory surface. */
-    if (!BitBlt(memDC, 0, 0, width, height, hDC, regionPtr->left, 
+    if (!BitBlt(memDC, 0, 0, width, height, hDC, regionPtr->left,
 	regionPtr->top, SRCCOPY)) {
 #ifdef notdef
 	PurifyPrintf("can't blit: %s\n", Blt_LastError());
@@ -994,11 +994,11 @@ Blt_BlendColorImage(
     image = Blt_CreateColorImage(width, height);
     destPtr = Blt_ColorImageBits(image);
 
-    /* 
+    /*
      * Copy the DIB RGB data into the color image. The DIB scanlines
      * are stored bottom-to-top and the order of the RGBA color
      * components is BGRA. Who says Win32 GDI programming isn't
-     * backwards?  
+     * backwards?
      */
     for (y = height - 1; y >= 0; y--) {
 	srcPtr = srcArr + (y * ds.dsBm.bmWidthBytes);
@@ -1065,7 +1065,7 @@ Blt_JPEGToColorImage(interp, fileName)
 	jpgProps.DIBChannels = 4;
 	jpgProps.DIBColor = IJL_RGBA_FPX;
 	break;
-	
+
     case 3:
 	jpgProps.JPGColor = IJL_YCBCR;
 	jpgProps.DIBChannels = 4;
@@ -1089,7 +1089,7 @@ Blt_JPEGToColorImage(interp, fileName)
 
     jpgProps.DIBWidth    = jpgProps.JPGWidth;
     jpgProps.DIBHeight   = jpgProps.JPGHeight;
-    jpgProps.DIBPadBytes = IJL_DIB_PAD_BYTES(jpgProps.DIBWidth, 
+    jpgProps.DIBPadBytes = IJL_DIB_PAD_BYTES(jpgProps.DIBWidth,
 					     jpgProps.DIBChannels);
 
     image = Blt_CreateColorImage(jpgProps.JPGWidth, jpgProps.JPGHeight);
@@ -1112,9 +1112,9 @@ Blt_JPEGToColorImage(interp, fileName)
     }
     ijlFree(&jpgProps);
     return NULL;
-} 
+}
 
-#else 
+#else
 
 #ifdef HAVE_JPEGLIB_H
 
@@ -1236,7 +1236,7 @@ Blt_JPEGToColorImage(interp, fileName)
 
     /* Make a one-row-high sample array that will go away when done
      * with image */
-    readBuffer = (*jpg.mem->alloc_sarray) ((j_common_ptr)&jpg, JPOOL_IMAGE, 
+    readBuffer = (*jpg.mem->alloc_sarray) ((j_common_ptr)&jpg, JPOOL_IMAGE,
 	row_stride, 1);
     image = Blt_CreateColorImage(imageWidth, imageHeight);
     destPtr = Blt_ColorImageBits(image);
@@ -1271,21 +1271,21 @@ Blt_JPEGToColorImage(interp, fileName)
     jpeg_destroy_decompress(&jpg);
 
 
-    /*  
+    /*
      * After finish_decompress, we can close the input file.  Here we
      * postpone it until after no more JPEG errors are possible, so as
      * to simplify the setjmp error logic above.  (Actually, I don't
      * think that jpeg_destroy can do an error exit, but why assume
-     * anything...)  
+     * anything...)
      */
     fclose(f);
 
-    /* 
+    /*
      * At this point you may want to check to see whether any corrupt-data
      * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
      */
     if (handler.pub.num_warnings > 0) {
-	Tcl_SetErrorCode(interp, "IMAGE", "JPEG", 
+	Tcl_SetErrorCode(interp, "IMAGE", "JPEG",
 		 Tcl_DStringValue(&(handler.dString)), (char *)NULL);
     } else {
 	Tcl_SetErrorCode(interp, "NONE", (char *)NULL);

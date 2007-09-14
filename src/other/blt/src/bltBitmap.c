@@ -43,7 +43,7 @@
 
 /*
   Predefined table holds bitmap info (source width, height)
-  Name table holds bitmap names  
+  Name table holds bitmap names
   Id table hold bitmap ids
   Both id and name tables get you the actual bitmap.
  */
@@ -56,17 +56,17 @@
 
 #define BITMAP_THREAD_KEY	"BLT Bitmap Data"
 
-/* 
+/*
  * BitmapInterpData --
  *
  *	Tk's routine to create a bitmap, Tk_DefineBitmap, assumes that
  *	the source (bit array) is always statically allocated.  This
- *	isn't true here (we dynamically allocate the arrays), so we have 
- *	to save them in a hashtable and cleanup after the interpreter 
+ *	isn't true here (we dynamically allocate the arrays), so we have
+ *	to save them in a hashtable and cleanup after the interpreter
  *	is deleted.
  */
 typedef struct {
-    Blt_HashTable bitmapTable;	/* Hash table of bitmap data keyed by 
+    Blt_HashTable bitmapTable;	/* Hash table of bitmap data keyed by
 				 * the name of the bitmap. */
     Tcl_Interp *interp;
     Display *display;		/* Display of interpreter. */
@@ -75,7 +75,7 @@ typedef struct {
 
 #define MAX_SIZE 255
 
-/* 
+/*
  * BitmapInfo --
  */
 typedef struct {
@@ -86,7 +86,7 @@ typedef struct {
     Blt_Pad padX, padY;		/* Padding around the text */
 } BitmapInfo;
 
-/* 
+/*
  * BitmapData --
  */
 typedef struct {
@@ -528,7 +528,7 @@ ParseListData(interp, string, widthPtr, heightPtr, bitsPtr)
     if (nElem == 2) {
 	char **dimArr;
 	int nDim;
-	
+
 	if (Tcl_SplitList(interp, elemArr[0], &nDim, &dimArr) != TCL_OK) {
 	    goto error;
 	}
@@ -561,7 +561,7 @@ ParseListData(interp, string, widthPtr, heightPtr, bitsPtr)
 	goto error;
     }
     /* Convert commas to blank spaces */
-    
+
     for (p = string; *p != '\0'; p++) {
 	if (*p == ',') {
 	    *p = ' ';
@@ -624,39 +624,39 @@ ParseStructData(interp, string, widthPtr, heightPtr, bitsPtr)
 	    char *start, *end;
 
 	    Tcl_RegExpRange(re, 0, &start, &end);
-	    name = strtok(end, " \t"); 
+	    name = strtok(end, " \t");
 	    value = strtok(NULL, " \t");
 	    if ((name == NULL) || (value == NULL)) {
 		return TCL_ERROR;
 	    }
 	    len = strlen(name);
-	    if ((len >= 6) && (name[len-6] == '_') && 
+	    if ((len >= 6) && (name[len-6] == '_') &&
 		(strcmp(name+len-6, "_width") == 0)) {
 		if (Tcl_GetInt(interp, value, &width) != TCL_OK) {
 		    return -1;
 		}
-	    } else if ((len >= 7) && (name[len-7] == '_') && 
+	    } else if ((len >= 7) && (name[len-7] == '_') &&
 		       (strcmp(name+len-7, "_height") == 0)) {
 		if (Tcl_GetInt(interp, value, &height) != TCL_OK) {
 		    return -1;
 		}
-	    } else if ((len >= 6) && (name[len-6] == '_') && 
+	    } else if ((len >= 6) && (name[len-6] == '_') &&
 		       (strcmp(name+len-6, "_x_hot") == 0)) {
 		if (Tcl_GetInt(interp, value, &hotX) != TCL_OK) {
 		    return -1;
 		}
-	    } else if ((len >= 6) && (name[len-6] == '_') && 
+	    } else if ((len >= 6) && (name[len-6] == '_') &&
 		       (strcmp(name+len-6, "_y_hot") == 0)) {
 		if (Tcl_GetInt(interp, value, &hotY) != TCL_OK) {
 		    return -1;
 		}
-	    } 
+	    }
 	} else {
 	    re = Tcl_RegExpCompile(interp, " *static +.*char +");
 	    if (Tcl_RegExpExec(interp, re, line, line)) {
 		/* Find the { */
 	        /* Repair the string so we can search the entire string. */
- 	        *nextline = ' ';   
+ 	        *nextline = ' ';
 		p = strchr(line, '{');
 		if (p == NULL) {
 		    return -1;
@@ -731,7 +731,7 @@ ScaleRotateData(
     int srcBytesPerLine, destBytesPerLine;
 
     srcBytesPerLine = (srcPtr->width + 7) / 8;
-    Blt_GetBoundingBox(srcPtr->width, srcPtr->height, theta, &rotWidth, 
+    Blt_GetBoundingBox(srcPtr->width, srcPtr->height, theta, &rotWidth,
 	&rotHeight, (Point2D *)NULL);
     destPtr->width = (int)(rotWidth * scale + 0.5) ;
     destPtr->height = (int)(rotHeight * scale + 0.5);
@@ -961,7 +961,7 @@ ComposeOp(clientData, interp, argc, argv)
 	srcData.height = height;
 	srcData.arraySize = arraySize;
 
-	result = ScaleRotateData(interp, &srcData, theta, info.scale, 
+	result = ScaleRotateData(interp, &srcData, theta, info.scale,
 		 &destData);
 	Blt_Free(bits);		/* Free the un-transformed data array. */
 	if (result != TCL_OK) {
@@ -1052,7 +1052,7 @@ DefineOp(clientData, interp, argc, argv)
 	theta += 360.0;
     }
     /* If bitmap is to be rotated or scale, do it here */
-    if ((theta != 0.0) || (info.scale != 1.0)) { 
+    if ((theta != 0.0) || (info.scale != 1.0)) {
 	BitmapData srcData, destData;
 
 	srcData.bits = bits;
@@ -1060,7 +1060,7 @@ DefineOp(clientData, interp, argc, argv)
 	srcData.height = height;
 	srcData.arraySize = arraySize;
 
-	result = ScaleRotateData(interp, &srcData, theta, info.scale, 
+	result = ScaleRotateData(interp, &srcData, theta, info.scale,
 		 &destData);
 	Blt_Free(bits);		/* Free the array of un-transformed data. */
 	if (result != TCL_OK) {
@@ -1129,7 +1129,7 @@ HeightOp(clientData, interp, argc, argv)
     BitmapInterpData *dataPtr = clientData;
     int width, height;
     Pixmap bitmap;
-    
+
     bitmap = Tk_GetBitmap(interp, dataPtr->tkwin, Tk_GetUid(argv[2]));
     if (bitmap == None) {
 	return TCL_ERROR;
@@ -1332,7 +1332,7 @@ BitmapInterpDeleteProc(clientData, interp)
     Blt_HashEntry *hPtr;
     unsigned char *bits;
     Blt_HashSearch cursor;
-    
+
     for (hPtr = Blt_FirstHashEntry(&(dataPtr->bitmapTable), &cursor);
 	 hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	bits = (unsigned char *)Blt_GetHashValue(hPtr);
@@ -1358,7 +1358,7 @@ GetBitmapInterpData(interp)
 	dataPtr->interp = interp;
 	dataPtr->tkwin = Tk_MainWindow(interp);
 	dataPtr->display = Tk_Display(dataPtr->tkwin);
-	Tcl_SetAssocData(interp, BITMAP_THREAD_KEY, BitmapInterpDeleteProc, 
+	Tcl_SetAssocData(interp, BITMAP_THREAD_KEY, BitmapInterpDeleteProc,
 		 dataPtr);
 	Blt_InitHashTable(&(dataPtr->bitmapTable), BLT_STRING_KEYS);
     }

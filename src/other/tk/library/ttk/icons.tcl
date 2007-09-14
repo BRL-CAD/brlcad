@@ -2,7 +2,7 @@
 # $Id$
 #
 # Ttk package -- stock icons.
-# 
+#
 # Usage:
 #	$w configure -image [ttk::stockIcon $context/$icon]
 #
@@ -22,7 +22,7 @@ namespace eval ttk {
 }
 
 # stockIcon $name --
-#	Returns a Tk image for built-in icon $name. 
+#	Returns a Tk image for built-in icon $name.
 #
 proc ttk::stockIcon {name} {
     variable Icons
@@ -31,7 +31,7 @@ proc ttk::stockIcon {name} {
 
 # defineImage --
 #	Define a new stock icon.
-# 
+#
 proc ttk::defineImage {name args} {
     variable Icons
     set iconName ::ttk::icons::$name
@@ -40,7 +40,7 @@ proc ttk::defineImage {name args} {
 }
 
 #
-# Stock icons for dialogs 
+# Stock icons for dialogs
 #
 # SOURCE: dialog icons taken from BWidget toolkit.
 #

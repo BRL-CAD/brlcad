@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH DITHER 3 2/2/87 3
-.UC 4 
+.UC 4
 .SH NAME
 .HP
 dithermap, bwdithermap, make_square, dithergb, ditherbw \- functions for dithering color or black and white images.
@@ -57,7 +57,7 @@ int x, y, val, divN[256], modN[256], magic[16][16];
 .ad b
 .SH DESCRIPTION
 These functions provide a common set of routines for dithering a full
-color or gray scale image into a lower resolution color map.  
+color or gray scale image into a lower resolution color map.
 
 .I Dithermap
 computes a color map and some auxiliary parameters for dithering a
@@ -65,10 +65,10 @@ full color (24 bit) image to fewer bits.  The argument
 .I levels
 tells how many different intensity levels per primary color should be
 computed.  To get maximum use of a 256 entry color map, use
-.IR levels =6.  
+.IR levels =6.
 The computed map uses \fIlevels^3\fP entries.
 The
-.I gamma 
+.I gamma
 argument provides for gamma compensation of the generated color map
 (that is, the values in the map will be adjusted to give a linear
 intensity variation on a display with the given gamma).
@@ -103,7 +103,7 @@ The color map index for a dithered full color pixel is computed by
 .IR dithergb .
 Since the pattern depends on the screen location, the first two
 arguments
-.IR x 
+.IR x
 and
 .IR y ,
 specify that location.  The true color of the pixel at that location
@@ -116,7 +116,7 @@ The number of intensity
 .I levels
 and the dithering parameter matrices computed by
 .I dithermap
-are also passed to 
+are also passed to
 .IR dithergb .
 .PP
 The color map index for a dithered gray scale pixel is computed by

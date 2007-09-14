@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_TraceVar 3 7.4 Tcl "Tcl Library Procedures"
 .BS
@@ -205,7 +205,7 @@ The procedures \fBTcl_TraceVar2\fR, \fBTcl_UntraceVar2\fR, and
 except that the name of the variable consists of two parts.
 \fIName1\fR gives the name of a scalar variable or array,
 and \fIname2\fR gives the name of an element within an array.
-When \fIname2\fR is NULL, 
+When \fIname2\fR is NULL,
 \fIname1\fR may contain both an array and an element name:
 if the name contains an open parenthesis and ends with a
 close parenthesis, then the value between the parentheses is
@@ -213,11 +213,11 @@ treated as an element name (which can have any string value) and
 the characters before the first open
 parenthesis are treated as the name of an array variable.
 If \fIname2\fR is NULL and \fIname1\fR does not refer
-to an array element 
+to an array element
 it means that either the variable is
 a scalar or the trace is to be set on the entire array rather
 than an individual element (see WHOLE-ARRAY TRACES below for
-more information). 
+more information).
 
 
 .SH "ACCESSING VARIABLES DURING TRACES"

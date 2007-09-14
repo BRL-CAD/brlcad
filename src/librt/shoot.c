@@ -122,12 +122,12 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 {
     struct rt_piecestate	*psp;
     int			i;
-    
+
     RT_CK_RESOURCE(resp);
     if (rtip) {
 	RT_CK_RTI(rtip);
     }
-    
+
     if( !resp->re_pieces ) {
 	/* no pieces allocated, nothing to do */
 	if (rtip) {
@@ -135,7 +135,7 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	}
 	return;
     }
-    
+
     /* pieces allocated, need to clean up */
     if (rtip) {
 	for( i = rtip->rti_nsolids_with_pieces-1; i >= 0; i-- )  {
@@ -149,9 +149,9 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
     }
     bu_free( (char *)resp->re_pieces, "re_pieces[]" );
     resp->re_pieces = NULL;
-    
+
     bu_ptbl_free( &resp->re_pieces_pending );
-    
+
     rtip->rti_nsolids_with_pieces = 0;
 }
 

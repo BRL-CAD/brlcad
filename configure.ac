@@ -1217,11 +1217,11 @@ dnl *** X11 ***
 if test "x$bc_with_x11" != "xno" ; then
 
     if test "x$bc_with_x11_val" != "x" ; then
-	if test "x$x_includes" = "xNONE"; then 
+	if test "x$x_includes" = "xNONE"; then
 	    x_includes="$bc_with_x11_val/include"
 	    ac_x_includes="$x_includes"
 	fi
-	if test "x$x_libraries" = "xNONE"; then 
+	if test "x$x_libraries" = "xNONE"; then
 	    x_libraries="$bc_with_x11_val/lib"
 	    ac_x_libraries="$x_libraries"
 	fi
@@ -1465,7 +1465,7 @@ stdcxx_link_works=no
 LIBSTDCXX=""
 AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++",
 	[PRELIBS="$LIBS"
-	 LIBS="$LIBS $LIBM" 
+	 LIBS="$LIBS $LIBM"
 	 AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++ $LIBM"
 	 LIBS="$PRELIBS"
 	 )]
@@ -2571,7 +2571,7 @@ int main() {
 #define ATTEMPT(try,fail) if(try) { fprintf(stderr, fail": %s\n", \
 	interp->result); return -1; }
     ATTEMPT(Tcl_Init(interp) == TCL_ERROR,"Tcl_Init returned error");
-    ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl, 
+    ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl,
  	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
 #if TK_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8  (it's %d)\n", TK_MAJOR_VERSION);
@@ -2766,7 +2766,7 @@ int main() {
 	printf("ITCL interp failed to initaliaze: %s\n", interp->result);
 	return 1;
     }
-    res = Tcl_Eval(interp, cmd); 
+    res = Tcl_Eval(interp, cmd);
     if ( res != TCL_OK) {
 	printf("Failed to load Iwidgets: %s\n", interp->result);
 	if(Tcl_Eval(interp, "package names") == TCL_ERROR)

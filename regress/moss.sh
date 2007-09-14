@@ -64,7 +64,7 @@ else
 	    moss_ref.pix \
 	    > moss.pix.diff \
 	    2> moss-diff.log
-	
+
 	echo -n moss.pix
 	tr , '\012' < moss-diff.log | grep many
 	if test $? -ne 0 ; then

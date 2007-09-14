@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -16,7 +16,7 @@
 
 #include "opennurbs.h"
 
-ON_Cone::ON_Cone() 
+ON_Cone::ON_Cone()
 {
   height = 0.0;
 }
@@ -77,7 +77,7 @@ double ON_Cone::AngleInDegrees() const
   return 180.0*AngleInRadians()/ON_PI;
 }
 
-ON_Circle ON_Cone::CircleAt( 
+ON_Circle ON_Cone::CircleAt(
       double height_parameter
       ) const
 {
@@ -90,7 +90,7 @@ ON_Circle ON_Cone::CircleAt(
   return c;
 }
 
-ON_Line ON_Cone::LineAt( 
+ON_Line ON_Cone::LineAt(
       double radial_parameter
       ) const
 {
@@ -139,8 +139,8 @@ BOOL ON_Cone::Transform( const ON_Xform& xform )
   return rc;
 }
 
-bool ON_Cone::ClosestPointTo( 
-          ON_3dPoint point, 
+bool ON_Cone::ClosestPointTo(
+          ON_3dPoint point,
           double* radial_parameter,
           double* height_parameter
        ) const
@@ -162,7 +162,7 @@ bool ON_Cone::ClosestPointTo(
     {
       a -= 2.0*ON_PI;
     }
-    
+
     if (a < 0.0 )
     {
       a += 2.0*ON_PI;
@@ -194,7 +194,7 @@ bool ON_Cone::ClosestPointTo(
 }
 
 // returns point on cylinder that is closest to given point
-ON_3dPoint ON_Cone::ClosestPointTo( 
+ON_3dPoint ON_Cone::ClosestPointTo(
        ON_3dPoint point
        ) const
 {
@@ -279,7 +279,7 @@ int ON_Cone::GetNurbForm( ON_NurbsSurface& s ) const
 
     if ( height >= 0.0 ) {
       s.m_knot[1][0] = 0.0;
-      s.m_knot[1][1] = height; 
+      s.m_knot[1][1] = height;
       j0 = 0;
       j1 = 1;
     }
@@ -350,7 +350,7 @@ ON_Brep* ON_Cone::BrepForm( ON_Brep* brep ) const
       pBrep = brep;
     else
       pBrep = new ON_Brep();
-    if ( !pBrep->Create(pRevSurface) ) 
+    if ( !pBrep->Create(pRevSurface) )
     {
       if ( !brep )
         delete pBrep;
@@ -361,11 +361,11 @@ ON_Brep* ON_Cone::BrepForm( ON_Brep* brep ) const
         pRevSurface = 0;
       }
     }
-    else 
+    else
     {
       // add cap
       ON_Circle circle = CircleAt(height);
-      ON_NurbsSurface* pCapSurface = ON_NurbsSurfaceQuadrilateral( 
+      ON_NurbsSurface* pCapSurface = ON_NurbsSurfaceQuadrilateral(
         circle.plane.PointAt(-radius,-radius),
         circle.plane.PointAt(+radius,-radius),
         circle.plane.PointAt(+radius,+radius),

@@ -36,7 +36,7 @@ static Ttk_Tag NewTag(Ttk_TagTable tagTable)
     return tag;
 }
 
-static void DeleteTag(Ttk_Tag tag, int nOptions) 
+static void DeleteTag(Ttk_Tag tag, int nOptions)
 {
     int i;
     for (i = 0; i < nOptions; ++i) {
@@ -107,7 +107,7 @@ Ttk_Tag Ttk_GetTagFromObj(Ttk_TagTable tagTable, Tcl_Obj *objPtr)
  * Result must be passed to Ttk_FreeTagList().
  */
 extern int Ttk_GetTagListFromObj(
-    Tcl_Interp *interp, 
+    Tcl_Interp *interp,
     Ttk_TagTable tagTable,
     Tcl_Obj *objPtr,
     int *nTags_rtn,
@@ -141,7 +141,7 @@ extern int Ttk_GetTagListFromObj(
 
 void Ttk_FreeTagList(void **taglist)
 {
-    if (taglist) 
+    if (taglist)
 	ckfree((ClientData)taglist);
 }
 

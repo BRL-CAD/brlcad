@@ -145,9 +145,9 @@ typedef VOID **TclHandle;
 
 
 /*
- *   The following fills in dummy types for structure refered to 
+ *   The following fills in dummy types for structure refered to
  *   internally by the Tcl interpreter.  Since we don't need the actual
- *   size of the structures (they are only pointer references), we'll 
+ *   size of the structures (they are only pointer references), we'll
  *   simply provide empty opaque types.
  *
  */

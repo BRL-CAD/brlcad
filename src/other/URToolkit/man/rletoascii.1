@@ -1,6 +1,6 @@
 .\" Copyright (c) 1990, University of Michigan
 .TH RLETOASCII 1 "Jun 18, 1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletoascii \- Print an RLE image as ASCII chars.
 .SH SYNOPSIS
@@ -20,16 +20,16 @@ rletoascii \- Print an RLE image as ASCII chars.
 .I Rletoascii
 reads a file in
 .IR RLE (5)
-format, converts it to black and white, then dumps it as ASCII characters. 
+format, converts it to black and white, then dumps it as ASCII characters.
 The 0 to 255 range of pixel values in
 the image is scaled to the length of
 .I asciistr
 and a the character at that position in the string is printed for each pixel.
 Input will be read from
 .I infile
-if specified, from standard input, otherwise.  Output dumps to 
+if specified, from standard input, otherwise.  Output dumps to
 standard output, or
-.I outfile, 
+.I outfile,
 if specified.
 
 Usually, the input will need to be resized by
@@ -49,7 +49,7 @@ option.  Finally, it may be helpful to maximize the dynamic range with
 .BI \-S \ asciistr
 Specifies the range of ascii characters for conversion.  The default string
 (\fB@BR*#$PX0woIcv:+!~"., \fP)
-was designed to look good with the X 6x13 font.  
+was designed to look good with the X 6x13 font.
 .TP
 .B \-r
 Reverse video.  This causes the 0 to 255 range to be mapped to the reverse of

@@ -1,9 +1,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_Panic 3 8.4 Tcl "Tcl Library Procedures"
 .BS
@@ -72,7 +72,7 @@ callers of \fBTcl_Panic\fR, \fIpanicProc\fR must not return; it must
 call \fBabort\fR.  \fIpanicProc\fR should avoid making calls into the
 Tcl library, or into other libraries that may call the Tcl library,
 since the original call to \fBTcl_Panic\fR indicates the Tcl library is
-not in a state of reliable operation.  
+not in a state of reliable operation.
 .PP
 The typical use of \fBTcl_SetPanicProc\fR arranges for the error message
 to be displayed or reported in a manner more suitable for the

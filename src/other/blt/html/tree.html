@@ -7,9 +7,9 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
-tree -  Create and manage tree data objects. 
+tree -  Create and manage tree data objects.
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <B>blt::tree
 create </B>?<I>treeName</I>? <P>
@@ -22,18 +22,18 @@ general ordered tree of nodes.  Each node has both a label and a key-value
 list of data.  Data can be heterogeneous, since nodes do not have to contain
 the same data keys.  It is associated with a Tcl command that you can use
 to access and modify the its structure and data. Tree objects can also be
-managed via a C API. 
+managed via a C API.
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 <P>
- 
+
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 <P>
- 
+
 <H2><A NAME="sect5" HREF="#toc5">Syntax</A></H2>
 
 <DL>
 
-<DT><B>tree create</B> ?<I>treeName</I>? 
+<DT><B>tree create</B> ?<I>treeName</I>?
  </DT>
 <DD>Creates a new tree object.  The name of the new tree is returned.  If no
 <I>treeName</I> argument is present, then the name of the tree is automatically
@@ -83,7 +83,7 @@ to refer to all of the nodes in the tree that have a tag matching the specifier.
 an id that selects a single node or a tag that selects zero or more nodes.
  Many tree commands only operate on a single node at a time; if <I>node</I> is
 specified in a way that names multiple items, then an error "refers to
-more than one node" is generated. 
+more than one node" is generated.
 <H2><A NAME="sect7" HREF="#toc7">Node Modifiers</A></H2>
 You can also specify node
 in relation to another node by appending one or more modifiers to the node
@@ -129,7 +129,7 @@ example,  even if the node is labeled "parent"). </DD>
 It's an error the node can't
 be found.  For example, <B>lastchild</B> and <B>firstchild</B> will generate errors if
 the node has no children.  The exception to this is the <B>index</B> operation.
-You can use <B>index</B> to test if a modifier is valid. 
+You can use <B>index</B> to test if a modifier is valid.
 <H2><A NAME="sect8" HREF="#toc8">Tree Operations</A></H2>
 Once you
 create a tree object, you can use its Tcl command  to query or modify it.
@@ -137,7 +137,7 @@ create a tree object, you can use its Tcl command  to query or modify it.
 <P>
 <CODE><I>treeName</I> <I>operation</I> ?<I>arg</I>?...<BR>
 </CODE><P>Both <I>operation</I> and its arguments determine the exact behavior of the command.
- The operations available for trees are listed below. 
+ The operations available for trees are listed below.
 <DL>
 
 <DT><I>treeName</I> <B>ancestor</B>
@@ -716,7 +716,7 @@ Tags are invoked by the <B>tag</B> operation.  The general form is <BR>
 <P>
 <CODE><I>treeName</I> <B>tag</B> <I>operation</I> ?<I>arg</I>?...<BR>
 </CODE><P>Both <I>operation</I> and its arguments determine the exact behavior of the command.
- The operations available for tags are listed below. 
+ The operations available for tags are listed below.
 <DL>
 
 <DT><I>treeName</I> <B>tag add</B> <I>string</I>
@@ -759,14 +759,14 @@ traces are invoked by the <B>trace</B> operation.  The general form is <BR>
 <P>
 <CODE><I>treeName</I> <B>trace</B> <I>operation</I> ?<I>arg</I>?...<BR>
 </CODE><P>Both <I>operation</I> and its arguments determine the exact behavior of the command.
- The operations available for traces are listed below. 
+ The operations available for traces are listed below.
 <DL>
 
 <DT><I>treeName</I> <B>trace create</B>
 <I>node</I> <I>key</I> <I>ops</I> <I>command</I> </DT>
 <DD>Creates a trace for <I>node</I> on data field <I>key</I>.  <I>Node</I> can
 refer to more than one node (for example, the tag <B>all</B>). If <I>node</I> is a tag,
-any node with that tag can possibly trigger a trace, invoking <I>command</I>. 
+any node with that tag can possibly trigger a trace, invoking <I>command</I>.
  <I>Command</I> is command prefix, typically a procedure name. Whenever a trace
 is triggered, four arguments are appended to <I>command</I> before it is invoked:
 <I>treeName</I>, id of the node, <I>key</I> and, <I>ops</I>. Note that no nodes need have the
@@ -827,7 +827,7 @@ handled by the <B>notify</B> operation.  The general form is <BR>
 <P>
 <CODE><I>treeName</I> <B>notify</B> <I>operation</I> ?<I>arg</I>?...<BR>
 </CODE><P>Both <I>operation</I> and its arguments determine the exact behavior of the command.
- The operations available for events are listed below. 
+ The operations available for events are listed below.
 <DL>
 
 <DT><I>treeName</I> <B>notify create</B>
@@ -904,7 +904,7 @@ Blt_TreeApply,
  Blt_TreeNodeDegree,  Blt_TreeNodeDepth,  Blt_TreeNodeId,  Blt_TreeNodeLabel,
  Blt_TreeNodeParent,  Blt_TreePrevNode,  Blt_TreePrevSibling,  Blt_TreeRelabelNode,
  Blt_TreeReleaseToken,  Blt_TreeRootNode,  Blt_TreeSetValue,  Blt_TreeSize,
- Blt_TreeSortNode, and Blt_TreeUnsetValue. 
+ Blt_TreeSortNode, and Blt_TreeUnsetValue.
 <H2><A NAME="sect13" HREF="#toc13">Keywords</A></H2>
 tree, hiertable, widget
 <P>

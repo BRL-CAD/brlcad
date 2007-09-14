@@ -30,7 +30,7 @@
 #define LEGEND_BOTTOM	(1<<2)	/* Bottom margin */
 #define LEGEND_TOP	(1<<3)	/* Top margin, below the graph title. */
 #define LEGEND_PLOT	(1<<4)	/* Plot area */
-#define LEGEND_XY	(1<<5)	/* Screen coordinates in the plotting 
+#define LEGEND_XY	(1<<5)	/* Screen coordinates in the plotting
 				 * area. */
 #define LEGEND_WINDOW	(1<<6)	/* External window. */
 #define LEGEND_IN_MARGIN \
@@ -51,6 +51,6 @@ extern int Blt_LegendIsHidden _ANSI_ARGS_((Legend *legendPtr));
 extern int Blt_LegendIsRaised _ANSI_ARGS_((Legend *legendPtr));
 extern int Blt_LegendX _ANSI_ARGS_((Legend *legendPtr));
 extern int Blt_LegendY _ANSI_ARGS_((Legend *legendPtr));
-extern void Blt_LegendRemoveElement _ANSI_ARGS_((Legend *legendPtr, 
+extern void Blt_LegendRemoveElement _ANSI_ARGS_((Legend *legendPtr,
 	Element *elemPtr));
 #endif /* BLT_GR_LEGEND_H */

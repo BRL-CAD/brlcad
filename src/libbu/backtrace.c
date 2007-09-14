@@ -218,7 +218,7 @@ backtrace(char **args, int fd)
 				    perror("error writing trim message to file");
 				    break;
 				}
-			    }				
+			    }
 			}
 			position = 0;
 			continue;

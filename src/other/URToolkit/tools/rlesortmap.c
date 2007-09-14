@@ -1,6 +1,6 @@
-/* 
+/*
  * rlesortmap.c - Sort the colormap using a n-d peano curve.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -25,7 +25,7 @@ extern int pcompar();
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage:
  * 	rlesortmap [-o outfile] [infile]
  * Inputs:
@@ -171,7 +171,7 @@ char **argv;
 		rle_putcom( buf, &out_hdr );
 	    }
 	}
-	
+
 	/* Allocate space for the rle opcode information */
 	if ( rle_raw_alloc( &in_hdr, &scan, &nraw ) < 0 )
 	    RLE_CHECK_ALLOC( in_hdr.cmd, 0, "image data" );
@@ -206,7 +206,7 @@ char **argv;
 			    case RByteDataOp:
 				for ( j = 0; j < scan[c][i].length;
 				      j++ )
-				    scan[c][i].u.pixels[j] = 
+				    scan[c][i].u.pixels[j] =
 					map_pixel( scan[c][i].u.pixels[j],
 						   cmaplen, isort);
 				break;
@@ -238,7 +238,7 @@ char **argv;
 
 /*****************************************************************
  * TAG( pcompar )
- * 
+ *
  * Compares the indicated colormap entries using the Peano ordering.
  * Inputs:
  * 	a, b:	Indices into the sortindex array (which indexes the

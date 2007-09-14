@@ -41,13 +41,13 @@ TCL_EXTERN(int)		Itcl_IsClass _ANSI_ARGS_((Tcl_Command cmd));
 #ifndef Itcl_FindClass_TCL_DECLARED
 #define Itcl_FindClass_TCL_DECLARED
 /* 2 */
-TCL_EXTERN(ItclClass*)	Itcl_FindClass _ANSI_ARGS_((Tcl_Interp* interp, 
+TCL_EXTERN(ItclClass*)	Itcl_FindClass _ANSI_ARGS_((Tcl_Interp* interp,
 				CONST char* path, int autoload));
 #endif
 #ifndef Itcl_FindObject_TCL_DECLARED
 #define Itcl_FindObject_TCL_DECLARED
 /* 3 */
-TCL_EXTERN(int)		Itcl_FindObject _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_FindObject _ANSI_ARGS_((Tcl_Interp * interp,
 				CONST char * name, ItclObject ** roPtr));
 #endif
 #ifndef Itcl_IsObject_TCL_DECLARED
@@ -58,13 +58,13 @@ TCL_EXTERN(int)		Itcl_IsObject _ANSI_ARGS_((Tcl_Command cmd));
 #ifndef Itcl_ObjectIsa_TCL_DECLARED
 #define Itcl_ObjectIsa_TCL_DECLARED
 /* 5 */
-TCL_EXTERN(int)		Itcl_ObjectIsa _ANSI_ARGS_((ItclObject * contextObj, 
+TCL_EXTERN(int)		Itcl_ObjectIsa _ANSI_ARGS_((ItclObject * contextObj,
 				ItclClass * cdefn));
 #endif
 #ifndef Itcl_Protection_TCL_DECLARED
 #define Itcl_Protection_TCL_DECLARED
 /* 6 */
-TCL_EXTERN(int)		Itcl_Protection _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_Protection _ANSI_ARGS_((Tcl_Interp * interp,
 				int newLevel));
 #endif
 #ifndef Itcl_ProtectionStr_TCL_DECLARED
@@ -75,14 +75,14 @@ TCL_EXTERN(char*)	Itcl_ProtectionStr _ANSI_ARGS_((int pLevel));
 #ifndef Itcl_CanAccess_TCL_DECLARED
 #define Itcl_CanAccess_TCL_DECLARED
 /* 8 */
-TCL_EXTERN(int)		Itcl_CanAccess _ANSI_ARGS_((ItclMember* memberPtr, 
+TCL_EXTERN(int)		Itcl_CanAccess _ANSI_ARGS_((ItclMember* memberPtr,
 				Tcl_Namespace* fromNsPtr));
 #endif
 #ifndef Itcl_CanAccessFunc_TCL_DECLARED
 #define Itcl_CanAccessFunc_TCL_DECLARED
 /* 9 */
 TCL_EXTERN(int)		Itcl_CanAccessFunc _ANSI_ARGS_((
-				ItclMemberFunc* mfunc, 
+				ItclMemberFunc* mfunc,
 				Tcl_Namespace* fromNsPtr));
 #endif
 #ifndef Itcl_GetTrueNamespace_TCL_DECLARED
@@ -94,56 +94,56 @@ TCL_EXTERN(Tcl_Namespace*) Itcl_GetTrueNamespace _ANSI_ARGS_((
 #ifndef Itcl_ParseNamespPath_TCL_DECLARED
 #define Itcl_ParseNamespPath_TCL_DECLARED
 /* 11 */
-TCL_EXTERN(void)	Itcl_ParseNamespPath _ANSI_ARGS_((CONST char * name, 
-				Tcl_DString * buffer, char ** head, 
+TCL_EXTERN(void)	Itcl_ParseNamespPath _ANSI_ARGS_((CONST char * name,
+				Tcl_DString * buffer, char ** head,
 				char ** tail));
 #endif
 #ifndef Itcl_DecodeScopedCommand_TCL_DECLARED
 #define Itcl_DecodeScopedCommand_TCL_DECLARED
 /* 12 */
 TCL_EXTERN(int)		Itcl_DecodeScopedCommand _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char * name, 
+				Tcl_Interp * interp, CONST char * name,
 				Tcl_Namespace ** rNsPtr, char ** rCmdPtr));
 #endif
 #ifndef Itcl_EvalArgs_TCL_DECLARED
 #define Itcl_EvalArgs_TCL_DECLARED
 /* 13 */
-TCL_EXTERN(int)		Itcl_EvalArgs _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_EvalArgs _ANSI_ARGS_((Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_CreateArgs_TCL_DECLARED
 #define Itcl_CreateArgs_TCL_DECLARED
 /* 14 */
-TCL_EXTERN(Tcl_Obj*)	Itcl_CreateArgs _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char * string, int objc, 
+TCL_EXTERN(Tcl_Obj*)	Itcl_CreateArgs _ANSI_ARGS_((Tcl_Interp * interp,
+				CONST char * string, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_PushContext_TCL_DECLARED
 #define Itcl_PushContext_TCL_DECLARED
 /* 15 */
-TCL_EXTERN(int)		Itcl_PushContext _ANSI_ARGS_((Tcl_Interp * interp, 
-				ItclMember * member, 
-				ItclClass * contextClass, 
-				ItclObject * contextObj, 
+TCL_EXTERN(int)		Itcl_PushContext _ANSI_ARGS_((Tcl_Interp * interp,
+				ItclMember * member,
+				ItclClass * contextClass,
+				ItclObject * contextObj,
 				ItclContext * contextPtr));
 #endif
 #ifndef Itcl_PopContext_TCL_DECLARED
 #define Itcl_PopContext_TCL_DECLARED
 /* 16 */
-TCL_EXTERN(void)	Itcl_PopContext _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(void)	Itcl_PopContext _ANSI_ARGS_((Tcl_Interp * interp,
 				ItclContext * contextPtr));
 #endif
 #ifndef Itcl_GetContext_TCL_DECLARED
 #define Itcl_GetContext_TCL_DECLARED
 /* 17 */
-TCL_EXTERN(int)		Itcl_GetContext _ANSI_ARGS_((Tcl_Interp * interp, 
-				ItclClass ** cdefnPtr, 
+TCL_EXTERN(int)		Itcl_GetContext _ANSI_ARGS_((Tcl_Interp * interp,
+				ItclClass ** cdefnPtr,
 				ItclObject ** odefnPtr));
 #endif
 #ifndef Itcl_InitHierIter_TCL_DECLARED
 #define Itcl_InitHierIter_TCL_DECLARED
 /* 18 */
-TCL_EXTERN(void)	Itcl_InitHierIter _ANSI_ARGS_((ItclHierIter * iter, 
+TCL_EXTERN(void)	Itcl_InitHierIter _ANSI_ARGS_((ItclHierIter * iter,
 				ItclClass * cdefn));
 #endif
 #ifndef Itcl_DeleteHierIter_TCL_DECLARED
@@ -161,63 +161,63 @@ TCL_EXTERN(ItclClass*)	Itcl_AdvanceHierIter _ANSI_ARGS_((
 #define Itcl_FindClassesCmd_TCL_DECLARED
 /* 21 */
 TCL_EXTERN(int)		Itcl_FindClassesCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_FindObjectsCmd_TCL_DECLARED
 #define Itcl_FindObjectsCmd_TCL_DECLARED
 /* 22 */
 TCL_EXTERN(int)		Itcl_FindObjectsCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ProtectionCmd_TCL_DECLARED
 #define Itcl_ProtectionCmd_TCL_DECLARED
 /* 23 */
 TCL_EXTERN(int)		Itcl_ProtectionCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_DelClassCmd_TCL_DECLARED
 #define Itcl_DelClassCmd_TCL_DECLARED
 /* 24 */
-TCL_EXTERN(int)		Itcl_DelClassCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_DelClassCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_DelObjectCmd_TCL_DECLARED
 #define Itcl_DelObjectCmd_TCL_DECLARED
 /* 25 */
-TCL_EXTERN(int)		Itcl_DelObjectCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_DelObjectCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ScopeCmd_TCL_DECLARED
 #define Itcl_ScopeCmd_TCL_DECLARED
 /* 26 */
-TCL_EXTERN(int)		Itcl_ScopeCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_ScopeCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_CodeCmd_TCL_DECLARED
 #define Itcl_CodeCmd_TCL_DECLARED
 /* 27 */
-TCL_EXTERN(int)		Itcl_CodeCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_CodeCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_StubCreateCmd_TCL_DECLARED
 #define Itcl_StubCreateCmd_TCL_DECLARED
 /* 28 */
 TCL_EXTERN(int)		Itcl_StubCreateCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_StubExistsCmd_TCL_DECLARED
 #define Itcl_StubExistsCmd_TCL_DECLARED
 /* 29 */
 TCL_EXTERN(int)		Itcl_StubExistsCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_IsStub_TCL_DECLARED
@@ -228,14 +228,14 @@ TCL_EXTERN(int)		Itcl_IsStub _ANSI_ARGS_((Tcl_Command cmd));
 #ifndef Itcl_CreateClass_TCL_DECLARED
 #define Itcl_CreateClass_TCL_DECLARED
 /* 31 */
-TCL_EXTERN(int)		Itcl_CreateClass _ANSI_ARGS_((Tcl_Interp* interp, 
-				CONST char* path, ItclObjectInfo * info, 
+TCL_EXTERN(int)		Itcl_CreateClass _ANSI_ARGS_((Tcl_Interp* interp,
+				CONST char* path, ItclObjectInfo * info,
 				ItclClass ** rPtr));
 #endif
 #ifndef Itcl_DeleteClass_TCL_DECLARED
 #define Itcl_DeleteClass_TCL_DECLARED
 /* 32 */
-TCL_EXTERN(int)		Itcl_DeleteClass _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_DeleteClass _ANSI_ARGS_((Tcl_Interp * interp,
 				ItclClass * cdefnPtr));
 #endif
 #ifndef Itcl_FindClassNamespace_TCL_DECLARED
@@ -247,32 +247,32 @@ TCL_EXTERN(Tcl_Namespace*) Itcl_FindClassNamespace _ANSI_ARGS_((
 #ifndef Itcl_HandleClass_TCL_DECLARED
 #define Itcl_HandleClass_TCL_DECLARED
 /* 34 */
-TCL_EXTERN(int)		Itcl_HandleClass _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_HandleClass _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassCmdResolver_TCL_DECLARED
 #define Itcl_ClassCmdResolver_TCL_DECLARED
 /* 35 */
 TCL_EXTERN(int)		Itcl_ClassCmdResolver _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char* name, 
-				Tcl_Namespace * context, int flags, 
+				Tcl_Interp * interp, CONST char* name,
+				Tcl_Namespace * context, int flags,
 				Tcl_Command * rPtr));
 #endif
 #ifndef Itcl_ClassVarResolver_TCL_DECLARED
 #define Itcl_ClassVarResolver_TCL_DECLARED
 /* 36 */
 TCL_EXTERN(int)		Itcl_ClassVarResolver _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char* name, 
-				Tcl_Namespace * context, int flags, 
+				Tcl_Interp * interp, CONST char* name,
+				Tcl_Namespace * context, int flags,
 				Tcl_Var * rPtr));
 #endif
 #ifndef Itcl_ClassCompiledVarResolver_TCL_DECLARED
 #define Itcl_ClassCompiledVarResolver_TCL_DECLARED
 /* 37 */
 TCL_EXTERN(int)		Itcl_ClassCompiledVarResolver _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char* name, 
-				int length, Tcl_Namespace * context, 
+				Tcl_Interp * interp, CONST char* name,
+				int length, Tcl_Namespace * context,
 				Tcl_ResolvedVarInfo ** rPtr));
 #endif
 #ifndef Itcl_BuildVirtualTables_TCL_DECLARED
@@ -284,8 +284,8 @@ TCL_EXTERN(void)	Itcl_BuildVirtualTables _ANSI_ARGS_((
 #ifndef Itcl_CreateVarDefn_TCL_DECLARED
 #define Itcl_CreateVarDefn_TCL_DECLARED
 /* 39 */
-TCL_EXTERN(int)		Itcl_CreateVarDefn _ANSI_ARGS_((Tcl_Interp * interp, 
-				ItclClass* cdefn, char* name, char* init, 
+TCL_EXTERN(int)		Itcl_CreateVarDefn _ANSI_ARGS_((Tcl_Interp * interp,
+				ItclClass* cdefn, char* name, char* init,
 				char* config, ItclVarDefn** vdefnPtr));
 #endif
 #ifndef Itcl_DeleteVarDefn_TCL_DECLARED
@@ -296,13 +296,13 @@ TCL_EXTERN(void)	Itcl_DeleteVarDefn _ANSI_ARGS_((ItclVarDefn * vdefn));
 #ifndef Itcl_GetCommonVar_TCL_DECLARED
 #define Itcl_GetCommonVar_TCL_DECLARED
 /* 41 */
-TCL_EXTERN(CONST char*)	 Itcl_GetCommonVar _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(CONST char*)	 Itcl_GetCommonVar _ANSI_ARGS_((Tcl_Interp * interp,
 				CONST char * name, ItclClass * contextClass));
 #endif
 #ifndef Itcl_CreateMember_TCL_DECLARED
 #define Itcl_CreateMember_TCL_DECLARED
 /* 42 */
-TCL_EXTERN(ItclMember*)	 Itcl_CreateMember _ANSI_ARGS_((Tcl_Interp* interp, 
+TCL_EXTERN(ItclMember*)	 Itcl_CreateMember _ANSI_ARGS_((Tcl_Interp* interp,
 				ItclClass * cdefn, CONST char* name));
 #endif
 #ifndef Itcl_DeleteMember_TCL_DECLARED
@@ -313,87 +313,87 @@ TCL_EXTERN(void)	Itcl_DeleteMember _ANSI_ARGS_((ItclMember * memPtr));
 #ifndef Itcl_CreateObject_TCL_DECLARED
 #define Itcl_CreateObject_TCL_DECLARED
 /* 44 */
-TCL_EXTERN(int)		Itcl_CreateObject _ANSI_ARGS_((Tcl_Interp * interp, 
-				CONST char* name, ItclClass * cdefn, 
-				int objc, Tcl_Obj *CONST objv[], 
+TCL_EXTERN(int)		Itcl_CreateObject _ANSI_ARGS_((Tcl_Interp * interp,
+				CONST char* name, ItclClass * cdefn,
+				int objc, Tcl_Obj *CONST objv[],
 				ItclObject ** roPtr));
 #endif
 #ifndef Itcl_DeleteObject_TCL_DECLARED
 #define Itcl_DeleteObject_TCL_DECLARED
 /* 45 */
-TCL_EXTERN(int)		Itcl_DeleteObject _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_DeleteObject _ANSI_ARGS_((Tcl_Interp * interp,
 				ItclObject * contextObj));
 #endif
 #ifndef Itcl_DestructObject_TCL_DECLARED
 #define Itcl_DestructObject_TCL_DECLARED
 /* 46 */
-TCL_EXTERN(int)		Itcl_DestructObject _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_DestructObject _ANSI_ARGS_((Tcl_Interp * interp,
 				ItclObject * contextObj, int flags));
 #endif
 #ifndef Itcl_HandleInstance_TCL_DECLARED
 #define Itcl_HandleInstance_TCL_DECLARED
 /* 47 */
 TCL_EXTERN(int)		Itcl_HandleInstance _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_GetInstanceVar_TCL_DECLARED
 #define Itcl_GetInstanceVar_TCL_DECLARED
 /* 48 */
 TCL_EXTERN(CONST char*)	 Itcl_GetInstanceVar _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char * name, 
-				ItclObject * contextObj, 
+				Tcl_Interp * interp, CONST char * name,
+				ItclObject * contextObj,
 				ItclClass * contextClass));
 #endif
 #ifndef Itcl_ScopedVarResolver_TCL_DECLARED
 #define Itcl_ScopedVarResolver_TCL_DECLARED
 /* 49 */
 TCL_EXTERN(int)		Itcl_ScopedVarResolver _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char * name, 
-				Tcl_Namespace * contextNs, int flags, 
+				Tcl_Interp * interp, CONST char * name,
+				Tcl_Namespace * contextNs, int flags,
 				Tcl_Var * rPtr));
 #endif
 #ifndef Itcl_BodyCmd_TCL_DECLARED
 #define Itcl_BodyCmd_TCL_DECLARED
 /* 50 */
-TCL_EXTERN(int)		Itcl_BodyCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BodyCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ConfigBodyCmd_TCL_DECLARED
 #define Itcl_ConfigBodyCmd_TCL_DECLARED
 /* 51 */
-TCL_EXTERN(int)		Itcl_ConfigBodyCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_ConfigBodyCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_CreateMethod_TCL_DECLARED
 #define Itcl_CreateMethod_TCL_DECLARED
 /* 52 */
-TCL_EXTERN(int)		Itcl_CreateMethod _ANSI_ARGS_((Tcl_Interp* interp, 
-				ItclClass * cdefn, CONST char* name, 
+TCL_EXTERN(int)		Itcl_CreateMethod _ANSI_ARGS_((Tcl_Interp* interp,
+				ItclClass * cdefn, CONST char* name,
 				CONST char* arglist, CONST char* body));
 #endif
 #ifndef Itcl_CreateProc_TCL_DECLARED
 #define Itcl_CreateProc_TCL_DECLARED
 /* 53 */
-TCL_EXTERN(int)		Itcl_CreateProc _ANSI_ARGS_((Tcl_Interp* interp, 
-				ItclClass * cdefn, CONST char* name, 
+TCL_EXTERN(int)		Itcl_CreateProc _ANSI_ARGS_((Tcl_Interp* interp,
+				ItclClass * cdefn, CONST char* name,
 				CONST char* arglist, CONST char* body));
 #endif
 #ifndef Itcl_CreateMemberFunc_TCL_DECLARED
 #define Itcl_CreateMemberFunc_TCL_DECLARED
 /* 54 */
 TCL_EXTERN(int)		Itcl_CreateMemberFunc _ANSI_ARGS_((
-				Tcl_Interp* interp, ItclClass * cdefn, 
-				CONST char* name, CONST char* arglist, 
+				Tcl_Interp* interp, ItclClass * cdefn,
+				CONST char* name, CONST char* arglist,
 				CONST char* body, ItclMemberFunc** mfuncPtr));
 #endif
 #ifndef Itcl_ChangeMemberFunc_TCL_DECLARED
 #define Itcl_ChangeMemberFunc_TCL_DECLARED
 /* 55 */
 TCL_EXTERN(int)		Itcl_ChangeMemberFunc _ANSI_ARGS_((
-				Tcl_Interp* interp, ItclMemberFunc* mfunc, 
+				Tcl_Interp* interp, ItclMemberFunc* mfunc,
 				CONST char* arglist, CONST char* body));
 #endif
 #ifndef Itcl_DeleteMemberFunc_TCL_DECLARED
@@ -405,8 +405,8 @@ TCL_EXTERN(void)	Itcl_DeleteMemberFunc _ANSI_ARGS_((CONST char* cdata));
 #define Itcl_CreateMemberCode_TCL_DECLARED
 /* 57 */
 TCL_EXTERN(int)		Itcl_CreateMemberCode _ANSI_ARGS_((
-				Tcl_Interp* interp, ItclClass * cdefn, 
-				CONST char* arglist, CONST char* body, 
+				Tcl_Interp* interp, ItclClass * cdefn,
+				CONST char* arglist, CONST char* body,
 				ItclMemberCode** mcodePtr));
 #endif
 #ifndef Itcl_DeleteMemberCode_TCL_DECLARED
@@ -417,29 +417,29 @@ TCL_EXTERN(void)	Itcl_DeleteMemberCode _ANSI_ARGS_((CONST char* cdata));
 #ifndef Itcl_GetMemberCode_TCL_DECLARED
 #define Itcl_GetMemberCode_TCL_DECLARED
 /* 59 */
-TCL_EXTERN(int)		Itcl_GetMemberCode _ANSI_ARGS_((Tcl_Interp* interp, 
+TCL_EXTERN(int)		Itcl_GetMemberCode _ANSI_ARGS_((Tcl_Interp* interp,
 				ItclMember* member));
 #endif
 /* Slot 60 is reserved */
 #ifndef Itcl_EvalMemberCode_TCL_DECLARED
 #define Itcl_EvalMemberCode_TCL_DECLARED
 /* 61 */
-TCL_EXTERN(int)		Itcl_EvalMemberCode _ANSI_ARGS_((Tcl_Interp * interp, 
-				ItclMemberFunc * mfunc, ItclMember * member, 
-				ItclObject * contextObj, int objc, 
+TCL_EXTERN(int)		Itcl_EvalMemberCode _ANSI_ARGS_((Tcl_Interp * interp,
+				ItclMemberFunc * mfunc, ItclMember * member,
+				ItclObject * contextObj, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_CreateArgList_TCL_DECLARED
 #define Itcl_CreateArgList_TCL_DECLARED
 /* 62 */
-TCL_EXTERN(int)		Itcl_CreateArgList _ANSI_ARGS_((Tcl_Interp* interp, 
-				CONST char* decl, int* argcPtr, 
+TCL_EXTERN(int)		Itcl_CreateArgList _ANSI_ARGS_((Tcl_Interp* interp,
+				CONST char* decl, int* argcPtr,
 				CompiledLocal** argPtr));
 #endif
 #ifndef Itcl_CreateArg_TCL_DECLARED
 #define Itcl_CreateArg_TCL_DECLARED
 /* 63 */
-TCL_EXTERN(CompiledLocal*) Itcl_CreateArg _ANSI_ARGS_((CONST char* name, 
+TCL_EXTERN(CompiledLocal*) Itcl_CreateArg _ANSI_ARGS_((CONST char* name,
 				CONST char* init));
 #endif
 #ifndef Itcl_DeleteArgList_TCL_DECLARED
@@ -451,57 +451,57 @@ TCL_EXTERN(void)	Itcl_DeleteArgList _ANSI_ARGS_((
 #ifndef Itcl_ArgList_TCL_DECLARED
 #define Itcl_ArgList_TCL_DECLARED
 /* 65 */
-TCL_EXTERN(Tcl_Obj*)	Itcl_ArgList _ANSI_ARGS_((int argc, 
+TCL_EXTERN(Tcl_Obj*)	Itcl_ArgList _ANSI_ARGS_((int argc,
 				CompiledLocal* arglist));
 #endif
 #ifndef Itcl_EquivArgLists_TCL_DECLARED
 #define Itcl_EquivArgLists_TCL_DECLARED
 /* 66 */
-TCL_EXTERN(int)		Itcl_EquivArgLists _ANSI_ARGS_((CompiledLocal* arg1, 
+TCL_EXTERN(int)		Itcl_EquivArgLists _ANSI_ARGS_((CompiledLocal* arg1,
 				int arg1c, CompiledLocal* arg2, int arg2c));
 #endif
 #ifndef Itcl_GetMemberFuncUsage_TCL_DECLARED
 #define Itcl_GetMemberFuncUsage_TCL_DECLARED
 /* 67 */
 TCL_EXTERN(void)	Itcl_GetMemberFuncUsage _ANSI_ARGS_((
-				ItclMemberFunc * mfunc, 
+				ItclMemberFunc * mfunc,
 				ItclObject * contextObj, Tcl_Obj * objPtr));
 #endif
 #ifndef Itcl_ExecMethod_TCL_DECLARED
 #define Itcl_ExecMethod_TCL_DECLARED
 /* 68 */
-TCL_EXTERN(int)		Itcl_ExecMethod _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_ExecMethod _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ExecProc_TCL_DECLARED
 #define Itcl_ExecProc_TCL_DECLARED
 /* 69 */
-TCL_EXTERN(int)		Itcl_ExecProc _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_ExecProc _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_AssignArgs_TCL_DECLARED
 #define Itcl_AssignArgs_TCL_DECLARED
 /* 70 */
-TCL_EXTERN(int)		Itcl_AssignArgs _ANSI_ARGS_((Tcl_Interp * interp, 
-				int objc, Tcl_Obj *CONST objv[], 
+TCL_EXTERN(int)		Itcl_AssignArgs _ANSI_ARGS_((Tcl_Interp * interp,
+				int objc, Tcl_Obj *CONST objv[],
 				ItclMemberFunc * mfunc));
 #endif
 #ifndef Itcl_ConstructBase_TCL_DECLARED
 #define Itcl_ConstructBase_TCL_DECLARED
 /* 71 */
-TCL_EXTERN(int)		Itcl_ConstructBase _ANSI_ARGS_((Tcl_Interp * interp, 
-				ItclObject * contextObj, 
+TCL_EXTERN(int)		Itcl_ConstructBase _ANSI_ARGS_((Tcl_Interp * interp,
+				ItclObject * contextObj,
 				ItclClass * contextClass));
 #endif
 #ifndef Itcl_InvokeMethodIfExists_TCL_DECLARED
 #define Itcl_InvokeMethodIfExists_TCL_DECLARED
 /* 72 */
 TCL_EXTERN(int)		Itcl_InvokeMethodIfExists _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char * name, 
-				ItclClass * contextClass, 
-				ItclObject * contextObj, int objc, 
+				Tcl_Interp * interp, CONST char * name,
+				ItclClass * contextClass,
+				ItclObject * contextObj, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 /* Slot 73 is reserved */
@@ -509,84 +509,84 @@ TCL_EXTERN(int)		Itcl_InvokeMethodIfExists _ANSI_ARGS_((
 #define Itcl_ReportFuncErrors_TCL_DECLARED
 /* 74 */
 TCL_EXTERN(int)		Itcl_ReportFuncErrors _ANSI_ARGS_((
-				Tcl_Interp* interp, ItclMemberFunc * mfunc, 
+				Tcl_Interp* interp, ItclMemberFunc * mfunc,
 				ItclObject * contextObj, int result));
 #endif
 #ifndef Itcl_ParseInit_TCL_DECLARED
 #define Itcl_ParseInit_TCL_DECLARED
 /* 75 */
-TCL_EXTERN(int)		Itcl_ParseInit _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_ParseInit _ANSI_ARGS_((Tcl_Interp * interp,
 				ItclObjectInfo * info));
 #endif
 #ifndef Itcl_ClassCmd_TCL_DECLARED
 #define Itcl_ClassCmd_TCL_DECLARED
 /* 76 */
-TCL_EXTERN(int)		Itcl_ClassCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_ClassCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassInheritCmd_TCL_DECLARED
 #define Itcl_ClassInheritCmd_TCL_DECLARED
 /* 77 */
 TCL_EXTERN(int)		Itcl_ClassInheritCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassProtectionCmd_TCL_DECLARED
 #define Itcl_ClassProtectionCmd_TCL_DECLARED
 /* 78 */
 TCL_EXTERN(int)		Itcl_ClassProtectionCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassConstructorCmd_TCL_DECLARED
 #define Itcl_ClassConstructorCmd_TCL_DECLARED
 /* 79 */
 TCL_EXTERN(int)		Itcl_ClassConstructorCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassDestructorCmd_TCL_DECLARED
 #define Itcl_ClassDestructorCmd_TCL_DECLARED
 /* 80 */
 TCL_EXTERN(int)		Itcl_ClassDestructorCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassMethodCmd_TCL_DECLARED
 #define Itcl_ClassMethodCmd_TCL_DECLARED
 /* 81 */
 TCL_EXTERN(int)		Itcl_ClassMethodCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassProcCmd_TCL_DECLARED
 #define Itcl_ClassProcCmd_TCL_DECLARED
 /* 82 */
-TCL_EXTERN(int)		Itcl_ClassProcCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_ClassProcCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassVariableCmd_TCL_DECLARED
 #define Itcl_ClassVariableCmd_TCL_DECLARED
 /* 83 */
 TCL_EXTERN(int)		Itcl_ClassVariableCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ClassCommonCmd_TCL_DECLARED
 #define Itcl_ClassCommonCmd_TCL_DECLARED
 /* 84 */
 TCL_EXTERN(int)		Itcl_ClassCommonCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_ParseVarResolver_TCL_DECLARED
 #define Itcl_ParseVarResolver_TCL_DECLARED
 /* 85 */
 TCL_EXTERN(int)		Itcl_ParseVarResolver _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char* name, 
-				Tcl_Namespace * contextNs, int flags, 
+				Tcl_Interp * interp, CONST char* name,
+				Tcl_Namespace * contextNs, int flags,
 				Tcl_Var* rPtr));
 #endif
 #ifndef Itcl_BiInit_TCL_DECLARED
@@ -603,85 +603,85 @@ TCL_EXTERN(int)		Itcl_InstallBiMethods _ANSI_ARGS_((
 #ifndef Itcl_BiIsaCmd_TCL_DECLARED
 #define Itcl_BiIsaCmd_TCL_DECLARED
 /* 88 */
-TCL_EXTERN(int)		Itcl_BiIsaCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiIsaCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiConfigureCmd_TCL_DECLARED
 #define Itcl_BiConfigureCmd_TCL_DECLARED
 /* 89 */
 TCL_EXTERN(int)		Itcl_BiConfigureCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiCgetCmd_TCL_DECLARED
 #define Itcl_BiCgetCmd_TCL_DECLARED
 /* 90 */
-TCL_EXTERN(int)		Itcl_BiCgetCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiCgetCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiChainCmd_TCL_DECLARED
 #define Itcl_BiChainCmd_TCL_DECLARED
 /* 91 */
-TCL_EXTERN(int)		Itcl_BiChainCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiChainCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiInfoClassCmd_TCL_DECLARED
 #define Itcl_BiInfoClassCmd_TCL_DECLARED
 /* 92 */
-TCL_EXTERN(int)		Itcl_BiInfoClassCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiInfoClassCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiInfoInheritCmd_TCL_DECLARED
 #define Itcl_BiInfoInheritCmd_TCL_DECLARED
 /* 93 */
-TCL_EXTERN(int)		Itcl_BiInfoInheritCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiInfoInheritCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiInfoHeritageCmd_TCL_DECLARED
 #define Itcl_BiInfoHeritageCmd_TCL_DECLARED
 /* 94 */
-TCL_EXTERN(int)		Itcl_BiInfoHeritageCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiInfoHeritageCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiInfoFunctionCmd_TCL_DECLARED
 #define Itcl_BiInfoFunctionCmd_TCL_DECLARED
 /* 95 */
-TCL_EXTERN(int)		Itcl_BiInfoFunctionCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiInfoFunctionCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiInfoVariableCmd_TCL_DECLARED
 #define Itcl_BiInfoVariableCmd_TCL_DECLARED
 /* 96 */
-TCL_EXTERN(int)		Itcl_BiInfoVariableCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiInfoVariableCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiInfoBodyCmd_TCL_DECLARED
 #define Itcl_BiInfoBodyCmd_TCL_DECLARED
 /* 97 */
-TCL_EXTERN(int)		Itcl_BiInfoBodyCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiInfoBodyCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_BiInfoArgsCmd_TCL_DECLARED
 #define Itcl_BiInfoArgsCmd_TCL_DECLARED
 /* 98 */
-TCL_EXTERN(int)		Itcl_BiInfoArgsCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_BiInfoArgsCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_DefaultInfoCmd_TCL_DECLARED
 #define Itcl_DefaultInfoCmd_TCL_DECLARED
 /* 99 */
-TCL_EXTERN(int)		Itcl_DefaultInfoCmd _ANSI_ARGS_((ClientData dummy, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_DefaultInfoCmd _ANSI_ARGS_((ClientData dummy,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_EnsembleInit_TCL_DECLARED
@@ -692,24 +692,24 @@ TCL_EXTERN(int)		Itcl_EnsembleInit _ANSI_ARGS_((Tcl_Interp * interp));
 #ifndef Itcl_CreateEnsemble_TCL_DECLARED
 #define Itcl_CreateEnsemble_TCL_DECLARED
 /* 101 */
-TCL_EXTERN(int)		Itcl_CreateEnsemble _ANSI_ARGS_((Tcl_Interp * interp, 
+TCL_EXTERN(int)		Itcl_CreateEnsemble _ANSI_ARGS_((Tcl_Interp * interp,
 				CONST char* ensName));
 #endif
 #ifndef Itcl_AddEnsemblePart_TCL_DECLARED
 #define Itcl_AddEnsemblePart_TCL_DECLARED
 /* 102 */
 TCL_EXTERN(int)		Itcl_AddEnsemblePart _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char* ensName, 
-				CONST char* partName, CONST char* usageInfo, 
-				Tcl_ObjCmdProc * objProc, 
-				ClientData clientData, 
+				Tcl_Interp * interp, CONST char* ensName,
+				CONST char* partName, CONST char* usageInfo,
+				Tcl_ObjCmdProc * objProc,
+				ClientData clientData,
 				Tcl_CmdDeleteProc * deleteProc));
 #endif
 #ifndef Itcl_GetEnsemblePart_TCL_DECLARED
 #define Itcl_GetEnsemblePart_TCL_DECLARED
 /* 103 */
 TCL_EXTERN(int)		Itcl_GetEnsemblePart _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char * ensName, 
+				Tcl_Interp * interp, CONST char * ensName,
 				CONST char * partName, Tcl_CmdInfo * infoPtr));
 #endif
 #ifndef Itcl_IsEnsemble_TCL_DECLARED
@@ -721,35 +721,35 @@ TCL_EXTERN(int)		Itcl_IsEnsemble _ANSI_ARGS_((Tcl_CmdInfo* infoPtr));
 #define Itcl_GetEnsembleUsage_TCL_DECLARED
 /* 105 */
 TCL_EXTERN(int)		Itcl_GetEnsembleUsage _ANSI_ARGS_((
-				Tcl_Interp * interp, CONST char * ensName, 
+				Tcl_Interp * interp, CONST char * ensName,
 				Tcl_Obj * objPtr));
 #endif
 #ifndef Itcl_GetEnsembleUsageForObj_TCL_DECLARED
 #define Itcl_GetEnsembleUsageForObj_TCL_DECLARED
 /* 106 */
 TCL_EXTERN(int)		Itcl_GetEnsembleUsageForObj _ANSI_ARGS_((
-				Tcl_Interp * interp, Tcl_Obj * ensObjPtr, 
+				Tcl_Interp * interp, Tcl_Obj * ensObjPtr,
 				Tcl_Obj * objPtr));
 #endif
 #ifndef Itcl_EnsembleCmd_TCL_DECLARED
 #define Itcl_EnsembleCmd_TCL_DECLARED
 /* 107 */
-TCL_EXTERN(int)		Itcl_EnsembleCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_EnsembleCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_EnsPartCmd_TCL_DECLARED
 #define Itcl_EnsPartCmd_TCL_DECLARED
 /* 108 */
-TCL_EXTERN(int)		Itcl_EnsPartCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_EnsPartCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_EnsembleErrorCmd_TCL_DECLARED
 #define Itcl_EnsembleErrorCmd_TCL_DECLARED
 /* 109 */
 TCL_EXTERN(int)		Itcl_EnsembleErrorCmd _ANSI_ARGS_((
-				ClientData clientData, Tcl_Interp * interp, 
+				ClientData clientData, Tcl_Interp * interp,
 				int objc, Tcl_Obj *CONST objv[]));
 #endif
 /* Slot 110 is reserved */
@@ -764,7 +764,7 @@ TCL_EXTERN(Tcl_CallFrame*) _Tcl_GetCallFrame _ANSI_ARGS_((
 #define _Tcl_ActivateCallFrame_TCL_DECLARED
 /* 113 */
 TCL_EXTERN(Tcl_CallFrame*) _Tcl_ActivateCallFrame _ANSI_ARGS_((
-				Tcl_Interp * interp, 
+				Tcl_Interp * interp,
 				Tcl_CallFrame * framePtr));
 #endif
 #ifndef _TclNewVar_TCL_DECLARED
@@ -775,21 +775,21 @@ TCL_EXTERN(Var*)	_TclNewVar _ANSI_ARGS_((void));
 #ifndef Itcl_Assert_TCL_DECLARED
 #define Itcl_Assert_TCL_DECLARED
 /* 115 */
-TCL_EXTERN(void)	Itcl_Assert _ANSI_ARGS_((CONST char * testExpr, 
+TCL_EXTERN(void)	Itcl_Assert _ANSI_ARGS_((CONST char * testExpr,
 				CONST char * fileName, int lineNum));
 #endif
 #ifndef Itcl_IsObjectCmd_TCL_DECLARED
 #define Itcl_IsObjectCmd_TCL_DECLARED
 /* 116 */
-TCL_EXTERN(int)		Itcl_IsObjectCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_IsObjectCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 #ifndef Itcl_IsClassCmd_TCL_DECLARED
 #define Itcl_IsClassCmd_TCL_DECLARED
 /* 117 */
-TCL_EXTERN(int)		Itcl_IsClassCmd _ANSI_ARGS_((ClientData clientData, 
-				Tcl_Interp * interp, int objc, 
+TCL_EXTERN(int)		Itcl_IsClassCmd _ANSI_ARGS_((ClientData clientData,
+				Tcl_Interp * interp, int objc,
 				Tcl_Obj *CONST objv[]));
 #endif
 

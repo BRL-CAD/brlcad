@@ -134,7 +134,7 @@ bu_which(const char *cmd)
 	if (strlen(directory) == 0) {
 	    directory = ".";
 	}
-	
+
 	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
 	if (bu_file_exists(bu_which_result)) {
 	    return bu_which_result;

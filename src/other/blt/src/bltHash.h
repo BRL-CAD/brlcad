@@ -1,5 +1,5 @@
 
-/* 
+/*
  * bltHash.h --
  *
  * Copyright 2001 Silicon Metrics Corporation.
@@ -76,7 +76,7 @@ typedef unsigned int uint32_t;
 #endif /* SIZEOF_VOID_P == 8 */
 #endif /* HAVE_INTTYPES_H */
 
-#if (SIZEOF_VOID_P == 8) 
+#if (SIZEOF_VOID_P == 8)
 typedef uint64_t Blt_Hash;
 #else
 typedef uint32_t Blt_Hash;
@@ -147,11 +147,11 @@ typedef struct Blt_HashTable {
     size_t rebuildSize;	                /* Enlarge table when numEntries gets
 					 * to be this large. */
     Blt_Hash mask;		        /* Mask value used in hashing
-				         * function. */	
+				         * function. */
     unsigned int downShift;	        /* Shift count used in hashing
 					 * function.  Designed to use high-
 					 * order bits of randomized keys. */
-    size_t keyType;			/* Type of keys used in this table. 
+    size_t keyType;			/* Type of keys used in this table.
 					 * It's either BLT_STRING_KEYS,
 					 * BLT_ONE_WORD_KEYS, or an integer
 					 * giving the number of ints that
@@ -202,10 +202,10 @@ typedef struct {
 #define Blt_CreateHashEntry(tablePtr, key, newPtr) \
 	(*((tablePtr)->createProc))(tablePtr, key, newPtr)
 
-EXTERN void Blt_InitHashTable _ANSI_ARGS_((Blt_HashTable *tablePtr, 
+EXTERN void Blt_InitHashTable _ANSI_ARGS_((Blt_HashTable *tablePtr,
 	size_t keyType));
 
-EXTERN void Blt_InitHashTableWithPool _ANSI_ARGS_((Blt_HashTable *tablePtr, 
+EXTERN void Blt_InitHashTableWithPool _ANSI_ARGS_((Blt_HashTable *tablePtr,
 	size_t keyType));
 
 EXTERN void Blt_DeleteHashTable _ANSI_ARGS_((Blt_HashTable *tablePtr));

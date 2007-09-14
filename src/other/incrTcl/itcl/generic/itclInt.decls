@@ -10,7 +10,7 @@
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
 library itcl
@@ -36,7 +36,7 @@ declare 2 generic {
 declare 3 generic {
     int Itcl_FindObject (Tcl_Interp *interp, CONST char *name, ItclObject **roPtr)
 }
-declare 4 generic {   
+declare 4 generic {
     int Itcl_IsObject (Tcl_Command cmd)
 }
 declare 5 generic {
@@ -122,7 +122,7 @@ declare 27 generic {
     int Itcl_CodeCmd (ClientData clientData, Tcl_Interp *interp, \
         int objc, Tcl_Obj *CONST objv[])
 }
-declare 28 generic {	
+declare 28 generic {
     int Itcl_StubCreateCmd (ClientData clientData, Tcl_Interp *interp, \
         int objc, Tcl_Obj *CONST objv[])
 }

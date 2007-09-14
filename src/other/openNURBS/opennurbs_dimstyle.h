@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -50,9 +50,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -213,9 +213,9 @@ public:
     fn_lengthfactor               = 16,
     fn_bAlternate                 = 17,
     fn_alternate_lengthfactor     = 18,
-    fn_alternate_lengthformat     = 19, 
+    fn_alternate_lengthformat     = 19,
     fn_alternate_lengthresolution = 20,
-    fn_alternate_angleformat      = 21, 
+    fn_alternate_angleformat      = 21,
     fn_alternate_angleresolution  = 22,
     fn_prefix                     = 23,
     fn_suffix                     = 24,

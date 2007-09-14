@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tk_ConfigureWidget 3 4.1 Tk "Tk Library Procedures"
 .BS
@@ -63,7 +63,7 @@ Display containing widget whose record is being freed;  needed in
 order to free up resources.
 .BE
 .SH DESCRIPTION
-.PP 
+.PP
 Note: \fBTk_ConfigureWidget\fR should be replaced with the new
 \fBTcl_Obj\fR based API \fBTk_SetOptions\fR.  The old interface is
 retained for backward compatibility.
@@ -172,7 +172,7 @@ legal values for \fItype\fR, and the corresponding actions, are:
 \fBTK_CONFIG_ACTIVE_CURSOR\fR
 The value
 must be an ASCII string identifying a cursor in a form
-suitable for passing to \fBTk_GetCursor\fR. 
+suitable for passing to \fBTk_GetCursor\fR.
 The value is converted to a \fBTk_Cursor\fR by calling
 \fBTk_GetCursor\fR and the result is stored in the target.
 In addition, the resulting cursor is made the active cursor

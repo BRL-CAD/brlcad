@@ -600,7 +600,7 @@ TkpGetFontAttrsForChar(
     HFONT oldfont;		/* Saved font from the device context */
     TEXTMETRIC tm;		/* Font metrics of the selected subfont */
 
-  
+
     /* Get the font attributes */
 
     oldfont = SelectObject(hdc, thisSubFontPtr->hFont);

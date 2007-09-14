@@ -1,4 +1,4 @@
-/* 
+/*
  * tkUnixConfig.c --
  *
  *	This module implements the Unix system defaults for the configuration

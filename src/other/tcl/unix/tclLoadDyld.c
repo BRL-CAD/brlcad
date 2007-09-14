@@ -465,20 +465,20 @@ TclpLoadMemory(
 	#define mh_magic OSSwapHostToBigInt32(MH_MAGIC_64)
 	#define mh_size  sizeof(struct mach_header_64)
 #endif
-	
+
 	if ((size_t) codeSize >= sizeof(struct fat_header)
 		&& fh->magic == OSSwapHostToBigInt32(FAT_MAGIC)) {
 	    /*
 	     * Fat binary, try to find mach_header for our architecture
 	     */
 	    uint32_t fh_nfat_arch = OSSwapBigToHostInt32(fh->nfat_arch);
-	    
-	    if ((size_t) codeSize >= sizeof(struct fat_header) + 
+
+	    if ((size_t) codeSize >= sizeof(struct fat_header) +
 		    fh_nfat_arch * sizeof(struct fat_arch)) {
 		void *fatarchs = (char*)buffer + sizeof(struct fat_header);
 		CONST NXArchInfo *arch = NXGetLocalArchInfo();
 		struct fat_arch *fa;
-		
+
 		if (fh->magic != FAT_MAGIC) {
 		    swap_fat_arch(fatarchs, fh_nfat_arch, arch->byteorder);
 		}

@@ -113,7 +113,7 @@ proc puts {args} {
 # ----------------------------------------------------------------------
 set iwManPage ""
 proc iw_load_manpage {{name ""}} {
-    global widgets iwManPage 
+    global widgets iwManPage
 
     if {[winfo ismapped $widgets(info-manpage)]} {
         if {$name == ""} {
@@ -376,7 +376,7 @@ John Tucker
 Mitch Gorman
 John Reekie
 Ken Copeland
-Tony Parent 
+Tony Parent
 Chad Smith
 and
 Michael McLennan
@@ -389,7 +389,7 @@ catch {$win.authors configure -font -*-helvetica-medium-o-normal-*-*-120-*}
 # ----------------------------------------------------------------------
 foreach file [lsort [glob [file join ${iwidgets::library} demos *]]] {
     set name [file tail $file]
-    if {![file isdirectory $file] && ![string match *.* $name] 
+    if {![file isdirectory $file] && ![string match *.* $name]
         && ![string match catalog $name]
         && ![string match scopedobject $name]} {
 	if {$name == "mainwindow"} {

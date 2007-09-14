@@ -1,7 +1,7 @@
 .\" Copyright (c) 1986, University of Utah
 .\" Template man page.  Taken from wtm's page for getcx3d
 .TH RLETOPAINT 1 "Month X, YYYY" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletopaint \- convert an RLE file to MacPaint format using dithering
 .SH SYNOPSIS
@@ -20,27 +20,27 @@ rletopaint \- convert an RLE file to MacPaint format using dithering
 .B \-o
 .I outfile.paint
 ] [
-.I infile 
+.I infile
 ]
 .SH DESCRIPTION
 .IR Rletopaint
 converts a file from
 .IR RLE (5)
-format to MacPaint format.  The program uses 
+format to MacPaint format.  The program uses
 dithering to convert from a full 24 bit color image to a bitmapped image.
-If the RLE file is larger than a MacPaint image (576\(mu720) it is cropped to 
+If the RLE file is larger than a MacPaint image (576\(mu720) it is cropped to
 fit.
 
 Because MacPaint files have their coordinate origin in the upper left instead
 of the lower left, the RLE file should be piped through
 .IR rleflip "(1) \-v"
-before 
+before
 .IR rletopaint.
 
 The resulting file can be downloaded to a Macintosh in binary mode,
-and should be given a type of 
+and should be given a type of
 .I PNTG
-and a creator of 
+and a creator of
 .IR MPNT ,
 so it will be recognized as a MacPaint file.
 .SH OPTIONS
@@ -49,7 +49,7 @@ so it will be recognized as a MacPaint file.
 Use a linear map in the conversion from 24 bits to bitmapped output.
 .TP
 \fB\-g\ \fR[\fI\ gamma\ \fR]
-Use a gamma map of 
+Use a gamma map of
 .I gamma
 (gamma is 2.0 if not specified).
 .TP

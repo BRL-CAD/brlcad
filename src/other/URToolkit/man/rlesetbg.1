@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH RLESETBG 1 "December 20, 1986" 1
-.UC 4 
+.UC 4
 .SH NAME
 rlesetbg \- Set the background value in the RLE header.
 .SH SYNOPSIS
@@ -18,13 +18,13 @@ rlesetbg \- Set the background value in the RLE header.
 .I infile
 ]
 .SH DESCRIPTION
-.IR rlesetbg 
+.IR rlesetbg
 sets the background color field in the image header of an
 .IR RLE (5)
 image (none of the actual
-pixels are changed).  If 
+pixels are changed).  If
 .I infile
-isn't specified, the image is read from stdin.  
+isn't specified, the image is read from stdin.
 
 The background color in the header is used to save space in the
 run-length encoded file.  Runs of background-colored pixels longer
@@ -47,11 +47,11 @@ Specifies that the image has no background, it overlays existing images.
 \fB\-c \fIbgcolor ...\fR
 Specifies the color values to set the background to.  There should be
 at least as many values as there are color channels in the image.  Use
-\-\^\- or another option to separate the list of colors from 
+\-\^\- or another option to separate the list of colors from
 .IR infile .
 .TP
 .BI \-o " outfile"
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.

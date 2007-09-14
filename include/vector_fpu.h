@@ -14,64 +14,64 @@ struct vec_internal {
 template<int LEN>
 inline dvec<LEN>::dvec(double s)
 {
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     data.v[i] = s;
 }
 
 template<int LEN>
 inline dvec<LEN>::dvec(const double* vals, bool aligned)
 {
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     data.v[i] = vals[i];
 }
 
 template<int LEN>
 inline dvec<LEN>::dvec(const dvec<LEN>& p)
 {
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     data.v[i] = p.data.v[i];
 }
 
 template<int LEN>
 inline dvec<LEN>::dvec(const vec_internal<LEN>& d)
 {
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     data.v[i] = d.v[i];
 }
 
 template<int LEN>
-inline dvec<LEN>& 
+inline dvec<LEN>&
 dvec<LEN>::operator=(const dvec<LEN>& p)
 {
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     data.v[i] = p.data.v[i];
   return *this;
 }
 
 template<int LEN>
-inline double 
+inline double
 dvec<LEN>::operator[](int index) const
 {
   return data.v[index];
 }
 
 template<int LEN>
-inline void 
+inline void
 dvec<LEN>::u_store(double* arr) const
 {
   a_store(arr);
 }
 
 template<int LEN>
-inline void 
+inline void
 dvec<LEN>::a_store(double* arr) const
 {
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     arr[i] = data.v[i];
 }
 
 template<int LEN>
-inline bool 
+inline bool
 dvec<LEN>::operator==(const dvec<LEN>& b) const
 {
   for (int i = 0; i < LEN; i++)
@@ -80,67 +80,67 @@ dvec<LEN>::operator==(const dvec<LEN>& b) const
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
   vec_internal<LEN> r;
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     r.v[i] = data.v[i] + b.data.v[i];
   return dvec<LEN>(r);
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator-(const dvec<LEN>& b)
 {
   vec_internal<LEN> r;
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     r.v[i] = data.v[i] - b.data.v[i];
   return dvec<LEN>(r);
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator*(const dvec<LEN>& b)
 {
   vec_internal<LEN> r;
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     r.v[i] = data.v[i] * b.data.v[i];
   return dvec<LEN>(r);
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::operator/(const dvec<LEN>& b)
 {
   vec_internal<LEN> r;
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     r.v[i] = data.v[i] / b.data.v[i];
   return dvec<LEN>(r);
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
   vec_internal<LEN> r;
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     r.v[i] = data.v[i] * s.data.v[i] + b.data.v[i];
   return dvec<LEN>(r);
 }
 
 template<int LEN>
-inline dvec<LEN> 
+inline dvec<LEN>
 dvec<LEN>::madd(const double s, const dvec<LEN>& b)
-{  
+{
   vec_internal<LEN> r;
-  for (int i = 0; i < LEN; i++) 
+  for (int i = 0; i < LEN; i++)
     r.v[i] = data.v[i] * s +  b.data.v[i];
   return dvec<LEN>(r);
 }
 
 template<int LEN>
-inline double 
+inline double
 dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
 {
     double val = identity;
@@ -150,7 +150,7 @@ dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
     return val;
 }
 template<int LEN>
-inline double 
+inline double
 dvec<LEN>::foldl(double identity, const dvec_op& op, int limit)
 {
     double val = identity;
@@ -179,7 +179,7 @@ operator<<(std::ostream& out, const dvec<LEN>& v)
   out << "<";
   for (int i = 0; i < LEN; i++) {
     out << v.data.v[i];
-    if (i != LEN-1) 
+    if (i != LEN-1)
       out << ",";
   }
   out << ">";
@@ -188,11 +188,11 @@ operator<<(std::ostream& out, const dvec<LEN>& v)
 
 class vec2d {
 public:
-    
-  vec2d() { 
-    _init(0,0); 
+
+  vec2d() {
+    _init(0,0);
   }
-  
+
   vec2d(double x, double y) {
     _init(x,y);
   }
@@ -202,7 +202,7 @@ public:
     _init(proto.v[0],proto.v[1]);
   }
 
-  vec2d& operator=(const vec2d& b) 
+  vec2d& operator=(const vec2d& b)
   {
     v[0] = b.v[0];
     v[1] = b.v[1];
@@ -218,17 +218,17 @@ public:
   {
     return vec2d(v[0] + b.v[0], v[1] + b.v[1]);
   }
-  
+
   vec2d operator-(const vec2d& b) const
   {
     return vec2d(v[0] - b.v[0], v[1] - b.v[1]);
   }
-  
+
   vec2d operator*(const vec2d& b) const
   {
     return vec2d(v[0] * b.v[0], v[1] * b.v[1]);
   }
-  
+
   vec2d operator/(const vec2d& b) const
   {
     return vec2d(v[0] / b.v[0], v[1] / b.v[1]);
@@ -253,10 +253,10 @@ private:
     v = (double*)((((long)m) + 0x10L) & ~0xFL);
     v[0] = x;
     v[1] = y;
-  }    
+  }
 };
 
-inline std::ostream& 
+inline std::ostream&
 operator<<(std::ostream& out, const vec2d& v)
 {
   out << "<" << v.x() << "," << v.y() << ">";

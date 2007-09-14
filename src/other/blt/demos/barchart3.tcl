@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -39,18 +39,18 @@ option add *graph.xFont *Times-Medium-R*12*
 option add *graph.elemBackground white
 option add *graph.elemRelief raised
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual != "staticgray" && $visual != "grayscale" } {
     option add *print.background yellow
     option add *quit.background red
 }
 
 htext .header -text {
-This is an example of the barchart widget.  To create a postscript 
-file "bar.ps", press the %% 
+This is an example of the barchart widget.  To create a postscript
+file "bar.ps", press the %%
 button $htext(widget).print -text {Print} -command {
   $graph postscript output bar.ps  -maxpect 1
-} 
+}
 $htext(widget) append $htext(widget).print
 %% button.}
 
@@ -66,7 +66,7 @@ $graph legend configure \
 
 htext .footer -text {Hit the %%
 button $htext(widget).quit -text quit -command exit
-$htext(widget) append $htext(widget).quit 
+$htext(widget) append $htext(widget).quit
 %% button when you've seen enough.%%
 label $htext(widget).logo -bitmap BLT
 $htext(widget) append $htext(widget).logo -padx 20
@@ -80,7 +80,7 @@ if { $visual == "staticgray" || $visual == "grayscale" } {
     set fgcolors { red green blue purple orange brown cyan navy }
     set bgcolors { green blue purple orange brown cyan navy red }
 }
-set bitmaps { 
+set bitmaps {
     bdiagonal1 bdiagonal2 checker2 checker3 cross1 cross2 cross3 crossdiag
     dot1 dot2 dot3 dot4 fdiagonal1 fdiagonal2 hline1 hline2 lbottom ltop
     rbottom rtop vline1 vline2
@@ -94,29 +94,29 @@ for { set i 0} { $i < $numColors } { incr i } {
 	-bg [lindex $bgcolors $i] \
 	-stipple [lindex $bitmaps $i]  \
 	-relief raised \
-	-bd 2 
+	-bd 2
 }
 
 $graph element create Nine \
     -data { 9 -1.0 } \
     -fg red  \
-    -relief sunken 
+    -relief sunken
 $graph element create Ten \
     -data { 10 2 } \
     -fg seagreen \
     -stipple hobbes \
-    -background palegreen 
+    -background palegreen
 $graph element create Eleven \
     -data { 11 3.3 } \
-    -fg blue  
+    -fg blue
 
-#    -coords { -Inf Inf  } 
+#    -coords { -Inf Inf  }
 
 $graph marker create bitmap \
     -coords { 11 3.3 } -anchor center \
     -bitmap @bitmaps/sharky.xbm \
     -name bitmap \
-    -fill "" 
+    -fill ""
 
 $graph marker create polygon \
     -coords { 5 0 7 2  10 10  10 2 } \
@@ -125,7 +125,7 @@ $graph marker create polygon \
 table . \
     .header 0,0 -padx .25i \
     $graph 1,0 -fill both \
-    .footer 2,0 -padx .25i  
+    .footer 2,0 -padx .25i
 
 table configure . r0 r2 -resize none
 
@@ -136,7 +136,7 @@ proc FormatLabel { w value } {
     set displaylist [$w element show]
     set index [expr round($value)-1]
     set name [lindex $displaylist $index]
-    if { $name == "" } { 
+    if { $name == "" } {
 	return $name
     }
     # Return the element label
@@ -162,7 +162,7 @@ $graph marker bind all <Enter> {
 
 $graph marker bind all <Leave> {
     set marker [%W marker get current]
-    catch { 
+    catch {
 	set default [lindex [%W marker configure $marker -fill] 3]
 	%W marker configure $marker -fill "$default"
     }

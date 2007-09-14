@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH scan n 8.4 Tcl "Tcl Built-In Commands"
 .BS
@@ -40,7 +40,7 @@ performed.
 If the next character in \fIformat\fR is a blank or tab then it
 matches any number of white space characters in \fIstring\fR (including
 zero).
-Otherwise, if it isn't a \fB%\fR character then it 
+Otherwise, if it isn't a \fB%\fR character then it
 must match the next character of \fIstring\fR.
 When a \fB%\fR is encountered in \fIformat\fR, it indicates
 the start of a conversion specifier.
@@ -55,7 +55,7 @@ The fields that are present must appear in the order given above.
 When \fBscan\fR finds a conversion specifier in \fIformat\fR, it
 first skips any white-space characters in \fIstring\fR (unless the
 conversion character is \fB[\fR or \fBc\fR).
-Then it converts the next input characters according to the 
+Then it converts the next input characters according to the
 conversion specifier and stores the result in the variable given
 by the next argument to \fBscan\fR.
 .PP
@@ -94,7 +94,7 @@ It is read in and the integer value is stored in the variable,
 truncated as required by the size modifier value.
 .TP 10
 \fBo\fR
-The input substring must be an octal integer. It is read in and the 
+The input substring must be an octal integer. It is read in and the
 integer value is stored in the variable,
 truncated as required by the size modifier value.
 .TP 10
@@ -112,27 +112,27 @@ The conversion makes no sense without reference to a truncation range,
 so the size modifier \fBll\fR is not permitted in combination
 with conversion character \fBu\fR.
 .TP 10
-\fBi\fR 
+\fBi\fR
 The input substring must be an integer.  The base (i.e. decimal, binary,
 octal, or hexadecimal) is determined in the same fashion as described in
 \fBexpr\fR.  The integer value is stored in the variable,
 truncated as required by the size modifier value.
 .TP 10
 \fBc\fR
-A single character is read in and its Unicode value is stored in 
+A single character is read in and its Unicode value is stored in
 the variable as an integer value.
 Initial white space is not skipped in this case, so the input
 substring may be a white-space character.
 .TP 10
 \fBs\fR
-The input substring consists of all the characters up to the next 
+The input substring consists of all the characters up to the next
 white-space character; the characters are copied to the variable.
 .TP 10
 \fBe\fR or \fBf\fR or \fBg\fR
-The input substring must be a floating-point number consisting 
+The input substring must be a floating-point number consisting
 of an optional sign, a string of decimal digits possibly
-containing a decimal point, and an optional exponent consisting 
-of an \fBe\fR or \fBE\fR followed by an optional sign and a string of 
+containing a decimal point, and an optional exponent consisting
+of an \fBe\fR or \fBE\fR followed by an optional sign and a string of
 decimal digits.
 It is read in and stored in the variable as a floating-point value.
 .TP 10
@@ -151,8 +151,8 @@ it is treated as part of \fIchars\fR rather than indicating a range.
 \fB[^\fIchars\fB]\fR
 The input substring consists of one or more characters not in \fIchars\fR.
 The matching string is stored in the variable.
-If the character immediately following the \fB^\fR is a \fB]\fR then it is 
-treated as part of the set rather than the closing bracket for 
+If the character immediately following the \fB^\fR is a \fB]\fR then it is
+treated as part of the set rather than the closing bracket for
 the set.
 If \fIchars\fR
 contains a sequence of the form \fIa\fB\-\fIb\fR then any
@@ -167,12 +167,12 @@ of characters scanned from the input string so far is stored in the variable.
 .LP
 The number of characters read from the input for a conversion is the
 largest number that makes sense for that particular conversion (e.g.
-as many decimal digits as possible for \fB%d\fR, as 
+as many decimal digits as possible for \fB%d\fR, as
 many octal digits as possible for \fB%o\fR, and so on).
 The input substring for a given conversion terminates either when a
-white-space character is encountered or when the maximum substring 
+white-space character is encountered or when the maximum substring
 width has been reached, whichever comes first.
-If a \fB*\fR is present in the conversion specifier 
+If a \fB*\fR is present in the conversion specifier
 then no variable is assigned and the next scan argument is not consumed.
 .SH "DIFFERENCES FROM ANSI SSCANF"
 .PP

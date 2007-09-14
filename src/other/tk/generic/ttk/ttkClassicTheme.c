@@ -73,7 +73,7 @@ static Ttk_ElementSpec HighlightElementSpec =
 
 /*------------------------------------------------------------------------
  * +++ Button Border element:
- * 
+ *
  * The Motif-style button border on X11 consists of (from outside-in):
  *
  * + focus indicator (controlled by -highlightcolor and -highlightthickness),
@@ -90,13 +90,13 @@ typedef struct {
 
 static Ttk_ElementOptionSpec ButtonBorderElementOptions[] =
 {
-    { "-background", TK_OPTION_BORDER, 
+    { "-background", TK_OPTION_BORDER,
 	Tk_Offset(ButtonBorderElement,borderObj), DEFAULT_BACKGROUND },
-    { "-borderwidth", TK_OPTION_PIXELS, 
+    { "-borderwidth", TK_OPTION_PIXELS,
 	Tk_Offset(ButtonBorderElement,borderWidthObj), DEFAULT_BORDERWIDTH },
-    { "-relief", TK_OPTION_RELIEF, 
+    { "-relief", TK_OPTION_RELIEF,
 	Tk_Offset(ButtonBorderElement,reliefObj), "flat" },
-    { "-default", TK_OPTION_ANY, 
+    { "-default", TK_OPTION_ANY,
 	Tk_Offset(ButtonBorderElement,defaultStateObj), "disabled" },
     {NULL}
 };
@@ -121,7 +121,7 @@ ButtonBorderElementSize(
 
 /*
  * (@@@ Note: ButtonBorderElement still still still buggy:
- * padding for default ring is drawn in the wrong color 
+ * padding for default ring is drawn in the wrong color
  * when the button is active.)
  */
 static void
@@ -290,19 +290,19 @@ static Ttk_ElementSpec ArrowElementSpec =
 /*------------------------------------------------------------------------
  * +++ Sash element (for ttk::panedwindow)
  *
- * NOTES: 
+ * NOTES:
  *
  * panedwindows with -orient horizontal use vertical sashes, and vice versa.
  *
  * Interpretation of -sashrelief 'groove' and 'ridge' are
  * swapped wrt. the core panedwindow, which (I think) has them backwards.
  *
- * Default -sashrelief is sunken; the core panedwindow has default 
+ * Default -sashrelief is sunken; the core panedwindow has default
  * -sashrelief raised, but that looks wrong to me.
  */
 
 static Ttk_Orient SashClientData[] = {
-    TTK_ORIENT_HORIZONTAL, TTK_ORIENT_VERTICAL 
+    TTK_ORIENT_HORIZONTAL, TTK_ORIENT_VERTICAL
 };
 
 typedef struct {
@@ -315,13 +315,13 @@ typedef struct {
 } SashElement;
 
 static Ttk_ElementOptionSpec SashOptions[] = {
-    { "-background", TK_OPTION_BORDER, 
+    { "-background", TK_OPTION_BORDER,
 	Tk_Offset(SashElement,borderObj), DEFAULT_BACKGROUND },
-    { "-sashrelief", TK_OPTION_RELIEF, 
+    { "-sashrelief", TK_OPTION_RELIEF,
 	Tk_Offset(SashElement,sashReliefObj), "sunken" },
     { "-sashthickness", TK_OPTION_PIXELS,
 	Tk_Offset(SashElement,sashThicknessObj), "6" },
-    { "-sashpad", TK_OPTION_PIXELS, 
+    { "-sashpad", TK_OPTION_PIXELS,
 	Tk_Offset(SashElement,sashPadObj), "2" },
     { "-handlesize", TK_OPTION_PIXELS,
 	Tk_Offset(SashElement,handleSizeObj), "8" },
@@ -376,10 +376,10 @@ static void SashElementDraw(
 	    gc1 = Tk_3DBorderGC(tkwin, border, TK_3D_DARK_GC);
 	    gc2 = Tk_3DBorderGC(tkwin, border, TK_3D_LIGHT_GC);
 	    break;
-	case TK_RELIEF_SOLID: 
+	case TK_RELIEF_SOLID:
 	    gc1 = gc2 = Tk_3DBorderGC(tkwin, border, TK_3D_DARK_GC);
 	    break;
-	case TK_RELIEF_FLAT: 
+	case TK_RELIEF_FLAT:
 	default:
 	    gc1 = gc2 = Tk_3DBorderGC(tkwin, border, TK_3D_FLAT_GC);
 	    break;
@@ -407,7 +407,7 @@ static void SashElementDraw(
 	    hb = Ttk_StickBox(b, handleSize, handleSize, TTK_STICK_N);
 	    hb.y += handlePad;
 	}
-	Tk_Fill3DRectangle(tkwin, d, border, 
+	Tk_Fill3DRectangle(tkwin, d, border,
 	    hb.x, hb.y, hb.width, hb.height, 1, TK_RELIEF_RAISED);
     }
 }
@@ -506,7 +506,7 @@ MODULE_SCOPE int TtkClassicTheme_Init(Tcl_Interp *interp)
     Ttk_RegisterElement(interp, theme, "arrow",
 	    &ArrowElementSpec, &ArrowElements[0]);
 
-    Ttk_RegisterElement(interp, theme, "hsash", 
+    Ttk_RegisterElement(interp, theme, "hsash",
 	    &SashElementSpec, &SashClientData[0]);
     Ttk_RegisterElement(interp, theme, "vsash",
 	    &SashElementSpec, &SashClientData[1]);

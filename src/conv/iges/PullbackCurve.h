@@ -22,18 +22,18 @@
  *                                                              ____
  *    then the curve between t1 and t2 is flat if distance(C(m),p1p2) < flatness
  *
- * 2. Use the sampled points to perform a global interpolation using 
+ * 2. Use the sampled points to perform a global interpolation using
  *    universal knot generation to build a B-Spline curve.
  *
- * 3. If the curve is a line or an arc (determined with openNURBS routines), 
+ * 3. If the curve is a line or an arc (determined with openNURBS routines),
  *    return the appropriate ON_Curve subclass (otherwise, return an ON_NurbsCurve).
  *
- * 
+ *
  */
 extern ON_Curve*
-pullback_curve(const ON_Surface* surface, 
-	       const ON_Curve* curve, 
-	       double tolerance = 1.0e-6, 
+pullback_curve(const ON_Surface* surface,
+	       const ON_Curve* curve,
+	       double tolerance = 1.0e-6,
 	       double flatness = 1.0e-3);
 
 

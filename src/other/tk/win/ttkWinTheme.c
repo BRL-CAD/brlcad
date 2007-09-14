@@ -107,7 +107,7 @@ typedef struct {
 } FrameControlElementData;
 
 static FrameControlElementData FrameControlElements[] = {
-    { "Checkbutton.indicator", 
+    { "Checkbutton.indicator",
 	DFC_BUTTON, DFCS_BUTTONCHECK, SM_CYMENUCHECK, SM_CYMENUCHECK,
 	checkbutton_statemap, {0,0,4,0} },
     { "Radiobutton.indicator",
@@ -116,10 +116,10 @@ static FrameControlElementData FrameControlElements[] = {
     { "uparrow",
     	DFC_SCROLL, DFCS_SCROLLUP, SM_CXVSCROLL, SM_CYVSCROLL,
 	arrow_statemap, {0,0,0,0} },
-    { "downarrow", 
+    { "downarrow",
     	DFC_SCROLL, DFCS_SCROLLDOWN, SM_CXVSCROLL, SM_CYVSCROLL,
 	arrow_statemap, {0,0,0,0} },
-    { "leftarrow", 
+    { "leftarrow",
 	DFC_SCROLL, DFCS_SCROLLLEFT, SM_CXHSCROLL, SM_CYHSCROLL,
 	arrow_statemap, {0,0,0,0} },
     { "rightarrow",
@@ -150,7 +150,7 @@ FrameControlElementGeometry(
     *paddingPtr = elementData->padding;
 }
 
-static void 
+static void
 FrameControlElementDraw(
     void *clientData,
     void *elementRecord,
@@ -247,7 +247,7 @@ typedef struct {
 } FieldElement;
 
 static Ttk_ElementOptionSpec FieldElementOptions[] = {
-    { "-fieldbackground", TK_OPTION_BORDER, 
+    { "-fieldbackground", TK_OPTION_BORDER,
     	Tk_Offset(FieldElement,backgroundObj), "white" },
     {NULL}
 };
@@ -313,7 +313,7 @@ static Ttk_ElementOptionSpec ButtonBorderElementOptions[] = {
 	Tk_Offset(ButtonBorderElement,reliefObj), "flat" },
     { "-highlightcolor",TK_OPTION_COLOR,
 	Tk_Offset(ButtonBorderElement,highlightColorObj), "black" },
-    { "-default", TK_OPTION_ANY, 
+    { "-default", TK_OPTION_ANY,
 	Tk_Offset(ButtonBorderElement,defaultStateObj), "disabled" },
     {NULL}
 };
@@ -663,7 +663,7 @@ static Ttk_ElementSpec ThumbElementSpec = {
     ThumbElementDraw
 };
 
-/* ---------------------------------------------------------------------- 
+/* ----------------------------------------------------------------------
  * The slider element is the shaped thumb used in the slider widget.
  * Windows likes to call this a trackbar.
  */
@@ -782,7 +782,7 @@ TTK_BEGIN_LAYOUT(ComboboxLayout)
     TTK_GROUP("Combobox.field", TTK_FILL_BOTH,
 	TTK_NODE("Combobox.downarrow", TTK_PACK_RIGHT|TTK_FILL_Y)
 	TTK_GROUP("Combobox.padding", TTK_PACK_LEFT|TTK_EXPAND|TTK_FILL_BOTH,
-	    TTK_GROUP("Combobox.focus", TTK_PACK_LEFT|TTK_EXPAND|TTK_FILL_BOTH, 
+	    TTK_GROUP("Combobox.focus", TTK_PACK_LEFT|TTK_EXPAND|TTK_FILL_BOTH,
 		TTK_NODE("Combobox.textarea", TTK_FILL_BOTH))))
 TTK_END_LAYOUT
 
@@ -803,11 +803,11 @@ TtkWinTheme_Init(
     }
 
     Ttk_RegisterElementSpec(themePtr, "border", &BorderElementSpec, NULL);
-    Ttk_RegisterElementSpec(themePtr, "Button.border", 
+    Ttk_RegisterElementSpec(themePtr, "Button.border",
 	    &ButtonBorderElementSpec, NULL);
     Ttk_RegisterElementSpec(themePtr, "field", &FieldElementSpec, NULL);
     Ttk_RegisterElementSpec(themePtr, "focus", &FocusElementSpec, NULL);
-    Ttk_RegisterElementSpec(themePtr, "Combobox.focus", 
+    Ttk_RegisterElementSpec(themePtr, "Combobox.focus",
 	    &ComboboxFocusElementSpec, NULL);
     Ttk_RegisterElementSpec(themePtr, "thumb", &ThumbElementSpec, NULL);
     Ttk_RegisterElementSpec(themePtr, "slider", &SliderElementSpec, NULL);

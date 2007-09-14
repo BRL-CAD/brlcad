@@ -305,7 +305,7 @@ test event-7.5 {correct behaviour when there is no bgerror [Bug 219142]} {exec} 
     ("after" script)}}
 
 
-# someday : add a test checking that 
+# someday : add a test checking that
 # when there is no bgerror, an error msg goes to stderr
 # ideally one would use sub interp and transfer a fake stderr
 # to it, unfortunatly the current interp tcl API does not allow

@@ -209,7 +209,7 @@
 #define DEF_BUTTON_ACTIVE_FOREGROUND	STD_ACTIVE_FOREGROUND
 #define DEF_BUTTON_ACTIVE_FG_MONO	STD_ACTIVE_FG_MONO
 #define DEF_BUTTON_BORDERWIDTH		"1"
-#if (TK_MAJOR_VERSION == 4) 
+#if (TK_MAJOR_VERSION == 4)
 #define DEF_BUTTON_CLOSE_RELIEF		"flat"
 #define DEF_BUTTON_OPEN_RELIEF		"flat"
 #else
@@ -319,7 +319,7 @@ static Tk_CustomOption scrollModeOption =
 {
     StringToScrollMode, ScrollModeToString, (ClientData)0,
 };
-static Tk_CustomOption separatorOption = 
+static Tk_CustomOption separatorOption =
 {
     StringToSeparator, SeparatorToString, (ClientData)0,
 };
@@ -786,7 +786,7 @@ struct HierboxStruct {
     char *xScrollCmdPrefix, *yScrollCmdPrefix;
 
     int scrollMode;		/* Selects mode of scrolling: either
-				 * BLT_SCROLL_MODE_HIERBOX, 
+				 * BLT_SCROLL_MODE_HIERBOX,
 				 * BLT_SCROLL_MODE_LISTBOX, or
 				 * BLT_SCROLL_MODE_CANVAS. */
 
@@ -883,7 +883,7 @@ static Tk_ConfigSpec buttonConfigSpecs[] =
     {TK_CONFIG_RELIEF, "-openrelief", "openRelief", "Relief",
 	DEF_BUTTON_OPEN_RELIEF, Tk_Offset(Hierbox, button.openRelief),
 	TK_CONFIG_DONT_SET_DEFAULT},
-    {TK_CONFIG_CUSTOM, "-size", "size", "Size", DEF_BUTTON_SIZE, 
+    {TK_CONFIG_CUSTOM, "-size", "size", "Size", DEF_BUTTON_SIZE,
 	Tk_Offset(Hierbox, button.reqSize), 0, &bltDistanceOption},
     {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
 	(char *)NULL, 0, 0}
@@ -1014,7 +1014,7 @@ static Tk_ConfigSpec configSpecs[] =
 	DEF_HIERBOX_SELECT_RELIEF, Tk_Offset(Hierbox, selRelief),
 	TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_CUSTOM, "-separator", "separator", "Separator",
-	DEF_HIERBOX_SEPARATOR, Tk_Offset(Hierbox, separator), 
+	DEF_HIERBOX_SEPARATOR, Tk_Offset(Hierbox, separator),
 	TK_CONFIG_NULL_OK, &separatorOption},
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
 	DEF_HIERBOX_TAKE_FOCUS, Tk_Offset(Hierbox, takeFocus), TK_CONFIG_NULL_OK},
@@ -1093,8 +1093,8 @@ static int ConfigureEntry _ANSI_ARGS_((Hierbox *hboxPtr, Entry * entryPtr,
 static void ComputeLayout _ANSI_ARGS_((Hierbox *hboxPtr));
 
 static CompareProc ExactCompare, GlobCompare, RegexpCompare;
-static ApplyProc SelectNode, GetSelectedLabels, CloseNode, SizeOfNode, 
-    IsSelectedNode, MapAncestors, FixUnmappedSelections, UnmapNode, 
+static ApplyProc SelectNode, GetSelectedLabels, CloseNode, SizeOfNode,
+    IsSelectedNode, MapAncestors, FixUnmappedSelections, UnmapNode,
     SortNode, OpenNode;
 static IterProc NextNode, LastNode;
 static Tk_ImageChangedProc ImageChangedProc;
@@ -1427,7 +1427,7 @@ ImagesToString(clientData, tkwin, widgRec, offset, freeProcPtr)
 	register CachedImage *imagePtr;
 
 	for (imagePtr = *imagePtrPtr; *imagePtr != NULL; imagePtr++) {
-	    Tcl_DStringAppendElement(&dString, 
+	    Tcl_DStringAppendElement(&dString,
 			     Blt_NameOfImage((*imagePtr)->tkImage));
 	}
     }
@@ -1474,7 +1474,7 @@ StringToSeparator(clientData, interp, tkwin, string, widgRec, offset)
 	*sepPtr = SEPARATOR_NONE;
     } else {
 	*sepPtr = Blt_Strdup(string);
-    } 
+    }
     return TCL_OK;
 }
 
@@ -1503,7 +1503,7 @@ SeparatorToString(clientData, tkwin, widgRec, offset, freeProcPtr)
 	return "";
     } else if (separator == SEPARATOR_LIST) {
 	return "list";
-    } 
+    }
     return separator;
 }
 
@@ -1525,7 +1525,7 @@ ApplyToTree(hboxPtr, rootPtr, proc, flags)
 	    Blt_ChainLink *linkPtr, *nextPtr;
 	    Tree *treePtr;
 
-	    for (linkPtr = Blt_ChainFirstLink(rootPtr->chainPtr); 
+	    for (linkPtr = Blt_ChainFirstLink(rootPtr->chainPtr);
 		linkPtr != NULL;  linkPtr = nextPtr) {
 		/* Get the next link in the chain before calling
 		 * ApplyToTree.  This is because ApplyToTree may
@@ -1857,7 +1857,7 @@ SelectEntry(hboxPtr, treePtr)
     int isNew;
     Blt_HashEntry *hPtr;
 
-    hPtr = Blt_CreateHashEntry(&(hboxPtr->selectTable), (char *)treePtr, 
+    hPtr = Blt_CreateHashEntry(&(hboxPtr->selectTable), (char *)treePtr,
        &isNew);
     if (isNew) {
 	Blt_ChainLink *linkPtr;
@@ -1907,7 +1907,7 @@ PruneSelection(hboxPtr, rootPtr)
     int selectionChanged;
 
     selectionChanged = FALSE;
-    for (linkPtr = Blt_ChainFirstLink(&(hboxPtr->selectChain)); 
+    for (linkPtr = Blt_ChainFirstLink(&(hboxPtr->selectChain));
 	 linkPtr != NULL; linkPtr = nextPtr) {
 	nextPtr = Blt_ChainNextLink(linkPtr);
 	treePtr = Blt_ChainGetValue(linkPtr);
@@ -2256,9 +2256,9 @@ FindPath(hboxPtr, rootPtr, path)
     if (*path == '\0') {
 	return rootPtr;
     }
-    if (hboxPtr->separator == SEPARATOR_NONE) { 
+    if (hboxPtr->separator == SEPARATOR_NONE) {
 	return FindComponent(rootPtr, path);
-    } 
+    }
     if (hboxPtr->separator == SEPARATOR_LIST) {
 	char **nameArr;
 	int nComp;
@@ -2707,8 +2707,8 @@ CloseNode(hboxPtr, treePtr)
     char *command;
     int result;
 
-    /*   
-     * The tricky part here is that the "close" command can delete 
+    /*
+     * The tricky part here is that the "close" command can delete
      * this node.  So we'll preserve it until after we mark it closed.
      */
     Tcl_Preserve(treePtr);
@@ -2759,8 +2759,8 @@ OpenNode(hboxPtr, treePtr)
     char *string;
     int result;
 
-    /*   
-     * The tricky part here is that the "open" command can delete 
+    /*
+     * The tricky part here is that the "open" command can delete
      * this node.  So we'll preserve it until after we mark it closed.
      */
     Tcl_Preserve(treePtr);
@@ -2778,7 +2778,7 @@ OpenNode(hboxPtr, treePtr)
 	result = Tcl_GlobalEval(hboxPtr->interp, Tcl_DStringValue(&dString));
 	Tcl_DStringFree(&dString);
     }
-    /* 
+    /*
      * Mark the entry open, only after the Tcl proc callback has run.
      */
     entryPtr->flags |= ENTRY_OPEN;
@@ -3130,7 +3130,7 @@ FixUnmappedSelections(hboxPtr, treePtr)
 
 static int
 DeleteNode(hboxPtr, treePtr)
-    Hierbox *hboxPtr;		
+    Hierbox *hboxPtr;
     Tree *treePtr;
 {
     /*
@@ -3158,12 +3158,12 @@ DeleteNode(hboxPtr, treePtr)
 	Blt_ChainDeleteLink(treePtr->parentPtr->chainPtr, treePtr->linkPtr);
 	treePtr->linkPtr = NULL;
     }
-    /* 
+    /*
      * Node may still be in use, so we can't free it right now.  We'll
      * mark the parent as NULL and remove it from the parent's list of
-     * children. 
+     * children.
      */
-    treePtr->parentPtr = NULL;	
+    treePtr->parentPtr = NULL;
     Blt_DeleteBindings(hboxPtr->bindTable, treePtr);
     Blt_DeleteBindings(hboxPtr->buttonBindTable, treePtr);
     Tcl_EventuallyFree(treePtr, DestroyNode);
@@ -3582,9 +3582,9 @@ CreateHierbox(interp, tkwin)
     Blt_InitHashTable(&(hboxPtr->selectTable), BLT_ONE_WORD_KEYS);
     Blt_InitHashTable(&(hboxPtr->nodeTable), BLT_ONE_WORD_KEYS);
     Blt_InitHashTable(&(hboxPtr->imageTable), BLT_STRING_KEYS);
-    hboxPtr->bindTable = Blt_CreateBindingTable(interp, tkwin, hboxPtr, 
+    hboxPtr->bindTable = Blt_CreateBindingTable(interp, tkwin, hboxPtr,
 	PickEntry, GetTags);
-    hboxPtr->buttonBindTable = Blt_CreateBindingTable(interp, tkwin, hboxPtr, 
+    hboxPtr->buttonBindTable = Blt_CreateBindingTable(interp, tkwin, hboxPtr,
 	PickButton, GetTags);
 #if (TK_MAJOR_VERSION > 4)
     Blt_SetWindowInstanceData(tkwin, hboxPtr);
@@ -3714,7 +3714,7 @@ HierboxEventProc(clientData, eventPtr)
 	    if ((editPtr->active) && (hboxPtr->flags & HIERBOX_FOCUS)) {
 		editPtr->cursorOn = TRUE;
 		if (editPtr->offTime != 0) {
-		    editPtr->timerToken = 
+		    editPtr->timerToken =
 			Tcl_CreateTimerHandler(editPtr->onTime,
 			LabelBlinkProc, clientData);
 		}
@@ -3790,7 +3790,7 @@ SelectionProc(clientData, offset, buffer, maxBytes)
 	Blt_ChainLink *linkPtr;
 	Tree *treePtr;
 
-	for (linkPtr = Blt_ChainFirstLink(&(hboxPtr->selectChain)); 
+	for (linkPtr = Blt_ChainFirstLink(&(hboxPtr->selectChain));
 	     linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    treePtr = Blt_ChainGetValue(linkPtr);
 	    Tcl_DStringAppend(&dString, treePtr->entryPtr->labelText, -1);
@@ -4479,7 +4479,7 @@ DrawVerticals(hboxPtr, treePtr, drawable)
 	    y2 = Tk_Height(hboxPtr->tkwin);
 	}
 	if ((y1 < Tk_Height(hboxPtr->tkwin)) && (y2 > 0)) {
-	    XDrawLine(hboxPtr->display, drawable, hboxPtr->lineGC, x1, y1, 
+	    XDrawLine(hboxPtr->display, drawable, hboxPtr->lineGC, x1, y1,
 		      x2, y2);
 	}
     }
@@ -4561,7 +4561,7 @@ DrawButton(hboxPtr, treePtr, drawable)
     relief = (entryPtr->flags & ENTRY_OPEN)
 	? buttonPtr->openRelief : buttonPtr->closeRelief;
     /*
-     * FIXME: Reliefs "flat" and "solid" the same, since there's no 
+     * FIXME: Reliefs "flat" and "solid" the same, since there's no
      * "solid" in pre-8.0 releases.  Should change this when we go to a
      * pure 8.x release.
      */
@@ -4637,7 +4637,7 @@ DisplayIcon(hboxPtr, treePtr, x, y, drawable)
     image = NULL;
     if ((isActive) && (entryPtr->activeIcons != NULL)) {
 	image = entryPtr->activeIcons[0];
-	if ((treePtr == hboxPtr->focusPtr) && 
+	if ((treePtr == hboxPtr->focusPtr) &&
 	    (entryPtr->activeIcons[1] != NULL)) {
 	    image = entryPtr->activeIcons[1];
 	}
@@ -4759,7 +4759,7 @@ DrawLabel(hboxPtr, treePtr, x, y, drawable)
 
 #ifdef notdef
     /* Normal background color */
-    Blt_Fill3DRectangle(hboxPtr->tkwin, drawable, hboxPtr->border, x, y, width, 
+    Blt_Fill3DRectangle(hboxPtr->tkwin, drawable, hboxPtr->border, x, y, width,
 	       height, 0, TK_RELIEF_FLAT);
 #endif
     if (isFocused) {		/* Focus outline */
@@ -5055,9 +5055,9 @@ DisplayHierbox(clientData)
 	    int y, height;
 
 	    y = SCREENY(hboxPtr, hboxPtr->activePtr->entryPtr->worldY);
-	    height = MAX(hboxPtr->activePtr->entryPtr->iconHeight, 
+	    height = MAX(hboxPtr->activePtr->entryPtr->iconHeight,
 		hboxPtr->activePtr->entryPtr->labelHeight);
-	    Blt_Fill3DRectangle(hboxPtr->tkwin, drawable, hboxPtr->activeBorder, 
+	    Blt_Fill3DRectangle(hboxPtr->tkwin, drawable, hboxPtr->activeBorder,
 	       0, y, Tk_Width(hboxPtr->tkwin), height, 0, TK_RELIEF_FLAT);
 	}
 	if (hboxPtr->lineWidth > 0) {
@@ -5171,7 +5171,7 @@ HierboxCmd(clientData, interp, argc, argv)
     hboxPtr->selAnchorPtr = NULL;
     Blt_SetFocusItem(hboxPtr->bindTable, hboxPtr->focusPtr, NULL);
 
-    Tk_CreateSelHandler(tkwin, XA_PRIMARY, XA_STRING, SelectionProc, hboxPtr, 
+    Tk_CreateSelHandler(tkwin, XA_PRIMARY, XA_STRING, SelectionProc, hboxPtr,
 	XA_STRING);
     Tk_CreateEventHandler(tkwin, ExposureMask | StructureNotifyMask |
 	FocusChangeMask, HierboxEventProc, hboxPtr);
@@ -5296,7 +5296,7 @@ BboxOp(hboxPtr, interp, argc, argv)
     right = bottom = 0;
 
     screen = FALSE;
-    if ((argc > 2) && (argv[2][0] == '-') && 
+    if ((argc > 2) && (argv[2][0] == '-') &&
 	(strcmp(argv[2], "-screen") == 0)) {
 	screen = TRUE;
 	argc--, argv++;
@@ -5702,7 +5702,7 @@ CurselectionOp(hboxPtr, interp, argc, argv)
 	Blt_ChainLink *linkPtr;
 	Tree *treePtr;
 
-	for (linkPtr = Blt_ChainFirstLink(&(hboxPtr->selectChain)); 
+	for (linkPtr = Blt_ChainFirstLink(&(hboxPtr->selectChain));
 	     linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    treePtr = Blt_ChainGetValue(linkPtr);
 	    Tcl_AppendElement(interp, NodeToString(hboxPtr, treePtr));
@@ -5771,7 +5771,7 @@ BindOp(hboxPtr, interp, argc, argv)
     if (item == 0) {
 	item = (ClientData)Tk_GetUid(argv[2]);
     }
-    return Blt_ConfigureBindings(interp, hboxPtr->bindTable, item, argc - 3, 
+    return Blt_ConfigureBindings(interp, hboxPtr->bindTable, item, argc - 3,
 	argv + 3);
 }
 
@@ -6408,7 +6408,7 @@ ChildrenOpOp(hboxPtr, interp, argc, argv)
 	}
 	if ((first == -1) || (first >= nNodes)) {
 	    first = nNodes - 1;
-	} 
+	}
 	firstPtr = Blt_ChainGetNthLink(parentPtr->chainPtr, first);
 	lastPtr = Blt_ChainGetNthLink(parentPtr->chainPtr, last);
 	if (first > last) {
@@ -6526,7 +6526,7 @@ EntryOp(hboxPtr, interp, argc, argv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOp(interp, nEntrySpecs, entryOperSpecs, BLT_OP_ARG2, argc, 
+    proc = Blt_GetOp(interp, nEntrySpecs, entryOperSpecs, BLT_OP_ARG2, argc,
 	argv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -8000,7 +8000,7 @@ IncludesOpOp(hboxPtr, interp, argc, argv)
  * Side effects:
  *	The selection changes.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -8019,13 +8019,13 @@ MarkOpOp(hboxPtr, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (hboxPtr->selAnchorPtr == NULL) {
-	Tcl_AppendResult(interp, "selection anchor must be set first", 
+	Tcl_AppendResult(interp, "selection anchor must be set first",
 		 (char *)NULL);
 	return TCL_ERROR;
     }
 
     /* Deselect entry from the list all the way back to the anchor. */
-    for (linkPtr = Blt_ChainLastLink(&(hboxPtr->selectChain)); 
+    for (linkPtr = Blt_ChainLastLink(&(hboxPtr->selectChain));
 	 linkPtr != NULL; linkPtr = nextPtr) {
 	nextPtr = Blt_ChainPrevLink(linkPtr);
 	selectPtr = Blt_ChainGetValue(linkPtr);
@@ -8315,7 +8315,7 @@ XViewOp(hboxPtr, interp, argc, argv)
 	return TCL_OK;
     }
     if (Blt_GetScrollInfo(interp, argc - 2, argv + 2, &(hboxPtr->xOffset),
-	    worldWidth, width, hboxPtr->xScrollUnits, hboxPtr->scrollMode) 
+	    worldWidth, width, hboxPtr->xScrollUnits, hboxPtr->scrollMode)
 	    != TCL_OK) {
 	return TCL_ERROR;
     }

@@ -1,4 +1,4 @@
-/* 
+/*
  * tclMacResource.r --
  *
  *	This file creates resources for use in a simple shell.
@@ -59,7 +59,7 @@ resource 'vers' (2) {
 #define TCL_LIBRARY_RESOURCES 1000
 #define ITCL_LIBRARY_RESOURCES 2000
 
-/* 
+/*
  * The mechanisim below loads Tcl source into the resource fork of the
  * application.  The example below creates a TEXT resource named
  * "Init" from the file "init.tcl".  This allows applications to use
@@ -85,7 +85,7 @@ read 'TEXT' (ITCL_LIBRARY_RESOURCES, "itcl", purgeable,preload) "::library:itcl.
  * A good example of something you may want to set is: "TCL_LIBRARY=My
  * disk:etc."
  */
- 
+
 resource 'STR#' (128, "Tcl Environment Variables") {
 	{	"SCHEDULE_NAME=Agent Controller Schedule",
 		"SCHEDULE_PATH=Lozoya:System Folder:Tcl Lib:Tcl-Scheduler"

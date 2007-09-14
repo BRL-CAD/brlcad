@@ -1,6 +1,6 @@
 .\" Copyright (c) 1990, University of Michigan
 .TH RLETOTIFF 1 "July 3, 1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletotiff \- Convert 24 bit RLE image files to TIFF.
 .SH SYNOPSIS
@@ -8,23 +8,23 @@ rletotiff \- Convert 24 bit RLE image files to TIFF.
 [
 .B \-{cC}
 ]
-.B \-o 
+.B \-o
 .I outfile.tif
 [
 .B \-v
-] [ 
+] [
 .I infile.rle
 ]
 .SH DESCRIPTION
 This program converts a 24 bit image in
 .IR RLE (5)
-format into 
+format into
 .I TIFF
 form.  Only a single image will be converted.
 .SH OPTIONS
 .TP
 .B \-{cC}
-Sets the type of compression used in the output file.  
+Sets the type of compression used in the output file.
 .B \-c
 (the default) will cause the output file to be compressed using the
 Lempel-Ziv-Welch (LZW) algorithm.
@@ -32,7 +32,7 @@ Lempel-Ziv-Welch (LZW) algorithm.
 will suppress any compression.
 .TP
 .BI \-o " outfile.tif"
-The output will be written to this file.  
+The output will be written to this file.
 .I outfile.tif
 must be a real file, the special cases described in
 .I urt (1)

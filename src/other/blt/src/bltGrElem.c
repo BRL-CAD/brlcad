@@ -84,7 +84,7 @@ GetPenStyle(graphPtr, string, type, stylePtr)
 	return TCL_ERROR;
     }
     if ((nElem != 1) && (nElem != 3)) {
-	Tcl_AppendResult(interp, "bad style \"", string, "\": should be ", 
+	Tcl_AppendResult(interp, "bad style \"", string, "\": should be ",
 		 "\"penName\" or \"penName min max\"", (char *)NULL);
 	if (elemArr != NULL) {
 	    Blt_Free(elemArr);
@@ -409,7 +409,7 @@ DataToString(clientData, tkwin, widgRec, offset, freeProcPtr)
     Tcl_DString dString;
     char *result;
     char string[TCL_DOUBLE_SPACE + 1];
-    double *p, *endPtr; 
+    double *p, *endPtr;
 
     if (vPtr->clientId != NULL) {
 	return Blt_NameOfVectorId(vPtr->clientId);
@@ -588,7 +588,7 @@ StringToAlong(clientData, interp, tkwin, string, widgRec, offset)
 
     if ((string[0] == 'x') && (string[1] == '\0')) {
 	*intPtr = SEARCH_X;
-    } else if ((string[0] == 'y') && (string[1] == '\0')) { 
+    } else if ((string[0] == 'y') && (string[1] == '\0')) {
 	*intPtr = SEARCH_Y;
     } else if ((string[0] == 'b') && (strcmp(string, "both") == 0)) {
 	*intPtr = SEARCH_BOTH;
@@ -649,7 +649,7 @@ Blt_FreePalette(graphPtr, palette)
 	register PenStyle *stylePtr;
 	Blt_ChainLink *nextPtr;
 
-	for (linkPtr = Blt_ChainNextLink(linkPtr); linkPtr != NULL; 
+	for (linkPtr = Blt_ChainNextLink(linkPtr); linkPtr != NULL;
 	     linkPtr = nextPtr) {
 	    nextPtr =  Blt_ChainNextLink(linkPtr);
 	    stylePtr = Blt_ChainGetValue(linkPtr);
@@ -820,8 +820,8 @@ Blt_StyleMap(elemPtr)
     linkPtr = Blt_ChainFirstLink(elemPtr->palette);
     stylePtr = Blt_ChainGetValue(linkPtr);
 
-    /* 
-     * Create a style mapping array (data point index to style), 
+    /*
+     * Create a style mapping array (data point index to style),
      * initialized to the default style.
      */
     dataToStyle = Blt_Malloc(nPoints * sizeof(PenStyle *));
@@ -839,7 +839,7 @@ Blt_StyleMap(elemPtr)
 		double norm;
 
 		norm = (w[i] - stylePtr->weight.min) / stylePtr->weight.range;
-		if (((norm - 1.0) <= DBL_EPSILON) && 
+		if (((norm - 1.0) <= DBL_EPSILON) &&
 		    (((1.0 - norm) - 1.0) <= DBL_EPSILON)) {
 		    dataToStyle[i] = stylePtr;
 		    break;		/* Done: found range that matches. */
@@ -892,7 +892,7 @@ Blt_MapErrorBars(graphPtr, elemPtr, dataToStyle)
 	int *errorToData;
 	int *indexPtr;
 	register int i;
-		
+
 	segPtr = errorBars = Blt_Malloc(n * 3 * sizeof(Segment2D));
 	indexPtr = errorToData = Blt_Malloc(n * 3 * sizeof(int));
 	for (i = 0; i < n; i++) {
@@ -954,7 +954,7 @@ Blt_MapErrorBars(graphPtr, elemPtr, dataToStyle)
 	int *errorToData;
 	int *indexPtr;
 	register int i;
-		
+
 	segPtr = errorBars = Blt_Malloc(n * 3 * sizeof(Segment2D));
 	indexPtr = errorToData = Blt_Malloc(n * 3 * sizeof(int));
 	for (i = 0; i < n; i++) {
@@ -971,7 +971,7 @@ Blt_MapErrorBars(graphPtr, elemPtr, dataToStyle)
 		}
 		if ((FINITE(high)) && (FINITE(low)))  {
 		    Point2D p, q;
-		    
+
 		    p = Blt_Map2D(graphPtr, x, high, &elemPtr->axes);
 		    q = Blt_Map2D(graphPtr, x, low, &elemPtr->axes);
 		    segPtr->p = p;
@@ -1149,7 +1149,7 @@ CreateElement(graphPtr, interp, argc, argv, classUid)
     int isNew;
 
     if (argv[3][0] == '-') {
-	Tcl_AppendResult(graphPtr->interp, "name of element \"", argv[3], 
+	Tcl_AppendResult(graphPtr->interp, "name of element \"", argv[3],
 			 "\" can't start with a '-'", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1161,15 +1161,15 @@ CreateElement(graphPtr, interp, argc, argv, classUid)
     }
     if (classUid == bltBarElementUid) {
 	elemPtr = Blt_BarElement(graphPtr, argv[3], classUid);
-    } else { 
-	/* Stripcharts are line graphs with some options enabled. */	
+    } else {
+	/* Stripcharts are line graphs with some options enabled. */
 	elemPtr = Blt_LineElement(graphPtr, argv[3], classUid);
     }
     elemPtr->hashPtr = hPtr;
     Blt_SetHashValue(hPtr, elemPtr);
 
     if (Blt_ConfigureWidgetComponent(interp, graphPtr->tkwin, elemPtr->name,
-	    "Element", elemPtr->specsPtr, argc - 4, argv + 4, 
+	    "Element", elemPtr->specsPtr, argc - 4, argv + 4,
 		(char *)elemPtr, 0) != TCL_OK) {
 	DestroyElement(graphPtr, elemPtr);
 	return TCL_ERROR;
@@ -1389,7 +1389,7 @@ Blt_ElementsToPostScript(graphPtr, psToken)
 	elemPtr = Blt_ChainGetValue(linkPtr);
 	if (!elemPtr->hidden) {
 	    /* Comment the PostScript to indicate the start of the element */
-	    Blt_FormatToPostScript(psToken, "\n%% Element \"%s\"\n\n", 
+	    Blt_FormatToPostScript(psToken, "\n%% Element \"%s\"\n\n",
 		elemPtr->name);
 	    (*elemPtr->procsPtr->printNormalProc) (graphPtr, psToken, elemPtr);
 	}
@@ -1643,7 +1643,7 @@ static Tk_ConfigSpec closestSpecs[] =
     {TK_CONFIG_CUSTOM, "-halo", (char *)NULL, (char *)NULL,
 	(char *)NULL, Tk_Offset(ClosestSearch, halo), 0, &bltDistanceOption},
     {TK_CONFIG_BOOLEAN, "-interpolate", (char *)NULL, (char *)NULL,
-	(char *)NULL, Tk_Offset(ClosestSearch, mode), 0 }, 
+	(char *)NULL, Tk_Offset(ClosestSearch, mode), 0 },
     {TK_CONFIG_CUSTOM, "-along", (char *)NULL, (char *)NULL,
 	(char *)NULL, Tk_Offset(ClosestSearch, along), 0, &alongOption},
     {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
@@ -1680,7 +1680,7 @@ ClosestOp(graphPtr, interp, argc, argv)
 	temp = x, x = y, y = temp;
     }
     for (i = 6; i < argc; i += 2) {	/* Count switches-value pairs */
-	if ((argv[i][0] != '-') || 
+	if ((argv[i][0] != '-') ||
 	    ((argv[i][1] == '-') && (argv[i][2] == '\0'))) {
 	    break;
 	}
@@ -1736,17 +1736,17 @@ ClosestOp(graphPtr, interp, argc, argv)
     } else {
 	Blt_ChainLink *linkPtr;
 
-	/* 
+	/*
 	 * Find the closest point from the set of displayed elements,
 	 * searching the display list from back to front.  That way if
 	 * the points from two different elements overlay each other
-	 * exactly, the last one picked will be the topmost.  
+	 * exactly, the last one picked will be the topmost.
 	 */
 	for (linkPtr = Blt_ChainLastLink(graphPtr->elements.displayList);
 	    linkPtr != NULL; linkPtr = Blt_ChainPrevLink(linkPtr)) {
 	    elemPtr = Blt_ChainGetValue(linkPtr);
 	    /* Check if the X or Y vectors have notifications pending */
-	    if ((elemPtr->hidden) || 
+	    if ((elemPtr->hidden) ||
 		(elemPtr->flags & MAP_ITEM) ||
 		(Blt_VectorNotifyPending(elemPtr->x.clientId)) ||
 		(Blt_VectorNotifyPending(elemPtr->y.clientId))) {
@@ -1810,7 +1810,7 @@ ClosestOp(graphPtr, interp, argc, argv)
  * Side Effects:
  *	Graph will be redrawn to reflect the new display list.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 ConfigureOp(graphPtr, interp, argc, argv)
@@ -1844,13 +1844,13 @@ ConfigureOp(graphPtr, interp, argc, argv)
 	NameToElement(graphPtr, argv[i], &elemPtr);
 	flags = TK_CONFIG_ARGV_ONLY;
 	if (numOpts == 0) {
-	    return Tk_ConfigureInfo(interp, graphPtr->tkwin, 
+	    return Tk_ConfigureInfo(interp, graphPtr->tkwin,
 		elemPtr->specsPtr, (char *)elemPtr, (char *)NULL, flags);
 	} else if (numOpts == 1) {
-	    return Tk_ConfigureInfo(interp, graphPtr->tkwin, 
+	    return Tk_ConfigureInfo(interp, graphPtr->tkwin,
 		elemPtr->specsPtr, (char *)elemPtr, options[0], flags);
 	}
-	if (Tk_ConfigureWidget(interp, graphPtr->tkwin, elemPtr->specsPtr, 
+	if (Tk_ConfigureWidget(interp, graphPtr->tkwin, elemPtr->specsPtr,
 		numOpts, options, (char *)elemPtr, flags) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -2014,7 +2014,7 @@ GetOp(graphPtr, interp, argc, argv)
     if ((argv[3][0] == 'c') && (strcmp(argv[3], "current") == 0)) {
 	elemPtr = (Element *)Blt_GetCurrentItem(graphPtr->bindTable);
 	/* Report only on elements. */
-	if ((elemPtr != NULL) && 
+	if ((elemPtr != NULL) &&
 	    ((elemPtr->classUid == bltBarElementUid) ||
 	    (elemPtr->classUid == bltLineElementUid) ||
 	    (elemPtr->classUid == bltStripElementUid))) {

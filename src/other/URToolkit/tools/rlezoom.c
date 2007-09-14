@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rlezoom.c - Zoom an RLE file.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -37,7 +37,7 @@ static int advance_fp();
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Zoom an RLE file by an integral factor.
  *
  * Usage:
@@ -60,7 +60,7 @@ static int advance_fp();
  *      Read input file in raw mode.  For each line, expand it by the
  *      X expansion factor.  If the factor is > 3, convert pixel data
  *      into runs.  Write each line a number of times equal to the Y
- *      factor. 
+ *      factor.
  */
 int
 main( argc, argv )
@@ -110,7 +110,7 @@ char **argv;
 	  (rle_err = rle_get_setup( &in_hdr )) == RLE_SUCCESS;
 	  rle_cnt++ )
     {
-    
+
 	/* Figure out output file size and parameters */
 	(void)rle_hdr_cp( &in_hdr, &out_hdr );
 	if ( rle_cnt == 0 )
@@ -172,7 +172,7 @@ char **argv;
 
 /*****************************************************************
  * TAG( integer_zoom )
- * 
+ *
  * Zoom the input image by an integer factor.
  * Inputs:
  * 	in_hdr:		Input image header.
@@ -196,12 +196,12 @@ rle_hdr *out_hdr;
     int y, ynext, i;
     rle_op ** in_raw, ** out_raw;
     int * in_nraw, * out_nraw;
-    
+
     /* Create raw arrays for input and output files */
     if ( rle_raw_alloc( in_hdr, &in_raw, &in_nraw ) < 0 ||
 	 rle_raw_alloc( out_hdr, &out_raw, &out_nraw ) < 0 )
 	RLE_CHECK_ALLOC( in_hdr->cmd, 0, 0 );
-    
+
     y = in_hdr->ymin;
     while ( (ynext = rle_getraw( in_hdr, in_raw, in_nraw )) != 32768 )
     {
@@ -215,7 +215,7 @@ rle_hdr *out_hdr;
 	y = ynext;
     }
     rle_puteof( out_hdr );
-    
+
     rle_raw_free( in_hdr, in_raw, in_nraw );
     rle_raw_free( out_hdr, out_raw, out_nraw );
 }
@@ -223,7 +223,7 @@ rle_hdr *out_hdr;
 
 /*****************************************************************
  * TAG( expand_raw )
- * 
+ *
  * Zoom the input scanline by an integer factor.
  * Inputs:
  * 	the_hdr:		Used for ncolors and alpha channel indication.
@@ -234,7 +234,7 @@ rle_hdr *out_hdr;
  * 	out_raw:	Output raw opcodes.
  *	out_nraw:	Output counts.
  * Assumptions:
- * 	
+ *
  * Algorithm:
  * 	Replicate pixels by xfact.  If xfact > 3, turn pixel data into
  * 	runs.
@@ -308,7 +308,7 @@ int *out_nraw;
 
 /*****************************************************************
  * TAG( float_zoom )
- * 
+ *
  * Expand (or contract) input image by floating point amount.
  * Inputs:
  * 	in_hdr:		Header for input image.
@@ -333,7 +333,7 @@ rle_hdr *out_hdr;
     int curr_row, in_row;
     int wid, i;
 
-    if (rle_row_alloc( in_hdr, &in_scan ) < 0 || 
+    if (rle_row_alloc( in_hdr, &in_scan ) < 0 ||
 	rle_row_alloc( out_hdr, &out_scan ) < 0 )
 	RLE_CHECK_ALLOC( in_hdr->cmd, 0, 0 );
 
@@ -376,7 +376,7 @@ rle_hdr *out_hdr;
 
 /*****************************************************************
  * TAG( advance_fp )
- * 
+ *
  * Advance the input to the specified row.
  * Inputs:
  * 	hdr:		Input image header.
@@ -405,7 +405,7 @@ rle_pixel **in_scan;
 
 /*****************************************************************
  * TAG( build_row )
- * 
+ *
  * Build zoomed output scanline from an input scanline.
  * Inputs:
  * 	hdr:		Output image header.

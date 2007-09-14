@@ -165,7 +165,7 @@ foreach mode $modes {
     catch {tk_getOpenFile -foo 1} msg
     regsub -all ,      $msg "" options
     regsub \"-foo\" $options "" options
-    
+
     foreach option $options {
         if {[string index $option 0] eq "-"} {
 	    test filebox-1.2-$mode$option "tk_getOpenFile command" -body {

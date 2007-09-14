@@ -707,7 +707,7 @@ ExpandLocalLiteralArray(
     if (currArrayPtr != newArrayPtr) {
 	for (i=0 ; i<currElems ; i++) {
 	    if (newArrayPtr[i].nextPtr != NULL) {
-		newArrayPtr[i].nextPtr = newArrayPtr 
+		newArrayPtr[i].nextPtr = newArrayPtr
 			+ (newArrayPtr[i].nextPtr - currArrayPtr);
 	    }
 	}

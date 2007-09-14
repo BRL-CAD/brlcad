@@ -34,7 +34,7 @@ foreach arg $argv {
     # generate a pkgIndex.tcl file in the arg dir
     puts "Generating pkgIndex.tcl in $arg"
     catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
-    
+
     if {![file exists "$arg/pkgIndex.tcl"]} {
 	puts "ERROR: pkgIndex.tcl does not exist in $arg"
 	continue
@@ -53,7 +53,7 @@ foreach arg $argv {
 	}
     }
     close $fd
-    
+
     # write out the sorted pkgIndex.tcl
     set fd [open "$arg/pkgIndex.tcl" {WRONLY TRUNC CREAT}]
     foreach line $header {

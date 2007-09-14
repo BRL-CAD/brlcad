@@ -1,20 +1,20 @@
 .\" Copyright (c) 1987, University of Utah
 .TH UNSLICE 1 "May 21, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 unslice \- Quickly assemble image slices
 .SH SYNOPSIS
 .B unslice
 [
 .B \-f
-.I ctlfile 
+.I ctlfile
 ] [
 .B \-y
 .I ymax
 ] [
 .B \-o
 .I outfile
-] 
+]
 .I infiles ...
 .SH DESCRIPTION
 .IR Unslice
@@ -39,14 +39,14 @@ If no control file is given, the
 flag is used.  This tells \fIunslice\fP what the maximum Y value of
 the output image is.
 .I Unslice
-reads the files in order, using the RLE headers to 
-determine where to place the slices.  If two slices overlap, the first 
+reads the files in order, using the RLE headers to
+determine where to place the slices.  If two slices overlap, the first
 scanlines from the second slice are thrown away.  In both cases, the slices
 must be in ascending order, and are expected to be of uniform width.
 .SH SEE ALSO
-.IR crop (1), 
-.IR rlecomp (1), 
-.IR rlepatch (1), 
+.IR crop (1),
+.IR rlecomp (1),
+.IR rlepatch (1),
 .IR repos (1),
 .IR urt (1),
 .IR RLE (5).
@@ -54,5 +54,5 @@ must be in ascending order, and are expected to be of uniform width.
 John W. Peterson
 .SH BUGS
 .I Unslice
-has really been superceded by 
+has really been superceded by
 .IR rlepatch (1).

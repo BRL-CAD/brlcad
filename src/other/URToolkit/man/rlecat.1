@@ -1,7 +1,7 @@
 .\" -*- Text -*-
 .\" Copyright (c) 1990, University of Michigan
 .TH RLECAT 1 "November 12, 1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 rlecat \- concatenate and repeat images.
 .SH SYNOPSIS
@@ -12,18 +12,18 @@ rlecat \- concatenate and repeat images.
 .B \-n
 .I repeat-count
 ] [
-.B \-o 
+.B \-o
 .I outfile
-] [ 
+] [
 .I files ...
 ]
 .SH DESCRIPTION
-This program will concatenate all the input 
+This program will concatenate all the input
 .IR RLE (5)
 images, adding titles, and
 optionally repeating the images a specified number of times.
 For each input file, it copies all images to the output file.  If an
-image does not have a 
+image does not have a
 .I title
 or
 .I TITLE
@@ -40,7 +40,7 @@ and so on.
 .SH OPTIONS
 .TP
 .B \-c
-With 
+With
 .BR \-n ,
 specifies that the output images should be "collated".  In other
 words, the repeat sequence will be 1 2 3 ... 1 2 3 ... instead of the
@@ -49,7 +49,7 @@ default of 1 1 ... 2 2 ... 3 3 ...
 .BI \-n " repeat-count"
 Specifies that each input image should be repeated
 .I repeat-count
-times.  The "repeat unit" (if 
+times.  The "repeat unit" (if
 .B \-c
 is specified, this is the entire concatenated sequence of input
 images, otherwise it is just each image, separately) is written to a
@@ -57,7 +57,7 @@ temporary file, and then copied to the output the requisite number of
 times.
 .TP
 .BI \-o " outfile"
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.
@@ -75,9 +75,9 @@ Generates 25 copies of a gray background; useful for using
 to put background on an animation sequence (with 25 or fewer frames).
 .TP
 rlecat *.rle | <some processing> | getx11
-Adds 
-.I TITLE 
-comments so the individual images are correctly identified by 
+Adds
+.I TITLE
+comments so the individual images are correctly identified by
 .IR getx11 (1).
 .TP
 rlecat -c -r 3 anim*.rle
@@ -98,4 +98,4 @@ Spencer W. Thomas, University of Michigan
 .SH BUGS
 If the /tmp directory is not writable, or if there is not sufficient
 space on /tmp to hold a repeat unit, the program will not work
-correctly.  
+correctly.

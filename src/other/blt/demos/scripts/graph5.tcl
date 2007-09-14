@@ -6,19 +6,19 @@ set configOptions {
     Font			{ Courier 18 bold}
     Height			4i
     Legend.ActiveRelief		raised
-    Legend.Font			{ Courier 14 } 
+    Legend.Font			{ Courier 14 }
     Legend.padY			0
     Title			"Element Symbol Types"
     Width			5i
-} 
+}
 set resName [string trimleft $graph .]
 foreach { option value } $configOptions {
     option add *$resName.$option $value
 }
 
 vector xValues
-xValues set { 
-    0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 
+xValues set {
+    0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
 }
 
 for { set i 0 } { $i < 10 } { incr i } {
@@ -50,7 +50,7 @@ foreach { symbol label fill color yVec } $attributes {
 	-color $color \
 	-fill $fill \
 	-x xValues \
-	-y $yVec 
+	-y $yVec
     incr count
 }
 $graph element configure line0 \

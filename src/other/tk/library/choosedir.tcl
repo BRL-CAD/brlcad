@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2000 by Scriptics Corporation.
 # All rights reserved.
-# 
+#
 # RCS: @(#) $Id$
 
 # Make sure the tk::dialog namespace, in which all dialogs should live, exists
@@ -115,7 +115,7 @@ proc ::tk::dialog::file::chooseDir:: {args} {
 
     # Return value to user
     #
-    
+
     return $Priv(selectFilePath)
 }
 
@@ -157,7 +157,7 @@ proc ::tk::dialog::file::chooseDir::Config {dataName argList} {
     if {$data(-title) eq ""} {
 	set data(-title) "[mc "Choose Directory"]"
     }
-    
+
     # Stub out the -multiple value for the dialog; it doesn't make sense for
     # choose directory dialogs, but we have to have something there because we
     # share so much code with the file dialogs.
@@ -250,7 +250,7 @@ proc ::tk::dialog::file::chooseDir::DblClick {w} {
 	    return
 	}
     }
-}    
+}
 
 # Gets called when user browses the IconList widget (dragging mouse, arrow
 # keys, etc)

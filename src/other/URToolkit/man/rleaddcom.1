@@ -5,7 +5,7 @@
 rleaddcom \- add picture comments to an RLE file.
 .SH SYNOPSIS
 .B
-rleaddcom 
+rleaddcom
 [
 .B \-d
 ] [
@@ -13,17 +13,17 @@ rleaddcom
 ] [
 .B \-o
 .I outfile
-] 
+]
 .I infile
 .I comments
 .SH DESCRIPTION
-The 
+The
 .I rleaddcom
-program will add one or more comments to an 
+program will add one or more comments to an
 .IR RLE (5)
 file.  If
 .I infile
-is "\-", it will read from the standard input.  The modified 
+is "\-", it will read from the standard input.  The modified
 .IR RLE (5)
 file is written to the standard output if the
 .B \-o
@@ -49,16 +49,16 @@ This argument requires write permission to the directory containing
 .IR infile ,
 but does not require write permission for
 .IR infile .
-Of the special file name cases described in 
+Of the special file name cases described in
 .IR urt (1),
 only compressed files may be updated in place.  (It doesn't make sense
 to update the output of a pipe "in place", does it?)
 
 If
 .BI  \-o " outfile"
-is specified together with 
+is specified together with
 .BR \-i ,
-then 
+then
 .I outfile
 will not be modified until \fIrleaddcom\fP has finished (this is
 similar to the way that

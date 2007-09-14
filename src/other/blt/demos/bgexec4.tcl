@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -35,7 +35,7 @@ set program ../src/bltwish
 if { [info exists tcl_platform ] } {
     puts stderr $tcl_platform(platform)
     if { $tcl_platform(platform) == "windows" } {
-        set shells [glob C:/Program\ Files/Tcl/bin/tclsh8*.exe ] 
+        set shells [glob C:/Program\ Files/Tcl/bin/tclsh8*.exe ]
         set program [lindex $shells 0]
     }
 }
@@ -60,7 +60,7 @@ proc Animate {} {
 	return
     }
     if { $animate(index) >= 0 } {
-	.logo configure -bitmap $animate(prefix).$animate(index) 
+	.logo configure -bitmap $animate(prefix).$animate(index)
 	incr animate(index)
 	if { $animate(index) >= $animate(numBitmaps) } {
 	    set animate(index) 0
@@ -108,7 +108,7 @@ option add *logo.padX 4
 option add *title.text "Catching stdout and stderr"
 option add *title.font -*-Helvetica-Bold-R-*-*-14-*-*-*-*-*-*-*
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { [string match *color $visual] } {
     option add *text.background white
     option add *text.foreground blue
@@ -119,7 +119,7 @@ if { [string match *color $visual] } {
     option add *start.background green
     option add *start.foreground navyblue
     option add *logo.background beige
-    option add *logo.foreground brown 
+    option add *logo.foreground brown
     option add *logo.foreground green4
     option add *title.background lightblue
     option add *logo.background lightblue
@@ -148,13 +148,13 @@ proc Stop { } {
 }
 
 # Create widgets
-text .text 
+text .text
 .text tag configure stdout -font -*-Helvetica-Bold-R-*-*-18-*-*-*-*-*-*-* \
     -foreground green2
 .text tag configure stderr -font -*-Helvetica-Medium-O-*-*-18-*-*-*-*-*-*-* \
     -foreground red2
 
-scrollbar .vscroll 
+scrollbar .vscroll
 button .start -text "Start" -command [list Start $command]
 button .stop -text "Stop" -command Stop
 label .logo  -bitmap globe.0
@@ -167,7 +167,7 @@ table . \
     .vscroll 	1,3 -fill y \
     .logo 	2,0 -anchor w -padx 10 -reqheight .6i -pady 4 \
     .start 	2,1 \
-    .stop 	2,2 
+    .stop 	2,2
 
 set buttonWidth 1i
 table configure . c1 c2 -width 1i

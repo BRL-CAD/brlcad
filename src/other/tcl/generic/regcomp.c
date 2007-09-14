@@ -1828,7 +1828,7 @@ dovec(
     } else {
 	leads = NULL;
     }
-    
+
     /*
      * First, get the ordinary characters out of the way.
      */
@@ -1876,7 +1876,7 @@ dovec(
      * Possibly just a problem with parens? The original condition was
      * ((leads == NULL || leads->nchrs == 0) && cv->nmcces == 0)
      */
-    
+
     if (leads == NULL || (leads->nchrs == 0 && cv->nmcces == 0)) {
 	return;
     }

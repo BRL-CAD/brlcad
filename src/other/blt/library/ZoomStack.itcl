@@ -5,12 +5,12 @@ class ZoomStackGraph {
     # The name of graph (nee the namespace path)
     variable graph ""
 
-    # Indicates which corner of the rectangular zoom region 
-    # is currently being choosen.  
+    # Indicates which corner of the rectangular zoom region
+    # is currently being choosen.
     variable corner "first"
 
     # Coordinates of the current zoom region. They represent the
-    # two corners of a rectangular area.  The two points are order 
+    # two corners of a rectangular area.  The two points are order
     # independent.
     variable x1
     variable y1
@@ -45,31 +45,31 @@ class ZoomStackGraph {
 
     # These methods are used internally, within this class, to manage the
     # zoom stack.
-    private method SaveCoords { x y } 
+    private method SaveCoords { x y }
     private method Zoom {}
     private method Unzoom {}
     private method Push { cmd }
     private method Pop {}
     private method MarkPoint { x y }
     private method SetTitle { title }
-    private method DrawBox { } 
+    private method DrawBox { }
 
-    # These methods are called by "bind" and "after" from the Tk 
+    # These methods are called by "bind" and "after" from the Tk
     # event loop.  Is there any way of hiding them, so that it
     # doesn't look to the user as part of the public interface?
     method ClearZoom {}
     method ClearTitle {}
-    method UpdateOutline { x y } 
+    method UpdateOutline { x y }
     method SelectPoint { x y }
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # SaveCoords --
 #
-#	Given a point on the screen, transforms the point into graph 
-#	coordinates and saves it as one of the points representing a 
-#	corner of the zoom region. 
+#	Given a point on the screen, transforms the point into graph
+#	coordinates and saves it as one of the points representing a
+#	corner of the zoom region.
 #
 # ----------------------------------------------------------------------
 body ZoomStackGraph::SaveCoords { x y } {
@@ -79,42 +79,42 @@ body ZoomStackGraph::SaveCoords { x y } {
     set y [lindex $coords 1]
 
     scan [$graph xaxis limits] "%s %s" min max
-    if { $x > $max } { 
-	set x $max 
-    } elseif { $x < $min } { 
-	set x $min 
+    if { $x > $max } {
+	set x $max
+    } elseif { $x < $min } {
+	set x $min
     }
 
     scan [$graph yaxis limits] "%s %s" min max
-    if { $y > $max } { 
-	set y $max 
-    } elseif { $y < $min } { 
-	set y $min 
+    if { $y > $max } {
+	set y $max
+    } elseif { $y < $min } {
+	set y $min
     }
 
     if { $corner == "first" } {
-	set x1 $x ; set y1 $y 
+	set x1 $x ; set y1 $y
     } else {
 	set x2 $x ; set y2 $y
     }
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # MarkPoint --
 #
 #	Adds text around one of the corners of the zoom region.
-#	The text consists of the x,y graph coordinates of the 
+#	The text consists of the x,y graph coordinates of the
 #	corner.
 #
 # ----------------------------------------------------------------------
 body ZoomStackGraph::MarkPoint { x y } {
 
     set marker "bltZoom_text_$corner"
-    set text [format "x=%.4g\ny=%.4g" $x $y] 
+    set text [format "x=%.4g\ny=%.4g" $x $y]
 
     if [$graph marker exists $marker] {
-     	$graph marker configure $marker -coords { $x $y } -text $text 
+     	$graph marker configure $marker -coords { $x $y } -text $text
     } else {
     	$graph marker create text -coords { $x $y } -name $marker \
    	    -font *lucida*-r-*-10-* \
@@ -123,7 +123,7 @@ body ZoomStackGraph::MarkPoint { x y } {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # Empty --
 #
 #	Indicates if the stack of axis configuration commands is
@@ -136,11 +136,11 @@ body ZoomStackGraph::Empty { } {
 
 
 # ----------------------------------------------------------------------
-# 
+#
 # Push --
 #
 #	Appends a command on the list "stack" which can be used
-#	to return to previous graph x and y axis ranges.  
+#	to return to previous graph x and y axis ranges.
 #
 # ----------------------------------------------------------------------
 body ZoomStackGraph::Push { cmd } {
@@ -148,7 +148,7 @@ body ZoomStackGraph::Push { cmd } {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # Pop --
 #
 #	Remove the last item pushed onto the stack and returns it.
@@ -161,11 +161,11 @@ body ZoomStackGraph::Pop { } {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # ClearTitle --
 #
 #	Clears the zoom title (displayed in the upper left corner
-#	of the graph).  This routine is called from the event queue 
+#	of the graph).  This routine is called from the event queue
 #	using "after".
 #
 # ----------------------------------------------------------------------
@@ -174,7 +174,7 @@ body ZoomStackGraph::ClearTitle {} {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # Unzoom --
 #
 #	Reverts to a previous zoom.  Resets the x and y axis limits
@@ -212,21 +212,21 @@ body ZoomStackGraph::Unzoom { } {
 # ----------------------------------------------------------------------
 #
 # Zoom --
-# 
+#
 #	Push the old axis limits on the stack and set them to the
 #	zoom region.
 #
 # ----------------------------------------------------------------------
 body ZoomStackGraph::Zoom { } {
-    $graph marker delete "bltZoom_*" 
+    $graph marker delete "bltZoom_*"
 
-    if { ($x1 == $x2) && ($y1 == $y2) } { 
+    if { ($x1 == $x2) && ($y1 == $y2) } {
 	# The first and last points of the zoom region are the same.
 	# Revert back to the start.
 	return
     }
 
-    # Put a command on the stack that lets us revert back to the current 
+    # Put a command on the stack that lets us revert back to the current
     # axis limits.
     set cmd [format {
 	%s xaxis configure -min "%s" -max "%s"
@@ -239,16 +239,16 @@ body ZoomStackGraph::Zoom { } {
     # selected in ascending order.  So consider their relative positions
     # when setting min and max axis limits.
 
-    if { $x1 > $x2 } { 
-	$graph xaxis configure -min $x2 -max $x1 
+    if { $x1 > $x2 } {
+	$graph xaxis configure -min $x2 -max $x1
     } elseif { $x1 < $x2 } {
 	$graph xaxis configure -min $x1 -max $x2
-    } 
-    if { $y1 > $y2 } { 
+    }
+    if { $y1 > $y2 } {
 	$graph yaxis configure -min $y2 -max $y1
     } elseif { $y1 < $y2 } {
 	$graph yaxis configure -min $y1 -max $y2
-    } 
+    }
 
     # Call "update" explicitly here after the graph is made busy.
     # This prevents the user from inadvertantly selecting another zoom
@@ -260,13 +260,13 @@ body ZoomStackGraph::Zoom { } {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # ClearZoom --
 #
 # ----------------------------------------------------------------------
 body ZoomStackGraph::ClearZoom { } {
 
-    $graph marker delete "bltZoom_*" 
+    $graph marker delete "bltZoom_*"
     if { $corner == "first" } {
 	# We're haven't started to select a zoom region, so assume
 	# that we want to revert back to a previous zoom level.
@@ -280,18 +280,18 @@ body ZoomStackGraph::ClearZoom { } {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # SetTitle --
 #
 # ----------------------------------------------------------------------
 body ZoomStackGraph::SetTitle { title } {
 
     $graph marker create text -name "bltZoom_title" -text $title \
-	    -coords {-Inf Inf} -anchor nw -bg {} 
+	    -coords {-Inf Inf} -anchor nw -bg {}
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # UpdateOutline --
 #
 # ----------------------------------------------------------------------
@@ -302,7 +302,7 @@ body ZoomStackGraph::UpdateOutline { x y } {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # SelectPoint --
 #
 #	Invoked from the binding to ButtonPress-1 events.  Saves
@@ -312,7 +312,7 @@ body ZoomStackGraph::UpdateOutline { x y } {
 # ----------------------------------------------------------------------
 body ZoomStackGraph::SelectPoint { x y } {
 
-    SaveCoords $x $y 
+    SaveCoords $x $y
     if { $corner == "first" } {
 	MarkPoint $x1 $y1
 
@@ -323,7 +323,7 @@ body ZoomStackGraph::SelectPoint { x y } {
 	# Start watching now for motion events, drawing an outline
 	bind $graph <Any-Motion> [code $this UpdateOutline %x %y]
 
-	# Indicate the next corner is the last 
+	# Indicate the next corner is the last
 	set corner last
     } else {
 
@@ -339,7 +339,7 @@ body ZoomStackGraph::SelectPoint { x y } {
 }
 
 # ----------------------------------------------------------------------
-# 
+#
 # DrawBox --
 #
 # ----------------------------------------------------------------------

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -90,14 +90,14 @@ int ON_PolylineCurve::Dimension() const
   return m_dim;
 }
 
-BOOL 
+BOOL
 ON_PolylineCurve::GetBBox( // returns TRUE if successful
          double* boxmin,    // minimum
          double* boxmax,    // maximum
          BOOL bGrowBox
          ) const
 {
-  return ON_GetPointListBoundingBox( m_dim, FALSE, PointCount(), 3, m_pline[0], 
+  return ON_GetPointListBoundingBox( m_dim, FALSE, PointCount(), 3, m_pline[0],
                         boxmin, boxmax, bGrowBox?true:false
                         );
 }
@@ -124,11 +124,11 @@ BOOL ON_PolylineCurve::IsValid( ON_TextLog* text_log ) const
 {
   BOOL rc = false;
   const int count = PointCount();
-  if ( count >= 2 && count == m_t.Count() ) 
+  if ( count >= 2 && count == m_t.Count() )
   {
     rc = m_pline.IsValid();
     int i;
-    for ( i = 1; rc && i < count; i++ ) 
+    for ( i = 1; rc && i < count; i++ )
     {
       if ( m_t[i] <= m_t[i-1] )
       {
@@ -217,7 +217,7 @@ BOOL ON_PolylineCurve::SetDomain( double t0, double t1 )
   {
     if ( t0 == m_t[0] && t1 == m_t[count] )
       rc = TRUE;
-    else if ( t0 < t1 ) 
+    else if ( t0 < t1 )
     {
       const ON_Interval old_domain = Domain();
       const ON_Interval new_domain(t0,t1);
@@ -226,12 +226,12 @@ BOOL ON_PolylineCurve::SetDomain( double t0, double t1 )
       for ( int i = 1; i < count; i++ )
       {
         m_t[i] = new_domain.ParameterAt( old_domain.NormalizedParameterAt(m_t[i]) );
-      }      
+      }
 			rc=TRUE;
     }
   }
 	DestroyCurveTree();
-  return rc;  
+  return rc;
 }
 
 bool ON_PolylineCurve::ChangeDimension( int desired_dimension )
@@ -248,7 +248,7 @@ bool ON_PolylineCurve::ChangeDimension( int desired_dimension )
       {
         // 7 April 2003 Dale Lear:
         //   If x coord of first point is set, then
-        //   zero all z coords.  
+        //   zero all z coords.
         if ( ON_UNSET_VALUE != m_pline[0].x )
         {
           for ( i = 0; i < count; i++ )
@@ -257,13 +257,13 @@ bool ON_PolylineCurve::ChangeDimension( int desired_dimension )
       }
       m_dim = 2;
     }
-    else 
+    else
     {
       if ( count > 0 )
       {
         // 7 April 2003 Dale Lear:
         //   If first point x coord is set and z is unset, then
-        //   zero all z coords.  
+        //   zero all z coords.
         if ( ON_UNSET_VALUE != m_pline[0].x && ON_UNSET_VALUE == m_pline[0].z )
         {
           for ( i = 0; i < count; i++ )
@@ -310,7 +310,7 @@ BOOL ON_PolylineCurve::ChangeClosedCurveSeam( double t )
       int n = old_count-i-1;
       new_pt.Append( n, m_pline.Array() + i+1 );
       new_t.Append( n, m_t.Array() + i+1 );
-      
+
       int j = new_t.Count();
 
       n = new_count-old_count+i-1;
@@ -346,13 +346,13 @@ int ON_PolylineCurve::SpanCount() const
   return m_pline.SegmentCount();
 }
 
-BOOL ON_PolylineCurve::GetSpanVector( // span "knots" 
-       double* s // array of length SpanCount() + 1 
+BOOL ON_PolylineCurve::GetSpanVector( // span "knots"
+       double* s // array of length SpanCount() + 1
        ) const
 {
   BOOL rc = FALSE;
   const int count = PointCount();
-  if ( count >= 1 ) 
+  if ( count >= 1 )
   {
     memcpy( s, m_t.Array(), count*sizeof(*s) );
     rc = TRUE;
@@ -483,19 +483,19 @@ ON_PolylineCurve::IsInPlane(
   return rc;
 }
 
-BOOL 
+BOOL
 ON_PolylineCurve::IsClosed() const
 {
   return m_pline.IsClosed(0.0);
 }
 
-BOOL 
+BOOL
 ON_PolylineCurve::IsPeriodic() const
 {
   return FALSE;
 }
 
-bool ON_PolylineCurve::GetNextDiscontinuity( 
+bool ON_PolylineCurve::GetNextDiscontinuity(
                 ON::continuity c,
                 double t0,
                 double t1,
@@ -507,7 +507,7 @@ bool ON_PolylineCurve::GetNextDiscontinuity(
                 ) const
 {
   bool rc = false;
-  
+
   const int segment_count = m_pline.SegmentCount();
 
   if ( segment_count > 0 && t0 != t1 )
@@ -541,7 +541,7 @@ bool ON_PolylineCurve::GetNextDiscontinuity(
       if ( dtype )
         *dtype = 0;
       ON::continuity parametric_c = ON::ParametricContinuity(c);
-      if ( segment_count >= 2 && parametric_c != ON::C0_continuous ) 
+      if ( segment_count >= 2 && parametric_c != ON::C0_continuous )
       {
         int i = 0;
         int delta_i = 1;
@@ -562,7 +562,7 @@ bool ON_PolylineCurve::GetNextDiscontinuity(
         }
         else if ( t0 > t1 )
         {
-          // Check backwards (have to handle this case so 
+          // Check backwards (have to handle this case so
           // ON_CurveProxy::GetNextDiscontinuity() works on
           // reversed proxy curves.
           if ( t0 > m_t[i] && t1 < m_t[i] && (t0-m_t[i]) <= segtol && i > 0 )
@@ -621,7 +621,7 @@ bool ON_PolylineCurve::GetNextDiscontinuity(
 
 bool ON_PolylineCurve::IsContinuous(
     ON::continuity desired_continuity,
-    double t, 
+    double t,
     int* hint, // default = NULL,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
@@ -639,21 +639,21 @@ bool ON_PolylineCurve::IsContinuous(
 
     switch(desired_continuity)
     {
-    case ON::C2_continuous: 
+    case ON::C2_continuous:
       // on a polyline C1 impiles C2
-      desired_continuity = ON::C1_continuous; 
+      desired_continuity = ON::C1_continuous;
       break;
-    case ON::G2_continuous: 
+    case ON::G2_continuous:
       // on a polyline G1 impiles G2
-      desired_continuity = ON::G1_continuous; 
+      desired_continuity = ON::G1_continuous;
       break;
-    case ON::C2_locus_continuous: 
+    case ON::C2_locus_continuous:
       // on a polyline C1 impiles C2
-      desired_continuity = ON::C1_locus_continuous; 
+      desired_continuity = ON::C1_locus_continuous;
       break;
-    case ON::G2_locus_continuous: 
+    case ON::G2_locus_continuous:
       // on a polyline G1 impiles G2
-      desired_continuity = ON::G1_locus_continuous; 
+      desired_continuity = ON::G1_locus_continuous;
       break;
     default:
       // intentionally ignoring other ON::continuity enum values
@@ -666,9 +666,9 @@ bool ON_PolylineCurve::IsContinuous(
       //     Consistently handles locus case and out of domain case.
       switch(desired_continuity)
       {
-      case ON::C0_locus_continuous: 
-      case ON::C1_locus_continuous: 
-      case ON::G1_locus_continuous: 
+      case ON::C0_locus_continuous:
+      case ON::C1_locus_continuous:
+      case ON::G1_locus_continuous:
         bPerformTest = true;
         break;
       default:
@@ -678,14 +678,14 @@ bool ON_PolylineCurve::IsContinuous(
     }
     else
     {
-      if ( segment_count >= 2 && desired_continuity != ON::C0_continuous ) 
+      if ( segment_count >= 2 && desired_continuity != ON::C0_continuous )
       {
         int i = ON_NurbsSpanIndex(2,PointCount(),m_t,t,0,(hint)?*hint:0);
-        
+
         {
           // 20 March 2003 Dale Lear:
           //     If t is very near interior m_t[] value, see if it
-          //     should be set to that value.  A bit or two of 
+          //     should be set to that value.  A bit or two of
           //     precision sometimes gets lost in proxy
           //     domain to real curve domain conversions on the interior
           //     of a curve domain.
@@ -703,7 +703,7 @@ bool ON_PolylineCurve::IsContinuous(
             }
           }
         }
-        
+
         if ( hint )
           *hint = i;
         if ( i > 0 && i < segment_count && t == m_t[i] )
@@ -773,7 +773,7 @@ BOOL ON_PolylineCurve::SetEndPoint(
   return rc;
 }
 
-BOOL 
+BOOL
 ON_PolylineCurve::Evaluate( // returns FALSE if unable to evaluate
        double t,       // evaluation parameter
        int der_count,  // number of derivatives (>=0)
@@ -781,7 +781,7 @@ ON_PolylineCurve::Evaluate( // returns FALSE if unable to evaluate
        double* v,      // v[] array of length stride*(ndir+1)
        int side,       // optional - determines which side to evaluate from
                        //         0 = default
-                       //      <  0 to evaluate from below, 
+                       //      <  0 to evaluate from below,
                        //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint (int) used to speed
                        //            repeated evaluations
@@ -821,7 +821,7 @@ ON_PolylineCurve::Evaluate( // returns FALSE if unable to evaluate
   return rc;
 }
 
-BOOL 
+BOOL
 ON_PolylineCurve::PointCount() const
 {
   return m_pline.PointCount();
@@ -877,8 +877,8 @@ BOOL ON_PolylineCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
   {
     // no need for complicated test in common and simple case of a line.
     rc = GetClosestPoint(test_point,t,0.0,sub_domain);
-    if ( rc 
-         && t 
+    if ( rc
+         && t
          && test_point.DistanceTo(PointAt(seed_parameter)) <= test_point.DistanceTo(PointAt(*t))
          )
     {
@@ -903,7 +903,7 @@ BOOL ON_PolylineCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
 
     rc = nurbs_curve.GetLocalClosestPoint(test_point,seed_parameter,t,sub_domain);
 
-    // Prevent ~ON_NurbsCurve from deleting of this polyline's 
+    // Prevent ~ON_NurbsCurve from deleting of this polyline's
     // points and knots. Setting the nurbs_curve.m_*_capacity = 0
     // should be enough, but this is fast and bulletproof.
     nurbs_curve.m_cv = 0;
@@ -928,14 +928,14 @@ BOOL ON_PolylineCurve::GetLength(
 			return FALSE;
 
     int i, count = m_t.Count();
-		if( count<1) 
+		if( count<1)
 			return TRUE;
 
 		ON_Interval scratch_domain= ON_Interval(*m_t.Last(), m_t[0]);
 		if(scratch_domain.Intersection(*sub_domain))
 			sub_domain = &scratch_domain;
 		else
-			return FALSE;		
+			return FALSE;
 
     double s0 = sub_domain->Min();
     double s1 = sub_domain->Max();
@@ -982,7 +982,7 @@ bool ON_PolylineCurve::Append( const ON_PolylineCurve& c )
   if (!IsValid() || !c.IsValid())
     return false;
 
-  if ( c.Dimension() == 3 &&  Dimension() == 2) 
+  if ( c.Dimension() == 3 &&  Dimension() == 2)
     m_dim = 3;
 
   m_pline.Remove();
@@ -1058,7 +1058,7 @@ BOOL ON_PolylineCurve::GetNormalizedArcLengthPoints(
         const ON_Interval* sub_domain
         ) const
 {
-  // TODO: move actual calculations into this function and 
+  // TODO: move actual calculations into this function and
   // have GetNormalizedArcLengthPoint() call here.
   BOOL rc = TRUE;
   if ( count > 0 || s != NULL && t != NULL )
@@ -1090,7 +1090,7 @@ BOOL ON_PolylineCurve::Trim( const ON_Interval& domain )
   const ON_Interval original_polyline_domain = Domain();
   if ( !original_polyline_domain.IsIncreasing() )
     return false;
-  
+
   ON_Interval output_domain = domain;
   if ( !output_domain.Intersection(original_polyline_domain) )
     return false;
@@ -1102,7 +1102,7 @@ BOOL ON_PolylineCurve::Trim( const ON_Interval& domain )
   int i, j;
   int s0 = -2; // s0 gets set to index of first segment we keep
   int s1 = -3; // s1 gets set to index of last segment we keep
-  
+
 	if ( ParameterSearch(output_domain[0], s0, true ) )
   {
     // ParameterSearch says domain[0] is within "microtol" of
@@ -1144,7 +1144,7 @@ BOOL ON_PolylineCurve::Trim( const ON_Interval& domain )
   if ( actual_trim_domain == original_polyline_domain )
   {
     // ParameterSearch says that the ends of output_domain
-    // were microtol away from being the entire curve.  
+    // were microtol away from being the entire curve.
     // Set the domain and return.
     m_t[0] = output_domain[0];
     m_t[segment_count] = output_domain[1];
@@ -1199,7 +1199,7 @@ BOOL ON_PolylineCurve::Trim( const ON_Interval& domain )
       Q1 = seg_chord.PointAt( np1 );
       bSet1 = true;
     }
-    
+
     if ( np0 >= np1 )
       return false; // trim is not viable
 
@@ -1261,16 +1261,16 @@ bool ON_PolylineCurve::Extend(
   )
 
 {
-  if (IsClosed()) 
+  if (IsClosed())
     return false;
-  if (PointCount() < 2) 
+  if (PointCount() < 2)
     return false;
   if ( !domain.IsIncreasing() )
     return false;
   bool changed = false;
   if ( domain == Domain() )
     return true;
-  
+
   if (domain[0] < m_t[0]){
     changed = true;
     double len = m_t[1] - m_t[0];
@@ -1336,8 +1336,8 @@ BOOL ON_PolylineCurve::Split(
 
 
     if ( m_t[0] < t && t < m_t[count] )
-    {		 
-      int left_point_count = (split_at_break) ? segment_index+1 : segment_index+2;	
+    {
+      int left_point_count = (split_at_break) ? segment_index+1 : segment_index+2;
       int right_point_count = m_t.Count() - segment_index;
 
       if ( left_pl != this )
@@ -1351,7 +1351,7 @@ BOOL ON_PolylineCurve::Split(
         memcpy( left_pl->m_t.Array(), m_t.Array(), left_point_count*sizeof(double) );
         memcpy( left_pl->m_pline.Array(), m_pline.Array(), left_point_count*sizeof(ON_3dPoint) );
 				if(split_at_break){
-					// reparameterize the last segment 
+					// reparameterize the last segment
 					*left_pl->m_t.Last()= t;
 				}
         left_pl->m_dim = m_dim;
@@ -1364,10 +1364,10 @@ BOOL ON_PolylineCurve::Split(
         right_pl->m_t.SetCount(right_point_count);
         right_pl->m_pline.Reserve(right_point_count);
         right_pl->m_pline.SetCount(right_point_count);
-        memcpy( right_pl->m_t.Array(), 
-							  m_t.Array() + m_t.Count() - right_point_count, 
+        memcpy( right_pl->m_t.Array(),
+							  m_t.Array() + m_t.Count() - right_point_count,
 							  right_point_count*sizeof(double) );
-        memcpy( right_pl->m_pline.Array(), 
+        memcpy( right_pl->m_pline.Array(),
 							  m_pline.Array() + m_pline.Count() - right_point_count,
 							  right_point_count*sizeof(ON_3dPoint) );
 				if( split_at_break)
@@ -1376,8 +1376,8 @@ BOOL ON_PolylineCurve::Split(
         right_pl->m_dim = m_dim;
       }
       left_pl->Trim( ON_Interval( left_pl->m_t[0], t ) );
-      right_pl->Trim( ON_Interval( t, *right_pl->m_t.Last() ) );  
-		  rc = TRUE;  
+      right_pl->Trim( ON_Interval( t, *right_pl->m_t.Last() ) );
+		  rc = TRUE;
     }
 
 	}
@@ -1389,8 +1389,8 @@ BOOL ON_PolylineCurve::Split(
 }
 
 
-int ON_PolylineCurve::GetNurbForm( 
-                                  ON_NurbsCurve& nurb, 
+int ON_PolylineCurve::GetNurbForm(
+                                  ON_NurbsCurve& nurb,
                                   double tol,
                                   const ON_Interval* subdomain  // OPTIONAL subdomain of ON::ProxyCurve::Domain()
                                   ) const

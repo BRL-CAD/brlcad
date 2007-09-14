@@ -5247,7 +5247,7 @@ TclCompileDivOpCmd(
  *
  * Results:
  * 	Returns the variable's index in the table of compiled locals if the
- *      tail is known at compile time, or -1 otherwise. 
+ *      tail is known at compile time, or -1 otherwise.
  *
  * Side effects:
  *	None.
@@ -5259,14 +5259,14 @@ static int
 IndexTailVarIfKnown(
     Tcl_Interp *interp,
     Tcl_Token *varTokenPtr,    /* Token representing the variable name */
-    CompileEnv *envPtr)		/* Holds resulting instructions. */    
+    CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
     Tcl_Obj *tailPtr;
     const char *tailName, *p;
     int len, n = varTokenPtr->numComponents;
     Tcl_Token *lastTokenPtr;
     int full, localIndex;
-    
+
     /*
      * Determine if the tail is (a) known at compile time, and (b) not an
      * array element. Should any of these fail, return an error so that
@@ -5286,13 +5286,13 @@ IndexTailVarIfKnown(
 	lastTokenPtr = varTokenPtr;
     } else {
 	full = 0;
-	lastTokenPtr = varTokenPtr + n;	
+	lastTokenPtr = varTokenPtr + n;
 	if (!TclWordKnownAtCompileTime(lastTokenPtr, tailPtr)) {
 	    Tcl_DecrRefCount(tailPtr);
 	    return -1;
 	}
     }
-	    
+
     tailName = Tcl_GetStringFromObj(tailPtr, &len);
 
     if (len) {
@@ -5300,7 +5300,7 @@ IndexTailVarIfKnown(
 	    /*
 	     * Possible array: bail out
 	     */
-	    
+
 	    Tcl_DecrRefCount(tailPtr);
 	    return -1;
 	}
@@ -5308,7 +5308,7 @@ IndexTailVarIfKnown(
 	/*
 	 * Get the tail: immediately after the last '::'
 	 */
-	
+
 	for(p = tailName + len -1; p > tailName; p--) {
 	    if ((*p == ':') && (*(p-1) == ':')) {
 		p++;
@@ -5361,15 +5361,15 @@ TclCompileUpvarCmd(
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
     Tcl_Token *tokenPtr, *otherTokenPtr, *localTokenPtr;
-    int simpleVarName, isScalar, localIndex, numWords, i;    
+    int simpleVarName, isScalar, localIndex, numWords, i;
     DefineLineInformation;	/* TIP #280 */
     Tcl_Obj *objPtr = Tcl_NewObj();
-    
+
     if (envPtr->procPtr == NULL) {
 	Tcl_DecrRefCount(objPtr);
 	return TCL_ERROR;
     }
-    
+
     numWords = parsePtr->numWords;
     if (numWords < 3) {
 	Tcl_DecrRefCount(objPtr);
@@ -5390,11 +5390,11 @@ TclCompileUpvarCmd(
 	 * Attempt to convert to a level reference. Note that TclObjGetFrame
 	 * only changes the obj type when a conversion was successful.
 	 */
-	
+
 	TclObjGetFrame(interp, objPtr, &framePtr);
 	newTypePtr = objPtr->typePtr;
 	Tcl_DecrRefCount(objPtr);
-	
+
 	if (newTypePtr != typePtr) {
 	    if(numWords%2) {
 		return TCL_ERROR;
@@ -5414,7 +5414,7 @@ TclCompileUpvarCmd(
 	Tcl_DecrRefCount(objPtr);
 	return TCL_ERROR;
     }
-    
+
     /*
      * Loop over the (otherVar, thisVar) pairs. If any of the thisVar is not a
      * local variable, return an error so that the non-compiled command will
@@ -5434,7 +5434,7 @@ TclCompileUpvarCmd(
 	}
 	TclEmitInstInt4(INST_UPVAR, localIndex, envPtr);
     }
-    
+
     /*
      * Pop the frame index, and set the result to empty
      */
@@ -5472,13 +5472,13 @@ TclCompileNamespaceCmd(
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
     Tcl_Token *tokenPtr, *otherTokenPtr, *localTokenPtr;
-    int simpleVarName, isScalar, localIndex, numWords, i;    
+    int simpleVarName, isScalar, localIndex, numWords, i;
     DefineLineInformation;	/* TIP #280 */
-    
+
     if (envPtr->procPtr == NULL) {
 	return TCL_ERROR;
     }
-    
+
     /*
      * Only compile [namespace upvar ...]: needs an odd number of args, >=5
      */
@@ -5527,7 +5527,7 @@ TclCompileNamespaceCmd(
 	}
 	TclEmitInstInt4(INST_NSUPVAR, localIndex, envPtr);
     }
-    
+
     /*
      * Pop the namespace, and set the result to empty
      */
@@ -5550,7 +5550,7 @@ TclCompileNamespaceCmd(
  * 	evaluation to runtime.
  *
  * Side effects:
- *	Instructions are added to envPtr to execute the "global" command at 
+ *	Instructions are added to envPtr to execute the "global" command at
  *	runtime.
  *
  *----------------------------------------------------------------------
@@ -5564,9 +5564,9 @@ TclCompileGlobalCmd(
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
     Tcl_Token *varTokenPtr;
-    int localIndex, numWords, i;    
+    int localIndex, numWords, i;
     DefineLineInformation;	/* TIP #280 */
-    
+
     numWords = parsePtr->numWords;
     if (numWords < 2) {
 	return TCL_ERROR;
@@ -5579,7 +5579,7 @@ TclCompileGlobalCmd(
     if (envPtr->procPtr == NULL) {
 	return TCL_ERROR;
     }
-    
+
     /*
      * Push the namespace
      */
@@ -5601,7 +5601,7 @@ TclCompileGlobalCmd(
 	CompileWord(envPtr, varTokenPtr, interp, 1);
 	TclEmitInstInt4(INST_NSUPVAR, localIndex, envPtr);
     }
-    
+
     /*
      * Pop the namespace, and set the result to empty
      */
@@ -5624,7 +5624,7 @@ TclCompileGlobalCmd(
  * 	evaluation to runtime.
  *
  * Side effects:
- *	Instructions are added to envPtr to execute the "variable" command at 
+ *	Instructions are added to envPtr to execute the "variable" command at
  *	runtime.
  *
  *----------------------------------------------------------------------
@@ -5639,9 +5639,9 @@ TclCompileVariableCmd(
 {
     Interp *iPtr = (Interp *) interp;
     Tcl_Token *varTokenPtr, *valueTokenPtr;
-    int localIndex, numWords, i;    
+    int localIndex, numWords, i;
     DefineLineInformation;	/* TIP #280 */
-    
+
     numWords = parsePtr->numWords;
     if (numWords < 2) {
 	return TCL_ERROR;
@@ -5650,20 +5650,20 @@ TclCompileVariableCmd(
     /*
      * Bail out if not compiling a proc body
      */
-    
+
     if (envPtr->procPtr == NULL) {
 	return TCL_ERROR;
     }
-    
+
     /*
      * Push the namespace: it is the namespace corresponding to the current
-     * compilation. 
+     * compilation.
      */
 
     PushLiteral(envPtr, iPtr->varFramePtr->nsPtr->fullName,-1);
 
     /*
-     * Loop over the (var, value) pairs. 
+     * Loop over the (var, value) pairs.
      */
 
     valueTokenPtr = parsePtr->tokenPtr;
@@ -5676,10 +5676,10 @@ TclCompileVariableCmd(
 	if(localIndex < 0) {
 	    return TCL_ERROR;
 	}
-	
+
 	CompileWord(envPtr, varTokenPtr, interp, 1);
 	TclEmitInstInt4(INST_VARIABLE, localIndex, envPtr);
-	
+
 	if (i != numWords) {
 	    /*
 	     * A value has been given: set the variable, pop the value
@@ -5690,7 +5690,7 @@ TclCompileVariableCmd(
 	    TclEmitOpcode(INST_POP, envPtr);
 	}
     }
-    
+
     /*
      * Pop the namespace, and set the result to empty
      */

@@ -1,4 +1,4 @@
-/* 
+/*
  * strtoll.c --
  *
  *	Source code for the "strtoll" library procedure.

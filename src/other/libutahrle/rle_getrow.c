@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -18,15 +18,15 @@
  *  Modified at BRL 16-May-88 by Mike Muuss to avoid Alliant STDC desire
  *  to have all "void" functions so declared.
  */
-/* 
+/*
  * rle_getrow.c - Read an RLE file in.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Wed Apr 10 1985
  * Copyright (c) 1985 Spencer W. Thomas
- * 
+ *
  * $Id$
  */
 #ifndef lint
@@ -40,7 +40,7 @@ static char rcs_ident[] = "$Id$";
 /* Read a two-byte "short" that started in VAX (LITTLE_ENDIAN) order */
 #define VAXSHORT( var, fp )\
 	{ var = fgetc(fp)&0xFF; var |= (fgetc(fp)) << 8; }
-  
+
 /* Instruction format -- first byte is opcode, second is datum. */
 
 #define OPCODE(inst) (inst[0] & ~LONG)
@@ -53,7 +53,7 @@ extern int vax_gshort();
 
 /*****************************************************************
  * TAG( rle_get_setup )
- * 
+ *
  * Read the initialization information from an RLE file.
  * Inputs:
  * 	the_hdr:    Contains pointer to the input file.
@@ -80,7 +80,7 @@ rle_hdr * the_hdr;
     rle_pixel * bg_color;
     register int i;
     char * comment_buf;
-    
+
     /* Clear old stuff out of the header. */
     rle_hdr_clear( the_hdr );
     if ( the_hdr->is_init != RLE_INIT_MAGIC )
@@ -177,7 +177,7 @@ rle_hdr * the_hdr;
 	if ( evenlen )
 	{
 	    comment_buf = (char *)malloc( (unsigned) evenlen );
-	
+
 	    if ( comment_buf == NULL )
 	    {
 		fprintf( stderr,
@@ -235,7 +235,7 @@ rle_hdr * the_hdr;
 
 /*****************************************************************
  * TAG( rle_get_setup_ok )
- * 
+ *
  * Read the initialization information from an RLE file.
  * Inputs:
  * 	the_hdr:    Contains pointer to the input file.
@@ -258,7 +258,7 @@ CONST_DECL char *file_name;
 {
     int code;
 
-    /* Backwards compatibility: if is_init is not properly set, 
+    /* Backwards compatibility: if is_init is not properly set,
      * initialize the header.
      */
     if ( the_hdr->is_init != RLE_INIT_MAGIC )
@@ -278,7 +278,7 @@ CONST_DECL char *file_name;
 
 /*****************************************************************
  * TAG( rle_debug )
- * 
+ *
  * Turn RLE debugging on or off.
  * Inputs:
  * 	on_off:		if 0, stop debugging, else start.
@@ -304,10 +304,10 @@ int on_off;
 
 /*****************************************************************
  * TAG( rle_getrow )
- * 
+ *
  * Get a scanline from the input file.
  * Inputs:
- *	the_hdr:    Header structure containing information about 
+ *	the_hdr:    Header structure containing information about
  *		    the input file.
  * Outputs:
  * 	scanline:   an array of pointers to the individual color
@@ -322,7 +322,7 @@ int on_off;
  *	specified (the_hdr->background is true), just set the
  *	scanlines to the background color.  If clear-to-background is
  *	not set, just increment the scanline number and return.
- * 
+ *
  *	Otherwise, read input until a vertical skip is encountered,
  *	decoding the instructions into scanline data.
  *
@@ -519,7 +519,7 @@ rle_pixel *scanline[];
 		{
 		    ns = scan_x - max_x - 1;
 		    nc -= ns;
-		} 
+		}
 		else
 		    ns = 0;
 		if ( nc >= 10 )		/* break point for 785, anyway */

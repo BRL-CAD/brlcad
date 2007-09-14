@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rleccube.c - Make an image of a "color cube".
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -38,7 +38,7 @@ rleccube()			Tag the file.
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage:
  * 	rleccube [-p] [-w squares-wide] [-o outfile] [cube-side]
  * Inputs:
@@ -84,7 +84,7 @@ char **argv;
     int r = 0, g, b;
     int x, y;
     rle_pixel **rows;
-    
+
     if ( scanargs( argc, argv,
 		   "% p%- w%-squares-wide!d o%-outfile!s cube-side%d",
 		   &pflag, &wflag, &squares_wide,
@@ -174,7 +174,7 @@ char **argv;
     /* The other default values should be ok. */
 
     rle_put_setup( &rle_dflt_hdr );
-    
+
     /* Allocate scanline memory. */
     if ( rle_row_alloc( &rle_dflt_hdr, &rows ) < 0 )
 	RLE_CHECK_ALLOC( cmd_name( argv ), 0, 0 );
@@ -228,7 +228,7 @@ char **argv;
 		rows[2][x] = c[2] << (8 - nbits);
 	    }
 	}
-	
+
 	rle_putrow( rows, squares_wide * cube_side, &rle_dflt_hdr );
     }
 

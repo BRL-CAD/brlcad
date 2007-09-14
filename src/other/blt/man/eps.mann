@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Graph widget created by Sani Nassif and George Howlett.
 '\"
@@ -55,7 +55,7 @@ It also scales and translates the EPS file when the canvas is printed.
 .DE
 The \fBeps\fR item creates a new canvas item. \fICanvas\fR is the name
 of a \fBcanvas\fR widget.  You must supply the X-Y coordinate of
-the new eps item.  How the coordinate is exactly interpretered is 
+the new eps item.  How the coordinate is exactly interpretered is
 controlled by the \fB\-anchor\fR option (see below).
 .PP
 Additional options may be specified on the command line to configure
@@ -82,7 +82,7 @@ entry which contains four integers representing the lower-left and
 upper-right coordinates of the area bounding the EPS.
 The default is \f(CW""\fR.
 .TP
-\fB\-font \fIfontName\fR 
+\fB\-font \fIfontName\fR
 Specifies the font of the title. The default is
 \f(CW*-Helvetica-Bold-R-Normal-*-18-180-*\fR.
 .TP
@@ -111,8 +111,8 @@ the title contains more than one line of text. \fIJustify\fR must be
 .TP
 \fB\-relief \fIrelief\fR
 Specifies the 3-D effect for the EPS item.  \fIRelief\fR
-specifies how the item should appear relative to canvas; 
-for example, \f(CWraised\fR means the item should appear to 
+specifies how the item should appear relative to canvas;
+for example, \f(CWraised\fR means the item should appear to
 protrude.  The default is \f(CWflat\fR.
 .TP
 \fB\-shadowcolor \fIcolor\fR
@@ -127,8 +127,8 @@ If \fIpixels\fR is \f(CW0\fR, no shadow will be seen.
 The default is \f(CW0\fR.
 .TP
 \fB\-showimage \fIboolean\fR
-Indicates whether to display the image preview (if one exists), 
-or a simple rectangle.  
+Indicates whether to display the image preview (if one exists),
+or a simple rectangle.
 The default is \f(CWyes\fR.
 .TP
 \fB\-stipple \fIbitmap\fR
@@ -146,13 +146,13 @@ Tells how to position the title within EPS item.
 The default is \f(CWn\fR.
 .TP
 \fB\-titlecolor \fIcolor\fR
-Specifies the color of the title.  
+Specifies the color of the title.
 The default is \f(CWwhite\fR.
 .TP
 \fB\-titlerotate \fIdegrees\fR
 Sets the rotation of the title.  \fIDegrees\fR is a real number
-representing the angle of rotation.  
-The title is first rotated in space and then placed according to 
+representing the angle of rotation.
+The title is first rotated in space and then placed according to
 the \fB\-titleanchor\fR position.  The default rotation is \f(CW0.0\fR.
 .TP
 \fB\-width \fIpixels\fR

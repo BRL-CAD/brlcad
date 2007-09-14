@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH set n "" Tcl "Tcl Built-In Commands"
 .BS
@@ -32,14 +32,14 @@ Otherwise \fIvarName\fR refers to a scalar variable.
 If \fIvarName\fR includes namespace qualifiers
 (in the array name if it refers to an array element), or if \fIvarName\fR
 is unqualified (does not include the names of any containing namespaces)
-but no procedure is active, 
+but no procedure is active,
 \fIvarName\fR refers to a namespace variable
 resolved according to the rules described under \fBNAME RESOLUTION\fR in
 the \fBnamespace\fR manual page.
 .PP
 If a procedure is active and \fIvarName\fR is unqualified, then
 \fIvarName\fR refers to a parameter or local variable of the procedure,
-unless \fIvarName\fR was declared to resolve differently through one of the 
+unless \fIvarName\fR was declared to resolve differently through one of the
 \fBglobal\fR, \fBvariable\fR or \fBupvar\fR commands.
 .SH EXAMPLES
 Store a random number in the variable \fIr\fR:

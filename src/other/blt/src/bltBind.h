@@ -32,7 +32,7 @@ typedef struct Blt_BindTableStruct *Blt_BindTable;
 typedef ClientData (Blt_BindPickProc) _ANSI_ARGS_((ClientData clientData,
 	int x, int y, ClientData *contextPtr));
 
-typedef void (Blt_BindTagProc) _ANSI_ARGS_((Blt_BindTable bindTable, 
+typedef void (Blt_BindTagProc) _ANSI_ARGS_((Blt_BindTable bindTable,
 	ClientData object, ClientData context, Blt_List list));
 
 
@@ -61,7 +61,7 @@ struct Blt_BindTableStruct {
 				 * current item pointer that occur during
 				 * Leave processing of the previous current
 				 * tab.  */
-    ClientData newContext;	/* One-word indicating what kind of object 
+    ClientData newContext;	/* One-word indicating what kind of object
 				 * was just picked. */
 
     ClientData focusItem;
@@ -104,7 +104,7 @@ EXTERN void Blt_PickCurrentItem _ANSI_ARGS_((Blt_BindTable table));
 EXTERN void Blt_DeleteBindings _ANSI_ARGS_((Blt_BindTable table,
 	ClientData object));
 
-EXTERN void Blt_MoveBindingTable _ANSI_ARGS_((Blt_BindTable table, 
+EXTERN void Blt_MoveBindingTable _ANSI_ARGS_((Blt_BindTable table,
 	Tk_Window tkwin));
 
 #define Blt_SetFocusItem(bindPtr, object, context) \

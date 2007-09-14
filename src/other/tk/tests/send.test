@@ -443,7 +443,7 @@ test send-10.8 {SendEventProc procedure, exceptional return} {secureserver tests
 } {
 r
 -s 62
--r 
+-r
 -c 3
 }
 test send-10.9 {SendEventProc procedure, empty return} {secureserver testsend} {
@@ -455,7 +455,7 @@ test send-10.9 {SendEventProc procedure, empty return} {secureserver testsend} {
 } {
 r
 -s 62
--r 
+-r
 }
 test send-10.10 {SendEventProc procedure, asynchronous calls} {secureserver testsend} {
     testsend prop [winfo id .f] Comm {}

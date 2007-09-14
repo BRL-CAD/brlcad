@@ -2,11 +2,11 @@
  *
  * Documentation of BRL-CAD<sup>tm</sup> libraries.
  *
- * This 
+ * This
  * is the second iteration of the documentation.  Pages have been subdivided
  * and should load much more quickly in your browser now.
  *
- * At this point, only the libbu module has been fully converted to the 
+ * At this point, only the libbu module has been fully converted to the
  * new format.  Other modules should follow soon.
  */
 /** @defgroup libbu libbu (utility functions)
@@ -23,7 +23,7 @@
  * @defgroup conv Data Conversion
  * @ingroup libbu
  *
- * @addtogroup bu_debug Debugging 
+ * @addtogroup bu_debug Debugging
  * @ingroup libbu
  *
  * @defgroup hton Endian Support
@@ -113,7 +113,7 @@
  * @defgroup rand Random Numbers
  * @ingroup libbn
  *
- * @defgroup msr Minimal Standard Random Numbers 
+ * @defgroup msr Minimal Standard Random Numbers
  * @ingroup rand
  *
  * @defgroup bntcl bn Tcl interface
@@ -134,13 +134,13 @@
  * @defgroup wavelet Wavelets
  * @ingroup libbn
  *
- 
+
 /** @defgroup libfb libfb (framebuffer) */
 
 
 /** @defgroup librt librt geometry, raytracing
  *
- * @defgroup dbio Database IO 
+ * @defgroup dbio Database IO
  * @ingroup librt
  *
  * @defgroup db5 Database5

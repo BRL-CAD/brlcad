@@ -73,7 +73,7 @@
    - scrolledframe
    - messagedialog
    - and many others...
- 
+
  Classes and/or related procedures can also be encapsulated in their
  own "namespace".  A namespace is a collection of commands, variables,
  classes and other namespaces that is set apart from the usual global

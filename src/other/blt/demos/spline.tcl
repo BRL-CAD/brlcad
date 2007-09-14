@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -34,7 +34,7 @@ set tcl_precision 15
 
 # Make and fill small vectors
 vector x y
-x seq 10 0 -0.5 
+x seq 10 0 -0.5
 y expr sin(x^3)
 x expr x*x
 x sort y
@@ -47,11 +47,11 @@ x populate x2 10
 spline natural x y x2 y1
 
 # quadratic spline interpolation
-spline quadratic x y x2 y2 
+spline quadratic x y x2 y2
 
 # make plot
-graph .graph 
-.graph xaxis configure -title "x^2" 
+graph .graph
+.graph xaxis configure -title "x^2"
 .graph yaxis configure -title "sin(y^3)"
 
 .graph pen configure activeLine -pixels 5

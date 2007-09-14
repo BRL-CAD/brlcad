@@ -348,7 +348,7 @@ Initialize(interp)
      *  command exports, so that the itcl::is command can *not* be
      *  exported. This is done for concern that the itcl::is command
      *  imported might be confusing ("is").
-     */   
+     */
     if (!itclNs ||
 	    (Tcl_Export(interp, itclNs, "body", /* reset */ 1) != TCL_OK) ||
 	    (Tcl_Export(interp, itclNs, "class", 0) != TCL_OK) ||
@@ -1588,7 +1588,7 @@ Itcl_IsObjectCmd(clientData, interp, objc, objv)
         }
 
     } /* end for objc loop */
-        
+
 
     /*
      *  The object name may be a scoped value of the form

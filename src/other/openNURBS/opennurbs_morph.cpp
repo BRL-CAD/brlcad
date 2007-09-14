@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -110,7 +110,7 @@ bool ON_Localizer::Write(ON_BinaryArchive& archive) const
 
     break;
   }
-  
+
   if ( !archive.EndWrite3dmChunk() )
     rc = false;
 
@@ -185,7 +185,7 @@ bool ON_Localizer::Read(ON_BinaryArchive& archive)
 
     break;
   }
-  
+
   if ( !archive.EndRead3dmChunk() )
     rc = false;
 
@@ -196,11 +196,11 @@ bool ON_Localizer::Read(ON_BinaryArchive& archive)
 bool ON_Localizer::CreateCylinderLocalizer( ON_3dPoint P, ON_3dVector V, double r0, double r1 )
 {
   Destroy();
-  if (    P.IsValid() 
-       && V.IsValid() 
-       && V.Length() > 0.0 
-       && ON_IsValid(r0) 
-       && ON_IsValid(r1) 
+  if (    P.IsValid()
+       && V.IsValid()
+       && V.Length() > 0.0
+       && ON_IsValid(r0)
+       && ON_IsValid(r1)
        && r0 > 0.0
        && r1 > 0.0
        && r0 != r1 )
@@ -437,15 +437,15 @@ ON_SpaceMorph::~ON_SpaceMorph()
 {
 }
 
-ON_3dVector ON_SpaceMorph::MorphVector( 
-          ON_3dPoint tail_point, 
-          ON_3dVector vector 
+ON_3dVector ON_SpaceMorph::MorphVector(
+          ON_3dPoint tail_point,
+          ON_3dVector vector
           ) const
 {
   return (MorphPoint(tail_point+vector) - MorphPoint(tail_point));
 }
 
-ON_4dPoint ON_SpaceMorph::MorphPoint( 
+ON_4dPoint ON_SpaceMorph::MorphPoint(
           ON_4dPoint point
           ) const
 {
@@ -488,7 +488,7 @@ double ON_SpaceMorph::Tolerance() const
 
 void ON_SpaceMorph::SetTolerance(double tolerance)
 {
-  m_tolerance = (ON_IsValid(tolerance) && tolerance > 0.0 ) 
+  m_tolerance = (ON_IsValid(tolerance) && tolerance > 0.0 )
               ? tolerance
               : 0.0;
 }
@@ -519,9 +519,9 @@ void ON_SpaceMorph::SetPreserveStructure( bool bPreserveStructure )
 }
 
 void ON_SpaceMorph::MorphPointList(
-        int dim, 
+        int dim,
         int is_rat,
-        int count, 
+        int count,
         int stride,
         double* point
         ) const
@@ -573,9 +573,9 @@ void ON_SpaceMorph::MorphPointList(
 }
 
 void ON_SpaceMorph::MorphPointList(
-        int dim, 
+        int dim,
         int is_rat,
-        int count, 
+        int count,
         int stride,
         float* point
         ) const
@@ -654,7 +654,7 @@ bool ON_Mesh::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) cons
       if (ci.m_index >= 0 && ci.m_index < m_V.Count())
 	P = m_V[ci.m_index];
       break;
-      
+
     case ON_COMPONENT_INDEX::meshtop_vertex:
       if (ci.m_index >= 0 && ci.m_index < m_top.m_topv.Count()) {
       const ON_MeshTopologyVertex& topv = m_top.m_topv[ci.m_index];
@@ -665,9 +665,9 @@ bool ON_Mesh::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) cons
       }
       }
       break;
-      
+
     case ON_COMPONENT_INDEX::meshtop_edge:
-      if ( 5 == objref.m_evp.m_t_type 
+      if ( 5 == objref.m_evp.m_t_type
 	   && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] - 1.0) <= ON_SQRT_EPSILON )
 	{
 	  ON_Line L = m_top.TopEdgeLine(ci.m_index);
@@ -676,9 +676,9 @@ bool ON_Mesh::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) cons
 	  }
 	}
       break;
-      
+
     case ON_COMPONENT_INDEX::mesh_face:
-      if ( 4 == objref.m_evp.m_t_type 
+      if ( 4 == objref.m_evp.m_t_type
 	   && fabs(objref.m_evp.m_t[0] + objref.m_evp.m_t[1] + objref.m_evp.m_t[2] + objref.m_evp.m_t[3] - 1.0) <= ON_SQRT_EPSILON )
 	{
 	  if (ci.m_index >= 0 && ci.m_index < m_F.Count()) {
@@ -700,12 +700,12 @@ bool ON_Mesh::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) cons
 	  }
 	}
       break;
-      
+
     default:
       /* unsupported */
       break;
   }
-  
+
   return P.IsValid();
 }
 
@@ -839,8 +839,8 @@ bool ON_NurbsSurface::Morph( const ON_SpaceMorph& morph )
 
   for ( i = 0; i < m_cv_count[0]; i++ )
   {
-    morph.MorphPointList( m_dim, m_is_rat, 
-                          m_cv_count[1], m_cv_stride[1], 
+    morph.MorphPointList( m_dim, m_is_rat,
+                          m_cv_count[1], m_cv_stride[1],
                           CV(i,0) );
   }
 
@@ -877,8 +877,8 @@ bool ON_BezierSurface::Morph( const ON_SpaceMorph& morph )
   int i;
   for ( i = 0; i < m_order[0]; i++ )
   {
-    morph.MorphPointList( m_dim, m_is_rat, 
-                          m_order[1], m_cv_stride[1], 
+    morph.MorphPointList( m_dim, m_is_rat,
+                          m_order[1], m_cv_stride[1],
                           CV(i,0) );
   }
   return true;
@@ -890,7 +890,7 @@ bool ON_Brep::Morph( const ON_SpaceMorph& morph )
   if ( rc )
   {
     ON_Surface* srf = const_cast<ON_Surface*>(m_F[0].SurfaceOf());
-    
+
     if ( srf->IsMorphable() )
     {
       rc = srf->Morph(morph);
@@ -916,10 +916,10 @@ bool ON_Brep::Morph( const ON_SpaceMorph& morph )
         new_srf = 0;
       }
     }
-    
+
     if ( rc )
     {
-      double tol = 0.01; 
+      double tol = 0.01;
       rc = RebuildEdges( m_F[0], tol, true, true );
 
       DestroyMesh(ON::analysis_mesh);

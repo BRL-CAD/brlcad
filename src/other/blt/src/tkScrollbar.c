@@ -942,7 +942,7 @@ DisplayScrollbar(clientData)
 
     if (scrollPtr->tile != NULL) {
 	Blt_SetTileOrigin(tkwin, scrollPtr->tile, 0, 0);
-	Blt_TileRectangle(tkwin, pixmap, scrollPtr->tile, scrollPtr->inset, 
+	Blt_TileRectangle(tkwin, pixmap, scrollPtr->tile, scrollPtr->inset,
 		scrollPtr->inset,
 		(unsigned)(Tk_Width(tkwin) - 2 * scrollPtr->inset),
 		(unsigned)(Tk_Height(tkwin) - 2 * scrollPtr->inset));
@@ -1066,7 +1066,7 @@ DisplayScrollbar(clientData)
     }
     if (scrollPtr->vertical) {
 	if (tile != NULL) {
-	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->inset, 
+	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->inset,
 		scrollPtr->sliderFirst, width - 1,
 		scrollPtr->sliderLast - scrollPtr->sliderFirst - 1);
 	    Blt_Draw3DRectangle(tkwin, pixmap, border,
@@ -1081,7 +1081,7 @@ DisplayScrollbar(clientData)
 	}
     } else {
 	if (tile != NULL) {
-	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->sliderFirst, 
+	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->sliderFirst,
 		scrollPtr->inset,
 		scrollPtr->sliderLast - scrollPtr->sliderFirst - 1, width - 1);
 	    Blt_Draw3DRectangle(tkwin, pixmap, border,

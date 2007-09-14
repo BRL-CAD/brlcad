@@ -415,7 +415,7 @@ tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	long	mode, x, y;
 	unsigned char	pixel[4];
 	struct bu_vls vls;
-	
+
 	Tcl_ResetResult(interp);
 
 	if( argc != 4 )  {

@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rle_hdr.c - Functions to manipulate rle_hdr structures.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -101,7 +101,7 @@ static int no_recurse = 0;
 
 /*****************************************************************
  * TAG( rle_hdr_cp )
- * 
+ *
  * Make a "safe" copy of a rle_hdr structure.
  * Inputs:
  * 	from_hdr:	Header to be copied.
@@ -198,14 +198,14 @@ rle_hdr *from_hdr, *to_hdr;
 
 /*****************************************************************
  * TAG( rle_hdr_clear )
- * 
+ *
  * Clear out the allocated memory pieces of a header.
  *
  * This routine is intended to be used internally by the library, to
  * clear a header before putting new data into it.  It clears all the
  * fields that would be set by reading in a new image header.
  * Therefore, it does not clear the program and file names.
- * 
+ *
  * Inputs:
  * 	the_hdr:	To be cleared.
  * Outputs:
@@ -245,7 +245,7 @@ rle_hdr *the_hdr;
 
 /*****************************************************************
  * TAG( rle_hdr_init )
- * 
+ *
  * Initialize a rle_hdr structure.
  * Inputs:
  * 	the_hdr:	Header to be initialized.

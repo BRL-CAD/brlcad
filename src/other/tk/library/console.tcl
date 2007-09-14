@@ -268,7 +268,7 @@ proc ::tk::ConsoleHistory {cmd} {
 
 # ::tk::ConsolePrompt --
 # This procedure draws the prompt.  If tcl_prompt1 or tcl_prompt2
-# exists in the main interpreter it will be called to generate the 
+# exists in the main interpreter it will be called to generate the
 # prompt.  Otherwise, a hard coded default prompt is printed.
 #
 # Arguments:
@@ -669,7 +669,7 @@ proc ::tk::console::TagProc w {
 # 	c2	- second char of pair
 #
 # Calls:	::tk::console::Blink
- 
+
 proc ::tk::console::MatchPair {w c1 c2 {lim 1.0}} {
     if {!$::tk::console::magicKeys} {
 	return
@@ -724,7 +724,7 @@ proc ::tk::console::MatchPair {w c1 c2 {lim 1.0}} {
 #	w	- console text widget
 #
 # Calls:	::tk::console::Blink
- 
+
 proc ::tk::console::MatchQuote {w {lim 1.0}} {
     if {!$::tk::console::magicKeys} {
 	return
@@ -859,7 +859,7 @@ proc ::tk::console::Expand {w {type ""}} {
 #
 # Returns:	list containing longest unique match followed by all the
 #		possible further matches
- 
+
 proc ::tk::console::ExpandPathname str {
     set pwd [EvalAttached pwd]
     if {[catch {EvalAttached [list cd [file dirname $str]]} err]} {

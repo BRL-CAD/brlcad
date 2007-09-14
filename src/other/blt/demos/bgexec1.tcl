@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -131,7 +131,7 @@ option add *logo.padX 4
 option add *title.text "Virtual Memory Statistics"
 option add *title.font -*-Helvetica-Bold-R-*-*-14-*-*-*-*-*-*-*
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual != "staticgray" && $visual != "grayscale" } {
     option add *text.background lightblue
     option add *text.foreground blue
@@ -140,15 +140,15 @@ if { $visual != "staticgray" && $visual != "grayscale" } {
     option add *stop.background yellow
     option add *stop.foreground navyblue
     option add *logo.background beige
-    option add *logo.foreground brown 
+    option add *logo.foreground brown
 }
 
 # Create widgets
-text .text 
-scrollbar .vscroll 
+text .text
+scrollbar .vscroll
 button .quit
 button .stop
-label .logo 
+label .logo
 label .title
 
 # Layout widgets in table
@@ -158,7 +158,7 @@ table . \
     .vscroll 	1,3 -fill y \
     .logo 	2,0 -anchor w -padx 10 -reqheight .6i -pady 4 \
     .stop 	2,1 \
-    .quit  	2,2 
+    .quit  	2,2
 
 set buttonWidth 1i
 table configure . c1 c2 -width 1i
@@ -183,14 +183,14 @@ set bgStatus {}
 AnimateBitmap 0
 
 #
-# Pick a command that 
+# Pick a command that
 #    1) periodically writes output and
 #    2) flushes output each time.
 #
 set command { vmstat 1 }
 #set command { netstat -c }
 
-catch { eval "bgexec bgStatus -onoutput DisplayStats $command" } 
+catch { eval "bgexec bgStatus -onoutput DisplayStats $command" }
 
 # Turn off animation by canceling any pending after task.
 if { [info exists afterId] } {

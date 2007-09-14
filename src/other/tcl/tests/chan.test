@@ -110,7 +110,7 @@ test chan-16.4 {chan command: pending subcommand} -body {
     chan pending {input output} stdout
 } -returnCodes error -result "bad mode \"input output\": must be input or output"
 test chan-16.5 {chan command: pending input subcommand} -body {
-    chan pending input stdout 
+    chan pending input stdout
 } -result -1
 test chan-16.6 {chan command: pending input subcommand} -body {
     chan pending input stdin
@@ -169,7 +169,7 @@ test chan-16.9 {chan command: pending input subcommand} -setup {
     set ::chan-16.9-data [list]
     set ::chan-16.9-done 0
 } -body {
-    after idle chan-16.9-client 
+    after idle chan-16.9-client
     vwait ::chan-16.9-done
     set ::chan-16.9-data
 } -result {-1 0 0 1 36 -1 0 0 1 72 -1 0 0 1 108 -1 0 0 1 144 ABC 890} -cleanup {

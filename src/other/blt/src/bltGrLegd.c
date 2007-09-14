@@ -55,9 +55,9 @@ struct LegendStruct {
     short int nColumns, nRows;	/* Number of columns and rows in legend */
 
     int site;
-    Point2D anchorPos;		/* Says how to position the legend. Indicates 
-				 * the site and/or x-y screen coordinates of 
-				 * the legend.  Used in conjunction with the 
+    Point2D anchorPos;		/* Says how to position the legend. Indicates
+				 * the site and/or x-y screen coordinates of
+				 * the legend.  Used in conjunction with the
 				 * anchor to determine its location. */
 
     Tk_Anchor anchor;		/* Anchor of legend. Used to interpret the
@@ -144,7 +144,7 @@ static Tk_ConfigSpec configSpecs[] =
 	"ActiveBackground", DEF_LEGEND_ACTIVE_BG_MONO,
 	Tk_Offset(Legend, activeBorder), TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_CUSTOM, "-activeborderwidth", "activeBorderWidth",
-	"BorderWidth", DEF_LEGEND_BORDERWIDTH, 
+	"BorderWidth", DEF_LEGEND_BORDERWIDTH,
 	Tk_Offset(Legend, entryBorderWidth),
 	TK_CONFIG_DONT_SET_DEFAULT, &bltDistanceOption},
     {TK_CONFIG_COLOR, "-activeforeground", "activeForeground",
@@ -197,7 +197,7 @@ static Tk_ConfigSpec configSpecs[] =
 	DEF_LEGEND_PAD_Y, Tk_Offset(Legend, padY),
 	TK_CONFIG_DONT_SET_DEFAULT, &bltPadOption},
     {TK_CONFIG_CUSTOM, "-position", "position", "Position",
-	DEF_LEGEND_POSITION, 0, 
+	DEF_LEGEND_POSITION, 0,
         TK_CONFIG_DONT_SET_DEFAULT, &legendPositionOption},
     {TK_CONFIG_BOOLEAN, "-raised", "raised", "Raised",
 	DEF_LEGEND_RAISED, Tk_Offset(Legend, raised),
@@ -284,7 +284,7 @@ LegendEventProc(clientData, eventPtr)
 	if (legendPtr->tkwin != graphPtr->tkwin) {
 	    Blt_DeleteWindowInstanceData(legendPtr->tkwin);
 	    if (legendPtr->cmdToken != NULL) {
-		Tcl_DeleteCommandFromToken(graphPtr->interp, 
+		Tcl_DeleteCommandFromToken(graphPtr->interp,
 					   legendPtr->cmdToken);
 		legendPtr->cmdToken = NULL;
 	    }
@@ -324,7 +324,7 @@ CreateLegendWindow(interp, legendPtr, pathName)
     if (legendPtr->tkwin != legendPtr->graphPtr->tkwin) {
 	Tk_DestroyWindow(legendPtr->tkwin);
     }
-    legendPtr->cmdToken = Tcl_CreateCommand(interp, pathName, 
+    legendPtr->cmdToken = Tcl_CreateCommand(interp, pathName,
 	Blt_GraphInstCmdProc, legendPtr->graphPtr, NULL);
     legendPtr->tkwin = tkwin;
     legendPtr->site = LEGEND_WINDOW;
@@ -379,7 +379,7 @@ StringToPosition(clientData, interp, tkwin, string, widgRec, offset)
 	char *comma;
 	long x, y;
 	int result;
-	
+
 	comma = strchr(string + 1, ',');
 	if (comma == NULL) {
 	    Tcl_AppendResult(interp, "bad screen position \"", string,
@@ -456,7 +456,7 @@ PositionToString(clientData, tkwin, widgRec, offset, freeProcPtr)
 	    char string[200];
 	    char *result;
 
-	    sprintf(string, "@%d,%d", (int)legendPtr->anchorPos.x, 
+	    sprintf(string, "@%d,%d", (int)legendPtr->anchorPos.x,
 		    (int)legendPtr->anchorPos.y);
 	    result = Blt_Strdup(string);
 	    *freeProcPtr = (Tcl_FreeProc *)Blt_Free;
@@ -503,7 +503,7 @@ SetLegendOrigin(legendPtr)
 	break;
     case LEGEND_BOTTOM:
 	width = graphPtr->right - graphPtr->left;
-	height = graphPtr->bottomMargin.height - 
+	height = graphPtr->bottomMargin.height -
 	    graphPtr->bottomMargin.axesOffset;
 	x = graphPtr->left;
 	y = graphPtr->height - (height + graphPtr->inset);
@@ -586,10 +586,10 @@ PickLegendEntry(clientData, x, y, contextPtr)
 		    }
 		    count++;
 		}
-	    }	      
+	    }
 	    if (linkPtr != NULL) {
 		return Blt_ChainGetValue(linkPtr);
-	    }	
+	    }
 	}
     }
     return NULL;
@@ -658,11 +658,11 @@ Blt_MapLegend(legendPtr, plotWidth, plotHeight)
 	return;			/* Legend is not being displayed */
     }
 
-    /*   
+    /*
      * Count the number of legend entries and determine the widest and
      * tallest label.  The number of entries would normally be the
      * number of elements, but 1) elements can be hidden and 2)
-     * elements can have no legend entry (-label "").  
+     * elements can have no legend entry (-label "").
      */
     nEntries = 0;
     entryWidth = entryHeight = 0;
@@ -696,24 +696,24 @@ Blt_MapLegend(legendPtr, plotWidth, plotHeight)
 	5 + symbolWidth;
     entryHeight += 2 * legendPtr->entryBorderWidth + PADDING(legendPtr->ipadY);
 
-    legendWidth = plotWidth - 2 * legendPtr->borderWidth - 
+    legendWidth = plotWidth - 2 * legendPtr->borderWidth -
 	PADDING(legendPtr->padX);
-    legendHeight = plotHeight - 2 * legendPtr->borderWidth - 
+    legendHeight = plotHeight - 2 * legendPtr->borderWidth -
 	PADDING(legendPtr->padY);
 
     /*
      * The number of rows and columns is computed as one of the following:
      *
-     *	both options set		User defined. 
+     *	both options set		User defined.
      *  -rows				Compute columns from rows.
      *  -columns			Compute rows from columns.
      *	neither set			Compute rows and columns from
-     *					size of plot.  
+     *					size of plot.
      */
     if (legendPtr->reqRows > 0) {
-	nRows = legendPtr->reqRows; 
+	nRows = legendPtr->reqRows;
 	if (nRows > nEntries) {
-	    nRows = nEntries;	
+	    nRows = nEntries;
 	}
 	if (legendPtr->reqColumns > 0) {
 	    nColumns = legendPtr->reqColumns;
@@ -729,22 +729,22 @@ Blt_MapLegend(legendPtr, plotWidth, plotHeight)
 	    nColumns = nEntries;
 	}
 	nRows = ((nEntries - 1) / nColumns) + 1;
-    } else {			
+    } else {
 	/* Compute # of rows and columns from the legend size. */
 	nRows = legendHeight / entryHeight;
 	nColumns = legendWidth / entryWidth;
-	
+
 	if (nRows > nEntries) {
 	    nRows = nEntries;
 	} else if (nRows < 1) {
 	    nRows = 1;
-	} 
+	}
 	if (nColumns > nEntries) {
 	    nColumns = nEntries;
 	} else if (nColumns < 1) {
 	    nColumns = 1;
 	}
-	if ((legendPtr->site == LEGEND_TOP) || 
+	if ((legendPtr->site == LEGEND_TOP) ||
 	    (legendPtr->site == LEGEND_BOTTOM)) {
 	    nRows = ((nEntries - 1) / nColumns) + 1;
 	} else {
@@ -821,46 +821,46 @@ Blt_DrawLegend(legendPtr, drawable)
     symbolSize = fontMetrics.ascent;
     midX = symbolSize + 1 + legendPtr->entryBorderWidth;
     midY = (symbolSize / 2) + 1 + legendPtr->entryBorderWidth;
-    labelX = 2 * symbolSize + legendPtr->entryBorderWidth + 
+    labelX = 2 * symbolSize + legendPtr->entryBorderWidth +
 	legendPtr->ipadX.side1 + 5;
     symbolY = midY + legendPtr->ipadY.side1;
     symbolX = midX + legendPtr->ipadX.side1;
 
-    pixmap = Tk_GetPixmap(graphPtr->display, Tk_WindowId(legendPtr->tkwin), 
+    pixmap = Tk_GetPixmap(graphPtr->display, Tk_WindowId(legendPtr->tkwin),
 	width, height, Tk_Depth(legendPtr->tkwin));
 
     if (legendPtr->border != NULL) {
 	/* Background color and relief. */
-	Blt_Fill3DRectangle(legendPtr->tkwin, pixmap, legendPtr->border, 0, 0, 
+	Blt_Fill3DRectangle(legendPtr->tkwin, pixmap, legendPtr->border, 0, 0,
 		width, height, 0, TK_RELIEF_FLAT);
     } else if (legendPtr->site & LEGEND_IN_PLOT) {
-	/* 
+	/*
 	 * Legend background is transparent and is positioned over the
 	 * the plot area.  Either copy the part of the background from
 	 * the backing store pixmap or (if no backing store exists)
 	 * just fill it with the background color of the plot.
 	 */
 	if (graphPtr->backPixmap != None) {
-	    XCopyArea(graphPtr->display, graphPtr->backPixmap, pixmap, 
-		graphPtr->drawGC, legendPtr->x, legendPtr->y, width, height, 
+	    XCopyArea(graphPtr->display, graphPtr->backPixmap, pixmap,
+		graphPtr->drawGC, legendPtr->x, legendPtr->y, width, height,
 		0, 0);
         } else {
 	    XFillRectangle(graphPtr->display, pixmap, graphPtr->plotFillGC,
 		0, 0, width, height);
  	}
     } else {
-	/* 
+	/*
 	 * The legend is positioned in one of the margins or the
 	 * external window.  Draw either the solid or tiled background
 	 * with the the border.
 	 */
 	if (graphPtr->tile != NULL) {
-	    Blt_SetTileOrigin(legendPtr->tkwin, graphPtr->tile, legendPtr->x, 
+	    Blt_SetTileOrigin(legendPtr->tkwin, graphPtr->tile, legendPtr->x,
 			      legendPtr->y);
-	    Blt_TileRectangle(legendPtr->tkwin, pixmap, graphPtr->tile, 0, 0, 
+	    Blt_TileRectangle(legendPtr->tkwin, pixmap, graphPtr->tile, 0, 0,
 				width, height);
 	} else {
-	    XFillRectangle(graphPtr->display, pixmap, graphPtr->fillGC, 0, 0, 
+	    XFillRectangle(graphPtr->display, pixmap, graphPtr->fillGC, 0, 0,
 			   width, height);
  	}
     }
@@ -876,9 +876,9 @@ Blt_DrawLegend(legendPtr, drawable)
 	}
 	if (elemPtr->flags & LABEL_ACTIVE) {
 	    legendPtr->style.state |= STATE_ACTIVE;
-	    Blt_Fill3DRectangle(legendPtr->tkwin, pixmap, 
-		legendPtr->activeBorder, x, y, 
-		legendPtr->style.width, legendPtr->style.height, 
+	    Blt_Fill3DRectangle(legendPtr->tkwin, pixmap,
+		legendPtr->activeBorder, x, y,
+		legendPtr->style.width, legendPtr->style.height,
 		legendPtr->entryBorderWidth, legendPtr->activeRelief);
 	} else {
 	    legendPtr->style.state &= ~STATE_ACTIVE;
@@ -890,8 +890,8 @@ Blt_DrawLegend(legendPtr, drawable)
 	}
 	(*elemPtr->procsPtr->drawSymbolProc) (graphPtr, pixmap, elemPtr,
 		x + symbolX, y + symbolY, symbolSize);
-	Blt_DrawText(legendPtr->tkwin, pixmap, elemPtr->label, 
-		&legendPtr->style, x + labelX, 
+	Blt_DrawText(legendPtr->tkwin, pixmap, elemPtr->label,
+		&legendPtr->style, x + labelX,
 		y + legendPtr->entryBorderWidth + legendPtr->ipadY.side1);
 	count++;
 
@@ -910,10 +910,10 @@ Blt_DrawLegend(legendPtr, drawable)
     if (border == NULL) {
 	border = graphPtr->border;
     }
-    Blt_Draw3DRectangle(legendPtr->tkwin, pixmap, border, 0, 0, width, height, 
+    Blt_Draw3DRectangle(legendPtr->tkwin, pixmap, border, 0, 0, width, height,
 	legendPtr->borderWidth, legendPtr->relief);
 
-    XCopyArea(graphPtr->display, pixmap, drawable, graphPtr->drawGC, 0, 0, 
+    XCopyArea(graphPtr->display, pixmap, drawable, graphPtr->drawGC, 0, 0,
 	width, height, legendPtr->x, legendPtr->y);
     Tk_FreePixmap(graphPtr->display, pixmap);
 }
@@ -969,7 +969,7 @@ Blt_LegendToPostScript(legendPtr, psToken)
     symbolSize = fontMetrics.ascent;
     midX = symbolSize + 1 + legendPtr->entryBorderWidth;
     midY = (symbolSize / 2) + 1 + legendPtr->entryBorderWidth;
-    labelX = 2 * symbolSize + legendPtr->entryBorderWidth + 
+    labelX = 2 * symbolSize + legendPtr->entryBorderWidth +
 	legendPtr->ipadX.side1 + 5;
     symbolY = midY + legendPtr->ipadY.side1;
     symbolX = midX + legendPtr->ipadX.side1;
@@ -998,7 +998,7 @@ Blt_LegendToPostScript(legendPtr, psToken)
 	(*elemPtr->procsPtr->printSymbolProc) (graphPtr, psToken, elemPtr,
 	    x + symbolX, y + symbolY, symbolSize);
 	Blt_TextToPostScript(psToken, elemPtr->label, &(legendPtr->style),
-		x + labelX, 
+		x + labelX,
 		y + legendPtr->entryBorderWidth + legendPtr->ipadY.side1);
 	count++;
 	if ((count % legendPtr->nRows) > 0) {
@@ -1131,7 +1131,7 @@ Blt_DestroyLegend(graphPtr)
 	tkwin = legendPtr->tkwin;
 	legendPtr->tkwin = NULL;
 	if (tkwin != NULL) {
-	    Tk_DeleteEventHandler(tkwin, ExposureMask | StructureNotifyMask, 
+	    Tk_DeleteEventHandler(tkwin, ExposureMask | StructureNotifyMask,
 				  LegendEventProc, legendPtr);
 	    Blt_DeleteWindowInstanceData(tkwin);
 	    Tk_DestroyWindow(tkwin);
@@ -1231,7 +1231,7 @@ GetOp(graphPtr, interp, argc, argv)
     if ((c == 'c') && (strcmp(argv[3], "current") == 0)) {
 	elemPtr = (Element *)Blt_GetCurrentItem(legendPtr->bindTable);
     } else if ((c == '@') &&
-       (Blt_GetXY(interp, graphPtr->tkwin, argv[3], &x, &y) == TCL_OK)) { 
+       (Blt_GetXY(interp, graphPtr->tkwin, argv[3], &x, &y) == TCL_OK)) {
 	elemPtr = (Element *)PickLegendEntry(graphPtr, x, y, NULL);
     }
     if (elemPtr != NULL) {
@@ -1457,49 +1457,49 @@ Blt_LegendOp(graphPtr, interp, argc, argv)
     return result;
 }
 
-int 
+int
 Blt_LegendSite(legendPtr)
     Legend *legendPtr;
 {
     return legendPtr->site;
 }
 
-int 
+int
 Blt_LegendWidth(legendPtr)
     Legend *legendPtr;
 {
     return legendPtr->width;
 }
 
-int 
+int
 Blt_LegendHeight(legendPtr)
     Legend *legendPtr;
 {
     return legendPtr->height;
 }
 
-int 
+int
 Blt_LegendIsHidden(legendPtr)
     Legend *legendPtr;
 {
     return legendPtr->hidden;
 }
 
-int 
+int
 Blt_LegendIsRaised(legendPtr)
     Legend *legendPtr;
 {
     return legendPtr->raised;
 }
 
-int 
+int
 Blt_LegendX(legendPtr)
     Legend *legendPtr;
 {
     return legendPtr->x;
 }
 
-int 
+int
 Blt_LegendY(legendPtr)
     Legend *legendPtr;
 {

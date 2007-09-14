@@ -10,11 +10,11 @@ namespace brlcad {
     geom_name = "piston";
     ON::Begin();
     _written = false;
-  }  
+  }
 
   BRLCADBrepHandler::~BRLCADBrepHandler() {
     if (!_written) delete _brep;
-    // can only call delete here if write wasn't called! 
+    // can only call delete here if write wasn't called!
     ON::End();
   }
 
@@ -55,15 +55,15 @@ namespace brlcad {
     }
 
     string sol = geom_name+".s";
-    string reg = geom_name+".r";    
+    string reg = geom_name+".r";
     if (_brep_flip) _brep->Flip();
     mk_brep(outfp, sol.c_str(), _brep);
     unsigned char rgb[] = {200,180,180};
-    mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);    
+    mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);
     wdb_close(outfp);
   }
 
-  int 
+  int
   BRLCADBrepHandler::handleShell(bool isVoid, bool orient) {
     _brep_flip = !orient;
     _brep = ON_Brep::New();
@@ -71,8 +71,8 @@ namespace brlcad {
     return _objects.size()-1;
   }
 
-  int 
-  BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {    
+  int
+  BRLCADBrepHandler::handleFace(bool orient, int surfIndex) {
     ON_BrepFace& face = _brep->NewFace(_topology[surfIndex]);
     face.m_bRev = !orient;
 
@@ -82,19 +82,19 @@ namespace brlcad {
   }
 
 
-  int 
+  int
   BRLCADBrepHandler::handleLoop(bool isOuter, int faceIndex) {
     debug("handleLoop");
     ON_BrepLoop::TYPE type = (isOuter) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
     ON_BrepLoop& loop = _brep->NewLoop(type, face());
-    
+
     _loop = loop.m_loop_index;
     _topology.push_back(_loop);
     return _topology.size()-1;
   }
 
-  int 
-  BRLCADBrepHandler::handleEdge(int curve, int initVert, int termVert) {    
+  int
+  BRLCADBrepHandler::handleEdge(int curve, int initVert, int termVert) {
     debug("handleEdge");
     debug("curve: " << curve);
     debug("init : " << initVert);
@@ -118,16 +118,16 @@ namespace brlcad {
 
     debug("handleEdgeUse: edge  : " << edgeIndex);
     debug("handleEdgeUse: orient: " << orientWithCurve);
-    
-    ON_BrepEdge& e = edge(edgeIndex);    
 
-    debug("handleEdgeUse: " << e.m_vi[0] << " --> " << e.m_vi[1]);    
+    ON_BrepEdge& e = edge(edgeIndex);
+
+    debug("handleEdgeUse: " << e.m_vi[0] << " --> " << e.m_vi[1]);
 
     // grab the curve for this edge
     const ON_Curve* c = e.EdgeCurveOf();
     // grab the surface for the face
     const ON_Surface* s = face().SurfaceOf();
-    
+
     // get a 2d parameter-space curve that lies on the surface for this edge
     // hopefully this works!
     ON_Curve* c2d = pullback_curve(&face(), c);
@@ -139,7 +139,7 @@ namespace brlcad {
     _brep->m_C2.Append(c2d);
 
     ON_BrepTrim& trim = _brep->NewTrim(e, !orientWithCurve, loop(), trimCurve);
-    debug("handleEdgeUse: trim " << (orientWithCurve ? "is not " : "is ") << "reversed"); 
+    debug("handleEdgeUse: trim " << (orientWithCurve ? "is not " : "is ") << "reversed");
     trim.m_type = ON_BrepTrim::mated; // closed solids!
     trim.m_tolerance[0] = 1e-3; // XXX: tolerance?
     trim.m_tolerance[1] = 1e-3;
@@ -165,7 +165,7 @@ namespace brlcad {
     return _topology.size()-1;
   }
 
-  int 
+  int
   BRLCADBrepHandler::handlePoint(double x, double y, double z) {
     // XXX may be deprecated
     return 0;
@@ -178,7 +178,7 @@ namespace brlcad {
   BRLCADBrepHandler::handleRuledSurface() { return 0; }
 
   int
-  BRLCADBrepHandler::handleSurfaceOfRevolution(int lineIndex, int curveIndex, double startAngle, double endAngle) { 
+  BRLCADBrepHandler::handleSurfaceOfRevolution(int lineIndex, int curveIndex, double startAngle, double endAngle) {
     debug("handleSurfaceOfRevolution");
     debug("line  : " << lineIndex);
     debug("curve : " << curveIndex);
@@ -204,19 +204,19 @@ namespace brlcad {
   BRLCADBrepHandler::handleTabulatedCylinder() { return 0; }
 
   int
-  BRLCADBrepHandler::handleRationalBSplineSurface(int num_control[2], 
-						  int degree[2], 
-						  bool u_closed, 
-						  bool v_closed, 
-						  bool rational, 
-						  bool u_periodic, 
-						  bool v_periodic, 
+  BRLCADBrepHandler::handleRationalBSplineSurface(int num_control[2],
+						  int degree[2],
+						  bool u_closed,
+						  bool v_closed,
+						  bool rational,
+						  bool u_periodic,
+						  bool v_periodic,
 						  int u_num_knots,
 						  int v_num_knots,
 						  double u_knots[],
 						  double v_knots[],
 						  double weights[],
-						  double* ctl_points) { 
+						  double* ctl_points) {
     debug("handleRationalBSplineSurface()");
     debug("u controls: " << num_control[0]);
     debug("v controls: " << num_control[1]);
@@ -224,15 +224,15 @@ namespace brlcad {
     debug("v degree  : " << degree[1]);
 
     ON_NurbsSurface* surf = ON_NurbsSurface::New(3, rational, degree[0]+1, degree[1]+1, num_control[0], num_control[1]);
-    
+
     debug("Num u knots: " << surf->KnotCount(0));
     debug("Num v knots: " << surf->KnotCount(1));
     debug("Mult u knots: " << surf->KnotMultiplicity(0,0) << "," << surf->KnotMultiplicity(0,1));
     debug("Mult v knots: " << surf->KnotMultiplicity(1,0) << "," << surf->KnotMultiplicity(1,1));
 
     // openNURBS handles the knots differently (than most other APIs
-    // I've seen, which is admittedly not many) 
-    // 
+    // I've seen, which is admittedly not many)
+    //
     // it implicitly represents multiplicities based on a "base" knot
     // vector. IOW, if you had a degree 3 surface, then you'd have a
     // multiplicity of 3 for the first and last knots if it was
@@ -269,7 +269,7 @@ namespace brlcad {
     for (int u = 0; u < num_control[0]; u++) {
       for (int v = 0; v < num_control[1]; v++) {
 	int index = v*num_control[0]*3 + u*3;
-	if (rational) 
+	if (rational)
 	  surf->SetCV(u,v,ON_4dPoint(ctl_points[index+0],
 				     ctl_points[index+1],
 				     ctl_points[index+2],
@@ -281,14 +281,14 @@ namespace brlcad {
 	  double* p = &ctl_points[index];
 	  debug("ctl: " << PT(p));
 	}
-      } 
+      }
     }
 
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
     debug("u: [" << u[0] << "," << u[1] << "]");
     debug("v: [" << v[0] << "," << v[1] << "]");
-    
+
     int sid = _brep->AddSurface(surf);
     assert(sid != -1);
     _topology.push_back(sid);
@@ -311,14 +311,14 @@ namespace brlcad {
   BRLCADBrepHandler::handleSphericalSurface() { return 0; }
 
   int
-  BRLCADBrepHandler::handleToroidalSurface() { return 0; }    
+  BRLCADBrepHandler::handleToroidalSurface() { return 0; }
 
   int
   BRLCADBrepHandler::handleCircularArc(double radius,
 				       point_t center,
 				       vect_t normal,
 				       point_t start,
-				       point_t end) { 
+				       point_t end) {
     debug("handleCircularArc");
     debug("radius: " << radius);
     debug("center: " << PT(center));
@@ -338,7 +338,7 @@ namespace brlcad {
     }
     ON_Arc arc(circle, ON_Interval(a, b));
 
-    ON_TextLog tl;        
+    ON_TextLog tl;
     arc.Dump(tl);
     debug("arc valid: " << arc.IsValid());
     ON_ArcCurve* curve = new ON_ArcCurve(arc, arc.Domain().Min(), arc.Domain().Max());
@@ -346,7 +346,7 @@ namespace brlcad {
 
     _objects.push_back(curve);
 
-    return _objects.size()-1; 
+    return _objects.size()-1;
   }
 
   int
@@ -369,7 +369,7 @@ namespace brlcad {
     debug("handleLine");
     debug("start: " << PT(start));
     debug("end  : " << PT(end));
-    
+
     ON_LineCurve* line = new ON_LineCurve(ON_3dPoint(start),ON_3dPoint(end));
     _objects.push_back(line);
     return _objects.size()-1;
@@ -378,7 +378,7 @@ namespace brlcad {
   int
   BRLCADBrepHandler::handleParametricSplineCurve() { return 0; }
 
-  int 
+  int
   BRLCADBrepHandler::handleRationalBSplineCurve(int degree,
 						double tmin,
 						double tmax,
@@ -406,7 +406,7 @@ namespace brlcad {
     for (int i = 0; i < num_knots-2; i++) {
       c->m_knot[i] = knots[i+1];
     }
-    
+
     int stride = c->m_cv_stride;
     for (int i = 0; i < num_control_points; i++) {
       c->m_cv[i*stride] = ctl_points[i*stride];
@@ -420,6 +420,6 @@ namespace brlcad {
   }
 
   int
-  BRLCADBrepHandler::handleOffsetCurve() { return 0; }    
+  BRLCADBrepHandler::handleOffsetCurve() { return 0; }
 
 }

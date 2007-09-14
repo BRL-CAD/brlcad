@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -27,12 +27,12 @@ Blt_TreeCreate \- Create tree data object.
 .nf
 \fB#include <bltTree.h>\fR
 .sp
-int 
+int
 \fBBlt_TreeCreate\fR(\fIinterp\fR, \fIname\fR, \fItokenPtr\fR)
 .SH ARGUMENTS
 .AS Tcl_Interp *interp
 .AP Tcl_Interp *interp in
-Interpreter to report results back to.  
+Interpreter to report results back to.
 .AP "const char" *name  in
 Name of the new tree.  Can be qualified by a namespace.
 .AP Blt_Tree *tokenPtr out
@@ -58,8 +58,8 @@ If a qualifier is present, the namespace must already exist.
 .TP 1i
 \fItokenPtr\fR
 Holds the returned token.  \fITokenPtr\fR points to a location
-where it is stored. Tree tokens are used to work with the tree object.  
-If NULL, no token is allocated.  You can later use 
+where it is stored. Tree tokens are used to work with the tree object.
+If NULL, no token is allocated.  You can later use
 \fBTcl_TreeGetToken\fR to obtain a token.
 .PP
 The new tree data object created will initially contain only a root
@@ -87,7 +87,7 @@ created for you.
 .IP \(bu
 Memory can't be allocated for the tree or token.
 .SH EXAMPLE
-The following example creates a new 
+The following example creates a new
 .CS
 Blt_Tree token;
 

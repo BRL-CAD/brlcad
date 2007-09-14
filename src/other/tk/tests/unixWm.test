@@ -632,7 +632,7 @@ test unixWm-17.2 {Tk_WmCmd procedure, "focusmodel" option} unix {
     list [catch {wm focusmodel .t bogus} msg] $msg
 } {1 {bad argument "bogus": must be active or passive}}
 test unixWm-17.3 {Tk_WmCmd procedure, "focusmodel" option} unix {
-    set result {} 
+    set result {}
     lappend result [wm focusmodel .t]
     wm focusmodel .t active
     lappend result [wm focusmodel .t]
@@ -1330,7 +1330,7 @@ test unixWm-40.1 {Tk_SetGrid procedure, set grid dimensions before turning on gr
     catch {destroy .t}
     toplevel .t
     wm geometry .t 30x10+0+0
-    listbox .t.l -height 20 -width 20 -setgrid 1 
+    listbox .t.l -height 20 -width 20 -setgrid 1
     pack .t.l -fill both -expand 1
     update
     wm geometry .t
@@ -1339,7 +1339,7 @@ test unixWm-40.2 {Tk_SetGrid procedure, turning on grid when dimensions already 
     catch {destroy .t}
     toplevel .t
     wm geometry .t 200x100+0+0
-    listbox .t.l -height 20 -width 20 
+    listbox .t.l -height 20 -width 20
     pack .t.l -fill both -expand 1
     update
     .t.l configure -setgrid 1
@@ -1752,7 +1752,7 @@ test unixWm-49.2 {Tk_GetRootCoords procedure, menubars} {unix testmenubar} {
     testmenubar window .t .t.m
     update
     list [expr [winfo rootx .t.m.f] - $x] [expr [winfo rooty .t.m.f] - $y] \
-	    [expr [winfo rootx .t.f] - $x] [expr [winfo rooty .t.f] - $y] 
+	    [expr [winfo rootx .t.f] - $x] [expr [winfo rooty .t.f] - $y]
 } {52 7 12 62}
 
 deleteWindows

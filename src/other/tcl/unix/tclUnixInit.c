@@ -773,7 +773,7 @@ TclpSetVariables(
      * Set msgcat fallback locale to current CFLocale identifier.
      */
     CFLocaleRef localeRef;
-    
+
     if (CFLocaleCopyCurrent != NULL && CFLocaleGetIdentifier != NULL &&
 	    (localeRef = CFLocaleCopyCurrent())) {
 	CFStringRef locale = CFLocaleGetIdentifier(localeRef);

@@ -2,7 +2,7 @@
 /*****************************************************************************
  *
  * GIFENCODE.C    - GIF Image compression interface
- * 
+ *
  * GIFEncode( FName, GHeight, GWidth, GInterlace, Background,
  *	      BitsPerPixel, Red, Green, Blue, GetPixel )
  *
@@ -45,11 +45,11 @@ BumpPixel()
 	if( curx == Width ) {
 		curx = 0;
 
-	        if( !Interlace ) 
+	        if( !Interlace )
 			cury++;
 		else {
 		     switch( Pass ) {
-	     
+
 	               case 0:
         	          cury += 8;
                 	  if( cury >= Height ) {
@@ -57,7 +57,7 @@ BumpPixel()
 				cury = 4;
 		  	  }
                           break;
-		  
+
 	               case 1:
         	          cury += 8;
                 	  if( cury >= Height ) {
@@ -73,7 +73,7 @@ BumpPixel()
 	                     cury = 1;
 	                  }
 	                  break;
-			  
+
 	               case 3:
 	                  cury += 2;
 	                  break;
@@ -119,9 +119,9 @@ ifunptr getpixel;
 /* public */
 
 void
-GIFEncode( FName, GWidth, GHeight, GInterlace, Background, 
+GIFEncode( FName, GWidth, GHeight, GInterlace, Background,
 	   BitsPerPixel, Red, Green, Blue, GetPixel )
-	 
+
 char *FName;
 int GWidth, GHeight;
 int GInterlace;
@@ -142,13 +142,13 @@ ifunptr GetPixel;
     /* doesn't support interlace yet */
     if (GInterlace) error("no support for interlace yet");
 	Interlace = GInterlace;
-	
+
 	ColorMapSize = 1 << BitsPerPixel;
-	
+
 	RWidth = Width = GWidth;
 	RHeight = Height = GHeight;
 	LeftOfs = TopOfs = 0;
-	
+
 	Resolution = BitsPerPixel;
 
 	/*
@@ -273,7 +273,7 @@ ifunptr GetPixel;
 	 * And close the file
 	 */
 	fclose( fp );
-	
+
 }
 
 

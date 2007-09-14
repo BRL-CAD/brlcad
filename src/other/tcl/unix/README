@@ -82,7 +82,7 @@ How To Compile And Install Tcl:
 				should be reachable under several names.
 	--enable-man-compression=PROG
 				Compress the manpages using PROG.
-    Mac OS X only: 
+    Mac OS X only:
 	--enable-framework	package Tcl as a framework.
 	--disable-corefoundation disable use of CoreFoundation API and revert to
 				standard select based notifier, required when

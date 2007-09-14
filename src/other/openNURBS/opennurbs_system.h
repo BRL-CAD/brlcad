@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@
 
 #if _MSC_VER >= 1300
 #define ON_COMPILER_MSC1300
-// If you are using VC7/.NET and are having trouble linking 
+// If you are using VC7/.NET and are having trouble linking
 // to functions that have whcar_t types in arguments, then
 // read the documentation about the wchar_t type and
 // the /Zc:wchar_t compiler option.
@@ -73,7 +73,7 @@
 #define ON_COMPILER_IRIX
 #endif
 
-#if defined(sun) || defined(__sun) 
+#if defined(sun) || defined(__sun)
 #define ON_COMPILER_SUN
 #endif
 
@@ -88,14 +88,14 @@
 /*
 /////////////////////////////////////////////////////////////////////////
 //
-// Begin Windows system includes - 
+// Begin Windows system includes -
 */
 #if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
 
 /*
 // From windows.h openNURBS only needs definitions of BOOL, TRUE,
 // and FALSE, and a declarations of OutputDebugString(), and
-// WideCharToMultiByte().  These 
+// WideCharToMultiByte().  These
 // defines disable the inclusion of most of the Windows garbage.
 */
 
@@ -206,10 +206,10 @@ typedef int BOOL;
 #endif
 
 #if !defined(_WCHAR_T_DEFINED)
-// If you are using VC7/.NET and are having trouble linking 
+// If you are using VC7/.NET and are having trouble linking
 // to functions that have whcar_t types in arguments, then
 // read the documentation about the wchar_t type and
-// the /Zc:wchar_t compiler option.  Since 
+// the /Zc:wchar_t compiler option.  Since
 
 /* 16-bit wide character ("UNICODE") */
 
@@ -225,10 +225,10 @@ typedef unsigned short wchar_t;
 
 // As 64 bit compilers become more common, the definitions
 // of the next 6 typedefs may need to vary with compiler.
-// As much as possible, the size of runtime types is left 
-// up to the compiler so performance and ease of use can 
-// be maximized.  In the rare cases where it is critical 
-// to use an integer that is exactly 16 bits, 32 bits 
+// As much as possible, the size of runtime types is left
+// up to the compiler so performance and ease of use can
+// be maximized.  In the rare cases where it is critical
+// to use an integer that is exactly 16 bits, 32 bits
 // or 64 bits, the ON__INT16, ON__INT32, and ON__INT64
 // typedefs are used.
 

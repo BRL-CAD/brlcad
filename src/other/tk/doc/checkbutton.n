@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH checkbutton n 4.4 Tk "Tk Built-In Commands"
 .BS
@@ -47,10 +47,10 @@ selected and raised otherwise.
 Specifies the relief for the checkbutton when the indicator is not drawn and
 the checkbutton is off.  The default value is "raised".  By setting this option
 to "flat" and setting -indicatoron to false and -overrelief to raised,
-the effect is achieved 
+the effect is achieved
 of having a flat button that raises on mouse-over and which is
 depressed when activated.  This is the behavior typically exhibited by
-the Bold, Italic, and Underline checkbuttons on the toolbar of a 
+the Bold, Italic, and Underline checkbuttons on the toolbar of a
 word-processor, for example.
 .OP \-offvalue offValue Value
 Specifies value to store in the button's associated variable whenever
@@ -99,7 +99,7 @@ specified.
 .VE 8.5
 .OP \-tristatevalue tristateValue Value
 .VS 8.5
-Specifies the value that causes the checkbutton to display the multi-value 
+Specifies the value that causes the checkbutton to display the multi-value
 selection, also known as the tri-state mode.  Defaults to ``""''
 .VE 8.5
 .OP \-variable variable Variable
@@ -156,17 +156,17 @@ The indicator is drawn with a check mark inside.
 If the checkbutton is not selected, then the indicator is drawn with a
 deselected appearance, and the associated variable is
 set to a different value (typically 0).
-The indicator is drawn without a check mark inside.  In the special case 
-where the variable (if specified) has a value that matches the tristatevalue, 
-the indicator is drawn with a tri-state appearance and is in the tri-state 
-mode indicating mixed or multiple values.  (This is used when the check 
+The indicator is drawn without a check mark inside.  In the special case
+where the variable (if specified) has a value that matches the tristatevalue,
+the indicator is drawn with a tri-state appearance and is in the tri-state
+mode indicating mixed or multiple values.  (This is used when the check
 box represents the state of multiple items.)
-The indicator is drawn in a platform dependent manner.  Under Unix and 
-Windows, the background interior of the box is ``grayed''.  Under Mac, 
+The indicator is drawn in a platform dependent manner.  Under Unix and
+Windows, the background interior of the box is ``grayed''.  Under Mac,
 the indicator is drawn with a dash mark inside.
 By default, the name of the variable associated with a checkbutton is the
 same as the \fIname\fR used to create the checkbutton.
-The variable name, and the ``on'', ``off'' and ``tristate'' values stored in 
+The variable name, and the ``on'', ``off'' and ``tristate'' values stored in
 it, may be modified with options on the command line or in the option
 database.
 Configuration options may also be used to modify the way the

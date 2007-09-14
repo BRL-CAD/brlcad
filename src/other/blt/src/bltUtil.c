@@ -36,7 +36,7 @@
 
 #ifndef HAVE_STRTOLOWER
 void
-strtolower(s) 
+strtolower(s)
     register char *s;
 {
     while (*s != '\0') {
@@ -50,133 +50,133 @@ strtolower(s)
 
 static unsigned char caseTable[] =
 {
-    (unsigned char)'\000', (unsigned char)'\001', 
-    (unsigned char)'\002', (unsigned char)'\003', 
-    (unsigned char)'\004', (unsigned char)'\005', 
+    (unsigned char)'\000', (unsigned char)'\001',
+    (unsigned char)'\002', (unsigned char)'\003',
+    (unsigned char)'\004', (unsigned char)'\005',
     (unsigned char)'\006', (unsigned char)'\007',
-    (unsigned char)'\010', (unsigned char)'\011', 
-    (unsigned char)'\012', (unsigned char)'\013', 
-    (unsigned char)'\014', (unsigned char)'\015', 
+    (unsigned char)'\010', (unsigned char)'\011',
+    (unsigned char)'\012', (unsigned char)'\013',
+    (unsigned char)'\014', (unsigned char)'\015',
     (unsigned char)'\016', (unsigned char)'\017',
-    (unsigned char)'\020', (unsigned char)'\021', 
-    (unsigned char)'\022', (unsigned char)'\023', 
-    (unsigned char)'\024', (unsigned char)'\025', 
+    (unsigned char)'\020', (unsigned char)'\021',
+    (unsigned char)'\022', (unsigned char)'\023',
+    (unsigned char)'\024', (unsigned char)'\025',
     (unsigned char)'\026', (unsigned char)'\027',
-    (unsigned char)'\030', (unsigned char)'\031', 
-    (unsigned char)'\032', (unsigned char)'\033', 
-    (unsigned char)'\034', (unsigned char)'\035', 
+    (unsigned char)'\030', (unsigned char)'\031',
+    (unsigned char)'\032', (unsigned char)'\033',
+    (unsigned char)'\034', (unsigned char)'\035',
     (unsigned char)'\036', (unsigned char)'\037',
-    (unsigned char)'\040', (unsigned char)'\041', 
-    (unsigned char)'\042', (unsigned char)'\043', 
-    (unsigned char)'\044', (unsigned char)'\045', 
+    (unsigned char)'\040', (unsigned char)'\041',
+    (unsigned char)'\042', (unsigned char)'\043',
+    (unsigned char)'\044', (unsigned char)'\045',
     (unsigned char)'\046', (unsigned char)'\047',
-    (unsigned char)'\050', (unsigned char)'\051', 
-    (unsigned char)'\052', (unsigned char)'\053', 
-    (unsigned char)'\054', (unsigned char)'\055', 
+    (unsigned char)'\050', (unsigned char)'\051',
+    (unsigned char)'\052', (unsigned char)'\053',
+    (unsigned char)'\054', (unsigned char)'\055',
     (unsigned char)'\056', (unsigned char)'\057',
-    (unsigned char)'\060', (unsigned char)'\061', 
-    (unsigned char)'\062', (unsigned char)'\063', 
-    (unsigned char)'\064', (unsigned char)'\065', 
+    (unsigned char)'\060', (unsigned char)'\061',
+    (unsigned char)'\062', (unsigned char)'\063',
+    (unsigned char)'\064', (unsigned char)'\065',
     (unsigned char)'\066', (unsigned char)'\067',
-    (unsigned char)'\070', (unsigned char)'\071', 
-    (unsigned char)'\072', (unsigned char)'\073', 
-    (unsigned char)'\074', (unsigned char)'\075', 
+    (unsigned char)'\070', (unsigned char)'\071',
+    (unsigned char)'\072', (unsigned char)'\073',
+    (unsigned char)'\074', (unsigned char)'\075',
     (unsigned char)'\076', (unsigned char)'\077',
-    (unsigned char)'\100', (unsigned char)'\141', 
-    (unsigned char)'\142', (unsigned char)'\143', 
-    (unsigned char)'\144', (unsigned char)'\145', 
+    (unsigned char)'\100', (unsigned char)'\141',
+    (unsigned char)'\142', (unsigned char)'\143',
+    (unsigned char)'\144', (unsigned char)'\145',
     (unsigned char)'\146', (unsigned char)'\147',
-    (unsigned char)'\150', (unsigned char)'\151', 
-    (unsigned char)'\152', (unsigned char)'\153', 
-    (unsigned char)'\154', (unsigned char)'\155', 
-    (unsigned char)'\156', (unsigned char)'\157',
-    (unsigned char)'\160', (unsigned char)'\161', 
-    (unsigned char)'\162', (unsigned char)'\163', 
-    (unsigned char)'\164', (unsigned char)'\165', 
-    (unsigned char)'\166', (unsigned char)'\167',
-    (unsigned char)'\170', (unsigned char)'\171', 
-    (unsigned char)'\172', (unsigned char)'\133', 
-    (unsigned char)'\134', (unsigned char)'\135', 
-    (unsigned char)'\136', (unsigned char)'\137',
-    (unsigned char)'\140', (unsigned char)'\141', 
-    (unsigned char)'\142', (unsigned char)'\143', 
-    (unsigned char)'\144', (unsigned char)'\145', 
-    (unsigned char)'\146', (unsigned char)'\147',
-    (unsigned char)'\150', (unsigned char)'\151', 
-    (unsigned char)'\152', (unsigned char)'\153', 
-    (unsigned char)'\154', (unsigned char)'\155', 
+    (unsigned char)'\150', (unsigned char)'\151',
+    (unsigned char)'\152', (unsigned char)'\153',
+    (unsigned char)'\154', (unsigned char)'\155',
     (unsigned char)'\156', (unsigned char)'\157',
     (unsigned char)'\160', (unsigned char)'\161',
-    (unsigned char)'\162', (unsigned char)'\163', 
-    (unsigned char)'\164', (unsigned char)'\165', 
+    (unsigned char)'\162', (unsigned char)'\163',
+    (unsigned char)'\164', (unsigned char)'\165',
     (unsigned char)'\166', (unsigned char)'\167',
-    (unsigned char)'\170', (unsigned char)'\171', 
-    (unsigned char)'\172', (unsigned char)'\173', 
-    (unsigned char)'\174', (unsigned char)'\175', 
+    (unsigned char)'\170', (unsigned char)'\171',
+    (unsigned char)'\172', (unsigned char)'\133',
+    (unsigned char)'\134', (unsigned char)'\135',
+    (unsigned char)'\136', (unsigned char)'\137',
+    (unsigned char)'\140', (unsigned char)'\141',
+    (unsigned char)'\142', (unsigned char)'\143',
+    (unsigned char)'\144', (unsigned char)'\145',
+    (unsigned char)'\146', (unsigned char)'\147',
+    (unsigned char)'\150', (unsigned char)'\151',
+    (unsigned char)'\152', (unsigned char)'\153',
+    (unsigned char)'\154', (unsigned char)'\155',
+    (unsigned char)'\156', (unsigned char)'\157',
+    (unsigned char)'\160', (unsigned char)'\161',
+    (unsigned char)'\162', (unsigned char)'\163',
+    (unsigned char)'\164', (unsigned char)'\165',
+    (unsigned char)'\166', (unsigned char)'\167',
+    (unsigned char)'\170', (unsigned char)'\171',
+    (unsigned char)'\172', (unsigned char)'\173',
+    (unsigned char)'\174', (unsigned char)'\175',
     (unsigned char)'\176', (unsigned char)'\177',
-    (unsigned char)'\200', (unsigned char)'\201', 
-    (unsigned char)'\202', (unsigned char)'\203', 
-    (unsigned char)'\204', (unsigned char)'\205', 
+    (unsigned char)'\200', (unsigned char)'\201',
+    (unsigned char)'\202', (unsigned char)'\203',
+    (unsigned char)'\204', (unsigned char)'\205',
     (unsigned char)'\206', (unsigned char)'\207',
-    (unsigned char)'\210', (unsigned char)'\211', 
-    (unsigned char)'\212', (unsigned char)'\213', 
-    (unsigned char)'\214', (unsigned char)'\215', 
+    (unsigned char)'\210', (unsigned char)'\211',
+    (unsigned char)'\212', (unsigned char)'\213',
+    (unsigned char)'\214', (unsigned char)'\215',
     (unsigned char)'\216', (unsigned char)'\217',
-    (unsigned char)'\220', (unsigned char)'\221', 
-    (unsigned char)'\222', (unsigned char)'\223', 
-    (unsigned char)'\224', (unsigned char)'\225', 
+    (unsigned char)'\220', (unsigned char)'\221',
+    (unsigned char)'\222', (unsigned char)'\223',
+    (unsigned char)'\224', (unsigned char)'\225',
     (unsigned char)'\226', (unsigned char)'\227',
-    (unsigned char)'\230', (unsigned char)'\231', 
-    (unsigned char)'\232', (unsigned char)'\233', 
-    (unsigned char)'\234', (unsigned char)'\235', 
+    (unsigned char)'\230', (unsigned char)'\231',
+    (unsigned char)'\232', (unsigned char)'\233',
+    (unsigned char)'\234', (unsigned char)'\235',
     (unsigned char)'\236', (unsigned char)'\237',
-    (unsigned char)'\240', (unsigned char)'\241', 
-    (unsigned char)'\242', (unsigned char)'\243', 
-    (unsigned char)'\244', (unsigned char)'\245', 
+    (unsigned char)'\240', (unsigned char)'\241',
+    (unsigned char)'\242', (unsigned char)'\243',
+    (unsigned char)'\244', (unsigned char)'\245',
     (unsigned char)'\246', (unsigned char)'\247',
-    (unsigned char)'\250', (unsigned char)'\251', 
-    (unsigned char)'\252', (unsigned char)'\253', 
-    (unsigned char)'\254', (unsigned char)'\255', 
+    (unsigned char)'\250', (unsigned char)'\251',
+    (unsigned char)'\252', (unsigned char)'\253',
+    (unsigned char)'\254', (unsigned char)'\255',
     (unsigned char)'\256', (unsigned char)'\257',
-    (unsigned char)'\260', (unsigned char)'\261', 
-    (unsigned char)'\262', (unsigned char)'\263', 
-    (unsigned char)'\264', (unsigned char)'\265', 
+    (unsigned char)'\260', (unsigned char)'\261',
+    (unsigned char)'\262', (unsigned char)'\263',
+    (unsigned char)'\264', (unsigned char)'\265',
     (unsigned char)'\266', (unsigned char)'\267',
-    (unsigned char)'\270', (unsigned char)'\271', 
-    (unsigned char)'\272', (unsigned char)'\273', 
-    (unsigned char)'\274', (unsigned char)'\275', 
+    (unsigned char)'\270', (unsigned char)'\271',
+    (unsigned char)'\272', (unsigned char)'\273',
+    (unsigned char)'\274', (unsigned char)'\275',
     (unsigned char)'\276', (unsigned char)'\277',
-    (unsigned char)'\300', (unsigned char)'\341', 
-    (unsigned char)'\342', (unsigned char)'\343', 
-    (unsigned char)'\344', (unsigned char)'\345', 
+    (unsigned char)'\300', (unsigned char)'\341',
+    (unsigned char)'\342', (unsigned char)'\343',
+    (unsigned char)'\344', (unsigned char)'\345',
     (unsigned char)'\346', (unsigned char)'\347',
-    (unsigned char)'\350', (unsigned char)'\351', 
-    (unsigned char)'\352', (unsigned char)'\353', 
-    (unsigned char)'\354', (unsigned char)'\355', 
+    (unsigned char)'\350', (unsigned char)'\351',
+    (unsigned char)'\352', (unsigned char)'\353',
+    (unsigned char)'\354', (unsigned char)'\355',
     (unsigned char)'\356', (unsigned char)'\357',
-    (unsigned char)'\360', (unsigned char)'\361', 
-    (unsigned char)'\362', (unsigned char)'\363', 
-    (unsigned char)'\364', (unsigned char)'\365', 
+    (unsigned char)'\360', (unsigned char)'\361',
+    (unsigned char)'\362', (unsigned char)'\363',
+    (unsigned char)'\364', (unsigned char)'\365',
     (unsigned char)'\366', (unsigned char)'\367',
-    (unsigned char)'\370', (unsigned char)'\371', 
-    (unsigned char)'\372', (unsigned char)'\333', 
-    (unsigned char)'\334', (unsigned char)'\335', 
+    (unsigned char)'\370', (unsigned char)'\371',
+    (unsigned char)'\372', (unsigned char)'\333',
+    (unsigned char)'\334', (unsigned char)'\335',
     (unsigned char)'\336', (unsigned char)'\337',
-    (unsigned char)'\340', (unsigned char)'\341', 
-    (unsigned char)'\342', (unsigned char)'\343', 
-    (unsigned char)'\344', (unsigned char)'\345', 
+    (unsigned char)'\340', (unsigned char)'\341',
+    (unsigned char)'\342', (unsigned char)'\343',
+    (unsigned char)'\344', (unsigned char)'\345',
     (unsigned char)'\346', (unsigned char)'\347',
-    (unsigned char)'\350', (unsigned char)'\351', 
-    (unsigned char)'\352', (unsigned char)'\353', 
-    (unsigned char)'\354', (unsigned char)'\355', 
+    (unsigned char)'\350', (unsigned char)'\351',
+    (unsigned char)'\352', (unsigned char)'\353',
+    (unsigned char)'\354', (unsigned char)'\355',
     (unsigned char)'\356', (unsigned char)'\357',
-    (unsigned char)'\360', (unsigned char)'\361', 
-    (unsigned char)'\362', (unsigned char)'\363', 
-    (unsigned char)'\364', (unsigned char)'\365', 
+    (unsigned char)'\360', (unsigned char)'\361',
+    (unsigned char)'\362', (unsigned char)'\363',
+    (unsigned char)'\364', (unsigned char)'\365',
     (unsigned char)'\366', (unsigned char)'\367',
-    (unsigned char)'\370', (unsigned char)'\371', 
-    (unsigned char)'\372', (unsigned char)'\373', 
-    (unsigned char)'\374', (unsigned char)'\375', 
+    (unsigned char)'\370', (unsigned char)'\371',
+    (unsigned char)'\372', (unsigned char)'\373',
+    (unsigned char)'\374', (unsigned char)'\375',
     (unsigned char)'\376', (unsigned char)'\377',
 };
 
@@ -261,7 +261,7 @@ Tcl_GetString(Tcl_Obj *objPtr)
     return Tcl_GetStringFromObj(objPtr, &dummy);
 }
 
-int 
+int
 Tcl_EvalObjv(Tcl_Interp *interp, int objc, Tcl_Obj **objv, int flags)
 {
     Tcl_DString dString;
@@ -272,12 +272,12 @@ Tcl_EvalObjv(Tcl_Interp *interp, int objc, Tcl_Obj **objv, int flags)
     for (i = 0; i < objc; i++) {
 	Tcl_DStringAppendElement(&dString, Tcl_GetString(objv[i]));
     }
-    result = Tcl_Eval(interp, Tcl_DStringValue(&dString)); 
+    result = Tcl_Eval(interp, Tcl_DStringValue(&dString));
     Tcl_DStringFree(&dString);
     return result;
 }
 
-int 
+int
 Tcl_WriteObj(Tcl_Channel channel, Tcl_Obj *objPtr)
 {
     char *data;
@@ -289,10 +289,10 @@ Tcl_WriteObj(Tcl_Channel channel, Tcl_Obj *objPtr)
 
 char *
 Tcl_SetVar2Ex(
-    Tcl_Interp *interp, 
-    char *part1, 
-    char *part2, 
-    Tcl_Obj *objPtr, 
+    Tcl_Interp *interp,
+    char *part1,
+    char *part2,
+    Tcl_Obj *objPtr,
     int flags)
 {
     return Tcl_SetVar2(interp, part1, part2, Tcl_GetString(objPtr), flags);
@@ -301,12 +301,12 @@ Tcl_SetVar2Ex(
 Tcl_Obj *
 Tcl_GetVar2Ex(
     Tcl_Interp *interp,
-    char *part1, 
+    char *part1,
     char *part2,
     int flags)
 {
     char *result;
-    
+
     result = Tcl_GetVar2(interp, part1, part2, flags);
     if (result == NULL) {
 	return NULL;
@@ -350,7 +350,7 @@ Blt_DictionaryCompare(left, right)
     int secondaryDiff = 0;
 
     for(;;) {
-	if ((isdigit(UCHAR(*right))) && (isdigit(UCHAR(*left)))) { 
+	if ((isdigit(UCHAR(*right))) && (isdigit(UCHAR(*left)))) {
 	    /*
 	     * There are decimal numbers embedded in the two
 	     * strings.  Compare them as numbers, rather than
@@ -456,7 +456,7 @@ Blt_DictionaryCompare(left, right)
     return diff;
 }
 
-#else 
+#else
 
 int
 Blt_DictionaryCompare(left, right)
@@ -594,7 +594,7 @@ Blt_Panic TCL_VARARGS_DEF(char *, arg1)
     abort();
 }
 
-void 
+void
 Blt_DStringAppendElements
 TCL_VARARGS_DEF(Tcl_DString *, arg1)
 {
@@ -785,7 +785,7 @@ Blt_GetUid(string)
     int isNew;
     Blt_HashEntry *hPtr;
     int refCount;
-    
+
     if (!uidInitialized) {
 	Blt_InitHashTable(&uidTable, BLT_STRING_KEYS);
 	uidInitialized = 1;
@@ -964,7 +964,7 @@ LinearOpSearch(specArr, nSpecs, string)
     nMatches = 0;
     last = -1;
     for (specPtr = specArr, i = 0; i < nSpecs; i++, specPtr++) {
-	if ((c == specPtr->name[0]) && 
+	if ((c == specPtr->name[0]) &&
 	    (strncmp(string, specPtr->name, length) == 0)) {
 	    last = i;
 	    nMatches++;
@@ -975,10 +975,10 @@ LinearOpSearch(specArr, nSpecs, string)
     }
     if (nMatches > 1) {
 	return -2;		/* Ambiguous operation name */
-    } 
+    }
     if (nMatches == 0) {
 	return -1;		/* Can't find operation */
-    } 
+    }
     return last;		/* Op found. */
 }
 
@@ -1063,7 +1063,7 @@ Blt_GetOp(interp, nSpecs, specArr, operPos, argc, argv, flags)
 	if (operPos > 2) {
 	    Tcl_AppendResult(interp, " ", argv[operPos - 1], (char *)NULL);
 	}
-	Tcl_AppendResult(interp, " operation \"", string, "\": ", 
+	Tcl_AppendResult(interp, " operation \"", string, "\": ",
 			 (char *)NULL);
 	goto usage;
     }
@@ -1081,7 +1081,7 @@ Blt_GetOp(interp, nSpecs, specArr, operPos, argc, argv, flags)
     return specPtr->proc;
 }
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0))
 
 /*
  *----------------------------------------------------------------------
@@ -1123,7 +1123,7 @@ Blt_GetOpFromObj(interp, nSpecs, specArr, operPos, objc, objv, flags)
 	for (n = 0; n < nSpecs; n++) {
 	    Tcl_AppendResult(interp, "\n  ", (char *)NULL);
 	    for (i = 0; i < operPos; i++) {
-		Tcl_AppendResult(interp, Tcl_GetString(objv[i]), " ", 
+		Tcl_AppendResult(interp, Tcl_GetString(objv[i]), " ",
 			 (char *)NULL);
 	    }
 	    specPtr = specArr + n;
@@ -1144,7 +1144,7 @@ Blt_GetOpFromObj(interp, nSpecs, specArr, operPos, objc, objv, flags)
 
 	Tcl_AppendResult(interp, "ambiguous", (char *)NULL);
 	if (operPos > 2) {
-	    Tcl_AppendResult(interp, " ", Tcl_GetString(objv[operPos - 1]), 
+	    Tcl_AppendResult(interp, " ", Tcl_GetString(objv[operPos - 1]),
 		(char *)NULL);
 	}
 	Tcl_AppendResult(interp, " operation \"", string, "\" matches:",
@@ -1164,18 +1164,18 @@ Blt_GetOpFromObj(interp, nSpecs, specArr, operPos, objc, objv, flags)
     } else if (n == -1) {	/* Can't find operation, display help */
 	Tcl_AppendResult(interp, "bad", (char *)NULL);
 	if (operPos > 2) {
-	    Tcl_AppendResult(interp, " ", Tcl_GetString(objv[operPos - 1]), 
+	    Tcl_AppendResult(interp, " ", Tcl_GetString(objv[operPos - 1]),
 		(char *)NULL);
 	}
 	Tcl_AppendResult(interp, " operation \"", string, "\": ", (char *)NULL);
 	goto usage;
     }
     specPtr = specArr + n;
-    if ((objc < specPtr->minArgs) || 
+    if ((objc < specPtr->minArgs) ||
 	((specPtr->maxArgs > 0) && (objc > specPtr->maxArgs))) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", (char *)NULL);
 	for (i = 0; i < operPos; i++) {
-	    Tcl_AppendResult(interp, Tcl_GetString(objv[i]), " ", 
+	    Tcl_AppendResult(interp, Tcl_GetString(objv[i]), " ",
 		(char *)NULL);
 	}
 	Tcl_AppendResult(interp, specPtr->name, " ", specPtr->usage, "\"",
@@ -1198,7 +1198,7 @@ Blt_GetOpFromObj(interp, nSpecs, specArr, operPos, objc, objv, flags)
 /* ---------------------------------------------------------------- */
 
 /* this is the CRC32 lookup table
- * thanks Gary S. Brown 
+ * thanks Gary S. Brown
  * 64 lines of 4 values for a 256 dword table (1024 bytes)
  */
 static unsigned long crcTab[256] =
@@ -1267,7 +1267,7 @@ static unsigned long crcTab[256] =
     0xbad03605UL, 0xcdd70693UL, 0x54de5729UL, 0x23d967bfUL,
     0xb3667a2eUL, 0xc4614ab8UL, 0x5d681b02UL, 0x2a6f2b94UL,
     0xb40bbe37UL, 0xc30c8ea1UL, 0x5a05df1bUL, 0x2d02ef8dUL
-}; 
+};
 
 #define CRC32(c, b) (crcTab[((int)(c) ^ (b)) & 0xff] ^ ((c) >> 8))
 #define DO1(buf)  crc = CRC32(crc, *buf++)
@@ -1278,12 +1278,12 @@ static unsigned long crcTab[256] =
 static int
 Crc32Cmd(
    ClientData clientData,
-   Tcl_Interp *interp, 
+   Tcl_Interp *interp,
    int argc, char **argv)
 {
     register unsigned int crc;
     char buf[200];
-    
+
     crc = 0L;
     crc = crc ^ 0xffffffffL;
     if (strcmp(argv[1], "-data") == 0) {
@@ -1300,7 +1300,7 @@ Crc32Cmd(
     } else {
 	register int c;
 	FILE *f;
-	
+
 	if (argc != 2) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
 		     " ?fileName? ?-data dataString?", (char *)NULL);

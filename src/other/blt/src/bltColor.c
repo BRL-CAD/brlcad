@@ -87,7 +87,7 @@ GetPaletteSizes(nColors, nRedsPtr, nGreensPtr, nBluesPtr)
 {
     unsigned int nBlues, nReds, nGreens;
 
-    assert(nColors > 1); 
+    assert(nColors > 1);
     nBlues = nReds = nGreens = 0;
     while ((nBlues * nBlues * nBlues) <= nColors) {
 	nBlues++;
@@ -143,7 +143,7 @@ BuildColorRamp(palettePtr, nColors)
  *	The number of colors allocated is returned. The array "colorArr"
  *	will contain the XColor values of each color in the colormap.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 
 static int
@@ -308,7 +308,7 @@ MatchColors(colorTabPtr, rgbPtr, numColors, numAvailColors, numMapColors,
     return sum;
 }
 
-    
+
 static int
 AllocateColors(nImageColors, colorTabPtr, matchOnly)
     int nImageColors;

@@ -27,7 +27,7 @@ AC_DEFUN([SC_PATH_TCLCONFIG], [
     else
 	TCL_BIN_DIR_DEFAULT=../../tcl/win
     fi
-    
+
     AC_ARG_WITH(tcl, [  --with-tcl=DIR          use Tcl 8.5 binaries from DIR],
 	    TCL_BIN_DIR=$withval, TCL_BIN_DIR=`cd $TCL_BIN_DIR_DEFAULT; pwd`)
     if test ! -d $TCL_BIN_DIR; then
@@ -67,7 +67,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
     else
 	TK_BIN_DIR_DEFAULT=../../tk/win
     fi
-    
+
     AC_ARG_WITH(tk, [  --with-tk=DIR          use Tk 8.5 binaries from DIR],
 	    TK_BIN_DIR=$withval, TK_BIN_DIR=`cd $TK_BIN_DIR_DEFAULT; pwd`)
     if test ! -d $TK_BIN_DIR; then
@@ -86,7 +86,7 @@ AC_DEFUN([SC_PATH_TKCONFIG], [
 #	Load the tclConfig.sh file.
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TCL_BIN_DIR
 #
@@ -158,7 +158,7 @@ AC_DEFUN([SC_LOAD_TCLCONFIG], [
 #	Currently a no-op for Windows
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TK_BIN_DIR
 #
@@ -191,7 +191,7 @@ AC_DEFUN([SC_LOAD_TKCONFIG], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -235,7 +235,7 @@ AC_DEFUN([SC_ENABLE_SHARED], [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -273,11 +273,11 @@ AC_DEFUN([SC_ENABLE_THREADS], [
 #
 # Arguments:
 #	none
-#	
+#
 #	Requires the following vars to be set in the Makefile:
 #		CFLAGS_DEBUG
 #		CFLAGS_OPTIMIZE
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -536,7 +536,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	CC_OBJNAME="-o \[$]@"
 	CC_EXENAME="-o \[$]@"
 
-	# Specify linker flags depending on the type of app being 
+	# Specify linker flags depending on the type of app being
 	# built -- Console vs. Window.
 	#
 	# ORIGINAL COMMENT:
@@ -547,7 +547,7 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	# cross compiling. Remove this -e workaround once we
 	# require a gcc that does not have this bug.
 	#
-	# MK NOTE: Tk should use a different mechanism. This causes 
+	# MK NOTE: Tk should use a different mechanism. This causes
 	# interesting problems, such as wish dying at startup.
 	#LDFLAGS_WINDOW="-mwindows -e _WinMain@16 ${extra_ldflags}"
 	LDFLAGS_CONSOLE="-mconsole ${extra_ldflags}"
@@ -750,12 +750,12 @@ AC_DEFUN([SC_CONFIG_CFLAGS], [
 	CFLAGS_WARNING="-W3"
 	LDFLAGS_DEBUG="-debug:full"
 	LDFLAGS_OPTIMIZE="-release"
-	
+
 	# Specify the CC output file names based on the target name
 	CC_OBJNAME="-Fo\[$]@"
 	CC_EXENAME="-Fe\"\$(shell \$(CYGPATH) '\[$]@')\""
 
-	# Specify linker flags depending on the type of app being 
+	# Specify linker flags depending on the type of app being
 	# built -- Console vs. Window.
 	if test "$doWince" != "no" -a "${TARGETCPU}" != "X86"; then
 	    LDFLAGS_CONSOLE="-link ${lflags}"
@@ -800,7 +800,7 @@ AC_DEFUN([SC_WITH_TCL], [
     else
 	TCL_BIN_DEFAULT=../../tcl8.5/win
     fi
-    
+
     AC_ARG_WITH(tcl, [  --with-tcl=DIR          use Tcl 8.5 binaries from DIR],
 	    TCL_BIN_DIR=$withval, TCL_BIN_DIR=`cd $TCL_BIN_DEFAULT; pwd`)
     if test ! -d $TCL_BIN_DIR; then

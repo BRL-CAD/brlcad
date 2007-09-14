@@ -51,7 +51,7 @@ bu_terminate(int process)
 #ifdef HAVE_KILL
     /* kill() returns 0 for success */
     successful = kill(process, SIGKILL);
-    successful = !successful; 
+    successful = !successful;
 #else
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
     if(hProcess != NULL) {

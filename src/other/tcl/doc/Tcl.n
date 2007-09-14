@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
 '\"
 .so man.macros
@@ -51,13 +51,13 @@ are performed on the characters between the quotes as described below.
 The double-quotes are not retained as part of the word.
 .VS 8.5 br
 .IP "[5] \fBArgument expansion.\fR"
-If a word starts with the string ``{*}'' followed by a 
+If a word starts with the string ``{*}'' followed by a
 non-whitespace character, then the leading ``{*}'' is removed
-and the rest of the word is parsed and substituted as any other  
+and the rest of the word is parsed and substituted as any other
 word. After substitution, the word is parsed again without
 substitutions, and its words are added to the command being
 substituted. For instance, ``cmd a {*}{b c} d {*}{e f}'' is
-equivalent to ``cmd a b c d e f''. 
+equivalent to ``cmd a b c d e f''.
 .VE 8.5
 .IP "[6] \fBBraces.\fR"
 If the first character of a word is an open brace (``{'') and
@@ -160,13 +160,13 @@ in braces or quotes.
 \e\e
 Backslash (``\e'').
 .TP 7
-\e\fIooo\fR 
+\e\fIooo\fR
 .
-The digits \fIooo\fR (one, two, or three of them) give an eight-bit octal 
+The digits \fIooo\fR (one, two, or three of them) give an eight-bit octal
 value for the Unicode character that will be inserted.  The upper bits of the
 Unicode character will be 0.
 .TP 7
-\e\fBx\fIhh\fR 
+\e\fBx\fIhh\fR
 .
 The hexadecimal digits \fIhh\fR give an eight-bit hexadecimal value for the
 Unicode character that will be inserted.  Any number of hexadecimal digits
@@ -174,7 +174,7 @@ may be present; however, all but the last two are ignored (the result is
 always a one-byte quantity).  The upper bits of the Unicode character will
 be 0.
 .TP 7
-\e\fBu\fIhhhh\fR 
+\e\fBu\fIhhhh\fR
 .
 The hexadecimal digits \fIhhhh\fR (one, two, three, or four of them) give a
 sixteen-bit hexadecimal value for the Unicode character that will be

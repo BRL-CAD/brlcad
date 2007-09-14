@@ -982,7 +982,7 @@ TkWmSetClass(
  *
  * Tk_WmObjCmd --
  *
- *	This function is invoked to process the "wm" Tcl command. 
+ *	This function is invoked to process the "wm" Tcl command.
  *
  *----------------------------------------------------------------------
  */

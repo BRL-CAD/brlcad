@@ -63,7 +63,7 @@ struct fitness_state {
     int res[2]; /*  ray resolution on u and v axes */
     double gridSpacing[2]; /* grid spacing on u and v axes */
     int row; /* current v axis index */
-    
+
     int capture; /* flags whether to store the object */
     fastf_t diff; /* linear difference between source and object */
     fastf_t same;

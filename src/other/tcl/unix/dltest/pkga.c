@@ -1,4 +1,4 @@
-/* 
+/*
  * pkga.c --
  *
  *	This file contains a simple Tcl package "pkga" that is intended

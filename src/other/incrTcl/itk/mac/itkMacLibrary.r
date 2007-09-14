@@ -2,7 +2,7 @@
  * tkMacLibrary.r --
  *
  *	This file creates resources for use in most Tk applications.
- *	This is designed to be an example of using the Tcl/Tk 
+ *	This is designed to be an example of using the Tcl/Tk
  *	libraries in a Macintosh Application.
  *
  * Copyright (c) 1996 Sun Microsystems, Inc.
@@ -68,7 +68,7 @@ resource 'vers' (2) {
  * The -16397 string will be displayed by Finder when a user
  * tries to open the shared library. The string should
  * give the user a little detail about the library's capabilities
- * and enough information to install the library in the correct location.  
+ * and enough information to install the library in the correct location.
  * A similar string should be placed in all shared libraries.
  */
 resource 'STR ' (-16397, purgeable) {
@@ -79,13 +79,13 @@ resource 'STR ' (-16397, purgeable) {
 };
 
 
-/* 
+/*
  * We now load the Tk library into the resource fork of the library.
  */
 
 #include "itkMacTclCode.r"
 
-read 'TEXT' (ITK_LIBRARY_RESOURCES+12, "itk:tclIndex", purgeable) 
+read 'TEXT' (ITK_LIBRARY_RESOURCES+12, "itk:tclIndex", purgeable)
 	"::mac:tclIndex";
 data 'TEXT' (ITK_LIBRARY_RESOURCES+13,"pkgIndex",purgeable, preload) {
 	"# Tcl package index file, version 1.0\n"

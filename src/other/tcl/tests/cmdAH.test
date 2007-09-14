@@ -361,7 +361,7 @@ test cmdAH-8.45 {Tcl_FileObjCmd: dirname} {
     -match regexp
     -setup {
 	set temp $::env(HOME)
-    }	
+    }
     -body {
 	set ::env(HOME) "/homewontexist/test"
 	testsetplatform windows

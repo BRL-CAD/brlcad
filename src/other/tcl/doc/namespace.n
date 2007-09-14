@@ -6,9 +6,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH namespace n 8.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -140,18 +140,18 @@ Each \fIpattern\fR is a simple or qualified name such as
 Qualified names contain double colons (\fB::\fR) and qualify a name
 with the name of one or more namespaces.
 Each \fIqualified pattern\fR is qualified with the name of an
-exporting namespace 
+exporting namespace
 and may have glob-style special characters in the command name
 at the end of the qualified name.
 Glob characters may not appear in a namespace name.
 For each \fIsimple pattern\fR this command deletes the matching
-commands of the 
+commands of the
 current namespace that were imported from a different namespace.
 For \fIqualified patterns\fR, this command first finds the matching
-exported commands. 
+exported commands.
 It then checks whether any of those commands
 were previously imported by the current namespace.
-If so, this command deletes the corresponding imported commands. 
+If so, this command deletes the corresponding imported commands.
 In effect, this un-does the action of a \fBnamespace import\fR command.
 .TP
 \fBnamespace import \fR?\fB\-force\fR? ?\fIpattern\fR \fIpattern ...\fR?
@@ -253,20 +253,20 @@ the names of currently defined namespaces.
 This command arranges for one or more local variables in the current
 procedure to refer to variables in \fInamespace\fR. The namespace name is
 resolved as described in section \fBNAME RESOLUTION\fR.
-The command 
+The command
 \fBnamespace upvar $ns a b\fR has the same behaviour as
 \fBupvar 0 $ns::a b\fR, with the sole exception of the resolution rules
-used for qualified namespace or variable names. 
+used for qualified namespace or variable names.
 \fBnamespace upvar\fR returns an empty string.
 .TP
 \fBnamespace unknown\fR ?\fIscript\fR?
 Sets or returns the unknown command handler for the current namespace.
 The handler is invoked when a command called from within the namespace
-cannot be found (in either the current namespace or the global namespace). 
+cannot be found (in either the current namespace or the global namespace).
 The \fIscript\fR argument, if given, should be a well
 formed list representing a command name and optional arguments. When
 the handler is invoked, the full invocation line will be appended to the
-script and the result evaluated in the context of the namespace. The 
+script and the result evaluated in the context of the namespace. The
 default handler for all namespaces is \fB::unknown\fR. If no argument
 is given, it returns the handler for the current namespace.
 .TP
@@ -279,7 +279,7 @@ this command returns a fully-qualified name in the global namespace.
 If the command or variable does not exist,
 this command returns an empty string.  If the variable has been
 created but not defined, such as with the \fBvariable\fR command
-or through a \fBtrace\fR on the variable, this command will return the 
+or through a \fBtrace\fR on the variable, this command will return the
 fully-qualified name of the variable.
 If no flag is given, \fIname\fR is treated as a command name.
 See the section \fBNAME RESOLUTION\fR below for an explanation of
@@ -419,7 +419,7 @@ If you provide a fully-qualified name that starts with a \fB::\fR,
 there is no question about what command, variable, or namespace
 you mean.
 However, if the name does not start with a \fB::\fR
-(i.e., is \fIrelative\fR), 
+(i.e., is \fIrelative\fR),
 Tcl follows basic rules for looking it up:
 Variable names are always resolved
 by looking first in the current namespace,
@@ -459,7 +459,7 @@ set traceLevel 0
 }
 .CE
 Here Tcl looks for \fBtraceLevel\fR first in the namespace \fBFoo::Debug\fR.
-Since it is not found there, Tcl then looks for it 
+Since it is not found there, Tcl then looks for it
 in the global namespace.
 The variable \fBFoo::traceLevel\fR is completely ignored
 during the name resolution process.

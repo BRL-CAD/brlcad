@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * flip.c - Invert, reflect or 90-degree rotate an rle image.
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Mon Jun 23 1986
  * Copyright (c) 1986, University of Utah
- * 
+ *
  * Usage is:
  *   flip  [-v | -h | -l | -r] [ infile ] [ -o outfile ]
  *
@@ -65,7 +65,7 @@ char *argv[];
     in_hdr = *rle_hdr_init( NULL );
     out_hdr = *rle_hdr_init( NULL );
 
-    if (scanargs(argc, argv, "% rlhv!- o%-outfile!s infile%s", 
+    if (scanargs(argc, argv, "% rlhv!- o%-outfile!s infile%s",
         &flags, &oflag, &out_fname, &infilename) == 0)
     {
 	exit(-1);
@@ -97,7 +97,7 @@ char *argv[];
 
 	/* getrow and putrow assume the scanline starts at pixel 0 */
 	xlinewidth = in_hdr.xmax + 1;
-    
+
 	/* Note:
 	 * When you read in a row of pixels with rle_getrow, it places blank
 	 * pixels between 0 and xmin of your buffer.  However, when you
@@ -231,7 +231,7 @@ char *argv[];
 			    for (chan = 0; chan < nchan; chan++)
 			    {
 				/* Bytes upto input chan */
-				chan_offset = lineoff + xlinewidth * chan;  
+				chan_offset = lineoff + xlinewidth * chan;
 				outptr = temp_line[chan];
 				for (j = oxlen - 1; j >= 0; j--)
 				    *outptr++ =

@@ -189,8 +189,8 @@ file_top_level_element: NL
   | pipe_line
   | sphere_line
   ;
-   
-file: 
+
+file:
   | file file_top_level_element
   ;
   /*
@@ -221,7 +221,7 @@ int yywrap()
     INITIALIZE_POINT_LINE_T(plt);
     plt.code = 0;
     process_point(&plt);
-    
+
     return(1);
 }
 

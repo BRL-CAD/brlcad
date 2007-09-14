@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -170,9 +170,9 @@ proc source_create {name color min max} {
     }
     $yvname append [random $max $min]
     $wvname append 0
-    
+
     catch {.sc element delete $name}
-    .sc element create $name -x $xvname -y $yvname -color $color 
+    .sc element create $name -x $xvname -y $yvname -color $color
     if { $name != "default" } {
 	.sc axis create $name -title $name \
 	    -limitscolor $color -limitsformat "%4.4g" -titlecolor ${color}
@@ -353,7 +353,7 @@ catch {.mbar.prefs.m.wm invoke "circle"}
 catch {.mbar.prefs.m.em invoke "cross"}
 
 # ----------------------------------------------------------------------
-stripchart .sc -title "Stripchart" 
+stripchart .sc -title "Stripchart"
 pack .sc -expand yes -fill both
 
 .sc xaxis configure -title "Time (s)" -autorange 2.0 -shiftby 0.5
@@ -385,7 +385,7 @@ Blt_ZoomStack .sc
     set axis [%W axis get current]
     set detail [%W axis get detail]
     if { $detail == "line" } {
-	%W axis configure $axis -background grey 
+	%W axis configure $axis -background grey
     }
 }
 .sc axis bind Y <Leave> {
@@ -394,7 +394,7 @@ Blt_ZoomStack .sc
 }
 
 .sc axis bind Y <ButtonPress-1> {
-   set axis [%W axis get current] 
+   set axis [%W axis get current]
 #   scan [%W axis limits $axis] "%%g %%g" min max
 #   set min [expr $min + (($max - $min) * 0.1)]
 #   set max [expr $max - (($max - $min) * 0.1)]
@@ -403,7 +403,7 @@ Blt_ZoomStack .sc
 }
 
 .sc axis bind Y <ButtonPress-3> {
-   set axis [%W axis get current] 
+   set axis [%W axis get current]
 #   %W axis configure $axis -min {} -max {}
    %W axis configure $axis -logscale no
 }

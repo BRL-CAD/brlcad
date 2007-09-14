@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Blt_Tree 3 BLT_VERSION BLT "Blt Library Procedures"
 .BS
@@ -56,7 +56,7 @@ Tree objects can also be shared.  For example, the \fBtree\fR
 and \fBhiertable\fR commands may access the same tree data object.
 Each client grabs a token associated with the tree.  When all tokens
 are released the tree data object is automatically destroyed.
-.TP 2.0i 
+.TP 2.0i
 \fBBlt_TreeCreate\fR
 Create a tree data object and optionally obtains a token associated
 with it.
@@ -81,7 +81,7 @@ Tree objects initially contain only a root node. You can add or
 delete nodes with the following routines.
 .TP 2i
 \fBBlt_TreeCreateNode\fR
-Creates a new child node for a given parent in the tree.  
+Creates a new child node for a given parent in the tree.
 .TP
 \fBBlt_TreeDeleteNode\fR
 Deletes a node and its children.
@@ -105,7 +105,7 @@ Resets a node's label.
 Returns the fullpath to a node.
 .TP
 \fBBlt_TreeNodeDepth\fR
-Returns the depth of the node.  
+Returns the depth of the node.
 .TP
 \fBBlt_TreeNodeDegree\fR
 Returns the number of children for a node.
@@ -131,7 +131,7 @@ Each node can have zero or more children nodes.  These routines
 let you navigate the tree hierarchy.
 .TP 2i
 \fBBlt_TreeNodeParent\fR
-Returns the parent node. 
+Returns the parent node.
 .TP
 \fBBlt_TreeFirstChild\fR
 Returns the first child of a parent node.
@@ -151,7 +151,7 @@ Returns the root node of the tree.
 \fBBlt_TreeNextNode\fR
 Returns the next node in depth-first order.
 .TP
-\fBBlt_TreePrevNode\fR 
+\fBBlt_TreePrevNode\fR
 Returns the previous node in depth-first order.
 .TP
 \fBBlt_TreeEndNode\fR
@@ -170,8 +170,8 @@ Walks through a node and all it descendants in breadth-first search
 order, applying a given callback procedure.
 .SH NODE DATA VALUES
 Data values can be stored at any node.  Values have by both a string
-key and a Tcl_Obj value.  Data value keys do not have to be homogenous 
-across all nodes (i.e. nodes do not have to contain the same keys).  
+key and a Tcl_Obj value.  Data value keys do not have to be homogenous
+across all nodes (i.e. nodes do not have to contain the same keys).
 There is also a special node array data type.
 .TP 2i
 \fBBlt_TreeGetValue\fR
@@ -186,7 +186,7 @@ Sets a node's value of a key.
 \fBBlt_TreeUnsetValue\fR
 Remove the node data value and key.
 .TP
-\fBBlt_TreeGetArrayValue\fR 
+\fBBlt_TreeGetArrayValue\fR
 Gets the node data array value given by a key and an array index.
 .TP
 \fBBlt_TreeSetArrayValue\fR
@@ -199,7 +199,7 @@ Remove the node data array value.
 Determines if an array element by a given index exists.
 .TP
 \fBBlt_TreeFirstKey\fR
-Returns the key of the first value in the node. 
+Returns the key of the first value in the node.
 .TP
 \fBBlt_TreeNextKey\fR
 Returns the key of the next value in the node.
@@ -210,22 +210,22 @@ Lock the value to current client, making it private.
 \fBBlt_TreePublicValue\fR
 Unlock the value so that all clients can access it.
 .TP
-\fBBlt_TreeGetKey\fR 
+\fBBlt_TreeGetKey\fR
 .SH NODE TRACES
 .TP 2i
 \fBBlt_TreeCreateTrace\fR
 Sets up a trace callback to be invoked when the node value is
 read, set, or unset.
-.TP 
+.TP
 \fBBlt_TreeDeleteTrace\fR
 Deletes an existing trace.
 .SH NODE EVENTS
 .TP 2i
 \fBBlt_TreeCreateEventHandler\fR
-Sets up a callback to be invoked when events (create, delete, 
+Sets up a callback to be invoked when events (create, delete,
 relabel, etc) take place on a node.
 .TP
-\fBBlt_TreeDeleteEventHandler\fR 
+\fBBlt_TreeDeleteEventHandler\fR
 Deletes an existing node callback.
 .SH KEYWORDS
 alloc, allocation, free, malloc, memory, realloc

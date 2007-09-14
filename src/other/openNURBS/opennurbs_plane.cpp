@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -18,12 +18,12 @@
 
 const ON_Plane ON_xy_plane( ON_3dPoint(0.0,0.0,0.0),
                               ON_3dVector(1.0,0.0,0.0),
-                              ON_3dVector(0.0,1.0,0.0) 
+                              ON_3dVector(0.0,1.0,0.0)
                               );
 
 const ON_Plane ON_yz_plane( ON_3dPoint(0.0,0.0,0.0),
-                              ON_3dVector(0.0,1.0,0.0), 
-                              ON_3dVector(0.0,0.0,1.0) 
+                              ON_3dVector(0.0,1.0,0.0),
+                              ON_3dVector(0.0,0.0,1.0)
                               );
 
 const ON_Plane ON_zx_plane( ON_3dPoint(0.0,0.0,0.0),
@@ -33,8 +33,8 @@ const ON_Plane ON_zx_plane( ON_3dPoint(0.0,0.0,0.0),
 
 const ON_Plane ON_Plane::World_xy=ON_xy_plane;
 
-ON_Plane::ON_Plane() 
-        : origin(0.0,0.0,0.0), 
+ON_Plane::ON_Plane()
+        : origin(0.0,0.0,0.0),
           xaxis(1.0,0.0,0.0), yaxis(0.0,1.0,0.0), zaxis(0.0,0.0,1.0)
 {
   plane_equation.x = plane_equation.y = plane_equation.d = 0.0;
@@ -93,7 +93,7 @@ ON_Line ON_Plane::IsoLine( // iso parametric line
                          //   e.g., line(t) = plane(t,c)
                          // 1 first parameter is constant and second parameter varies
                          //   e.g., line(t) = plane(c,t)
-       double c           // c = value of constant parameter 
+       double c           // c = value of constant parameter
        ) const
 {
   ON_Line line;
@@ -121,7 +121,7 @@ bool ON_Plane::GetDistanceToBoundingBox(const ON_BoundingBox& Box,
   //min and max signed distance.  Returns false if plane normal has zero length.
 
   ON_3dVector UnitNormal = Normal();
-  if (!UnitNormal.Unitize()) 
+  if (!UnitNormal.Unitize())
     return false;
 
   double mind, maxd;
@@ -129,11 +129,11 @@ bool ON_Plane::GetDistanceToBoundingBox(const ON_BoundingBox& Box,
   int i0, i1, i2;
   for (i0=0;i0<2;i0++)
   {
-    for(i1=0;i1<2;i1++) 
+    for(i1=0;i1<2;i1++)
     {
-      for (i2=0;i2<2;i2++) 
+      for (i2=0;i2<2;i2++)
       {
-        if (i0||i1||i2) 
+        if (i0||i1||i2)
         {
           ON_3dPoint P;
           P[0]=(i0)?Box.Max()[0]:Box.Min()[0];
@@ -141,9 +141,9 @@ bool ON_Plane::GetDistanceToBoundingBox(const ON_BoundingBox& Box,
           P[2]=(i2)?Box.Max()[2]:Box.Min()[2];
           double d = (P - Origin())*UnitNormal;
           //double dd = P.DistanceTo(ClosestPointTo(P));
-          if (d < mind) 
+          if (d < mind)
             mind=d;
-          else if (d > maxd) 
+          else if (d > maxd)
             maxd=d;
         }
       }
@@ -366,7 +366,7 @@ bool ON_Plane::IsValid() const
 bool ON_Plane::Transform( const ON_Xform& xform )
 {
   ON_3dPoint origin_pt = xform*origin;
-  // use care tranforming vectors 
+  // use care tranforming vectors
   ON_3dVector xaxis_vec = (xform*(origin+xaxis)) - origin_pt;
   ON_3dVector yaxis_vec = (xform*(origin+yaxis)) - origin_pt;
 
@@ -578,7 +578,7 @@ bool ON_Plane::Flip()
 int ON_ArePointsOnPlane( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance) a single point on the line
         int dim,     // 2 or 3
         int is_rat,
-        int count, 
+        int count,
         int stride, const double* point,
         const ON_BoundingBox& bbox, // if needed, use ON_GetBoundingBox(dim,is_rat,count,stride,point)
         const ON_Plane& plane,  // line to test
@@ -589,8 +589,8 @@ int ON_ArePointsOnPlane( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance
   int rc, i, j, k;
 
   rc = 0;
-  ON_ASSERT_OR_RETURN( plane.IsValid(), rc ); 
-  ON_ASSERT_OR_RETURN( bbox.IsValid(), rc ); 
+  ON_ASSERT_OR_RETURN( plane.IsValid(), rc );
+  ON_ASSERT_OR_RETURN( bbox.IsValid(), rc );
   ON_ASSERT_OR_RETURN( tolerance >= 0.0, rc );
   if ( count < 1 )
     return rc;

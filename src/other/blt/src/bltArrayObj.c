@@ -38,11 +38,11 @@ static Tcl_SetFromAnyProc SetArrayFromAny;
 static Tcl_ObjType arrayObjType = {
     "array",
     FreeArrayInternalRep,	/* Called when an object is freed. */
-    DupArrayInternalRep,	/* Copies an internal representation 
+    DupArrayInternalRep,	/* Copies an internal representation
 				 * from one object to another. */
     UpdateStringOfArray,	/* Creates string representation from
 				 * an object's internal representation. */
-    SetArrayFromAny,		/* Creates valid internal representation 
+    SetArrayFromAny,		/* Creates valid internal representation
 				 * from an object's string representation. */
 };
 
@@ -82,7 +82,7 @@ SetArrayFromAny(interp, objPtr)
 	/* Make sure we increment the reference count */
 	Tcl_IncrRefCount(elemObjPtr);
     }
-    
+
     if ((oldTypePtr != NULL) && (oldTypePtr->freeIntRepProc != NULL)) {
 	oldTypePtr->freeIntRepProc(objPtr);
     }
@@ -156,7 +156,7 @@ FreeArrayInternalRep(objPtr)
     Blt_HashSearch cursor;
     Blt_HashTable *tablePtr;
     Tcl_Obj *elemObjPtr;
-    
+
     Tcl_InvalidateStringRep(objPtr);
     tablePtr = (Blt_HashTable *)objPtr->internalRep.otherValuePtr;
     for (hPtr = Blt_FirstHashEntry(tablePtr, &cursor); hPtr != NULL;
@@ -169,7 +169,7 @@ FreeArrayInternalRep(objPtr)
 }
 
 int
-Blt_GetArrayFromObj(interp, objPtr, tablePtrPtr) 
+Blt_GetArrayFromObj(interp, objPtr, tablePtrPtr)
     Tcl_Interp *interp;
     Tcl_Obj *objPtr;
     Blt_HashTable **tablePtrPtr;
@@ -184,9 +184,9 @@ Blt_GetArrayFromObj(interp, objPtr, tablePtrPtr)
     }
     return TCL_ERROR;
 }
-    
+
 Tcl_Obj *
-Blt_NewArrayObj(objc, objv) 
+Blt_NewArrayObj(objc, objv)
     int objc;
     Tcl_Obj *objv[];
 {
@@ -216,16 +216,16 @@ Blt_NewArrayObj(objc, objv)
 	}
 	Blt_SetHashValue(hPtr, objPtr);
     }
-    arrayObjPtr = Tcl_NewObj(); 
-    /* 
+    arrayObjPtr = Tcl_NewObj();
+    /*
      * Reference counts for entry objects are initialized to 0. They
-     * are incremented as they are inserted into the tree via the 
-     * Blt_TreeSetValue call. 
+     * are incremented as they are inserted into the tree via the
+     * Blt_TreeSetValue call.
      */
-    arrayObjPtr->refCount = 0;	
+    arrayObjPtr->refCount = 0;
     arrayObjPtr->internalRep.otherValuePtr = (VOID *)tablePtr;
     arrayObjPtr->bytes = NULL;
-    arrayObjPtr->length = 0; 
+    arrayObjPtr->length = 0;
     arrayObjPtr->typePtr = &arrayObjType;
     return arrayObjPtr;
 }

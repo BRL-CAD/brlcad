@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Tile command created by George Howlett.
 '\"
@@ -50,21 +50,21 @@ With the advent of Tk 4.0, images are now easy to create and use in
 applications.  Images add interest to applications and they convey
 more information.  But one area where Tk hasn't taken advantage of
 images is using images as textures for widgets.  Since tiling is a
-standard feature of windowing systems, it's very easy to use images 
+standard feature of windowing systems, it's very easy to use images
 as textures.
 .PP
 The tile widgets take the standard Tk 4.0 widgets and add tiling
-configuration options to them.  Textures are specified by the name 
-of the image you wish to be tiled across the background of the widget.  
+configuration options to them.  Textures are specified by the name
+of the image you wish to be tiled across the background of the widget.
 .SH EXAMPLE
-To add tiling to a widget, you simply create an image using 
+To add tiling to a widget, you simply create an image using
 Tk's \fBimage\fR command and use the image name as the value for
 the \fB\-tile\fR configuration option of the widget.
 .CS
 image create photo my_texture -file tan_paper.gif
 blt::tile::frame .f -tile my_texture
 .CE
-The image \f(CWmy_texture\fR is added to the frame.  
+The image \f(CWmy_texture\fR is added to the frame.
 If \f(CWmy_texture\fR is updated, so will the widget background.
 .CS
 image create photo my_texture -file rain.gif
@@ -89,7 +89,7 @@ The following configurations options are added to the widgets. If
 a \fB\-tile\fB or \fB\-activetile\fR option is specified, it overrides
 the background color of the widget.
 .TP
-\fB\-activetile \fIimage\fR 
+\fB\-activetile \fIimage\fR
 Specifies a textured background to display when the widget is active.
 This option is available for the \fBtilebutton\fR,
 \fBtilecheckbutton\fR, \fBtileradiobutton\fR, and \fBtilescrollbar\fR
@@ -98,7 +98,7 @@ widgets.  \fIImage\fR is the name an image created using Tk's
 \fIimage\fR.  If \fIimage\fR is \f(CW""\fR, then the active background
 color is displayed.  The default is \f(CW""\fR.
 .TP
-\fB\-tile \fIimage\fR 
+\fB\-tile \fIimage\fR
 Specifies a textured background to display for the widget.
 \fIImage\fR is the name an image created using Tk's \fBimage\fR
 command.  The background of the widget is tiled with \fIimage\fR.  If

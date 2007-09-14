@@ -934,7 +934,7 @@ static int NotebookIdentifyCommand(
 	Ttk_RebindSublayout(tabLayout, tab);
 	Ttk_PlaceLayout(tabLayout, state, tab->parcel);
 
-	node = Ttk_LayoutIdentify(tabLayout, x, y); 
+	node = Ttk_LayoutIdentify(tabLayout, x, y);
     }
 
     if (node) {
@@ -1253,7 +1253,7 @@ TTK_END_LAYOUT
  * +++ Initialization.
  */
 
-MODULE_SCOPE 
+MODULE_SCOPE
 void TtkNotebook_Init(Tcl_Interp *interp)
 {
     Ttk_Theme themePtr = Ttk_GetDefaultTheme(interp);

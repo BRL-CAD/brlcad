@@ -1,6 +1,6 @@
 # This file is a Tcl script to test out various known bugs that will
 # cause Tk to crash.  This file ends with .tcl instead of .test to make
-# sure it isn't run when you type "source all".  We currently are not 
+# sure it isn't run when you type "source all".  We currently are not
 # shipping this file with the rest of the source release.
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@ ON_BoundingBox ON_Geometry::BoundingBox() const
   return bbox;
 }
 
-BOOL 
+BOOL
 ON_Geometry::GetBoundingBox( // returns TRUE if successful
        ON_BoundingBox& bbox,
        BOOL bGrowBox
@@ -51,7 +51,7 @@ ON_Geometry::GetBoundingBox( // returns TRUE if successful
   return GetBoundingBox( bbox.m_min, bbox.m_max, bGrowBox );
 }
 
-BOOL 
+BOOL
 ON_Geometry::GetBoundingBox( // returns TRUE if successful
        ON_3dPoint& boxmin,
        ON_3dPoint& boxmax,
@@ -97,8 +97,8 @@ ON_Geometry::GetBoundingBox( // returns TRUE if successful
   return rc;
 }
 
-bool ON_Geometry::GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+bool ON_Geometry::GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox,
 			const ON_Xform* xform
       ) const
@@ -243,7 +243,7 @@ ON_COMPONENT_INDEX ON_Geometry::ComponentIndex() const
   // default constructor sets
   // m_type = ON_COMPONENT_INDEX::invalid_type and m_index = -1.
   ON_COMPONENT_INDEX ci;
-  return ci;  
+  return ci;
 }
 
 bool ON_Geometry::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const

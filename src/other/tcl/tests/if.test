@@ -52,12 +52,12 @@ test if-1.7 {TclCompileIfCmd: "then" after if/elseif test} {
 } {1}
 test if-1.8 {TclCompileIfCmd: keyword other than "then" after if/elseif test} {
     set a {}
-    catch {if 1<2 therefore {set a 1}} msg 
+    catch {if 1<2 therefore {set a 1}} msg
     set msg
 } {invalid command name "therefore"}
 test if-1.9 {TclCompileIfCmd: missing "then" body} {
     set a {}
-    catch {if 1<2 then} msg 
+    catch {if 1<2 then} msg
     set msg
 } {wrong # args: no script following "then" argument}
 test if-1.10 {TclCompileIfCmd: error in "then" body} -body {
@@ -163,12 +163,12 @@ test if-2.1 {TclCompileIfCmd: "elseif" after if/elseif test} {
 # But then there shouldn't be any additional argument words for the "if".
 test if-2.2 {TclCompileIfCmd: keyword other than "elseif"} {
     set a {}
-    catch {if 1<2 {set a 1} elwood {set a 2}} msg 
+    catch {if 1<2 {set a 1} elwood {set a 2}} msg
     set msg
 } {wrong # args: extra words after "else" clause in "if" command}
 test if-2.3 {TclCompileIfCmd: missing expression after "elseif"} {
     set a {}
-    catch {if 1<2 {set a 1} elseif} msg 
+    catch {if 1<2 {set a 1} elseif} msg
     set msg
 } {wrong # args: no expression after "elseif" argument}
 test if-2.4 {TclCompileIfCmd: error in expression after "elseif"} -body {
@@ -287,24 +287,24 @@ test if-3.1 {TclCompileIfCmd: "else" clause} {
 # But then there shouldn't be any additional argument words for the "if".
 test if-3.2 {TclCompileIfCmd: keyword other than "else"} {
     set a {}
-    catch {if 1<2 then {set a 1} elsex {set a 2}} msg 
+    catch {if 1<2 then {set a 1} elsex {set a 2}} msg
     set msg
 } {wrong # args: extra words after "else" clause in "if" command}
 test if-3.3 {TclCompileIfCmd: missing body after "else"} {
     set a {}
-    catch {if 2<1 {set a 1} else} msg 
+    catch {if 2<1 {set a 1} else} msg
     set msg
 } {wrong # args: no script following "else" argument}
 test if-3.4 {TclCompileIfCmd: error compiling body after "else"} -body {
     set a {}
-    catch {if 2<1 {set a 1} else {set}} msg 
+    catch {if 2<1 {set a 1} else {set}} msg
     set ::errorInfo
 } -match glob -result {wrong # args: should be "set varName ?newValue?"
     while *ing
 "set"*}
 test if-3.5 {TclCompileIfCmd: extra arguments after "else" argument} {
     set a {}
-    catch {if 2<1 {set a 1} else {set a 2} or something} msg 
+    catch {if 2<1 {set a 1} else {set a 2} or something} msg
     set msg
 } {wrong # args: extra words after "else" clause in "if" command}
 # The following test also checks whether contained loops and other
@@ -529,13 +529,13 @@ test if-5.7 {if cmd with computed command names: "then" after if/elseif test} {
 test if-5.8 {if cmd with computed command names: keyword other than "then" after if/elseif test} {
     set z if
     set a {}
-    catch {$z 1<2 therefore {set a 1}} msg 
+    catch {$z 1<2 therefore {set a 1}} msg
     set msg
 } {invalid command name "therefore"}
 test if-5.9 {if cmd with computed command names: missing "then" body} {
     set z if
     set a {}
-    catch {$z 1<2 then} msg 
+    catch {$z 1<2 then} msg
     set msg
 } {wrong # args: no script following "then" argument}
 test if-5.10 {if cmd with computed command names: error in "then" body} -body {
@@ -653,13 +653,13 @@ test if-6.1 {if cmd with computed command names: "elseif" after if/elseif test} 
 test if-6.2 {if cmd with computed command names: keyword other than "elseif"} {
     set z if
     set a {}
-    catch {$z 1<2 {set a 1} elwood {set a 2}} msg 
+    catch {$z 1<2 {set a 1} elwood {set a 2}} msg
     set msg
 } {wrong # args: extra words after "else" clause in "if" command}
 test if-6.3 {if cmd with computed command names: missing expression after "elseif"} {
     set z if
     set a {}
-    catch {$z 1<2 {set a 1} elseif} msg 
+    catch {$z 1<2 {set a 1} elseif} msg
     set msg
 } {wrong # args: no expression after "elseif" argument}
 test if-6.4 {if cmd with computed command names: error in expression after "elseif"} -body {
@@ -782,19 +782,19 @@ test if-7.1 {if cmd with computed command names: "else" clause} {
 test if-7.2 {if cmd with computed command names: keyword other than "else"} {
     set z if
     set a {}
-    catch {$z 1<2 then {set a 1} elsex {set a 2}} msg 
+    catch {$z 1<2 then {set a 1} elsex {set a 2}} msg
     set msg
 } {wrong # args: extra words after "else" clause in "if" command}
 test if-7.3 {if cmd with computed command names: missing body after "else"} {
     set z if
     set a {}
-    catch {$z 2<1 {set a 1} else} msg 
+    catch {$z 2<1 {set a 1} else} msg
     set msg
 } {wrong # args: no script following "else" argument}
 test if-7.4 {if cmd with computed command names: error compiling body after "else"} -body {
     set z if
     set a {}
-    catch {$z 2<1 {set a 1} else {set}} msg 
+    catch {$z 2<1 {set a 1} else {set}} msg
     set ::errorInfo
 } -match glob -result {wrong # args: should be "set varName ?newValue?"
     while *ing
@@ -804,7 +804,7 @@ test if-7.4 {if cmd with computed command names: error compiling body after "els
 test if-7.5 {if cmd with computed command names: extra arguments after "else" argument} {
     set z if
     set a {}
-    catch {$z 2<1 {set a 1} else {set a 2} or something} msg 
+    catch {$z 2<1 {set a 1} else {set a 2} or something} msg
     set msg
 } {wrong # args: extra words after "else" clause in "if" command}
 # The following test also checks whether contained loops and other

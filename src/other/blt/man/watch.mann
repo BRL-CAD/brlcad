@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -36,7 +36,7 @@ watch \- call Tcl procedures before and after each command
 .sp
 \fBwatch info\fR \fIwatchName\fR
 .sp
-\fBwatch names\fR 
+\fBwatch names\fR
 .BE
 .SH DESCRIPTION
 The \fBwatch\fR command arranges for Tcl procedures to be invoked
@@ -55,9 +55,9 @@ command as it executes.  Another use is to profile your Tcl commands.
 You can profile any Tcl command (like \fBif\fR and \fBset\fR), not just
 Tcl procedures.
 .SH EXAMPLE
-The following example use \fBwatch\fR to trace Tcl commands 
-(printing to standard error) both before and after they are executed. 
-.CS 
+The following example use \fBwatch\fR to trace Tcl commands
+(printing to standard error) both before and after they are executed.
+.CS
 proc preCmd { level command argv } {
     set name [lindex $argv 0]
     puts stderr "$level $name => $command"
@@ -73,16 +73,16 @@ watch create trace \\
 .SH "OPERATIONS"
 The following operations are available for the \fBwatch\fR command:
 .TP
-\fBwatch activate \fIwatchName\fR 
+\fBwatch activate \fIwatchName\fR
 Activates the watch, causing Tcl commands the be traced to the
 maximum depth selected.
 .TP
 \fBwatch create \fIwatchName\fR ?\fIoptions\fR?...
-Creates a new watch \fIwatchName\fR. It's an error if another watch 
+Creates a new watch \fIwatchName\fR. It's an error if another watch
 \fIwatchName\fR already exists and an error message will be returned.
-\fIOptions\fR may have any of the values accepted by the 
+\fIOptions\fR may have any of the values accepted by the
 \fBwatch configure\fR command.
-This command returns the empty string.  
+This command returns the empty string.
 .TP
 \fBwatch configure \fIwatchName\fR ?\fIoptions...\fR?
 Queries or modifies the configuration options of the watch \fIwatchName\fR.
@@ -104,7 +104,7 @@ split into words 4) the return code of the command, and 5) the results
 of the command.  The return status of the postcmd procedure is always
 ignored.
 .TP
-\fB\-precmd \fIstring\fR 
+\fB\-precmd \fIstring\fR
 Specifies a Tcl procedure to be called immediately before each Tcl
 command.  \fIString\fR is name of a Tcl procedure and any extra
 arguments to be passed to it.  Before \fIstring\fR is invoked, three
@@ -118,12 +118,12 @@ Specifies the maximum evaluation depth to watch Tcl commands.
 The default maximum level is 10000.
 .RE
 .TP
-\fBwatch deactivate \fIwatchName\fR 
+\fBwatch deactivate \fIwatchName\fR
 Deactivates the watch.  The \fB\-precmd\fR and \fB\-postcmd\fR procedures
 will no longer be invoked.
 .TP
-\fBwatch info \fIwatchName\fR 
-Returns the configuration information associated with the 
+\fBwatch info \fIwatchName\fR
+Returns the configuration information associated with the
 watch \fIwatchName\fR.  \fIWatchName\fR is the name of a watch.
 .TP
 \fBwatch names\fR ?\fIstate\fR?

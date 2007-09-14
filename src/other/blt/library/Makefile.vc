@@ -45,12 +45,12 @@ install-dirs:
 install-ddfiles: install-dirs
 	for i in $(ddFiles) ; do \
 	    $(INSTALL_DATA) $(srcdir)/dd_protocols/$$i $(scriptdir)/dd_protocols ; \
-	done 
+	done
 
 install-files: install-dirs
 	for i in $(miscFiles) ; do \
 	    $(INSTALL_DATA) $(srcdir)/$$i $(scriptdir) ; \
-	done 
+	done
 
 pkgIndex.tcl: build-pkgindex
 
@@ -66,7 +66,7 @@ install-pkgindex: pkgIndex.tcl
 
 clean:
 	$(RM) pkgIndex.tcl
-	$(RM) $(srcdir)/*.bak $(srcdir)/*\~ $(srcdir)/"#"* 
+	$(RM) $(srcdir)/*.bak $(srcdir)/*\~ $(srcdir)/"#"*
 
 distclean: clean
 	$(RM) Makefile

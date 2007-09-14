@@ -124,7 +124,7 @@ toohard:
 			/* fall into... */
 
 		case '2':
-two:	
+two:
 			*dp++ = which / 10 | '0';
 one:
 			*dp++ = which % 10 | '0';

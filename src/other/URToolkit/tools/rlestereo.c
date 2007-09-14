@@ -17,7 +17,7 @@
  */
 /*
  * rlestereo.c - Merge two RLE images to form a single red-green or red-blue
- * 		 image suitable for viewing with them goofy glasses. 
+ * 		 image suitable for viewing with them goofy glasses.
  *
  * Author:      Craig E. Kolb
  * 		Department of Mathematics
@@ -74,7 +74,7 @@ int get_rle_setup();
  * intensities of the two base colors as viewed through the glasses.
  *
  * Options:
- * 
+ *
  *	-g		Produce red-green image rather than red-blue.
  *	-l scale	Scale factor for left-eye image (default 0.7).
  *	-r scale	Scale factor for right-eye image (default 1.0).
@@ -96,7 +96,7 @@ char **argv;
 	char *err_name = NULL;
 
  	left_hdr = *rle_hdr_init( NULL );
-	right_hdr = *rle_hdr_init( NULL ); 
+	right_hdr = *rle_hdr_init( NULL );
 	out_hdr = *rle_hdr_init( NULL );
 
 	if (scanargs(argc, argv,
@@ -124,7 +124,7 @@ char **argv;
 	    /*
 	     * Read headers of both images.
 	     */
-	    if ( (rle_err = 
+	    if ( (rle_err =
 		  get_rle_setup(&left_hdr, &Xres, &Yres)) != RLE_SUCCESS )
 	    {
 		err_name = leftname;
@@ -263,7 +263,7 @@ convert_line(out, left, right)
 rle_pixel **out, **left, **right;
 {
 	register int i;
-	
+
 	/*
 	 * Convert input scanlines to 'stereo' output scanline.
 	 */

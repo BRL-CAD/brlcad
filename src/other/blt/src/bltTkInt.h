@@ -170,7 +170,7 @@ typedef union {
 typedef struct {
     HPALETTE palette;
     int bkmode;			/* This field was added in Tk
-				 * 8.3.1. Be careful that you don't 
+				 * 8.3.1. Be careful that you don't
 				 * use this structure in a context
 				 * where its size is important.  */
 } TkWinDCState;
@@ -207,7 +207,7 @@ typedef struct TkBorderStruct {
     int objRefCount;		/* The number of Tcl objects that reference
 				 * this structure. */
 #endif /* TK_VERSION_NUMBER >= 8.1.0 */
-    XColor *bgColor;		/* Background color (intensity between 
+    XColor *bgColor;		/* Background color (intensity between
 				 * lightColorPtr and darkColorPtr). */
     XColor *darkColor;		/* Color for darker areas (must free when
 				 * deleting structure). NULL means shadows

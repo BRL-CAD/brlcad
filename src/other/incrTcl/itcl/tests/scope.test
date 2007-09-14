@@ -93,7 +93,7 @@ test scope-2.8 {last namespace wins} {
 test scope-2.9 {"--" terminates switches} {
     list [catch {itcl::code -namespace test_scope_ns -foo -bar} msg] $msg \
          [catch {itcl::code -namespace test_scope_ns -- -foo -bar} msg] $msg
-    
+
 } {1 {bad option "-foo": should be -namespace or --} 0 {namespace inscope ::test_scope_ns {-foo -bar}}}
 
 namespace delete test_scope_ns

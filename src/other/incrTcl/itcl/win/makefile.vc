@@ -3,7 +3,7 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # Copyright (c) 1993-1998 Lucent Technologies, Inc.
 # RCS: $Id$
 #------------------------------------------------------------------------------
@@ -14,7 +14,7 @@
 MSG = ^
 You must run this makefile only from the directory it is in.^
 Please `cd` to its location first.
-!error $(MSG) 
+!error $(MSG)
 !endif
 
 PROJECT	= itcl
@@ -60,7 +60,7 @@ ITCLSTUBLIBNAME	= $(STUBPREFIX)$(ITCL_VERSION).lib
 ITCLSTUBLIB	= "$(OUT_DIR)\$(ITCLSTUBLIBNAME)"
 !else
 ITCLSTUBLIBNAME	=
-ITCLSTUBLIB	= 
+ITCLSTUBLIB	=
 TCLSTUBLIB	= $(TCLIMPLIB)
 !endif
 

@@ -2,17 +2,17 @@
 
 #package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -46,20 +46,20 @@ proc RunDemo { program } {
 frame .top
 hierbox .top.hier -separator "." -xscrollincrement 1 \
     -yscrollcommand { .top.yscroll set } -xscrollcommand { .top.xscroll set } \
-    -selectcommand { 
+    -selectcommand {
 	set index [.top.hier curselection]
 	set label [.top.hier entry cget $index -label]
 	.top.title configure -text $label
-	.top.tab tab configure Example -window .top.tab.f1 
+	.top.tab tab configure Example -window .top.tab.f1
 	if { $label != $oldLabel }  {
 	    RunDemo $label
 	}
     }
-	
+
 
 scrollbar .top.yscroll -command { .top.hier yview }
 scrollbar .top.xscroll -command { .top.hier xview } -orient horizontal
-label .top.mesg -relief groove -borderwidth 2 
+label .top.mesg -relief groove -borderwidth 2
 label .top.title -text "Synopsis" -highlightthickness 0
 tabset .top.tab -side bottom -relief flat -bd 0 -highlightthickness 0 \
     -pageheight 4i
@@ -68,7 +68,7 @@ tabset .top.tab -side bottom -relief flat -bd 0 -highlightthickness 0 \
     "Example" \
     "See Code" \
     "Manual"
- 
+
 set pics /DOS/f/gah/Pics
 set pics /home/gah/Pics
 image create photo dummy -file $pics/Ex1.gif
@@ -106,7 +106,7 @@ winop resample dummy barchart.img box box
     "Miscellaneous.busy" \
     "Miscellaneous.bgexec" \
     "Miscellaneous.watch" \
-    "Miscellaneous.bltdebug" 
+    "Miscellaneous.bltdebug"
 .top.hier open -r root
 .top.hier entry configure root -labelfont *-helvetica*-bold-r-*-18-* \
     -labelcolor red -labelshadow red3
@@ -133,7 +133,7 @@ table .top \
     0,2 .top.mesg -padx 2 -pady { 8 2 } -fill both \
     0,2 .top.title -anchor nw -padx { 8 8 }  \
     1,2 .top.tab -fill both -rspan 2 \
-    2,0 .top.xscroll -fill x 
+    2,0 .top.xscroll -fill x
 
 table configure .top c1 r2 -resize none
 table configure .top c0 -width { 3i {} }
@@ -148,12 +148,12 @@ proc DoExit { code } {
 }
 
 container .top.tab.f1 -relief raised -bd 2 -takefocus 0
-.top.tab tab configure Example -window .top.tab.f1 
+.top.tab tab configure Example -window .top.tab.f1
 
 if  1 {
     set cmd "xterm -fn fixed -geom +4000+4000"
     eval bgexec programInfo(xterm) $cmd &
     set programInfo(lastProgram) xterm
-    .top.tab.f1 configure -command $cmd 
-} 
+    .top.tab.f1 configure -command $cmd
+}
 wm protocol . WM_DELETE_WINDOW { destroy . }

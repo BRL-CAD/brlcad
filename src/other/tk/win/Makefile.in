@@ -146,7 +146,7 @@ MAN2TCL			= man2tcl$(EXEEXT)
 
 @SET_MAKE@
 
-# Setting the VPATH variable to a list of paths will cause the 
+# Setting the VPATH variable to a list of paths will cause the
 # makefile to look into these paths when resolving .c to .obj
 # dependencies.
 
@@ -401,7 +401,7 @@ SHELL_ENV = \
 	TK_LIBRARY="$(ROOT_DIR_NATIVE)/library"; export TK_LIBRARY; \
 	PATH="$(TCL_BIN_DIR):$(PATH)"; export PATH;
 
-# Main targets.  The default target -- all -- builds the binaries, 
+# Main targets.  The default target -- all -- builds the binaries,
 # performs any post processing on libraries or documents.
 
 all: binaries libraries doc
@@ -476,7 +476,7 @@ install-binaries: binaries
 		$(COPY) $$i "$(BIN_INSTALL_DIR)"; \
 	    fi; \
 	    done
-	@echo "Creating package index $(PKG_INDEX)"; 
+	@echo "Creating package index $(PKG_INDEX)";
 	@$(RM) $(PKG_INDEX);
 	@(\
 	echo "if {![package vsatisfies [package provide Tcl] $(TCLVERSION)]} { return }";\

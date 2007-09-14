@@ -7,23 +7,23 @@
 CFG=opennurbs - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "opennurbs.mak".
-!MESSAGE 
+!MESSAGE
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "opennurbs.mak" CFG="opennurbs - Win32 Debug"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "opennurbs - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "opennurbs - Win32 Release Multithreaded" (based on "Win32 (x86) Static Library")
 !MESSAGE "opennurbs - Win32 Release Multithreaded DLL" (basierend auf "Win32 (x86) Static Library")
 !MESSAGE "opennurbs - Win32 Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE "opennurbs - Win32 Debug Multithreaded" (based on "Win32 (x86) Static Library")
 !MESSAGE "opennurbs - Win32 Debug Multithreaded DLL" (bbased on "Win32 (x86) Static Library")
-!MESSAGE 
+!MESSAGE
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
@@ -170,7 +170,7 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
 
-!ENDIF 
+!ENDIF
 
 # Begin Target
 

@@ -772,11 +772,11 @@ test parseExpr-21.8 {error messages} -body {
 in expression "0_@_8x";
 looks like invalid octal number}
 test parseExpr-21.9 {error messages} -body {
-    expr {"} 
+    expr {"}
 } -returnCodes error -result {missing "
 in expression """}
 test parseExpr-21.10 {error messages} -body {
-    expr \{ 
+    expr \{
 } -returnCodes error -result "missing close-brace
 in expression \"\{\""
 test parseExpr-21.11 {error messages} -body {

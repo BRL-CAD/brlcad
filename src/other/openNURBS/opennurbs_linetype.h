@@ -83,7 +83,7 @@ public:
 
   /*
     Index of each linetype
-    This index is used by geometry objects to 
+    This index is used by geometry objects to
     reference a specific linetype
   */
   bool SetLinetypeIndex( int);

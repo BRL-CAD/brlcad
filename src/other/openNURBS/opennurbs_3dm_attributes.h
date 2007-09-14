@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -25,11 +25,11 @@
 
 
 /*
-Description: 
+Description:
   Top level OpenNURBS objects have geometry and attributes.  The
-  geometry is stored in some class derived from ON_Geometry and 
+  geometry is stored in some class derived from ON_Geometry and
   the attributes are stored in an ON_3dmObjectAttributes class.
-  Examples of attributes are object name, object id, display 
+  Examples of attributes are object name, object id, display
   attributes, group membership, layer membership, and so on.
 
 Remarks:
@@ -92,7 +92,7 @@ public:
 
   /*
   Description:
-    Use this query to determine if an object is part of an 
+    Use this query to determine if an object is part of an
     instance definition.
   Returns:
     True if the object is part of an instance definition.
@@ -111,7 +111,7 @@ public:
   Description:
     Controls object visibility
   Parameters:
-    bVisible - [in] true to make object visible, 
+    bVisible - [in] true to make object visible,
                     false to make object invisible
   See Also:
     ON_3dmObjectAttributes::IsVisible
@@ -119,14 +119,14 @@ public:
   void SetVisible( bool bVisible );
 
   // The Linetype used to display an OpenNURBS object is specified in one of two ways.
-  // If LinetypeSource() is ON::linetype_from_layer, then the object's layer 
+  // If LinetypeSource() is ON::linetype_from_layer, then the object's layer
   // ON_Layer::Linetype() is used.
   // If LinetypeSource() is ON::linetype_from_object, then value of m_linetype is used.
   ON::object_linetype_source LinetypeSource() const;
   void SetLinetypeSource( ON::object_linetype_source ); // See LinetypeSource().
 
   // The color used to display an OpenNURBS object is specified in one of three ways.
-  // If ColorSource() is ON::color_from_layer, then the object's layer 
+  // If ColorSource() is ON::color_from_layer, then the object's layer
   // ON_Layer::Color() is used.
   // If ColorSource() is ON::color_from_object, then value of m_color is used.
   // If ColorSource() is ON::color_from_material, then the diffuse color of the object's
@@ -135,9 +135,9 @@ public:
   ON::object_color_source ColorSource() const;
   void SetColorSource( ON::object_color_source ); // See ColorSource().
 
-  // The color used to plot an OpenNURBS object on paper is specified 
+  // The color used to plot an OpenNURBS object on paper is specified
   // in one of three ways.
-  // If PlotColorSource() is ON::plot_color_from_layer, then the object's layer 
+  // If PlotColorSource() is ON::plot_color_from_layer, then the object's layer
   // ON_Layer::PlotColor() is used.
   // If PlotColorSource() is ON::plot_color_from_object, then value of PlotColor() is used.
   ON::plot_color_source PlotColorSource() const;
@@ -158,8 +158,8 @@ public:
 
   /*
   Description:
-    If "this" has attributes (color, plot weight, ...) with 
-    "by parent" sources, then the values of those attributes 
+    If "this" has attributes (color, plot weight, ...) with
+    "by parent" sources, then the values of those attributes
     on parent_attributes are copied.
   Parameters:
     parent_attributes - [in]
@@ -184,7 +184,7 @@ public:
             0x10: plot weight
             0x20: linetype
   */
-  unsigned int ApplyParentalControl( 
+  unsigned int ApplyParentalControl(
          const ON_3dmObjectAttributes& parent_attributes,
          unsigned int control_limits = 0xFFFFFFFF
          );
@@ -193,7 +193,7 @@ public:
   // default value is NULL.  When an OpenNURBS object is added to a model, the
   // value is checked.  If the value is NULL, a new UUID is created.  If the
   // value is not NULL but it is already used by another object in the model,
-  // a new UUID is created.  If the value is not NULL and it is not used by 
+  // a new UUID is created.  If the value is not NULL and it is not used by
   // another object in the model, then that value persists. When an object
   // is updated, by a move for example, the value of m_uuid persists.
   ON_UUID m_uuid;
@@ -222,19 +222,19 @@ public:
   int m_linetype_index;
 
   // Rendering material:
-  //   If you want something simple and fast, set 
-  //   m_material_index to the index of the rendering material 
+  //   If you want something simple and fast, set
+  //   m_material_index to the index of the rendering material
   //   and ignore m_rendering_attributes.
-  //   If you are developing a high quality plug-in renderer, 
-  //   and a user is assigning one of your fabulous rendering 
-  //   materials to this object, then add rendering material 
-  //   information to the  m_rendering_attributes.m_materials[] 
-  //   array. 
+  //   If you are developing a high quality plug-in renderer,
+  //   and a user is assigning one of your fabulous rendering
+  //   materials to this object, then add rendering material
+  //   information to the  m_rendering_attributes.m_materials[]
+  //   array.
   //
   // Developers:
   //   As soon as m_rendering_attributes.m_materials[] is not empty,
   //   rendering material queries slow down.  Do not populate
-  //   m_rendering_attributes.m_materials[] when setting 
+  //   m_rendering_attributes.m_materials[] when setting
   //   m_material_index will take care of your needs.
   int m_material_index;
   ON_ObjectRenderingAttributes m_rendering_attributes;
@@ -281,7 +281,7 @@ public:
   //
   //   @table
   //   value    number of isoparametric wires
-  //   0        boundary and knot wires 
+  //   0        boundary and knot wires
   //   1        boundary and knot wires and, if there are no
   //            interior knots, a single interior wire.
   //   N>=2     boundary and knot wires and (N+1) interior wires
@@ -289,16 +289,16 @@ public:
 
 
   // If m_viewport_id is nil, the object is active in
-  // all viewports. If m_viewport_id is not nil, then 
-  // this object is only active in a specific view.  
+  // all viewports. If m_viewport_id is not nil, then
+  // this object is only active in a specific view.
   // This field is primarily used to assign page space
-  // objects to a specific page, but it can also be used 
+  // objects to a specific page, but it can also be used
   // to restrict model space to a specific view.
   ON_UUID m_viewport_id;
 
   // Starting with V4, objects can be in either model space
   // or page space.  If an object is in page space, then
-  // m_viewport_id is not nil and identifies the page it 
+  // m_viewport_id is not nil and identifies the page it
   // is on.
   ON::active_space m_space;
 
@@ -311,7 +311,7 @@ private:
   unsigned char m_plot_weight_source; // ON::plot_weight_source values
   unsigned char m_material_source;    // ON::object_material_source values
   unsigned char m_linetype_source;    // ON::object_linetype_source values
-  
+
   ON_SimpleArray<int> m_group; // array of zero based group indices
 public:
 
@@ -320,12 +320,12 @@ public:
   // returns number of groups object belongs to
   int GroupCount() const;
 
-  // Returns and array an array of GroupCount() zero based 
+  // Returns and array an array of GroupCount() zero based
   // group indices.  If GroupCount() is zero, then GroupList()
   // returns NULL.
   const int* GroupList() const;
 
-  // Returns GroupCount() and puts a list of zero based group indices 
+  // Returns GroupCount() and puts a list of zero based group indices
   // into the array.
   int GetGroupList(ON_SimpleArray<int>&) const;
 
@@ -355,7 +355,7 @@ public:
     int // zero based group index
     );
 
-  // Removes object from the group with specified index.  If the 
+  // Removes object from the group with specified index.  If the
   // object is not in the group, nothing is changed.
   void RemoveFromGroup(
     int // zero based group index
@@ -381,11 +381,11 @@ public:
     referenced in other ON_DisplayMaterialRefs.
 
   Parameters:
-    search_material - [in] 
+    search_material - [in]
     found_material - [out]
-    
+
     If FindDisplayMaterialRef(), the input value of search_material
-    is never changed.  If FindDisplayMaterialRef() returns true, 
+    is never changed.  If FindDisplayMaterialRef() returns true,
     the chart shows the output value of display_material.  When
     there are multiple possibilities for a match, the matches
     at the top of the chart have higher priority.
@@ -431,11 +431,11 @@ public:
   Returns:
     True if a material_id is assigned.
   */
-  bool FindDisplayMaterialId( 
-        const ON_UUID& viewport_id, 
+  bool FindDisplayMaterialId(
+        const ON_UUID& viewport_id,
         ON_UUID* display_material_id = NULL
         ) const;
-     
+
   /*
   Description:
     Add a display material reference to the attributes.  If

@@ -22,7 +22,7 @@ struct Blt_PoolStruct {
     size_t itemSize;		/* Size of an item. */
     size_t bytesLeft;		/* # of bytes left in the current chunk. */
     size_t waste;
-    
+
     Blt_PoolAllocProc *allocProc;
     Blt_PoolFreeProc *freeProc;
 };

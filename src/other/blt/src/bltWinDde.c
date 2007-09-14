@@ -1,5 +1,5 @@
 
-/* 
+/*
  * bltWinDde.c --
  *
  *	This file provides procedures that implement the "send"
@@ -20,7 +20,7 @@
 
 #include <ddeml.h>
 
-/* 
+/*
  * The following structure is used to keep track of the interpreters
  * registered by this process.
  */
@@ -51,9 +51,9 @@ static Conversation *conversations; /* A list of conversations currently
 				     * being processed. */
 static RegisteredInterp *interps; /* List of all interpreters registered
 				   * in the current process. */
-static HSZ globalService;		
+static HSZ globalService;
 static DWORD instance;		/* The application instance handle given
-				 * to us by DdeInitialize. */ 
+				 * to us by DdeInitialize. */
 static int isServer;
 
 #define TCL_DDE_VERSION		"1.2"
@@ -66,10 +66,10 @@ static int isServer;
 
 static Tcl_Obj *ExecuteRemoteObject _ANSI_ARGS_((Tcl_Interp *interp,
 	Tcl_Obj *objPtr));
-static int MakeConnection _ANSI_ARGS_((Tcl_Interp *interp, char *name, 
+static int MakeConnection _ANSI_ARGS_((Tcl_Interp *interp, char *name,
 	HCONV *convPtr));
-static HDDEDATA CALLBACK ServerProc _ANSI_ARGS_((UINT uType, UINT uFmt, 
-	HCONV hConv, HSZ topic, HSZ item, HDDEDATA hData, DWORD dwData1, 
+static HDDEDATA CALLBACK ServerProc _ANSI_ARGS_((UINT uType, UINT uFmt,
+	HCONV hConv, HSZ topic, HSZ item, HDDEDATA hData, DWORD dwData1,
 	DWORD dwData2));
 
 static Tcl_ExitProc ExitProc;
@@ -118,9 +118,9 @@ Initialize(void)
 	if (instance == 0) {
 	    unsigned int flags;
 
-	    flags = (CBF_SKIP_REGISTRATIONS | CBF_SKIP_UNREGISTRATIONS | 
+	    flags = (CBF_SKIP_REGISTRATIONS | CBF_SKIP_UNREGISTRATIONS |
 		    CBF_FAIL_POKES);
-	    if (DdeInitialize(&instance, ServerProc, flags, 0) 
+	    if (DdeInitialize(&instance, ServerProc, flags, 0)
 		!= DMLERR_NO_ERROR) {
 		instance = 0;
 	    }
@@ -130,14 +130,14 @@ Initialize(void)
 	if ((globalService == 0) && (nameFound != 0)) {
 	    isServer = TRUE;
 	    Tcl_CreateExitHandler(ExitProc, NULL);
-	    globalService = DdeCreateStringHandle(instance, 
+	    globalService = DdeCreateStringHandle(instance,
 		TCL_DDE_SERVICE_NAME, 0);
 	    DdeNameService(instance, globalService, 0L, DNS_REGISTER);
 	} else {
 	    isServer = FALSE;
 	}
     }
-}    
+}
 
 /*
  *--------------------------------------------------------------
@@ -183,7 +183,7 @@ SetServerName(
      * will take care of disposing of this entry.
      */
 
-    for (riPtr = interps, prevPtr = NULL; riPtr != NULL; 
+    for (riPtr = interps, prevPtr = NULL; riPtr != NULL;
 	    prevPtr = riPtr, riPtr = riPtr->nextPtr) {
 	if (riPtr->interp == interp) {
 	    if (name != NULL) {
@@ -213,7 +213,7 @@ SetServerName(
 
 	return "";
     }
-    
+
     /*
      * Pick a name to use for the application.  Use "name" if it's not
      * already in use.  Otherwise add a suffix such as " #2", trying
@@ -245,7 +245,7 @@ SetServerName(
      * re-initialize with the new name
      */
     Initialize();
-    
+
     return riPtr->name;
 }
 
@@ -367,11 +367,11 @@ ServerProc (
 				 * are performing. */
     UINT uFmt,			/* The format that data is sent or
 				 * received. */
-    HCONV hConv,		/* The conversation associated with the 
+    HCONV hConv,		/* The conversation associated with the
 				 * current transaction. */
-    HSZ topic,			/* A string handle. Transaction-type 
+    HSZ topic,			/* A string handle. Transaction-type
 				 * dependent. */
-    HSZ item,			/* A string handle. Transaction-type 
+    HSZ item,			/* A string handle. Transaction-type
 				 * dependent. */
     HDDEDATA hData,		/* DDE data. Transaction-type dependent. */
     DWORD dwData1,		/* Transaction-dependent data. */
@@ -398,7 +398,7 @@ ServerProc (
 	    Tcl_DStringInit(&dString);
 	    Tcl_DStringSetLength(&dString, length);
 	    utilString = Tcl_DStringValue(&dString);
-	    DdeQueryString(instance, topic, utilString, length + 1, 
+	    DdeQueryString(instance, topic, utilString, length + 1,
 			   CP_WINANSI);
 
 	    for (riPtr = interps; riPtr != NULL; riPtr = riPtr->nextPtr) {
@@ -411,12 +411,12 @@ ServerProc (
 	    Tcl_DStringFree(&dString);
 	    return (HDDEDATA) FALSE;
 	}
-    case XTYP_CONNECT_CONFIRM: 
+    case XTYP_CONNECT_CONFIRM:
 	{
 	    DWORD length;
 
 	    /*
-	     * Dde has decided that we can connect, so it gives us a 
+	     * Dde has decided that we can connect, so it gives us a
 	     * conversation handle. We need to keep track of it
 	     * so we know which execution result to return in an
 	     * XTYP_REQUEST.
@@ -426,7 +426,7 @@ ServerProc (
 	    Tcl_DStringInit(&dString);
 	    Tcl_DStringSetLength(&dString, length);
 	    utilString = Tcl_DStringValue(&dString);
-	    DdeQueryString(instance, topic, utilString, length + 1, 
+	    DdeQueryString(instance, topic, utilString, length + 1,
 		    CP_WINANSI);
 	    for (riPtr = interps; riPtr != NULL; riPtr = riPtr->nextPtr) {
 		if (strcasecmp(riPtr->name, utilString) == 0) {
@@ -450,7 +450,7 @@ ServerProc (
 	     */
 
 	    for (convPtr = conversations, prevConvPtr = NULL;
-		    convPtr != NULL; 
+		    convPtr != NULL;
 		    prevConvPtr = convPtr, convPtr = convPtr->nextPtr) {
 		if (hConv == convPtr->hConv) {
 		    if (prevConvPtr == NULL) {
@@ -494,19 +494,19 @@ ServerProc (
 		Tcl_DStringInit(&dString);
 		Tcl_DStringSetLength(&dString, length);
 		utilString = Tcl_DStringValue(&dString);
-		DdeQueryString(instance, item, utilString, length + 1, 
+		DdeQueryString(instance, item, utilString, length + 1,
 			CP_WINANSI);
 		if (strcasecmp(utilString, "$TCLEVAL$EXECUTE$RESULT") == 0) {
 		    char *value;
 
-		    value = Tcl_GetStringFromObj(convPtr->returnPackagePtr, 
+		    value = Tcl_GetStringFromObj(convPtr->returnPackagePtr,
 				 &length);
-		    code = DdeCreateDataHandle(instance, value, length+1, 0, 
+		    code = DdeCreateDataHandle(instance, value, length+1, 0,
 			item, CF_TEXT, 0);
 		} else {
 		    char *value;
 
-		    value = Tcl_GetVar2(convPtr->riPtr->interp, utilString, 
+		    value = Tcl_GetVar2(convPtr->riPtr->interp, utilString,
 				NULL, TCL_GLOBAL_ONLY);
 		    if (value != NULL) {
 			length = strlen(value);
@@ -520,7 +520,7 @@ ServerProc (
 	    }
 	    return code;
 	}
-    case XTYP_EXECUTE: 
+    case XTYP_EXECUTE:
 	{
 	    DWORD length;
 	    /*
@@ -551,7 +551,7 @@ ServerProc (
 		Tcl_DecrRefCount(convPtr->returnPackagePtr);
 	    }
 	    convPtr->returnPackagePtr = NULL;
-	    returnPackagePtr = ExecuteRemoteObject(convPtr->riPtr->interp, 
+	    returnPackagePtr = ExecuteRemoteObject(convPtr->riPtr->interp,
 		objPtr);
 	    for (convPtr = conversations; (convPtr != NULL)
  		    && (convPtr->hConv != hConv); convPtr = convPtr->nextPtr) {
@@ -571,7 +571,7 @@ ServerProc (
 		return (HDDEDATA) DDE_FACK;
 	    }
 	}
-    case XTYP_WILDCONNECT: 
+    case XTYP_WILDCONNECT:
 	{
 	    DWORD length;
 
@@ -592,10 +592,10 @@ ServerProc (
 	    }
 
 	    numItems = i;
-	    code = DdeCreateDataHandle(instance, NULL, 
+	    code = DdeCreateDataHandle(instance, NULL,
 		(numItems + 1) * sizeof(HSZPAIR), 0, 0, 0, 0);
 	    returnPtr = (HSZPAIR *) DdeAccessData(code, &length);
-	    for (i = 0, riPtr = interps; i < numItems; 
+	    for (i = 0, riPtr = interps; i < numItems;
 		    i++, riPtr = riPtr->nextPtr) {
 		returnPtr[i].hszSvc = DdeCreateStringHandle(
                         instance, "TclEval", CP_WINANSI);
@@ -646,7 +646,7 @@ ExitProc(
  *
  * Results:
  *	A standard Tcl result.
- *	
+ *
  *
  * Side effects:
  *	Passes back a conversation through ddeConvPtr
@@ -662,7 +662,7 @@ MakeConnection(
 {
     HSZ topic, service;
     HCONV conv;
-    
+
     service = DdeCreateStringHandle(instance, "TclEval", 0);
     topic = DdeCreateStringHandle(instance, name, 0);
 
@@ -672,7 +672,7 @@ MakeConnection(
 
     if (conv == NULL) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "no registered server named \"", name, 
+	    Tcl_AppendResult(interp, "no registered server named \"", name,
 		"\"", (char *) NULL);
 	}
 	return TCL_ERROR;
@@ -692,7 +692,7 @@ MakeConnection(
  *
  * Results:
  *	None.
- *	
+ *
  *
  * Side effects:
  *	The interp's result object is changed.
@@ -764,7 +764,7 @@ DdeObjCmd(
     };
 
     static char *commands[] = {
-	"servername", "execute", "poke", "request", "services", "eval", 
+	"servername", "execute", "poke", "request", "services", "eval",
 	(char *) NULL
     };
     static char *options[] = {
@@ -791,9 +791,9 @@ DdeObjCmd(
     /*
      * Initialize DDE server/client
      */
-    
+
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, 
+	Tcl_WrongNumArgs(interp, 1, objv,
 		"?-async? serviceName topicName value");
 	return TCL_ERROR;
     }
@@ -813,10 +813,10 @@ DdeObjCmd(
 	}
 	firstArg = (objc - 1);
 	break;
-	
+
     case DDE_EXECUTE:
 	if ((objc < 5) || (objc > 6)) {
-	    Tcl_WrongNumArgs(interp, 1, objv, 
+	    Tcl_WrongNumArgs(interp, 1, objv,
 			"execute ?-async? serviceName topicName value");
 	    return TCL_ERROR;
 	}
@@ -869,7 +869,7 @@ DdeObjCmd(
 
     case DDE_EVAL:
 	if (objc < 4) {
-	    Tcl_WrongNumArgs(interp, 1, objv, 
+	    Tcl_WrongNumArgs(interp, 1, objv,
 			     "eval ?-async? serviceName args");
 	    return TCL_ERROR;
 	}
@@ -919,7 +919,7 @@ DdeObjCmd(
     }
 
     switch (index) {
-    case DDE_SERVERNAME: 
+    case DDE_SERVERNAME:
 	serviceName = SetServerName(interp, serviceName);
 	if (serviceName != NULL) {
 	    Tcl_SetStringObj(Tcl_GetObjResult(interp),
@@ -929,7 +929,7 @@ DdeObjCmd(
 	}
 	break;
 
-    case DDE_EXECUTE: 
+    case DDE_EXECUTE:
 	{
 	    dataString = Tcl_GetStringFromObj(objv[firstArg + 2], &dataLength);
 	    if (dataLength == 0) {
@@ -948,13 +948,13 @@ DdeObjCmd(
 		break;
 	    }
 
-	    data = DdeCreateDataHandle(instance, dataString, dataLength + 1, 
+	    data = DdeCreateDataHandle(instance, dataString, dataLength + 1,
 		0, 0, CF_TEXT, 0);
 	    if (data != NULL) {
 		if (async) {
 		    DWORD status;
 
-		    DdeClientTransaction((LPBYTE) data, 0xFFFFFFFF, hConv, 0, 
+		    DdeClientTransaction((LPBYTE) data, 0xFFFFFFFF, hConv, 0,
 			    CF_TEXT, XTYP_EXECUTE, TIMEOUT_ASYNC, &status);
 		    DdeAbandonTransaction(instance, hConv, status);
 		} else {
@@ -972,7 +972,7 @@ DdeObjCmd(
 	    }
 	    break;
 	}
-    case DDE_REQUEST: 
+    case DDE_REQUEST:
 	{
 	    itemString = Tcl_GetStringFromObj(objv[firstArg + 2], &length);
 	    if (length == 0) {
@@ -983,7 +983,7 @@ DdeObjCmd(
 	    hConv = DdeConnect(instance, service, topic, NULL);
 	    DdeFreeStringHandle(instance, service);
 	    DdeFreeStringHandle(instance, topic);
-	    
+
 	    if (hConv == NULL) {
 		SetError(interp);
 		result = TCL_ERROR;
@@ -1013,7 +1013,7 @@ DdeObjCmd(
 
 	    break;
 	}
-    case DDE_POKE: 
+    case DDE_POKE:
 	{
 	    itemString = Tcl_GetStringFromObj(objv[firstArg + 2], &length);
 	    if (length == 0) {
@@ -1022,7 +1022,7 @@ DdeObjCmd(
 		return TCL_ERROR;
 	    }
 	    dataString = Tcl_GetStringFromObj(objv[firstArg + 3], &length);
-	    
+
 	    hConv = DdeConnect(instance, service, topic, NULL);
 	    DdeFreeStringHandle(instance, service);
 	    DdeFreeStringHandle(instance, topic);
@@ -1048,16 +1048,16 @@ DdeObjCmd(
 	    break;
 	}
 
-    case DDE_SERVICES: 
+    case DDE_SERVICES:
 	{
 	    HCONVLIST hConvList;
 	    CONVINFO convInfo;
 	    Tcl_Obj *convListObjPtr, *elementObjPtr;
 	    Tcl_DString dString;
 	    char *name;
-	    
+
 	    convInfo.cb = sizeof(CONVINFO);
-	    hConvList = DdeConnectList(instance, service, 
+	    hConvList = DdeConnectList(instance, service,
                     topic, 0, NULL);
 	    DdeFreeStringHandle(instance, service);
 	    DdeFreeStringHandle(instance, topic);
@@ -1068,11 +1068,11 @@ DdeObjCmd(
 	    while (hConv = DdeQueryNextServer(hConvList, hConv), hConv != 0) {
 		elementObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
 		DdeQueryConvInfo(hConv, QID_SYNC, &convInfo);
-		length = DdeQueryString(instance, 
+		length = DdeQueryString(instance,
                         convInfo.hszSvcPartner, NULL, 0, CP_WINANSI);
 		Tcl_DStringSetLength(&dString, length);
 		name = Tcl_DStringValue(&dString);
-		DdeQueryString(instance, convInfo.hszSvcPartner, 
+		DdeQueryString(instance, convInfo.hszSvcPartner,
                         name, length + 1, CP_WINANSI);
 		Tcl_ListObjAppendElement(interp, elementObjPtr,
 			Tcl_NewStringObj(name, length));
@@ -1092,7 +1092,7 @@ DdeObjCmd(
 	    Tcl_DStringFree(&dString);
 	    break;
 	}
-    case DDE_EVAL: 
+    case DDE_EVAL:
 	{
 	    objc -= (async + 3);
 	    ((Tcl_Obj **) objv) += (async + 3);
@@ -1107,7 +1107,7 @@ DdeObjCmd(
 	     * deleted, the bytecode structure would be referring to
 	     * deallocated objects.
 	     */
-	    
+
 	    for (riPtr = interps; riPtr != NULL;
 		 riPtr = riPtr->nextPtr) {
 		if (strcasecmp(serviceName, riPtr->name) == 0) {
@@ -1120,11 +1120,11 @@ DdeObjCmd(
 		 * This command is to a local interp. No need to go through
 		 * the server.
 		 */
-		
+
 		Tcl_Preserve(riPtr);
 		sendInterp = riPtr->interp;
 		Tcl_Preserve(sendInterp);
-		
+
 		/*
 		 * Don't exchange objects between interps.  The target interp
 		 * would compile an object, producing a bytecode structure that
@@ -1149,12 +1149,12 @@ DdeObjCmd(
 			 * from the destination interpreter back to our
 			 * interpreter.
 			 */
-			
+
 			Tcl_ResetResult(interp);
-			value = Tcl_GetVar2(sendInterp, "errorInfo", NULL, 
+			value = Tcl_GetVar2(sendInterp, "errorInfo", NULL,
 				TCL_GLOBAL_ONLY);
 			Tcl_AddObjErrorInfo(interp, value, length);
-			
+
 			value = Tcl_GetVar2(sendInterp, "errorCode", NULL,
 				TCL_GLOBAL_ONLY);
 			Tcl_SetErrorCode(interp, value, (char *)NULL);
@@ -1168,16 +1168,16 @@ DdeObjCmd(
 		 * This is a non-local request. Send the script to the server
 		 * and poll it for a result.
 		 */
-		
+
 		if (MakeConnection(interp, serviceName, &hConv) != TCL_OK) {
 		    goto error;
 		}
-		
+
 		objPtr = Tcl_ConcatObj(objc, objv);
 		string = Tcl_GetStringFromObj(objPtr, &length);
 		itemData = DdeCreateDataHandle(instance, string,
 			length+1, 0, 0, CF_TEXT, 0);
-		
+
 		if (async) {
 		    DWORD status;
 
@@ -1190,8 +1190,8 @@ DdeObjCmd(
 			    0xFFFFFFFF, hConv, 0,
 			    CF_TEXT, XTYP_EXECUTE, 30000, NULL);
 		    if (data != 0) {
-			
-			cookie = DdeCreateStringHandle(instance, 
+
+			cookie = DdeCreateStringHandle(instance,
 				"$TCLEVAL$EXECUTE$RESULT", CP_WINANSI);
 			data = DdeClientTransaction(NULL, 0, hConv,
 				cookie, CF_TEXT, XTYP_REQUEST, 30000, NULL);
@@ -1199,15 +1199,15 @@ DdeObjCmd(
 		}
 
 		Tcl_DecrRefCount(objPtr);
-		
+
 		if (data == 0) {
 		    SetError(interp);
 		    goto errorNoResult;
 		}
-		
+
 		if (async == 0) {
 		    Tcl_Obj *resultPtr;
-		    
+
 		    /*
 		     * The return handle has a two or four element list in
 		     * it. The first element is the return code (TCL_OK,
@@ -1216,14 +1216,14 @@ DdeObjCmd(
 		     * element is the value of the variable "errorCode", and
 		     * the fourth is the value of the variable "errorInfo".
 		     */
-		    
+
 		    resultPtr = Tcl_NewObj();
 		    length = DdeGetData(data, NULL, 0, 0);
 		    Tcl_SetObjLength(resultPtr, length);
 		    string = Tcl_GetString(resultPtr);
 		    DdeGetData(data, string, length, 0);
 		    Tcl_SetObjLength(resultPtr, strlen(string));
-		    
+
 		    if (Tcl_ListObjIndex(NULL, resultPtr, 0, &objPtr)
 			    != TCL_OK) {
 			Tcl_DecrRefCount(resultPtr);
@@ -1244,7 +1244,7 @@ DdeObjCmd(
 			length = -1;
 			string = Tcl_GetStringFromObj(objPtr, &length);
 			Tcl_AddObjErrorInfo(interp, string, length);
-			
+
 			Tcl_ListObjIndex(NULL, resultPtr, 2, &objPtr);
 			Tcl_SetObjErrorCode(interp, objPtr);
 		    }
@@ -1277,7 +1277,7 @@ DdeObjCmd(
     return result;
 
     error:
-    Tcl_SetStringObj(Tcl_GetObjResult(interp), 
+    Tcl_SetStringObj(Tcl_GetObjResult(interp),
 	     "invalid data returned from server", -1);
 
     errorNoResult:

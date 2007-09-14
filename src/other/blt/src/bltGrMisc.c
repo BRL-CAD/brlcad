@@ -23,7 +23,7 @@
  * whatsoever resulting from loss of use, data or profits, whether in
  * an action of contract, negligence or other tortuous action, arising
  * out of or in connection with the use or performance of this
- * software.  
+ * software.
  */
 
 #include "bltGraph.h"
@@ -105,7 +105,7 @@ Blt_GetXY(interp, tkwin, string, xPtr, yPtr)
     return TCL_OK;
 
   badFormat:
-    Tcl_AppendResult(interp, "bad position \"", string, 
+    Tcl_AppendResult(interp, "bad position \"", string,
 	     "\": should be \"@x,y\"", (char *)NULL);
     return TCL_ERROR;
 }
@@ -372,9 +372,9 @@ Blt_PointInSegments(samplePtr, segments, nSegments, halo)
     double dist, minDist;
 
     minDist = DBL_MAX;
-    for (segPtr = segments, endPtr = segments + nSegments; segPtr < endPtr; 
+    for (segPtr = segments, endPtr = segments + nSegments; segPtr < endPtr;
 	 segPtr++) {
-	t = Blt_GetProjection((int)samplePtr->x, (int)samplePtr->y, 
+	t = Blt_GetProjection((int)samplePtr->x, (int)samplePtr->y,
 		      &segPtr->p, &segPtr->q);
 	if (segPtr->p.x > segPtr->q.x) {
 	    right = segPtr->p.x, left = segPtr->q.x;
@@ -408,7 +408,7 @@ Blt_PointInPolygon(samplePtr, points, nPoints)
 
     count = 0;
     for (p = points, q = p + 1, endPtr = p + nPoints; q < endPtr; p++, q++) {
-	if (((p->y <= samplePtr->y) && (samplePtr->y < q->y)) || 
+	if (((p->y <= samplePtr->y) && (samplePtr->y < q->y)) ||
 	    ((q->y <= samplePtr->y) && (samplePtr->y < p->y))) {
 	    b = (q->x - p->x) * (samplePtr->y - p->y) / (q->y - p->y) + p->x;
 	    if (samplePtr->x < b) {
@@ -429,10 +429,10 @@ Blt_RegionInPolygon(extsPtr, points, nPoints, enclosed)
     register Point2D *pointPtr, *endPtr;
 
     if (enclosed) {
-	/*  
+	/*
 	 * All points of the polygon must be inside the rectangle.
 	 */
-	for (pointPtr = points, endPtr = points + nPoints; pointPtr < endPtr; 
+	for (pointPtr = points, endPtr = points + nPoints; pointPtr < endPtr;
 	     pointPtr++) {
 	    if ((pointPtr->x < extsPtr->left) ||
 		(pointPtr->x > extsPtr->right) ||
@@ -450,7 +450,7 @@ Blt_RegionInPolygon(extsPtr, points, nPoints, enclosed)
 	 * polygon overlaps the rectangle.
 	 */
 	points[nPoints] = points[0];
-	for (pointPtr = points, endPtr = points + nPoints; pointPtr < endPtr; 
+	for (pointPtr = points, endPtr = points + nPoints; pointPtr < endPtr;
 	     pointPtr++) {
 	    p = *pointPtr;
 	    q = *(pointPtr + 1);
@@ -458,10 +458,10 @@ Blt_RegionInPolygon(extsPtr, points, nPoints, enclosed)
 		return TRUE;
 	    }
 	}
-	/* 
+	/*
 	 * Otherwise the polygon and rectangle are either disjoint
 	 * or enclosed.  Check if one corner of the rectangle is
-	 * inside the polygon.  
+	 * inside the polygon.
 	 */
 	p.x = extsPtr->left;
 	p.y = extsPtr->top;
@@ -499,13 +499,13 @@ Blt_GraphExtents(graphPtr, extsPtr)
 {
     extsPtr->left = (double)(graphPtr->hOffset - graphPtr->padX.side1);
     extsPtr->top = (double)(graphPtr->vOffset - graphPtr->padY.side1);
-    extsPtr->right = (double)(graphPtr->hOffset + graphPtr->hRange + 
+    extsPtr->right = (double)(graphPtr->hOffset + graphPtr->hRange +
 	graphPtr->padX.side2);
-    extsPtr->bottom = (double)(graphPtr->vOffset + graphPtr->vRange + 
+    extsPtr->bottom = (double)(graphPtr->vOffset + graphPtr->vRange +
 	graphPtr->padY.side2);
 }
 
-static int 
+static int
 ClipTest (double ds, double dr, double *t1, double *t2)
 {
   double t;
@@ -514,7 +514,7 @@ ClipTest (double ds, double dr, double *t1, double *t2)
       t = dr / ds;
       if (t > *t2) {
 	  return FALSE;
-      } 
+      }
       if (t > *t1) {
 	  *t1 = t;
       }
@@ -522,7 +522,7 @@ ClipTest (double ds, double dr, double *t1, double *t2)
       t = dr / ds;
       if (t < *t1) {
 	  return FALSE;
-      } 
+      }
       if (t < *t2) {
 	  *t2 = t;
       }
@@ -551,9 +551,9 @@ ClipTest (double ds, double dr, double *t1, double *t2)
  *	coordinates of the original line segment are overwritten
  *	by the clipped coordinates.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
-int 
+int
 Blt_LineRectClip(extsPtr, p, q)
     Extents2D *extsPtr;		/* Rectangular region to clip. */
     Point2D *p, *q;		/* (in/out) Coordinates of original
@@ -568,7 +568,7 @@ Blt_LineRectClip(extsPtr, p, q)
     if ((ClipTest (-dx, p->x - extsPtr->left, &t1, &t2)) &&
 	(ClipTest (dx, extsPtr->right - p->x, &t1, &t2))) {
 	dy = q->y - p->y;
-	if ((ClipTest (-dy, p->y - extsPtr->top, &t1, &t2)) && 
+	if ((ClipTest (-dy, p->y - extsPtr->top, &t1, &t2)) &&
 	    (ClipTest (dy, extsPtr->bottom - p->y, &t1, &t2))) {
 	    if (t2 < 1.0) {
 		q->x = p->x + t2 * dx;
@@ -590,24 +590,24 @@ Blt_LineRectClip(extsPtr, p, q)
  * Blt_PolyRectClip --
  *
  *	Clips the given polygon to a rectangular region.  The resulting
- *	polygon is returned. Note that the resulting polyon may be 
- *	complex, connected by zero width/height segments.  The drawing 
+ *	polygon is returned. Note that the resulting polyon may be
+ *	complex, connected by zero width/height segments.  The drawing
  *	routine (such as XFillPolygon) will not draw a connecting
  *	segment.
  *
- *	Reference:  Liang-Barsky Polygon Clipping Algorithm 
+ *	Reference:  Liang-Barsky Polygon Clipping Algorithm
  *
  * Results:
  *	Returns the number of points in the clipped polygon. The
  *	points of the clipped polygon are stored in *outputPts*.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 #define EPSILON  FLT_EPSILON
-#define AddVertex(vx, vy)	    r->x=(vx), r->y=(vy), r++, count++ 
-#define LastVertex(vx, vy)	    r->x=(vx), r->y=(vy), count++ 
+#define AddVertex(vx, vy)	    r->x=(vx), r->y=(vy), r++, count++
+#define LastVertex(vx, vy)	    r->x=(vx), r->y=(vy), count++
 
-int 
+int
 Blt_PolyRectClip(extsPtr, points, nPoints, clipPts)
     Extents2D *extsPtr;
     Point2D *points;
@@ -633,10 +633,10 @@ Blt_PolyRectClip(extsPtr, points, nPoints, clipPts)
 	dx = q->x - p->x;	/* X-direction */
 	dy = q->y - p->y;	/* Y-direction */
 
-	if (FABS(dx) < EPSILON) { 
+	if (FABS(dx) < EPSILON) {
 	    dx = (p->x > extsPtr->left) ? -EPSILON : EPSILON ;
 	}
-	if (FABS(dy) < EPSILON) { 
+	if (FABS(dy) < EPSILON) {
 	    dy = (p->y > extsPtr->top) ? -EPSILON : EPSILON ;
 	}
 
@@ -654,10 +654,10 @@ Blt_PolyRectClip(extsPtr, points, nPoints, clipPts)
 	    yin = extsPtr->bottom + 1.0;
 	    yout = extsPtr->top;
 	}
-	
+
 	tinx = (xin - p->x) / dx;
 	tiny = (yin - p->y) / dy;
-	
+
 	if (tinx < tiny) {	/* Hits x first */
 	    tin1 = tinx;
 	    tin2 = tiny;
@@ -665,7 +665,7 @@ Blt_PolyRectClip(extsPtr, points, nPoints, clipPts)
 	    tin1 = tiny;
 	    tin2 = tinx;
 	}
-	
+
 	if (tin1 <= 1.0) {
 	    if (tin1 > 0.0) {
 		AddVertex(xin, yin);
@@ -676,7 +676,7 @@ Blt_PolyRectClip(extsPtr, points, nPoints, clipPts)
 		toutx = (xout - p->x) / dx;
 		touty = (yout - p->y) / dy;
 		tout1 = MIN(toutx, touty);
-		
+
 		if ((tin2 > 0.0) || (tout1 > 0.0)) {
 		    if (tin2 <= tout1) {
 			if (tin2 > 0.0) {
@@ -757,10 +757,10 @@ Blt_GetProjection(x, y, p, q)
 	m1 = (dy / dx);
 	b1 = p->y - (p->x * m1);
 
-	/* 
+	/*
 	 * Compute the slope and intercept of a second line segment:
 	 * one that intersects through sample X-Y coordinate with a
-	 * slope perpendicular to original line. 
+	 * slope perpendicular to original line.
 	 */
 
 	/* Find midpoint of original segment. */
@@ -1082,7 +1082,7 @@ Blt_GetScrollInfoFromObj(interp, objc, objv, offsetPtr, worldSize, windowSize,
 	    /* A page is 90% of the view-able window. */
 	    fract = (double)count *windowSize * 0.9;
 	} else {
-	    Tcl_AppendResult(interp, "unknown \"scroll\" units \"", 
+	    Tcl_AppendResult(interp, "unknown \"scroll\" units \"",
 		     Tcl_GetString(objv[2]), "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1247,27 +1247,27 @@ Blt_SetDashes(display, gc, dashesPtr)
     GC gc;
     Blt_Dashes *dashesPtr;
 {
-    XSetDashes(display, gc, dashesPtr->offset, 
+    XSetDashes(display, gc, dashesPtr->offset,
        (CONST char *)dashesPtr->values, strlen((char *)dashesPtr->values));
 }
 #endif
 
 
 static double
-FindSplit(points, i, j, split) 
+FindSplit(points, i, j, split)
     Point2D points[];
     int i, j;			/* Indices specifying the range of points. */
     int *split;			/* (out) Index of next split. */
 {    double maxDist;
-    
+
     maxDist = -1.0;
     if ((i + 1) < j) {
 	register int k;
-	double a, b, c;	
+	double a, b, c;
 	double sqDist;
 
-	/* 
-	 * 
+	/*
+	 *
 	 * sqDist P(k) =  |  1  P(i).x  P(i).y  |
 	 *		  |  1  P(j).x  P(j).y  |
 	 *                |  1  P(k).x  P(k).y  |
@@ -1281,7 +1281,7 @@ FindSplit(points, i, j, split)
 	for (k = (i + 1); k < j; k++) {
 	    sqDist = (points[k].x * a) + (points[k].y * b) + c;
 	    if (sqDist < 0.0) {
-		sqDist = -sqDist;	
+		sqDist = -sqDist;
 	    }
 	    if (sqDist > maxDist) {
 		maxDist = sqDist;	/* Track the maximum. */
@@ -1290,14 +1290,14 @@ FindSplit(points, i, j, split)
 	}
 	/* Correction for segment length---should be redone if can == 0 */
 	maxDist *= maxDist / (a * a + b * b);
-    } 
+    }
     return maxDist;
 }
 
 
 /* Douglas-Peucker line simplification algorithm */
 int
-Blt_SimplifyLine(inputPts, low, high, tolerance, indices) 
+Blt_SimplifyLine(inputPts, low, high, tolerance, indices)
    Point2D inputPts[];
    int low, high;
    double tolerance;
@@ -1308,7 +1308,7 @@ Blt_SimplifyLine(inputPts, low, high, tolerance, indices)
 #define StackEmpty()	(s < 0)
 #define StackTop()	stack[s]
     int *stack;
-    int split = -1; 
+    int split = -1;
     double sqDist, sqTolerance;
     int s = -1;			/* Points to top stack item. */
     int count;
@@ -1326,7 +1326,7 @@ Blt_SimplifyLine(inputPts, low, high, tolerance, indices)
 	    indices[count++] = StackTop();
 	    StackPop(low);
 	}
-    } 
+    }
     Blt_Free(stack);
     return count;
 }
@@ -1369,7 +1369,7 @@ Blt_DrawArrow(display, drawable, gc, x, y, arrowHeight, orientation)
 {
     XPoint arrow[5];
     int a, b;
-    
+
     a = arrowHeight / 2 + 1;
     b = arrowHeight;
     switch (orientation) {
@@ -1423,7 +1423,7 @@ Blt_DrawArrow(display, drawable, gc, x, y, arrowHeight, orientation)
 	 *	 +
 	 *       |\
 	 *       | \
-	 *       |  \ 
+	 *       |  \
 	 *       |   \
 	 *       |    \
 	 *       | x,y + 0
@@ -1478,8 +1478,8 @@ Blt_DrawArrow(display, drawable, gc, x, y, arrowHeight, orientation)
     XDrawLines(display, drawable, gc, arrow, 4, CoordModeOrigin);
 }
 
-int 
-Blt_MaxRequestSize(Display *display, unsigned int elemSize) 
+int
+Blt_MaxRequestSize(Display *display, unsigned int elemSize)
 {
     long size;
 
@@ -1540,7 +1540,7 @@ Blt_Fill3DRectangle(tkwin, drawable, border, x, y, width,
 	x++, y++, width -= 2, height -= 2, borderWidth--;
     }
 #endif
-    Tk_Fill3DRectangle(tkwin, drawable, border, x, y, width, height, 
+    Tk_Fill3DRectangle(tkwin, drawable, border, x, y, width, height,
 	borderWidth, relief);
 }
 
@@ -1588,7 +1588,7 @@ Blt_Draw3DRectangle(tkwin, drawable, border, x, y, width,
 	x++, y++, width -= 2, height -= 2, borderWidth--;
     }
 #endif
-    Tk_Draw3DRectangle(tkwin, drawable, border, x, y, width, height, 
+    Tk_Draw3DRectangle(tkwin, drawable, border, x, y, width, height,
 	borderWidth, relief);
 }
 
@@ -1638,7 +1638,7 @@ typedef struct {
 
     struct Blt_3DBorderStruct *nextPtr;
 } Border, *Blt_3DBorder;
-    
+
 
 void
 Blt_Draw3DRectangle(tkwin, drawable, border, x, y, width,
@@ -1661,13 +1661,13 @@ Blt_Draw3DRectangle(tkwin, drawable, border, x, y, width,
 
 	XSetForeground(borderPtr->lightGC, borderPtr->shadows[0]);
 	XSetForeground(borderPtr->darkGC, borderPtr->shadows[3]);
-	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC, 
+	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC,
 		  x, y, x2, y);
-	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC, 
+	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC,
 		  x, y, x, y2);
-	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC, 
+	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC,
 		  x2, y, x2, y2);
-	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC, 
+	XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC,
 		  x2, y2, x, y2);
 	XSetForeground(borderPtr->lightGC, borderPtr->shadows[1]);
 	XSetForeground(borderPtr->darkGC, borderPtr->shadows[2]);
@@ -1683,20 +1683,20 @@ Blt_Draw3DRectangle(tkwin, drawable, border, x, y, width,
 	     *  |
 	     */
 	    x++, y++, x2--, y2--;
-	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC, 
+	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC,
 		x, y, x2, y);
-	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC, 
+	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->lightGC,
 		x, y, x, y2);
-	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC, 
+	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC,
 		x2, y, x2, y2);
-	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC, 
+	    XDrawLine(Tk_Display(tkwin), drawable, borderPtr->darkGC,
 		x2, y2, x, y2);
 	}
     }
 }
 
 void
-Blt_Fill3DRectangle(tkwin, drawable, border, x, y, width, height, borderWidth, 
+Blt_Fill3DRectangle(tkwin, drawable, border, x, y, width, height, borderWidth,
 	relief)
     Tk_Window tkwin;		/* Window for which border was allocated. */
     Drawable drawable;		/* X window or pixmap in which to draw. */
@@ -1712,13 +1712,13 @@ Blt_Fill3DRectangle(tkwin, drawable, border, x, y, width, height, borderWidth,
     XFillRectangle(Tk_Display(tkwin), drawable, borderPtr->bgGC, x, y, width,
 	   height);
     if ((borderWidth > 0) && (relief != BLT_RELIEF_FLAT)) {
-	Blt_Draw3DRectangle(tkwin, drawable, borderPtr, x, y, width, height, 
+	Blt_Draw3DRectangle(tkwin, drawable, borderPtr, x, y, width, height,
 	    borderWidth, relief);
     }
 }
 
 
-void 
+void
 FreeBorder(display, borderPtr)
     Display *display;
     Border *borderPtr;
@@ -1763,7 +1763,7 @@ Blt_Free3DBorder(display, border)
 	    headPtr = headPtr->next;
 	}
 	if (headPtr == NULL) {
-	    return;		/* This can't happen. It means that 
+	    return;		/* This can't happen. It means that
 				 * we could not find the border. */
 	}
 	if (lastPtr != NULL) {
@@ -1795,7 +1795,7 @@ Blt_Get3DBorder(interp, tkwin, borderName)
     if (!isNew) {
 	borderPtr = lastBorderPtr = Blt_GetHashValue(hPtr);
 	while (borderPtr != NULL) {
-	    if ((Tk_Screen(tkwin) == borderPtr->screen) && 
+	    if ((Tk_Screen(tkwin) == borderPtr->screen) &&
 		(Tk_Colormap(tkwin) == borderPtr->colormap)) {
 		borderPtr->refCount++;
 		return borderPtr;
@@ -1839,10 +1839,10 @@ Blt_Get3DBorder(interp, tkwin, borderName)
 	XColor color;
 	double sat, sat0, diff, step, hstep;
 	int count;
-	
+
 	/* Convert the face (background) color to HSV */
 	Blt_XColorToHSV(borderPtr->bgColorPtr, &hsv);
-	
+
 	/* Using the color as the baseline intensity, pick a set of
 	 * colors around the intensity. */
 #define UFLOOR(x,u)		(floor((x)*(u))/(u))

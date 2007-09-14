@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_AddErrorInfo 3 8.5 Tcl "Tcl Library Procedures"
 .BS
@@ -20,7 +20,7 @@ Tcl_GetReturnOptions, Tcl_SetReturnOptions, Tcl_AddErrorInfo, Tcl_AddObjErrorInf
 Tcl_Obj *
 \fBTcl_GetReturnOptions\fR(\fIinterp, code\fR)
 .sp
-int 
+int
 \fBTcl_SetReturnOptions\fR(\fIinterp, options\fR)
 .VE 8.5
 .sp
@@ -43,7 +43,7 @@ void
 .AS Tcl_Interp commandLength
 .AP Tcl_Interp *interp in
 Interpreter in which to record information.
-.AP int code 
+.AP int code
 The code returned from script evaluation.
 .AP Tcl_Obj *options
 A dictionary of return options.
@@ -110,7 +110,7 @@ retrieve the stack trace when script evaluation returns
 .CS
 int code = Tcl_Eval(interp, script);
 if (code == TCL_ERROR) {
-    Tcl_Obj *options = Tcl_GetReturnOptions(interp, code);  
+    Tcl_Obj *options = Tcl_GetReturnOptions(interp, code);
     Tcl_Obj *key = Tcl_NewStringObj("-errorinfo", -1);
     Tcl_Obj *stackTrace;
     Tcl_IncrRefCount(key);
@@ -149,7 +149,7 @@ to any reference counting.  This is analogous to
 .PP
 While \fBTcl_SetReturnOptions\fR provides a general interface
 to set any collection of return options, there are a handful
-of return options that are very frequently used.  Most 
+of return options that are very frequently used.  Most
 notably the \fB-errorinfo\fR and \fB-errorcode\fR return
 options should be set properly when the command procedure
 of a command returns \fBTCL_ERROR\fR.  Tcl provides several
@@ -202,7 +202,7 @@ a useful part of the \fImessage\fR passed to \fBTcl_AddErrorInfo\fR.
 .PP
 \fBTcl_AddObjErrorInfo\fR is nearly identical
 to \fBTcl_AddErrorInfo\fR, except that it has an additional \fIlength\fR
-argument.  This allows the \fImessage\fR string to contain 
+argument.  This allows the \fImessage\fR string to contain
 embedded null bytes.  This is essentially never a good idea.
 If the \fImessage\fR needs to contain the null character \fBU+0000\fR,
 Tcl's usual internal encoding rules should be used to avoid
@@ -210,9 +210,9 @@ the need for a null byte.  If the \fBTcl_AddObjErrorInfo\fR
 interface is used at all, it should be with a negative \fIlength\fR value.
 .PP
 The procedure \fBTcl_SetObjErrorCode\fR is used to set the
-\fB-errorcode\fR return option to the list object \fIerrorObjPtr\fR 
-built up by the caller. 
-\fBTcl_SetObjErrorCode\fR is typically invoked just 
+\fB-errorcode\fR return option to the list object \fIerrorObjPtr\fR
+built up by the caller.
+\fBTcl_SetObjErrorCode\fR is typically invoked just
 before returning an error. If an error is
 returned without calling \fBTcl_SetObjErrorCode\fR or
 \fBTcl_SetErrorCode\fR the Tcl interpreter automatically sets
@@ -248,7 +248,7 @@ the interpreter's result.
 \fBTcl_LogCommandInfo\fR is invoked after an error occurs in an
 interpreter.  It adds information about the command that was being
 executed when the error occurred to the \fB-errorinfo\fR value, and
-the line number stored internally in the interpreter is set.  
+the line number stored internally in the interpreter is set.
 .PP
 In older releases of Tcl, there was no \fBTcl_GetReturnOptions\fR
 routine.  In its place, the global Tcl variables \fBerrorInfo\fR
@@ -261,7 +261,7 @@ global variables remains a supported way to access these
 return option values, it is important not to assume that
 writing to those global variables will properly set the
 corresponding return options.  It has long been emphasized
-in this manual page that it is important to 
+in this manual page that it is important to
 call the procedures described here rather than
 setting \fBerrorInfo\fR or \fBerrorCode\fR directly with
 \fBTcl_ObjSetVar2\fR.
@@ -270,7 +270,7 @@ If the procedure \fBTcl_ResetResult\fR is called,
 it clears all of the state of the interpreter associated with
 script evaluation, including the entire return options dictionary.
 In particular, the \fB-errorinfo\fR and \fB-errorcode\fR options
-are reset.  
+are reset.
 If an error had occurred, the \fBTcl_ResetResult\fR call will
 clear the error state to make it appear as if no error had
 occurred after all.

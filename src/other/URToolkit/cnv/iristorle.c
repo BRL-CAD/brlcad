@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -16,7 +16,7 @@
  * and the reason for such modification.
  */
 /*
- * 	toutah - 
+ * 	toutah -
  *		Convert a IRIS image to Utah raster toolkit.
  *
  *	To comple:
@@ -30,9 +30,9 @@
 #include "image.h"
 #include "rle.h"
 
-short rbuf[8192]; 
-short gbuf[8192]; 
-short bbuf[8192]; 
+short rbuf[8192];
+short gbuf[8192];
+short bbuf[8192];
 
 rle_hdr	hdr;
 
@@ -124,7 +124,7 @@ register int n;
 	    cptr[5] = sptr[5];
 	    cptr[6] = sptr[6];
 	    cptr[7] = sptr[7];
-	    sptr+=8; 
+	    sptr+=8;
 	    cptr+=8;
 	    n -= 7;
 	} else {

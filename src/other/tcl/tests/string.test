@@ -215,7 +215,7 @@ test string-4.14 {string first, negative start index} {
 } 1
 test string-4.15 {string first, ability to two-byte encoded utf-8 chars} {
     # Test for a bug in Tcl 8.3 where test for all-single-byte-encoded
-    # strings was incorrect, leading to an index returned by [string first] 
+    # strings was incorrect, leading to an index returned by [string first]
     # which pointed past the end of the string.
     set uchar \u057e    ;# character with two-byte encoding in utf-8
     string first % %#$uchar$uchar#$uchar$uchar#% 3
@@ -415,7 +415,7 @@ test string-6.37 {string is double, false on int overflow} {
 } {1 0}
 # string-6.38 removed, underflow on input is no longer an error.
 test string-6.39 {string is double, false} {
-    # This test is non-portable because IRIX thinks 
+    # This test is non-portable because IRIX thinks
     # that .e1 is a valid double - this is really a bug
     # on IRIX as .e1 should NOT be a valid double
     #

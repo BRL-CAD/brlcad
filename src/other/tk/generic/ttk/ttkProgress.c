@@ -403,7 +403,7 @@ static int ProgressbarStepCommand(
 {
     Progressbar *pb = recordPtr;
     double value = 0.0, stepAmount = 1.0;
-    Tcl_Obj *newValueObj; 
+    Tcl_Obj *newValueObj;
 
     if (objc == 3) {
 	if (Tcl_GetDoubleFromObj(interp, objv[2], &stepAmount) != TCL_OK) {
@@ -429,7 +429,7 @@ static int ProgressbarStepCommand(
 
     TtkRedisplayWidget(&pb->core);
 
-    /* Update value by setting the linked -variable, if there is one: 
+    /* Update value by setting the linked -variable, if there is one:
      */
     if (pb->progress.variableTrace) {
 	return Tcl_ObjSetVar2(
@@ -449,7 +449,7 @@ static int ProgressbarStepCommand(
 }
 
 /* $sb start|stop ?args? --
- * Change [$sb $cmd ...] to [ttk::progressbar::$cmd ...] 
+ * Change [$sb $cmd ...] to [ttk::progressbar::$cmd ...]
  * and pass to interpreter.
  */
 static int ProgressbarStartStopCommand(

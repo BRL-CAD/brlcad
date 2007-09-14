@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -47,7 +47,7 @@ ON_Matrix::ON_Matrix() : m(0), m_row_count(0), m_col_count(0)
   m_cmem = 0;
 }
 
-ON_Matrix::ON_Matrix( int row_size, int col_size ) 
+ON_Matrix::ON_Matrix( int row_size, int col_size )
                    : m(0), m_row_count(0), m_col_count(0)
 {
   m_reserved1 = 0;
@@ -57,7 +57,7 @@ ON_Matrix::ON_Matrix( int row_size, int col_size )
   Create(row_size,col_size);
 }
 
-ON_Matrix::ON_Matrix( int row0, int row1, int col0, int col1 ) 
+ON_Matrix::ON_Matrix( int row0, int row1, int col0, int col1 )
                    : m(0), m_row_count(0), m_col_count(0)
 {
   m_reserved1 = 0;
@@ -67,7 +67,7 @@ ON_Matrix::ON_Matrix( int row0, int row1, int col0, int col1 )
   Create(row0,row1,col0,col1);
 }
 
-ON_Matrix::ON_Matrix( const ON_Xform& x ) 
+ON_Matrix::ON_Matrix( const ON_Xform& x )
                    : m(0), m_row_count(0), m_col_count(0)
 {
   m_reserved1 = 0;
@@ -125,19 +125,19 @@ bool ON_Matrix::Create( int row_count, int col_count)
 {
   bool b = false;
   Destroy();
-  if ( row_count > 0 && col_count > 0 ) 
+  if ( row_count > 0 && col_count > 0 )
   {
     m_row.Reserve(row_count);
     if ( 0 != m_row.Array() )
     {
       m_row.SetCount(row_count);
-      // In general, allocate coefficient memory in chunks 
+      // In general, allocate coefficient memory in chunks
       // of <= max_dblblk_size bytes.  The value of max_dblblk_size
       // is tuned to maximize speed on calculations involving
       // large matrices.  If all of the coefficients will fit
-      // into a chunk of memory <= 1.1*max_dblblk_size, then 
+      // into a chunk of memory <= 1.1*max_dblblk_size, then
       // a single chunk is allocated.
-      
+
       // In limited testing, these two values appeared to work ok.
       // The latter was a hair faster in solving large row reduction
       // problems (for reasons I do not understand).
@@ -152,7 +152,7 @@ bool ON_Matrix::Create( int row_count, int col_count)
       else if ( rows_per_block < row_count && 11*rows_per_block >= 10*row_count )
         rows_per_block = row_count;
 
-      int j, i = row_count; 
+      int j, i = row_count;
       m = m_row.Array();
       double** row = m;
       for ( i = row_count; i > 0; i -= rows_per_block )
@@ -379,10 +379,10 @@ void ON_Matrix::ColOp( int dest_col, double s, int src_col )
 }
 
 int
-ON_Matrix::RowReduce( 
+ON_Matrix::RowReduce(
     double zero_tolerance,
     double& determinant,
-    double& pivot 
+    double& pivot
     )
 {
   double x, piv, det;
@@ -437,10 +437,10 @@ ON_Matrix::RowReduce(
 }
 
 int
-ON_Matrix::RowReduce( 
+ON_Matrix::RowReduce(
     double zero_tolerance,
     double* B,
-    double* pivot 
+    double* pivot
     )
 {
   double t;
@@ -495,10 +495,10 @@ ON_Matrix::RowReduce(
 }
 
 int
-ON_Matrix::RowReduce( 
+ON_Matrix::RowReduce(
     double zero_tolerance,
     ON_3dPoint* B,
-    double* pivot 
+    double* pivot
     )
 {
   ON_3dPoint t;
@@ -555,10 +555,10 @@ ON_Matrix::RowReduce(
 }
 
 int
-ON_Matrix::RowReduce( 
+ON_Matrix::RowReduce(
     double zero_tolerance,
     int pt_dim, int pt_stride, double* pt,
-    double* pivot 
+    double* pivot
     )
 {
   const int sizeof_pt = pt_dim*sizeof(pt[0]);
@@ -634,7 +634,7 @@ ON_Matrix::RowReduce(
 
 
 bool
-ON_Matrix::BackSolve( 
+ON_Matrix::BackSolve(
     double zero_tolerance,
     int Bsize,
     const double* B,
@@ -667,7 +667,7 @@ ON_Matrix::BackSolve(
 }
 
 bool
-ON_Matrix::BackSolve( 
+ON_Matrix::BackSolve(
     double zero_tolerance,
     int Bsize,
     const ON_3dPoint* B,
@@ -712,7 +712,7 @@ ON_Matrix::BackSolve(
 
 
 bool
-ON_Matrix::BackSolve( 
+ON_Matrix::BackSolve(
     double zero_tolerance,
     int pt_dim,
     int Bsize,
@@ -735,7 +735,7 @@ ON_Matrix::BackSolve(
   if ( Bsize < m_col_count || Bsize > m_row_count )
     return false; // under determined
 
-  for ( i = m_col_count; i < Bsize; i++ ) 
+  for ( i = m_col_count; i < Bsize; i++ )
   {
     Bi = Bpt + i*Bpt_stride;
     for( j = 0; j < pt_dim; j++ )
@@ -967,7 +967,7 @@ bool ON_Matrix::Invert( double zero_tolerance )
     ON_ArrayScale( m_col_count-k-1, x, &this_m[k][k+1], &this_m[k][k+1] );
     I.RowScale( k, x );
 
-    // zero this_m[!=k][k]'s 
+    // zero this_m[!=k][k]'s
     for ( i = 0; i < n; i++ ) {
       if ( i != k ) {
         x = -this_m[i][k];
@@ -1019,7 +1019,7 @@ bool ON_Matrix::Multiply( const ON_Matrix& a, const ON_Matrix& b )
     }
     this_m[i][j] = x;
   }
-  return true;  
+  return true;
 }
 
 bool ON_Matrix::Add( const ON_Matrix& a, const ON_Matrix& b )
@@ -1040,13 +1040,13 @@ bool ON_Matrix::Add( const ON_Matrix& a, const ON_Matrix& b )
   for ( i = 0; i < m_row_count; i++ ) for ( j = 0; j < m_col_count; j++ ) {
     this_m[i][j] = am[i][j] + bm[i][j];
   }
-  return true;  
+  return true;
 }
 
 bool ON_Matrix::Scale( double s )
 {
   bool rc = false;
-  if ( m_row_count > 0 && m_col_count > 0 ) 
+  if ( m_row_count > 0 && m_col_count > 0 )
   {
     struct DBLBLK* cmem = (struct DBLBLK*)m_cmem;
     int i;
@@ -1077,12 +1077,12 @@ bool ON_Matrix::Scale( double s )
 }
 
 
-int ON_RowReduce( int row_count, 
+int ON_RowReduce( int row_count,
                   int col_count,
                   double zero_pivot,
-                  double** A, 
-                  double** B, 
-                  double pivots[2] 
+                  double** A,
+                  double** B,
+                  double pivots[2]
                  )
 {
   // returned A is identity, B = inverse of input A
@@ -1131,17 +1131,17 @@ int ON_RowReduce( int row_count,
       //
       //for ( j = i+1; j < N; j++ )
       //  A[i][j] *= a;
-      //      
+      //
       j = i+1;
       ptr1 = A[i] + j;
       j = N - j;
       while(j--) *ptr1++ *= a;
-      
+
       // The "ptr" voodoo is faster but does the same thing as
       //
       //for ( j = 0; j <= i; j++ )
       //  B[i][j] *= a;
-      //            
+      //
       ptr1 = B[i];
       j = i+1;
       while(j--) *ptr1++ *= a;
@@ -1153,7 +1153,7 @@ int ON_RowReduce( int row_count,
       if ( 0.0 == a )
         continue;
       a = -a;
-      
+
       //A[ii][i] = 0.0;  // no need to do this
 
       // The "ptr" voodoo is faster but does the same thing as
@@ -1184,7 +1184,7 @@ int ON_RowReduce( int row_count,
   }
 
 
-  // A is now upper triangular with all 1s on diagonal 
+  // A is now upper triangular with all 1s on diagonal
   //   (That is, if the lines that say "no need to do this" are used.)
   // B is lower triangular with a nonzero diagonal
   for ( i = M-1; i >= 0; i-- )

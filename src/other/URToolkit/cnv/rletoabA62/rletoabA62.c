@@ -120,9 +120,9 @@ main(int argc,char *argv[])
     yiq_t         **raster;
 
     /*
-     * Parse program arguments... 
+     * Parse program arguments...
      *
-     * The -w and -h args should actually not be used. 
+     * The -w and -h args should actually not be used.
      */
 
     errors = 0;
@@ -169,7 +169,7 @@ main(int argc,char *argv[])
     }
 
     /*
-     * Initialize the type manager for Utah RLE files 
+     * Initialize the type manager for Utah RLE files
      */
 
     rasterInit(file, Width, Height, BkgRed, BkgGreen, BkgBlue);
@@ -177,12 +177,12 @@ main(int argc,char *argv[])
     /*
      * Allocate storage for the RGB inputs, the computed YIQ, and the
      * results. This is all dynamically allocated because the dimensions of
-     * the framestore are only decided at run time. 
+     * the framestore are only decided at run time.
      *
      * The YIQ arrays are extended two entries at either end to simplify the
      * filtering code. The effect is that the iVal and qVal arrays can be
      * indexed [-2 .. Width+2] and yVal [-4 .. Width+4] (the stuff at the
-     * end of the yVal array isn't used). 
+     * end of the yVal array isn't used).
      */
 
     red = (unsigned char *) calloc(Width, sizeof *red);
@@ -198,7 +198,7 @@ main(int argc,char *argv[])
 
     /*
      * Allocate storage to hold the 8-bit YIQ values for the entire
-     * picture. 
+     * picture.
      */
 
     raster = (yiq_t **) calloc(Height, sizeof *raster);
@@ -208,7 +208,7 @@ main(int argc,char *argv[])
 
     /*
      * Build the mappings from R,G,B to Y,I,Q. The pedastal is factored
-     * into this mapping. 
+     * into this mapping.
      */
 
     for (i = 0; i < 256; i++) {
@@ -226,7 +226,7 @@ main(int argc,char *argv[])
     }
 
     /*
-     * process the input raster line by raster line 
+     * process the input raster line by raster line
      */
 
     for (i = 0; i < Height; i++) {
@@ -240,7 +240,7 @@ main(int argc,char *argv[])
 
 	/*
 	 * Convert RGB to YIQ.  The multiplication is done by table lookup
-	 * into the [rgb]TO[yiq] arrays. 
+	 * into the [rgb]TO[yiq] arrays.
 	 */
 
 	for (j = 0; j < Width; j++) {
@@ -257,7 +257,7 @@ main(int argc,char *argv[])
 	    filterIQ(qVal, 0.34594, 0.25122, 0.07581, 1, 2);
 	}
 	/*
-	 * Build the YIQ raster 
+	 * Build the YIQ raster
 	 */
 
 	for (j = 0; j < Width; j++) {
@@ -268,13 +268,13 @@ main(int argc,char *argv[])
     }
 
     /*
-     * Dump the raster as four color fields. 
+     * Dump the raster as four color fields.
      *
-     * Assert that Width%4 ==0 and Height%4 == 0 
+     * Assert that Width%4 ==0 and Height%4 == 0
      *
      * Despite what the A62 SCSI manual says, for frames I and IV, the even
      * numbered lines (starting with line 0) begin Y-I and the others begin
-     * Y+I. 
+     * Y+I.
      */
 
     for (i = 0; i < NumFrames; i++) {
@@ -303,7 +303,7 @@ main(int argc,char *argv[])
  *
  * Apply and RIF filter to the luminance data. The signal is shifted two pixels
  * to the right in the process.
- * 
+ *
  * The multiplier arrays m0, m1, and m2 exist to reduce the number of floating
  * point multiplications and to allow the filtering to occur in place.
  */
@@ -345,7 +345,7 @@ float *yVal, c0, c1, c2;
  * This is different from the manual in than the filtering is done on adjacent
  * pixels, rather than every other pixel.  This may be a problem...
  */
-void 
+void
 filterIQ(iqVal, c0, c1, c2, start, stride)
 float *iqVal, c0, c1, c2;
 int start, stride;

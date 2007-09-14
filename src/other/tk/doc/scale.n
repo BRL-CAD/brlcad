@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH scale n 4.1 Tk "Tk Built-In Commands"
 .BS
@@ -205,7 +205,7 @@ the horizontal behavior is described in parentheses.
 .IP [1]
 If button 1 is pressed in the trough, the scale's value will
 be incremented or decremented by the value of the \fBresolution\fR
-option so that the slider moves in the direction of the cursor. 
+option so that the slider moves in the direction of the cursor.
 If the button is held down, the action auto-repeats.
 .IP [2]
 If button 1 is pressed over the slider, the slider can be dragged

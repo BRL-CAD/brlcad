@@ -24,21 +24,21 @@ extern char *Tcl_Realloc _ANSI_ARGS_((char *ptr, unsigned int size));
 #endif /*__GNUC__*/
 
 Blt_MallocProc *Blt_MallocProcPtr = (Blt_MallocProc *)Tcl_Alloc;
-Blt_FreeProc *Blt_FreeProcPtr = (Blt_FreeProc *)Tcl_Free; 
-Blt_ReallocProc *Blt_ReallocProcPtr = (Blt_ReallocProc *)Tcl_Realloc; 
+Blt_FreeProc *Blt_FreeProcPtr = (Blt_FreeProc *)Tcl_Free;
+Blt_ReallocProc *Blt_ReallocProcPtr = (Blt_ReallocProc *)Tcl_Realloc;
 
 #else
 
-/* 
+/*
  * Try to use the same memory allocator/deallocator that Tcl is
  * using. Before 8.1 it used malloc/free.
  */
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0)) 
-/* 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0))
+/*
  * We're pointing to the private TclpAlloc/TclpFree instead of public
  * Tcl_Alloc/Tcl_Free routines because they don't automatically cause
- * a panic when not enough memory is available. There are cases (such 
+ * a panic when not enough memory is available. There are cases (such
  * as allocating a very large vector) where it's recoverable.
  */
 EXTERN Blt_MallocProc TclpAlloc;
@@ -46,12 +46,12 @@ EXTERN Blt_FreeProc TclpFree;
 EXTERN Blt_ReallocProc TclpRealloc;
 
 Blt_MallocProc *Blt_MallocProcPtr = TclpAlloc;
-Blt_FreeProc *Blt_FreeProcPtr = TclpFree; 
-Blt_ReallocProc *Blt_ReallocProcPtr = TclpRealloc; 
+Blt_FreeProc *Blt_FreeProcPtr = TclpFree;
+Blt_ReallocProc *Blt_ReallocProcPtr = TclpRealloc;
 #else
 
 Blt_MallocProc *Blt_MallocProcPtr = malloc;
-Blt_FreeProc *Blt_FreeProcPtr = free; 
+Blt_FreeProc *Blt_FreeProcPtr = free;
 Blt_ReallocProc *Blt_ReallocProcPtr = realloc;
 
 #endif /* >= 8.1.0 */
@@ -59,7 +59,7 @@ Blt_ReallocProc *Blt_ReallocProcPtr = realloc;
 
 void *
 Blt_Calloc(nElems, sizeOfElem)
-    unsigned int nElems; 
+    unsigned int nElems;
     size_t sizeOfElem;
 {
     char *ptr;

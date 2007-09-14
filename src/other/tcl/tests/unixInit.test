@@ -221,7 +221,7 @@ test unixInit-2.8 {TclpInitLibraryPath: all absolute pathtype} -setup {
     # Checking for Bug 219416
     # When a program that embeds the Tcl library, like tcltest, is
     # installed near the "root" of the file system, there was a problem
-    # constructing directories relative to the executable.  When a 
+    # constructing directories relative to the executable.  When a
     # relative ".." went past the root, relative path names were created
     # rather than absolute pathnames.  In some cases, accessing past the
     # root caused memory access violations too.

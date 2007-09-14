@@ -1,10 +1,10 @@
-# This file is a Tcl script to test out the procedures in tkWinFont.c. 
+# This file is a Tcl script to test out the procedures in tkWinFont.c.
 # It is organized in the standard fashion for Tcl tests.
 #
 # Many of these tests are visually oriented and cannot be checked
 # programmatically (such as "does an underlined font appear to be
 # underlined?"); these tests attempt to exercise the code in question,
-# but there are no results that can be checked.  
+# but there are no results that can be checked.
 #
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.

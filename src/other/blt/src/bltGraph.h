@@ -268,7 +268,7 @@ typedef struct {
 	Segment2D *segments;	/* Array of line segments representing the
 				 * x or y grid lines */
 	int nSegments;		/* # of axis segments. */
-    } x, y;	
+    } x, y;
 
 } Grid;
 
@@ -288,8 +288,8 @@ typedef struct {
     short int width, height;	/* Extents of the margin */
 
     short int axesOffset;
-    short int axesTitleLength;	/* Width of the widest title to be shown. 
-				 * Multiple titles are displayed in 
+    short int axesTitleLength;	/* Width of the widest title to be shown.
+				 * Multiple titles are displayed in
 				 * another margin. This is the minimum
 				 * space requirement. */
     unsigned int nAxes;		/* Number of axes to be displayed */
@@ -299,14 +299,14 @@ typedef struct {
 				 * updated when the margin size changes */
 
     int reqSize;		/* Requested size of margin */
-    int site;			/* Indicates where margin is located: 
+    int site;			/* Indicates where margin is located:
 				 * left/right/top/bottom. */
 } Margin;
 
 #define MARGIN_NONE	-1
-#define MARGIN_BOTTOM	0	
-#define MARGIN_LEFT	1 
-#define MARGIN_TOP	2			
+#define MARGIN_BOTTOM	0
+#define MARGIN_LEFT	1
+#define MARGIN_TOP	2
 #define MARGIN_RIGHT	3
 
 #define rightMargin	margins[MARGIN_RIGHT]
@@ -344,15 +344,15 @@ struct GraphStruct {
     Tk_Cursor cursor;
 
     int inset;			/* Sum of focus highlight and 3-D
-				 * border.  Indicates how far to 
-				 * offset the graph from outside 
+				 * border.  Indicates how far to
+				 * offset the graph from outside
 				 * edge of the window. */
 
     int borderWidth;		/* Width of the exterior border */
     int relief;			/* Relief of the exterior border */
     Tk_3DBorder border;		/* 3-D border used to delineate the plot
 				 * surface and outer edge of window */
-    
+
     int highlightWidth;		/* Width in pixels of highlight to draw
 				 * around widget when it has the focus.
 				 * <= 0 means don't draw a highlight. */
@@ -363,34 +363,34 @@ struct GraphStruct {
     char *title;
     short int titleX, titleY;
     TextStyle titleTextStyle;	/* Graph title */
-    
+
     char *takeFocus;
-    
+
     int reqWidth, reqHeight;	/* Requested size of graph window */
     int width, height;		/* Size of graph window or PostScript
 				 * page */
-    
+
     Blt_HashTable penTable;	/* Table of pens */
-    
+
     struct Component {
 	Blt_HashTable table;	/* Hash table of ids. */
 	Blt_Chain *displayList;	/* Display list. */
 	Blt_HashTable tagTable;	/* Table of bind tags. */
     } elements, markers, axes;
-    
+
     Blt_Uid classUid;		/* Default element type */
 
     Blt_BindTable bindTable;
     int nextMarkerId;		/* Tracks next marker identifier available */
-    
+
     Blt_Chain *axisChain[4];	/* Chain of axes for each of the
 				 * margins.  They're separate from the
 				 * margin structures to make it easier
 				 * to invert the X-Y axes by simply
-				 * switching chain pointers.  
+				 * switching chain pointers.
 				 */
     Margin margins[4];
-    
+
     PostScript *postscript;	/* PostScript options: see bltGrPS.c */
     Legend *legend;		/* Legend information: see bltGrLegd.c */
     Crosshairs *crosshairs;	/* Crosshairs information: see bltGrHairs.c */
@@ -419,7 +419,7 @@ struct GraphStruct {
     double aspect;
 
     short int left, right;	/* Coordinates of plot bbox */
-    short int top, bottom;	
+    short int top, bottom;
 
     Blt_Pad padX;		/* Vertical padding for plotarea */
     int vRange, vOffset;	/* Vertical axis range and offset from the
@@ -490,47 +490,47 @@ struct GraphStruct {
  *				position in the graph window) needs
  *				to be recalculated.
  *
- *	MAP_ALL			Indicates that the layout of the axes and 
- *				all elements and markers and the graph need 
+ *	MAP_ALL			Indicates that the layout of the axes and
+ *				all elements and markers and the graph need
  *				to be recalculated. Otherwise, the layout
  *				of only those markers and elements that
- *				have changed will be reset. 
+ *				have changed will be reset.
  *
- *	GET_AXIS_GEOMETRY	Indicates that the size of the axes needs 
- *				to be recalculated. 
+ *	GET_AXIS_GEOMETRY	Indicates that the size of the axes needs
+ *				to be recalculated.
  *
- *	RESET_AXES		Flag to call to Blt_ResetAxes routine.  
+ *	RESET_AXES		Flag to call to Blt_ResetAxes routine.
  *				This routine recalculates the scale offset
  *				(used for mapping coordinates) of each axis.
- *				If an axis limit has changed, then it sets 
- *				flags to re-layout and redraw the entire 
+ *				If an axis limit has changed, then it sets
+ *				flags to re-layout and redraw the entire
  *				graph.  This needs to happend before the axis
- *				can compute transformations between graph and 
- *				screen coordinates. 
+ *				can compute transformations between graph and
+ *				screen coordinates.
  *
- *	LAYOUT_NEEDED		
+ *	LAYOUT_NEEDED
  *
- *	REDRAW_BACKING_STORE	If set, redraw all elements into the pixmap 
- *				used for buffering elements. 
+ *	REDRAW_BACKING_STORE	If set, redraw all elements into the pixmap
+ *				used for buffering elements.
  *
- *	REDRAW_PENDING		Non-zero means a DoWhenIdle handler has 
- *				already been queued to redraw this window. 
+ *	REDRAW_PENDING		Non-zero means a DoWhenIdle handler has
+ *				already been queued to redraw this window.
  *
- *	DRAW_LEGEND		Non-zero means redraw the legend. If this is 
- *				the only DRAW_* flag, the legend display 
- *				routine is called instead of the graph 
- *				display routine. 
+ *	DRAW_LEGEND		Non-zero means redraw the legend. If this is
+ *				the only DRAW_* flag, the legend display
+ *				routine is called instead of the graph
+ *				display routine.
  *
- *	DRAW_MARGINS		Indicates that the margins bordering 
- *				the plotting area need to be redrawn. 
+ *	DRAW_MARGINS		Indicates that the margins bordering
+ *				the plotting area need to be redrawn.
  *				The possible reasons are:
  *
  *				1) an axis configuration changed
  *				2) an axis limit changed
  *				3) titles have changed
- *				4) window was resized. 
+ *				4) window was resized.
  *
- *	GRAPH_FOCUS	
+ *	GRAPH_FOCUS
  */
 
 #define	MAP_ITEM		(1<<0) /* 0x0001 */
@@ -558,9 +558,9 @@ struct GraphStruct {
 extern int Blt_CreatePostScript _ANSI_ARGS_((Graph *graphPtr));
 extern int Blt_CreateCrosshairs _ANSI_ARGS_((Graph *graphPtr));
 extern int Blt_CreateGrid _ANSI_ARGS_((Graph *graphPtr));
-extern double Blt_InvHMap _ANSI_ARGS_((Graph *graphPtr, Axis *axisPtr, 
+extern double Blt_InvHMap _ANSI_ARGS_((Graph *graphPtr, Axis *axisPtr,
 	double x));
-extern double Blt_InvVMap _ANSI_ARGS_((Graph *graphPtr, Axis *axisPtr, 
+extern double Blt_InvVMap _ANSI_ARGS_((Graph *graphPtr, Axis *axisPtr,
 	double x));
 extern double Blt_HMap _ANSI_ARGS_((Graph *graphPtr, Axis *axisPtr, double x));
 extern double Blt_VMap _ANSI_ARGS_((Graph *graphPtr, Axis *axisPtr, double y));
@@ -594,7 +594,7 @@ extern void Blt_DrawGraph _ANSI_ARGS_((Graph *graphPtr, Drawable drawable,
 extern void Blt_DrawGrid _ANSI_ARGS_((Graph *graphPtr, Drawable drawable));
 extern void Blt_DrawMarkers _ANSI_ARGS_((Graph *graphPtr, Drawable drawable,
 	int under));
-extern void Blt_Draw2DSegments _ANSI_ARGS_((Display *display, 
+extern void Blt_Draw2DSegments _ANSI_ARGS_((Display *display,
 	Drawable drawable, GC gc, Segment2D *segments, int nSegments));
 extern int Blt_GetCoordinate _ANSI_ARGS_((Tcl_Interp *interp,
 	char *expr, double *valuePtr));
@@ -614,7 +614,7 @@ extern void Blt_MapMarkers _ANSI_ARGS_((Graph *graphPtr));
 extern void Blt_MapGrid _ANSI_ARGS_((Graph *graphPtr));
 extern void Blt_UpdateCrosshairs _ANSI_ARGS_((Graph *graphPtr));
 extern void Blt_DestroyPens _ANSI_ARGS_((Graph *graphPtr));
-extern int Blt_GetPen _ANSI_ARGS_((Graph *graphPtr, char *name, 
+extern int Blt_GetPen _ANSI_ARGS_((Graph *graphPtr, char *name,
 	Blt_Uid classUid, Pen **penPtrPtr));
 extern Pen *Blt_BarPen _ANSI_ARGS_((char *penName));
 extern Pen *Blt_LinePen _ANSI_ARGS_((char *penName));
@@ -626,7 +626,7 @@ extern void Blt_FreePen _ANSI_ARGS_((Graph *graphPtr, Pen *penPtr));
 
 extern int Blt_VirtualAxisOp _ANSI_ARGS_((Graph *graphPtr, Tcl_Interp *interp,
 	int argc, char **argv));
-extern int Blt_AxisOp _ANSI_ARGS_((Graph *graphPtr, int margin, int argc, 
+extern int Blt_AxisOp _ANSI_ARGS_((Graph *graphPtr, int margin, int argc,
 	char **argv));
 extern int Blt_ElementOp _ANSI_ARGS_((Graph *graphPtr, Tcl_Interp *interp,
 	int argc, char **argv, Blt_Uid classUid));
@@ -638,11 +638,11 @@ extern int Blt_MarkerOp _ANSI_ARGS_((Graph *graphPtr, Tcl_Interp *interp,
 	int argc, char **argv));
 extern int Blt_PenOp _ANSI_ARGS_((Graph *graphPtr, Tcl_Interp *interp,
 	int argc, char **argv));
-extern int Blt_PointInPolygon _ANSI_ARGS_((Point2D *samplePtr, 
+extern int Blt_PointInPolygon _ANSI_ARGS_((Point2D *samplePtr,
 	Point2D *screenPts, int nScreenPts));
 extern int Blt_RegionInPolygon _ANSI_ARGS_((Extents2D *extsPtr, Point2D *points,
 	int nPoints, int enclosed));
-extern int Blt_PointInSegments _ANSI_ARGS_((Point2D *samplePtr, 
+extern int Blt_PointInSegments _ANSI_ARGS_((Point2D *samplePtr,
 	Segment2D *segments, int nSegments, double halo));
 extern int Blt_PostScriptOp _ANSI_ARGS_((Graph *graphPtr, Tcl_Interp *interp,
 	int argc, char **argv));

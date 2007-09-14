@@ -1182,7 +1182,7 @@ MODULE_SCOPE void	TkUnderlineCharsInContext(Display *display,
 			    const char *string, int numBytes, int x, int y,
 			    int firstByte, int lastByte);
 MODULE_SCOPE void	TkpGetFontAttrsForChar(Tk_Window tkwin, Tk_Font tkfont,
-					       Tcl_UniChar c, 
+					       Tcl_UniChar c,
 					       struct TkFontAttributes *faPtr);
 
 /*

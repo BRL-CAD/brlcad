@@ -46,25 +46,25 @@ static Atom dndAtom;
 #endif
 
 /*
- *	Each "drag&drop" target widget is tagged with a "BltDrag&DropTarget" 
- *	property in XA_STRING format.  This property identifies the window 
+ *	Each "drag&drop" target widget is tagged with a "BltDrag&DropTarget"
+ *	property in XA_STRING format.  This property identifies the window
  *	as a "drag&drop" target.  It's formated as a Tcl list and contains
  *	the following information:
  *
  *	    "INTERP_NAME TARGET_NAME DATA_TYPE DATA_TYPE ..."
  *
  *	  INTERP_NAME	Name of the target application's interpreter.
- *	  TARGET_NAME	Path name of widget registered as the drop target.  
+ *	  TARGET_NAME	Path name of widget registered as the drop target.
  *	  DATA_TYPE	One or more "types" handled by the target.
  *
  *	When the user invokes the "drag" operation, the window hierarchy
  *	is progressively examined.  Window information is cached during
  *	the operation, to minimize X server traffic. Windows carrying a
- *	"BltDrag&DropTarget" property are identified.  When the token is 
- *	dropped over a valid site, the drop information is sent to the 
- *	application 
- *	via the usual "send" command.  If communication fails, the drag&drop 
- *	facility automatically posts a rejection symbol on the token window.  
+ *	"BltDrag&DropTarget" property are identified.  When the token is
+ *	dropped over a valid site, the drop information is sent to the
+ *	application
+ *	via the usual "send" command.  If communication fails, the drag&drop
+ *	facility automatically posts a rejection symbol on the token window.
  */
 
 #define INTERP_NAME	0
@@ -138,7 +138,7 @@ typedef struct {
 typedef struct AnyWindowStruct AnyWindow;
 
 struct AnyWindowStruct {
-    WINDOW nativeWindow;	/* Native window: HWINDOW (Win32) or 
+    WINDOW nativeWindow;	/* Native window: HWINDOW (Win32) or
 				 * Window (X11). */
 
     int initialized;		/* If non-zero, the rest of this structure's
@@ -258,10 +258,10 @@ typedef struct {
 } Token;
 
 typedef struct {
-    Tcl_Interp *interp;		/* Interpreter associated with the Tk source 
+    Tcl_Interp *interp;		/* Interpreter associated with the Tk source
 				 * widget. */
 
-    Tk_Window tkwin;		/* Tk window registered as the drag&drop 
+    Tk_Window tkwin;		/* Tk window registered as the drag&drop
 				 * source. */
 
     Display *display;		/* Drag&drop source window display */
@@ -272,24 +272,24 @@ typedef struct {
     int button;			/* Button used to invoke drag operation. */
 
     Token token;		/* Token used to provide special cursor. */
-    
+
     int pkgCmdInProgress;	/* Indicates if a pkgCmd is currently active. */
     char *pkgCmd;		/* Tcl command executed at start of "drag"
-				 * operation to gather information about 
+				 * operation to gather information about
 				 * the source data. */
 
-    char *pkgCmdResult;		/* Result returned by the most recent 
+    char *pkgCmdResult;		/* Result returned by the most recent
 				 * pkgCmd. */
 
-    char *siteCmd;		/* Tcl command executed to update token 
+    char *siteCmd;		/* Tcl command executed to update token
 				 * window. */
 
     AnyWindow *rootPtr;		/* Cached window information: Gathered
-				 * and used during the "drag" operation 
-				 * to see if the mouse pointer is over a 
+				 * and used during the "drag" operation
+				 * to see if the mouse pointer is over a
 				 * valid target. */
 
-    int selfTarget;		/* Indicated if the source should drop onto 
+    int selfTarget;		/* Indicated if the source should drop onto
 				 * itself. */
 
     Tk_Cursor cursor;		/* cursor restored after dragging */
@@ -298,8 +298,8 @@ typedef struct {
 
     Blt_HashEntry *hashPtr;
 
-    AnyWindow *windowPtr;	/* Last target examined. If NULL, mouse 
-				 * pointer is not currently over a valid 
+    AnyWindow *windowPtr;	/* Last target examined. If NULL, mouse
+				 * pointer is not currently over a valid
 				 * target. */
 } Source;
 
@@ -341,17 +341,17 @@ static Tk_ConfigSpec configSpecs[] =
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_BOOLEAN, "-selftarget", "selfTarget", "SelfTarget",
 	DEF_DND_SELF_TARGET, Tk_Offset(Source, selfTarget), 0},
-    {TK_CONFIG_CUSTOM, "-send", "send", "Send", DEF_DND_SEND, 
+    {TK_CONFIG_CUSTOM, "-send", "send", "Send", DEF_DND_SEND,
 	Tk_Offset(Source, sendTypes), TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_STRING, "-sitecmd", "siteCommand", "Command",
 	DEF_DND_SITE_COMMAND, Tk_Offset(Source, siteCmd), TK_CONFIG_NULL_OK},
     {TK_CONFIG_ANCHOR, "-tokenanchor", "tokenAnchor", "Anchor",
 	DEF_TOKEN_ANCHOR, Tk_Offset(Source, token.anchor), 0},
-    {TK_CONFIG_BORDER, "-tokenactivebackground", "tokenActiveBackground", 
-	"ActiveBackground", DEF_TOKEN_ACTIVE_BACKGROUND, 
+    {TK_CONFIG_BORDER, "-tokenactivebackground", "tokenActiveBackground",
+	"ActiveBackground", DEF_TOKEN_ACTIVE_BACKGROUND,
 	Tk_Offset(Source, token.activeBorder), TK_CONFIG_COLOR_ONLY},
-    {TK_CONFIG_BORDER, "-tokenactivebackground", "tokenActiveBackground", 
-	"ActiveBackground", DEF_TOKEN_ACTIVE_BG_MONO, 
+    {TK_CONFIG_BORDER, "-tokenactivebackground", "tokenActiveBackground",
+	"ActiveBackground", DEF_TOKEN_ACTIVE_BG_MONO,
 	Tk_Offset(Source, token.activeBorder), TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_BORDER, "-tokenbg", "tokenBackground", "Background",
 	DEF_TOKEN_BACKGROUND, Tk_Offset(Source, token.normalBorder),
@@ -368,9 +368,9 @@ static Tk_ConfigSpec configSpecs[] =
     {TK_CONFIG_PIXELS, "-tokenborderwidth", "tokenBorderWidth", "BorderWidth",
 	DEF_TOKEN_BORDERWIDTH, Tk_Offset(Source, token.borderWidth), 0},
     {TK_CONFIG_CURSOR, "-tokencursor", "tokenCursor", "Cursor",
-	DEF_TOKEN_CURSOR, Tk_Offset(Source, token.cursor), 
+	DEF_TOKEN_CURSOR, Tk_Offset(Source, token.cursor),
 	TK_CONFIG_NULL_OK},
-    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 
+    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL,
 	0, 0},
 };
 
@@ -380,14 +380,14 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
 	"ActiveBackground", DEF_TOKEN_ACTIVE_BACKGROUND,
 	Tk_Offset(Token, activeBorder), TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_BORDER, "-activebackground", "activeBackground",
-	"ActiveBackground", DEF_TOKEN_ACTIVE_BG_MONO, 
+	"ActiveBackground", DEF_TOKEN_ACTIVE_BG_MONO,
 	Tk_Offset(Token, activeBorder), TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_RELIEF, "-activerelief", "activeRelief", "activeRelief",
 	DEF_TOKEN_ACTIVE_RELIEF, Tk_Offset(Token, activeRelief), 0},
     {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor",
 	DEF_TOKEN_ANCHOR, Tk_Offset(Token, anchor), 0},
     {TK_CONFIG_PIXELS, "-activeborderwidth", "activeBorderWidth",
-	"ActiveBorderWidth", DEF_TOKEN_ACTIVE_BORDERWIDTH, 
+	"ActiveBorderWidth", DEF_TOKEN_ACTIVE_BORDERWIDTH,
 	Tk_Offset(Token, activeBorderWidth), 0},
     {TK_CONFIG_BORDER, "-background", "background", "Background",
 	DEF_TOKEN_BACKGROUND, Tk_Offset(Token, normalBorder),
@@ -403,19 +403,19 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
 	DEF_TOKEN_OUTLINE_COLOR, Tk_Offset(Token, outline),
 	TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_BORDER, "-outline", "outline", "Outline",
-	DEF_TOKEN_OUTLINE_MONO, Tk_Offset(Token, outline), 
+	DEF_TOKEN_OUTLINE_MONO, Tk_Offset(Token, outline),
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_COLOR, "-rejectbg", "rejectBackground", "Background",
-	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, rejectBg), 
+	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, rejectBg),
 	TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_COLOR, "-rejectbg", "rejectBackground", "Background",
-	DEF_TOKEN_REJECT_BG_MONO, Tk_Offset(Token, rejectBg), 
+	DEF_TOKEN_REJECT_BG_MONO, Tk_Offset(Token, rejectBg),
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_COLOR, "-rejectfg", "rejectForeground", "Foreground",
-	DEF_TOKEN_REJECT_FOREGROUND, Tk_Offset(Token, rejectFg), 
+	DEF_TOKEN_REJECT_FOREGROUND, Tk_Offset(Token, rejectFg),
 	TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_COLOR, "-rejectfg", "rejectForeground", "Foreground",
-	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, rejectFg), 
+	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, rejectFg),
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_BITMAP, "-rejectstipple", "rejectStipple", "Stipple",
 	DEF_TOKEN_REJECT_STIPPLE_COLOR, Tk_Offset(Token, rejectStipple),
@@ -425,7 +425,7 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief",
 	DEF_TOKEN_RELIEF, Tk_Offset(Token, relief), 0},
-    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 
+    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL,
 	0, 0},
 };
 
@@ -435,16 +435,16 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
  */
 static int DragDropCmd _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp,
 	int argc, char **argv));
-static void TokenEventProc _ANSI_ARGS_((ClientData clientData, 
+static void TokenEventProc _ANSI_ARGS_((ClientData clientData,
 	XEvent *eventPtr));
-static void TargetEventProc _ANSI_ARGS_((ClientData clientData, 
+static void TargetEventProc _ANSI_ARGS_((ClientData clientData,
 	XEvent *eventPtr));
 static void MoveToken _ANSI_ARGS_((Source * srcPtr, Token *tokenPtr));
 static void UpdateToken _ANSI_ARGS_((ClientData clientData));
 static void HideToken _ANSI_ARGS_((Token *tokenPtr));
 static void RejectToken _ANSI_ARGS_((Token *tokenPtr));
 
-static int GetSource _ANSI_ARGS_((Tcl_Interp *interp, char *name, 
+static int GetSource _ANSI_ARGS_((Tcl_Interp *interp, char *name,
 	Source **srcPtrPtr));
 static Source *CreateSource _ANSI_ARGS_((Tcl_Interp *interp, char *pathname,
 	int *newEntry));
@@ -537,9 +537,9 @@ GetWindowZOrder(
  */
 static BOOL CALLBACK
 GetEnumPropsExProc(
-    HWND hwnd, 
-    LPCTSTR atom, 
-    HANDLE hData, 
+    HWND hwnd,
+    LPCTSTR atom,
+    HANDLE hData,
     DWORD clientData)
 {
     PropertyInfo *infoPtr = (PropertyInfo *) clientData;
@@ -807,8 +807,8 @@ ChangeToken(tokenPtr, active)
 	border = tokenPtr->normalBorder;
 	borderWidth = tokenPtr->borderWidth;
     }
-    Blt_Fill3DRectangle(tokenPtr->tkwin, Tk_WindowId(tokenPtr->tkwin), border, 
-	2, 2, Tk_Width(tokenPtr->tkwin) - 4, Tk_Height(tokenPtr->tkwin) - 4, 
+    Blt_Fill3DRectangle(tokenPtr->tkwin, Tk_WindowId(tokenPtr->tkwin), border,
+	2, 2, Tk_Width(tokenPtr->tkwin) - 4, Tk_Height(tokenPtr->tkwin) - 4,
 	borderWidth, relief);
 }
 
@@ -970,15 +970,15 @@ UpdateToken(clientData)
 	Tcl_DString dString;
 	int result;
 	SubstDescriptors subs[2];
-	
+
 	sprintf(buffer, "%d", tokenPtr->active);
 	subs[0].letter = 's';
 	subs[0].value = buffer;
 	subs[1].letter = 't';
 	subs[1].value = Tk_PathName(tokenPtr->tkwin);
-	
+
 	Tcl_DStringInit(&dString);
-	result = Tcl_Eval(srcPtr->interp, 
+	result = Tcl_Eval(srcPtr->interp,
 			  ExpandPercents(srcPtr->siteCmd, subs, 2, &dString));
 	Tcl_DStringFree(&dString);
 	if ((result != TCL_OK) && (errorCmd != NULL) && (*errorCmd)) {
@@ -1301,7 +1301,7 @@ ConfigureSource(interp, srcPtr, argc, argv, flags)
      *  Check the button binding for valid range (0 or 1-5)
      */
     if ((srcPtr->button < 0) || (srcPtr->button > 5)) {
-	Tcl_AppendResult(interp, 
+	Tcl_AppendResult(interp,
 		 "button number must be 1-5, or 0 for no bindings",
 		 (char *)NULL);
 	return TCL_ERROR;
@@ -1438,12 +1438,12 @@ CreateTarget(interp, tkwin)
     targetPtr->display = Tk_Display(tkwin);
     targetPtr->tkwin = tkwin;
     Blt_InitHashTable(&(targetPtr->handlerTable), BLT_STRING_KEYS);
-    targetPtr->hashPtr = Blt_CreateHashEntry(&targetTable, (char *)tkwin, 
+    targetPtr->hashPtr = Blt_CreateHashEntry(&targetTable, (char *)tkwin,
 	     &isNew);
     Blt_SetHashValue(targetPtr->hashPtr, targetPtr);
 
-    /* 
-     * Arrange for the target to removed if the host window is destroyed.  
+    /*
+     * Arrange for the target to removed if the host window is destroyed.
      */
     Tk_CreateEventHandler(tkwin, StructureNotifyMask, TargetEventProc,
 	  targetPtr);
@@ -1586,9 +1586,9 @@ DndSend(srcPtr)
 	subs[1].value = targetInfo[TARGET_NAME];
 	subs[2].letter = 'v';
 	subs[2].value = srcPtr->pkgCmdResult;
-	
+
 	Tcl_DStringInit(&cmdString);
-	status = Tcl_Eval(srcPtr->interp, 
+	status = Tcl_Eval(srcPtr->interp,
 		ExpandPercents(cmd, subs, 3, &cmdString));
 	Tcl_DStringFree(&cmdString);
         if (status != TCL_OK) {
@@ -1886,7 +1886,7 @@ QueryWindow(display, windowPtr)
     /*
      *  Query for the window coordinates.
      */
-    visible = GetWindowRegion(display, windowPtr->nativeWindow, 
+    visible = GetWindowRegion(display, windowPtr->nativeWindow,
       &(windowPtr->x1), &(windowPtr->y1), &(windowPtr->x2), &(windowPtr->y2));
     if (visible) {
 	Blt_ChainLink *linkPtr;
@@ -2068,7 +2068,7 @@ DragOp(interp, argc, argv)
 	    " drag pathname x y\"", (char *)NULL);
 	return TCL_ERROR;
     }
-    if ((GetSource(interp, argv[2], &srcPtr) != TCL_OK) || 
+    if ((GetSource(interp, argv[2], &srcPtr) != TCL_OK) ||
 	(Tcl_GetInt(interp, argv[3], &x) != TCL_OK) ||
 	(Tcl_GetInt(interp, argv[4], &y) != TCL_OK)) {
 	return TCL_ERROR;
@@ -2221,7 +2221,7 @@ DropOp(interp, argc, argv)
     tokenPtr = &(srcPtr->token);
     tokenPtr->lastX = locX = x;			/* Save drag&drop location */
     tokenPtr->lastY = locY = y;
-    
+
     /* Put the cursor back to its usual state.  */
     if (srcPtr->cursor == None) {
 	Tk_UndefineCursor(srcPtr->tkwin);
@@ -2339,7 +2339,7 @@ TokenOp(interp, argc, argv)
     if (GetSource(interp, argv[2], &srcPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
-    if ((argc > 3) && 
+    if ((argc > 3) &&
 	(ConfigureToken(interp, srcPtr, argc - 3, argv + 3) != TCL_OK)) {
 	return TCL_ERROR;
     }
@@ -2708,7 +2708,7 @@ Blt_DragDropInit(interp)
 	locX = locY = 0;
 	initialized = TRUE;
 #ifndef WIN32
-	dndAtom = XInternAtom(Tk_Display(Tk_MainWindow(interp)), propName, 
+	dndAtom = XInternAtom(Tk_Display(Tk_MainWindow(interp)), propName,
 		False);
 #endif
     }

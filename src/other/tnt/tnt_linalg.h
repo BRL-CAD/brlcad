@@ -13,10 +13,10 @@ namespace Linear_Algebra {
 
 	using namespace std;
 
-/** 
+/**
    <P>
    For a symmetric, positive definite matrix A, this function
-   computes the Cholesky factorization, i.e. it computes a lower 
+   computes the Cholesky factorization, i.e. it computes a lower
    triangular matrix L such that A = L*L'.
    If the matrix is not symmetric or positive definite, the function
    computes only a partial decomposition.  This can be tested with
@@ -27,13 +27,13 @@ namespace Linear_Algebra {
 	Matrix<double> A(n,n);
 	Matrix<double> L;
 
-	 ... 
+	 ...
 
 	Cholesky<double> chol(A);
 
 	if (chol.is_spd())
 		L = chol.getL();
-		
+
   	else
 		cout << "factorization was not complete.\n";
 
@@ -41,7 +41,7 @@ namespace Linear_Algebra {
 
 
    <p>
-	(Adapted from JAMA, a Java Matrix Library, developed by jointly 
+	(Adapted from JAMA, a Java Matrix Library, developed by jointly
 	by the Mathworks and NIST; see  http://math.nist.gov/javanumerics/jama).
 
    */
@@ -67,7 +67,7 @@ template <class Real>
 Cholesky<Real>::Cholesky() : L_(Real(0.0)), isspd(0) {}
 
 /**
-	@return 1, if original matrix to be factored was symmetric 
+	@return 1, if original matrix to be factored was symmetric
 		positive-definite (SPD).
 */
 template <class Real>
@@ -98,7 +98,7 @@ Cholesky<Real>::Cholesky(const Matrix<Real> &A)
 
    	int m = A.num_rows();
 	int n = A.num_cols();
-	
+
 	isspd = (m == n);
 
 	if (m != n)
@@ -111,24 +111,24 @@ Cholesky<Real>::Cholesky(const Matrix<Real> &A)
 
 
       // Main loop.
-     for (int j = 0; j < n; j++) 
+     for (int j = 0; j < n; j++)
 	 {
         Real d = Real(0.0);
-        for (int k = 0; k < j; k++) 
+        for (int k = 0; k < j; k++)
 		{
             Real s = Real(0.0);
-            for (int i = 0; i < k; i++) 
+            for (int i = 0; i < k; i++)
 			{
                s += L_[k][i]*L_[j][i];
             }
             L_[j][k] = s = (A[j][k] - s)/L_[k][k];
             d = d + s*s;
-            isspd = isspd && (A[k][j] == A[j][k]); 
+            isspd = isspd && (A[k][j] == A[j][k]);
          }
          d = A[j][j] - d;
          isspd = isspd && (d > Real(0.0));
          L_[j][j] = sqrt(d > Real(0.0) ? d : Real(0.0));
-         for (int k = j+1; k < n; k++) 
+         for (int k = j+1; k < n; k++)
 		 {
             L_[j][k] = Real(0.0);
          }
@@ -157,18 +157,18 @@ Vector<Real> Cholesky<Real>::solve(const Vector<Real> &b)
 
 
       // Solve L*y = b;
-      for (int k = 0; k < n; k++) 
+      for (int k = 0; k < n; k++)
 	  {
-         for (int i = 0; i < k; i++) 
+         for (int i = 0; i < k; i++)
                x[k] -= x[i]*L_[k][i];
 		 x[k] /= L_[k][k];
-		
+
       }
 
       // Solve L'*X = Y;
-      for (int k = n-1; k >= 0; k--) 
+      for (int k = n-1; k >= 0; k--)
 	  {
-         for (int i = k+1; i < n; i++) 
+         for (int i = k+1; i < n; i++)
                x[k] -= x[i]*L_[i][k];
          x[k] /= L_[k][k];
       }
@@ -201,9 +201,9 @@ Matrix<Real> Cholesky<Real>::solve(const Matrix<Real> &B)
       // Solve L*y = b;
   	  for (int j=0; j< nx; j++)
 	  {
-      	for (int k = 0; k < n; k++) 
+      	for (int k = 0; k < n; k++)
 		{
-			for (int i = 0; i < k; i++) 
+			for (int i = 0; i < k; i++)
                X[k][j] -= X[i][j]*L_[k][i];
 		    X[k][j] /= L_[k][k];
 		 }
@@ -212,9 +212,9 @@ Matrix<Real> Cholesky<Real>::solve(const Matrix<Real> &B)
       // Solve L'*X = Y;
      for (int j=0; j<nx; j++)
 	 {
-      	for (int k = n-1; k >= 0; k--) 
+      	for (int k = n-1; k >= 0; k--)
 	  	{
-         	for (int i = k+1; i < n; i++) 
+         	for (int i = k+1; i < n; i++)
                X[k][j] -= X[i][j]*L_[i][k];
          	X[k][j] /= L_[k][k];
 		}
@@ -228,17 +228,17 @@ Matrix<Real> Cholesky<Real>::solve(const Matrix<Real> &B)
 
 
 
-/** 
+/**
 
     Computes eigenvalues and eigenvectors of a real (non-complex)
-    matrix. 
+    matrix.
 <P>
     If A is symmetric, then A = V*D*V' where the eigenvalue matrix D is
     diagonal and the eigenvector matrix V is orthogonal. That is,
 	the diagonal values of D are the eigenvalues, and
-    V*V' = I, where I is the identity matrix.  The columns of V 
+    V*V' = I, where I is the identity matrix.  The columns of V
     represent the eigenvectors in the sense that A*V = V*D.
-    
+
 <P>
     If A is not symmetric, then the eigenvalue matrix D is block diagonal
     with the real eigenvalues in 1-by-1 blocks and any complex eigenvalues,
@@ -257,7 +257,7 @@ Matrix<Real> Cholesky<Real>::solve(const Matrix<Real> &B)
 <pre>
 
             u        v        .          .      .    .
-           -v        u        .          .      .    . 
+           -v        u        .          .      .    .
             .        .        a          b      .    .
             .        .       -b          a      .    .
             .        .        .          .      x    .
@@ -265,16 +265,16 @@ Matrix<Real> Cholesky<Real>::solve(const Matrix<Real> &B)
 </pre>
     This keeps V a real matrix in both symmetric and non-symmetric
     cases, and A*V = V*D.
-    
-    
-    
+
+
+
     <p>
     The matrix V may be badly
     conditioned, or even singular, so the validity of the equation
     A = V*D*inverse(V) depends upon the condition number of V.
 
    <p>
-	(Adapted from JAMA, a Java Matrix Library, developed by jointly 
+	(Adapted from JAMA, a Java Matrix Library, developed by jointly
 	by the Mathworks and NIST (see  http://math.nist.gov/javanumerics/jama),
 	which in turn, were based on original EISPACK routines.
 **/
@@ -301,7 +301,7 @@ class Eigenvalue
    @serial internal storage of nonsymmetric Hessenberg form.
    */
    Matrix<Real> H;
-   
+
 
    /* Working storage for nonsymmetric algorithm.
    @serial working storage for nonsymmetric algorithm.
@@ -323,11 +323,11 @@ class Eigenvalue
       }
 
       // Householder reduction to tridiagonal form.
-   
+
       for (int i = n-1; i > 0; i--) {
-   
+
          // Scale to avoid under/overflow.
-   
+
          Real scale = Real(0.0);
          Real h = Real(0.0);
          for (int k = 0; k < i; k++) {
@@ -341,9 +341,9 @@ class Eigenvalue
                V[j][i] = Real(0.0);
             }
          } else {
-   
+
             // Generate Householder vector.
-   
+
             for (int k = 0; k < i; k++) {
                d[k] /= scale;
                h += d[k] * d[k];
@@ -359,9 +359,9 @@ class Eigenvalue
             for (int j = 0; j < i; j++) {
                e[j] = Real(0.0);
             }
-   
+
             // Apply similarity transformation to remaining columns.
-   
+
             for (int j = 0; j < i; j++) {
                f = d[j];
                V[j][i] = f;
@@ -393,9 +393,9 @@ class Eigenvalue
          }
          d[i] = h;
       }
-   
+
       // Accumulate transformations.
-   
+
       for (int i = 0; i < n-1; i++) {
          V[n-1][i] = V[i][i];
          V[i][i] = Real(1.0);
@@ -424,29 +424,29 @@ class Eigenvalue
       }
       V[n-1][n-1] = Real(1.0);
       e[0] = Real(0.0);
-   } 
+   }
 
    // Symmetric tridiagonal QL algorithm.
-   
+
    void tql2 () {
 
    //  This is derived from the Algol procedures tql2, by
    //  Bowdler, Martin, Reinsch, and Wilkinson, Handbook for
    //  Auto. Comp., Vol.ii-Linear Algebra, and the corresponding
    //  Fortran subroutine in EISPACK.
-   
+
       for (int i = 1; i < n; i++) {
          e[i-1] = e[i];
       }
       e[n-1] = Real(0.0);
-   
+
       Real f = Real(0.0);
       Real tst1 = Real(0.0);
       Real eps = pow(2.0,-52.0);
       for (int l = 0; l < n; l++) {
 
          // Find small subdiagonal element
-   
+
          tst1 = max(tst1,abs(d[l]) + abs(e[l]));
          int m = l;
 
@@ -458,17 +458,17 @@ class Eigenvalue
             m++;
          }
 
-   
+
          // If m == l, d[l] is an eigenvalue,
          // otherwise, iterate.
-   
+
          if (m > l) {
             int iter = 0;
             do {
                iter = iter + 1;  // (Could check iteration count here.)
-   
+
                // Compute implicit shift
-   
+
                Real g = d[l];
                Real p = (d[l+1] - g) / (2.0 * e[l]);
                Real r = hypot(p, static_cast<Real>(Real(1.0)));
@@ -483,9 +483,9 @@ class Eigenvalue
                   d[i] -= h;
                }
                f = f + h;
-   
+
                // Implicit QL transformation.
-   
+
                p = d[m];
                Real c = Real(1.0);
                Real c2 = c;
@@ -505,9 +505,9 @@ class Eigenvalue
                   c = p / r;
                   p = c * d[i] - s * g;
                   d[i+1] = h + s * (c * g + s * d[i]);
-   
+
                   // Accumulate transformation.
-   
+
                   for (int k = 0; k < n; k++) {
                      h = V[k][i+1];
                      V[k][i+1] = s * V[k][i] + c * h;
@@ -517,17 +517,17 @@ class Eigenvalue
                p = -s * s2 * c3 * el1 * e[l] / dl1;
                e[l] = s * p;
                d[l] = c * p;
-   
+
                // Check for convergence.
-   
+
             } while (abs(e[l]) > eps*tst1);
          }
          d[l] = d[l] + f;
          e[l] = Real(0.0);
       }
-     
+
       // Sort eigenvalues and corresponding vectors.
-   
+
       for (int i = 0; i < n-1; i++) {
          int k = i;
          Real p = d[i];
@@ -552,27 +552,27 @@ class Eigenvalue
    // Nonsymmetric reduction to Hessenberg form.
 
    void orthes () {
-   
+
       //  This is derived from the Algol procedures orthes and ortran,
       //  by Martin and Wilkinson, Handbook for Auto. Comp.,
       //  Vol.ii-Linear Algebra, and the corresponding
       //  Fortran subroutines in EISPACK.
-   
+
       int low = 0;
       int high = n-1;
-   
+
       for (int m = low+1; m <= high-1; m++) {
-   
+
          // Scale column.
-   
+
          Real scale = Real(0.0);
          for (int i = m; i <= high; i++) {
             scale = scale + abs(H[i][m-1]);
          }
          if (scale != Real(0.0)) {
-   
+
             // Compute Householder transformation.
-   
+
             Real h = Real(0.0);
             for (int i = high; i >= m; i--) {
                ort[i] = H[i][m-1]/scale;
@@ -584,10 +584,10 @@ class Eigenvalue
             }
             h = h - ort[m] * g;
             ort[m] = ort[m] - g;
-   
+
             // Apply Householder similarity transformation
             // H = (I-u*u'/h)*H*(I-u*u')/h)
-   
+
             for (int j = m; j < n; j++) {
                Real f = Real(0.0);
                for (int i = high; i >= m; i--) {
@@ -598,7 +598,7 @@ class Eigenvalue
                   H[i][j] -= f*ort[i];
                }
            }
-   
+
            for (int i = 0; i <= high; i++) {
                Real f = Real(0.0);
                for (int j = high; j >= m; j--) {
@@ -613,7 +613,7 @@ class Eigenvalue
             H[m][m-1] = scale*g;
          }
       }
-   
+
       // Accumulate transformations (Algol's ortran).
 
       for (int i = 0; i < n; i++) {
@@ -665,14 +665,14 @@ class Eigenvalue
    // Nonsymmetric reduction from Hessenberg to real Schur form.
 
    void hqr2 () {
-   
+
       //  This is derived from the Algol procedure hqr2,
       //  by Martin and Wilkinson, Handbook for Auto. Comp.,
       //  Vol.ii-Linear Algebra, and the corresponding
       //  Fortran subroutine in EISPACK.
-   
+
       // Initialize
-   
+
       int nn = this->n;
       int n = nn-1;
       int low = 0;
@@ -680,9 +680,9 @@ class Eigenvalue
       Real eps = pow(2.0,-52.0);
       Real exshift = Real(0.0);
       Real p=0,q=0,r=0,s=0,z=0,t,w,x,y;
-   
+
       // Store roots isolated by balanc and compute matrix norm
-   
+
       Real norm = Real(0.0);
       for (int i = 0; i < nn; i++) {
          if ((i < low) || (i > high)) {
@@ -693,14 +693,14 @@ class Eigenvalue
             norm = norm + abs(H[i][j]);
          }
       }
-   
+
       // Outer loop over eigenvalue index
-   
+
       int iter = 0;
       while (n >= low) {
-   
+
          // Look for single small sub-diagonal element
-   
+
          int l = n;
          while (l > low) {
             s = abs(H[l-1][l-1]) + abs(H[l][l]);
@@ -712,19 +712,19 @@ class Eigenvalue
             }
             l--;
          }
-       
+
          // Check for convergence
          // One root found
-   
+
          if (l == n) {
             H[n][n] = H[n][n] + exshift;
             d[n] = H[n][n];
             e[n] = Real(0.0);
             n--;
             iter = 0;
-   
+
          // Two roots found
-   
+
          } else if (l == n-1) {
             w = H[n][n-1] * H[n-1][n];
             p = (H[n-1][n-1] - H[n][n]) / 2.0;
@@ -733,9 +733,9 @@ class Eigenvalue
             H[n][n] = H[n][n] + exshift;
             H[n-1][n-1] = H[n-1][n-1] + exshift;
             x = H[n][n];
-   
+
             // Real pair
-   
+
             if (q >= 0) {
                if (p >= 0) {
                   z = p + z;
@@ -756,33 +756,33 @@ class Eigenvalue
                r = sqrt(p * p+q * q);
                p = p / r;
                q = q / r;
-   
+
                // Row modification
-   
+
                for (int j = n-1; j < nn; j++) {
                   z = H[n-1][j];
                   H[n-1][j] = q * z + p * H[n][j];
                   H[n][j] = q * H[n][j] - p * z;
                }
-   
+
                // Column modification
-   
+
                for (int i = 0; i <= n; i++) {
                   z = H[i][n-1];
                   H[i][n-1] = q * z + p * H[i][n];
                   H[i][n] = q * H[i][n] - p * z;
                }
-   
+
                // Accumulate transformations
-   
+
                for (int i = low; i <= high; i++) {
                   z = V[i][n-1];
                   V[i][n-1] = q * z + p * V[i][n];
                   V[i][n] = q * V[i][n] - p * z;
                }
-   
+
             // Complex pair
-   
+
             } else {
                d[n-1] = x + p;
                d[n] = x + p;
@@ -791,13 +791,13 @@ class Eigenvalue
             }
             n = n - 2;
             iter = 0;
-   
+
          // No convergence yet
-   
+
          } else {
-   
+
             // Form shift
-   
+
             x = H[n][n];
             y = Real(0.0);
             w = Real(0.0);
@@ -805,9 +805,9 @@ class Eigenvalue
                y = H[n-1][n-1];
                w = H[n][n-1] * H[n-1][n];
             }
-   
+
             // Wilkinson's original ad hoc shift
-   
+
             if (iter == 10) {
                exshift += x;
                for (int i = low; i <= n; i++) {
@@ -836,11 +836,11 @@ class Eigenvalue
                     x = y = w = 0.964;
                 }
             }
-   
+
             iter = iter + 1;   // (Could check iteration count here.)
-   
+
             // Look for two consecutive small sub-diagonal elements
-   
+
             int m = n-2;
             while (m >= l) {
                z = H[m][m];
@@ -863,16 +863,16 @@ class Eigenvalue
                }
                m--;
             }
-   
+
             for (int i = m+2; i <= n; i++) {
                H[i][i-2] = Real(0.0);
                if (i > m+2) {
                   H[i][i-3] = Real(0.0);
                }
             }
-   
+
             // Double QR step involving rows l:n and columns m:n
-   
+
             for (int k = m; k <= n-1; k++) {
                int notlast = (k != n-1);
                if (k != m) {
@@ -905,9 +905,9 @@ class Eigenvalue
                   z = r / s;
                   q = q / p;
                   r = r / p;
-   
+
                   // Row modification
-   
+
                   for (int j = k; j < nn; j++) {
                      p = H[k][j] + q * H[k+1][j];
                      if (notlast) {
@@ -917,9 +917,9 @@ class Eigenvalue
                      H[k][j] = H[k][j] - p * x;
                      H[k+1][j] = H[k+1][j] - p * y;
                   }
-   
+
                   // Column modification
-   
+
                   for (int i = 0; i <= min(n,k+3); i++) {
                      p = x * H[i][k] + y * H[i][k+1];
                      if (notlast) {
@@ -929,9 +929,9 @@ class Eigenvalue
                      H[i][k] = H[i][k] - p;
                      H[i][k+1] = H[i][k+1] - p * q;
                   }
-   
+
                   // Accumulate transformations
-   
+
                   for (int i = low; i <= high; i++) {
                      p = x * V[i][k] + y * V[i][k+1];
                      if (notlast) {
@@ -945,19 +945,19 @@ class Eigenvalue
             }  // k loop
          }  // check convergence
       }  // while (n >= low)
-      
+
       // Backsubstitute to find vectors of upper triangular form
 
       if (norm == Real(0.0)) {
          return;
       }
-   
+
       for (n = nn-1; n >= 0; n--) {
          p = d[n];
          q = e[n];
-   
+
          // Real vector
-   
+
          if (q == 0) {
             int l = n;
             H[n][n] = Real(1.0);
@@ -978,9 +978,9 @@ class Eigenvalue
                      } else {
                         H[i][n] = -r / (eps * norm);
                      }
-   
+
                   // Solve real equations
-   
+
                   } else {
                      x = H[i][i+1];
                      y = H[i+1][i];
@@ -993,9 +993,9 @@ class Eigenvalue
                         H[i+1][n] = (-s - y * t) / z;
                      }
                   }
-   
+
                   // Overflow control
-   
+
                   t = abs(H[i][n]);
                   if ((eps * t) * t > 1) {
                      for (int j = i; j <= n; j++) {
@@ -1004,14 +1004,14 @@ class Eigenvalue
                   }
                }
             }
-   
+
          // Complex vector
-   
+
          } else if (q < 0) {
             int l = n-1;
 
             // Last vector component imaginary so matrix is triangular
-   
+
             if (abs(H[n][n-1]) > abs(H[n-1][n])) {
                H[n-1][n-1] = q / H[n][n-1];
                H[n-1][n] = -(H[n][n] - p) / H[n][n-1];
@@ -1031,7 +1031,7 @@ class Eigenvalue
                   sa = sa + H[i][j] * H[j][n];
                }
                w = H[i][i] - p;
-   
+
                if (e[i] < Real(0.0)) {
                   z = w;
                   r = ra;
@@ -1043,9 +1043,9 @@ class Eigenvalue
                      H[i][n-1] = cdivr;
                      H[i][n] = cdivi;
                   } else {
-   
+
                      // Solve complex equations
-   
+
                      x = H[i][i+1];
                      y = H[i+1][i];
                      vr = (d[i] - p) * (d[i] - p) + e[i] * e[i] - q * q;
@@ -1066,7 +1066,7 @@ class Eigenvalue
                         H[i+1][n] = cdivi;
                      }
                   }
-   
+
                   // Overflow control
 
                   t = max(abs(H[i][n-1]),abs(H[i][n]));
@@ -1080,9 +1080,9 @@ class Eigenvalue
             }
          }
       }
-   
+
       // Vectors of isolated roots
-   
+
       for (int i = 0; i < nn; i++) {
          if (i < low || i > high) {
             for (int j = i; j < nn; j++) {
@@ -1090,9 +1090,9 @@ class Eigenvalue
             }
          }
       }
-   
+
       // Back transformation to get eigenvectors of original matrix
-   
+
       for (int j = nn-1; j >= low; j--) {
          for (int i = low; i <= high; i++) {
             z = Real(0.0);
@@ -1130,26 +1130,26 @@ public:
                V[i][j] = A[i][j];
             }
          }
-   
+
          // Tridiagonalize.
          tred2();
-   
+
          // Diagonalize.
          tql2();
 
       } else {
          H = Matrix<Real>(n,n);
          ort = Vector<Real>(n);
-         
+
          for (int j = 0; j < n; j++) {
             for (int i = 0; i < n; i++) {
                H[i][j] = A[i][j];
             }
          }
-   
+
          // Reduce to Hessenberg form.
          orthes();
-   
+
          // Reduce Hessenberg to real Schur form.
          hqr2();
       }
@@ -1184,11 +1184,11 @@ public:
       return;
    }
 
-   
-/** 
+
+/**
 	Computes the block diagonal eigenvalue matrix.
-    If the original matrix A is not symmetric, then the eigenvalue 
-	matrix D is block diagonal with the real eigenvalues in 1-by-1 
+    If the original matrix A is not symmetric, then the eigenvalue
+	matrix D is block diagonal with the real eigenvalues in 1-by-1
 	blocks and any complex eigenvalues,
     a + i*b, in 2-by-2 blocks, [a, b; -b, a].  That is, if the complex
     eigenvalues look like
@@ -1205,7 +1205,7 @@ public:
 <pre>
 
             u        v        .          .      .    .
-           -v        u        .          .      .    . 
+           -v        u        .          .      .    .
             .        .        a          b      .    .
             .        .       -b          a      .    .
             .        .        .          .      x    .
@@ -1214,9 +1214,9 @@ public:
     This keeps V a real matrix in both symmetric and non-symmetric
     cases, and A*V = V*D.
 
-	@param D: upon return, the matrix is filled with the block diagonal 
+	@param D: upon return, the matrix is filled with the block diagonal
 	eigenvalue matrix.
-	
+
 */
    void getD (Matrix<Real> &D) {
       D = Matrix<Real>(n,n);
@@ -1255,11 +1255,11 @@ class LU
 
    /* Array for internal storage of decomposition.  */
    Matrix<Real>  LU_;
-   int m, n, pivsign; 
+   int m, n, pivsign;
    Vector<int> piv;
 
 
-   Matrix<Real> permute_copy( const Matrix<Real> &A, 
+   Matrix<Real> permute_copy( const Matrix<Real> &A,
    			const Vector<int> &piv, int j0, int j1)
 	{
 		int piv_length = piv.dim();
@@ -1267,14 +1267,14 @@ class LU
 		Matrix<Real> X(piv_length, j1-j0+1);
 
 
-         for (int i = 0; i < piv_length; i++) 
-            for (int j = j0; j <= j1; j++) 
+         for (int i = 0; i < piv_length; i++)
+            for (int j = j0; j <= j1; j++)
                X[i][j-j0] = A[piv[i]][j];
 
 		return X;
 	}
 
-   Vector<Real> permute_copy( const Vector<Real> &A, 
+   Vector<Real> permute_copy( const Vector<Real> &A,
    		const Vector<int> &piv)
 	{
 		int piv_length = piv.dim();
@@ -1284,7 +1284,7 @@ class LU
 		Vector<Real> x(piv_length);
 
 
-         for (int i = 0; i < piv_length; i++) 
+         for (int i = 0; i < piv_length; i++)
                x[i] = A[piv[i]];
 
 		return x;
@@ -1298,9 +1298,9 @@ class LU
    @return     LU Decomposition object to access L, U and piv.
    */
 
-    LU (const Matrix<Real> &A) : LU_(A), m(A.num_rows()), n(A.num_cols()), 
+    LU (const Matrix<Real> &A) : LU_(A), m(A.num_rows()), n(A.num_cols()),
 		piv(A.num_rows())
-	
+
 	{
 
    // Use a "left-looking", dot-product, Crout/Doolittle algorithm.
@@ -1338,7 +1338,7 @@ class LU
 
             LUrowi[j] = LUcolj[i] -= s;
          }
-   
+
          // Find pivot and exchange if necessary.
 
          int p = j;
@@ -1350,18 +1350,18 @@ class LU
          if (p != j) {
 		    int k=0;
             for (k = 0; k < n; k++) {
-               double t = LU_[p][k]; 
-			   LU_[p][k] = LU_[j][k]; 
+               double t = LU_[p][k];
+			   LU_[p][k] = LU_[j][k];
 			   LU_[j][k] = t;
             }
-            k = piv[p]; 
-			piv[p] = piv[j]; 
+            k = piv[p];
+			piv[p] = piv[j];
 			piv[j] = k;
             pivsign = -pivsign;
          }
 
          // Compute multipliers.
-         
+
          if ((j < m) && (LU_[j][j] != Real(0.0))) {
             for (int i = j+1; i < m; i++) {
                LU_[i][j] /= LU_[j][j];
@@ -1372,7 +1372,7 @@ class LU
 
 
    /** Is the matrix nonsingular?
-   @return     1 (true)  if upper triangular factor U (and hence A) 
+   @return     1 (true)  if upper triangular factor U (and hence A)
    				is nonsingular, 0 otherwise.
    */
 
@@ -1452,11 +1452,11 @@ class LU
    					Real(0.0) (null) array.
    */
 
-   Matrix<Real> solve (const Matrix<Real> &B) 
+   Matrix<Real> solve (const Matrix<Real> &B)
    {
 
 	  /* Dimensions: A is mxn, X is nxk, B is mxk */
-      
+
       if (B.num_rows() != m) {
 	  	return Matrix<Real>(Real(0.0));
       }
@@ -1493,7 +1493,7 @@ class LU
    }
 
 
-   /** Solve A*x = b, where x and b are vectors of length equal	
+   /** Solve A*x = b, where x and b are vectors of length equal
    		to the number of rows in A.
 
    @param  b   a vector (Vector> of length equal to the first dimension
@@ -1502,11 +1502,11 @@ class LU
    					returns Real(0.0) (null) array.
    */
 
-   Vector<Real> solve (const Vector<Real> &b) 
+   Vector<Real> solve (const Vector<Real> &b)
    {
 
 	  /* Dimensions: A is mxn, X is nxk, B is mxk */
-      
+
       if (b.dim() != m) {
 	  	return Vector<Real>();
       }
@@ -1523,14 +1523,14 @@ class LU
                x[i] -= x[k]*LU_[i][k];
             }
          }
-      
+
 	  // Solve U*X = Y;
       for (int k = n-1; k >= 0; k--) {
             x[k] /= LU_[k][k];
-      		for (int i = 0; i < k; i++) 
+      		for (int i = 0; i < k; i++)
             	x[i] -= x[k]*LU_[i][k];
       }
-     
+
 
       return x;
    }
@@ -1538,7 +1538,7 @@ class LU
 }; /* class LU */
 
 
-/** 
+/**
 <p>
 	Classical QR Decompisition:
    for an m-by-n matrix A with m >= n, the QR decomposition is an m-by-n
@@ -1554,10 +1554,10 @@ class LU
 <p>
 	The Q and R factors can be retrived via the getQ() and getR()
 	methods. Furthermore, a solve() method is provided to find the
-	least squares solution of Ax=b using the QR factors.  
+	least squares solution of Ax=b using the QR factors.
 
    <p>
-	(Adapted from JAMA, a Java Matrix Library, developed by jointly 
+	(Adapted from JAMA, a Java Matrix Library, developed by jointly
 	by the Mathworks and NIST; see  http://math.nist.gov/javanumerics/jama).
 */
 
@@ -1568,7 +1568,7 @@ class QR {
    /* Array for internal storage of decomposition.
    @serial internal array storage.
    */
-   
+
    Matrix<Real> QR_;
 
    /* Row and column dimensions.
@@ -1584,7 +1584,7 @@ class QR {
 
 
 public:
-	
+
 /**
 	Create a QR factorization object for A.
 
@@ -1618,7 +1618,7 @@ public:
 
             // Apply transformation to remaining columns.
             for (j = k+1; j < n; j++) {
-               Real s = Real(0.0); 
+               Real s = Real(0.0);
                for (i = k; i < m; i++) {
                   s += QR_[i][k]*QR_[i][j];
                }
@@ -1638,21 +1638,21 @@ public:
 
 	@return 1 if matrix is full rank, 0 otherwise.
 */
-	int isFullRank() const		
+	int isFullRank() const
 	{
-      for (int j = 0; j < n; j++) 
+      for (int j = 0; j < n; j++)
 	  {
          if (Rdiag[j] == 0)
             return 0;
       }
       return 1;
 	}
-	
-	
 
 
-   /** 
-   
+
+
+   /**
+
    Retreive the Householder vectors from QR factorization
    @returns lower trapezoidal matrix whose columns define the reflections
    */
@@ -1664,9 +1664,9 @@ public:
 	  /* note: H is completely filled in by algorithm, so
 	     initializaiton of H is not necessary.
 	  */
-      for (int i = 0; i < m; i++) 
+      for (int i = 0; i < m; i++)
 	  {
-         for (int j = 0; j < n; j++) 
+         for (int j = 0; j < n; j++)
 		 {
             if (i >= j) {
                H[i][j] = QR_[i][j];
@@ -1700,12 +1700,12 @@ public:
       }
 	  return R;
    }
-	
-	
 
 
 
-   /** 
+
+
+   /**
    @return     Q the (ecnomy-sized) orthogonal factor (Q*R=A).
    */
 
@@ -1756,21 +1756,21 @@ public:
 	  Vector<Real> x = b;
 
       // Compute Y = transpose(Q)*b
-      for (int k = 0; k < n; k++) 
+      for (int k = 0; k < n; k++)
 	  {
-            Real s = Real(0.0); 
-            for (int i = k; i < m; i++) 
+            Real s = Real(0.0);
+            for (int i = k; i < m; i++)
 			{
                s += QR_[i][k]*x[i];
             }
             s = -s/QR_[k][k];
-            for (int i = k; i < m; i++) 
+            for (int i = k; i < m; i++)
 			{
                x[i] += s*QR_[i][k];
             }
       }
       // Solve R*X = Y;
-      for (int k = n-1; k >= 0; k--) 
+      for (int k = n-1; k >= 0; k--)
 	  {
          x[k] /= Rdiag[k];
          for (int i = 0; i < k; i++) {
@@ -1804,14 +1804,14 @@ public:
 	  	return Matrix<Real>(Real(0.0));
 	  }
 
-      int nx = B.num_cols(); 
+      int nx = B.num_cols();
 	  Matrix<Real> X = B;
 	  int i=0, j=0, k=0;
 
       // Compute Y = transpose(Q)*B
       for (k = 0; k < n; k++) {
          for (j = 0; j < nx; j++) {
-            Real s = Real(0.0); 
+            Real s = Real(0.0);
             for (i = k; i < m; i++) {
                s += QR_[i][k]*X[i][j];
             }
@@ -1861,11 +1861,11 @@ public:
    rank can be computed from this decomposition.
 
    <p>
-	(Adapted from JAMA, a Java Matrix Library, developed by jointly 
+	(Adapted from JAMA, a Java Matrix Library, developed by jointly
 	by the Mathworks and NIST; see  http://math.nist.gov/javanumerics/jama).
    */
 template <class Real>
-class SVD 
+class SVD
 {
 
 
@@ -1882,7 +1882,7 @@ class SVD
       m = Arg.num_rows();
       n = Arg.num_cols();
       int nu = min(m,n);
-      s = Vector<Real>(min(m+1,n)); 
+      s = Vector<Real>(min(m+1,n));
       U = Matrix<Real>(m, nu, Real(0));
       V = Matrix<Real>(n,n);
       Vector<Real> e(n);
@@ -2109,7 +2109,7 @@ class SVD
                if (ks == k) {
                   break;
                }
-               double t = (ks != p ? abs(e[ks]) : 0.) + 
+               double t = (ks != p ? abs(e[ks]) : 0.) +
                           (ks != k+1 ? abs(e[ks-1]) : 0.);
                if (abs(s[ks]) <= eps*t)  {
                   s[ks] = Real(0.0);
@@ -2184,9 +2184,9 @@ class SVD
             case 3: {
 
                // Calculate the shift.
-   
+
                double scale = max(max(max(max(
-                       abs(s[p-1]),abs(s[p-2])),abs(e[p-2])), 
+                       abs(s[p-1]),abs(s[p-2])),abs(e[p-2])),
                        abs(s[k])),abs(e[k]));
                double sp = s[p-1]/scale;
                double spm1 = s[p-2]/scale;
@@ -2205,9 +2205,9 @@ class SVD
                }
                double f = (sk + sp)*(sk - sp) + shift;
                double g = sk*ek;
-   
+
                // Chase zeros.
-   
+
                for (j = k; j < p-1; j++) {
                   double t = hypot(f,g);
                   double cs = f/t;
@@ -2252,7 +2252,7 @@ class SVD
             case 4: {
 
                // Make the singular values positive.
-   
+
                if (s[k] <= Real(0.0)) {
                   s[k] = (s[k] < Real(0.0) ? -s[k] : Real(0.0));
                   if (wantv) {
@@ -2261,9 +2261,9 @@ class SVD
                      }
                   }
                }
-   
+
                // Order the singular values.
-   
+
                while (k < pp) {
                   if (s[k] >= s[k+1]) {
                      break;
@@ -2292,7 +2292,7 @@ class SVD
    }
 
 
-   void getU (Matrix<Real> &A) 
+   void getU (Matrix<Real> &A)
    {
    	  int minm = min(m+1,n);
 
@@ -2301,19 +2301,19 @@ class SVD
 	  for (int i=0; i<m; i++)
 	  	for (int j=0; j<minm; j++)
 			A[i][j] = U[i][j];
-   	
+
    }
 
    /* Return the right singular vectors */
 
-   void getV (Matrix<Real> &A) 
+   void getV (Matrix<Real> &A)
    {
    	  A = V;
    }
 
    /** Return the one-dimensional array of singular values */
 
-   void getSingularValues (Vector<Real> &x) 
+   void getSingularValues (Vector<Real> &x)
    {
       x = s;
    }
@@ -2348,7 +2348,7 @@ class SVD
    @return     Number of nonnegligible singular values.
    */
 
-   int rank () 
+   int rank ()
    {
       double eps = pow(2.0,-52.0);
       double tol = max(m,n)*s[0]*eps;

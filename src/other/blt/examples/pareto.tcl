@@ -3,17 +3,17 @@
 package require BLT
 
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -39,7 +39,7 @@ barchart .b \
     -font {Helvetica 12} \
     -plotpady { 12 4 } \
     -width 6i \
-    -height 5i 
+    -height 5i
 table . .b -fill both
 
 set data {
@@ -75,7 +75,7 @@ foreach { label value color } $data {
 	-relief solid \
 	-borderwidth 1 \
 	-stipple pattern1 \
-	-bg lightblue 
+	-bg lightblue
 
     set labels($count) $label
     # Get the total number of defects.
@@ -84,9 +84,9 @@ foreach { label value color } $data {
     lappend xdata $count
 }
 
-# Configure the coordinates of the accumulated defects, 
+# Configure the coordinates of the accumulated defects,
 # now that we know what they are.
-.b line configure accum -xdata $xdata -ydata $ydata 
+.b line configure accum -xdata $xdata -ydata $ydata
 
 # Add text markers to label the percentage of total at each point.
 foreach x $xdata y $ydata {
@@ -94,7 +94,7 @@ foreach x $xdata y $ydata {
     if { $x == 0 } {
 	set text " 0%"
     } else {
-	set text [format %.1f $percent] 
+	set text [format %.1f $percent]
     }
     .b marker create text \
 	-coords "$x $y" \

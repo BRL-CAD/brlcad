@@ -1,7 +1,7 @@
 /*
  * bltSwitch.c --
  *
- *	This module implements command/argument switch parsing 
+ *	This module implements command/argument switch parsing
  *	procedures for the BLT toolkit.
  *
  * Copyright 1991-1998 Lucent Technologies, Inc.
@@ -72,12 +72,12 @@ FindSwitchSpec(interp, specs, name, needFlags, hateFlags)
     c = name[1];
     length = strlen(name);
     matchPtr = NULL;
-    
+
     for (specPtr = specs; specPtr->type != BLT_SWITCH_END; specPtr++) {
 	if (specPtr->switchName == NULL) {
 	    continue;
 	}
-	if ((specPtr->switchName[1] != c) 
+	if ((specPtr->switchName[1] != c)
 	    || (strncmp(specPtr->switchName, name, length) != 0)) {
 	    continue;
 	}
@@ -89,7 +89,7 @@ FindSwitchSpec(interp, specs, name, needFlags, hateFlags)
 	    return specPtr;	/* Stop on a perfect match. */
 	}
 	if (matchPtr != NULL) {
-	    Tcl_AppendResult(interp, "ambiguous option \"", name, "\"", 
+	    Tcl_AppendResult(interp, "ambiguous option \"", name, "\"",
 		(char *) NULL);
 	    return (Blt_SwitchSpec *) NULL;
 	}
@@ -180,10 +180,10 @@ DoSwitch(interp, specPtr, string, record)
 	    }
 	    break;
 
-	case BLT_SWITCH_STRING: 
+	case BLT_SWITCH_STRING:
 	    {
 		char *old, *new, **strPtr;
-		
+
 		strPtr = (char **)ptr;
 		if (isNull) {
 		    new = NULL;
@@ -199,7 +199,7 @@ DoSwitch(interp, specPtr, string, record)
 	    break;
 
 	case BLT_SWITCH_LIST:
-	    if (Tcl_SplitList(interp, string, &count, (char ***)ptr) 
+	    if (Tcl_SplitList(interp, string, &count, (char ***)ptr)
 		!= TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -213,13 +213,13 @@ DoSwitch(interp, specPtr, string, record)
 	    }
 	    break;
 
-	default: 
+	default:
 	    Tcl_AppendResult(interp, "bad switch table: unknown type \"",
 		 Blt_Itoa(specPtr->type), "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	specPtr++;
-    } while ((specPtr->switchName == NULL) && 
+    } while ((specPtr->switchName == NULL) &&
 	     (specPtr->type != BLT_SWITCH_END));
     return TCL_OK;
 }
@@ -272,7 +272,7 @@ Blt_ProcessSwitches(interp, specs, argc, argv, record, flags)
     hateFlags = 0;
 
     /*
-     * Pass 1:  Clear the change flags on all the specs so that we 
+     * Pass 1:  Clear the change flags on all the specs so that we
      *          can check it later.
      */
     for (specPtr = specs; specPtr->type != BLT_SWITCH_END; specPtr++) {
@@ -286,10 +286,10 @@ Blt_ProcessSwitches(interp, specs, argc, argv, record, flags)
 	arg = argv[count];
 	if (flags & BLT_SWITCH_OBJV_PARTIAL) {
 	    if ((arg[0] != '-') || ((arg[1] == '-') && (argv[2] == '\0'))) {
-		/* 
+		/*
 		 * If the argument doesn't start with a '-' (not a switch)
 		 * or is '--', stop processing and return the number of
-		 * arguments comsumed. 
+		 * arguments comsumed.
 		 */
 		return count;
 	    }
@@ -300,17 +300,17 @@ Blt_ProcessSwitches(interp, specs, argc, argv, record, flags)
 	}
 	if (specPtr->type == BLT_SWITCH_FLAG) {
 	    char *ptr;
-	    
+
 	    ptr = record + specPtr->offset;
 	    *((int *)ptr) |= specPtr->value;
 	} else if (specPtr->type == BLT_SWITCH_VALUE) {
 	    char *ptr;
-	    
+
 	    ptr = record + specPtr->offset;
 	    *((int *)ptr) = specPtr->value;
 	} else {
 	    if ((count + 1) == argc) {
-		Tcl_AppendResult(interp, "value for \"", arg, "\" missing", 
+		Tcl_AppendResult(interp, "value for \"", arg, "\" missing",
 			(char *) NULL);
 		return -1;
 	    }
@@ -318,7 +318,7 @@ Blt_ProcessSwitches(interp, specs, argc, argv, record, flags)
 	    if (DoSwitch(interp, specPtr, argv[count], record) != TCL_OK) {
 		char msg[100];
 
-		sprintf(msg, "\n    (processing \"%.40s\" option)", 
+		sprintf(msg, "\n    (processing \"%.40s\" option)",
 			specPtr->switchName);
 		Tcl_AddErrorInfo(interp, msg);
 		return -1;
@@ -329,7 +329,7 @@ Blt_ProcessSwitches(interp, specs, argc, argv, record, flags)
     return count;
 }
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0))
 
 /*
  *--------------------------------------------------------------
@@ -378,7 +378,7 @@ Blt_ProcessObjSwitches(interp, specs, objc, objv, record, flags)
     hateFlags = 0;
 
     /*
-     * Pass 1:  Clear the change flags on all the specs so that we 
+     * Pass 1:  Clear the change flags on all the specs so that we
      *          can check it later.
      */
     for (specPtr = specs; specPtr->type != BLT_SWITCH_END; specPtr++) {
@@ -394,10 +394,10 @@ Blt_ProcessObjSwitches(interp, specs, objc, objv, record, flags)
 	arg = Tcl_GetString(objv[count]);
 	if (flags & BLT_SWITCH_OBJV_PARTIAL) {
 	    if ((arg[0] != '-') || ((arg[1] == '-') && (arg[2] == '\0'))) {
-		/* 
+		/*
 		 * If the argument doesn't start with a '-' (not a switch)
 		 * or is '--', stop processing and return the number of
-		 * arguments comsumed. 
+		 * arguments comsumed.
 		 */
 		return count;
 	    }
@@ -408,18 +408,18 @@ Blt_ProcessObjSwitches(interp, specs, objc, objv, record, flags)
 	}
 	if (specPtr->type == BLT_SWITCH_FLAG) {
 	    char *ptr;
-	    
+
 	    ptr = record + specPtr->offset;
 	    *((int *)ptr) |= specPtr->value;
 	} else if (specPtr->type == BLT_SWITCH_VALUE) {
 	    char *ptr;
-	    
+
 	    ptr = record + specPtr->offset;
 	    *((int *)ptr) = specPtr->value;
 	} else {
 	    count++;
 	    if (count == objc) {
-		Tcl_AppendResult(interp, "value for \"", arg, "\" missing", 
+		Tcl_AppendResult(interp, "value for \"", arg, "\" missing",
 				 (char *) NULL);
 		return -1;
 	    }
@@ -427,7 +427,7 @@ Blt_ProcessObjSwitches(interp, specs, objc, objv, record, flags)
 	    if (DoSwitch(interp, specPtr, arg, record) != TCL_OK) {
 		char msg[100];
 
-		sprintf(msg, "\n    (processing \"%.40s\" option)", 
+		sprintf(msg, "\n    (processing \"%.40s\" option)",
 			specPtr->switchName);
 		Tcl_AddErrorInfo(interp, msg);
 		return -1;
@@ -479,7 +479,7 @@ Blt_FreeSwitches(specs, record, needFlags)
 		break;
 
 	    case BLT_SWITCH_CUSTOM:
-		if ((*(char **)ptr != NULL) && 
+		if ((*(char **)ptr != NULL) &&
 		    (specPtr->customPtr->freeProc != NULL)) {
 		    (*specPtr->customPtr->freeProc)(*(char **)ptr);
 		    *((char **) ptr) = NULL;

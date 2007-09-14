@@ -46,9 +46,9 @@ foreach test {
     {-bg #ff0000 #ff0000 non-existent {unknown color name "non-existent"}}
     {-borderwidth 1.3 1 badValue {bad screen distance "badValue"}}
     {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-disabledbackground green green non-existent 
+    {-disabledbackground green green non-existent
 	{unknown color name "non-existent"}}
-    {-disabledforeground blue blue non-existent 
+    {-disabledforeground blue blue non-existent
 	{unknown color name "non-existent"}}
     {-exportselection yes 1 xyzzy {expected boolean value but got "xyzzy"}}
     {-fg #110022 #110022 bogus {unknown color name "bogus"}}
@@ -67,14 +67,14 @@ foreach test {
     {-invalidcommand "any string" "any string" {} {}}
     {-invcmd "any string" "any string" {} {}}
     {-justify right right bogus {bad justification "bogus": must be left, right, or center}}
-    {-readonlybackground green green non-existent 
+    {-readonlybackground green green non-existent
 	{unknown color name "non-existent"}}
     {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
     {-selectbackground #110022 #110022 bogus {unknown color name "bogus"}}
     {-selectborderwidth 1.3 1 badValue {bad screen distance "badValue"}}
     {-selectforeground #654321 #654321 bogus {unknown color name "bogus"}}
     {-show * * {} {}}
-    {-state n normal bogus 
+    {-state n normal bogus
 	{bad state "bogus": must be disabled, normal, or readonly}}
     {-takefocus "any string" "any string" {} {}}
     {-textvariable i i {} {}}
@@ -508,13 +508,13 @@ test entry-3.74 {EntryWidgetCmd procedure, "xview" widget command} {
 test entry-3.75 {EntryWidgetCmd procedure, "xview" widget command} {
     .e xview 30
     update
-    .e xview scroll 2 units 
+    .e xview scroll 2 units
     .e index @0
 } {32}
 test entry-3.76 {EntryWidgetCmd procedure, "xview" widget command} {
     .e xview 30
     update
-    .e xview scroll -1 units 
+    .e xview scroll -1 units
     .e index @0
 } {29}
 test entry-3.77 {EntryWidgetCmd procedure, "xview" widget command} {
@@ -673,7 +673,7 @@ test entry-5.11 {ConfigureEntry procedure} {
     pack [entry .e -font {{open look glyph}}]
     .e scan dragto 30
     update
-} {}    
+} {}
 
 # No tests for DisplayEntry.
 
@@ -1196,14 +1196,14 @@ test entry-13.9 {GetEntryIndex procedure} {
 } {1 6}
 selection clear .e
 test entry-13.10 {GetEntryIndex procedure} unix {
-    # On unix, when selection is cleared, entry widget's internal 
+    # On unix, when selection is cleared, entry widget's internal
     # selection range is reset.
 
     list [catch {.e index sel.first} msg] $msg
 } {1 {selection isn't in widget .e}}
 test entry-13.11 {GetEntryIndex procedure} win {
     # On mac and pc, when selection is cleared, entry widget remembers
-    # last selected range.  When selection ownership is restored to 
+    # last selected range.  When selection ownership is restored to
     # entry, the old range will be rehighlighted.
 
     list [catch {selection get}] [.e index sel.first]
@@ -1382,7 +1382,7 @@ test entry-18.1 {Entry widget vs hiding} {
     interp hide {} .e
     destroy .e
     list [winfo children .] [interp hidden]
-} [list {} $l]    
+} [list {} $l]
 
 ##
 ## Entry widget VALIDATION tests

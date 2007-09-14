@@ -60,9 +60,9 @@ bind ComboboxListbox <Motion> {
 # but on Windows and OSX that doesn't prevent the user from interacting
 # with other applications.  We need to popdown the listbox when this happens.
 #
-# On OSX, the listbox gets a <Deactivate> event.  This doesn't happen 
+# On OSX, the listbox gets a <Deactivate> event.  This doesn't happen
 # on Windows or X11, but it does get a <FocusOut> event.  However on OSX
-# in Tk 8.5, the listbox gets spurious <FocusOut> events when the listbox 
+# in Tk 8.5, the listbox gets spurious <FocusOut> events when the listbox
 # is posted (see #1349811).
 #
 # The following seems to work:
@@ -84,7 +84,7 @@ if {[tk windowingsystem] eq "x11"} {
     option add *TCombobox*Listbox.background white
 }
 
-# The following ensures that the popdown listbox uses the same font 
+# The following ensures that the popdown listbox uses the same font
 # as the combobox entry field (at least for the standard Ttk themes).
 #
 option add *TCombobox*Listbox.font TkTextFont
@@ -134,13 +134,13 @@ proc ttk::combobox::Drag {w x}  {
 #	For editable comboboxes, set the selection and insert cursor.
 #
 proc ttk::combobox::TraverseIn {w} {
-    $w instate {!readonly !disabled} { 
+    $w instate {!readonly !disabled} {
 	$w selection range 0 end
 	$w icursor end
     }
 }
 
-## SelectEntry $cb $index -- 
+## SelectEntry $cb $index --
 #	Set the combobox selection in response to a user action.
 #
 proc ttk::combobox::SelectEntry {cb index} {
@@ -184,7 +184,7 @@ proc ttk::combobox::LBCancel {lb} {
 }
 
 ## LBTab --
-#	Tab key binding for combobox listbox:  
+#	Tab key binding for combobox listbox:
 #	Set the selection, and navigate to next/prev widget.
 #
 proc ttk::combobox::LBTab {lb dir} {
@@ -196,7 +196,7 @@ proc ttk::combobox::LBTab {lb dir} {
 
     if {$newFocus ne ""} {
 	LBSelected $lb
-	# The [grab release] call in [Unpost] queues events that later 
+	# The [grab release] call in [Unpost] queues events that later
 	# re-set the focus.  [update] to make sure these get processed first:
 	update
 	tk::TabToWindow $newFocus

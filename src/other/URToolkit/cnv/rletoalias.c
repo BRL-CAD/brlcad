@@ -185,7 +185,7 @@ bitmap_hdr *image;
   two_lines = 2 * image->xsize;
   VPRINTF(stderr, "Image size: %dx%d\n", image->xsize, image->ysize);
   VPRINTF(stderr, "Image depth: %d\n", image->depth);
-  VPRINTF(stderr, "%s colormap\n", 
+  VPRINTF(stderr, "%s colormap\n",
                   (the_hdr.ncmap ? "With" : "Without"));
 
   /*
@@ -426,7 +426,7 @@ int code;
 {
   fprintf(stderr, "%s: ", the_hdr.cmd);
   switch (code) {
-    case  0: fprintf(stderr, "Usage:  %s [-v] [-o outfile] [infile] \n", 
+    case  0: fprintf(stderr, "Usage:  %s [-v] [-o outfile] [infile] \n",
                      the_hdr.cmd);
              break;
     case  1: fprintf(stderr, "Cannot open file.\n");

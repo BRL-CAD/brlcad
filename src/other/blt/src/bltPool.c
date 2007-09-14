@@ -28,29 +28,29 @@
 /*
  * Blt_Pool --
  *
- *	Implements a pool memory allocator. 
+ *	Implements a pool memory allocator.
  *
  *	  + It's faster allocating memory since malloc/free are called
- *	    only a fraction of the normal times.  Fixed size items can 
+ *	    only a fraction of the normal times.  Fixed size items can
  *	    be reused without deallocating/reallocating memory.
- *	  + You don't have the extra 8-16 byte overhead per malloc. 
+ *	  + You don't have the extra 8-16 byte overhead per malloc.
  *	  - Memory is freed only when the entire pool is destroyed.
- *	  - Memory is allocated in chunks. More memory is allocated 
- *	    than used.  
+ *	  - Memory is allocated in chunks. More memory is allocated
+ *	    than used.
  *	  0 Depending upon allocation/deallocation patterns, locality
  *	    may be improved or degraded.
  *
  *      The pool is a chain of malloc'ed blocks.
  *
- *             +---------+  +---------+  +---------+  
+ *             +---------+  +---------+  +---------+
  *       NULL<-| nextPtr |<-| nextPtr |<-| nextPtr |<- headPtr
- *             |---------|  |---------|  |---------|  
- *             | chunk1  |  | chunk2  |  | chunk3  |  
- *             +---------+  |         |  |         |  
- *                          +---------+  |         |  
- *                                       |         |  
- *                                       |         |  
- *                                       +---------+  
+ *             |---------|  |---------|  |---------|
+ *             | chunk1  |  | chunk2  |  | chunk3  |
+ *             +---------+  |         |  |         |
+ *                          +---------+  |         |
+ *                                       |         |
+ *                                       |         |
+ *                                       +---------+
  *
  *      Each chunk contains an integral number of fixed size items.
  *	The number of items doubles until a maximum size is reached
@@ -59,24 +59,24 @@
  *	in the last chunk).
  *
  *	The chain of blocks is only freed when the entire pool is
- *	destroyed.  
+ *	destroyed.
  *
  *      A freelist of unused items also maintained. Each freed item
  *	is prepended to a free list.  Before allocating new chunks
  *	the freelist is examined to see if an unused items exist.
  *
  *               chunk1       chunk2       chunk3
- *            +---------+  +---------+  +---------+  
+ *            +---------+  +---------+  +---------+
  *      NULL<-| unused  |  |         |  |         |
- *            +----^----+  +---------+  +---------+  
- *            | unused  |<-| unused  |<-| unused  |       
- *            +---------+  +---------+  +----^----+  
+ *            +----^----+  +---------+  +---------+
+ *            | unused  |<-| unused  |<-| unused  |
+ *            +---------+  +---------+  +----^----+
  *            |         |  |         |  | unused  |
  *            +---------+  |         |  +----^----+
  *                         |         |  |    |    |
  *                         +---------+  +----|----+
  *                                      | usused  |<- freePtr
- *                                      +---------+  
+ *                                      +---------+
  */
 
 #define POOL_MAX_CHUNK_SIZE      ((1<<16) - sizeof(Blt_PoolChain))
@@ -98,9 +98,9 @@ static Blt_PoolFreeProc  StringPoolFreeItem;
  *
  * VariablePoolAllocItem --
  *
- *      Returns a new item.  First check if there is any more space 
+ *      Returns a new item.  First check if there is any more space
  *	left in the current chunk.  If there isn't then next check
- *	the free list for unused items.  Finally allocate a new 
+ *	the free list for unused items.  Finally allocate a new
  *	chunk and return its first item.
  *
  * Results:
@@ -121,7 +121,7 @@ VariablePoolAllocItem(poolPtr, size)
 
     size = ALIGN(size);
     if (size >= POOL_MAX_CHUNK_SIZE) {
-	/* 
+	/*
 	 * Handle oversized requests by allocating a chunk to hold the
 	 * single item and immediately placing it into the in-use list.
 	 */
@@ -158,7 +158,7 @@ VariablePoolAllocItem(poolPtr, size)
  *
  * VariablePoolFreeItem --
  *
- *      Placeholder for freeProc routine.  The pool memory is 
+ *      Placeholder for freeProc routine.  The pool memory is
  *	not reclaimed or freed until the entire pool is released.
  *
  * Results:
@@ -168,7 +168,7 @@ VariablePoolAllocItem(poolPtr, size)
  */
 /*ARGSUSED*/
 static void
-VariablePoolFreeItem(poolPtr, item) 
+VariablePoolFreeItem(poolPtr, item)
     struct Blt_PoolStruct *poolPtr;
     void *item;
 {
@@ -180,9 +180,9 @@ VariablePoolFreeItem(poolPtr, item)
  *
  * StringPoolAllocItem --
  *
- *      Returns a new item.  First check if there is any more space 
+ *      Returns a new item.  First check if there is any more space
  *	left in the current chunk.  If there isn't then next check
- *	the free list for unused items.  Finally allocate a new 
+ *	the free list for unused items.  Finally allocate a new
  *	chunk and return its first item.
  *
  * Results:
@@ -202,7 +202,7 @@ StringPoolAllocItem(poolPtr, size)
     void *memPtr;
 
     if (size >= POOL_MAX_CHUNK_SIZE) {
-	/* 
+	/*
 	 * Handle oversized requests by allocating a chunk to hold the
 	 * single item and immediately placing it into the in-use list.
 	 */
@@ -240,7 +240,7 @@ StringPoolAllocItem(poolPtr, size)
  *
  * StringPoolFreeItem --
  *
- *      Placeholder for freeProc routine.  String pool memory is 
+ *      Placeholder for freeProc routine.  String pool memory is
  *	not reclaimed or freed until the entire pool is released.
  *
  * Results:
@@ -250,7 +250,7 @@ StringPoolAllocItem(poolPtr, size)
  */
 /*ARGSUSED*/
 static void
-StringPoolFreeItem(poolPtr, item) 
+StringPoolFreeItem(poolPtr, item)
     struct Blt_PoolStruct *poolPtr;
     void *item;
 {
@@ -260,15 +260,15 @@ StringPoolFreeItem(poolPtr, item)
 /*
  *       The fixed size pool is a chain of malloc'ed blocks.
  *
- *             +---------+  +---------+  +---------+  
+ *             +---------+  +---------+  +---------+
  *       NULL<-| nextPtr |<-| nextPtr |<-| nextPtr |<- headPtr
- *             |---------|  |---------|  |---------|  
- *             | chunk1  |  | chunk2  |  | chunk3  |  
- *             +---------+  |         |  |         |  
- *                          +---------+  |         |  
- *                                       |         |  
- *                                       |         |  
- *                                       +---------+  
+ *             |---------|  |---------|  |---------|
+ *             | chunk1  |  | chunk2  |  | chunk3  |
+ *             +---------+  |         |  |         |
+ *                          +---------+  |         |
+ *                                       |         |
+ *                                       |         |
+ *                                       +---------+
  *
  *      Each chunk contains an integral number of fixed size items.
  *	The number of items doubles until a maximum size is reached
@@ -277,24 +277,24 @@ StringPoolFreeItem(poolPtr, item)
  *	in the last chunk).
  *
  *	The chain of blocks is only freed when the entire pool is
- *	destroyed.  
+ *	destroyed.
  *
  *      A freelist of unused items also maintained. Each freed item
  *	is prepended to a free list.  Before allocating new chunks
  *	the freelist is examined to see if an unused items exist.
  *
  *               chunk1       chunk2       chunk3
- *            +---------+  +---------+  +---------+  
+ *            +---------+  +---------+  +---------+
  *      NULL<-| unused  |  |         |  |         |
- *            +----^----+  +---------+  +---------+  
- *            | unused  |<-| unused  |<-| unused  |       
- *            +---------+  +---------+  +----^----+  
+ *            +----^----+  +---------+  +---------+
+ *            | unused  |<-| unused  |<-| unused  |
+ *            +---------+  +---------+  +----^----+
  *            |         |  |         |  | unused  |
  *            +---------+  |         |  +----^----+
  *                         |         |  |    |    |
  *                         +---------+  +----|----+
  *                                      | usused  |<- freePtr
- *                                      +---------+  
+ *                                      +---------+
  */
 
 /*
@@ -302,9 +302,9 @@ StringPoolFreeItem(poolPtr, item)
  *
  * FixedPoolFreeItem --
  *
- *      Returns a new item.  First check if there is any more space 
+ *      Returns a new item.  First check if there is any more space
  *	left in the current chunk.  If there isn't then next check
- *	the free list for unused items.  Finally allocate a new 
+ *	the free list for unused items.  Finally allocate a new
  *	chunk and return its first item.
  *
  * Results:
@@ -338,11 +338,11 @@ FixedPoolAllocItem(poolPtr, size)
 	poolPtr->freePtr = chainPtr->nextPtr;
 	newPtr = (void *)chainPtr;
     } else {			/* Allocate another block. */
-	
+
 	/* Create a new block of items and prepend it to the in-use list */
 	poolPtr->bytesLeft = poolPtr->itemSize * (1 << poolPtr->poolSize);
 	if (poolPtr->bytesLeft < POOL_MAX_CHUNK_SIZE) {
-	    poolPtr->poolSize++; /* Keep doubling the size of the new 
+	    poolPtr->poolSize++; /* Keep doubling the size of the new
 				  * chunk up to a maximum size. */
 	}
 	/* Allocate the requested chunk size, plus the header */
@@ -375,12 +375,12 @@ FixedPoolAllocItem(poolPtr, size)
  *----------------------------------------------------------------------
  */
 static void
-FixedPoolFreeItem(poolPtr, item) 
+FixedPoolFreeItem(poolPtr, item)
     struct Blt_PoolStruct *poolPtr;
     void *item;
 {
     Blt_PoolChain *chainPtr = (Blt_PoolChain *)item;
-    
+
     /* Prepend the newly deallocated item to the free list. */
     chainPtr->nextPtr = poolPtr->freePtr;
     poolPtr->freePtr = chainPtr;
@@ -392,12 +392,12 @@ FixedPoolFreeItem(poolPtr, item)
  * Blt_PoolCreate --
  *
  *      Creates a new memory pool for fixed-size/variable-size/string
- *      items.  
+ *      items.
  *
  * Results:
  *      Returns a pointer to the newly allocated pool.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 
 Blt_Pool
@@ -443,12 +443,12 @@ Blt_PoolCreate(type)
  *
  *----------------------------------------------------------------------
  */
-void  
+void
 Blt_PoolDestroy(poolPtr)
     struct Blt_PoolStruct *poolPtr;
 {
     register Blt_PoolChain *chainPtr, *nextPtr;
-    
+
     for (chainPtr = poolPtr->headPtr; chainPtr != NULL; chainPtr = nextPtr) {
 	nextPtr = chainPtr->nextPtr;
 	Blt_Free(chainPtr);

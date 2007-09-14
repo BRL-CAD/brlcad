@@ -54,7 +54,7 @@ struct options{
 };
 
 
-/* 
+/*
  * MACROS TO IMPROVE READABILITY
  * OF FITNESS FUNCTION
  */

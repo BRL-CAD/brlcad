@@ -5,24 +5,24 @@ bgexec (Windows)
   1. (BUG) Convert collected data to UTF before passing to the interpreter.
 
 container (Unix)
-  1. (done) Add timeout option to control how long to search for application 
+  1. (done) Add timeout option to control how long to search for application
             window.
 
-debug  
-  1. (done) Recent versions of Tcl swamp Tcl_CommandTrace.  
+debug
+  1. (done) Recent versions of Tcl swamp Tcl_CommandTrace.
             Add line cutoff option (default is 6).
 
 dnd (Unix)
-  1. (DOC) Create manual page for "dnd" command. 
-  2. (Feature) Add Motif drag-and-drop capabilities.  
+  1. (DOC) Create manual page for "dnd" command.
+  2. (Feature) Add Motif drag-and-drop capabilities.
 
 eps
-  1. (DOC) Update manual page for eps canvas item.  
+  1. (DOC) Update manual page for eps canvas item.
   2. (FEATURE) Read Windows EPS files with embedded TIFF images.
 
 graph
   1. (done) Fix zooming graph procedure to handle multiple axes.
-  2. (BUG) Windows printing commands "print1" and "print2" need to use 
+  2. (BUG) Windows printing commands "print1" and "print2" need to use
      postscript options like -maxpect, -pad, etc. to control graph
      size.
   3. (BUG) No PostScript generated for polygon tiling.
@@ -38,16 +38,16 @@ graph
 	   devices. How do Windows' print devices handle this?
 
 hierbox
-  1. (CHANGE) Hierbox to use tree object for data.  The -data option will 
+  1. (CHANGE) Hierbox to use tree object for data.  The -data option will
               be a field in the tree.
   2. (FEATURE) Add edit bindings for entries.
   3. (DOCUMENTATION) Create real hierbox manual page.
 
 hiertable
   1. (done) -tree option dumps core.
-  2. (done) Sorting tree view affects all other hiertables using the tree.  
+  2. (done) Sorting tree view affects all other hiertables using the tree.
             Is separate data structure needed for non-flattened sorts?  What
-            about moves? 
+            about moves?
   3. (done) Call tree update procedure when tree object is sorted.  This
             is only when a tree is shared between more than one hiertable.
             It goes out-of-sync with actual tree positions.
@@ -59,18 +59,18 @@ hiertable
   6b.(FEATURE) XOR outline for column move operation.
   7. (???) Update procedure isn't called for moved nodes.  Call global
            update routine (like sort) or selected node update procedures?
-  8. (DOC) Explain selection modes ("single" and "multiple") 
+  8. (DOC) Explain selection modes ("single" and "multiple")
            in manual page.
   9. (BUG) Multi-line entry editting is broken.
  10. (BUG) Add default bindings for entry editting. Need to set grab
      on edit window.
  11. (BUG) Add standard keyboard bindings.
- 12. (FEATURE) Images in column title.  
- 13. (PERFORMANCE) Don't redraw entire widget for scrolling.  Copy 
-                   portions of pixmap and redraw only changed areas.  
+ 12. (FEATURE) Images in column title.
+ 13. (PERFORMANCE) Don't redraw entire widget for scrolling.  Copy
+                   portions of pixmap and redraw only changed areas.
 	           This will affect lots of code.
  14. (PERFORMANCE) Don't redraw entire widget for selections.  Draw
-	           only changed entries.  
+	           only changed entries.
  15. (???) Add checkbox column entries.
  16. (BUG) "column resize" reports incorrect width of column.
 
@@ -81,15 +81,15 @@ printer (Windows)
   4. (BUG) Needs print job abort handler.
 
 tabset
-  1. (done) Add perforation gizmo for tearoffs.  
+  1. (done) Add perforation gizmo for tearoffs.
   2. (FEATURE) Allow alternatative tearout styles.
 
-tree 
+tree
   1. (done) Create Tcl interface.
   2. (DOC) Create manuals for both Tcl and C APIs.
 
 vector
-  1. (FEATURE) Add Tcl-based notification callbacks.  
+  1. (FEATURE) Add Tcl-based notification callbacks.
 
 gradient
   1. (FEATURE) Create gradient command that interfaces with tiling.

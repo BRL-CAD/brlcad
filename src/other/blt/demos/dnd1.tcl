@@ -3,17 +3,17 @@
 package require BLT
 
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -46,7 +46,7 @@ proc OnMotion { widget args } {
     set y1 $x1
     set x2 [expr [winfo width $widget] - $x1]
     set y2 [expr [winfo height $widget] - $y1]
-    if { ($info(x) >= $x1) && ($info(x) <= $x2) && 
+    if { ($info(x) >= $x1) && ($info(x) <= $x2) &&
 	 ($info(y) >= $y1) && ($info(y) <= $y2) } {
 	$widget configure -highlightbackground red
 	return 1
@@ -63,7 +63,7 @@ proc OnLeave { widget args } {
 option add *OnEnter	OnEnter
 option add *OnLeave	OnLeave
 option add *OnMotion	OnMotion
-	
+
 # ----------------------------------------------------------------------
 # This procedure is invoked each time a token is grabbed from the
 # sample window.  It configures the token to display the current
@@ -81,8 +81,8 @@ proc PackageSample { widget args } {
 
 proc ShowResult { widget args } {
     array set info $args
-    puts "drop transaction($info(timestamp)) completed: result was $info(action)" 
-} 
+    puts "drop transaction($info(timestamp)) completed: result was $info(action)"
+}
 
 
 # ----------------------------------------------------------------------
@@ -94,7 +94,7 @@ iDjjAoPkIZuTgCZykBCA2ziaXusRrFUGQ5zeRMCcE76xvJBPozuBVCmT0eUKGAHOqFQqqwIS
 ADs=
     }
 label .sample -text "Color" -height 12 -width 20 -bd 2 -relief raised  \
-    -highlightthickness 2 
+    -highlightthickness 2
 
 set cursors {
     { @bitmaps/hand/hand01.xbm bitmaps/hand/hand01m.xbm  black white }
@@ -102,7 +102,7 @@ set cursors {
     { @bitmaps/hand/hand03.xbm bitmaps/hand/hand03m.xbm  black white }
     { @bitmaps/hand/hand04.xbm bitmaps/hand/hand04m.xbm  black white }
     { @bitmaps/hand/hand05.xbm bitmaps/hand/hand05m.xbm  black white }
-    { @bitmaps/hand/hand06.xbm bitmaps/hand/hand06m.xbm  black white } 
+    { @bitmaps/hand/hand06.xbm bitmaps/hand/hand06m.xbm  black white }
     { @bitmaps/hand/hand07.xbm bitmaps/hand/hand07m.xbm  black white }
     { @bitmaps/hand/hand08.xbm bitmaps/hand/hand08m.xbm  black white }
     { @bitmaps/hand/hand09.xbm bitmaps/hand/hand09m.xbm  black white }
@@ -125,7 +125,7 @@ dnd setdata .sample color SetColor
 
 # Establish the appearance of the token window:
 set token [dnd token window .sample]
-label $token.label -text "Color" -bd 2 -highlightthickness 1  
+label $token.label -text "Color" -bd 2 -highlightthickness 1
 pack $token.label
 dnd token configure .sample -borderwidth 2 \
     -relief raised -activerelief raised  \
@@ -153,12 +153,12 @@ proc GetColor { widget args } {
 }
 
 proc SetColor { widget args } {
-    array set info $args 
+    array set info $args
     set rgb [winfo rgb . $info(value)]
     set r [lindex $rgb 0]
     set g [lindex $rgb 1]
     set b [lindex $rgb 2]
-    
+
     .redScale set [expr round($r/65535.0 * 255)]
     .greenScale set [expr round($g/65535.0 * 255)]
     .blueScale set [expr round($b/65535.0 * 255)]

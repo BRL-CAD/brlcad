@@ -203,7 +203,7 @@ AC_DEFUN(SC_PATH_TKCONFIG, [
 #	Load the tclConfig.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TCL_BIN_DIR
 #
@@ -257,7 +257,7 @@ AC_DEFUN(SC_LOAD_TCLCONFIG, [
 #	Load the tkConfig.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TK_BIN_DIR
 #
@@ -290,7 +290,7 @@ AC_DEFUN(SC_LOAD_TKCONFIG, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -325,7 +325,7 @@ AC_DEFUN(SC_ENABLE_GCC, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -369,7 +369,7 @@ AC_DEFUN(SC_ENABLE_SHARED, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -425,13 +425,13 @@ AC_DEFUN(SC_ENABLE_THREADS, [
 #
 # Arguments:
 #	none
-#	
+#
 #	Requires the following vars to be set:
 #		CFLAGS_DEBUG
 #		CFLAGS_OPTIMIZE
 #		LDFLAGS_DEBUG
 #		LDFLAGS_OPTIMIZE
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -572,7 +572,7 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
 	do64bit=no
     fi
     AC_MSG_RESULT($do64bit)
- 
+
     # Step 1: set the variable "system" to hold the name and version number
     # for the system.  This can usually be done via the "uname" command, but
     # there are a few systems, like Next, where this doesn't work.
@@ -588,7 +588,7 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
 	else
 	    # Special check for weird MP-RAS system (uname returns weird
 	    # results, and the version is kept in special file).
-	
+
 	    if test -r /etc/.relid -a "X`uname -n`" = "X`uname -s`" ; then
 		system=MP-RAS-`awk '{print $3}' /etc/.relid'`
 	    fi
@@ -753,7 +753,7 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
 	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 
-	    # egcs-2.91.66 on Redhat Linux 6.0 generates lots of warnings 
+	    # egcs-2.91.66 on Redhat Linux 6.0 generates lots of warnings
 	    # when you inline the string and math operations.  Turn this off to
 	    # get rid of the warnings.
 
@@ -850,7 +850,7 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
 	OS/390-*)
 	    CFLAGS_OPTIMIZE=""      # Optimizer is buggy
 	    AC_DEFINE(_OE_SOCKETS)  # needed in sys/socket.h
-	    ;;      
+	    ;;
 	OSF1-1.0|OSF1-1.1|OSF1-1.2)
 	    # OSF/1 1.[012] from OSF, and derivatives, including Paragon OSF/1
 	    SHLIB_CFLAGS=""
@@ -955,7 +955,7 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
 	    SHLIB_CFLAGS="-KPIC"
 	    SHLIB_LD="/usr/ccs/bin/ld -G -z text"
 	    LDFLAGS=""
-    
+
 	    do64bit_ok=no
 	    if test "$do64bit" = "yes" ; then
 	    arch=`isainfo`
@@ -964,14 +964,14 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
 		do64bit_ok=yes
 		EXTRA_CFLAGS="-xarch=v9"
 		LDFLAGS="-xarch=v9"
-		else 
+		else
 		AC_MSG_WARN("64bit mode not supported using GCC on $system")
 		fi
 	    else
 		AC_MSG_WARN("64bit mode only supported sparcv9 system")
 	    fi
 	    fi
-	    
+
 	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
 	    # symbols when dynamically loaded into tclsh.
 
@@ -1028,7 +1028,7 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
     # New Orleans, LA, Computerized Processes Unlimited, 1994), then we need
     # to determine which of several header files defines the a.out file
     # format (a.out.h, sys/exec.h, or sys/exec_aout.h).  At present, we
-    # support only a file format that is more or less version-7-compatible. 
+    # support only a file format that is more or less version-7-compatible.
     # In particular,
     #	- a.out files must begin with `struct exec'.
     #	- the N_TXTOFF on the `struct exec' must compute the seek address
@@ -1176,7 +1176,7 @@ AC_DEFUN(SC_CONFIG_CFLAGS, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines only one of the following vars:
@@ -1255,7 +1255,7 @@ main()
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -1346,7 +1346,7 @@ closedir(d);
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Sets the the following vars:
@@ -1424,13 +1424,13 @@ AC_DEFUN(SC_PATH_X, [
 # SC_BLOCKING_STYLE
 #
 #	The statements below check for systems where POSIX-style
-#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented. 
+#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented.
 #	On these systems (mostly older ones), use the old BSD-style
 #	FIONBIO approach instead.
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -1454,7 +1454,7 @@ AC_DEFUN(SC_BLOCKING_STYLE, [
 	else
 	    # Special check for weird MP-RAS system (uname returns weird
 	    # results, and the version is kept in special file).
-	
+
 	    if test -r /etc/.relid -a "X`uname -n`" = "X`uname -s`" ; then
 		system=MP-RAS-`awk '{print $3}' /etc/.relid'`
 	    fi
@@ -1498,7 +1498,7 @@ AC_DEFUN(SC_BLOCKING_STYLE, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -1557,7 +1557,7 @@ main()
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -1639,7 +1639,7 @@ AC_DEFUN(SC_TIME_HANDLER, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Might defines some of the following vars:
@@ -1684,7 +1684,7 @@ AC_DEFUN(SC_BUGGY_STRTOD, [
 #		DL_LIBS
 #		LIBS
 #		MATH_LIBS
-#	
+#
 # Results:
 #
 #	Subst's the following var:
@@ -1765,7 +1765,7 @@ AC_DEFUN(SC_TCL_LINK_LIBS, [
     fi
     AC_CHECK_FUNC(gethostbyname, , AC_CHECK_LIB(nsl, main,
 	    [LIBS="$LIBS -lnsl"]))
-    
+
     # Don't perform the eval of the libraries here because DL_LIBS
     # won't be set until we call SC_CONFIG_CFLAGS
 

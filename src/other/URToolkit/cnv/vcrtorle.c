@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * vcrtorle.c - Convert from VICAR to RLE.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Information Technology and Networking
  * 		University of Michigan Medical Center
  * Date:	Mon Feb 17 1992
  * Copyright (c) 1992, University of Michigan
- * 
+ *
  * From: vcr2wff.c
  * Author: K.R. Sloan
  */
@@ -39,7 +39,7 @@
  * by an integer in ASCII format.  The other items in the label you
  * need to look for are NL (number of lines) and NS (number of
  * samples).  The keywords are always upper case.
- * 
+ *
  *  The image data itself starts immediately after the space allocated
  * for the label.  So, skip LBLSIZE bytes at the beginning of the file
  * to find the start of the image.  The image is stored in binary (not
@@ -49,20 +49,20 @@
  * So, the first NS bytes contain the entire first line of the image,
  * the second NS bytes contain the entire second line, etc.  The order
  * goes left-to-right, top-to-bottom.
- * 
+ *
  *  The full VICAR format can be more complex than this, but this
  * description will hold for most files.  If you want to do a sanity
  * check, then the following have to be true for this description to
  * work: FORMAT='BYTE' ORG='BSQ' NB=1 NBB=0 NLB=0.
- * 
+ *
  * For example, here's the beginning of the file from an actual image,
  * dumped in ASCII format (the newlines are artificial for this
  * message, and are not in the file):
- * 
+ *
  * LBLSIZE=1024        FORMAT='BYTE'  TYPE='IMAGE'  BUFSIZ=20480  DIM=3  EOL=0
  * RECSIZE=1024  ORG='BSQ'  NL=1024  NS=1024  NB=1  N1=1024  N2=1024  N3=1
  * N4=0 NBB=0  NLB=0  HOST='VAX-VMS'  INTFMT='LOW'  REALFMT='VAX'  TASK= ...
- * 
+ *
  * This says the image is 1024 samples (NS, X dimension) by 1024 lines
  * (NL, Y dimension).  The space allocated for the label is 1024
  * bytes.  So, the image data starts at byte number 1024 (0-based) in
@@ -70,16 +70,16 @@
  * The first 1024 bytes in the image are the first horizontal line of
  * the image.  The next 1024 bytes are the second line, and so on.
  * There is no data compression.
- * 
+ *
  *  Note that items in the label do not have to be in the same order
  * (except LBLSIZE is always first), so don't count on that.  Also,
  * LBLSIZE does not have to equal NS, although it does have to be an
  * integer multiple of NS.  NL and NS do not have to be equal, i.e.
  * the image does not have to be square.
- * 
- *  Ron Baalke                           baalke@mars.jpl.nasa.gov 
- *  Jet Propulsion Lab  
- *  
+ *
+ *  Ron Baalke                           baalke@mars.jpl.nasa.gov
+ *  Jet Propulsion Lab
+ *
  */
 #ifndef lint
 static char rcs_id[] = "$Header$";
@@ -110,7 +110,7 @@ static char FORMAT[80];    /* 'BYTE' is OK */
 static char TYPE[80];      /* 'IMAGE' is OK */
 static char ORG[80];       /* `BSQ` is OK */
 static int  NL;            /* height */
-static int  NS;            /* width */ 
+static int  NS;            /* width */
 static int  NB;            /* samples per pixel? */
 static char HOST[80];      /* machine type? */
 static char INTFMT[80];    /* integer format? */
@@ -173,7 +173,7 @@ FILE *fd;
 	n++;
 
 	cp = &Value[1];
-	if ('\'' == Value[0]) 
+	if ('\'' == Value[0])
 	    for(;n < LBLSIZE;cp++)
 	    {
 		*cp = fgetc( fd );
@@ -184,7 +184,7 @@ FILE *fd;
 		    break;
 		}
 	    }
-	else 
+	else
 	    for(;n < LBLSIZE;cp++)
 	    {
 		*cp = fgetc(fd);
@@ -205,13 +205,13 @@ FILE *fd;
 	if (VERBOSE) fprintf(stderr,"[%s = %s]\n",Name,Value);
 	Value[80] = '\0';	/* for our own protection... */
 
-	if (0 == strcmp("FORMAT" ,Name)) {strcpy(FORMAT ,Value); continue;} 
-	if (0 == strcmp("TYPE"   ,Name)) {strcpy(TYPE   ,Value); continue;} 
+	if (0 == strcmp("FORMAT" ,Name)) {strcpy(FORMAT ,Value); continue;}
+	if (0 == strcmp("TYPE"   ,Name)) {strcpy(TYPE   ,Value); continue;}
 	if (0 == strcmp("BUFSIZ" ,Name)) {   (void) atoi(Value); continue;}
 	if (0 == strcmp("DIM"    ,Name)) {   (void) atoi(Value); continue;}
 	if (0 == strcmp("EOL"    ,Name)) {   (void) atoi(Value); continue;}
 	if (0 == strcmp("RECSIZE",Name)) {   (void) atoi(Value); continue;}
-	if (0 == strcmp("ORG"    ,Name)) {strcpy(ORG    ,Value); continue;} 
+	if (0 == strcmp("ORG"    ,Name)) {strcpy(ORG    ,Value); continue;}
 	if (0 == strcmp("NL"     ,Name)) {NL      = atoi(Value); continue;}
 	if (0 == strcmp("NS"     ,Name)) {NS      = atoi(Value); continue;}
 	if (0 == strcmp("NB"     ,Name)) {NB      = atoi(Value); continue;}
@@ -221,15 +221,15 @@ FILE *fd;
 	if (0 == strcmp("N4"     ,Name)) {     (void) atoi(Value); continue;}
 	if (0 == strcmp("NBB"    ,Name)) {     (void) atoi(Value); continue;}
 	if (0 == strcmp("NLB"    ,Name)) {     (void) atoi(Value); continue;}
-	if (0 == strcmp("HOST"   ,Name)) {strcpy(HOST   ,Value); continue;} 
-	if (0 == strcmp("INTFMT" ,Name)) {strcpy(INTFMT ,Value); continue;} 
-	if (0 == strcmp("REALFMT",Name)) {strcpy(REALFMT,Value); continue;} 
-	if (0 == strcmp("TASK"   ,Name)) {strcpy(TASK   ,Value); continue;} 
-	if (0 == strcmp("USER"   ,Name)) {strcpy(USER   ,Value); continue;} 
-	if (0 == strcmp("DAT_TIM",Name)) {strcpy(DAT_TIM,Value); continue;} 
-	if (0 == strcmp("COMMENT",Name)) {strcpy(COMMENT,Value); continue;} 
+	if (0 == strcmp("HOST"   ,Name)) {strcpy(HOST   ,Value); continue;}
+	if (0 == strcmp("INTFMT" ,Name)) {strcpy(INTFMT ,Value); continue;}
+	if (0 == strcmp("REALFMT",Name)) {strcpy(REALFMT,Value); continue;}
+	if (0 == strcmp("TASK"   ,Name)) {strcpy(TASK   ,Value); continue;}
+	if (0 == strcmp("USER"   ,Name)) {strcpy(USER   ,Value); continue;}
+	if (0 == strcmp("DAT_TIM",Name)) {strcpy(DAT_TIM,Value); continue;}
+	if (0 == strcmp("COMMENT",Name)) {strcpy(COMMENT,Value); continue;}
 	if (done) break;
-    }  
+    }
 
     /* Skip the rest of the label. */
     while ( n < LBLSIZE )
@@ -237,7 +237,7 @@ FILE *fd;
 	(void)fgetc( fd );
 	n++;
     }
-	
+
 }
 
 /* RLE stuff */
@@ -274,7 +274,7 @@ int xsize, ysize, zsize;
     addVICARcomment( the_hdr, "DAT_TIM", DAT_TIM );
     addVICARcomment( the_hdr, "TASK", TASK );
     addVICARcomment( the_hdr, "COMMENT", COMMENT );
-}  
+}
 
 int main(argc,argv)
 int argc;
@@ -298,7 +298,7 @@ char *argv[];
 	exit( 1 );
     rle_names( &the_hdr, cmd_name( argv ), outfname, 0 );
     rle_addhist( argv, NULL, &the_hdr );
-  
+
     fd = rle_open_f(the_hdr.cmd,VICARFileName,"r");
 
     ParseVICARHeader(fd);

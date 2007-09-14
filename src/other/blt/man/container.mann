@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Container widget created by George Howlett.
 '\"
@@ -55,7 +55,7 @@ out, and then replace them when you are finished.
 A container may contain an unlimited number of folders.  If there are too
 many tabs to view, you can arrange them as multiple tiers or scroll
 the tabs. The container uses the conventional Tk scrollbar syntax, so you
-can attach a scrollbar too. 
+can attach a scrollbar too.
 .SH EXAMPLE
 You create a container widget with the \fBcontainer\fR command.
 .CS
@@ -82,11 +82,11 @@ default, the text of the tab is the name of the tab.  You can change
 this by configuring the \fB\-text\fR option.
 .CS
 # Change the label of "f1"
-\&.ts tab configure "f1" -label "Tab #1" 
+\&.ts tab configure "f1" -label "Tab #1"
 .CE
 The \fBinsert\fR operation lets you add one or more folders at a time.
 .CS
-\&.ts insert end "f2" -label "Tab #2" "f3" "f4" 
+\&.ts insert end "f2" -label "Tab #2" "f3" "f4"
 .CE
 The tab on each folder contains a label.  A label may display both
 an image and a text string.  You can reconfigure the tab's attributes
@@ -123,8 +123,8 @@ fill the available space in the folder.
 Now when you click the left mouse button on "f1", the
 graph will be displayed in the folder.  It will be automatically
 hidden when another folder is selected.  If you click on the right
-mouse button, the embedded widget will be moved into a toplevel widget 
-of its own.  Clicking again on the right mouse button puts it back into 
+mouse button, the embedded widget will be moved into a toplevel widget
+of its own.  Clicking again on the right mouse button puts it back into
 the folder.
 .PP
 If you want to share a page between two different folders, the
@@ -132,20 +132,20 @@ If you want to share a page between two different folders, the
 whenever the folder is selected.  You can reset the \fB\-window\fR
 option for the tab whenever it's clicked.
 .CS
-\&.ts tab configure "f2" -command { 
+\&.ts tab configure "f2" -command {
     \&.ts tab configure "f2" -window ".ts.graph"
 }
-\&.ts tab configure "f1" -command { 
+\&.ts tab configure "f1" -command {
     \&.ts tab configure "f1" -window ".ts.graph"
 }
 .CE
 If you have many folders, you may wish to stack tabs in multiple
 tiers.  The container's \fB\-tiers\fR option requests a maximum
-number of tiers.   The default is one tier.  
+number of tiers.   The default is one tier.
 .CS
 \&.ts configure -tiers 2
 .CE
-If the tabs can fit in less tiers, the widget will use that many.  
+If the tabs can fit in less tiers, the widget will use that many.
 Whenever there are more tabs than can be displayed in the maximum number
 of tiers, the container will automatically let you scroll the tabs.  You
 can even attach a scrollbar to the container.
@@ -153,11 +153,11 @@ can even attach a scrollbar to the container.
 \&.ts configure -scrollcommand { .sbar set }  -scrollincrement 20
 \&.sbar configure -orient horizontal -command { .ts view }
 .CE
-By default tabs are along the top of the container from left to right.  
+By default tabs are along the top of the container from left to right.
 But tabs can be placed on any side of the container using the \fB\-side\fR
 option.
 .CS
-# Arrange tabs along the right side of the container. 
+# Arrange tabs along the right side of the container.
 \&.ts configure -side right -rotate 270
 .CE
 .SH SYNTAX
@@ -186,7 +186,7 @@ The size of the container window is determined the number of tiers of
 tabs and the sizes of the Tk widgets embedded inside each folder.
 The widest widget determines the width of the folder. The tallest
 determines the height.  If no folders contain an embedded widget, the
-size is detemined solely by the size of the tabs.  
+size is detemined solely by the size of the tabs.
 .PP
 You can override either dimension with the container's \fB\-width\fR
 and \fB\-height\fR options.
@@ -210,7 +210,7 @@ operation described below.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Query or modify the configuration options of the widget.
-If no \fIoption\fR is specified, returns a list describing all 
+If no \fIoption\fR is specified, returns a list describing all
 the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
 information on the format of this list).  If \fIoption\fR is specified
 with no \fIvalue\fR, then the command returns a list describing the
@@ -223,7 +223,7 @@ this case the command returns an empty string.
 .RS
 .TP
 \fB\-background \fIcolor\fR
-Sets the border color of the container.  
+Sets the border color of the container.
 .TP
 \fB\-borderwidth \fIpixels\fR
 Sets the width of the 3\-D border around the outside edge of the widget.  The
@@ -242,21 +242,21 @@ Specifies the widget's cursor.  The default cursor is \f(CW""\fR.
 .TP
 \fB\-height \fIpixels\fR
 Specifies the requested height of widget.  If \fIpixels\fR is
-0, then the height is height the embedded window plus the specified 
+0, then the height is height the embedded window plus the specified
 borderwidth. The default is \f(CW0\fR.
-.TP 
+.TP
 \fB\-highlightbackground  \fIcolor\fR
 Sets the color to display in the traversal highlight region when
-the container does not have the input focus.  
-.TP 
+the container does not have the input focus.
+.TP
 \fB\-highlightcolor \fIcolor\fR
 Sets the color to use for the traversal highlight rectangle that is
-drawn around the widget when it has the input focus. 
+drawn around the widget when it has the input focus.
 The default is \f(CWblack\fR.
-.TP 
+.TP
 \fB\-highlightthickness \fIpixels\fR
-Sets the width of the highlight rectangle to draw around the outside of 
-the widget when it has the input focus. \fIPixels\fR is a non-negative 
+Sets the width of the highlight rectangle to draw around the outside of
+the widget when it has the input focus. \fIPixels\fR is a non-negative
 value and may have any of the forms acceptable to \fBTk_GetPixels\fR.
 If the value is zero, no focus highlight is drawn around the widget.
 The default is \f(CW2\fR.
@@ -274,7 +274,7 @@ specifies how the container should appear relative to widget that
 it is packed into; for example, \f(CWraised\fR means the container should
 appear to protrude.  The default is \f(CWsunken\fR.
 .TP
-\fB\-takefocus\fR \fIfocus\fR 
+\fB\-takefocus\fR \fIfocus\fR
 Provides information used when moving the focus from window to window
 via keyboard traversal (e.g., Tab and Shift-Tab).  If \fIfocus\fR is
 \f(CW0\fR, this means that this window should be skipped entirely during
@@ -283,13 +283,13 @@ receive the input focus.  An empty value means that the traversal
 scripts decide whether to focus on the window.
 The default is \f(CW1\fR.
 .TP
-\fB\-width \fIpixels\fR 
+\fB\-width \fIpixels\fR
 Specifies the requested width of the widget.  If \fIpixels\fR is 0,
 then the width is the width the embedded window and the specified
 borderwidth.  The default is \f(CW0\fR.
 .TP
 \fB\-window \fIid\fR
-Specifies the foreign embedded using its X window id.  
+Specifies the foreign embedded using its X window id.
 .RE
 .TP
 \fIpathName \fBfind \fB\-command\fR|\fB\-name\fR \fIpattern\fR

@@ -7,12 +7,12 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
-eps -  Encapsulated PostScript canvas item. 
+eps -  Encapsulated PostScript canvas item.
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <I>canvas<B>
-create eps <I>x y </I></B></I>?<I>option value</I>?... 
+create eps <I>x y </I></B></I>?<I>option value</I>?...
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The <B>eps</B> canvas item lets you place
 encapulated PostScript (EPS) on a canvas, controlling its size and placement.
@@ -21,7 +21,7 @@ encapulated PostScript (EPS) on a canvas, controlling its size and placement.
 an ASCII hexidecimal preview, or 2) a Tk photo image.  When the canvas generates
 PostScript output, the EPS will be inserted with the proper translation
 and scaling to match that of the EPS item. So can use the canvas widget
-as a page layout tool. 
+as a page layout tool.
 <H2><A NAME="sect3" HREF="#toc3">Example</A></H2>
 Let's say you have for PostScript files of
 four graphs which you want to tile two-by-two on a single page.  Maybe you'd
@@ -32,7 +32,7 @@ own PostScript program.  The <B>eps</B> canvas item lets you do this through Tk'
 canvas widget.  An <B>eps</B> item displays an image (or rectangle) representing
 the encapsulated PostScript file. It also scales and translates the EPS
 file when the canvas is printed. <P>
- 
+
 <H2><A NAME="sect4" HREF="#toc4">Syntax</A></H2>
 <BR>
 <P>
@@ -43,7 +43,7 @@ is exactly interpretered is  controlled by the <B>-anchor</B> option (see below)
 <P>
 Additional options may be specified on the command line to configure aspects
 of the eps item such as its color, stipple, and font.  The following <I>option</I>
-and <I>value</I> pairs are valid. 
+and <I>value</I> pairs are valid.
 <DL>
 
 <DT><B>-anchor <I>anchor</I></B> </DT>
@@ -162,7 +162,7 @@ command and the <B>element</B> component. <BR>
 <tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;-xdata { 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0 } \<BR>
 <tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;-ydata { 26.18 50.46 72.85 93.31 111.86 128.47 143.14 <BR>
 <tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;155.85 166.60 175.38 }<BR>
-</CODE><P>The element's X and Y coordinates are specified using lists of numbers. 
+</CODE><P>The element's X and Y coordinates are specified using lists of numbers.
 Alternately, BLT vectors could be used to hold the X-Y coordinates. <BR>
 <CODE># Create two vectors and add them to the graph.<BR>
 vector xVec yVec<BR>
@@ -251,7 +251,7 @@ the <B>-under</B> option. <BR>
 the graph.  The option <B>-maxpect</B> says to scale the plot to the size of the
 page.  Turning off the <B>-decorations</B> option denotes that no borders or color
 backgrounds should be drawn (i.e. the background of the margins, legend,
-and plotting area will be white). 
+and plotting area will be white).
 <H2><A NAME="sect6" HREF="#toc6">Graph Operations</A></H2>
 
 <DL>
@@ -498,7 +498,7 @@ data elements, legend, grid, cross hairs, postscript, and annotation markers.
 Instead of one big set of configuration options and operations, the graph
 is partitioned, where each component has its own configuration options
 and operations that specifically control that aspect or part of the graph.
- 
+
 <H3><A NAME="sect8" HREF="#toc8">Axis Components</A></H3>
 Four coordinate axes are automatically created: two X-coordinate
 axes (<I>x</I> and <I>x2</I>) and two Y-coordinate axes (<I>y</I>, and <I>y2</I>).  By default, the axis
@@ -755,7 +755,7 @@ can be more convenient to use than always determining what axes are current
 being displayed by the graph. <P>
 The following operations are available for
 axes. They mirror exactly the operations of the <B>axis</B> component.  The <I>axis</I>
-argument must be <B>xaxis</B>, <B>x2axis</B>, <B>yaxis</B>, or <B>y2axis</B>. 
+argument must be <B>xaxis</B>, <B>x2axis</B>, <B>yaxis</B>, or <B>y2axis</B>.
 <DL>
 
 <DT><I>pathName <I>axis <B>cget <I>option</I></B></I></I>
@@ -790,7 +790,7 @@ mouse in relation to the coordinate axes.  Cross hairs differ from line
 markers in that they are implemented using XOR drawing primitives. This
 means that they can be quickly drawn and erased without redrawing the entire
 graph. <P>
-The following operations are available for cross hairs: 
+The following operations are available for cross hairs:
 <DL>
 
 <DT><I>pathName
@@ -850,7 +850,7 @@ option add *Graph.Crosshairs.Color     red<BR>
 on</B></I> </DT>
 <DD>Turns on the display of the cross hairs. </DD>
 
-<DT><I>pathName <B>crosshairs toggle</B></I> 
+<DT><I>pathName <B>crosshairs toggle</B></I>
 </DT>
 <DD>Toggles the current state of the cross hairs, alternately mapping and unmapping
 the cross hairs. </DD>
@@ -866,7 +866,7 @@ When new data elements are created,
 they are automatically added to a list of displayed elements.   The display
 list controls what elements are drawn and in what order.   <P>
 The following
-operations are available for elements. 
+operations are available for elements.
 <DL>
 
 <DT><I>pathName <B>element activate <I>elemName
@@ -926,7 +926,7 @@ for elements. <blockquote></DD>
 </DD>
 
 <DT><B>-color <I>color</I></B>  </DT>
-<DD>Sets the color of the traces connecting the data points.  
+<DD>Sets the color of the traces connecting the data points.
 </DD>
 
 <DT><B>-dashes <I>dashList</I></B> </DT>
@@ -1107,7 +1107,7 @@ string <I>"bar"</I>, otherwise it returns <I>"line"</I>. </DD>
 Grid lines extend
 from the major and minor ticks of each axis horizontally or vertically
 across the plotting area.  The following operations are available for grid
-lines. 
+lines.
 <DL>
 
 <DT><I>pathName <B>grid cget <I>option</I></B></I> </DT>
@@ -1164,7 +1164,7 @@ appear at minor tick intervals.  The default is <I>1</I>. </DD>
 There may be
 cases where the graph needs to be drawn and updated as quickly as possible.
  If drawing speed becomes a big problem, here are a few tips to speed up
-displays. 
+displays.
 <UL>
 &#183;<LI>Try to minimize the number of data points.  The more data points
 the looked at, the more work the graph must do. </LI>&#183;<LI>If your data is generated
@@ -1192,7 +1192,7 @@ is logarithmically scaled. <P>
 The PostScript output generated for polygons
 with more than 1500 points may exceed the limits of some printers (See
 PostScript Language Reference Manual, page 568).  The work-around is to break
-the polygon into separate pieces. 
+the polygon into separate pieces.
 <H2><A NAME="sect14" HREF="#toc14">Future Incompatibility</A></H2>
 The <B>-mapped</B> options
 are obsoleted and will be removed.  You can achieve the same results using

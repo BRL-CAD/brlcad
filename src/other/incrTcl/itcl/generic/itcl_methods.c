@@ -1681,11 +1681,11 @@ Itcl_PushContext(interp, member, contextClass, contextObj, contextPtr)
          * have been defined as the body if no implementation was defined.
          */
         assert(mcode->procPtr->bodyPtr != NULL);
-	
+
         result = TclProcCompileProc(interp, mcode->procPtr,
 				    mcode->procPtr->bodyPtr, (Namespace*)member->classDefn->namesp,
 				    "body for", member->fullname);
-	
+
         if (result != TCL_OK) {
 	  return result;
 	}

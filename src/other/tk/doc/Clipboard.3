@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tk_ClipboardClear 3 4.0 Tk "Tk Library Procedures"
 .BS
@@ -45,7 +45,7 @@ once, then calling \fBTk_ClipboardAppend\fR to add data for any
 number of targets.
 .PP
 \fBTk_ClipboardClear\fR claims the CLIPBOARD selection and frees any
-data items previously stored on the clipboard in this application.  
+data items previously stored on the clipboard in this application.
 It normally returns \fBTCL_OK\fR, but if an error occurs it returns
 \fBTCL_ERROR\fR and leaves an error message in \fIinterp->result\fR.
 \fBTk_ClipboardClear\fR must be called before a sequence of

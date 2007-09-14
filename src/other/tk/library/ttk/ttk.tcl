@@ -123,7 +123,7 @@ proc ttk::LoadThemes {} {
     variable library
 
     # "default" always present:
-    uplevel #0 [list source [file join $library defaults.tcl]] 
+    uplevel #0 [list source [file join $library defaults.tcl]]
 
     set builtinThemes [style theme names]
     foreach {theme script} {
@@ -144,7 +144,7 @@ ttk::LoadThemes; rename ::ttk::LoadThemes {}
 
 ### Select platform-specific default theme:
 #
-# Notes: 
+# Notes:
 #	+ On OSX, aqua theme is the default
 #	+ On Windows, xpnative takes precedence over winnative if available.
 #	+ On X11, users can use the X resource database to

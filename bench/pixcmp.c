@@ -219,7 +219,7 @@ main(int argc, char *argv[])
 	perror("FILE1 fseek failure");
 	exit(FILE_ERROR);
     }
-    
+
     /* skip requested pixels in FILE2 */
     if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
 	fprintf(stderr,

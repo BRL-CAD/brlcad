@@ -25,10 +25,10 @@ awk 'BEGIN { ind=0; count=0;pr = 0
 		print "};"
 	     print "int Base[] = {"
 	     for(i=0 ; i<ind ; i++ ) {
-		if(i%8==0) 
+		if(i%8==0)
 			printf("   ")
 		printf(" %4d,", Base[i]);
-		if(i%8==7) 
+		if(i%8==7)
 			printf("\n")
 	   }
 	   if ( i%4 != 0 ) printf("\n");

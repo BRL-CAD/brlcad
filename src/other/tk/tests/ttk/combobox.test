@@ -38,7 +38,7 @@ test combobox-2.3 "current -- change value" -body {
     .cb current
 } -result 1
 
-test combobox-2.4 "current -- value not in list" -body { 
+test combobox-2.4 "current -- value not in list" -body {
     .cb set "z"
     .cb current
 } -result -1

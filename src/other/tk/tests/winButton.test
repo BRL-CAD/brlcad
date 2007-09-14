@@ -91,7 +91,7 @@ test winbutton-1.4 {TkpComputeButtonGeometry procedure} {win nonPortable} {
 	    [winfo reqwidth .b2] [winfo reqheight .b2] \
 	    [winfo reqwidth .b3] [winfo reqheight .b3] \
 	    [winfo reqwidth .b4] [winfo reqheight .b4]
-} {58 24 67 33 88 30 90 28} 
+} {58 24 67 33 88 30 90 28}
 test winbutton-1.5 {TkpComputeButtonGeometry procedure} {win nonPortable} {
     deleteWindows
     label .l1 -text "This is a long string that will wrap around on several lines.\n\nIt also has a blank line (above)." -wraplength 1.5i -padx 0 -pady 0

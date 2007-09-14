@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -30,27 +30,27 @@ Blt_TreeNodeId \- Returns the node serial number.
 unsigned int
 \fBBlt_TreeNodeId\fR(\fInode\fR)
 .SH ARGUMENTS
-.AS Blt_TreeNode node 
+.AS Blt_TreeNode node
 .AP Blt_TreeNode node in
-Node whose ID is to be returned.  
+Node whose ID is to be returned.
 .BE
 .SH DESCRIPTION
 This procedure returns the node serial number.  The node serial number
 is useful for programs that export the tree data object to the Tcl
 programming level.  Since node labels (and therefore pathnames) are
-not unique, the ID can be used to uniquely identify a node.  
+not unique, the ID can be used to uniquely identify a node.
 .PP
 The arguments are as follows:
 .TP 1i
 \fInode\fR
-The node whose serial number is returned.  The serial number of 
+The node whose serial number is returned.  The serial number of
 the root node for example is always 0.
 .SH RETURNS
 The serial number of the node.  Nodes are given a unique serial number
 when they are created.  You can use the ID to later retrieve the node
-using \fBBlt_TreeGetNode\fR.  
+using \fBBlt_TreeGetNode\fR.
 .SH EXAMPLE
-The following example prints the ID of a node. 
+The following example prints the ID of a node.
 .CS
 printf("root ID is %s\\n", Blt_TreeNodeId(node));
 .CE

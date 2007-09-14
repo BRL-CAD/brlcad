@@ -21,23 +21,23 @@ rle_hdr * the_hdr;
 .I Rle_putrow
 is called for each output scanline when creating an
 .IR RLE (5)
-image.  
+image.
 .I Rows
 is an array of pointers to the pixel data for the color components of
-the scanline.  Rows should have 
+the scanline.  Rows should have
 .IR the_hdr \(-> ncolors
 elements.  If an alpha channel is being saved, rows[-1] should point to the
 alpha channel data.
 .I Length
-is the number of pixels in the scanline.  
+is the number of pixels in the scanline.
 .I Rows[i]
-should point to the 
+should point to the
 .IR the_hdr \(-> xmin
 element of the scanline.
 
 The function
 .IR rle_row_alloc (3)
-will properly allocate memory for use by 
+will properly allocate memory for use by
 .IR rle_putrow .
 .SH SEE ALSO
 .na
@@ -53,7 +53,7 @@ will properly allocate memory for use by
 .SH AUTHOR
 Spencer W. Thomas, Todd Fuqua
 .SH BUGS
-Having the scanline indexed from 
+Having the scanline indexed from
 .I xmin
 is an incredible botch.  Its origin lies in the deep dark history of
 the raster toolkit, and it seems it's too late to change it now.

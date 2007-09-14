@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -47,17 +47,17 @@ hiertable .h  -width 0\
     -yscrollcommand { .vs set } \
     -xscrollcommand { .hs set }  \
     -selectmode multiple \
-    -hideroot yes 
+    -hideroot yes
 
 #.h configure -icons "" -activeicons ""
 
 .h column configure treeView -text "View"
-.h column insert 0 mtime atime gid 
-.h column insert end nlink mode type ctime uid ino size dev 
-.h column configure uid -background \#eaeaff -style text 
-.h column configure mtime -hide no -bg \#ffeaea -style text 
+.h column insert 0 mtime atime gid
+.h column insert end nlink mode type ctime uid ino size dev
+.h column configure uid -background \#eaeaff -style text
+.h column configure mtime -hide no -bg \#ffeaea -style text
 .h column configure size gid nlink uid ino dev -justify right -style text
-.h column configure treeView -hide no -edit no -style text 
+.h column configure treeView -hide no -edit no -style text
 
 scrollbar .vs -orient vertical -command { .h yview }
 scrollbar .hs -orient horizontal -command { .h xview }
@@ -73,13 +73,13 @@ proc FormatSize { size } {
        set size [expr $size / 1000]
        if { $size > 0 } {
            set rem [format "%03d" $rem]
-       } 
+       }
        if { $string != "" } {
            set string "$rem,$string"
        } else {
            set string "$rem"
        }
-   } 
+   }
    return $string
 }
 
@@ -88,7 +88,7 @@ array set modes {
    1    --x
    2    -w-
    3    -wx
-   4    r-- 
+   4    r--
    5    r-x
    6    rw-
    7    rwx
@@ -109,7 +109,7 @@ table configure . c1 r1 -resize none
 image create photo fileImage -file images/stopsign.gif
 
 proc DoFind { dir parent } {
-    global count 
+    global count
     set saved [pwd]
 
     cd $dir
@@ -153,7 +153,7 @@ proc Find { dir } {
 proc GetAbsolutePath { dir } {
     set saved [pwd]
     cd $dir
-    set path [pwd] 
+    set path [pwd]
     cd $saved
     return $path
 }
@@ -170,7 +170,7 @@ eval .h entry configure $nodes -foreground green4
 set nodes [.h find -glob -name *.h]
 eval .h entry configure $nodes -foreground cyan4
 set nodes [.h find -glob -name *.o]
-eval .h entry configure $nodes -foreground red4 
+eval .h entry configure $nodes -foreground red4
 
 cd $saved
 
@@ -179,13 +179,13 @@ cd $saved
 }
 
 proc SortColumn { column } {
-    set old [.h sort cget -column] 
+    set old [.h sort cget -column]
     set decreasing 0
     if { "$old" == "$column" } {
 	set decreasing [.h sort cget -decreasing]
 	set decreasing [expr !$decreasing]
     }
-    .h sort configure -decreasing $decreasing -column $column 
+    .h sort configure -decreasing $decreasing -column $column
     .h configure -flat yes
     .h sort auto yes
     blt::busy hold .h

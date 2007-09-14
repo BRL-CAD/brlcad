@@ -1,4 +1,4 @@
-/* 
+/*
  * pkge.c --
  *
  *	This file contains a simple Tcl package "pkge" that is intended

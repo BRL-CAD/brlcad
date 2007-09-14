@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rleswap.c - Swap the channels in an RLE file around
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -41,7 +41,7 @@ void setup_map(), print_map();
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage:
  *	rleswap [-mM] [-p channel-pairs,...] [-f from-channels,...]
  *		[-t to-channels,...] [-d delete-channels,...] [infile]
@@ -50,7 +50,7 @@ void setup_map(), print_map();
  * 			affected.
  * 	-M:		Don't modify the colormap.  Only the image
  * 			data is affected.
- * 
+ *
  *	-p, -f, -t, -d:	Only one of these may be specified, they indicate
  *			different ways of indicating the channel swapping
  *			from input to output.
@@ -176,7 +176,7 @@ char **argv;
     in_hdr.rle_file = rle_open_f(cmd_name( argv ), fname, "r");
     rle_names( &in_hdr, cmd_name( argv ), fname, 0 );
     rle_names( &out_hdr, in_hdr.cmd, out_fname, 0 );
-   
+
     /* Read in header */
     for ( rle_cnt = 0;
 	  (rle_err = rle_get_setup( &in_hdr )) == RLE_SUCCESS;
@@ -268,7 +268,7 @@ char **argv;
 	    else
 		out_hdr.cmap = 0;
 	    out_hdr.ncmap = mapnoutput;
-	    
+
 	    /* If input channel is in color map, copy it, else use identity? */
 	    for ( i = 0; i < mapnoutput; i++ )
 		if ( mapoutchan[i] >= 0 && mapoutchan[i] < in_hdr.ncmap )
@@ -297,7 +297,7 @@ char **argv;
 	/* Allocate raw buffers for input */
 	if ( rle_raw_alloc( &in_hdr, &scanraw, &nraw ) < 0 )
 	    RLE_CHECK_ALLOC( in_hdr.cmd, 0, "scanline memory" );
-	    
+
 
 	/* Allocate buffer pointers for output */
 	if ( rle_raw_alloc( &out_hdr, &outraw, &outnraw ) < 0 )

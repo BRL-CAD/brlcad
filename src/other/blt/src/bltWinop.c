@@ -94,7 +94,7 @@ static int
 GetWindowSize(
     Tcl_Interp *interp,
     Window window,
-    int *widthPtr, 
+    int *widthPtr,
     int *heightPtr)
 {
     int result;
@@ -151,11 +151,11 @@ GetWindowSize(interp, window, widthPtr, heightPtr)
     Window root;
     Tk_ErrorHandler handler;
     Tk_Window tkwin;
-    
+
     tkwin = Tk_MainWindow(interp);
-    handler = Tk_CreateErrorHandler(Tk_Display(tkwin), any, X_GetGeometry, 
+    handler = Tk_CreateErrorHandler(Tk_Display(tkwin), any, X_GetGeometry,
 	    any, XGeometryErrorProc, &result);
-    result = XGetGeometry(Tk_Display(tkwin), window, &root, &x, &y, 
+    result = XGetGeometry(Tk_Display(tkwin), window, &root, &x, &y,
 	  (unsigned int *)widthPtr, (unsigned int *)heightPtr,
 	  (unsigned int *)&borderWidth, (unsigned int *)&depth);
     Tk_DeleteErrorHandler(handler);
@@ -448,7 +448,7 @@ WarpToOp(clientData, interp, argc, argv)
 	    if (Blt_GetXY(interp, mainWindow, argv[2], &x, &y) != TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    root = RootWindow(Tk_Display(mainWindow), 
+	    root = RootWindow(Tk_Display(mainWindow),
 		Tk_ScreenNumber(mainWindow));
 	    XWarpPointer(Tk_Display(mainWindow), None, root, 0, 0, 0, 0, x, y);
 	} else {
@@ -1008,7 +1008,7 @@ SubsampleOp(clientData, interp, argc, argv)
     if (filterPtr == NULL) {
 	Blt_ResizePhoto(srcPhoto, x, y, width, height, destPhoto);
     } else {
-	Blt_ResamplePhoto(srcPhoto, x, y, width, height, destPhoto, 
+	Blt_ResamplePhoto(srcPhoto, x, y, width, height, destPhoto,
 		horzFilterPtr, vertFilterPtr);
     }
     return TCL_OK;
@@ -1020,7 +1020,7 @@ static Blt_OpSpec imageOps[] =
 	"srcPhoto destPhoto filter",},
     {"gradient", 1, (Blt_Op)GradientOp, 7, 7, "photo left right type",},
     {"readjpeg", 3, (Blt_Op)ReadJPEGOp, 5, 5, "fileName photoName",},
-    {"resample", 3, (Blt_Op)ResampleOp, 5, 7, 
+    {"resample", 3, (Blt_Op)ResampleOp, 5, 7,
 	"srcPhoto destPhoto ?horzFilter vertFilter?",},
     {"rotate", 2, (Blt_Op)RotateOp, 6, 6, "srcPhoto destPhoto angle",},
     {"snap", 2, (Blt_Op)SnapOp, 5, 7, "window photoName ?width height?",},

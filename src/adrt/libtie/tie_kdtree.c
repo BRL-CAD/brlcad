@@ -151,7 +151,7 @@ void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
       /* Check to see if defines a new Max or Min point */
       MATH_VEC_MIN(tie->min, min);
       MATH_VEC_MAX(tie->max, max);
-      /* printf("Box: [%g, %g, %g] [%g, %g, %g]\n", tie->min.v[0], tie->min.v[1], tie->min.v[2], tie->max.v[0], tie->max.v[1], tie->max.v[2]);*/ 
+      /* printf("Box: [%g, %g, %g] [%g, %g, %g]\n", tie->min.v[0], tie->min.v[1], tie->min.v[2], tie->max.v[0], tie->max.v[1], tie->max.v[2]);*/
     }
 
     ((tie_geom_t *)(tie->kdtree->data))->tri_num = tri_num;
@@ -389,7 +389,7 @@ fflush (stdout);
       }
 
       for(i = 0; i < node_gd->tri_num; i++) {
-        /* 
+        /*
         * Optimization: If the points for the triangle of the dimension being tested
         * do not span the cutting plane, then do not bother with the next test.
         */
@@ -505,7 +505,7 @@ fflush (stdout);
     d = 1;
   if(gap[2][1] - gap[2][0] > gap[d][1] - gap[d][0])
     d = 2;
-  
+
   /*
   * Largest gap found must meet MIN_SPAN requirements
   * There must be atleast 500 triangles or we don't bother.
@@ -627,7 +627,7 @@ fflush (stdout);
   child[1]->tri_num = 0;
 
 
-  /* 
+  /*
   * Determine if the triangles touch either of the two children nodes,
   * if it does insert it into them respectively.
   */
@@ -680,7 +680,7 @@ fflush (stdout);
   /* Push each child through the same process. */
   tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[0], depth+1, cmin[0], cmax[0], cnt[0], cnt[1]);
   tie_kdtree_build(tie, &((tie_kdtree_t *)(node->data))[1], depth+1, cmin[1], cmax[1], cnt[0], cnt[1]);
- 
+
   /* Assign the splitting dimension to the node */
   /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
   node->data = (void *)((intptr_t)(node->data) + split + 4);

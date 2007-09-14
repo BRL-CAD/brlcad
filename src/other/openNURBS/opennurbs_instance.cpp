@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -108,11 +108,11 @@ BOOL ON_InstanceDefinition::Write(
     rc = binary_archive.WriteInt( (unsigned int)m_idef_update_type );
   if ( rc )
     rc = binary_archive.WriteString( m_source_archive );
-  
+
   // version 1.1 fields
   if (rc)
     rc = m_source_archive_checksum.Write( binary_archive );
-  
+
   // version 1.2 fields
   if (rc)
     rc = binary_archive.WriteInt( m_us.m_unit_system );
@@ -282,7 +282,7 @@ BOOL ON_InstanceDefinition::GetBBox(
   return m_bbox.IsValid();
 }
 
-BOOL ON_InstanceDefinition::Transform( 
+BOOL ON_InstanceDefinition::Transform(
        const ON_Xform& xform
        )
 {
@@ -354,7 +354,7 @@ void ON_InstanceDefinition::SetBoundingBox( ON_BoundingBox bbox )
   m_bbox = bbox;
 }
 
-void ON_InstanceDefinition::SetSourceArchive( const wchar_t* source_archive, 
+void ON_InstanceDefinition::SetSourceArchive( const wchar_t* source_archive,
                                               ON_CheckSum checksum,
                                               ON_InstanceDefinition::IDEF_UPDATE_TYPE idef_update_type)
 {
@@ -535,7 +535,7 @@ BOOL ON_InstanceRef::GetBBox(
   return bGrowBox;
 }
 
-BOOL ON_InstanceRef::Transform( 
+BOOL ON_InstanceRef::Transform(
        const ON_Xform& xform
        )
 {

@@ -12,7 +12,7 @@ testConstraint nyi 0
 test treetags-1.0 "Setup" -constraints treeview -body {
     set tv [ttk::treeview .tv]
     .tv insert {} end -id item1 -text "Item 1"
-    pack .tv 
+    pack .tv
 }
 
 test treetags-1.1 "Bad tag list" -constraints treeview -body {

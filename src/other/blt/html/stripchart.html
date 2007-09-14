@@ -7,12 +7,12 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 stripchart -  2D strip chart for plotting x and
-y coordinate data. 
+y coordinate data.
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
-<B>stripchart<I> <I>pathName </I></I></B>?<I>option value</I>?... 
+<B>stripchart<I> <I>pathName </I></I></B>?<I>option value</I>?...
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The
 <B>stripchart</B> command creates a strip chart for plotting two-dimensional data
@@ -26,7 +26,7 @@ use of a strip chart differs in that the X-axis typically refers to time
 points.  Data values are added at intervals.  The strip chart lets you automatically
 maintain a view of the most recent time points. The axis options <B>-shiftby</B>
 and <B>-autorange</B> control this. You can specify different line styles for data
-points (see the  <B>-styles</B> option).   
+points (see the  <B>-styles</B> option).
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 The <B>stripchart</B> command creates
 a new window for plotting two-dimensional data (x,y coordinates).  Data points
@@ -36,7 +36,7 @@ the plotting area.  By default, the legend is displayed in the right margin.
  The title is displayed in top margin. <P>
 A strip chart is composed of several
 components: coordinate axes, data elements, legend, grid, cross hairs,
-pens, postscript, and annotation markers.  
+pens, postscript, and annotation markers.
 <DL>
 
 <DT><I>axis</I>  </DT>
@@ -65,7 +65,7 @@ major and minor ticks of the X-axis and/or Y-axis across the  plotting area.
  </DD>
 
 <DT><I>legend</I>  </DT>
-<DD>The legend displays the name and symbol of each data element. 
+<DD>The legend displays the name and symbol of each data element.
 The legend can be drawn in any margin or in the plotting area. </DD>
 
 <DT><I>marker</I> </DT>
@@ -77,7 +77,7 @@ bitmaps, connected line  segments, images, polygons, or embedded widgets.
 </DD>
 
 <DT><I>pen</I>  </DT>
-<DD>Pens define attributes (both symbol and line style) for elements. 
+<DD>Pens define attributes (both symbol and line style) for elements.
 Data elements use pens to specify how they should be drawn.  A data  element
 may use many pens at once.  Here, the particular pen  used for a data point
 is determined from each element's weight  vector (see the element's <B>-weight</B>
@@ -117,7 +117,7 @@ the strip chart. <BR>
 </CODE><P>The operation, now located after the name of the component, is the function
 to be performed on that component. Each component has its own set of operations
 that manipulate that component.  They will be described below in their own
-sections. 
+sections.
 <H2><A NAME="sect5" HREF="#toc5">Example</A></H2>
 The <B>stripchart</B> command creates a new strip chart.   <BR>
 <CODE># Create a new strip chart.  Plotting area is black.<BR>
@@ -136,7 +136,7 @@ new command and the <B>element</B> component. <BR>
 <tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;-xdata { 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0 } \<BR>
 <tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;-ydata { 26.18 50.46 72.85 93.31 111.86 128.47 143.14 <BR>
 <tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;155.85 166.60 175.38 }<BR>
-</CODE><P>The element's X and Y coordinates are specified using lists of numbers. 
+</CODE><P>The element's X and Y coordinates are specified using lists of numbers.
 Alternately, BLT vectors could be used to hold the X-Y coordinates. <BR>
 <CODE># Create two vectors and add them to the strip chart.<BR>
 vector xVec yVec<BR>
@@ -229,7 +229,7 @@ with the <B>-under</B> option. <BR>
 the strip chart.  The option <B>-maxpect</B> says to scale the plot to the size
 of the page.  Turning off the <B>-decorations</B> option indicates that no borders
 or color backgrounds should be displayed (i.e. the background of the margins,
-legend, and plotting area will be white). 
+legend, and plotting area will be white).
 <H2><A NAME="sect6" HREF="#toc6">Stripchart Operations</A></H2>
 
 <DL>
@@ -491,7 +491,7 @@ of several components: coordinate axes, data elements, legend, grid, cross
 hairs, postscript, and annotation markers. Instead of one big set of configuration
 options and operations, the strip chart is partitioned, where each component
 has its own configuration options and operations that specifically control
-that aspect or part of the strip chart.  
+that aspect or part of the strip chart.
 <H3><A NAME="sect8" HREF="#toc8">Axis Components</A></H3>
 Four coordinate
 axes are automatically created: two X-coordinate axes (<I>x</I> and <I>x2</I>) and two
@@ -765,7 +765,7 @@ can be more convenient to use than always determining what axes are current
 being displayed by the graph. <P>
 The following operations are available for
 axes. They mirror exactly the operations of the <B>axis</B> component.  The <I>axis</I>
-argument must be <B>xaxis</B>, <B>x2axis</B>, <B>yaxis</B>, or <B>y2axis</B>. 
+argument must be <B>xaxis</B>, <B>x2axis</B>, <B>yaxis</B>, or <B>y2axis</B>.
 <DL>
 
 <DT><I>pathName <I>axis <B>cget <I>option</I></B></I></I>
@@ -800,7 +800,7 @@ mouse in relation to the coordinate axes.  Cross hairs differ from line
 markers in that they are implemented using XOR drawing primitives. This
 means that they can be quickly drawn and erased without redrawing the entire
 strip chart. <P>
-The following operations are available for cross hairs: 
+The following operations are available for cross hairs:
 <DL>
 
 <DT><I>pathName
@@ -876,7 +876,7 @@ When new data elements are created,
 they are automatically added to a list of displayed elements.   The display
 list controls what elements are drawn and in what order.   <P>
 The following
-operations are available for elements. 
+operations are available for elements.
 <DL>
 
 <DT><I>pathName <B>element activate <I>elemName
@@ -895,7 +895,7 @@ operation. </DD>
 <DT><I>pathName <B>element closest <I>x y</I></B></I> <I>varName</I> ?<I>option value</I>?... ?<I>elemName</I>?...
 </DT>
 <DD>Finds the data point closest to the window coordinates <I>x</I> and <I>y</I> in the element
-<I>elemName</I>.  <I>ElemName</I> is the name of an element, that must not be hidden. 
+<I>elemName</I>.  <I>ElemName</I> is the name of an element, that must not be hidden.
 If no elements are specified, then all visible elements are searched.  It
 returns via the array variable <I>varName</I> the name of the closest element,
 the index of its closest point, and the graph coordinates of the point.
@@ -911,7 +911,7 @@ isn't specified, then it defaults to the value of the stripchart's <B>-halo</B> 
 
 <DT><B>-interpolate <I>boolean</I></B> </DT>
 <DD>Indicates that both the data points and interpolated
-points along the line segment formed should be considered.  If <I>boolean</I> 
+points along the line segment formed should be considered.  If <I>boolean</I>
 is true, the closest line segment will be selected instead of the closest
 point. If this option isn't specified, <I>boolean</I> defaults  to <I>0</I>. </DD>
 </DL>
@@ -1106,7 +1106,7 @@ string <I>"bar"</I>, otherwise it returns <I>"line"</I>. </DD>
 Grid lines extend
 from the major and minor ticks of each axis horizontally or vertically
 across the plotting area.  The following operations are available for grid
-lines. 
+lines.
 <DL>
 
 <DT><I>pathName <B>grid cget <I>option</I></B></I> </DT>
@@ -1184,7 +1184,7 @@ The legend displays a list of the data elements.
 in any margin (the default location is in the right margin).  It can also
 be positioned anywhere within the plotting area. <P>
 The following operations
-are valid for the legend. 
+are valid for the legend.
 <DL>
 
 <DT><I>pathName <B>legend activate <I>pattern</I></B></I>... </DT>
@@ -1497,7 +1497,7 @@ is generated.  You can change the page dimensions and borders.  The plot
 itself can be scaled, centered, or rotated to landscape.  The PostScript
 output can be written directly to a file or returned through the interpreter.
 <P>
-The following postscript operations are available. 
+The following postscript operations are available.
 <DL>
 
 <DT><I>pathName <B>postscript cget
@@ -1643,7 +1643,7 @@ by <I>-Inf</I> and <I>Inf</I> respectively) that translate into the minimum or m
 limit of the axis.  For example, you can place a marker so it always remains
 in the lower left corner of the plotting area, by using the coordinates
 <I>-Inf</I>,<I>-Inf</I>. <P>
-The following operations are available for markers. 
+The following operations are available for markers.
 <DL>
 
 <DT><I>pathName <B>marker
@@ -1744,7 +1744,7 @@ option add *Stripchart.m1.Background     blue<BR>
 
 <DT></CODE><P><I>pathName <B>marker create <I>type</I></B></I> ?<I>option value</I>?... </DT>
 <DD>Creates a marker of the selected
-type. <I>Type</I> may be either <I>text</I>, <I>line</I>, <I>bitmap</I>, <I>image</I>, <I>polygon</I>, or <I>window</I>. 
+type. <I>Type</I> may be either <I>text</I>, <I>line</I>, <I>bitmap</I>, <I>image</I>, <I>polygon</I>, or <I>window</I>.
 This command returns the marker identifier,  used as the <I>markerId</I> argument
 in the other marker-related commands.  If the <B>-name</B> option is used, this overrides
 the normal marker identifier.  If the name provided is already used for
@@ -1825,7 +1825,7 @@ the marker's <B>create</B> operation in the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the marker's <B>configure</B>
 operation. <P>
-The following options are specific to image markers: 
+The following options are specific to image markers:
 <DL>
 
 <DT><B>-anchor <I>anchor</I></B>
@@ -1851,7 +1851,7 @@ the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the marker's <B>configure</B>
 operation. <P>
-The following options are specific to line markers: 
+The following options are specific to line markers:
 <DL>
 
 <DT><B>-background
@@ -1891,7 +1891,7 @@ markers are created using the marker <B>create</B> operation in the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the <B>marker configure</B>
 command to change the marker's configuration. The following options are supported
-for polygon markers: 
+for polygon markers:
 <DL>
 
 <DT><B>-dashes <I>dashList</I></B> </DT>
@@ -1935,7 +1935,7 @@ in the form: <BR>
 for the text marker.   These same <I>option</I>-<I>value</I> pairs may be used with the
  marker's <B>configure</B> operation.   <P>
 The following options are specific to text
-markers: 
+markers:
 <DL>
 
 <DT><B>-anchor <I>anchor</I></B> </DT>
@@ -2000,7 +2000,7 @@ operation in the form: <BR>
 </CODE><P>There may be many <I>option</I>-<I>value</I> pairs, each sets a configuration option for
 the marker.  These same <I>option</I>-<I>value</I> pairs may be used with the marker's <B>configure</B>
 command. <P>
-The following options are specific to window markers: 
+The following options are specific to window markers:
 <DL>
 
 <DT><B>-anchor <I>anchor</I></B>
@@ -2054,7 +2054,7 @@ the event,  just as for the bind command. <P>
 The <B>-bindtagsR option for these
 components controls addition tag names which can be matched.  Implicitly
 elements and markers always have tags matching their names.  Setting the
-value of the <B>-bindtags</B></B> option doesn't change this. 
+value of the <B>-bindtags</B></B> option doesn't change this.
 <H2><A NAME="sect23" HREF="#toc23">C Language API</A></H2>
 You can manipulate
 data elements from the C language.  There may be situations where it is
@@ -2095,12 +2095,12 @@ if ((Blt_ResetVector(xVec, x, 50, 50, TCL_VOLATILE) != TCL_OK) ||<BR>
     (Blt_ResetVector(yVec, y, 50, 50, TCL_VOLATILE) != TCL_OK)) {<BR>
    return TCL_ERROR;<BR>
 }<BR>
-</CODE><P>See the <B>vector</B> manual page for more details. 
+</CODE><P>See the <B>vector</B> manual page for more details.
 <H2><A NAME="sect24" HREF="#toc24">Speed Tips</A></H2>
 There may be cases
 where the strip chart needs to be drawn and updated as quickly as possible.
  If drawing speed becomes a big problem, here are a few tips to speed up
-displays. 
+displays.
 <UL>
 &#183;<LI>Try to minimize the number of data points.  The more data points
 the looked at, the more work the strip chart must do. </LI>&#183;<LI>If your data is generated
@@ -2128,7 +2128,7 @@ is logarithmically scaled. <P>
 The PostScript output generated for polygons
 with more than 1500 points may exceed the limits of some printers (See
 PostScript Language Reference Manual, page 568).  The work-around is to break
-the polygon into separate pieces. 
+the polygon into separate pieces.
 <H2><A NAME="sect26" HREF="#toc26">Future Incompatibility</A></H2>
 The <B>-mapped</B> options
 are obsoleted and will be removed.  You can achieve the same results using

@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH RLECLOCK 1 "Dec 11, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 rleClock \- Generate a clock face in RLE format
 .SH SYNOPSIS
@@ -14,8 +14,8 @@ rleClock \- Generate a clock face in RLE format
 .SH DESCRIPTION
 This program generates an analog clock face in
 .IR RLE (5)
-file format and writes it to 
-.I outfile 
+file format and writes it to
+.I outfile
 or standard output.
 The picture is a standard clock face with optional digital representation
 above.
@@ -144,7 +144,7 @@ rleClock \-Fc 255 0 0 \-Hc 0 0 255 \-lw 3 \-ty 96 \-tc 0 255 0 \-Tc 128 128 128
 Generates a clock with a red inside, white face, blue hands, wide lines, tall
 text field, green test, and grey text background.
 .TP
-.B 
+.B
 rleClock \-ty 32 \-bs 10 \-bv 4.51 \-ls 100 \-lv 45.1 \-tf "%2l.%2.2B"
 Generates a clock with the scale of the big hand set to 10 and it's value at
 4.51, the scale and value of the little hand as 100 and 45.1, and the format

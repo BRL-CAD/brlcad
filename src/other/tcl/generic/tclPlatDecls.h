@@ -51,13 +51,13 @@
 #ifndef Tcl_WinUtfToTChar_TCL_DECLARED
 #define Tcl_WinUtfToTChar_TCL_DECLARED
 /* 0 */
-EXTERN TCHAR *		Tcl_WinUtfToTChar (CONST char * str, int len, 
+EXTERN TCHAR *		Tcl_WinUtfToTChar (CONST char * str, int len,
 				Tcl_DString * dsPtr);
 #endif
 #ifndef Tcl_WinTCharToUtf_TCL_DECLARED
 #define Tcl_WinTCharToUtf_TCL_DECLARED
 /* 1 */
-EXTERN char *		Tcl_WinTCharToUtf (CONST TCHAR * str, int len, 
+EXTERN char *		Tcl_WinTCharToUtf (CONST TCHAR * str, int len,
 				Tcl_DString * dsPtr);
 #endif
 #endif /* __WIN32__ */
@@ -65,17 +65,17 @@ EXTERN char *		Tcl_WinTCharToUtf (CONST TCHAR * str, int len,
 #ifndef Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 #define Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 /* 0 */
-EXTERN int		Tcl_MacOSXOpenBundleResources (Tcl_Interp * interp, 
-				CONST char * bundleName, int hasResourceFile, 
+EXTERN int		Tcl_MacOSXOpenBundleResources (Tcl_Interp * interp,
+				CONST char * bundleName, int hasResourceFile,
 				int maxPathLen, char * libraryPath);
 #endif
 #ifndef Tcl_MacOSXOpenVersionedBundleResources_TCL_DECLARED
 #define Tcl_MacOSXOpenVersionedBundleResources_TCL_DECLARED
 /* 1 */
 EXTERN int		Tcl_MacOSXOpenVersionedBundleResources (
-				Tcl_Interp * interp, CONST char * bundleName, 
-				CONST char * bundleVersion, 
-				int hasResourceFile, int maxPathLen, 
+				Tcl_Interp * interp, CONST char * bundleName,
+				CONST char * bundleVersion,
+				int hasResourceFile, int maxPathLen,
 				char * libraryPath);
 #endif
 #endif /* MAC_OSX_TCL */

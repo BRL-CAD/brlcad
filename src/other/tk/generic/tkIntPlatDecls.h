@@ -36,14 +36,14 @@
 #ifndef TkAlignImageData_TCL_DECLARED
 #define TkAlignImageData_TCL_DECLARED
 /* 0 */
-EXTERN char *		TkAlignImageData (XImage * image, int alignment, 
+EXTERN char *		TkAlignImageData (XImage * image, int alignment,
 				int bitOrder);
 #endif
 /* Slot 1 is reserved */
 #ifndef TkGenerateActivateEvents_TCL_DECLARED
 #define TkGenerateActivateEvents_TCL_DECLARED
 /* 2 */
-EXTERN void		TkGenerateActivateEvents (TkWindow * winPtr, 
+EXTERN void		TkGenerateActivateEvents (TkWindow * winPtr,
 				int active);
 #endif
 #ifndef TkpGetMS_TCL_DECLARED
@@ -64,7 +64,7 @@ EXTERN void		TkpPrintWindowId (char * buf, Window window);
 #ifndef TkpScanWindowId_TCL_DECLARED
 #define TkpScanWindowId_TCL_DECLARED
 /* 6 */
-EXTERN int		TkpScanWindowId (Tcl_Interp * interp, 
+EXTERN int		TkpScanWindowId (Tcl_Interp * interp,
 				CONST char * string, Window * idPtr);
 #endif
 #ifndef TkpSetCapture_TCL_DECLARED
@@ -85,7 +85,7 @@ EXTERN void		TkpWmSetState (TkWindow * winPtr, int state);
 #ifndef TkSetPixmapColormap_TCL_DECLARED
 #define TkSetPixmapColormap_TCL_DECLARED
 /* 10 */
-EXTERN void		TkSetPixmapColormap (Pixmap pixmap, 
+EXTERN void		TkSetPixmapColormap (Pixmap pixmap,
 				Colormap colormap);
 #endif
 #ifndef TkWinCancelMouseTimer_TCL_DECLARED
@@ -96,31 +96,31 @@ EXTERN void		TkWinCancelMouseTimer (void);
 #ifndef TkWinClipboardRender_TCL_DECLARED
 #define TkWinClipboardRender_TCL_DECLARED
 /* 12 */
-EXTERN void		TkWinClipboardRender (TkDisplay * dispPtr, 
+EXTERN void		TkWinClipboardRender (TkDisplay * dispPtr,
 				UINT format);
 #endif
 #ifndef TkWinEmbeddedEventProc_TCL_DECLARED
 #define TkWinEmbeddedEventProc_TCL_DECLARED
 /* 13 */
-EXTERN LRESULT		TkWinEmbeddedEventProc (HWND hwnd, UINT message, 
+EXTERN LRESULT		TkWinEmbeddedEventProc (HWND hwnd, UINT message,
 				WPARAM wParam, LPARAM lParam);
 #endif
 #ifndef TkWinFillRect_TCL_DECLARED
 #define TkWinFillRect_TCL_DECLARED
 /* 14 */
-EXTERN void		TkWinFillRect (HDC dc, int x, int y, int width, 
+EXTERN void		TkWinFillRect (HDC dc, int x, int y, int width,
 				int height, int pixel);
 #endif
 #ifndef TkWinGetBorderPixels_TCL_DECLARED
 #define TkWinGetBorderPixels_TCL_DECLARED
 /* 15 */
-EXTERN COLORREF		TkWinGetBorderPixels (Tk_Window tkwin, 
+EXTERN COLORREF		TkWinGetBorderPixels (Tk_Window tkwin,
 				Tk_3DBorder border, int which);
 #endif
 #ifndef TkWinGetDrawableDC_TCL_DECLARED
 #define TkWinGetDrawableDC_TCL_DECLARED
 /* 16 */
-EXTERN HDC		TkWinGetDrawableDC (Display * display, Drawable d, 
+EXTERN HDC		TkWinGetDrawableDC (Display * display, Drawable d,
 				TkWinDCState * state);
 #endif
 #ifndef TkWinGetModifierState_TCL_DECLARED
@@ -141,8 +141,8 @@ EXTERN HWND		TkWinGetWrapperWindow (Tk_Window tkwin);
 #ifndef TkWinHandleMenuEvent_TCL_DECLARED
 #define TkWinHandleMenuEvent_TCL_DECLARED
 /* 20 */
-EXTERN int		TkWinHandleMenuEvent (HWND * phwnd, UINT * pMessage, 
-				WPARAM * pwParam, LPARAM * plParam, 
+EXTERN int		TkWinHandleMenuEvent (HWND * phwnd, UINT * pMessage,
+				WPARAM * pwParam, LPARAM * plParam,
 				LRESULT * plResult);
 #endif
 #ifndef TkWinIndexOfColor_TCL_DECLARED
@@ -153,13 +153,13 @@ EXTERN int		TkWinIndexOfColor (XColor * colorPtr);
 #ifndef TkWinReleaseDrawableDC_TCL_DECLARED
 #define TkWinReleaseDrawableDC_TCL_DECLARED
 /* 22 */
-EXTERN void		TkWinReleaseDrawableDC (Drawable d, HDC hdc, 
+EXTERN void		TkWinReleaseDrawableDC (Drawable d, HDC hdc,
 				TkWinDCState * state);
 #endif
 #ifndef TkWinResendEvent_TCL_DECLARED
 #define TkWinResendEvent_TCL_DECLARED
 /* 23 */
-EXTERN LRESULT		TkWinResendEvent (WNDPROC wndproc, HWND hwnd, 
+EXTERN LRESULT		TkWinResendEvent (WNDPROC wndproc, HWND hwnd,
 				XEvent * eventPtr);
 #endif
 #ifndef TkWinSelectPalette_TCL_DECLARED
@@ -175,7 +175,7 @@ EXTERN void		TkWinSetMenu (Tk_Window tkwin, HMENU hMenu);
 #ifndef TkWinSetWindowPos_TCL_DECLARED
 #define TkWinSetWindowPos_TCL_DECLARED
 /* 26 */
-EXTERN void		TkWinSetWindowPos (HWND hwnd, HWND siblingHwnd, 
+EXTERN void		TkWinSetWindowPos (HWND hwnd, HWND siblingHwnd,
 				int pos);
 #endif
 #ifndef TkWinWmCleanup_TCL_DECLARED
@@ -206,7 +206,7 @@ EXTERN void		TkWinDialogDebug (int debug);
 #ifndef TkWinGetMenuSystemDefault_TCL_DECLARED
 #define TkWinGetMenuSystemDefault_TCL_DECLARED
 /* 32 */
-EXTERN Tcl_Obj *	TkWinGetMenuSystemDefault (Tk_Window tkwin, 
+EXTERN Tcl_Obj *	TkWinGetMenuSystemDefault (Tk_Window tkwin,
 				CONST char * dbName, CONST char * className);
 #endif
 #ifndef TkWinGetPlatformId_TCL_DECLARED
@@ -229,7 +229,7 @@ EXTERN int		TkWinGetPlatformTheme (void);
 #ifndef TkGenerateActivateEvents_TCL_DECLARED
 #define TkGenerateActivateEvents_TCL_DECLARED
 /* 0 */
-EXTERN void		TkGenerateActivateEvents (TkWindow * winPtr, 
+EXTERN void		TkGenerateActivateEvents (TkWindow * winPtr,
 				int active);
 #endif
 /* Slot 1 is reserved */
@@ -299,13 +299,13 @@ EXTERN Window		TkMacOSXGetXWindow (WindowRef macWinPtr);
 #ifndef TkMacOSXGrowToplevel_TCL_DECLARED
 #define TkMacOSXGrowToplevel_TCL_DECLARED
 /* 17 */
-EXTERN int		TkMacOSXGrowToplevel (WindowRef whichWindow, 
+EXTERN int		TkMacOSXGrowToplevel (WindowRef whichWindow,
 				Point start);
 #endif
 #ifndef TkMacOSXHandleMenuSelect_TCL_DECLARED
 #define TkMacOSXHandleMenuSelect_TCL_DECLARED
 /* 18 */
-EXTERN void		TkMacOSXHandleMenuSelect (MenuID theMenu, 
+EXTERN void		TkMacOSXHandleMenuSelect (MenuID theMenu,
 				MenuItemIndex theItem, int optionKeyPressed);
 #endif
 /* Slot 19 is reserved */
@@ -313,13 +313,13 @@ EXTERN void		TkMacOSXHandleMenuSelect (MenuID theMenu,
 #ifndef TkMacOSXInvalidateWindow_TCL_DECLARED
 #define TkMacOSXInvalidateWindow_TCL_DECLARED
 /* 21 */
-EXTERN void		TkMacOSXInvalidateWindow (MacDrawable * macWin, 
+EXTERN void		TkMacOSXInvalidateWindow (MacDrawable * macWin,
 				int flag);
 #endif
 #ifndef TkMacOSXIsCharacterMissing_TCL_DECLARED
 #define TkMacOSXIsCharacterMissing_TCL_DECLARED
 /* 22 */
-EXTERN int		TkMacOSXIsCharacterMissing (Tk_Font tkfont, 
+EXTERN int		TkMacOSXIsCharacterMissing (Tk_Font tkfont,
 				unsigned int searchChar);
 #endif
 #ifndef TkMacOSXMakeRealWindowExist_TCL_DECLARED
@@ -340,7 +340,7 @@ EXTERN void		TkMacOSXMenuClick (void);
 #ifndef TkMacOSXRegisterOffScreenWindow_TCL_DECLARED
 #define TkMacOSXRegisterOffScreenWindow_TCL_DECLARED
 /* 26 */
-EXTERN void		TkMacOSXRegisterOffScreenWindow (Window window, 
+EXTERN void		TkMacOSXRegisterOffScreenWindow (Window window,
 				GWorldPtr portPtr);
 #endif
 #ifndef TkMacOSXResizable_TCL_DECLARED
@@ -356,7 +356,7 @@ EXTERN void		TkMacOSXSetHelpMenuItemCount (void);
 #ifndef TkMacOSXSetScrollbarGrow_TCL_DECLARED
 #define TkMacOSXSetScrollbarGrow_TCL_DECLARED
 /* 29 */
-EXTERN void		TkMacOSXSetScrollbarGrow (TkWindow * winPtr, 
+EXTERN void		TkMacOSXSetScrollbarGrow (TkWindow * winPtr,
 				int flag);
 #endif
 #ifndef TkMacOSXSetUpClippingRgn_TCL_DECLARED
@@ -392,19 +392,19 @@ EXTERN RgnHandle	TkMacOSXVisableClipRgn (TkWindow * winPtr);
 #ifndef TkMacOSXWinBounds_TCL_DECLARED
 #define TkMacOSXWinBounds_TCL_DECLARED
 /* 36 */
-EXTERN void		TkMacOSXWinBounds (TkWindow * winPtr, 
+EXTERN void		TkMacOSXWinBounds (TkWindow * winPtr,
 				Rect * geometry);
 #endif
 #ifndef TkMacOSXWindowOffset_TCL_DECLARED
 #define TkMacOSXWindowOffset_TCL_DECLARED
 /* 37 */
-EXTERN void		TkMacOSXWindowOffset (WindowRef wRef, int * xOffset, 
+EXTERN void		TkMacOSXWindowOffset (WindowRef wRef, int * xOffset,
 				int * yOffset);
 #endif
 #ifndef TkSetMacColor_TCL_DECLARED
 #define TkSetMacColor_TCL_DECLARED
 /* 38 */
-EXTERN int		TkSetMacColor (unsigned long pixel, 
+EXTERN int		TkSetMacColor (unsigned long pixel,
 				RGBColor * macColor);
 #endif
 #ifndef TkSetWMName_TCL_DECLARED
@@ -420,13 +420,13 @@ EXTERN void		TkSuspendClipboard (void);
 #ifndef TkMacOSXZoomToplevel_TCL_DECLARED
 #define TkMacOSXZoomToplevel_TCL_DECLARED
 /* 41 */
-EXTERN int		TkMacOSXZoomToplevel (WindowPtr whichWindow, 
+EXTERN int		TkMacOSXZoomToplevel (WindowPtr whichWindow,
 				short zoomPart);
 #endif
 #ifndef Tk_TopCoordsToWindow_TCL_DECLARED
 #define Tk_TopCoordsToWindow_TCL_DECLARED
 /* 42 */
-EXTERN Tk_Window	Tk_TopCoordsToWindow (Tk_Window tkwin, int rootX, 
+EXTERN Tk_Window	Tk_TopCoordsToWindow (Tk_Window tkwin, int rootX,
 				int rootY, int * newX, int * newY);
 #endif
 #ifndef TkMacOSXContainerId_TCL_DECLARED
@@ -463,7 +463,7 @@ EXTERN Window		TkGetTransientMaster (TkWindow * winPtr);
 #ifndef TkGenerateButtonEvent_TCL_DECLARED
 #define TkGenerateButtonEvent_TCL_DECLARED
 /* 50 */
-EXTERN int		TkGenerateButtonEvent (int x, int y, Window window, 
+EXTERN int		TkGenerateButtonEvent (int x, int y, Window window,
 				unsigned int state);
 #endif
 #ifndef TkGenWMDestroyEvent_TCL_DECLARED
@@ -522,7 +522,7 @@ EXTERN void		TkUnixSetMenubar (Tk_Window tkwin, Tk_Window menubar);
 #ifndef TkpScanWindowId_TCL_DECLARED
 #define TkpScanWindowId_TCL_DECLARED
 /* 8 */
-EXTERN int		TkpScanWindowId (Tcl_Interp * interp, 
+EXTERN int		TkpScanWindowId (Tcl_Interp * interp,
 				CONST char * string, Window * idPtr);
 #endif
 #ifndef TkWmCleanup_TCL_DECLARED
@@ -548,8 +548,8 @@ EXTERN int		TkpWmSetState (TkWindow * winPtr, int state);
 #ifndef TkpTestsendCmd_TCL_DECLARED
 #define TkpTestsendCmd_TCL_DECLARED
 /* 13 */
-EXTERN int		TkpTestsendCmd (ClientData clientData, 
-				Tcl_Interp * interp, int argc, 
+EXTERN int		TkpTestsendCmd (ClientData clientData,
+				Tcl_Interp * interp, int argc,
 				CONST char ** argv);
 #endif
 #endif /* X11 */

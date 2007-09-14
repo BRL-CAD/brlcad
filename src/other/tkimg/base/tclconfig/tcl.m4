@@ -212,7 +212,7 @@ AC_DEFUN(TEA_PATH_TKCONFIG, [
 #	Load the tclConfig.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TCL_BIN_DIR
 #
@@ -290,7 +290,7 @@ AC_DEFUN(TEA_LOAD_TCLCONFIG, [
 #	Load the tkConfig.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		TK_BIN_DIR
 #
@@ -360,7 +360,7 @@ AC_DEFUN(TEA_LOAD_TKCONFIG, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -406,7 +406,7 @@ AC_DEFUN(TEA_ENABLE_SHARED, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -444,7 +444,7 @@ AC_DEFUN(TEA_ENABLE_THREADS, [
 		AC_CHECK_LIB(pthread, __pthread_mutex_init,
 		    tcl_ok=yes, tcl_ok=no)
 	    fi
-	    
+
 	    if test "$tcl_ok" = "yes"; then
 		# The space is needed
 		THREADS_LIBS=" -lpthread"
@@ -520,13 +520,13 @@ AC_DEFUN(TEA_ENABLE_THREADS, [
 #
 # Arguments:
 #	none
-#	
+#
 #	Requires the following vars to be set:
 #		CFLAGS_DEBUG
 #		CFLAGS_OPTIMIZE
 #		LDFLAGS_DEBUG
 #		LDFLAGS_OPTIMIZE
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -596,7 +596,7 @@ AC_DEFUN(TEA_ENABLE_SYMBOLS, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Adds the following arguments to configure:
@@ -730,7 +730,7 @@ AC_DEFUN(TEA_CONFIG_CFLAGS, [
     AC_MSG_CHECKING([if 64bit support is enabled])
     AC_ARG_ENABLE(64bit,[  --enable-64bit          enable 64bit support (where applicable)], [do64bit=$enableval], [do64bit=no])
     AC_MSG_RESULT([$do64bit])
- 
+
     # Step 0.b: Enable Solaris 64 bit VIS support?
 
     AC_MSG_CHECKING([if 64bit Sparc VIS support is requested])
@@ -757,7 +757,7 @@ AC_DEFUN(TEA_CONFIG_CFLAGS, [
 	else
 	    # Special check for weird MP-RAS system (uname returns weird
 	    # results, and the version is kept in special file).
-	
+
 	    if test -r /etc/.relid -a "X`uname -n`" = "X`uname -s`" ; then
 		system=MP-RAS-`awk '{print $3}' /etc/.relid'`
 	    fi
@@ -938,7 +938,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 	    if test "$do64bit" = "yes" -a "`uname -v`" -gt "3" ; then
 		if test "$GCC" = "yes" ; then
 		    AC_MSG_WARN("64bit mode not supported with GCC on $system")
-		else 
+		else
 		    do64bit_ok=yes
 		    EXTRA_CFLAGS="-q64"
 		    LDFLAGS="-q64"
@@ -1112,7 +1112,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".so"
 
-	    # egcs-2.91.66 on Redhat Linux 6.0 generates lots of warnings 
+	    # egcs-2.91.66 on Redhat Linux 6.0 generates lots of warnings
 	    # when you inline the string and math operations.  Turn this off to
 	    # get rid of the warnings.
 
@@ -1282,7 +1282,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 	OS/390-*)
 	    CFLAGS_OPTIMIZE=""      # Optimizer is buggy
 	    AC_DEFINE(_OE_SOCKETS)  # needed in sys/socket.h
-	    ;;      
+	    ;;
 	OSF1-1.0|OSF1-1.1|OSF1-1.2)
 	    # OSF/1 1.[012] from OSF, and derivatives, including Paragon OSF/1
 	    SHLIB_CFLAGS=""
@@ -1447,7 +1447,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 
 	    SHLIB_CFLAGS="-KPIC"
 	    LDFLAGS=""
-    
+
 	    # Check to enable 64-bit flags for compiler/linker
 	    if test "$do64bit" = "yes" ; then
 		arch=`isainfo`
@@ -1468,7 +1468,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 		    AC_MSG_WARN("64bit mode only supported sparcv9 system")
 		fi
 	    fi
-	    
+
 	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
 	    # symbols when dynamically loaded into tclsh.
 
@@ -1530,7 +1530,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
     # New Orleans, LA, Computerized Processes Unlimited, 1994), then we need
     # to determine which of several header files defines the a.out file
     # format (a.out.h, sys/exec.h, or sys/exec_aout.h).  At present, we
-    # support only a file format that is more or less version-7-compatible. 
+    # support only a file format that is more or less version-7-compatible.
     # In particular,
     #	- a.out files must begin with `struct exec'.
     #	- the N_TXTOFF on the `struct exec' must compute the seek address
@@ -1691,7 +1691,7 @@ dnl AC_CHECK_TOOL(AR, ar, :)
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines only one of the following vars:
@@ -1812,7 +1812,7 @@ int main() {
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -1905,7 +1905,7 @@ closedir(d);
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Sets the following vars:
@@ -1994,13 +1994,13 @@ AC_DEFUN(TEA_PATH_UNIX_X, [
 # TEA_BLOCKING_STYLE
 #
 #	The statements below check for systems where POSIX-style
-#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented. 
+#	non-blocking I/O (O_NONBLOCK) doesn't work or is unimplemented.
 #	On these systems (mostly older ones), use the old BSD-style
 #	FIONBIO approach instead.
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -2024,7 +2024,7 @@ AC_DEFUN(TEA_BLOCKING_STYLE, [
 	else
 	    # Special check for weird MP-RAS system (uname returns weird
 	    # results, and the version is kept in special file).
-	
+
 	    if test -r /etc/.relid -a "X`uname -n`" = "X`uname -s`" ; then
 		system=MP-RAS-`awk '{print $3}' /etc/.relid'`
 	    fi
@@ -2065,7 +2065,7 @@ AC_DEFUN(TEA_BLOCKING_STYLE, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Defines some of the following vars:
@@ -2145,7 +2145,7 @@ AC_DEFUN(TEA_TIME_HANDLER, [
 #
 # Arguments:
 #	none
-#	
+#
 # Results:
 #
 #	Might defines some of the following vars:
@@ -2196,7 +2196,7 @@ AC_DEFUN(TEA_BUGGY_STRTOD, [
 #		DL_LIBS
 #		LIBS
 #		MATH_LIBS
-#	
+#
 # Results:
 #
 #	Subst's the following var:
@@ -2261,7 +2261,7 @@ AC_DEFUN(TEA_TCL_LINK_LIBS, [
     fi
     AC_CHECK_FUNC(gethostbyname, , [AC_CHECK_LIB(nsl, gethostbyname,
 	    [LIBS="$LIBS -lnsl"])])
-    
+
     # Don't perform the eval of the libraries here because DL_LIBS
     # won't be set until we call TEA_CONFIG_CFLAGS
 
@@ -2278,7 +2278,7 @@ AC_DEFUN(TEA_TCL_LINK_LIBS, [
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -2321,7 +2321,7 @@ AC_DEFUN(TEA_TCL_EARLY_FLAGS,[
 #
 # Arguments:
 #	None
-#	
+#
 # Results:
 #
 #	Might define the following vars:
@@ -3148,7 +3148,7 @@ AC_DEFUN(TEA_PATH_CONFIG, [
 #	Load the $1Config.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		$1_BIN_DIR
 #
@@ -3205,7 +3205,7 @@ AC_DEFUN(TEA_LOAD_CONFIG, [
 #	Define the data to insert into the ${PACKAGE}Config.sh file
 #
 # Arguments:
-#	
+#
 #	Requires the following vars to be set:
 #		$1
 #

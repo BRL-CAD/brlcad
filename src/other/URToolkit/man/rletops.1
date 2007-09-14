@@ -1,7 +1,7 @@
 .\" Copyright (c) 1986, University of Utah
 .\" Template man page.  Taken from wtm's page for getcx3d
 .TH RLETOPS 1 "December 20, 1986" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletops \- Convert RLE images to PostScript
 .SH SYNOPSIS
@@ -29,9 +29,9 @@ rletops \- Convert RLE images to PostScript
 .IR Rletops
 converts
 .IR RLE (5)
-images into 
+images into
 .IR PostScript .
-The conversion uses the 
+The conversion uses the
 .I PostScript
 .B image
 operator, instructing the device to reproduce the image to the best of its
@@ -74,9 +74,9 @@ operator at the end, and the default image center is changed to 3.25 inches
 from the margin (which usually is 1 inch).
 This is to generate PostScript files that can be included in Scribe documents
 with the @Picture command.  Images may also be included in LaTex documents
-with local conventions like the \\special{psfile=image.ps} command.  
+with local conventions like the \\special{psfile=image.ps} command.
 .SH NOTES
-On devices like the Apple LaserWriter, 
+On devices like the Apple LaserWriter,
 .I rletops
 generates large PostScript files that take a non-trivial amount of time
 to download and print.  A 512x512 image takes about ten minutes.

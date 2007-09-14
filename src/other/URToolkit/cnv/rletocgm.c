@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rletocgm.c - Tool to convert RLE files to ANSI/ISO CGM metafiles.
- * 
+ *
  * Author:      Joel Welling
  * 		Pittsburgh Supercomputing Center
  * 		Carnegie Mellon University
@@ -68,7 +68,7 @@ char *outfname;
 /* This routine opens the output file. */
 {
   int ierr= 0, i256= 256;
-  
+
   wrcopn(outfname,&ierr);
   if (ierr) {
     fprintf(stderr,"rletocgm: Error opening file <%s> for output!\n",outfname);
@@ -90,7 +90,7 @@ static void close_output()
   if (ierr) {
     fprintf(stderr,"rletocgm: Error closing output!\n");
     exit(2);
-  }  
+  }
 }
 
 static void begin_direct_page(in_hdr)
@@ -120,17 +120,17 @@ rle_hdr *in_hdr;
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing color selection mode!\n");
     exit(2);
-  }  
+  }
   wrbgdc(&red, &green, &blue, &ierr);
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing background color!\n");
     exit(2);
-  }  
+  }
   wrbgpb(&ierr);
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing begin picture body!\n");
     exit(2);
-  }  
+  }
 }
 
 static void handle_color_table(in_hdr,cmap)
@@ -147,7 +147,7 @@ rle_pixel **cmap;
   /* Calculate table size, then reset it if there is a comment to that
    * effect in the RLE file.
    */
-  if (in_hdr->cmaplen) 
+  if (in_hdr->cmaplen)
     tablesize= 2<<(in_hdr->cmaplen-1);
   else tablesize= 2;
   comstring= rle_getcom( "color_map_length", in_hdr );
@@ -185,7 +185,7 @@ rle_pixel **cmap;
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing color map!\n");
     exit(2);
-  }      
+  }
 
   /* Clean up */
   free( (char *)rarray );
@@ -219,17 +219,17 @@ rle_hdr *in_hdr;
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing begin page!\n");
     exit(2);
-  }  
+  }
   wrbgdc(&red, &green, &blue, &ierr);
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing background color!\n");
     exit(2);
-  }  
+  }
   wrbgpb(&ierr);
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing begin picture body!\n");
     exit(2);
-  }  
+  }
 
   /* Produce a color table */
   handle_color_table(in_hdr, cmap);
@@ -247,7 +247,7 @@ static void end_page()
   if (ierr) {
     fprintf(stderr,"rletocgm: Error ending output page!\n");
     exit(2);
-  }    
+  }
 }
 
 static void center_image(in_hdr, px, py, qx, qy, rx, ry)
@@ -294,12 +294,12 @@ rle_hdr *in_hdr;
 
   /* Begin an output page, including the color table */
   begin_indexed_page(in_hdr);
-  
+
   /* Calculate array boundaries */
   center_image(in_hdr, &px, &py, &qx, &qy, &rx, &ry);
 
   /* Allocate the CGM image array, if it's not already there */
-  if (!iarray || 
+  if (!iarray ||
       !(nx == in_hdr->xmax - in_hdr->xmin + 1) ||
       !(ny == in_hdr->ymax - in_hdr->ymin + 1)) {
     if (iarray) free( (char *)iarray );
@@ -316,30 +316,30 @@ rle_hdr *in_hdr;
     fprintf( stderr, "rletocgm: Unable to allocate image memory.\n" );
     exit( RLE_NO_SPACE );
   }
-  
+
   /* Read the input image and copy it to the output file. */
   iptr= iarray;
   for ( y = in_hdr->ymin; y <= in_hdr->ymax; y++ )
     {
       /* Read a scanline. */
       rle_getrow( in_hdr, rows );
-      
+
       for (x=0; x<nx; x++) *iptr++= rows[0][x];
     }
-  
+
   /* Write the CGM cell array */
   wrtcla( iarray, &nx, &ny, &px, &py, &qx, &qy, &rx, &ry, &ierr );
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing indexed cell array!\n");
     exit(2);
-  }      
+  }
 
   /* Protect from bad input. */
   while ( rle_getskip( in_hdr ) != 32768 );
-  
+
   /* Free memory. */
   rle_row_free( in_hdr, rows );
-  
+
   /* End the page */
   end_page();
 }
@@ -357,18 +357,18 @@ rle_hdr *in_hdr;
   static int nx, ny;            /* dimensions of image */
   float px, py, qx, qy, rx, ry; /* CGM array boundaries */
   int ierr= 0;
-  
+
   /* Be verbose if requested */
   if (verboseflag) fprintf(stderr,"Found direct color (3 channel) page\n");
-  
+
   /* Begin an output page */
   begin_direct_page(in_hdr);
-  
+
   /* Calculate array boundaries */
   center_image(in_hdr, &px, &py, &qx, &qy, &rx, &ry);
-  
+
   /* Allocate the CGM image array, if it's not already there */
-  if (!rarray || 
+  if (!rarray ||
       !(nx == in_hdr->xmax - in_hdr->xmin + 1) ||
       !(ny == in_hdr->ymax - in_hdr->ymin + 1)) {
     if (rarray) free( (char *)rarray );
@@ -395,7 +395,7 @@ rle_hdr *in_hdr;
     fprintf( stderr, "rletocgm: Unable to allocate image memory.\n" );
     exit( RLE_NO_SPACE );
   }
-  
+
   /* Read the input image and copy it to the output file. */
   rptr= rarray;
   gptr= garray;
@@ -404,35 +404,35 @@ rle_hdr *in_hdr;
     {
       /* Read a scanline. */
       rle_getrow( in_hdr, rows );
-      
+
       for (x=0; x<nx; x++) {
 	*rptr++= (float)rows[0][x]/255.0;
 	*gptr++= (float)rows[1][x]/255.0;
 	*bptr++= (float)rows[2][x]/255.0;
       }
     }
-  
+
   /* Write the CGM cell array */
-  wcladc( rarray, garray, barray, 
+  wcladc( rarray, garray, barray,
 	 &nx, &ny, &px, &py, &qx, &qy, &rx, &ry, &ierr );
   if (ierr) {
     fprintf(stderr,"rletocgm: Error writing direct color cell array!\n");
     exit(2);
-  }      
+  }
 
   /* Protect from bad input. */
   while ( rle_getskip( in_hdr ) != 32768 );
-  
+
   /* Free memory. */
   rle_row_free( in_hdr, rows );
-  
+
   /* End the page */
   end_page();
 }
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * A skeleton RLE tool.  Demonstrates argument parsing, opening,
  * reading, and writing RLE files.  Includes support for files
  * consisting of concatenated images.
@@ -460,12 +460,12 @@ char **argv;
   int 	oflag = 0, debugflag= 0;
   FILE       *outfile;
   rle_hdr *in_hdr;	/* Headers for input file. */
-  
+
   in_hdr = rle_init_hdr( (rle_hdr *)NULL );
   if ( scanargs( argc, argv, "% o%-outfile!s d%- v%- infile%s",
 		&oflag, &outfname, &debugflag, &verboseflag, &infname ) == 0 )
     exit( 1 );
-  
+
   /* Turn on debugging if requested. */
   if (debugflag) {
     int ierr= 0;
@@ -481,20 +481,20 @@ char **argv;
    */
   rle_names( in_hdr, cmd_name( argv ), infname, 0 );
   in_hdr->rle_file = rle_open_f( in_hdr->cmd, infname, "r" );
-  
+
   /* Read images from the input file until the end of file is
    * encountered or an error occurs.
    */
   rle_cnt = 0;
   while ( (rle_err = rle_get_setup( in_hdr )) == RLE_SUCCESS )
     {
-      
+
       /* Open the CGM output file */
       if (rle_cnt==0) open_output(oflag ? outfname : "-");
-      
+
       /* Count the input images. */
       rle_cnt++;
-      
+
       /* Be verbose if requested */
       if (verboseflag) fprintf(stderr,"image %d: ",rle_cnt);
 
@@ -509,15 +509,15 @@ char **argv;
 		       in_hdr->ncolors);
       }
     }
-  
+
   /* Close the CGM output file */
   close_output();
-  
+
   /* Check for an error.  EOF or EMPTY is ok if at least one image
    * has been read.  Otherwise, print an error message.
    */
   if ( rle_cnt == 0 || (rle_err != RLE_EOF && rle_err != RLE_EMPTY) )
     rle_get_error( rle_err, in_hdr->cmd, infname );
-  
+
   exit( 0 );
 }

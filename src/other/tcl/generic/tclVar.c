@@ -37,7 +37,7 @@ static const char *badNamespace =	"parent namespace doesn't exist";
 static const char *missingName =	"missing variable name";
 static const char *isArrayElement =
 	"name refers to an element in an array";
- 
+
 /*
  * A test to see if we are in a call frame that has local variables. This is
  * true if we are inside a procedure body.
@@ -2370,7 +2370,7 @@ Tcl_LappendObjCmd(
 	    if (result != TCL_OK) {
 		return result;
 	    }
-	}	    
+	}
     } else {
 	/*
 	 * We have arguments to append. We used to call Tcl_SetVar2 to append
@@ -3220,7 +3220,7 @@ ObjMakeUpvar(
     if (framePtr == NULL) {
 	framePtr = iPtr->rootFramePtr;
     }
-    
+
     varFramePtr = iPtr->varFramePtr;
     if (!(otherFlags & TCL_NAMESPACE_ONLY)) {
 	iPtr->varFramePtr = framePtr;
@@ -3294,8 +3294,8 @@ TclPtrMakeUpvar(
     CallFrame *varFramePtr = iPtr->varFramePtr;
     Var *varPtr;
     const char *errMsg;
-    const char *p;    
-    
+    const char *p;
+
     if (index >= 0) {
 	if (!HasLocalVars(varFramePtr)) {
 	    Tcl_Panic("ObjMakeUpvar called with an index outside from a proc");

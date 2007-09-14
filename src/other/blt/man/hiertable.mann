@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" The hierarchical table widget created by George Howlett.
 '\"
@@ -100,12 +100,12 @@ the command.  The operations available are described in the
 .SB "TREEVIEW OPERATIONS"
 section.
 .SH "IDS AND TAGS"
-Nodes can be inserted into a tree using the \fBtreeview\fR widget 
+Nodes can be inserted into a tree using the \fBtreeview\fR widget
 .CS
 blt::treeview .t
 set node [.t insert end root "one"]
 .CE
-or \fBtree\fR command. 
+or \fBtree\fR command.
 .CS
 set tree [blt::tree create]
 set node [$tree insert root "one"]
@@ -131,7 +131,7 @@ to all nodes with that tag.
 .PP
 The tag \fBall\fR is implicitly associated with every node in
 the tree.  It may be used to invoke operations on all the nodes in the
-tree. 
+tree.
 .PP
 Tags may be shared, just like trees, between clients.  For example,
 you can use the tags created by the \fBtree\fR command with
@@ -145,14 +145,14 @@ the \fBtreeview\fR widget.
 .TP 15
 \fBactive\fR
 The node where the mouse pointer is currently located.
-When a node is active, it is drawn using its active icon 
+When a node is active, it is drawn using its active icon
 (see the \fB\-activeicon\fR option).
 The \fBactive\fR id is changed automatically by moving the mouse
 pointer over another node or by using the \fBentry activate\fR
 operation. Note that there can be only one active node at a time.
 .TP 15
 \fBanchor\fR
-The node representing the fixed end of the current selection.  
+The node representing the fixed end of the current selection.
 The anchor is set by the \fBselection anchor\fR operation.
 .TP 15
 \fBcurrent\fR
@@ -166,12 +166,12 @@ The next open node from the current focus. The \fBdown\fR of
 the last open node is the same.
 .TP 15
 \fBend\fR
-The last open node (in depth-first order) on the tree.  
+The last open node (in depth-first order) on the tree.
 .TP 15
 \fBfocus\fR
 The node that currently has focus.  When a node has focus,
 it receives key events.  To indicate focus, the node
-is drawn with a dotted line around its label.  You can change the 
+is drawn with a dotted line around its label.  You can change the
 focus using the \fBfocus\fR operation.
 .TP 15
 \fBlast\fR
@@ -180,12 +180,12 @@ when the focus is at root, \fBlast\fR wraps around to the last
 open node in the tree.
 .TP 15
 \fBmark\fR
-The node representing the non-fixed end of the current selection.  
+The node representing the non-fixed end of the current selection.
 The mark is set by the \fBselection mark\fR operation.
 .TP 15
 \fBnext\fR
 The next open node from the current focus.  But unlike \fBdown\fR,
-when the focus is on last open node, \fBnext\fR wraps around to the 
+when the focus is on last open node, \fBnext\fR wraps around to the
 root node.
 .TP 15
 \fBnextsibling\fR
@@ -214,7 +214,7 @@ First node that's current visible in the widget.
 \fBview.bottom\fR
 Last node that's current visible in the widget.
 .TP 15
-\fIpath\fR 
+\fIpath\fR
 Absolute path of a node.  Path names refer to the node name, not
 their entry labels. Paths don't have to start with a separator (see
 the \fB\-separator\fR configuration option), but component names must
@@ -250,7 +250,7 @@ binding with one or more nodes.  There is a built-in tag \f(CWall\fR
 that all node entries automatically have.
 .SH "TREEVIEW OPERATIONS"
 The \fBtreeview\fR operations are the invoked by specifying
-the widget's pathname, the operation, and any arguments that pertain 
+the widget's pathname, the operation, and any arguments that pertain
 to that operation.  The general form is:
 .sp
 .CS
@@ -262,16 +262,16 @@ command.  The following operation are available for \fBtreeview\fR widgets:
 .TP
 \fIpathName \fBbbox\fR ?\fB-screen\fR? \fItagOrId...\fR
 Returns a list of 4 numbers, representing a bounding box of around
-the specified entries. The entries is given by one or more \fItagOrId\fR 
-arguments.  
+the specified entries. The entries is given by one or more \fItagOrId\fR
+arguments.
 If the \fB\-screen\fR flag is given, then the x-y coordinates
-of the bounding box are returned as screen coordinates, not 
+of the bounding box are returned as screen coordinates, not
 virtual coordinates. Virtual coordinates start from \f(CW0\fR from the
 root node.
 The returned list contains the following values.
 .RS
 .TP 1.25i
-\fIx\fR 
+\fIx\fR
 X-coordinate of the upper-left corner of the bounding box.
 .TP
 \fIy\fR
@@ -287,32 +287,32 @@ Height of the bounding box.
 \fIpathName \fBbind\fR \fItagName\fR ?\fIsequence command\fR?
 Associates \fIcommand\fR with \fItagName\fR such that whenever the
 event sequence given by \fIsequence\fR occurs for a node with this
-tag, \fIcommand\fR will be invoked.  The syntax is similar to the 
-\fBbind\fR command except that it operates on \fBtreeview\fR entries, 
+tag, \fIcommand\fR will be invoked.  The syntax is similar to the
+\fBbind\fR command except that it operates on \fBtreeview\fR entries,
 rather than widgets. See the \fBbind\fR manual entry for
-complete details on \fIsequence\fR and the substitutions performed on 
-\fIcommand\fR before invoking it.  
+complete details on \fIsequence\fR and the substitutions performed on
+\fIcommand\fR before invoking it.
 .sp
-If all arguments are specified then a new binding is created, replacing 
+If all arguments are specified then a new binding is created, replacing
 any existing binding for the same \fIsequence\fR and \fItagName\fR.
-If the first character of \fIcommand\fR is \f(CW+\fR then \fIcommand\fR 
-augments an existing binding rather than replacing it. 
+If the first character of \fIcommand\fR is \f(CW+\fR then \fIcommand\fR
+augments an existing binding rather than replacing it.
 If no \fIcommand\fR argument is provided then the command currently
-associated with \fItagName\fR and \fIsequence\fR (it's an error occurs 
-if there's no such binding) is returned.  If both \fIcommand\fR and 
-\fIsequence\fR are missing then a list of all the event sequences for 
-which bindings have been defined for \fItagName\fR. 
+associated with \fItagName\fR and \fIsequence\fR (it's an error occurs
+if there's no such binding) is returned.  If both \fIcommand\fR and
+\fIsequence\fR are missing then a list of all the event sequences for
+which bindings have been defined for \fItagName\fR.
 .TP
 \fIpathName \fBbutton \fIoperation\fR ?\fIargs\fR?
-This command is used to control the button selectors within a 
-\fBtreeview\fR widget.  
+This command is used to control the button selectors within a
+\fBtreeview\fR widget.
 It has several forms, depending on \fIoperation\fR:
 .RS
 .TP
 \fIpathName \fBbutton activate\fR \fItagOrId\fR
-Designates the node given by \fItagOrId\fR as active.  
-When a node is active it's entry is drawn using its active icon 
-(see the \fB\-activeicon\fR option). 
+Designates the node given by \fItagOrId\fR as active.
+When a node is active it's entry is drawn using its active icon
+(see the \fB\-activeicon\fR option).
 Note that there can be only one active entry at a time.
 The special id \fBactive\fR indicates the currently active node.
 .TP
@@ -325,15 +325,15 @@ similar to the \fBbind\fR command except that it operates on
 manual entry for complete details on \fIsequence\fR and the
 substitutions performed on \fIcommand\fR before invoking it.
 .sp
-If all arguments are specified then a new binding is created, replacing 
+If all arguments are specified then a new binding is created, replacing
 any existing binding for the same \fIsequence\fR and \fItagName\fR.
-If the first character of \fIcommand\fR is \f(CW+\fR then \fIcommand\fR 
-augments an existing binding rather than replacing it. 
+If the first character of \fIcommand\fR is \f(CW+\fR then \fIcommand\fR
+augments an existing binding rather than replacing it.
 If no \fIcommand\fR argument is provided then the command currently
-associated with \fItagName\fR and \fIsequence\fR (it's an error occurs 
-if there's no such binding) is returned.  If both \fIcommand\fR and 
-\fIsequence\fR are missing then a list of all the event sequences for 
-which bindings have been defined for \fItagName\fR. 
+associated with \fItagName\fR and \fIsequence\fR (it's an error occurs
+if there's no such binding) is returned.  If both \fIcommand\fR and
+\fIsequence\fR are missing then a list of all the event sequences for
+which bindings have been defined for \fItagName\fR.
 .TP
 \fIpathName \fBbutton cget\fR \fIoption\fR
 Returns the current value of the configuration option given
@@ -352,8 +352,8 @@ sublist of the value returned if no \fIoption\fR is specified).  If
 one or more \fIoption\-value\fR pairs are specified, then the command
 modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
-\fIOption\fR and \fIvalue\fR are described in the section 
-.SB "BUTTON OPTIONS" 
+\fIOption\fR and \fIvalue\fR are described in the section
+.SB "BUTTON OPTIONS"
 below.
 .RE
 .TP
@@ -403,7 +403,7 @@ one or more \fIoption\-value\fR pairs are specified, then the command
 modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
 \fIOption\fR and \fIvalue\fR are described in the section
-.SB "COLUMN OPTIONS" 
+.SB "COLUMN OPTIONS"
 below.
 .TP
 \fIpathName \fBcolumn delete\fR \fIfield\fR ?\fIfield\fR...?
@@ -416,16 +416,16 @@ each node's data field by the same name.  If the node doesn't
 have the given field, the cell is left blank.
 \fIPosition\fR
 indicates where in the list of columns to add the new column.  It may be
-either a number or \f(CWend\fR. 
+either a number or \f(CWend\fR.
 .TP
 \fIpathName \fBcolumn invoke\fR \fIfield\fR
-Invokes the Tcl command associated with the column \fIfield\fR, 
-if there is one (using the column's \fB\-command\fR option).  
-The command is ignored if the column's \fB\-state\fR option 
+Invokes the Tcl command associated with the column \fIfield\fR,
+if there is one (using the column's \fB\-command\fR option).
+The command is ignored if the column's \fB\-state\fR option
 set to \f(CWdisabled\fR.
 .TP
-\fIpathName \fBcolumn move \fIname\fR \fIdest\fR 
-Moves the column \fIname\fR to the destination position.  
+\fIpathName \fBcolumn move \fIname\fR \fIdest\fR
+Moves the column \fIname\fR to the destination position.
 \fIDest\fR is the name of another column or a screen position
 in the form \f(CW@\fIx\f(CW,\fIy\fR.
 .TP
@@ -455,7 +455,7 @@ this case the command returns an empty string.
 below.
 .TP
 \fIpathName \fBcurselection\fR
-Returns a list containing the ids of all of the entries that are 
+Returns a list containing the ids of all of the entries that are
 currently selected.
 If there are no entries selected, then the empty string is returned.
 .TP
@@ -467,9 +467,9 @@ The following operations are available for treeview entries.
 .RS
 .TP
 \fIpathName \fBentry activate\fR \fItagOrId\fR
-Sets the active entry to the one specified by \fItagOrId\fR.  
-When an entry is active it is drawn using its active icon 
-(see the \fB\-activeicon\fR option). 
+Sets the active entry to the one specified by \fItagOrId\fR.
+When an entry is active it is drawn using its active icon
+(see the \fB\-activeicon\fR option).
 Note that there can be only one active node at a time.
 The special id of the currently active node is \fBactive\fR.
 .TP
@@ -480,13 +480,13 @@ by \fIoption\fR.
 operation described below.
 .TP
 \fIpathName \fBentry children\fR \fItagOrId\fR  ?\fIfirst\fR? ?\fIlast\fR?
-Returns a list of ids for the given range of children of \fItagOrId\fR.  
+Returns a list of ids for the given range of children of \fItagOrId\fR.
 \fITagOrId\fR is the id or tag of the node to be examined.
-If only a \fIfirst\fR argument is present, then the id 
-of the that child at that numeric position is returned.  If both \fIfirst\fR 
+If only a \fIfirst\fR argument is present, then the id
+of the that child at that numeric position is returned.  If both \fIfirst\fR
 and \fIlast\fR arguments are given, then the ids of all the children
 in that range are returned.  Otherwise the ids of all children
-are returned.  
+are returned.
 .TP
 \fIpathName \fBentry configure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Query or modify the configuration options of the widget.
@@ -517,8 +517,8 @@ also hidden if any of its ancestor nodes are closed or hidden.
 Returns 1 if the node is currently open and 0 otherwise.
 .TP
 \fIpathName \fBentry size\fR \fB\-recurse\fR \fItagOrId\fR
-Returns the number of children for parent node \fItagOrId\fR.  
-If the \fB\-recurse\fR flag is set, the number of all 
+Returns the number of children for parent node \fItagOrId\fR.
+If the \fB\-recurse\fR flag is set, the number of all
 its descendants is returned.  The node itself is not counted.
 .RE
 .TP
@@ -548,7 +548,7 @@ similar to that used by the C-shell.  For  the  two
 strings  to match, their contents must be identical
 except that the  following  special  sequences  may
 appear in pattern:
-.RS 
+.RS
 .TP 5
 \f(CW*\fR
 Matches  any  sequence  of  characters in
@@ -559,7 +559,7 @@ Matches any single character in string.
 .TP 5
 \f(CW[\fIchars\f(CW]\fR
 Matches any character in the set given by \fIchars\fR. If a sequence of the
-form \fIx\fR-\fIy\fR appears in \fIchars\fR, then any character between 
+form \fIx\fR-\fIy\fR appears in \fIchars\fR, then any character between
 \fIx\fR and \fIy\fR,
 inclusive, will match.
 .TP 5
@@ -572,16 +572,16 @@ the pattern.
 .TP 1.25i
 \fB\-regexp\fR
 Use regular expression pattern matching (i.e. the same as implemented
-by the \fBregexp\fR command).  
+by the \fBregexp\fR command).
 .TP 1.25i
 \fB\-nonmatching\fR
-Pick entries that don't match.  
+Pick entries that don't match.
 .TP 1.25i
 \fB\-exec\fI string\fR
 Specifies a Tcl script to be invoked for each matching node.
-Percent substitutions are performed on \fIstring\fR before 
+Percent substitutions are performed on \fIstring\fR before
 it is executed.  The following substitutions are valid:
-.RS 
+.RS
 .TP 5
 \f(CW%W\fR
 The pathname of the widget.
@@ -608,14 +608,14 @@ Indicates the end of flags.
 .TP
 \fIpathName \fBfocus \fR \fItagOrId\fR
 Sets the focus to the node given by \fItagOrId\fR.  When a node
-has focus, it can receive keyboard events.   
+has focus, it can receive keyboard events.
 The special id \fBfocus\fR designates the node that currently has focus.
 .TP
 \fIpathName \fBget \fR?\fB\-full\fR? \fItagOrId\fR \fItagOrId\fR...
-Translates one or more ids to their node entry names.  It returns a list of 
+Translates one or more ids to their node entry names.  It returns a list of
 names for all the ids specified.  If the \fB\-full\fR
 flag is set, then the full pathnames are returned.
-.TP 
+.TP
 \fIpathName \fBhide \fR?\fBflags\fR? \fItagOrId\fR...
 Hides all nodes matching the criteria given by \fIflags\fR.  The
 search is performed recursively for each node given by \fItagOrId\fR.
@@ -640,7 +640,7 @@ similar to that used by the C-shell.  For  the  two
 strings  to match, their contents must be identical
 except that the  following  special  sequences  may
 appear in pattern:
-.RS 
+.RS
 .TP 5
 \f(CW*\fR
 Matches  any  sequence  of  characters in
@@ -651,7 +651,7 @@ Matches any single character in string.
 .TP 5
 \f(CW[\fIchars\f(CW]\fR
 Matches any character in the set given by \fIchars\fR. If a sequence of the
-form \fIx\fR-\fIy\fR appears in \fIchars\fR, then any character between 
+form \fIx\fR-\fIy\fR appears in \fIchars\fR, then any character between
 \fIx\fR and \fIy\fR,
 inclusive, will match.
 .TP 5
@@ -664,22 +664,22 @@ the pattern.
 .TP 1.25i
 \fB\-regexp\fR
 Use regular expression pattern matching (i.e. the same as implemented
-by the \fBregexp\fR command).  
+by the \fBregexp\fR command).
 .TP 1.25i
 \fB\-nonmatching\fR
-Hide nodes that don't match.  
+Hide nodes that don't match.
 .TP 1.25i
 \fB\-\-\fR
 Indicates the end of flags.
 .RE
 .TP
-\fIpathName \fBindex \fR?\fB\-at\fR \fItagOrId\fR? \fIstring\fR 
+\fIpathName \fBindex \fR?\fB\-at\fR \fItagOrId\fR? \fIstring\fR
 Returns the id of the node specified by \fIstring\fR.  \fIString\fR
 may be a tag or node id.
-Some special ids are normally relative to the node that 
+Some special ids are normally relative to the node that
 has focus.  The \fB\-at\fR flag lets you select another node.
 .TP
-\fIpathName \fBinsert \fR?\fB\-at \fItagOrId\fR? \fIposition\fR \fIpath\fR ?\fIoptions...\fR? ?\fIpath\fR? ?\fIoptions...\fR? 
+\fIpathName \fBinsert \fR?\fB\-at \fItagOrId\fR? \fIposition\fR \fIpath\fR ?\fIoptions...\fR? ?\fIpath\fR? ?\fIoptions...\fR?
 Inserts one or more nodes at \fIposition\fR.  \fIPosition\fR is the
 location (number or \f(CWend\fR) where the new nodes are added to
 the parent node.  \fIPath\fR is the pathname of the new node.
@@ -687,13 +687,13 @@ Pathnames can be formated either as a Tcl list (each element is a path
 component) or as a string separated by a special character sequence
 (using the \fB\-separator\fR option).  Pathnames are normally
 absolute, but the \fB\-at\fR switch lets you select a relative
-starting point.  Its value is the id of the starting node.  
+starting point.  Its value is the id of the starting node.
 .sp
 All ancestors of the new node must already exist, unless the
 \fB\-autocreate\fR option is set.  It is also an error if a node
 already exists, unless the \fB\-allowduplicates\fR option is set.
 .sp
-\fIOption\fR and \fIvalue\fR may have any of the values accepted by the 
+\fIOption\fR and \fIvalue\fR may have any of the values accepted by the
 \fBentry configure\fR operation described in the
 .SB "ENTRY OPERATIONS"
 section below.  This command returns a list of the ids of
@@ -721,15 +721,15 @@ Moves the node to the end of the destination's list of children.
 Returns the id of the node entry closest to the given X-Y screen
 coordinate.  The optional argument \fIvarName\fR is the name of
 variable which is set to either \f(CWbutton\fR or \f(CWselect\fR to
-indicate over what part of the node the coordinate lies.  
+indicate over what part of the node the coordinate lies.
 If the coordinate is not directly over any node, then
 \fIvarName\fR will contain the empty string.
 .TP
 \fIpathName \fBopen \fR?\fB\-recurse\fR? \fItagOrId...\fR
-Opens the one or more nodes specified by \fItagOrId\fR.  
-If a node is not already open, the Tcl script specified by the 
-\fB\-opencommand\fR option is invoked. If the \fB\-recurse\fR flag 
-is present, then each descendant is recursively opened.  
+Opens the one or more nodes specified by \fItagOrId\fR.
+If a node is not already open, the Tcl script specified by the
+\fB\-opencommand\fR option is invoked. If the \fB\-recurse\fR flag
+is present, then each descendant is recursively opened.
 .TP
 \fIpathName \fBrange\fR ?\fB-open\fR? \fIfirst last\fR
 Returns the ids in depth-first order of the nodes
@@ -783,25 +783,25 @@ node.
 .TP
 \fIpathName \fBselection cancel\fR
 Clears the temporary selection of entries back to the
-current anchor.  Temporary selections are created by 
+current anchor.  Temporary selections are created by
 the \fBselection mark\fR operation.
 .TP
 \fIpathName \fBselection clear \fIfirst \fR?\fIlast\fR?
 Removes the entries between \fIfirst\fR and \fIlast\fR
-(inclusive) from the selection.  Both \fIfirst\fR and 
+(inclusive) from the selection.  Both \fIfirst\fR and
 \fIlast\fR are ids representing a range of entries.
 If \fIlast\fR isn't given, then only \fIfirst\fR is deselected.
 Entries outside the selection are not affected.
 .TP
 \fIpathName \fBselection clearall\fR
-Clears the entire selection.  
+Clears the entire selection.
 .TP
 \fIpathName \fBselection mark \fItagOrId\fR
 Sets the selection mark to the node given by \fItagOrId\fR.  This
 causes the range of entries between the anchor and the mark to be
 temporarily added to the selection.  The selection mark is the end of
 the selection that is fixed while dragging out a selection with the
-mouse.  The special id \fBmark\fR may be used to refer to the current 
+mouse.  The special id \fBmark\fR may be used to refer to the current
 mark node.
 If \fItagOrId\fR refers to a non-existent node, then the mark
 is ignored.
@@ -826,7 +826,7 @@ Selects/deselects nodes in the range between
 If a node is currently selected, it becomes deselected, and
 visa versa.
 .RE
-.TP 
+.TP
 \fIpathName \fBshow \fR?\fBflags\fR? \fItagOrId\fR...
 Exposes all nodes matching the criteria given by \fIflags\fR.  This
 is the inverse of the \fBhide\fR operation.  The search is performed
@@ -853,7 +853,7 @@ similar to that used by the C-shell.  For  the  two
 strings  to match, their contents must be identical
 except that the  following  special  sequences  may
 appear in pattern:
-.RS 
+.RS
 .TP 5
 \f(CW*\fR
 Matches  any  sequence  of  characters in
@@ -864,7 +864,7 @@ Matches any single character in string.
 .TP 5
 \f(CW[\fIchars\f(CW]\fR
 Matches any character in the set given by \fIchars\fR. If a sequence of the
-form \fIx\fR-\fIy\fR appears in \fIchars\fR, then any character between 
+form \fIx\fR-\fIy\fR appears in \fIchars\fR, then any character between
 \fIx\fR and \fIy\fR,
 inclusive, will match.
 .TP 5
@@ -877,10 +877,10 @@ the pattern.
 .TP 1.25i
 \fB\-regexp\fR
 Use regular expression pattern matching (i.e. the same as implemented
-by the \fBregexp\fR command).  
+by the \fBregexp\fR command).
 .TP 1.25i
 \fB\-nonmatching\fR
-Expose nodes that don't match.  
+Expose nodes that don't match.
 .TP 1.25i
 \fB\-\-\fR
 Indicates the end of flags.
@@ -921,26 +921,26 @@ according to this column.  If \fIcolumn\fR is \f(CW""\fR then
 no sort is performed.
 .TP
 \fB\-command\fI string\fR
-Specifies a Tcl procedure to be called when sorting nodes. 
+Specifies a Tcl procedure to be called when sorting nodes.
 The procedure is called with three arguments: the pathname of the widget
 and the fields of two entries.  The procedure returns 1 if the first
 node is greater than the second, -1 is the second is greater, and 0
-if equal.  
+if equal.
 .TP
 \fB\-decreasing\fI boolean\fR
-Indicates to sort in ascending/descending order.  If \fIboolean\fR 
-is true, then the entries as in descending order. The default is 
+Indicates to sort in ascending/descending order.  If \fIboolean\fR
+is true, then the entries as in descending order. The default is
 \f(CWno\fR.
 .TP
 \fB\-mode\fI string\fR
 Specifies how to compare entries when sorting. \fIString\fR
 may be one of the following:
-.RS 
+.RS
 .TP 1.5i
 \f(CWascii\fR
 Use string comparison based upon the ASCII collation order.
 .TP 1.5i
-\f(CWdictionary\fR 
+\f(CWdictionary\fR
 Use dictionary-style comparison.  This is the same as \f(CWascii\fR
 except (a) case is ignored except as a tie-breaker and (b) if two
 strings contain embedded numbers, the numbers compare as integers, not
@@ -954,15 +954,15 @@ Compares fields as integers.
 Compares fields as floating point numbers.
 .TP 1.5i
 \f(CWcommand\fR
-Use the Tcl proc specified by the \fB\-command\fR option to compare entries 
-when sorting.   If no command is specified, the sort reverts to 
+Use the Tcl proc specified by the \fB\-command\fR option to compare entries
+when sorting.   If no command is specified, the sort reverts to
 \f(CWascii\fR sorting.
 .RE
 .RE
 .TP
 \fIpathName \fBsort once\fR ?\fIflags\fR? \fItagOrId...\fR
-Sorts the children for each entries specified by \fItagOrId\fR.  
-By default, entries are sorted by name, but you can specify a 
+Sorts the children for each entries specified by \fItagOrId\fR.
+By default, entries are sorted by name, but you can specify a
 Tcl proc to do your own comparisons.
 .RS
 .TP 1.5i
@@ -975,7 +975,7 @@ Recursively sort the entire branch, not just the children.
 Tags are a general means of selecting and marking nodes in the tree.
 A tag is just a string of characters, and it may take any form except
 that of an integer.  The same tag may be associated with many
-different nodes.  
+different nodes.
 .sp
 Both \fIoperation\fR and its arguments determine the exact behavior of
 the command.  The operations available for tags are listed below.
@@ -985,7 +985,7 @@ the command.  The operations available for tags are listed below.
 Adds the tag \fIstring\fR to one of more entries.
 .TP
 \fIpathName\fR \fBtag delete\fR \fIstring\fR \fIid\fR...
-Deletes the tag \fIstring\fR from one or more entries.  
+Deletes the tag \fIstring\fR from one or more entries.
 .TP
 \fIpathName\fR \fBtag forget\fR \fIstring\fR
 Removes the tag \fIstring\fR from all entries.  It's not an error if no
@@ -993,7 +993,7 @@ entries are tagged as \fIstring\fR.
 .TP
 \fIpathName\fR \fBtag names\fR ?\fIid\fR?
 Returns a list of tags used.  If an \fIid\fR argument
-is present, only those tags used by the node designated by \fIid\fR 
+is present, only those tags used by the node designated by \fIid\fR
 are returned.
 .TP
 \fIpathName\fR \fBtag nodes\fR \fIstring\fR
@@ -1002,7 +1002,7 @@ is tagged as \fIstring\fR, then an empty string is returned.
 .RE
 .TP
 \fIpathName \fBtext \fIoperation\fR ?\fIargs\fR?
-This operation is used to provide text editing for cells (data 
+This operation is used to provide text editing for cells (data
 fields in a column) or entry labels.
 It has several forms, depending on \fIoperation\fR:
 .RS
@@ -1012,7 +1012,7 @@ Applies the edited buffer, replacing the entry label
 or data field. The edit window is hidden.
 .TP
 \fIpathName \fBtext cancel\fR
-Cancels the editing operation, reverting the entry label 
+Cancels the editing operation, reverting the entry label
 or data value back to the previous value. The edit window is hidden.
 .TP
 \fIpathName \fBtext cget\fI value\fR
@@ -1032,14 +1032,14 @@ sublist of the value returned if no \fIoption\fR is specified).  If
 one or more \fIoption\-value\fR pairs are specified, then the command
 modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
-\fIOption\fR and \fIvalue\fR are described in the section 
-.SB "TEXT EDITING OPTIONS" 
+\fIOption\fR and \fIvalue\fR are described in the section
+.SB "TEXT EDITING OPTIONS"
 below.
 .RE
 .TP
 \fIpathName \fBtext delete\fI first last\fR
 Deletes the characters in the edit buffer between the two given
-character positions.  
+character positions.
 .TP
 \fIpathName \fBtext get\fR ?\fI\-root\fR? \fIx y\fR
 .TP
@@ -1049,7 +1049,7 @@ character positions.
 Returns the text index of given \fIindex\fR.
 .TP
 \fIpathName \fBtext insert\fI index string\fR
-Insert the text string \fIstring\fR into the edit buffer at the index 
+Insert the text string \fIstring\fR into the edit buffer at the index
 \fIindex\fR.  For example, the index 0 will prepend the buffer.
 .TP
 \fIpathName \fBtext selection\fI args\fR
@@ -1078,9 +1078,9 @@ Sets the unanchored end (mark) of the selection.
 .RE
 .TP
 \fIpathName \fBtoggle \fItagOrId\fR
-Opens or closes the node given by \fItagOrId\fR.  If the corresponding 
+Opens or closes the node given by \fItagOrId\fR.  If the corresponding
 \fB\-opencommand\fR or \fB\-closecommand\fR option is set, then that
-command is also invoked. 
+command is also invoked.
 .TP
 \fIpathName \fBxview \fIargs\fR
 This command is used to query and change the horizontal position of the
@@ -1093,7 +1093,7 @@ Returns a list containing two elements.
 Each element is a real fraction between 0 and 1;  together they describe
 the horizontal span that is visible in the window.
 For example, if the first element is .2 and the second element is .6,
-20% of the \fBtreeview\fR widget's text is off-screen to the left, 
+20% of the \fBtreeview\fR widget's text is off-screen to the left,
 the middle 40% is visible
 in the window, and 40% of the text is off-screen to the right.
 These are the same values passed to scrollbars via the \fB\-xscrollcommand\fR
@@ -1176,22 +1176,22 @@ The following widget options are available:
 .TP
 \fB\-activebackground \fIcolor\fR
 Sets the background color for active entries.  A node
-is active when the mouse passes over it's entry or using the 
-\fBactivate\fR operation.  
+is active when the mouse passes over it's entry or using the
+\fBactivate\fR operation.
 .TP
 \fB\-activeforeground \fIcolor\fR
 Sets the foreground color of the active node.  A node
-is active when the mouse passes over it's entry or using the 
-\fBactivate\fR operation.  
+is active when the mouse passes over it's entry or using the
+\fBactivate\fR operation.
 .TP
 \fB\-activeicons \fIimages\fR
 Specifies images to be displayed for an entry's icon
-when it is active. \fIImages\fR is a list of two Tk images: 
+when it is active. \fIImages\fR is a list of two Tk images:
 the first image is displayed when the node is open, the
 second when it is closed.
 .TP
 \fB\-autocreate \fIboolean\fR
-If \fIboolean\fR is true, automatically create missing ancestor 
+If \fIboolean\fR is true, automatically create missing ancestor
 nodes when inserting new nodes. Otherwise flag an error.
 The default is \f(CWno\fR.
 .TP
@@ -1210,11 +1210,11 @@ default is \f(CW2\fR.
 .TP
 \fB\-closecommand \fIstring\fR
 Specifies a Tcl script to be invoked when a node is closed.  You can
-overrider this for individual entries using the entry's \fB\-closecommand\fR 
+overrider this for individual entries using the entry's \fB\-closecommand\fR
 option. The default is \f(CW""\fR.
-Percent substitutions are performed on \fIstring\fR before 
+Percent substitutions are performed on \fIstring\fR before
 it is executed.  The following substitutions are valid:
-.RS 
+.RS
 .TP 5
 \f(CW%W\fR
 The pathname of the widget.
@@ -1236,12 +1236,12 @@ Translates to a single percent.
 Specifies the widget's cursor.  The default cursor is \f(CW""\fR.
 .TP
 \fB\-dashes \fInumber\fR
-Sets the dash style of the horizontal and vertical lines drawn connecting 
+Sets the dash style of the horizontal and vertical lines drawn connecting
 entries. \fINumber\fR is the length in pixels of the dashes and gaps in
-the line. If \fInumber\fR is \f(CW0\fR, solid lines will 
+the line. If \fInumber\fR is \f(CW0\fR, solid lines will
 be drawn. The default is \f(CW1\fR (dotted).
 .TP
-\fB\-exportselection \fIboolean\fR 
+\fB\-exportselection \fIboolean\fR
 Indicates if the selection is exported.  If the widget is exporting its
 selection then it will observe the standard X11 protocols for handling
 the selection.  Selections are available as type \fBSTRING\fR;
@@ -1249,33 +1249,33 @@ the value of the selection will be the label of the selected nodes,
 separated by newlines.  The default is \f(CWno\fR.
 .TP
 \fB\-flat \fIboolean\fR
-Indicates whether to display the tree as a flattened list. 
+Indicates whether to display the tree as a flattened list.
 If \fIboolean\fR is true, then the hierarchy will be a list of full
-paths for the nodes.  This option also has affect on sorting. 
-See the 
+paths for the nodes.  This option also has affect on sorting.
+See the
 .SB "SORT OPERATIONS"
 section for more information.
 The default is \f(CWno\fR.
 .TP
-\fB\-focusdashes \fIdashList\fR 
+\fB\-focusdashes \fIdashList\fR
 Sets the dash style of the outline rectangle drawn around the entry
 label of the node that current has focus. \fINumber\fR is the length
 in pixels of the dashes and gaps in the line.  If
 \fInumber\fR is \f(CW0\fR, a solid line will be drawn. The default is
 \f(CW1\fR.
 .TP
-\fB\-focusforeground \fIcolor\fR 
-Sets the color of the focus rectangle. 
+\fB\-focusforeground \fIcolor\fR
+Sets the color of the focus rectangle.
 The default is \f(CWblack\fR.
 .TP
-\fB\-font \fIfontName\fR 
+\fB\-font \fIfontName\fR
 Specifies the font for entry labels.  You can override this for individual
 entries with the entry's \fB\-font\fR configuration option.  The default is
 \f(CW*-Helvetica-Bold-R-Normal-*-12-120-*\fR.
 .TP
-\fB\-foreground \fIcolor\fR 
+\fB\-foreground \fIcolor\fR
 Sets the text color of entry labels.  You can override this for individual
-entries with the entry's \fB\-foreground\fR configuration option.  
+entries with the entry's \fB\-foreground\fR configuration option.
 The default is
 \f(CWblack\fR.
 .TP
@@ -1284,18 +1284,18 @@ Specifies the requested height of widget.  The default is
 \f(CW400\fR.
 .TP
 \fB\-hideroot \fIboolean\fR
-If \fIboolean\fR is true, it indicates that no entry for the root node 
+If \fIboolean\fR is true, it indicates that no entry for the root node
 should be displayed.  The default is \f(CWno\fR.
-.TP 
+.TP
 \fB\-highlightbackground  \fIcolor\fR
 Specifies the normal color of the traversal highlight region when
-the widget does not have the input focus.  
-.TP 
+the widget does not have the input focus.
+.TP
 \fB\-highlightcolor \fIcolor\fR
 Specifies the color of the traversal highlight rectangle when
-the widget has the input focus. 
+the widget has the input focus.
 The default is \f(CWblack\fR.
-.TP 
+.TP
 \fB\-highlightthickness \fIpixels\fR
 Specifies the width of the highlight rectangle indicating when the
 widget has input focus. The value may have any of the forms acceptable
@@ -1304,30 +1304,30 @@ be displayed.  The default is \f(CW2\fR.
 .TP
 \fB\-icons \fIimages\fR
 Specifies images for the entry's icon.
-\fIImages\fR is a list of two Tk images: 
+\fIImages\fR is a list of two Tk images:
 the first image is displayed when the node is open, the
 second when it is closed.
 .TP
 \fB\-linecolor \fIcolor\fR
-Sets the color of the connecting lines drawn between entries.  
+Sets the color of the connecting lines drawn between entries.
 The default is \f(CWblack\fR.
 .TP
 \fB\-linespacing \fIpixels\fR
-Sets the number of pixels spacing between entries.  
+Sets the number of pixels spacing between entries.
 The default is \f(CW0\fR.
 .TP
 \fB\-linewidth \fIpixels\fR
 Set the width of the lines drawn connecting entries.  If \fIpixels\fR
-is \f(CW0\fR, no vertical or horizontal lines are drawn. 
+is \f(CW0\fR, no vertical or horizontal lines are drawn.
 The default is \f(CW1\fR.
 .TP
 \fB\-opencommand \fIstring\fR
-Specifies a Tcl script to be invoked when a node is open.  
+Specifies a Tcl script to be invoked when a node is open.
 You can override this for individual entries with the entry's
 \fB\-opencommand\fR configuration option.  The default is \f(CW""\fR.
-Percent substitutions are performed on \fIstring\fR before 
+Percent substitutions are performed on \fIstring\fR before
 it is executed.  The following substitutions are valid:
-.RS 
+.RS
 .TP 5
 \f(CW%W\fR
 The pathname of the widget.
@@ -1347,11 +1347,11 @@ Translates to a single percent.
 .TP
 \fB\-relief \fIrelief\fR
 Specifies the 3-D effect for the widget.  \fIRelief\fR
-specifies how the \fBtreeview\fR widget should appear relative to widget 
-it is packed into; for example, \f(CWraised\fR means the \fBtreeview\fR widget 
+specifies how the \fBtreeview\fR widget should appear relative to widget
+it is packed into; for example, \f(CWraised\fR means the \fBtreeview\fR widget
 should appear to protrude.  The default is \f(CWsunken\fR.
 .TP
-\fB\-scrollmode \fImode\fR 
+\fB\-scrollmode \fImode\fR
 Specifies the style of scrolling to be used.  The following
 styles are valid.  This is the default is \f(CWhierbox\fR.
 .RS
@@ -1364,19 +1364,19 @@ thumb to shrink as the last entry is scrolled upward.
 \f(CWhierbox\fR
 Like the \fBhierbox\fR widget, the last entry can only be
 viewed at the bottom of the widget window.  The scrollbar
-stays a constant size.  
+stays a constant size.
 .TP 1.25i
 \f(CWcanvas\fR
 Like the \fBcanvas\fR widget, the entries are bound within
-the scrolling area. 
+the scrolling area.
 .RE
-.TP 
+.TP
 \fB\-selectbackground \fIcolor\fR
 Sets the background color selected node entries.
 The default is \f(CW#ffffea\fR.
-.TP 
+.TP
 \fB\-selectborderwidth \fIpixels\fR
-Sets the width of the raised 3-D border drawn around the labels 
+Sets the width of the raised 3-D border drawn around the labels
 of selected entries. The default is \f(CW0\fR.
 \fB\-selectcommand \fIstring\fR
 Specifies a Tcl script to invoked when the set of selected
@@ -1384,33 +1384,33 @@ nodes changes.
 The default is \f(CW""\fR.
 .TP
 \fB\-selectforeground \fIcolor\fB
-Sets the color of the labels of selected node entries. 
+Sets the color of the labels of selected node entries.
 The default is \f(CWblack\fR.
-.TP 
+.TP
 \fB\-selectmode \fImode\fR
-Specifies the selection mode. If \fImode\fR is 
+Specifies the selection mode. If \fImode\fR is
 \f(CWsingle\fR, only one node can be selected
 at a time.  If \f(CWmultiple\fR more than one
 node can be selected.
 The default is \f(CWsingle\fR.
 .TP
 \fB\-separator \fIstring\fR
-Specifies the character sequence to use when spliting the path components.  
+Specifies the character sequence to use when spliting the path components.
 The separator may be several characters wide (such as "::")
 Consecutive separators in a pathname are treated as one.
-If \fIstring\fR is the empty string, the pathnames are Tcl lists. 
+If \fIstring\fR is the empty string, the pathnames are Tcl lists.
 Each element is a path component.   The default is \f(CW""\fR.
 .TP
 \fB\-showtitles \fIboolean\fR
-If \fIboolean\fR is false, column titles are not be displayed.  
+If \fIboolean\fR is false, column titles are not be displayed.
 The default is \f(CWyes\fR.
-.TP 
+.TP
 \fB\-sortselection \fIboolean\fR
 If \fIboolean\fR is true, nodes in the selection are ordered as they
 are currently displayed (depth-first or sorted), not in the order
 they were selected. The default is \f(CWno\fR.
 .TP
-\fB\-takefocus\fR \fIfocus\fR 
+\fB\-takefocus\fR \fIfocus\fR
 Provides information used when moving the focus from window to window
 via keyboard traversal (e.g., Tab and Shift-Tab).  If \fIfocus\fR is
 \f(CW0\fR, this means that this window should be skipped entirely during
@@ -1420,7 +1420,7 @@ scripts make the decision whether to focus on the window.
 The default is \f(CW"1"\fR.
 .TP
 \fB\-trim \fIstring\fR
-Specifies a string leading characters to trim from entry pathnames 
+Specifies a string leading characters to trim from entry pathnames
 before parsing.  This only makes sense if the \fB\-separator\fR is also
 set.  The default is \f(CW""\fR.
 .TP
@@ -1428,12 +1428,12 @@ set.  The default is \f(CW""\fR.
 Sets the requested width of the widget.  If \fIpixels\fR is 0, then
 the with is computed from the contents of the \fBtreeview\fR widget.
 The default is \f(CW200\fR.
-.TP 
+.TP
 \fB\-xscrollcommand \fIstring\fR
 Specifies the prefix for a command used to communicate with horizontal
-scrollbars.  Whenever the horizontal view in the widget's window 
-changes, the widget will generate a Tcl command by concatenating the 
-scroll command and two numbers.  If this option is not specified, then 
+scrollbars.  Whenever the horizontal view in the widget's window
+changes, the widget will generate a Tcl command by concatenating the
+scroll command and two numbers.  If this option is not specified, then
 no command will be executed.
 .TP
 \fB\-xscrollincrement\fR \fIpixels\fR
@@ -1441,9 +1441,9 @@ Sets the horizontal scrolling distance. The default is 20 pixels.
 .TP
 \fB\-yscrollcommand \fIstring\fR
 Specifies the prefix for a command used to communicate with vertical
-scrollbars.   Whenever the vertical view in the widget's window 
-changes, the widget will generate a Tcl command by concatenating the 
-scroll command and two numbers.  If this option is not specified, then 
+scrollbars.   Whenever the vertical view in the widget's window
+changes, the widget will generate a Tcl command by concatenating the
+scroll command and two numbers.  If this option is not specified, then
 no command will be executed.
 .TP
 \fB\-yscrollincrement\fR \fIpixels\fR
@@ -1463,20 +1463,20 @@ There is no resource class or name for entries.
 Specifies images to be displayed as the entry's icon
 when it is active. This overrides the global \fB\-activeicons\fR
 configuration option for the specific entry.
-\fIImages\fR is a list of two Tk images: 
+\fIImages\fR is a list of two Tk images:
 the first image is displayed when the node is open, the
 second when it is closed.
 .TP
 \fB\-bindtags \fItagList\fR
 Specifies the binding tags for nodes.  \fITagList\fR is a list
 of binding tag names.  The tags and their order will determine how
-events are handled for nodes.  Each tag in the list matching the current 
-event sequence will have its Tcl command executed.  The default value 
+events are handled for nodes.  Each tag in the list matching the current
+event sequence will have its Tcl command executed.  The default value
 is \f(CWall\fR.
 .TP
 \fB\-button \fIstring\fR
 Indicates whether a button should be displayed on the left side
-of the node entry.  \fIString\fR can be \f(CWyes\fR, \f(CWno\fR, 
+of the node entry.  \fIString\fR can be \f(CWyes\fR, \f(CWno\fR,
 or \f(CWauto\fR.  If \f(CWauto\fR, then a button is automatically
 displayed if the node has children.  This is the default.
 .TP
@@ -1484,9 +1484,9 @@ displayed if the node has children.  This is the default.
 Specifies a Tcl script to be invoked when the node is closed.  This
 overrides the global \fB\-closecommand\fR option for this entry.
 The default is \f(CW""\fR.
-Percent substitutions are performed on \fIstring\fR before 
+Percent substitutions are performed on \fIstring\fR before
 it is executed.  The following substitutions are valid:
-.RS 
+.RS
 .TP 5
 \f(CW%W\fR
 The pathname of the widget.
@@ -1505,36 +1505,36 @@ Translates to a single percent.
 .RE
 .TP
 \fB\-data \fIstring\fR
-Sets data fields for the node.  \fIString\fR is a list of 
+Sets data fields for the node.  \fIString\fR is a list of
 name-value pairs to be set. The default is \f(CW""\fR.
 .TP
-\fB\-font \fIfontName\fR 
+\fB\-font \fIfontName\fR
 Sets the font for entry labels.  This overrides the widget's
 \fB\-font\fR option for this node.  The default is
 \f(CW*-Helvetica-Bold-R-Normal-*-12-120-*\fR.
 .TP
-\fB\-foreground \fIcolor\fR 
+\fB\-foreground \fIcolor\fR
 Sets the text color of the entry label.  This overrides the widget's
 \fB\-foreground\fR configuration option.  The default is \f(CW""\fR.
 .TP
 \fB\-icons \fIimages\fR
 Specifies images to be displayed for the entry's icon.
 This overrides the global \fB\-icons\fR configuration option.
-\fIImages\fR is a list of two Tk images: 
+\fIImages\fR is a list of two Tk images:
 the first image is displayed when the node is open, the
 second when it is closed.
 .TP
 \fB\-label \fIstring\fR
-Sets the text for the entry's label.  If not set, this 
+Sets the text for the entry's label.  If not set, this
 defaults to the name of the node. The default is \f(CW""\fR.
 .TP
 \fB\-opencommand \fIstring\fR
-Specifies a Tcl script to be invoked when the entry is opened.  
-This overrides the widget's \fB\-opencommand\fR option for this node.  
-The default is \f(CW""\fR. 
-Percent substitutions are performed on \fIstring\fR before 
+Specifies a Tcl script to be invoked when the entry is opened.
+This overrides the widget's \fB\-opencommand\fR option for this node.
+The default is \f(CW""\fR.
+Percent substitutions are performed on \fIstring\fR before
 it is executed.  The following substitutions are valid:
-.RS 
+.RS
 .TP 5
 \f(CW%W\fR
 The pathname of the widget.
@@ -1563,55 +1563,55 @@ The following are the configuration options available for buttons.
 .TP
 \fB\-activebackground \fIcolor\fR
 Sets the background color of active buttons.  A button
-is made active when the mouse passes over it or by the 
-\fBbutton activate\fR operation.  
+is made active when the mouse passes over it or by the
+\fBbutton activate\fR operation.
 .TP
 \fB\-activeforeground \fIcolor\fR
 Sets the foreground color of active buttons.  A button
-is made active when the mouse passes over it or by the 
-\fBbutton activate\fR operation.  
+is made active when the mouse passes over it or by the
+\fBbutton activate\fR operation.
 .TP
 \fB\-background \fIcolor\fR
 Sets the background of the button.  The default is \f(CWwhite\fR.
 .TP
 \fB\-borderwidth \fIpixels\fR
-Sets the width of the 3\-D border around the button.  
+Sets the width of the 3\-D border around the button.
 The \fB\-relief\fR option determines if a border is to be drawn.  The
 default is \f(CW1\fR.
 .TP
 \fB\-closerelief \fIrelief\fR
 Specifies the 3-D effect for the closed button.  \fIRelief\fR
-indicates how the button should appear relative to the widget; 
+indicates how the button should appear relative to the widget;
 for example, \f(CWraised\fR means the button should
 appear to protrude.  The default is \f(CWsolid\fR.
 .TP
 \fB\-cursor \fIcursor\fR
 Sets the widget's cursor.  The default cursor is \f(CW""\fR.
 .TP
-\fB\-foreground \fIcolor\fR 
-Sets the foreground color of buttons. 
+\fB\-foreground \fIcolor\fR
+Sets the foreground color of buttons.
 The default is \f(CWblack\fR.
 .TP
 \fB\-images \fIimages\fR
 Specifies images to be displayed for the button.
-\fIImages\fR is a list of two Tk images: 
+\fIImages\fR is a list of two Tk images:
 the first image is displayed when the button is open, the
 second when it is closed.  If the \fIimages\fR is the empty string,
 then a plus/minus gadget is drawn.  The default is \f(CW""\fR.
 .TP
 \fB\-openrelief \fIrelief\fR
 Specifies the 3-D effect of the open button.  \fIRelief\fR
-indicates how the button should appear relative to the widget; 
+indicates how the button should appear relative to the widget;
 for example, \f(CWraised\fR means the button should
 appear to protrude.  The default is \f(CWflat\fR.
 .TP
 \fB\-size \fIpixels\fR
-Sets the requested size of the button.  
+Sets the requested size of the button.
 The default is \f(CW0\fR.
 .RE
 .SH "COLUMN OPTIONS"
 Column configuration options may also be set by the \fBoption\fR command.
-The resource subclass is \f(CWColumn\fR.   The resource name is the 
+The resource subclass is \f(CWColumn\fR.   The resource name is the
 name of the column.
 .CS
 option add *TreeView.Column.Foreground white
@@ -1624,22 +1624,22 @@ Sets the background color of the column.  This overrides
 the widget's \fB\-background\fR option. The default is \f(CWwhite\fR.
 .TP
 \fB\-borderwidth \fIpixels\fR
-Sets the width of the 3\-D border of the column.  
+Sets the width of the 3\-D border of the column.
 The \fB\-relief\fR option determines if a border is to be drawn.  The
 default is \f(CW0\fR.
 .TP
 \fB\-edit \fIboolean\fR
-Indicates if the column's data fields can be edited. If \fIboolean\fR is 
+Indicates if the column's data fields can be edited. If \fIboolean\fR is
 false, the data fields in the column may not be edited.
 The default is \f(CWyes\fR.
 .TP
-\fB\-foreground \fIcolor\fR 
-Specifies the foreground color of the column. 
-You can override this for individual entries with the entry's 
+\fB\-foreground \fIcolor\fR
+Specifies the foreground color of the column.
+You can override this for individual entries with the entry's
 \fB\-foreground\fR option.
 The default is \f(CWblack\fR.
 .TP
-\fB\-font \fIfontName\fR 
+\fB\-font \fIfontName\fR
 Sets the font for a column.  You can override this for individual entries
 with the entry's \fB\-font\fR option.  The default is
 \f(CW*-Helvetica-Bold-R-Normal-*-12-120-*\fR.
@@ -1650,9 +1650,9 @@ The default is \f(CWyes\fR.
 .TP
 \fB\-justify \fIjustify\fR
 Specifies how the column data fields title should be justified within
-the column.  This matters only when the column is wider than the 
+the column.  This matters only when the column is wider than the
 data field to be display.
-\fIJustify\fR must be \f(CWleft\fR, \f(CWright\fR, or \f(CWcenter\fR.  
+\fIJustify\fR must be \f(CWleft\fR, \f(CWright\fR, or \f(CWcenter\fR.
 The default is \f(CWleft\fR.
 .TP
 \fB\-pad \fIpad\fR
@@ -1665,7 +1665,7 @@ default is \f(CW2\fR.
 .TP
 \fB\-relief \fIrelief\fR
 Specifies the 3-D effect of the column.  \fIRelief\fR
-specifies how the column should appear relative to the widget; 
+specifies how the column should appear relative to the widget;
 for example, \f(CWraised\fR means the column should
 appear to protrude.  The default is \f(CWflat\fR.
 .TP
@@ -1678,12 +1678,12 @@ The default is \f(CWnormal\fR.
 Sets the title for the column.
 The default is \f(CW""\fR.
 .TP
-\fB\-titleforeground \fIcolor\fR 
-Sets the foreground color of the column title. 
+\fB\-titleforeground \fIcolor\fR
+Sets the foreground color of the column title.
 The default is \f(CWblack\fR.
 .TP
-\fB\-titleshadow \fIcolor\fR 
-Sets the color of the drop shadow of the column title.  
+\fB\-titleshadow \fIcolor\fR
+Sets the color of the drop shadow of the column title.
 The default is \f(CW""\fR.
 .TP
 \fB\-width \fIpixels\fR
@@ -1693,7 +1693,7 @@ the width is computed as from the contents of the column. The
 default is \f(CW0\fR.
 .RE
 .SH "TEXT EDITING OPTIONS"
-Text edit window configuration options may also be set by the 
+Text edit window configuration options may also be set by the
 \fBoption\fR command. The resource class is \f(CWTreeViewEditor\fR.
 The resource name is always \f(CWedit\fR.
 .CS
@@ -1707,13 +1707,13 @@ text editing window.
 Sets the background of the text edit window.  The default is \f(CWwhite\fR.
 .TP
 \fB\-borderwidth \fIpixels\fR
-Sets the width of the 3\-D border around the edit window.  
+Sets the width of the 3\-D border around the edit window.
 The \fB\-relief\fR option determines if a border is to be drawn.  The
 default is \f(CW1\fR.
 .TP
 \fB\-exportselection \fIboolean\fR
-Indicates if the text selection is exported.  If the edit window is 
-exporting its selection then it will observe the standard X11 protocols 
+Indicates if the text selection is exported.  If the edit window is
+exporting its selection then it will observe the standard X11 protocols
 for handling the selection.  Selections are available as type \fBSTRING\fR.
 The default is \f(CWno\fR.
 .TP
@@ -1724,20 +1724,20 @@ window; for example, \f(CWraised\fR means the background should
 appear to protrude.  The default is \f(CWsolid\fR.
 .TP
 \fB\-selectbackground \fIcolor\fR
-Sets the background of the selected text in the edit window.  
+Sets the background of the selected text in the edit window.
 The default is \f(CWwhite\fR.
 .TP
 \fB\-selectborderwidth \fIpixels\fR
-Sets the width of the 3\-D border around the selected text in the 
-edit window.  The \fB\-selectrelief\fR option determines if a border 
+Sets the width of the 3\-D border around the selected text in the
+edit window.  The \fB\-selectrelief\fR option determines if a border
 is to be drawn.  The default is \f(CW1\fR.
 .TP
 \fB\-selectforeground \fIcolor\fR
-Sets the foreground of the selected text in the edit window.  
+Sets the foreground of the selected text in the edit window.
 The default is \f(CWwhite\fR.
 .TP
 \fB\-selectrelief \fIrelief\fR
-Specifies the 3-D effect of the selected text in the edit window.  
+Specifies the 3-D effect of the selected text in the edit window.
 \fIRelief\fR indicates how the text should appear relative to the edit
 window; for example, \f(CWraised\fR means the text should
 appear to protrude.  The default is \f(CWflat\fR.
@@ -1748,7 +1748,7 @@ Motif-like behavior.  Much of the behavior of a \fBtreeview\fR widget is determi
 by its \fB\-selectmode\fR option, which selects one of two ways
 of dealing with the selection.
 .PP
-If the selection mode is \fBsingle\fR, only one node can be 
+If the selection mode is \fBsingle\fR, only one node can be
 selected at a time.
 Clicking button 1 on an node selects
 it and deselects any other selected item.
@@ -1813,11 +1813,11 @@ by one page (the height of the window).
 The Home and End keys scroll the \fBtreeview\fR widget horizontally to
 the left and right edges, respectively.
 .IP [10]
-Control-Home sets the location cursor to the the first entry, 
+Control-Home sets the location cursor to the the first entry,
 selects that entry, and deselects everything else
 in the widget.
 .IP [11]
-Control-End sets the location cursor to the the last entry, 
+Control-End sets the location cursor to the the last entry,
 selects that entry, and deselects everything else
 in the widget.
 .IP [12]
@@ -1852,59 +1852,59 @@ The F16 key (labelled Copy on many Sun workstations) or Meta-w
 copies the selection in the widget to the clipboard, if there is
 a selection.
 .PP
-The behavior of \fBtreeview\fR widgets can be changed by defining new bindings 
+The behavior of \fBtreeview\fR widgets can be changed by defining new bindings
 for individual widgets or by redefining the class bindings.
 .SS WIDGET BINDINGS
 In addition to the above behavior, the following additional behavior
 is defined by the default widget class (TreeView) bindings.
-.IP \f(CW<ButtonPress-2>\fR 
-Starts scanning. 
-.IP \f(CW<B2-Motion>\fR 
+.IP \f(CW<ButtonPress-2>\fR
+Starts scanning.
+.IP \f(CW<B2-Motion>\fR
 Adjusts the scan.
 .IP \f(CW<ButtonRelease-2>\fR
 Stops scanning.
-.IP \f(CW<B1-Leave>\fR 
+.IP \f(CW<B1-Leave>\fR
 Starts auto-scrolling.
 .IP \f(CW<B1-Enter>\fR
-Starts auto-scrolling 
-.IP \f(CW<KeyPress-Up>\fR 
+Starts auto-scrolling
+.IP \f(CW<KeyPress-Up>\fR
 Moves the focus to the previous entry.
-.IP \f(CW<KeyPress-Down>\fR 
+.IP \f(CW<KeyPress-Down>\fR
 Moves the focus to the next entry.
 .IP \f(CW<Shift-KeyPress-Up>\fR
 Moves the focus to the previous sibling.
 .IP \f(CW<Shift-KeyPress-Down>\fR
 Moves the focus to the next sibling.
-.IP \f(CW<KeyPress-Prior>\fR 
+.IP \f(CW<KeyPress-Prior>\fR
 Moves the focus to first entry.  Closed or hidden entries
 are ignored.
-.IP \f(CW<KeyPress-Next>\fR 
+.IP \f(CW<KeyPress-Next>\fR
 Move the focus to the last entry. Closed or hidden entries
 are ignored.
-.IP \f(CW<KeyPress-Left>\fR 
+.IP \f(CW<KeyPress-Left>\fR
 Closes the entry.  It is not an error if the entry has no children.
-.IP \f(CW<KeyPress-Right>\fR 
+.IP \f(CW<KeyPress-Right>\fR
 Opens the entry, displaying its children.  It is not an
 error if the entry has no children.
-.IP \f(CW<KeyPress-space>\fR 
+.IP \f(CW<KeyPress-space>\fR
 In "single" select mode this selects the entry.  In "multiple" mode,
 it toggles the entry (if it was previous selected, it is not
 deselected).
-.IP \f(CW<KeyRelease-space>\fR 
+.IP \f(CW<KeyRelease-space>\fR
 Turns off select mode.
-.IP \f(CW<KeyPress-Return>\fR 
+.IP \f(CW<KeyPress-Return>\fR
 Sets the focus to the current entry.
-.IP \f(CW<KeyRelease-Return>\fR 
+.IP \f(CW<KeyRelease-Return>\fR
 Turns off select mode.
-.IP \f(CW<KeyPress>\fR 
+.IP \f(CW<KeyPress>\fR
 Moves to the next entry whose label starts with the letter typed.
-.IP \f(CW<KeyPress-Home>\fR 
+.IP \f(CW<KeyPress-Home>\fR
 Moves the focus to first entry.  Closed or hidden entries
 are ignored.
-.IP \f(CW<KeyPress-End>\fR 
+.IP \f(CW<KeyPress-End>\fR
 Move the focus to the last entry. Closed or hidden entries
 are ignored.
-.IP \f(CW<KeyPress-F1>\fR 
+.IP \f(CW<KeyPress-F1>\fR
 Opens all entries.
 .IP \f(CW<KeyPress-F2>\fR
 Closes all entries (except root).
@@ -1912,9 +1912,9 @@ Closes all entries (except root).
 Buttons have bindings.  There are associated with the "all" bindtag
 (see the entry's -bindtag option).  You can use the \fBbind\fR
 operation to change them.
-.IP \f(CW<Enter>\fR 
+.IP \f(CW<Enter>\fR
 Highlights the button of the current entry.
-.IP \f(CW<Leave>\fR 
+.IP \f(CW<Leave>\fR
 Returns the button back to its normal state.
 .IP \f(CW<ButtonRelease-1>\fR
 Adjust the view so that the current entry is visible.
@@ -1922,73 +1922,73 @@ Adjust the view so that the current entry is visible.
 Entries have default bindings.  There are associated with the "all"
 bindtag (see the entry's -bindtag option).  You can use the \fBbind\fR
 operation to modify them.
-.IP \f(CW<Enter>\fR 
+.IP \f(CW<Enter>\fR
 Highlights the current entry.
-.IP \f(CW<Leave>\fR 
+.IP \f(CW<Leave>\fR
 Returns the entry back to its normal state.
-.IP \f(CW<ButtonPress-1>\fR 
+.IP \f(CW<ButtonPress-1>\fR
 Sets the selection anchor the current entry.
 .IP \f(CW<Double-ButtonPress-1>\fR
 Toggles the selection of the current entry.
 .IP \f(CW<B1-Motion>\fR
 For "multiple" mode only.  Saves the current location of the
-pointer for auto-scrolling.  Resets the selection mark.  
+pointer for auto-scrolling.  Resets the selection mark.
 .IP \f(CW<ButtonRelease-1>\fR
-For "multiple" mode only.  Sets the selection anchor to the 
+For "multiple" mode only.  Sets the selection anchor to the
 current entry.
 .IP \f(CW<Shift-ButtonPress-1>\fR
 For "multiple" mode only. Extends the selection.
-.IP \f(CW<Shift-Double-ButtonPress-1>\fR 
+.IP \f(CW<Shift-Double-ButtonPress-1>\fR
 Place holder. Does nothing.
-.IP \f(CW<Shift-B1-Motion>\fR 
+.IP \f(CW<Shift-B1-Motion>\fR
 Place holder. Does nothing.
-.IP \f(CW<Shift-ButtonRelease-1>\fR 
+.IP \f(CW<Shift-ButtonRelease-1>\fR
 Stop auto-scrolling.
-.IP \f(CW<Control-ButtonPress-1>\fR 
+.IP \f(CW<Control-ButtonPress-1>\fR
 For "multiple" mode only.  Toggles and extends the selection.
 .IP \f(CW<Control-Double-ButtonPress-1>\fR
 Place holder. Does nothing.
-.IP \f(CW<Control-B1-Motion>\fR 
+.IP \f(CW<Control-B1-Motion>\fR
 Place holder. Does nothing.
-.IP \f(CW<Control-ButtonRelease-1>\fR 
+.IP \f(CW<Control-ButtonRelease-1>\fR
 Stops auto-scrolling.
-.IP \f(CW<Control-Shift-ButtonPress-1>\fR 
+.IP \f(CW<Control-Shift-ButtonPress-1>\fR
 ???
 .IP \f(CW<Control-Shift-Double-ButtonPress-1>\fR
 Place holder. Does nothing.
-.IP \f(CW<Control-Shift-B1-Motion>\fR 
+.IP \f(CW<Control-Shift-B1-Motion>\fR
 Place holder. Does nothing.
 .SS COLUMN BINDINGS
 Columns have bindings too.  They are associated with the column's
 "all" bindtag (see the column -bindtag option).  You can use the
 \fBcolumn bind\fR operation to change them.
-.IP \f(CW<Enter>\fR 
+.IP \f(CW<Enter>\fR
 Highlights the current column title.
-.IP \f(CW<Leave>\fR 
+.IP \f(CW<Leave>\fR
 Returns the column back to its normal state.
 .IP \f(CW<ButtonRelease-1>\fR
 Invokes the command (see the column's -command option) if one
-if specified.  
+if specified.
 .SS COLUMN RULE BINDINGS
-.IP \f(CW<Enter>\fR 
+.IP \f(CW<Enter>\fR
 Highlights the current and activates the ruler.
-.IP \f(CW<Leave>\fR 
+.IP \f(CW<Leave>\fR
 Returns the column back to its normal state. Deactivates the
 ruler.
-.IP \f(CW<ButtonPress-1>\fR 
+.IP \f(CW<ButtonPress-1>\fR
 Sets the resize anchor for the column.
-.IP \f(CW<B1-Motion>\fR 
+.IP \f(CW<B1-Motion>\fR
 Sets the resize mark for the column.
-.IP \f(CW<ButtonRelease-1>\fR 
+.IP \f(CW<ButtonRelease-1>\fR
 Adjust the size of the column, based upon the resize anchor and mark
 positions.
 .SH EXAMPLE
-The \fBtreeview\fR command creates a new widget.  
+The \fBtreeview\fR command creates a new widget.
 .CS
 treeview .h \-bg white
 .CE
 A new Tcl command \f(CW.h\fR is also created.  This command can be used
-to query and modify the \fBtreeview\fR widget.  For example, to change the 
+to query and modify the \fBtreeview\fR widget.  For example, to change the
 background
 color of the table to "green", you use the new command and the widget's
 \fBconfigure\fR operation.
@@ -2008,7 +2008,7 @@ When a new tree is created, it contains only a root node.  The node
 is automatically opened.  The id of the root node is always
 \f(CW0\fR (you can use also use the special id \f(CWroot\fR). The
 \fBinsert\fR operation lets you insert one or more new entries into
-the tree.  The last argument is the node's \fIpathname\fR.  
+the tree.  The last argument is the node's \fIpathname\fR.
 .CS
 # Create a new entry named "myEntry"
 set id [\&.h insert end "myEntry"]
@@ -2037,14 +2037,14 @@ To insert a node somewhere other than root, use the \fB\-at\fR switch.
 It takes the id of the node where the new child will be added.
 .CS
 # Create a new node "barney" in "fred".
-\&.h insert -at $id end "barney" 
+\&.h insert -at $id end "barney"
 .CE
 A pathname describes the path to an entry in the hierarchy.  It's a
 list of entry names that compose the path in the tree.  Therefore, you
 can also add "barney" to "fred" as follows.
 .CS
 # Create a new sub-entry of "fred"
-\&.h insert end "fred barney" 
+\&.h insert end "fred barney"
 .CE
 Every name in the list is ancestor of the next.  All ancestors must
 already exist.  That means that an entry "fred" is an ancestor of
@@ -2053,8 +2053,8 @@ already exist.  That means that an entry "fred" is an ancestor of
 ancestor nodes.
 .CS
 # Force the creation of ancestors.
-\&.h configure -autocreate yes 
-\&.h insert end "fred barney wilma betty" 
+\&.h configure -autocreate yes
+\&.h insert end "fred barney wilma betty"
 .CE
 Sometimes the pathname is already separated by a character sequence
 rather than formed as a list.  A file name is a good example of this.
@@ -2064,14 +2064,14 @@ automatically split using the separator string as a separator.
 Multiple separators are treated as one.
 .CS
 \&.h configure -separator /
-\&.h insert end "/usr/local/tcl/bin" 
+\&.h insert end "/usr/local/tcl/bin"
 .CE
 If the path is prefixed by extraneous characters, you can
 automatically trim it off using the \fB\-trim\fR option.  It removed
 the string from the path before it is parsed.
 .CS
 \&.h configure -trim C:/windows -separator /
-\&.h insert end "C:/window/system" 
+\&.h insert end "C:/window/system"
 .CE
 You can insert more than one entry at a time with the \fBinsert\fR
 operation.  This can be much faster than looping over a list of names.
@@ -2106,7 +2106,7 @@ You can hide an entry and its children using the \fB\-hide\fR option.
 More that one entry can be configured at once.  All entries specified
 are configured with the same options.
 .CS
-\&.h entry configure $i1 $i2 $i3 $i4 -color brown 
+\&.h entry configure $i1 $i2 $i3 $i4 -color brown
 .CE
 An icon is displayed for each entry.  It's a Tk image drawn to the
 left of the label.  You can set the icon with the entry's
@@ -2137,7 +2137,7 @@ The entry's \fB\-data\fR option lets you set data fields.
 .CS
 \&.h entry configure $id -data {mode 0666 group users}
 .CE
-The \fB\-data\fR takes a list of name-value pairs.  
+The \fB\-data\fR takes a list of name-value pairs.
 .PP
 You can display these data fields as \fIcolumns\fR in the
 \fBtreeview\fR widget.  You can create and configure columns with
@@ -2165,21 +2165,21 @@ displayed.
 \&.h column configure "mode" -hide yes
 .CE
 Entries can be selected by clicking on the mouse.  Selected entries
-are drawn using the colors specified by the \fB\-selectforeground\fR 
+are drawn using the colors specified by the \fB\-selectforeground\fR
 and \fB\-selectbackground\fR configuration options.
 The selection itself is managed by the \fBselection\fR operation.
 .CS
 # Clear all selections
 \&.h selection clear 0 end
 # Select the root node
-\&.h selection set 0 
+\&.h selection set 0
 .CE
 The \fBcurselection\fR operation returns a list of ids of
 all the selected entries.
 .CS
 set ids [\&.h curselection]
 .CE
-You can use the \fBget\fR operation to convert the ids to 
+You can use the \fBget\fR operation to convert the ids to
 their pathnames.
 .CS
 set names [eval .h get -full $ids]
@@ -2227,7 +2227,7 @@ option.
 \&.h configure -scrollmode "listbox"
 .CE
 Entries can be programmatically opened or closed using the \fBopen\fR
-and \fBclose\fR operations respectively.  
+and \fBclose\fR operations respectively.
 .CS
 \&.h open $id
 \&.h close $id
@@ -2237,7 +2237,7 @@ The \fB\-opencommand\fR option specifies this procedure.  This
 procedure can lazily insert entries as needed.
 .CS
 proc AddEntries { dir } {
-   eval .h insert end [glob -nocomplain $dir/*] 
+   eval .h insert end [glob -nocomplain $dir/*]
 }
 \&.h configure -opencommand "AddEntries %P"
 .CE

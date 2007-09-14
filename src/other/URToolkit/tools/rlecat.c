@@ -1,6 +1,6 @@
-/* 
+/*
  * rlecat.c - Concatenate RLE files.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -37,7 +37,7 @@ static void rep_file();
  *  	-c: 	"Collated"  Multiple input images will be repeated
  *  	    	(see -n) in sequence 1 2 3 ... 1 2 3 ...  The default
  *  	    	is uncolllated, 1 1 ... 2 2 ... 3 3 ...
- * 
+ *
  *  	-n repeat-count:
  *  	    	Repeat each input image 'repeat-count' times.  The -c
  *  	    	flag controls the ordering of the repeats.  Repeating
@@ -86,7 +86,7 @@ char **argv;
     char    	buf[BUFSIZ];	/* For building title comment. */
     rle_op    **rows;		/* Storage for input data. */
     int	       *n_op;		/* Number of ops per row. */
-    
+
     in_hdr = *rle_hdr_init( NULL );
     out_hdr = *rle_hdr_init( NULL );
 
@@ -104,7 +104,7 @@ char **argv;
 
     /* Open the output file now, to make sure we can. */
     outfile = rle_open_f_noexit( cmd_name( argv ), outfname, "w" );
-    
+
     /* If requesting repeats, create temp file. */
     if ( nflag )
     {
@@ -231,7 +231,7 @@ char **argv;
 
 /*****************************************************************
  * TAG( rep_file )
- * 
+ *
  * Copy an rle file repeatedly to the output file.
  * Inputs:
  * 	in_hdr:	    Header for the file to copy from.

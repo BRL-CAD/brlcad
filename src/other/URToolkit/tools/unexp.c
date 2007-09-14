@@ -1,6 +1,6 @@
-/* 
+/*
  * unexp.c - take an exponential RLE file and make an integer file.
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -44,7 +44,7 @@ char *argv[];
     long start;
 
     if (scanargs(argc, argv, "% v%- p%- s%- m%-maxval!f o%-outfile!s infile!s",
-                 &verbose_flag, &print_flag, &scan_flag, &max_flag, &maxval, 
+                 &verbose_flag, &print_flag, &scan_flag, &max_flag, &maxval,
 		 &oflag, &outfilename, &infilename ) == 0)
     {
 	exit(-1);
@@ -74,7 +74,7 @@ char *argv[];
 
 	if (in_hdr.ncolors < 2)
 	{
-	    fprintf(stderr, 
+	    fprintf(stderr,
 		    "%s: File does not contain exponent channel.\n",
 		    cmd_name( argv ));
 	    exit(-4);
@@ -91,7 +91,7 @@ char *argv[];
 	    {
 		if ((verbose_flag) && (y % 100) == 0)
 		    fprintf(stderr, "Scanning row %d...\n", y);
-	    
+
 		rle_getrow( &in_hdr, in_rows );
 
 		for (x = in_hdr.xmin; x <= in_hdr.xmax; x++)
@@ -111,7 +111,7 @@ char *argv[];
 	    if (scan_flag) exit(0);
 
 	    fseek( in_hdr.rle_file, start, 0 );
-    
+
 	    rle_get_setup( &in_hdr );
 	}
 
@@ -148,13 +148,13 @@ char *argv[];
 	{
 	    if (((y % 100) == 0) && verbose_flag)
 		fprintf(stderr, "Processing row %d...\n", y);
-	
+
 	    rle_getrow( &in_hdr, in_rows );
 
 	    for (x = in_hdr.xmin; x <= in_hdr.xmax; x++)
 	    {
 		/* Only bother with pixels with coverage */
-		if (in_rows[RLE_ALPHA][x]) 
+		if (in_rows[RLE_ALPHA][x])
 		{
 		    expnt = ldexp( 1/256.0, in_rows[RLE_EXPONENT][x] - 127 );
 		    tmp_max = -1000;
@@ -174,13 +174,13 @@ char *argv[];
 		    for( chan = 0; chan < RLE_EXPONENT; chan++ )
 			out_rows[chan][x-in_hdr.xmin] = (rle_pixel) (int)
 			    (in_rows[chan][x] * tmp);
-		    out_rows[RLE_ALPHA][x-in_hdr.xmin] = 
+		    out_rows[RLE_ALPHA][x-in_hdr.xmin] =
 			in_rows[RLE_ALPHA][x];
 		}
 		else
 		    for( chan = RLE_ALPHA; chan < RLE_EXPONENT; chan++ )
 			out_rows[chan][x-in_hdr.xmin] = 0;
-	    	
+
 	    }
 	    rle_putrow( out_rows, (in_hdr.xmax - in_hdr.xmin) + 1,
 			&out_hdr );

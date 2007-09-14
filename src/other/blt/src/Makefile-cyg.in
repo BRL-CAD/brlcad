@@ -4,23 +4,23 @@
 # ------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------
-# 	C Compiler options 
+# 	C Compiler options
 # ------------------------------------------------------------------------
 
 BLT_LIBRARY =	@BLT_LIBRARY@
 TCLLIBPATH   =	@TCL_LIB_DIR@/tcl@TCL_VERSION@
 CC =		@CC@
-CFLAGS =	@CFLAGS@ 
+CFLAGS =	@CFLAGS@
 DEFINES =	@DEFINES@ -DWIN32
 EXTRA_CFLAGS =	@GCCFLAGS@
 LDFLAGS =	@LDFLAGS@ @LD_RUN_PATH@
-SHLIB_LD =	@SHLIB_LD@ 
-SHLIB_LD_FLAGS = @SHLIB_LD_FLAGS@ 
+SHLIB_LD =	@SHLIB_LD@
+SHLIB_LD_FLAGS = @SHLIB_LD_FLAGS@
 version =	@BLT_MAJOR_VERSION@@BLT_MINOR_VERSION@
 cyg_prefix =	@BLT_LIB_PREFIX@
 
 # ------------------------------------------------------------------------
-# 	Source and targer installation directories 
+# 	Source and targer installation directories
 # ------------------------------------------------------------------------
 
 bindir =	$(exec_prefix)/bin
@@ -44,7 +44,7 @@ INCLUDES =	-I. -I$(srcdir) -I$(srcdir)/../win @INCLUDES@
 #       Libraries directives for Tcl, Tk, X11, and BLT
 # ------------------------------------------------------------------------
 
-LIBS =		@LIB_SPECS@ @EXTRA_LIB_SPECS@ 
+LIBS =		@LIB_SPECS@ @EXTRA_LIB_SPECS@
 TCL_ONLY_LIBS = @TCL_ONLY_LIB_SPECS@ @EXTRA_LIB_SPECS@
 
 # ------------------------------------------------------------------------
@@ -52,9 +52,9 @@ TCL_ONLY_LIBS = @TCL_ONLY_LIB_SPECS@ @EXTRA_LIB_SPECS@
 # ------------------------------------------------------------------------
 
 N_OBJS       =	bltTed.o
-V3_OBJS       =	bltTri.o bltGrMt.o 
+V3_OBJS       =	bltTri.o bltGrMt.o
 
-TK_OBJS       =	tkButton.o tkFrame.o tkScrollbar.o 
+TK_OBJS       =	tkButton.o tkFrame.o tkScrollbar.o
 
 GRAPH_OBJS =	bltGrAxis.o \
 		bltGrBar.o \
@@ -67,7 +67,7 @@ GRAPH_OBJS =	bltGrAxis.o \
 		bltGrMisc.o \
 		bltGrPen.o \
 		bltGrPs.o \
-		bltGraph.o 
+		bltGraph.o
 
 TCL_ONLY_OBJS =	bltAlloc.o \
 		bltArrayObj.o \
@@ -126,12 +126,12 @@ OBJS =		$(GRAPH_OBJS) \
 		bltWindow.o \
 		bltObjConfig.o \
 		bltWinop.o \
-		$(TK_OBJS) $(N_OBJS) 
+		$(TK_OBJS) $(N_OBJS)
 
 NOT_YET       =	bltContainer.o bltCutBuffer.o bltColor.o
 
 # GNU Make-specific macro
-SRCS =		$(patsubst %.o,$(srcdir)/%.c,$(OBJS)) 
+SRCS =		$(patsubst %.o,$(srcdir)/%.c,$(OBJS))
 
 bltwish =	${cyg_prefix}bltwish$(version).exe
 bltsh =		${cyg_prefix}bltsh$(version).exe
@@ -142,7 +142,7 @@ headers =	$(srcdir)/blt.h \
 		$(srcdir)/bltList.h \
 		$(srcdir)/bltPool.h \
 		$(srcdir)/bltTree.h \
-		$(srcdir)/bltVector.h 
+		$(srcdir)/bltVector.h
 
 lib_a =		libBLT$(version).a
 tcl_only_lib_a =  libBLTlite$(version).a
@@ -152,7 +152,7 @@ tcl_only_lib_so =  $(cyg_prefix)BLTlite$(version).dll
 CC_SWITCHES =	$(EXTRA_CFLAGS) $(CFLAGS) $(DEFINES) $(INCLUDES)
 INSTALL =	@INSTALL@
 INSTALL_DATA =	@INSTALL_DATA@
-INSTALL_ROOT =  
+INSTALL_ROOT =
 RANLIB =	@RANLIB@
 SHELL =		/bin/sh
 AR =		ar rc
@@ -164,7 +164,7 @@ XREFFLAGS =	-dltR
 LN_S =		@LN_S@
 VPATH =		$(srcdir)
 
-all: $(tcl_only_lib_so) $(lib_so) $(bltsh) $(bltwish) 
+all: $(tcl_only_lib_so) $(lib_so) $(bltsh) $(bltwish)
 
 $(bltwish): $(lib_a) $(srcdir)/tkConsole.c $(srcdir)/bltWinMain.c
 	$(RM) $(bltwish)
@@ -177,7 +177,7 @@ $(bltsh): $(tcl_only_lib_a) $(srcdir)/bltWinMain.c
 	$(RM) $(bltsh)
 	$(CC) $(CC_SWITCHES) $(LDFLAGS) -DTCL_ONLY -o $(bltsh) \
 		-DTCLLIBPATH=\"$(TCLLIBPATH)\" \
-		$(srcdir)/bltWinMain.c $(tcl_only_lib_a) $(TCL_ONLY_LIBS) 
+		$(srcdir)/bltWinMain.c $(tcl_only_lib_a) $(TCL_ONLY_LIBS)
 
 $(lib_a): $(OBJS) $(srcdir)/bltInit.c
 	$(CC) -c $(CC_SWITCHES) -DBLT_LIBRARY=\"$(BLT_LIBRARY)\" \

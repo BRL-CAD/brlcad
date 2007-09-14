@@ -6190,7 +6190,7 @@ NsEnsembleImplementationCmd(
 	     * check here, and if we're still valid, we can jump straight to the
 	     * part where we do the invocation of the subcommand.
 	     */
-	    
+
 	    if (objv[1]->typePtr == &ensembleCmdType) {
 		EnsembleCmdRep *ensembleCmd = (EnsembleCmdRep *)
 		    objv[1]->internalRep.otherValuePtr;
@@ -6203,7 +6203,7 @@ NsEnsembleImplementationCmd(
 
 		    prefixObj = ensembleCmd->realPrefixObj;
 		    Tcl_IncrRefCount(prefixObj);
-		    
+
 	        runResultingSubcommand:
 		    /*
 		     * Do the real work of execution of the subcommand by
@@ -6213,15 +6213,15 @@ NsEnsembleImplementationCmd(
 		     * then feeding it back through the main command-lookup
 		     * engine. In theory, we could look up the command in the
 		     * namespace ourselves, as we already have the namespace
-		     * in which it is guaranteed to exist, but we don't do 
+		     * in which it is guaranteed to exist, but we don't do
 		     * that (the cacheing of the command object used should
-		     * help with that.) 
+		     * help with that.)
 		     */
 
 		    iPtr = (Interp *) interp;
 		    isRootEnsemble = (iPtr->ensembleRewrite.sourceObjs == NULL);
 		    copyObj = TclListObjCopy(NULL, prefixObj);
-		    
+
 		    Tcl_ListObjGetElements(NULL, copyObj, &prefixObjc, &prefixObjv);
 		    if (isRootEnsemble) {
 			iPtr->ensembleRewrite.sourceObjs = objv;

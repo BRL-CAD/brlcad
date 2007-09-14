@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, University of Utah
 .TH GETQCR 1 "Jan 25, 1988" 1
-.UC 4 
+.UC 4
 .SH NAME
 getqcr \- Photograph an RLE image with the Matrix QCR-Z camera
 .SH SYNOPSIS
@@ -27,9 +27,9 @@ photographs an image on the Matrix QCR-Z camera.  The program
 reads the image once for each channel, and displays this on QCR-Z,
 moving the filter wheel as appropriate.  The colormap is currently
 ignored, so one must be applied first if needed (see applymap(1)).
-Since the QCR supports large images (2K or 4K pixels in size), 
+Since the QCR supports large images (2K or 4K pixels in size),
 most images will need to be stretched to fill the QCR-Z's image area.
-Both 
+Both
 .IR fant (1)
 and
 .IR rlezoom (1)
@@ -45,7 +45,7 @@ This enables verbose output.  Since exposing large images takes several
 minutes, this is generally useful to monitor progress.
 .TP
 .BI \-e " exposures"
-Expose the film 
+Expose the film
 .IR exposures
 number of times.  This is much faster than running getqcr multiple times.
 .TP
@@ -81,7 +81,7 @@ The color map should be applied automatically.
 
 Currently uses "row" mode, it may run faster in "raw" mode.
 
-Single channel images should be photographed in black and white (they 
+Single channel images should be photographed in black and white (they
 currently come out red).
 
 It was written for the 4x5 film back.  Shutter and film advance controls

@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH MERGECHAN 1 "Nov 8, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 mergechan \- merge channels from several RLE files into a single output stream
 .SH SYNOPSIS
@@ -10,7 +10,7 @@ mergechan \- merge channels from several RLE files into a single output stream
 ] [
 .B \-o
 .I outfile
-] 
+]
 .I infiles ...
 .SH DESCRIPTION
 .I Mergechan
@@ -18,7 +18,7 @@ takes input from several RLE files and combines them into a single output
 stream.  Each channel in the output stream comes from the respective filename
 specified on the input (i.e., channel zero is taken from the first file,
 channel one from the next, etc).  The same file can be specified more than
-once.  If the 
+once.  If the
 .B \-a
 flag is given, the channels are numbered from -1 (the alpha channel) instead
 of zero.  All of the input channels must have exactly the same dimensions
@@ -30,7 +30,7 @@ Mergechan is typically used to introduce an alpha mask from another source
 into an image, or combine color channels digitized independently.
 
 If \fB\-o\fP is specified, the output will be written to
-.IR outfile .  
+.IR outfile .
 .SH SEE ALSO
 .IR crop (1),
 .IR rleswap (1),

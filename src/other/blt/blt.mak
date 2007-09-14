@@ -14,7 +14,7 @@ srcdir		= .
 #       Don't edit anything beyond this point
 # ------------------------------------------------------------------------
 
-all:  
+all:
 	cd $(MAKEDIR)\src
 	$(MAKE) -f blt.mak all
 	cd $(MAKEDIR)

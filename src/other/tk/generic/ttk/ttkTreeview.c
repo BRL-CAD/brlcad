@@ -891,14 +891,14 @@ static int DistributeWidth(Treeview *tv, int n)
 
 /* + ResizeColumns --
  * 	Recompute column widths based on available width.
- * 	Pick up slack first; 
+ * 	Pick up slack first;
  * 	Distribute the remainder evenly across stretchable columns;
  * 	If any is still left over due to minwidth constraints, shove left.
  */
 static void ResizeColumns(Treeview *tv, int newWidth)
 {
     int delta = newWidth - (TreeWidth(tv) + tv->tree.slack);
-    DepositSlack(tv, 
+    DepositSlack(tv,
 	ShoveLeft(tv, tv->tree.nDisplayColumns - 1,
 	    DistributeWidth(tv, PickupSlack(tv, delta))));
 }
@@ -2655,7 +2655,7 @@ static int TreeviewMoveCommand(
 	    if (p != item) {
 		--index;
 	    } /* else -- moving node forward, count index+1 nodes  */
-	    sibling = p; 
+	    sibling = p;
 	}
     }
 
@@ -3198,7 +3198,7 @@ static Ttk_ElementSpec RowElementSpec =
  * +++ Initialisation.
  */
 
-MODULE_SCOPE 
+MODULE_SCOPE
 void TtkTreeview_Init(Tcl_Interp *interp)
 {
     Ttk_Theme theme = Ttk_GetDefaultTheme(interp);

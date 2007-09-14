@@ -92,7 +92,7 @@ ON_INC = \
 	opennurbs_viewport.h \
 	opennurbs_workspace.h \
 	opennurbs_x.h \
-	opennurbs_xform.h 
+	opennurbs_xform.h
 
 ON_SRC = \
 	opennurbs_3dm_attributes.cpp \
@@ -187,7 +187,7 @@ ON_SRC = \
 	opennurbs_workspace.cpp \
 	opennurbs_wstring.cpp \
 	opennurbs_xform.cpp \
-	opennurbs_zlib.cpp 
+	opennurbs_zlib.cpp
 
 nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
@@ -198,7 +198,7 @@ libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS}
 libopenNURBS_nil_la_CXXFLAGS = -Wall ${LIBZ_CPPFLAGS}
 libopenNURBS_nil_la_LIBADD = ${LIBZ}
 
-libopenNURBS_la_SOURCES = 
+libopenNURBS_la_SOURCES =
 libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 
 EXTRA_DIST = \

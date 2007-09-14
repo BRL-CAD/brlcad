@@ -146,7 +146,7 @@ extern "C" {
  *
  * The following TCL_VARARGS* macros are to support old extensions
  * written for older versions of Tcl where the macros permitted
- * support for the varargs.h system as well as stdarg.h .  
+ * support for the varargs.h system as well as stdarg.h .
  *
  * New code should just directly be written to use stdarg.h conventions.
  */
@@ -168,7 +168,7 @@ extern "C" {
  * Note: when building static but linking dynamically to MSVCRT we must still
  *       correctly decorate the C library imported function.  Use CRTIMPORT
  *       for this purpose.  _DLL is defined by the compiler when linking to
- *       MSVCRT.  
+ *       MSVCRT.
  */
 
 #if (defined(__WIN32__) && (defined(_MSC_VER) || (__BORLANDC__ >= 0x0550) || defined(__LCC__) || defined(__WATCOMC__) || (defined(__GNUC__) && defined(__declspec))))

@@ -1,26 +1,26 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * 	fromutah -
  *		Convert a UTAH raster toolkit image into an IRIS image.
  *
  *	To compile:
- *		cc -I/usr/include/gl fromutah.c -o fromutah -lrle -limage 
+ *		cc -I/usr/include/gl fromutah.c -o fromutah -lrle -limage
  *
  *				Paul Haeberli - 1988
  */
@@ -106,7 +106,7 @@ register int n;
 	    sptr[5] = cptr[5];
 	    sptr[6] = cptr[6];
 	    sptr[7] = cptr[7];
-	    sptr+=8; 
+	    sptr+=8;
 	    cptr+=8;
 	    n -= 7;
 	} else {

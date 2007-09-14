@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -147,7 +147,7 @@ BOOL ON_PointCloud::Read( ON_BinaryArchive& file )
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if (rc && major_version == 1 ) 
+  if (rc && major_version == 1 )
   {
     if (rc) rc = file.ReadArray( m_P );
     if (rc) rc = file.ReadPlane( m_plane );
@@ -213,7 +213,7 @@ BOOL ON_PointCloud::GetBBox( // returns TRUE if successful
   return rc;
 }
 
-BOOL ON_PointCloud::Transform( 
+BOOL ON_PointCloud::Transform(
        const ON_Xform& xform
        )
 {
@@ -309,7 +309,7 @@ double ON_PointCloud::Height(int i)
   return (m_P[i] - m_plane.origin)*m_plane.zaxis;
 }
 
-bool ON_GetClosestPointInPointList( 
+bool ON_GetClosestPointInPointList(
           int point_count,
           const ON_3dPoint* point_list,
           ON_3dPoint P,
@@ -355,7 +355,7 @@ bool ON_GetClosestPointInPointList(
   return rc;
 }
 
-bool ON_3dPointArray::GetClosestPoint( 
+bool ON_3dPointArray::GetClosestPoint(
           ON_3dPoint P,
           int* closest_point_index,
           double maximum_distance
@@ -395,7 +395,7 @@ bool ON_PointCloud::HasPointNormals() const
 bool ON_PointCloud::GetClosestPoint(
                 ON_3dPoint P,
                 int* closest_point_index,
-                double maximum_distance 
+                double maximum_distance
                 ) const
 {
   bool rc = false;
@@ -415,10 +415,10 @@ bool ON_PointCloud::GetClosestPoint(
 int ON_PointCloud::HiddenPointCount() const
 {
   int point_count;
-  return (    m_hidden_count > 0 
+  return (    m_hidden_count > 0
            && (point_count = m_P.Count()) > 0
-           && m_hidden_count < point_count 
-           && m_H.Count() == point_count 
+           && m_hidden_count < point_count
+           && m_H.Count() == point_count
            )
            ? m_hidden_count
            : 0;
@@ -432,8 +432,8 @@ void ON_PointCloud::DestroyHiddenPointArray()
 
 const bool* ON_PointCloud::HiddenPointArray() const
 {
-  return (m_hidden_count > 0 && m_H.Count() == m_P.Count()) 
-         ? m_H.Array() 
+  return (m_hidden_count > 0 && m_H.Count() == m_P.Count())
+         ? m_H.Array()
          : 0;
 }
 

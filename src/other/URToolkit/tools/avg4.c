@@ -1,30 +1,30 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * avg4.c - Reduce image by half in X and Y, producing alphas even
  *          if they weren't there originally.
- * 
+ *
  * Author:	Rod Bogart & John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Fri Jun 20 1986
  * Copyright (c) 1986, University of Utah
- * 
+ *
  */
 #ifndef lint
 static char rcs_ident[] = "$Header$";
@@ -55,7 +55,7 @@ char	*argv[];
     rle_pixel **rows0, **rows1, **rowsout;
     rle_pixel *ptr0, *ptr1, *ptrout, *alphptr;
     int		A, chan;
-    
+
     in_hdr = *rle_hdr_init( NULL );
     out_hdr = *rle_hdr_init( NULL );
 
@@ -156,6 +156,6 @@ char	*argv[];
 
     if ( rle_cnt == 0 || (rle_err != RLE_EOF && rle_err != RLE_EMPTY) )
 	rle_get_error( rle_err, cmd, infname );
-    
+
     exit( 0 );
 }

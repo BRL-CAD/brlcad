@@ -20,14 +20,14 @@ update idletasks
 proc setup {} {
     catch {destroy .b.f}
     catch {eval font delete [font names]}
-    label .b.f 
+    label .b.f
     pack .b.f
     update
 }
 
 label .b.l -padx 0 -pady 0 -bd 0 -highlightthickness 0 -justify left -text "0" -font "Courier -12"
 pack .b.l
-canvas .b.c -closeenough 0 
+canvas .b.c -closeenough 0
 .b.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
 pack .b.c
 update
@@ -88,7 +88,7 @@ test font-2.1 {TkFontPkgFree} {
 
     # Tests cancelling the idle handler for TheWorldHasChanged,
     # because app goes away before idle serviced.
-    
+
     foo eval {
 	.b config -font wiggles
 	font config wiggles -size 24
@@ -113,7 +113,7 @@ test font-4.1 {font command: actual: arguments} {
     list [catch {font actual xyz -displayof} msg] $msg
 } {1 {value for "-displayof" missing}}
 test font-4.2 {font command: actual: arguments} {
-    # (objc < 3) 
+    # (objc < 3)
     list [catch {font actual} msg] $msg
 } {1 {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}}
 test font-4.3 {font command: actual: arguments} {
@@ -151,7 +151,7 @@ test font-4.11 {font command: bad option} {
 } {1 {bad option "-style": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
 
 test font-5.1 {font command: configure} {
-    # (objc < 3) 
+    # (objc < 3)
     list [catch {font configure} msg] $msg
 } {1 {wrong # args: should be "font configure fontname ?options?"}}
 test font-5.2 {font command: configure: non-existent font} {
@@ -159,7 +159,7 @@ test font-5.2 {font command: configure: non-existent font} {
     list [catch {font configure xyz} msg] $msg
 } {1 {named font "xyz" doesn't exist}}
 test font-5.3 {font command: configure: "deleted" font} {
-    # (nfPtr->deletePending != 0) 
+    # (nfPtr->deletePending != 0)
     setup
     font create xyz
     .b.f configure -font xyz
@@ -221,12 +221,12 @@ test font-6.4 {font command: create: generate name} {
     font configure font2 -family
 } {four}
 test font-6.5 {font command: create: bad option creating new font} {
-    # name was specified so skip = 3 
+    # name was specified so skip = 3
     setup
     list [catch {font create xyz -xyz times} msg] $msg
 } {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
 test font-6.6 {font command: create: bad option creating new font} {
-    # name was not specified so skip = 2 
+    # name was not specified so skip = 2
     setup
     list [catch {font create -xyz times} msg] $msg
 } {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
@@ -238,11 +238,11 @@ test font-6.7 {font command: create: already exists} {
 } {1 {named font "xyz" already exists}}
 
 test font-7.1 {font command: delete: arguments} {
-    # (objc < 3) 
+    # (objc < 3)
     list [catch {font delete} msg] $msg
 } {1 {wrong # args: should be "font delete fontname ?fontname ...?"}}
 test font-7.2 {font command: delete: loop test} {
-    # for (i = 2; i < objc; i++) 
+    # for (i = 2; i < objc; i++)
     setup
     set x {}
     font create a -underline 1
@@ -268,7 +268,7 @@ test font-7.3 {font command: delete: loop test} {
     lappend x [lsort [font names]]
 } {{a b c d e} {b c e}}
 test font-7.4 {font command: delete: non-existent} {
-    # (namedHashPtr == NULL) 
+    # (namedHashPtr == NULL)
     setup
     list [catch {font delete xyz} msg] $msg
 } {1 {named font "xyz" doesn't exist}}
@@ -312,11 +312,11 @@ test font-9.1 {font command: measure: arguments} {
     list [catch {font measure xyz -displayof} msg] $msg
 } {1 {value for "-displayof" missing}}
 test font-9.2 {font command: measure: arguments} {
-    # (objc - skip != 4) 
+    # (objc - skip != 4)
     list [catch {font measure} msg] $msg
 } {1 {wrong # args: should be "font measure font ?-displayof window? text"}}
 test font-9.3 {font command: measure: arguments} {
-    # (objc - skip != 4) 
+    # (objc - skip != 4)
     list [catch {font measure xyz abc def} msg] $msg
 } {1 {wrong # args: should be "font measure font ?-displayof window? text"}}
 test font-9.4 {font command: measure: arguments} {noExceed} {
@@ -336,7 +336,7 @@ test font-10.2 {font command: metrics: arguments} {
     list [catch {font metrics xyz -displayof} msg] $msg
 } {1 {value for "-displayof" missing}}
 test font-10.3 {font command: metrics: arguments} {
-    # (objc < 3) 
+    # (objc < 3)
     list [catch {font metrics} msg] $msg
 } {1 {wrong # args: should be "font metrics font ?-displayof window? ?option?"}}
 test font-10.4 {font command: metrics: arguments} {
@@ -357,7 +357,7 @@ test font-10.7 {font command: metrics: get all metrics} {
     array set a [font metrics {-family xyz}]
     set x [lsort [array names a]]
     unset a
-    set x    
+    set x
 } {-ascent -descent -fixed -linespace}
 test font-10.8 {font command: metrics: bad metric} {
     # (Tcl_GetIndexFromObj() != TCL_OK)
@@ -490,10 +490,10 @@ test font-15.4 {Tk_AllocFontFromObj procedure: bump ref count} {
     lindex [font actual {-family fixed}] 0
 } {-family}
 test font-15.5 {Tk_AllocFontFromObj procedure: get named font} {
-    # (namedHashPtr != NULL) 
+    # (namedHashPtr != NULL)
     setup
-    font create xyz 
-    .b.f config -font xyz 
+    font create xyz
+    .b.f config -font xyz
 } {}
 test font-15.6 {Tk_AllocFontFromObj procedure: not a named font} {
     # not (namedHashPtr != NULL)
@@ -501,17 +501,17 @@ test font-15.6 {Tk_AllocFontFromObj procedure: not a named font} {
     .b.f config -font {times 20}
 } {}
 test font-15.7 {Tk_AllocFontFromObj procedure: get native font} unix {
-    # not (fontPtr == NULL) 
+    # not (fontPtr == NULL)
     setup
     .b.f config -font fixed
 } {}
 test font-15.8 {Tk_AllocFontFromObj procedure: get native font} win {
-    # not (fontPtr == NULL) 
+    # not (fontPtr == NULL)
     setup
     .b.f config -font oemfixed
 } {}
 test font-15.10 {Tk_AllocFontFromObj procedure: get attribute font} {
-    # (fontPtr == NULL) 
+    # (fontPtr == NULL)
     list [catch {.b.f config -font {xxx yyy zzz}} msg] $msg
 } {1 {expected integer but got "yyy"}}
 test font-15.11 {Tk_AllocFontFromObj procedure: no match} {noExceed} {
@@ -535,7 +535,7 @@ test font-15.14 {Tk_AllocFontFromObj procedure: underline position} {
     setup
     .b.f config -text "underline" -font "times -8 underline"
     update
-} {}    
+} {}
 
 test font-16.1 {Tk_NameOfFont procedure} {
     setup
@@ -575,7 +575,7 @@ test font-17.3 {Tk_FreeFont procedure: multiple ref} {
     set x
 } {-family fixed}
 test font-17.4 {Tk_FreeFont procedure: named font} {
-    # (fontPtr->namedHashPtr != NULL) 
+    # (fontPtr->namedHashPtr != NULL)
     setup
     font create xyz
     .b.f config -font xyz
@@ -583,7 +583,7 @@ test font-17.4 {Tk_FreeFont procedure: named font} {
     font names
 } {xyz}
 test font-17.5 {Tk_FreeFont procedure: named font} {
-    # not (fontPtr->refCount == 0) 
+    # not (fontPtr->refCount == 0)
     setup
     font create xyz -underline 1
     .b.f config -font xyz
@@ -594,7 +594,7 @@ test font-17.5 {Tk_FreeFont procedure: named font} {
 } {0 1}
 test font-17.6 {Tk_FreeFont procedure: named font not deleted yet} {
     setup
-    font create xyz 
+    font create xyz
     .b.f config -font xyz
     button .b.b -font xyz
     font delete xyz
@@ -848,7 +848,7 @@ test font-25.1 {Tk_FreeTextLayout procedure} {
     .b.f config -text foo
     .b.f config -text boo
 } {}
-    
+
 test font-26.1 {Tk_DrawTextLayout procedure: auto-detect last char} {
     .b.f config -text foo
 } {}
@@ -883,7 +883,7 @@ test font-27.3 {Tk_UnderlineTextLayout procedure: underline is visible} {
     .b.f config -text "000          00000" -wrap [expr $ax*7] -under 5
     .b.f config -wrap -1 -under -1
 } {}
-    
+
 test font-28.1 {Tk_PointToChar procedure: above all lines} {
     csetup "000"
     .b.c index text @-1,0
@@ -937,7 +937,7 @@ test font-28.11 {Tk_PointToChar procedure: below all chunks} {
     csetup "000 0000000"
     .b.c index text @0,1000000
 } {11}
-    
+
 test font-29.1 {Tk_CharBBox procedure: index < 0} {
     .b.f config -text "000" -underline -1
 } {}
@@ -1088,14 +1088,14 @@ test font-31.6 {Tk_IntersectTextLayout procedure: ignore spaces at eol} {
 test font-32.1 {Tk_TextLayoutToPostscript: ensure buffer doesn't overflow} {
     # If there were a whole bunch of returns or tabs in a row, then the
     # temporary buffer could overflow and write on the stack.
-    
+
     csetup "qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm\n"
     .b.c itemconfig text -width 800
     .b.c insert text end "qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm\n"
     .b.c insert text end "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
     .b.c insert text end "end"
     set x [.b.c postscript]
-    set i [string first "(qwerty" $x] 
+    set i [string first "(qwerty" $x]
     string range $x $i [expr {$i + 278}]
 } {(qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm)]
 [(qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm)]
@@ -1193,7 +1193,7 @@ test font-36.1 {GetAttributeInfoObj procedure: unknown attribute} {
 } {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
 
 test font-37.1 {GetAttributeInfoObj procedure: all attributes} {
-    # not (objPtr != NULL) 
+    # not (objPtr != NULL)
     setup
     font create xyz -family xyz
     font config xyz

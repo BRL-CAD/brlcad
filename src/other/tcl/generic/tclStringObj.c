@@ -2366,7 +2366,7 @@ AppendPrintfToObjVA(
 		/*
 		 * The buffer to copy characters from starts at bytes
 		 * and ends at either the first NUL byte, or after
-		 * lastNum bytes, when caller has indicated a limit.  
+		 * lastNum bytes, when caller has indicated a limit.
 		 */
 
 		end = bytes;

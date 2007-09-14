@@ -1,27 +1,27 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rlegrid.c - Generate grids and checkerboards for test images
- * 
+ *
  * Author:	James Painter
  * 		Computer Science
  * 		University of Utah
- * Date:	Tue November 20, 1990 
+ * Date:	Tue November 20, 1990
  * Copyright (c) 1990, University of Utah
  */
 #ifndef lint
@@ -38,11 +38,11 @@ rlegrid()			Tag the file.
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Generate simple grids
  *
  * Usage:
- * 	rlegrid [-o outfile] [-s xsize ysize] [-w width] [-f fb_color] 
+ * 	rlegrid [-o outfile] [-s xsize ysize] [-w width] [-f fb_color]
  *              [-b bg_color][-c]
  *
  * Outputs:
@@ -70,9 +70,9 @@ char **argv;
 
     out_hdr = *rle_hdr_init( NULL );
 
-    if ( scanargs( argc, argv, 
+    if ( scanargs( argc, argv,
  "% o%-outfile!s s%-xsize!dysize!d w%-width!d f%-fg_color!d b%-bg_color!d c%-",
-		   &oflag, &outfname, 
+		   &oflag, &outfname,
 		   &sflag, &xsize, &ysize,
 		   &wflag, &width,
 		   &fflag, &fg_color,
@@ -84,7 +84,7 @@ char **argv;
     fg = fg_color;
 
     outfile = rle_open_f( cmd_name( argv ), outfname, "w" );
-    
+
     /* Set up the output header.
      */
     (void)rle_hdr_init( &out_hdr );
@@ -121,11 +121,11 @@ char **argv;
 	    p->opcode = RRunDataOp;
 	    p->xloc = x;
 	    p->length = width;
-	    *q = *p;	
+	    *q = *p;
 	    p->u.run_val = fg_color;
 	    q->u.run_val = bg_color;
 	    (*nrawp[0])++; (*nrawp[1])++;
-	    
+
 	    p++; q++;
 	    p->opcode = RRunDataOp;
 	    p->xloc = x+width;
@@ -157,7 +157,7 @@ char **argv;
 	    p->length = 1;
 	    p->u.pixels = (rle_pixel *) &fg;
 	    (*nrawp[1])++;
-	    
+
 	    p++;
 	    p->opcode = RRunDataOp;
 	    p->xloc = x+1;

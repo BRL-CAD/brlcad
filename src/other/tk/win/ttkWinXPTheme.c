@@ -43,7 +43,7 @@ typedef HRESULT (STDAPICALLTYPE DrawThemeBackgroundProc)(HTHEME hTheme,
 typedef HRESULT	(STDAPICALLTYPE GetThemePartSizeProc)(HTHEME,HDC,
 		 int iPartId, int iStateId,
 		 RECT *prc, enum THEMESIZE eSize, SIZE *psz);
-/* GetThemeTextExtent and DrawThemeText only used with BROKEN_TEXT_ELEMENT */ 
+/* GetThemeTextExtent and DrawThemeText only used with BROKEN_TEXT_ELEMENT */
 typedef HRESULT (STDAPICALLTYPE GetThemeTextExtentProc)(HTHEME hTheme, HDC hdc,
 		 int iPartId, int iStateId, LPCWSTR pszText, int iCharCount,
 		 DWORD dwTextFlags, const RECT *pBoundingRect, RECT *pExtent);
@@ -228,7 +228,7 @@ static Ttk_StateTable groupbox_statemap[] =
 /*
  * Edit fields (tk: "entry")
  */
-static Ttk_StateTable edittext_statemap[] = 
+static Ttk_StateTable edittext_statemap[] =
 {
     { ETS_DISABLED,	TTK_STATE_DISABLED, 0 },
     { ETS_READONLY,	TTK_STATE_READONLY, 0 },
@@ -239,11 +239,11 @@ static Ttk_StateTable edittext_statemap[] =
 };
 
 /*
- * Combobox text field statemap: 
- * Same as edittext_statemap, but doesn't use ETS_READONLY 
+ * Combobox text field statemap:
+ * Same as edittext_statemap, but doesn't use ETS_READONLY
  * (fixes: #1032409)
  */
-static Ttk_StateTable combotext_statemap[] = 
+static Ttk_StateTable combotext_statemap[] =
 {
     { ETS_DISABLED,	TTK_STATE_DISABLED, 0 },
     { ETS_FOCUSED,	TTK_STATE_FOCUS, 0 },
@@ -346,7 +346,7 @@ static Ttk_StateTable tabitem_statemap[] =
  * to most elements in this theme.  It contains data relevant
  * to a single XP Theme "part".
  *
- * <<NOTE-GetThemeMargins>>: 
+ * <<NOTE-GetThemeMargins>>:
  *	In theory, we should be call GetThemeMargins(...TMT_CONTENTRECT...)
  *	to calculate the internal padding.  In practice, this routine
  *	only seems to work properly for BP_PUSHBUTTON.  So we hardcode
@@ -355,20 +355,20 @@ static Ttk_StateTable tabitem_statemap[] =
  *	The PAD_MARGINS flag bit determines whether the padding
  *	should be added on the inside (0) or outside (1) of the element.
  *
- * <<NOTE-GetThemePartSize>>: 
+ * <<NOTE-GetThemePartSize>>:
  *	This gives bogus metrics for some parts (in particular,
  *	BP_PUSHBUTTONS).  Set the IGNORE_THEMESIZE flag to skip this call.
  */
 
 typedef struct {		/* XP element specifications */
     const char *elementName;	/* Tk theme engine element name */
-    Ttk_ElementSpec *elementSpec;	
+    Ttk_ElementSpec *elementSpec;
     				/* Element spec (usually GenericElementSpec) */
     LPCWSTR className;		/* Windows window class name */
     int partId;			/* BP_PUSHBUTTON, BP_CHECKBUTTON, etc. */
     Ttk_StateTable *statemap;	/* Map Tk states to XP states */
     Ttk_Padding	padding;	/* See NOTE-GetThemeMargins */
-    int flags;		
+    int flags;
 #define IGNORE_THEMESIZE 0x1	/* See NOTE-GetThemePartSize */
 #define PAD_MARGINS	 0x2	/* See NOTE-GetThemeMargins */
 } ElementInfo;
@@ -460,7 +460,7 @@ FreeElementData(
 
 /*----------------------------------------------------------------------
  * +++ Generic element implementation.
- * 
+ *
  * Used for elements which are handled entirely by the XP Theme API,
  * such as radiobutton and checkbutton indicators, scrollbar arrows, etc.
  */
@@ -491,10 +491,10 @@ GenericElementGeometry(
 	if (SUCCEEDED(result)) {
 	    *widthPtr = size.cx;
 	    *heightPtr = size.cy;
-	} 
+	}
     }
 
-    /* See NOTE-GetThemeMargins 
+    /* See NOTE-GetThemeMargins
      */
     *paddingPtr = elementData->info->padding;
 }
@@ -582,7 +582,7 @@ static Ttk_ElementSpec ThumbElementSpec = {
 /*----------------------------------------------------------------------
  * +++ Progress bar element.
  *	Increases the requested length of PP_CHUNK and PP_CHUNKVERT parts
- *	so that indeterminate progress bars show 3 bars instead of 1.   
+ *	so that indeterminate progress bars show 3 bars instead of 1.
  */
 
 static void
@@ -620,7 +620,7 @@ static Ttk_ElementSpec PbarElementSpec = {
 
  *	Same as generic element, with additional logic to select proper
  *	iPartID for the leftmost tab.
- * 	
+ *
  *	Notes: TABP_TABITEMRIGHTEDGE (or TABP_TOPTABITEMRIGHTEDGE, which
  *	appears to be identical) should be used if the tab is exactly at the
  *	right edge of the notebook, but not if it's simply the rightmost tab.
@@ -716,7 +716,7 @@ static Ttk_ElementSpec TreeIndicatorElementSpec = {
  * According to "Using Windows XP Visual Styles", we need to select a font
  * into the DC before calling DrawThemeText(). There's just no easy way to get
  * an HFONT out of a Tk_Font. Maybe GetThemeFont() would work?
- * 
+ *
  */
 
 typedef struct {
@@ -770,7 +770,7 @@ TextElementGeometry(
     FreeElementData(elementData);
 }
 
-static void 
+static void
 TextElementDraw(
     ClientData clientData,
     void *elementRecord,
@@ -813,7 +813,7 @@ static Ttk_ElementSpec TextElementSpec = {
 
 TTK_BEGIN_LAYOUT(ButtonLayout)
     TTK_GROUP("Button.button", TTK_FILL_BOTH,
-	TTK_GROUP("Button.focus", TTK_FILL_BOTH, 
+	TTK_GROUP("Button.focus", TTK_FILL_BOTH,
 	    TTK_GROUP("Button.padding", TTK_FILL_BOTH,
 		TTK_NODE("Button.label", TTK_FILL_BOTH))))
 TTK_END_LAYOUT
@@ -851,12 +851,12 @@ TTK_END_LAYOUT
 TTK_BEGIN_LAYOUT(HorizontalScaleLayout)
     TTK_GROUP("Scale.focus", TTK_EXPAND|TTK_FILL_BOTH,
 	TTK_GROUP("Horizontal.Scale.trough", TTK_EXPAND|TTK_FILL_BOTH,
-	    TTK_NODE("Horizontal.Scale.track", TTK_FILL_X) 
+	    TTK_NODE("Horizontal.Scale.track", TTK_FILL_X)
 	    TTK_NODE("Horizontal.Scale.slider", TTK_PACK_LEFT) ))
 TTK_END_LAYOUT
 
 /*----------------------------------------------------------------------
- * +++ XP element info table: 
+ * +++ XP element info table:
  */
 
 #define PAD(l,t,r,b) {l,t,r,b}
@@ -919,7 +919,7 @@ static ElementInfo ElementInfoTable[] = {
     /* ttk::notebook */
     { "tab", &TabElementSpec, L"TAB",
     	TABP_TABITEM, tabitem_statemap, PAD(3,3,3,0), 0 },
-    { "client", &GenericElementSpec, L"TAB", 
+    { "client", &GenericElementSpec, L"TAB",
     	TABP_PANE, null_statemap, PAD(1,1,3,3), 0 },
     { "NotebookPane.background", &GenericElementSpec, L"TAB",
     	TABP_BODY, null_statemap, NOPAD, 0 },
@@ -931,13 +931,13 @@ static ElementInfo ElementInfoTable[] = {
     	TP_SPLITBUTTONDROPDOWN,toolbutton_statemap, NOPAD,0 },
     { "Treeitem.indicator", &TreeIndicatorElementSpec, L"TREEVIEW",
     	TVP_GLYPH, tvpglyph_statemap, PAD(1,1,6,0), PAD_MARGINS },
-    { "Treeheading.border", &GenericElementSpec, L"HEADER", 
+    { "Treeheading.border", &GenericElementSpec, L"HEADER",
     	HP_HEADERITEM, header_statemap, PAD(4,0,4,0),0 },
-    { "sizegrip", &GenericElementSpec, L"STATUS", 
+    { "sizegrip", &GenericElementSpec, L"STATUS",
     	SP_GRIPPER, null_statemap, NOPAD,0 },
 
 #if BROKEN_TEXT_ELEMENT
-    { "Labelframe.text", &TextElementSpec, L"BUTTON", 
+    { "Labelframe.text", &TextElementSpec, L"BUTTON",
     	BP_GROUPBOX, groupbox_statemap, NOPAD,0 },
 #endif
 

@@ -1,12 +1,12 @@
-/* 
+/*
  * pyrhalf.c - Create bandpass pyramid for pyramid operations.
- * 
+ *
  * Author:	Rod Bogart
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Wed Oct 15 1986
  * Copyright (c) 1986, University of Utah
- * 
+ *
  */
 #ifndef lint
 static char rcs_ident[] = "$Header$";

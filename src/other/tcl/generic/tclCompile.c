@@ -376,13 +376,13 @@ InstructionDesc tclInstructionTable[] = {
          /* finds level and otherName in stack, links to local variable at
 	  * index op1. Leaves the level on stack. */
     {"nsupvar",          5,     0,        1,   {OPERAND_LVT4}},
-         /* finds namespace and otherName in stack, links to local variable at 
+         /* finds namespace and otherName in stack, links to local variable at
 	  * index op1. Leaves the namespace on stack. */
     {"variable",         5,     0,        1,   {OPERAND_LVT4}},
-         /* finds namespace and otherName in stack, links to local variable at 
+         /* finds namespace and otherName in stack, links to local variable at
 	  * index op1. Leaves the namespace on stack. */
     {"noop",             1,     0,        0,   {OPERAND_NONE}},
-         /* finds namespace and otherName in stack, links to local variable at 
+         /* finds namespace and otherName in stack, links to local variable at
 	  * index op1. Leaves the namespace on stack. */
     {0}
 };
@@ -2005,7 +2005,7 @@ TclCompileExprWords(
  * Side effects:
  *	Instructions are added to envPtr to execute a no-op at runtime. No
  *      result is pushed onto the stack: the compiler has to take care of this
- *      itself if the last compiled command is a NoOp. 
+ *      itself if the last compiled command is a NoOp.
  *
  *----------------------------------------------------------------------
  */

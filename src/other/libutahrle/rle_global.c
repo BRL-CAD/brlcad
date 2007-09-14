@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -18,15 +18,15 @@
  *  Modified at BRL 16-May-88 by Mike Muuss to avoid Alliant STDC desire
  *  to have all "void" functions so declared.
  */
-/* 
+/*
  * rle_global.c - Global variable initialization for rle routines.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Thu Apr 25 1985
  * Copyright (c) 1985,1986 Spencer W. Thomas
- * 
+ *
  * $Id$
  */
 

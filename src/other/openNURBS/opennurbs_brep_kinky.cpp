@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,7 +17,7 @@
 #include "opennurbs.h"
 
 
-bool ON_Brep::SplitKinkyFaces( 
+bool ON_Brep::SplitKinkyFaces(
         double kink_tol_radians,
         bool bCompactIfNeeded
         )
@@ -39,7 +39,7 @@ bool ON_Brep::SplitKinkyFaces(
 }
 
 
-bool ON_Brep::SplitKinkyFace( 
+bool ON_Brep::SplitKinkyFace(
   int,   // face_index - formal parameter intentionally ignored in this virtual function
   double // kink_tol_radians - formal parameter intentionally ignored in this virtual function
   )
@@ -48,20 +48,20 @@ bool ON_Brep::SplitKinkyFace(
   return false;
 }
 
-bool ON_Brep::SplitKinkyEdge( 
-  int edge_index, 
+bool ON_Brep::SplitKinkyEdge(
+  int edge_index,
   double kink_tol_radians
   )
 {
   // Default kink_tol_radians MUST BE ON_PI/180.0.
   //
-  // The default kink tol must be kept in sync with the default for 
+  // The default kink tol must be kept in sync with the default for
   // TL_Brep::SplitKinkyFace() and ON_Brep::SplitKinkyFace().
   // See comments in TL_Brep::SplitKinkyFace() for more details.
 
   bool rc = true;
   if (kink_tol_radians < ON_ZERO_TOLERANCE) kink_tol_radians = ON_ZERO_TOLERANCE;
-  else if (kink_tol_radians > ON_PI - ON_ZERO_TOLERANCE) 
+  else if (kink_tol_radians > ON_PI - ON_ZERO_TOLERANCE)
     kink_tol_radians = ON_PI - ON_ZERO_TOLERANCE;
   double atol = cos(kink_tol_radians);
   if (edge_index < 0 || edge_index >= m_E.Count()) return false;
@@ -75,7 +75,7 @@ bool ON_Brep::SplitKinkyEdge(
   int scount = curve->SpanCount();
   while (split_t.Count() < scount){
     double t;
-    if (!E.GetNextDiscontinuity(ON::G1_continuous, t0, E.Domain()[1], 
+    if (!E.GetNextDiscontinuity(ON::G1_continuous, t0, E.Domain()[1],
       &t, &hint, NULL, atol)) break;
     split_t.Append(t);
     t0 = t;
@@ -96,7 +96,7 @@ bool ON_Brep::SplitKinkyEdge(
     //   attempts to trim a nano-gnats-wisker of the end of a trim.
 
     // set to true if edge should be trimmed instead of split.
-    bool bTrimEdgeEnd = false; 
+    bool bTrimEdgeEnd = false;
 
     double edge_split_s = ON_Interval(t0,t1).NormalizedParameterAt(split_t[i]);
     double trim_split_s = 0.5;

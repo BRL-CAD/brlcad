@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH file n 8.3 Tcl "Tcl Built-In Commands"
 .BS
@@ -139,7 +139,7 @@ example,
 .CS
 \fBfile dirname c:/\fR
 .CE
-returns \fBc:/\fR. 
+returns \fBc:/\fR.
 .PP
 Note that tilde substitution will only be
 performed if it is necessary to complete the command. For example,
@@ -156,7 +156,7 @@ returns \fB/home\fR (or something similar).
 \fBfile executable \fIname\fR
 .
 Returns \fB1\fR if file \fIname\fR is executable by the current user,
-\fB0\fR otherwise.  
+\fB0\fR otherwise.
 .TP
 \fBfile exists \fIname\fR
 .
@@ -284,7 +284,7 @@ rename', 'file copy' are defined to operate on symbolic links, not on the
 things that they point to).
 .RE
 .TP
-\fBfile owned \fIname\fR 
+\fBfile owned \fIname\fR
 .
 Returns \fB1\fR if file \fIname\fR is owned by the current user, \fB0\fR
 otherwise.
@@ -302,7 +302,7 @@ type is \fBvolumerelative\fR.
 \fBfile readable \fIname\fR
 .
 Returns \fB1\fR if file \fIname\fR is readable by the current user,
-\fB0\fR otherwise. 
+\fB0\fR otherwise.
 .TP
 \fBfile readlink \fIname\fR
 .
@@ -339,7 +339,7 @@ component of \fIname\fR doesn't contain a dot, then returns \fIname\fR.
 .TP
 \fBfile separator\fR ?\fIname\fR?
 .
-If no argument is given, returns the character which is used to separate 
+If no argument is given, returns the character which is used to separate
 path segments for native files on this platform.  If a path is given,
 the filesystem responsible for that path is asked to return its
 separator character.  If no file system accepts \fIname\fR, an error
@@ -399,7 +399,7 @@ not belong to any filesystem, an error is generated.
 .
 Returns all of the characters in the last filesystem component of
 \fIname\fR.  Any trailing directory separator in \fIname\fR is ignored.
-If \fIname\fR contains no separators then returns \fIname\fR.  So, 
+If \fIname\fR contains no separators then returns \fIname\fR.  So,
 \fBfile tail a/b\fR, \fBfile tail a/b/\fR and \fBfile tail b\fR all
 return \fBb\fR.
 .TP
@@ -410,7 +410,7 @@ Returns a string giving the type of file \fIname\fR, which will be one of
 \fBfifo\fR, \fBlink\fR, or \fBsocket\fR.
 .TP
 \fBfile volumes\fR
-. 
+.
 Returns the absolute paths to the volumes mounted on the system, as a
 proper Tcl list.  Without any virtual filesystems mounted as root
 volumes, on UNIX, the command will always return "/", since all
@@ -428,7 +428,7 @@ Returns \fB1\fR if file \fIname\fR is writable by the current user,
 \fBUnix\fR\0\0\0\0\0\0\0
 .
 These commands always operate using the real user and group identifiers,
-not the effective ones. 
+not the effective ones.
 .SH EXAMPLES
 This procedure shows how to search for C files in a given directory
 that have a correspondingly-named object file in the current

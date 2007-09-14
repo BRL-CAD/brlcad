@@ -60,7 +60,7 @@ EXTERN void Blt_FreeUid _ANSI_ARGS_((Blt_Uid uid));
 EXTERN Blt_Uid Blt_FindUid _ANSI_ARGS_((char *string));
 
 #if (TCL_MAJOR_VERSION >= 8)
-EXTERN int Blt_GetArrayFromObj _ANSI_ARGS_((Tcl_Interp *interp, 
+EXTERN int Blt_GetArrayFromObj _ANSI_ARGS_((Tcl_Interp *interp,
 	Tcl_Obj *objPtr, Blt_HashTable **tablePtrPtr));
 EXTERN Tcl_Obj *Blt_NewArrayObj _ANSI_ARGS_((int objc, Tcl_Obj *objv[]));
 EXTERN void Blt_RegisterArrayObj _ANSI_ARGS_((Tcl_Interp *interp));

@@ -3,17 +3,17 @@
 package require BLT
 
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -39,20 +39,20 @@ tabnotebook .t \
     -textside right \
     -samewidth yes -tiers 2 -slant right \
     -scrollcommand { .s set } \
-    -tile bgTile 
+    -tile bgTile
 
 label .t.l -image testImage
 
 set attributes {
-    graph1 "Graph \#1" red	.t.graph1  
-    graph2 "Graph \#2" green	.t.graph2  
-    graph3 "Graph \#3" cyan	.t.graph3  
-    graph5 "Graph \#5" yellow	.t.graph5  
-    graph6 one		orange	.t.l       
+    graph1 "Graph \#1" red	.t.graph1
+    graph2 "Graph \#2" green	.t.graph2
+    graph3 "Graph \#3" cyan	.t.graph3
+    graph5 "Graph \#5" yellow	.t.graph5
+    graph6 one		orange	.t.l
 }
 
 foreach { entry label color window } $attributes {
-    .t insert end -text $label -fill both 
+    .t insert end -text $label -fill both
 }
 
 foreach label { there bunky another test of a widget } {
@@ -64,7 +64,7 @@ set img [image create photo -file ./images/blt98.gif]
 
 table . \
     .t 0,0 -fill both \
-    .s 1,0 -fill x 
+    .s 1,0 -fill x
 
 table configure . r1 -resize none
 

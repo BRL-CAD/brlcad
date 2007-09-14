@@ -839,7 +839,7 @@ GetWindowHandle(Tk_Window tkwin)
 {
     HWND hWnd;
     Window window;
-    
+
     window = Tk_WindowId(tkwin);
     if (window == None) {
 	Tk_MakeWindowExist(tkwin);
@@ -987,7 +987,7 @@ Blt_MakeTransparentWindowExist(tkwin, parent, isBusy)
     if (winPtr->window != None) {
 	return;			/* Window already exists. */
     }
-#ifdef notdef			
+#ifdef notdef
     if ((winPtr->parentPtr == NULL) || (winPtr->flags & TK_TOP_LEVEL)) {
 	parent = XRootWindow(winPtr->display, winPtr->screenNum);
 	/* TODO: Make the entire screen busy */
@@ -1020,7 +1020,7 @@ Blt_MakeTransparentWindowExist(tkwin, parent, isBusy)
     winPtr->atts.do_not_propagate_mask = PROP_EVENTS;
     winPtr->atts.event_mask = USER_EVENTS;
     winPtr->changes.border_width = 0;
-    winPtr->depth = 0; 
+    winPtr->depth = 0;
 
     winPtr->window = XCreateWindow(winPtr->display, parent,
 	winPtr->changes.x, winPtr->changes.y,
@@ -1088,7 +1088,7 @@ Blt_MakeTransparentWindowExist(tkwin, parent, isBusy)
  *      Performs a linear search for the named child window in a given
  *	parent window.
  *
- *	This can be done via Tcl, but not through Tk's C API.  It's 
+ *	This can be done via Tcl, but not through Tk's C API.  It's
  *	simple enough, if you peek into the Tk_Window structure.
  *
  * Results:
@@ -1107,7 +1107,7 @@ Blt_FindChild(parent, name)
     register TkWindow *winPtr;
     TkWindow *parentPtr = (TkWindow *)parent;
 
-    for (winPtr = parentPtr->childList; winPtr != NULL; 
+    for (winPtr = parentPtr->childList; winPtr != NULL;
 	winPtr = winPtr->nextPtr) {
 	if (strcmp(name, winPtr->nameUid) == 0) {
 	    return (Tk_Window)winPtr;
@@ -1124,7 +1124,7 @@ Blt_FindChild(parent, name)
  *      Performs a linear search for the named child window in a given
  *	parent window.
  *
- *	This can be done via Tcl, but not through Tk's C API.  It's 
+ *	This can be done via Tcl, but not through Tk's C API.  It's
  *	simple enough, if you peek into the Tk_Window structure.
  *
  * Results:
@@ -1150,7 +1150,7 @@ Blt_FirstChild(parent)
  *      Performs a linear search for the named child window in a given
  *	parent window.
  *
- *	This can be done via Tcl, but not through Tk's C API.  It's 
+ *	This can be done via Tcl, but not through Tk's C API.  It's
  *	simple enough, if you peek into the Tk_Window structure.
  *
  * Results:
@@ -1225,8 +1225,8 @@ UnlinkWindow(winPtr)
  *	of the new parent's list.
  *
  *	FIXME:  If the window has focus, the focus should be moved
- *		to an ancestor.  Otherwise, Tk becomes confused 
- *		about which Toplevel turns on focus for the window. 
+ *		to an ancestor.  Otherwise, Tk becomes confused
+ *		about which Toplevel turns on focus for the window.
  *		Right now this is done at the Tcl layer.  For example,
  *		see blt::CreateTearoff in tabset.tcl.
  *
@@ -1277,8 +1277,8 @@ Blt_RelinkWindow(tkwin, newParent, x, y)
  *	of the new parent's list.
  *
  *	FIXME:  If the window has focus, the focus should be moved
- *		to an ancestor.  Otherwise, Tk becomes confused 
- *		about which Toplevel turns on focus for the window. 
+ *		to an ancestor.  Otherwise, Tk becomes confused
+ *		about which Toplevel turns on focus for the window.
  *		Right now this is done at the Tcl layer.  For example,
  *		see blt::CreateTearoff in tabset.tcl.
  *
@@ -1391,7 +1391,7 @@ Blt_RootX(tkwin)
     Tk_Window tkwin;
 {
     int x;
-    
+
     for (x = 0; tkwin != NULL;  tkwin = Tk_Parent(tkwin)) {
 	x += Tk_X(tkwin) + Tk_Changes(tkwin)->border_width;
 	if (Tk_IsTopLevel(tkwin)) {
@@ -1406,7 +1406,7 @@ Blt_RootY(tkwin)
     Tk_Window tkwin;
 {
     int y;
-    
+
     for (y = 0; tkwin != NULL;  tkwin = Tk_Parent(tkwin)) {
 	y += Tk_Y(tkwin) + Tk_Changes(tkwin)->border_width;
 	if (Tk_IsTopLevel(tkwin)) {
@@ -1540,7 +1540,7 @@ Blt_MoveResizeToplevel(tkwin, x, y, width, height)
 int
 Blt_ReparentWindow(
     Display *display,
-    Window window, 
+    Window window,
     Window newParent,
     int x, int y)
 {
@@ -1641,7 +1641,7 @@ Blt_MoveResizeToplevel(tkwin, x, y, width, height)
     Tk_Window tkwin;
     int x, y, width, height;
 {
-    XMoveResizeWindow(Tk_Display(tkwin), GetWindowId(tkwin), x, y, 
+    XMoveResizeWindow(Tk_Display(tkwin), GetWindowId(tkwin), x, y,
 	      width, height);
 }
 

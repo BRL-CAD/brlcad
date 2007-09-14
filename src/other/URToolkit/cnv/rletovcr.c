@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rletovcr.c - Convert RLE to VICAR format.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Information Technology and Networking
  * 		University of Michigan Medical Center
@@ -34,7 +34,7 @@ Based on.
 
  NOTE: this program is based on bare minimum specifications for VICAR
        images.  It works on the images that I have seen, and on the images
-       produced by wff2vcr (of course?).  It is not to be taken as a 
+       produced by wff2vcr (of course?).  It is not to be taken as a
        specification of VICAR images.  If you spot an obvious error, or
        know enough to provide guidance on further extensions, please
        contact <sloan@cis.uab.edu>
@@ -42,8 +42,8 @@ Based on.
   NOTE: the VICAR files have 8 bits per sample
 
         the .wff files must be I.  If the BitsPerSample is less than
-        8, then samples are extended to 8 bits (correctly!).  If the 
-        BitsPerSample is greater than 8, the samples are truncated.   
+        8, then samples are extended to 8 bits (correctly!).  If the
+        BitsPerSample is greater than 8, the samples are truncated.
  */
 
 #include <stdlib.h>
@@ -67,13 +67,13 @@ static int  EOL;           /* == 0? */
 static int  RECSIZE;       /* == LBLSIZE? */
 static char ORG[80];       /* `BSQ` is OK */
 static int  NL;            /* height */
-static int  NS;            /* width */ 
+static int  NS;            /* width */
 static int  NB;            /* samples per pixel? */
-static int  N1;            /* == NL? */ 
+static int  N1;            /* == NL? */
 static int  N2;            /* == NS? */
 static int  N3;            /* == NB? */
 static int  N4;            /* 0 is OK */
-static int  NBB;           /* 0 is OK */ 
+static int  NBB;           /* 0 is OK */
 static int  NLB;           /* 0 is OK */
 static char HOST[80];      /* machine type? */
 static char INTFMT[80];    /* integer format? */
@@ -83,7 +83,7 @@ static char USER[80];      /* who was responsible? */
 static char DAT_TIM[80];   /* when? */
 static char COMMENT[80];   /* comment! */
 #endif
-    
+
 void WriteVICARHeader(fd, width, height, BandsPerPixel)
 FILE *fd;
 int width, height, BandsPerPixel;
@@ -95,9 +95,9 @@ int width, height, BandsPerPixel;
       It also needs to be large enough for everything below to fit.
       We use 1024 as a reasonable minimum size, and pick the first integer
       multiple of 'width' to be the LBLSIZE.
-      
+
       Look - I don't really understand VICAR format.  We're just hacking...
-      
+
       */
     LBLSIZE = width;  while(LBLSIZE < 1024) LBLSIZE += width;
     /* Allocate a buffer. */
@@ -114,37 +114,37 @@ int width, height, BandsPerPixel;
 
     sprintf(bp,"LBLSIZE=%-d ",LBLSIZE);	/* see above */
     incr( bp, 20 );
-    sprintf(bp," FORMAT='BYTE'");        
+    sprintf(bp," FORMAT='BYTE'");
     incr( bp, 20 );
     sprintf(bp," TYPE='IMAGE'");
     incr( bp, 20 );
     sprintf(bp," BUFSIZ=%-d",20*LBLSIZE);
     incr( bp, 20 );
-    sprintf(bp," DIM=3");  
+    sprintf(bp," DIM=3");
     incr( bp, 20 );
-    sprintf(bp," EOL=0");             
+    sprintf(bp," EOL=0");
     incr( bp, 20 );
-    sprintf(bp," RECSIZE=%-d",LBLSIZE); 
+    sprintf(bp," RECSIZE=%-d",LBLSIZE);
     incr( bp, 20 );
-    sprintf(bp," ORG='BSQ'");         
+    sprintf(bp," ORG='BSQ'");
     incr( bp, 20 );
-    sprintf(bp," NL=%-d",height);     
+    sprintf(bp," NL=%-d",height);
     incr( bp, 20 );
-    sprintf(bp," NS=%-d",width);      
+    sprintf(bp," NS=%-d",width);
     incr( bp, 20 );
-    sprintf(bp," NB=1");              
+    sprintf(bp," NB=1");
     incr( bp, 20 );
-    sprintf(bp," N1=%-d",height);     
+    sprintf(bp," N1=%-d",height);
     incr( bp, 20 );
-    sprintf(bp," N2=%-d",width);      
+    sprintf(bp," N2=%-d",width);
     incr( bp, 20 );
-    sprintf(bp," N3=1");              
+    sprintf(bp," N3=1");
     incr( bp, 20 );
-    sprintf(bp," N4=0");              
+    sprintf(bp," N4=0");
     incr( bp, 20 );
-    sprintf(bp," NBB=0");             
+    sprintf(bp," NBB=0");
     incr( bp, 20 );
-    sprintf(bp," NLB=0");             
+    sprintf(bp," NLB=0");
     incr( bp, 100 );
     sprintf(bp," COMMENT='created by rletovcr'");
     bp += strlen( bp );
@@ -181,7 +181,7 @@ rle_hdr *the_hdr;
     rle_get_setup_ok( the_hdr, NULL, NULL );
     /* Don't read alpha channel. */
     RLE_CLR_BIT( *the_hdr, RLE_ALPHA );
-    
+
     /* Sanity check. */
     if ( the_hdr->ncolors > 1 || the_hdr->cmap )
     {
@@ -229,7 +229,7 @@ unsigned char *VICARImage;
 
     width = the_hdr->xmax - the_hdr->xmin + 1;
     height = the_hdr->ymax - the_hdr->ymin + 1;
-    WriteVICARHeader(outFD, width, height, the_hdr->ncolors); 
+    WriteVICARHeader(outFD, width, height, the_hdr->ncolors);
 
     if (VERBOSE) fprintf(stderr,"%s: Writing VICAR image", the_hdr->cmd);
 
@@ -238,7 +238,7 @@ unsigned char *VICARImage;
 	WriteVICARScanLine(outFD, VICARImage + y * width, width);
 	if (VERBOSE) fprintf(stderr,".");
     }
-  
+
     if (VERBOSE) fprintf(stderr,"\n");
 
     if (ferror(outFD))
@@ -247,7 +247,7 @@ unsigned char *VICARImage;
     if (VERBOSE)
 	fprintf(stderr,"%s: finished writing the image\n", the_hdr->cmd);
 
-    fflush(outFD); 
+    fflush(outFD);
 }
 
 int main(argc,argv)
@@ -264,7 +264,7 @@ char *argv[];
 \tConvert URT image to VICAR format (as currently understood).)",
 		   &VERBOSE, &oflag, &outfname, &infname ) == 0 )
 	exit( 1 );
- 
+
     the_hdr = *rle_hdr_init( (rle_hdr *)NULL );
     rle_names( &the_hdr, cmd_name( argv ), infname, 0 );
 
@@ -276,5 +276,5 @@ char *argv[];
 
     write_image( &the_hdr, outFD, VICARImage );
 
-    exit(0); 
+    exit(0);
 }

@@ -933,7 +933,7 @@ test unixMenu-25.19 {TkpComputeStandardMenuGeometry - three columns} unix {
     .m1 add command -label four
     .m1 add command -label five -columnbreak 1
     .m1 add command -label six
-    list [update idletasks] [destroy .m1]    
+    list [update idletasks] [destroy .m1]
 } {{} {}}
 test unixMenu-25.20 {TkpComputeStandardMenuGeometry - hide margin} unix {
     catch {destroy .m1}

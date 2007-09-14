@@ -219,7 +219,7 @@ Tcl_Obj *Ttk_StateMapLookup(
 
 /* Ttk_GetStateMapFromObj --
  * 	Returns a Ttk_StateMap from a Tcl_Obj*.
- * 	Since a Ttk_StateMap is just a specially-formatted Tcl_Obj, 
+ * 	Since a Ttk_StateMap is just a specially-formatted Tcl_Obj,
  * 	this basically just checks for errors.
  */
 Ttk_StateMap Ttk_GetStateMapFromObj(

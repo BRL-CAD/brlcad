@@ -234,7 +234,7 @@ COMMA	[,]
     printf("WARNING: Ignoring non-printable character (0x%x) on line %ld  (file offset %ld)\n", yytext[0], get_lines()+1, get_bytes());
 }
 
-. {   
+. {
     /* bad input?  */
     printf("TOKENIZE ERROR: Unexpected character ('%c' 0x%x) on line %ld, column %ld  (file offset %ld)\n", yytext[0], yytext[0], get_lines()+1, get_column(), get_bytes());
     yyerror(yytext);

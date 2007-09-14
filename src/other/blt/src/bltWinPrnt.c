@@ -60,7 +60,7 @@
 #define PRINTER_THREAD_KEY	"BLT Printer Data"
 
 typedef struct {
-    Blt_HashTable printerTable;	/* Hash table of printer structures keyed by 
+    Blt_HashTable printerTable;	/* Hash table of printer structures keyed by
 				 * the name of the printer. */
     int nextId;
 } PrinterInterpData;
@@ -423,7 +423,7 @@ OpenQueue(
     ZeroMemory(&pd, sizeof(pd));
     pd.DesiredAccess = PRINTER_ALL_ACCESS;
     if (!OpenPrinter(queuePtr->printerName, &hPrinter, &pd)) {
-        Tcl_AppendResult(interp, "can't open printer \"", 
+        Tcl_AppendResult(interp, "can't open printer \"",
 		queuePtr->printerName, "\": ", Blt_LastError(), (char *)NULL);
 	queuePtr->hPrinter = NULL;
 	return TCL_ERROR;
@@ -443,22 +443,22 @@ GetQueueProperties(
     DEVMODE *dmPtr;
 
     hWnd = GetDesktopWindow();
-    dmSize = DocumentProperties(hWnd, queuePtr->hPrinter, 
+    dmSize = DocumentProperties(hWnd, queuePtr->hPrinter,
 	queuePtr->printerName, NULL, NULL, 0);
     if (dmSize == 0) {
 	Tcl_AppendResult(queuePtr->interp,
-		"can't get document properties for \"", 
+		"can't get document properties for \"",
 		queuePtr->printerName,
 		"\": ", Blt_LastError(), (char *)NULL);
 	return NULL;
     }
     hMem = GlobalAlloc(GHND, dmSize);
     dmPtr = (DEVMODE *)GlobalLock(hMem);
-    if (!DocumentProperties(hWnd, queuePtr->hPrinter, queuePtr->printerName, 
+    if (!DocumentProperties(hWnd, queuePtr->hPrinter, queuePtr->printerName,
 	dmPtr, NULL, DM_OUT_BUFFER)) {
 	Tcl_AppendResult(queuePtr->interp,
 		"can't allocate document properties for \"",
-		queuePtr->printerName, "\": ", Blt_LastError(), 
+		queuePtr->printerName, "\": ", Blt_LastError(),
 		(char *)NULL);
 	GlobalUnlock(hMem);
 	GlobalFree(hMem);
@@ -471,7 +471,7 @@ GetQueueProperties(
 
 static int
 SetQueueProperties(
-    Tcl_Interp *interp, 
+    Tcl_Interp *interp,
     PrintQueue *queuePtr,
     DEVMODE *dmPtr)
 {
@@ -479,13 +479,13 @@ SetQueueProperties(
     int result;
 
     hWnd = GetDesktopWindow();
-    result = DocumentProperties(hWnd, queuePtr->hPrinter, 
+    result = DocumentProperties(hWnd, queuePtr->hPrinter,
 	queuePtr->printerName, dmPtr, dmPtr, DM_IN_BUFFER | DM_OUT_BUFFER);
     if (result == 0) {
-	Tcl_AppendResult(interp, "can't set document properties for \"", 
+	Tcl_AppendResult(interp, "can't set document properties for \"",
 	    queuePtr->printerName, "\": ", Blt_LastError(), (char *)NULL);
 	return TCL_ERROR;
-    } 
+    }
     if (queuePtr->dmPtr != NULL) {
 	Blt_Free(queuePtr->dmPtr);
     }
@@ -604,7 +604,7 @@ GetPrinterAttributes(
     PrintQueue *queuePtr,
     Tcl_Obj *objPtr)		/* Name of array variable to contain
 				 * printer device information. */
-{	
+{
     char *string;
     Tcl_DString dString;
     DEVMODE *dmPtr;
@@ -629,12 +629,12 @@ GetPrinterAttributes(
 
     hMem1 = GlobalAlloc(GHND, bytesNeeded);
     if (hMem1 == NULL) {
-        Tcl_AppendResult(interp, "can't allocate memory for printer \"", 
+        Tcl_AppendResult(interp, "can't allocate memory for printer \"",
 		queuePtr->name, "\": ", Blt_LastError(), (char *)NULL);
 	goto error;
     }
     buffer = (LPVOID)GlobalLock(hMem1);
-    if (!GetPrinter(queuePtr->hPrinter, 2, buffer, bytesNeeded, 
+    if (!GetPrinter(queuePtr->hPrinter, 2, buffer, bytesNeeded,
 	&bytesNeeded)) {
         Tcl_AppendResult(interp, "can't get printer \"", queuePtr->name, "\": ",
 	    Blt_LastError(), (char *)NULL);
@@ -642,7 +642,7 @@ GetPrinterAttributes(
     }
     hMem2 = GetQueueProperties(queuePtr, &dmPtr);
     if (hMem2 == NULL) {
-        Tcl_AppendResult(interp, "can't allocate memory for printer \"", 
+        Tcl_AppendResult(interp, "can't allocate memory for printer \"",
 		queuePtr->name, "\" properties: ", Blt_LastError(), (char *)NULL);
 	goto error;
     }
@@ -925,7 +925,7 @@ EnumOp(
     } else if ((c == 't') && (strncmp(attr, "ttoption", length) == 0)) {
 	p = ttOptionTable;
     } else {
-	Tcl_AppendResult(interp, "bad enumeration field \"", attr, 
+	Tcl_AppendResult(interp, "bad enumeration field \"", attr,
 "\": should be \"paper\", \"quality\", \"bin\", \"orientation\", \"color\", \"duplex\", or \"ttoption\"",
 	    (char *)NULL);
 	return TCL_ERROR;
@@ -989,7 +989,7 @@ OpenOp(
     buffer = (LPVOID)GlobalLock(hMem);
 
     /* And call the again to actually get the printer. */
-    if (!GetPrinter(queuePtr->hPrinter, 2, buffer, bytesNeeded, 
+    if (!GetPrinter(queuePtr->hPrinter, 2, buffer, bytesNeeded,
 		    &bytesNeeded)) {
 	Tcl_AppendResult(interp, "can't get printer attributes for \"",
 	    name, "\": ", Blt_LastError(), (char *)NULL);
@@ -1065,7 +1065,7 @@ NamesOp(
 	    Blt_LastError(), (char *)NULL);
 	return TCL_ERROR;
     }
-    if (objc > 2) {	
+    if (objc > 2) {
 	register unsigned int i;
 	char *pattern;
 	char *p;
@@ -1194,7 +1194,7 @@ SnapOp(
     if (Tk_WindowId(tkwin) == None) {
 	Tk_MakeWindowExist(tkwin);
     }
-    
+
     result = TCL_ERROR;
     hDC = TkWinGetDrawableDC(Tk_Display(tkwin), Tk_WindowId(tkwin), &state);
 
@@ -1226,10 +1226,10 @@ SnapOp(
      * databits and write them to the printer device, stretching the
      * image to the fit the printer's resolution.  */
     if (GetObject(hBitmap, sizeof(DIBSECTION), &ds) == 0) {
-	Tcl_AppendResult(interp, "can't get DIB object: ", Blt_LastError(), 
+	Tcl_AppendResult(interp, "can't get DIB object: ", Blt_LastError(),
 			 (char *)NULL);
 	goto done;
-    } 
+    }
     driverName = NULL;
     if (Blt_GetPlatformId() == VER_PLATFORM_WIN32_NT) {
 	driverName = queuePtr->driverName;
@@ -1267,17 +1267,17 @@ SnapOp(
     di.lpszDocName = Tcl_DStringValue(&dString);
     jobId = StartDoc(printDC, &di);
     if (jobId <= 0) {
-	Tcl_AppendResult(interp, "can't start document: ", Blt_LastError(), 
+	Tcl_AppendResult(interp, "can't start document: ", Blt_LastError(),
 		(char *)NULL);
 	goto done;
     }
     if (StartPage(printDC) <= 0) {
-	Tcl_AppendResult(interp, "error starting page: ", Blt_LastError(), 
+	Tcl_AppendResult(interp, "error starting page: ", Blt_LastError(),
 		(char *)NULL);
 	goto done;
     }
-    StretchDIBits(printDC, 0, 0, ROUND(pageWidth), ROUND(pageHeight), 0, 0, 
-	Tk_Width(tkwin), Tk_Height(tkwin), ds.dsBm.bmBits, 
+    StretchDIBits(printDC, 0, 0, ROUND(pageWidth), ROUND(pageHeight), 0, 0,
+	Tk_Width(tkwin), Tk_Height(tkwin), ds.dsBm.bmBits,
 	(LPBITMAPINFO)&ds.dsBmih, DIB_RGB_COLORS, SRCCOPY);
     EndPage(printDC);
     EndDoc(printDC);
@@ -1289,7 +1289,7 @@ SnapOp(
     Tcl_DStringFree(&dString);
     if (queuePtr->hPrinter != NULL) {
 	CloseQueue(queuePtr);
-    }    
+    }
     DeleteBitmap(hBitmap);
     DeleteDC(memDC);
     TkWinReleaseDrawableDC(Tk_WindowId(tkwin), hDC, &state);
@@ -1344,19 +1344,19 @@ WriteOp(
     /* Start new document */
     jobId = StartDocPrinter(queuePtr->hPrinter, 1, (unsigned char *)&di1);
     if (jobId == 0) {
-	Tcl_AppendResult(interp, "error starting document on \"", 
+	Tcl_AppendResult(interp, "error starting document on \"",
 	 queuePtr->printerName, "\": ", Blt_LastError(), (char *)NULL);
 	goto error;
     }
     /* Start new page */
     if (!StartPagePrinter(queuePtr->hPrinter)) {
-	Tcl_AppendResult(interp, "error starting page on \"", 
+	Tcl_AppendResult(interp, "error starting page on \"",
 	 queuePtr->printerName, "\": ", Blt_LastError(), (char *)NULL);
 	goto error;
     }
     do {
 	if (!WritePrinter(queuePtr->hPrinter, data, bytesLeft, &nBytes)) {
-	    Tcl_AppendResult(interp, "can't write data to \"", 
+	    Tcl_AppendResult(interp, "can't write data to \"",
 		queuePtr->printerName, "\": ", Blt_LastError(), (char *)NULL);
 	    EndDocPrinter(queuePtr->hPrinter);
 	    goto error;
@@ -1366,13 +1366,13 @@ WriteOp(
     } while (bytesLeft > 0);
     /* End last page */
     if (!EndPagePrinter(queuePtr->hPrinter)) {
-	Tcl_AppendResult(interp, "error ending page on \"", 
+	Tcl_AppendResult(interp, "error ending page on \"",
 		queuePtr->printerName, "\": ", Blt_LastError(), (char *)NULL);
 	goto error;
     }
     /* End document */
     if (!EndDocPrinter(queuePtr->hPrinter)) {
-	Tcl_AppendResult(interp, "error ending document on \"", 
+	Tcl_AppendResult(interp, "error ending document on \"",
 		queuePtr->printerName, "\": ", Blt_LastError(), (char *)NULL);
 	goto error;
     }
@@ -1406,7 +1406,7 @@ PrinterCmd(
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nPrinterOps, printerOps, BLT_OP_ARG1, 
+    proc = Blt_GetOpFromObj(interp, nPrinterOps, printerOps, BLT_OP_ARG1,
 		    objc, objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1420,8 +1420,8 @@ PrinterCmd(
  *
  * PrinterInterpDeleteProc --
  *
- *	This is called when the interpreter hosting one or more printer 
- *	commands is destroyed.  
+ *	This is called when the interpreter hosting one or more printer
+ *	commands is destroyed.
  *
  * Results:
  *	None.
@@ -1479,7 +1479,7 @@ Blt_GetOpenPrinter(
     Drawable *drawablePtr)
 {
     PrintQueue *queuePtr;
-    
+
     if (GetQueue(interp, name, &queuePtr) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1530,7 +1530,7 @@ Blt_PrintDialog(
     PRINTDLG dlg;
     static PrintDrawable drawable;
     int mode, result;
-    
+
     ZeroMemory(&dlg, sizeof(PRINTDLG));
     dlg.lStructSize = sizeof(PRINTDLG);
     dlg.Flags = PD_RETURNDC | PD_NOPAGENUMS | PD_NOSELECTION;
@@ -1541,10 +1541,10 @@ Blt_PrintDialog(
 	if (!CommDlgExtendedError()) {
 	    return TCL_RETURN;	/* User canceled. */
 	}
-	Tcl_AppendResult(interp, "can't access printer:", Blt_LastError(), 
+	Tcl_AppendResult(interp, "can't access printer:", Blt_LastError(),
 			 (char *)NULL);
 	return TCL_ERROR;
-    } 
+    }
     *drawablePtr = (Drawable)&drawable;
     drawable.type = TWD_WINDC;
     drawable.hDC = dlg.hDC;

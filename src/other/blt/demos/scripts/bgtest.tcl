@@ -3,7 +3,7 @@ set fid [open "../README" "r"]
 set data [read $fid]
 close $fid
 
-regsub -all "\r|\n|\t" $data " " data 
+regsub -all "\r|\n|\t" $data " " data
 set data [split $data " "]
 
 set count 0

@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -57,23 +57,23 @@ set image [image create photo -format gif -data $data]
 
 set graph [graph .g]
 table . \
-    0,0 $graph -fill both 
+    0,0 $graph -fill both
 
 source scripts/graph2.tcl
 
 $graph postscript configure \
     -maxpect yes \
-    -landscape yes 
+    -landscape yes
 $graph configure \
     -width 5i \
-    -height 5i 
+    -height 5i
 $graph axis configure x \
     -title "X Axis"
 
 if 1 {
     $graph element configure line1 \
 	-areapattern solid -areaforeground green
-#	-areatile $image 
+#	-areatile $image
     $graph element configure line3 \
 	-areapattern @bitmaps/sharky.xbm \
 	-areaforeground red \
@@ -84,21 +84,21 @@ set fileName testImg.jpg
 if { [file exists $fileName] } {
     set image [image create photo]
     winop readjpeg $fileName $image
-    if 1 { 
-	puts stderr [time { 
+    if 1 {
+	puts stderr [time {
 	    $graph marker create image -image $image \
 		-coords "-360.0 -1.0 360.0 1.0" \
 		-under yes \
 		-mapx degrees \
-		-name $fileName 
+		-name $fileName
 	}]
     }
-} 
+}
 
 
 bind $graph <Control-ButtonPress-3> { MakeSnapshot }
-bind $graph <Shift-ButtonPress-3> { 
-    %W postscript output demo2.ps 
+bind $graph <Shift-ButtonPress-3> {
+    %W postscript output demo2.ps
     %W snap -format emf demo2.emf
 }
 
@@ -112,10 +112,10 @@ proc MakeSnapshot {} {
 
     toplevel $top
     wm title $top "Snapshot \#$unique of \"[$graph cget -title]\""
-    label $top.lab -image $im 
+    label $top.lab -image $im
     button $top.but -text "Dismiss" -command "DestroySnapshot $top"
     table $top $top.lab
-    table $top $top.but -pady 4 
+    table $top $top.but -pady 4
     focus $top.but
 }
 
@@ -145,9 +145,9 @@ if { $tcl_platform(platform) == "windows" } {
 	}
     } else {
 	after 5000 {
-	    $graph print2 
+	    $graph print2
 	}
-    }	
+    }
     if 1 {
 	after 2000 {$graph snap -format emf CLIPBOARD}
     }

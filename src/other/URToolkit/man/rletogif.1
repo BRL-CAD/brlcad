@@ -1,12 +1,12 @@
 .\" Copyright (c) 1990, University of Michigan
 .TH RLETOGIF 1 "July 3, 1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletogif \- Convert RLE files to GIF format.
 .SH SYNOPSIS
 .B rletogif
 [
-.B \-o 
+.B \-o
 .I outfile.gif
 ] [
 .I infile.rle
@@ -14,8 +14,8 @@ rletogif \- Convert RLE files to GIF format.
 .SH DESCRIPTION
 This program converts an
 .IR RLE (5)
-image file to 
-.I GIF 
+image file to
+.I GIF
 format.  The input file must be a single channel
 (8 bit) image.  Three channel (24 bit) images can be converted to
 single channel images using the programs
@@ -24,7 +24,7 @@ single channel images using the programs
 .IR mcut (1),
 or
 .IR rlequant (1).
-The input image will be flipped vertically, since the 
+The input image will be flipped vertically, since the
 .I GIF
 origin is in the upper left, and the
 .I RLE
@@ -32,7 +32,7 @@ origin is in the lower left.  Only a single image will be converted.
 .SH OPTIONS
 .TP
 .BI \-o " outfile.gif"
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile.gif
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.

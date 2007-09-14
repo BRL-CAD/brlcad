@@ -9,7 +9,7 @@ AC_REVISION($Id$)
 #--------------------------------------------------------------------
 
 #--------------------------------------------------------------------
-# This very first macro is used to verify that the configure script can 
+# This very first macro is used to verify that the configure script can
 # find the sources.  The argument to AC_INIT is a unique filename for
 # this package.
 #--------------------------------------------------------------------

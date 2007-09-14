@@ -124,7 +124,7 @@ bu_same_file(const char *fn1, const char *fn2)
     if (!fn1 || !fn2) {
 	return 0;
     }
-    
+
     if (!bu_file_exists(fn1) || !bu_file_exists(fn2)) {
 	return 0;
     }
@@ -145,7 +145,7 @@ bu_same_file(const char *fn1, const char *fn2)
 #ifndef bu_same_file_method
 #  error "Do not know how to test if two files are the same on this system"
 #endif
-    
+
     return 0;
 }
 
@@ -183,7 +183,7 @@ bu_same_fd(int fd1, int fd2)
 #ifndef bu_same_file_method
 #  error "Do not know how to test if two files are the same on this system"
 #endif
-    
+
     return 0;
 }
 

@@ -1,13 +1,13 @@
-/* 
+/*
  * mcut.c - Generate a "median cut" color map for an image.
- * 
+ *
  * Producer:	Robert Mecklenburg
  * Director:    John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
  *
  *              Based on the novel by Paul Heckbert
- *		(See "Color Image Quantization for Frame Buffer Display", 
+ *		(See "Color Image Quantization for Frame Buffer Display",
  *		 Proc. SIGGRAPH '82)
  *
  * Date:	Sun Sep 27 1987
@@ -16,7 +16,7 @@
 
 /*
  * Still left to do:
- * 
+ *
  *   The five bits used for initial quantization should be generalized
  *   with a #define.  It would not be a good idea to make this a
  *   run-time option, since the arithmatic required to compute the bit
@@ -86,7 +86,7 @@
 
 /*****************************************************************
  * TAG( color_t )
- * 
+ *
  * An rgb structure.
  */
 typedef struct _color color_t;
@@ -174,7 +174,7 @@ char		  *cmd_nm;	/* Command name for error messages */
  * TAG( mcut )
  *
  * Theory
- * 
+ *
  * This program accepts a color image of 24 bit RGB and tries to find
  * N representative colors which best fit the image.  Its main purpose
  * is to display reasonable color pictures on shallow (8 bits or less)
@@ -301,7 +301,7 @@ char ** argv;
 
 	if ( rle_row_alloc( &in_hdr, &scan ) < 0 )
 	    RLE_CHECK_ALLOC( cmd_nm, 0, "input image data" );
-	
+
 	/*
 	 * Build histogram.
 	 */
@@ -315,7 +315,7 @@ char ** argv;
 	    {
 		register int tmp = FAST_PACK( *rptr++, *gptr++, *bptr++ );
 		register histogram_t *hp = hist[tmp];
-	    
+
 		if ( hp == NULL )
 		{
 		    hist[tmp] = hp = (histogram_t *) malloc( sizeof(histogram_t) );
@@ -339,7 +339,7 @@ char ** argv;
 
 	re_expand_map();
 
-	/* 
+	/*
 	 * Now rewind the input and convert the pixels from RGB to the index.
 	 */
 	fseek( in_hdr.rle_file, start, 0 );
@@ -455,7 +455,7 @@ break_box ()
 
     newb = split_box( box );
     cb_list = insert_elt( cb_list, box );
-	
+
     if ( newb == NULL )
 	return 1;
 
@@ -475,7 +475,7 @@ break_box ()
  * here with pointers.  There is only one histogram, but each
  * color_box_t structure has a pointer into this histogram along with
  * the number of entries it "owns".  Those entries are re-arranged
- * (sorted) whenever the color_box_t is split.  
+ * (sorted) whenever the color_box_t is split.
  */
 color_box_t *
 split_box ( box )
@@ -509,7 +509,7 @@ color_box_t *box;
     newbox->nsamples = box->nsamples - t;
     bound_rgb( newbox );
     set_size_axis( newbox );
-    
+
     box->hsize = box->hsize - newbox->hsize;
     box->nsamples = box->nsamples - newbox->nsamples;
     bound_rgb( box );
@@ -521,7 +521,7 @@ color_box_t *box;
 
 /*****************************************************************
  * TAG( average_colors )
- * 
+ *
  * Walk the list of bounding boxes calculating the average colors.
  */
 void
@@ -530,7 +530,7 @@ average_colors ()
     color_box_t *cp;
     int i;
     float red, grn, blu, nsamp;
-    
+
     TRACE( cp, cb_list )
     {
 	red = grn = blu = nsamp = 0;
@@ -552,7 +552,7 @@ average_colors ()
 
 /*****************************************************************
  * TAG( calc_inverse_map )
- * 
+ *
  * Calculate the inverse mapping from original colors to new (averaged
  * colors).  This is a simple linear exhaustive search.  For each
  * color box in cb_list, walk the color box's histogram.  For each
@@ -577,7 +577,7 @@ calc_inverse_map ()
 		ref_col.g = GREENMASK( cp->hist[i]->color );
 		ref_col.b = BLUEMASK( cp->hist[i]->color );
 		dist = DISTANCE( ref_col, cp->color );
-		
+
 		TRACE( tmp, cb_list )
 		{
 		    register color_t *newcol = &tmp->color;
@@ -618,7 +618,7 @@ make_rle_map()
 
 /*****************************************************************
  * TAG( re_expand_map )
- * 
+ *
  * In order to convert RGB pixel values into final color map indices,
  * we need to "re-hash" the values into their original slots.  The table
  * is first sorted, so we can walk backwards without trashing anything.
@@ -788,7 +788,7 @@ rle_pixel **scan;
 		    dist = DISTANCE( ref_col, cb_list->color );
 		    hist[tmp]->color_ptr = cb_list;
 		    hist[tmp]->cmap_index = cb_list->cindex;
-		
+
 		    TRACE( tmp_cb, cb_list )
 		    {
 			register color_t *newcol = &tmp_cb->color;
@@ -805,9 +805,9 @@ rle_pixel **scan;
 		else
 		    fprintf( stderr, "Color box list is empty.\n" );
 	    }
-	    
+
 	    *optr++ = hist[tmp]->cmap_index;
-	    
+
 	    red -= FROM_5_BITS(hist[tmp]->color_ptr->color.r);
 	    green -= FROM_5_BITS(hist[tmp]->color_ptr->color.g);
 	    blue -= FROM_5_BITS(hist[tmp]->color_ptr->color.b);
@@ -899,7 +899,7 @@ color_box_t *cb;
 	    cb->size = bsize;
 	}
     }
-}    
+}
 
 
 /*****************************************************************
@@ -925,7 +925,7 @@ register color_box_t *box;
 		box->b.min = box->b.max = BLUEMASK( (*hp)->color );
 		first_time = 0;
 	    }
-	    
+
 	    box->r.min = MIN( box->r.min, REDMASK((*hp)->color) );
 	    box->r.max = MAX( box->r.max, REDMASK((*hp)->color) );
 	    box->g.min = MIN( box->g.min, GREENMASK((*hp)->color) );
@@ -1010,7 +1010,7 @@ color_box_t *list, *elt;
 	 */
 	if ( P(lp) == NULL )
 	    ADD( elt, list );
-	else 
+	else
         if ( N(lp) == NULL && elt->size < lp->size )
 	{
 	    /* Append elt to lp */

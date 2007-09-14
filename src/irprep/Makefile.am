@@ -20,7 +20,7 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 all_sf_SOURCES = all_sf.c
-all_sf_LDADD = ${RT} 
+all_sf_LDADD = ${RT}
 
 showtherm_SOURCES = showtherm.c
 showtherm_LDADD = ${RT}
@@ -43,7 +43,7 @@ ir_X_LDADD = \
 endif
 
 secpass_SOURCES = secpass.c subroutines.c
-secpass_LDADD = ${RT} 
+secpass_LDADD = ${RT}
 
 shapefact_SOURCES = shapefact.c
 shapefact_LDADD = ${RT}

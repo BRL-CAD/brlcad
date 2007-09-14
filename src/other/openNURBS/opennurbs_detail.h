@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ public:
   //////////////////////////////////////////////////////
   //
   // virtual ON_Geometry overrides
-  // The m_boundary determines all bounding boxes 
+  // The m_boundary determines all bounding boxes
   //
   int Dimension() const;
 
@@ -63,8 +63,8 @@ public:
          int bGrowBox = false
          ) const;
 
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;

@@ -44,56 +44,56 @@ EXTERN XColor *		Tk_3DBorderColor (Tk_3DBorder border);
 #ifndef Tk_3DBorderGC_TCL_DECLARED
 #define Tk_3DBorderGC_TCL_DECLARED
 /* 2 */
-EXTERN GC		Tk_3DBorderGC (Tk_Window tkwin, Tk_3DBorder border, 
+EXTERN GC		Tk_3DBorderGC (Tk_Window tkwin, Tk_3DBorder border,
 				int which);
 #endif
 #ifndef Tk_3DHorizontalBevel_TCL_DECLARED
 #define Tk_3DHorizontalBevel_TCL_DECLARED
 /* 3 */
-EXTERN void		Tk_3DHorizontalBevel (Tk_Window tkwin, 
-				Drawable drawable, Tk_3DBorder border, int x, 
-				int y, int width, int height, int leftIn, 
+EXTERN void		Tk_3DHorizontalBevel (Tk_Window tkwin,
+				Drawable drawable, Tk_3DBorder border, int x,
+				int y, int width, int height, int leftIn,
 				int rightIn, int topBevel, int relief);
 #endif
 #ifndef Tk_3DVerticalBevel_TCL_DECLARED
 #define Tk_3DVerticalBevel_TCL_DECLARED
 /* 4 */
-EXTERN void		Tk_3DVerticalBevel (Tk_Window tkwin, 
-				Drawable drawable, Tk_3DBorder border, int x, 
-				int y, int width, int height, int leftBevel, 
+EXTERN void		Tk_3DVerticalBevel (Tk_Window tkwin,
+				Drawable drawable, Tk_3DBorder border, int x,
+				int y, int width, int height, int leftBevel,
 				int relief);
 #endif
 #ifndef Tk_AddOption_TCL_DECLARED
 #define Tk_AddOption_TCL_DECLARED
 /* 5 */
-EXTERN void		Tk_AddOption (Tk_Window tkwin, CONST char * name, 
+EXTERN void		Tk_AddOption (Tk_Window tkwin, CONST char * name,
 				CONST char * value, int priority);
 #endif
 #ifndef Tk_BindEvent_TCL_DECLARED
 #define Tk_BindEvent_TCL_DECLARED
 /* 6 */
-EXTERN void		Tk_BindEvent (Tk_BindingTable bindingTable, 
-				XEvent * eventPtr, Tk_Window tkwin, 
+EXTERN void		Tk_BindEvent (Tk_BindingTable bindingTable,
+				XEvent * eventPtr, Tk_Window tkwin,
 				int numObjects, ClientData * objectPtr);
 #endif
 #ifndef Tk_CanvasDrawableCoords_TCL_DECLARED
 #define Tk_CanvasDrawableCoords_TCL_DECLARED
 /* 7 */
-EXTERN void		Tk_CanvasDrawableCoords (Tk_Canvas canvas, double x, 
-				double y, short * drawableXPtr, 
+EXTERN void		Tk_CanvasDrawableCoords (Tk_Canvas canvas, double x,
+				double y, short * drawableXPtr,
 				short * drawableYPtr);
 #endif
 #ifndef Tk_CanvasEventuallyRedraw_TCL_DECLARED
 #define Tk_CanvasEventuallyRedraw_TCL_DECLARED
 /* 8 */
-EXTERN void		Tk_CanvasEventuallyRedraw (Tk_Canvas canvas, int x1, 
+EXTERN void		Tk_CanvasEventuallyRedraw (Tk_Canvas canvas, int x1,
 				int y1, int x2, int y2);
 #endif
 #ifndef Tk_CanvasGetCoord_TCL_DECLARED
 #define Tk_CanvasGetCoord_TCL_DECLARED
 /* 9 */
-EXTERN int		Tk_CanvasGetCoord (Tcl_Interp * interp, 
-				Tk_Canvas canvas, CONST char * str, 
+EXTERN int		Tk_CanvasGetCoord (Tcl_Interp * interp,
+				Tk_Canvas canvas, CONST char * str,
 				double * doublePtr);
 #endif
 #ifndef Tk_CanvasGetTextInfo_TCL_DECLARED
@@ -104,33 +104,33 @@ EXTERN Tk_CanvasTextInfo * Tk_CanvasGetTextInfo (Tk_Canvas canvas);
 #ifndef Tk_CanvasPsBitmap_TCL_DECLARED
 #define Tk_CanvasPsBitmap_TCL_DECLARED
 /* 11 */
-EXTERN int		Tk_CanvasPsBitmap (Tcl_Interp * interp, 
-				Tk_Canvas canvas, Pixmap bitmap, int x, 
+EXTERN int		Tk_CanvasPsBitmap (Tcl_Interp * interp,
+				Tk_Canvas canvas, Pixmap bitmap, int x,
 				int y, int width, int height);
 #endif
 #ifndef Tk_CanvasPsColor_TCL_DECLARED
 #define Tk_CanvasPsColor_TCL_DECLARED
 /* 12 */
-EXTERN int		Tk_CanvasPsColor (Tcl_Interp * interp, 
+EXTERN int		Tk_CanvasPsColor (Tcl_Interp * interp,
 				Tk_Canvas canvas, XColor * colorPtr);
 #endif
 #ifndef Tk_CanvasPsFont_TCL_DECLARED
 #define Tk_CanvasPsFont_TCL_DECLARED
 /* 13 */
-EXTERN int		Tk_CanvasPsFont (Tcl_Interp * interp, 
+EXTERN int		Tk_CanvasPsFont (Tcl_Interp * interp,
 				Tk_Canvas canvas, Tk_Font font);
 #endif
 #ifndef Tk_CanvasPsPath_TCL_DECLARED
 #define Tk_CanvasPsPath_TCL_DECLARED
 /* 14 */
-EXTERN void		Tk_CanvasPsPath (Tcl_Interp * interp, 
-				Tk_Canvas canvas, double * coordPtr, 
+EXTERN void		Tk_CanvasPsPath (Tcl_Interp * interp,
+				Tk_Canvas canvas, double * coordPtr,
 				int numPoints);
 #endif
 #ifndef Tk_CanvasPsStipple_TCL_DECLARED
 #define Tk_CanvasPsStipple_TCL_DECLARED
 /* 15 */
-EXTERN int		Tk_CanvasPsStipple (Tcl_Interp * interp, 
+EXTERN int		Tk_CanvasPsStipple (Tcl_Interp * interp,
 				Tk_Canvas canvas, Pixmap bitmap);
 #endif
 #ifndef Tk_CanvasPsY_TCL_DECLARED
@@ -146,16 +146,16 @@ EXTERN void		Tk_CanvasSetStippleOrigin (Tk_Canvas canvas, GC gc);
 #ifndef Tk_CanvasTagsParseProc_TCL_DECLARED
 #define Tk_CanvasTagsParseProc_TCL_DECLARED
 /* 18 */
-EXTERN int		Tk_CanvasTagsParseProc (ClientData clientData, 
-				Tcl_Interp * interp, Tk_Window tkwin, 
-				CONST char * value, char * widgRec, 
+EXTERN int		Tk_CanvasTagsParseProc (ClientData clientData,
+				Tcl_Interp * interp, Tk_Window tkwin,
+				CONST char * value, char * widgRec,
 				int offset);
 #endif
 #ifndef Tk_CanvasTagsPrintProc_TCL_DECLARED
 #define Tk_CanvasTagsPrintProc_TCL_DECLARED
 /* 19 */
-EXTERN char *		Tk_CanvasTagsPrintProc (ClientData clientData, 
-				Tk_Window tkwin, char * widgRec, int offset, 
+EXTERN char *		Tk_CanvasTagsPrintProc (ClientData clientData,
+				Tk_Window tkwin, char * widgRec, int offset,
 				Tcl_FreeProc ** freeProcPtr);
 #endif
 #ifndef Tk_CanvasTkwin_TCL_DECLARED
@@ -166,22 +166,22 @@ EXTERN Tk_Window	Tk_CanvasTkwin (Tk_Canvas canvas);
 #ifndef Tk_CanvasWindowCoords_TCL_DECLARED
 #define Tk_CanvasWindowCoords_TCL_DECLARED
 /* 21 */
-EXTERN void		Tk_CanvasWindowCoords (Tk_Canvas canvas, double x, 
-				double y, short * screenXPtr, 
+EXTERN void		Tk_CanvasWindowCoords (Tk_Canvas canvas, double x,
+				double y, short * screenXPtr,
 				short * screenYPtr);
 #endif
 #ifndef Tk_ChangeWindowAttributes_TCL_DECLARED
 #define Tk_ChangeWindowAttributes_TCL_DECLARED
 /* 22 */
-EXTERN void		Tk_ChangeWindowAttributes (Tk_Window tkwin, 
-				unsigned long valueMask, 
+EXTERN void		Tk_ChangeWindowAttributes (Tk_Window tkwin,
+				unsigned long valueMask,
 				XSetWindowAttributes * attsPtr);
 #endif
 #ifndef Tk_CharBbox_TCL_DECLARED
 #define Tk_CharBbox_TCL_DECLARED
 /* 23 */
-EXTERN int		Tk_CharBbox (Tk_TextLayout layout, int index, 
-				int * xPtr, int * yPtr, int * widthPtr, 
+EXTERN int		Tk_CharBbox (Tk_TextLayout layout, int index,
+				int * xPtr, int * yPtr, int * widthPtr,
 				int * heightPtr);
 #endif
 #ifndef Tk_ClearSelection_TCL_DECLARED
@@ -192,67 +192,67 @@ EXTERN void		Tk_ClearSelection (Tk_Window tkwin, Atom selection);
 #ifndef Tk_ClipboardAppend_TCL_DECLARED
 #define Tk_ClipboardAppend_TCL_DECLARED
 /* 25 */
-EXTERN int		Tk_ClipboardAppend (Tcl_Interp * interp, 
-				Tk_Window tkwin, Atom target, Atom format, 
+EXTERN int		Tk_ClipboardAppend (Tcl_Interp * interp,
+				Tk_Window tkwin, Atom target, Atom format,
 				char* buffer);
 #endif
 #ifndef Tk_ClipboardClear_TCL_DECLARED
 #define Tk_ClipboardClear_TCL_DECLARED
 /* 26 */
-EXTERN int		Tk_ClipboardClear (Tcl_Interp * interp, 
+EXTERN int		Tk_ClipboardClear (Tcl_Interp * interp,
 				Tk_Window tkwin);
 #endif
 #ifndef Tk_ConfigureInfo_TCL_DECLARED
 #define Tk_ConfigureInfo_TCL_DECLARED
 /* 27 */
-EXTERN int		Tk_ConfigureInfo (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tk_ConfigSpec * specs, 
-				char * widgRec, CONST char * argvName, 
+EXTERN int		Tk_ConfigureInfo (Tcl_Interp * interp,
+				Tk_Window tkwin, Tk_ConfigSpec * specs,
+				char * widgRec, CONST char * argvName,
 				int flags);
 #endif
 #ifndef Tk_ConfigureValue_TCL_DECLARED
 #define Tk_ConfigureValue_TCL_DECLARED
 /* 28 */
-EXTERN int		Tk_ConfigureValue (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tk_ConfigSpec * specs, 
-				char * widgRec, CONST char * argvName, 
+EXTERN int		Tk_ConfigureValue (Tcl_Interp * interp,
+				Tk_Window tkwin, Tk_ConfigSpec * specs,
+				char * widgRec, CONST char * argvName,
 				int flags);
 #endif
 #ifndef Tk_ConfigureWidget_TCL_DECLARED
 #define Tk_ConfigureWidget_TCL_DECLARED
 /* 29 */
-EXTERN int		Tk_ConfigureWidget (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tk_ConfigSpec * specs, 
-				int argc, CONST84 char ** argv, 
+EXTERN int		Tk_ConfigureWidget (Tcl_Interp * interp,
+				Tk_Window tkwin, Tk_ConfigSpec * specs,
+				int argc, CONST84 char ** argv,
 				char * widgRec, int flags);
 #endif
 #ifndef Tk_ConfigureWindow_TCL_DECLARED
 #define Tk_ConfigureWindow_TCL_DECLARED
 /* 30 */
-EXTERN void		Tk_ConfigureWindow (Tk_Window tkwin, 
-				unsigned int valueMask, 
+EXTERN void		Tk_ConfigureWindow (Tk_Window tkwin,
+				unsigned int valueMask,
 				XWindowChanges * valuePtr);
 #endif
 #ifndef Tk_ComputeTextLayout_TCL_DECLARED
 #define Tk_ComputeTextLayout_TCL_DECLARED
 /* 31 */
-EXTERN Tk_TextLayout	Tk_ComputeTextLayout (Tk_Font font, CONST char * str, 
-				int numChars, int wrapLength, 
-				Tk_Justify justify, int flags, 
+EXTERN Tk_TextLayout	Tk_ComputeTextLayout (Tk_Font font, CONST char * str,
+				int numChars, int wrapLength,
+				Tk_Justify justify, int flags,
 				int * widthPtr, int * heightPtr);
 #endif
 #ifndef Tk_CoordsToWindow_TCL_DECLARED
 #define Tk_CoordsToWindow_TCL_DECLARED
 /* 32 */
-EXTERN Tk_Window	Tk_CoordsToWindow (int rootX, int rootY, 
+EXTERN Tk_Window	Tk_CoordsToWindow (int rootX, int rootY,
 				Tk_Window tkwin);
 #endif
 #ifndef Tk_CreateBinding_TCL_DECLARED
 #define Tk_CreateBinding_TCL_DECLARED
 /* 33 */
-EXTERN unsigned long	Tk_CreateBinding (Tcl_Interp * interp, 
-				Tk_BindingTable bindingTable, 
-				ClientData object, CONST char * eventStr, 
+EXTERN unsigned long	Tk_CreateBinding (Tcl_Interp * interp,
+				Tk_BindingTable bindingTable,
+				ClientData object, CONST char * eventStr,
 				CONST char * command, int append);
 #endif
 #ifndef Tk_CreateBindingTable_TCL_DECLARED
@@ -263,22 +263,22 @@ EXTERN Tk_BindingTable	Tk_CreateBindingTable (Tcl_Interp * interp);
 #ifndef Tk_CreateErrorHandler_TCL_DECLARED
 #define Tk_CreateErrorHandler_TCL_DECLARED
 /* 35 */
-EXTERN Tk_ErrorHandler	Tk_CreateErrorHandler (Display * display, int errNum, 
-				int request, int minorCode, 
-				Tk_ErrorProc * errorProc, 
+EXTERN Tk_ErrorHandler	Tk_CreateErrorHandler (Display * display, int errNum,
+				int request, int minorCode,
+				Tk_ErrorProc * errorProc,
 				ClientData clientData);
 #endif
 #ifndef Tk_CreateEventHandler_TCL_DECLARED
 #define Tk_CreateEventHandler_TCL_DECLARED
 /* 36 */
-EXTERN void		Tk_CreateEventHandler (Tk_Window token, 
-				unsigned long mask, Tk_EventProc * proc, 
+EXTERN void		Tk_CreateEventHandler (Tk_Window token,
+				unsigned long mask, Tk_EventProc * proc,
 				ClientData clientData);
 #endif
 #ifndef Tk_CreateGenericHandler_TCL_DECLARED
 #define Tk_CreateGenericHandler_TCL_DECLARED
 /* 37 */
-EXTERN void		Tk_CreateGenericHandler (Tk_GenericProc * proc, 
+EXTERN void		Tk_CreateGenericHandler (Tk_GenericProc * proc,
 				ClientData clientData);
 #endif
 #ifndef Tk_CreateImageType_TCL_DECLARED
@@ -300,29 +300,29 @@ EXTERN void		Tk_CreatePhotoImageFormat (
 #ifndef Tk_CreateSelHandler_TCL_DECLARED
 #define Tk_CreateSelHandler_TCL_DECLARED
 /* 41 */
-EXTERN void		Tk_CreateSelHandler (Tk_Window tkwin, Atom selection, 
-				Atom target, Tk_SelectionProc * proc, 
+EXTERN void		Tk_CreateSelHandler (Tk_Window tkwin, Atom selection,
+				Atom target, Tk_SelectionProc * proc,
 				ClientData clientData, Atom format);
 #endif
 #ifndef Tk_CreateWindow_TCL_DECLARED
 #define Tk_CreateWindow_TCL_DECLARED
 /* 42 */
-EXTERN Tk_Window	Tk_CreateWindow (Tcl_Interp * interp, 
-				Tk_Window parent, CONST char * name, 
+EXTERN Tk_Window	Tk_CreateWindow (Tcl_Interp * interp,
+				Tk_Window parent, CONST char * name,
 				CONST char * screenName);
 #endif
 #ifndef Tk_CreateWindowFromPath_TCL_DECLARED
 #define Tk_CreateWindowFromPath_TCL_DECLARED
 /* 43 */
-EXTERN Tk_Window	Tk_CreateWindowFromPath (Tcl_Interp * interp, 
-				Tk_Window tkwin, CONST char * pathName, 
+EXTERN Tk_Window	Tk_CreateWindowFromPath (Tcl_Interp * interp,
+				Tk_Window tkwin, CONST char * pathName,
 				CONST char * screenName);
 #endif
 #ifndef Tk_DefineBitmap_TCL_DECLARED
 #define Tk_DefineBitmap_TCL_DECLARED
 /* 44 */
-EXTERN int		Tk_DefineBitmap (Tcl_Interp * interp, 
-				CONST char * name, CONST char * source, 
+EXTERN int		Tk_DefineBitmap (Tcl_Interp * interp,
+				CONST char * name, CONST char * source,
 				int width, int height);
 #endif
 #ifndef Tk_DefineCursor_TCL_DECLARED
@@ -333,14 +333,14 @@ EXTERN void		Tk_DefineCursor (Tk_Window window, Tk_Cursor cursor);
 #ifndef Tk_DeleteAllBindings_TCL_DECLARED
 #define Tk_DeleteAllBindings_TCL_DECLARED
 /* 46 */
-EXTERN void		Tk_DeleteAllBindings (Tk_BindingTable bindingTable, 
+EXTERN void		Tk_DeleteAllBindings (Tk_BindingTable bindingTable,
 				ClientData object);
 #endif
 #ifndef Tk_DeleteBinding_TCL_DECLARED
 #define Tk_DeleteBinding_TCL_DECLARED
 /* 47 */
-EXTERN int		Tk_DeleteBinding (Tcl_Interp * interp, 
-				Tk_BindingTable bindingTable, 
+EXTERN int		Tk_DeleteBinding (Tcl_Interp * interp,
+				Tk_BindingTable bindingTable,
 				ClientData object, CONST char * eventStr);
 #endif
 #ifndef Tk_DeleteBindingTable_TCL_DECLARED
@@ -356,26 +356,26 @@ EXTERN void		Tk_DeleteErrorHandler (Tk_ErrorHandler handler);
 #ifndef Tk_DeleteEventHandler_TCL_DECLARED
 #define Tk_DeleteEventHandler_TCL_DECLARED
 /* 50 */
-EXTERN void		Tk_DeleteEventHandler (Tk_Window token, 
-				unsigned long mask, Tk_EventProc * proc, 
+EXTERN void		Tk_DeleteEventHandler (Tk_Window token,
+				unsigned long mask, Tk_EventProc * proc,
 				ClientData clientData);
 #endif
 #ifndef Tk_DeleteGenericHandler_TCL_DECLARED
 #define Tk_DeleteGenericHandler_TCL_DECLARED
 /* 51 */
-EXTERN void		Tk_DeleteGenericHandler (Tk_GenericProc * proc, 
+EXTERN void		Tk_DeleteGenericHandler (Tk_GenericProc * proc,
 				ClientData clientData);
 #endif
 #ifndef Tk_DeleteImage_TCL_DECLARED
 #define Tk_DeleteImage_TCL_DECLARED
 /* 52 */
-EXTERN void		Tk_DeleteImage (Tcl_Interp * interp, 
+EXTERN void		Tk_DeleteImage (Tcl_Interp * interp,
 				CONST char * name);
 #endif
 #ifndef Tk_DeleteSelHandler_TCL_DECLARED
 #define Tk_DeleteSelHandler_TCL_DECLARED
 /* 53 */
-EXTERN void		Tk_DeleteSelHandler (Tk_Window tkwin, Atom selection, 
+EXTERN void		Tk_DeleteSelHandler (Tk_Window tkwin, Atom selection,
 				Atom target);
 #endif
 #ifndef Tk_DestroyWindow_TCL_DECLARED
@@ -391,66 +391,66 @@ EXTERN CONST84_RETURN char * Tk_DisplayName (Tk_Window tkwin);
 #ifndef Tk_DistanceToTextLayout_TCL_DECLARED
 #define Tk_DistanceToTextLayout_TCL_DECLARED
 /* 56 */
-EXTERN int		Tk_DistanceToTextLayout (Tk_TextLayout layout, int x, 
+EXTERN int		Tk_DistanceToTextLayout (Tk_TextLayout layout, int x,
 				int y);
 #endif
 #ifndef Tk_Draw3DPolygon_TCL_DECLARED
 #define Tk_Draw3DPolygon_TCL_DECLARED
 /* 57 */
-EXTERN void		Tk_Draw3DPolygon (Tk_Window tkwin, Drawable drawable, 
-				Tk_3DBorder border, XPoint * pointPtr, 
-				int numPoints, int borderWidth, 
+EXTERN void		Tk_Draw3DPolygon (Tk_Window tkwin, Drawable drawable,
+				Tk_3DBorder border, XPoint * pointPtr,
+				int numPoints, int borderWidth,
 				int leftRelief);
 #endif
 #ifndef Tk_Draw3DRectangle_TCL_DECLARED
 #define Tk_Draw3DRectangle_TCL_DECLARED
 /* 58 */
-EXTERN void		Tk_Draw3DRectangle (Tk_Window tkwin, 
-				Drawable drawable, Tk_3DBorder border, int x, 
-				int y, int width, int height, 
+EXTERN void		Tk_Draw3DRectangle (Tk_Window tkwin,
+				Drawable drawable, Tk_3DBorder border, int x,
+				int y, int width, int height,
 				int borderWidth, int relief);
 #endif
 #ifndef Tk_DrawChars_TCL_DECLARED
 #define Tk_DrawChars_TCL_DECLARED
 /* 59 */
-EXTERN void		Tk_DrawChars (Display * display, Drawable drawable, 
-				GC gc, Tk_Font tkfont, CONST char * source, 
+EXTERN void		Tk_DrawChars (Display * display, Drawable drawable,
+				GC gc, Tk_Font tkfont, CONST char * source,
 				int numBytes, int x, int y);
 #endif
 #ifndef Tk_DrawFocusHighlight_TCL_DECLARED
 #define Tk_DrawFocusHighlight_TCL_DECLARED
 /* 60 */
-EXTERN void		Tk_DrawFocusHighlight (Tk_Window tkwin, GC gc, 
+EXTERN void		Tk_DrawFocusHighlight (Tk_Window tkwin, GC gc,
 				int width, Drawable drawable);
 #endif
 #ifndef Tk_DrawTextLayout_TCL_DECLARED
 #define Tk_DrawTextLayout_TCL_DECLARED
 /* 61 */
-EXTERN void		Tk_DrawTextLayout (Display * display, 
-				Drawable drawable, GC gc, 
-				Tk_TextLayout layout, int x, int y, 
+EXTERN void		Tk_DrawTextLayout (Display * display,
+				Drawable drawable, GC gc,
+				Tk_TextLayout layout, int x, int y,
 				int firstChar, int lastChar);
 #endif
 #ifndef Tk_Fill3DPolygon_TCL_DECLARED
 #define Tk_Fill3DPolygon_TCL_DECLARED
 /* 62 */
-EXTERN void		Tk_Fill3DPolygon (Tk_Window tkwin, Drawable drawable, 
-				Tk_3DBorder border, XPoint * pointPtr, 
-				int numPoints, int borderWidth, 
+EXTERN void		Tk_Fill3DPolygon (Tk_Window tkwin, Drawable drawable,
+				Tk_3DBorder border, XPoint * pointPtr,
+				int numPoints, int borderWidth,
 				int leftRelief);
 #endif
 #ifndef Tk_Fill3DRectangle_TCL_DECLARED
 #define Tk_Fill3DRectangle_TCL_DECLARED
 /* 63 */
-EXTERN void		Tk_Fill3DRectangle (Tk_Window tkwin, 
-				Drawable drawable, Tk_3DBorder border, int x, 
-				int y, int width, int height, 
+EXTERN void		Tk_Fill3DRectangle (Tk_Window tkwin,
+				Drawable drawable, Tk_3DBorder border, int x,
+				int y, int width, int height,
 				int borderWidth, int relief);
 #endif
 #ifndef Tk_FindPhoto_TCL_DECLARED
 #define Tk_FindPhoto_TCL_DECLARED
 /* 64 */
-EXTERN Tk_PhotoHandle	Tk_FindPhoto (Tcl_Interp * interp, 
+EXTERN Tk_PhotoHandle	Tk_FindPhoto (Tcl_Interp * interp,
 				CONST char * imageName);
 #endif
 #ifndef Tk_FontId_TCL_DECLARED
@@ -476,7 +476,7 @@ EXTERN void		Tk_FreeColor (XColor * colorPtr);
 #ifndef Tk_FreeColormap_TCL_DECLARED
 #define Tk_FreeColormap_TCL_DECLARED
 /* 69 */
-EXTERN void		Tk_FreeColormap (Display * display, 
+EXTERN void		Tk_FreeColormap (Display * display,
 				Colormap colormap);
 #endif
 #ifndef Tk_FreeCursor_TCL_DECLARED
@@ -502,8 +502,8 @@ EXTERN void		Tk_FreeImage (Tk_Image image);
 #ifndef Tk_FreeOptions_TCL_DECLARED
 #define Tk_FreeOptions_TCL_DECLARED
 /* 74 */
-EXTERN void		Tk_FreeOptions (Tk_ConfigSpec * specs, 
-				char * widgRec, Display * display, 
+EXTERN void		Tk_FreeOptions (Tk_ConfigSpec * specs,
+				char * widgRec, Display * display,
 				int needFlags);
 #endif
 #ifndef Tk_FreePixmap_TCL_DECLARED
@@ -529,26 +529,26 @@ EXTERN GC		Tk_GCForColor (XColor * colorPtr, Drawable drawable);
 #ifndef Tk_GeometryRequest_TCL_DECLARED
 #define Tk_GeometryRequest_TCL_DECLARED
 /* 79 */
-EXTERN void		Tk_GeometryRequest (Tk_Window tkwin, int reqWidth, 
+EXTERN void		Tk_GeometryRequest (Tk_Window tkwin, int reqWidth,
 				int reqHeight);
 #endif
 #ifndef Tk_Get3DBorder_TCL_DECLARED
 #define Tk_Get3DBorder_TCL_DECLARED
 /* 80 */
-EXTERN Tk_3DBorder	Tk_Get3DBorder (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN Tk_3DBorder	Tk_Get3DBorder (Tcl_Interp * interp, Tk_Window tkwin,
 				Tk_Uid colorName);
 #endif
 #ifndef Tk_GetAllBindings_TCL_DECLARED
 #define Tk_GetAllBindings_TCL_DECLARED
 /* 81 */
-EXTERN void		Tk_GetAllBindings (Tcl_Interp * interp, 
-				Tk_BindingTable bindingTable, 
+EXTERN void		Tk_GetAllBindings (Tcl_Interp * interp,
+				Tk_BindingTable bindingTable,
 				ClientData object);
 #endif
 #ifndef Tk_GetAnchor_TCL_DECLARED
 #define Tk_GetAnchor_TCL_DECLARED
 /* 82 */
-EXTERN int		Tk_GetAnchor (Tcl_Interp * interp, CONST char * str, 
+EXTERN int		Tk_GetAnchor (Tcl_Interp * interp, CONST char * str,
 				Tk_Anchor * anchorPtr);
 #endif
 #ifndef Tk_GetAtomName_TCL_DECLARED
@@ -559,65 +559,65 @@ EXTERN CONST84_RETURN char * Tk_GetAtomName (Tk_Window tkwin, Atom atom);
 #ifndef Tk_GetBinding_TCL_DECLARED
 #define Tk_GetBinding_TCL_DECLARED
 /* 84 */
-EXTERN CONST84_RETURN char * Tk_GetBinding (Tcl_Interp * interp, 
-				Tk_BindingTable bindingTable, 
+EXTERN CONST84_RETURN char * Tk_GetBinding (Tcl_Interp * interp,
+				Tk_BindingTable bindingTable,
 				ClientData object, CONST char * eventStr);
 #endif
 #ifndef Tk_GetBitmap_TCL_DECLARED
 #define Tk_GetBitmap_TCL_DECLARED
 /* 85 */
-EXTERN Pixmap		Tk_GetBitmap (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN Pixmap		Tk_GetBitmap (Tcl_Interp * interp, Tk_Window tkwin,
 				CONST char * str);
 #endif
 #ifndef Tk_GetBitmapFromData_TCL_DECLARED
 #define Tk_GetBitmapFromData_TCL_DECLARED
 /* 86 */
-EXTERN Pixmap		Tk_GetBitmapFromData (Tcl_Interp * interp, 
-				Tk_Window tkwin, CONST char * source, 
+EXTERN Pixmap		Tk_GetBitmapFromData (Tcl_Interp * interp,
+				Tk_Window tkwin, CONST char * source,
 				int width, int height);
 #endif
 #ifndef Tk_GetCapStyle_TCL_DECLARED
 #define Tk_GetCapStyle_TCL_DECLARED
 /* 87 */
-EXTERN int		Tk_GetCapStyle (Tcl_Interp * interp, 
+EXTERN int		Tk_GetCapStyle (Tcl_Interp * interp,
 				CONST char * str, int * capPtr);
 #endif
 #ifndef Tk_GetColor_TCL_DECLARED
 #define Tk_GetColor_TCL_DECLARED
 /* 88 */
-EXTERN XColor *		Tk_GetColor (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN XColor *		Tk_GetColor (Tcl_Interp * interp, Tk_Window tkwin,
 				Tk_Uid name);
 #endif
 #ifndef Tk_GetColorByValue_TCL_DECLARED
 #define Tk_GetColorByValue_TCL_DECLARED
 /* 89 */
-EXTERN XColor *		Tk_GetColorByValue (Tk_Window tkwin, 
+EXTERN XColor *		Tk_GetColorByValue (Tk_Window tkwin,
 				XColor * colorPtr);
 #endif
 #ifndef Tk_GetColormap_TCL_DECLARED
 #define Tk_GetColormap_TCL_DECLARED
 /* 90 */
-EXTERN Colormap		Tk_GetColormap (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN Colormap		Tk_GetColormap (Tcl_Interp * interp, Tk_Window tkwin,
 				CONST char * str);
 #endif
 #ifndef Tk_GetCursor_TCL_DECLARED
 #define Tk_GetCursor_TCL_DECLARED
 /* 91 */
-EXTERN Tk_Cursor	Tk_GetCursor (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN Tk_Cursor	Tk_GetCursor (Tcl_Interp * interp, Tk_Window tkwin,
 				Tk_Uid str);
 #endif
 #ifndef Tk_GetCursorFromData_TCL_DECLARED
 #define Tk_GetCursorFromData_TCL_DECLARED
 /* 92 */
-EXTERN Tk_Cursor	Tk_GetCursorFromData (Tcl_Interp * interp, 
-				Tk_Window tkwin, CONST char * source, 
-				CONST char * mask, int width, int height, 
+EXTERN Tk_Cursor	Tk_GetCursorFromData (Tcl_Interp * interp,
+				Tk_Window tkwin, CONST char * source,
+				CONST char * mask, int width, int height,
 				int xHot, int yHot, Tk_Uid fg, Tk_Uid bg);
 #endif
 #ifndef Tk_GetFont_TCL_DECLARED
 #define Tk_GetFont_TCL_DECLARED
 /* 93 */
-EXTERN Tk_Font		Tk_GetFont (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN Tk_Font		Tk_GetFont (Tcl_Interp * interp, Tk_Window tkwin,
 				CONST char * str);
 #endif
 #ifndef Tk_GetFontFromObj_TCL_DECLARED
@@ -628,28 +628,28 @@ EXTERN Tk_Font		Tk_GetFontFromObj (Tk_Window tkwin, Tcl_Obj * objPtr);
 #ifndef Tk_GetFontMetrics_TCL_DECLARED
 #define Tk_GetFontMetrics_TCL_DECLARED
 /* 95 */
-EXTERN void		Tk_GetFontMetrics (Tk_Font font, 
+EXTERN void		Tk_GetFontMetrics (Tk_Font font,
 				Tk_FontMetrics * fmPtr);
 #endif
 #ifndef Tk_GetGC_TCL_DECLARED
 #define Tk_GetGC_TCL_DECLARED
 /* 96 */
-EXTERN GC		Tk_GetGC (Tk_Window tkwin, unsigned long valueMask, 
+EXTERN GC		Tk_GetGC (Tk_Window tkwin, unsigned long valueMask,
 				XGCValues * valuePtr);
 #endif
 #ifndef Tk_GetImage_TCL_DECLARED
 #define Tk_GetImage_TCL_DECLARED
 /* 97 */
-EXTERN Tk_Image		Tk_GetImage (Tcl_Interp * interp, Tk_Window tkwin, 
-				CONST char * name, 
-				Tk_ImageChangedProc * changeProc, 
+EXTERN Tk_Image		Tk_GetImage (Tcl_Interp * interp, Tk_Window tkwin,
+				CONST char * name,
+				Tk_ImageChangedProc * changeProc,
 				ClientData clientData);
 #endif
 #ifndef Tk_GetImageMasterData_TCL_DECLARED
 #define Tk_GetImageMasterData_TCL_DECLARED
 /* 98 */
-EXTERN ClientData	Tk_GetImageMasterData (Tcl_Interp * interp, 
-				CONST char * name, 
+EXTERN ClientData	Tk_GetImageMasterData (Tcl_Interp * interp,
+				CONST char * name,
 				Tk_ImageType ** typePtrPtr);
 #endif
 #ifndef Tk_GetItemTypes_TCL_DECLARED
@@ -660,13 +660,13 @@ EXTERN Tk_ItemType *	Tk_GetItemTypes (void);
 #ifndef Tk_GetJoinStyle_TCL_DECLARED
 #define Tk_GetJoinStyle_TCL_DECLARED
 /* 100 */
-EXTERN int		Tk_GetJoinStyle (Tcl_Interp * interp, 
+EXTERN int		Tk_GetJoinStyle (Tcl_Interp * interp,
 				CONST char * str, int * joinPtr);
 #endif
 #ifndef Tk_GetJustify_TCL_DECLARED
 #define Tk_GetJustify_TCL_DECLARED
 /* 101 */
-EXTERN int		Tk_GetJustify (Tcl_Interp * interp, CONST char * str, 
+EXTERN int		Tk_GetJustify (Tcl_Interp * interp, CONST char * str,
 				Tk_Justify * justifyPtr);
 #endif
 #ifndef Tk_GetNumMainWindows_TCL_DECLARED
@@ -677,51 +677,51 @@ EXTERN int		Tk_GetNumMainWindows (void);
 #ifndef Tk_GetOption_TCL_DECLARED
 #define Tk_GetOption_TCL_DECLARED
 /* 103 */
-EXTERN Tk_Uid		Tk_GetOption (Tk_Window tkwin, CONST char * name, 
+EXTERN Tk_Uid		Tk_GetOption (Tk_Window tkwin, CONST char * name,
 				CONST char * className);
 #endif
 #ifndef Tk_GetPixels_TCL_DECLARED
 #define Tk_GetPixels_TCL_DECLARED
 /* 104 */
-EXTERN int		Tk_GetPixels (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN int		Tk_GetPixels (Tcl_Interp * interp, Tk_Window tkwin,
 				CONST char * str, int * intPtr);
 #endif
 #ifndef Tk_GetPixmap_TCL_DECLARED
 #define Tk_GetPixmap_TCL_DECLARED
 /* 105 */
-EXTERN Pixmap		Tk_GetPixmap (Display * display, Drawable d, 
+EXTERN Pixmap		Tk_GetPixmap (Display * display, Drawable d,
 				int width, int height, int depth);
 #endif
 #ifndef Tk_GetRelief_TCL_DECLARED
 #define Tk_GetRelief_TCL_DECLARED
 /* 106 */
-EXTERN int		Tk_GetRelief (Tcl_Interp * interp, CONST char * name, 
+EXTERN int		Tk_GetRelief (Tcl_Interp * interp, CONST char * name,
 				int * reliefPtr);
 #endif
 #ifndef Tk_GetRootCoords_TCL_DECLARED
 #define Tk_GetRootCoords_TCL_DECLARED
 /* 107 */
-EXTERN void		Tk_GetRootCoords (Tk_Window tkwin, int * xPtr, 
+EXTERN void		Tk_GetRootCoords (Tk_Window tkwin, int * xPtr,
 				int * yPtr);
 #endif
 #ifndef Tk_GetScrollInfo_TCL_DECLARED
 #define Tk_GetScrollInfo_TCL_DECLARED
 /* 108 */
-EXTERN int		Tk_GetScrollInfo (Tcl_Interp * interp, int argc, 
-				CONST84 char ** argv, double * dblPtr, 
+EXTERN int		Tk_GetScrollInfo (Tcl_Interp * interp, int argc,
+				CONST84 char ** argv, double * dblPtr,
 				int * intPtr);
 #endif
 #ifndef Tk_GetScreenMM_TCL_DECLARED
 #define Tk_GetScreenMM_TCL_DECLARED
 /* 109 */
-EXTERN int		Tk_GetScreenMM (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN int		Tk_GetScreenMM (Tcl_Interp * interp, Tk_Window tkwin,
 				CONST char * str, double * doublePtr);
 #endif
 #ifndef Tk_GetSelection_TCL_DECLARED
 #define Tk_GetSelection_TCL_DECLARED
 /* 110 */
-EXTERN int		Tk_GetSelection (Tcl_Interp * interp, 
-				Tk_Window tkwin, Atom selection, Atom target, 
+EXTERN int		Tk_GetSelection (Tcl_Interp * interp,
+				Tk_Window tkwin, Atom selection, Atom target,
 				Tk_GetSelProc * proc, ClientData clientData);
 #endif
 #ifndef Tk_GetUid_TCL_DECLARED
@@ -732,20 +732,20 @@ EXTERN Tk_Uid		Tk_GetUid (CONST char * str);
 #ifndef Tk_GetVisual_TCL_DECLARED
 #define Tk_GetVisual_TCL_DECLARED
 /* 112 */
-EXTERN Visual *		Tk_GetVisual (Tcl_Interp * interp, Tk_Window tkwin, 
-				CONST char * str, int * depthPtr, 
+EXTERN Visual *		Tk_GetVisual (Tcl_Interp * interp, Tk_Window tkwin,
+				CONST char * str, int * depthPtr,
 				Colormap * colormapPtr);
 #endif
 #ifndef Tk_GetVRootGeometry_TCL_DECLARED
 #define Tk_GetVRootGeometry_TCL_DECLARED
 /* 113 */
-EXTERN void		Tk_GetVRootGeometry (Tk_Window tkwin, int * xPtr, 
+EXTERN void		Tk_GetVRootGeometry (Tk_Window tkwin, int * xPtr,
 				int * yPtr, int * widthPtr, int * heightPtr);
 #endif
 #ifndef Tk_Grab_TCL_DECLARED
 #define Tk_Grab_TCL_DECLARED
 /* 114 */
-EXTERN int		Tk_Grab (Tcl_Interp * interp, Tk_Window tkwin, 
+EXTERN int		Tk_Grab (Tcl_Interp * interp, Tk_Window tkwin,
 				int grabGlobal);
 #endif
 #ifndef Tk_HandleEvent_TCL_DECLARED
@@ -761,8 +761,8 @@ EXTERN Tk_Window	Tk_IdToWindow (Display * display, Window window);
 #ifndef Tk_ImageChanged_TCL_DECLARED
 #define Tk_ImageChanged_TCL_DECLARED
 /* 117 */
-EXTERN void		Tk_ImageChanged (Tk_ImageMaster master, int x, int y, 
-				int width, int height, int imageWidth, 
+EXTERN void		Tk_ImageChanged (Tk_ImageMaster master, int x, int y,
+				int width, int height, int imageWidth,
 				int imageHeight);
 #endif
 #ifndef Tk_Init_TCL_DECLARED
@@ -778,14 +778,14 @@ EXTERN Atom		Tk_InternAtom (Tk_Window tkwin, CONST char * name);
 #ifndef Tk_IntersectTextLayout_TCL_DECLARED
 #define Tk_IntersectTextLayout_TCL_DECLARED
 /* 120 */
-EXTERN int		Tk_IntersectTextLayout (Tk_TextLayout layout, int x, 
+EXTERN int		Tk_IntersectTextLayout (Tk_TextLayout layout, int x,
 				int y, int width, int height);
 #endif
 #ifndef Tk_MaintainGeometry_TCL_DECLARED
 #define Tk_MaintainGeometry_TCL_DECLARED
 /* 121 */
-EXTERN void		Tk_MaintainGeometry (Tk_Window slave, 
-				Tk_Window master, int x, int y, int width, 
+EXTERN void		Tk_MaintainGeometry (Tk_Window slave,
+				Tk_Window master, int x, int y, int width,
 				int height);
 #endif
 #ifndef Tk_MainWindow_TCL_DECLARED
@@ -801,8 +801,8 @@ EXTERN void		Tk_MakeWindowExist (Tk_Window tkwin);
 #ifndef Tk_ManageGeometry_TCL_DECLARED
 #define Tk_ManageGeometry_TCL_DECLARED
 /* 124 */
-EXTERN void		Tk_ManageGeometry (Tk_Window tkwin, 
-				CONST Tk_GeomMgr * mgrPtr, 
+EXTERN void		Tk_ManageGeometry (Tk_Window tkwin,
+				CONST Tk_GeomMgr * mgrPtr,
 				ClientData clientData);
 #endif
 #ifndef Tk_MapWindow_TCL_DECLARED
@@ -813,14 +813,14 @@ EXTERN void		Tk_MapWindow (Tk_Window tkwin);
 #ifndef Tk_MeasureChars_TCL_DECLARED
 #define Tk_MeasureChars_TCL_DECLARED
 /* 126 */
-EXTERN int		Tk_MeasureChars (Tk_Font tkfont, CONST char * source, 
-				int numBytes, int maxPixels, int flags, 
+EXTERN int		Tk_MeasureChars (Tk_Font tkfont, CONST char * source,
+				int numBytes, int maxPixels, int flags,
 				int * lengthPtr);
 #endif
 #ifndef Tk_MoveResizeWindow_TCL_DECLARED
 #define Tk_MoveResizeWindow_TCL_DECLARED
 /* 127 */
-EXTERN void		Tk_MoveResizeWindow (Tk_Window tkwin, int x, int y, 
+EXTERN void		Tk_MoveResizeWindow (Tk_Window tkwin, int x, int y,
 				int width, int height);
 #endif
 #ifndef Tk_MoveWindow_TCL_DECLARED
@@ -846,7 +846,7 @@ EXTERN CONST84_RETURN char * Tk_NameOfAnchor (Tk_Anchor anchor);
 #ifndef Tk_NameOfBitmap_TCL_DECLARED
 #define Tk_NameOfBitmap_TCL_DECLARED
 /* 132 */
-EXTERN CONST84_RETURN char * Tk_NameOfBitmap (Display * display, 
+EXTERN CONST84_RETURN char * Tk_NameOfBitmap (Display * display,
 				Pixmap bitmap);
 #endif
 #ifndef Tk_NameOfCapStyle_TCL_DECLARED
@@ -862,7 +862,7 @@ EXTERN CONST84_RETURN char * Tk_NameOfColor (XColor * colorPtr);
 #ifndef Tk_NameOfCursor_TCL_DECLARED
 #define Tk_NameOfCursor_TCL_DECLARED
 /* 135 */
-EXTERN CONST84_RETURN char * Tk_NameOfCursor (Display * display, 
+EXTERN CONST84_RETURN char * Tk_NameOfCursor (Display * display,
 				Tk_Cursor cursor);
 #endif
 #ifndef Tk_NameOfFont_TCL_DECLARED
@@ -893,42 +893,42 @@ EXTERN CONST84_RETURN char * Tk_NameOfRelief (int relief);
 #ifndef Tk_NameToWindow_TCL_DECLARED
 #define Tk_NameToWindow_TCL_DECLARED
 /* 141 */
-EXTERN Tk_Window	Tk_NameToWindow (Tcl_Interp * interp, 
+EXTERN Tk_Window	Tk_NameToWindow (Tcl_Interp * interp,
 				CONST char * pathName, Tk_Window tkwin);
 #endif
 #ifndef Tk_OwnSelection_TCL_DECLARED
 #define Tk_OwnSelection_TCL_DECLARED
 /* 142 */
-EXTERN void		Tk_OwnSelection (Tk_Window tkwin, Atom selection, 
+EXTERN void		Tk_OwnSelection (Tk_Window tkwin, Atom selection,
 				Tk_LostSelProc * proc, ClientData clientData);
 #endif
 #ifndef Tk_ParseArgv_TCL_DECLARED
 #define Tk_ParseArgv_TCL_DECLARED
 /* 143 */
-EXTERN int		Tk_ParseArgv (Tcl_Interp * interp, Tk_Window tkwin, 
-				int * argcPtr, CONST84 char ** argv, 
+EXTERN int		Tk_ParseArgv (Tcl_Interp * interp, Tk_Window tkwin,
+				int * argcPtr, CONST84 char ** argv,
 				Tk_ArgvInfo * argTable, int flags);
 #endif
 #ifndef Tk_PhotoPutBlock_NoComposite_TCL_DECLARED
 #define Tk_PhotoPutBlock_NoComposite_TCL_DECLARED
 /* 144 */
-EXTERN void		Tk_PhotoPutBlock_NoComposite (Tk_PhotoHandle handle, 
-				Tk_PhotoImageBlock * blockPtr, int x, int y, 
+EXTERN void		Tk_PhotoPutBlock_NoComposite (Tk_PhotoHandle handle,
+				Tk_PhotoImageBlock * blockPtr, int x, int y,
 				int width, int height);
 #endif
 #ifndef Tk_PhotoPutZoomedBlock_NoComposite_TCL_DECLARED
 #define Tk_PhotoPutZoomedBlock_NoComposite_TCL_DECLARED
 /* 145 */
 EXTERN void		Tk_PhotoPutZoomedBlock_NoComposite (
-				Tk_PhotoHandle handle, 
-				Tk_PhotoImageBlock * blockPtr, int x, int y, 
-				int width, int height, int zoomX, int zoomY, 
+				Tk_PhotoHandle handle,
+				Tk_PhotoImageBlock * blockPtr, int x, int y,
+				int width, int height, int zoomX, int zoomY,
 				int subsampleX, int subsampleY);
 #endif
 #ifndef Tk_PhotoGetImage_TCL_DECLARED
 #define Tk_PhotoGetImage_TCL_DECLARED
 /* 146 */
-EXTERN int		Tk_PhotoGetImage (Tk_PhotoHandle handle, 
+EXTERN int		Tk_PhotoGetImage (Tk_PhotoHandle handle,
 				Tk_PhotoImageBlock * blockPtr);
 #endif
 #ifndef Tk_PhotoBlank_TCL_DECLARED
@@ -939,19 +939,19 @@ EXTERN void		Tk_PhotoBlank (Tk_PhotoHandle handle);
 #ifndef Tk_PhotoExpand_Panic_TCL_DECLARED
 #define Tk_PhotoExpand_Panic_TCL_DECLARED
 /* 148 */
-EXTERN void		Tk_PhotoExpand_Panic (Tk_PhotoHandle handle, 
+EXTERN void		Tk_PhotoExpand_Panic (Tk_PhotoHandle handle,
 				int width, int height);
 #endif
 #ifndef Tk_PhotoGetSize_TCL_DECLARED
 #define Tk_PhotoGetSize_TCL_DECLARED
 /* 149 */
-EXTERN void		Tk_PhotoGetSize (Tk_PhotoHandle handle, 
+EXTERN void		Tk_PhotoGetSize (Tk_PhotoHandle handle,
 				int * widthPtr, int * heightPtr);
 #endif
 #ifndef Tk_PhotoSetSize_Panic_TCL_DECLARED
 #define Tk_PhotoSetSize_Panic_TCL_DECLARED
 /* 150 */
-EXTERN void		Tk_PhotoSetSize_Panic (Tk_PhotoHandle handle, 
+EXTERN void		Tk_PhotoSetSize_Panic (Tk_PhotoHandle handle,
 				int width, int height);
 #endif
 #ifndef Tk_PointToChar_TCL_DECLARED
@@ -962,45 +962,45 @@ EXTERN int		Tk_PointToChar (Tk_TextLayout layout, int x, int y);
 #ifndef Tk_PostscriptFontName_TCL_DECLARED
 #define Tk_PostscriptFontName_TCL_DECLARED
 /* 152 */
-EXTERN int		Tk_PostscriptFontName (Tk_Font tkfont, 
+EXTERN int		Tk_PostscriptFontName (Tk_Font tkfont,
 				Tcl_DString * dsPtr);
 #endif
 #ifndef Tk_PreserveColormap_TCL_DECLARED
 #define Tk_PreserveColormap_TCL_DECLARED
 /* 153 */
-EXTERN void		Tk_PreserveColormap (Display * display, 
+EXTERN void		Tk_PreserveColormap (Display * display,
 				Colormap colormap);
 #endif
 #ifndef Tk_QueueWindowEvent_TCL_DECLARED
 #define Tk_QueueWindowEvent_TCL_DECLARED
 /* 154 */
-EXTERN void		Tk_QueueWindowEvent (XEvent * eventPtr, 
+EXTERN void		Tk_QueueWindowEvent (XEvent * eventPtr,
 				Tcl_QueuePosition position);
 #endif
 #ifndef Tk_RedrawImage_TCL_DECLARED
 #define Tk_RedrawImage_TCL_DECLARED
 /* 155 */
-EXTERN void		Tk_RedrawImage (Tk_Image image, int imageX, 
-				int imageY, int width, int height, 
-				Drawable drawable, int drawableX, 
+EXTERN void		Tk_RedrawImage (Tk_Image image, int imageX,
+				int imageY, int width, int height,
+				Drawable drawable, int drawableX,
 				int drawableY);
 #endif
 #ifndef Tk_ResizeWindow_TCL_DECLARED
 #define Tk_ResizeWindow_TCL_DECLARED
 /* 156 */
-EXTERN void		Tk_ResizeWindow (Tk_Window tkwin, int width, 
+EXTERN void		Tk_ResizeWindow (Tk_Window tkwin, int width,
 				int height);
 #endif
 #ifndef Tk_RestackWindow_TCL_DECLARED
 #define Tk_RestackWindow_TCL_DECLARED
 /* 157 */
-EXTERN int		Tk_RestackWindow (Tk_Window tkwin, int aboveBelow, 
+EXTERN int		Tk_RestackWindow (Tk_Window tkwin, int aboveBelow,
 				Tk_Window other);
 #endif
 #ifndef Tk_RestrictEvents_TCL_DECLARED
 #define Tk_RestrictEvents_TCL_DECLARED
 /* 158 */
-EXTERN Tk_RestrictProc * Tk_RestrictEvents (Tk_RestrictProc * proc, 
+EXTERN Tk_RestrictProc * Tk_RestrictEvents (Tk_RestrictProc * proc,
 				ClientData arg, ClientData * prevArgPtr);
 #endif
 #ifndef Tk_SafeInit_TCL_DECLARED
@@ -1016,7 +1016,7 @@ EXTERN CONST char *	Tk_SetAppName (Tk_Window tkwin, CONST char * name);
 #ifndef Tk_SetBackgroundFromBorder_TCL_DECLARED
 #define Tk_SetBackgroundFromBorder_TCL_DECLARED
 /* 161 */
-EXTERN void		Tk_SetBackgroundFromBorder (Tk_Window tkwin, 
+EXTERN void		Tk_SetBackgroundFromBorder (Tk_Window tkwin,
 				Tk_3DBorder border);
 #endif
 #ifndef Tk_SetClass_TCL_DECLARED
@@ -1027,7 +1027,7 @@ EXTERN void		Tk_SetClass (Tk_Window tkwin, CONST char * className);
 #ifndef Tk_SetGrid_TCL_DECLARED
 #define Tk_SetGrid_TCL_DECLARED
 /* 163 */
-EXTERN void		Tk_SetGrid (Tk_Window tkwin, int reqWidth, 
+EXTERN void		Tk_SetGrid (Tk_Window tkwin, int reqWidth,
 				int reqHeight, int gridWidth, int gridHeight);
 #endif
 #ifndef Tk_SetInternalBorder_TCL_DECLARED
@@ -1038,19 +1038,19 @@ EXTERN void		Tk_SetInternalBorder (Tk_Window tkwin, int width);
 #ifndef Tk_SetWindowBackground_TCL_DECLARED
 #define Tk_SetWindowBackground_TCL_DECLARED
 /* 165 */
-EXTERN void		Tk_SetWindowBackground (Tk_Window tkwin, 
+EXTERN void		Tk_SetWindowBackground (Tk_Window tkwin,
 				unsigned long pixel);
 #endif
 #ifndef Tk_SetWindowBackgroundPixmap_TCL_DECLARED
 #define Tk_SetWindowBackgroundPixmap_TCL_DECLARED
 /* 166 */
-EXTERN void		Tk_SetWindowBackgroundPixmap (Tk_Window tkwin, 
+EXTERN void		Tk_SetWindowBackgroundPixmap (Tk_Window tkwin,
 				Pixmap pixmap);
 #endif
 #ifndef Tk_SetWindowBorder_TCL_DECLARED
 #define Tk_SetWindowBorder_TCL_DECLARED
 /* 167 */
-EXTERN void		Tk_SetWindowBorder (Tk_Window tkwin, 
+EXTERN void		Tk_SetWindowBorder (Tk_Window tkwin,
 				unsigned long pixel);
 #endif
 #ifndef Tk_SetWindowBorderWidth_TCL_DECLARED
@@ -1061,31 +1061,31 @@ EXTERN void		Tk_SetWindowBorderWidth (Tk_Window tkwin, int width);
 #ifndef Tk_SetWindowBorderPixmap_TCL_DECLARED
 #define Tk_SetWindowBorderPixmap_TCL_DECLARED
 /* 169 */
-EXTERN void		Tk_SetWindowBorderPixmap (Tk_Window tkwin, 
+EXTERN void		Tk_SetWindowBorderPixmap (Tk_Window tkwin,
 				Pixmap pixmap);
 #endif
 #ifndef Tk_SetWindowColormap_TCL_DECLARED
 #define Tk_SetWindowColormap_TCL_DECLARED
 /* 170 */
-EXTERN void		Tk_SetWindowColormap (Tk_Window tkwin, 
+EXTERN void		Tk_SetWindowColormap (Tk_Window tkwin,
 				Colormap colormap);
 #endif
 #ifndef Tk_SetWindowVisual_TCL_DECLARED
 #define Tk_SetWindowVisual_TCL_DECLARED
 /* 171 */
-EXTERN int		Tk_SetWindowVisual (Tk_Window tkwin, Visual * visual, 
+EXTERN int		Tk_SetWindowVisual (Tk_Window tkwin, Visual * visual,
 				int depth, Colormap colormap);
 #endif
 #ifndef Tk_SizeOfBitmap_TCL_DECLARED
 #define Tk_SizeOfBitmap_TCL_DECLARED
 /* 172 */
-EXTERN void		Tk_SizeOfBitmap (Display * display, Pixmap bitmap, 
+EXTERN void		Tk_SizeOfBitmap (Display * display, Pixmap bitmap,
 				int * widthPtr, int * heightPtr);
 #endif
 #ifndef Tk_SizeOfImage_TCL_DECLARED
 #define Tk_SizeOfImage_TCL_DECLARED
 /* 173 */
-EXTERN void		Tk_SizeOfImage (Tk_Image image, int * widthPtr, 
+EXTERN void		Tk_SizeOfImage (Tk_Image image, int * widthPtr,
 				int * heightPtr);
 #endif
 #ifndef Tk_StrictMotif_TCL_DECLARED
@@ -1096,13 +1096,13 @@ EXTERN int		Tk_StrictMotif (Tk_Window tkwin);
 #ifndef Tk_TextLayoutToPostscript_TCL_DECLARED
 #define Tk_TextLayoutToPostscript_TCL_DECLARED
 /* 175 */
-EXTERN void		Tk_TextLayoutToPostscript (Tcl_Interp * interp, 
+EXTERN void		Tk_TextLayoutToPostscript (Tcl_Interp * interp,
 				Tk_TextLayout layout);
 #endif
 #ifndef Tk_TextWidth_TCL_DECLARED
 #define Tk_TextWidth_TCL_DECLARED
 /* 176 */
-EXTERN int		Tk_TextWidth (Tk_Font font, CONST char * str, 
+EXTERN int		Tk_TextWidth (Tk_Font font, CONST char * str,
 				int numBytes);
 #endif
 #ifndef Tk_UndefineCursor_TCL_DECLARED
@@ -1113,17 +1113,17 @@ EXTERN void		Tk_UndefineCursor (Tk_Window window);
 #ifndef Tk_UnderlineChars_TCL_DECLARED
 #define Tk_UnderlineChars_TCL_DECLARED
 /* 178 */
-EXTERN void		Tk_UnderlineChars (Display * display, 
-				Drawable drawable, GC gc, Tk_Font tkfont, 
-				CONST char * source, int x, int y, 
+EXTERN void		Tk_UnderlineChars (Display * display,
+				Drawable drawable, GC gc, Tk_Font tkfont,
+				CONST char * source, int x, int y,
 				int firstByte, int lastByte);
 #endif
 #ifndef Tk_UnderlineTextLayout_TCL_DECLARED
 #define Tk_UnderlineTextLayout_TCL_DECLARED
 /* 179 */
-EXTERN void		Tk_UnderlineTextLayout (Display * display, 
-				Drawable drawable, GC gc, 
-				Tk_TextLayout layout, int x, int y, 
+EXTERN void		Tk_UnderlineTextLayout (Display * display,
+				Drawable drawable, GC gc,
+				Tk_TextLayout layout, int x, int y,
 				int underline);
 #endif
 #ifndef Tk_Ungrab_TCL_DECLARED
@@ -1134,7 +1134,7 @@ EXTERN void		Tk_Ungrab (Tk_Window tkwin);
 #ifndef Tk_UnmaintainGeometry_TCL_DECLARED
 #define Tk_UnmaintainGeometry_TCL_DECLARED
 /* 181 */
-EXTERN void		Tk_UnmaintainGeometry (Tk_Window slave, 
+EXTERN void		Tk_UnmaintainGeometry (Tk_Window slave,
 				Tk_Window master);
 #endif
 #ifndef Tk_UnmapWindow_TCL_DECLARED
@@ -1150,43 +1150,43 @@ EXTERN void		Tk_UnsetGrid (Tk_Window tkwin);
 #ifndef Tk_UpdatePointer_TCL_DECLARED
 #define Tk_UpdatePointer_TCL_DECLARED
 /* 184 */
-EXTERN void		Tk_UpdatePointer (Tk_Window tkwin, int x, int y, 
+EXTERN void		Tk_UpdatePointer (Tk_Window tkwin, int x, int y,
 				int state);
 #endif
 #ifndef Tk_AllocBitmapFromObj_TCL_DECLARED
 #define Tk_AllocBitmapFromObj_TCL_DECLARED
 /* 185 */
-EXTERN Pixmap		Tk_AllocBitmapFromObj (Tcl_Interp * interp, 
+EXTERN Pixmap		Tk_AllocBitmapFromObj (Tcl_Interp * interp,
 				Tk_Window tkwin, Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_Alloc3DBorderFromObj_TCL_DECLARED
 #define Tk_Alloc3DBorderFromObj_TCL_DECLARED
 /* 186 */
-EXTERN Tk_3DBorder	Tk_Alloc3DBorderFromObj (Tcl_Interp * interp, 
+EXTERN Tk_3DBorder	Tk_Alloc3DBorderFromObj (Tcl_Interp * interp,
 				Tk_Window tkwin, Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_AllocColorFromObj_TCL_DECLARED
 #define Tk_AllocColorFromObj_TCL_DECLARED
 /* 187 */
-EXTERN XColor *		Tk_AllocColorFromObj (Tcl_Interp * interp, 
+EXTERN XColor *		Tk_AllocColorFromObj (Tcl_Interp * interp,
 				Tk_Window tkwin, Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_AllocCursorFromObj_TCL_DECLARED
 #define Tk_AllocCursorFromObj_TCL_DECLARED
 /* 188 */
-EXTERN Tk_Cursor	Tk_AllocCursorFromObj (Tcl_Interp * interp, 
+EXTERN Tk_Cursor	Tk_AllocCursorFromObj (Tcl_Interp * interp,
 				Tk_Window tkwin, Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_AllocFontFromObj_TCL_DECLARED
 #define Tk_AllocFontFromObj_TCL_DECLARED
 /* 189 */
-EXTERN Tk_Font		Tk_AllocFontFromObj (Tcl_Interp * interp, 
+EXTERN Tk_Font		Tk_AllocFontFromObj (Tcl_Interp * interp,
 				Tk_Window tkwin, Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_CreateOptionTable_TCL_DECLARED
 #define Tk_CreateOptionTable_TCL_DECLARED
 /* 190 */
-EXTERN Tk_OptionTable	Tk_CreateOptionTable (Tcl_Interp * interp, 
+EXTERN Tk_OptionTable	Tk_CreateOptionTable (Tcl_Interp * interp,
 				CONST Tk_OptionSpec * templatePtr);
 #endif
 #ifndef Tk_DeleteOptionTable_TCL_DECLARED
@@ -1197,25 +1197,25 @@ EXTERN void		Tk_DeleteOptionTable (Tk_OptionTable optionTable);
 #ifndef Tk_Free3DBorderFromObj_TCL_DECLARED
 #define Tk_Free3DBorderFromObj_TCL_DECLARED
 /* 192 */
-EXTERN void		Tk_Free3DBorderFromObj (Tk_Window tkwin, 
+EXTERN void		Tk_Free3DBorderFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_FreeBitmapFromObj_TCL_DECLARED
 #define Tk_FreeBitmapFromObj_TCL_DECLARED
 /* 193 */
-EXTERN void		Tk_FreeBitmapFromObj (Tk_Window tkwin, 
+EXTERN void		Tk_FreeBitmapFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_FreeColorFromObj_TCL_DECLARED
 #define Tk_FreeColorFromObj_TCL_DECLARED
 /* 194 */
-EXTERN void		Tk_FreeColorFromObj (Tk_Window tkwin, 
+EXTERN void		Tk_FreeColorFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_FreeConfigOptions_TCL_DECLARED
 #define Tk_FreeConfigOptions_TCL_DECLARED
 /* 195 */
-EXTERN void		Tk_FreeConfigOptions (char * recordPtr, 
+EXTERN void		Tk_FreeConfigOptions (char * recordPtr,
 				Tk_OptionTable optionToken, Tk_Window tkwin);
 #endif
 #ifndef Tk_FreeSavedOptions_TCL_DECLARED
@@ -1226,104 +1226,104 @@ EXTERN void		Tk_FreeSavedOptions (Tk_SavedOptions * savePtr);
 #ifndef Tk_FreeCursorFromObj_TCL_DECLARED
 #define Tk_FreeCursorFromObj_TCL_DECLARED
 /* 197 */
-EXTERN void		Tk_FreeCursorFromObj (Tk_Window tkwin, 
+EXTERN void		Tk_FreeCursorFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_FreeFontFromObj_TCL_DECLARED
 #define Tk_FreeFontFromObj_TCL_DECLARED
 /* 198 */
-EXTERN void		Tk_FreeFontFromObj (Tk_Window tkwin, 
+EXTERN void		Tk_FreeFontFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_Get3DBorderFromObj_TCL_DECLARED
 #define Tk_Get3DBorderFromObj_TCL_DECLARED
 /* 199 */
-EXTERN Tk_3DBorder	Tk_Get3DBorderFromObj (Tk_Window tkwin, 
+EXTERN Tk_3DBorder	Tk_Get3DBorderFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_GetAnchorFromObj_TCL_DECLARED
 #define Tk_GetAnchorFromObj_TCL_DECLARED
 /* 200 */
-EXTERN int		Tk_GetAnchorFromObj (Tcl_Interp * interp, 
+EXTERN int		Tk_GetAnchorFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr, Tk_Anchor * anchorPtr);
 #endif
 #ifndef Tk_GetBitmapFromObj_TCL_DECLARED
 #define Tk_GetBitmapFromObj_TCL_DECLARED
 /* 201 */
-EXTERN Pixmap		Tk_GetBitmapFromObj (Tk_Window tkwin, 
+EXTERN Pixmap		Tk_GetBitmapFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_GetColorFromObj_TCL_DECLARED
 #define Tk_GetColorFromObj_TCL_DECLARED
 /* 202 */
-EXTERN XColor *		Tk_GetColorFromObj (Tk_Window tkwin, 
+EXTERN XColor *		Tk_GetColorFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_GetCursorFromObj_TCL_DECLARED
 #define Tk_GetCursorFromObj_TCL_DECLARED
 /* 203 */
-EXTERN Tk_Cursor	Tk_GetCursorFromObj (Tk_Window tkwin, 
+EXTERN Tk_Cursor	Tk_GetCursorFromObj (Tk_Window tkwin,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_GetOptionInfo_TCL_DECLARED
 #define Tk_GetOptionInfo_TCL_DECLARED
 /* 204 */
-EXTERN Tcl_Obj *	Tk_GetOptionInfo (Tcl_Interp * interp, 
-				char * recordPtr, Tk_OptionTable optionTable, 
+EXTERN Tcl_Obj *	Tk_GetOptionInfo (Tcl_Interp * interp,
+				char * recordPtr, Tk_OptionTable optionTable,
 				Tcl_Obj * namePtr, Tk_Window tkwin);
 #endif
 #ifndef Tk_GetOptionValue_TCL_DECLARED
 #define Tk_GetOptionValue_TCL_DECLARED
 /* 205 */
-EXTERN Tcl_Obj *	Tk_GetOptionValue (Tcl_Interp * interp, 
-				char * recordPtr, Tk_OptionTable optionTable, 
+EXTERN Tcl_Obj *	Tk_GetOptionValue (Tcl_Interp * interp,
+				char * recordPtr, Tk_OptionTable optionTable,
 				Tcl_Obj * namePtr, Tk_Window tkwin);
 #endif
 #ifndef Tk_GetJustifyFromObj_TCL_DECLARED
 #define Tk_GetJustifyFromObj_TCL_DECLARED
 /* 206 */
-EXTERN int		Tk_GetJustifyFromObj (Tcl_Interp * interp, 
+EXTERN int		Tk_GetJustifyFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr, Tk_Justify * justifyPtr);
 #endif
 #ifndef Tk_GetMMFromObj_TCL_DECLARED
 #define Tk_GetMMFromObj_TCL_DECLARED
 /* 207 */
-EXTERN int		Tk_GetMMFromObj (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tcl_Obj * objPtr, 
+EXTERN int		Tk_GetMMFromObj (Tcl_Interp * interp,
+				Tk_Window tkwin, Tcl_Obj * objPtr,
 				double * doublePtr);
 #endif
 #ifndef Tk_GetPixelsFromObj_TCL_DECLARED
 #define Tk_GetPixelsFromObj_TCL_DECLARED
 /* 208 */
-EXTERN int		Tk_GetPixelsFromObj (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tcl_Obj * objPtr, 
+EXTERN int		Tk_GetPixelsFromObj (Tcl_Interp * interp,
+				Tk_Window tkwin, Tcl_Obj * objPtr,
 				int * intPtr);
 #endif
 #ifndef Tk_GetReliefFromObj_TCL_DECLARED
 #define Tk_GetReliefFromObj_TCL_DECLARED
 /* 209 */
-EXTERN int		Tk_GetReliefFromObj (Tcl_Interp * interp, 
+EXTERN int		Tk_GetReliefFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr, int * resultPtr);
 #endif
 #ifndef Tk_GetScrollInfoObj_TCL_DECLARED
 #define Tk_GetScrollInfoObj_TCL_DECLARED
 /* 210 */
-EXTERN int		Tk_GetScrollInfoObj (Tcl_Interp * interp, int objc, 
-				Tcl_Obj *CONST objv[], double * dblPtr, 
+EXTERN int		Tk_GetScrollInfoObj (Tcl_Interp * interp, int objc,
+				Tcl_Obj *CONST objv[], double * dblPtr,
 				int * intPtr);
 #endif
 #ifndef Tk_InitOptions_TCL_DECLARED
 #define Tk_InitOptions_TCL_DECLARED
 /* 211 */
-EXTERN int		Tk_InitOptions (Tcl_Interp * interp, 
-				char * recordPtr, Tk_OptionTable optionToken, 
+EXTERN int		Tk_InitOptions (Tcl_Interp * interp,
+				char * recordPtr, Tk_OptionTable optionToken,
 				Tk_Window tkwin);
 #endif
 #ifndef Tk_MainEx_TCL_DECLARED
 #define Tk_MainEx_TCL_DECLARED
 /* 212 */
-EXTERN void		Tk_MainEx (int argc, char ** argv, 
-				Tcl_AppInitProc * appInitProc, 
+EXTERN void		Tk_MainEx (int argc, char ** argv,
+				Tcl_AppInitProc * appInitProc,
 				Tcl_Interp * interp);
 #endif
 #ifndef Tk_RestoreSavedOptions_TCL_DECLARED
@@ -1334,9 +1334,9 @@ EXTERN void		Tk_RestoreSavedOptions (Tk_SavedOptions * savePtr);
 #ifndef Tk_SetOptions_TCL_DECLARED
 #define Tk_SetOptions_TCL_DECLARED
 /* 214 */
-EXTERN int		Tk_SetOptions (Tcl_Interp * interp, char * recordPtr, 
-				Tk_OptionTable optionTable, int objc, 
-				Tcl_Obj *CONST objv[], Tk_Window tkwin, 
+EXTERN int		Tk_SetOptions (Tcl_Interp * interp, char * recordPtr,
+				Tk_OptionTable optionTable, int objc,
+				Tcl_Obj *CONST objv[], Tk_Window tkwin,
 				Tk_SavedOptions * savePtr, int * maskPtr);
 #endif
 #ifndef Tk_InitConsoleChannels_TCL_DECLARED
@@ -1352,7 +1352,7 @@ EXTERN int		Tk_CreateConsoleWindow (Tcl_Interp * interp);
 #ifndef Tk_CreateSmoothMethod_TCL_DECLARED
 #define Tk_CreateSmoothMethod_TCL_DECLARED
 /* 217 */
-EXTERN void		Tk_CreateSmoothMethod (Tcl_Interp * interp, 
+EXTERN void		Tk_CreateSmoothMethod (Tcl_Interp * interp,
 				Tk_SmoothMethod * method);
 #endif
 /* Slot 218 is reserved */
@@ -1360,7 +1360,7 @@ EXTERN void		Tk_CreateSmoothMethod (Tcl_Interp * interp,
 #ifndef Tk_GetDash_TCL_DECLARED
 #define Tk_GetDash_TCL_DECLARED
 /* 220 */
-EXTERN int		Tk_GetDash (Tcl_Interp * interp, CONST char * value, 
+EXTERN int		Tk_GetDash (Tcl_Interp * interp, CONST char * value,
 				Tk_Dash * dash);
 #endif
 #ifndef Tk_CreateOutline_TCL_DECLARED
@@ -1371,32 +1371,32 @@ EXTERN void		Tk_CreateOutline (Tk_Outline * outline);
 #ifndef Tk_DeleteOutline_TCL_DECLARED
 #define Tk_DeleteOutline_TCL_DECLARED
 /* 222 */
-EXTERN void		Tk_DeleteOutline (Display * display, 
+EXTERN void		Tk_DeleteOutline (Display * display,
 				Tk_Outline * outline);
 #endif
 #ifndef Tk_ConfigOutlineGC_TCL_DECLARED
 #define Tk_ConfigOutlineGC_TCL_DECLARED
 /* 223 */
-EXTERN int		Tk_ConfigOutlineGC (XGCValues * gcValues, 
-				Tk_Canvas canvas, Tk_Item * item, 
+EXTERN int		Tk_ConfigOutlineGC (XGCValues * gcValues,
+				Tk_Canvas canvas, Tk_Item * item,
 				Tk_Outline * outline);
 #endif
 #ifndef Tk_ChangeOutlineGC_TCL_DECLARED
 #define Tk_ChangeOutlineGC_TCL_DECLARED
 /* 224 */
-EXTERN int		Tk_ChangeOutlineGC (Tk_Canvas canvas, Tk_Item * item, 
+EXTERN int		Tk_ChangeOutlineGC (Tk_Canvas canvas, Tk_Item * item,
 				Tk_Outline * outline);
 #endif
 #ifndef Tk_ResetOutlineGC_TCL_DECLARED
 #define Tk_ResetOutlineGC_TCL_DECLARED
 /* 225 */
-EXTERN int		Tk_ResetOutlineGC (Tk_Canvas canvas, Tk_Item * item, 
+EXTERN int		Tk_ResetOutlineGC (Tk_Canvas canvas, Tk_Item * item,
 				Tk_Outline * outline);
 #endif
 #ifndef Tk_CanvasPsOutline_TCL_DECLARED
 #define Tk_CanvasPsOutline_TCL_DECLARED
 /* 226 */
-EXTERN int		Tk_CanvasPsOutline (Tk_Canvas canvas, Tk_Item * item, 
+EXTERN int		Tk_CanvasPsOutline (Tk_Canvas canvas, Tk_Item * item,
 				Tk_Outline * outline);
 #endif
 #ifndef Tk_SetTSOrigin_TCL_DECLARED
@@ -1407,62 +1407,62 @@ EXTERN void		Tk_SetTSOrigin (Tk_Window tkwin, GC gc, int x, int y);
 #ifndef Tk_CanvasGetCoordFromObj_TCL_DECLARED
 #define Tk_CanvasGetCoordFromObj_TCL_DECLARED
 /* 228 */
-EXTERN int		Tk_CanvasGetCoordFromObj (Tcl_Interp * interp, 
-				Tk_Canvas canvas, Tcl_Obj * obj, 
+EXTERN int		Tk_CanvasGetCoordFromObj (Tcl_Interp * interp,
+				Tk_Canvas canvas, Tcl_Obj * obj,
 				double * doublePtr);
 #endif
 #ifndef Tk_CanvasSetOffset_TCL_DECLARED
 #define Tk_CanvasSetOffset_TCL_DECLARED
 /* 229 */
-EXTERN void		Tk_CanvasSetOffset (Tk_Canvas canvas, GC gc, 
+EXTERN void		Tk_CanvasSetOffset (Tk_Canvas canvas, GC gc,
 				Tk_TSOffset * offset);
 #endif
 #ifndef Tk_DitherPhoto_TCL_DECLARED
 #define Tk_DitherPhoto_TCL_DECLARED
 /* 230 */
-EXTERN void		Tk_DitherPhoto (Tk_PhotoHandle handle, int x, int y, 
+EXTERN void		Tk_DitherPhoto (Tk_PhotoHandle handle, int x, int y,
 				int width, int height);
 #endif
 #ifndef Tk_PostscriptBitmap_TCL_DECLARED
 #define Tk_PostscriptBitmap_TCL_DECLARED
 /* 231 */
-EXTERN int		Tk_PostscriptBitmap (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tk_PostscriptInfo psInfo, 
-				Pixmap bitmap, int startX, int startY, 
+EXTERN int		Tk_PostscriptBitmap (Tcl_Interp * interp,
+				Tk_Window tkwin, Tk_PostscriptInfo psInfo,
+				Pixmap bitmap, int startX, int startY,
 				int width, int height);
 #endif
 #ifndef Tk_PostscriptColor_TCL_DECLARED
 #define Tk_PostscriptColor_TCL_DECLARED
 /* 232 */
-EXTERN int		Tk_PostscriptColor (Tcl_Interp * interp, 
+EXTERN int		Tk_PostscriptColor (Tcl_Interp * interp,
 				Tk_PostscriptInfo psInfo, XColor * colorPtr);
 #endif
 #ifndef Tk_PostscriptFont_TCL_DECLARED
 #define Tk_PostscriptFont_TCL_DECLARED
 /* 233 */
-EXTERN int		Tk_PostscriptFont (Tcl_Interp * interp, 
+EXTERN int		Tk_PostscriptFont (Tcl_Interp * interp,
 				Tk_PostscriptInfo psInfo, Tk_Font font);
 #endif
 #ifndef Tk_PostscriptImage_TCL_DECLARED
 #define Tk_PostscriptImage_TCL_DECLARED
 /* 234 */
-EXTERN int		Tk_PostscriptImage (Tk_Image image, 
-				Tcl_Interp * interp, Tk_Window tkwin, 
-				Tk_PostscriptInfo psinfo, int x, int y, 
+EXTERN int		Tk_PostscriptImage (Tk_Image image,
+				Tcl_Interp * interp, Tk_Window tkwin,
+				Tk_PostscriptInfo psinfo, int x, int y,
 				int width, int height, int prepass);
 #endif
 #ifndef Tk_PostscriptPath_TCL_DECLARED
 #define Tk_PostscriptPath_TCL_DECLARED
 /* 235 */
-EXTERN void		Tk_PostscriptPath (Tcl_Interp * interp, 
-				Tk_PostscriptInfo psInfo, double * coordPtr, 
+EXTERN void		Tk_PostscriptPath (Tcl_Interp * interp,
+				Tk_PostscriptInfo psInfo, double * coordPtr,
 				int numPoints);
 #endif
 #ifndef Tk_PostscriptStipple_TCL_DECLARED
 #define Tk_PostscriptStipple_TCL_DECLARED
 /* 236 */
-EXTERN int		Tk_PostscriptStipple (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tk_PostscriptInfo psInfo, 
+EXTERN int		Tk_PostscriptStipple (Tcl_Interp * interp,
+				Tk_Window tkwin, Tk_PostscriptInfo psInfo,
 				Pixmap bitmap);
 #endif
 #ifndef Tk_PostscriptY_TCL_DECLARED
@@ -1473,9 +1473,9 @@ EXTERN double		Tk_PostscriptY (double y, Tk_PostscriptInfo psInfo);
 #ifndef Tk_PostscriptPhoto_TCL_DECLARED
 #define Tk_PostscriptPhoto_TCL_DECLARED
 /* 238 */
-EXTERN int		Tk_PostscriptPhoto (Tcl_Interp * interp, 
-				Tk_PhotoImageBlock * blockPtr, 
-				Tk_PostscriptInfo psInfo, int width, 
+EXTERN int		Tk_PostscriptPhoto (Tcl_Interp * interp,
+				Tk_PhotoImageBlock * blockPtr,
+				Tk_PostscriptInfo psInfo, int width,
 				int height);
 #endif
 #ifndef Tk_CreateClientMessageHandler_TCL_DECLARED
@@ -1493,59 +1493,59 @@ EXTERN void		Tk_DeleteClientMessageHandler (
 #ifndef Tk_CreateAnonymousWindow_TCL_DECLARED
 #define Tk_CreateAnonymousWindow_TCL_DECLARED
 /* 241 */
-EXTERN Tk_Window	Tk_CreateAnonymousWindow (Tcl_Interp * interp, 
+EXTERN Tk_Window	Tk_CreateAnonymousWindow (Tcl_Interp * interp,
 				Tk_Window parent, CONST char * screenName);
 #endif
 #ifndef Tk_SetClassProcs_TCL_DECLARED
 #define Tk_SetClassProcs_TCL_DECLARED
 /* 242 */
-EXTERN void		Tk_SetClassProcs (Tk_Window tkwin, 
-				Tk_ClassProcs * procs, 
+EXTERN void		Tk_SetClassProcs (Tk_Window tkwin,
+				Tk_ClassProcs * procs,
 				ClientData instanceData);
 #endif
 #ifndef Tk_SetInternalBorderEx_TCL_DECLARED
 #define Tk_SetInternalBorderEx_TCL_DECLARED
 /* 243 */
-EXTERN void		Tk_SetInternalBorderEx (Tk_Window tkwin, int left, 
+EXTERN void		Tk_SetInternalBorderEx (Tk_Window tkwin, int left,
 				int right, int top, int bottom);
 #endif
 #ifndef Tk_SetMinimumRequestSize_TCL_DECLARED
 #define Tk_SetMinimumRequestSize_TCL_DECLARED
 /* 244 */
-EXTERN void		Tk_SetMinimumRequestSize (Tk_Window tkwin, 
+EXTERN void		Tk_SetMinimumRequestSize (Tk_Window tkwin,
 				int minWidth, int minHeight);
 #endif
 #ifndef Tk_SetCaretPos_TCL_DECLARED
 #define Tk_SetCaretPos_TCL_DECLARED
 /* 245 */
-EXTERN void		Tk_SetCaretPos (Tk_Window tkwin, int x, int y, 
+EXTERN void		Tk_SetCaretPos (Tk_Window tkwin, int x, int y,
 				int height);
 #endif
 #ifndef Tk_PhotoPutBlock_Panic_TCL_DECLARED
 #define Tk_PhotoPutBlock_Panic_TCL_DECLARED
 /* 246 */
-EXTERN void		Tk_PhotoPutBlock_Panic (Tk_PhotoHandle handle, 
-				Tk_PhotoImageBlock * blockPtr, int x, int y, 
+EXTERN void		Tk_PhotoPutBlock_Panic (Tk_PhotoHandle handle,
+				Tk_PhotoImageBlock * blockPtr, int x, int y,
 				int width, int height, int compRule);
 #endif
 #ifndef Tk_PhotoPutZoomedBlock_Panic_TCL_DECLARED
 #define Tk_PhotoPutZoomedBlock_Panic_TCL_DECLARED
 /* 247 */
-EXTERN void		Tk_PhotoPutZoomedBlock_Panic (Tk_PhotoHandle handle, 
-				Tk_PhotoImageBlock * blockPtr, int x, int y, 
-				int width, int height, int zoomX, int zoomY, 
+EXTERN void		Tk_PhotoPutZoomedBlock_Panic (Tk_PhotoHandle handle,
+				Tk_PhotoImageBlock * blockPtr, int x, int y,
+				int width, int height, int zoomX, int zoomY,
 				int subsampleX, int subsampleY, int compRule);
 #endif
 #ifndef Tk_CollapseMotionEvents_TCL_DECLARED
 #define Tk_CollapseMotionEvents_TCL_DECLARED
 /* 248 */
-EXTERN int		Tk_CollapseMotionEvents (Display * display, 
+EXTERN int		Tk_CollapseMotionEvents (Display * display,
 				int collapse);
 #endif
 #ifndef Tk_RegisterStyleEngine_TCL_DECLARED
 #define Tk_RegisterStyleEngine_TCL_DECLARED
 /* 249 */
-EXTERN Tk_StyleEngine	Tk_RegisterStyleEngine (CONST char * name, 
+EXTERN Tk_StyleEngine	Tk_RegisterStyleEngine (CONST char * name,
 				Tk_StyleEngine parent);
 #endif
 #ifndef Tk_GetStyleEngine_TCL_DECLARED
@@ -1556,7 +1556,7 @@ EXTERN Tk_StyleEngine	Tk_GetStyleEngine (CONST char * name);
 #ifndef Tk_RegisterStyledElement_TCL_DECLARED
 #define Tk_RegisterStyledElement_TCL_DECLARED
 /* 251 */
-EXTERN int		Tk_RegisterStyledElement (Tk_StyleEngine engine, 
+EXTERN int		Tk_RegisterStyledElement (Tk_StyleEngine engine,
 				Tk_ElementSpec * templatePtr);
 #endif
 #ifndef Tk_GetElementId_TCL_DECLARED
@@ -1567,7 +1567,7 @@ EXTERN int		Tk_GetElementId (CONST char * name);
 #ifndef Tk_CreateStyle_TCL_DECLARED
 #define Tk_CreateStyle_TCL_DECLARED
 /* 253 */
-EXTERN Tk_Style		Tk_CreateStyle (CONST char * name, 
+EXTERN Tk_Style		Tk_CreateStyle (CONST char * name,
 				Tk_StyleEngine engine, ClientData clientData);
 #endif
 #ifndef Tk_GetStyle_TCL_DECLARED
@@ -1588,7 +1588,7 @@ EXTERN CONST char *	Tk_NameOfStyle (Tk_Style style);
 #ifndef Tk_AllocStyleFromObj_TCL_DECLARED
 #define Tk_AllocStyleFromObj_TCL_DECLARED
 /* 257 */
-EXTERN Tk_Style		Tk_AllocStyleFromObj (Tcl_Interp * interp, 
+EXTERN Tk_Style		Tk_AllocStyleFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr);
 #endif
 #ifndef Tk_GetStyleFromObj_TCL_DECLARED
@@ -1604,68 +1604,68 @@ EXTERN void		Tk_FreeStyleFromObj (Tcl_Obj * objPtr);
 #ifndef Tk_GetStyledElement_TCL_DECLARED
 #define Tk_GetStyledElement_TCL_DECLARED
 /* 260 */
-EXTERN Tk_StyledElement	 Tk_GetStyledElement (Tk_Style style, int elementId, 
+EXTERN Tk_StyledElement	 Tk_GetStyledElement (Tk_Style style, int elementId,
 				Tk_OptionTable optionTable);
 #endif
 #ifndef Tk_GetElementSize_TCL_DECLARED
 #define Tk_GetElementSize_TCL_DECLARED
 /* 261 */
-EXTERN void		Tk_GetElementSize (Tk_Style style, 
-				Tk_StyledElement element, char * recordPtr, 
-				Tk_Window tkwin, int width, int height, 
+EXTERN void		Tk_GetElementSize (Tk_Style style,
+				Tk_StyledElement element, char * recordPtr,
+				Tk_Window tkwin, int width, int height,
 				int inner, int * widthPtr, int * heightPtr);
 #endif
 #ifndef Tk_GetElementBox_TCL_DECLARED
 #define Tk_GetElementBox_TCL_DECLARED
 /* 262 */
-EXTERN void		Tk_GetElementBox (Tk_Style style, 
-				Tk_StyledElement element, char * recordPtr, 
-				Tk_Window tkwin, int x, int y, int width, 
-				int height, int inner, int * xPtr, 
+EXTERN void		Tk_GetElementBox (Tk_Style style,
+				Tk_StyledElement element, char * recordPtr,
+				Tk_Window tkwin, int x, int y, int width,
+				int height, int inner, int * xPtr,
 				int * yPtr, int * widthPtr, int * heightPtr);
 #endif
 #ifndef Tk_GetElementBorderWidth_TCL_DECLARED
 #define Tk_GetElementBorderWidth_TCL_DECLARED
 /* 263 */
-EXTERN int		Tk_GetElementBorderWidth (Tk_Style style, 
-				Tk_StyledElement element, char * recordPtr, 
+EXTERN int		Tk_GetElementBorderWidth (Tk_Style style,
+				Tk_StyledElement element, char * recordPtr,
 				Tk_Window tkwin);
 #endif
 #ifndef Tk_DrawElement_TCL_DECLARED
 #define Tk_DrawElement_TCL_DECLARED
 /* 264 */
-EXTERN void		Tk_DrawElement (Tk_Style style, 
-				Tk_StyledElement element, char * recordPtr, 
-				Tk_Window tkwin, Drawable d, int x, int y, 
+EXTERN void		Tk_DrawElement (Tk_Style style,
+				Tk_StyledElement element, char * recordPtr,
+				Tk_Window tkwin, Drawable d, int x, int y,
 				int width, int height, int state);
 #endif
 #ifndef Tk_PhotoExpand_TCL_DECLARED
 #define Tk_PhotoExpand_TCL_DECLARED
 /* 265 */
-EXTERN int		Tk_PhotoExpand (Tcl_Interp * interp, 
+EXTERN int		Tk_PhotoExpand (Tcl_Interp * interp,
 				Tk_PhotoHandle handle, int width, int height);
 #endif
 #ifndef Tk_PhotoPutBlock_TCL_DECLARED
 #define Tk_PhotoPutBlock_TCL_DECLARED
 /* 266 */
-EXTERN int		Tk_PhotoPutBlock (Tcl_Interp * interp, 
-				Tk_PhotoHandle handle, 
-				Tk_PhotoImageBlock * blockPtr, int x, int y, 
+EXTERN int		Tk_PhotoPutBlock (Tcl_Interp * interp,
+				Tk_PhotoHandle handle,
+				Tk_PhotoImageBlock * blockPtr, int x, int y,
 				int width, int height, int compRule);
 #endif
 #ifndef Tk_PhotoPutZoomedBlock_TCL_DECLARED
 #define Tk_PhotoPutZoomedBlock_TCL_DECLARED
 /* 267 */
-EXTERN int		Tk_PhotoPutZoomedBlock (Tcl_Interp * interp, 
-				Tk_PhotoHandle handle, 
-				Tk_PhotoImageBlock * blockPtr, int x, int y, 
-				int width, int height, int zoomX, int zoomY, 
+EXTERN int		Tk_PhotoPutZoomedBlock (Tcl_Interp * interp,
+				Tk_PhotoHandle handle,
+				Tk_PhotoImageBlock * blockPtr, int x, int y,
+				int width, int height, int zoomX, int zoomY,
 				int subsampleX, int subsampleY, int compRule);
 #endif
 #ifndef Tk_PhotoSetSize_TCL_DECLARED
 #define Tk_PhotoSetSize_TCL_DECLARED
 /* 268 */
-EXTERN int		Tk_PhotoSetSize (Tcl_Interp * interp, 
+EXTERN int		Tk_PhotoSetSize (Tcl_Interp * interp,
 				Tk_PhotoHandle handle, int width, int height);
 #endif
 #ifndef Tk_GetUserInactiveTime_TCL_DECLARED

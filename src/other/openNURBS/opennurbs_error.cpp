@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@
 //   If an error condition occurs during a openNURBS Geometry Library
 //   computation, the ON_Error() function is called, the computation is
 //   stopped, and an error code (negative integer ) is returned.  If a
-//   warning condition occurs during a Trout Lake Geometry Library 
+//   warning condition occurs during a Trout Lake Geometry Library
 //   computation, the ON_Warning() function is called and the computation
 //   continues.
 //
@@ -39,28 +39,28 @@ static int ON_WARNING_COUNT = 0;
 #if defined(ON_DEBUG)
 
 // debug build defaults
-static int ON_DEBUG_BREAK_OPTION = 0; 
-static int ON_DEBUG_ERROR_MESSAGE_OPTION = 1; 
+static int ON_DEBUG_BREAK_OPTION = 0;
+static int ON_DEBUG_ERROR_MESSAGE_OPTION = 1;
 
 #else
 
 // release build defaults
-static int ON_DEBUG_BREAK_OPTION = 0; 
-static int ON_DEBUG_ERROR_MESSAGE_OPTION = 0; 
+static int ON_DEBUG_BREAK_OPTION = 0;
+static int ON_DEBUG_ERROR_MESSAGE_OPTION = 0;
 
 #endif
 
 
 int ON_GetErrorCount(void)
 {
-  return ON_ERROR_COUNT;	
-}	
+  return ON_ERROR_COUNT;
+}
 
 
 int ON_GetWarningCount(void)
 {
-  return ON_WARNING_COUNT;	
-}	
+  return ON_WARNING_COUNT;
+}
 
 
 int ON_GetDebugBreak(void)
@@ -87,9 +87,9 @@ void ON_EnableDebugErrorMessage( int bEnableDebugErrorMessage )
 }
 
 // The sMessage[] string is used by ON_Error()
-// and ON_Warning() to hold the message.  The static function 
-// ON_FormatMessage() is used to do most of the actual formatting.  
-// When ON_DEBUG is defined, the "PRINT_STRING" macro is used to 
+// and ON_Warning() to hold the message.  The static function
+// ON_FormatMessage() is used to do most of the actual formatting.
+// When ON_DEBUG is defined, the "PRINT_STRING" macro is used to
 // print the formatted string.
 
 #define MAX_MSG_LENGTH 2048
@@ -112,7 +112,7 @@ void ON_DebugBreak()
 }
 
 
-void ON_Error(const char* sFileName, int line_number, 
+void ON_Error(const char* sFileName, int line_number,
               const char* sFormat, ...)
 {
   int bPrintMessage = FALSE;
@@ -135,7 +135,7 @@ void ON_Error(const char* sFileName, int line_number,
       rc = FormatMessage(sFormat,args);
       va_end(args);
     }
-    if (!rc && bPrintMessage ) { 
+    if (!rc && bPrintMessage ) {
       ON_ErrorMessage(1,sMessage);
     }
   }
@@ -144,7 +144,7 @@ void ON_Error(const char* sFileName, int line_number,
 }
 
 
-void ON_Warning(const char* sFileName, int line_number, 
+void ON_Warning(const char* sFileName, int line_number,
                 const char* sFormat, ...)
 {
   int bPrintMessage = FALSE;
@@ -177,10 +177,10 @@ void ON_Warning(const char* sFileName, int line_number,
 
 
 void ON_Assert(int bCondition,
-               const char* sFileName, int line_number, 
+               const char* sFileName, int line_number,
                const char* sFormat, ...)
 {
-  if ( !bCondition ) 
+  if ( !bCondition )
   {
     int bPrintMessage = FALSE;
     int rc = 0;
@@ -202,7 +202,7 @@ void ON_Assert(int bCondition,
         rc = FormatMessage(sFormat,args);
         va_end(args);
       }
-      if (!rc && bPrintMessage ) { 
+      if (!rc && bPrintMessage ) {
         ON_ErrorMessage(2,sMessage);
       }
     }
@@ -223,5 +223,5 @@ static int FormatMessage(const char* format, va_list args)
   sMessage[MAX_MSG_LENGTH-1] = 0;
   on_vsnprintf(sMessage+len, MAX_MSG_LENGTH-1-len, format, args);
   return 0;
-}	
+}
 

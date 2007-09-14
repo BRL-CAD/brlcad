@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH expr n 8.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -204,7 +204,7 @@ precedence level.  For example, the command
 returns 0.
 .PP
 The \fB&&\fR, \fB||\fR, and \fB?:\fR operators have ``lazy
-evaluation'', just as in C, 
+evaluation'', just as in C,
 which means that operands are not evaluated if they are
 not needed to determine the outcome.  For example, in the command
 .CS
@@ -329,7 +329,7 @@ Most expressions do not require a second round of substitutions.
 Either they are enclosed in braces or, if not,
 their variable and command substitutions yield numbers or strings
 that don't themselves require substitutions.
-However, because a few unbraced expressions 
+However, because a few unbraced expressions
 need two rounds of substitutions,
 the bytecode compiler must emit
 additional instructions to handle this situation.

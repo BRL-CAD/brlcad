@@ -243,7 +243,7 @@ Tk_MainEx(
      * of length 0, (e.g. /dev/null, which is what Finder sets when double
      * clicking Wish) then use the GUI console.
      */
-    
+
     if (!tsdPtr->tty) {
 	struct stat st;
 

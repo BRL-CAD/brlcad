@@ -16,7 +16,7 @@ tcltest::loadTestedCommands
 
 # Can't find a usable tk.tcl in the following directories:
 #     {$p(:26:)}
-# 
+#
 # $p(:26:)/tk.tcl: script error
 # script error
 #     invoked from within
@@ -24,8 +24,8 @@ tcltest::loadTestedCommands
 #     ("uplevel" body line 1)
 #     invoked from within
 # "uplevel #0 [list source $file]"
-# 
-# 
+#
+#
 # This probably means that tk wasn't installed properly.
 
 ## it indicates that something went wrong sourcing tk.tcl.

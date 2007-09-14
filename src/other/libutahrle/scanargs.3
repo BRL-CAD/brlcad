@@ -4,7 +4,7 @@ scanargs, qscanargs - formatted conversion from command argument list
 .SH SYNOPSIS
 .B "#include <stdio.h>"
 .PP
-.B "scanargs(argc, argv, format" 
+.B "scanargs(argc, argv, format"
 [, pointer]...
 .B )
 .br
@@ -24,9 +24,9 @@ and stores the results of the conversions in its parameters.
 .PP
 Scanargs expects as its parameters an argument count
 .I argc,
-a pointer to an argument list 
+a pointer to an argument list
 .I argv
-(see 
+(see
 .IR exec (2)),
 a control string
 .I format,
@@ -36,25 +36,25 @@ arguments indicating where the converted output should be stored.
 .PP
 The control string contains specifications, which are used to direct
 interpretation of argument sequences.  It contains
-the necessary information to describe an acceptable 
+the necessary information to describe an acceptable
 syntax for the argument list, and the expected meaning of each argument.
 .PP
-If the scanning fails it will print a cryptic 
-message telling why it failed, and generate a 
+If the scanning fails it will print a cryptic
+message telling why it failed, and generate a
 .I usage
 message from the control string.
 .PP
 The control string is composed of two parts:
 .PP
-.B Name:\ \ 
-The first characters in the string are assumed to be the calling 
+.B Name:\ \
+The first characters in the string are assumed to be the calling
 name of the program being executed. This is used for generation of
 usage messages, but is otherwise ignored.
 If this field is a % sign, it is replaced with the contents of
 .IR argv [0]
 in the message.
 .PP
-.B Conversions:\ \ 
+.B Conversions:\ \
 Following the name, an optional list of conversion specifications is given,
 with separating spaces.  The structure of a conversion specification:
 .RS
@@ -71,7 +71,7 @@ which may be either of
 .TP 4
 .B %
 The argument is optional. Its absence is ignored.
-.TP 4 
+.TP 4
 .B !
 A required argument. If absent, an error return ensues.
 .PP
@@ -83,7 +83,7 @@ pointer parameter must be of a restricted type.
 The following conversion characters are supported:
 .TP 4
 .B d D
-a decimal integer is expected; the corresponding parameter should be an 
+a decimal integer is expected; the corresponding parameter should be an
 .I int
 or a
 .I long
@@ -92,23 +92,23 @@ or a
 is specified) pointer.
 .TP 4
 .B o O
-an octal integer is expected; the corresponding parameter should be an 
+an octal integer is expected; the corresponding parameter should be an
 .I int
 or a
 .I long
 pointer.
 .TP 4
 .B x X
-a hexadecimal integer is expected; the corresponding parameter should be an 
+a hexadecimal integer is expected; the corresponding parameter should be an
 .I int
 or a
 .I long
 pointer.
 .TP 4
 .B n N
-an integer numeric conversion using 
+an integer numeric conversion using
 .I C
-language syntax.  Numbers beginning 
+language syntax.  Numbers beginning
 .B 0x
 are hexadecimal, numbers beginning
 .B 0
@@ -137,27 +137,27 @@ address of a pointer to
 .TP 4
 .B \-
 a single character flag is expected; the corresponding parameter should
-be an 
+be an
 .I int
 pointer.  The occurrence of a
 .B \-
 followed by the character specified in the label
-will cause the setting of the least significant bit of the integer pointed to 
+will cause the setting of the least significant bit of the integer pointed to
 by the corresponding parameter.  The label may consist of up to sixteen
 (actually, up to the number of bits in an \fIint\fP) option
 characters, in which case one of the bits of the integer is independently
 set to reflect which one of the flags was present. (The right most character
 corresponds to the LSB of the integer)  Only one option may be chosen from
 each conversion specification.  The bits which are not set will remain in
-their previous state.  For example, a specification of 
+their previous state.  For example, a specification of
 .B abc%\-
 would match one of
 .B \-a \-b
 or
 .B \-c
-in the argument list. 
+in the argument list.
 .B \-c
-would cause the corresponding variable to be set to 1, 
+would cause the corresponding variable to be set to 1,
 .B \-b
 to 2, and
 .B \-a
@@ -255,9 +255,9 @@ in a C program executed by the shell command
 program 10 3.5397 inputfile
 .RE
 .PP
-will assign to 
+will assign to
 .I i
-the value 10, 
+the value 10,
 .I x
 the value 3.5397, and
 .I name
@@ -288,7 +288,7 @@ Finally, executing the command
 program 10
 .RE
 .br
-would assign 10 to 
+would assign 10 to
 .IR i ,
 leaving
 .I x
@@ -296,7 +296,7 @@ and
 .I name
 unaffected.
 .PP
-This call could be used for the 
+This call could be used for the
 .IR diff (1)
 command
 .RS
@@ -308,12 +308,12 @@ scanargs(argc, argv, "diff b%\- efh%\- file1!s file2!s",
 &blanks, &flags, &file1, &file2 );
 .RE
 .PP
-and would only allow one of either 
+and would only allow one of either
 .BR \-e ", " \-f ,
 or
 .B \-h
-to be chosen optionally, with 
-.B \-b 
+to be chosen optionally, with
+.B \-b
 as an independent option.
 .B File1
 and
@@ -332,11 +332,11 @@ This call could be used for a simplified version of the
 command
 .RS
 .PP
-int efile; int noprint; char *script; 
+int efile; int noprint; char *script;
 .br
 char *file1; char *file2;
 .br
-scanargs(argc, argv, 
+scanargs(argc, argv,
 .in 15
 "sed n%\- f%\-editfile!s script%s file%s",
 .in 15
@@ -371,12 +371,12 @@ format string:	"prog d%\-num%d othernum%d"
 command line:	prog \-d 9
 .RE
 .br
-It is unclear whether the number 9 should be associated with the 
+It is unclear whether the number 9 should be associated with the
 .I num
 parameter or the
 .I othernum
-parameter.  
-.I Scanargs 
+parameter.
+.I Scanargs
 assigns it to the
 .I num
 parameter.  To force it to be associated with
@@ -390,10 +390,10 @@ command could be invoked as either
 or		prog \-d \-\^\- 9
 .RE
 .br
-The 
+The
 .B \-\^\-
 in the second example is interpreted as a flag, thereby
-terminating the scan for arguments introduced by the 
+terminating the scan for arguments introduced by the
 .BR \-d .
 According to the proposed standard, an argument of
 .B \-\^\-
@@ -405,10 +405,10 @@ Note that if the format string in the above example were
 		"prog othernum%d d%\-num%d"
 .RE
 .br
-it would be impossible to assign a value to 
+it would be impossible to assign a value to
 .I num
 without also
-assigning a value to 
+assigning a value to
 .I othernum.
 A command line of
 .RS
@@ -425,5 +425,5 @@ Gary Newman \(em Ampex Corporation
 Spencer W. Thomas \(em University of Utah
 .SH BUGS
 By its nature a call to scanargs defines a syntax
-which may be ambiguous, and although the results may be surprising, 
+which may be ambiguous, and although the results may be surprising,
 they are quite predictable.

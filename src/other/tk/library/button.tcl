@@ -130,7 +130,7 @@ bind Radiobutton <Leave> {
 if {"windows" eq $tcl_platform(platform)} {
 
 #########################
-# Windows implementation 
+# Windows implementation
 #########################
 
 # ::tk::ButtonEnter --

@@ -3,7 +3,7 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # Copyright (c) 1993-1998 Lucent Technologies, Inc.
 # RCS: $Id$
 #------------------------------------------------------------------------------
@@ -14,7 +14,7 @@
 MSG = ^
 You must run this makefile only from the directory it is in.^
 Please `cd` to its location first.
-!error $(MSG) 
+!error $(MSG)
 !endif
 
 PROJECT	= itk
@@ -205,7 +205,7 @@ crt = -MT$(DBGX)
 
 !if $(TCLINSTALL)
 TCL_INCLUDES	= -I"$(TCLDIR)\include"
-TK_INCLUDES	= 
+TK_INCLUDES	=
 !else
 TCL_INCLUDES	= -I"$(TCLDIR)\generic"
 TK_INCLUDES	= -I"$(TKDIR)\generic" -I"$(TKDIR)\xlib"

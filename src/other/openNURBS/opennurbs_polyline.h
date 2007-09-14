@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ public:
   //   other_radius.
   // Parameters:
   //   circle - [in] circle star polygon starts on
-  //   other_radius - [in] radius of other circle 
+  //   other_radius - [in] radius of other circle
   //   corner_count - [in] (>=3) number of corners on circle
   //      There will be 2*corner_count sides and 2*corner_count
   //      vertices.
@@ -86,7 +86,7 @@ public:
   // See Also:
   //   ON_Polyline::Clean.
   bool IsValid(
-    double tolerance = 0.0 
+    double tolerance = 0.0
     ) const;
 
   // Description:
@@ -98,8 +98,8 @@ public:
   // Remarks:
   //   If the distance between points polyline[i] and polyline[i+1]
   //   is <= tolerance, then the point with index (i+1) is removed.
-  int Clean( 
-    double tolerance = 0.0 
+  int Clean(
+    double tolerance = 0.0
     );
 
   // Returns:
@@ -118,7 +118,7 @@ public:
   //   point in the polyline whose distance from the start and end
   //   points is > tolerance.
   bool IsClosed(
-    double tolerance = 0.0 
+    double tolerance = 0.0
     ) const;
 
 
@@ -161,7 +161,7 @@ public:
   ON_3dVector TangentAt( double t ) const;
 
   // Description:
-  //   Find a point on the polyline that is closest 
+  //   Find a point on the polyline that is closest
   //   to test_point.
   // Parameters:
   //   test_point - [in]
@@ -170,13 +170,13 @@ public:
   //             exist, then the smallest solution is returned.
   // Returns:
   //   TRUE if successful.
-  bool ClosestPointTo( 
-        const ON_3dPoint& test_point, 
+  bool ClosestPointTo(
+        const ON_3dPoint& test_point,
         double* t
         ) const;
 
   // Description:
-  //   Find a point on the polyline that is closest 
+  //   Find a point on the polyline that is closest
   //   to test_point.
   // Parameters:
   //   test_point - [in]
@@ -192,21 +192,21 @@ public:
   //   ClosestPointTo( ON_3dPoint(0,0,0), &t, 3, 6 );
   // Returns:
   //   TRUE if successful.
-  bool ClosestPointTo( 
-        const ON_3dPoint& test_point, 
-        double* t, 
+  bool ClosestPointTo(
+        const ON_3dPoint& test_point,
+        double* t,
         int segment_index0, // index of segment where search begins
         int segment_index1 // index + 1 of segment where search stops
         ) const;
 
   // Description:
-  //   Find a point on the polyline that is closest 
+  //   Find a point on the polyline that is closest
   //   to test_point.
   // Parameters:
   //   test_point - [in]
   // Returns:
   //   point on polyline.
-  ON_3dPoint ClosestPointTo( 
+  ON_3dPoint ClosestPointTo(
        const ON_3dPoint& test_point
     ) const;
 

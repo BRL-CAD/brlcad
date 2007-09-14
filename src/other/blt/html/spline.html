@@ -7,19 +7,19 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 spline -  Fit curves with spline interpolation
 
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <P>
 <B>spline natural <I>x y sx sy</I></B> <P>
-<B>spline quadratic <I>x y sx sy</I></B> 
+<B>spline quadratic <I>x y sx sy</I></B>
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The
 <B>spline</B> command computes a spline fitting a set of data points (x and y
 vectors) and produces a vector of the interpolated images (y-coordinates)
-at a given set of x-coordinates. 
+at a given set of x-coordinates.
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 Curve fitting has many applications.
  In graphs, curve fitting can be useful for displaying curves which are
@@ -40,7 +40,7 @@ spline interpolation using cubic ("natural") or quadratic polynomial functions.
 y vectors.  The interpolated new points are determined by another vector
 which represents the abscissas (x-coordinates) or the new points.  The ordinates
 (y-coordinates) are interpolated using the spline and  written to another
-vector. 
+vector.
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 Before we can use the <B>spline</B> command, we need to create two
 BLT vectors which will represent the knots (x and y coordinates) of the
@@ -54,7 +54,7 @@ for {set i 10} {$i &gt; 0} {incr i -1} {<BR>
     set y($i-1) [expr sin($i*$i*$i)]<BR>
 }<BR>
 </CODE><P>We now have two vectors <I>x</I> and <I>y</I> representing the ten data points we're trying
-to fit.  The order of the values of <I>x</I> must be monotonically increasing. 
+to fit.  The order of the values of <I>x</I> must be monotonically increasing.
 We can use the vector's <B>sort</B> operation  to sort the vectors. <BR>
 <CODE>x sort y<BR>
 </CODE><P>The components of <I>x</I> are sorted in increasing order.  The components of <I>y</I>
@@ -93,7 +93,7 @@ through each knot.  In mathematical terms, the second derivatives of the
 first and last points are zero. <P>
 Alternatively, you can generate a spline
 using the <B>quadratic</B> operation.  Quadratic interpolation produces a spline
-which follows  the line segments of the data points much more closely. 
+which follows  the line segments of the data points much more closely.
  <BR>
 <CODE>spline quadratic x y sx sy <BR>
 
@@ -135,11 +135,11 @@ Numerical Analysis
 by R. Burden, J. Faires and A. Reynolds.<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;
 Prindle, Weber &amp; Schmidt, 1981, pp. 112
 
-Shape Preserving Quadratic Splines 
+Shape Preserving Quadratic Splines
 by D.F.Mcallister &amp; J.A.Roulier
 Coded by S.L.Dodd &amp; M.Roulier N.C.State University.
 
-</PRE>The original code for the quadratric spline can be found in TOMS #574. 
+</PRE>The original code for the quadratric spline can be found in TOMS #574.
 <H2><A NAME="sect7" HREF="#toc7">Keywords</A></H2>
 spline,
 vector, graph <P>

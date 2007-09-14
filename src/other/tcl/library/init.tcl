@@ -203,9 +203,9 @@ if {[interp issafe]} {
 		-subcommands {
 		    add clicks format microseconds milliseconds scan seconds
 		}]
-	
+
 	# Auto-loading stubs for 'clock.tcl'
-	
+
 	foreach cmd {add format scan} {
 	    proc ::tcl::clock::$cmd args {
 		variable TclLibDir
@@ -306,7 +306,7 @@ proc unknown args {
 	    if {$code ==  1} {
 		#
 		# Compute stack trace contribution from the [uplevel].
-		# Note the dependence on how Tcl_AddErrorInfo, etc. 
+		# Note the dependence on how Tcl_AddErrorInfo, etc.
 		# construct the stack trace.
 		#
 		set errorInfo [dict get $opts -errorinfo]
@@ -439,7 +439,7 @@ proc unknown args {
 # library file to create the procedure.  Returns 1 if it successfully
 # loaded the procedure, 0 otherwise.
 #
-# Arguments: 
+# Arguments:
 # cmd -			Name of the command to find and load.
 # namespace (optional)  The namespace where the command is being used - must be
 #                       a canonical namespace as returned [namespace current]
@@ -463,7 +463,7 @@ proc auto_load {cmd {namespace {}}} {
 	    #    info commands $name
 	    # Unfortunately, if the name has glob-magic chars in it like *
 	    # or [], it may not match.  For our purposes here, a better
-	    # route is to use 
+	    # route is to use
 	    #    namespace which -command $name
 	    if {[namespace which -command $name] ne ""} {
 		return 1
@@ -494,7 +494,7 @@ proc auto_load {cmd {namespace {}}} {
 # of available commands.  Returns 1 if the index is loaded, and 0 if
 # the index is already loaded and up to date.
 #
-# Arguments: 
+# Arguments:
 # None.
 
 proc auto_load_index {} {
@@ -584,7 +584,7 @@ proc auto_qualify {cmd namespace} {
 	    return [list [string range $cmd 2 end]]
 	}
     }
-    
+
     # Potentially returning 2 elements to try  :
     # (if the current namespace is not the global one)
 
@@ -642,13 +642,13 @@ proc auto_import {pattern} {
 
 # auto_execok --
 #
-# Returns string that indicates name of program to execute if 
+# Returns string that indicates name of program to execute if
 # name corresponds to a shell builtin or an executable in the
-# Windows search path, or "" otherwise.  Builds an associative 
-# array auto_execs that caches information about previous checks, 
+# Windows search path, or "" otherwise.  Builds an associative
+# array auto_execs that caches information about previous checks,
 # for speed.
 #
-# Arguments: 
+# Arguments:
 # name -			Name of a command.
 
 if {$tcl_platform(platform) eq "windows"} {
@@ -703,7 +703,7 @@ proc auto_execok name {
 
     set path "[file dirname [info nameof]];.;"
     if {[info exists env(WINDIR)]} {
-	set windir $env(WINDIR) 
+	set windir $env(WINDIR)
     }
     if {[info exists windir]} {
 	if {$tcl_platform(os) eq "Windows NT"} {
@@ -768,13 +768,13 @@ proc auto_execok name {
 # This procedure is called by Tcl's core when attempts to call the
 # filesystem's copydirectory function fail.  The semantics of the call
 # are that 'dest' does not yet exist, i.e. dest should become the exact
-# image of src.  If dest does exist, we throw an error.  
-# 
+# image of src.  If dest does exist, we throw an error.
+#
 # Note that making changes to this procedure can change the results
 # of running Tcl's tests.
 #
-# Arguments: 
-# action -              "renaming" or "copying" 
+# Arguments:
+# action -              "renaming" or "copying"
 # src -			source directory
 # dest -		destination directory
 proc tcl::CopyDirectory {action src dest} {
@@ -802,7 +802,7 @@ proc tcl::CopyDirectory {action src dest} {
 	    # exists, then we should only call this function if -force
 	    # is true, which means we just want to over-write.  So,
 	    # the following code is now commented out.
-	    # 
+	    #
 	    # return -code error "error $action \"$src\" to\
 	    # \"$dest\": file already exists"
 	} else {
@@ -835,7 +835,7 @@ proc tcl::CopyDirectory {action src dest} {
     # Have to be careful to capture both visible and hidden files.
     # We will also be more generous to the file system and not
     # assume the hidden and non-hidden lists are non-overlapping.
-    # 
+    #
     # On Unix 'hidden' files begin with '.'.  On other platforms
     # or filesystems hidden files may have other interpretations.
     set filelist [concat [glob -nocomplain -directory $src *] \

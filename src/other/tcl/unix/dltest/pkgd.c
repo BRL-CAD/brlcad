@@ -1,4 +1,4 @@
-/* 
+/*
  * pkgd.c --
  *
  *	This file contains a simple Tcl package "pkgd" that is intended

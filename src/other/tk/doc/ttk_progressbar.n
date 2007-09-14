@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH ttk_progressbar n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -46,15 +46,15 @@ that is, the progress bar completes one "cycle" when
 the \fB-value\fR increases by \fB-maximum\fR.
 .OP \-variable variable Variable
 The name of a Tcl variable which is linked to the \fB-value\fR.
-If specified, the \fB-value\fR of the progress bar is 
-automatically set to the value of the variable whenever 
+If specified, the \fB-value\fR of the progress bar is
+automatically set to the value of the variable whenever
 the latter is modified.
 .OP \-phase phase Phase
 Read-only option.
-The widget periodically increments the value of this option 
+The widget periodically increments the value of this option
 whenever the \fB-value\fR is greater than 0 and,
 in \fIdeterminate\fR mode, less than \fB-maximum\fR.
-This option may be used by the current theme 
+This option may be used by the current theme
 to provide additional animation effects.
 
 .SH "WIDGET COMMAND"
@@ -70,7 +70,7 @@ Test the widget state; see \fIttk_widget(n)\fR.
 .TP
 \fIpathName \fBstart\fR ?\fIinterval\fR?
 Begin autoincrement mode:
-schedules a recurring timer event that calls \fBstep\fR 
+schedules a recurring timer event that calls \fBstep\fR
 every \fIinterval\fR milliseconds.
 If omitted, \fIinterval\fR defaults to 50 milliseconds (20 steps/second).
 .TP
@@ -78,7 +78,7 @@ If omitted, \fIinterval\fR defaults to 50 milliseconds (20 steps/second).
 Modify or query the widget state; see \fIttk_widget(n)\fR.
 .TP
 \fIpathName \fBstep\fR ?\fIamount\fR?
-Increments the \fB-value\fR by \fIamount\fR.  
+Increments the \fB-value\fR by \fIamount\fR.
 \fIamount\fR defaults to 1.0 if omitted.
 .TP
 \fIpathName \fBstop\fR

@@ -7,7 +7,7 @@
 # Copyright (c) 1996 by Sun Microsystems, Inc.
 #
 # SCCS: @(#) regexpTestLib.tcl 1.4 98/01/22 14:48:34
-# 
+#
 
 proc readInputFile {} {
     global inFileName
@@ -46,7 +46,7 @@ proc readInputFile {} {
 #
 # strings with embedded @'s are truncated
 # unpreceeded @'s are replaced by {}
-# 
+#
 proc removeAts {ls} {
     set len [llength $ls]
     set newLs {}
@@ -97,7 +97,7 @@ proc writeOutputFile {numLines fcn} {
     global outFileName
     global lineArray
 
-    # open output file and write file header info to it. 
+    # open output file and write file header info to it.
 
     set fileId [open $outFileName w]
 
@@ -136,7 +136,7 @@ proc writeOutputFile {numLines fcn} {
 	    puts $fileId $currentLine
 	    incr srcLineNum $lineArray(c$lineNum)
 	    incr lineNum
-	    continue	    
+	    continue
 	}
 
 	set len [llength $currentLine]
@@ -147,7 +147,7 @@ proc writeOutputFile {numLines fcn} {
 	    puts $fileId "\n"
 	    incr srcLineNum $lineArray(c$lineNum)
 	    incr lineNum
-	    continue	    
+	    continue
 	}
 	if {($len < 3)} {
 	    puts "warning: test is too short --\n\t$currentLine"
@@ -212,21 +212,21 @@ proc convertTestLine {currentLine len lineNum srcLineNum} {
     set vals {}
     set result 0
     set v 0
-    
+
     if {[regsub {\*} "$flags" "" newFlags] == 1} {
 	# an error is expected
-	
+
 	if {[string compare $str "EMPTY"] == 0} {
 	    # empty regexp is not an error
 	    # skip this test
-	    
+
 	    return "\# skipping the empty-re test from line $srcLineNum\n"
 	}
 	set flags $newFlags
 	set result "\{1 \{[convertErrCode $str]\}\}"
     } elseif {$numVars > 0} {
 	# at least 1 match is made
-	
+
 	if {[regexp {s} $flags] == 1} {
 	    set result "\{0 1\}"
 	} else {
@@ -243,7 +243,7 @@ proc convertTestLine {currentLine len lineNum srcLineNum} {
 	}
     } else {
 	# no match is made
-	
+
 	set result "\{0 0\}"
     }
 
@@ -251,7 +251,7 @@ proc convertTestLine {currentLine len lineNum srcLineNum} {
 
     set cmd [prepareCmd $flags $re $str $vars $noBraces]
     if {$cmd == -1} {
-	return "\# skipping test with metasyntax from line $srcLineNum\n"	    
+	return "\# skipping test with metasyntax from line $srcLineNum\n"
     }
 
     set test "test regexp-1.$srcLineNum \{converted from line $srcLineNum\} \{\n"

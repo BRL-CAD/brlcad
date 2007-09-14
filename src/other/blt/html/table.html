@@ -7,9 +7,9 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
-table - Arranges widgets in a table 
+table - Arranges widgets in a table
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <B>table
 <I>container</I></B> ?<I>widget index option value</I>?... <P>
@@ -26,7 +26,7 @@ table - Arranges widgets in a table
 <B>table containers </B>?<I>switch</I>? ?<I>arg</I>? <P>
 <B>table save
 <I>container</I></B>  <P>
-<B>table search <I>container</I></B> ?<I>switch arg</I>?... 
+<B>table search <I>container</I></B> ?<I>switch arg</I>?...
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The <B>table</B> command
 arranges widgets in a table.  The alignment of widgets is detemined by their
@@ -56,7 +56,7 @@ of the table is in turn the sum of the row and column sizes.  This is the
 table's <I>normal size</I>. <P>
 The total number of rows and columns in a table is determined
 from the indices specified.  The table grows dynamically as windows are
-added at larger indices. 
+added at larger indices.
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 The table geometry manager is created by
 invoking the <B>table</B> command. <BR>
@@ -209,13 +209,13 @@ from the table. <BR>
 <CODE># Remove the windows from the table<BR>
 table forget .quit .frame<BR>
 </CODE><P>It's not necessary to specify the container.  The <B>table</B> command determines
-the container from the widget name. 
+the container from the widget name.
 <H2><A NAME="sect5" HREF="#toc5">Operations</A></H2>
 The following operations are
-available for the <B>table</B>: 
+available for the <B>table</B>:
 <DL>
 
-<DT><B>table <I>container</I></B> ?<I>widget index option value</I>?...  
+<DT><B>table <I>container</I></B> ?<I>widget index option value</I>?...
 </DT>
 <DD>Adds the widget <I>widget</I> to the table at <I>index</I>.  <I>Index</I> is a row,column position
 in the table.  It must be in the form <I>row</I>,<I>column</I> where <I>row</I> and <I>column</I> are
@@ -315,7 +315,7 @@ the column of <I>container</I> to be queried.  <I>Item</I> must be in the form <
 
 <DT><I>R<I>i</I></I>  </DT>
 <DD>Specifies the row of <I>container</I> to be
-queried. <I>Item</I> must be in the form <I>R<I>i</I></I>, where <I>i</I> is the index of the row.  
+queried. <I>Item</I> must be in the form <I>R<I>i</I></I>, where <I>i</I> is the index of the row.
 </DD>
 
 <DT><I>widget</I>  </DT>
@@ -362,7 +362,7 @@ managed by any table, the empty string is returned. </DD>
 the criteria given by <I>switch</I> and <I>arg</I>.  <I>Container</I> is name of the container
 window associated with the table to be searched. The name of the widget
 is returned if any one <I>switch</I>-<I>arg</I> criteria matches. If no <I>switch</I>-<I>arg</I> arguments
-are given, the names of all widgets managed by <I>container</I> are returned. 
+are given, the names of all widgets managed by <I>container</I> are returned.
 The following are switches are available: <blockquote></DD>
 
 <DT><B>-pattern</B> <I>pattern</I> </DT>
@@ -447,7 +447,7 @@ is <I>normal</I>. <blockquote></DD>
 
 <DT><I>full</I> </DT>
 <DD>Only the width
-of <I>widget</I> will be considered when computing the widths of the columns. 
+of <I>widget</I> will be considered when computing the widths of the columns.
 </DD>
 
 <DT><I>normal</I> </DT>
@@ -475,7 +475,7 @@ to fill any free space in the span surrounding <I>widget</I>. <I>Fill</I> is eit
 and horizontally.   </DD>
 
 <DT><I>none</I> </DT>
-<DD>The widget does not grow along with the span.  
+<DD>The widget does not grow along with the span.
 </DD>
 </DL>
 </blockquote>
@@ -612,7 +612,7 @@ top and bottom areas are padded by the value.  The default is <I>0</I>. </DD>
 
 <DT><B>-resize <I>mode</I></B>
 </DT>
-<DD>Indicates that the row can expand or shrink from its requested height 
+<DD>Indicates that the row can expand or shrink from its requested height
 when the table is resized. <I>Mode</I> must be one of the following: <I>none</I>, <I>expand</I>,
 <I>shrink</I>, or <I>both</I>.  If <I>mode</I> is  <I>expand</I> the height of the row is expanded if
 there is extra space in the container. If <I>mode</I> is <I>shrink</I> its height may
@@ -694,7 +694,7 @@ are arranged in the same container ".", but using different geometry managers.
 </CODE><P>This leads to bizarre window resizing, as each geometry manager applies
 its own brand of layout policies.  When the container is a top level window
 (such as "."), your window manager may become locked as it responds to the
-never-ending stream of resize requests.   
+never-ending stream of resize requests.
 <H2><A NAME="sect13" HREF="#toc13">Keywords</A></H2>
 frame, geometry manager,
 location, table, size <P>

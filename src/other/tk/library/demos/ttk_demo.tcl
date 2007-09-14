@@ -345,7 +345,7 @@ $l.mb configure -menu [menubuttonMenu $l.mb.menu]
 
 set ::entryText "Entry widget"
 ttk::entry $l.e -textvariable ::entryText
-$l.e selection range 6 end 
+$l.e selection range 6 end
 
 set ltext [ttk::scrolled text $l.t -width 12 -height 5 -wrap none]
 
@@ -363,8 +363,8 @@ grid rowconfigure    $l 7 -weight 1 ; # text widget (grid is a PITA)
 
 ## Main demo pane - core widgets.
 #
-checkbutton $r.cb -text "Checkbutton" -variable ::V(SELECTED) 
-radiobutton $r.rb1 -text "One" -variable ::V(CHOICE) -value 1 
+checkbutton $r.cb -text "Checkbutton" -variable ::V(SELECTED)
+radiobutton $r.rb1 -text "One" -variable ::V(CHOICE) -value 1
 radiobutton $r.rb2 -text "Two" -variable ::V(CHOICE) -value 2 -underline 1
 radiobutton $r.rb3 -text "Three" -variable ::V(CHOICE) -value 3
 button $r.button -text "Button"
@@ -515,7 +515,7 @@ proc tree.pane {w} {
     ttk::scrollbar $w.vsb -command [list $w.t yview]
     ttk::treeview $w.t -columns [list Class] \
 	-padding 4 \
-	-yscrollcommand [list sbset $w.vsb] 
+	-yscrollcommand [list sbset $w.vsb]
 
     grid $w.t $w.vsb -sticky nwse
     grid columnconfigure $w 0 -weight 1
@@ -523,7 +523,7 @@ proc tree.pane {w} {
     grid propagate $w 0
 
     #
-    # Add initial tree node: 
+    # Add initial tree node:
     # Later nodes will be added in <<TreeviewOpen>> binding.
     #
     $w.t insert {} 0 -id . -text "Main Window" -open 0 \
@@ -535,7 +535,7 @@ proc tree.pane {w} {
     return $w
 }
 
-# fillTree -- <<TreeviewOpen>> binding for tree widget. 
+# fillTree -- <<TreeviewOpen>> binding for tree widget.
 #
 proc fillTree {tv} {
     set id [$tv focus]
@@ -577,13 +577,13 @@ bind ShowDescription <Enter> { $BASE.nb.others.m configure -text $Desc(%W) }
 bind ShowDescription <Leave> { $BASE.nb.others.m configure -text "" }
 
 foreach {command label description} {
-    trackStates "Widget states..." 
+    trackStates "Widget states..."
     "Display/modify widget state bits"
 
     scrollbarResizeDemo  "Scrollbar resize behavior..."
     "Shows how Ttk and standard scrollbars differ when they're sized too large"
 
-    trackFocus "Track keyboard focus..." 
+    trackFocus "Track keyboard focus..."
     "Display the name of the widget that currently has focus"
 
     repeatDemo "Repeating buttons"
@@ -626,7 +626,7 @@ proc trackFocus {} {
     global Focus
     set t .focus
     destroy $t
-    toplevel $t 
+    toplevel $t
     wm title $t "Keyboard focus"
     set i 0
     foreach {label variable} {
@@ -681,7 +681,7 @@ proc TrackWidget {w} {
     if {[winfo exists .states]} {
 	UpdateStates
     } else {
-    	trackStates 
+    	trackStates
     }
 }
 
@@ -749,7 +749,7 @@ proc ChangeState {state} {
     variable State
     variable Widget
     if {$Widget ne ""} {
-	if {$State($state)} { 
+	if {$State($state)} {
 	    $Widget state $state
 	} else {
 	    $Widget state !$state

@@ -28,13 +28,13 @@ package require Tcl 8.4
 # and need not follow the licensing terms described here, provided that
 # the new terms are clearly indicated on the first page of each file where
 # they apply.
-# 
+#
 # IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY
 # FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
 # ARISING OUT OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY
 # DERIVATIVES THEREOF, EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
 # INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE
@@ -57,7 +57,7 @@ package require Tcl 8.4
 #  Sep 14, 1996 - made various modifications for tcl7.6b1/tk4.2b1
 #  Oct 18, 1996 - added tcl7.6/tk4.2 to the list of distributions.
 #  Oct 22, 1996 - major hacking on indentation code and elsewhere.
-#  Mar  4, 1997 - 
+#  Mar  4, 1997 -
 #  May 28, 1997 - added tcl8.0b1/tk8.0b1 to the list of distributions
 #		- cleaned source for tclsh8.0 execution
 #		- renamed output files for windoze installation
@@ -510,7 +510,7 @@ proc output-RS-list {} {
 	} else {
 	    man-puts $line
 	}
-    }	
+    }
     man-puts </DL>
 }
 
@@ -1149,7 +1149,7 @@ proc output-directive {line} {
 	}
 	.DS {
 	    if {[next-op-is .ta rest]} {
-		
+
 	    }
 	    if {[match-text @stuff .DE]} {
 		man-puts <PRE>$stuff</PRE>
@@ -1162,7 +1162,7 @@ proc output-directive {line} {
 	}
 	.CS {
 	    if {[next-op-is .ta rest]} {
-		
+
 	    }
 	    if {[match-text @stuff .CE]} {
 		man-puts <PRE>$stuff</PRE>
@@ -1268,7 +1268,7 @@ proc output-directive {line} {
 }
 ##
 ## merge copyright listings
-## 
+##
 proc merge-copyrights {l1 l2} {
     foreach copyright [concat $l1 $l2] {
 	if {[regexp {^Copyright +\(c\) +(\d+) +(by +)?(\w.*)$} $copyright all date by who]} {
@@ -1718,7 +1718,7 @@ set tclcmddesc {The commands which the <B>tclsh</B> interpreter implements.}
 set tkcmddesc {The additional commands which the <B>wish</B> interpreter implements.}
 set tcllibdesc {The C functions which a Tcl extended C program may use.}
 set tklibdesc {The additional C functions which a Tk extended C program may use.}
-		
+
 if {1} {
     if {[catch {
 	make-man-pages $webdir \

@@ -36,11 +36,11 @@ static std::numeric_limits<double> real;
 #define TRACE(s)
 //#define TRACE(s) std::cerr << s << std::endl;
 #define TRACE2(s) std::cerr << s << std::endl;
-#define TRACE1(s) 
-//#define TRACE(s) 
+#define TRACE1(s)
+//#define TRACE(s)
 
 namespace brlcad {
-  
+
   //--------------------------------------------------------------------------------
   // Bounding volume hierarchy classes
 
@@ -57,7 +57,7 @@ namespace brlcad {
     BVSegment() {}
     BVSegment(BVNode<BV>* node, double near, double far) :
       m_node(node), m_near(near), m_far(far) {}
-    BVSegment(const BVSegment& seg) : m_node(seg.m_node), 
+    BVSegment(const BVSegment& seg) : m_node(seg.m_node),
 				      m_near(seg.m_near),
 				      m_far(seg.m_far) {}
     BVSegment& operator=(const BVSegment& seg) {
@@ -103,7 +103,7 @@ namespace brlcad {
 
     virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
     virtual bool intersectsHierarchy(ON_Ray& ray, std::list<segment>* results = 0);
-    
+
   private:
     BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
   };
@@ -111,9 +111,9 @@ namespace brlcad {
   template<class BV>
   class SubsurfaceBVNode : public BVNode<BV> {
   public:
-    SubsurfaceBVNode(const BV& node, 
-		     const ON_BrepFace* face, 
-		     const ON_Interval& u, 
+    SubsurfaceBVNode(const BV& node,
+		     const ON_BrepFace* face,
+		     const ON_Interval& u,
 		     const ON_Interval& v,
 		     bool checkTrim = true,
 		     bool trimmed = false);
@@ -123,26 +123,26 @@ namespace brlcad {
     bool doTrimming() const;
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-    
+
     const ON_BrepFace* m_face;
     ON_Interval m_u;
     ON_Interval m_v;
     bool m_checkTrim;
     bool m_trimmed;
-  };  
-  
+  };
+
   typedef BVNode<ON_BoundingBox> BBNode;
   typedef SubsurfaceBVNode<ON_BoundingBox> SubsurfaceBBNode;
 
   //--------------------------------------------------------------------------------
   // Template Implementation
   template<class BV>
-  inline 
+  inline
   BVNode<BV>::BVNode() { }
-  
+
   template<class BV>
   inline
-  BVNode<BV>::BVNode(const BV& node) : m_node(node) {     
+  BVNode<BV>::BVNode(const BV& node) : m_node(node) {
     for (int i = 0; i < 3; i++) {
       double d = m_node.m_max[i] - m_node.m_min[i];
       if (ON_NearZero(d,ON_ZERO_TOLERANCE)) {
@@ -151,7 +151,7 @@ namespace brlcad {
       }
     }
   }
-  
+
   template<class BV>
   inline
   BVNode<BV>::~BVNode() {
@@ -162,33 +162,33 @@ namespace brlcad {
   }
 
   template<class BV>
-  inline void 
+  inline void
   BVNode<BV>::addChild(const BV& child) {
     m_children.push_back(new BVNode<BV>(child));
   }
 
   template<class BV>
-  inline void 
+  inline void
   BVNode<BV>::addChild(BVNode<BV>* child) {
     m_children.push_back(child);
   }
 
   template<class BV>
-  inline void 
+  inline void
   BVNode<BV>::removeChild(const BV& child) {
     // XXX implement
   }
 
   template<class BV>
-  inline void 
+  inline void
   BVNode<BV>::removeChild(BVNode<BV>* child) {
     // XXX implement
   }
 
   template<class BV>
-  inline bool 
+  inline bool
   BVNode<BV>::isLeaf() const { return false; }
-  
+
   template<class BV>
   inline void
   BVNode<BV>::GetBBox(double* min, double* max) {
@@ -200,7 +200,7 @@ namespace brlcad {
     max[2] = m_node.m_max[2];
   }
 
-  
+
   template<class BV>
   inline bool
   BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt) {
@@ -237,7 +237,7 @@ namespace brlcad {
       //       for (std::list<BVNode<BV>*>::iterator j = m_children.begin(); j != m_children.end(); j++) {
       // 	(*j)->intersectsHierarchy(ray, results_opt);
       //       }
-      for (int i = 0; i < m_children.size(); i++) {	
+      for (int i = 0; i < m_children.size(); i++) {
 	m_children[i]->intersectsHierarchy(ray, results_opt);
       }
     }
@@ -246,7 +246,7 @@ namespace brlcad {
   }
 
   template<class BV>
-  int 
+  int
   BVNode<BV>::depth() {
     int d = 0;
     for (int i = 0; i < m_children.size(); i++) {
@@ -256,7 +256,7 @@ namespace brlcad {
   }
 
   template<class BV>
-  void 
+  void
   BVNode<BV>::getLeaves(list<BVNode<BV>*>& out_leaves) {
     if (m_children.size() > 0) {
       for (int i = 0; i < m_children.size(); i++) {
@@ -266,8 +266,8 @@ namespace brlcad {
       out_leaves.push_back(this);
     }
   }
-  
-  
+
+
   template<class BV>
   BVNode<BV>*
   BVNode<BV>::closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right) {
@@ -296,21 +296,21 @@ namespace brlcad {
 	TRACE("\t" << PT(closestNode->m_estimate));
       }
       return closestNode->getClosestPointEstimate(pt, u, v);
-    } 
+    }
     throw new exception();
   }
 
   template<class BV>
-  inline SubsurfaceBVNode<BV>::SubsurfaceBVNode(const BV& node, 
-						const ON_BrepFace* face, 
-						const ON_Interval& u, 
+  inline SubsurfaceBVNode<BV>::SubsurfaceBVNode(const BV& node,
+						const ON_BrepFace* face,
+						const ON_Interval& u,
 						const ON_Interval& v,
 						bool checkTrim,
-						bool trimmed) 
+						bool trimmed)
     : BVNode<BV>(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), m_trimmed(trimmed)
   {
   }
-  
+
   template<class BV>
   inline bool
   SubsurfaceBVNode<BV>::intersectedBy(ON_Ray& ray, double *tnear, double *tfar) {
@@ -318,13 +318,13 @@ namespace brlcad {
   }
 
   template<class BV>
-  inline bool 
+  inline bool
   SubsurfaceBVNode<BV>::isLeaf() const {
     return true;
   }
 
   template<class BV>
-  inline bool 
+  inline bool
   SubsurfaceBVNode<BV>::doTrimming() const {
     return m_checkTrim;
   }
@@ -349,7 +349,7 @@ namespace brlcad {
 
     u = m_u;
     v = m_v;
-    
+
     // XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
     if (!surf->EvPoint(uvs[0][0],uvs[0][1],corners[0]) ||
 	!surf->EvPoint(uvs[1][0],uvs[1][1],corners[1]) ||
@@ -358,7 +358,7 @@ namespace brlcad {
       throw new exception(); // XXX - fix this
     }
     corners[4] = BVNode<BV>::m_estimate;
-			
+
     // find the point on the surface closest to pt
     int mini = 0;
     double mindist = pt.DistanceTo(corners[mini]);
@@ -382,8 +382,8 @@ namespace brlcad {
     SurfaceTree(ON_BrepFace* face);
     ~SurfaceTree();
 
-    BBNode* getRootNode() const;    
-    /** 
+    BBNode* getRootNode() const;
+    /**
      * Calculate, using the surface bounding volume hierarchy, a uv
      * estimate for the closest point on the surface to the point in
      * 3-space.
@@ -395,7 +395,7 @@ namespace brlcad {
      */
     void getLeaves(list<BBNode*>& out_leaves);
     int depth();
-        
+
   private:
     bool isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v);
     BBNode* subdivideSurface(const ON_Interval& u, const ON_Interval& v, int depth);
@@ -409,28 +409,28 @@ namespace brlcad {
   /**-------------------------------------------------------------------------------
    *                    g e t _ c l o s e s t _ p o i n t
    *
-   * approach: 
-   * 
+   * approach:
+   *
    * - get an estimate using the surface tree (if non-null, create
    * one otherwise)
-   * 
+   *
    * - find a point (u,v) for which S(u,v) is closest to _point_
    *                                                     _      __
    *   -- minimize the distance function: D(u,v) = sqrt(|S(u,v)-pt|^2)
    *                                       _      __
    *   -- simplify by minimizing f(u,v) = |S(u,v)-pt|^2
-   *   
+   *
    *   -- minimum occurs when the gradient is zero, i.e.
    *     \f[ \nabla f(u,v) = |\vec{S}(u,v)-\vec{p}|^2 = 0 \f]
    */
-  bool  
+  bool
   get_closest_point(ON_2dPoint& outpt,
 		    ON_BrepFace* face,
 		    const ON_3dPoint& point,
 		    SurfaceTree* tree = NULL,
 		    double tolerance = -1.0);
 
-    
+
   /**                  p u l l b a c k _ c u r v e
    *
    * Pull an arbitrary model-space *curve* onto the given *surface* as a
@@ -449,21 +449,21 @@ namespace brlcad {
    *                                                              ____
    *    then the curve between t1 and t2 is flat if distance(C(m),p1p2) < flatness
    *
-   * 2. Use the sampled points to perform a global interpolation using 
+   * 2. Use the sampled points to perform a global interpolation using
    *    universal knot generation to build a B-Spline curve.
    *
-   * 3. If the curve is a line or an arc (determined with openNURBS routines), 
+   * 3. If the curve is a line or an arc (determined with openNURBS routines),
    *    return the appropriate ON_Curve subclass (otherwise, return an ON_NurbsCurve).
    *
-   * 
+   *
    */
   extern ON_Curve*
-  pullback_curve(ON_BrepFace* face, 
-		 const ON_Curve* curve, 
+  pullback_curve(ON_BrepFace* face,
+		 const ON_Curve* curve,
 		 SurfaceTree* tree = NULL,
-		 double tolerance = 1.0e-6, 
+		 double tolerance = 1.0e-6,
 		 double flatness = 1.0e-3);
-  
+
 
 
 }

@@ -122,7 +122,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #endif
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
-        
+
 extern void mged_setup(void); /* setup.c */
 extern void mged_global_variable_setup(Tcl_Interp *interp); /* cmd.c */
 

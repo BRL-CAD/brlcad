@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -193,7 +193,7 @@ ON_BezierCage::~ON_BezierCage()
 {
   Destroy();
 }
-  
+
 ON_BezierCage::ON_BezierCage(const ON_BezierCage& src)
                  : m_dim(0),m_is_rat(0),m_cv_capacity(0),m_cv(0)
 {
@@ -209,19 +209,19 @@ ON_BezierCage::ON_BezierCage(const ON_BezierCage& src)
 ON_BezierCage& ON_BezierCage::operator=(const ON_BezierCage& src)
 {
   if ( this != &src ) {
-    if ( Create( src.m_dim, src.m_is_rat, 
+    if ( Create( src.m_dim, src.m_is_rat,
          src.m_order[0], src.m_order[1], src.m_order[3] ) )
     {
       const int sizeof_cv = src.CVSize()*sizeof(m_cv[0]);
       int i, j, k;
-      for ( i = 0; i < m_order[0]; i++ ) 
-      for ( j = 0; j < m_order[1]; j++ ) 
-      for ( k = 0; k < m_order[2]; k++ ) 
+      for ( i = 0; i < m_order[0]; i++ )
+      for ( j = 0; j < m_order[1]; j++ )
+      for ( k = 0; k < m_order[2]; k++ )
       {
         memcpy( CV(i,j,k), src.CV(i,j,k), sizeof_cv );
       }
     }
-    else 
+    else
     {
       Destroy();
     }
@@ -287,16 +287,16 @@ void ON_BezierCage::Dump( ON_TextLog& dump ) const
                m_dim, m_is_rat, m_order[0], m_order[1], m_order[2] );
   dump.Print( "Control Points  %d %s points\n"
                "  index               value\n",
-               m_order[0]*m_order[1]*m_order[2], 
+               m_order[0]*m_order[1]*m_order[2],
                (m_is_rat) ? "rational" : "non-rational" );
-  if ( !m_cv ) 
+  if ( !m_cv )
   {
     dump.Print("  NULL cv array\n");
   }
-  else 
+  else
   {
     int i,j;
-    char sPreamble[128]; 
+    char sPreamble[128];
     memset(sPreamble,0,sizeof(sPreamble));
     for ( i = 0; i < m_order[0]; i++ )
     {
@@ -306,9 +306,9 @@ void ON_BezierCage::Dump( ON_TextLog& dump ) const
           dump.Print("\n");
         sPreamble[0] = 0;
         sprintf(sPreamble,"  CV[%2d][%2d]",i,j);
-        dump.PrintPointList( m_dim, m_is_rat, 
+        dump.PrintPointList( m_dim, m_is_rat,
                           m_order[2], m_cv_stride[2],
-                          CV(i,j,0), 
+                          CV(i,j,0),
                           sPreamble );
       }
       if ( i < m_order[0]-1)
@@ -467,8 +467,8 @@ bool ON_BezierCage::GetBBox( // returns true if successful
 {
   int i, j;
   bool rc = (m_order[0] > 0 && m_order[1] > 0 && m_order[2] > 0) ? true : false;
-  for ( i = 0; rc && i < m_order[0]; i++ ) 
-  for ( j = 0; rc && j < m_order[1]; j++ ) 
+  for ( i = 0; rc && i < m_order[0]; i++ )
+  for ( j = 0; rc && j < m_order[1]; j++ )
   {
     rc = ON_GetPointListBoundingBox( m_dim, m_is_rat, m_order[2], m_cv_stride[2],
                                     CV(i,j,0), boxmin, boxmax, bGrowBox );
@@ -482,7 +482,7 @@ bool ON_BezierCage::Transform( const ON_Xform& xform )
   int i,j;
   bool rc = (m_order[0] > 0 && m_order[1] > 0 && m_order[2]) ? true : false;
   if (rc)
-  {  
+  {
     if ( 0 == m_is_rat )
     {
       if ( xform.m_xform[3][0] != 0.0 || xform.m_xform[3][1] != 0.0 || xform.m_xform[3][2] != 0.0 )
@@ -490,13 +490,13 @@ bool ON_BezierCage::Transform( const ON_Xform& xform )
         MakeRational();
       }
     }
-  
-    for ( i = 0; rc && i < m_order[0]; i++ ) 
+
+    for ( i = 0; rc && i < m_order[0]; i++ )
     {
-      for ( j = 0; rc && j < m_order[1]; j++ ) 
+      for ( j = 0; rc && j < m_order[1]; j++ )
       {
-        rc = ON_TransformPointList( m_dim, m_is_rat, 
-                                    m_order[2], m_cv_stride[2], 
+        rc = ON_TransformPointList( m_dim, m_is_rat,
+                                    m_order[2], m_cv_stride[2],
                                     CV(i,j,0), xform );
       }
     }
@@ -539,7 +539,7 @@ bool ON_BezierCage::Scale( double x )
   return Transform( s );
 }
 
-ON_Interval ON_BezierCage::Domain( 
+ON_Interval ON_BezierCage::Domain(
       int // dir - formal parameter intentionally ignored in this virtual function
       ) const
 {
@@ -552,7 +552,7 @@ bool ON_BezierCage::Evaluate( // returns false if unable to evaluate
        int v_stride,             // array stride (>=Dimension())
        double* v                 // array of length stride*(ndir+1)*(ndir+2)/2
        ) const
-{  
+{
   const int cvdim = m_is_rat?(m_dim+1):m_dim;
   int i,j,k,n;
   double Barray[64], vtmparray[10*4], Bi, Bij, Bijk, *Bj, *Bk, *vtmp;
@@ -571,8 +571,8 @@ bool ON_BezierCage::Evaluate( // returns false if unable to evaluate
   memset(vtmp,0,i);
 
   // get arrays to hold values of Bernstein basis functions
-  Bj = ((m_order[1]+m_order[2]) <= 64) 
-    ? &Barray[0] 
+  Bj = ((m_order[1]+m_order[2]) <= 64)
+    ? &Barray[0]
     : ((double*)alloca((m_order[1]+m_order[2])*sizeof(*Bj)));
   Bk = Bj + m_order[1];
 
@@ -626,8 +626,8 @@ bool ON_BezierCage::Evaluate( // returns false if unable to evaluate
 }
 
 ON_3dPoint ON_BezierCage::PointAt(
-        double r, 
-        double s, 
+        double r,
+        double s,
         double t
         ) const
 {
@@ -729,16 +729,16 @@ double ON_BezierCage::Weight( int i, int j, int k ) const
 bool ON_BezierCage::SetWeight( int i, int j, int k, double w )
 {
   bool rc = false;
-  if ( m_is_rat ) 
+  if ( m_is_rat )
   {
     double* cv = CV(i,j,k);
-    if (cv) 
+    if (cv)
     {
       cv[m_dim] = w;
       rc = true;
     }
   }
-  else if ( w == 1.0 ) 
+  else if ( w == 1.0 )
   {
     rc = true;
   }
@@ -797,7 +797,7 @@ bool ON_BezierCage::SetCV( int i, int j, int k, ON::point_style style, const dou
     n = m_is_rat?m_dim+1:m_dim;
     memcpy(cv,Point,n*sizeof(*cv));
     break;
-    
+
   default:
     rc = false;
     break;
@@ -965,7 +965,7 @@ bool ON_BezierCage::ZeroCVs()
 
 bool ON_BezierCage::MakeRational()
 {
-  if ( !IsRational() ) 
+  if ( !IsRational() )
   {
     ON_ERROR("TODO: fill in ON_BezierCage::MakeRational()");
     /*
@@ -1015,7 +1015,7 @@ bool ON_BezierCage::MakeRational()
 
 bool ON_BezierCage::MakeNonRational()
 {
-  if ( IsRational() ) 
+  if ( IsRational() )
   {
     ON_ERROR("TODO: fill in ON_BezierCage::MakeNonRational()");
     /*
@@ -1209,8 +1209,8 @@ ON_BezierCageMorph::~ON_BezierCageMorph()
 {
 }
 
-ON_3dPoint ON_BezierCageMorph::MorphPoint( 
-          ON_3dPoint point 
+ON_3dPoint ON_BezierCageMorph::MorphPoint(
+          ON_3dPoint point
           ) const
 {
   ON_3dPoint Q = point;
@@ -1232,7 +1232,7 @@ bool ON_BezierCageMorph::Create(
     int point_countZ
     )
 {
-  if ( point_countX < 2 || point_countY < 2 || point_countZ < 2 
+  if ( point_countX < 2 || point_countY < 2 || point_countZ < 2
       || !P0.IsValid()
       || !P1.IsValid()
       || !P2.IsValid()

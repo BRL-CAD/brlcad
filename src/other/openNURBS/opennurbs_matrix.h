@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@ class ON_CLASS ON_Matrix
 {
 public:
   ON_Matrix();
-  ON_Matrix( 
+  ON_Matrix(
      int, // number of rows
      int  // number of columns
      );
@@ -54,7 +54,7 @@ public:
   int MinCount() const; // smallest of row and column count
   int MaxCount() const; // largest of row and column count
 
-  void RowScale(int,double); 
+  void RowScale(int,double);
   void ColScale(int,double);
   void RowOp(int,double,int);
   void ColOp(int,double,int);
@@ -87,7 +87,7 @@ public:
 
   bool SwapRows( int, int ); // ints are row indices to swap
   bool SwapCols( int, int ); // ints are col indices to swap
-  bool Invert( 
+  bool Invert(
           double // zero tolerance
           );
 
@@ -114,7 +114,7 @@ public:
     double,  // zero_tolerance
     double&, // determinant
     double&  // pivot
-    ); 
+    );
 
   // Description:
   //   Row reduce a matrix as the first step in solving M*X=B where
@@ -126,7 +126,7 @@ public:
   //   B - [in/out] an array of m_row_count values that is row reduced
   //       with the matrix.
   //   determinant - [out] value of determinant is returned here.
-  //   pivot - [out] If not NULL, then the value of the smallest 
+  //   pivot - [out] If not NULL, then the value of the smallest
   //       pivot is returned here
   // Returns:
   //   Rank of the matrix.
@@ -140,13 +140,13 @@ public:
   //   ON_Matrix M(m,n) = ...;
   //   M.RowReduce(ON_ZERO_TOLERANCE,B); // modifies M and B
   //   M.BackSolve(m,B,X); // solution is in X
-  // See Also: 
+  // See Also:
   //   ON_Matrix::BackSolve
   int RowReduce(
     double,        // zero_tolerance
     double*,       // B
     double* = NULL // pivot
-    ); 
+    );
 
   // Description:
   //   Row reduce a matrix as the first step in solving M*X=B where
@@ -155,23 +155,23 @@ public:
   //   zero_tolerance - [in] (>=0.0) zero tolerance for pivot test
   //       If a the absolute value of a pivot is <= zero_tolerance,
   //       then the pivoit is assumed to be zero.
-  //   B - [in/out] an array of m_row_count 3d points that is 
+  //   B - [in/out] an array of m_row_count 3d points that is
   //       row reduced with the matrix.
   //   determinant - [out] value of determinant is returned here.
-  //   pivot - [out] If not NULL, then the value of the smallest 
+  //   pivot - [out] If not NULL, then the value of the smallest
   //       pivot is returned here
   // Returns:
   //   Rank of the matrix.
   // Remarks:
   //   The matrix itself is row reduced so that the result is
   //   an upper triangular matrix with 1's on the diagonal.
-  // See Also: 
+  // See Also:
   //   ON_Matrix::BackSolve
   int RowReduce(
     double,        // zero_tolerance
     ON_3dPoint*,   // B
     double* = NULL // pivot
-    ); 
+    );
 
   // Description:
   //   Row reduce a matrix as the first step in solving M*X=B where
@@ -185,16 +185,16 @@ public:
   //   pt - [in/out] array of m_row_count*pt_stride values.
   //        The i-th point is
   //        (pt[i*pt_stride],...,pt[i*pt_stride+pt_dim-1]).
-  //        This array of points is row reduced along with the 
+  //        This array of points is row reduced along with the
   //        matrix.
-  //   pivot - [out] If not NULL, then the value of the smallest 
+  //   pivot - [out] If not NULL, then the value of the smallest
   //       pivot is returned here
   // Returns:
   //   Rank of the matrix.
   // Remarks:
   //   The matrix itself is row reduced so that the result is
   //   an upper triangular matrix with 1's on the diagonal.
-  // See Also: 
+  // See Also:
   //   ON_Matrix::BackSolve
   int RowReduce( // returns rank
     double,      // zero_tolerance
@@ -202,7 +202,7 @@ public:
     int,         // pt_stride
     double*,     // pt
     double* = NULL // pivot
-    ); 
+    );
 
   // Description:
   //   Solve M*X=B where M is upper triangular with a unit diagonal and
@@ -216,7 +216,7 @@ public:
   //   B - [in] array of length Bsize.
   //   X - [out] array of length m_col_count.  Solutions returned here.
   // Remarks:
-  //   Actual values M[i][j] with i <= j are ignored. 
+  //   Actual values M[i][j] with i <= j are ignored.
   //   M[i][i] is assumed to be one and M[i][j] i<j is assumed to be zero.
   //   For square M, B and X can point to the same memory.
   // See Also:
@@ -240,7 +240,7 @@ public:
   //   B - [in] array of length Bsize.
   //   X - [out] array of length m_col_count.  Solutions returned here.
   // Remarks:
-  //   Actual values M[i][j] with i <= j are ignored. 
+  //   Actual values M[i][j] with i <= j are ignored.
   //   M[i][i] is assumed to be one and M[i][j] i<j is assumed to be zero.
   //   For square M, B and X can point to the same memory.
   // See Also:
@@ -271,7 +271,7 @@ public:
   //        The i-th X point is
   //        (Xpt[i*Xpt_stride],...,Xpt[i*Xpt_stride+pt_dim-1]).
   // Remarks:
-  //   Actual values M[i][j] with i <= j are ignored. 
+  //   Actual values M[i][j] with i <= j are ignored.
   //   M[i][i] is assumed to be one and M[i][j] i<j is assumed to be zero.
   //   For square M, B and X can point to the same memory.
   // See Also:
@@ -334,13 +334,13 @@ Returns:
   If C = input value of A, then B*C = (I,*)
 */
 ON_DECL
-int ON_RowReduce( 
-          int row_count, 
+int ON_RowReduce(
+          int row_count,
           int col_count,
           double zero_pivot,
-          double** A, 
-          double** B, 
-          double pivots[2] 
+          double** A,
+          double** B,
+          double pivots[2]
           );
 
 #endif

@@ -9,11 +9,11 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
 # The following variables are used to determine which characters are
-# interpreted as white space.  
+# interpreted as white space.
 
 if {$::tcl_platform(platform) eq "windows"} {
     # Windows style - any but a unicode space char

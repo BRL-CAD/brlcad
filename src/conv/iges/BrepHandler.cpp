@@ -17,34 +17,34 @@ namespace brlcad {
     extractBrep(de);
   }
 
-  void 
+  void
   BrepHandler::extractBrep(const DirectoryEntry* de) {
     debug("########################### E X T R A C T   B R E P");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
-    
+
     Pointer shell = params.getPointer(1);
     extractShell(_iges->getDirectoryEntry(shell), false, params.getLogical(2));
     int numVoids = params.getInteger(3);
-    
-    if (numVoids <= 0) return;    
-    
+
+    if (numVoids <= 0) return;
+
     int index = 4;
     for (int i = 0; i < numVoids; i++) {
-      shell = params.getPointer(index);      
+      shell = params.getPointer(index);
       extractShell(_iges->getDirectoryEntry(shell),
 		   true,
 		   params.getLogical(index+1));
       index += 2;
     }
   }
-  
+
   void
   BrepHandler::extractShell(const DirectoryEntry* de, bool isVoid, bool orientWithFace) {
     debug("########################### E X T R A C T   S H E L L");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
-    
+
     handleShell(isVoid, orientWithFace);
 
     int numFaces = params.getInteger(1);
@@ -56,7 +56,7 @@ namespace brlcad {
     }
   }
 
-  void 
+  void
   BrepHandler::extractFace(const DirectoryEntry* de, bool orientWithSurface) {
     // spec says the surface can be:
     //   parametric spline surface
@@ -71,10 +71,10 @@ namespace brlcad {
     //   spherical surface
     //   toroidal surface
 
-    debug("########################## E X T R A C T   F A C E"); 
+    debug("########################## E X T R A C T   F A C E");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
-        
+
     Pointer surfaceDE = params.getPointer(1);
     int surf = extractSurface(_iges->getDirectoryEntry(surfaceDE));
 
@@ -83,7 +83,7 @@ namespace brlcad {
     int numLoops = params.getInteger(2);
     bool isOuter = params.getLogical(3) || true; // outer is not set in IGES from Pro/E!
     for (int i = 4; (i-4) < numLoops; i++) {
-      Pointer loopDE = params.getPointer(i);      
+      Pointer loopDE = params.getPointer(i);
       extractLoop(_iges->getDirectoryEntry(loopDE), isOuter, face);
       isOuter = false;
     }
@@ -106,7 +106,7 @@ namespace brlcad {
   }
 
   int
-  BrepHandler::extractLine(const Pointer& ptr) 
+  BrepHandler::extractLine(const Pointer& ptr)
   {
     DirectoryEntry* de = _iges->getDirectoryEntry(ptr);
     ParameterData params;
@@ -120,15 +120,15 @@ namespace brlcad {
       Pointer curvePtr = params.getPointer(2);
       double startAngle = params.getReal(3);
       double endAngle = params.getReal(4);
-      
+
       // load the line (axis of revolution)
       int line = extractLine(linePtr);
-      
+
       // load the curve (generatrix)
       int curve = extractCurve(_iges->getDirectoryEntry(curvePtr), false);
-      
+
       return handleSurfaceOfRevolution(line, curve, startAngle, endAngle);
-  }  
+  }
 
   int
   BrepHandler::extractRationalBSplineSurface(const ParameterData& params) {
@@ -143,14 +143,14 @@ namespace brlcad {
     bool rational = params.getInteger(7)() == 0;
     bool u_periodic = params.getInteger(8)() == 1;
     bool v_periodic = params.getInteger(9)() == 1;
-      
+
     const int n1 = 1+ui-u_degree;
     const int n2 = 1+vi-v_degree;
-      
+
     const int u_num_knots = n1 + 2 * u_degree;
     const int v_num_knots = n2 + 2 * v_degree;
     const int num_weights = (1+ui)*(1+vi);
-      
+
     // read the u knots
     int i = 10; // first u knot
     double* u_knots = new double[u_num_knots+1];
@@ -164,7 +164,7 @@ namespace brlcad {
       v_knots[_i] = params.getReal(i);
       i++;
     }
-      
+
     // read the weights (w)
     i = 11 + u_num_knots + v_num_knots;
     double* weights = new double[num_weights];
@@ -172,7 +172,7 @@ namespace brlcad {
       weights[_i] = params.getReal(i);
       i++;
     }
-      
+
     // read the control points
     i = 12 + u_num_knots + v_num_knots + num_weights;
     double* ctl_points = new double[(ui+1)*(vi+1)*3];
@@ -187,7 +187,7 @@ namespace brlcad {
 	i += 3;
       }
     }
-      
+
     // read the domain intervals
     double umin = params.getReal(i);
     double umax = params.getReal(i+1);
@@ -238,7 +238,7 @@ namespace brlcad {
     case TabulatedCylinder:
       debug("\ttabulated cylinder");
       break;
-    case RationalBSplineSurface: 
+    case RationalBSplineSurface:
       debug("\trational b-spline surface");
       return extractRationalBSplineSurface(params);
     case OffsetSurface:
@@ -265,29 +265,29 @@ namespace brlcad {
 
   class PSpaceCurve {
   public:
-    PSpaceCurve(IGES* _iges, BrepHandler* _brep, Logical& iso, Pointer& c) 
+    PSpaceCurve(IGES* _iges, BrepHandler* _brep, Logical& iso, Pointer& c)
     {
       DirectoryEntry* curveDE = _iges->getDirectoryEntry(c);
       ParameterData param;
       _iges->getParameter(curveDE->paramData(), param);
     }
-    PSpaceCurve(const PSpaceCurve& ps) 
+    PSpaceCurve(const PSpaceCurve& ps)
       : isIso(ps.isIso), curveIndex(ps.curveIndex) {}
 
     Logical isIso;
     int curveIndex;
   };
-      
+
 
   int
-  BrepHandler::extractEdge(const DirectoryEntry* edgeListDE, int index) { 
+  BrepHandler::extractEdge(const DirectoryEntry* edgeListDE, int index) {
     EdgeKey k = make_pair(edgeListDE, index);
     EdgeMap::iterator i = edges.find(k);
-    if (i == edges.end()) {      
+    if (i == edges.end()) {
       Pointer initVertexList;
       Integer initVertexIndex;
       Pointer termVertexList;
-      Integer termVertexIndex;    
+      Integer termVertexIndex;
       debug("########################## E X T R A C T   E D G E");
       ParameterData params;
       _iges->getParameter(edgeListDE->paramData(), params);
@@ -297,16 +297,16 @@ namespace brlcad {
       initVertexIndex = params.getInteger(paramIndex+2);
       termVertexList = params.getPointer(paramIndex+3);
       termVertexIndex = params.getInteger(paramIndex+4);
-      
+
       // extract the model space curves
       int mCurveIndex = extractCurve(_iges->getDirectoryEntry(msCurvePtr), false);
-      
-      // extract the vertices      
-      int initVertex = extractVertex(_iges->getDirectoryEntry(initVertexList), 
+
+      // extract the vertices
+      int initVertex = extractVertex(_iges->getDirectoryEntry(initVertexList),
 					initVertexIndex);
       int termVertex = extractVertex(_iges->getDirectoryEntry(termVertexList),
 					termVertexIndex);
-      
+
       edges[k] = handleEdge(mCurveIndex, initVertex, termVertex);
       return edges[k];
     } else {
@@ -328,9 +328,9 @@ namespace brlcad {
       bool isVertex = (1 == params.getInteger(i)) ? true : false;
       Pointer edgePtr = params.getPointer(i+1);
       int index = params.getInteger(i+2);
-      // need to get the edge list, and extract the edge info     
-      int edge = extractEdge(_iges->getDirectoryEntry(edgePtr), index);      
-      bool orientWithCurve = params.getLogical(i+3);      
+      // need to get the edge list, and extract the edge info
+      int edge = extractEdge(_iges->getDirectoryEntry(edgePtr), index);
+      bool orientWithCurve = params.getLogical(i+3);
 
       // handle this edge
       handleEdgeUse(edge, orientWithCurve);
@@ -344,7 +344,7 @@ namespace brlcad {
 	Logical iso = params.getLogical(j);
 	Pointer ptr = params.getPointer(j+1);
 	pCurveIndices.push_back(PSpaceCurve(_iges,
-					    this, 
+					    this,
 					    iso,
 					    ptr));
 	j += 2;
@@ -354,27 +354,27 @@ namespace brlcad {
     return loop;
   }
 
-  int 
+  int
   BrepHandler::extractVertex(const DirectoryEntry* de, int index) {
     VertKey k = make_pair(de,index);
     VertMap::iterator i = vertices.find(k);
     if (i == vertices.end()) {
-      // XXX: fix this... 
-      
+      // XXX: fix this...
+
       ParameterData params;
       _iges->getParameter(de->paramData(), params);
       int num_verts = params.getInteger(1);
       debug("num verts: " << num_verts);
       debug("index    : " << index);
       assert(index <= num_verts);
-      
+
       int i = 3*index-1;
-      
+
       point_t pt;
       pt[X] = params.getReal(i);
       pt[Y] = params.getReal(i+1);
       pt[Z] = params.getReal(i+2);
-      
+
       // XXX: xform matrix application?
       vertices[k] = handleVertex(pt);
       return vertices[k];
@@ -406,8 +406,8 @@ namespace brlcad {
     double dx = start[X] - center[X];
     double dy = start[Y] - center[Y];
     double radius = sqrt(dx*dx + dy*dy);
-    
-    point_t tcenter, tstart, tend;    
+
+    point_t tcenter, tstart, tend;
     MAT4X3PNT(tcenter, xform, center);
     MAT4X3PNT(tstart, xform, start);
     MAT4X3PNT(tend, xform, end);
@@ -426,7 +426,7 @@ namespace brlcad {
     bool closed = (params.getInteger(4)() == 1) ? true : false;
     bool rational = (params.getInteger(5)() == 0) ? true : false;
     bool periodic = (params.getInteger(6)() == 1) ? true : false;
-    
+
     int num_control_points = k + 1;
     int n = k + 1 - degree;
     int num_knots = n + 2 * degree + 1;
@@ -437,7 +437,7 @@ namespace brlcad {
       knots[_i] = params.getReal(i);
       i++;
     }
-    
+
     double* weights = new double[num_control_points];
     for (int _i = 0; _i < num_control_points; _i++) {
       weights[_i] = params.getReal(i);
@@ -451,16 +451,16 @@ namespace brlcad {
       ctl_points[_i*3+2] = params.getReal(i+2);
       i += 3;
     }
-    
+
     double umin = params.getReal(i); i++;
     double umax = params.getReal(i); i++;
-    
+
     vect_t unit_normal;
     if (planar) {
       VSET(unit_normal, params.getReal(i), params.getReal(i+1), params.getReal(i+2));
       i += 3;
     }
-        
+
     int val = handleRationalBSplineCurve(degree,
 					 umin,
 					 umax,
@@ -480,13 +480,13 @@ namespace brlcad {
     return val;
   }
 
-  int 
+  int
   BrepHandler::extractCurve(const DirectoryEntry* de, bool isISO) {
     debug("########################## E X T R A C T   C U R V E");
     ParameterData params;
     _iges->getParameter(de->paramData(), params);
     switch (de->type()) {
-    case CircularArc: 
+    case CircularArc:
       debug("\tcircular arc");
       return extractCircularArc(de, params);
     case CompositeCurve:
@@ -501,7 +501,7 @@ namespace brlcad {
       // 12: 3d path
       // 63: simple closed planar curve
       break;
-    case Line: 
+    case Line:
       debug("\tline");
       return extractLine(de, params);
     case ParametricSplineCurve:

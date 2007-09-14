@@ -1,4 +1,4 @@
-/* 
+/*
  * tclMacLibrary.r --
  *
  *	This file creates resources used by the Tcl shared library.
@@ -72,7 +72,7 @@ resource 'vers' (2) {
  * custom icons rather than new file types for a different appearance.
  */
 
-resource 'BNDL' (TCL_LIBRARY_RESOURCES, "Tcl bundle", purgeable) 
+resource 'BNDL' (TCL_LIBRARY_RESOURCES, "Tcl bundle", purgeable)
 {
 	ITCL_CREATOR,
 	0,
@@ -92,7 +92,7 @@ resource 'BNDL' (TCL_LIBRARY_RESOURCES, "Tcl bundle", purgeable)
 	}
 };
 
-resource 'FREF' (TCL_LIBRARY_RESOURCES, purgeable) 
+resource 'FREF' (TCL_LIBRARY_RESOURCES, purgeable)
 {
 	'shlb', 0, ""
 };
@@ -122,7 +122,7 @@ resource 'kind' (TCL_LIBRARY_RESOURCES, "Itcl kind", purgeable) {
  * The -16397 string will be displayed by Finder when a user
  * tries to open the shared library. The string should
  * give the user a little detail about the library's capabilities
- * and enough information to install the library in the correct location.  
+ * and enough information to install the library in the correct location.
  * A similar string should be placed in all shared libraries.
  */
 resource 'STR ' (-16397, purgeable) {
@@ -132,7 +132,7 @@ resource 'STR ' (-16397, purgeable) {
 	"within the Extensions folder."
 };
 
-/* 
+/*
  * The mechanisim below loads Tcl source into the resource fork of the
  * application.  The example below creates a TEXT resource named
  * "Init" from the file "init.tcl".  This allows applications to use

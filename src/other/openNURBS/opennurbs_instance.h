@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 
 /*
 Description:
-  An ON_InstanceDefinition defines the geometry used by 
+  An ON_InstanceDefinition defines the geometry used by
   instance references.
 See Also:
   ON_InstanceRef
@@ -31,7 +31,7 @@ class ON_CLASS ON_InstanceDefinition : public ON_Geometry
 public:
 
   // IDEF_UPDATE_TYPE lists the possible relationships between
-  // the instance definition geometry and the archive 
+  // the instance definition geometry and the archive
   // (m_source_archive) containing the original defition.
   enum IDEF_UPDATE_TYPE
   {
@@ -59,8 +59,8 @@ public:
                       // If m_source_archive is not available, the
                       // instance definition is not valid.
                       // This does not save runtime memory.  It may
-                      // save a little disk space, but it is a 
-                      // foolish option requested by people who do not 
+                      // save a little disk space, but it is a
+                      // foolish option requested by people who do not
                       // understand all the issues.
     force_32bit_idef_update_type = 0xFFFFFFFF
   };
@@ -104,7 +104,7 @@ public:
          double* boxmax,
          int bGrowBox = false
          ) const;
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform& xform
          );
 
@@ -147,8 +147,8 @@ public:
     archive settings and update the  definition when appropriate.
     The checksum can be used to detect changed files.
   */
-  void SetSourceArchive( 
-        const wchar_t* source_archive, 
+  void SetSourceArchive(
+        const wchar_t* source_archive,
         ON_CheckSum checksum,
         IDEF_UPDATE_TYPE update_type
         );
@@ -177,11 +177,11 @@ public:
 public:
 
   ON_UUID m_uuid;     // unique id for this instance definition
-  ON_wString m_name;  // The "name" is for human comfort.  
+  ON_wString m_name;  // The "name" is for human comfort.
                       // It can be empty and duplicates
                       // may exist. Instance reference use
                       // m_uuid to find instance definitions.
-  ON_wString m_description; 
+  ON_wString m_description;
 
   ON_wString m_url;
   ON_wString m_url_tag;     // UI link text for m_url
@@ -189,15 +189,15 @@ public:
   ON_BoundingBox m_bbox;
 
   ON_UnitSystem  m_us;
-  
-  IDEF_UPDATE_TYPE m_idef_update_type; 
+
+  IDEF_UPDATE_TYPE m_idef_update_type;
 
   int m_idef_update_depth; // Controls how much geometry is read when
                            // a linked idef is updated.
                            //   0: read everything, included nested linked idefs
                            //   1: skip nested linked idefs.
 
-  ON_wString m_source_archive;   // filename used to update idef 
+  ON_wString m_source_archive;   // filename used to update idef
                                  // (it can be empty or relative)
   bool m_source_bRelativePath;  // True if the filename in m_source_archive is
                                  // a relative the location of the 3dm file
@@ -245,7 +245,7 @@ public:
          double* boxmax,
          int bGrowBox = false
          ) const;
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform& xform
          );
 
@@ -258,7 +258,7 @@ public:
   /////////////////////////////////////////////////////////////
   //
 
-  // Unique id of the instance definition (ON_InstanceDefinition) 
+  // Unique id of the instance definition (ON_InstanceDefinition)
   // in the instance definition table that defines the geometry
   // used by this reference.
   ON_UUID m_instance_definition_uuid;

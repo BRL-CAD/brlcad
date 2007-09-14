@@ -1,5 +1,5 @@
 .TH RAWTORLE 1 "1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 rawtorle \- Convert raw image data to RLE.
 .SH SYNOPSIS
@@ -40,7 +40,7 @@ rawtorle \- Convert raw image data to RLE.
 .I outfile
 ] [
 .I infile
-] 
+]
 .SH DESCRIPTION
 This program is used to convert image data in any of a number of "raw" forms to the
 .IR RLE (5)
@@ -110,7 +110,7 @@ rawtorle \-w 640 \-h 512 \-n 3
 picture.[rgb]
 cat picture.[rgb] | rawtorle \-w 640 \-h 512 \-n 3 \-N \-r
 .br
-(I.e., separate red, green, blue image files.  This subsumes 
+(I.e., separate red, green, blue image files.  This subsumes
 .IR graytorle (1).)
 .TP
 JPL ODL Voyager pics
@@ -119,7 +119,7 @@ rawtorle \-w 800 \-h 800 \-f 2508 \-t 1672 \-n 1 \-p 36
 24bit Sun raster file
 rawtorle \-f 32 \-w ... \-h ... \-n 3
 .br
-(But 
+(But
 .IR rastorle (1)
 is easier.)
 .TP

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -79,9 +79,9 @@ ON_PlaneSurface::~ON_PlaneSurface()
 BOOL
 ON_PlaneSurface::IsValid( ON_TextLog* text_log ) const
 {
-  return (   m_plane.IsValid() 
-           && m_domain[0].IsIncreasing() && m_domain[1].IsIncreasing() 
-           && m_extents[0].IsIncreasing() && m_extents[1].IsIncreasing() 
+  return (   m_plane.IsValid()
+           && m_domain[0].IsIncreasing() && m_domain[1].IsIncreasing()
+           && m_extents[0].IsIncreasing() && m_extents[1].IsIncreasing()
            ) ? true : false;
 }
 
@@ -91,7 +91,7 @@ ON_PlaneSurface::Dump( ON_TextLog& dump ) const
   dump.Print("ON_PlaneSurface\n");
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::Write(
        ON_BinaryArchive& file  // open binary file
      ) const
@@ -105,7 +105,7 @@ ON_PlaneSurface::Write(
     rc = file.WriteInterval( m_domain[0] );
   if (rc)
     rc = file.WriteInterval( m_domain[1] );
-  
+
   // added to version 1.1 chunks
   if (rc)
     rc = file.WriteInterval( m_extents[0] );
@@ -114,7 +114,7 @@ ON_PlaneSurface::Write(
   return rc;
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::Read(
        ON_BinaryArchive& file // open binary file
      )
@@ -143,13 +143,13 @@ ON_PlaneSurface::Read(
   return rc;
 }
 
-int 
+int
 ON_PlaneSurface::Dimension() const
 {
   return 3;
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::GetBBox( // returns true if successful
          double* boxmin,    // minimum
          double* boxmax,    // maximum
@@ -161,9 +161,9 @@ ON_PlaneSurface::GetBBox( // returns true if successful
   for ( i = 0; i < 2; i++ ) for ( j = 0; j < 2; j++ ) {
     corner[k++] = PointAt( m_domain[0].m_t[i], m_domain[1].m_t[j] );
   }
-  return ON_GetPointListBoundingBox( 3, 0, 4, 3, 
-                                     &corner[0].x, 
-                                     boxmin, 
+  return ON_GetPointListBoundingBox( 3, 0, 4, 3,
+                                     &corner[0].x,
+                                     boxmin,
                                      boxmax, bGrowBox?true:false );
 }
 
@@ -204,14 +204,14 @@ int ON_PlaneSurface::SpanCount( int dir ) const
   return 1;
 }
 
-BOOL ON_PlaneSurface::GetSurfaceSize( 
-    double* width, 
-    double* height 
+BOOL ON_PlaneSurface::GetSurfaceSize(
+    double* width,
+    double* height
     ) const
 {
-  if ( width ) 
+  if ( width )
     *width = Extents(0).Length();
-  if ( height ) 
+  if ( height )
     *height = Extents(1).Length();
   return true;
 }
@@ -230,7 +230,7 @@ int ON_PlaneSurface::Degree( int dir ) const
   return 1;
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::GetParameterTolerance(
          int dir,
          double t,  // t = parameter in domain
@@ -249,25 +249,25 @@ BOOL ON_PlaneSurface::IsPlanar( ON_Plane* plane, double tolerance ) const
   return true;
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::IsClosed( int dir ) const
 {
   return false;
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::IsPeriodic( int dir ) const
 {
   return false;
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::IsSingular( int side ) const
 {
   return false;
 }
 
-bool ON_PlaneSurface::GetNextDiscontinuity( 
+bool ON_PlaneSurface::GetNextDiscontinuity(
                 int dir,
                 ON::continuity c,
                 double t0,
@@ -300,8 +300,8 @@ ON_PlaneSurface::Reverse( int dir )
 
 bool ON_PlaneSurface::IsContinuous(
     ON::continuity desired_continuity,
-    double s, 
-    double t, 
+    double s,
+    double t,
     int* hint, // default = NULL,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
@@ -330,7 +330,7 @@ ON_PlaneSurface::Transpose()
   return true;
 }
 
-BOOL 
+BOOL
 ON_PlaneSurface::Evaluate( // returns false if unable to evaluate
        double s, double t, // evaluation parameters
        int der_count,  // number of derivatives (>=0)
@@ -338,7 +338,7 @@ ON_PlaneSurface::Evaluate( // returns false if unable to evaluate
        double* v,      // v[] array of length stride*(ndir+1)
        int side,       // optional - determines which side to evaluate from
                        //         0 = default
-                       //      <  0 to evaluate from below, 
+                       //      <  0 to evaluate from below,
                        //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint (int) used to speed
                        //            repeated evaluations
@@ -361,7 +361,7 @@ ON_PlaneSurface::Evaluate( // returns false if unable to evaluate
   v[1] = P.y;
   v[2] = P.z;
   v += v_stride;
-  if ( der_count >= 1 ) 
+  if ( der_count >= 1 )
   {
     v[0] = ds*m_plane.xaxis.x;
     v[1] = ds*m_plane.xaxis.y;
@@ -373,7 +373,7 @@ ON_PlaneSurface::Evaluate( // returns false if unable to evaluate
     v[2] = dt*m_plane.yaxis.z;
     v += v_stride;
 
-    if ( der_count > 1 ) 
+    if ( der_count > 1 )
     {
       // zero higher partials
       memset( v, 0, (((der_count+1)*(der_count+2)/2-4)*v_stride+3)*sizeof(*v) );
@@ -385,7 +385,7 @@ ON_PlaneSurface::Evaluate( // returns false if unable to evaluate
 ON_Curve* ON_PlaneSurface::IsoCurve( int dir, double c ) const
 {
   ON_LineCurve* line_curve = 0;
-  if ( dir == 0 || dir == 1 && IsValid() ) 
+  if ( dir == 0 || dir == 1 && IsValid() )
   {
     ON_Line line;
     ON_Interval domain = Domain(dir);
@@ -475,14 +475,14 @@ ON_Curve* ON_PlaneSurface::Pushup( const ON_Curve& curve_2d,
   return curve;
 }
 
-ON_Curve* ON_Surface::PushupPolyCurve( 
+ON_Curve* ON_Surface::PushupPolyCurve(
                   const ON_PolyCurve& polycurve, // 2d polycurve
                   double tolerance,
                   const ON_Interval* curve_2d_subdomain
                   ) const
 {
   ON_Curve* pushup = 0;
-  
+
   ON_PolyCurve* polycurve_pushup = 0;
 
   ON_Curve* segment_pushup = 0;
@@ -497,12 +497,12 @@ ON_Curve* ON_Surface::PushupPolyCurve(
     segment_pushup=0;
     segment_curve = polycurve.SegmentCurve(i);
     ON_Interval segment_domain = polycurve.SegmentDomain(i); // polycurve parameters
-    
+
     if ( 0 != curve_2d_subdomain )
     {
-      if ( curve_2d_subdomain->Max() <= segment_domain[0] ) 
+      if ( curve_2d_subdomain->Max() <= segment_domain[0] )
         continue;
-      if ( curve_2d_subdomain->Min() >= segment_domain[1] ) 
+      if ( curve_2d_subdomain->Min() >= segment_domain[1] )
         continue;
     }
 
@@ -575,12 +575,12 @@ ON_Curve* ON_Surface::PushupPolyCurve(
         polycurve_pushup = new ON_PolyCurve();
         polycurve_pushup->Append(pushup);
         pushup = polycurve_pushup;
-      }      
+      }
       polycurve_pushup->Append(segment_pushup);
     }
   }
 
-  return pushup;    
+  return pushup;
 }
 
 
@@ -629,7 +629,7 @@ static int PullbackSegOnSeam( const ON_Interval& udom, const ON_Interval& vdom,
 }
 
 
-ON_Curve* ON_Surface::PullbackPolyCurve( 
+ON_Curve* ON_Surface::PullbackPolyCurve(
                   const ON_PolyCurve&  polycurve,
                   double tolerance,
                   const ON_Interval* curve_3d_subdomain,
@@ -639,9 +639,9 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
 {
   // tool for ON_Surface::Pullback overrides to call to pullback
   // polycurves segment-by-segment
-  
+
   ON_Curve* pullback = 0;
-  
+
   ON_PolyCurve* polycurve_pullback = 0;
 
   ON_Curve* segment_pullback = 0;
@@ -668,13 +668,13 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
     segment_pullback=0;
     segment_curve = polycurve.SegmentCurve(i);
     ON_Interval segment_domain = polycurve.SegmentDomain(i); // polycurve parameters
-    
+
     if ( 0 != curve_3d_subdomain )
     {
-      if ( curve_3d_subdomain->Max() <= segment_domain[0] ) 
+      if ( curve_3d_subdomain->Max() <= segment_domain[0] )
         break;
 
-      if ( curve_3d_subdomain->Min() >= segment_domain[1] ) 
+      if ( curve_3d_subdomain->Min() >= segment_domain[1] )
         continue;
 
       if ( i == count-1 || curve_3d_subdomain->Max() <= segment_domain[1] )
@@ -737,9 +737,9 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
       segment_pullback = Pullback(*segment_curve,tolerance,&segment_curve_domain,segment_start_uv,segment_end_uv);
       prev_segment_3d_end = segment_curve->PointAt(segment_curve_domain[1]);
       if ( 0 == pullback
-           && count > 1 
-           && 0 != segment_pullback 
-           && ON_UNSET_VALUE == segment_start_uv.x 
+           && count > 1
+           && 0 != segment_pullback
+           && ON_UNSET_VALUE == segment_start_uv.x
            && ON_UNSET_VALUE == segment_end_uv.x )
       {
         // 19 September 2003 Dale Lear
@@ -754,15 +754,15 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
         first_seg_on_seam = PullbackSegOnSeam( udom, vdom,bClosedU, bClosedV,segment_pullback);
         if ( 0 != first_seg_on_seam )
         {
-          // save the information we need if we have to 
+          // save the information we need if we have to
           // redo this pullback below.
           first_seg_3d_curve = segment_curve;
           first_seg_pullback_domain = segment_curve_domain;
         }
       }
       else if ( 0 != pullback && 0 == polycurve_pullback
-                && 0 != first_seg_on_seam 
-                && 0 != segment_pullback 
+                && 0 != first_seg_on_seam
+                && 0 != segment_pullback
                 && ON_IsValid(segment_start_uv.x)
                 && ON_IsValid(segment_start_uv.y)
                 && (! segment_end_uv.IsValid() || segment_end_uv != end_uv )
@@ -789,7 +789,7 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
             ON_3dPoint new_first_seg_end_uv = test_pullback->PointAtStart();
             new_first_seg_end_uv.z = 0.0;
 
-            // See if the starts of segment_pullback and test_pullback are on opposite 
+            // See if the starts of segment_pullback and test_pullback are on opposite
             // sides of parameter space.
             ON_3dPoint segStart = segment_pullback->PointAtStart();
             ON_3dPoint testStart = test_pullback->PointAtStart();
@@ -839,7 +839,7 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
               break;
             }
 
-            if ( bUseTestSegment 
+            if ( bUseTestSegment
                  && 0 != first_seg_3d_curve
                  && first_seg_pullback_domain.IsIncreasing()
                  )
@@ -861,14 +861,14 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
                 pullback = new_first_seg_pullback;
                 pullback->SetDomain(dom[0],dom[1]);
                 new_first_seg_pullback = 0;
-                
+
                 delete segment_pullback;
                 segment_pullback = test_pullback;
-                test_pullback = 0;       
+                test_pullback = 0;
               }
             }
           }
-          
+
           if ( 0 != test_pullback )
           {
             // clean up unused test segment
@@ -877,7 +877,7 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
         }
       }
     }
-    
+
     if ( 0 == segment_pullback )
     {
       if ( 0 != pullback )
@@ -901,16 +901,16 @@ ON_Curve* ON_Surface::PullbackPolyCurve(
         polycurve_pullback = new ON_PolyCurve();
         polycurve_pullback->Append(pullback);
         pullback = polycurve_pullback;
-      }      
+      }
       polycurve_pullback->Append(segment_pullback);
     }
   }
 
-  return pullback;    
-} 
+  return pullback;
+}
 
 
-ON_Curve* ON_Surface::PullbackCurveProxy( 
+ON_Curve* ON_Surface::PullbackCurveProxy(
                 const ON_CurveProxy& curveproxy_3d,
                 double tolerance,
                 const ON_Interval* curve_3d_subdomain,
@@ -1046,8 +1046,8 @@ ON_Curve* ON_PlaneSurface::Pullback( const ON_Curve& curve_3d,
   const ON_CurveProxy* proxycurve = ON_CurveProxy::Cast(&curve_3d);
   if ( 0 != proxycurve )
   {
-    return PullbackCurveProxy( *proxycurve, tolerance, 
-                               curve_3d_subdomain, 
+    return PullbackCurveProxy( *proxycurve, tolerance,
+                               curve_3d_subdomain,
                                start_uv, end_uv );
   }
 
@@ -1254,7 +1254,7 @@ bool ON_PlaneSurface::GetClosestPoint( const ON_3dPoint& test_point,
 		tdomain = &tdom;
 
   bool rc = m_plane.ClosestPointTo( test_point, &u, &v );
-  if ( rc ) 
+  if ( rc )
   {
     // convert m_plane coordinates to ON_Surface coordinates
     if ( m_domain[0] != m_extents[0] )
@@ -1280,7 +1280,7 @@ bool ON_PlaneSurface::GetClosestPoint( const ON_3dPoint& test_point,
       *s = u;
     if ( t )
       *t = v;
-    if (maximum_distance > 0.0) 
+    if (maximum_distance > 0.0)
     {
       ON_3dPoint pt = PointAt(u,v);
       if ( test_point.DistanceTo(pt) > maximum_distance )
@@ -1291,8 +1291,8 @@ bool ON_PlaneSurface::GetClosestPoint( const ON_3dPoint& test_point,
 }
 
 //////////
-// Find parameters of the point on a surface that is locally closest to 
-// the test_point.  The search for a local close point starts at 
+// Find parameters of the point on a surface that is locally closest to
+// the test_point.  The search for a local close point starts at
 // seed parameters. If a sub_domain parameter is not NULL, then
 // the search is restricted to the specified portion of the surface.
 //
@@ -1311,8 +1311,8 @@ BOOL ON_PlaneSurface::GetLocalClosestPoint( const ON_3dPoint& test_point, // tes
 
 
 ON_Surface* ON_PlaneSurface::Offset(
-      double offset_distance, 
-      double tolerance, 
+      double offset_distance,
+      double tolerance,
       double* max_deviation
       ) const
 {
@@ -1330,16 +1330,16 @@ ON_Surface* ON_PlaneSurface::Offset(
 }
 
 
-int 
+int
 ON_PlaneSurface::GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
                    //            matches the surface's to wthe desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
-                   //            the interior of the surface's domain, the 
+                   //            the interior of the surface's domain, the
                    //            surface's parameterization and the NURBS
-                   //            parameterization may not match to the 
+                   //            parameterization may not match to the
                    //            desired accuracy.
         ON_NurbsSurface& nurbs,
         double tolerance
@@ -1349,8 +1349,8 @@ ON_PlaneSurface::GetNurbForm( // returns 0: unable to create NURBS representatio
 
   if( !rc )
   {
-    if (    m_plane.origin.x != ON_UNSET_VALUE 
-         && m_plane.xaxis.x != ON_UNSET_VALUE 
+    if (    m_plane.origin.x != ON_UNSET_VALUE
+         && m_plane.xaxis.x != ON_UNSET_VALUE
          && m_plane.yaxis.x != ON_UNSET_VALUE
          && m_domain[0].IsIncreasing() && m_domain[1].IsIncreasing()
          && m_extents[0].Length() > 0.0 && m_extents[1].Length() > 0.0
@@ -1365,7 +1365,7 @@ ON_PlaneSurface::GetNurbForm( // returns 0: unable to create NURBS representatio
     }
   }
 
-  if ( rc ) 
+  if ( rc )
   {
     nurbs.m_dim = 3;
     nurbs.m_is_rat = 0;
@@ -1389,16 +1389,16 @@ ON_PlaneSurface::GetNurbForm( // returns 0: unable to create NURBS representatio
   return rc;
 }
 
-int 
+int
 ON_PlaneSurface::HasNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
                    //         1: success - returned NURBS parameterization
                    //            matches the surface's to wthe desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the surfaces's to the desired accuracy but, on
-                   //            the interior of the surface's domain, the 
+                   //            the interior of the surface's domain, the
                    //            surface's parameterization and the NURBS
-                   //            parameterization may not match to the 
+                   //            parameterization may not match to the
                    //            desired accuracy.
         ) const
 
@@ -1408,7 +1408,7 @@ ON_PlaneSurface::HasNurbForm( // returns 0: unable to create NURBS representatio
   return 1;
 }
 
-bool ON_PlaneSurface::SetExtents( 
+bool ON_PlaneSurface::SetExtents(
        int dir,
        ON_Interval extents,
        bool bSyncDomain
@@ -1430,9 +1430,9 @@ ON_Interval ON_PlaneSurface::Extents(
   return dir ? m_extents[1] : m_extents[0];
 }
 
-BOOL ON_PlaneSurface::SetDomain( 
-  int dir, 
-  double t0, 
+BOOL ON_PlaneSurface::SetDomain(
+  int dir,
+  double t0,
   double t1
   )
 {
@@ -1478,7 +1478,7 @@ bool ON_ClippingPlane::Read( ON_BinaryArchive& file )
 
   int major_version = 0;
   int minor_version = 0;
-  
+
   bool rc = file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
   if (!rc)
     return false;
@@ -1626,7 +1626,7 @@ ON__UINT32 ON_ClippingPlaneSurface::DataCRC(ON__UINT32 current_remainder) const
 void ON_ClippingPlaneSurface::Dump( ON_TextLog& text_log ) const
 {
   text_log.Print("Clipping plane surface\n");
-  text_log.PushIndent();  
+  text_log.PushIndent();
   text_log.Print("Enabled = %d",m_clipping_plane.m_bEnabled);
   text_log.Print("View IDs =\n");
   {
@@ -1642,13 +1642,13 @@ void ON_ClippingPlaneSurface::Dump( ON_TextLog& text_log ) const
   }
   text_log.Print("Plane ID = ");
   text_log.Print(m_clipping_plane.m_plane_id);
-  text_log.Print("\n");  
+  text_log.Print("\n");
 
   text_log.Print("Plane surface\n");
-  text_log.PushIndent();  
+  text_log.PushIndent();
   ON_PlaneSurface::Dump(text_log);
-  text_log.PopIndent();  
-  text_log.PopIndent();  
+  text_log.PopIndent();
+  text_log.PopIndent();
 }
 
 BOOL ON_ClippingPlaneSurface::Write( ON_BinaryArchive& file ) const

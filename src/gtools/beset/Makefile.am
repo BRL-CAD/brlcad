@@ -25,4 +25,4 @@ include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(beset_OBJECTS) \
-	$(noinst_PROGRAMS) 
+	$(noinst_PROGRAMS)

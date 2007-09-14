@@ -1,7 +1,7 @@
 .\" Copyright (c) 1986, University of Utah
 .\" Template man page.  Taken from wtm's page for getcx3d
 .TH TO8 1 "Month DD, YYYY" 1
-.UC 4 
+.UC 4
 .SH NAME
 to8 \- Convert a 24 bit RLE file to eight bits using dithering.
 .SH SYNOPSIS
@@ -23,7 +23,7 @@ to8 \- Convert a 24 bit RLE file to eight bits using dithering.
 Converts an image with 24 bit pixel values (eight bits each of red, green and
 blue) to eight bits of color using a dithered color map (the special color
 map is automatically written into the output file).
-If no input file is specified, 
+If no input file is specified,
 .I to8
 reads from stdin.  If no output file is specified with
 .B \-o
@@ -35,7 +35,7 @@ The dithering process assumes that the incoming image has a gamma of
 a 100.)  If this is not the case, the input values must be adjusted
 before dithering via the
 .B \-i
-or 
+or
 .B \-I
 option.  The input file may also specify the gamma of the image via a
 picture comment (see below).  The output display is assumed to have a gamma of
@@ -73,13 +73,13 @@ file of the form
 The command line argument will override the value in the file if specified.
 .TP
 .BI \-g " display_gamma"
-Specify the gamma of the 
+Specify the gamma of the
 .I X
 display monitor.  The default value is 2.5, suitable for most color TV
 monitors (this is the gamma value assumed by the NTSC video standard).
 .TP
 .BI \-o " outfile"
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.

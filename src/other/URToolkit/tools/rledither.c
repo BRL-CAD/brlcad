@@ -1,29 +1,29 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rledither.c - Do Floyd Steinberg dithering on an image.  Edge enhancement
  *    can be tuned with command line argument.
- * 
- * Author:	Rod Bogart 
+ *
+ * Author:	Rod Bogart
  * 		University of Michigan
  * Date:	Fri Dec 1 1989
  * Copyright (c) 1989, The Regents of the University of Michigan
- * 
+ *
  *   -e edge_factor     Zero means no edge enhancement, 1.0 looks pretty good.
  *   -l nchan length    Number of channels in the colormap, and num entries.
  *			Defaults to 3 channels of 256 entries each.
@@ -154,17 +154,17 @@ char	*argv[];
 	edgetop = 1;
 	edgebottom = 0;
 	/* just copy the top row, it gets no edge enhancement */
-	copy_into_shortrow( &in_hdr, 
+	copy_into_shortrow( &in_hdr,
 			    cleanrows[top], shortrows[edgetop] );
 
 	for (y = in_hdr.ymin+2; y <= in_hdr.ymax; y++)
 	{
 	    rle_getrow(&in_hdr, cleanrows[bottom]);
-	    edge_enhance(&in_hdr, 
+	    edge_enhance(&in_hdr,
 			 cleanrows[bottom], cleanrows[middle], cleanrows[top],
 			 edgerows[edgebottom],
 			 blend, blend_divisor);
-	    copy_into_shortrow( &in_hdr, 
+	    copy_into_shortrow( &in_hdr,
 				edgerows[edgebottom], shortrows[edgebottom] );
 	    fsdither(&in_hdr, map, length,
 		     shortrows[edgebottom], shortrows[edgetop], outrow);
@@ -177,7 +177,7 @@ char	*argv[];
 		 shortrows[edgebottom], shortrows[edgetop], outrow);
 	rle_putrow( outrow, in_hdr.xmax+1, &out_hdr);
 	/* just copy the middle row, it gets no edge enhancement */
-	copy_into_shortrow( &in_hdr, 
+	copy_into_shortrow( &in_hdr,
 			    cleanrows[middle], shortrows[edgetop] );
 	fsdither(&in_hdr, map, length, NULL, shortrows[edgetop], outrow);
 	rle_putrow( outrow, in_hdr.xmax+1, &out_hdr);
@@ -231,8 +231,8 @@ int blend_divisor, blend;
     for (chan = 0; chan < in_hdr->ncolors; chan++)
     {
 	/* i = 0 case, ignore left column of pixels */
-	total = row_b[chan][0] + row_b[chan][1] + 
-	                         row_m[chan][1] + 
+	total = row_b[chan][0] + row_b[chan][1] +
+	                         row_m[chan][1] +
 		row_t[chan][0] + row_t[chan][1];
 	avg = total / 5;
 	diff = avg - row_m[chan][0];
@@ -243,12 +243,12 @@ int blend_divisor, blend;
 	    edge_row[chan][0] = 255;
 	else
 	    edge_row[chan][0] = result;
-	
+
 	/* all the nice cases */
 	for (i=1; i < in_hdr->xmax; i++)
 	{
-	    total = row_b[chan][i-1] + row_b[chan][i] + row_b[chan][i+1] + 
-		    row_m[chan][i-1]                  + row_m[chan][i+1] + 
+	    total = row_b[chan][i-1] + row_b[chan][i] + row_b[chan][i+1] +
+		    row_m[chan][i-1]                  + row_m[chan][i+1] +
 		    row_t[chan][i-1] + row_t[chan][i] + row_t[chan][i+1];
 	    avg = total >> 3;  /* divide by 8 */
 	    diff = avg - row_m[chan][i];
@@ -262,8 +262,8 @@ int blend_divisor, blend;
 	}
 	/* i = in_hdr.xmax case, ignore right column of pixels */
 	i = in_hdr->xmax;
-	total = row_b[chan][i-1] + row_b[chan][i] +  
-	        row_m[chan][i-1]                  + 
+	total = row_b[chan][i-1] + row_b[chan][i] +
+	        row_m[chan][i-1]                  +
 		row_t[chan][i-1] + row_t[chan][i];
 	avg = total / 5;
 	diff = avg - row_m[chan][i];
@@ -311,7 +311,7 @@ rle_pixel **outrow;
     optr = outrow[RLE_RED];
 
     thisptr = row_top;
-    if (row_bottom) 
+    if (row_bottom)
 	nextptr = row_bottom;
     else
 	lastline = 1;
@@ -338,7 +338,7 @@ rle_pixel **outrow;
 	/* find closest color */
 	find_closest(map, numchan, maplen, pixel, &cmap_index);
 	*optr++ = cmap_index;
-	    
+
 	/* thisptr is now looking at pixel to the right of current pixel
 	 * nextptr is looking at pixel below current pixel
 	 * So, increment thisptr as stuff gets stored.  nextptr gets moved
@@ -371,7 +371,7 @@ rle_pixel **outrow;
 
 /*****************************************************************
  * TAG( filemap )
- * 
+ *
  * NOTE: this code is stolen from rleldmap.
  * Read a color map from a file
  * Inputs:
@@ -439,7 +439,7 @@ rle_map **amap;
 		switch ( fscanf( mapfile, "%d", &ent ) )
 		{
 		case EOF:	/* EOF */
-		    fprintf( stderr, 
+		    fprintf( stderr,
 	"%s: Premature end of file reading map %s at entry %d, channel %d\n",
 			     progname, mapfname, i, c );
 		    exit(-1);
@@ -466,7 +466,7 @@ rle_map **amap;
 
 /*****************************************************************
  * TAG( allocmap )
- * 
+ *
  * Allocate a color map of a given size.
  * Inputs:
  * 	nchan:		Number of channels in the map.
@@ -506,7 +506,7 @@ rle_map * cmap;
 
 /*****************************************************************
  * TAG( shiftmap )
- * 
+ *
  * Shift the entries in the color map to left justify them.
  * Inputs:
  * 	map:		The color map.
@@ -528,7 +528,7 @@ rle_map **map;
 {
     register rle_map * e;
     register int i;
-    
+
     bits = 16 - bits;
     if ( bits == 0 )
 	return;			/* no work! */
@@ -544,8 +544,8 @@ int nchan, length;
 {
     register rle_map *ie, *oe;
     register int i;
-    
-    for ( i = nchan * length, ie = inmap[0], oe = outmap[0]; 
+
+    for ( i = nchan * length, ie = inmap[0], oe = outmap[0];
 	  i > 0; i--, ie++, oe++ )
 	*oe = *ie;
 }

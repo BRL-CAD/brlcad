@@ -18,7 +18,7 @@ namespace eval ::tk::unsupported {
     # Map from the old global names of Tk private commands to their
     # new namespace-encapsulated names.
 
-    variable PrivateCommands 
+    variable PrivateCommands
     array set PrivateCommands {
 	tkButtonAutoInvoke		::tk::ButtonAutoInvoke
 	tkButtonDown			::tk::ButtonDown

@@ -1,4 +1,4 @@
-/* 
+/*
  * itclStubLib.c --
  *
  *	Stub object that will be statically linked into extensions that wish
@@ -67,7 +67,7 @@ Itcl_InitStubs (interp, version, exact)
     int exact;
 {
     CONST char *actualVersion;
-    
+
     actualVersion = Tcl_PkgRequireEx(interp, "Itcl", (CONST84 char *)version, exact,
         (ClientData *) &itclStubsPtr);
 
@@ -81,6 +81,6 @@ Itcl_InitStubs (interp, version, exact)
     } else {
 	itclIntStubsPtr = NULL;
     }
-    
+
     return actualVersion;
 }

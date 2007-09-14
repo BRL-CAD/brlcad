@@ -55,8 +55,8 @@ static char *sortTypeStrings[] = {
     "dictionary", "ascii", "integer", "real", "command", "none", NULL
 };
 
-enum SortTypeValues { 
-    SORT_TYPE_DICTIONARY, SORT_TYPE_ASCII, SORT_TYPE_INTEGER, 
+enum SortTypeValues {
+    SORT_TYPE_DICTIONARY, SORT_TYPE_ASCII, SORT_TYPE_INTEGER,
     SORT_TYPE_REAL, SORT_TYPE_COMMAND, SORT_TYPE_NONE
 };
 
@@ -131,18 +131,18 @@ static Blt_TreeApplyProc SortApplyProc;
 
 static Blt_ConfigSpec columnSpecs[] =
 {
-    {BLT_CONFIG_BORDER, "-activetitlebackground", "activeTitleBackground", 
-	"Background", DEF_COLUMN_ACTIVE_TITLE_BG, 
+    {BLT_CONFIG_BORDER, "-activetitlebackground", "activeTitleBackground",
+	"Background", DEF_COLUMN_ACTIVE_TITLE_BG,
 	Blt_Offset(TreeViewColumn, activeTitleBorder), 0},
-    {BLT_CONFIG_COLOR, "-activetitleforeground", "activeTitleForeground", 
-	"Foreground", DEF_COLUMN_ACTIVE_TITLE_FG, 
+    {BLT_CONFIG_COLOR, "-activetitleforeground", "activeTitleForeground",
+	"Foreground", DEF_COLUMN_ACTIVE_TITLE_FG,
 	Blt_Offset(TreeViewColumn, activeTitleFgColor), 0},
     {BLT_CONFIG_BORDER, "-background", "background", "Background",
-	DEF_COLUMN_BACKGROUND, Blt_Offset(TreeViewColumn, border), 
+	DEF_COLUMN_BACKGROUND, Blt_Offset(TreeViewColumn, border),
 	BLT_CONFIG_NULL_OK},
-    {BLT_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL,
 	0, 0},
-    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL,
 	0, 0},
     {BLT_CONFIG_CUSTOM, "-bindtags", "bindTags", "BindTags",
 	DEF_COLUMN_BIND_TAGS, Blt_Offset(TreeViewColumn, tagsUid),
@@ -152,9 +152,9 @@ static Blt_ConfigSpec columnSpecs[] =
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_STRING, "-command", "command", "Command",
 	DEF_COLUMN_COMMAND, Blt_Offset(TreeViewColumn, titleCmd),
-	BLT_CONFIG_DONT_SET_DEFAULT | BLT_CONFIG_NULL_OK}, 
+	BLT_CONFIG_DONT_SET_DEFAULT | BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_BOOLEAN, "-edit", "edit", "Edit",
-	DEF_COLUMN_STATE, Blt_Offset(TreeViewColumn, editable), 
+	DEF_COLUMN_STATE, Blt_Offset(TreeViewColumn, editable),
         BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_BOOLEAN, "-hide", "hide", "Hide",
 	DEF_COLUMN_HIDE, Blt_Offset(TreeViewColumn, hidden),
@@ -163,58 +163,58 @@ static Blt_ConfigSpec columnSpecs[] =
 	(char *)NULL, Blt_Offset(TreeViewColumn, titleIcon),
 	BLT_CONFIG_DONT_SET_DEFAULT, &bltTreeViewIconOption},
     {BLT_CONFIG_JUSTIFY, "-justify", "justify", "Justify",
-	DEF_COLUMN_JUSTIFY, Blt_Offset(TreeViewColumn, justify), 
+	DEF_COLUMN_JUSTIFY, Blt_Offset(TreeViewColumn, justify),
         BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_DISTANCE, "-max", "max", "Max",
-	DEF_COLUMN_MAX, Blt_Offset(TreeViewColumn, reqMax), 
+	DEF_COLUMN_MAX, Blt_Offset(TreeViewColumn, reqMax),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_DISTANCE, "-min", "min", "Min",
-	DEF_COLUMN_MIN, Blt_Offset(TreeViewColumn, reqMin), 
+	DEF_COLUMN_MIN, Blt_Offset(TreeViewColumn, reqMin),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_PAD, "-pad", "pad", "Pad",
-	DEF_COLUMN_PAD, Blt_Offset(TreeViewColumn, pad), 
+	DEF_COLUMN_PAD, Blt_Offset(TreeViewColumn, pad),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_RELIEF, "-relief", "relief", "Relief",
-	DEF_COLUMN_RELIEF, Blt_Offset(TreeViewColumn, relief), 
+	DEF_COLUMN_RELIEF, Blt_Offset(TreeViewColumn, relief),
         BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_DASHES, "-ruledashes", "ruleDashes", "RuleDashes",
 	DEF_COLUMN_RULE_DASHES, Blt_Offset(TreeViewColumn, ruleDashes),
 	BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_STRING, "-sortcommand", "sortCommand", "SortCommand",
-	DEF_SORT_COMMAND, Blt_Offset(TreeViewColumn, sortCmd), 
-	BLT_CONFIG_NULL_OK}, 
+	DEF_SORT_COMMAND, Blt_Offset(TreeViewColumn, sortCmd),
+	BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_STATE, "-state", "state", "State",
-	DEF_COLUMN_STATE, Blt_Offset(TreeViewColumn, state), 
+	DEF_COLUMN_STATE, Blt_Offset(TreeViewColumn, state),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_CUSTOM, "-style", "style", "Style",
-	DEF_COLUMN_STYLE, Blt_Offset(TreeViewColumn, stylePtr), 
+	DEF_COLUMN_STYLE, Blt_Offset(TreeViewColumn, stylePtr),
         0, &styleOption},
     {BLT_CONFIG_STRING, "-text", "text", "Text",
 	(char *)NULL, Blt_Offset(TreeViewColumn, title), 0},
     {BLT_CONFIG_STRING, "-title", "title", "Title",
 	(char *)NULL, Blt_Offset(TreeViewColumn, title), 0},
-    {BLT_CONFIG_BORDER, "-titlebackground", "titleBackground", 
-	"TitleBackground", DEF_COLUMN_TITLE_BACKGROUND, 
+    {BLT_CONFIG_BORDER, "-titlebackground", "titleBackground",
+	"TitleBackground", DEF_COLUMN_TITLE_BACKGROUND,
 	Blt_Offset(TreeViewColumn, titleBorder),0},
-    {BLT_CONFIG_DISTANCE, "-titleborderwidth", "BorderWidth", 
-	"TitleBorderWidth", DEF_COLUMN_TITLE_BORDERWIDTH, 
+    {BLT_CONFIG_DISTANCE, "-titleborderwidth", "BorderWidth",
+	"TitleBorderWidth", DEF_COLUMN_TITLE_BORDERWIDTH,
 	Blt_Offset(TreeViewColumn, titleBorderWidth),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_FONT, "-titlefont", "titleFont", "Font",
 	DEF_COLUMN_TITLE_FONT, Blt_Offset(TreeViewColumn, titleFont), 0},
     {BLT_CONFIG_COLOR, "-titleforeground", "titleForeground", "TitleForeground",
-	DEF_COLUMN_TITLE_FOREGROUND, 
+	DEF_COLUMN_TITLE_FOREGROUND,
 	Blt_Offset(TreeViewColumn, titleFgColor), 0},
     {BLT_CONFIG_RELIEF, "-titlerelief", "titleRelief", "TitleRelief",
-	DEF_COLUMN_TITLE_RELIEF, Blt_Offset(TreeViewColumn, titleRelief), 
+	DEF_COLUMN_TITLE_RELIEF, Blt_Offset(TreeViewColumn, titleRelief),
         BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_SHADOW, "-titleshadow", "titleShadow", "TitleShadow",
 	(char *)NULL, Blt_Offset(TreeViewColumn, titleShadow), 0},
     {BLT_CONFIG_DOUBLE, "-weight", (char *)NULL, (char *)NULL,
-	DEF_COLUMN_WEIGHT, Blt_Offset(TreeViewColumn, weight), 
+	DEF_COLUMN_WEIGHT, Blt_Offset(TreeViewColumn, weight),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_DISTANCE, "-width", "width", "Width",
-	DEF_COLUMN_WIDTH, Blt_Offset(TreeViewColumn, reqWidth), 
+	DEF_COLUMN_WIDTH, Blt_Offset(TreeViewColumn, reqWidth),
         BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
 	(char *)NULL, 0, 0}
@@ -230,7 +230,7 @@ static Blt_ConfigSpec sortSpecs[] =
 	BLT_CONFIG_DONT_SET_DEFAULT, &columnOption},
     {BLT_CONFIG_BOOLEAN, "-decreasing", "decreasing", "Decreasing",
 	DEF_SORT_DECREASING, Blt_Offset(TreeView, sortDecreasing),
-        BLT_CONFIG_DONT_SET_DEFAULT}, 
+        BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_CUSTOM, "-mode", "mode", "Mode",
 	DEF_SORT_TYPE, Blt_Offset(TreeView, sortType), 0, &typeOption},
     {BLT_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
@@ -274,7 +274,7 @@ ObjToColumn(clientData, interp, tkwin, objPtr, widgRec, offset)
     } else {
 	TreeView *tvPtr = (TreeView *)widgRec;
 
-	if (Blt_TreeViewGetColumn(interp, tvPtr, objPtr, columnPtrPtr) 
+	if (Blt_TreeViewGetColumn(interp, tvPtr, objPtr, columnPtrPtr)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -344,7 +344,7 @@ ObjToData(clientData, interp, tkwin, objPtr, widgRec, offset)
     string = Tcl_GetString(objPtr);
     if (*string == '\0') {
 	return TCL_OK;
-    } 
+    }
     if (Tcl_ListObjGetElements(interp, objPtr, &objc, &objv) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -352,18 +352,18 @@ ObjToData(clientData, interp, tkwin, objPtr, widgRec, offset)
 	return TCL_OK;
     }
     if (objc & 0x1) {
-	Tcl_AppendResult(interp, "data \"", string, 
+	Tcl_AppendResult(interp, "data \"", string,
 		 "\" must be in even name-value pairs", (char *)NULL);
 	return TCL_ERROR;
     }
     for (i = 0; i < objc; i += 2) {
 	TreeView *tvPtr = entryPtr->tvPtr;
 
-	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr) 
+	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if (Blt_TreeSetValueByKey(tvPtr->interp, tvPtr->tree, entryPtr->node, 
+	if (Blt_TreeSetValueByKey(tvPtr->interp, tvPtr->tree, entryPtr->node,
 		columnPtr->key, objv[i + 1]) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -397,14 +397,14 @@ DataToObj(clientData, interp, tkwin, widgRec, offset)
 
     /* Add the key-value pairs to a new Tcl_Obj */
     listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **)NULL);
-    for (valuePtr = entryPtr->values; valuePtr != NULL; 
+    for (valuePtr = entryPtr->values; valuePtr != NULL;
 	valuePtr = valuePtr->nextPtr) {
 	objPtr = Tcl_NewStringObj(valuePtr->columnPtr->key, -1);
 	Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
 	if (Blt_TreeViewGetData(entryPtr, valuePtr->columnPtr->key, &objPtr)
 	    != TCL_OK) {
 	    objPtr = bltEmptyStringObjPtr;
-	} 
+	}
 	Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
     }
     return listObjPtr;
@@ -424,16 +424,16 @@ Blt_TreeViewGetColumn(interp, tvPtr, objPtr, columnPtrPtr)
 	*columnPtrPtr = &tvPtr->treeColumn;
     } else {
 	Blt_HashEntry *hPtr;
-    
+
 	hPtr = Blt_FindHashEntry(&tvPtr->columnTable, Blt_TreeGetKey(string));
 	if (hPtr == NULL) {
 	    if (interp != NULL) {
-		Tcl_AppendResult(interp, "can't find column \"", string, 
-			"\" in \"", Tk_PathName(tvPtr->tkwin), "\"", 
+		Tcl_AppendResult(interp, "can't find column \"", string,
+			"\" in \"", Tk_PathName(tvPtr->tkwin), "\"",
 			(char *)NULL);
 	    }
 	    return TCL_ERROR;
-	} 
+	}
 	*columnPtrPtr = Blt_GetHashValue(hPtr);
     }
     return TCL_OK;
@@ -468,7 +468,7 @@ ObjToStyle(clientData, interp, tkwin, objPtr, widgRec, offset)
     TreeViewStyle **stylePtrPtr = (TreeViewStyle **)(widgRec + offset);
     TreeViewStyle *stylePtr;
 
-    if (Blt_TreeViewGetStyle(interp, tvPtr, Tcl_GetString(objPtr), 
+    if (Blt_TreeViewGetStyle(interp, tvPtr, Tcl_GetString(objPtr),
 	     &stylePtr) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -586,7 +586,7 @@ Blt_TreeViewUpdateColumnGCs(tvPtr, columnPtr)
 
     gcMask = (GCFunction | GCLineWidth | GCLineStyle | GCForeground);
 
-    /* 
+    /*
      * If the rule is active, turn it off (i.e. draw again to erase
      * it) before changing the GC.  If the color changes, we won't be
      * able to erase the old line, since it will no longer be
@@ -594,14 +594,14 @@ Blt_TreeViewUpdateColumnGCs(tvPtr, columnPtr)
      */
     drawable = Tk_WindowId(tvPtr->tkwin);
     ruleDrawn = ((tvPtr->flags & TV_RULE_ACTIVE) &&
-		 (tvPtr->activeTitleColumnPtr == columnPtr) && 
+		 (tvPtr->activeTitleColumnPtr == columnPtr) &&
 		 (drawable != None));
     if (ruleDrawn) {
 	Blt_TreeViewDrawRule(tvPtr, columnPtr, drawable);
     }
-    /* XOR-ed rule column divider */ 
+    /* XOR-ed rule column divider */
     gcValues.line_width = LineWidth(columnPtr->ruleLineWidth);
-    gcValues.foreground = 
+    gcValues.foreground =
 	Blt_TreeViewGetStyleFg(tvPtr, columnPtr->stylePtr)->pixel;
     if (LineIsDashed(columnPtr->ruleDashes)) {
 	gcValues.line_style = LineOnOffDash;
@@ -611,7 +611,7 @@ Blt_TreeViewUpdateColumnGCs(tvPtr, columnPtr)
     gcValues.function = GXxor;
 
     border = CHOOSE(tvPtr->border, columnPtr->border);
-    gcValues.foreground ^= Tk_3DBorderColor(border)->pixel; 
+    gcValues.foreground ^= Tk_3DBorderColor(border)->pixel;
     newGC = Blt_GetPrivateGC(tvPtr->tkwin, gcMask, &gcValues);
     if (columnPtr->ruleGC != NULL) {
 	Blt_FreePrivateGC(tvPtr->display, columnPtr->ruleGC);
@@ -673,7 +673,7 @@ Blt_TreeViewDestroyColumns(tvPtr)
     if (tvPtr->colChainPtr != NULL) {
 	Blt_ChainLink *linkPtr;
 	TreeViewColumn *columnPtr;
-	
+
 	for (linkPtr = Blt_ChainFirstLink(tvPtr->colChainPtr); linkPtr != NULL;
 	     linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    columnPtr = Blt_ChainGetValue(linkPtr);
@@ -714,8 +714,8 @@ Blt_TreeViewCreateColumn(tvPtr, columnPtr, name, defTitle)
     bltTreeViewUidOption.clientData = tvPtr;
     bltTreeViewIconOption.clientData = tvPtr;
     styleOption.clientData = tvPtr;
-    if (Blt_ConfigureComponentFromObj(tvPtr->interp, tvPtr->tkwin, name, 
-	"Column", columnSpecs, 0, (Tcl_Obj **)NULL, (char *)columnPtr, 0) 
+    if (Blt_ConfigureComponentFromObj(tvPtr->interp, tvPtr->tkwin, name,
+	"Column", columnSpecs, 0, (Tcl_Obj **)NULL, (char *)columnPtr, 0)
 	!= TCL_OK) {
 	DestroyColumn(tvPtr, columnPtr);
 	return TCL_ERROR;
@@ -734,15 +734,15 @@ CreateColumn(tvPtr, nameObjPtr, objc, objv)
 
     columnPtr = Blt_Calloc(1, sizeof(TreeViewColumn));
     assert(columnPtr);
-    if (Blt_TreeViewCreateColumn(tvPtr, columnPtr, Tcl_GetString(nameObjPtr), 
+    if (Blt_TreeViewCreateColumn(tvPtr, columnPtr, Tcl_GetString(nameObjPtr),
 	Tcl_GetString(nameObjPtr)) != TCL_OK) {
 	return NULL;
     }
     bltTreeViewUidOption.clientData = tvPtr;
     bltTreeViewIconOption.clientData = tvPtr;
     styleOption.clientData = tvPtr;
-    if (Blt_ConfigureComponentFromObj(tvPtr->interp, tvPtr->tkwin, 
-	columnPtr->key, "Column", columnSpecs, objc, objv, (char *)columnPtr, 
+    if (Blt_ConfigureComponentFromObj(tvPtr->interp, tvPtr->tkwin,
+	columnPtr->key, "Column", columnSpecs, objc, objv, (char *)columnPtr,
 	BLT_CONFIG_OBJV_ONLY) != TCL_OK) {
 	DestroyColumn(tvPtr, columnPtr);
 	return NULL;
@@ -774,12 +774,12 @@ Blt_TreeViewNearestColumn(tvPtr, x, y, contextPtr)
 	    if ((x >= columnPtr->worldX) && (x <= right)) {
 		if (contextPtr != NULL) {
 		    *contextPtr = NULL;
-		    if ((tvPtr->flags & TV_SHOW_COLUMN_TITLES) && 
+		    if ((tvPtr->flags & TV_SHOW_COLUMN_TITLES) &&
 			(y >= tvPtr->inset) &&
 			(y < (tvPtr->titleHeight + tvPtr->inset))) {
-			*contextPtr = (x >= (right - RULE_AREA)) 
+			*contextPtr = (x >= (right - RULE_AREA))
 			    ? ITEM_COLUMN_RULE : ITEM_COLUMN_TITLE;
-		    } 
+		    }
 		}
 		return columnPtr;
 	    }
@@ -814,11 +814,11 @@ ColumnActivateOp(tvPtr, interp, objc, objv)
 	if (string[0] == '\0') {
 	    columnPtr = NULL;
 	} else {
-	    if (Blt_TreeViewGetColumn(interp, tvPtr, objv[3], &columnPtr) 
+	    if (Blt_TreeViewGetColumn(interp, tvPtr, objv[3], &columnPtr)
 		!= TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    if (((tvPtr->flags & TV_SHOW_COLUMN_TITLES) == 0) || 
+	    if (((tvPtr->flags & TV_SHOW_COLUMN_TITLES) == 0) ||
 		(columnPtr->hidden) || (columnPtr->state == STATE_DISABLED)) {
 		columnPtr = NULL;
 	    }
@@ -886,7 +886,7 @@ ColumnCgetOp(tvPtr, interp, objc, objv)
     if (Blt_TreeViewGetColumn(interp, tvPtr, objv[3], &columnPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
-    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, columnSpecs, 
+    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, columnSpecs,
 	(char *)columnPtr, objv[4], 0);
 }
 
@@ -928,31 +928,31 @@ ColumnConfigureOp(tvPtr, interp, objc, objv)
 	if (Blt_ObjIsOption(columnSpecs, objv[i], 0)) {
 	    break;
 	}
-	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr) 
+	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
     }
     start = i;
     nOptions = objc - start;
-    
+
     bltTreeViewUidOption.clientData = tvPtr;
     bltTreeViewIconOption.clientData = tvPtr;
     styleOption.clientData = tvPtr;
     for (i = 3; i < start; i++) {
-	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr) 
+	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	if (nOptions == 0) {
-	    return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, columnSpecs, 
+	    return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, columnSpecs,
 		(char *)columnPtr, (Tcl_Obj *)NULL, 0);
 	} else if (nOptions == 1) {
-	    return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, columnSpecs, 
+	    return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, columnSpecs,
 		(char *)columnPtr, objv[start], 0);
 	}
-	if (Blt_ConfigureWidgetFromObj(tvPtr->interp, tvPtr->tkwin, 
-	       columnSpecs, nOptions, objv + start, (char *)columnPtr, 
+	if (Blt_ConfigureWidgetFromObj(tvPtr->interp, tvPtr->tkwin,
+	       columnSpecs, nOptions, objv + start, (char *)columnPtr,
 		BLT_CONFIG_OBJV_ONLY) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -984,7 +984,7 @@ ColumnDeleteOp(tvPtr, interp, objc, objv)
     register int i;
 
     for(i = 3; i < objc; i++) {
-	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr) 
+	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[i], &columnPtr)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -993,9 +993,9 @@ ColumnDeleteOp(tvPtr, interp, objc, objv)
 	    entryPtr = Blt_TreeViewNextEntry(entryPtr, 0)) {
 	    if (entryPtr != NULL) {
 		TreeViewValue *valuePtr, *lastPtr, *nextPtr;
-		
+
 		lastPtr = NULL;
-		for (valuePtr = entryPtr->values; valuePtr != NULL; 
+		for (valuePtr = entryPtr->values; valuePtr != NULL;
 		     valuePtr = nextPtr) {
 		    nextPtr = valuePtr->nextPtr;
 		    if (valuePtr->columnPtr == columnPtr) {
@@ -1048,7 +1048,7 @@ ColumnInsertOp(tvPtr, interp, objc, objv)
     if (Blt_GetPositionFromObj(tvPtr->interp, objv[3], &insertPos) != TCL_OK) {
 	return TCL_ERROR;
     }
-    if ((insertPos == -1) || 
+    if ((insertPos == -1) ||
 	(insertPos >= Blt_ChainGetLength(tvPtr->colChainPtr))) {
 	beforePtr = NULL;
     } else {
@@ -1070,7 +1070,7 @@ ColumnInsertOp(tvPtr, interp, objc, objv)
 
     for (i = 4; i < start; i++) {
 	if (Blt_TreeViewGetColumn(NULL, tvPtr, objv[i], &columnPtr) == TCL_OK) {
-	    Tcl_AppendResult(interp, "column \"", Tcl_GetString(objv[i]), 
+	    Tcl_AppendResult(interp, "column \"", Tcl_GetString(objv[i]),
 		"\" already exists", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -1083,10 +1083,10 @@ ColumnInsertOp(tvPtr, interp, objc, objv)
 	} else {
 	    columnPtr->linkPtr = Blt_ChainNewLink();
 	    Blt_ChainSetValue(columnPtr->linkPtr, columnPtr);
-	    Blt_ChainLinkBefore(tvPtr->colChainPtr, columnPtr->linkPtr, 
+	    Blt_ChainLinkBefore(tvPtr->colChainPtr, columnPtr->linkPtr,
 		beforePtr);
 	}
-	/* 
+	/*
 	 * Traverse the tree adding column entries where needed.
 	 */
 	for(entryPtr = tvPtr->rootPtr; entryPtr != NULL;
@@ -1128,7 +1128,7 @@ ColumnCurrentOp(tvPtr, interp, objc, objv)
     }
     if (context >= ITEM_STYLE) {
 	TreeViewValue *valuePtr = context;
-	
+
 	columnPtr = valuePtr->columnPtr;
     }
     if (columnPtr != NULL) {
@@ -1247,16 +1247,16 @@ ColumnNearestOp(tvPtr, interp, objc, objv)
 	objv++, objc--;
     }
     if (objc != 5) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", 
-		Tcl_GetString(objv[0]), " ", Tcl_GetString(objv[1]), 
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
+		Tcl_GetString(objv[0]), " ", Tcl_GetString(objv[1]),
 		Tcl_GetString(objv[2]), " ?-root? x y\"", (char *)NULL);
 	return TCL_ERROR;
-			 
+
     }
 #endif
     if (Tk_GetPixelsFromObj(interp, tvPtr->tkwin, objv[3], &x) != TCL_OK) {
 	return TCL_ERROR;
-    } 
+    }
     y = 0;
     checkTitle = FALSE;
     if (objc == 5) {
@@ -1295,12 +1295,12 @@ UpdateMark(tvPtr, newMark)
     }
 
     /* Erase any existing rule. */
-    if (tvPtr->flags & TV_RULE_ACTIVE) { 
+    if (tvPtr->flags & TV_RULE_ACTIVE) {
 	Blt_TreeViewDrawRule(tvPtr, columnPtr, drawable);
     }
-    
-    dx = newMark - tvPtr->ruleAnchor; 
-    width = columnPtr->width - 
+
+    dx = newMark - tvPtr->ruleAnchor;
+    width = columnPtr->width -
 	(PADDING(columnPtr->pad) + 2 * columnPtr->borderWidth);
     if ((columnPtr->reqMin > 0) && ((width + dx) < columnPtr->reqMin)) {
 	dx = columnPtr->reqMin - width;
@@ -1347,11 +1347,11 @@ ResizeActivateOp(tvPtr, interp, objc, objv)
 	    Tk_UndefineCursor(tvPtr->tkwin);
 	}
 	tvPtr->resizeColumnPtr = NULL;
-    } else if (Blt_TreeViewGetColumn(interp, tvPtr, objv[4], &columnPtr) 
+    } else if (Blt_TreeViewGetColumn(interp, tvPtr, objv[4], &columnPtr)
 	       == TCL_OK) {
 	if (tvPtr->resizeCursor != None) {
 	    Tk_DefineCursor(tvPtr->tkwin, tvPtr->resizeCursor);
-	} 
+	}
 	tvPtr->resizeColumnPtr = columnPtr;
     } else {
 	return TCL_ERROR;
@@ -1380,7 +1380,7 @@ ResizeAnchorOp(tvPtr, interp, objc, objv)
 
     if (Tcl_GetIntFromObj(NULL, objv[4], &x) != TCL_OK) {
 	return TCL_ERROR;
-    } 
+    }
     tvPtr->ruleAnchor = x;
     tvPtr->flags |= TV_RULE_NEEDED;
     UpdateMark(tvPtr, x);
@@ -1409,7 +1409,7 @@ ResizeMarkOp(tvPtr, interp, objc, objv)
 
     if (Tcl_GetIntFromObj(NULL, objv[4], &x) != TCL_OK) {
 	return TCL_ERROR;
-    } 
+    }
     tvPtr->flags |= TV_RULE_NEEDED;
     UpdateMark(tvPtr, x);
     return TCL_OK;
@@ -1440,7 +1440,7 @@ ResizeSetOp(tvPtr, interp, objc, objv)
 
 	columnPtr = tvPtr->resizeColumnPtr;
 	delta = (tvPtr->ruleMark - tvPtr->ruleAnchor);
-	width = tvPtr->resizeColumnPtr->width + delta - 
+	width = tvPtr->resizeColumnPtr->width + delta -
 	    (PADDING(columnPtr->pad) + 2 * columnPtr->borderWidth) - 1;
 	Tcl_SetObjResult(interp, Tcl_NewIntObj(width));
     }
@@ -1448,7 +1448,7 @@ ResizeSetOp(tvPtr, interp, objc, objv)
 }
 
 static Blt_OpSpec resizeOps[] =
-{ 
+{
     {"activate", 2, (Blt_Op)ResizeActivateOp, 5, 5, "column"},
     {"anchor", 2, (Blt_Op)ResizeAnchorOp, 5, 5, "x"},
     {"mark", 1, (Blt_Op)ResizeMarkOp, 5, 5, "x"},
@@ -1474,7 +1474,7 @@ ColumnResizeOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nResizeOps, resizeOps, BLT_OP_ARG3, 
+    proc = Blt_GetOpFromObj(interp, nResizeOps, resizeOps, BLT_OP_ARG3,
 	objc, objv,0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1489,12 +1489,12 @@ static Blt_OpSpec columnOps[] =
     {"activate", 1, (Blt_Op)ColumnActivateOp, 3, 4, "?field?",},
     {"bind", 1, (Blt_Op)ColumnBindOp, 4, 6, "tagName ?sequence command?",},
     {"cget", 2, (Blt_Op)ColumnCgetOp, 5, 5, "field option",},
-    {"configure", 2, (Blt_Op)ColumnConfigureOp, 4, 0, 
+    {"configure", 2, (Blt_Op)ColumnConfigureOp, 4, 0,
 	"field ?option value?...",},
     {"current", 2, (Blt_Op)ColumnCurrentOp, 3, 3, "",},
     {"delete", 1, (Blt_Op)ColumnDeleteOp, 3, 0, "?field...?",},
     {"highlight", 1, (Blt_Op)ColumnActivateOp, 3, 4, "?field?",},
-    {"insert", 3, (Blt_Op)ColumnInsertOp, 5, 0, 
+    {"insert", 3, (Blt_Op)ColumnInsertOp, 5, 0,
 	"position field ?field...? ?option value?...",},
     {"invoke", 3, (Blt_Op)ColumnInvokeOp, 4, 4, "field",},
     {"names", 2, (Blt_Op)ColumnNamesOp, 3, 3, "",},
@@ -1520,7 +1520,7 @@ Blt_TreeViewColumnOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nColumnOps, columnOps, BLT_OP_ARG2, 
+    proc = Blt_GetOpFromObj(interp, nColumnOps, columnOps, BLT_OP_ARG2,
 	objc, objv,0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1545,7 +1545,7 @@ InvokeCompare(tvPtr, e1Ptr, e2Ptr, command)
     objv[2] = Tcl_NewIntObj(Blt_TreeNodeId(e1Ptr->node));
     objv[3] = Tcl_NewIntObj(Blt_TreeNodeId(e2Ptr->node));
     objv[4] = Tcl_NewStringObj(tvPtr->sortColumnPtr->key, -1);
-	     
+
     if (tvPtr->flatView) {
 	objv[5] = Tcl_NewStringObj(e1Ptr->fullName, -1);
 	objv[6] = Tcl_NewStringObj(e2Ptr->fullName, -1);
@@ -1559,7 +1559,7 @@ InvokeCompare(tvPtr, e1Ptr, e2Ptr, command)
     objv[7] = NULL;
     result = Tcl_EvalObjv(tvPtr->interp, 7, objv, TCL_EVAL_GLOBAL);
     if ((result != TCL_OK) ||
-	(Tcl_GetIntFromObj(tvPtr->interp, Tcl_GetObjResult(tvPtr->interp), 
+	(Tcl_GetIntFromObj(tvPtr->interp, Tcl_GetObjResult(tvPtr->interp),
 			   &result) != TCL_OK)) {
 	Tcl_BackgroundError(tvPtr->interp);
     }
@@ -1623,7 +1623,7 @@ CompareEntries(a, b)
 		    result = i1 - i2;
 		} else {
 		    result = -1;
-		} 
+		}
 	    } else if (Tcl_GetIntFromObj(NULL, obj2, &i2) == TCL_OK) {
 		result = 1;
 	    } else {
@@ -1641,7 +1641,7 @@ CompareEntries(a, b)
 		    result = (r1 < r2) ? -1 : (r1 > r2) ? 1 : 0;
 		} else {
 		    result = -1;
-		} 
+		}
 	    } else if (Tcl_GetDoubleFromObj(NULL, obj2, &r2) == TCL_OK) {
 		result = 1;
 	    } else {
@@ -1652,7 +1652,7 @@ CompareEntries(a, b)
     }
     if (tvPtr->sortDecreasing) {
 	return -result;
-    } 
+    }
     return result;
 }
 
@@ -1763,7 +1763,7 @@ SortCgetOp(tvPtr, interp, objc, objv)
     int objc;			/* Not used. */
     Tcl_Obj *CONST *objv;
 {
-    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, sortSpecs, 
+    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, sortSpecs,
 	(char *)tvPtr, objv[3], 0);
 }
 
@@ -1801,16 +1801,16 @@ SortConfigureOp(tvPtr, interp, objc, objv)
     TreeViewColumn *oldColumn;
 
     if (objc == 3) {
-	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, sortSpecs, 
+	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, sortSpecs,
 		(char *)tvPtr, (Tcl_Obj *)NULL, 0);
     } else if (objc == 4) {
-	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, sortSpecs, 
+	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, sortSpecs,
 		(char *)tvPtr, objv[3], 0);
     }
     oldColumn = tvPtr->sortColumnPtr;
     oldType = tvPtr->sortType;
     oldCommand = tvPtr->sortCmd;
-    if (Blt_ConfigureWidgetFromObj(interp, tvPtr->tkwin, sortSpecs, 
+    if (Blt_ConfigureWidgetFromObj(interp, tvPtr->tkwin, sortSpecs,
 	objc - 3, objv + 3, (char *)tvPtr, BLT_CONFIG_OBJV_ONLY) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1819,7 +1819,7 @@ SortConfigureOp(tvPtr, interp, objc, objv)
 	(oldCommand != tvPtr->sortCmd)) {
 	tvPtr->flags &= ~TV_SORTED;
 	tvPtr->flags |= (TV_DIRTY | TV_RESORT);
-    } 
+    }
     if (tvPtr->flags & TV_SORT_AUTO) {
 	tvPtr->flags |= TV_SORT_PENDING;
     }
@@ -1906,7 +1906,7 @@ Blt_TreeViewSortOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nSortOps, sortOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nSortOps, sortOps, BLT_OP_ARG2, objc,
 	    objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1941,7 +1941,7 @@ SortApplyProc(node, clientData, order)
     }
     return TCL_OK;
 }
- 
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1970,11 +1970,11 @@ Blt_TreeViewSortFlatView(tvPtr)
 	    return;
 	}
 
-	/* 
-	 * The view is already sorted but in the wrong direction. 
+	/*
+	 * The view is already sorted but in the wrong direction.
 	 * Reverse the entries in the array.
 	 */
- 	for (first = 0, last = tvPtr->nEntries - 1; last > first; 
+ 	for (first = 0, last = tvPtr->nEntries - 1; last > first;
 	     first++, last--) {
 	    hold = tvPtr->flatArr[first];
 	    tvPtr->flatArr[first] = tvPtr->flatArr[last];

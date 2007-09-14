@@ -209,14 +209,14 @@ BOOL ON_Linetype::Read( ON_BinaryArchive& file)
 
   if (rc)
   {
-    if( 1 == major_version ) 
+    if( 1 == major_version )
     {
       // chunk version 1.0 fields
-      if( rc) 
+      if( rc)
         rc = file.ReadInt( &m_linetype_index );
-      if( rc) 
+      if( rc)
         rc = file.ReadString( m_linetype_name );
-      if( rc) 
+      if( rc)
         rc = file.ReadArray( m_segments );
 
       if ( minor_version >= 1 )

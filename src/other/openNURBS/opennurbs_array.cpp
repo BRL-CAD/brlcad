@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -16,14 +16,14 @@
 
 #include "opennurbs.h"   // openNURBS declarations of functions that perform simple calculations
 
-ON_2dPointArray::ON_2dPointArray() 
+ON_2dPointArray::ON_2dPointArray()
 {}
 
-ON_2dPointArray::ON_2dPointArray(int c) 
-                : ON_SimpleArray<ON_2dPoint>(c) 
+ON_2dPointArray::ON_2dPointArray(int c)
+                : ON_SimpleArray<ON_2dPoint>(c)
 {}
 
-ON_2dPointArray::ON_2dPointArray(const ON_2dPointArray& src) 
+ON_2dPointArray::ON_2dPointArray(const ON_2dPointArray& src)
                 : ON_SimpleArray<ON_2dPoint>(src)
 {}
 
@@ -54,17 +54,17 @@ ON_2dPointArray& ON_2dPointArray::operator=(const ON_2dPointArray& src)
   return *this;
 }
 
-ON_3dPointArray::ON_3dPointArray() 
+ON_3dPointArray::ON_3dPointArray()
 {}
 
-ON_3dPointArray::ON_3dPointArray(int c) : ON_SimpleArray<ON_3dPoint>(c) 
+ON_3dPointArray::ON_3dPointArray(int c) : ON_SimpleArray<ON_3dPoint>(c)
 {}
 
-ON_3dPointArray::ON_3dPointArray(const ON_SimpleArray<ON_3dPoint>& src) 
+ON_3dPointArray::ON_3dPointArray(const ON_SimpleArray<ON_3dPoint>& src)
                 : ON_SimpleArray<ON_3dPoint>(src)
 {}
 
-ON_3dPointArray::ON_3dPointArray(const ON_SimpleArray<ON_3fPoint>& src) 
+ON_3dPointArray::ON_3dPointArray(const ON_SimpleArray<ON_3fPoint>& src)
 {
   *this = src;
 }
@@ -76,7 +76,7 @@ ON_BoundingBox ON_3dPointArray::BoundingBox() const
   return bbox;
 }
 
-bool ON_3dPointArray::GetBoundingBox( 
+bool ON_3dPointArray::GetBoundingBox(
   ON_BoundingBox& bbox,
   int bGrowBox
   ) const
@@ -163,7 +163,7 @@ ON_3dPointArray& ON_3dPointArray::operator=(const ON_SimpleArray<ON_3fPoint>& sr
 }
 
 
-bool ON_3dPointArray::Create( 
+bool ON_3dPointArray::Create(
   int point_dimension,
   int bRational,
   int point_count,
@@ -172,8 +172,8 @@ bool ON_3dPointArray::Create(
   )
 {
   bool rc = false;
-  if (     point_dimension >= 2 && point_dimension <= 3 
-        && point_count>0 && points 
+  if (     point_dimension >= 2 && point_dimension <= 3
+        && point_count>0 && points
         && point_stride >= bRational?(point_dimension+1):point_dimension )
   {
     rc = true;
@@ -215,7 +215,7 @@ bool ON_3dPointArray::Create(
 }
 
 
-bool ON_3dPointArray::Create( 
+bool ON_3dPointArray::Create(
   int point_dimension,
   int bRational,
   int point_count,
@@ -224,8 +224,8 @@ bool ON_3dPointArray::Create(
   )
 {
   bool rc = false;
-  if (     point_dimension >= 2 && point_dimension <= 3 
-        && point_count>0 && points 
+  if (     point_dimension >= 2 && point_dimension <= 3
+        && point_count>0 && points
         && point_stride >= bRational?(point_dimension+1):point_dimension )
   {
     rc = true;
@@ -268,10 +268,10 @@ bool ON_3dPointArray::Create(
 
 
 
-ON_4dPointArray::ON_4dPointArray() 
+ON_4dPointArray::ON_4dPointArray()
 {}
 
-ON_4dPointArray::ON_4dPointArray(int c) : ON_SimpleArray<ON_4dPoint>(c) 
+ON_4dPointArray::ON_4dPointArray(int c) : ON_SimpleArray<ON_4dPoint>(c)
 {}
 
 ON_4dPointArray::ON_4dPointArray(const ON_4dPointArray& src) : ON_SimpleArray<ON_4dPoint>(src)
@@ -295,10 +295,10 @@ ON_4dPointArray& ON_4dPointArray::operator=(const ON_4dPointArray& src)
   return *this;
 }
 
-ON_2dVectorArray::ON_2dVectorArray() 
+ON_2dVectorArray::ON_2dVectorArray()
 {}
 
-ON_2dVectorArray::ON_2dVectorArray(int c) : ON_SimpleArray<ON_2dVector>(c) 
+ON_2dVectorArray::ON_2dVectorArray(int c) : ON_SimpleArray<ON_2dVector>(c)
 {}
 
 ON_2dVectorArray::ON_2dVectorArray(const ON_2dVectorArray& src) : ON_SimpleArray<ON_2dVector>(src)
@@ -331,10 +331,10 @@ ON_2dVectorArray& ON_2dVectorArray::operator=(const ON_2dVectorArray& src)
   return *this;
 }
 
-ON_3dVectorArray::ON_3dVectorArray() 
+ON_3dVectorArray::ON_3dVectorArray()
 {}
 
-ON_3dVectorArray::ON_3dVectorArray(int c) : ON_SimpleArray<ON_3dVector>(c) 
+ON_3dVectorArray::ON_3dVectorArray(int c) : ON_SimpleArray<ON_3dVector>(c)
 {}
 
 ON_3dVectorArray::ON_3dVectorArray(const ON_3dVectorArray& src) : ON_SimpleArray<ON_3dVector>(src)
@@ -370,14 +370,14 @@ ON_3dVectorArray& ON_3dVectorArray::operator=(const ON_3dVectorArray& src)
 ////
 ////
 ////
-ON_2fPointArray::ON_2fPointArray() 
+ON_2fPointArray::ON_2fPointArray()
 {}
 
-ON_2fPointArray::ON_2fPointArray(int c) 
-                : ON_SimpleArray<ON_2fPoint>(c) 
+ON_2fPointArray::ON_2fPointArray(int c)
+                : ON_SimpleArray<ON_2fPoint>(c)
 {}
 
-ON_2fPointArray::ON_2fPointArray(const ON_2fPointArray& src) 
+ON_2fPointArray::ON_2fPointArray(const ON_2fPointArray& src)
                 : ON_SimpleArray<ON_2fPoint>(src)
 {}
 
@@ -409,7 +409,7 @@ ON_2fPointArray& ON_2fPointArray::operator=(const ON_2fPointArray& src)
 }
 
 
-ON_3fPointArray::ON_3fPointArray() 
+ON_3fPointArray::ON_3fPointArray()
 {}
 
 ON_3fPointArray::ON_3fPointArray(int c) : ON_SimpleArray<ON_3fPoint>(c)
@@ -445,10 +445,10 @@ ON_3fPointArray& ON_3fPointArray::operator=(const ON_3fPointArray& src)
   return *this;
 }
 
-ON_4fPointArray::ON_4fPointArray() 
+ON_4fPointArray::ON_4fPointArray()
 {}
 
-ON_4fPointArray::ON_4fPointArray(int c) : ON_SimpleArray<ON_4fPoint>(c) 
+ON_4fPointArray::ON_4fPointArray(int c) : ON_SimpleArray<ON_4fPoint>(c)
 {}
 
 ON_4fPointArray::ON_4fPointArray(const ON_4fPointArray& src) : ON_SimpleArray<ON_4fPoint>(src)
@@ -472,10 +472,10 @@ ON_4fPointArray& ON_4fPointArray::operator=(const ON_4fPointArray& src)
   return *this;
 }
 
-ON_2fVectorArray::ON_2fVectorArray() 
+ON_2fVectorArray::ON_2fVectorArray()
 {}
 
-ON_2fVectorArray::ON_2fVectorArray(int c) : ON_SimpleArray<ON_2fVector>(c) 
+ON_2fVectorArray::ON_2fVectorArray(int c) : ON_SimpleArray<ON_2fVector>(c)
 {}
 
 ON_2fVectorArray::ON_2fVectorArray(const ON_2fVectorArray& src) : ON_SimpleArray<ON_2fVector>(src)
@@ -508,10 +508,10 @@ ON_2fVectorArray& ON_2fVectorArray::operator=(const ON_2fVectorArray& src)
   return *this;
 }
 
-ON_3fVectorArray::ON_3fVectorArray() 
+ON_3fVectorArray::ON_3fVectorArray()
 {}
 
-ON_3fVectorArray::ON_3fVectorArray(int c) : ON_SimpleArray<ON_3fVector>(c) 
+ON_3fVectorArray::ON_3fVectorArray(int c) : ON_SimpleArray<ON_3fVector>(c)
 {}
 
 ON_3fVectorArray::ON_3fVectorArray(const ON_3fVectorArray& src) : ON_SimpleArray<ON_3fVector>(src)
@@ -593,14 +593,14 @@ int ON_UuidPair::Compare(const class ON_UuidPair* a,const class ON_UuidPair* b)
   return i;
 }
 
-ON_UuidList::ON_UuidList() 
+ON_UuidList::ON_UuidList()
                      : ON_SimpleArray<ON_UUID>(32),
                        m_sorted_count(0),
                        m_removed_count(0)
 {
 }
 
-ON_UuidList::ON_UuidList(int capacity) 
+ON_UuidList::ON_UuidList(int capacity)
                      : ON_SimpleArray<ON_UUID>(capacity),
                        m_sorted_count(0),
                        m_removed_count(0)
@@ -613,7 +613,7 @@ ON_UuidList::~ON_UuidList()
   m_removed_count = 0;
 }
 
-ON_UuidList::ON_UuidList(const ON_UuidList& src) 
+ON_UuidList::ON_UuidList(const ON_UuidList& src)
                      : ON_SimpleArray<ON_UUID>(src),
                        m_sorted_count(src.m_sorted_count),
                        m_removed_count(src.m_removed_count)
@@ -735,8 +735,8 @@ bool ON_UuidList::Read( class ON_BinaryArchive& archive )
   m_sorted_count = 0;
   int major_version = 0;
   int minor_version = 0;
-  bool rc = archive.BeginRead3dmChunk( TCODE_ANONYMOUS_CHUNK, 
-                                       &major_version, 
+  bool rc = archive.BeginRead3dmChunk( TCODE_ANONYMOUS_CHUNK,
+                                       &major_version,
                                        &minor_version );
   if (rc)
   {
@@ -771,8 +771,8 @@ ON_UUID* ON_UuidList::SearchHelper(const ON_UUID* uuid) const
   }
 
   ON_UUID* p = (m_sorted_count > 0 )
-             ? (ON_UUID*)bsearch( uuid, m_a, m_sorted_count, sizeof(m_a[0]), 
-                                  (int(*)(const void*,const void*))ON_UuidList::CompareUuid ) 
+             ? (ON_UUID*)bsearch( uuid, m_a, m_sorted_count, sizeof(m_a[0]),
+                                  (int(*)(const void*,const void*))ON_UuidList::CompareUuid )
              : 0;
 
   if (0 == p)
@@ -795,14 +795,14 @@ ON_UUID* ON_UuidList::SearchHelper(const ON_UUID* uuid) const
 
 
 
-ON_UuidIndexList::ON_UuidIndexList() 
+ON_UuidIndexList::ON_UuidIndexList()
                      : ON_SimpleArray<ON_UuidIndex>(32),
                        m_sorted_count(0),
                        m_removed_count(0)
 {
 }
 
-ON_UuidIndexList::ON_UuidIndexList(int capacity) 
+ON_UuidIndexList::ON_UuidIndexList(int capacity)
                      : ON_SimpleArray<ON_UuidIndex>(capacity>32?capacity:32),
                        m_sorted_count(0),
                        m_removed_count(0)
@@ -815,7 +815,7 @@ ON_UuidIndexList::~ON_UuidIndexList()
   m_removed_count = 0;
 }
 
-ON_UuidIndexList::ON_UuidIndexList(const ON_UuidIndexList& src) 
+ON_UuidIndexList::ON_UuidIndexList(const ON_UuidIndexList& src)
                      : ON_SimpleArray<ON_UuidIndex>(src),
                        m_sorted_count(src.m_sorted_count),
                        m_removed_count(src.m_removed_count)
@@ -996,9 +996,9 @@ ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
   }
 
   ON_UuidIndex* p = (m_sorted_count > 0 )
-                   ? (ON_UuidIndex*)bsearch( uuid, m_a, m_sorted_count, 
-                                        sizeof(m_a[0]), 
-                                        (int(*)(const void*,const void*))compar_uuidindex_uuid ) 
+                   ? (ON_UuidIndex*)bsearch( uuid, m_a, m_sorted_count,
+                                        sizeof(m_a[0]),
+                                        (int(*)(const void*,const void*))compar_uuidindex_uuid )
                    : 0;
   if (0 == p)
   {
@@ -1021,8 +1021,8 @@ ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
 ON_2dexMap::ON_2dexMap() : m_bSorted(0)
 {}
 
-ON_2dexMap::ON_2dexMap(int capacity) 
-            : ON_SimpleArray<ON_2dex>(capacity), 
+ON_2dexMap::ON_2dexMap(int capacity)
+            : ON_SimpleArray<ON_2dex>(capacity),
             m_bSorted(0)
 {}
 

@@ -1726,13 +1726,13 @@ Tcl_ParseExpr(
 		    ((start - limit) < scratch.string) ? "" : "...",
 		    ((start - limit) < scratch.string)
 		    ? (start - scratch.string) : limit - 3,
-		    ((start - limit) < scratch.string) 
+		    ((start - limit) < scratch.string)
 		    ? scratch.string : start - limit + 3,
 		    (scanned < limit) ? scanned : limit - 3, start,
 		    (scanned < limit) ? "" : "...",
 		    insertMark ? mark : "",
 		    (start + scanned + limit > scratch.end)
-		    ? scratch.end - (start + scanned) : limit-3, 
+		    ? scratch.end - (start + scanned) : limit-3,
 		    start + scanned,
 		    (start + scanned + limit > scratch.end) ? "" : "...");
 	    if (post != NULL) {

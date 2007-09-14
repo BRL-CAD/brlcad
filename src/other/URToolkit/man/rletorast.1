@@ -1,13 +1,13 @@
 .TH RLETORAST 1 "1990" 1
-.UC 4 
+.UC 4
 .SH NAME
 rletorast \- Convert an RLE file to a Sun rasterfile.
 .SH SYNOPSIS
 .B rletorast
 [
-.B \-o 
+.B \-o
 .I outfile.ras
-] [ 
+] [
 .I infile
 ]
 .SH DESCRIPTION
@@ -16,7 +16,7 @@ This program converts an
 file to a Sun raster file.
 .TP
 .BI \-o \ outfile.ras
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile.ras
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.  The input file should have either 1 or 3
@@ -39,7 +39,7 @@ The programs
 and
 .IR tobw (1)
 will make a 1 channel RLE image from an 3 channel (full color) image.
-If the original image also had an alpha channel, 
+If the original image also had an alpha channel,
 .I rleswap -d -1
 can be used to delete it.
 .SH SEE ALSO

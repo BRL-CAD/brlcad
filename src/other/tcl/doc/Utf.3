@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Utf 3 "8.1" Tcl "Tcl Library Procedures"
 .BS
@@ -50,7 +50,7 @@ int
 int
 \fBTcl_UtfCharComplete\fR(\fIsrc, length\fR)
 .sp
-int 
+int
 \fBTcl_NumUtfChars\fR(\fIsrc, length\fR)
 .sp
 const char *
@@ -111,7 +111,7 @@ Pointer to the beginning of a UTF-8 string.
 .AP int index in
 The index of a character (not byte) in the UTF-8 string.
 .AP int *readPtr out
-If non-NULL, filled with the number of bytes in the backslash sequence, 
+If non-NULL, filled with the number of bytes in the backslash sequence,
 including the backslash character.
 .AP char *dst out
 Buffer in which the bytes represented by the backslash sequence are stored.
@@ -144,7 +144,7 @@ end and dereference non-existent or random memory; if the source buffer
 is known to be null-terminated, this will not happen.  If the input is
 not in proper UTF-8 format, \fBTcl_UtfToUniChar\fR will store the first
 byte of \fIsrc\fR in \fI*chPtr\fR as a Tcl_UniChar between 0x0000 and
-0x00ff and return 1.  
+0x00ff and return 1.
 .PP
 \fBTcl_UniCharToUtfDString\fR converts the given Unicode string
 to UTF-8, storing the result in a previously initialized \fBTcl_DString\fR.
@@ -211,12 +211,12 @@ length is negative, all bytes up to the first null byte are used.
 \fBTcl_UtfFindFirst\fR corresponds to \fBstrchr\fR for UTF-8 strings.  It
 returns a pointer to the first occurrence of the Tcl_UniChar \fIch\fR
 in the null-terminated UTF-8 string \fIsrc\fR.  The null terminator is
-considered part of the UTF-8 string.  
+considered part of the UTF-8 string.
 .PP
 \fBTcl_UtfFindLast\fR corresponds to \fBstrrchr\fR for UTF-8 strings.  It
 returns a pointer to the last occurrence of the Tcl_UniChar \fIch\fR
 in the null-terminated UTF-8 string \fIsrc\fR.  The null terminator is
-considered part of the UTF-8 string.  
+considered part of the UTF-8 string.
 .PP
 Given \fIsrc\fR, a pointer to some location in a UTF-8 string,
 \fBTcl_UtfNext\fR returns a pointer to the next UTF-8 character in the
@@ -240,7 +240,7 @@ characters.  Behavior is undefined if a negative \fIindex\fR is given.
 .PP
 \fBTcl_UtfAtIndex\fR returns a pointer to the specified character (not
 byte) \fIindex\fR in the UTF-8 string \fIsrc\fR.  The source string must
-contain at least \fIindex\fR characters.  This is equivalent to calling 
+contain at least \fIindex\fR characters.  This is equivalent to calling
 \fBTcl_UtfNext\fR \fIindex\fR times.  If a negative \fIindex\fR is given,
 the return pointer points to the first character in the source string.
 .PP

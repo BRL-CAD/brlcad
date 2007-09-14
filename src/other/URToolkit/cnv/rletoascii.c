@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notices are 
+ * modified, and redistributed, provided that the copyright notices are
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rletoascii.c - Take a RLE, make it black and white, dump it as ascii chars.
- * 
+ *
  */
 
 #include <stdlib.h>
@@ -39,7 +39,7 @@ typedef FILE	*FILPTR;
  * B = 23
  * R = 22
  * * = 21
- * # = 20 
+ * # = 20
  * $ = 19
  * P = 18
  * X = 17
@@ -108,7 +108,7 @@ char *argv[];
     nrow = hdr.xmax + 1;
     nscan = (hdr.ymax - hdr.ymin + 1);
     buffer = (unsigned char *)malloc( nrow );
-    scan = (unsigned char **) malloc( hdr.ncolors * 
+    scan = (unsigned char **) malloc( hdr.ncolors *
 				      sizeof( unsigned char * ) );
     for ( i = 0; i < hdr.ncolors; i++ )
 	scan[i] = (unsigned char *)malloc( nrow );

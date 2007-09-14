@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH Tcl_ListObj 3 8.0 Tcl "Tcl Library Procedures"
 .BS
@@ -66,7 +66,7 @@ Points to location where \fBTcl_ListObjGetElements\fR
 stores the number of element objects in \fIlistPtr\fR.
 .AP Tcl_Obj ***objvPtr out
 A location where \fBTcl_ListObjGetElements\fR stores a pointer to an array
-of pointers to the element objects of \fIlistPtr\fR.  
+of pointers to the element objects of \fIlistPtr\fR.
 .AP int objc in
 The number of Tcl objects that \fBTcl_NewListObj\fR
 will insert into a new list object,
@@ -77,7 +77,7 @@ the number of Tcl objects to insert into \fIobjPtr\fR.
 An array of pointers to objects.
 \fBTcl_NewListObj\fR will insert these objects into a new list object
 and \fBTcl_ListObjReplace\fR will insert them into an existing \fIlistPtr\fR.
-Each object will become a separate list element.  
+Each object will become a separate list element.
 .AP int *intPtr out
 Points to location where \fBTcl_ListObjLength\fR
 stores the length of the list.
@@ -136,7 +136,7 @@ If no error occurs,
 the two procedures return \fBTCL_OK\fR after appending the objects.
 .PP
 \fBTcl_NewListObj\fR and \fBTcl_SetListObj\fR
-create a new object or modify an existing object to hold 
+create a new object or modify an existing object to hold
 the \fIobjc\fR elements of the array referenced by \fIobjv\fR
 where each element is a pointer to a Tcl object.
 If \fIobjc\fR is less than or equal to zero,

@@ -1,7 +1,7 @@
-/* 
+/*
  * rle_open_f.c - Open a file with defaults.
- * 
- * Author : 	Jerry Winters 
+ *
+ * Author : 	Jerry Winters
  * 		EECS Dept.
  * 		University of Michigan
  * Date:	11/14/89
@@ -30,7 +30,7 @@ static FILE *my_popen();
 #endif /* !NO_OPEN_PIPES */
 
 
-/* 
+/*
  *  Purpose : Open a file for input or ouput as controlled by the mode
  *  parameter.  If no file name is specified (ie. file_name is null) then
  *  a pointer to stdin or stdout will be returned.  The calling routine may
@@ -49,10 +49,10 @@ static FILE *my_popen();
  *
  *   output:
  *     a file pointer
- * 
+ *
  */
 FILE *
-rle_open_f_noexit( prog_name, file_name, mode ) 
+rle_open_f_noexit( prog_name, file_name, mode )
 char *prog_name, *file_name, *mode;
 {
     FILE *fp;
@@ -76,7 +76,7 @@ char *prog_name, *file_name, *mode;
 	fp = stdout;     /* Set the default value */
     else
 	fp = stdin;
-    
+
     if ( file_name != NULL && strcmp( file_name, "-" ) != 0 )
     {
 #ifndef	NO_OPEN_PIPES
@@ -126,10 +126,10 @@ char *prog_name, *file_name, *mode;
 
 	/*  Real file, not stdin or stdout.  If name ends in ".Z",
 	 *  pipe from/to un/compress (depending on r/w mode).
-	 *  
+	 *
 	 *  If it starts with "|", popen that command.
 	 */
-	    
+
 	cp = file_name + strlen( file_name ) - 2;
 	/* Pipe case. */
 	if ( *file_name == '|' )
@@ -227,7 +227,7 @@ char *prog_name, *file_name, *mode;
 
 /*****************************************************************
  * TAG( rle_close_f )
- * 
+ *
  * Close a file opened by rle_open_f.  If the file is stdin or stdout,
  * it will not be closed.
  * Inputs:
@@ -273,7 +273,7 @@ int *pid;
 
     if ( pipe(pipefd) < 0 )
 	return NULL;
-    
+
     /* Flush known files. */
     fflush(stdout);
     fflush(stderr);
@@ -304,7 +304,7 @@ int *pid;
 	if ( execl("/bin/sh", "sh", "-c", cmd, NULL) < 0 )
 	    exit(127);
 	/* NOTREACHED */
-    }	
+    }
 
     /* Close file descriptors, and gen up a FILE ptr */
     if ( *mode == 'r' )

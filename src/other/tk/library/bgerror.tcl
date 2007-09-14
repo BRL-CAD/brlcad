@@ -8,7 +8,7 @@
 #
 # Copyright (c) 1998-2000 by Ajuba Solutions.
 # All rights reserved.
-# 
+#
 # RCS: @(#) $Id$
 # $Id$
 

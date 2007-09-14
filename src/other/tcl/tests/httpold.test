@@ -38,7 +38,7 @@ if {[catch {package require http 1.0}]} {
 set bindata "This is binary data\x0d\x0amore\x0dmore\x0amore\x00null"
 catch {unset data}
 
-## 
+##
 ## The httpd script implement a stub http server
 ##
 source [file join [file dirname [info script]] httpd]

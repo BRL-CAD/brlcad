@@ -392,7 +392,7 @@ test regexp-11.12 {regsub without final variable name returns value} {
 } {a,bcd,c,ea,bcfd,cf,e}
 
 # This test crashes on the Mac unless you increase the Stack Space to about 1
-# Meg.  This is probably bigger than most users want... 
+# Meg.  This is probably bigger than most users want...
 # 8.2.3 regexp reduced stack space requirements, but this should be
 # tested again
 test regexp-12.1 {Tcl_RegExpExec: large number of subexpressions} {macCrash} {
@@ -592,10 +592,10 @@ test regexp-19.1 {regsub null replacement} {
 
 test regexp-20.1 {regsub shared object shimmering} {
     # Bug #461322
-    set a abcdefghijklmnopqurstuvwxyz 
-    set b $a 
-    set c abcdefghijklmnopqurstuvwxyz0123456789 
-    regsub $a $c $b d 
+    set a abcdefghijklmnopqurstuvwxyz
+    set b $a
+    set c abcdefghijklmnopqurstuvwxyz0123456789
+    regsub $a $c $b d
     list $d [string length $d] [string bytelength $d]
 } [list abcdefghijklmnopqurstuvwxyz0123456789 37 37]
 test regexp-20.2 {regsub shared object shimmering with -about} {

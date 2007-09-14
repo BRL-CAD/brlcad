@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 '\" RCS: @(#) $Id$
-'\" 
+'\"
 .so man.macros
 .TH event n 8.3 Tk "Tk Built-In Commands"
 .BS
@@ -171,7 +171,7 @@ one of \fBNotifyNormal\fR, \fBNotifyGrab\fR, \fBNotifyUngrab\fR, or
 \fBNotifyWhileGrabbed\fR.
 Valid for \fBEnter\fR, \fBLeave\fR, \fBFocusIn\fR, and
 \fBFocusOut\fR events.
-Corresponds to the \fB%m\fR substitution for binding scripts.  
+Corresponds to the \fB%m\fR substitution for binding scripts.
 .TP
 \fB\-override\fI boolean\fR
 \fIBoolean\fR must be a boolean value;  it specifies the
@@ -223,7 +223,7 @@ Corresponds to the \fB%#\fR substitution for binding scripts.
 For \fBKeyPress\fR, \fBKeyRelease\fR, \fBButtonPress\fR,
 \fBButtonRelease\fR, \fBEnter\fR, \fBLeave\fR, and \fBMotion\fR events
 it must be an integer value.
-For \fBVisibility\fR events it must be one of \fBVisibilityUnobscured\fR, 
+For \fBVisibility\fR events it must be one of \fBVisibilityUnobscured\fR,
 \fBVisibilityPartiallyObscured\fR, or \fBVisibilityFullyObscured\fR.
 This option overrides any modifiers such as \fBMeta\fR or \fBControl\fR
 specified in the base \fIevent\fR.
@@ -301,9 +301,9 @@ If \fIWindow\fR is empty the coordinate is relative to the
 screen, and this option corresponds to the \fB%Y\fR substitution
 for binding scripts.
 .PP
-Any options that are not specified when generating an event are filled 
-with the value 0, except for \fIserial\fR, which is filled with the 
-next X event serial number.  
+Any options that are not specified when generating an event are filled
+with the value 0, except for \fIserial\fR, which is filled with the
+next X event serial number.
 .SH "PREDEFINED VIRTUAL EVENTS"
 Tk defines the following virtual events for the purposes of
 notification:
@@ -404,7 +404,7 @@ will be invoked, because a physical event is considered
 more specific than a virtual event, all other things being equal.
 However, when the user types Meta-Control-y the
 \fB<<Paste>>\fR binding will be invoked, because the
-\fBMeta\fR modifier in the physical pattern associated with the 
+\fBMeta\fR modifier in the physical pattern associated with the
 virtual binding is more specific than the \fB<Control-y\fR> sequence for
 the physical event.
 .PP
@@ -422,7 +422,7 @@ event add <<Paste>> <Key-F6>
 .CE
 the behavior will change such in two ways.  First, the shadowed
 \fB<<Paste>>\fR binding will emerge.
-Typing Control-y will no longer invoke the \fB<Control-y>\fR binding, 
+Typing Control-y will no longer invoke the \fB<Control-y>\fR binding,
 but instead invoke the virtual event \fB<<Paste>>\fR.  Second,
 pressing the F6 key will now also invoke the \fB<<Paste>>\fR binding.
 

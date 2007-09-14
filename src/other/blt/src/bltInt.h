@@ -37,7 +37,7 @@
 
 #define USE_NON_CONST
 #include <tcl.h>
-#define USE_COMPOSITELESS_PHOTO_PUT_BLOCK 
+#define USE_COMPOSITELESS_PHOTO_PUT_BLOCK
 #include <tk.h>
 
 #define _VERSION(a,b,c)	    (((a) << 16) + ((b) << 8) + (c))
@@ -51,11 +51,11 @@
 
 #if defined(WIN32) && !defined(__GNUC__)
 #include "bltWinConfig.h"
-#else 
+#else
 #include "bltConfig.h"
 #endif
 
-#ifdef WIN32 
+#ifdef WIN32
 #ifndef EXPORT
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define EXPORT __declspec(dllexport)
@@ -251,12 +251,12 @@ typedef enum {
 #define BLT_OP_LINEAR_SEARCH	1
 #define BLT_OP_BINARY_SEARCH	0
 
-extern Blt_Op Blt_GetOp _ANSI_ARGS_((Tcl_Interp *interp, int nSpecs, 
+extern Blt_Op Blt_GetOp _ANSI_ARGS_((Tcl_Interp *interp, int nSpecs,
 	Blt_OpSpec *specArr, int operPos, int argc, char **argv, int flags));
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0))
 extern Blt_Op Blt_GetOpFromObj _ANSI_ARGS_((Tcl_Interp *interp,
-	int nSpecs, Blt_OpSpec *specArr, int operPos, int objc, 
+	int nSpecs, Blt_OpSpec *specArr, int operPos, int objc,
 	Tcl_Obj *CONST *objv, int flags));
 #endif
 
@@ -279,10 +279,10 @@ EXTERN void Blt_Panic _ANSI_ARGS_(TCL_VARARGS(char *, args));
 
 
 extern void Blt_Draw3DRectangle _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable,
-	Tk_3DBorder border, int x, int y, int width, int height, 
+	Tk_3DBorder border, int x, int y, int width, int height,
 	int borderWidth, int relief));
 extern void Blt_Fill3DRectangle _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable,
-	Tk_3DBorder border, int x, int y, int width, int height, 
+	Tk_3DBorder border, int x, int y, int width, int height,
 	int borderWidth, int relief));
 
 #ifdef notdef
@@ -468,7 +468,7 @@ typedef struct {
  * ----------------------------------------------------------------------
  *
  * The following enumerated values are used as bit flags.
- *	FILL_NONE		Neither coordinate plane is specified 
+ *	FILL_NONE		Neither coordinate plane is specified
  *	FILL_X			Horizontal plane.
  *	FILL_Y			Vertical plane.
  *	FILL_BOTH		Both vertical and horizontal planes.
@@ -641,17 +641,17 @@ extern char *Blt_Dtoa _ANSI_ARGS_((Tcl_Interp *interp, double value));
 extern Tcl_Command Blt_InitCmd _ANSI_ARGS_((Tcl_Interp *interp,
 	char *namespace, Blt_CmdSpec *specPtr));
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,0,0))
 extern Tcl_Command Blt_InitObjCmd _ANSI_ARGS_((Tcl_Interp *interp,
 	char *namespace, Blt_ObjCmdSpec *specPtr));
 #if (TCL_VERSION_NUMBER < _VERSION(8,1,0))
 extern char *Tcl_GetString _ANSI_ARGS_((Tcl_Obj *objPtr));
-extern int Tcl_EvalObjv _ANSI_ARGS_((Tcl_Interp *interp, int objc, 
+extern int Tcl_EvalObjv _ANSI_ARGS_((Tcl_Interp *interp, int objc,
 	Tcl_Obj **objv, int flags));
 extern int Tcl_WriteObj _ANSI_ARGS_((Tcl_Channel channel, Tcl_Obj *objPtr));
-extern char *Tcl_SetVar2Ex _ANSI_ARGS_((Tcl_Interp *interp, char *part1, 
+extern char *Tcl_SetVar2Ex _ANSI_ARGS_((Tcl_Interp *interp, char *part1,
 	char *part2, Tcl_Obj *objPtr, int flags));
-extern Tcl_Obj *Tcl_GetVar2Ex _ANSI_ARGS_((Tcl_Interp *interp, char *part1, 
+extern Tcl_Obj *Tcl_GetVar2Ex _ANSI_ARGS_((Tcl_Interp *interp, char *part1,
 	char *part2, int flags));
 #endif /* TCL_VERSION_NUMBER < 8.2.0 */
 #endif /* TCL_VERSION_NUMBER >= 8.0.0 */
@@ -660,7 +660,7 @@ extern Tcl_Obj *Tcl_GetVar2Ex _ANSI_ARGS_((Tcl_Interp *interp, char *part1,
 extern int Blt_InitCmds _ANSI_ARGS_((Tcl_Interp *interp, char *namespace,
 	Blt_CmdSpec *specPtr, int nCmds));
 
-extern int Blt_NaturalSpline _ANSI_ARGS_((Point2D *origPts, int nOrigPts, 
+extern int Blt_NaturalSpline _ANSI_ARGS_((Point2D *origPts, int nOrigPts,
 	Point2D *intpPts, int nIntpPts));
 
 extern int Blt_QuadraticSpline _ANSI_ARGS_((Point2D *origPts, int nOrigPts,
@@ -669,11 +669,11 @@ extern int Blt_QuadraticSpline _ANSI_ARGS_((Point2D *origPts, int nOrigPts,
 extern int Blt_SimplifyLine _ANSI_ARGS_((Point2D *origPts, int low, int high,
 	 double tolerance, int indices[]));
 
-extern int Blt_NaturalParametricSpline _ANSI_ARGS_((Point2D *origPts, 
-	int nOrigPts, Extents2D *extsPtr, int isClosed, Point2D *intpPts, 
+extern int Blt_NaturalParametricSpline _ANSI_ARGS_((Point2D *origPts,
+	int nOrigPts, Extents2D *extsPtr, int isClosed, Point2D *intpPts,
 	int nIntpPts));
 
-extern int Blt_CatromParametricSpline _ANSI_ARGS_((Point2D *origPts, 
+extern int Blt_CatromParametricSpline _ANSI_ARGS_((Point2D *origPts,
 	int nOrigPts, Point2D *intpPts, int nIntpPts));
 
 extern int Blt_StringToFlag _ANSI_ARGS_((ClientData clientData,
@@ -715,7 +715,7 @@ extern char *Blt_NameOfFill _ANSI_ARGS_((int fill));
 extern int Blt_GetXY _ANSI_ARGS_((Tcl_Interp *interp, Tk_Window tkwin,
 	char *string, int *x, int *y));
 
-extern Point2D Blt_GetProjection _ANSI_ARGS_((int x, int y, Point2D *p, 
+extern Point2D Blt_GetProjection _ANSI_ARGS_((int x, int y, Point2D *p,
 	Point2D *q));
 
 extern void Blt_DrawArrow _ANSI_ARGS_((Display *display, Drawable drawable,
@@ -759,7 +759,7 @@ extern int Blt_ParseFlag _ANSI_ARGS_((ClientData, Tcl_Interp *, Tk_Window,
 extern char *Blt_FlagPrint _ANSI_ARGS_((ClientData, Tk_Window, char *, int,
 	Tcl_FreeProc **));
 
-extern int Blt_MaxRequestSize _ANSI_ARGS_((Display *display, 
+extern int Blt_MaxRequestSize _ANSI_ARGS_((Display *display,
 	unsigned int elemSize));
 
 extern Window Blt_GetRealWindowId _ANSI_ARGS_((Tk_Window tkwin));
@@ -771,10 +771,10 @@ extern void Blt_MapToplevel _ANSI_ARGS_((Tk_Window tkwin));
 extern void Blt_UnmapToplevel _ANSI_ARGS_((Tk_Window tkwin));
 extern void Blt_RaiseToplevel _ANSI_ARGS_((Tk_Window tkwin));
 extern void Blt_LowerToplevel _ANSI_ARGS_((Tk_Window tkwin));
-extern void Blt_ResizeToplevel _ANSI_ARGS_((Tk_Window tkwin, 
+extern void Blt_ResizeToplevel _ANSI_ARGS_((Tk_Window tkwin,
 	int width, int height));
 extern void Blt_MoveToplevel _ANSI_ARGS_((Tk_Window tkwin, int x, int y));
-extern void Blt_MoveResizeToplevel _ANSI_ARGS_((Tk_Window tkwin, 
+extern void Blt_MoveResizeToplevel _ANSI_ARGS_((Tk_Window tkwin,
 	int x, int y, int width, int height));
 extern ClientData Blt_GetWindowInstanceData _ANSI_ARGS_((Tk_Window tkwin));
 
@@ -790,7 +790,7 @@ extern int Blt_GetScrollInfo _ANSI_ARGS_((Tcl_Interp *interp, int argc,
 	char **argv, int *offsetPtr, int worldSize, int windowSize,
 	int scrollUnits, int scrollMode));
 
-#if (TK_MAJOR_VERSION >= 8) 
+#if (TK_MAJOR_VERSION >= 8)
 extern int Blt_GetScrollInfoFromObj _ANSI_ARGS_((Tcl_Interp *interp, int objc,
 	Tcl_Obj *CONST *objv, int *offsetPtr, int worldSize, int windowSize,
 	int scrollUnits, int scrollMode));
@@ -823,12 +823,12 @@ extern int Blt_JPEGToPhoto _ANSI_ARGS_((Tcl_Interp *interp, char *fileName,
 #else
 #define NO_DDE		1
 #endif
-#else 
+#else
 #define NO_DDE		1
 #define NO_PRINTER	1
 #endif /* WIN32 */
 
-#if (TCL_MAJOR_VERSION == 7) 
+#if (TCL_MAJOR_VERSION == 7)
 #define NO_TREE		1
 #define NO_ARRAY	1
 #define NO_TREEVIEW	1

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -37,17 +37,17 @@ public:
   ~ON_MeshParameters();
   // C++ default works fine // ON_MeshParameters(const ON_MeshParameters& );
   // C++ default works fine // ON_MeshParameters& operator=(const ON_MeshParameters&);
- 
+
   bool operator!=(const ON_MeshParameters&) const;
   bool operator==(const ON_MeshParameters&) const;
 
   // compares with mesh's mesh parameters
   bool operator==(const ON_Mesh&) const;
   bool operator!=(const ON_Mesh&) const;
-  
+
   void Dump( ON_TextLog& test_log ) const;
 
-  void Default(); 
+  void Default();
 
   /*
   Description:
@@ -64,14 +64,14 @@ public:
 
   /*
   Description:
-    Sets the meshing parameters to create "jagged and faster" 
+    Sets the meshing parameters to create "jagged and faster"
     render meshes.
   */
   void JaggedAndFasterMeshParameters();
 
   /*
   Description:
-    Sets the meshing parameters to create "smooth and slower" 
+    Sets the meshing parameters to create "smooth and slower"
     render meshes.
   */
   void SmoothAndSlowerMeshParameters();
@@ -94,7 +94,7 @@ public:
   // rectangular grid.  The second stage refines the grid until
   // the mesh meets all meshing requirements.  The third stage
   // combines coincident vertices if the resulting mesh is a composite.
-  
+
   bool m_bCustomSettings;    // FALSE - if these settings were used to create
                              //         a mesh and the app settings don't match,
                              //         then remesh the object using the app
@@ -115,40 +115,40 @@ public:
   bool m_bRefine;            // FALSE - skip stage 2
                              // TRUE  - (default) do stage 2
 
-  bool m_bJaggedSeams;       // FALSE - (default) edges of meshes of joined 
+  bool m_bJaggedSeams;       // FALSE - (default) edges of meshes of joined
                              //          b-rep faces match with no gaps or
                              //          "T" joints.
                              // TRUE   - faces in b-reps are meshed independently.
                              //          This is faster but results in gaps and
                              //          "T" joints along seams between faces.
-    
+
   int m_texture_range;       // 1: normalized
                              //
-                             //          each face has a normalized texture range 
+                             //          each face has a normalized texture range
                              //          [0,1]x[0,1].
                              //
                              // 2: packed normalized (default)
                              //
                              //          each face in a polysurface is assigned
-                             //          a texture range that is a subrectangle 
-                             //          of [0,1]x[0,1].  The subrectangles are 
+                             //          a texture range that is a subrectangle
+                             //          of [0,1]x[0,1].  The subrectangles are
                              //          mutually disjoint and packed into
                              //          into [0,1]x[0,1] in a way that minimizes
                              //          distortion and maximizes the coverage
-                             //          of [0,1]x[0,1].  (This texture style 
-                             //          is suitable for creating texture maps 
+                             //          of [0,1]x[0,1].  (This texture style
+                             //          is suitable for creating texture maps
                              //          with popular 3D painting programs.)
-                           
+
   // These controls are used in both stages
 
   double m_tolerance; // maximum distance from center of edge to surface
 
-        
-  double m_relative_tolerance; // If 0 < m_relative_tolerance < 1, 
+
+  double m_relative_tolerance; // If 0 < m_relative_tolerance < 1,
   double m_min_tolerance;      // then the maximum distance from the
                                // center of an edge to the surface will
                                // be <= T, where T is the larger of
-                               // (m_min_tolerance,d*m_relative_tolerance), 
+                               // (m_min_tolerance,d*m_relative_tolerance),
                                // where d is an esimate of the size of the
                                // object being meshed.
 
@@ -196,7 +196,7 @@ public:
 
   void Destroy();
   void EmergencyDestroy();
-  
+
   bool Set( ON::curvature_style,
             int,           // Kcount,
             const ON_SurfaceCurvature*, // K[]
@@ -208,7 +208,7 @@ public:
   bool Read( ON_BinaryArchive& );
 
   ON::curvature_style m_style;
-  
+
   double m_infinity; // curvature values >= this are considered infinite
                      // and not used to compute the m_average or m_adev
   int    m_count_infinite; // number of "infinte" values
@@ -227,18 +227,18 @@ public:
 
 struct ON_MeshTopologyVertex
 {
-  // m_tope_count = number of topological edges that begin or 
+  // m_tope_count = number of topological edges that begin or
   // end at this topological vertex.
   int m_tope_count;
 
-  // m_topei[] is an array of length m_tope_count with the indices 
+  // m_topei[] is an array of length m_tope_count with the indices
   // of the topological edges that begin or end at this topological
   // vertex.  Generally, these edges are listed in no particular
   // order.  If you want the edges listed "radially", then call
   // ON_MeshTopology::SortVertexEdges.
   const int* m_topei;
 
-  // m_v_count = number of ON_Mesh vertices that correspond to 
+  // m_v_count = number of ON_Mesh vertices that correspond to
   // this topological vertex.
   int m_v_count;
 
@@ -249,7 +249,7 @@ struct ON_MeshTopologyVertex
 
 struct ON_MeshTopologyEdge
 {
-  // m_topvi[] = indices of the topological verteices where the 
+  // m_topvi[] = indices of the topological verteices where the
   // edge begins and ends.
   int m_topvi[2];
 
@@ -267,7 +267,7 @@ struct ON_CLASS ON_MeshTopologyFace
     m_topei[] = indices of the topological edges that bound the face.
     If m_topei[2] = m_topei[3], then the face is a triangle, otherwise
     the face is a quad.
- 
+
     NOTE WELL:
       The topological edge with index m_topei[k] ENDS at the
       vertex corresponding to ON_MeshFace.vi[k]. So, ...
@@ -281,7 +281,7 @@ struct ON_CLASS ON_MeshTopologyFace
       ON_MeshFace.vi[1] and ENDS at ON_MeshFace.vi[2], and
       the topological edge with index m_topei[3] STARTS at
       ON_MeshFace.vi[0] and ENDS at ON_MeshFace.vi[1],
-      
+
       If the face is a triangle, (ON_MeshFace.vi[2]==ON_MeshFace.vi[3]),
       the topological edge with index m_topei[0] STARTS at
       ON_MeshFace.vi[2] and ENDS at ON_MeshFace.vi[0],
@@ -301,8 +301,8 @@ struct ON_CLASS ON_MeshTopologyFace
 
   /*
   Description:
-    A topological mesh face is a valid triangle if m_topei[0], 
-    m_topei[1], m_topei[2] are distinct edges and 
+    A topological mesh face is a valid triangle if m_topei[0],
+    m_topei[1], m_topei[2] are distinct edges and
     m_topei[3]=m_topei[2].
   Returns:
     True if face is a triangle.
@@ -311,7 +311,7 @@ struct ON_CLASS ON_MeshTopologyFace
 
   /*
   Description:
-    A topological mesh face is a valid quad if m_topei[0], 
+    A topological mesh face is a valid quad if m_topei[0],
     m_topei[1], m_topei[2], and m_topei[3] are distinct edges.
   Returns:
     True if face is a quad.
@@ -320,8 +320,8 @@ struct ON_CLASS ON_MeshTopologyFace
 
   /*
   Description:
-    A topological mesh face is valid if m_topei[0], m_topei[1], 
-    and m_topei[2] are mutually distinct, and m_topei[3] is 
+    A topological mesh face is valid if m_topei[0], m_topei[1],
+    and m_topei[2] are mutually distinct, and m_topei[3] is
     either equal to m_topei[2] or mutually distinct from the
     first three indices.
   Returns:
@@ -336,7 +336,7 @@ public:
   int vi[4]; // vertex index - vi[2]==vi[3] for tirangles
   bool IsTriangle() const;
   bool IsQuad() const;
-  bool IsValid( 
+  bool IsValid(
           int // number of vertices in mesh
         ) const;
   void Flip();
@@ -354,7 +354,7 @@ struct ON_MeshPart
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -389,7 +389,7 @@ public:
   //////////
   // number of topoligical edges
   int TopEdgeCount() const;
-  
+
   //////////
   // number of topoligical faces (same as m_mesh.FaceCount())
   int TopFaceCount() const;
@@ -492,7 +492,7 @@ public:
 
   /*
   Description:
-    Sort the m_topei[] list of every mesh topology vertex so 
+    Sort the m_topei[] list of every mesh topology vertex so
     that the edges are in radial order.  The "const" is a white
     lie to make this function easier to call.
   Remarks:
@@ -504,7 +504,7 @@ public:
 
   /*
   Description:
-    Returns true if the topological vertex is hidden. 
+    Returns true if the topological vertex is hidden.
   Parameters:
     topvi - [in] mesh topology vertex index.
   Returns:
@@ -517,7 +517,7 @@ public:
 
   /*
   Description:
-    Returns true if the topological edge is hidden. 
+    Returns true if the topological edge is hidden.
   Parameters:
     topei - [in] mesh topology edge index.
   Returns:
@@ -530,7 +530,7 @@ public:
 
   /*
   Description:
-    Returns true if the topological face is hidden. 
+    Returns true if the topological face is hidden.
   Parameters:
     topfi - [in] mesh topology face index.
   Returns:
@@ -542,7 +542,7 @@ public:
   bool TopFaceIsHidden( int topfi ) const;
 
   //////////
-  // m_topv_map[] has length m_mesh.VertexCount() and 
+  // m_topv_map[] has length m_mesh.VertexCount() and
   // m_topv[m_topv_map[vi]] is the topological mesh vertex that is assocated
   // the with the mesh vertex m_mesh.m_V[vi].
   ON_SimpleArray<int> m_topv_map;
@@ -561,8 +561,8 @@ public:
   // Array of topological mesh faces.  The topological face
   // m_topf[fi] corresponds to the mesh face ON_Mesh.m_F[fi].
   // See the comments in the definition of ON_MeshTopologyFace
-  // for details. To get the indices of the mesh topology 
-  // vertices at the face corners use 
+  // for details. To get the indices of the mesh topology
+  // vertices at the face corners use
   // topvi = m_topv_map[m_mesh.m_F[fi].vi[n]]
   ON_SimpleArray<ON_MeshTopologyFace> m_topf;
 
@@ -610,10 +610,10 @@ public:
   // maximum number of triangles in a partition (quads count as 2 triangles)
   int m_partition_max_triangle_count;
 
-  // Partition i uses 
-  // vertices m_V[j] where 
+  // Partition i uses
+  // vertices m_V[j] where
   //
-  //   m_part[i].vi[0] <= j < m_part[i].vi[1] 
+  //   m_part[i].vi[0] <= j < m_part[i].vi[1]
   //
   // and uses faces m_F[k] where
   //
@@ -661,14 +661,14 @@ public:
   */
   bool IsDefaultSurfaceParameterMapping() const;
 
-  // Identifies the mapping used to create the texture 
-  // coordinates and records transformations applied 
+  // Identifies the mapping used to create the texture
+  // coordinates and records transformations applied
   // to the mesh after the texture coordinates were
   // calculated.  If the texture mapping does not
-  // change when the mesh is transformed, then set 
+  // change when the mesh is transformed, then set
   // m_mesh_xform to zero so that compares will work right.
   //
-  // 
+  //
   ON_UUID                 m_mapping_id;   // ON_TextureMapping::m_mapping_id
   ON_TextureMapping::TYPE m_mapping_type; // ON_TextureMapping::m_type
   ON__UINT32              m_mapping_crc;  // ON_TextureMapping::MappingCRC()
@@ -688,7 +688,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -721,11 +721,11 @@ public:
 
   void Destroy();
   void EmergencyDestroy(); // Call only when memory used by this class's
-                           // members will soon become invalid for reasons 
+                           // members will soon become invalid for reasons
                            // beyond your control. EmergencyDestroy() zeros
                            // anything that could possibly cause
                            // ~ON_Mesh() to crash.  Calling
-                           // EmergencyDestroy() under normal conditions 
+                           // EmergencyDestroy() under normal conditions
                            // will result in ~ON_Mesh() leaking
                            // memory.
 
@@ -750,9 +750,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -787,24 +787,24 @@ public:
     Get tight bounding box of the mesh.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       mesh's tight bounding box.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
       mesh is calculated.  The mesh is not modified.
 	Returns:
-    True if the returned tight_bbox is set to a valid 
+    True if the returned tight_bbox is set to a valid
     bounding box.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
 
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform&
          );
 
@@ -830,7 +830,7 @@ public:
 
   /////////////////////////////////////////////////////////////////
   // Interface
-  // 
+  //
 
   // creation
   bool SetVertex(
@@ -911,7 +911,7 @@ public:
     ON_Mesh::EdgeRef
     ON_Mesh::FaceRef
   */
-  ON_Geometry* MeshComponent( 
+  ON_Geometry* MeshComponent(
       ON_COMPONENT_INDEX ci
       ) const;
 
@@ -933,18 +933,18 @@ public:
   */
   int HiddenVertexCount() const;
 
-  bool GetCurvatureStats( 
-         ON::curvature_style, 
-         ON_MeshCurvatureStats& 
+  bool GetCurvatureStats(
+         ON::curvature_style,
+         ON_MeshCurvatureStats&
          ) const;
 
-  void InvalidateVertexBoundingBox(); // Call if defining geometry is changed by 
+  void InvalidateVertexBoundingBox(); // Call if defining geometry is changed by
                              // directly manipulating the m_V[] array.
-  void InvalidateVertexNormalBoundingBox(); // Call if defining geometry is changed by 
+  void InvalidateVertexNormalBoundingBox(); // Call if defining geometry is changed by
                              // directly manipulating the m_N[] array.
-  void InvalidateTextureCoordinateBoundingBox(); // Call if defining geometry is changed by 
+  void InvalidateTextureCoordinateBoundingBox(); // Call if defining geometry is changed by
                              // directly manipulating the m_T[] array.
-  void InvalidateCurvatureStats(); // Call if defining geometry is changed by 
+  void InvalidateCurvatureStats(); // Call if defining geometry is changed by
                              // directly manipulating the m_T[] array.
   void InvalidateBoundingBoxes(); // Invalidates all cached bounding box information.
 
@@ -959,7 +959,7 @@ public:
   const ON_MeshParameters* MeshParameters() const;
   void DeleteMeshParameters();
 
-  
+
   bool UnitizeVertexNormals();
   bool UnitizeFaceNormals();
   bool CountQuads();
@@ -1002,7 +1002,7 @@ public:
   bool Compact();
 
   bool ComputeVertexNormals();    // uses face normals to cook up a vertex normal
-  
+
   //////////
   // Scales textures so the texture domains are [0,1] and
   // eliminates any texture rotations.
@@ -1015,7 +1015,7 @@ public:
 	//			true  -  success
 	bool TransposeTextureCoordinates();
 	bool TransposeSurfaceParameters();
- 
+
 	/////////
 	// Description:
 	//		Reverse one coordinate direction of the texture coordinates, within texture domain m_tex_domain
@@ -1026,7 +1026,7 @@ public:
 	//			true  -  success
 	bool ReverseTextureCoordinates( int dir );
 	bool ReverseSurfaceParameters( int dir );
- 
+
 
 
   /*
@@ -1046,7 +1046,7 @@ public:
   See Also:
     ON_TextureMapping::GetTextureCoordinates
   */
-  bool SetTextureCoordinates( 
+  bool SetTextureCoordinates(
           const class ON_TextureMapping& mapping,
 					const class ON_Xform* mesh_xform = 0,
           bool bLazy = true
@@ -1054,11 +1054,11 @@ public:
 
   bool HasCachedTextureCoordinates() const;
 
-  const ON_TextureCoordinates* CachedTextureCoordinates( 
-          const ON_UUID& mapping_id 
+  const ON_TextureCoordinates* CachedTextureCoordinates(
+          const ON_UUID& mapping_id
           ) const;
 
-  const ON_TextureCoordinates* SetCachedTextureCoordinates( 
+  const ON_TextureCoordinates* SetCachedTextureCoordinates(
           const class ON_TextureMapping& mapping,
 					const class ON_Xform* mesh_xform = 0,
           bool bLazy = true
@@ -1068,7 +1068,7 @@ public:
                                                   // to set mesh geometry
 
   // finds all coincident vertices and merges them if break angle is small enough
-  bool CombineCoincidentVertices( 
+  bool CombineCoincidentVertices(
           ON_3fVector, // coordinate tols for considering vertices
                        // to be coincident
           double  // cosine normal angle tolerance in radians
@@ -1158,9 +1158,9 @@ public:
   Returns:
     Number of ON_2dex values appended to the edges[] array.
   */
-  int GetVertexEdges( 
+  int GetVertexEdges(
     int vcount,
-    const int* vertex_index, 
+    const int* vertex_index,
     bool bNoDuplicates,
     ON_SimpleArray<ON_2dex>& edges
     ) const;
@@ -1176,7 +1176,7 @@ public:
   Returns:
     Number of ON_2dex values appended to the edges[] array.
   */
-  int GetMeshEdges( 
+  int GetMeshEdges(
     ON_SimpleArray<ON_2dex>& edges
     ) const;
 
@@ -1208,7 +1208,7 @@ public:
   See Also:
     ON_Mesh::AreaMassProperties
   */
-  ON_3dPoint AreaCentroid( 
+  ON_3dPoint AreaCentroid(
           double* area = NULL
           ) const;
 
@@ -1216,7 +1216,7 @@ public:
   Description:
     Calculate area mass properties of the mesh.
   Parameters:
-    mp - [out] 
+    mp - [out]
     bArea - [in] true to calculate area
     bFirstMoments - [in] true to calculate area first moments,
                          area and area centroid.
@@ -1264,9 +1264,9 @@ public:
             double error_estimate = vol1_err + vol2_err + vol3_err;
             printf("mesh volumd = %g (+/- %g)\n",volume,error_estimate);
   */
-  double Volume( 
-              ON_3dPoint base_point = ON_origin, 
-              double* error_estimate = NULL 
+  double Volume(
+              ON_3dPoint base_point = ON_origin,
+              double* error_estimate = NULL
               ) const;
 
 
@@ -1275,7 +1275,7 @@ public:
     Compute volume centroid of the mesh.
   Parameters:
     base_point - [in] When computing the centroid of a solid
-      volume defined by several meshes, pass the same base_point 
+      volume defined by several meshes, pass the same base_point
       to each call to GetVolumeCentroid() and add the answers.
       When computing the centroid of a solid defined by a single
       mesh, the center of the bounding box is a good choice for base_point.
@@ -1283,7 +1283,7 @@ public:
   Returns:
     Location of the volume centroid.
   */
-  ON_3dPoint VolumeCentroid( 
+  ON_3dPoint VolumeCentroid(
           ON_3dPoint base_point = ON_origin,
           double* volume = NULL
           ) const;
@@ -1294,19 +1294,19 @@ public:
   Parameters:
     base_point - [in] When computing the volume mass properties
       of a solid volume defined by several meshes, pass the same
-      base_point to each call to VolumeMassProperties() and add 
+      base_point to each call to VolumeMassProperties() and add
       the answers.  When computing the volume mass properties of
-      a solid defined by a single mesh, the center of the 
+      a solid defined by a single mesh, the center of the
       bounding box is a good choice for base_point. If the mesh
       is closed, you can pass ON_UNSET_POINT and the
       center of the bounding box will be used.
-    mp - [out] 
+    mp - [out]
     bVolume - [in] true to calculate volume
     bFirstMoments - [in] true to calculate volume first moments,
                          volume, and volume centroid.
     bSecondMoments - [in] true to calculate volume second moments.
     bProductMoments - [in] true to calculate volume product moments.
-    base_point - [in] 
+    base_point - [in]
       If the surface is closed, then pass ON_UNSET_VALUE.
 
       This parameter is for expert users who are computing a
@@ -1314,25 +1314,25 @@ public:
       breps, surfaces, and meshes.
 
       When computing the volume, volume centroid, or volume
-      first moments of a volume whose boundary is defined by 
-      several breps, surfaces, and meshes, pass the same 
-      base_point to each call to VolumeMassProperties.  
+      first moments of a volume whose boundary is defined by
+      several breps, surfaces, and meshes, pass the same
+      base_point to each call to VolumeMassProperties.
 
       When computing the volume second moments or volume product
       moments of a volume whose boundary is defined by several
-      breps, surfaces, and meshes, you MUST pass the entire 
-      volume's centroid as the base_point and the input mp 
+      breps, surfaces, and meshes, you MUST pass the entire
+      volume's centroid as the base_point and the input mp
       parameter must contain the results of a previous call
       to VolumeMassProperties(mp,true,true,false,false,base_point).
       In particular, in this case, you need to make two sets of
       calls; use first set to calculate the volume centroid and
-      the second set calculate the second moments and product 
+      the second set calculate the second moments and product
       moments.
   Returns:
     True if successful.
   */
   bool VolumeMassProperties(
-    ON_MassProperties& mp, 
+    ON_MassProperties& mp,
     bool bVolume = true,
     bool bFirstMoments = true,
     bool bSecondMoments = true,
@@ -1454,7 +1454,7 @@ public:
   //
   // In order to keep the mesh facet definition simple and make the mesh
   // definition easily used in common rendering application, if two facets
-  // share a vertex location but have different normals, curvatures, 
+  // share a vertex location but have different normals, curvatures,
   // textures, etc., at that common vertex location, then the vertex is
   // duplicated.  When the topology of the mesh needs to be known,
   // use Topology() to get a class that provides complete topological
@@ -1473,9 +1473,9 @@ public:
   // mesh partitions
   //
   // Some rendering engines work best when processing small batches of
-  // triangles.  CreatePartition() sorts the vertices and faces 
+  // triangles.  CreatePartition() sorts the vertices and faces
   // so that they can be processed in small batches.
-  const ON_MeshPartition* CreatePartition( 
+  const ON_MeshPartition* CreatePartition(
                 int, // maximum number of vertices in a partition
                 int  // maximum number of triangles in a partition
                 );
@@ -1496,13 +1496,13 @@ public:
   ON_SimpleArray<ON_MeshFace> m_F;
 
   // m_N[] OPTIONAL vertex unit normals
-  // If m_N[] is empty or m_N.Count() != m_V.Count(), 
+  // If m_N[] is empty or m_N.Count() != m_V.Count(),
   // Either m_N[] has zero count or it m_N[j] is the
   // the unit vertex normal at m_V[j].
   ON_3fVectorArray m_N;
 
   // m_FN[] OPTIONAL face unit normals
-  // If m_FN[] is empty or m_FN.Count() != m_F.Count(), 
+  // If m_FN[] is empty or m_FN.Count() != m_F.Count(),
   // then m_FN is ignored.  Otherwise m_FN[j] is the
   // unit normal for the facet m_F[j].
   ON_3fVectorArray m_FN;
@@ -1521,33 +1521,33 @@ public:
   // RUNTIME ONLY
   //   This array is used to cache texture coordinates used by
   //   rendering applications that require 1d texture coordinates,
-  //   3d texture coordinates, or multiple sets of texture 
+  //   3d texture coordinates, or multiple sets of texture
   //   coordinates (e.g. blended textures with different mappings).
-  //   Users are responsible for verifying 
+  //   Users are responsible for verifying
   //   m_TC[i].m_T.Count() = m_V.Count()
-  ON_ClassArray<ON_TextureCoordinates> m_TC;  
+  ON_ClassArray<ON_TextureCoordinates> m_TC;
 
   // If m_T.Count() == m_V.Count(), then the mesh has texture coordinates
   // and m_T[j] is the texture coordinate for vertex m_V[j].
   //
   // When opennurbs or Rhino meshes an ON_Surface or ON_Brep, the texture
-  // coordinates have a "canonical" linear relationship with the surface 
-  // parameters that is described in the next section.  However, various 
-  // mappings, spherical, planar, cylindrical, etc., can be applied that 
+  // coordinates have a "canonical" linear relationship with the surface
+  // parameters that is described in the next section.  However, various
+  // mappings, spherical, planar, cylindrical, etc., can be applied that
   // change the values of the texture coordinates.
   //
-  // If a texture mapping function was used to set the m_T[] values, 
+  // If a texture mapping function was used to set the m_T[] values,
   // then the id and serial number of the mapping function is saved
   // in m_mapping_id and m_mapping_sn. The intended use of these fields
-  // is to make it easy to avoid unnecessary recalculation.  
-  // If a mesh is modified, then m_mapping_id should be set to nil 
+  // is to make it easy to avoid unnecessary recalculation.
+  // If a mesh is modified, then m_mapping_id should be set to nil
   // and m_mapping_crc should be set to 0.
   //
   /////////////////////////////////////////////////////////////////
 
 
   /////////////////////////////////////////////////////////////////
-  // Implementation - surface parameters and packed texture 
+  // Implementation - surface parameters and packed texture
   // information
   //
   // If m_S.Count() == m_V.Count(), then the mesh is a tesselation
@@ -1555,11 +1555,11 @@ public:
   // m_V[j].  Storing values in m_S[] is OPTIONAL.
   //
   // If m_srf_scale[] has positive values, then they report
-  // the world coordinate size of a rectangle that would 
+  // the world coordinate size of a rectangle that would
   // minimize texture distortion if it were mapped to the
   // mesh using normalized surface evaluation parameters.
-  // This information is used to calculate high quality 
-  // packed texture coordinates.  
+  // This information is used to calculate high quality
+  // packed texture coordinates.
   ON_2dPointArray m_S;
   ON_Interval m_srf_domain[2]; // surface evaluation domain.
   double m_srf_scale[2];
@@ -1567,17 +1567,17 @@ public:
 
   // Packed texture information.
   //
-  // If either of the m_packed_tex_domain[] intervals is a 
-  // proper subinterval of (0,1), then a texture packing 
+  // If either of the m_packed_tex_domain[] intervals is a
+  // proper subinterval of (0,1), then a texture packing
   // calculation assigned this subrectangle to this mesh.
 
   ON_Interval m_packed_tex_domain[2];
 
   // The m_packed_tex_rotate setting is valid only when
-  // m_S, m_srf_domain, m_packed_scale[] and 
+  // m_S, m_srf_domain, m_packed_scale[] and
   // m_packed_tex_domain[] are all valid and the texture
   // coordinates are based on surface evaluation parameters.
-  // In this special situation, this boolean records the 
+  // In this special situation, this boolean records the
   // correspondence between the the surface parameters, (u,v),
   // and the packed texture coordinates, (s,t),
   //
@@ -1634,7 +1634,7 @@ public:
   // Implementation - runtime vertex visibility - not saved in 3dm files.
   ON_SimpleArray<bool> m_H; // OPTIONAL vertex visibility.
                             // If m_H.Count() = m_V.Count(), then
-                            // m_H[vi] is true if the vertex m_V[vi] 
+                            // m_H[vi] is true if the vertex m_V[vi]
                             // is hidden.  Otherwise, all vertices are visible.
   int m_hidden_count;       // number of vertices that are hidden
                             // = number of true values in m_H[] array.
@@ -1663,7 +1663,7 @@ private:
 
   // The bounding boxes are valid if m_?box[0][0] <= m_?box[0][1];
   float m_vbox[2][3]; // 3d bounding box of all referenced vertices
-  float m_nbox[2][3]; // 3d bounding box of all referenced unit normals 
+  float m_nbox[2][3]; // 3d bounding box of all referenced unit normals
                       // (for estimation of Gauss map bounds)
   float m_tbox[2][2]; // 2d bounding box of all referenced texture coordinates
   ON_MeshCurvatureStats* m_kstat[4]; // gaussian,mean,min,max,sectionx,sectiony,sectionz
@@ -1696,13 +1696,13 @@ public:
 
   // parent mesh
   const ON_Mesh* m_mesh;
-  
+
   // m_mesh->m_V[] index
   // (can be -1 when m_top_vi references a shared vertex location)
-  int m_mesh_vi; 
-  
+  int m_mesh_vi;
+
   // m_mesh->m_top.m_tope[] index
-  int m_top_vi; 
+  int m_top_vi;
 
 
   /*
@@ -1710,8 +1710,8 @@ public:
     Override of the virtual ON_Geometry::ComponentIndex().
   Returns:
     A component index for the vertex.  The type of the returned
-    component index can be 
-    ON_COMPONENT_INDEX::mesh_vertex, 
+    component index can be
+    ON_COMPONENT_INDEX::mesh_vertex,
     ON_COMPONENT_INDEX::meshtop_vertex, or
     ON_COMPONENT_INDEX::invalid_type.
   */
@@ -1719,7 +1719,7 @@ public:
 
   /*
   Returns:
-    The mesh topology associated with this 
+    The mesh topology associated with this
     mesh vertex reference or NULL if it doesn't
     exist.
   */
@@ -1728,14 +1728,14 @@ public:
   /*
   Returns:
     The 3d location of the mesh vertex.  Returns
-    ON_UNSET_POINT is this ON_MeshVertexRef is not 
+    ON_UNSET_POINT is this ON_MeshVertexRef is not
     valid.
   */
   ON_3dPoint Point() const;
 
   /*
   Returns:
-    The mesh topology vertex associated with this 
+    The mesh topology vertex associated with this
     mesh vertex reference.
   */
   const ON_MeshTopologyVertex* MeshTopologyVertex() const;
@@ -1753,7 +1753,7 @@ public:
          double* boxmax,
          int bGrowBox = false
          ) const;
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform& xform
          );
 };
@@ -1768,9 +1768,9 @@ public:
 
   // parent mesh
   const ON_Mesh* m_mesh;
-  
+
   // m_mesh->m_top.m_tope[] index
-  int m_top_ei; 
+  int m_top_ei;
 
   /*
   Description:
@@ -1784,7 +1784,7 @@ public:
 
   /*
   Returns:
-    The mesh topology associated with this 
+    The mesh topology associated with this
     mesh edge reference or NULL if it doesn't
     exist.
   */
@@ -1800,7 +1800,7 @@ public:
 
   /*
   Returns:
-    The mesh topology edge associated with this 
+    The mesh topology edge associated with this
     mesh edge reference.
   */
   const ON_MeshTopologyEdge* MeshTopologyEdge() const;
@@ -1818,7 +1818,7 @@ public:
          double* boxmax,
          int bGrowBox = false
          ) const;
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform& xform
          );
 };
@@ -1835,7 +1835,7 @@ public:
   const ON_Mesh* m_mesh;
 
   // m_mesh->m_F[] and m_mesh->m_top.m_tope[] index.
-  int m_mesh_fi; 
+  int m_mesh_fi;
 
   /*
   Description:
@@ -1849,7 +1849,7 @@ public:
 
   /*
   Returns:
-    The mesh topology associated with this 
+    The mesh topology associated with this
     mesh face reference or NULL if it doesn't
     exist.
   */
@@ -1863,7 +1863,7 @@ public:
 
   /*
   Returns:
-    The mesh topology face associated with this 
+    The mesh topology face associated with this
     mesh face reference.
   */
   const ON_MeshTopologyFace* MeshTopologyFace() const;
@@ -1881,7 +1881,7 @@ public:
          double* boxmax,
          int bGrowBox = false
          ) const;
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform& xform
          );
 };
@@ -1902,8 +1902,8 @@ Returns:
   if the surface could not be meshed.
 */
 ON_DECL
-ON_Mesh* ON_MeshSurface( 
-            const ON_Surface& surface, 
+ON_Mesh* ON_MeshSurface(
+            const ON_Surface& surface,
             int mesh_density = 0,
             ON_Mesh* mesh = 0
             );
@@ -1925,8 +1925,8 @@ Returns:
   if the surface could not be meshed.
 */
 ON_DECL
-ON_Mesh* ON_MeshSurface( 
-            const ON_Surface& surface, 
+ON_Mesh* ON_MeshSurface(
+            const ON_Surface& surface,
             int u_count,
             const double* u,
             int v_count,
@@ -1936,7 +1936,7 @@ ON_Mesh* ON_MeshSurface(
 
 /*
 Description:
-  Finds the barycentric coordinates of the point on a 
+  Finds the barycentric coordinates of the point on a
   triangle that is closest to P.
 Parameters:
   A - [in] triangle corner
@@ -1947,10 +1947,10 @@ Parameters:
   b - [out] barycentric coordinate
   c - [out] barycentric coordinate
         If ON_ClosestPointToTriangle() returns true, then
-        (*a)*A + (*b)*B + (*c)*C is the point on the 
-        triangle's plane that is closest to P.  It is 
+        (*a)*A + (*b)*B + (*c)*C is the point on the
+        triangle's plane that is closest to P.  It is
         always the case that *a + *b + *c = 1, but this
-        function will return negative barycentric 
+        function will return negative barycentric
         coordinate if the point on the plane is not
         inside the triangle.
 Returns:
@@ -1959,7 +1959,7 @@ Returns:
   closest point is the input point that is closest to P.
 */
 ON_DECL
-bool ON_ClosestPointToTriangle( 
+bool ON_ClosestPointToTriangle(
         ON_3dPoint A, ON_3dPoint B, ON_3dPoint C,
         ON_3dPoint P,
         double* a, double* b, double* c
@@ -1968,7 +1968,7 @@ bool ON_ClosestPointToTriangle(
 
 /*
 Description:
-  Finds the barycentric coordinates of the point on a 
+  Finds the barycentric coordinates of the point on a
   triangle that is closest to P.
 Parameters:
   A - [in] triangle corner
@@ -1979,10 +1979,10 @@ Parameters:
   b - [out] barycentric coordinate
   c - [out] barycentric coordinate
         If ON_ClosestPointToTriangle() returns true, then
-        (*a)*A + (*b)*B + (*c)*C is the point on the 
-        triangle's plane that is closest to P.  It is 
+        (*a)*A + (*b)*B + (*c)*C is the point on the
+        triangle's plane that is closest to P.  It is
         always the case that *a + *b + *c = 1, but this
-        function will return negative barycentric 
+        function will return negative barycentric
         coordinate if the point on the plane is not
         inside the triangle.
 Returns:
@@ -1991,10 +1991,10 @@ Returns:
   closest point is the input point that is closest to P.
 */
 ON_DECL
-bool ON_ClosestPointToTriangleFast( 
-          const ON_3dPoint& A, 
-          const ON_3dPoint& B, 
-          const ON_3dPoint& C, 
+bool ON_ClosestPointToTriangleFast(
+          const ON_3dPoint& A,
+          const ON_3dPoint& B,
+          const ON_3dPoint& C,
           ON_3dPoint P,
           double* a, double* b, double* c
           );
@@ -2009,14 +2009,14 @@ Parameters:
                     up to be triangles. Surfaces with singular
                     sides are a common source of degenerate qauds.
   input_mesh - [in] If NULL, then the returned mesh is created
-       by a class to new ON_Mesh().  If not null, then this 
+       by a class to new ON_Mesh().  If not null, then this
        mesh will be used to store the conrol polygon.
 Returns:
   If successful, a pointer to a mesh.
 */
 ON_DECL
-ON_Mesh* ON_ControlPolygonMesh( 
-          const ON_NurbsSurface& nurbs_surface, 
+ON_Mesh* ON_ControlPolygonMesh(
+          const ON_NurbsSurface& nurbs_surface,
           bool bCleanMesh,
           ON_Mesh* input_mesh = NULL
           );
@@ -2030,7 +2030,7 @@ Parameters:
   C - [in] triangle corner
   P - [in] start of line segment
   Q - [in] end of line segment
-  abc - [out] 
+  abc - [out]
      barycentric coordinates of intersection point(s)
   t - [out] line coordinate of intersection point(s)
 Returns:
@@ -2045,7 +2045,7 @@ int ON_LineTriangleIntersect(
         const ON_3dPoint& C,
         const ON_3dPoint& P,
         const ON_3dPoint& Q,
-        double abc[2][3], 
+        double abc[2][3],
         double t[2],
         double tol
         );

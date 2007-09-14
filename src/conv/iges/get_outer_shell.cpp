@@ -31,7 +31,7 @@
 #include "./iges_extern.h"
 #include "brep.h"
 
-bool 
+bool
 Get_outer_brep(ON_Brep* brep, int entityno, int shell_orient)
 {
     int		sol_num;		/* IGES solid type number */
@@ -40,18 +40,18 @@ Get_outer_brep(ON_Brep* brep, int entityno, int shell_orient)
     int		*face_de;		/* Directory seqence numbers for faces */
     int		*face_orient;		/* Orientation of faces */
     int		face;
-    
+
     /* Acquiring Data */
-    
+
     if( dir[entityno]->param <= pstart ) {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct , dir[entityno]->name );
 	return(0);
-    }    
+    }
     Readrec( dir[entityno]->param );
     Readint( &sol_num , "" );
     Readint( &no_of_faces , "" );
-    
+
     face_de = (int *)bu_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell face DE's" );
     face_orient = (int *)bu_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell orients" );
 
@@ -63,12 +63,12 @@ Get_outer_brep(ON_Brep* brep, int entityno, int shell_orient)
     for(face = 0; face < no_of_faces; face++) {
 	Add_face_to_brep(brep, (face_de[face]-1)/2, face_orient[face]);
     }
-    
+
     // XXX do I need to glue these faces together?
 
     bu_free( (char *)face_de , "Get_outer_shell: face DE's" );
     bu_free( (char *)face_orient , "Get_outer_shell: face orients" );
-    return( s );    
+    return( s );
 }
 
 struct shell *

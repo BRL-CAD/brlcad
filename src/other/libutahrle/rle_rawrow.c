@@ -1,6 +1,6 @@
-/* 
+/*
  * rle_rawrow.c - Convert RLE "raw" input to "row" input.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -13,7 +13,7 @@
 
 /*****************************************************************
  * TAG( rle_rawtorow )
- * 
+ *
  * Convert a "raw" scanline to a row format.
  * Inputs:
  * 	the_hdr:	RLE header describing the image.
@@ -27,7 +27,7 @@
  * 	Scanline between xmin and xmax is prefilled with background
  * 	color, if one is given.
  */
-void    
+void
 rle_rawtorow(the_hdr, raw, nraw, outrows)
 rle_hdr * the_hdr;
 rle_op ** raw;
@@ -37,7 +37,7 @@ rle_pixel ** outrows;
     register int i, j;
     register rle_pixel * outptr;
     int chan;
-    
+
     for (chan = -the_hdr->alpha; chan < the_hdr->ncolors; chan++)
 	if ( RLE_BIT( *the_hdr, chan ) )
 	{

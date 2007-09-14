@@ -51,11 +51,11 @@ int height;
     rle_get_setup_ok(&hdr, NULL, NULL);
 
     if (hdr.xmax > width) {
-	fprintf(stderr, "Warning: RLE width (%d) exceeds maximum (%d)\n", 
+	fprintf(stderr, "Warning: RLE width (%d) exceeds maximum (%d)\n",
 	    hdr.xmax, width);
     }
     if (hdr.ymax > height) {
-	fprintf(stderr, "Warning: RLE height (%d) exceeds maximum (%d)\n", 
+	fprintf(stderr, "Warning: RLE height (%d) exceeds maximum (%d)\n",
 	    hdr.ymax, height);
     }
     Globals.row = 0;
@@ -63,7 +63,7 @@ int height;
 				      hdr.alpha) *
 				     sizeof(unsigned char *));
     for (i = 0; i < hdr.ncolors + hdr.alpha; i++)
-	Globals.scan[i] = 
+	Globals.scan[i] =
 	    (unsigned char *)malloc(hdr.xmax+1);
 
     if (hdr.alpha) {
