@@ -1314,10 +1314,10 @@ BU_EXPORT extern int	bu_debug;
 #if __STDC__ && !defined(ipsc860)
 #	define bu_offsetofarray(_t, _m)	offsetof(_t, _m[0])
 #else
-#	define bu_offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
+#	define bu_offsetofarray(_t, _m)	(size_t)( (((_t *)0)->_m))
 #endif
 #if !defined(offsetof)
-#	define bu_offsetof(_t, _m) (int)(&(((_t *)0)->_m))
+#	define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
 #else
 #	define bu_offsetof(_t, _m) offsetof(_t, _m)
 #endif
@@ -1333,24 +1333,24 @@ BU_EXPORT extern int	bu_debug;
  *  Matching compensation code for the CRAY is located in librt/parse.c
  */
 #if defined(CRAY)
-#	define bu_byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
+#	define bu_byteoffset(_i)	(((size_t)&(_i)))	/* actually a word offset */
 #else
 #  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _ABIN32 && _MIPS_SIM != _MIPS_SIM_ABI32
 #      define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
        /* "Lazy" way.  Works on reasonable machines with byte addressing */
-#      define bu_byteoffset(_i)	((int)((char *)&(_i)))
+#      define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #    else
 #      if defined(__ia64__) || defined(__x86_64__) || defined(__sparc64__)
 #        if defined (__INTEL_COMPILER)
-#          define bu_byteoffset(_i)	((long)((char *)&(_i)))
+#          define bu_byteoffset(_i)	((size_t)((char *)&(_i)))
 #        else
-#          define bu_byteoffset(_i)	((long)(((void *)&(_i))-((void *)0)))
+#          define bu_byteoffset(_i)	((size_t)(((void *)&(_i))-((void *)0)))
 #        endif
 #      else
 	 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#        define bu_byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
 #      endif
 #    endif
 #  endif
