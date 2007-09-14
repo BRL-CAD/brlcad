@@ -140,9 +140,8 @@ init_list(struct nametbl *l, int s)
     l->names = (struct name *)bu_calloc(10, sizeof(struct name), "alloc l->names");
     for (i = 0; i < 10; i++) {
 	l->names[i].dest = (char **)bu_calloc(s, sizeof(char *), "alloc l->names.dest");
-	for (j = 0; j < s; j++) {
+	for (j = 0; j < s; j++)
 	    l->names[i].dest[j] = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc l->names.dest[j]");
-	}
     }
     l->name_size = s;
     l->names_len = 10;
@@ -167,9 +166,8 @@ add_to_list(struct nametbl *l, char name[NAMESIZE])
 	l->names = (struct name *)bu_realloc(l->names, sizeof(struct name)*(l->names_len+1), "realloc l->names");
 	for (i = l->names_used; i < l->names_len; i++) {
 	    l->names[i].dest = (char **)bu_calloc(l->name_size, sizeof(char *), "alloc l->names.dest");
-	    for (j = 0; j < l->name_size; j++) {
+	    for (j = 0; j < l->name_size; j++)
 		l->names[i].dest[j] = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc l->names.dest[j]");
-	    }
 	}
     }
     strncpy(l->names[l->names_used++].src, name, NAMESIZE);
@@ -185,11 +183,9 @@ is_in_list(struct nametbl l, char name[NAMESIZE])
 {
     int i;
 
-    for (i = 0; i < l.names_used; i++) {
-	if (!strcmp(l.names[i].src, name)) {
+    for (i = 0; i < l.names_used; i++)
+	if (!strcmp(l.names[i].src, name))
 	    return 1;
-	}
-    }
     return 0;
 }
 
@@ -203,11 +199,9 @@ index_in_list(struct nametbl l, char name[NAMESIZE])
 {
     int i;
 
-    for (i = 0; i < l.names_used; i++) {
-	if (!strcmp(l.names[i].src, name)) {
+    for (i = 0; i < l.names_used; i++)
+	if (!strcmp(l.names[i].src, name))
 	    return i;
-	}
-    }
     return -1;
 }
 
@@ -222,38 +216,32 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 {
     char *newname = NULL;
     char prefix[NAMESIZE] = {0}, suffix[NAMESIZE] = {0}, buf[NAMESIZE] = {0};
-    int num = 0, i, j;
+    int num = 0, i = 1, j;
 
-    if (!newname) {
+    if (!newname)
 	newname = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc newname");
-    }
     sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
 
-    i = 1;
-    if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
+    if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION))
 	/* primitives and regions */
 	do {
-	    if (suffix[0] == '.') {
-
+	    if (suffix[0] == '.')
 		if ((i == 1) && is_in_list(obj_list, buf)) {
 		    j = index_in_list(obj_list, buf);
 		    snprintf(buf, NAMESIZE, "%s%d", prefix, num);
 		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], suffix);
-		} else {
+		} else
 		    snprintf(newname, NAMESIZE, "%s%d%s", prefix, num+i*state->incr, suffix);
-		}
-	    } else {
+	    else
 		snprintf(newname, NAMESIZE, "%s%d", prefix, num+i*state->incr);
-	    }
 	    i++;
 	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
-    } else {
+    else
 	/* non-region combinations */
 	do {
 	    snprintf(newname, NAMESIZE, "%s%d", prefix, (num==0)?2:num+i);
 	    i++;
 	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
-    }
     return newname;
 }
 
@@ -273,11 +261,10 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     for (i = 0; i < state->n_copies; i++) {
 	const char *name = (const char *)NULL;
 
-	if (i==0) {
+	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
-	} else {
+	else
 	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
-	}
 	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
 	bu_free((char *)name, "free get_name() name");
 
@@ -301,23 +288,20 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	    if (state->miraxis != W) {
 		/* XXX er, this seems rather wrong .. but it's v4 so punt */
 		rp->s.s_values[state->miraxis] += 2 * (state->mirpos - rp->s.s_values[state->miraxis]);
-		for (j = 3+state->miraxis; j < 24; j++) {
+		for (j = 3+state->miraxis; j < 24; j++)
 		    rp->s.s_values[j] = -rp->s.s_values[j];
-		}
 	    }
 	    /* translate */
-	    if (state->trans[W]) {
+	    if (state->trans[W])
 		/* assumes primitive's first parameter is it's position */
 		VADD2(rp->s.s_values, rp->s.s_values, state->trans);
-	    }
 	    /* rotate */
 	    if (state->rot[W]) {
 		mat_t r;
 		vect_t vec, ovec;
 
-		if (state->rpnt[W]) {
+		if (state->rpnt[W])
 		    VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
-		}
 		MAT_IDN(r);
 		bn_mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
 		for (j = 0; j < 24; j+=3) {
@@ -325,24 +309,20 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 		    MAT4X3VEC(ovec, r, vec);
 		    VMOVE(rp->s.s_values+j, ovec);
 		}
-		if (state->rpnt[W]) {
+		if (state->rpnt[W])
 		    VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
-		}
 	    }
-	} else {
+	} else
 	    bu_log("mods not available on %s\n", proto->d_namep);
-	}
 
 	/* write the object to disk */
 	if (db_put(_dbip, dp, rp, 0, dp->d_len) < 0) {
 	    bu_log("ERROR: clone internal error writing to the database\n");
 	    return;
 	}
-
     }
-    if (rp) {
+    if (rp)
 	bu_free((char *)rp, "copy_solid record[]");
-    }
 
     return;
 }
@@ -366,48 +346,43 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     for (i = 0; i < state->n_copies; i++) {
 	const char *name = (const char *)NULL;
 
-	if (i==0) {
+	if (i==0)
 	    dp = proto;
-	} else {
+	else
 	    dp = db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET);
-	}
 	name = get_name(_dbip, dp, state, i); /* get new name */
 	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
 
+	/* actually copy the primitive to the new name */
 	argv[1] = proto->d_namep;
 	argv[2] = (char *)name;
 	ret = wdb_copy_cmd(_dbip->dbi_wdbp, INTERP, 3, argv);
-	if (ret != TCL_OK) {
+	if (ret != TCL_OK)
 	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
-	}
 	bu_free((char *)name, "free get_name() name");
 
-	/* XXX incomplete, still needs transformation matrix */
-	bu_log("WARNING: clone incomplete -- no transfomation matrix is applied\n");
-
-	/* mirror */
-	if (state->miraxis != W) {
-	    /* matrix[state->miraxis * ELEMENTS_PER_PLANE] += 2 * (state->mirpos - */
-	}
-	/* translate */
-	if (state->trans[W]) {
-	    MAT_DELTAS_ADD_VEC(matrix, state->trans);
-	}
-	/* rotation */
-	if (state->rot[W]) {
-	}
-
-	/* apply transformations on object */
+	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	    return;
 	}
 	RT_CK_DB_INTERNAL(&intern);
-	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
-	    rt_db_free_internal(&intern, &rt_uniresource);
-	    return;
+
+	/* mirror */
+	if (state->miraxis != W) {
 	}
+
+	/* translate */
+	if (state->trans[W])
+	    MAT_DELTAS_ADD_VEC(matrix, state->trans);
+
+	/* rotation */
+	if (state->rot[W]) {
+	}
+
+	/* write the new matrix to the new object */
+	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
+	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	rt_db_free_internal(&intern, &rt_uniresource);
     } /* end iteration over each copy */
 
@@ -438,12 +413,10 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 	return;
     }
 
-    if (_dbip->dbi_version < 5) {
+    if (_dbip->dbi_version < 5)
 	(void)copy_v4_solid(_dbip, proto, (struct clone_state *)state, idx);
-    } else {
+    else
 	(void)copy_v5_solid(_dbip, proto, (struct clone_state *)state, idx);
-    }
-
     return;
 }
 
@@ -477,11 +450,10 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    obj_list.names[idx].dest[i][0] = 'r';
 	} else {
 	    const char *name = (const char *)NULL;
-	    if (i==0) {
+	    if (i==0)
 		name = get_name(_dbip, proto, state, i);
-	    } else {
+	    else
 		name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
-	    }
 	    strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
 	    bu_free((char *)name, "free get_name() name");
 	}
@@ -538,11 +510,10 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	if (i==0) {
+	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
-	} else {
+	else
 	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1], LOOKUP_QUIET), state, i);
-	}
 	strncpy(obj_list.names[idx].dest[i], name, NAMESIZE);
 
 	/* we have a before and an after, do the copy */
@@ -587,11 +558,10 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
 	return;
     }
 
-    if (_dbip->dbi_version < 5) {
+    if (_dbip->dbi_version < 5)
 	(void)copy_v4_comb(_dbip, proto, (struct clone_state *)state, idx);
-    } else {
+    else
 	(void)copy_v5_comb(_dbip, proto, (struct clone_state *)state, idx);
-    }
 
     return;
 }
@@ -650,37 +620,30 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
 	    /* copy this combination itself */
 	    copy_comb(_dbip, dp, (genptr_t)state);
-	} else {
+	} else
 	    /* A v5 method of peeking into a combination */
-
 	    db_functree(_dbip, dp, copy_comb, copy_solid, resp, (genptr_t)state);
-	}
-
-    } else if (dp->d_flags & DIR_SOLID) {
+    } else if (dp->d_flags & DIR_SOLID)
 	/* leaf node -- make a copy the object */
 	copy_solid(_dbip, dp, (genptr_t)state);
-    } else {
+    else {
 	Tcl_AppendResult(INTERP, "clone:  ", dp->d_namep, " is neither a combination or a primitive?\n", (char *)NULL);
 	goto done_copy_tree;
     }
 
     nextname = get_name(_dbip, dp, state, 0);
-    if (strcmp(copyname, nextname) == 0) {
+    if (strcmp(copyname, nextname) == 0)
 	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
-    } else {
+    else
 	copy = db_lookup(_dbip, copyname, LOOKUP_QUIET);
-    }
 
  done_copy_tree:
-    if (rp) {
+    if (rp)
 	bu_free((char *)rp, "copy_tree record[]");
-    }
-    if (copyname) {
+    if (copyname)
 	bu_free((char *)copyname, "free get_name() copyname");
-    }
-    if (nextname) {
+    if (nextname)
 	bu_free((char *)nextname, "free get_name() copyname");
-    }
 
     return copy;
 }
@@ -703,9 +666,8 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
     copy = copy_tree(_dbip, state->src, resp, state);
 
     /* make sure it made what we hope/think it made */
-    if (!copy || !is_in_list(obj_list, state->src->d_namep)) {
+    if (!copy || !is_in_list(obj_list, state->src->d_namep))
 	return copy;
-    }
 
     /* display the cloned object(s) */
     if (state->draw_obj) {
@@ -721,9 +683,8 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 
     /* release our name allocations */
     for (i = 0; i < obj_list.names_len; i++) {
-	for (j = 0; j < obj_list.name_size; j++) {
+	for (j = 0; j < obj_list.name_size; j++)
 	    bu_free((char *)obj_list.names[i].dest[j], "free dest[j]");
-	}
 	bu_free((char **)obj_list.names[i].dest, "free dest");
     }
     bu_free((struct name *)obj_list.names, "free names");
@@ -849,9 +810,8 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     }
 
     /* sanity */
-    if (!argv[bu_optind]) {
+    if (!argv[bu_optind])
 	return TCL_ERROR;
-    }
 
     /* use global dbip; we make sure the lookup succeeded in f_clone() */
     state->src = db_lookup(dbip, argv[bu_optind], LOOKUP_QUIET);
@@ -877,11 +837,10 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct clone_state	state;
 
     /* allow interrupts */
-    if( setjmp( jmp_env ) == 0 ) {
+    if( setjmp( jmp_env ) == 0 )
 	(void)signal( SIGINT, sig3);
-    } else {
+    else
 	return TCL_OK;
-    }
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "clone:  Not enough args.  Use -h for help\n", (char*)NULL);
@@ -889,9 +848,8 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* validate user options */
-    if (get_args(interp, argc, argv, &state) == TCL_ERROR) {
+    if (get_args(interp, argc, argv, &state) == TCL_ERROR)
 	return TCL_ERROR;
-    }
 
     /* do it, use global dbip */
     (void)copy_object(dbip, &rt_uniresource, &state);
@@ -913,14 +871,12 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
     int i = 0;
     fastf_t s, s2, s3;
 
-    if (t == spl.t[spl.n_segs]) {
+    if (t == spl.t[spl.n_segs])
 	t -= VUNITIZE_TOL;
-    }
 
     /* traverse to the spline segment interval */
-    while (t >= spl.t[i+1]) {
+    while (t >= spl.t[i+1])
 	i++;
-    }
 
     /* compute the t offset */
     t -= spl.t[i];
@@ -956,14 +912,13 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int no_draw = 0;
 
     /* allow interrupts */
-    if( setjmp( jmp_env ) == 0 ) {
+    if( setjmp( jmp_env ) == 0 )
 	(void)signal( SIGINT, sig3 );
-    } else {
+    else
 	return TCL_OK;
-    }
 
     bu_optind = 1;
-    while ((i = bu_getopt(argc, argv, "fh")) != EOF) {
+    while ((i = bu_getopt(argc, argv, "fh")) != EOF)
 	switch (i) {
 	    case 'f':
 		no_draw = 1;
@@ -980,7 +935,6 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "\t<link1> <%% of total link> <link2> <%% of total link> ....\n", (char *)NULL);
 		return TCL_OK;
 	}
-    }
 
     if (argc < arg+1) {
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter number of links: ", (char *)NULL);
@@ -1017,22 +971,19 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     links = (struct link *)malloc(sizeof(struct link)*n_links);
     for (i = arg; i < argc; i+=2) {
 	strcpy(links[(i-arg)/2].name, argv[i]);
-	if (argc > arg+1) {
+	if (argc > arg+1)
 	    sscanf(argv[i+1], "%lf", &links[(i-arg)/2].pct);
-	} else {
+	else
 	    links[(i-arg)/2].pct = 1.0;
-	}
 	totlen += links[(i-arg)/2].pct;
     }
-    if (totlen != 1.0) {
+    if (totlen != 1.0)
 	fprintf(stdout, "ERROR\n");
-    }
-
 
     /* Read in knots from specified file *************/
-    do {
+    do
 	bu_fgets(line, 81, points);
-    } while (strcmp(strtok(line, ","), "112") != 0);
+    while (strcmp(strtok(line, ","), "112") != 0);
 
     strcpy(tok, strtok(NULL, ","));
     strcpy(tok, strtok(NULL, ","));
@@ -1050,7 +1001,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 	s.t[i] = atof(tok);
     }
-    for (i = 0; i <= s.n_segs; i++) {
+    for (i = 0; i <= s.n_segs; i++)
 	for (j = 0; j < 3; j++) {
 	    for (k = 0; k < 4; k++) {
 		strcpy(tok, strtok(NULL, ","));
@@ -1063,14 +1014,12 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    }
 	    s.k[i].pt[j] = s.k[i].c[j][0];
 	}
-    }
     fclose(points);
 
 
     /* Interpolate link vertices *********************/
-    for (i = 0; i < s.n_segs; i++) { /* determine initial track length */
+    for (i = 0; i < s.n_segs; i++) /* determine initial track length */
 	totlen += DIST_PT_PT(s.k[i].pt, s.k[i+1].pt);
-    }
     len = totlen/(n_verts-1);
     VMOVE(verts[0], s.k[0].pt);
     olen = 2*len;
@@ -1078,14 +1027,13 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) { /* number of track iterations */
 	fprintf(stdout, ".");
 	fflush(stdout);
-	for (j = 0; j < n_links; j++) { /* set length of each link based on current track length */
+	for (j = 0; j < n_links; j++) /* set length of each link based on current track length */
 	    links[j].len = len * links[j].pct;
-	}
 	min = 0;
 	max = s.t[s.n_segs];
 	mid = 0;
 
-	for (j = 0; j < n_verts+1; j++) { /* around the track once */
+	for (j = 0; j < n_verts+1; j++) /* around the track once */
 	    for (k = 0; k < n_links; k++) { /* for each sub-link */
 		if ((k == 0) && (j == 0)) {continue;} /* the first sub-link of the first link is already in position */
 		min = mid;
@@ -1106,13 +1054,11 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 		interp_spl(mid, s, verts[n_links*j+k]);
 	    }
-	}
 
 	interp_spl(s.t[s.n_segs], s, verts[n_verts*n_links-1]);
 	totlen = 0.0;
-	for (j = 0; j < n_verts*n_links-1; j++) {
+	for (j = 0; j < n_verts*n_links-1; j++)
 	    totlen += DIST_PT_PT(verts[j], verts[j+1]);
-	}
 	olen = len;
 	len = totlen/(n_verts-1);
     }
@@ -1120,9 +1066,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Write out interpolation info ******************/
     fprintf(stdout, "%d Iterations; Final link lengths:\n", i);
-    for (i = 0; i < n_links; i++) {
+    for (i = 0; i < n_links; i++)
 	fprintf(stdout, "  %s\t%.15lf\n", links[i].name, links[i].len);
-    }
     fflush(stdin);
     /* Place links on vertices ***********************/
     fprintf(stdout, "Continue? [y/n]  ");
@@ -1134,9 +1079,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	char *vargs[3];
 	vect_t *rots;
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 2; i++)
 	    vargs[i] = (char *)bu_malloc(sizeof(char)*NAMESIZE, "alloc vargs1");
-	}
 
 	strcpy(vargs[0], "e");
 	strcpy(vargs[1], links[j].name);
@@ -1149,35 +1093,35 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	state.miraxis = W;
 
 	dps = (struct directory **)bu_malloc(sizeof(struct directory *)*n_links, "alloc dps");
-	/*		rots = (vect_t *)bu_malloc(sizeof(vect_t)*n_links, "alloc rots");*/
+	/* rots = (vect_t *)bu_malloc(sizeof(vect_t)*n_links, "alloc rots");*/
 	for (i = 0; i < n_links; i++) {
 	    /* global dbip */
 	    dps[i] = db_lookup(dbip, links[i].name, LOOKUP_QUIET);
-	    /*			VSET(rots[i], 0,0,0);*/
+	    /* VSET(rots[i], 0,0,0);*/
 	}
 
-	for (i = 0; i < n_verts-1; i++) {
+	for (i = 0; i < n_verts-1; i++)
 	    for (j = 0; j < n_links; j++) {
 		if (i == 0) {
 		    VSCALE(state.trans, verts[n_links*i+j], local2base);
-		} else {
+		} else
 		    VSUB2SCALE(state.trans, verts[n_links*(i-1)+j], verts[n_links*i+j], local2base);
-		}
 		VSCALE(state.rpnt, verts[n_links*i+j], local2base);
 
 		VSUB2(pt, verts[n_links*i+j], verts[n_links*i+j+1]);
 		VSET(state.rot, 0, (M_PI - atan2(pt[Z], pt[X])),
 		     -atan2(pt[Y], sqrt(pt[X]*pt[X]+pt[Z]*pt[Z])));
 		VSCALE(state.rot, state.rot, radtodeg);
-		/*				VSUB2(state.rot, state.rot, rots[j]);
-						VADD2(rots[j], state.rot, rots[j]);*/
-
+		/*
+		VSUB2(state.rot, state.rot, rots[j]);
+		VADD2(rots[j], state.rot, rots[j]);
+		*/
 
 		state.src = dps[j];
 		/* global dbip */
 		dps[j] = copy_object(dbip, &rt_uniresource, &state);
 		strcpy(vargs[1], dps[j]->d_namep);
-		/*				strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
+		/* strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
 
 		if (!no_draw || !is_dm_null()) {
 		    drawtrees(2, vargs, 1);
@@ -1189,11 +1133,9 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		fprintf(stdout, ".");
 		fflush(stdout);
 	    }
-	}
 	fprintf(stdout, "\n");
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 2; i++)
 	    bu_free((char *)vargs[i], "free vargs[i]");
-	}
 	free(dps);
     }
 
