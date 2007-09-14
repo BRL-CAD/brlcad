@@ -1,7 +1,7 @@
 # $Id$
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-LDFLAGS = \
+AM_LDFLAGS = \
 	${OPTICAL} \
 	${RT} ${FB}
 
