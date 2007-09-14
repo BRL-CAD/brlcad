@@ -43,12 +43,10 @@ static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #endif
-#include <math.h>
 
-#ifdef HAVE_FLOAT_H
-   /* for isnan() function */
-#  include <float.h>
-#endif
+/* for isnan() function */
+#include <float.h>
+#include <math.h>
 
 #include "tcl.h"
 #include "machine.h"

@@ -47,13 +47,7 @@
 #include "common.h"
 
 #include <stdio.h>
-#ifdef HAVE_FABS
-# ifdef HAVE_MATH_H
-#  include <math.h>
-# endif
-#else
-# define fabs(x) ((x)>0?(x):-(x))
-#endif
+#include <math.h>
 
 #include "./ged_types.h"
 

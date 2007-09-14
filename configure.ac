@@ -1487,7 +1487,6 @@ AC_CHECK_HEADERS( \
 	curses.h \
 	dslib.h \
 	fcntl.h \
-	float.h \
 	getopt.h \
 	gl/device.h \
 	ieeefp.h \
@@ -1500,7 +1499,6 @@ AC_CHECK_HEADERS( \
 	limits.h \
 	locale.h \
 	malloc.h \
-	math.h \
 	memory.h \
 	ncurses.h \
 	netdb.h \

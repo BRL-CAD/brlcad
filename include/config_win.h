@@ -59,9 +59,7 @@
 #define HAS_OPENGL	1
 #define HAVE_ACCESS     1
 #define HAVE_CALLOC	1
-#define HAVE_ERRNO_H	1
 #define HAVE_FCNTL_H	1
-#define HAVE_FLOAT_H	1
 #define HAVE_GETENV     1
 #define HAVE_PUTENV     1
 #define HAVE_GETHOSTNAME	1
@@ -69,7 +67,6 @@
 #define HAVE_GL_GL_H	1
 #define HAVE_IO_H	1
 #define HAVE_LIMITS_H	1
-#define HAVE_MATH_H     1
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
 #define HAVE_MEMSET	1
