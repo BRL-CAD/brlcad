@@ -1667,10 +1667,47 @@ proc tab_expansion { line } {
 
     if { $len > 1 } {
 	# already have complete command, so do object expansion
+
+	# check if we have an open db
+	set dbCommand [info command db]
+	if { [string length $dbCommand] == 0 } {
+	    # no db command means no db is open, cannot expand
+	    return [list $line {}]
+	}
+
 	# get last word on command line
 	set word [lindex $line [expr $len - 1]]
+
+	# verify that word contains a legit path
+	# convert the path to a list of path elements
+	set path [string map {"/" " "} $word]
+	set pathLength [llength $path]
+
 	# look for the last "/" in the object
 	set index2 [string last "/" $word]
+
+	set slashIsLast 0
+	if { $index2 == [expr [string length $word]] - 1 } {
+	    set slashIsLast 1
+	}
+
+	# only check if we have more than one path element
+	if { $pathLength > 1 || $slashIsLast == 1 } {
+	    if { $slashIsLast != 1 } {
+		# do not verify the last element (that is what we expand)
+		incr pathLength -1
+	    }
+	    for { set index 0 } { $index < $pathLength } { incr index } {
+		set element [lindex $path $index]
+		# "db get_type" does not blather on error
+		if [catch {db get_type $element} type] {
+		    # the current path element is invalid, just return
+		    return [list $line {}]
+		}
+	    }
+	}
+
+	# we have a valid path, do expansion
 	if { $index2 > 0 } {
 	    incr index2 -1
 	    set index1 [string last "/" $word $index2]
@@ -1692,7 +1729,9 @@ proc tab_expansion { line } {
 
 	    # get the members of the last object on the command line
 	    # the "lt" command returns a list of elements like "{ op name }"
-	    set members [lt "$grp"]
+	    if [catch {lt $grp} members] {
+		set members {}
+	    }
 
 	    # use the search pattern to find matches in the list of members
 	    set match [lsearch -all -inline $members $pattern]
