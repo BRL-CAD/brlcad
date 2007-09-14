@@ -1562,7 +1562,9 @@ AC_CHECK_HEADERS( \
 	wchar.h \
 	winsock.h
 )
-# The headers <complex.h>, <fenv.h>, <inttypes.h>, <stdbool.h>, <stdint.h>, and <tgmath.h> were added with C99.
+# The headers assert.h, ctype.h, errno.h, float.h, limits.h, locale.h, math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h, string.h, time.h are part of C89.
+# The headers wchar.h, wctype.h, iso646.h were added with C95.
+# The headers complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h, and tgmath.h were added with C99.
 
 
 GL_CPPFLAGS=""
