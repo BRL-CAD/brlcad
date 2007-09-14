@@ -86,7 +86,7 @@ static struct db_tree_state	tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_converted = 0;
 
-//extern struct mater* rt_material_head;
+/* extern struct mater* rt_material_head; */
 
 /*
 *			D O _ R E G I O N _ E N D

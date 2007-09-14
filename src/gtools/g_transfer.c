@@ -517,7 +517,7 @@ main(int argc, char *argv[]) {
 	}
 
 	/* mark the database as in-memory only */
-	//	XXX = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+	/* XXX = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM); */
 
 	/* ignore broken pipes */
 	(void)signal(SIGPIPE, SIG_IGN);

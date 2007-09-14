@@ -49,7 +49,7 @@ struct dm_xvars {
 #ifdef IF_WGL
     PIXELFORMATDESCRIPTOR *vip;
     HFONT fontstruct;
-    HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
+    HDC  hdc;      /* device context of device that OpenGL calls are to be drawn on */
 #endif
 #if defined(DM_X) || defined (DM_OGL)
     XVisualInfo *vip;

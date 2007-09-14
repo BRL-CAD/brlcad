@@ -124,7 +124,7 @@ pop_spawn (struct population *p)
 	r1 = r2 = 2.5;
 	*/
 	for(j = 0; j < 6; j++){
-	    //VSETALL(p1, -10+pop_rand()*10);
+	    /* VSETALL(p1, -10+pop_rand()*10); */
 	    p1[0] = -10*pop_rand()*10;
 	    p1[1] = -10*pop_rand()*10;
 	    p1[2] = -10*pop_rand()*10;

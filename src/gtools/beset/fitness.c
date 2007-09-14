@@ -498,7 +498,7 @@ void
 fit_clean(struct fitness_state *fstate)
 {
     free_rays(fstate);
-    //bu_semaphore_free();
+    /* bu_semaphore_free(); */
 }
 
 /**

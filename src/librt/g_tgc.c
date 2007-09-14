@@ -720,7 +720,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
 		nroots = rt_poly_roots( &C , val, stp->st_dp->d_namep );
 
-		//		bn_pr_roots("roots", val, nroots);
+		/* bn_pr_roots("roots", val, nroots); */
 
 		/*  Only real roots indicate an intersection in real space.
 		 *
@@ -734,7 +734,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 				k[npts++] = val[l].re;
 			}
 		}
-		//		bu_log("npts rooted is %d; ", npts);
+		/* bu_log("npts rooted is %d; ", npts); */
 
 		/* Here, 'npts' is number of points being returned */
 		if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
@@ -759,7 +759,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		k[i] += cor_proj;
 	}
 
-	//	bu_log("npts before elimination is %d; ", npts);
+	/* bu_log("npts before elimination is %d; ", npts); */
 	/*
 	 * Eliminate hits beyond the end planes
 	 */
@@ -783,7 +783,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/*
 	 * Consider intersections with the end ellipses
 	 */
-	//	bu_log("npts before base is %d; ", npts);
+	/* bu_log("npts before base is %d; ", npts); */
 	dir = VDOT( tgc->tgc_N, rp->r_dir );
 	if( !NEAR_ZERO( dprime[Z], SMALL_FASTF ) && !NEAR_ZERO( dir, RT_DOT_TOL ) )  {
 		b = ( -pprime[Z] )/dprime[Z];
@@ -815,7 +815,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		}
 	}
 
-	//	bu_log("npts FINAL is %d\n", npts);
+	/* bu_log("npts FINAL is %d\n", npts); */
 
 	/* Sort Most distant to least distant: rt_pt_sort( k, npts ) */
 	{
