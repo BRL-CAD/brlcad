@@ -57,7 +57,8 @@
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
 
 
-/* NOTE: in order to not shadow the global "dbip" pointer used
+/*
+ * NOTE: in order to not shadow the global "dbip" pointer used
  * throughout mged, a "_dbip" is used for 'local' database instance
  * pointers to prevent proliferating the global dbip even further than
  * necessary.  the global is used at the hook functions only as a
@@ -65,8 +66,9 @@
  */
 
 
-/** state structure used to keep track of what actions the user
- *  requested and values necessary to perform the cloning operation.
+/**
+ * state structure used to keep track of what actions the user
+ * requested and values necessary to perform the cloning operation.
  */
 struct clone_state {
     Tcl_Interp *interp;                 /* Stash a pointer to the tcl interpreter for output */
@@ -88,9 +90,10 @@ struct name {
     char **dest;		/* dest object names */
 };
 
-/** structure used to store the names of objects that are to be
- *  cloned.  space is preallocated via names with len and used keeping
- *  track of space available and used.
+/**
+ * structure used to store the names of objects that are to be
+ * cloned.  space is preallocated via names with len and used keeping
+ * track of space available and used.
  */
 struct nametbl {
     struct name *names;
@@ -101,13 +104,16 @@ struct nametbl {
 
 struct nametbl obj_list;
 
-/** a polynamial value for representing knots */
+/**
+ * a polynamial value for representing knots
+ */
 struct knot {
     vect_t pt;
     fastf_t c[3][4];
 };
 
-/** a spline path with various segments, break points, and polynamial
+/**
+ * a spline path with various segments, break points, and polynamial
  *  values.
  */
 struct spline {
@@ -123,7 +129,9 @@ struct link {
 };
 
 
-/** initialize the name list used for stashing destination names */
+/**
+ * initialize the name list used for stashing destination names
+ */
 static void
 init_list(struct nametbl *l, int s)
 {
@@ -142,13 +150,16 @@ init_list(struct nametbl *l, int s)
 }
 
 
-/** add a new name to the name list */
+/**
+ * add a new name to the name list
+ */
 static int
 add_to_list(struct nametbl *l, char name[NAMESIZE])
 {
     int i, j;
 
-    /* add more slots if adding 1 more new name will fill up all the
+    /*
+     * add more slots if adding 1 more new name will fill up all the
      * available slots.
      */
     if (l->names_len == (l->names_used+1)) {
@@ -166,7 +177,9 @@ add_to_list(struct nametbl *l, char name[NAMESIZE])
 }
 
 
-/** returns truthfully if 'name' exists in the list */
+/**
+ * returns truthfully if 'name' exists in the list
+ */
 static int
 is_in_list(struct nametbl l, char name[NAMESIZE])
 {
@@ -181,7 +194,8 @@ is_in_list(struct nametbl l, char name[NAMESIZE])
 }
 
 
-/** returns the location of 'name' in the list if it exists, returns
+/**
+ * returns the location of 'name' in the list if it exists, returns
  * -1 otherwise.
  */
 static int
@@ -198,7 +212,8 @@ index_in_list(struct nametbl l, char name[NAMESIZE])
 }
 
 
-/** returns the next available/unused name, using a consistent naming
+/**
+ * returns the next available/unused name, using a consistent naming
  * convention specific to combinations/regions and solids.
  * state->incr is used for each number level increase.
  */
@@ -243,8 +258,9 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 }
 
 
-/** make a copy of a v4 solid by adding it to our book-keeping list,
- *  adding it to the db directory, and writing it out to disk.
+/**
+ * make a copy of a v4 solid by adding it to our book-keeping list,
+ * adding it to the db directory, and writing it out to disk.
  */
 static void
 copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
@@ -332,8 +348,9 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 }
 
 
-/** make a copy of a v5 solid by adding it to our book-keeping list,
- *  adding it to the db directory, and writing it out to disk.
+/**
+ * make a copy of a v5 solid by adding it to our book-keeping list,
+ * adding it to the db directory, and writing it out to disk.
  */
 static void
 copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
@@ -398,9 +415,10 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 }
 
 
-/** make n copies of a database combination by adding it to our
- *  book-keeping list, adding it to the directory, then writing it out
- *  to the db.
+/**
+ * make n copies of a database combination by adding it to our
+ * book-keeping list, adding it to the directory, then writing it out
+ * to the db.
  */
 static void
 copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
@@ -430,7 +448,8 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 }
 
 
-/** make n copies of a v4 combination.
+/**
+ * make n copies of a v4 combination.
  */
 static struct directory *
 copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
@@ -496,7 +515,8 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     return dp;
 }
 
-/** make n copies of a v5 combination.
+/**
+ * make n copies of a v5 combination.
  */
 static struct directory *
 copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
@@ -544,9 +564,10 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 }
 
 
-/** make n copies of a database combination by adding it to our
- *  book-keeping list, adding it to the directory, then writing it out
- *  to the db.
+/**
+ * make n copies of a database combination by adding it to our
+ * book-keeping list, adding it to the directory, then writing it out
+ * to the db.
  */
 static void
 copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
@@ -576,7 +597,9 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
 }
 
 
-/** recursively copy a tree of geometry */
+/**
+ * recursively copy a tree of geometry
+ */
 static struct directory *
 copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state *state)
 {
@@ -604,7 +627,8 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 		TCL_READ_ERR;
 		goto done_copy_tree;
 	    }
-	    /* if it is a combination/region, copy the objects that
+	    /*
+	     * if it is a combination/region, copy the objects that
 	     * make up the object.
 	     */
 	    for (i = 1; i < dp->d_len; i++ ) {
@@ -662,8 +686,9 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 }
 
 
-/** copy an object, recursivley copying all of the object's contents
- *  if it's a combination/region.
+/**
+ * copy an object, recursivley copying all of the object's contents
+ * if it's a combination/region.
  */
 static struct directory *
 copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state)
@@ -711,7 +736,9 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 }
 
 
-/** how to use clone.  blissfully simple interface. */
+/**
+ * how to use clone.  blissfully simple interface.
+ */
 void
 print_usage(Tcl_Interp *interp)
 {
@@ -731,8 +758,9 @@ print_usage(Tcl_Interp *interp)
 }
 
 
-/** process the user-provided arguments. stash their operations into
- *  our state structure.
+/**
+ * process the user-provided arguments. stash their operations into
+ * our state structure.
  */
 int
 get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
@@ -840,7 +868,9 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 }
 
 
-/** master hook function for the 'clone' command. */
+/**
+ * master hook function for the 'clone' command.
+ */
 int
 f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -871,7 +901,8 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-/** helper function that computes where a point is along a spline
+/**
+ * helper function that computes where a point is along a spline
  * given some distance 't'.
  *
  * i.e. sets pt = Q(t) for the specified spline
@@ -902,8 +933,9 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
 }
 
 
-/** master hook function for the 'tracker' command used to create
- *  copies of objects along a spline path.
+/**
+ * master hook function for the 'tracker' command used to create
+ * copies of objects along a spline path.
  */
 int
 f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
