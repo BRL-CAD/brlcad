@@ -93,7 +93,8 @@ main(int argc, char **argv)
 		if( orig[i] == after[i] )  continue;
 
 		/* Byte-for-byte compare */
-		if( ckbytes( &orig[i], &after[i], nbytes ) == 0 )
+		if( ckbytes( (unsigned char *)&orig[i], 
+			    (unsigned char *)&after[i], nbytes ) == 0 )
 			continue;
 
 		/* Wrong */
