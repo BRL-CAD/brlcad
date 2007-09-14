@@ -1486,7 +1486,6 @@ AC_CHECK_HEADERS( \
 	arpa/inet.h \
 	curses.h \
 	dslib.h \
-	errno.h \
 	fcntl.h \
 	float.h \
 	getopt.h \
@@ -1519,7 +1518,6 @@ AC_CHECK_HEADERS( \
 	stdint.h \
 	string.h \
 	strings.h \
-	sys/errno.h \
 	sys/file.h \
 	sys/_ioctl.h \
 	sys/ioctl.h \

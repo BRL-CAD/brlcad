@@ -74,9 +74,6 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
-#ifdef HAVE_SYS_ERRNO_H
-#  include <sys/errno.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
