@@ -54,13 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #if defined(HAVE_FCNTL_H)
 #  include <fcntl.h>
 #endif
-#if defined(HAVE_ERRNO_H)
-#  include <errno.h>
-#else
-#  if defined(HAVE_SYS_ERRNO_H)
-#    include <sys/errno.h>
-#  endif
-#endif
+#include <errno.h>
 #if defined(HAVE_UNISTD_H)
 #  include <unistd.h>
 #endif
