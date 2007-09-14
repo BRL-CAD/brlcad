@@ -576,15 +576,15 @@ polydata(void)	/* Print out Polydata record information */
 	register int i, j;
 
 	(void)fprintf(ofp, "%c ", record.q.q_id );		/* Q */
-	(void)fprintf(ofp, "%d ", record.q.q_count );		/* # of vertices <= 5 */
+	(void)fprintf(ofp, "%d", record.q.q_count );		/* # of vertices <= 5 */
 	for( i = 0; i < 5; i++ )  {			/* [5][3] vertices */
 		for( j = 0; j < 3; j++ ) {
-			(void)fprintf(ofp, "%.12e ", record.q.q_verts[i][j] );
+			(void)fprintf(ofp, " %.12e", record.q.q_verts[i][j] );
 		}
 	}
 	for( i = 0; i < 5; i++ )  {			/* [5][3] normals */
 		for( j = 0; j < 3; j++ ) {
-			(void)fprintf(ofp, "%.12e ", record.q.q_norms[i][j] );
+			(void)fprintf(ofp, " %.12e", record.q.q_norms[i][j] );
 		}
 	}
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
@@ -598,9 +598,9 @@ soldump(void)	/* Print out Solid record information */
 	(void)fprintf(ofp, "%c ", record.s.s_id );	/* S */
 	(void)fprintf(ofp, "%d ", record.s.s_type );	/* GED primitive type */
 	(void)fprintf(ofp, "%.16s ", name(record.s.s_name) );	/* unique name */
-	(void)fprintf(ofp, "%d ", record.s.s_cgtype );/* COMGEOM solid type */
+	(void)fprintf(ofp, "%d", record.s.s_cgtype );/* COMGEOM solid type */
 	for( i = 0; i < 24; i++ )
-		(void)fprintf(ofp, "%.12e ", record.s.s_values[i] ); /* parameters */
+		(void)fprintf(ofp, " %.12e", record.s.s_values[i] ); /* parameters */
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
 
@@ -669,7 +669,7 @@ bot_dump(void)
 	(void)fprintf(ofp, "%d ", bot->orientation );
 	(void)fprintf(ofp, "%d ", 0 );	/* was error_mode */
 	(void)fprintf(ofp, "%d ", bot->num_vertices );
-	(void)fprintf(ofp, "%d ", bot->num_faces );
+	(void)fprintf(ofp, "%d", bot->num_faces );
 	(void)fprintf(ofp, "\n");
 
 	for( i=0 ; i<bot->num_vertices ; i++ )
@@ -925,14 +925,14 @@ combdump(void)	/* Print out Combination record information */
 		if( record.c.c_matparm[0] )
 			m2 = 1;
 	}
-	fprintf(ofp, "%d %d ", m1, m2 );
+	fprintf(ofp, "%d %d", m1, m2 );
 	switch( record.c.c_inherit )  {
 	case DB_INH_HIGHER:
-		fprintf(ofp, "%d ", DB_INH_HIGHER );
+		fprintf(ofp, " %d", DB_INH_HIGHER );
 		break;
 	default:
 	case DB_INH_LOWER:
-		fprintf(ofp, "%d ", DB_INH_LOWER );
+		fprintf(ofp, " %d", DB_INH_LOWER );
 		break;
 	}
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
@@ -975,7 +975,7 @@ membdump(union record *rp)
 	(void)fprintf(ofp, "%.16s ", name(rp->M.m_instname) );	/* referred-to obj. */
 	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
 		(void)fprintf(ofp, "%.12e ", rp->M.m_mat[i] );
-	(void)fprintf(ofp, "%d ", 0 );			/* was COMGEOM solid # */
+	(void)fprintf(ofp, "%d", 0 );			/* was COMGEOM solid # */
 	(void)fprintf(ofp, "\n");				/* Terminate w/ nl */
 }
 
@@ -997,7 +997,7 @@ arsadump(void)	/* Print out ARS record information */
 	(void)fprintf(ofp, "%.12e ", record.a.a_ymax );	/* max y coordinate */
 	(void)fprintf(ofp, "%.12e ", record.a.a_ymin );	/* min y coordinate */
 	(void)fprintf(ofp, "%.12e ", record.a.a_zmax );	/* max z coordinate */
-	(void)fprintf(ofp, "%.12e ", record.a.a_zmin );	/* min z coordinate */
+	(void)fprintf(ofp, "%.12e", record.a.a_zmin );	/* min z coordinate */
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
 	length = (int)record.a.a_totlen;	/* Get # of ARS B records */
@@ -1017,9 +1017,9 @@ arsbdump(void)	/* Print out ARS B record information */
 	(void)fprintf(ofp, "%c ", record.b.b_id );		/* B */
 	(void)fprintf(ofp, "%d ", record.b.b_type );		/* primitive type */
 	(void)fprintf(ofp, "%d ", record.b.b_n );		/* current curve # */
-	(void)fprintf(ofp, "%d ", record.b.b_ngranule );	/* current granule */
+	(void)fprintf(ofp, "%d", record.b.b_ngranule );	/* current granule */
 	for( i = 0; i < 24; i++ )  {			/* [8*3] vectors */
-		(void)fprintf(ofp, "%.12e ", record.b.b_values[i] );
+		(void)fprintf(ofp, " %.12e", record.b.b_values[i] );
 	}
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 }
@@ -1261,9 +1261,9 @@ sketchdump(void)
 	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->V ) );
 	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->u_vec ) );
 	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->v_vec ) );
-	(void)fprintf(ofp, "%d %d\n ", skt->vert_count, crv->seg_count );
+	(void)fprintf(ofp, "%d %d\n", skt->vert_count, crv->seg_count );
 	for( i=0 ; i<skt->vert_count ; i++ )
-		(void)fprintf(ofp, "%.12e %.12e ", V2ARGS( skt->verts[i] ) );
+		(void)fprintf(ofp, " %.12e %.12e", V2ARGS( skt->verts[i] ) );
 	(void)fprintf(ofp, "\n" );
 
 	for( j=0 ; j<crv->seg_count ; j++ )
