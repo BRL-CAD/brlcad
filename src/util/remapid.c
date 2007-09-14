@@ -106,9 +106,9 @@ static const char RCSrtstring[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #if defined(HAVE_STDARG_H)
 # include <stdarg.h>

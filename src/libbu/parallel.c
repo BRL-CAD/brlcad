@@ -45,11 +45,7 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 
-#ifdef HAVE_STDLIB_H
-# include <stdlib.h>
-#elif defined(HAVE_MALLOC_H)
-# include <malloc.h>
-#endif
+#include <stdlib.h>
 
 #include <ctype.h>
 #include <math.h>

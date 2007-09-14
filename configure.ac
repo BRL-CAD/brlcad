@@ -1517,7 +1517,6 @@ AC_CHECK_HEADERS( \
 	stdarg.h \
 	stddef.h \
 	stdint.h \
-	stdlib.h \
 	string.h \
 	strings.h \
 	sys/errno.h \
@@ -1563,6 +1562,8 @@ AC_CHECK_HEADERS( \
 	wchar.h \
 	winsock.h
 )
+# The headers <complex.h>, <fenv.h>, <inttypes.h>, <stdbool.h>, <stdint.h>, and <tgmath.h> were added with C99.
+
 
 GL_CPPFLAGS=""
 # optionally check for OpenGL headers

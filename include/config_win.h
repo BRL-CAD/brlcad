@@ -82,8 +82,6 @@
 #define HAVE_SETVBUF	1
 #define HAVE_STAT       1
 #define HAVE_STDARG_H	1
-#define HAVE_STDLIB_H	1
-#define HAVE_STRCHR	1
 #define HAVE_STRCHR	1
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1

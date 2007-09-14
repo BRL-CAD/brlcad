@@ -57,6 +57,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
@@ -77,9 +78,6 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #endif
 #ifdef HAVE_ERRNO_H
 #  include <errno.h>
-#endif
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>

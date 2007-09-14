@@ -40,17 +40,14 @@
 #  include <unistd.h>
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h> /* for atof() */
-#endif
-
 #include <math.h>
 
 #include "machine.h"
 
-double	ibuf[512];
-float	obuf[512];
+double	ibuf[512] = { 0.0 };
+float	obuf[512] = { 0.0f};
 
 static char usage[] = "\
 Usage: d-f [-n || scale] < doubles > floats\n";

@@ -34,12 +34,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <fcntl.h>
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-#endif
 #include <ctype.h>
 #ifdef HAVE_STRING_H
 #  include <string.h>

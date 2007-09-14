@@ -49,9 +49,6 @@
 /* Define to 1 if you have the <stdio.h> header file. */
 #define HAVE_STDIO_H 1
 
-/* Define to 1 if you have the <stdlib.h> header file. */
-#define HAVE_STDLIB_H 1
-
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
 
