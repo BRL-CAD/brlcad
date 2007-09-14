@@ -25,6 +25,11 @@
 
 #include "common.h"
 #include <stdio.h>
+
+#ifdef HAVE_STDLIB_H
+# include <stdlib.h>
+#endif
+
 #include <math.h>
 #include "machine.h"
 #include "bu.h"
