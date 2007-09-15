@@ -60,16 +60,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
+#include <time.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 #endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
-#endif
-
-#ifdef HAVE_TIME_H
-#  include <time.h>
 #endif
 
 #if defined(HAVE_WINSOCK_H) && !defined(__CYGWIN__)

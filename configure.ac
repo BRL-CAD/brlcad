@@ -1508,7 +1508,6 @@ AC_CHECK_HEADERS( \
 	sgtty.h \
 	socket.h \
 	stdarg.h \
-	stddef.h \
 	stdint.h \
 	string.h \
 	strings.h \
@@ -1542,7 +1541,6 @@ AC_CHECK_HEADERS( \
 	termio.h \
 	termios.h \
 	termlib.h \
-	time.h \
 	tinfo.h \
 	tk.h \
 	ulocks.h \

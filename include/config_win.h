@@ -86,7 +86,6 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME	1
-#define HAVE_TIME_H	1
 #define HAVE_VARARGS_H	1
 #define HAVE_VFORK	1
 #define HAVE_VPRINTF	1
