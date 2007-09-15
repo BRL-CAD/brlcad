@@ -49,9 +49,6 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_SIGNAL_H
-#  include <signal.h>
-#endif
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #else

@@ -338,7 +338,7 @@ main(int argc, char **argv)
 	}
     }
 
-#ifdef HAVE_SIGNAL
+#if defined(SIGPIPE) && defined(SIGINT)
     (void)signal( SIGPIPE, SIG_IGN );
 
     /*
@@ -349,7 +349,7 @@ main(int argc, char **argv)
      */
     cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
     (void)signal( SIGINT, cur_sigint );		/* restore */
-#endif /* HAVE_SIGNAL */
+#endif /* SIGPIPE && SIGINT */
 
 #ifdef HAVE_PIPE
     if( !classic_mged && !run_in_foreground ) {
@@ -699,7 +699,7 @@ main(int argc, char **argv)
 	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan,TCL_READABLE, stdin_input, stdin_file);
 
-#ifdef HAVE_SIGNAL
+#ifdef SIGINT
 	(void)signal( SIGINT, SIG_IGN );
 #endif
 

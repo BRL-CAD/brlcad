@@ -238,7 +238,7 @@ sigalarm(int code)
 	if( fb_server_fbp != FBIO_NULL ) {
 		fb_poll(fb_server_fbp);
 	}
-#ifdef HAVE_SIGNAL
+#ifdef SIGALRM
 	(void)signal( SIGALRM, sigalarm );	/* some systems remove handler */
 #endif
 	alarm(1);
@@ -298,7 +298,7 @@ main(int argc, char **argv)
 	_fb_disk_enable = 0;
 	memset((void *)clients, 0, sizeof(struct pkg_conn *) * MAX_CLIENTS);
 
-#ifdef HAVE_SIGNAL
+#ifdef SIGALRM
 	(void)signal( SIGPIPE, SIG_IGN );
 	(void)signal( SIGALRM, sigalarm );
 #endif

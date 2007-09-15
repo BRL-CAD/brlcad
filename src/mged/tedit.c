@@ -938,7 +938,7 @@ editit(const char *file)
 	bu_log("Invoking %s on %s\n", editor, file);
 	bu_log("NOTE: YOU MUST QUIT %s BEFORE MGED WILL RESPOND AND CONTINUE\n", editor);
 
-#ifdef HAVE_SIGNAL_H
+#if defined(SIGINT) && defined(SIGQUIT)
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );
 #endif
@@ -954,7 +954,7 @@ editit(const char *file)
 		register int i;
 		/* Don't call bu_log() here in the child! */
 
-#ifdef HAVE_SIGNAL_H
+#if defined(SIGINT) && defined(SIGQUIT)
 		/* deja vu */
 		(void)signal( SIGINT, SIG_DFL );
 		(void)signal( SIGQUIT, SIG_DFL );
@@ -1004,7 +1004,7 @@ editit(const char *file)
 	}
 #endif
 
-#ifdef HAVE_SIGNAL_H
+#if defined(SIGINT) && defined(SIGQUIT)
 	(void)signal(SIGINT, s2);
 	(void)signal(SIGQUIT, s3);
 #endif

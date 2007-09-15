@@ -66,7 +66,6 @@
 #define HAVE_GETPROGNAME        1
 #define HAVE_GL_GL_H	1
 #define HAVE_IO_H	1
-#define HAVE_LIMITS_H	1
 #define HAVE_MATHERR	1
 #define HAVE_MEMORY_H	1
 #define HAVE_MEMSET	1
