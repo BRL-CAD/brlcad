@@ -96,6 +96,7 @@
 #
 #  @(#)$Header$ (BRL)
 
+
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
