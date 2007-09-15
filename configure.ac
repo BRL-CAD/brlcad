@@ -1558,8 +1558,6 @@ AC_CHECK_HEADERS( \
 # The headers wchar.h, wctype.h, iso646.h were added with C95.
 # The headers complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h, and tgmath.h were added with C99.
 
-# needed for blt
-AC_DEFINE(HAVE_ERRNO_H, 1, [c89 header])
 
 GL_CPPFLAGS=""
 # optionally check for OpenGL headers
