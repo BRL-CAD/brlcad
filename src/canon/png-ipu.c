@@ -54,26 +54,19 @@
  *	v	verbose;
  *	V	verbose;
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+#include <fcntl.h>
 
 #include <png.h>
 
 #include "machine.h"
 #include "bu.h"
 
-#include <fcntl.h>
-#include <stdlib.h>
 
 #include "./canon.h"
 

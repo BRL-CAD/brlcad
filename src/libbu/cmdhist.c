@@ -39,13 +39,9 @@
  *
  */
 
-
 #include "common.h"
 
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "tcl.h"
 

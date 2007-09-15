@@ -23,13 +23,7 @@
 
 #include "common.h"
 
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>

@@ -23,9 +23,7 @@
 
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
 
 #include "machine.h"
 #include "bu.h"

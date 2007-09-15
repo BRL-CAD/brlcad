@@ -57,22 +57,15 @@ static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <math.h>
 #include <fcntl.h>
+#include <string.h>
+
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-
-#include "machine.h"
-
 #ifdef HAVE_UNIX_IO
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #endif
-
 #ifdef HAVE_SYS_MMAN_H
 #  include <sys/mman.h>
 #  if !defined(MAP_FAILED)
@@ -80,6 +73,7 @@ static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
 #  endif
 #endif
 
+#include "machine.h"
 #include "bu.h"
 
 

@@ -39,17 +39,14 @@ static const char RCSrev[] = "$Revision$";
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
+#include <string.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
 
 #include "machine.h"

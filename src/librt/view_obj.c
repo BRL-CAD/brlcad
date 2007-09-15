@@ -41,14 +41,11 @@
 
 #include "common.h"
 
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <math.h>
+
 #include "tcl.h"
+
 #include "machine.h"
 #include "cmd.h"		/* includes bu.h */
 #include "vmath.h"

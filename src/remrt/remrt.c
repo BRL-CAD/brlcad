@@ -47,23 +47,20 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include <math.h>
 #include <netdb.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
 #include <sys/time.h>		/* sometimes includes <time.h> */
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif

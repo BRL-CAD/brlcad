@@ -30,14 +30,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
-
 #include <stdio.h>
+
 #include "machine.h"
 
 double	obuf[2*1024];

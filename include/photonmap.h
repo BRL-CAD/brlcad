@@ -30,13 +30,9 @@
 
 #include "common.h"
 
-#ifdef HAVE_STRING_H     /* OPTIONAL, for strcmp() etc. */
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "machine.h"
 #include "bu.h"

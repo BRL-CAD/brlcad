@@ -20,20 +20,11 @@
 /** @file getinput.c
  *	Author:		Gary S. Moss
  */
-#if ! defined( lint )
-static const char RCSid[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, archive /vld/moss/src/fbed/s.getinput.c";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #include "machine.h"
 #include "fb.h"

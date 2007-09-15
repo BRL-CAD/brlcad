@@ -24,17 +24,12 @@
  */
 #include "common.h"
 
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */

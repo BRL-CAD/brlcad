@@ -81,7 +81,6 @@
 #define HAVE_STRCHR	1
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1
-#define HAVE_STRING_H	1
 #define HAVE_STRTOK	1
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1

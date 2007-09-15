@@ -53,11 +53,8 @@ static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+
 #if defined(HAVE_STDARG_H)
 #  include <stdarg.h>
 #endif

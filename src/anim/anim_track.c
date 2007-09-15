@@ -32,13 +32,9 @@
 
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "machine.h"
 #include "vmath.h"

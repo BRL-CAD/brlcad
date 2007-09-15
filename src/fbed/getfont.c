@@ -18,25 +18,16 @@
  * information.
  */
 /** @file getfont.c
+	Load a new font by reading in the header and directory.
+
 	Authors:	Paul R. Stay	(original author)
 			Gary S. Moss	(port to big-endian machine)
 */
-#if ! defined( lint )
-static const char RCSid[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld/moss/src/fbed/s.getfont.c";
-#endif
-/*
-	getfont.c - Load a new font by reading in the header and directory.
- */
+
 #include "common.h"
 
-
 #include <stdio.h>
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #include "./font.h"
 

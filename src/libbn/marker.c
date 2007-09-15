@@ -49,11 +49,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "machine.h"
 #include "vmath.h"

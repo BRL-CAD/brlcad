@@ -32,14 +32,9 @@
 
 #include "common.h"
 
-
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 /* #define DEBUG 1  Define to only print system commands */
 

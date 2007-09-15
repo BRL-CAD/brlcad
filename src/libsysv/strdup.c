@@ -36,14 +36,7 @@ static const int unused = 0;
 
 /* for malloc */
 #include <stdlib.h>
-
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  ifdef HAVE_STRINGS_H
-#    include <strings.h>
-#  endif
-#endif
+#include <string.h>
 
 
 /*

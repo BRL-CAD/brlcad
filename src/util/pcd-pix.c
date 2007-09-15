@@ -24,26 +24,22 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "common.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+#include "machine.h"
+
+
 /* define DEBUG for some debugging informations, just remove the x from xDEBUG */
 #define xDEBUG
 
 /* define MELDUNG if you want to see what is happening and what takes time,
    just remove the x from xMeldung */
 #define xMELDUNG
-
-#include "common.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#include <math.h>
-
-#include "machine.h"
-
 
 #define own_BUsize (3*24*1024)
 

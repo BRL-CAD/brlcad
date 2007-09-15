@@ -36,21 +36,12 @@
  * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-
-#ifndef lint
-static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <ctype.h>
 #include <errno.h>
 

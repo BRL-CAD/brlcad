@@ -38,37 +38,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_TIME_H
-#   include <sys/time.h>
+#  include <sys/time.h>
 #endif
 
 #ifdef HAVE_SYS_TIMES_H
-#   include <sys/times.h>
+#  include <sys/times.h>
 #endif
 
 #ifdef HAVE_SYS_TYPES_H
-#   include <sys/types.h>
+#  include <sys/types.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
-#   include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #ifdef HAVE_FCNTL_H
-#   include <fcntl.h>
+#  include <fcntl.h>
 #endif
 
 #ifdef HAVE_PROCESS_H
-#   include <process.h>
+#  include <process.h>
 #endif
 
 #ifdef HAVE_SYS_SELECT_H
-#   include <sys/select.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#   include <string.h>
+#  include <sys/select.h>
 #endif
 
 /* common headers */

@@ -48,12 +48,50 @@
 
 #ifdef IF_X
 
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/types.h>
+#include <string.h>
 
-#define X_DBG	0
-#define UPD_DBG 0
-#define BLIT_DBG 0
-#define EVENT_DBG 0
-#define BLIT_DBG_PIX 0
+#if defined(USE_SYS_TIME_H)
+#  include <sys/time.h>
+#endif
+
+#ifdef HAVE_SYS_MMAN_H
+#  include <unistd.h>
+#  include <sys/mman.h>
+#  include <fcntl.h>
+#  define CAN_LINGER 1
+#  undef HAVE_SYS_SHM_H		/* Don't use both ways, mmap is preferred. */
+#else
+#  ifdef HAVE_SYS_SHM_H
+#    include <sys/ipc.h>
+#    include <sys/shm.h>
+#    define CAN_LINGER 1
+#  endif
+#endif
+
+#include <X11/X.h>
+#ifdef HAVE_XOSDEFS_H
+#  include <X11/Xfuncproto.h>
+#  include <X11/Xosdefs.h>
+#endif
+#if defined(linux)
+#  undef X_NOT_STDC_ENV
+#  undef X_NOT_POSIX
+#endif
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+
+#include <ctype.h>
+
+#include "machine.h"
+#include "fb.h"
+
 
 /* Print a debug message on first time into a piece of code */
 #if 0
@@ -62,52 +100,11 @@
 # define DEBUG1(str)	/*NIL*/
 #endif
 
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <time.h>
-#include <sys/types.h>
-#if defined(USE_SYS_TIME_H)
-#  include <sys/time.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-
-#include "machine.h"
-#include "fb.h"
-
-#ifdef HAVE_SYS_MMAN_H
-#  include <unistd.h>
-#  include <sys/mman.h>
-#  include <fcntl.h>
-#  define CAN_LINGER 1
-#  undef HAVE_SYS_SHM_H		/* Don't use both ways, mmap is preferred. */
-# else
-#  ifdef HAVE_SYS_SHM_H
-#	include <sys/ipc.h>
-#	include <sys/shm.h>
-#	define	CAN_LINGER 1
-#  endif
-#endif
-
-#include <X11/X.h>
-#ifdef HAVE_XOSDEFS_H
-#include <X11/Xfuncproto.h>
-#include <X11/Xosdefs.h>
-#endif
-#if defined(linux)
-#	undef	X_NOT_STDC_ENV
-#	undef	X_NOT_POSIX
-#endif
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
-
-#include <ctype.h>
+#define X_DBG	0
+#define UPD_DBG 0
+#define BLIT_DBG 0
+#define EVENT_DBG 0
+#define BLIT_DBG_PIX 0
 
 #define SHMEM_KEY	42
 

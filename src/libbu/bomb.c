@@ -45,11 +45,10 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
+
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
 #endif
 #ifdef HAVE_UNIX_IO
 #  include <fcntl.h>

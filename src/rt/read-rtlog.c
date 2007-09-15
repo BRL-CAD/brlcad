@@ -40,12 +40,9 @@ static const char RCSreadfile[] = "@(#)$Header$";
 #include "common.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"

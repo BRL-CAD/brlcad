@@ -46,34 +46,23 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
-char MGEDCopyRight_Notice[] = "@(#) \
-BRL-CAD is Open Source software. \
-This software is Copyright (c) 1985-2007 by the United States Government \
-as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
+#include <ctype.h>
+#include <signal.h>
+#include <time.h>
+
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
 #endif
 #ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
-#include <ctype.h>
-#include <signal.h>
-#include <time.h>
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
@@ -98,6 +87,12 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "./mged_dm.h"
 #include "./cmd.h"
 #include "brlcad_version.h"
+
+
+char MGEDCopyRight_Notice[] = "@(#) \
+BRL-CAD is Open Source software. \
+This software is Copyright (c) 1985-2007 by the United States Government \
+as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 
 #ifdef DEBUG

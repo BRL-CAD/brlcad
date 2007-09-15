@@ -1509,7 +1509,6 @@ AC_CHECK_HEADERS( \
 	socket.h \
 	stdarg.h \
 	stdint.h \
-	string.h \
 	strings.h \
 	sys/file.h \
 	sys/_ioctl.h \

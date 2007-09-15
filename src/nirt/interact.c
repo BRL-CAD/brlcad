@@ -21,24 +21,12 @@
  *
  */
 
-/*      INTERACT.C      */
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
-
-/*	INCLUDES	*/
 #include "common.h"
 
-
 #include <stdlib.h>
-
 #include <stdio.h>
 #include <ctype.h>
-#if HAVE_STRING_H
-# include <string.h>
-#else
-# include <strings.h>
-#endif
+#include <string.h>
 
 #include "machine.h"
 #include "vmath.h"

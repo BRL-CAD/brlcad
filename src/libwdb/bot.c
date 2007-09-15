@@ -36,14 +36,10 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <math.h>
-#include "machine.h"
 
+#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

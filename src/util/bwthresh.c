@@ -36,14 +36,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #define		USAGE		"Usage: 'bwthresh val ...'\n"
 

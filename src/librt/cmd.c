@@ -43,14 +43,10 @@ static const char RCScmd[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <ctype.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"

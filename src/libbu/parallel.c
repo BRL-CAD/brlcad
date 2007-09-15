@@ -35,25 +35,16 @@
  *
  */
 
-#ifndef lint
-static const char RCSparallel[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
 
 /* XXX header mess needs cleaned up */
 
 #include <stdio.h>
-
 #include <stdlib.h>
-
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+
 #include "machine.h"
 #include "bu.h"
 

@@ -32,6 +32,9 @@
 static const char RCSid[] = "$Header$";
 #endif
 
+#include "common.h"
+
+// system headers
 #include <iostream>
 #include <sstream>
 #include <cstdio>
@@ -40,15 +43,7 @@ static const char RCSid[] = "$Header$";
 #include <map>
 #include <vector>
 #include <stack>
-
-#include "common.h"
-
-// system headers
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>

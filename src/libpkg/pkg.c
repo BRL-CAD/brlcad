@@ -61,6 +61,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 #include <time.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
@@ -83,11 +84,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
 #endif
 
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif

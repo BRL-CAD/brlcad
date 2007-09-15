@@ -33,9 +33,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -43,12 +40,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #include "machine.h"
 

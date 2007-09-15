@@ -28,18 +28,15 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <math.h>
+
+#include <tcl.h>
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-#include <tcl.h>
 
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,

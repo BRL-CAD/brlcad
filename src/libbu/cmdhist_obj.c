@@ -32,14 +32,12 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-
 #include "common.h"
 
+#include <string.h>
 
 #include "tcl.h"
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
+
 #include "machine.h"
 #include "cmd.h"
 

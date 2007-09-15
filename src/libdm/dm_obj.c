@@ -34,14 +34,13 @@
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
 #include <math.h>
-#include "tcl.h"
 
 #include <zlib.h>
 #include <png.h>
+
+#include "tcl.h"
 
 #include "machine.h"
 #include "cmd.h"                  /* includes bu.h */

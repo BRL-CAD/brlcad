@@ -24,18 +24,11 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-# include "common.h"
-#endif
-
 #include "compnet.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef HAVE_STRING_H
-# include <string.h>
-#endif
-
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>

@@ -31,14 +31,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
+#include <string.h>
+
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
+#endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
 #endif
 
 #include "tcl.h"
 #include "tk.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -47,13 +51,6 @@
 #include "bn.h"
 #include "dm.h"
 #include "dm-X.h"
-
-#ifdef HAVE_GL_GLX_H
-#  include <GL/glx.h>
-#endif
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
 
 #ifdef DM_WGL
 #  include "dm-wgl.h"

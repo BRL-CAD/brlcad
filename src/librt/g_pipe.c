@@ -37,16 +37,15 @@ static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
 
 /* for isnan() function */
 #include <float.h>
 #include <math.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "tcl.h"
 #include "machine.h"

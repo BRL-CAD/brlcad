@@ -37,16 +37,13 @@ static const char RCSray_bot_faces[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
+#include <ctype.h>
+
 #ifdef HAVE_UNIX_IO
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#include <ctype.h>
 
 #include "machine.h"
 #include "vmath.h"

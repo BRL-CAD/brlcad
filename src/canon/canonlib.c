@@ -28,23 +28,17 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/time.h>
 #include <fcntl.h>
 #include <ctype.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
+#include <string.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
 #endif
-
 
 #include "machine.h"
 #include "bu.h"

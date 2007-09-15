@@ -39,12 +39,8 @@
  *  Include Sequencing -
 @code
 	# include "common.h"	/_* Must come before system <> includes *_/
-	#ifdef HAVE_STRING_H	/_* OPTIONAL, for strcmp() etc. *_/
-	#  include <string.h>
-	#else
-	#  include <strings.h>
-	#endif
 	# include <stdio.h>
+	# include <string.h>
 	# include <math.h>
 	# include "machine.h"	/_* For fastf_t definition on this machine *_/
 	# include "bu.h"

@@ -37,11 +37,7 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 
 #include <stddef.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <math.h>
 
 #include "machine.h"

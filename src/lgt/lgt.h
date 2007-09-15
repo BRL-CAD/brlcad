@@ -23,11 +23,9 @@
 #ifndef INCL_LGT
 #define INCL_LGT
 
-#ifdef HAVE_STRING_H
+#include "common.h"
+
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 
 #define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported. */

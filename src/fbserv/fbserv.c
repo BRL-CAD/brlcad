@@ -66,24 +66,24 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
+#include <string.h>
+#include <time.h>
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #if defined(HAVE_STDARG_H)
 #  include <stdarg.h>
 #endif
 #if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
 #  include <varargs.h>
 #endif
-
 #if HAVE_SYSLOG_H
 #  include <syslog.h>
 #endif
-
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
@@ -94,12 +94,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #  include <process.h>
 #  include <winsock.h>
 #endif
-
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
@@ -107,7 +101,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include <time.h>
 
 #include "machine.h"
 #include "fb.h"

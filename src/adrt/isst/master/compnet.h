@@ -27,6 +27,8 @@
 #ifndef _ISST_COMPNET_H
 #define _ISST_COMPNET_H
 
+#include "common.h"
+
 #define ISST_COMPNET_PORT 1983
 
 void isst_compnet_connect(char *host, int port);

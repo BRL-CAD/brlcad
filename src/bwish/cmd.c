@@ -40,11 +40,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #ifdef BWISH
 #  include "tk.h"

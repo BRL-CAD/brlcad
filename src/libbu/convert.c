@@ -40,20 +40,12 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-#ifndef lint
-static const char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <ctype.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"

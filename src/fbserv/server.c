@@ -36,9 +36,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
+
 #if defined (HAVE_SYS_SELECT_H)
 #  include <sys/select.h>
 #else

@@ -39,11 +39,8 @@ static const char RCSid[] = "@(#)$Header";
 
 #include <stdlib.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif

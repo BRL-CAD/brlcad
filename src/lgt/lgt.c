@@ -28,27 +28,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
 #include <assert.h>
 
-#if defined( CRAY )
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef CRAY
 #  include <sys/category.h>
 #  include <sys/resource.h>
 #  include <sys/types.h>
-#  if defined( CRAY1 )
+#  ifdef CRAY1
 #    include <sys/machd.h>	/* For HZ */
 #  endif
-#  if defined( CRAY2 )
+#  ifdef CRAY2
 #    undef MAXINT
 #    include <sys/param.h>
 #  endif

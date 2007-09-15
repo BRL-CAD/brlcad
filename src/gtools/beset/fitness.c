@@ -30,17 +30,14 @@
  */
 
 #include "common.h"
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <limits.h>                     /* home of INT_MAX aka MAXINT */
 

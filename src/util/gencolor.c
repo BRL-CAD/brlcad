@@ -36,18 +36,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-
 #ifdef HAVE_FCNTL_H
-# include <fcntl.h>
+#  include <fcntl.h>
 #endif
 
 #define	MAX_BYTES	(128*1024)

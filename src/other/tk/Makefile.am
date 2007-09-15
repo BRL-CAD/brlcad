@@ -1,5 +1,7 @@
 # $Id$
 
+all: all-am
+
 all-am:
 	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
 

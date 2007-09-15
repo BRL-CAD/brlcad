@@ -42,13 +42,9 @@ static const char RCSdir[] = "@(#)$Header$";
 
 #include "common.h"
 
-
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
