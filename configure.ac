@@ -1868,7 +1868,7 @@ if test "x$bc_use_profiling" != "xno" ; then
 		if test "x$bc_use_profiling" = "xyes" ; then
 			dnl profiling was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Profiling was enabled but -pg does not work])
+			AC_MSG_NOTICE([Profiling was enabled but could not find a profile flag])
 			AC_MSG_ERROR([*** Don't know how to profile with this compiler ***])
 		fi
 		AC_MSG_WARN([Don't know how to profile with this compiler])
