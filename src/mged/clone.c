@@ -28,6 +28,7 @@
  * Author -
  *	Adam Ross (v4)
  *      Christopher Sean Morrison (v5)
+ *      Erik Greenwald (v5)
  *
  * Source -
  *      Geometric Solutions, Inc.
@@ -680,11 +681,13 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 	char *av[3] = {"e", NULL, NULL};
 
 	idx = index_in_list(obj_list, state->src->d_namep);
-	for (i = 0; i < (state->n_copies > obj_list.names_used ? obj_list.names_used : state->n_copies) ; i++) {
+	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies) ; i++) {
 	    av[1] = obj_list.names[idx].dest[i];
 	    /* draw does not use clientdata */
 	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
 	}
+	av[0] = "autoview";
+	cmd_autoview((ClientData)NULL, INTERP, 1, av);
     }
 
     /* release our name allocations */
