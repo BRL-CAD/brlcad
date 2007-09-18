@@ -864,8 +864,13 @@ editit(const char *file)
 	void (*s2)();
 	void (*s3)();
 
+	editor = Tcl_GetVar(interp,"editor", TCL_GLOBAL_ONLY);
+	if(!editor || editor[0] == '\0')
+	    editor = Tcl_GetVar(interp,"EDITOR", TCL_GLOBAL_ONLY);
+
 #ifdef HAVE_GETENV
-	editor = getenv("EDITOR");
+	if(!editor || editor[0] == '\0')
+	    editor = getenv("EDITOR");
 #endif
 
 	/* still unset? try windows */
