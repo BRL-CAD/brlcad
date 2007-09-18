@@ -179,8 +179,8 @@ getshort(void)
 double
 getieee(void)
 {
-	char	in[8];
-	double	d;
+	unsigned char	in[8];
+	double		d;
 
 	fread( in, 8, 1, stdin );
 	ntohd( (unsigned char *)&d, in, 1 );
