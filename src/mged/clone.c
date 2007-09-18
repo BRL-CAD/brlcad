@@ -344,6 +344,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* mirror */
     if (state->miraxis != W) {
+	bu_log("WARNING: mirroring not implemented!");
     }
 
     /* translate */
@@ -352,6 +353,10 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* rotation */
     if (state->rot[W]) {
+    	mat_t m2, t;
+	bn_mat_angles(m2, state->rot[X], state->rot[Y], state->rot[Z]);
+	bn_mat_mul(t, matrix, m2);
+	MAT_COPY(matrix, t);
     }
 
     /* make n copies */
