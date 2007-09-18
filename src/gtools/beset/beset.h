@@ -50,7 +50,7 @@ struct options{
     int kill_lower;
     int keep_upper;
     int mut_rate;
-    int cross_rate
+    int cross_rate;
 };
 
 
