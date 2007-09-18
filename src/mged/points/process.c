@@ -61,25 +61,91 @@ extern Tcl_Interp *twerp;
 #define PRINT_SCRIPT 1
 #define RUN_SCRIPT 1
 
-static int print_array(point_line_t **plta, int count) {
+#define PRINT_ARRAY 0
+#if PRINT_ARRAY
+static int 
+print_array(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
-	if (plt && plt->type) {
+	if (plt && plt->type)
 	    printf("\t%s %d: (%f,%f,%f)\n", plt->type, plt->index, plt->val[X], plt->val[Y], plt->val[Z]);
-	} else {
+	else
 	    printf("\tNULL POINT\n");
-	}
     }
 
     return 1;
 }
+#endif
 
+/* FIXME: not verified in the least bit */
+static int 
+create_cyl(point_line_t **plta, int count) {
+    int i;
+    point_line_t *plt = NULL;
 
-void process_value(point_line_t *plt, double value)
-{
+    struct bu_vls vls;
+    struct bu_vls vls2;
+
+    bu_vls_init(&vls);
+    bu_vls_init(&vls2);
+
+    for (i = 0; i < count; i++) {
+	plt = &(*plta)[i];
+	if (plt && plt->type)
+	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
+    }
+    bu_vls_printf(&vls2, "cylinder { %S }", &vls);
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#endif
+#if RUN_SCRIPT
+    Tcl_Eval(twerp, bu_vls_addr(&vls2));
+    if (twerp->result[0] != '\0')
+	bu_log("create_cyl failure: %s\n", twerp->result);
+    else
+	bu_log("create_cyl created\n");
+#endif
+
+    return 1;
+}
+
+/* FIXME: takes a list of points, not triplets */
+static int 
+create_sphere(point_line_t **plta, int count) {
+    int i;
+    point_line_t *plt = NULL;
+
+    struct bu_vls vls;
+    struct bu_vls vls2;
+
+    bu_vls_init(&vls);
+    bu_vls_init(&vls2);
+
+    for (i = 0; i < count; i++) {
+	plt = &(*plta)[i];
+	if (plt && plt->type) 
+	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
+    }
+    bu_vls_printf(&vls2, "sph { %S }", &vls);
+#if PRINT_SCRIPT
+    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
+#endif
+#if RUN_SCRIPT
+    Tcl_Eval(twerp, bu_vls_addr(&vls2));
+    if (twerp->result[0] != '\0') 
+	bu_log("create_cylinder failure: %s\n", twerp->result);
+     else 
+	bu_log("create_cylinder created\n");
+#endif
+
+    return 1;
+}
+
+void 
+process_value(point_line_t *plt, double value) {
     if (!plt) {
 	printf("WARNING: Unexpected call to process_value with a NULL point structure\n");
 	return;
@@ -95,8 +161,8 @@ void process_value(point_line_t *plt, double value)
     return;
 }
 
-void process_type(point_line_t *plt, const char *type, int code)
-{
+void 
+process_type(point_line_t *plt, const char *type, int code) {
     if (!plt) {
 	printf("WARNING: Unexpected call to process_value with a NULL point structure\n");
 	return;
@@ -108,7 +174,8 @@ void process_type(point_line_t *plt, const char *type, int code)
     return;
 }
 
-void process_point(point_line_t *plt) {
+void 
+process_point(point_line_t *plt) {
     static int code_state = INT32_MAX;
     static int points = 0;
     static point_line_t *plta = NULL;
@@ -129,9 +196,8 @@ void process_point(point_line_t *plt) {
 	    plta = NULL;
 	}
 
-	if (plt->type) {
+	if (plt->type)
 	    printf("BEGIN OF BLOCK %s (%d)\n", plt->type, plt->code);
-	}
 
 	/* get ready for the new batch */
 	code_state = plt->code;
@@ -139,17 +205,16 @@ void process_point(point_line_t *plt) {
     }
 
     /* allocate room for the new point */
-    if (!plta) {
+    if (!plta)
 	plta = (point_line_t *) bu_malloc(sizeof(point_line_t), "begin point_line_t group");
-    } else {
+    else
 	plta = (point_line_t *) bu_realloc(plta, sizeof(point_line_t) * (points + 1), "add point_line_t");
-    }
     COPY_POINT_LINE_T(plta[points], *plt);
     points++;
 }
 
-
-int condense_points(point_line_t **plta, int count) {
+int 
+condense_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
     int valid_count = 0;
@@ -174,16 +239,15 @@ int condense_points(point_line_t **plta, int count) {
     }
 
 #if PRINT_DEBUG
-    if (valid_count != count) {
+    if (valid_count != count)
 	bu_log("Started with %d points, condensed to %d points\n", count, valid_count);
-    }
 #endif
 
     return valid_count;
 }
 
-
-int delete_points(point_line_t **plta, int count, double tolerance) {
+int 
+delete_points(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
     point_line_t *previous_plt = NULL;
@@ -251,9 +315,8 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
     }
 
 #if PRINT_DEBUG
-    if (removed > 0) {
+    if (removed > 0)
 	bu_log("Found and removed %d invalid points\n", removed);
-    }
 #endif
 
 
@@ -273,12 +336,12 @@ int delete_points(point_line_t **plta, int count, double tolerance) {
     return count;
 }
 
-
 /**
  * handle a group of points of a particular type, with potentially
  * multiple sets delimited by triplicate points.
  */
-void process_multi_group(point_line_t **plta, int count, double tolerance) {
+void 
+process_multi_group(point_line_t **plta, int count, double tolerance) {
     int i;
     point_line_t *plt = NULL;
 
@@ -293,7 +356,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 	return;
     }
 
-#if 0
+#if PRINT_ARRAY
     static int print_counter = 0;
     if (print_counter == 0) {
 	bu_log("--- BEFORE ---\n");
@@ -304,7 +367,7 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
     /* remove points marked as bogus, 5-identical points in succession */
     count = delete_points(plta, count, tolerance);
 
-#if 0
+#if PRINT_ARRAY
     if (print_counter == 0) {
 	print_counter++;
 	bu_log("--- AFTER ---\n");
@@ -399,79 +462,8 @@ void process_multi_group(point_line_t **plta, int count, double tolerance) {
 
 }
 
-
-/** wrapper func to validate the block of points being processed and to
- * call the appropriate handler.
- */
-int
-process_group(point_line_t **plta, int count) {
-    int valid_count = 0;
-
-    if (!plta) {
-	printf("WARNING: Unexpected call to process_multi_group with a NULL point array\n");
-	return 0;
-    }
-
-    bu_log("processing a group!\n");
-
-    /* resort the list, put nulls at the end */
-    valid_count = condense_points(plta, count);
-
-    /* ignore insufficient counts */
-    if (valid_count <= 2) {
-	switch((*plta)[0].code) {
-	    case(PLATE): /* need at least 3 (triangle) */
-		/*		printf("IGNORING PLATE POINT DUPLICATE(S)\n"); */
-		return 0;
-	    case(ARB): /* need 8 */
-		/*		printf("IGNORING ARB POINT DUPLICATE(S)\n");*/
-		return 0;
-	    case(CYLINDER): /* need at least 3 (2 for length + diam) */
-		/* printf("IGNORING CYLINDER POINT DUPLICATE(S)\n"); */
-		return 0;
-	}
-    }
-
-    /* FIXME: callbacks should really be registered in the lexer or
-       parser when a point-line of that particular type is
-       encountered
-    */
-    switch((*plta)[0].code) {
-	case(PLATE):
-	    return create_plate(plta, valid_count);
-	case(ARB):
-	    return create_arb(plta, valid_count);
-	case(CYLINDER):
-	    return create_cylinder(plta, valid_count);
-	case(CYL):
-	    return create_cyl(plta, valid_count);
-	case(POINTS):
-#if 0
-    static int print_counter = 0;
-    if (print_counter == 0) {
-	bu_log("--- POINTS ---\n");
-	print_array(plta, count);
-    }
-#endif
-	    return create_points(plta, valid_count);
-	case(SYMMETRY):
-	    return create_points(plta, valid_count);
-	case(PIPE):
-	    return create_pipe(plta, valid_count);
-	case(SPHERE):
-	    return create_sphere(plta, valid_count);
-    }
-
-    printf("WARNING, unsupported point code encountered (%d)\n", (*plta)[0].code);
-    return 0;
-}
-
-
-/***
- * process each of the individual creation types
- ***/
-
-int create_plate(point_line_t **plta, int count) {
+int 
+create_plate(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -503,7 +495,8 @@ int create_plate(point_line_t **plta, int count) {
     return 1;
 }
 
-int create_arb(point_line_t **plta, int count) {
+int 
+create_arb(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -525,16 +518,17 @@ int create_arb(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') {
+    if (twerp->result[0] != '\0')
 	bu_log("create_arb failure: %s\n", twerp->result);
-    } else {
+    else
 	bu_log("create_arb created\n");
-    }
 #endif
 
     return 1;
 }
-int create_cylinder(point_line_t **plta, int count) {
+
+int 
+create_cylinder(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -546,9 +540,8 @@ int create_cylinder(point_line_t **plta, int count) {
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
-	if (plt && plt->type) {
+	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
-	}
     }
     bu_vls_printf(&vls2, "cyls { %S }", &vls);
 #if PRINT_SCRIPT
@@ -556,17 +549,17 @@ int create_cylinder(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') {
+    if (twerp->result[0] != '\0')
 	bu_log("create_cylinder failure: %s\n", twerp->result);
-    } else {
+    else
 	bu_log("create_cylinder created\n");
-    }
 #endif
 
     return 1;
 }
-/* FIXME: not verified in the least bit */
-int create_cyl(point_line_t **plta, int count) {
+
+int 
+create_pipe(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -578,40 +571,8 @@ int create_cyl(point_line_t **plta, int count) {
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
-	if (plt && plt->type) {
+	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
-	}
-    }
-    bu_vls_printf(&vls2, "cylinder { %S }", &vls);
-#if PRINT_SCRIPT
-    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#endif
-#if RUN_SCRIPT
-    Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') {
-	bu_log("create_cyl failure: %s\n", twerp->result);
-    } else {
-	bu_log("create_cyl created\n");
-    }
-#endif
-
-    return 1;
-}
-int create_pipe(point_line_t **plta, int count) {
-    int i;
-    point_line_t *plt = NULL;
-
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
-
-    for (i = 0; i < count; i++) {
-	plt = &(*plta)[i];
-	if (plt && plt->type) {
-	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
-	}
     }
     bu_vls_printf(&vls2, "pipe { %S }", &vls);
 #if PRINT_SCRIPT
@@ -619,17 +580,17 @@ int create_pipe(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') {
+    if (twerp->result[0] != '\0') 
 	bu_log("create_pipe failure: %s\n", twerp->result);
-    } else {
+     else 
 	bu_log("create_pipe created\n");
-    }
 #endif
 
     return 1;
 }
-/* FIXME: takes a list of points, not triplets */
-int create_sphere(point_line_t **plta, int count) {
+
+int 
+create_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
 
@@ -641,40 +602,8 @@ int create_sphere(point_line_t **plta, int count) {
 
     for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
-	if (plt && plt->type) {
-	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
-	}
-    }
-    bu_vls_printf(&vls2, "sph { %S }", &vls);
-#if PRINT_SCRIPT
-    fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
-#endif
-#if RUN_SCRIPT
-    Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') {
-	bu_log("create_cylinder failure: %s\n", twerp->result);
-    } else {
-	bu_log("create_cylinder created\n");
-    }
-#endif
-
-    return 1;
-}
-int create_points(point_line_t **plta, int count) {
-    int i;
-    point_line_t *plt = NULL;
-
-    struct bu_vls vls;
-    struct bu_vls vls2;
-
-    bu_vls_init(&vls);
-    bu_vls_init(&vls2);
-
-    for (i = 0; i < count; i++) {
-	plt = &(*plta)[i];
-	if (plt && plt->type) {
-	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
-	}
+	if (plt && plt->type) 
+	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
     bu_vls_printf(&vls2, "points { %S }", &vls);
 #if PRINT_SCRIPT
@@ -682,14 +611,79 @@ int create_points(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') {
+    if (twerp->result[0] != '\0') 
 	bu_log("create_points failure: %s\n", twerp->result);
-    } else {
+     else 
 	bu_log("create_points created\n");
-    }
 #endif
 
     return 1;
+}
+
+/** 
+ * wrapper func to validate the block of points being processed and to
+ * call the appropriate handler.
+ */
+int
+process_group(point_line_t **plta, int count) {
+    int valid_count = 0;
+
+    if (!plta) {
+	printf("WARNING: Unexpected call to process_multi_group with a NULL point array\n");
+	return 0;
+    }
+
+    bu_log("processing a group!\n");
+
+    /* resort the list, put nulls at the end */
+    valid_count = condense_points(plta, count);
+
+    /* ignore insufficient counts */
+    if (valid_count <= 2)
+	switch((*plta)[0].code) {
+	    case(PLATE): /* need at least 3 (triangle) */
+		/*		printf("IGNORING PLATE POINT DUPLICATE(S)\n"); */
+		return 0;
+	    case(ARB): /* need 8 */
+		/*		printf("IGNORING ARB POINT DUPLICATE(S)\n");*/
+		return 0;
+	    case(CYLINDER): /* need at least 3 (2 for length + diam) */
+		/* printf("IGNORING CYLINDER POINT DUPLICATE(S)\n"); */
+		return 0;
+	}
+
+    /* FIXME: callbacks should really be registered in the lexer or
+       parser when a point-line of that particular type is
+       encountered
+    */
+    switch((*plta)[0].code) {
+	case(PLATE):
+	    return create_plate(plta, valid_count);
+	case(ARB):
+	    return create_arb(plta, valid_count);
+	case(CYLINDER):
+	    return create_cylinder(plta, valid_count);
+	case(CYL):
+	    return create_cyl(plta, valid_count);
+	case(POINTS):
+#if PRINT_ARRAY
+    static int print_counter = 0;
+    if (print_counter == 0) {
+	bu_log("--- POINTS ---\n");
+	print_array(plta, count);
+    }
+#endif
+	    return create_points(plta, valid_count);
+	case(SYMMETRY):
+	    return create_points(plta, valid_count);
+	case(PIPE):
+	    return create_pipe(plta, valid_count);
+	case(SPHERE):
+	    return create_sphere(plta, valid_count);
+    }
+
+    printf("WARNING, unsupported point code encountered (%d)\n", (*plta)[0].code);
+    return 0;
 }
 
 /*
