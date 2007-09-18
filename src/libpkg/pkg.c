@@ -841,7 +841,7 @@ pkg_inget(register struct pkg_conn *pc, char *buf, int count)
  *  Returns number of bytes of user data actually sent.
  */
 int
-pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
+pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
     static struct iovec cmdvec[2];
@@ -1119,7 +1119,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
  *  Returns number of bytes of user data actually sent (or queued).
  */
 int
-pkg_stream(int type, char *buf, int len, register struct pkg_conn *pc)
+pkg_stream(int type, const char *buf, int len, register struct pkg_conn *pc)
 {
     static struct pkg_header hdr;
 

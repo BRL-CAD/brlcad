@@ -131,9 +131,9 @@ PKG_EXPORT PKG_EXTERN(int pkg_permserver, (const char *service, const char *prot
 PKG_EXPORT PKG_EXTERN(int pkg_permserver_ip, (const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)PKG_ARGS((char *msg))));
 PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_getclient, (int fd, const struct pkg_switch *switchp, void (*errlog)PKG_ARGS((char *msg)), int nodelay));
 PKG_EXPORT PKG_EXTERN(void pkg_close, (struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, char *buf, int len, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, const char *buf, int len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_2send, (int type, char *buf1, int len1, char *buf2, int len2, struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_stream, (int type, char *buf, int len, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_stream, (int type, const char *buf, int len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_flush, (struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_waitfor, (int type, char *buf, int len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(char *pkg_bwaitfor, (int type, struct pkg_conn* pc));
