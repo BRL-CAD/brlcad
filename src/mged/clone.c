@@ -342,6 +342,18 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     mat_t matrix;
     MAT_IDN(matrix);
 
+    /* mirror */
+    if (state->miraxis != W) {
+    }
+
+    /* translate */
+    if (state->trans[W])
+	MAT_DELTAS_ADD_VEC(matrix, state->trans);
+
+    /* rotation */
+    if (state->rot[W]) {
+    }
+
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
 	const char *name = (const char *)NULL;
@@ -359,7 +371,6 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	ret = wdb_copy_cmd(_dbip->dbi_wdbp, INTERP, 3, argv);
 	if (ret != TCL_OK)
 	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
-	bu_free((char *)name, "free get_name() name");
 
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
@@ -367,19 +378,9 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	    return;
 	}
 	RT_CK_DB_INTERNAL(&intern);
-
-	/* mirror */
-	if (state->miraxis != W) {
-	}
-
-	/* translate */
-	if (state->trans[W])
-	    MAT_DELTAS_ADD_VEC(matrix, state->trans);
-
-	/* rotation */
-	if (state->rot[W]) {
-	}
-
+	/* pull the new name */
+	dp = db_lookup(_dbip, name, LOOKUP_QUIET);
+	bu_free((char *)name, "free get_name() name");
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
