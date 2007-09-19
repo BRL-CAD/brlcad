@@ -18,7 +18,8 @@ libtclcad_la_CFLAGS = \
 	-I$(top_srcdir)/src/other/tcl/generic \
 	-I$(top_srcdir)/src/other/tcl/unix \
 	-I$(top_srcdir)/src/other/tk/generic \
-	-I$(top_srcdir)/src/other/tk/unix
+	-I$(top_srcdir)/src/other/tk/unix \
+	-I$(top_srcdir)/src/other/blt/src
 
 EXTRA_DIST = \
 	libtclcad.dsp
