@@ -1,302 +1,362 @@
-                            BRL-CAD Tutorial Series:
-
-                        Volume II - Introduction to MGED
-
-             by Lee A. Butler, Eric W. Edwards, Betty J. Schueler,
-
-                     Robert G. Parker, and John R. Anderson
-
-   ARL-SR-102 April 2001
-
-             Approved for public release; distribution is unlimited
-
-   The findings in this report are not to be construed as an official
-   Department of the Army position unless so designated by other authorized
-   documents.
-
-   Citation of manufacturer's or trade names does not constitute an official
-   endorsement or approval of the use thereof.
-
-   Destroy this report when it is no longer needed. Do not return it to the
-   originator.
-
-   Army Research Laboratory
-
-   Aberdeen Proving Ground, MD 21005-5068
-
-   +-----------------------+
-   | ARL-SR-102 April 2001 |
-   +-----------------------+
-
-   BRL-CAD Tutorial Series:
-
-   Volume II - Introduction to MGED
-
-   Lee A. Butler
-
-   Survivability/Lethality Analysis Directorate, ARL
-
-   Eric W. Edwards
-
-   SURVICE Engineering Company
-
-   Betty J. Schueler
-
-   Quantum Research International
-
-   Robert G. Parker
-
-   Survivability/Lethality Analysis Directorate, ARL
-
-   John R. Anderson
-
-   Survivability/Lethality Analysis Directorate, ARL
-
-   +---------------------------------------------------------+
-   | Approved for public release; distribution is unlimited. |
-   +---------------------------------------------------------+
-
-   +----------+
-   | Abstract |
-   +----------+
-
-   Since 1979, the U.S. Army Research Laboratory has been developing and
-   distributing the BRL-CAD constructive solid geometry (CSG) modeling
-   package for a wide range of military and industrial applications. The
-   package includes a large collection of tools and utilities including an
-   interactive geometry editor, ray-tracing and generic framebuffer
-   libraries, a network-distributed image-processing and signal-processing
-   capability, and an embedded scripting language.
-
-   As part of this effort, a multivolume tutorial series is being developed
-   to assist users in the many features of the BRL-CAD package. The
-   "Introduction to MGED," which is the second volume in the series, is
-   intended to provide new users with a basic understanding of the
-   Multi-Device Geometry Editor (MGED), which is the heart of BRL-CAD. Other
-   volumes focus on installation procedures, advanced features, and
-   programming.
-
-                                    Preface
-
-   Since 1979, the U.S. Army Research Laboratory (formerly the Ballistic
-   Research Laboratory) has been developing the BRL-CAD constructive solid
-   geometry (CSG) modeling package for a wide range of military and
-   industrial applications. The strength of the package lies in its ability
-   to build realistic models of complex objects from a relatively small set
-   of "primitive shapes" by employing the basic Boolean operations of union,
-   subtraction, and intersection and by assigning real-world material
-   attributes.
-
-   The package comprises a large collection of tools, utilities, and
-   libraries including an interactive geometry editor, ray-tracing and
-   generic framebuffer libraries, a network-distributed image-processing and
-   signal-processing capability, and an embedded scripting language.
-
-   Although BRL-CAD has continued to mature in performance and utility,
-   developers have strived to keep the package approachable and easy to use,
-   as evidenced by the package's dual command formats, its newly renovated
-   graphical user interface (GUI), and its customization potential through
-   user scripting.
-
-   In addition, a multivolume tutorial series is being developed to assist
-   users in a variety of BRL-CAD areas and applications. The "Introduction to
-   MGED," which is the second volume in the series, is intended to provide
-   new users with a basic understanding of the Multi-Device Geometry Editor
-   (MGED), which is the heart of the BRL-CAD package. Other volumes focus on
-   installation procedures, advanced features, and programming.
-
-                            Intentionally Left Blank
-
-                                Acknowledgments
-
-   The authors would like to thank Paul Tanenbaum, TraNese Christy, Sean
-   Morrison, and the other members of the Advanced Computer Systems Team who
-   reviewed this document in a timely manner and made many helpful
-   suggestions to improve its accuracy and presentation.
-
-   In addition, the authors would like to acknowledge team member Mike Muuss,
-   who passed away while this volume was in preparation. Mike was the
-   original architect of the BRL-CAD package and guided its development for
-   20 years until his death on 20 November 2000. He embodied a unique blend
-   of unparalleled intellect, unquenchable curiosity, and unending energy to
-   advance the capabilities of everything and everyone he touched. A
-   natural-born troubleshooter, Mike approached every job, big or small, with
-   a passion for excellence and a child-like enthusiasm, which helped drive
-   BRL-CAD far beyond expectations.
-
-   Although he never got a chance to review this document, much of this work
-   is a result of his vision and attention to detail. Therefore, the BRL-CAD
-   Tutorial Series is dedicated to his memory. His sharp mind, his warm
-   spirit, and his loyal friendship will be greatly missed.
-
-                            Intentionally Left Blank
-
-                               Table of Contents
-
-                                                                         Page
-
-   Preface iii
-
-   Acknowledgments v
-
-   Lesson 1: Creating Primitive Shapes 1
-
-   Lesson 2: Learning the Viewing Options 11
-
-   Lesson 3: Using the Insert Command to Size and Place Shapes 23
-
-   Lesson 4: Assigning Material Properties and Raytracing 31
-
-   Lesson 5: Learning About Boolean Expressions 37
-
-   Lesson 6: Creating a Goblet 47
-
-   Lesson 7: Assigning Material Properties to Your Goblet 55
-
-   Lesson 8: Assigning More Material Properties to Your Goblet 61
-
-   Lesson 9: Creating a Globe in a Display Box 69
-
-   Lesson 10: Creating a Mug 77
-
-   Lesson 11: Refining the Mug 83
-
-   Lesson 12: Creating the Mug Through the GUI 87
-
-   Lesson 13: Placing Shapes in 3-D Space 93
-
-   Lesson 14: Gaining More Practice Placing Shapes in Space 103
-
-   Lesson 15: Creating a Toy Truck 113
-
-   Lesson 16: Learning Modeling Techniques and Structures 129
-
-   Appendix A: MGED Commands 147
-
-   Appendix B: Emacs and Vi Commands 249
-
-   Appendix C: Primitive Shapes 253
-
-   Index 263
-
-   Distribution List 269
-
-   Report Documentation Page 271
-
-                            Intentionally Left Blank
-
-   +------------------------------------------------------------------------+
-   |                      Supplementary Tutorial Boxes                      |
-   |                                                                        |
-   | Note that throughout this document, tutorial boxes have been used to   |
-   | supplement the information presented in the text. Each box is labeled  |
-   | with one of the following icons for ease of recognition:               |
-   |------------------------------------------------------------------------|
-   |-----------------+--------------------+-------------+-------------------|
-   |    Point of     |      Further       |     Key     |    Alternative    |
-   |                 |                    |             |                   |
-   |     Caution     |    Information     |    Point    |    Idea/Method    |
-   +------------------------------------------------------------------------+
-
-                            Intentionally Left Blank
-
-   Lesson 1: Creating Primitive Shapes
-
-   In this lesson, you will:
-
-   +------------------------------------------------------------------------+
-   |   * Launch the MGED program.                                           |
-   |                                                                        |
-   |   * Enter commands at the MGED prompt in the Command Window.           |
-   |                                                                        |
-   |   * Use the MGED Graphical User Interface (GUI).                       |
-   |                                                                        |
-   |   * Open or create a new database when launching MGED.                 |
-   |                                                                        |
-   |   * Use the GUI to open or create a new database.                      |
-   |                                                                        |
-   |   * Title a database.                                                  |
-   |                                                                        |
-   |   * Select a unit of length for your design.                           |
-   |                                                                        |
-   |   * Select a primitive shape.                                          |
-   |                                                                        |
-   |   * Create a primitive shape using the make command.                   |
-   |                                                                        |
-   |   * Use the Z command to clear the Graphics Window.                    |
-   |                                                                        |
-   |   * Draw a previously created shape using the draw command.            |
-   |                                                                        |
-   |   * Use the erase command to delete an item in the Graphics Window     |
-   |     display.                                                           |
-   |                                                                        |
-   |   * Create a sphere using the GUI menu.                                |
-   |                                                                        |
-   |   * Use the l command to list a shape's attributes or parameters.      |
-   |                                                                        |
-   |   * Use the ls command to list the contents of the database.           |
-   |                                                                        |
-   |   * Eliminate a shape or object from the database using the kill       |
-   |     command.                                                           |
-   |                                                                        |
-   |   * Edit a command.                                                    |
-   |                                                                        |
-   |   * Use the q or exit commands to quit the program.                    |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
-
-   1. Launching the MGED Program
-
-   To launch the MGED program, type mged at the Terminal (tty) prompt and
-   then press the ENTER key. This brings up two main windows: the MGED
-   Command Window and the MGED Graphics Window (sometimes called the Geometry
-   Window). Both windows will initially be blank, awaiting input from you. To
-   leave the program at any time, at the Command Line type either the letter
-   q or the word quit and then press the ENTER key.
-
-   2. Entering Commands in the Command Window
-
-   You can type in commands at the mged> prompt. Many experienced UNIX users
-   prefer this method because it allows them to quickly create a model (which
-   we sometimes refer to as a "design") without having to point and click on
-   a lot of options. The complete listing of editing commands and what they
-   do can be found in Appendix A.
-
-   +------------------------------------------------------------------------+
-   || Check all typed entries before you press the ENTER key. If you find   |
-   || you made a mistake, simply press the BACKSPACE key until you have     |
-   || erased over the mistake and then re-type the information. Later you   |
-   || will get more experience editing text using vi and emacs command      |
-   || emulation.                                                            |
-   +------------------------------------------------------------------------+
-
-   3. Using the GUI
-
-   Users who are more familiar with Microsoft Windows may prefer to use the
-   GUI pull-down menus at the top of the Command or Graphics Window (they are
-   the same in either window). The menus are divided into logical groupings
-   to help you navigate through the MGED program.
-
-   Before you can create a model, you need to open a new database either
-   through the Terminal Window when starting MGED or through the GUI after
-   starting MGED.
-
-    4. Opening or Creating a New Database when Launching MGED
-
-   When launching MGED, you can open or create a database at the same time.
-   At the shell prompt (usually a $ or %), in the Terminal Window, type mged
-   followed by a new or existing database name with a .g extension. For
-   example:
-
-   mged sphere.g<ENTER>
-
-                                Terminal Window
-
-   If you are creating a new database, a small dialog box asking if you want
-   to create a new database named sphere.g will appear. Click on Yes, and a
-   new database will be created. If sphere.g already exists, MGED will open
-   the sphere.g database as the program is launched.
-
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+               "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+	       
+<book xmlns="http://docbook.org/ns/docbook">
+   <bookinfo>
+      <title>BRL-CAD Documentation</title>
+      <authorgroup>
+      	<author>
+	   <firstname>Lee</firstname>
+	   <surname>Butler</surname>
+	   <othername role='mi'>A</othername>
+	   <affiliation>
+    	      <shortaffil>ARL</shortaffil>
+              <jobtitle>Survivability/Lethality Analysis Directorate</jobtitle>
+              <orgname>Army Research Laboratory</orgname>
+              <address>
+	         Aberdeen Proving Ground
+		 <state>MD</state> 
+		 <postcode>21005-5068</postcode>
+	      </address>
+	   </affiliation>
+	</author>
+      	<author>
+	   <firstname>Eric</firstname>
+	   <surname>Edwards</surname>
+	   <othername role='mi'>W</othername>
+	   <affiliation>
+    	      <shortaffil>SURVICE</shortaffil>
+              <orgname>SURVICE Engineering Company</orgname>
+              <address>
+		 <street>4695 Millennium Drive</street>
+		 <city>Belcamp</city>
+		 <state>MD</state> 
+		 <postcode>21017-1505</postcode>
+	      </address>
+	   </affiliation>
+	</author>
+      	<author>
+	   <firstname>Betty</firstname>
+	   <surname>Schueler</surname>
+	   <othername role='mi'>J</othername>
+	   <affiliation>
+    	      <shortaffil>QRI</shortaffil>
+              <orgname>Quantum Research International, Inc.</orgname>
+              <address>
+		 <street>2014 Tollgate Rd, Suite 203</street>
+		 <city>Bel Air</city>
+		 <state>MD</state> 
+		 <postcode>21014</postcode>
+	      </address>
+	   </affiliation>
+	</author>
+      	<author>
+	   <firstname>Robert</firstname>
+	   <surname>Parker</surname>
+	   <othername role='mi'>G</othername>
+	   <affiliation>
+    	      <shortaffil>ARL</shortaffil>
+              <jobtitle>Survivability/Lethality Analysis Directorate</jobtitle>
+              <orgname>Army Research Laboratory</orgname>
+              <address>
+	         Aberdeen Proving Ground
+		 <state>MD</state> 
+		 <postcode>21005-5068</postcode>
+	      </address>
+	   </affiliation>
+	</author>
+      	<author>
+	   <firstname>John</firstname>
+	   <surname>Anderson</surname>
+	   <othername role='mi'>R</othername>
+	   <affiliation>
+    	      <shortaffil>ARL</shortaffil>
+              <jobtitle>Survivability/Lethality Analysis Directorate</jobtitle>
+              <orgname>Army Research Laboratory</orgname>
+              <address>
+	         Aberdeen Proving Ground
+		 <state>MD</state> 
+		 <postcode>21005-5068</postcode>
+	      </address>
+	   </affiliation>
+	</author>
+      </authorgroup>
+      
+      <contractsponsor>Army Research Laboratory</contractsponsor>
+      <contractnum>ARL-SR-102</contractnum>
+      <pubdate>April 2001</pubdate>
+      <legalnotice>
+         <para>Approved for public release; distribution is unlimited</para>
+	 
+	 <para>The findings in this report are not to be construed as an
+	  official Department of the Army position unless so designated 
+	  by other authorized documents.</para>
+	 
+	 <para>Citation of manufacturer's or trade names does not constitute
+	  an official endorsement or approval of the use thereof.</para>
+	 
+	 <para>Destroy this report when it is no longer needed. Do not return
+	  it to the originator.</par>
+	 
+      </legalnotice>      
+      <abstract>
+         <para>
+         Since 1979, the U.S. Army Research Laboratory has been developing and
+   	 distributing the BRL-CAD constructive solid geometry (CSG) modeling
+  	 package for a wide range of military and industrial applications. The
+  	 package includes a large collection of tools and utilities including an
+  	 interactive geometry editor, ray-tracing and generic framebuffer
+  	 libraries, a network-distributed image-processing and signal-processing
+  	 capability, and an embedded scripting language.
+	 </para>
+	 
+	 <para>
+	 As part of this effort, a multivolume tutorial series is being developed
+   	 to assist users in the many features of the BRL-CAD package. The
+ 	 "Introduction to MGED," which is the second volume in the series, is
+  	 intended to provide new users with a basic understanding of the
+  	 Multi-Device Geometry Editor (MGED), which is the heart of BRL-CAD. Other
+  	 volumes focus on installation procedures, advanced features, and
+  	 programming.
+	 </para>
+      </abstract>
+   </bookinfo>
+   <preface>
+     <title>Preface</title>
+     <para>
+     Since 1979, the U.S. Army Research Laboratory (formerly the Ballistic
+     Research Laboratory) has been developing the BRL-CAD constructive solid
+     geometry (CSG) modeling package for a wide range of military and
+     industrial applications. The strength of the package lies in its ability
+     to build realistic models of complex objects from a relatively small set
+     of "primitive shapes" by employing the basic Boolean operations of union,
+     subtraction, and intersection and by assigning real-world material
+     attributes.
+     </para>
+
+     <para>
+     The package comprises a large collection of tools, utilities, and
+     libraries including an interactive geometry editor, ray-tracing and
+     generic framebuffer libraries, a network-distributed image-processing and
+     signal-processing capability, and an embedded scripting language.
+     </para>
+
+     </para>
+     Although BRL-CAD has continued to mature in performance and utility,
+     developers have strived to keep the package approachable and easy to use,
+     as evidenced by the package's dual command formats, its newly renovated
+     graphical user interface (GUI), and its customization potential through
+     user scripting.
+     </para>
+
+     <para>
+     In addition, a multivolume tutorial series is being developed to assist
+     users in a variety of BRL-CAD areas and applications. The "Introduction to
+     MGED," which is the second volume in the series, is intended to provide
+     new users with a basic understanding of the Multi-Device Geometry Editor
+     (MGED), which is the heart of the BRL-CAD package. Other volumes focus on
+     installation procedures, advanced features, and programming.
+     </para>
+   </preface>
+
+   <article>
+   <ackno>
+     <para>
+     The authors would like to thank Paul Tanenbaum, TraNese Christy, Sean
+     Morrison, and the other members of the Advanced Computer Systems Team who
+     reviewed this document in a timely manner and made many helpful
+     suggestions to improve its accuracy and presentation.
+     </para>
+   
+     <para>
+     In addition, the authors would like to acknowledge team member Mike Muuss,
+     who passed away while this volume was in preparation. Mike was the
+     original architect of the BRL-CAD package and guided its development for
+     20 years until his death on 20 November 2000. He embodied a unique blend
+     of unparalleled intellect, unquenchable curiosity, and unending energy to
+     advance the capabilities of everything and everyone he touched. A
+     natural-born troubleshooter, Mike approached every job, big or small, with
+     a passion for excellence and a child-like enthusiasm, which helped drive
+     BRL-CAD far beyond expectations.
+     </para>
+  
+     <para>
+     Although he never got a chance to review this document, much of this work
+     is a result of his vision and attention to detail. Therefore, the BRL-CAD
+     Tutorial Series is dedicated to his memory. His sharp mind, his warm
+     spirit, and his loyal friendship will be greatly missed.
+     </para>
+   </ackno>
+   </article>
+   <toc>
+      <tocfront pagenum="iii">Preface</tocfront>
+      <tocfront pagenum="v">Acknowledgments</tocfront>
+      <tocchap>
+         <tocentry pagenum="1">Creating Primitive Shapes</tocentry>
+         <tocentry pagenum="11">Learning the Viewing Options</tocentry>
+         <tocentry pagenum="23">Using the Insert Command to Size and Place Shapes</tocentry>
+         <tocentry pagenum="31">Assigning Material Properties and Raytracing</tocentry>
+         <tocentry pagenum="37">Learning About Boolean Expressions</tocentry>
+         <tocentry pagenum="47">Creating a Goblet</tocentry>
+         <tocentry pagenum="55">Assigning Material Properties to Your Goblet</tocentry>
+         <tocentry pagenum="61">Assigning More Material Properties to Your Goblet</tocentry>
+         <tocentry pagenum="69">Creating a Globe in a Display Box</tocentry>
+         <tocentry pagenum="77">Creating a Mug</tocentry>
+         <tocentry pagenum="83">Refining the Mug</tocentry>
+         <tocentry pagenum="87">Creating the Mug Through the GUI</tocentry>
+         <tocentry pagenum="93">Placing Shapes in 3-D</tocentry>
+         <tocentry pagenum="103">Gaining More Practice Placing Shapes in Space</tocentry>
+         <tocentry pagenum="113">Creating a Toy Truck</tocentry>
+         <tocentry pagenum="129">Learning Modeling Techniques and Structures</tocentry>
+      </tocchap>
+      <tocback pagenum="147">Appendix A: MGED Commands</tocback>
+      <tocback pagenum="249">Appendix B: Emacs and Vi Commands</tocback>
+      <tocback pagenum="253">Appendix C: Primitive Shapes</tocback>
+      <tocback pagenum="263">Index</tocback>
+      <tocback pagenum="269">Distribution List</tocback>
+      <tocback pagenum="271">Report Documentation Page</tocback>
+   </toc>
+     
+
+   <chapter id="Lesson-1">
+      <title>Creating Primitive Shapes</title>
+      
+      <para>
+      In this lesson, you will:
+
+      <itemizedlist mark='bullet'>
+         <listitem>
+	    <para>Launch the MGED program.</para>
+	 </listitem>
+         <listitem>
+            <para>Enter commands at the MGED prompt in the Command Window.</para>
+	 </listitem>
+         <listitem>
+            <para>Use the MGED Graphical User Interface (GUI).</para>
+	 </listitem>
+         <listitem>
+            <para>Open or create a new database when launching MGED.</para>
+	 </listitem>
+         <listitem>
+            <para>Use the GUI to open or create a new database.</para>
+	 </listitem>
+         <listitem>
+            <para>Title a database.</para>
+	 </listitem>
+         <listitem>
+            <para>Select a unit of length for your design.</para>
+	 </listitem>
+         <listitem>
+            <para>Select a primitive shape.</para>
+	 </listitem>
+         <listitem>
+            <para>Create a primitive shape using the make command.</para>
+	 </listitem>
+         <listitem>
+            <para>Use the Z command to clear the Graphics Window.</para>
+	 </listitem>
+         <listitem>
+            <para>Draw a previously created shape using the draw command.</para>
+	 </listitem>
+         <listitem>
+            <para>Use the erase command to delete an item in the Graphics Window display.</para>
+	 </listitem>
+         <listitem>
+            <para>Create a sphere using the GUI menu.</para>
+	 </listitem>
+         <listitem>
+            <para>Use the l command to list a shape's attributes or parameters.</para>
+	 </listitem>
+         <listitem>
+            <para>Use the ls command to list the contents of the database.</para>
+	 </listitem>
+         <listitem>
+            <para>Eliminate a shape or object from the database using the kill command.</para>
+	 </listitem>
+         <listitem>
+            <para>Edit a command.</para>
+	 </listitem>
+         <listitem>
+            <para>Use the q or exit commands to quit the program.</para>
+	 </listitem>
+      </itemizedlist>
+      
+      </para>
+
+      <sect1><title>Launching the MGED Program</title> 
+
+      <para>
+      To launch the MGED program, type mged at the Terminal (tty) prompt and
+      then press the ENTER key. This brings up two main windows: the MGED
+      Command Window and the MGED Graphics Window (sometimes called the Geometry
+      Window). Both windows will initially be blank, awaiting input from you. To
+      leave the program at any time, at the Command Line type either the letter
+      q or the word quit and then press the ENTER key.
+      </para>
+      
+      </sect1>
+
+      <sect1><title>Entering Commands in the Command Window</title> 
+      
+      <para>
+      You can type in commands at the mged> prompt. Many experienced UNIX users
+      prefer this method because it allows them to quickly create a model (which
+      we sometimes refer to as a "design") without having to point and click on
+      a lot of options. The complete listing of editing commands and what they
+      do can be found in Appendix A.
+      </para>
+
+      <caution> 
+      Check all typed entries before you press the ENTER key. If you find   
+      you made a mistake, simply press the BACKSPACE key until you have     
+      erased over the mistake and then re-type the information. Later you   
+      will get more experience editing text using vi and emacs command      
+      emulation.
+      </caution>
+
+      </sect1>
+
+      <sect1><title>Using the GUI</title>
+
+      <para>
+      Users who are more familiar with Microsoft Windows may prefer to use the
+      GUI pull-down menus at the top of the Command or Graphics Window (they are
+      the same in either window). The menus are divided into logical groupings
+      to help you navigate through the MGED program.
+      </para>
+
+      <para>
+      Before you can create a model, you need to open a new database either
+      through the Terminal Window when starting MGED or through the GUI after
+      starting MGED.
+      </para>
+
+      <sect1><title>Opening or Creating a New Database when Launching MGED</title>
+
+      <para>
+      When launching MGED, you can open or create a database at the same time.
+      At the shell prompt (usually a $ or %), in the Terminal Window, type mged
+      followed by a new or existing database name with a .g extension. For
+      example:
+
+      <literal>mged sphere.g<ENTER></literal>
+      
+      <figure>
+        <title>Terminal Window</title>
+	<screenshot>
+	   <graphic fileref="terminal.png"></graphic>
+        </screenshot>
+      </figure>
+      
+      If you are creating a new database, a small dialog box asking if you want
+      to create a new database named sphere.g will appear. Click on Yes, and a
+      new database will be created. If sphere.g already exists, MGED will open
+      the sphere.g database as the program is launched.
+      </para>
+      
+      </sect1>
+ 
    5. Using the GUI to Open or Create a Database
 
    Alternatively, once you have launched MGED, you can open an existing
