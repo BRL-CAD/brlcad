@@ -357,306 +357,425 @@
       
       </sect1>
  
-   5. Using the GUI to Open or Create a Database
+      <sect1><title>Using the GUI to Open or Create a Database</title>
+
+      <para>
+      Alternatively, once you have launched MGED, you can open an existing
+      database or create a new database using the GUI menus (at the top of the
+      Command or Graphics Window) by clicking on File and then either Open or
+      New. Both options bring up a small dialog box. The Open dialog box will
+      ask you to type in the name of an existing database. The New dialog box
+      will ask you to type in the name of a new database. Click on OK to accept
+      the database.
+      </para>
+
+      <para>
+      For this lesson, create a new database called sphere.g. To do this, type
+      sphere.g at the end of the path name, as shown in the following
+      illustration. Click on OK to accept the database name.
+                     
+      <figure>
+        <title>MGED Command Window with Database Dialog Box</title>
+	<screenshot>
+	   <graphic fileref="commandwindow.png"></graphic>
+        </screenshot>
+      </figure>
+
+                        	 
+      <figure>
+        <title>MGED Graphics Window</title>
+	<screenshot>
+	   <graphic fileref="graphicswindow.png"></graphic>
+        </screenshot>
+      </figure>
+
+      One advantage to using the GUI, if you aren't familiar with UNIX file
+      management, is that this will show you your current path name, so you will
+      know exactly where your database is going to be located. This can be
+      especially helpful if you have a lot of directories or files to manage.
+      </para>
+
+      </sect1>
+
+      <sect1><title>Assigning a Title to Your Database</title>
+
+      <para>
+      You can title your new database to provide an audit trail for you or
+      others who might use your database. After the prompt, in the Command
+      Window, type title followed by a space and a name that reflects the
+      database you are going to make. When you are done, press the ENTER key.
+      For example:
+
+      <literal>mged> title MySphere<ENTER></literal>
+
+      Note that in BRL-CAD versions prior to release 6.0, the title is limited
+      to 72 characters.
+      </para>
+
+      </sect1>
+
+      <sect1><title>Selecting a Unit of Length</title>
+
+      <para>
+      MGED uses millimeters for all internal mathematical processes; however,
+      you can create your design using some other unit, such as feet. For this
+      lesson, inches is used. To select inches, move your mouse pointer to the
+      File menu at the top of the Command Window. Click on File and then
+      Preferences. A new menu will appear. Select Units and then Inches. If you
+      are not a "point-and-click" type of person and prefer a Command Line, then
+      just type units in after the MGED prompt in the Command Window, followed
+      by the ENTER key. The Command Line looks like:
+
+      <literal>mged> units in<ENTER></literal>
+      </para>
+
+      </sect1>
+
+      <sect1><title>Selecting a Primitive Shape</title>
+
+      <para>
+      MGED provides a variety of primitive shapes (sometimes referred to as
+      simply shapes or primitives) that you can use to build models. Each type
+      of shape has parameters that define its position, orientation, and size. A
+      listing of these shapes and their respective parameters is given in
+      Appendix C.
+      </para>
+
+      <note>
+      Historically, the word solid was used for what we now refer to as a   
+      primitive shape. This older terminology was sometimes difficult for   
+      new users to understand. If you see the word solid used in any        
+      BRL-CAD programs, documentation, or commands (e.g., in Appendix A),   
+      think primitive shape.                                                
+      </note>
+
+      </sect1>
+
+      <sect1><title>Creating a Sphere from the Command Line</title>
+
+      <para>
+      For this lesson, you are going to create a single sphere. There are two
+      ways you can create a primitive shape. You can create all shapes through
+      the Command Window and most shapes through the GUI.
+      </para>
+
+      <para>
+      You can easily create a sphere from the prompt in the Command Window by
+      typing just a few commands. At the MGED prompt, type:
+
+      <literal>make sph1.s sph<ENTER>  [Note: Use the digit 1, not the letter l]</literal>
+
+      </para>
+
+      <para>
+      This command tells the MGED program to:
+
+      <informaltable frame="all">
+         <tgroup cols='3'>
+         <tbody>
+	 <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
+         <row><entry>Make a primitive shape</entry><entry>Name it sph1.s</entry><entry>Make the shape a sphere</entry></row>
+         </tbody>
+         </tgroup>
+      </informaltable>
+
+      </para>
+
+      <para>
+      A default sphere will be created, and a wireframe representation of the
+      primitive shape will appear in the Graphics Window. In Lesson 4, you will
+      give your sphere a solid, three-dimensional look.
+      </para>
+
+      <para>
+      This command will draw the primitive shape in the Graphics Window.
+      </para>
+
+      </sect1>
+
+      <sect1><title>Clearing the Graphics Window</title>
+
+      <para>
+      To build another object or work on another primitive shape, you can easily
+      clear the Graphics Window through the Command Window. At the Command Line
+      prompt, type an uppercase Z (for zap) followed by ENTER.
+      </para>
+
+      <note>
+      Before using the zap option, make sure you "activate" (i.e.,    
+      set the focus on) the Command Window. If you type a z and your cursor 
+      is still in the Graphics Window, you will send your design spinning.  
+      Typing a zero (0) will stop the spin.
+      </note>
+
+      </sect1>     
+      
+      <sect1><title>Drawing a Previously Created Object</title>
+  
+      <para>
+      To recall the sphere, type the command on the Command Line as follows:
+
+      <literal>draw sph1.s<ENTER></literal>
+
+      This command tells the MGED program to:
+
+      <informaltable frame="all">
+         <tgroup cols='2'>
+         <tbody>
+	 <row><entry>draw</entry><entry>sph1.s</entry></row>
+         <row><entry>Draw a previously created primitive shape</entry><entry>named sph1.s</entry></row>
+         </tbody>
+         </tgroup>
+      </informaltable>
+      </para>
+
+      </sect1>     
+      
+      <sect1><title>Erasing an Item from the Graphics Window</title>
+
+      <para>
+      You may occasionally want to erase a particular item from the display in
+      the Graphics Window. You can use the erase command to remove the item
+      without any file operation being performed; the item remains in the
+      database. To delete the sph1.s object from the display, at the Command
+      Window prompt, type:
+
+      <literal>erase sph1.s<ENTER></literal>
+      </para>
+
+      </sect1>     
+      
+      <sect1><title>Creating a Sphere Using the GUI</title>
+      
+      <para>
+      Another way to create a sphere is to use the GUI menu system duplicated at
+      the top of the Command and Graphics windows. Clear your Graphics Window by
+      using the previously described Z command. Then, in the Graphics Window,
+      click on Create, and a drop-down menu will appear with the various
+      primitive shape types available. Select sph (for sphere) under the
+      Ellipsoids category. This will bring up a dialog box. Click in the empty
+      text box and type sph2.s. Click on Apply  or press ENTER. A new sphere
+      will be created and drawn in the Graphics Window. When you create a shape
+      through the GUI, the shape will automatically be in edit mode so that you
+      can change it as needed, and the shape's parameters-which define its
+      position, orientation, and size-will be in view.
+      </para>
 
-   Alternatively, once you have launched MGED, you can open an existing
-   database or create a new database using the GUI menus (at the top of the
-   Command or Graphics Window) by clicking on File and then either Open or
-   New. Both options bring up a small dialog box. The Open dialog box will
-   ask you to type in the name of an existing database. The New dialog box
-   will ask you to type in the name of a new database. Click on OK to accept
-   the database.
+      </sect1>
 
-   For this lesson, create a new database called sphere.g. To do this, type
-   sphere.g at the end of the path name, as shown in the following
-   illustration. Click on OK to accept the database name.
+      <sect1><title>Viewing a Shape's Parameters</title>
 
-                  MGED Command Window with Database Dialog Box
+      <para>
+      Sometimes when you are making a model, you might want to view a shape's
+      parameters, such as height, width, or radius, in the Command Window. You
+      can easily list the attributes of a shape by typing the l (for "list")
+      command at the Command Window prompt as follows:
+
+      <literal>l shape_name<ENTER>   [Note: The command is the lowercase letter l]</literal>
 
-                              MGED Graphics Window
+      <note>
+      Note: If you attempt to type in the Command Window and you see no     
+      words appearing there, chances are the focus has not been set on that 
+      window (i.e., keyboard input is still directed to another window).    
+      Depending on your system's configurations, the focus is set to a      
+      window either by moving the cursor into the window or clicking on the 
+      window.                                                               
+      </note>
+      
+      <para>
+      An example of the dialog that might occur in the Command Window for the
+      parameters or attributes of the first sphere you created is as follows:
 
-   One advantage to using the GUI, if you aren't familiar with UNIX file
-   management, is that this will show you your current path name, so you will
-   know exactly where your database is going to be located. This can be
-   especially helpful if you have a lot of directories or files to manage.
+      <literallayout>
+      mged> l sph1.s
+
+      sph1.s: ellipsoid (ELL)
+
+      V (1, 1, 1)
+
+      A (1, 0, 0) mag=1
+
+      B (0, 1, 0) mag=1
+
+      C (0, 0, 1) mag=1
+
+      A direction cosines=(0, 90, 90)
+
+      A rotation angle=0, fallback angle=0
+
+      B direction cosines=(90, 0, 90)
+
+      B rotation angle=90 fallback angle=0
+
+      C direction cosines=(90, 90, 0)
+
+      C rotation angle=0, fallback angle=90
+      </literallayout>
+
+      <para>
+      Don't be concerned if you notice in the preceding output that MGED stores
+      your sphere as an ellipsoid. In actuality, the sphere is just a special
+      case of the ellipsoid (see Appendix C). Also, note that it is not
+      important if the numbers in your output do not match what is shown in this
+      example.
+      </para>
+      
+      <para>
+      Use the l command to list both sph1.s and sph2.s before continuing with
+      this lesson.
+      </para>
+
+      </sect1>
+
+      <sect1><title>Listing the Contents of a Database</title>
+
+      <para>
+      In addition to viewing a shape's contents, you might also want to list the
+      contents of the database to see what items have been created. To view the
+      database contents, type at the Command Window prompt:
+
+      <literal>ls<ENTER></literal>
+      </para>
+
+
+      </sect1>
+
+      <sect1><title>Killing a Shape or Object</title>
+
+      <para>
+      Sometimes when creating a model, you may need to eliminate a shape or
+      object from the database. The kill command is used to do this. For
+      example, if you wanted to kill the sph1.s shape, you would type at the
+      Command Window prompt:
+
+      <literal>kill sph1.s<ENTER></literal>
+
+      Make another sphere through either the Command Window or the GUI and name
+      it sph3.s. Once the sphere is made, use the kill command to eliminate it
+      from the database by typing at the Command Window prompt:
+
+      <literal>kill sph3.s<ENTER></literal>
+
+      You can tell the shape has been eliminated by using the ls command in the
+      Command Window to list the contents of the database. At the Command Window
+      prompt, type:
+
+      <literal>ls<ENTER></literal>
+
+      You should see two shapes listed: sph1.s and sph2.s.
+      </para>
+
+      <note>
+      Note: All changes are immediately applied to the database, so there   
+      is no "save" or "save as" command. Likewise, there is presently no    
+      "undo" command to bring back what you have deleted, so be sure you    
+      really want to permanently delete data before using the kill command. 
+      </note>
+
+      </sect1>
+
+      <sect1><title>Editing Commands in the Command Window</title>
+
+      <para>
+      Occasionally, when you enter commands in the Command Window, you will make
+      a mistake in typing. MGED can emulate either the emacs or vi syntax for
+      Command Line editing. By default, the emacs syntax is used. See Appendix B
+      for a list of keystrokes, effects, and ways to select between the two
+      command sets.
+      </para>
+
+      <para>
+      You can also use the arrow keys to edit commands. The left and right arrow
+      keys move the cursor in the current Command Line. Typing ENTER at any
+      location on the Command Line executes the command. Note that both the
+      BACKSPACE and DELETE keys will delete one character to the left of the
+      cursor.
+      </para>
+
+      <para>
+      MGED keeps a history of commands that have been entered. The up and down
+      arrow keys allow you to select a previously executed command for editing
+      and re-execution.
+      </para>
+
+      </sect1>
+
+      <sect1><title>Quitting MGED</title>
+
+      <para>
+      Remember, to leave the program at any time, type from the Command Line
+      either the letter q or the word quit and then press the ENTER key. You may
+      also quit the program by selecting Exit from the File menu.
+      </para>
+
+      </sect1>
+
+      <sect1><title>Review</title>
+
+      <para>
+      In this lesson, you:
+      
+      <itemizedlist mark='bullet'>
+         <listitem>
+            <para>Started the MGED program.</para>
+	 </listitem>
+         <listitem>
+            <para>Entered commands in the Command Window.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the MGED GUI.</para>
+	 </listitem>
+         <listitem>
+            <para>Created or opened a database using MGED naming conventions.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the GUI to create or open a database.</para>
+	 </listitem>
+         <listitem>
+            <para>Titled a database.</para>
+	 </listitem>
+         <listitem>
+            <para>Selected a unit of measure for a design.</para>
+	 </listitem>
+         <listitem>
+            <para>Selected a primitive shape.</para>
+	 </listitem>
+         <listitem>
+            <para>Created a primitive shape using the make command in the Command Window.</para>
+	 </listitem>
+         <listitem>
+            <para>Cleared the screen of a design using the Z command.</para>
+	 </listitem>
+         <listitem>
+            <para>Drew a previously created shape using the draw command.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the erase command to delete a shape from the Graphics Window display.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the GUI to create a primitive shape.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the l command to view a shape's parameters.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the ls command to list the contents of the database.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the kill command to eliminate a shape from the database.</para>
+	 </listitem>
+         <listitem>
+            <para>Edited commands in the Command Window.</para>
+	 </listitem>
+         <listitem>
+            <para>Used the q or Exit commands to quit the program.</para>
+	 </listitem>
+      </itemizedlist>
+   </chapter>
 
-   6. Assigning a Title to Your Database
 
-   You can title your new database to provide an audit trail for you or
-   others who might use your database. After the prompt, in the Command
-   Window, type title followed by a space and a name that reflects the
-   database you are going to make. When you are done, press the ENTER key.
-   For example:
 
-   mged> title MySphere<ENTER>
 
-   Note that in BRL-CAD versions prior to release 6.0, the title is limited
-   to 72 characters.
-
-   7. Selecting a Unit of Length
-
-   MGED uses millimeters for all internal mathematical processes; however,
-   you can create your design using some other unit, such as feet. For this
-   lesson, inches is used. To select inches, move your mouse pointer to the
-   File menu at the top of the Command Window. Click on File and then
-   Preferences. A new menu will appear. Select Units and then Inches. If you
-   are not a "point-and-click" type of person and prefer a Command Line, then
-   just type units in after the MGED prompt in the Command Window, followed
-   by the ENTER key. The Command Line looks like:
-
-   mged> units in<ENTER>
-
-   8. Selecting a Primitive Shape
-
-   MGED provides a variety of primitive shapes (sometimes referred to as
-   simply shapes or primitives) that you can use to build models. Each type
-   of shape has parameters that define its position, orientation, and size. A
-   listing of these shapes and their respective parameters is given in
-   Appendix C.
-
-   +------------------------------------------------------------------------+
-   || Historically, the word solid was used for what we now refer to as a   |
-   || primitive shape. This older terminology was sometimes difficult for   |
-   || new users to understand. If you see the word solid used in any        |
-   || BRL-CAD programs, documentation, or commands (e.g., in Appendix A),   |
-   || think primitive shape.                                                |
-   +------------------------------------------------------------------------+
-
-   9. Creating a Sphere from the Command Line
-
-   For this lesson, you are going to create a single sphere. There are two
-   ways you can create a primitive shape. You can create all shapes through
-   the Command Window and most shapes through the GUI.
-
-   You can easily create a sphere from the prompt in the Command Window by
-   typing just a few commands. At the MGED prompt, type:
-
-   make sph1.s sph<ENTER>  [Note: Use the digit 1, not the letter l]
-
-   This command tells the MGED program to:
-
-   +-------------------------------------------------------------------+
-   |          make          |     sph1.s     |           sph           |
-   |------------------------+----------------+-------------------------|
-   | Make a primitive shape | Name it sph1.s | Make the shape a sphere |
-   +-------------------------------------------------------------------+
-
-   A default sphere will be created, and a wireframe representation of the
-   primitive shape will appear in the Graphics Window. In Lesson 4, you will
-   give your sphere a solid, three-dimensional look.
-
-   This command will draw the primitive shape in the Graphics Window.
-
-   10. Clearing the Graphics Window
-
-   To build another object or work on another primitive shape, you can easily
-   clear the Graphics Window through the Command Window. At the Command Line
-   prompt, type an uppercase Z (for zap) followed by ENTER.
-
-   +------------------------------------------------------------------------+
-   || Note: Before using the zap option, make sure you "activate" (i.e.,    |
-   || set the focus on) the Command Window. If you type a z and your cursor |
-   || is still in the Graphics Window, you will send your design spinning.  |
-   || Typing a zero (0) will stop the spin.                                 |
-   +------------------------------------------------------------------------+
-
-   11. Drawing a Previously Created Object
-
-   To recall the sphere, type the command on the Command Line as follows:
-
-   draw sph1.s<ENTER>
-
-   This command tells the MGED program to:
-
-   +----------------------------------------------------------+
-   |                   draw                    |    sph1.s    |
-   |-------------------------------------------+--------------|
-   | Draw a previously created primitive shape | named sph1.s |
-   +----------------------------------------------------------+
-
-   12. Erasing an Item from the Graphics Window
-
-   You may occasionally want to erase a particular item from the display in
-   the Graphics Window. You can use the erase command to remove the item
-   without any file operation being performed; the item remains in the
-   database. To delete the sph1.s object from the display, at the Command
-   Window prompt, type:
-
-   erase sph1.s<ENTER>
-
-   13. Creating a Sphere Using the GUI
-
-   Another way to create a sphere is to use the GUI menu system duplicated at
-   the top of the Command and Graphics windows. Clear your Graphics Window by
-   using the previously described Z command. Then, in the Graphics Window,
-   click on Create, and a drop-down menu will appear with the various
-   primitive shape types available. Select sph (for sphere) under the
-   Ellipsoids category. This will bring up a dialog box. Click in the empty
-   text box and type sph2.s. Click on Apply  or press ENTER. A new sphere
-   will be created and drawn in the Graphics Window. When you create a shape
-   through the GUI, the shape will automatically be in edit mode so that you
-   can change it as needed, and the shape's parameters-which define its
-   position, orientation, and size-will be in view.
-
-   14. Viewing a Shape's Parameters
-
-   Sometimes when you are making a model, you might want to view a shape's
-   parameters, such as height, width, or radius, in the Command Window. You
-   can easily list the attributes of a shape by typing the l (for "list")
-   command at the Command Window prompt as follows:
-
-   l shape_name<ENTER>   [Note: The command is the lowercase letter l]
-
-   +------------------------------------------------------------------------+
-   || Note: If you attempt to type in the Command Window and you see no     |
-   || words appearing there, chances are the focus has not been set on that |
-   || window (i.e., keyboard input is still directed to another window).    |
-   || Depending on your system's configurations, the focus is set to a      |
-   || window either by moving the cursor into the window or clicking on the |
-   || window.                                                               |
-   +------------------------------------------------------------------------+
-
-   An example of the dialog that might occur in the Command Window for the
-   parameters or attributes of the first sphere you created is as follows:
-
-   mged> l sph1.s
-
-   sph1.s: ellipsoid (ELL)
-
-   V (1, 1, 1)
-
-   A (1, 0, 0) mag=1
-
-   B (0, 1, 0) mag=1
-
-   C (0, 0, 1) mag=1
-
-   A direction cosines=(0, 90, 90)
-
-   A rotation angle=0, fallback angle=0
-
-   B direction cosines=(90, 0, 90)
-
-   B rotation angle=90 fallback angle=0
-
-   C direction cosines=(90, 90, 0)
-
-   C rotation angle=0, fallback angle=90
-
-   Don't be concerned if you notice in the preceding output that MGED stores
-   your sphere as an ellipsoid. In actuality, the sphere is just a special
-   case of the ellipsoid (see Appendix C). Also, note that it is not
-   important if the numbers in your output do not match what is shown in this
-   example.
-
-   Use the l command to list both sph1.s and sph2.s before continuing with
-   this lesson.
-
-   15. Listing the Contents of a Database
-
-   In addition to viewing a shape's contents, you might also want to list the
-   contents of the database to see what items have been created. To view the
-   database contents, type at the Command Window prompt:
-
-   ls<ENTER>
-
-   16. Killing a Shape or Object
-
-   Sometimes when creating a model, you may need to eliminate a shape or
-   object from the database. The kill command is used to do this. For
-   example, if you wanted to kill the sph1.s shape, you would type at the
-   Command Window prompt:
-
-   kill sph1.s<ENTER>
-
-   Make another sphere through either the Command Window or the GUI and name
-   it sph3.s. Once the sphere is made, use the kill command to eliminate it
-   from the database by typing at the Command Window prompt:
-
-   kill sph3.s<ENTER>
-
-   You can tell the shape has been eliminated by using the ls command in the
-   Command Window to list the contents of the database. At the Command Window
-   prompt, type:
-
-   ls<ENTER>
-
-   You should see two shapes listed: sph1.s and sph2.s.
-
-   +------------------------------------------------------------------------+
-   || Note: All changes are immediately applied to the database, so there   |
-   || is no "save" or "save as" command. Likewise, there is presently no    |
-   || "undo" command to bring back what you have deleted, so be sure you    |
-   || really want to permanently delete data before using the kill command. |
-   +------------------------------------------------------------------------+
-
-   17. Editing Commands in the Command Window
-
-   Occasionally, when you enter commands in the Command Window, you will make
-   a mistake in typing. MGED can emulate either the emacs or vi syntax for
-   Command Line editing. By default, the emacs syntax is used. See Appendix B
-   for a list of keystrokes, effects, and ways to select between the two
-   command sets.
-
-   You can also use the arrow keys to edit commands. The left and right arrow
-   keys move the cursor in the current Command Line. Typing ENTER at any
-   location on the Command Line executes the command. Note that both the
-   BACKSPACE and DELETE keys will delete one character to the left of the
-   cursor.
-
-   MGED keeps a history of commands that have been entered. The up and down
-   arrow keys allow you to select a previously executed command for editing
-   and re-execution.
-
-   18. Quitting MGED
-
-   Remember, to leave the program at any time, type from the Command Line
-   either the letter q or the word quit and then press the ENTER key. You may
-   also quit the program by selecting Exit from the File menu.
-
-   Review
-
-   In this lesson, you:
-
-     * Started the MGED program.
-
-     * Entered commands in the Command Window.
-
-     * Used the MGED GUI.
-
-     * Created or opened a database using MGED naming conventions.
-
-     * Used the GUI to create or open a database.
-
-     * Titled a database.
-
-     * Selected a unit of measure for a design.
-
-     * Selected a primitive shape.
-
-     * Created a primitive shape using the make command in the Command
-       Window.
-
-     * Cleared the screen of a design using the Z command.
-
-     * Drew a previously created shape using the draw command.
-
-     * Used the erase command to delete a shape from the Graphics Window
-       display.
-
-     * Used the GUI to create a primitive shape.
-
-     * Used the l command to view a shape's parameters.
-
-     * Used the ls command to list the contents of the database.
-
-     * Used the kill command to eliminate a shape from the database.
-
-     * Edited commands in the Command Window.
-
-     * Used the q or Exit commands to quit the program.
-
-                            Intentionally Left Blank
 
    Lesson 2: Learning the Viewing Options
 
