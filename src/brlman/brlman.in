@@ -63,6 +63,10 @@ fi
 
 # Ensure that MANPATH is set and has BRL-CAD materials man dirs listed first.
 
+prefix="@prefix@"	# needed to fill @mandir@
+if test -d "@mandir@" ; then
+    MANPATH="@mandir@:$MANPATH"
+fi
 if test -d "@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man" ; then
     MANPATH="@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
 fi
