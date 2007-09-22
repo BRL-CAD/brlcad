@@ -472,12 +472,12 @@
       This command tells the MGED program to:
 
       <informaltable frame="all">
-         <tgroup cols='3'>
-         <tbody>
-	 <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
-         <row><entry>Make a primitive shape</entry><entry>Name it sph1.s</entry><entry>Make the shape a sphere</entry></row>
-         </tbody>
-         </tgroup>
+	<tgroup cols='3'>
+	  <tbody>
+	    <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
+	    <row><entry>Make a primitive shape</entry><entry>Name it sph1.s</entry><entry>Make the shape a sphere</entry></row>
+	  </tbody>
+	</tgroup>
       </informaltable>
 
       </para>
@@ -781,7 +781,7 @@
 
    <chapter id="Lesson-2">
      <title>Learning the Viewing Options</title>
-
+     
      <para>
        In this lesson, you will:
        
@@ -858,435 +858,577 @@
        in knob.s rcc 4 4 40 8 0 0 5[ENTER]
      </literallayout>
      
-
-      <note>
-      Note that in the preceding Command Line expressions, btn is an        
-      abbreviation for button, ant is an abbreviation for antenna, and spkr 
-      is an abbreviation for speaker. Also note that the numbers could have 
-      been separated by single spaces. The extra spaces were inserted       
-      simply to improve readability. For some usages (e.g., the r and comb  
-      commands, which are discussed later), the number of spaces has to be  
-      exact.                                                                
-      </note>
-      <para>
-	An image similar to the following should now appear in the Graphics
-	Window.
-
-	<figure>
-	  <title> Default View of a Radio</title>
-	  <screenshot>
-	    <graphic fileref="defaultradio.png"></graphic>
-        </screenshot>
-	</figure>
-      </para>
+     
+     <note>
+       Note that in the preceding Command Line expressions, btn is an        
+       abbreviation for button, ant is an abbreviation for antenna, and spkr 
+       is an abbreviation for speaker. Also note that the numbers could have 
+       been separated by single spaces. The extra spaces were inserted       
+       simply to improve readability. For some usages (e.g., the r and comb  
+       commands, which are discussed later), the number of spaces has to be  
+       exact.                                                                
+     </note>
+     <para>
+       An image similar to the following should now appear in the Graphics
+       Window.
+       
+       <figure>
+	 <title> Default View of a Radio</title>
+	 <screenshot>
+	   <graphic fileref="defaultradio.png"/>
+	 </screenshot>
+       </figure>
+     </para>
      </sect1>
-
-      <sect1><title>Locating Viewing Information in the Command Window</title>
-      <para>
-	Now take a minute to look at the Command Window. Even if nothing is in the
-	window, enclosed in the bottom border is a string of information about the
-	Graphics Window. An example string might read:
-
-	<literal>cent=(8.000 16.000 24.000) sz=96.000 mm az=35.00 el=25.00 tw=-0.00
-	ang=(0.00 0.00 0.00)</literal>
-      </para>
-      <para>
-	As detailed in the following table, this information contains four groups
-	of viewing data about the Graphics Window.
-
-	<table frame='all'><title>Viewing Data at the Bottom of the Command Window</title>
-	<tgroup cols='5' align='center' colsep='1' rowsep='1'>
-	  <colspec colname='c1'/>
-	  <colspec colname='c2'/>
-	  <colspec colname='c3'/>
-	  <colspec colname='c4'/>
-	  <colspec colname='c5'/>
-	  <thead>
-	    <row>
-	      <entry>Screen Designation</entry>
-	      <entry>Viewing Information</entry>
-	      <entry>Location of Variables</entry>
-	      <entry>Default Units</entry>
-	      <entry>Default Values</entry>
-	    </row>
-	  </thead>
-	  <tbody>
-	    <row>
-	      <entry>cent=</entry>
-	      <entry>Center of View</entry>
-	      <entry>First 3 numbers</entry>
-	      <entry>Millimeters</entry>
-	      <entry>0.000 0.000 0.000</entry>
-	    </row>
-	    <row>
-	      <entry>sz=</entry>
-	      <entry>Size of View</entry>
-	      <entry>4th number</entry>
-	      <entry>Millimeters</entry>
-	      <entry>Dependent upon size selected</entry>
-	    </row>
-	    <row>
-	      <entry>az=</entry>
-	      <entry morerows='1' valign='middle'>Viewing Angle</entry>
-	      <entry morerows='1' valign='middle'>5th and 6th numbers</entry>
-	      <entry morerows='1' valign='middle'>Degrees</entry>
-	      <entry>35.00</entry>
-	    </row>
-	    <row>
-	      <entry>el=</entry>
-	      <entry>25.00</entry>
-	    </row>
-	    <row>
-	      <entry>tw=</entry>
-	      <entry>Twist</entry>
-	      <entry morerows='1' valign='middle'>7th-10th numbers</entry>
-	      <entry morerows='1' valign='middle'>Degrees</entry>
-	      <entry>0.00</entry>
-	    </row>
-	    <row>
-	      <entry>ang=</entry>
-	      <entry>Angle of View</entry>
-	      <entry>0.00 0.00 0.00</entry>
-	    </row>
-	  </tbody>
-	</tgroup>
-	</table>
-      </para>
-      </sect1>
-
-   3. Identifying Elements of the MGED Viewing System
-
-   Center of View
-
-   The first set of information tells you the center of what you are viewing.
-   You can change the center of where you are looking through both the GUI
-   and the Command Window.
-
-   To change the center of your view of the radio using the GUI, press the
-   SHIFT key and any mouse button while dragging the mouse. (This is an
-   example of a Shift Grip, which is described later in this chapter.) You
-   can also change the center of view by placing the mouse pointer where you
-   want the center to be and clicking the middle mouse button.
-
-   To change the center of view using the Command Window, simply type at the
-   prompt the word center followed by three values for x, y, and z  (which is
-   the 3-D coordinate system mentioned previously). For example:
-
-   center 0 15 325.735<ENTER>
-
-   As you change your view of the geometry, notice that the numbers in the
-   brackets after the cent= title will change to reflect the new center of
-   the view.
-
-   Size of View
-
-   The size of the view is the amount of model space that is shown in the
-   Graphics Window. For example, consider using a camera with a zoom lens to
-   photograph a rose. As shown in the following figures, if you zoom in on
-   the rose, it will appear large in relation to your viewing field. If you
-   zoom out, it will appear smaller. In actuality, the view size for the rose
-   image on the left might represent only 15 mm across while the view size
-   for the image on the right might represent 100 mm across. In both cases,
-   however, the actual size of the rose is the same.
-
-   +------------------------------------------------------+
-   |-------------------------+----------------------------|
-   |                         |  Zoom Out to View Object   |
-   | Zoom In to View Details |                            |
-   |                         | in Relation to Environment |
-   |  (small size of view)   |                            |
-   |                         |    (large size of view)    |
-   +------------------------------------------------------+
-
-   To change the view size of your radio through the GUI, click the right
-   mouse button to zoom in and the left mouse button to zoom out. Each time
-   you click the left or right mouse button, the view of the design will
-   increase or decrease in size by a factor of 2 (i.e., two times larger or
-   two times smaller than the previous size).
-
-   You can also zoom in or out on your design by going to the View menu and
-   selecting Zoom In or Zoom Out. A drawback to this method is that you can
-   only zoom in or out one time because the drop-down menu closes once you
-   make a selection.
-
-   If you get lost at any point while creating a model, you can use the zap
-   (Z) command to clear the geometry from the Graphics Window and then recall
-   the shape with the draw command. When drawing in an empty Graphics Window,
-   MGED automatically sizes the view to fit what you draw into the window.
-
-   You can control the view size of your radio more accurately with the
-   Command Window. To set the size to 100 (of whichever units you have
-   selected), type at the prompt:
-
-   size 100<ENTER>
-
-   You can also zoom in or out on a design by typing zoom on the Command
-   Line. To make your radio appear 50% smaller, you would type:
-
-   zoom 0.5<ENTER>
-
-   To make your radio appear twice as large, you would type:
-
-   zoom 2<ENTER>
-
-   +------------------------------------------------------------------------+
-   || Remember that changing the view size does NOT affect the size of the  |
-   || object. You will change the size of an object in Lesson 6.            |
-   +------------------------------------------------------------------------+
-
-   Angle of View
-
-   Azimuth, elevation, and twist (all measured in degrees) determine where
-   you are in relation to the object you are viewing. Azimuth determines
-   where you are around the sides of it (i.e., to the front, left, right,
-   behind, or somewhere in between), elevation determines where you are above
-   or below it, and twist determines the angle you are rotated about the
-   viewing direction.
-
-   To better understand azimuth, imagine walking around a truck with a camera
-   to photograph it. As shown in the following illustrations, you would be at
-   0'0 azimuth if you stood directly in front of the truck to take its
-   picture. If you circled around slightly to your right, you would be at
-   35'0 azimuth. If you moved further around until you were looking directly
-   at the driver's side (in U.S. trucks), you would be at 90'0 azimuth.
-   Standing behind it would put you at 180'0 azimuth. If you were facing the
-   passenger's side, you would be at 270'0 azimuth.
-
-   +------------------------------------------------------------------------+
-   || The terms azimuth, elevation, and twist are similar to the terms yaw, |
-   || pitch, and roll, respectively, which are common terms in the          |
-   || aerospace industry.                                                   |
-   +------------------------------------------------------------------------+
-
-   +-------------------------------------------+
-   |--------------------+----------------------|
-   | Front (az=0, el=0) |     az=35, el=0      |
-   |-------------------------------------------|
-   |---------------------+---------------------|
-   | Left (az=90, el=0)  | Rear (az=180, el=0) |
-   |-------------------------------------------|
-   |           Right (az=270, el=0)            |
-   +-------------------------------------------+
-
-   Elevation, on the other hand, involves the viewer's position above or
-   below an object. In the preceding example, you circled around a truck
-   without changing your relative height. You had an elevation of 0'0, which
-   means you were level with it. As the following figures illustrate,
-   however, imagine stopping at the 35'0 azimuth position and then climbing a
-   ladder to photograph the truck from 25'0 elevation. Climbing higher, you
-   would be at 60'0 elevation. If you were directly above it with the camera
-   facing down, you would be at 90'0 elevation. If you crawled under the
-   truck and looked directly up at it, you would be at -90'0 elevation.
-
-   +-----------------------------------------------+
-   |---------------------------+-------------------|
-   |        az=35, el=0        |   az=35, el=25    |
-   |-----------------------------------------------|
-   |---------------------+-------------------------|
-   |    az=35, el=60     |      az=35, el=90       |
-   |---------------------+-------------------------|
-   |---------------------+-------------------------|
-   | Top (az=270, el=90) | Bottom (az=270, el=-90) |
-   +-----------------------------------------------+
-
-   Finally, twist (which is an optional setting in MGED) specifies a rotation
-   about the viewing direction. This rotation is applied to the view after
-   azimuth and elevation have been designated. So, returning to our truck
-   example, imagine standing in front of the vehicle (az=0, el=0) and then
-   tilting your camera counterclockwise 14'0. This would give your view a
-   14'0 twist angle, as shown in the following figure (on the left). Note
-   again that it is not the truck that is tipped up, but simply your view of
-   it. For more information on specifying twist, see the ae command in
-   Appendix A.
-
-   +---------------------------+
-   |---------------------------|
-   | Front (az=0, el=0, tw=14) |
-   +---------------------------+
-
-   4. Summing up on Azimuth and Elevation and the xyz Coordinate System
-
-   As mentioned at the start of this lesson, MGED operates in a
-   three-dimensional coordinate system (determined by the x, y, and z axes).
-   Azimuth is measured in the xy plane with the positive x direction
-   corresponding to an azimuth of 0'0. Positive azimuth angles are measured
-   from the positive x axis toward and past the positive y axis. Negative
-   azimuth angles are measured in the other direction.
-
-               Azimuth, Elevation, and the xyz Coordinate System
-
-   If the azimuth angle is 0, then elevation is measured in the xz plane with
-   +90'0 corresponding to the positive z direction and -90'0 corresponding to
-   the negative z direction. However, if azimuth is not 0, these angles are
-   in a plane aligned with the azimuth direction.
-
-    5. Viewing Your Radio from Different Angles
-
-   Let's now experiment with different views of your radio. MGED has several
-   standard default views, which you've already seen in the preceding truck
-   example. They include Top (az270, el90); Bottom (az270, el-90); Right
-   (az270, el0); Left (az90, el0); Front (az0, el0); Rear (az180, el0); az35,
-   el25; and az45, el45.
-
-   Go to the View menu and try viewing your radio from different angles.
-
-   +-----------------+
-   |-----+-----------|
-   | Top | az35,el25 |
-   +-----------------+
-
-   +---------------+
-   |-------+-------|
-   | Right | Front |
-   +---------------+
-
-   You can also select any azimuth-elevation combination from the Command
-   Line. For example, at the prompt type
-
-   ae 128 17<ENTER>
-
-   As with many of the Command Line options, this method of selecting views
-   provides a finer degree of control/precision when you need it.
-
-   MGED can also display multiple views simultaneously. Go to the Modes menu
-   and click on Multipane. Four small panes with different views should
-   appear in your Graphics Window, as shown in the following illustration.
-
-                          Multipane View of the Radio
-
-   6. Working with Shift Grips
-
-   The Shift Grip options of MGED are handy hot-key and mouse button
-   combinations that can be used in two different ways. With regard to our
-   present discussion on viewing, the Shift Grips can, in effect, "drag" the
-   world around in front of the viewer (but without actually changing the
-   coordinates of the viewed objects). The same Shift Grips can also be used
-   in Edit mode to actually move or alter the geometry of your objects. In
-   both cases, the Shift Grips appear to do the same thing, so it is
-   important always to know the mode in which you are operating.
-
-   In general, the SHIFT key translates (moves), the CTRL key rotates, and
-   the ALT key constrains (or limits) translation or rotation to a particular
-   axis (x, y, or z). These axes correspond to the three mouse buttons as
-   follows: the left button represents the x axis, the middle button
-   represents the y axis, and the right button represents the z axis. In
-   addition, the SHIFT and CTRL keys can be used in conjunction with any
-   mouse button to scale an object (although the ALT key will not constrain
-   this action). The following table lists all of the key bindings and their
-   functions.
-
-                          Shift Grip Keys and Effects
-
-+------------------------------------------------------------------------------------------+
-|           |    Key    |Effect in|Effect in |                                             |
-| Function  |           |         |          |                                             |
-|           |Combination| Normal  |Edit Mode |                                             |
-|           |           | Viewing |          |                                             |
-|-----------+-----------+---------+----------|                                             |
-|           |SHIFT + any|  Moves  |Translates|                                             |
-| Translate |   mouse   | view in |object in |                                             |
-|  (Move)   | button +  |   any   |   any    |                                             |
-|           |mouse drag |direction|direction |                                             |
-|-----------+-----------+---------+----------|                                             |
-|           |CTRL + any | Rotates | Rotates  |                                             |
-|           |   mouse   | view in |object in |                                             |
-|  Rotate   | button +  |   any   |   any    |                                             |
-|           |           |direction|direction |                                             |
-|           |mouse drag |         |          |                                             |
-|-----------+-----------+---------+----------|                                             |
-|           |SHIFT + ALT|         |          |                                             |
-|           |     +     |  Moves  |Translates|                                             |
-|           |           | view in |object in |                                             |
-|           |left mouse |  the x  |  the x   |                                             |
-|           | button +  |direction|direction |                                             |
-|           |mouse drag |         |          |                                             |
-|           |-----------+---------+----------+----------+                                  |
-|           |           | SHIFT + |          |          |                                  |
-|           |           |  ALT +  |          |          |                                  |
-|           |           |         |Moves view|Translates|                                  |
-|           |           | middle  | in the y |object in |                                  |
-|           |           |  mouse  |direction |  the y   |                                  |
-|           |           |button + |          |direction |                                  |
-|           |           |  mouse  |          |          |                                  |
-|           |           |  drag   |          |          |                                  |
-|           |           |---------+----------+----------+----------+                       |
-|           |           |         | SHIFT +  |          |          |                       |
-|           |           |         |  ALT +   |          |Translates|                       |
-|           |           |         |          |Moves view|object in |                       |
-|           |           |         |  right   | in the z |  the z   |                       |
-|           |           |         |  mouse   |direction |direction |                       |
-|           |           |         | button + |          |          |                       |
-| Constrain |           |         |mouse drag|          |          |                       |
-|           |           |         |----------+----------+----------+-------+               |
-|Translation|           |         |          |CTRL + ALT|          |Rotates|               |
-|           |           |         |          |    +     | Rotates  |object |               |
-|           |           |         |          |          |view about| about |               |
-|           |           |         |          |left mouse|the x axis| the x |               |
-|           |           |         |          | button + |          | axis  |               |
-|           |           |         |          |mouse drag|          |       |               |
-|           |           |         |          |----------+----------+-------+-------+       |
-|           |           |         |          |          |CTRL + ALT|       |Rotates|       |
-|           |           |         |          |          |    +     |Rotates|object |       |
-|           |           |         |          |          |          | view  | only  |       |
-|           |           |         |          |          |  middle  | about | about |       |
-|           |           |         |          |          |  mouse   | the y | the y |       |
-|           |           |         |          |          | button + | axis  | axis  |       |
-|           |           |         |          |          |mouse drag|       |       |       |
-|           |           |         |Constrain |          |----------+-------+-------+-------|
-|           |           |         |          |          |          |CTRL + |       |       |
-|           |           |         | Rotation |          |          | ALT + |Rotates|Rotates|
-|           |           |         |          |          |          |       | view  |object |
-|           |           |         |          |          |          | right | about | about |
-|           |           |         |          |          |          | mouse | the z | the z |
-|           |           |         |          |          |          |button | axis  | axis  |
-|           |           |         |          |          |          |+ mouse|       |       |
-|           |           |         |          |          |          | drag  |       |       |
-|-----------|           |         |          |          |          |-------+-------+-------|
-|           |           |         |          |          |          |SHIFT +|       |       |
-|           |           |         |          |          |          |CTRL + |Scales |Scales |
-|           |           |         |          |          |          |  any  | view  |object |
-|   Scale   |           |         |          |          |          | mouse |larger |larger |
-|           |           |         |          |          |          |button |  or   |  or   |
-|           |           |         |          |          |          |+ mouse|smaller|smaller|
-|           |           |         |          |          |          | drag  |       |       |
-+------------------------------------------------------------------------------------------+
-
-   +------------------------------------------------------------------------+
-   || Depending on your window manager or desktop environment settings,     |
-   || some key combinations may already be designated to perform other      |
-   || tasks (e.g., resizing or moving a window). If so, you may need to     |
-   || adjust settings to allow the Shift Grip options to function.          |
-   || Furthermore, left-handed users may have switched the behavior of the  |
-   || left and right mouse buttons in their system configurations. In such  |
-   || instances, the terms left mouse button and right mouse button should  |
-   || be switched throughout this document.                                 |
-   +------------------------------------------------------------------------+
-
-   Probably the easiest way to familiarize yourself with the Shift Grip
-   options is to try them out on your radio. Using the preceding table as a
-   guide, experiment with translating, rotating, constraining translation and
-   rotation to particular axes, and sizing your radio view.
-
-   +------------------------------------------------------------------------+
-   || Remember, although the Shift Grip options may appear to be            |
-   || manipulating objects, unless you are in Edit mode they are only       |
-   || manipulating your view of the objects.                                |
-   +------------------------------------------------------------------------+
-
-   Review
-
-   In this lesson, you:
-
-     * Created a model radio.
-
-     * Located  viewing information in the Command Window.
-
-     * Identified elements of the MGED viewing system.
-
-     * Viewed your radio from different angles.
-
-     * Worked with Shift Grips.
-
+     
+     <sect1><title>Locating Viewing Information in the Command Window</title>
+     <para>
+       Now take a minute to look at the Command Window. Even if nothing is in the
+       window, enclosed in the bottom border is a string of information about the
+       Graphics Window. An example string might read:
+       
+       <literal>cent=(8.000 16.000 24.000) sz=96.000 mm az=35.00 el=25.00 tw=-0.00
+       ang=(0.00 0.00 0.00)</literal>
+     </para>
+     <para>
+       As detailed in the following table, this information contains four groups
+       of viewing data about the Graphics Window.
+       
+       <table frame='all'><title>Viewing Data at the Bottom of the Command Window</title>
+       <tgroup cols='5' align='center' colsep='1' rowsep='1'>
+	 <colspec colname='c1'/>
+	 <colspec colname='c2'/>
+	 <colspec colname='c3'/>
+	 <colspec colname='c4'/>
+	 <colspec colname='c5'/>
+	 <thead>
+	   <row>
+	     <entry>Screen Designation</entry>
+	     <entry>Viewing Information</entry>
+	     <entry>Location of Variables</entry>
+	     <entry>Default Units</entry>
+	     <entry>Default Values</entry>
+	   </row>
+	 </thead>
+	 <tbody>
+	   <row>
+	     <entry>cent=</entry>
+	     <entry>Center of View</entry>
+	     <entry>First 3 numbers</entry>
+	     <entry>Millimeters</entry>
+	     <entry>0.000 0.000 0.000</entry>
+	   </row>
+	   <row>
+	     <entry>sz=</entry>
+	     <entry>Size of View</entry>
+	     <entry>4th number</entry>
+	     <entry>Millimeters</entry>
+	     <entry>Dependent upon size selected</entry>
+	   </row>
+	   <row>
+	     <entry>az=</entry>
+	     <entry morerows='1' valign='middle'>Viewing Angle</entry>
+	     <entry morerows='1' valign='middle'>5th and 6th numbers</entry>
+	     <entry morerows='1' valign='middle'>Degrees</entry>
+	     <entry>35.00</entry>
+	   </row>
+	   <row>
+	     <entry>el=</entry>
+	     <entry>25.00</entry>
+	   </row>
+	   <row>
+	     <entry>tw=</entry>
+	     <entry>Twist</entry>
+	     <entry morerows='1' valign='middle'>7th-10th numbers</entry>
+	     <entry morerows='1' valign='middle'>Degrees</entry>
+	     <entry>0.00</entry>
+	   </row>
+	   <row>
+	     <entry>ang=</entry>
+	     <entry>Angle of View</entry>
+	     <entry>0.00 0.00 0.00</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+       </table>
+     </para>
+     </sect1>
+     
+     <sect1><title>Identifying Elements of the MGED Viewing System</title>
+     
+     <sect2><title>Center of View</title>
+     <para>
+       The first set of information tells you the center of what you are viewing.
+       You can change the center of where you are looking through both the GUI
+       and the Command Window.
+     </para>
+     <para>
+       To change the center of your view of the radio using the GUI, press the
+       SHIFT key and any mouse button while dragging the mouse. (This is an
+       example of a Shift Grip, which is described later in this chapter.) You
+       can also change the center of view by placing the mouse pointer where you
+       want the center to be and clicking the middle mouse button.
+     </para>
+     <para>
+       To change the center of view using the Command Window, simply type at the
+       prompt the word center followed by three values for x, y, and z  (which is
+       the 3-D coordinate system mentioned previously). For example:
+       
+       <command>center 0 15 325.735[Enter]</command>
+       
+       As you change your view of the geometry, notice that the numbers in the
+       brackets after the cent= title will change to reflect the new center of
+       the view.
+     </para>
+     </sect2>
+     
+     <sect2><title>Size of View</title>
+     
+     <para>
+       The size of the view is the amount of model space that is shown in the
+       Graphics Window. For example, consider using a camera with a zoom lens to
+       photograph a rose. As shown in the following figures, if you zoom in on
+       the rose, it will appear large in relation to your viewing field. If you
+       zoom out, it will appear smaller. In actuality, the view size for the rose
+       image on the left might represent only 15 mm across while the view size
+       for the image on the right might represent 100 mm across. In both cases,
+       however, the actual size of the rose is the same.
+     </para>
+     
+     <informaltable>
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Zoom In to View Details (small size of view)</entry>
+	     <entry>Zoom Out to View Object 
+	     in Relation to Environment (large size of view)</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <para>
+       To change the view size of your radio through the GUI, click the right
+       mouse button to zoom in and the left mouse button to zoom out. Each time
+       you click the left or right mouse button, the view of the design will
+       increase or decrease in size by a factor of 2 (i.e., two times larger or
+       two times smaller than the previous size).
+     </para>
+     <para>
+       You can also zoom in or out on your design by going to the View menu and
+       selecting Zoom In or Zoom Out. A drawback to this method is that you can
+       only zoom in or out one time because the drop-down menu closes once you
+       make a selection.
+     </para>
+     <para>
+       If you get lost at any point while creating a model, you can use the zap
+       (Z) command to clear the geometry from the Graphics Window and then recall
+       the shape with the draw command. When drawing in an empty Graphics Window,
+       MGED automatically sizes the view to fit what you draw into the window.
+     </para>
+     <para>
+       You can control the view size of your radio more accurately with the
+       Command Window. To set the size to 100 (of whichever units you have
+       selected), type at the prompt:
+       
+       <command>size 100[Enter]</command>
+     </para>
+     <para>
+       You can also zoom in or out on a design by typing zoom on the Command
+       Line. To make your radio appear 50% smaller, you would type:
+       
+       <command>zoom 0.5[Enter]</command>
+     </para>
+     <para>
+       To make your radio appear twice as large, you would type:
+       
+       <command>zoom 2[Enter]</command>
+     </para>
+     
+     <note>Remember that changing the view size does NOT affect the size of the
+     object. You will change the size of an object in Lesson 6.
+     </note>
+     </sect2>
+     
+     <sect2><title>Angle of View</title>
+     
+     <para>
+       Azimuth, elevation, and twist (all measured in degrees) determine where
+       you are in relation to the object you are viewing. Azimuth determines
+       where you are around the sides of it (i.e., to the front, left, right,
+       behind, or somewhere in between), elevation determines where you are above
+       or below it, and twist determines the angle you are rotated about the
+       viewing direction.
+     </para>
+     <para>
+       To better understand azimuth, imagine walking around a truck with a camera
+       to photograph it. As shown in the following illustrations, you would be at
+       0'0 azimuth if you stood directly in front of the truck to take its
+       picture. If you circled around slightly to your right, you would be at
+       35'0 azimuth. If you moved further around until you were looking directly
+       at the driver's side (in U.S. trucks), you would be at 90'0 azimuth.
+       Standing behind it would put you at 180'0 azimuth. If you were facing the
+       passenger's side, you would be at 270'0 azimuth.
+     </para>
+     
+     <note>
+       The terms azimuth, elevation, and twist are similar to the terms yaw,
+       pitch, and roll, respectively, which are common terms in the
+       aerospace industry.
+     </note>
+     
+     
+     <informaltable frames="none">
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Front (az=0, el=0)</entry>
+	     <entry>az=35, el=0</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <informaltable frames="none">
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Left (az=90, el=0)</entry>
+	     <entry>Rear (az=180, el=0)</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <informaltable frames="none">
+       <tgroup cols='1'>
+	 <tbody>
+	   <row>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Right (az=270, el=0)</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <para>
+       Elevation, on the other hand, involves the viewer's position above or
+       below an object. In the preceding example, you circled around a truck
+       without changing your relative height. You had an elevation of 0'0, which
+       means you were level with it. As the following figures illustrate,
+       however, imagine stopping at the 35'0 azimuth position and then climbing a
+       ladder to photograph the truck from 25'0 elevation. Climbing higher, you
+       would be at 60'0 elevation. If you were directly above it with the camera
+       facing down, you would be at 90'0 elevation. If you crawled under the
+       truck and looked directly up at it, you would be at -90'0 elevation.
+     </para>
+     
+     <informaltable frames="none">
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>az=35, el=0</entry>
+	     <entry>az=35, el=25</entry>
+	   </row>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>az=35, el=60</entry>
+	     <entry>az=35, el=90</entry>
+	   </row>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Top (az=270, el=90)</entry>
+	     <entry>Bottom (az=270, el=-90)</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <para>
+       Finally, twist (which is an optional setting in MGED) specifies a rotation
+       about the viewing direction. This rotation is applied to the view after
+       azimuth and elevation have been designated. So, returning to our truck
+       example, imagine standing in front of the vehicle (az=0, el=0) and then
+       tilting your camera counterclockwise 14'0. This would give your view a
+       14'0 twist angle, as shown in the following figure (on the left). Note
+       again that it is not the truck that is tipped up, but simply your view of
+       it. For more information on specifying twist, see the ae command in
+       Appendix A.
+  
+       <informaltable frames="none">
+	 <tgroup cols='1'>
+	   <tbody>
+	     <row>
+	       <entry><graphic/></entry>
+	     </row>
+	     <row>
+	       <entry>Front (az=0, el=0, tw=14)</entry>
+	     </row>
+	   </tbody>
+	 </tgroup>
+       </informaltable>
+     </para>
+     </sect2>
+     </sect1>
+     
+     <sect1><title>Summing up on Azimuth and Elevation and the xyz Coordinate System</title>
+     
+     <para>
+       As mentioned at the start of this lesson, MGED operates in a
+       three-dimensional coordinate system (determined by the x, y, and z axes).
+       Azimuth is measured in the xy plane with the positive x direction
+       corresponding to an azimuth of 0'0. Positive azimuth angles are measured
+       from the positive x axis toward and past the positive y axis. Negative
+       azimuth angles are measured in the other direction.
+     </para>
+     
+     <figure>
+       <title>Azimuth, Elevation, and the xyz Coordinate System</title>
+       <screenshot>
+	 <graphic fileref="coordsystem.png"/>
+       </screenshot>
+     </figure>
+     
+     <para>
+       If the azimuth angle is 0, then elevation is measured in the xz plane with
+       +90'0 corresponding to the positive z direction and -90'0 corresponding to
+       the negative z direction. However, if azimuth is not 0, these angles are
+       in a plane aligned with the azimuth direction.
+     </para>
+     
+     </sect1>
+     
+     <sect1><title>Viewing Your Radio from Different Angles</title>
+     
+     <para>
+       Let's now experiment with different views of your radio. MGED has several
+       standard default views, which you've already seen in the preceding truck
+       example. They include Top (az270, el90); Bottom (az270, el-90); Right
+       (az270, el0); Left (az90, el0); Front (az0, el0); Rear (az180, el0); az35,
+       el25; and az45, el45.
+     </para>
+     
+     <para>
+       Go to the View menu and try viewing your radio from different angles.
+     </para>
+     
+     <informaltable frames="none">
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Top</entry>
+	     <entry>az35,el25</entry>
+	   </row>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Right</entry>
+	     <entry>Front</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <para>
+       You can also select any azimuth-elevation combination from the Command
+       Line. For example, at the prompt type
+       
+       <command>ae 128 17[Enter]</command>
+       
+       As with many of the Command Line options, this method of selecting views
+       provides a finer degree of control/precision when you need it.
+     </para>
+     
+     <para>
+       MGED can also display multiple views simultaneously. Go to the Modes menu
+       and click on Multipane. Four small panes with different views should
+       appear in your Graphics Window, as shown in the following illustration.
+     </para>
+     
+     
+     <figure>
+       <title>Multipane View of the Radio</title>
+       <screenshot>
+	 <graphic fileref="multradioviews.png"/>
+       </screenshot>
+     </figure>
+     </sect1>
+     
+     <sect1><title>Working with Shift Grips</title>
+     
+     <para>
+       The Shift Grip options of MGED are handy hot-key and mouse button
+       combinations that can be used in two different ways. With regard to our
+       present discussion on viewing, the Shift Grips can, in effect, "drag" the
+       world around in front of the viewer (but without actually changing the
+       coordinates of the viewed objects). The same Shift Grips can also be used
+       in Edit mode to actually move or alter the geometry of your objects. In
+       both cases, the Shift Grips appear to do the same thing, so it is
+       important always to know the mode in which you are operating.
+     </para>
+     
+     <para>
+       In general, the SHIFT key translates (moves), the CTRL key rotates, and
+       the ALT key constrains (or limits) translation or rotation to a particular
+       axis (x, y, or z). These axes correspond to the three mouse buttons as
+       follows: the left button represents the x axis, the middle button
+       represents the y axis, and the right button represents the z axis. In
+       addition, the SHIFT and CTRL keys can be used in conjunction with any
+       mouse button to scale an object (although the ALT key will not constrain
+       this action). The following table lists all of the key bindings and their
+       functions.
+     </para>
+  
+     <table frame='all'><title>Shift Grip Keys and Effects</title>
+     <tgroup cols='5' align='center' colsep='1' rowsep='1'>
+       <colspec colname='c1'/>
+       <colspec colname='c2'/>
+       <colspec colname='c3'/>
+       <colspec colname='c4'/>
+       <thead>
+	 <row>
+	   <entry>Function</entry>
+	   <entry>Key Combination</entry>
+	   <entry>Effect in Normal Viewing</entry>
+	   <entry>Effect in Edit Mode</entry>
+	 </row>
+       </thead>
+       <tbody>
+	 <row>
+	   <entry>Translate (Move)</entry>
+	   <entry>SHIFT + any mouse button + mouse drag</entry>
+	   <entry>Moves view in any direction</entry>
+	   <entry>Translates object in any direction</entry>
+	 </row>
+	 <row>
+	   <entry>Rotate</entry>
+	   <entry>CTRL + any mouse button + mouse drag</entry>
+	   <entry>Rotates view in any direction</entry>
+	   <entry>Rotates object in any direction</entry>
+	 </row>
+	 <row>
+	   <entry morerows='2' valign='middle'>Constrain Translation</entry>
+	   <entry>SHIFT + ALT + left mouse button + mouse drag</entry>
+	   <entry>Moves view in the x direction</entry>
+	   <entry>Translates object in the x direction</entry>
+	 </row>
+	 <row>
+	   <entry>SHIFT + ALT + middle mouse button + mouse drag</entry>
+	   <entry>Moves view in the y direction</entry>
+	   <entry>Translates object in the y direction</entry>
+	 </row>
+	 <row>
+	   <entry>SHIFT + ALT + right mouse button + mouse drag</entry>
+	   <entry>Moves view in the z direction</entry>
+	   <entry>Translates object in the z direction</entry>
+	 </row>
+	 <row>
+	   <entry morerows='2' valign='middle'>Constrain Rotation</entry>
+	   <entry>CTRL + ALT + left mouse button + mouse drag</entry>
+	   <entry>Rotates view about the x axis</entry>
+	   <entry>Rotates object about the x axis</entry>
+	 </row>
+	 <row>
+	   <entry>CTRL + ALT + middle mouse button + mouse drag</entry>
+	   <entry>Rotates view about the y axis</entry>
+	   <entry>Rotates object only about the y axis</entry>
+	 </row>
+	 <row>
+	   <entry>CTRL + ALT + right mouse button + mouse drag</entry>
+	   <entry>Rotates view about the z axis</entry>
+	   <entry>Rotates object aboutthe z axis</entry>
+	 </row>
+	 <row>
+	   <entry>Scale</entry>
+	   <entry>SHIFT + CTRL + any mouse button + mouse drag</entry>
+	   <entry>Scales view larger or smaller</entry>
+	   <entry>Scales object larger or smaller</entry>
+	 </row>
+       </tbody>
+     </tgroup>
+     </table>
+     
+     <caution>
+       Depending on your window manager or desktop environment settings,     
+       some key combinations may already be designated to perform other      
+       tasks (e.g., resizing or moving a window). If so, you may need to     
+       adjust settings to allow the Shift Grip options to function.          
+       Furthermore, left-handed users may have switched the behavior of the  
+       left and right mouse buttons in their system configurations. In such  
+       instances, the terms left mouse button and right mouse button should  
+       be switched throughout this document.                                 
+     </caution>
+     
+     <para>
+       Probably the easiest way to familiarize yourself with the Shift Grip
+       options is to try them out on your radio. Using the preceding table as a
+       guide, experiment with translating, rotating, constraining translation and
+       rotation to particular axes, and sizing your radio view.
+     </para>
+     
+     <note>
+       Remember, although the Shift Grip options may appear to be            
+       manipulating objects, unless you are in Edit mode they are only       
+       manipulating your view of the objects.                                
+     </note>
+   </sect1>
+   
+   <sect1><title>Review</title>
+   
+   <para>
+     In this lesson, you:
+     
+     <itemizedlist mark='bullet'>
+       <listitem>
+	 <para>Created a model radio.</para>
+       </listitem>
+       <listitem>
+	 <para>Located  viewing information in the Command Window.</para>
+       </listitem>
+       <listitem>
+	 <para>Identified elements of the MGED viewing system.</para>
+       </listitem>
+       <listitem>
+	 <para>Viewed your radio from different angles.</para>
+       </listitem>
+       <listitem>
+	 <para>Worked with Shift Grips.</para>
+       </listitem>
+     </itemizedlist>
+   </para>
+   </sect1>
+ </chapter>
+  
    Lesson 3: Using the Insert Command to Size and Place Shapes
 
    In this lesson, you will:
@@ -1327,7 +1469,7 @@
    Begin by making the Command Window active (usually by clicking anywhere in
    the window). Then, at the MGED prompt, type in the command:
 
-   make sph1.s sph <ENTER>
+   make sph1.s sph [Enter]
 
    As noted in Lesson 1, this command tells MGED to:
 
@@ -1344,7 +1486,7 @@
 
    To make the rcc from the Command Window prompt, type:
 
-   make rcc1.s rcc<ENTER>
+   make rcc1.s rcc[Enter]
 
    Your Graphics Window should now display a large rcc that, from the default
    view of az35, el25, looks as if it intersects the sphere you previously
@@ -1364,7 +1506,7 @@
    Graphics Window.  You are now ready to create a sphere using the in
    command. At the MGED prompt type:
 
-   in sph2.s sph<ENTER>
+   in sph2.s sph[Enter]
 
    MGED will respond with:
 
@@ -1373,7 +1515,7 @@
    You must tell MGED where to position the vertex (center) of your sphere in
    space. Type at the MGED prompt:
 
-   4 4 4<ENTER>
+   4 4 4[Enter]
 
    +------------------------------------------------------------------------+
    || As you work in MGED, you will often be asked to enter a value for a   |
@@ -1392,7 +1534,7 @@
 
    Type in:
 
-   3<ENTER>
+   3[Enter]
 
    The radius of your sphere will be 3 mm. The following is the dialog that
    should appear in your Command Window (including the appropriate
@@ -1414,23 +1556,23 @@
 
    To make the right circular cylinder, type at the Command Window prompt:
 
-   in rcc2.s rcc<ENTER>
+   in rcc2.s rcc[Enter]
 
    MGED will ask you to enter values for x, y, and z of the vertex (where you
    want the center of one end of the rcc placed in space). Type:
 
-   4 4 0<ENTER>
+   4 4 0[Enter]
 
    Be sure to leave spaces between each of these numbers.
 
    MGED will now ask you to enter the x, y, and z values of the height (H)
    vector (i.e., how long you want the rcc to be). Type:
 
-   0 0 4<ENTER>
+   0 0 4[Enter]
 
    The last value you will need to enter is the radius of the rcc. Type:
 
-   3<ENTER>
+   3[Enter]
 
    The dialog in the Command Window for the creation of the rcc should look
    like this:
@@ -1466,7 +1608,7 @@
    Clear the Graphics Window by using the Z command. Now make another sphere
    by typing after the MGED prompt:
 
-   in sph3.s sph 4 4 4 3<ENTER>
+   in sph3.s sph 4 4 4 3[Enter]
 
    The meaning of this longer form of the command is:
 
@@ -1485,7 +1627,7 @@
    To make the right circular cylinder using this method, type after the MGED
    prompt:
 
-   in rcc3.s rcc 4 4 0 0 0 4 3<ENTER>
+   in rcc3.s rcc 4 4 0 0 0 4 3[Enter]
 
    The meaning of this command is:
 
@@ -1631,7 +1773,7 @@
    You should now have two windows prominently displayed on your screen. At
    the MGED prompt in the Command Window, type:
 
-   draw sph2.s rcc2.s<ENTER>
+   draw sph2.s rcc2.s[Enter]
 
    2. Creating a Region
 
@@ -1644,7 +1786,7 @@
 
    At the MGED prompt, type:
 
-   r shapes2.r u sph2.s u rcc2.s<ENTER> [Note: Make sure you key in
+   r shapes2.r u sph2.s u rcc2.s[Enter] [Note: Make sure you key in
 
    the information correctly before you press ENTER. Spaces, or the lack
    thereof, are important.]
@@ -1663,7 +1805,7 @@
 
    Now type in:
 
-   mater shapes2.r<ENTER>
+   mater shapes2.r[Enter]
 
    MGED will respond with:
 
@@ -1673,7 +1815,7 @@
 
    Type in:
 
-   plastic<ENTER>
+   plastic[Enter]
 
    MGED will ask:
 
@@ -1683,7 +1825,7 @@
 
    Type in:
 
-   0 255 0<ENTER>
+   0 255 0[Enter]
 
    This will assign a light green color to the region. MGED will now ask:
 
@@ -1693,7 +1835,7 @@
 
    Type:
 
-   0<ENTER>
+   0[Enter]
 
    When you have completed this set of commands, your Command Window should
    look like the following example:
@@ -1702,7 +1844,7 @@
 
    The one-line version of this set of commands would be:
 
-   mater shapes2.r plastic 0 255 0 0<ENTER>
+   mater shapes2.r plastic 0 255 0 0[Enter]
 
    Diagrammed, this command says to:
 
@@ -1720,7 +1862,7 @@
    An easy way to clear the Graphics Window of the old design and draw the
    new region is to type at the MGED prompt:
 
-   B shapes2.r<ENTER>
+   B shapes2.r[Enter]
 
    This command tells MGED to:
 
@@ -1976,7 +2118,7 @@
    Begin by opening the database shapes.g that you created in Lesson 3. At
    the Command Window prompt, type:
 
-   draw sph2.s rcc2.s<ENTER>
+   draw sph2.s rcc2.s[Enter]
 
    This lets us see the shapes we will be using to create our regions. As
    seen earlier, the two shapes should look something like the following:
@@ -1986,7 +2128,7 @@
    In this lesson, we will create different shapes to demonstrate the
    function of Boolean operations. In the Command Window, type the following:
 
-   r part1.r u rcc2.s - sph2.s<ENTER>
+   r part1.r u rcc2.s - sph2.s[Enter]
 
    This command tells MGED to:
 
@@ -2044,16 +2186,16 @@
    Next we will make a blue region using the intersection operator instead of
    subtraction. Once again, we start by creating a region:
 
-   r part2.r u rcc2.s + sph2.s<ENTER>
+   r part2.r u rcc2.s + sph2.s[Enter]
 
    For comparison to the GUI approach used to make part1.r, let's use the
    Command Line to assign the color to part2.r:
 
-   mater part2.r plastic 0 0 255 0<ENTER>
+   mater part2.r plastic 0 0 255 0[Enter]
 
    Finally, Blast this new region onto the display as follows:
 
-   B part2.r<ENTER>
+   B part2.r[Enter]
 
    Now raytrace the object. It should look similar to the preceding
    right-hand image.
@@ -2254,9 +2396,9 @@
    An even easier way to make the copies is to use the cp (copy) command as
    follows:
 
-   cp ball1.s ball2.s<ENTER>
+   cp ball1.s ball2.s[Enter]
 
-   cp ball1.s ball3.s<ENTER>
+   cp ball1.s ball3.s[Enter]
 
    Editing the Balls of the Goblet Stem
 
@@ -2303,15 +2445,15 @@
 
    To make the stem a region, type at the Command Window prompt:
 
-   r stem1.r u ball1.s u ball2.s u ball3.s<ENTER>
+   r stem1.r u ball1.s u ball2.s u ball3.s[Enter]
 
    To make the base a region, type at the prompt:
 
-   r base1.r u base1.s - ball1.s<ENTER>
+   r base1.r u base1.s - ball1.s[Enter]
 
    To make the basin a region, type at the prompt:
 
-   r basin1.r u basin1.s - stem1.r<ENTER>
+   r basin1.r u basin1.s - stem1.r[Enter]
 
    Note that when creating base1.r, we subtracted a primitive shape from
    another primitive shape. When creating basin1.r, we subtracted an entire
@@ -2322,7 +2464,7 @@
    To combine all the regions into one object, you will need to perform one
    last Boolean operation. At the prompt in the Command Window, type:
 
-   comb goblet1.c u basin1.r u stem1.r u base1.r<ENTER>
+   comb goblet1.c u basin1.r u stem1.r u base1.r[Enter]
 
    This operation tells the MGED program to:
 
@@ -2345,7 +2487,7 @@
    To view the data tree for this combination, type at the Command Window
    prompt:
 
-   tree goblet1.c<ENTER>
+   tree goblet1.c[Enter]
 
    MGED will respond with:
 
@@ -2454,7 +2596,7 @@
    again. The easiest way to do this is to open the database from the
    Terminal Window when first starting MGED. To do this, type at the prompt:
 
-   mged goblet.g<ENTER>
+   mged goblet.g[Enter]
 
    Alternatively, you could start the MGED program, and select File from the
    menu bar and then Open. A dialog box will appear and ask you to enter an
@@ -2468,7 +2610,7 @@
    To draw the goblet you made in the previous lesson, move the mouse pointer
    to the Command Window and type at the prompt:
 
-   draw goblet1.c<ENTER>
+   draw goblet1.c[Enter]
 
    A wireframe representation of the goblet should appear in the Graphics
    Window.
@@ -2499,7 +2641,7 @@
    Graphics Window doesn't reflect them yet. So, return the mouse pointer to
    the Command Window and type at the prompt:
 
-   B goblet1.c<ENTER>
+   B goblet1.c[Enter]
 
    This command clears the screen and redraws the goblet with the color
    selections applied.
@@ -2840,14 +2982,14 @@
 
    To view contents of the database, type at the Command Window prompt:
 
-   ls<ENTER>
+   ls[Enter]
 
    You should see cube1.s, cube2.s, and globe1.s listed as shapes you have
    created. To make regions of these shapes, type at the prompt:
 
-   r cube1.r u cube1.s - cube2.s<ENTER>
+   r cube1.r u cube1.s - cube2.s[Enter]
 
-   r globe1.r u globe1.s<ENTER>
+   r globe1.r u globe1.s[Enter]
 
    3. Using the Combination Editor to Assign Material Properties that Make
    the Objects Appear More Realistic
@@ -2871,7 +3013,7 @@
    by typing Z at the Command Window prompt because both shapes and regions
    are being displayed at this point. Next, type in the Command Window:
 
-   draw cube1.r globe1.r<ENTER>
+   draw cube1.r globe1.r[Enter]
 
    The display box and globe should reappear in the Graphics Window. Go to
    the File menu and select Raytrace. Next, select the white option for
@@ -2938,7 +3080,7 @@
    then type in the following parameters (abbreviated as p) on the Command
    Line:
 
-   p 180 0 0<ENTER>
+   p 180 0 0[Enter]
 
    Our shape should have flipped upside down and jumped to the bottom of the
    first trc. (The two zeros you input indicate no rotation along the y and z
@@ -2956,7 +3098,7 @@
 
    To make a region of the base, type in the Command Window:
 
-   r base1.r u base1.s u base2.s<ENTER>
+   r base1.r u base1.s u base2.s[Enter]
 
    5. Use the Color Tool of the Combination Editor to Produce Customized
    Colors.
@@ -2971,9 +3113,9 @@
    must first clear the Graphics Window and rebuild your design by typing at
    the Command Window prompt:
 
-   Z<ENTER>
+   Z[Enter]
 
-   draw cube1.r globe1.r base1.r<ENTER>
+   draw cube1.r globe1.r base1.r[Enter]
 
    Change your view to az35, el25 and then raytrace your design, which should
    appear similar to the following:
@@ -3048,15 +3190,15 @@
    make. Type in the values given in bold. Make sure you leave spaces between
    variable values.
 
-   Enter X, Y, Z of vertex: 0 0 0<ENTER>
+   Enter X, Y, Z of vertex: 0 0 0[Enter]
 
-   Enter X, Y, Z of height (H) vector: 0 0 3.5<ENTER>
+   Enter X, Y, Z of height (H) vector: 0 0 3.5[Enter]
 
-   Enter radius: 1.75<ENTER>
+   Enter radius: 1.75[Enter]
 
    Note that the streamlined way to do this would be to type:
 
-   in bodyout.s rcc 0 0 0 0 0 3.5 1.75<ENTER>
+   in bodyout.s rcc 0 0 0 0 0 3.5 1.75[Enter]
 
    The diagram of this command is as follows:
 
@@ -3084,7 +3226,7 @@
    will ensure that you don't inadvertently leave a thin film of material
    where the two surfaces meet.
 
-   in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5<ENTER>
+   in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5[Enter]
 
    The diagram of this command is:
 
@@ -3107,7 +3249,7 @@
    shape type for the handle is an elliptical torus. At the Command Window
    prompt, type:
 
-   in handle.s eto 0 2.5 1.75 1 0 0<ENTER>
+   in handle.s eto 0 2.5 1.75 1 0 0[Enter]
 
    The diagram of this command is:
 
@@ -3126,11 +3268,11 @@
    The program will ask you to enter more values for the elliptical torus you
    are creating. Type in the values shown in bold.
 
-   Enter X, Y, Z, of vector C: .6 0 0<ENTER>
+   Enter X, Y, Z, of vector C: .6 0 0[Enter]
 
-   Enter radius of revolution, r: 1.45<ENTER>
+   Enter radius of revolution, r: 1.45[Enter]
 
-   Enter elliptical semi-minor axis, d: 0.2<ENTER>
+   Enter elliptical semi-minor axis, d: 0.2[Enter]
 
    A doughnut shape should appear on the right-hand side of the body. If you
    look carefully, you can see that about one-third of the elliptical torus
@@ -3141,7 +3283,7 @@
    The next step is to combine the two cylinders into the body of the mug. To
    do this, type:
 
-   comb body.c u bodyout.s - bodyin.s<ENTER>
+   comb body.c u bodyout.s - bodyin.s[Enter]
 
    You have told the program to make the combination body.c out of the union
    of bodyout.s minus bodyin.s.
@@ -3158,7 +3300,7 @@
 
    To combine the handle with the outside cylinder, type:
 
-   comb handle.c u handle.s - bodyout.s<ENTER>
+   comb handle.c u handle.s - bodyout.s[Enter]
 
    +------------------------------------------------------------------------+
    |    comb     | handle.c |    u    | handle.s |    -     |   bodyout.s   |
@@ -3173,7 +3315,7 @@
    The last step, of this part of making the mug is to make a region out of
    your combinations. Type:
 
-   r mug.r u body.c u handle.c<ENTER>
+   r mug.r u body.c u handle.c[Enter]
 
    +------------------------------------------------------------------------+
    |       r        |  mug.r  |    u    |   body.c    |   u   |  handle.c   |
@@ -3247,26 +3389,26 @@
    lighting model. Select the plastic shader and set the color to a medium
    shade of green. The dialog in the Command Window should appear as follows:
 
-   mged> mater mug.r<ENTER>
+   mged> mater mug.r[Enter]
 
    Shader =
 
-   Shader? ('del' to delete, CR to skip) plastic<ENTER>
+   Shader? ('del' to delete, CR to skip) plastic[Enter]
 
    Color = (No color specified)
 
    Color R G B (0..255)? ('del' to delete, CR to skip)
 
-   32 128 32<ENTER>
+   32 128 32[Enter]
 
    Inherit = 0: lower nodes (towards leaves) override
 
-   Inheritance (0|1)? (CR to skip) 0<ENTER>
+   Inheritance (0|1)? (CR to skip) 0[Enter]
 
    Enter the appropriate information that is shown in bold font. If you want
    to use the streamlined version, type:
 
-   mater mug.r plastic 32 128 32 0<ENTER>
+   mater mug.r plastic 32 128 32 0[Enter]
 
    Diagrammed, this command says:
 
@@ -3300,7 +3442,7 @@
 
    At the MGED prompt, type:
 
-   in  rim.s tor 0 0 3.5 0 0 1 1.625 0.125<ENTER>
+   in  rim.s tor 0 0 3.5 0 0 1 1.625 0.125[Enter]
 
    +------------------------------------------------------------------------+
    |   in   |  rim.s  |  tor  |  0 0 3.5   |    0 0 1     | 1.625  | 0.125  |
@@ -3316,7 +3458,7 @@
 
    To combine the torus with the cup, you will need to type at the prompt:
 
-   comb body.c u rim.s<ENTER>
+   comb body.c u rim.s[Enter]
 
    Now you are faced with a unique situation. The shape rim.s was added to
    the list of objects being displayed when it was created. However, now it
@@ -3331,9 +3473,9 @@
    redisplay the objects you want to raytrace with the draw command. Type at
    the prompt:
 
-   Z<ENTER>
+   Z[Enter]
 
-   draw mug.r<ENTER>
+   draw mug.r[Enter]
 
    Raytrace your mug. It should now look similar to the following.
 
@@ -3482,7 +3624,7 @@
    To make the rim of the mug, go to the Create, select tor, and name it
    rim.s. Select the Rotate command and type on the Command Line:
 
-   p 0 90 0<ENTER>
+   p 0 90 0[Enter]
 
    to rotate the torus on its side (90'0 about the y axis). Then, Scale and
    edit the various parameters of the torus using the front and top views
@@ -3496,11 +3638,11 @@
    To combine the various shapes of the mug, type the following commands at
    the Command Window prompt:
 
-   comb mug.c u outside.s - inside.s<ENTER>
+   comb mug.c u outside.s - inside.s[Enter]
 
-   comb handle.c u handle.s - outside.s<ENTER>
+   comb handle.c u handle.s - outside.s[Enter]
 
-   comb mug.c u rim.s<ENTER>
+   comb mug.c u rim.s[Enter]
 
    Note: Refer to the previous two lessons to recall how each of these
    commands works.
@@ -3510,7 +3652,7 @@
    To make a region out of the combinations you just created, type at the
    Command Window prompt:
 
-   r mug.r u mug.c u handle.c<ENTER>
+   r mug.r u mug.c u handle.c[Enter]
 
    6. Checking the Data Tree
 
@@ -3537,12 +3679,12 @@
    and figure out where you went wrong. If necessary, you can kill off a
    shape, combination, or region by typing at the Command Window prompt:
 
-   kill [name of shape, combination, or region]<ENTER>
+   kill [name of shape, combination, or region][Enter]
 
    For example, in this lesson you may have created an extra shape, named
    rim2.s, which you no longer want. To kill this shape, you would type:
 
-   kill rim2.s<ENTER>
+   kill rim2.s[Enter]
 
    7. Assigning Material Properties Using the Combination Editor
 
@@ -3557,7 +3699,7 @@
    When you are finished, click on Apply and then Dismiss. In the Command
    Window then, type at the prompt:
 
-   B mug.r<ENTER>
+   B mug.r[Enter]
 
    8. Raytracing the Design
 
@@ -3635,14 +3777,14 @@
 
    Make a region of the tabletop by typing at the Command Window prompt:
 
-   r table1.r u arb8.s<ENTER>
+   r table1.r u arb8.s[Enter]
 
    2. Creating the Candle Base
 
    Create an eto and name it eto1.s. To create the bottom of the candle base,
    you will need to flip the eto 180'0. Type at the Command Window prompt:
 
-   rot 0 180 0<ENTER>
+   rot 0 180 0[Enter]
 
    This tells MGED to rotate the shape 180'0 along the y axis. Next, select
    Scale and make the eto a little smaller than its default size. Place the
@@ -3741,14 +3883,14 @@
 
    Make a region of the flame by typing at the Command Window prompt:
 
-   r flame1.r u part1.s<ENTER>
+   r flame1.r u part1.s[Enter]
 
    5. Making a Combination of the Base, Candle, and Flame
 
    To make a combination of the parts of the candle, type at the Command
    Window prompt:
 
-   comb candle1.c u base1.r u candle1.r u flame1.r<ENTER>
+   comb candle1.c u base1.r u candle1.r u flame1.r[Enter]
 
    6. Checking the Data Tree
 
@@ -3759,7 +3901,7 @@
    the Combination Editor (refer to Lesson 5). At the Command Line prompt,
    type:
 
-   tree candle1.c<ENTER>
+   tree candle1.c[Enter]
 
    Your Boolean expression should read:
 
@@ -3829,7 +3971,7 @@
    the completed design and then Blast the old design by typing at the
    Command Window prompt:
 
-   B table1.r candle1.c<ENTER>
+   B table1.r candle1.c[Enter]
 
    This command tells the MGED program to:
 
@@ -3957,27 +4099,27 @@
    region of each sphere. To do this, type the following in the Command
    Window:
 
-   r sph1.r u sph1.s<ENTER>
+   r sph1.r u sph1.s[Enter]
 
-   r sph2.r u sph2.s<ENTER>
+   r sph2.r u sph2.s[Enter]
 
-   r sph3.r u sph3.s<ENTER>
+   r sph3.r u sph3.s[Enter]
 
-   r sph4.r u sph4.s<ENTER>
+   r sph4.r u sph4.s[Enter]
 
-   r sph5.r u sph5.s<ENTER>
+   r sph5.r u sph5.s[Enter]
 
-   r sph6.r u sph6.s<ENTER>
+   r sph6.r u sph6.s[Enter]
 
-   r sph7.r u sph7.s<ENTER>
+   r sph7.r u sph7.s[Enter]
 
-   r sph8.r u sph8.s<ENTER>
+   r sph8.r u sph8.s[Enter]
 
    +------------------------------------------------------------------------+
    || There are three easier ways to make all of the regions. The first     |
    || involves typing the first command:                                    |
    ||                                                                       |
-   || r sph1.r u sph1.s<ENTER>                                              |
+   || r sph1.r u sph1.s[Enter]                                              |
    ||                                                                       |
    || and then using the up arrow to recall this command. Now use the left  |
    || arrow to move backward in the Command Line to replace both            |
@@ -3989,20 +4131,20 @@
    || some convenient loop commands. The following will make all of the     |
    || regions for us in a single command:                                   |
    ||                                                                       |
-   || foreach i { 1 2 3 4 5 6 7 8 } { <ENTER>                               |
+   || foreach i { 1 2 3 4 5 6 7 8 } { [Enter]                               |
    ||                                                                       |
-   || r sph$i.r u sph$i.s <ENTER>                                           |
+   || r sph$i.r u sph$i.s [Enter]                                           |
    ||                                                                       |
-   || }<ENTER>                                                              |
+   || }[Enter]                                                              |
    ||                                                                       |
    || This is much easier and faster than either of the previous methods.   |
    || However, if there were many more spheres (say 1000 or more), then it  |
    || might be easier to use a third approach, which employs a different    |
    || loop type:                                                            |
    ||                                                                       |
-   || for {set i 1} {i <= 1000} {incr i} {<ENTER>                           |
+   || for {set i 1} {i <= 1000} {incr i} {[Enter]                           |
    ||                                                                       |
-   || r sph$i.r u sph$i.s <ENTER>                                           |
+   || r sph$i.r u sph$i.s [Enter]                                           |
    ||                                                                       |
    || }                                                                     |
    +------------------------------------------------------------------------+
@@ -4021,11 +4163,11 @@
    || Once again, we are performing the same operation multiple times. This |
    || is another good opportunity to use a loop.                            |
    ||                                                                       |
-   || foreach i { 1 2 3 4 5 6 7 8 } {<ENTER>                                |
+   || foreach i { 1 2 3 4 5 6 7 8 } {[Enter]                                |
    ||                                                                       |
-   || mater sph$i.r "plastic" 255 0 0 0<ENTER>                              |
+   || mater sph$i.r "plastic" 255 0 0 0[Enter]                              |
    ||                                                                       |
-   || }<ENTER>                                                              |
+   || }[Enter]                                                              |
    ||                                                                       |
    || In general, the graphical interface is good for doing one thing at a  |
    || time or doing highly visual operations. Repetitive operations are     |
@@ -4054,7 +4196,7 @@
    On the Command Line, create rcc1.c by typing:
 
    comb rcc1.c u rcc1.s - sph1.r - sph2.r - sph3.r - sph4.r - sph5.r - sph6.r
-   - sph7.r - sph8.r<ENTER>
+   - sph7.r - sph8.r[Enter]
 
    Next, bring up the Combination Editor and select base1.r. Change the union
    of rcc1.s in the Boolean Expression window to a union of rcc1.c, and click
@@ -4111,9 +4253,9 @@
    || by using the rm (remove) command to remove rcc1.s from base1.r and    |
    || then adding rcc1.c:                                                   |
    ||                                                                       |
-   || rm base1.r rcc1.s<ENTER>                                              |
+   || rm base1.r rcc1.s[Enter]                                              |
    ||                                                                       |
-   || r base1.r u rcc1.c<ENTER>                                             |
+   || r base1.r u rcc1.c[Enter]                                             |
    ||                                                                       |
    || This would have resulted in a very similar tree as above:             |
    ||                                                                       |
@@ -4215,7 +4357,7 @@
    Now we need to add the jewels to the whole of candle1.c:
 
    comb candle1.c u sph1.r u sph2.r u sph3.r u sph4.r u sph5.r u sph6.r u
-   sph7.r u sph8.r<ENTER>
+   sph7.r u sph8.r[Enter]
 
    There are just a couple of things left to do before you raytrace your
    design. If you have enabled Multipanes or Draw Grid, go back to the Modes
@@ -4289,12 +4431,12 @@
    To make the cab of the truck, you will create a right parallel piped using
    the in (insert) command. At the Command Window prompt, type:
 
-   in cab1.s rpp<ENTER>
+   in cab1.s rpp[Enter]
 
    MGED will ask you to enter values for XMIN, XMAX, YMIN, YMAX, ZMIN, and
    ZMAX. Type at the prompt:
 
-   0 1 0 1 0 1<ENTER>
+   0 1 0 1 0 1[Enter]
 
    This will tell MGED to:
 
@@ -4309,7 +4451,7 @@
 
    You could also have used the streamlined version of:
 
-   in cab1.s rpp 0 1 0 1 0 1<ENTER>
+   in cab1.s rpp 0 1 0 1 0 1[Enter]
 
    A cube shape should appear in the Graphics Window, as follows:
 
@@ -4327,7 +4469,7 @@
    If you are using BRL-CAD version 6.0 or later, at the Command Window
    prompt, type:
 
-   inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1<ENTER>
+   inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]
 
    The inside command tells MGED to:
 
@@ -4354,7 +4496,7 @@
    || are using a pre-6.0 release of the package, the following parameter   |
    || order must be used for the aforementioned inside command:             |
    ||                                                                       |
-   || inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1<ENTER>                  |
+   || inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]                  |
    ||                                                                       |
    || (The order of faces in this case is front, rear, right, left, bottom, |
    || top instead of that specified for versions 6.0 and later.)            |
@@ -4370,7 +4512,7 @@
    Make a cylinder (rcc) to use for cutting away a space for the first wheel
    of the cab. At the Command Window prompt, type:
 
-   make well1.s rcc<ENTER>
+   make well1.s rcc[Enter]
 
    Go to the Edit menu and click on Primitive Selection, then well1.s. After
    selecting a Left view, go back to Edit and select Scale. Reduce the size
@@ -4382,7 +4524,7 @@
    exactly 90'0 along the x axis, a better choice is to use the Command Line
    and type:
 
-   p 90 0 0<ENTER>
+   p 90 0 0[Enter]
 
    After doing so, you may still have to use the Set H and Scale editing
    options to resize and the SHIFT key and left mouse button to position your
@@ -4440,7 +4582,7 @@
 
    It is now time to make a combination of the various cab shapes.
 
-   comb cab1.c u cab1.s - caboff1.s - well1.s - well2.s<ENTER>
+   comb cab1.c u cab1.s - caboff1.s - well1.s - well2.s[Enter]
 
    This command tells MGED to:
 
@@ -4475,7 +4617,7 @@
 
    To make the body of the truck, type at the Command Window prompt:
 
-   in body1.s rpp 0 2 0 1 0 1.5<ENTER>
+   in body1.s rpp 0 2 0 1 0 1.5[Enter]
 
    By now, you should know what this command tells MGED to do. If you have
    forgotten, refer back to making the cab of the truck.
@@ -4516,7 +4658,7 @@
    Before adding wheels to the truck, you need to make a region of the cab
    and body. At the Command Window prompt, type:
 
-   r truck1.r u cab1.c u body1.c<ENTER>
+   r truck1.r u cab1.c u body1.c[Enter]
 
    11. Making Wheels for the Truck
 
@@ -4527,7 +4669,7 @@
 
    To make the first wheel, type at the Command Window prompt:
 
-   in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08<ENTER>
+   in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08[Enter]
 
    This command tells MGED to:
 
@@ -4669,9 +4811,9 @@
    To make a combination of the two truck regions, type at the Command Window
    prompt:
 
-   comb truck1.c u truck1.r u wheel1.r<ENTER>
+   comb truck1.c u truck1.r u wheel1.r[Enter]
 
-   B truck1.c<ENTER>
+   B truck1.c[Enter]
 
    Your data tree for truck1.c should read:
 
@@ -4825,13 +4967,13 @@
    room for internal components. To do this, we can use the inside command to
    create a shape, which we'll call cavity.s:
 
-   inside body.s cavity.s 1 1 1 1 1 1<ENTER>
+   inside body.s cavity.s 1 1 1 1 1 1[Enter]
 
    Now, we'll make a region called case.r and define it as what's left of
    body.s after cavity.s has been subtracted out. The command should look
    like this:
 
-   r case.r u body.s - cavity.s<ENTER>
+   r case.r u body.s - cavity.s[Enter]
 
    +------------------------------------------------------------------------+
    || Remember that the inside command was originally created to hollow out |
@@ -4845,18 +4987,18 @@
    talk button. To do this, we must subtract the three shapes from the case
    as follows:
 
-   r case.r - ant.s - knob.s - btn.s<ENTER>
+   r case.r - ant.s - knob.s - btn.s[Enter]
 
    Finally, we need to "glue" the lip around the speaker to the case's front
    face by typing
 
-   r case.r u spkr.s<ENTER>
+   r case.r u spkr.s[Enter]
 
    Our body is now finished. Note that an experienced modeler would probably
    have combined the preceding three Boolean functions into a single command
    as follows:
 
-   r case.r u body.s - cavity.s - ant.s - knob.s - btn.s u spkr.s<ENTER>
+   r case.r u body.s - cavity.s - ant.s - knob.s - btn.s u spkr.s[Enter]
 
    If we were to raytrace case.r at this point, we would see the following:
 
@@ -4880,16 +5022,16 @@
    || union operators in our last command:                                  |
    ||                                                                       |
    || r case.r u (body.s - cavity.s - ant.s - knob.s - btn.s) u (spkr.s)    |
-   || <ENTER>                                                               |
+   || [Enter]                                                               |
    ||                                                                       |
    || Optionally, we could've unioned in spkr.s before body.s as follows:   |
    ||                                                                       |
-   || r case.r u spkr.s u body.s - cavity.s - ant.s - knob.s - btn.s<ENTER> |
+   || r case.r u spkr.s u body.s - cavity.s - ant.s - knob.s - btn.s[Enter] |
    ||                                                                       |
    || Let's consider, however, what would have happened if we had done the  |
    || following:                                                            |
    ||                                                                       |
-   || r case.r u body.s u spkr.s - cavity.s - ant.s - knob.s - btn.s<ENTER> |
+   || r case.r u body.s u spkr.s - cavity.s - ant.s - knob.s - btn.s[Enter] |
    ||                                                                       |
    || In this last case, operator precedence would have caused the program  |
    || to subtract cavity.s, ant.s, knob.s, and btn.s from spkr.s. Nothing   |
@@ -4907,14 +5049,14 @@
    consists of the union of two primitive shapes. To make them into a region,
    type
 
-   r button.r u btn.s u btn2.s<ENTER>
+   r button.r u btn.s u btn2.s[Enter]
 
    The volume knob and antenna are even simpler. They are single primitive
    shapes that can be made into regions by typing
 
-   r knob.r u knob.s<ENTER>
+   r knob.r u knob.s[Enter]
 
-   r ant.r u ant.s<ENTER>
+   r ant.r u ant.s[Enter]
 
     2. Gathering the Regions into an Assembly Combination
 
@@ -4923,11 +5065,11 @@
    of these parts together. There are several ways to do this. One way would
    be to use a similar method to the one we used to make the regions:
 
-   comb radio.c u case.r u button.r u knob.r u ant.r<ENTER>
+   comb radio.c u case.r u button.r u knob.r u ant.r[Enter]
 
    A shortcut, however, would be to use the g (group) command as follows:
 
-   g radio.c case.r button.r knob.r ant.r<ENTER>
+   g radio.c case.r button.r knob.r ant.r[Enter]
 
    Unlike the comb command, the g command assumes that all of the items
    specified will be unioned together, and so no Boolean operators need to be
@@ -4938,7 +5080,7 @@
 
    and easily specify all of the regions in the database:
 
-   g radio.c *.r<ENTER>
+   g radio.c *.r[Enter]
 
    If we now tree radio.c, we should get the following output in the Command
    Window.
@@ -5001,9 +5143,9 @@
    creating an ellipsoid (which we'll call ant2.s) and unioning it in with
    the rest of the antenna as follows:
 
-   in ant2.s ell1 2 2 94 0 0 1 3<ENTER>
+   in ant2.s ell1 2 2 94 0 0 1 3[Enter]
 
-   r ant.r u ant2.s<ENTER>
+   r ant.r u ant2.s[Enter]
 
     4. Adding Internal Components
 
@@ -5011,15 +5153,15 @@
    hollow shell. Let's further improve it by making a circuit board to go
    inside the case. To do this, type:
 
-   in board.s rpp 3 4 1 31 1 47<ENTER>
+   in board.s rpp 3 4 1 31 1 47[Enter]
 
-   r board.r u board.s<ENTER>
+   r board.r u board.s[Enter]
 
    Let's give the board a green semi-shiny color. The easiest way to do this
    is via the Combination Editor, but this time let's use the Command Line
    approach. Type:
 
-   mater board.r "plastic sh=4" 0 198 0 1<ENTER>
+   mater board.r "plastic sh=4" 0 198 0 1[Enter]
 
    Diagrammed, this command says to:
 
@@ -5035,7 +5177,7 @@
    Finally, we'll include the board with the rest of the components in
    radio.c as follows:
 
-   g radio.c board.r<ENTER>
+   g radio.c board.r[Enter]
 
    Our radio should now look like the following:
 
@@ -5124,7 +5266,7 @@
    copy of our present radio case and modify its material properties. We'll
    call the specialty case case_clear.r. Type
 
-   cp case.r case_clear.r<ENTER>
+   cp case.r case_clear.r[Enter]
 
    We can now use the Combination Editor to set the material properties on
    this case without affecting the "master" design of the radio. When this
@@ -5141,11 +5283,11 @@
 
    Finally, create the specialty radio combination by typing:
 
-   g radio_clear.c case_clear.r button.r knob.r ant.r board.r<ENTER>
+   g radio_clear.c case_clear.r button.r knob.r ant.r board.r[Enter]
 
    and then Blast the display with
 
-   B radio_clear.c<ENTER>
+   B radio_clear.c[Enter]
 
    Now raytrace your design to view the resulting effect. The new transparent
    case should appear similar to the following:
@@ -5228,7 +5370,7 @@
    combination that unions in radio.c and subtracts out the shape (cutaway.s)
    that is covering what you want to see (board.r):
 
-   comb radio_cutaway.c u radio.c - cutaway.s<ENTER>
+   comb radio_cutaway.c u radio.c - cutaway.s[Enter]
 
                       Multipane View of Cutting Primitive
 
@@ -5416,18 +5558,18 @@
    To accomplish this restructuring according to functionality, create an
    assembly called electronics.c to hold these components together. Type:
 
-   g electronics.c board.r knob.r button.r<ENTER>
+   g electronics.c board.r knob.r button.r[Enter]
 
    Of course, we now need to remove board.r, knob.r, and button.r from the
    radio.c assembly so that when electronics.c is added to the radio.c
    assembly, we won't have the knob and button included twice in the model.
    To do this, use the rm (remove) command:
 
-   rm radio.c board.r knob.r button.r<ENTER>
+   rm radio.c board.r knob.r button.r[Enter]
 
    and then union in the electronics assembly:
 
-   g radio.c electronics.c<ENTER>
+   g radio.c electronics.c[Enter]
 
    Now the tree for radio.c should appear as follows:
 
@@ -5476,11 +5618,11 @@
    First, we need to get rid of the old radio_cutaway.c, which was based on
    our previous structure. To do this, type
 
-   kill radio_cutaway.c<ENTER>
+   kill radio_cutaway.c[Enter]
 
    and then remake the combination by typing
 
-   comb radio_cutaway.c u case.r - cutaway.s u electronics.c u ant.r<ENTER>
+   comb radio_cutaway.c u case.r - cutaway.s u electronics.c u ant.r[Enter]
 
    Now when we Blast the display and raytrace radio_cutaway.c, we should see
    the following:
