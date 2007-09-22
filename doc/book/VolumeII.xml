@@ -341,7 +341,7 @@
       followed by a new or existing database name with a .g extension. For
       example:
       
-      <literal>mged sphere.g[ENTER]</literal>
+      <command>mged sphere.g[ENTER]</command>
       
       <figure>
 	<title>Terminal Window</title>
@@ -407,7 +407,7 @@
       database you are going to make. When you are done, press the ENTER key.
       For example:
 
-      <literal>mged> title MySphere[ENTER]</literal>
+      <command>mged> title MySphere[ENTER]</command>
 
       Note that in BRL-CAD versions prior to release 6.0, the title is limited
       to 72 characters.
@@ -427,7 +427,7 @@
       just type units in after the MGED prompt in the Command Window, followed
       by the ENTER key. The Command Line looks like:
 
-      <literal>mged> units in[ENTER]</literal>
+      <command>mged> units in[ENTER]</command>
       </para>
 
       </sect1>
@@ -464,7 +464,7 @@
       You can easily create a sphere from the prompt in the Command Window by
       typing just a few commands. At the MGED prompt, type:
 
-      <literal>make sph1.s sph[ENTER]  [Note: Use the digit 1, not the letter l] </literal>
+      <command>make sph1.s sph[ENTER]  [Note: Use the digit 1, not the letter l] </command>
 
       </para>
 
@@ -516,7 +516,7 @@
       <para>
       To recall the sphere, type the command on the Command Line as follows:
 
-      <literal>draw sph1.s[ENTER]</literal>
+      <command>draw sph1.s[ENTER]</command>
 
       This command tells the MGED program to:
 
@@ -541,7 +541,7 @@
       database. To delete the sph1.s object from the display, at the Command
       Window prompt, type:
 
-      <literal>erase sph1.s[ENTER]</literal>
+      <command>erase sph1.s[ENTER]</command>
       </para>
 
       </sect1>     
@@ -572,7 +572,7 @@
       can easily list the attributes of a shape by typing the l (for "list")
       command at the Command Window prompt as follows:
 
-      <literal>l shape_name[ENTER]   [Note: The command is the lowercase letter l]</literal>
+      <command>l shape_name[ENTER]</command> <note>[Note: The command is the lowercase letter l]</note>
       </para>
 
       <note>
@@ -637,7 +637,7 @@
       contents of the database to see what items have been created. To view the
       database contents, type at the Command Window prompt:
 
-      <literal>ls[ENTER]</literal>
+      <command>ls[ENTER]</command>
       </para>
 
 
@@ -651,19 +651,19 @@
       example, if you wanted to kill the sph1.s shape, you would type at the
       Command Window prompt:
 
-      <literal>kill sph1.s[ENTER]</literal>
+      <command>kill sph1.s[ENTER]</command>
 
       Make another sphere through either the Command Window or the GUI and name
       it sph3.s. Once the sphere is made, use the kill command to eliminate it
       from the database by typing at the Command Window prompt:
 
-      <literal>kill sph3.s[ENTER]</literal>
+      <command>kill sph3.s[ENTER]</command>
 
       You can tell the shape has been eliminated by using the ls command in the
       Command Window to list the contents of the database. At the Command Window
       prompt, type:
 
-      <literal>ls[ENTER]</literal>
+      <command>ls[ENTER]</command>
 
       You should see two shapes listed: sph1.s and sph2.s.
       </para>
@@ -779,84 +779,107 @@
    </chapter>
 
 
+   <chapter id="Lesson-2">
+     <title>Learning the Viewing Options</title>
 
+     <para>
+       In this lesson, you will:
+       
+       <itemizedlist mark='bullet'>
+	 <listitem>
+	   <para>Create a model radio.</para>
+	 </listitem> 
+	 <listitem>
+	   <para>Locate  viewing information in the Command Window.</para>
+	 </listitem> 
+	 <listitem>
+	   <para>Identify elements of the MGED viewing system.</para>
+	 </listitem> 
+	 <listitem>
+	   <para>View your radio from different angles.</para>
+	 </listitem> 
+	 <listitem>
+	   <para>Work with Shift Grips.</para>
+	 </listitem> 
+       </itemizedlist>
+     </para>
+     
+     <para>
+       Models in BRL-CAD are constructed in a single xyz coordinate system, which
+       we sometimes refer to as model space. The Graphics Window of MGED displays
+       a portion of this space. The xyz coordinate system is used for specifying
+       both the geometry and the view of the geometry that is presented in the
+       Graphics Window.
+     </para>
+     
+     <para>
+       MGED offers a default view and a variety of optional views. You can switch
+       back and forth between these views during and after model creation. This
+       lesson is designed to help you understand the viewing process and options.
+     </para>
+     
+     <sect1><title>Creating a Radio</title>
+     
+     <para>
+       To gain practice viewing actual geometry, let's build a simple geometric
+       object-a "walkie-talkie" radio. Note that the commands we use to do this
+       are not discussed here because our current concern is on applying the
+       principles of viewing. Later lessons on creating geometry address these
+       commands in detail. Begin by launching MGED and creating a new database
+       named radio.g. Remember that one way to do this is to type the following
+       command in a Terminal Window:
+       
+       <command>$ mged radio.g</command>
+     </para>
+     
+     <para>
+       Type the following in the Command Window, carefully checking each line
+       before pressing ENTER. If you make a mistake, use BACKSPACE or the left/
+       right arrow keys to make corrections before pressing ENTER (see Appendix B
+       for the editing command list).
+     </para>
+     
+     <note>
+       Be especially careful to note the difference between the numeral one  
+       [1] and the letter l [l] in ell1 on the third line.                   
+     </note>
+     
+     <literallayout>
+       in body.s rpp 0 16 0 32 0 48[ENTER]
+       
+       in btn.s rec 8 30 36 0 3 0 4 0 0 0 0 2[ENTER]
+       
+       in btn2.s ell1 8 33 36 4 0 0 2[ENTER]
+       
+       in spkr.s tor 16 16 16 1 0 0 12 1[ENTER]
+       
+       in ant.s rcc 2 2 46 0 0 48 1[ENTER]
+       
+       in knob.s rcc 4 4 40 8 0 0 5[ENTER]
+     </literallayout>
+     
 
+      <note>
+      Note that in the preceding Command Line expressions, btn is an        
+      abbreviation for button, ant is an abbreviation for antenna, and spkr 
+      is an abbreviation for speaker. Also note that the numbers could have 
+      been separated by single spaces. The extra spaces were inserted       
+      simply to improve readability. For some usages (e.g., the r and comb  
+      commands, which are discussed later), the number of spaces has to be  
+      exact.                                                                
+      </note>
+      <para>
+	An image similar to the following should now appear in the Graphics
+	Window.
 
-   Lesson 2: Learning the Viewing Options
-
-   In this lesson, you will:
-
-   +---------------------------------------------------------+
-   |   * Create a model radio.                               |
-   |                                                         |
-   |   * Locate  viewing information in the Command Window.  |
-   |                                                         |
-   |   * Identify elements of the MGED viewing system.       |
-   |                                                         |
-   |   * View your radio from different angles.              |
-   |                                                         |
-   |   * Work with Shift Grips.                              |
-   |---------------------------------------------------------|
-   +---------------------------------------------------------+
-
-   Models in BRL-CAD are constructed in a single xyz coordinate system, which
-   we sometimes refer to as model space. The Graphics Window of MGED displays
-   a portion of this space. The xyz coordinate system is used for specifying
-   both the geometry and the view of the geometry that is presented in the
-   Graphics Window.
-
-   MGED offers a default view and a variety of optional views. You can switch
-   back and forth between these views during and after model creation. This
-   lesson is designed to help you understand the viewing process and options.
-
-   1. Creating a Radio
-
-   To gain practice viewing actual geometry, let's build a simple geometric
-   object-a "walkie-talkie" radio. Note that the commands we use to do this
-   are not discussed here because our current concern is on applying the
-   principles of viewing. Later lessons on creating geometry address these
-   commands in detail. Begin by launching MGED and creating a new database
-   named radio.g. Remember that one way to do this is to type the following
-   command in a Terminal Window:
-
-   $ mged radio.g
-
-   Type the following in the Command Window, carefully checking each line
-   before pressing ENTER. If you make a mistake, use BACKSPACE or the left/
-   right arrow keys to make corrections before pressing ENTER (see Appendix B
-   for the editing command list).
-
-   +------------------------------------------------------------------------+
-   || Be especially careful to note the difference between the numeral one  |
-   || [1] and the letter l [l] in ell1 on the third line.                   |
-   +------------------------------------------------------------------------+
-
-   in body.s rpp 0 16 0 32 0 48<ENTER>
-
-   in btn.s rec 8 30 36 0 3 0 4 0 0 0 0 2<ENTER>
-
-   in btn2.s ell1 8 33 36 4 0 0 2<ENTER>
-
-   in spkr.s tor 16 16 16 1 0 0 12 1<ENTER>
-
-   in ant.s rcc 2 2 46 0 0 48 1<ENTER>
-
-   in knob.s rcc 4 4 40 8 0 0 5<ENTER>
-
-   +------------------------------------------------------------------------+
-   || Note that in the preceding Command Line expressions, btn is an        |
-   || abbreviation for button, ant is an abbreviation for antenna, and spkr |
-   || is an abbreviation for speaker. Also note that the numbers could have |
-   || been separated by single spaces. The extra spaces were inserted       |
-   || simply to improve readability. For some usages (e.g., the r and comb  |
-   || commands, which are discussed later), the number of spaces has to be  |
-   || exact.                                                                |
-   +------------------------------------------------------------------------+
-
-   An image similar to the following should now appear in the Graphics
-   Window.
-
-                            Default View of a Radio
+	<figure>
+	  <title> Default View of a Radio</title>
+	  <screenshot>
+	    <graphic fileref="defaultradio.png"></graphic>
+        </screenshot>
+	</figure>
+      </para>
+     </sect1>
 
    2. Locating Viewing Information in the Command Window
 
