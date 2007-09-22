@@ -881,41 +881,78 @@
       </para>
      </sect1>
 
-   2. Locating Viewing Information in the Command Window
+      <sect1><title>Locating Viewing Information in the Command Window</title>
+      <para>
+	Now take a minute to look at the Command Window. Even if nothing is in the
+	window, enclosed in the bottom border is a string of information about the
+	Graphics Window. An example string might read:
 
-   Now take a minute to look at the Command Window. Even if nothing is in the
-   window, enclosed in the bottom border is a string of information about the
-   Graphics Window. An example string might read:
+	<literal>cent=(8.000 16.000 24.000) sz=96.000 mm az=35.00 el=25.00 tw=-0.00
+	ang=(0.00 0.00 0.00)</literal>
+      </para>
+      <para>
+	As detailed in the following table, this information contains four groups
+	of viewing data about the Graphics Window.
 
-   cent=(8.000 16.000 24.000) sz=96.000 mm az=35.00 el=25.00 tw=-0.00
-   ang=(0.00 0.00 0.00)
-
-   As detailed in the following table, this information contains four groups
-   of viewing data about the Graphics Window.
-
-                Viewing Data at the Bottom of the Command Window
-
-   +------------------------------------------------------------------------+
-   |   Screen    |    Viewing    | Location  |   Default   |    Default     |
-   | Designation |  Information  |    of     |             |                |
-   |             |               | Variables |    Units    |     Values     |
-   |-------------+---------------+-----------+-------------+----------------|
-   |    cent=    |   Center of   |  First 3  | Millimeters |  0.000 0.000   |
-   |             |     View      |  numbers  |             |     0.000      |
-   |-------------+---------------+-----------+-------------+----------------|
-   |             |    Size of    |    4th    |             | Dependent upon |
-   |     sz=     |               |           | Millimeters | size selected  |
-   |             |     View      |  number   |             |                |
-   |-------------+---------------+-----------+-------------+----------------|
-   |     az=     |               |  5th and  |             |     35.00      |
-   |             | Viewing Angle |    6th    |   Degrees   |                |
-   |     el=     |               |           |             |     25.00      |
-   |             |               |  numbers  |             |                |
-   |-------------+---------------+-----------+-------------+----------------|
-   |     tw=     |   Twist and   | 7th-10th  |             |      0.00      |
-   |             |               |           |   Degrees   |                |
-   |    ang=     | Angle of View |  numbers  |             | 0.00 0.00 0.00 |
-   +------------------------------------------------------------------------+
+	<table frame='all'><title>Viewing Data at the Bottom of the Command Window</title>
+	<tgroup cols='5' align='center' colsep='1' rowsep='1'>
+	  <colspec colname='c1'/>
+	  <colspec colname='c2'/>
+	  <colspec colname='c3'/>
+	  <colspec colname='c4'/>
+	  <colspec colname='c5'/>
+	  <thead>
+	    <row>
+	      <entry>Screen Designation</entry>
+	      <entry>Viewing Information</entry>
+	      <entry>Location of Variables</entry>
+	      <entry>Default Units</entry>
+	      <entry>Default Values</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>cent=</entry>
+	      <entry>Center of View</entry>
+	      <entry>First 3 numbers</entry>
+	      <entry>Millimeters</entry>
+	      <entry>0.000 0.000 0.000</entry>
+	    </row>
+	    <row>
+	      <entry>sz=</entry>
+	      <entry>Size of View</entry>
+	      <entry>4th number</entry>
+	      <entry>Millimeters</entry>
+	      <entry>Dependent upon size selected</entry>
+	    </row>
+	    <row>
+	      <entry>az=</entry>
+	      <entry morerows='1' valign='middle'>Viewing Angle</entry>
+	      <entry morerows='1' valign='middle'>5th and 6th numbers</entry>
+	      <entry morerows='1' valign='middle'>Degrees</entry>
+	      <entry>35.00</entry>
+	    </row>
+	    <row>
+	      <entry>el=</entry>
+	      <entry>25.00</entry>
+	    </row>
+	    <row>
+	      <entry>tw=</entry>
+	      <entry>Twist</entry>
+	      <entry morerows='1' valign='middle'>7th-10th numbers</entry>
+	      <entry morerows='1' valign='middle'>Degrees</entry>
+	      <entry>0.00</entry>
+	    </row>
+	    <row>
+	      <entry>ang=</entry>
+	      <entry>Angle of View</entry>
+	      <entry>0.00 0.00 0.00</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+	</table>
+      </para>
+      </sect1>
 
    3. Identifying Elements of the MGED Viewing System
 
