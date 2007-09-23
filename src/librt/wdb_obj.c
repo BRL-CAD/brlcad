@@ -3397,6 +3397,10 @@ adjust_names(
 	     struct concat_data *cc_data )
 {
 	char *new_name;
+        
+        if( trp == NULL ) {
+            return;
+        }
 
 	switch( trp->tr_op ) {
 		case OP_DB_LEAF:
@@ -3457,10 +3461,8 @@ copy_object(
 		switch( ip.idb_minor_type ) {
 			case DB5_MINORTYPE_BRLCAD_COMBINATION:
 				comb = (struct rt_comb_internal *)ip.idb_ptr;
-				if( comb->tree != NULL ) {
-				    RT_CK_COMB_TCL( interp, comb );
-				    adjust_names( interp, comb->tree, curr_dbip, name_tbl, used_names_tbl, cc_data );
-				}
+                                RT_CK_COMB_TCL( interp, comb );
+                                adjust_names( interp, comb->tree, curr_dbip, name_tbl, used_names_tbl, cc_data );
 				break;
 			case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 				extr = (struct rt_extrude_internal *)ip.idb_ptr;
