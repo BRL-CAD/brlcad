@@ -1429,317 +1429,513 @@
    </sect1>
  </chapter>
   
-   Lesson 3: Using the Insert Command to Size and Place Shapes
+ <chapter id="Lesson-3">
+   <title>Using the Insert Command to Size and Place Shapes</title>
 
+   <para>
    In this lesson, you will:
 
-   +------------------------------------------------------------------------+
-   |   * Create a sphere and a right circular cylinder using the make       |
-   |     command.                                                           |
-   |                                                                        |
-   |   * Create the same two shapes using the in (insert) command.          |
-   |                                                                        |
-   |   * Combine arguments on the Command Line to streamline the entry of   |
-   |     variables.                                                         |
-   |                                                                        |
-   |   * Develop a combined-command form to help manage Command Line        |
-   |     variables.                                                         |
-   |                                                                        |
-   |   * Consider conventions for choosing names for your objects.          |
-   |                                                                        |
-   |   * View your shapes from different perspectives using options of the  |
-   |     View menu.                                                         |
-   |                                                                        |
-   |   * Quit the MGED program.                                             |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Create a sphere and a right circular cylinder using the make command.</para>
+	</listitem>
+	<listitem>
+	  <para>Create the same two shapes using the in (insert) command.</para>
+	</listitem>
+	<listitem>
+	  <para>Combine arguments on the Command Line to streamline the entry of variables.</para>
+	</listitem>
+	<listitem>
+	  <para>Develop a combined-command form to help manage Command Line variables.</para>
+	</listitem>
+	<listitem>
+	  <para>Consider conventions for choosing names for your objects.</para>
+	</listitem>
+	<listitem>
+	  <para>View your shapes from different perspectives using options of the View menu.</para>
+	</listitem>
+	<listitem>
+	  <para>Quit the MGED program.</para>
+	</listitem>
+      </itemizedlist>
+      
+    </para>
 
-   This lesson focuses on creating shapes from the Command Window using the
-   make and in commands. You will create a sphere (sph) and a right circular
-   cylinder (rcc) using both commands so that you can see how each command
-   works. Later in the lesson, you will practice viewing your model from
-   different angles.
+    <para>
+      This lesson focuses on creating shapes from the Command Window using the
+      make and in commands. You will create a sphere (sph) and a right circular
+      cylinder (rcc) using both commands so that you can see how each command
+      works. Later in the lesson, you will practice viewing your model from
+      different angles.
+    </para>
+    
+    <sect1><title>Creating a New Database from the Command Window</title>
+    <para>
+      Create a new database and name it shapes.g. Title your database myShapes.
+    </para>
+    </sect1>
 
-   Creating a New Database from the Command Window
+    <sect1><title>Creating a Sphere Using the Make Command</title>
+    
+    <para>
+      Begin by making the Command Window active (usually by clicking anywhere in
+      the window). Then, at the MGED prompt, type in the command:
 
-   Create a new database and name it shapes.g. Title your database myShapes.
+      <command>make sph1.s sph [Enter]</command>
+    </para>
 
-   1. Creating a Sphere Using the Make Command
+    <para>
+      As noted in Lesson 1, this command tells MGED to:
 
-   Begin by making the Command Window active (usually by clicking anywhere in
-   the window). Then, at the MGED prompt, type in the command:
+      <informaltable frame="all">
+	<tgroup cols='3'>
+	  <tbody>
+	    <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
+	    <row><entry>Create a shape</entry><entry>Name it sph1.s</entry><entry>Make it a sphere</entry></row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
 
-   make sph1.s sph [Enter]
+      <figure>
+	<title>Wireframe Sphere</title>
+	<screenshot>
+	  <graphic fileref="wireframesphere.png"/>
+	</screenshot>
+      </figure>
+    </para>
+    <para>
+      A sphere shape has now been created, and a wireframe drawing should appear
+      in your Graphics Window.
+    </para>
+    <para>
+      To make the rcc from the Command Window prompt, type:
+      
+      <command>make rcc1.s rcc[Enter]</command>
+    </para>
+    <para>
+      Your Graphics Window should now display a large rcc that, from the default
+      view of az35, el25, looks as if it intersects the sphere you previously
+      created.
+    
+      <figure>
+	<title>Wireframe Sphere and Right Circular Cylinder</title>
+	<screenshot>
+	  <graphic fileref="wireframespherecylinder.png"/>
+	</screenshot>
+      </figure>
+    </para>
 
-   As noted in Lesson 1, this command tells MGED to:
+    <para>
+      Using the make command is a fast and easy way to create a shape; however,
+      most models are going to require shapes that have specific parameters,
+      such as height and radius. So, a more precise way to create these shapes
+      is to use the in (insert) command.
+    </para>
+    </sect1>
+   
+    <sect1><title>Using the In Command to Create Shapes</title>
+    
+    <para>
+      Begin by making the Command Window active (usually done by clicking
+      anywhere in the window). Then, use the Z (zap) command to clear the
+      Graphics Window.  You are now ready to create a sphere using the in
+      command. At the MGED prompt type:
+      
+      <command>in sph2.s sph[Enter]</command>
+    </para>
+    <para>
+      MGED will respond with:
+      
+      <literal>Enter X, Y, Z of vertex:</literal>
+    </para>
+    <para>
+      You must tell MGED where to position the vertex (center) of your sphere in
+      space. Type at the MGED prompt:
+      
+      <command>4 4 4[Enter]</command>
+    </para>
 
-   +----------------------------------------------------+
-   |      make      |     sph1.s     |       sph        |
-   |----------------+----------------+------------------|
-   | Create a shape | Name it sph1.s | Make it a sphere |
-   +----------------------------------------------------+
+    <note>
+      As you work in MGED, you will often be asked to enter a value for a   
+      vector or a vertex. In MGED, a vector represents the distance and     
+      direction from one point in space to another, and a vertex is one     
+      single point in space. The values entered for a vector are typically  
+      used to create an object with specific dimensions. The values entered 
+      for a vertex place the object in space.                               
+    </note>
+    
+    <para>
+      Your sphere will now be placed at (x,y,z)=(4,4,4), as measured in
+      millimeters. Notice that the numbers are separated by spaces followed by
+      the ENTER key. MGED will now ask you to:
+    </para>  
+    <literallayout>
+      Enter radius:
+      
+      Type in:
+      
+      3[Enter]
+    </literallayout>
+    
+    <para>
+      The radius of your sphere will be 3 mm. The following is the dialog that
+      should appear in your Command Window (including the appropriate
+      responses).
+      
+      <command>mged> in sph2.s sph</command>
 
-                                Wireframe Sphere
+      <literal>Enter X, Y, Z of vertex: 4 4 4</literal>
+      
+      <literal>Enter radius: 3</literal>
 
-   A sphere shape has now been created, and a wireframe drawing should appear
-   in your Graphics Window.
+      <literal>51 vectors in 0.000543 sec</literal>
+      
+      The last line of this dialog is simply a record of the computer's speed in
+      drawing the shape. It has no real usefulness to the user at this point.
+    </para>
 
-   To make the rcc from the Command Window prompt, type:
+    <para>
+      A sphere has now been created, and a wireframe drawing similar to the one
+      created using the make command should appear in your Graphics Window.
+    </para>
+    
+    <para>
+      To make the right circular cylinder, type at the Command Window prompt:
 
-   make rcc1.s rcc[Enter]
+      <command>in rcc2.s rcc[Enter]</command>
 
-   Your Graphics Window should now display a large rcc that, from the default
-   view of az35, el25, looks as if it intersects the sphere you previously
-   created.
+      MGED will ask you to enter values for x, y, and z of the vertex (where you
+      want the center of one end of the rcc placed in space). Type:
+      
+      <command>4 4 0[Enter]</command>
 
-                  Wireframe Sphere and Right Circular Cylinder
+      Be sure to leave spaces between each of these numbers.
+    </para>
 
-   Using the make command is a fast and easy way to create a shape; however,
-   most models are going to require shapes that have specific parameters,
-   such as height and radius. So, a more precise way to create these shapes
-   is to use the in (insert) command.
+    <para>
+      MGED will now ask you to enter the x, y, and z values of the height (H)
+      vector (i.e., how long you want the rcc to be). Type:
 
-   2. Using the In Command to Create Shapes
+      <command>0 0 4[Enter]</command>
 
-   Begin by making the Command Window active (usually done by clicking
-   anywhere in the window). Then, use the Z (zap) command to clear the
-   Graphics Window.  You are now ready to create a sphere using the in
-   command. At the MGED prompt type:
+      The last value you will need to enter is the radius of the rcc. Type:
 
-   in sph2.s sph[Enter]
+      <command>3[Enter]</command>
 
-   MGED will respond with:
+      The dialog in the Command Window for the creation of the rcc should look
+      like this:
+    </para>
 
-   Enter X, Y, Z of vertex:
+    <literallayout>
+      mged> in rcc2.s rcc
+      
+      Enter X, Y, Z of vertex: 4 4 0
+      
+      Enter X, Y, Z of height (H) vector: 0 0 4
+      
+      Enter radius: 3
+      
+      42 vectors in 0.000214 sec
+    </literallayout>
+    
+    <para>
+      You should now have new versions of the sphere and rcc shapes. Notice how
+      these two shapes compare in size to the first two you created. The rcc is
+      now in proportion to the sphere and is placed in space off to the left in
+      your Graphics Window. By specifying the dimensions of the shapes and their
+      locations in space, you were able to create the model more precisely.
+    </para>
 
-   You must tell MGED where to position the vertex (center) of your sphere in
-   space. Type at the MGED prompt:
+    <informaltable>
+      <tgroup cols='2'>
+	<tbody>
+	  <row>
+	    <entry><graphic/></entry>
+	    <entry><graphic/></entry>
+	  </row>
+	  <row>
+	    <entry>Shapes Created with Make Command</entry>
+	    <entry>Shapes Created with In Command</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
 
-   4 4 4[Enter]
+  </sect1>
+   
+  <sect1><title>Combining Arguments on One Line</title>
 
-   +------------------------------------------------------------------------+
-   || As you work in MGED, you will often be asked to enter a value for a   |
-   || vector or a vertex. In MGED, a vector represents the distance and     |
-   || direction from one point in space to another, and a vertex is one     |
-   || single point in space. The values entered for a vector are typically  |
-   || used to create an object with specific dimensions. The values entered |
-   || for a vertex place the object in space.                               |
-   +------------------------------------------------------------------------+
-
-   Your sphere will now be placed at (x,y,z)=(4,4,4), as measured in
-   millimeters. Notice that the numbers are separated by spaces followed by
-   the ENTER key. MGED will now ask you to:
-
-   Enter radius:
-
-   Type in:
-
-   3[Enter]
-
-   The radius of your sphere will be 3 mm. The following is the dialog that
-   should appear in your Command Window (including the appropriate
-   responses).
-
-   mged> in sph2.s sph
-
-   Enter X, Y, Z of vertex: 4 4 4
-
-   Enter radius: 3
-
-   51 vectors in 0.000543 sec
-
-   The last line of this dialog is simply a record of the computer's speed in
-   drawing the shape. It has no real usefulness to the user at this point.
-
-   A sphere has now been created, and a wireframe drawing similar to the one
-   created using the make command should appear in your Graphics Window.
-
-   To make the right circular cylinder, type at the Command Window prompt:
-
-   in rcc2.s rcc[Enter]
-
-   MGED will ask you to enter values for x, y, and z of the vertex (where you
-   want the center of one end of the rcc placed in space). Type:
-
-   4 4 0[Enter]
-
-   Be sure to leave spaces between each of these numbers.
-
-   MGED will now ask you to enter the x, y, and z values of the height (H)
-   vector (i.e., how long you want the rcc to be). Type:
-
-   0 0 4[Enter]
-
-   The last value you will need to enter is the radius of the rcc. Type:
-
-   3[Enter]
-
-   The dialog in the Command Window for the creation of the rcc should look
-   like this:
-
-   mged> in rcc2.s rcc
-
-   Enter X, Y, Z of vertex: 4 4 0
-
-   Enter X, Y, Z of height (H) vector: 0 0 4
-
-   Enter radius: 3
-
-   42 vectors in 0.000214 sec
-
-   You should now have new versions of the sphere and rcc shapes. Notice how
-   these two shapes compare in size to the first two you created. The rcc is
-   now in proportion to the sphere and is placed in space off to the left in
-   your Graphics Window. By specifying the dimensions of the shapes and their
-   locations in space, you were able to create the model more precisely.
-
-   +-------------------------------------------------------------------+
-   |----------------------------------+--------------------------------|
-   | Shapes Created with Make Command | Shapes Created with In Command |
-   +-------------------------------------------------------------------+
-
-   3. Combining Arguments on One Line
-
-   Another way to use the in command is to combine all of the required
-   information on one line. Once you become familiar with using the in
-   command, you will probably prefer to use this method as it allows you to
-   input all the parameter values more quickly.
-
+  <para>
+    Another way to use the in command is to combine all of the required
+    information on one line. Once you become familiar with using the in
+    command, you will probably prefer to use this method as it allows you to
+    input all the parameter values more quickly.
+  </para>
+  <para>
    Clear the Graphics Window by using the Z command. Now make another sphere
    by typing after the MGED prompt:
 
-   in sph3.s sph 4 4 4 3[Enter]
+   <command>in sph3.s sph 4 4 4 3[Enter]</command>
+  </para>
 
+  <para>
    The meaning of this longer form of the command is:
+  </para>
 
-   +------------------------------------------------------------------------+
-   |    in     | sph3.s  |    sph    |     4     |   4    |   4    |   3    |
-   |-----------+---------+-----------+-----------+--------+--------+--------|
-   |           |         |           |           |  Make  |  Make  |  Make  |
-   |           |         | Make the  | Make the  | the y  | the z  |  the   |
-   | Insert a  | Name it | primitive | x of the  | of the | of the | radius |
-   | primitive | sph3.s  |  shape a  | vertex a  | vertex | vertex |   a    |
-   |   shape   |         |  sphere   | value of  |   a    |   a    | value  |
-   |           |         |           |     4     | value  | value  |  of 3  |
-   |           |         |           |           |  of 4  |  of 4  |        |
-   +------------------------------------------------------------------------+
 
-   To make the right circular cylinder using this method, type after the MGED
-   prompt:
+     <informaltable>
+       <tgroup cols='7'>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>sph3.s</entry>
+	     <entry>sph</entry>
+	     <entry>4</entry>
+	     <entry>4</entry>
+	     <entry>4</entry>
+	     <entry>3</entry>
+	   </row>
+	   <row>
+	     <entry>Insert a primitive shape</entry>
+	     <entry>Name it sph3.s</entry>
+	     <entry>Make the primitive shape a sphere</entry>
+	     <entry>Make the x of the vertex a value of 4</entry>
+	     <entry>Make the y of the vertex a value of 4</entry>
+	     <entry>Make the z of the vertex a value of 4</entry>
+	     <entry>Make the radius a value of 3</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <para>
+       To make the right circular cylinder using this method, type after the MGED
+       prompt:
 
-   in rcc3.s rcc 4 4 0 0 0 4 3[Enter]
+       <command>in rcc3.s rcc 4 4 0 0 0 4 3[Enter]</command>
+     </para>
+     <para>
+       The meaning of this command is:
+     </para>
 
-   The meaning of this command is:
+     <informaltable>
+       <tgroup cols='10' align='center' colsep='1' rowsep='1'>
+	 <colspec colname='c1'/>
+	 <colspec colname='c2'/>
+	 <colspec colname='c3'/>
+	 <colspec colname='c4'/>
+	 <colspec colname='c5'/>
+	 <colspec colname='c6'/>
+	 <colspec colname='c7'/>
+	 <colspec colname='c8'/>
+	 <colspec colname='c9'/>
+	 <colspec colname='c10'/>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>rcc3.s</entry>
+	     <entry>rcc</entry>
+	     <entry>4</entry>
+	     <entry>4</entry>
+	     <entry>0</entry>
+	     <entry>0</entry>
+	     <entry>0</entry>
+	     <entry>4</entry>
+	     <entry>3</entry>
+	   </row>
+	   <row>
+	     <entry morerows='1' valign='top'>Insert a primitive shape</entry>
+	     <entry morerows='1' valign='top'>Name it rcc3.s</entry>
+	     <entry morerows='1' valign='top'>Make the primitive shape a right circular cylinder</entry>
+	     <entry morerows='1' valign='top'>Make the x of the vertex a value of 4</entry>
+	     <entry morerows='1' valign='top'>Make the y of the vertex a value of 4</entry>
+	     <entry morerows='1' valign='top'>Make the z of the vertex a value of 0</entry>
+	     <entry>Make the x of the height vector a value of 0</entry>
+	     <entry>Make the y of the height vector a value of 0</entry>
+	     <entry>Make the z of the height vector a value of 4</entry>
+	     <entry morerows='1' valign='top'>Make the radius a value of 3</entry>
+	   </row>
+	   <row>
+	     <entry namest="c7" nameend="c9" align="center">Make the shape four units long, pointing straight toward positive z</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+  </sect1>
 
-+----------------------------------------------------------------------------------------+
-|   in    |rcc3.s|   rcc   |  4   |  4   |  0   |  0   |  0   |  4   |  3   |            |
-|---------+------+---------+------+------+------+------+------+------+------|            |
-|         |      |         |      |      |      | Make | Make | Make |      |            |
-|         |      |         |      |      |      |the x |the y |the z |      |            |
-|         |      |         |      |      |      |of the|of the|of the|      |            |
-|         |      |         |      |      |      |height|height|height|      |            |
-|         |      |         |      |      |      |vector|vector|vector|      |            |
-|         |      |         |      |      |      |  a   |  a   |  a   |      |            |
-|         |      |Make the | Make | Make | Make |value |value |value | Make |            |
-|         |      |primitive|the x |the y |the z | of 0 | of 0 | of 4 | the  |            |
-|Insert a | Name | shape a |of the|of the|of the|------+------+------|radius|------------|
-|primitive|  it  |  right  |vertex|vertex|vertex|      |      |      |  a   ||||Make the||
-|  shape  |rcc3.s|circular |  a   |  a   |  a   |      |      |      |value |||| shape  ||
-|         |      |cylinder |value |value |value |      |      |      | of 3 ||||  four  ||
-|         |      |         | of 4 | of 4 | of 0 |      |      |      |      |||| units  ||
-|         |      |         |      |      |      |      |      |      |      |||| long,  ||
-|         |      |         |      |      |      |      |      |      |      ||||pointing||
-|         |      |         |      |      |      |      |      |      |      ||||straight||
-|         |      |         |      |      |      |      |      |      |      |||| toward ||
-|         |      |         |      |      |      |      |      |      |      ||||positive||
-|         |      |         |      |      |      |      |      |      |      ||||   z    ||
-+----------------------------------------------------------------------------------------+
+  <sect1><title>Making a Combined-Command Form for the In Command</title>
 
-   4. Making a Combined-Command Form for the In Command
+  <para>
+    When you are first starting to use MGED, if you want to use the Command
+    Window rather than the GUI, you may want to make yourself some blank,
+    combined-command forms for each type of primitive shape you will be
+    creating. This can speed up the design process and help remind you of
+    which values must be entered for each shape. A form for the sphere might
+    be:
+  </para>
 
-   When you are first starting to use MGED, if you want to use the Command
-   Window rather than the GUI, you may want to make yourself some blank,
-   combined-command forms for each type of primitive shape you will be
-   creating. This can speed up the design process and help remind you of
-   which values must be entered for each shape. A form for the sphere might
-   be:
+     <informaltable>
+       <tgroup cols='10' align='center' colsep='1' rowsep='1'>
+	 <colspec colname='c1'/>
+	 <colspec colname='c2'/>
+	 <colspec colname='c3'/>
+	 <colspec colname='c4'/>
+	 <colspec colname='c5'/>
+	 <colspec colname='c6'/>
+	 <colspec colname='c7'/>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>?</entry>
+	     <entry>sph</entry>
+	     <entry>?</entry>
+	     <entry>?</entry>
+	     <entry>?</entry>
+	     <entry>?</entry>
+	   </row>
+	   <row>
+	     <entry morerows='1' valign='top'>Insert a shape</entry>
+	     <entry morerows='1' valign='top'>Name of primitive shape</entry>
+	     <entry morerows='1' valign='top'>Type of shape is a sphere</entry>
+	     <entry>Value of x</entry>
+	     <entry>Value of y</entry>
+	     <entry>Value of z</entry>
+	     <entry morerows='1' valign='top'>Radius of sph</entry>
+	   </row>
+	   <row>
+	     <entry namest="c4" nameend="c6" align="center">Center</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +------------------------------------------------------------------------+
-   |   in   |     ?     |  sph   |   ?   |   ?   |   ?   |   ?    |         |
-   |--------+-----------+--------+-------+-------+-------+--------|         |
-   |        |           |  Type  | Value | Value | Value |        |         |
-   | Insert |  Name of  |   of   | of x  | of y  | of z  | Radius |         |
-   |   a    | primitive | shape  |       |       |       | of sph |         |
-   | shape  |   shape   |  is a  |-------+-------+-------|        |---------|
-   |        |           | sphere |       |       |       |        | Center ||
-   +------------------------------------------------------------------------+
+     <para>
+       A Combined-Command Form for the rcc might be:
+     </para>
 
-   A Combined-Command Form for the rcc might be:
+     <informaltable>
+       <tgroup cols='10' align='center' colsep='1' rowsep='1'>
+	 <colspec colname='c1'/>
+	 <colspec colname='c2'/>
+	 <colspec colname='c3'/>
+	 <colspec colname='c4'/>
+	 <colspec colname='c5'/>
+	 <colspec colname='c6'/>
+	 <colspec colname='c7'/>
+	 <colspec colname='c8'/>
+	 <colspec colname='c9'/>
+	 <colspec colname='c10'/>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>?</entry>
+	     <entry>rcc</entry>
+	     <entry namest="c4" nameend="c6" align="center">?</entry>
+	     <entry namest="c7" nameend="c9" align="center">?</entry>
+	     <entry>?</entry>
+	   </row>
+	   <row>
+	     <entry morerows='1' valign='top'>Insert a primative shape</entry>
+	     <entry morerows='1' valign='top'>Name of shape</entry>
+	     <entry morerows='1' valign='top'>Type of shape is a right circular cylinder</entry>
+	     <entry>Value of x</entry>
+	     <entry>Value of y</entry>
+	     <entry>Value of z</entry>
+	     <entry>Value of x</entry>
+	     <entry>Value of y</entry>
+	     <entry>Value of z</entry>
+	     <entry morerows='1' valign='top'>Radius of rcc</entry>
+	   </row>
+	   <row>
+	     <entry namest="c4" nameend="c6" align="center">Vertex</entry>
+	     <entry namest="c7" nameend="c9" align="center">Height vector</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+  </sect1>
 
-   +---------------------------------------------------------------------------+
-   |   in    |  ?  |  rcc   |        ?        |        ?        |  ?   |       |
-   |---------+-----+--------+-----------------+-----------------+------|       |
-   |         |     |Type of |Value|Value|Value|Value|Value|Value|      |       |
-   |Insert a |Name |shape is|of x |of y |of z |of x |of y |of z |Radius|       |
-   |primitive| of  |a right |-----+-----+-----+-----------------|of rcc|-------|
-   |  shape  |shape|circular|     |     |     |     Vertex      |      |Height||
-   |         |     |cylinder|     |     |     |                 |      |vector||
-   +---------------------------------------------------------------------------+
 
-   5. Considering MGED Naming Conventions
+  <sect1><title>Considering MGED Naming Conventions</title>
 
-   You may have noticed that each time you have created a sphere, or rcc, you
-   have given it a different name. MGED doesn't care what name you give a
-   shape, but you will find as you develop models that it helps to have some
-   formula, or conventions, when naming shapes. Note also that each name must
-   be unique in the database, and for BRL-CAD releases prior to 6.0, names
-   are limited to 16 characters in length.
+  <para>
+    You may have noticed that each time you have created a sphere, or rcc, you
+    have given it a different name. MGED doesn't care what name you give a
+    shape, but you will find as you develop models that it helps to have some
+    formula, or conventions, when naming shapes. Note also that each name must
+    be unique in the database, and for BRL-CAD releases prior to 6.0, names
+    are limited to 16 characters in length.
+  </para>
+  <para>
+    In this lesson, we sometimes assigned names to the shapes based on their
+    shape type and the order in which we created them. We did this because the
+    shapes had no real function, except to be examples.
+  </para>
+  <para>
+    When you create real-life models, however, you will probably want to
+    assign names as we did for the radio component names, which were based on
+    their functions (e.g., btn for button, ant for antenna, etc.).
+  </para>
+  <para>
+    If you work with more experienced modelers, check with them to see what
+    set of conventions they use. If you work alone, develop a set of naming
+    conventions that works for you and then use it consistently.
+  </para>
 
-   In this lesson, we sometimes assigned names to the shapes based on their
-   shape type and the order in which we created them. We did this because the
-   shapes had no real function, except to be examples.
+  </sect1>
 
-   When you create real-life models, however, you will probably want to
-   assign names as we did for the radio component names, which were based on
-   their functions (e.g., btn for button, ant for antenna, etc.).
+  <sect1><title>Viewing the Shapes</title>
 
-   If you work with more experienced modelers, check with them to see what
-   set of conventions they use. If you work alone, develop a set of naming
-   conventions that works for you and then use it consistently.
+  <para>
+    Practice viewing your new shapes using the View menu. Manipulate your view
+    using the various mouse-key combinations identified in the previous
+    lesson.
+  </para>
 
-   6. Viewing the Shapes
+  </sect1>
 
-   Practice viewing your new shapes using the View menu. Manipulate your view
-   using the various mouse-key combinations identified in the previous
-   lesson.
+   <sect1><title>Quitting MGED</title>
 
-   7. Quitting MGED
+   <para>
+     If you wish to quit MGED, at this point, type either the letter q or the
+     word quit after the Command Window prompt and then press ENTER. You may
+     also quit the program by selecting Exit from the File menu.
+   </para>
+   </sect1>
 
-   If you wish to quit MGED, at this point, type either the letter q or the
-   word quit after the Command Window prompt and then press ENTER. You may
-   also quit the program by selecting Exit from the File menu.
+   <sect1><title>Review</title>
+   <para>
+     In this lesson, you:
+   </para>
 
-   Review
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Created a sphere and a right circular cylinder using the make command.</para>
+     </listitem>
+    <listitem>
+       <para>Created the same two shapes using the in (insert) command.</para>
+     </listitem>
+    <listitem>
+       <para>Combined commands to streamline the entry of variables.</para>
+     </listitem>
+     <listitem>
+       <para>Developed a combined-command form to help manage Command-Line variables.</para>
+     </listitem>
+     <listitem>
+       <para>Considered MGED naming conventions.</para>
+     </listitem>
+     <listitem>
+       <para>Viewed your shapes from different perspectives using options of the View menu.</para>
+     </listitem>
+     <listitem>
+       <para>Quit the MGED program.</para>
+     </listitem>
+   </itemizedlist>
+   </sect1>
+ </chapter>
 
-   In this lesson, you:
 
-     * Created a sphere and a right circular cylinder using the make command.
-
-     * Created the same two shapes using the in (insert) command.
-
-     * Combined commands to streamline the entry of variables.
-
-     * Developed a combined-command form to help manage Command-Line
-       variables.
-
-     * Considered MGED naming conventions.
-
-     * Viewed your shapes from different perspectives using options of the
-       View menu.
-
-     * Quit the MGED program.
-
-                            Intentionally Left Blank
+                           Intentionally Left Blank
 
    Lesson 4: Assigning Material Properties and Raytracing
 
