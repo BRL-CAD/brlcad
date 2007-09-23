@@ -3457,8 +3457,10 @@ copy_object(
 		switch( ip.idb_minor_type ) {
 			case DB5_MINORTYPE_BRLCAD_COMBINATION:
 				comb = (struct rt_comb_internal *)ip.idb_ptr;
-				RT_CK_COMB_TCL( interp, comb );
-				adjust_names( interp, comb->tree, curr_dbip, name_tbl, used_names_tbl, cc_data );
+				if( comb->tree != NULL ) {
+				    RT_CK_COMB_TCL( interp, comb );
+				    adjust_names( interp, comb->tree, curr_dbip, name_tbl, used_names_tbl, cc_data );
+				}
 				break;
 			case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 				extr = (struct rt_extrude_internal *)ip.idb_ptr;
