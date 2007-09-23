@@ -1934,30 +1934,36 @@
    </sect1>
  </chapter>
 
+ <chapter id="Lesson-4">
+   <title>Assigning Material Properties and Raytracing</title>
 
-                           Intentionally Left Blank
-
-   Lesson 4: Assigning Material Properties and Raytracing
-
+   <para>
    In this lesson, you will:
+   
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Recall primitive shapes made previously.</para>
+     </listitem>
+     <listitem>
+       <para>Make a region of two primitive shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Assign material properties to your primitive shapes from the Command Window.</para>
+     </listitem>
+     <listitem>
+       <para>Clear the Graphics Window and draw the new region.</para>
+     </listitem>
+     <listitem>
+       <para>Raytrace your design from the GUI.</para>
+     </listitem>
+     <listitem>
+       <para>Use the GUI to change layers of the Graphics Window.</para>
+     </listitem>
+     <listitem>
+       <para>Clear the Graphics Window after raytracing a model.</para>
+     </listitem>
+   </itemizedlist>
 
-   +------------------------------------------------------------------------+
-   |   * Recall primitive shapes made previously.                           |
-   |                                                                        |
-   |   * Make a region of two primitive shapes.                             |
-   |                                                                        |
-   |   * Assign material properties to your primitive shapes from the       |
-   |     Command Window.                                                    |
-   |                                                                        |
-   |   * Clear the Graphics Window and draw the new region.                 |
-   |                                                                        |
-   |   * Raytrace your design from the GUI.                                 |
-   |                                                                        |
-   |   * Use the GUI to change layers of the Graphics Window.               |
-   |                                                                        |
-   |   * Clear the Graphics Window after raytracing a model.                |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
 
    1. Opening the Database
 
@@ -1989,13 +1995,29 @@
 
    This command tells MGED to:
 
-   +------------------------------------------------------------------------+
-   |   r    | shapes2.r |          u          | sph2.s |     u     | rcc2.s |
-   |--------+-----------+---------------------+--------+-----------+--------|
-   | Make a |  Name it  |  Add the volume of  |        |  Add the  |        |
-   | region | shapes2.r |      the shape      | sph2.s | volume of | rcc2.s |
-   |        |           |                     |        | the shape |        |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>r</entry>
+	     <entry>shapes2.r</entry>
+	     <entry>u</entry>
+	     <entry>sph2.s</entry>
+	     <entry>u</entry>
+	     <entry>rcc2.s</entry>
+	   </row>
+	   <row>
+	     <entry>Make a region</entry>
+	     <entry>Name it shapes2.r</entry>
+	     <entry>Add the volumeof the shape</entry>
+	     <entry>sph2.s</entry>
+	     <entry>Add the volume of the shape</entry>
+	     <entry>rcc2.s</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+
 
    3. Assigning Material Properties to a Region
 
@@ -2043,15 +2065,26 @@
    mater shapes2.r plastic 0 255 0 0[Enter]
 
    Diagrammed, this command says to:
-
-   +------------------------------------------------------------------------+
-   |     mater      | shapes2.r  |  plastic  | 0 255 0  |         0         |
-   |----------------+------------+-----------+----------+-------------------|
-   |     Assign     | the region | Make the  | Give it  |  Do not inherit   |
-   |    material    |   called   | region of | a color  |     colors or     |
-   | properties to: | shapes1.r  |  plastic  | of light |   material type   |
-   |                |            |           |  green   |                   |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='5'>
+	 <tbody>
+	   <row>
+	     <entry>mater</entry>
+	     <entry>shapes2.r</entry>
+	     <entry>plastic</entry>
+	     <entry>0 255 0</entry>
+	     <entry>0</entry>
+	   </row>
+	   <row>
+	     <entry>Assign material properties to:</entry>
+	     <entry>the region called shapes2.r</entry>
+	     <entry>Make the region of plastic</entry>
+	     <entry>Give it a color of light green</entry>
+	     <entry>Do not inherit colors or material type</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    4. Clearing the Graphics Window and Drawing the New Region
 
@@ -2061,13 +2094,20 @@
    B shapes2.r[Enter]
 
    This command tells MGED to:
-
-   +------------------------------------------------------------------------+
-   |                     B                     |         shapes2.r          |
-   |-------------------------------------------+----------------------------|
-   |   Blast (clear) the Graphics Window and   | The region named shapes2.r |
-   |                   draw                    |                            |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry>B</entry>
+	     <entry>shapes2.r</entry>
+	   </row>
+	   <row>
+	     <entry>Blast (clear) the Graphics Window and draw</entry>
+	     <entry>The region named shapes2.r</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    The Blast command is shorthand for the combination of the Z and draw
    commands.
@@ -2178,20 +2218,35 @@
 
    In this lesson you:
 
-     * Recalled primitive shapes made previously.
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Recalled primitive shapes made previously.</para>
+     </listitem>
+     <listitem>
+       <para>Made a region of two primitive shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned material properties to your primitive shapes from the Command Window.</para>
+     </listitem>
+     <listitem>
+       <para>Cleared the Graphics Window and draw the new region.</para>
+     </listitem>
+     <listitem>
+       <para>Raytraced your design from the GUI.</para>
+     </listitem>
+     <listitem>
+       <para>Used the GUI to change layers of the Graphics Window.</para>
+     </listitem>
+     <listitem>
+       <para>Cleared the Graphics Window after raytracing a model.</para>
+     </listitem>
+   </itemizedlist>
+ </sect1>
 
-     * Made a region of two primitive shapes.
 
-     * Assigned material properties to your primitive shapes from the Command
-       Window.
+ </chapter>
 
-     * Cleared the Graphics Window and draw the new region.
 
-     * Raytraced your design from the GUI.
-
-     * Used the GUI to change layers of the Graphics Window.
-
-     * Cleared the Graphics Window after raytracing a model.
 
    Lesson 5: Learning About Boolean Expressions
 
@@ -2327,15 +2382,30 @@
    r part1.r u rcc2.s - sph2.s[Enter]
 
    This command tells MGED to:
+     <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>r</entry>
+	     <entry>part1.r</entry>
+	     <entry>u</entry>
+	     <entry>rcc2.s</entry>
+	     <entry>-</entry>
+	     <entry>sph2.s</entry>
+	   </row>
+	   <row>
+	     <entry>Make a region</entry>
+	     <entry>Call it part1.r</entry>
+	     <entry>Merge...</entry>
+	     <entry>The shape named rcc2.s</entry>
+	     <entry>Subtract...</entry>
+	     <entry>The shape named sph2.s</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +------------------------------------------------------------------------+
-   |   r    | part1.r |    u     |     rcc2.s     |      -      |  sph2.s   |
-   |--------+---------+----------+----------------+-------------+-----------|
-   | Make a | Call it |          | The shape      |             | The shape |
-   | region |         | Merge... | named rcc2.s   | Subtract... | named     |
-   |        | part1.r |          |                |             | sph2.s    |
-   +------------------------------------------------------------------------+
-
+ 
    +------------------------------------------------------------------------+
    || Note: The first member always has a lowercase u for an operator. The  |
    || second and subsequent members can use -, +, or u as needed. The       |
@@ -2489,32 +2559,41 @@
    Review
 
    In this lesson, you:
-
-     * Learned about combinations and regions.
-
-     * Learned about Boolean operations.
-
-     * Made regions with Boolean operations.
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Learned about combinations and regions.</para>
+     </listitem>
+     <listitem>
+       <para>Learned about Boolean operations.</para>
+     </listitem>
+     <listitem>
+       <para>Made regions with Boolean operations.</para>
+     </listitem>
+    </itemizedlist>
 
    Lesson 6: Creating a Goblet
 
    In this lesson, you will:
-
-   +------------------------------------------------------------------------+
-   |   * Create a new database.                                             |
-   |                                                                        |
-   |   * Create, edit, and copy primitive shapes to make the parts of the   |
-   |     goblet.                                                            |
-   |                                                                        |
-   |   * Make regions of the parts.                                         |
-   |                                                                        |
-   |   * Make a combination of the regions.                                 |
-   |                                                                        |
-   |   * View a data tree.                                                  |
-   |                                                                        |
-   |   * Raytrace your completed goblet.                                    |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Create a new database.</para>
+     </listitem>
+     <listitem>
+       <para>Create, edit, and copy primitive shapes to make the parts of the goblet.</para>
+     </listitem>
+     <listitem>
+       <para>Make regions of the parts.</para>
+     </listitem>
+     <listitem>
+       <para>Make a combination of the regions.</para>
+     </listitem>
+     <listitem>
+       <para>View a data tree. </para>
+     </listitem>
+     <listitem>
+       <para>Raytrace your completed goblet.</para>
+     </listitem>
+   </itemizedlist>
 
    In this lesson, you will create a goblet similar to the one in the
    following example.
@@ -2663,14 +2742,32 @@
    comb goblet1.c u basin1.r u stem1.r u base1.r[Enter]
 
    This operation tells the MGED program to:
-
-   +------------------------------------------------------------------------+
-   |   comb    |goblet1.c|        u        |basin1.r| u |stem1.r| u |base1.r|
-   |-----------+---------+-----------------+--------+---+-------+---+-------|
-   |  Make a   | Name it | The combination |  the   |   |  the  |   |  the  |
-   |combination|goblet1.c|will be made of a| region |and|region |and|region |
-   |           |         |    union of     |basin1.r|   |stem1.r|   |base1.r|
-   +------------------------------------------------------------------------+
+   <informaltable>
+       <tgroup cols='8'>
+	 <tbody>
+	   <row>
+	     <entry>comb</entry>
+	     <entry>goblet1.c</entry>
+	     <entry>u</entry>
+	     <entry>basin1.r</entry>
+	     <entry>u</entry>
+	     <entry>stem1.r</entry>
+	     <entry>u</entry>
+	     <entry>base1.r</entry>
+	   </row>
+	   <row>
+	     <entry>Make a combination</entry>
+	     <entry>Name it goblet1.c</entry>
+	     <entry>The combination will be made of a union of</entry>
+	     <entry>the region basin1.r</entry>
+	     <entry>and</entry>
+	     <entry>the region stem1.r</entry>
+	     <entry>and</entry>
+	     <entry>the region base1.r</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    5. Viewing a Data Tree
 
@@ -2751,34 +2848,46 @@
    Review
 
    In this lesson, you:
-
-     * Created a new database.
-
-     * Created, edited, and copied primitive shapes to make the parts of the
-       goblet.
-
-     * Made regions of the parts.
-
-     * Made a combination of the regions.
-
-     * Viewed a data tree.
-
-     * Raytraced your completed goblet.
-
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Created a new database.</para>
+     </listitem>
+     <listitem>
+       <para>Created, edited, and copied primitive shapes to make the parts of the goblet.</para>
+     </listitem>
+     <listitem>
+       <para>Made regions of the parts.</para>
+     </listitem>
+     <listitem>
+       <para>Made a combination of the regions.</para>
+     </listitem>
+     <listitem>
+       <para>Viewed a data tree.</para>
+     </listitem>
+     <listitem>
+       <para>Raytraced your completed goblet.</para>
+     </listitem>
+   </itemizedlist>
+ 
    Lesson 7: Assigning Material Properties to Your Goblet
 
    In this lesson, you will:
 
-   +------------------------------------------------------------------------+
-   |   * Review how to open an existing database.                           |
-   |                                                                        |
-   |   * Assign colors and the plastic shader to regions of the goblet.     |
-   |                                                                        |
-   |   * Use the transparency and mirror reflectance options of the shader. |
-   |                                                                        |
-   |   * Raytrace various forms of your goblet.                             |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Review how to open an existing database.</para>
+     </listitem>
+     <listitem>
+       <para>Assign colors and the plastic shader to regions of the goblet.</para>
+     </listitem>
+     <listitem>
+       <para>Use the transparency and mirror reflectance options of the shader.</para>
+     </listitem>
+     <listitem>
+       <para>Raytrace various forms of your goblet.</para>
+     </listitem>
+   </itemizedlist>
+
 
    In this lesson, you will add material properties to the goblet you created
    in the previous lesson. The finished goblet should appear similar to the
@@ -2928,32 +3037,42 @@
    Review
 
    In this lesson, you:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Reviewed how to open an existing database.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned colors and the plastic shader to regions of the goblet.</para>
+     </listitem>
+     <listitem>
+       <para>Used the transparency and mirror reflectance options of the shader.</para>
+     </listitem>
+     <listitem>
+       <para>Raytraced various forms of your goblet.</para>
+     </listitem>
+   </itemizedlist>
 
-     * Reviewed how to open an existing database.
-
-     * Assigned colors and the plastic shader to regions of the goblet.
-
-     * Used the transparency and mirror reflectance options of the shader.
-
-     * Raytraced various forms of your goblet.
 
    Lesson 8: Assigning More Material Properties to Your Goblet
 
    In this lesson, you will:
-
-   +------------------------------------------------------------------------+
-   |   * Use the specular and diffuse reflectivity options of the plastic   |
-   |     shader.                                                            |
-   |                                                                        |
-   |   * Assign values to the refractive index of the plastic shader.       |
-   |                                                                        |
-   |   * Assign values to the shininess option of the plastic shader.       |
-   |                                                                        |
-   |   * Assign values to the extinction option of the plastic shader.      |
-   |                                                                        |
-   |   * Experiment with various combinations of plastic shader options.    |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Use the specular and diffuse reflectivity options of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Assign values to the refractive index of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Assign values to the shininess option of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Assign values to the extinction option of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Experiment with various combinations of plastic shader options.</para>
+     </listitem>
+   </itemizedlist>
 
    Open the goblet.g database using whichever method you prefer. Go to the
    Edit menu and click on Combination Editor. Select basin1.r.
@@ -2981,14 +3100,24 @@
    is set at .5 and the mirror reflectance (re) is set at .45. The eight
    abbreviations currently used in the shader entry box are as follows:
 
-   +------------------------------------------------------------------------+
-   |                   | sp - specular     | ri -           | ex -          |
-   | tr - transparency | reflectivity      | refractive     | extinction    |
-   |                   |                   | index          |               |
-   |-------------------+-------------------+----------------+---------------|
-   | re - mirror       | di - diffuse      | sh - shininess | em - emission |
-   | reflectance       | reflectivity      |                |               |
-   +------------------------------------------------------------------------+
+      <informaltable>
+       <tgroup cols='4'>
+	 <tbody>
+	   <row>
+	     <entry>tr - transparency</entry>
+	     <entry>sp - specular reflectivity</entry>
+	     <entry>ri - refractive index</entry>
+	     <entry>ex - extinction</entry>
+	   </row>
+	   <row>
+	     <entry>re - mirror reflectance</entry>
+	     <entry>di - diffuse reflectivity</entry>
+	     <entry>sh - shininess</entry>
+	     <entry>em - emission</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    Specular and Diffuse Reflectivity
 
@@ -3095,17 +3224,24 @@
    Review
 
    In this lesson, you:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Used the specular reflectivity and diffuse reflectivity options of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned values to the refractive index of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned values to the shininess option of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned values to the extinction option of the plastic shader.</para>
+     </listitem>
+     <listitem>
+       <para>Experimented with various combinations of plastic shader options.</para>
+     </listitem>
+   </itemizedlist>
 
-     * Used the specular reflectivity and diffuse reflectivity options of the
-       plastic shader.
-
-     * Assigned values to the refractive index of the plastic shader.
-
-     * Assigned values to the shininess option of the plastic shader.
-
-     * Assigned values to the extinction option of the plastic shader.
-
-     * Experimented with various combinations of plastic shader options.
 
                             Intentionally Left Blank
 
@@ -3116,21 +3252,24 @@
    used in a wooden toy truck. However, in real life, most of the objects
    that you will design will consist of an outside shell and various inside
    parts. Therefore, in this lesson you will:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Use the GUI to create a display box using arb8 shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Create a globe inside the display box.</para>
+     </listitem>
+     <listitem>
+       <para>Assign material properties to make the objects appear more realistic.</para>
+     </listitem>
+     <listitem>
+       <para>Rotate an object 180'0 using the rotate option of the Edit menu</para>
+     </listitem>
+     <listitem>
+       <para>Use the color option of the Combination Editor to produce customized colors.</para>
+     </listitem>
+   </itemizedlist>
 
-   +------------------------------------------------------------------------+
-   |   * Use the GUI to create a display box using arb8 shapes.             |
-   |                                                                        |
-   |   * Create a globe inside the display box.                             |
-   |                                                                        |
-   |   * Assign material properties to make the objects appear more         |
-   |     realistic.                                                         |
-   |                                                                        |
-   |   * Rotate an object 180'0 using the rotate option of the Edit menu.   |
-   |                                                                        |
-   |   * Use the color option of the Combination Editor to produce          |
-   |     customized colors.                                                 |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
 
    Create a New Database
 
@@ -3319,41 +3458,51 @@
    Review
 
    In this lesson, you:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Used the GUI to create a display box using arb8 shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Created a globe inside the display box.</para>
+     </listitem>
+     <listitem>
+       <para>Used the Combination Editor to assign material properties that make the objects appear more realistic.</para>
+     </listitem>
+     <listitem>
+       <para>Rotated an object 180'0 using the rotate option of the Edit menu.</para>
+     </listitem>
+     <listitem>
+       <para>Used the color option of the Combination Editor to produce customized colors.</para>
+     </listitem>
+   </itemizedlist>
 
-     * Used the GUI to create a display box using arb8 shapes.
-
-     * Created a globe inside the display box.
-
-     * Used the Combination Editor to assign material properties that make
-       the objects appear more realistic.
-
-     * Rotated an object 180'0 using the rotate option of the Edit menu.
-
-     * Used the color option of the Combination Editor to produce customized
-       colors.
 
                             Intentionally Left Blank
 
    Lesson 10: Creating a Mug
 
    In this lesson, you will:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Create an outside cylinder using the in command.</para>
+     </listitem>
+     <listitem>
+       <para>Create an inside cylinder for hollowing out the larger shape cylinder.</para>
+     </listitem>
+     <listitem>
+       <para>Create a handle for your mug.</para>
+     </listitem>
+     <listitem>
+       <para>Create a combination to produce the body of your mug.</para>
+     </listitem>
+     <listitem>
+       <para>Create a combination to join the handle to the body.</para>
+     </listitem>
+     <listitem>
+       <para>Create a region of combined shapes with the same material and color.</para>
+     </listitem>
+   </itemizedlist>
 
-   +------------------------------------------------------------------------+
-   |   * Create an outside cylinder using the in command.                   |
-   |                                                                        |
-   |   * Create an inside cylinder for hollowing out the larger shape       |
-   |     cylinder.                                                          |
-   |                                                                        |
-   |   * Create a handle for your mug.                                      |
-   |                                                                        |
-   |   * Create a combination to produce the body of your mug.              |
-   |                                                                        |
-   |   * Create a combination to join the handle to the body.               |
-   |                                                                        |
-   |   * Create a region of combined shapes with the same material and      |
-   |     color.                                                             |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
 
    In this lesson, you will be continuing your work creating real-life
    objects-in this case, the basic body shape of a coffee mug. In the next
@@ -3375,12 +3524,22 @@
 
    The diagram of this command is as follows:
 
-   +------------------------------------------------------------------------+
-   |      in      |     bodyout.s     |                 rcc                 |
-   |--------------+-------------------+-------------------------------------|
-   | Make a shape | Call it bodyout.s |  The shape type is right circular   |
-   |              |                   |              cylinder               |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='3'>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>bodyout.s</entry>
+	     <entry>rcc</entry>
+	   </row>
+	   <row>
+	     <entry>Make a shape</entry>
+	     <entry>Call it bodyout.s</entry>
+	     <entry>The shape type is right circular cylinder</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    MGED will ask you the following questions about the cylinder you want to
    make. Type in the values given in bold. Make sure you leave spaces between
@@ -3398,17 +3557,28 @@
 
    The diagram of this command is as follows:
 
-   +------------------------------------------------------------------------+
-   |   in   | bodyout.s |    rcc    |  0 0 0   |     0 0 3.5      |  1.75   |
-   |--------+-----------+-----------+----------+------------------+---------|
-   |        |           |           |  The x,  |                  |         |
-   |        |           | The shape | y, and z | The x, y, and z  |         |
-   | Make a |  Call it  |  type is  |    of    |  of the height   |   The   |
-   | shape  | bodyout.s |   right   |  vertex  |  vector is 0 0   | radius  |
-   |        |           | circular  |    is    |       3.5        | is 1.75 |
-   |        |           | cylinder  |          |                  |         |
-   |        |           |           |  0 0 0   |                  |         |
-   +------------------------------------------------------------------------+
+      <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>bodyout.s</entry>
+	     <entry>rcc</entry>
+	     <entry>0 0 0</entry>
+	     <entry>0 0 3.5</entry>
+	     <entry>1.75</entry>
+	   </row>
+	   <row>
+	     <entry>Make a shape</entry>
+	     <entry>Call it bodyout.s</entry>
+	     <entry>The shape type is right circular cylinder</entry>
+	     <entry>The x, y, and z of vertex is 0 0 0</entry>
+	     <entry>The x, y, and z of the height vector is 0 0 3.5</entry>
+	     <entry>The radius is 1.75</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    A shape of a cylinder, in wireframe form, will appear in the Graphics
    Window.
@@ -3425,16 +3595,28 @@
    in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5[Enter]
 
    The diagram of this command is:
-
-   +------------------------------------------------------------------------+
-   |   in   | bodyin.s |    rcc    | 0 0 0.25  |      0 0 3.5      |  1.5   |
-   |--------+----------+-----------+-----------+-------------------+--------|
-   |        |          | The shape | The x, y, |  The x, y, and z  |        |
-   | Make a | Call it  |  type is  | and z of  |   of the height   |  The   |
-   | shape  | bodyin.s |   right   | vertex is |  vector is 0, 0,  | radius |
-   |        |          | circular  | 0, 0, and |      and 3.5      | is 1.5 |
-   |        |          | cylinder  |   0.25    |                   |        |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>bodyin.s</entry>
+	     <entry>rcc</entry>
+	     <entry>0 0 0.25</entry>
+	     <entry>0 0 3.5</entry>
+	     <entry>1.5</entry>
+	   </row>
+	   <row>
+	     <entry>Make a shape</entry>
+	     <entry>Call it bodyin.s</entry>
+	     <entry>The shape type is right circular cylinder</entry>
+	     <entry>The x, y, and z of vertex is 0, 0, and 0.25</entry>
+	     <entry>The x, y, and z of the height vector is 0, 0, and 3.5</entry>
+	     <entry>The radius is 1.5</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    A second cylinder, inside the first cylinder, should now appear in the
    Graphics Window.
@@ -3448,18 +3630,27 @@
    in handle.s eto 0 2.5 1.75 1 0 0[Enter]
 
    The diagram of this command is:
+     <informaltable>
+       <tgroup cols='5'>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>handle.s</entry>
+	     <entry>eto</entry>
+	     <entry>0 2.5 1.75</entry>
+	     <entry>1 0 0</entry>
+	   </row>
+	   <row>
+	     <entry>Make a shape</entry>
+	     <entry>Name it handle.s</entry>
+	     <entry>The shape type is elliptical torus</entry>
+	     <entry>The x, y, and z of the vertex is 0, 2.5, and 1.75</entry>
+	     <entry>The x, y, and z of the normal vector is 1, 0, and 0</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +------------------------------------------------------------------------+
-   |   in   | handle.s |      eto       | 0 2.5 1.75  |        1 0 0        |
-   |--------+----------+----------------+-------------+---------------------|
-   |        |          |                |  The x, y,  |                     |
-   |        |          |                |  and z of   | The x, y, and z of  |
-   | Make a | Name it  | The shape type | the vertex  |  the normal vector  |
-   | shape  | handle.s | is elliptical  |     is      |         is          |
-   |        |          |     torus      |             |                     |
-   |        |          |                | 0, 2.5, and |     1, 0, and 0     |
-   |        |          |                |    1.75     |                     |
-   +------------------------------------------------------------------------+
 
    The program will ask you to enter more values for the elliptical torus you
    are creating. Type in the values shown in bold.
@@ -3484,27 +3675,59 @@
    You have told the program to make the combination body.c out of the union
    of bodyout.s minus bodyin.s.
 
-   +------------------------------------------------------------------------+
-   |       comb       | body.c  |    u    | bodyout.s |    -     | bodyin.s |
-   |------------------+---------+---------+-----------+----------+----------|
-   |      Make a      | Call it | Create  | bodyout.s |   and    | bodyin.s |
-   |   combination    | body.c  | a union | cylinder  | subtract | cylinder |
-   |                  |         |   of    |           |          |          |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>comb</entry>
+	     <entry>body.c</entry>
+	     <entry>u</entry>
+	     <entry>bodyout.s</entry>
+	     <entry>-</entry>
+	     <entry>bodyin.s</entry>
+	   </row>
+	   <row>
+	     <entry>Make a combination</entry>
+	     <entry>Call it body.c</entry>
+	     <entry>Create a union of</entry>
+	     <entry>bodyout.s cylinder</entry>
+	     <entry>and subtract</entry>
+	     <entry>bodyin.s cylinder</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
+ 
    5. Creating the Handle.s - Bodyout.s Combination
 
    To combine the handle with the outside cylinder, type:
 
    comb handle.c u handle.s - bodyout.s[Enter]
 
-   +------------------------------------------------------------------------+
-   |    comb     | handle.c |    u    | handle.s |    -     |   bodyout.s   |
-   |-------------+----------+---------+----------+----------+---------------|
-   |   Make a    | Call it  | Create  |   the    |   and    | the bodyout.s |
-   | combination | handle.c | a union | handle.s | subtract |   cylinder    |
-   |             |          |   of    |  torus   |          |               |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>comb</entry>
+	     <entry>handle.c</entry>
+	     <entry>u</entry>
+	     <entry>handle.s</entry>
+	     <entry>-</entry>
+	     <entry>bodyout.s</entry>
+	   </row>
+	   <row>
+	     <entry>Make a combination</entry>
+	     <entry>Call it handle.c</entry>
+	     <entry>Create a union of</entry>
+	     <entry>the handle.s torus</entry>
+	     <entry>and subtract</entry>
+	     <entry>the bodyout.s cylinder</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+
 
    6. Creating the Region Mug.r
 
@@ -3513,15 +3736,28 @@
 
    r mug.r u body.c u handle.c[Enter]
 
-   +------------------------------------------------------------------------+
-   |       r        |  mug.r  |    u    |   body.c    |   u   |  handle.c   |
-   |----------------+---------+---------+-------------+-------+-------------|
-   | Make a region  |         |         |             |  and  |             |
-   |  of shapes of  | Call it | Create  | the body.c  | merge | the handle. |
-   |    the same    |  mug.r  | a union | combination |  it   |      c      |
-   |  material and  |         |   of    |             | with  | combination |
-   |     color      |         |         |             |       |             |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>r</entry>
+	     <entry>mug.r</entry>
+	     <entry>u</entry>
+	     <entry>body.c</entry>
+	     <entry>u</entry>
+	     <entry>handle.c</entry>
+	   </row>
+	   <row>
+	     <entry>Make a region of shapes of the same material and color</entry>
+	     <entry>Call it mug.r</entry>
+	     <entry>Create a union of</entry>
+	     <entry>the body.c combination</entry>
+	     <entry>and merge it with</entry>
+	     <entry>the handle.c combination</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    If you did this correctly, the program should say something similar to:
 
@@ -3541,34 +3777,43 @@
    Review
 
    In this lesson you:
-
-     * Created an outside cylinder using the in command.
-
-     * Created an inside cylinder for hollowing out the larger shape
-       cylinder.
-
-     * Created a handle for your mug.
-
-     * Created a combination to produce the body of your mug.
-
-     * Created a combination to join the handle to the body.
-
-     * Created a region of combined shapes with the same material and color.
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Created an outside cylinder using the in command.</para>
+     </listitem>
+     <listitem>
+       <para>Created an inside cylinder for hollowing out the larger shape cylinder.</para>
+     </listitem>
+     <listitem>
+       <para>Created a handle for your mug.</para>
+     </listitem>
+     <listitem>
+       <para>Created a combination to produce the body of your mug.</para>
+     </listitem>
+     <listitem>
+       <para>Created a combination to join the handle to the body.</para>
+     </listitem>
+     <listitem>
+       <para>Created a region of combined shapes with the same material and color.</para>
+     </listitem>
+   </itemizedlist>
 
                             Intentionally Left Blank
 
    Lesson 11: Refining the Mug
 
    In this lesson, you will:
-
-   +----------------------------------------------------------------------+
-   |   * Assign material properties to the mug using the mater command.   |
-   |                                                                      |
-   |   * Refine the mug.                                                  |
-   |                                                                      |
-   |   * Combine the shapes.                                              |
-   |----------------------------------------------------------------------|
-   +----------------------------------------------------------------------+
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Assign material properties to the mug using the mater command.</para>
+     </listitem>
+     <listitem>
+       <para>Refine the mug.</para>
+     </listitem>
+     <listitem>
+       <para>Combine the shapes.</para>
+     </listitem>
+  </itemizedlist>
 
    In this lesson, you will refine the mug you made in the previous lesson.
    If you stopped at the end of that lesson, open the database mug.g before
@@ -3607,15 +3852,27 @@
    mater mug.r plastic 32 128 32 0[Enter]
 
    Diagrammed, this command says:
+     <informaltable>
+       <tgroup cols='5'>
+	 <tbody>
+	   <row>
+	     <entry>mater</entry>
+	     <entry>mug.r</entry>
+	     <entry>plastic</entry>
+	     <entry>32 128 32</entry>
+	     <entry>0</entry>
+	   </row>
+	   <row>
+	     <entry>Assign material properties to a region</entry>
+	     <entry>Called mug.r</entry>
+	     <entry>Make the material plastic</entry>
+	     <entry>Color the mug green</entry>
+	     <entry>Turn inheritance off*</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +------------------------------------------------------------------------+
-   |           mater            | mug.r  | plastic  | 32 128  |      0      |
-   |                            |        |          |   32    |             |
-   |----------------------------+--------+----------+---------+-------------|
-   | Assign material properties | Called | Make the |  Color  |    Turn     |
-   |        to a region         | mug.r  | material | the mug | inheritance |
-   |                            |        | plastic  |  green  |    off*     |
-   +------------------------------------------------------------------------+
 
    *Note: Inheritance is an advanced topic beyond the scope of the present
    discussion.
@@ -3640,15 +3897,30 @@
 
    in  rim.s tor 0 0 3.5 0 0 1 1.625 0.125[Enter]
 
-   +------------------------------------------------------------------------+
-   |   in   |  rim.s  |  tor  |  0 0 3.5   |    0 0 1     | 1.625  | 0.125  |
-   |--------+---------+-------+------------+--------------+--------+--------|
-   |        |         | Make  | With x, y, | With x, y,   | Radius | Radius |
-   | Make a | Call it |  the  |   and z    | and z  of    |  1 is  |  2 is  |
-   | shape  |  rim.s  | shape |  vertices  | normal       | 1.625  | 0.125  |
-   |        |         |   a   |  of 0, 0,  | vector being | inches | inches |
-   |        |         | torus |  and 3.5   | 0, 0, and 1  |  and   |        |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='7'>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>rim.s</entry>
+	     <entry>tor</entry>
+	     <entry>0 0 3.5</entry>
+	     <entry>0 0 1</entry>
+	     <entry>1.625</entry>
+	     <entry>0.125</entry>
+	   </row>
+	   <row>
+	     <entry>Make a shape</entry>
+	     <entry>Call it rim.s</entry>
+	     <entry>Make the shape a torus</entry>
+	     <entry>With x, y, and z vertices of 0, 0, and 3.5</entry>
+	     <entry>With x, y, and z of normal vector being 0, 0, and 1</entry>
+	     <entry>Radius 1 is 1.625 inches and</entry>
+	     <entry>Radius 2 is 0.125 inches</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    4. Combining the Shapes
 
@@ -3680,32 +3952,43 @@
    Review
 
    In this chapter, you:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Assigned material properties to the mug using the mater command.</para>
+     </listitem>
+     <listitem>
+       <para>Refined the mug by smoothing the lip.</para>
+     </listitem>
+     <listitem>
+       <para>Combined the shapes.</para>
+     </listitem>
+   </itemizedlist>
 
-     * Assigned material properties to the mug using the mater command.
-
-     * Refined the mug by smoothing the lip.
-
-     * Combined the shapes.
 
    Lesson 12: Creating the Mug Through the GUI
 
    In this lesson, you will:
-
-   +----------------------------------------------------------------+
-   |   * Create the shapes of the mug through the GUI.              |
-   |                                                                |
-   |   * Use new shapes to create the handle and rim of the mug.    |
-   |                                                                |
-   |   * Combine the shapes.                                        |
-   |                                                                |
-   |   * Make a region of the combinations.                         |
-   |                                                                |
-   |   * Check the data tree and make corrections.                  |
-   |                                                                |
-   |   * Assign material properties using the Combination Editor.   |
-   |----------------------------------------------------------------|
-   +----------------------------------------------------------------+
-
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Create the shapes of the mug through the GUI.</para>
+     </listitem>
+     <listitem>
+       <para>Use new shapes to create the handle and rim of the mug.</para>
+     </listitem>
+     <listitem>
+       <para>Combine the shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Make a region of the combinations.</para>
+     </listitem>
+     <listitem>
+       <para>Check the data tree and make corrections.</para>
+     </listitem>
+     <listitem>
+       <para>Assign material properties using the Combination Editor.</para>
+     </listitem>
+   </itemizedlist>
+ 
    In the previous two lessons, you created a mug by entering commands at the
    Command Window prompt. Now, you will create the same type of mug using the
    GUI and different shapes.
@@ -3718,34 +4001,55 @@
    Cones & Cylinders category. Enter the name for the rcc. Call it outside.s.
 
    Go to the Edit menu, where you will be offered the following options:
+     <informaltable>
+       <tgroup cols='4'>
+	 <tbody>
+	   <row>
+	     <entry>
+	       <literallayout>
+		 Set H
+		 Set H (Move V)
+		 Set A
+		 Set B
+		 Set c
+		 Set d
+		 Set A,B
+		 Set C,D
+		 Set A,B,C,D
+		 Rotate H
+		 Rotate AxB
+		 Move End H(rt)
+		 Move End H
+	       </literallayout>
+	     </entry>
+	     <entry>
+	       <literallayout>
+		 Rotate
+		 Translate
+		 Scale
+		 None of the Above
+	       </literallayout>
+	     </entry>
+	     <entry>
+	       <literallayout>
+		 Reject
+		 Accept
+		 Apply
+		 Reset
+	       </literallayout>
+	     </entry>
+	     <entry>
+	       <literallayout>
+		 Primitive Editor
+		 Combination
+		 Editor
+	       </literallayout>
+	     </entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +------------------------------------------------------------------+
-   | Set H          |                   |        |                    |
-   |                |                   |        |                    |
-   | Set H (Move V) |                   |        |                    |
-   |                |                   |        |                    |
-   | Set A          |                   |        |                    |
-   |                |                   |        |                    |
-   | Set B          |                   |        |                    |
-   |                |                   |        |                    |
-   | Set c          |                   |        |                    |
-   |                | Rotate            | Reject |                    |
-   | Set d          |                   |        |                    |
-   |                | Translate         | Accept | Primitive Editor   |
-   | Set A,B        |                   |        |                    |
-   |                | Scale             | Apply  | Combination Editor |
-   | Set C,D        |                   |        |                    |
-   |                | None of the Above | Reset  |                    |
-   | Set A,B,C,D    |                   |        |                    |
-   |                |                   |        |                    |
-   | Rotate H       |                   |        |                    |
-   |                |                   |        |                    |
-   | Rotate AxB     |                   |        |                    |
-   |                |                   |        |                    |
-   | Move End H(rt) |                   |        |                    |
-   |                |                   |        |                    |
-   | Move End H     |                   |        |                    |
-   +------------------------------------------------------------------+
 
    Note: The first column includes shape-specific functions. The other
    columns are functions common to all shapes.
@@ -3790,16 +4094,43 @@
    shape) from the menu of shapes. Name the torus handle.s. The Edit menu
    will now offer a different set of parameters than those of the right
    circular cylinders, as shown in the following list:
-
-   +----------------------------------------------------------------+
-   |              | Rotate            | Reject |                    |
-   |              |                   |        |                    |
-   | Set Radius 1 | Translate         | Accept | Primitive Editor   |
-   |              |                   |        |                    |
-   | Set Radius 2 | Scale             | Apply  | Combination Editor |
-   |              |                   |        |                    |
-   |              | None of the Above | Reset  |                    |
-   +----------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='4'>
+	 <tbody>
+	   <row>
+	     <entry>
+	       <literallayout>
+		 Set Radius 1
+		 Set Radius 2
+	       </literallayout>
+	     </entry>
+	     <entry>
+	       <literallayout>
+		 Rotate
+		 Translate
+		 Scale
+		 None of the Above
+	       </literallayout>
+	     </entry>
+	     <entry>
+	       <literallayout>
+		 Reject
+		 Accept
+		 Apply
+		 Reset
+	       </literallayout>
+	     </entry>
+	     <entry>
+	       <literallayout>
+		 Primitive Editor
+		 Combination
+		 Editor
+	       </literallayout>
+	     </entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    In this instance, Set Radius 1 changes the distance from the center of the
    doughnut hole to the middle of the dough. Set Radius 2 changes the radius
@@ -3909,34 +4240,48 @@
    Review
 
    In this lesson, you:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Created the shapes of the mug through the GUI.</para>
+     </listitem>
+     <listitem>
+       <para>Used new shapes to create the handle and rim of the mug.</para>
+     </listitem>
+     <listitem>
+       <para>Combined the shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Made a region of the combinations.</para>
+     </listitem>
+     <listitem>
+       <para>Checked the data tree and made corrections.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned material properties using the Combination Editor.</para>
+     </listitem>
+   </itemizedlist>
 
-     * Created the shapes of the mug through the GUI.
-
-     * Used new shapes to create the handle and rim of the mug.
-
-     * Combined the shapes.
-
-     * Made a region of the combinations.
-
-     * Checked the data tree and made corrections.
-
-     * Assigned material properties using the Combination Editor.
-
+ 
    Lesson 13: Placing Shapes in 3-D Space
 
    In this lesson, you will:
 
-   +----------------------------------------------------------+
-   |   * Create, edit, and place shapes in 3-D space.         |
-   |                                                          |
-   |   * Create custom colors using the Combination Editor.   |
-   |                                                          |
-   |   * Identify the attributes of the checker shader.       |
-   |                                                          |
-   |   * Identify how RGB colors are created.                 |
-   |----------------------------------------------------------|
-   +----------------------------------------------------------+
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Create, edit, and place shapes in 3-D space.</para>
+     </listitem>
+     <listitem>
+       <para>Create custom colors using the Combination Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Identify the attributes of the checker shader.</para>
+     </listitem>
+     <listitem>
+       <para>Identify how RGB colors are created.</para>
+     </listitem>
+   </itemizedlist>
 
+ 
    In previous lessons, you created and edited shapes. You also placed
    objects in three-dimensional space. This lesson will provide more advanced
    practice on creating and editing shapes and placing them in 3-D space.
@@ -3999,22 +4344,36 @@
 
    Go to Edit. In addition to the standard commands, you will be presented
    with a menu of thirteen shape-specific ways to edit this shape.
+     <informaltable>
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry>
+	       <literallayout>
+Set H
+Set H (Move V)
+Set A
+Set B
+Set c
+Set d
+	       </literallayout>
+	     </entry>
+	     <entry>
+	       <literallayout>
+Set A,B
+Set C,D
+Set A,B,C,D
+Rotate H
+Rotate AxB
+Move End H(rt)
+Move End H
+	       </literallayout>
+	     </entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +---------------------------------+
-   |                | Set A,B        |
-   | Set H          |                |
-   |                | Set C,D        |
-   | Set H (Move V) |                |
-   |                | Set A,B,C,D    |
-   | Set A          |                |
-   |                | Rotate H       |
-   | Set B          |                |
-   |                | Rotate AxB     |
-   | Set c          |                |
-   |                | Move End H(rt) |
-   | Set d          |                |
-   |                | Move End H     |
-   +---------------------------------+
 
    Scale the shape until it is slightly larger in diameter than the top of
    the eto1.s (you can check this by switching to a top view). Go back to
@@ -4170,13 +4529,24 @@
    B table1.r candle1.c[Enter]
 
    This command tells the MGED program to:
+     <informaltable>
+       <tgroup cols='3'>
+	 <tbody>
+	   <row>
+	     <entry>B</entry>
+	     <entry>table1.r</entry>
+	     <entry>candle1.c</entry>
 
-   +------------------------------------------------------------------------+
-   |         B          |    table1.r     |            candle1.c            |
-   |--------------------+-----------------+---------------------------------|
-   | Clear the Graphics | Draw the region |   Draw the combination named    |
-   |       Window       | named table1.r  |            candle1.c            |
-   +------------------------------------------------------------------------+
+	   </row>
+	   <row>
+	     <entry>Clear the Graphics Window</entry>
+	     <entry>Draw the region named table1.r</entry>
+	     <entry>Draw the combination named candle1.c</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+
 
    To provide the most light on your design, use a white background color.
    Your raytraced candle should look similar to the following:
@@ -4186,29 +4556,39 @@
    Review
 
    In this lesson, you:
-
-     * Created, edited, and placed shapes in 3-D space.
-
-     * Created custom colors using the Combination Editor.
-
-     * Identified the attributes of the checker shader.
-
-     * Identified how RGB colors are created.
-
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Created, edited, and placed shapes in 3-D space.</para>
+     </listitem>
+     <listitem>
+       <para>Created custom colors using the Combination Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Identified the attributes of the checker shader.</para>
+     </listitem>
+     <listitem>
+       <para>Identified how RGB colors are created.</para>
+     </listitem>
+    </itemizedlist>
+ 
    Lesson 14: Gaining More Practice Placing Shapes in Space
 
    In this lesson, you will:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Create copies of a shape using the Primitive Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Draw a grid to help position objects.</para>
+     </listitem>
+     <listitem>
+       <para>Check the data tree and make corrections (if needed).</para>
+     </listitem>
+     <listitem>
+       <para>Assign material properties using the Combination Editor.</para>
+     </listitem>
+   </itemizedlist>
 
-   +----------------------------------------------------------------+
-   |   * Create copies of a shape using the Primitive Editor.       |
-   |                                                                |
-   |   * Draw a grid to help position objects.                      |
-   |                                                                |
-   |   * Check the data tree and make corrections (if needed).      |
-   |                                                                |
-   |   * Assign material properties using the Combination Editor.   |
-   |----------------------------------------------------------------|
-   +----------------------------------------------------------------+
 
    In previous lessons, we created and edited shapes and placed objects in
    3-D space. This lesson provides more advanced practice in these areas
@@ -4572,45 +4952,61 @@
    Review
 
    In this lesson, you:
-
-     * Created copies of a shape using the Primitive Editor.
-
-     * Drew a grid to help position objects.
-
-     * Checked the data tree and made corrections (if needed).
-
-     * Assigned material properties using the Combination Editor.
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Created copies of a shape using the Primitive Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Drew a grid to help position objects.</para>
+     </listitem>
+     <listitem>
+       <para>Checked the data tree and made corrections (if needed).</para>
+     </listitem>
+     <listitem>
+       <para>Assigned material properties using the Combination Editor.</para>
+     </listitem>
+  </itemizedlist>
+ 
 
                             Intentionally Left Blank
 
    Lesson 15: Creating a Toy Truck
 
    In this lesson, you will:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Create a toy truck from three shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Make copies of shapes using the Primitive Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Make combinations and regions of a more complex object.</para>
+     </listitem>
+     <listitem>
+       <para>Check the data tree for accuracy.</para>
+     </listitem>
+     <listitem>
+       <para>List contents of the database.</para>
+     </listitem>
+     <listitem>
+       <para>Assign material properties using the Combination Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Identify the difference between OK, Accept, Apply, Reset, Cancel, and Dismiss.</para>
+     </listitem>
+     <listitem>
+       <para>Identify the on-screen help option.</para>
+     </listitem>
+     <listitem>
+       <para>Identify the stacker option.</para>
+     </listitem>
+     <listitem>
+       <para>Experiment with the attributes of the camo shader.</para>
+     </listitem>
+   </itemizedlist>
 
-   +------------------------------------------------------------------------+
-   |   * Create a toy truck from three shapes.                              |
-   |                                                                        |
-   |   * Make copies of shapes using the Primitive Editor.                  |
-   |                                                                        |
-   |   * Make combinations and regions of a more complex object.            |
-   |                                                                        |
-   |   * Check the data tree for accuracy.                                  |
-   |                                                                        |
-   |   * List contents of the database.                                     |
-   |                                                                        |
-   |   * Assign material properties using the Combination Editor.           |
-   |                                                                        |
-   |   * Identify the difference between OK, Accept, Apply, Reset, Cancel,  |
-   |     and Dismiss.                                                       |
-   |                                                                        |
-   |   * Identify the on-screen help option.                                |
-   |                                                                        |
-   |   * Identify the stacker option.                                       |
-   |                                                                        |
-   |   * Experiment with the attributes of the camo shader.                 |
-   |------------------------------------------------------------------------|
-   +------------------------------------------------------------------------+
-
+ 
    In previous lessons, you created and edited shapes to produce simple
    objects. This lesson focuses on creating a slightly more complex object, a
    toy truck, from the Command Window. Your completed truck should look
@@ -4635,15 +5031,29 @@
    0 1 0 1 0 1[Enter]
 
    This will tell MGED to:
+     <informaltable>
+       <tgroup cols='6'>
+	 <tbody>
+	   <row>
+	     <entry>0</entry>
+	     <entry>1</entry>
+	     <entry>0</entry>
+	     <entry>1</entry>
+	     <entry>0</entry>
+	     <entry>1</entry>
+	   </row>
+	   <row>
+	     <entry>Make the value of the rpp's XMIN 0</entry>
+	     <entry>Make the value of the rpp's XMAX 1</entry>
+	     <entry>Make the value of the rpp's YMIN 0</entry>
+	     <entry>Make the value of the rpp's YMAX 1</entry>
+	     <entry>Make the value of the rpp's ZMIN 0</entry>
+	     <entry>Make the value of the rpp's ZMAX 1</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +------------------------------------------------------------------------+
-   |     0      |     1     |     0     |     1     |     0     |     1     |
-   |------------+-----------+-----------+-----------+-----------+-----------|
-   |  Make the  | Make the  | Make the  | Make the  | Make the  | Make the  |
-   |  value of  | value of  | value of  | value of  | value of  | value of  |
-   | the rpp's  | the rpp's | the rpp's | the rpp's | the rpp's | the rpp's |
-   |   XMIN 0   |  XMAX 1   |  YMIN 0   |  YMAX 1   |  ZMIN 0   |  ZMAX 1   |
-   +------------------------------------------------------------------------+
 
    You could also have used the streamlined version of:
 
@@ -4668,20 +5078,35 @@
    inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]
 
    The inside command tells MGED to:
+     <informaltable>
+       <tgroup cols='9'>
+	 <tbody>
+	   <row>
+	     <entry>inside</entry>
+	     <entry>cab1.s</entry>
+	     <entry>caboff1.s</entry>
+	     <entry>.5</entry>
+	     <entry>-.1</entry>
+	     <entry>7</entry>
+	     <entry>-.1</entry>
+	     <entry>-.1</entry>
+	     <entry>-.1</entry>
+	   </row>
+	   <row>
+	     <entry>Inside the shape</entry>
+	     <entry>named cab1.s,</entry>
+	     <entry>create rpp called caboff1.s</entry>
+	     <entry>Make face 1234 (bottom) .5 units thick</entry>
+	     <entry>Make face 5678 (top) -.1 units thick</entry>
+	     <entry>Make face 1485 (rear) .7 units thick</entry>
+	     <entry>Make face 2376 (front) -.1 units thick</entry>
+	     <entry>Make face 1265 (right) -.1 units thick</entry>
+	     <entry>Make face 3478 (left) -.1 units thick</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
-   +------------------------------------------------------------------------+
-   |inside|cab1.s | caboff1.s  |   .5   | -.1 |  .7  |  -.1  |  -.1  | -.1  |
-   |------+-------+------------+--------+-----+------+-------+-------+------|
-   |      |       |            |  Make  |Make | Make | Make  | Make  | Make |
-   |      |       |            |  face  |face | face | face  | face  | face |
-   |      |       |            |  1234  |     | 1485 | 2376  | 1265  | 3478 |
-   |Inside| named | create rpp |        |5678 |(rear)|       |       |      |
-   | the  |cab1.s,|   called   |(bottom)|(top)|      |(front)|(right)|(left)|
-   |shape |       | caboff1.s  |        |     |  .7  |       |       |      |
-   |      |       |            |.5 units| -.1 |units |  -.1  |  -.1  | -.1  |
-   |      |       |            | thick  |units|thick | units | units |units |
-   |      |       |            |        |thick|      | thick | thick |thick |
-   +------------------------------------------------------------------------+
 
    Note: In this example, each negative thickness number indicates that
    caboff1.s will protrude through the corresponding face of cab1.s.
@@ -4782,13 +5207,37 @@
 
    This command tells MGED to:
 
-   +---------------------------------------------------------------------------+
-   |   comb    |cab1.c|  u  |cab1.s|  -  |caboff1.s|  -  |well1.s|  -  |well2.s|
-   |-----------+------+-----+------+-----+---------+-----+-------+-----+-------|
-   |  Make a   | Name |Make |of the|     |the shape|     |  the  |     |  the  |
-   |combination|  it  |  a  |shape |minus|caboff1.s|minus| shape |minus| shape |
-   |           |cab1.c|union|cab1.s|     |         |     |well1.s|     |well2.s|
-   +---------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='10'>
+	 <tbody>
+	   <row>
+	     <entry>comb</entry>
+	     <entry>cab1.c</entry>
+	     <entry>u</entry>
+	     <entry>cab1.s</entry>
+	     <entry>-</entry>
+	     <entry>caboff1.s</entry>
+	     <entry>-</entry>
+	     <entry>well1.s</entry>
+	     <entry>-</entry>
+	     <entry>well2.s</entry>
+	   </row>
+	   <row>
+	     <entry>Make a combination</entry>
+	     <entry>Name it cab1.c</entry>
+	     <entry>Make a union</entry>
+	     <entry>of the shape cab1.s</entry>
+	     <entry>minus</entry>
+	     <entry>the shape caboff1.s</entry>
+	     <entry>minus</entry>
+	     <entry>the shape well1.s</entry>
+	     <entry>minus</entry>
+	     <entry>the shape well2.s</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+
 
    Before you go any further, you should check your data tree by typing tree
    cab1.c. The data tree should say:
@@ -4868,23 +5317,30 @@
    in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08[Enter]
 
    This command tells MGED to:
-
-   +------------------------------------------------------------------------+
-   |         |          |       |        |   .5774    |        |            |
-   |   in    | wheel1.s |  tor  | 0 0 0  |   .5774    |  .18   |    .08     |
-   |         |          |       |        |   .5774    |        |            |
-   |---------+----------+-------+--------+------------+--------+------------|
-   |         |          |       |        |  Make the  |        |            |
-   |         |          |       |  Make  | values for |  Make  |            |
-   |         |          | Make  |  the   | the x, y,  |  the   |  Make the  |
-   |         |          |  the  | values | and z  of  | value  |  value of  |
-   | Create  | Name it  | shape | of the | the normal | of the |  radius 2  |
-   | a shape | wheel1.s |   a   | vertex |   vector   | outer  | (the tire  |
-   |         |          | torus |        |            | radius | thickness) |
-   |         |          |       | 0 0 0  |   .5774    |  .18   |    .08     |
-   |         |          |       |        |   .5774    |        |            |
-   |         |          |       |        |   .5774    |        |            |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='7'>
+	 <tbody>
+	   <row>
+	     <entry>in</entry>
+	     <entry>wheel1.s</entry>
+	     <entry>tor</entry>
+	     <entry>0 0 0</entry>
+	     <entry>.5774 .5774 .5774</entry>
+	     <entry>.18</entry>
+	     <entry>.08</entry>
+	   </row>
+	   <row>
+	     <entry>Create a shape</entry>
+	     <entry>Name it wheel1.s</entry>
+	     <entry>Make the shape a torus</entry>
+	     <entry>Make the values of the vertex 0 0 0</entry>
+	     <entry>Make the values for x, y, and z of the normal vector .5774 .5774 .5774</entry>
+	     <entry>Make the value of the outer radius .18</entry>
+	     <entry>Make the value of radius 2 (the tire thickness) .08</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    Change View to Left and then Edit the position of the wheel. To correctly
    align the wheel with the truck, you will have to Rotate the tire using the
@@ -5071,48 +5527,68 @@
    Review
 
    In this lesson, you:
-
-     * Created a toy truck from three shapes.
-
-     * Made copies of shapes using the Primitive Editor.
-
-     * Made combinations and regions of a more complex object.
-
-     * Checked the data tree for accuracy.
-
-     * Listed contents of the database.
-
-     * Assigned material properties using the Combination Editor.
-
-     * Identified the difference between OK, Accept, Apply, Reset, Cancel,
-       and Dismiss.
-
-     * Identified the on-screen help option.
-
-     * Identified the stacker option.
-
-     * Experimented with the attributes of the camo shader.
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Created a toy truck from three shapes.</para>
+     </listitem>
+     <listitem>
+       <para>Made copies of shapes using the Primitive Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Made combinations and regions of a more complex object.</para>
+     </listitem>
+     <listitem>
+       <para>Checked the data tree for accuracy.</para>
+     </listitem>
+     <listitem>
+       <para>Listed contents of the database.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned material properties using the Combination Editor.</para>
+     </listitem>
+     <listitem>
+       <para>Identified the difference between OK, Accept, Apply, Reset, Cancel, and Dismiss.</para>
+     </listitem>
+    <listitem>
+       <para>Identified the on-screen help option.</para>
+     </listitem>
+     <listitem>
+       <para>Identified the stacker option.</para>
+     </listitem>
+     <listitem>
+       <para>Experimented with the attributes of the camo shader.</para>
+     </listitem>
+   </itemizedlist>
+ 
 
                             Intentionally Left Blank
 
    Lesson 16: Learning Modeling Techniques and Structures
 
    In this lesson, you will be:
-
-   +------------------------------------------------------------------+
-   |   * Making the shapes of the walkie-talkie radio into regions.   |
-   |                                                                  |
-   |   * Gathering the regions into an assembly combination.          |
-   |                                                                  |
-   |   * Assigning material properties to the regions.                |
-   |                                                                  |
-   |   * Adding internal components to the radio.                     |
-   |                                                                  |
-   |   * Creating specialty models of the radio.                      |
-   |                                                                  |
-   |   * Redefining the structure of the radio.                       |
-   |------------------------------------------------------------------|
-   +------------------------------------------------------------------+
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Making the shapes of the walkie-talkie radio into regions.</para>
+     </listitem>
+     <listitem>
+       <para>Gathering the regions into an assembly combination.</para>
+     </listitem>
+     <listitem>
+       <para>Assigning material properties to the regions.</para>
+     </listitem>
+     <listitem>
+       <para>Adding internal components to the radio.</para>
+     </listitem>
+     <listitem>
+       <para>Creating specialty models of the radio.</para>
+     </listitem>
+     <listitem>
+       <para>Redefining the structure of the radio.</para>
+     </listitem>
+     <listitem>
+       <para></para>
+     </listitem>
+   </itemizedlist>
 
    In Lesson 2, we made the basic shapes of a walkie-talkie radio to gain
    experience in viewing objects. Now that we have successfully modeled a few
@@ -5360,15 +5836,26 @@
    mater board.r "plastic sh=4" 0 198 0 1[Enter]
 
    Diagrammed, this command says to:
-
-   +------------------------------------------------------------------------+
-   |     mater     |  board.r   |    "plastic sh=4"    | 0 198 0 |    1     |
-   |---------------+------------+----------------------+---------+----------|
-   |    Assign     | the region |  Apply the plastic   | Give it | Inherit  |
-   |   material    |   called   |    shader with a     | a green |  color   |
-   | properties to |  board.r.  |   shininess of 4.    |  color  | material |
-   |               |            |                      |         |   type   |
-   +------------------------------------------------------------------------+
+     <informaltable>
+       <tgroup cols='5'>
+	 <tbody>
+	   <row>
+	     <entry>mater</entry>
+	     <entry>board.r</entry>
+	     <entry>"plastic sh=4"</entry>
+	     <entry>0 198 0</entry>
+	     <entry>1</entry>
+	   </row>
+	   <row>
+	     <entry>Assign material properties to</entry>
+	     <entry>the region called board.r.</entry>
+	     <entry>Apply the plastic shader with a shininess of 4</entry>
+	     <entry>Give it a green color</entry>
+	     <entry>Inherit color material type</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    Finally, we'll include the board with the rest of the components in
    radio.c as follows:
@@ -5828,18 +6315,27 @@
    Review
 
    In this lesson, you:
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Made the shapes of the walkie-talkie radio into regions.</para>
+     </listitem>
+     <listitem>
+       <para>Gathered the regions into an assembly combination.</para>
+     </listitem>
+     <listitem>
+       <para>Assigned material properties to the regions.</para>
+     </listitem>
+     <listitem>
+       <para>Added internal components to the radio.</para>
+     </listitem>
+     <listitem>
+       <para>Created specialty models of the radio.</para>
+     </listitem>
+     <listitem>
+       <para>Redefined the structure of the radio.</para>
+     </listitem>
+   </itemizedlist>
 
-     * Made the shapes of the walkie-talkie radio into regions.
-
-     * Gathered the regions into an assembly combination.
-
-     * Assigned material properties to the regions.
-
-     * Added internal components to the radio.
-
-     * Created specialty models of the radio.
-
-     * Redefined the structure of the radio.
 
                             Intentionally Left Blank
 
@@ -5850,88 +6346,293 @@
                             Intentionally Left Blank
 
                                MGED User Commands
+     <informaltable>
+       <tgroup cols='5'>
+	 <tbody>
+	   <row>
+	     <entry>%</entry>
+	     <entry>3ptarb</entry>
+	     <entry>?</entry>
+	     <entry>?devel</entry>
+	     <entry>?lib</entry>
+	   </row>
+	   <row>
+	     <entry>B</entry>
+	     <entry>E</entry>
+	     <entry>M</entry>
+	     <entry>Z</entry>
+	     <entry>adc</entry>
+	   </row>
+	   <row>
+	     <entry>ae</entry>
+	     <entry>analyze</entry>
+	     <entry>animate</entry>
+	     <entry>apropos</entry>
+	     <entry>aproposdevel</entry>
+	   </row>
+	   <row>
+	     <entry>aproposlib</entry>
+	     <entry>arb</entry>
+	     <entry>arced</entry>
+	     <entry>area</entry>
+	     <entry>arot</entry>
+	   </row>
+	   <row>
+	     <entry>attach</entry>
+	     <entry>bev</entry>
+	     <entry>c</entry>
+	     <entry>cat</entry>
+	     <entry>center</entry>
+	   </row>
+	   <row>
+	     <entry>color</entry>
+	     <entry>comb</entry>
+	     <entry>comb_color</entry>
+	     <entry>copyeval</entry>
+	     <entry>copymat</entry>
+	   </row>
+	   <row>
+	     <entry>cp</entry>
+	     <entry>cpi</entry>
+	     <entry>d</entry>
+	     <entry>dall</entry>
+	     <entry>db</entry>
+	   </row>
+	   <row>
+	     <entry>db_glob</entry>
+	     <entry>dbconcat</entry>
+	     <entry>debugbu</entry>
+	     <entry>debugdir</entry>
+	     <entry>debuglib</entry>
+	   </row>
+	   <row>
+	     <entry>debugmem</entry>
+	     <entry>debugnmg</entry>
+	     <entry>decompose</entry>
+	     <entry>delay</entry>
+	     <entry>dm</entry>
+	   </row>
+	   <row>
+	     <entry>draw</entry>
+	     <entry>dup</entry>
+	     <entry>e</entry>
+	     <entry>eac</entry>
+	     <entry>echo</entry>
+	   </row>
+	   <row>
+	     <entry>edcodes</entry>
+	     <entry>edcolor</entry>
+	     <entry>edcomb</entry>
+	     <entry>edgedir</entry>
+	     <entry>edmater</entry>
+	   </row>
+	   <row>
+	     <entry>eqn</entry>
+	     <entry>erase</entry>
+	     <entry>erase_all</entry>
+	     <entry>ev</entry>
+	     <entry>exit</entry>
+	   </row>
+	   <row>
+	     <entry>expand</entry>
+	     <entry>extrude</entry>
+	     <entry>eye_pt</entry>
+	     <entry>e_muves</entry>
+	     <entry>facedef</entry>
+	   </row>
+	   <row>
+	     <entry>facetize</entry>
+	     <entry>find</entry>
+	     <entry>fracture</entry>
+	     <entry>g</entry>
+	     <entry>garbage_collect</entry>
+	   </row>
+	   <row>
+	     <entry>gui</entry>
+	     <entry>help</entry>
+	     <entry>helpdevel</entry>
+	     <entry>helplib</entry>
+	     <entry>history</entry>
+	   </row>
+	   <row>
+	     <entry>i</entry>
+	     <entry>idents</entry>
+	     <entry>ill</entry>
+	     <entry>in</entry>
+	     <entry>inside</entry>
+	   </row>
+	   <row>
+	     <entry>item</entry>
+	     <entry>joint</entry>
+	     <entry>journal</entry>
+	     <entry>keep</entry>
+	     <entry>keypoint</entry>
+	   </row>
+	   <row>
+	     <entry>kill</entry>
+	     <entry>killall</entry>
+	     <entry>killtree</entry>
+	     <entry>knob</entry>
+	     <entry>l</entry>
+	   </row>
+	   <row>
+	     <entry>labelvert</entry>
+	     <entry>listeval</entry>
+	     <entry>loadtk</entry>
+	     <entry>lookat</entry>
+	     <entry>ls</entry>
+	   </row>
+	   <row>
+	     <entry>l_muves</entry>
+	     <entry>make</entry>
+	     <entry>make_bb</entry>
+	     <entry>mater</entry>
+	     <entry>matpick</entry>
+	   </row>
+	   <row>
+	     <entry>memprint</entry>
+	     <entry>mirface</entry>
+	     <entry>mirror</entry>
+	     <entry>mrot</entry>
+	     <entry>mv</entry>
+	   </row>
+	   <row>
+	     <entry>mvall</entry>
+	     <entry>nirt</entry>
+	     <entry>nmg_collapse</entry>
+	     <entry>nmg_simplify</entry>
+	     <entry>oed</entry>
+	   </row>
+	   <row>
+	     <entry>opendb</entry>
+	     <entry>orientation</entry>
+	     <entry>orot</entry>
+	     <entry>oscale</entry>
+	     <entry>overlay</entry>
+	   </row>
+	   <row>
+	     <entry>p</entry>
+	     <entry>pathlist</entry>
+	     <entry>paths</entry>
+	     <entry>permute</entry>
+	     <entry>pl</entry>
+	   </row>
+	   <row>
+	     <entry>plot</entry>
+	     <entry>polyb</entry>
+	     <entry>pov</entry>
+	     <entry>prcolor</entry>
+	     <entry>prefix</entry>
+	   </row>
+	   <row>
+	     <entry>press</entry>
+	     <entry>preview</entry>
+	     <entry>prj_add</entry>
+	     <entry>ps</entry>
+	     <entry>push</entry>
+	   </row>
+	   <row>
+	     <entry>putmat</entry>
+	     <entry>q</entry>
+	     <entry>qorot</entry>
+	     <entry>qray</entry>
+	     <entry>query_ray</entry>
+	   </row>
+	   <row>
+	     <entry>quit</entry>
+	     <entry>qvrot</entry>
+	     <entry>r</entry>
+	     <entry>rcodes</entry>
+	     <entry>read_muves</entry>
+	   </row>
+	   <row>
+	     <entry>red</entry>
+	     <entry>redraw_vlist</entry>
+	     <entry>refresh</entry>
+	     <entry>regdebug</entry>
+	     <entry>regdef</entry>
+	   </row>
+	   <row>
+	     <entry>regions</entry>
+	     <entry>release</entry>
+	     <entry>rfarb</entry>
+	     <entry>rm</entry>
+	     <entry>rmater</entry>
+	   </row>
+	   <row>
+	     <entry>rmats</entry>
+	     <entry>rot</entry>
+	     <entry>rotobj</entry>
+	     <entry>rrt</entry>
+	     <entry>rt</entry>
+	   </row>
+	   <row>
+	     <entry>rtcheck</entry>
+	     <entry>savekey</entry>
+	     <entry>saveview</entry>
+	     <entry>sca</entry>
+	     <entry>sed</entry>
+	   </row>
+	   <row>
+	     <entry>setview</entry>
+	     <entry>shader</entry>
+	     <entry>shells</entry>
+	     <entry>showmats</entry>
+	     <entry>size</entry>
+	   </row>
+	   <row>
+	     <entry>solids</entry>
+	     <entry>status</entry>
+	     <entry>summary</entry>
+	     <entry>sv</entry>
+	     <entry>sync</entry>
+	   </row>
+	   <row>
+	     <entry>t</entry>
+	     <entry>ted</entry>
+	     <entry>title</entry>
+	     <entry>tol</entry>
+	     <entry>tops</entry>
+	   </row>
+	   <row>
+	     <entry>tra</entry>
+	     <entry>track</entry>
+	     <entry>translate</entry>
+	     <entry>tree</entry>
+	     <entry>t_muves</entry>
+	   </row>
+	   <row>
+	     <entry>units</entry>
+	     <entry>vars</entry>
+	     <entry>vdraw</entry>
+	     <entry>view</entry>
+	     <entry>viewsize</entry>
+	   </row>
 
-   +-----------------------------------------------------------------+
-   |%         |3ptarb      |?           |?devel      |?lib           |
-   |----------+------------+------------+------------+---------------|
-   |B         |E           |M           |Z           |adc            |
-   |----------+------------+------------+------------+---------------|
-   |ae        |analyze     |animmate    |apropos     |aproposdevel   |
-   |----------+------------+------------+------------+---------------|
-   |aproposlib|arb         |arced       |area        |arot           |
-   |----------+------------+------------+------------+---------------|
-   |attach    |bev         |c           |cat         |center         |
-   |----------+------------+------------+------------+---------------|
-   |color     |comb        |comb_color  |copyeval    |copymat        |
-   |----------+------------+------------+------------+---------------|
-   |cp        |cpi         |d           |dall        |db             |
-   |----------+------------+------------+------------+---------------|
-   |db_glob   |dbconcat    |debugbu     |debugdir    |debuglib       |
-   |----------+------------+------------+------------+---------------|
-   |debugmem  |debugnmg    |decompose   |delay       |dm             |
-   |----------+------------+------------+------------+---------------|
-   |draw      |dup         |e           |eac         |echo           |
-   |----------+------------+------------+------------+---------------|
-   |edcodes   |edcolor     |edcomb      |edgedir     |edmater        |
-   |----------+------------+------------+------------+---------------|
-   |eqn       |erase       |erase_all   |ev          |exit           |
-   |----------+------------+------------+------------+---------------|
-   |expand    |extrude     |eye_pt      |e_muves     |facedef        |
-   |----------+------------+------------+------------+---------------|
-   |facetize  |find        |fracture    |g           |garbage_collect|
-   |----------+------------+------------+------------+---------------|
-   |gui       |help        |helpdevel   |helplib     |history        |
-   |----------+------------+------------+------------+---------------|
-   |i         |idents      |ill         |in          |inside         |
-   |----------+------------+------------+------------+---------------|
-   |item      |joint       |journal     |keep        |keypoint       |
-   |----------+------------+------------+------------+---------------|
-   |kill      |killall     |killtree    |knob        |l              |
-   |----------+------------+------------+------------+---------------|
-   |labelvert |listeval    |loadtk      |lookat      |ls             |
-   |----------+------------+------------+------------+---------------|
-   |l_muves   |make        |make_bb     |mater       |matpick        |
-   |----------+------------+------------+------------+---------------|
-   |memprint  |mirface     |mirror      |mrot        |mv             |
-   |----------+------------+------------+------------+---------------|
-   |mvall     |nirt        |nmg_collapse|nmg_simplify|oed            |
-   |----------+------------+------------+------------+---------------|
-   |opendb    |orientation |orot        |oscale      |overlay        |
-   |----------+------------+------------+------------+---------------|
-   |p         |pathlist    |paths       |permute     |pl             |
-   |----------+------------+------------+------------+---------------|
-   |plot      |polyb       |pov         |prcolor     |prefix         |
-   |----------+------------+------------+------------+---------------|
-   |press     |preview     |prj_add     |ps          |push           |
-   |----------+------------+------------+------------+---------------|
-   |putmat    |q           |qorot       |qray        |query_ray      |
-   |----------+------------+------------+------------+---------------|
-   |quit      |qvrot       |r           |rcodes      |read_muves     |
-   |----------+------------+------------+------------+---------------|
-   |red       |redraw_vlist|refresh     |regdebug    |regdef         |
-   |----------+------------+------------+------------+---------------|
-   |regions   |release     |rfarb       |rm          |rmater         |
-   |----------+------------+------------+------------+---------------|
-   |rmats     |rot         |rotobj      |rrt         |rt             |
-   |----------+------------+------------+------------+---------------|
-   |rtcheck   |savekey     |saveview    |sca         |sed            |
-   |----------+------------+------------+------------+---------------|
-   |setview   |shader      |shells      |showmats    |size           |
-   |----------+------------+------------+------------+---------------|
-   |solids    |status      |summary     |sv          |sync           |
-   |----------+------------+------------+------------+---------------|
-   |t         |ted         |title       |tol         |tops           |
-   |----------+------------+------------+------------+---------------|
-   |tra       |track       |translate   |tree        |t_muves        |
-   |----------+------------+------------+------------+---------------|
-   |units     |vars        |vdraw       |view        |viewsize       |
-   |----------+------------+------------+------------+---------------|
-   |vnirt     |vquery_ray  |vrmgr       |vrot        |wcodes         |
-   |----------+------------+------------+------------+---------------|
-   |whatid    |which_shader|whichair    |whichid     |who            |
-   |----------+------------+------------+------------+---------------|
-   |wmater    |x           |xpush       |zoom        |               |
-   +-----------------------------------------------------------------+
+	   <row>
+	     <entry>vnirt</entry>
+	     <entry>vquery_ray</entry>
+	     <entry>vrmgr</entry>
+	     <entry>vrot</entry>
+	     <entry>wcodes</entry>
+	   </row>
+	   <row>
+	     <entry>whatid</entry>
+	     <entry>which_shader</entry>
+	     <entry>whichair</entry>
+	     <entry>whichid</entry>
+	     <entry>who</entry>
+	   </row>
+	   <row>
+	     <entry>wmater</entry>
+	     <entry>x</entry>
+	     <entry>xpush</entry>
+	     <entry>zoom</entry>
+	     <entry></entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
 
    %
 
