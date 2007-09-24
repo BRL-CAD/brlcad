@@ -2605,106 +2605,148 @@
     your particular system.
   </para>
     
-   +---------------------------------------+
-   |-------------------+-------------------|
-   | Raytraced part1.r | Raytraced part2.r |
-   +---------------------------------------+
+  <informaltable>
+    <tgroup cols='2'>
+      <tbody>
+	<row>
+	  <entry><graphic/></entry>
+	  <entry><graphic/></entry>
+	</row>
+	<row>
+	  <entry>Raytraced part1.r</entry>
+	  <entry>Raytraced part2.r</entry>
+	</row>
+      </tbody>
+    </tgroup>
+  </informaltable>
 
-   You should see that a spherical "bite" has been taken out of the top of
-   the cylinder.
+  <para>
+    You should see that a spherical "bite" has been taken out of the top of
+    the cylinder.
+  </para>
 
+  <para>
    Next we will make a blue region using the intersection operator instead of
    subtraction. Once again, we start by creating a region:
 
    <command>r part2.r u rcc2.s + sph2.s[Enter]</command>
-
-   For comparison to the GUI approach used to make part1.r, let's use the
-   Command Line to assign the color to part2.r:
-
-   <command>mater part2.r plastic 0 0 255 0[Enter]</command>
-
+  </para>
+  <para>
+    For comparison to the GUI approach used to make part1.r, let's use the
+    Command Line to assign the color to part2.r:
+    
+    <command>mater part2.r plastic 0 0 255 0[Enter]</command>
+  </para>
+  <para>
    Finally, Blast this new region onto the display as follows:
 
    <command>B part2.r[Enter]</command>
+  </para>
 
+  <para>
    Now raytrace the object. It should look similar to the preceding
    right-hand image.
+  </para>
 
-   +------------------------------------------------------------------------+
-   || Note: Remember to clear the Graphics Window and draw your new region  |
-   || or combination before trying to raytrace the model. The raytracer     |
-   || ignores a region or combination that is not drawn in the Graphics     |
-   || Window. The color of the wireframe is your clue. If it doesn't        |
-   || reflect the colors you've assigned (e.g., everything is drawn in red  |
-   || even though you've assigned other colors), then you haven't cleared   |
-   || the screen of the primitive shapes and drawn the new region or        |
-   || combination since the time you made it.                               |
-   +------------------------------------------------------------------------+
+  <note>
+    Note: Remember to clear the Graphics Window and draw your new region  
+    or combination before trying to raytrace the model. The raytracer     
+    ignores a region or combination that is not drawn in the Graphics     
+    Window. The color of the wireframe is your clue. If it doesn't        
+    reflect the colors you've assigned (e.g., everything is drawn in red  
+    even though you've assigned other colors), then you haven't cleared   
+    the screen of the primitive shapes and drawn the new region or        
+    combination since the time you made it.                               
+  </note>
 
+  <para>
    When you use the intersection operator, the order in which you specify the
    shapes doesn't matter. We would have gotten the same results if we had
    specified the Boolean operation as
 
    <command>r part2.r u sph2.s + rcc2.s</command>
-
+  </para>
+  <para>
    However, when using the subtraction operator, the order of the two shapes
    is very important. Let's make a region with the order of the shapes
    reversed from that used for part1.r:
 
    <command>r part3.r u sph2.s - rcc2.s</command>
-
+  </para>
+  <para>
    This time we won't bother to set a color. (When no color is set for
    objects, the raytracer (rt) will use a color of white. However, these
    objects may appear gray because of the amount of light in the scene.)
    Blast this design to the display and raytrace it:
+  </para>
 
-                                Raytrace part3.r
-
+  <figure>
+    <title>Raytrace part3.r</title>
+    <screenshot>
+      <graphic fileref="rtpt3.png"/>
+    </screenshot>
+  </figure>
+ 
+  <para>
    Now let's raytrace all three objects we have created together. To draw the
    three regions at once, we could type:
 
    <command>B part1.r part2.r part3.r</command>
+  </para>
+  <para>
+    Doing this once is no problem. However, if these were three parts that
+    made up some complex object, we might like to be able to draw all of them
+    more conveniently. To make drawing a collection of objects together
+    easier, we create an assembly combination to gather them all together. We
+    will create one called dome.c for our three regions. This is accomplished
+    by the following command:
 
-   Doing this once is no problem. However, if these were three parts that
-   made up some complex object, we might like to be able to draw all of them
-   more conveniently. To make drawing a collection of objects together
-   easier, we create an assembly combination to gather them all together. We
-   will create one called dome.c for our three regions. This is accomplished
-   by the following command:
-
-   <command>comb dome.c u part1.r u part2.r u part3.r</command>
-
+    <command>comb dome.c u part1.r u part2.r u part3.r</command>
+  </para>
+  <para>
    Notice the similarity between this command and the r command we used to
    create the regions.
-
+  </para>
+  <para>
    Remember from the discussion at the beginning of this lesson, the
    difference between a region and a combination is that combinations are not
    necessarily composed of only one kind of material. Several objects of
    different materials can make up an assembly combination such as the one we
    have just created.
+  </para>
 
-   +------------------------------------------------------------------------+
-   || Because creating assembly combinations is a very common task, there   |
-   || is a shortcut command-the g (for group) command-to help make the task |
-   || easier. Creating dome.c using this command would look as follows:     |
-   ||                                                                       |
-   || <command>g dome.c part1.r part2.r part3.r</command>                                      |
-   ||                                                                       |
-   || Notice that you don't have to type the u Boolean operators. The g     |
-   || command unions all of its arguments.                                  |
-   +------------------------------------------------------------------------+
+  <note>
+    Because creating assembly combinations is a very common task, there   
+    is a shortcut command-the g (for group) command-to help make the task 
+    easier. Creating dome.c using this command would look as follows:     
+                                                                          
+    <command>g dome.c part1.r part2.r part3.r</command> 
 
+    Notice that you don't have to type the u Boolean operators. The g     
+    command unions all of its arguments.                                  
+  </note>
+
+  <para>
    All that is necessary to draw all three objects is the much simpler
    command:
 
    <command>B dome.c</command>
-
+  </para>
+  <para>
    Now we can raytrace the collected set and get the following image:
+  </para>
 
-                                Raytraced dome.c
+  <figure>
+    <title>Raytraced dome.c</title>
+    <screenshot>
+      <graphic fileref="rtdome.png"/>
+    </screenshot>
+  </figure>
+  </sect1>
 
-   5. Operator Precedence
+  <sect1><title>Operator Precedence</title>
 
+  <para>
    The shapes we have created here are fairly simple. In each case, a single
    primitive shape is unioned, and subtraction or intersection operations are
    performed on that single primitive shape. You should know that it is
@@ -2713,15 +2755,18 @@
    of the Boolean operations. In the Boolean notation we are using, the
    subtraction and intersection operators both have higher precedence than
    the union operator has. So, for example:
-
+   
    <command>comb demo.c u shape1 - shape2 u shape3 - shape4 + shape5</command>
-
+  </para>
+  <para>
    This would result in the following Boolean expression:
 
-   (shape1 - shape2) u ( (shape3 - shape4) + shape5)
+   <literal>(shape1 - shape2) u ( (shape3 - shape4) + shape5)</literal>
+  </para>
+  </sect1>
 
-   Review
-
+  <sect1><title>Review</title>
+  <para>
    In this lesson, you:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -2734,6 +2779,9 @@
        <para>Made regions with Boolean operations.</para>
      </listitem>
     </itemizedlist>
+  </para>
+  </sect1>
+</chapter>
 
    Lesson 6: Creating a Goblet
 
@@ -4301,6 +4349,20 @@
    of the dough ring. With the same technique used in editing the rcc shapes,
    edit the size of the torus until it looks similar to the following
    examples:
+  <informaltable>
+    <tgroup cols='2'>
+      <tbody>
+	<row>
+	  <entry><graphic/></entry>
+	  <entry><graphic/></entry>
+	</row>
+	<row>
+	  <entry></entry>
+	  <entry></entry>
+	</row>
+      </tbody>
+    </tgroup>
+  </informaltable>
 
    +-------------------------------------------------------------------+
    |----------------------------------+--------------------------------|
@@ -4815,6 +4877,20 @@ Move End H
    Click on sph2.s and drag it into position. Once you have positioned the
    eight spheres around the rcc, your design should look similar to the
    following ones when viewed from the top and front.
+  <informaltable>
+    <tgroup cols='2'>
+      <tbody>
+	<row>
+	  <entry><graphic/></entry>
+	  <entry><graphic/></entry>
+	</row>
+	<row>
+	  <entry></entry>
+	  <entry></entry>
+	</row>
+      </tbody>
+    </tgroup>
+  </informaltable>
 
    +-----------------------------------------------+
    |----------------------+------------------------|
