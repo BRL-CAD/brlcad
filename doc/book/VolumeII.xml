@@ -1963,36 +1963,48 @@
        <para>Clear the Graphics Window after raytracing a model.</para>
      </listitem>
    </itemizedlist>
+   </para>
 
+   <sect1><title>Opening the Database</title>
 
-   1. Opening the Database
+   <para>
+     To recall the primitive shapes made in the previous lesson, start MGED and
+     go to the File menu and select Open. A control panel will appear with a
+     list of folders and files. Select shapes.g and Open. A new box will
+     appear, and you should click on OK.
+   </para>
+   <para>
+     You should now have two windows prominently displayed on your screen. At
+     the MGED prompt in the Command Window, type:
 
-   To recall the primitive shapes made in the previous lesson, start MGED and
-   go to the File menu and select Open. A control panel will appear with a
-   list of folders and files. Select shapes.g and Open. A new box will
-   appear, and you should click on OK.
+     <command>draw sph2.s rcc2.s[Enter]</command>
+   </para>
+   </sect1>
 
-   You should now have two windows prominently displayed on your screen. At
-   the MGED prompt in the Command Window, type:
+   <sect1><title>Creating a Region</title>
+ 
+   <para>
+     Before you can raytrace your design, you have to make a region of the two
+     shapes. A region is an object that has uniform material properties. Most
+     applications that use BRL-CAD models consider regions as the basic
+     components of the model. Regions are constructed using the basic Boolean
+     operations of union, intersection, and subtraction, which are discussed in
+     the next chapter.
+   </para>
 
-   draw sph2.s rcc2.s[Enter]
+   <para>
+     At the MGED prompt, type:
+     
+     <command>r shapes2.r u sph2.s u rcc2.s[Enter]</command>
 
-   2. Creating a Region
+   </para>
 
-   Before you can raytrace your design, you have to make a region of the two
-   shapes. A region is an object that has uniform material properties. Most
-   applications that use BRL-CAD models consider regions as the basic
-   components of the model. Regions are constructed using the basic Boolean
-   operations of union, intersection, and subtraction, which are discussed in
-   the next chapter.
-
-   At the MGED prompt, type:
-
-   r shapes2.r u sph2.s u rcc2.s[Enter] [Note: Make sure you key in
-
-   the information correctly before you press ENTER. Spaces, or the lack
-   thereof, are important.]
-
+   <note>
+     Make sure you key in the information correctly before you press ENTER. 
+     Spaces, or the lack thereof, are important.
+   </note>
+   
+   <para>
    This command tells MGED to:
 
      <informaltable>
@@ -2017,54 +2029,77 @@
 	 </tbody>
        </tgroup>
      </informaltable>
+   </para>
+   </sect1>
 
+   <sect1><title>Assigning Material Properties to a Region</title>
 
-   3. Assigning Material Properties to a Region
+   <para>
+     Now type in:
+     
+     <command>mater shapes2.r[Enter]</command>
+     
+     MGED will respond with:
 
-   Now type in:
-
-   mater shapes2.r[Enter]
-
-   MGED will respond with:
-
+   </para>
+   <literallayout>
    shader=
-
+   
    Shader? ('del' to delete, CR to skip)
+   </literallayout>
 
-   Type in:
+   <para>
+     Type in:
+     
+     <command>plastic[Enter]</command>
 
-   plastic[Enter]
+     MGED will ask:
 
-   MGED will ask:
-
+   </para>
+   <literallayout>
    Color = (no color specified)
 
    Color R G B (0..255)? ('del' to delete, CR to skip)
+   </literallayout>
 
-   Type in:
+   <para>
+     Type in:
+     
+     <command>0 255 0[Enter]</command>
 
-   0 255 0[Enter]
+     This will assign a light green color to the region. MGED will now ask:
+   </para>
 
-   This will assign a light green color to the region. MGED will now ask:
-
+   <literallayout>
    Inherit = 0 lower nodes (towards leaves) override
 
    Inheritance (0/1)? (CR to skip)
+   </literallayout>
 
-   Type:
+   <para>
+     Type:
+     
+     <command>0[Enter]</command>
 
-   0[Enter]
+     When you have completed this set of commands, your Command Window should
+     look like the following example:
+   </para>
+   
+   <figure>
+     <title>The Command Window Screen</title>
+     <screenshot>
+       <graphic fileref="commandwindow.png"/>
+     </screenshot>
+   </figure>
 
-   When you have completed this set of commands, your Command Window should
-   look like the following example:
+   <para>
+     The one-line version of this set of commands would be:
+     
+     <command>mater shapes2.r plastic 0 255 0 0[Enter]</command>
+     
+     Diagrammed, this command says to:
+   </para>
 
-                           The Command Window Screen
-
-   The one-line version of this set of commands would be:
-
-   mater shapes2.r plastic 0 255 0 0[Enter]
-
-   Diagrammed, this command says to:
      <informaltable>
        <tgroup cols='5'>
 	 <tbody>
@@ -2085,15 +2120,19 @@
 	 </tbody>
        </tgroup>
      </informaltable>
+   </sect1>
 
-   4. Clearing the Graphics Window and Drawing the New Region
+   <sect1><title>Clearing the Graphics Window and Drawing the New Region</title>
 
-   An easy way to clear the Graphics Window of the old design and draw the
-   new region is to type at the MGED prompt:
+   <para>
+     An easy way to clear the Graphics Window of the old design and draw the
+     new region is to type at the MGED prompt:
+     
+     <command>B shapes2.r[Enter]</command>
 
-   B shapes2.r[Enter]
+     This command tells MGED to:
+   </para>
 
-   This command tells MGED to:
      <informaltable>
        <tgroup cols='2'>
 	 <tbody>
@@ -2109,114 +2148,160 @@
        </tgroup>
      </informaltable>
 
-   The Blast command is shorthand for the combination of the Z and draw
-   commands.
+   <para>
+     The Blast command is shorthand for the combination of the Z and draw
+     commands.
+   </para>
+   </sect1>
 
-   5. Raytracing Your Model
+  <sect1><title>Raytracing Your Model</title>
 
-   Now go to the File menu and select Raytrace. A dialog box called the
-   Raytrace Control Panel will appear. At the top are menus for Framebuffer
-   and Objects. Select Framebuffer. A drop-down menu will appear with six
-   choices: Active, All, Rectangle Area, Overlay, Interlay, and Underlay.
-   Make sure the Active, All, and Underlay options are activated (as shown by
-   the presence of a red indicator to the left of each choice). Select OK.
+  <para>
+    Now go to the File menu and select Raytrace. A dialog box called the
+    Raytrace Control Panel will appear. At the top are menus for Framebuffer
+    and Objects. Select Framebuffer. A drop-down menu will appear with six
+    choices: Active, All, Rectangle Area, Overlay, Interlay, and Underlay.
+    Make sure the Active, All, and Underlay options are activated (as shown by
+    the presence of a red indicator to the left of each choice). Select OK.
+  </para>
 
-   +------------------------------------------------------------------------+
-   || Note: When you select Raytrace from this dialog window, you start an  |
-   || auxiliary program (rt) of the BRL-CAD package. The program only       |
-   || raytraces objects that have been drawn in the Graphics Window. You    |
-   || may have many shapes, regions, or combinations in a database, but if  |
-   || they aren't currently drawn in the Graphics Window, the raytracer     |
-   || will ignore them.                                                     |
-   +------------------------------------------------------------------------+
+  <note>
+    Note: When you select Raytrace from this dialog window, you start an  
+    auxiliary program (rt) of the BRL-CAD package. The program only       
+    raytraces objects that have been drawn in the Graphics Window. You    
+    may have many shapes, regions, or combinations in a database, but if  
+    they aren't currently drawn in the Graphics Window, the raytracer     
+    will ignore them.                                                     
+  </note>
 
-   Change the background color produced by the raytracer by selecting
-   Background Color  in the Raytrace Control Panel. A drop-down menu will
-   appear with some predefined color choices plus a color tool. Select the
-   white option. The select button should now appear white, in accordance
-   with your selection.
+  <para>
+    Change the background color produced by the raytracer by selecting
+    Background Color  in the Raytrace Control Panel. A drop-down menu will
+    appear with some predefined color choices plus a color tool. Select the
+    white option. The select button should now appear white, in accordance
+    with your selection.
+  </para>
+ 
+  <para>
+    Next select Raytrace from the four options along the bottom of the box.
+    The Graphics Window should start changing, and you will soon see your
+    design in shades of green with the wireframe superimposed on the design,
+    as shown in the following example:
+  </para>
+  
+    <figure>
+	<title>Raytraced Shapes</title>
+	<screenshot>
+	  <graphic fileref="raytracedshapes.png"/>
+	</screenshot>
+      </figure>
 
-   Next select Raytrace from the four options along the bottom of the box.
-   The Graphics Window should start changing, and you will soon see your
-   design in shades of green with the wireframe superimposed on the design,
-   as shown in the following example:
+  <para>
+    As we have seen, you can specify the background color for the raytraced
+    image.
+  </para>
+  <para>
+    You can also fill the entire framebuffer with the background color. To do
+    this, select the desired color and then click the fbclear (framebuffer
+    clear) button at the bottom of the Raytrace Control Panel.
+  </para>
+  </sect1>
 
-                                Raytraced Shapes
+  <sect1><title>Changing Layers of the Graphics Window</title>
 
-   As we have seen, you can specify the background color for the raytraced
-   image.
+  <para>
+    The Graphics Window of MGED is used to display different types of
+    graphical information: 3D wireframes and 2D pixels (or images).
+    Conceptually, each type of data occupies a separate layer in the display.
+    The 3D wireframes occupy the wireframe layer, while the 2D pixels (images)
+    occupy the framebuffer layer. These layers can be thought of as
+    transparencies, and the order in which they are stacked and displayed can
+    be changed.
+  </para>
 
-   You can also fill the entire framebuffer with the background color. To do
-   this, select the desired color and then click the fbclear (framebuffer
-   clear) button at the bottom of the Raytrace Control Panel.
+  <para>
+    As mentioned previously, there is a Framebuffer menu within the Raytrace
+    Control Panel. At the top of this menu is a toggle button labeled Active.
+    This turns the display of the framebuffer layer on and off. Near the
+    bottom of the same menu are three radio buttons: Overlay, Interlay, and
+    Underlay. When the underlay mode is selected, the pixel data are displayed
+    under or behind the vector data. Conversely, when the overlay mode is
+    selected, the pixel data are in front of the vector data. The interlay
+    option is similar to the overlay mode. The subtle difference is an
+    advanced topic not covered here.
+  </para>
 
-   6. Changing Layers of the Graphics Window
+     <informaltable frames="none">
+       <tgroup cols='2'>
+	 <tbody>
+	   <row>
+	     <entry><graphic/></entry>
+	     <entry><graphic/></entry>
+	   </row>
+	   <row>
+	     <entry>Framebuffer in Underlay Mode</entry>
+	     <entry>Framebuffer in Overlay Mode</entry>
+	   </row>
+	 </tbody>
+       </tgroup>
+     </informaltable>
+     
+     <para>
+       To see how this works, go to the framebuffer menu and select Overlay.
+       Notice that the wireframe representation disappears. Where does it go? If
+       you answered "behind the framebuffer," you would be correct. To view the
+       model's geometry, you would have to make the framebuffer inactive or
+       select underlay  mode.
+     </para>
 
-   The Graphics Window of MGED is used to display different types of
-   graphical information: 3D wireframes and 2D pixels (or images).
-   Conceptually, each type of data occupies a separate layer in the display.
-   The 3D wireframes occupy the wireframe layer, while the 2D pixels (images)
-   occupy the framebuffer layer. These layers can be thought of as
-   transparencies, and the order in which they are stacked and displayed can
-   be changed.
+     <para>
+       The wireframe layer has a yellow dot in the center that marks the center
+       of the view talked about in Lesson 2. This allows you to determine whether
+       the framebuffer is in overlay or underlay mode. If you can see the yellow
+       dot, the framebuffer is in underlay mode. If you've told MGED to draw some
+       geometry and the Graphics Window seems to remain blank, you are probably
+       seeing a blank framebuffer masking the wireframe layer.
+     </para>
 
-   As mentioned previously, there is a Framebuffer menu within the Raytrace
-   Control Panel. At the top of this menu is a toggle button labeled Active.
-   This turns the display of the framebuffer layer on and off. Near the
-   bottom of the same menu are three radio buttons: Overlay, Interlay, and
-   Underlay. When the underlay mode is selected, the pixel data are displayed
-   under or behind the vector data. Conversely, when the overlay mode is
-   selected, the pixel data are in front of the vector data. The interlay
-   option is similar to the overlay mode. The subtle difference is an
-   advanced topic not covered here.
+     <para>
+       Note that you can change the view in the wireframe, but the view in the
+       framebuffer does not automatically update to match. It is not possible to
+       directly manipulate the view in the framebuffer. You must raytrace again
+       in order to update the framebuffer image.
+     </para>
+  </sect1>
 
-   +------------------------------------------------------------+
-   |------------------------------+-----------------------------|
-   | Framebuffer in Underlay Mode | Framebuffer in Overlay Mode |
-   +------------------------------------------------------------+
+  <sect1><title>Clearing the Graphics Window</title>
 
-   To see how this works, go to the framebuffer menu and select Overlay.
-   Notice that the wireframe representation disappears. Where does it go? If
-   you answered "behind the framebuffer," you would be correct. To view the
-   model's geometry, you would have to make the framebuffer inactive or
-   select underlay  mode.
+  <para>
+    To completely clear the Graphics Window, you have to handle both the
+    wireframe and framebuffer layers. Recall that you can clear the wireframe
+    layer with the Z command. For the framebuffer layer, there is the fbclear
+    button on the Raytrace Control Panel.
+  </para>
 
-   The wireframe layer has a yellow dot in the center that marks the center
-   of the view talked about in Lesson 2. This allows you to determine whether
-   the framebuffer is in overlay or underlay mode. If you can see the yellow
-   dot, the framebuffer is in underlay mode. If you've told MGED to draw some
-   geometry and the Graphics Window seems to remain blank, you are probably
-   seeing a blank framebuffer masking the wireframe layer.
+  <para>
+    In some instances, you may prefer to turn off the framebuffer instead of
+    clearing it. When the framebuffer is turned off, MGED runs faster because
+    it doesn't have to redraw the framebuffer each time it updates the
+    display. You can turn the framebuffer on and off by toggling the Active
+    item in the Raytrace Control Panel's framebuffer menu.
+  </para>
 
-   Note that you can change the view in the wireframe, but the view in the
-   framebuffer does not automatically update to match. It is not possible to
-   directly manipulate the view in the framebuffer. You must raytrace again
-   in order to update the framebuffer image.
+  <note>
+    Note that in BRL-CAD versions 5.1 and later, turning off the          
+    framebuffer does not destroy the image it contains. Turning it back   
+    on displays the same image. However, in earlier versions of the       
+    package, the contents of the framebuffer are lost when it is turned   
+    off.                                                                  
+  </note>
 
-   7. Clearing the Graphics Window
+  </sect1>
 
-   To completely clear the Graphics Window, you have to handle both the
-   wireframe and framebuffer layers. Recall that you can clear the wireframe
-   layer with the Z command. For the framebuffer layer, there is the fbclear
-   button on the Raytrace Control Panel.
+  <sect1><title>Review</title>
 
-   In some instances, you may prefer to turn off the framebuffer instead of
-   clearing it. When the framebuffer is turned off, MGED runs faster because
-   it doesn't have to redraw the framebuffer each time it updates the
-   display. You can turn the framebuffer on and off by toggling the Active
-   item in the Raytrace Control Panel's framebuffer menu.
-
-   +------------------------------------------------------------------------+
-   || Note that in BRL-CAD versions 5.1 and later, turning off the          |
-   || framebuffer does not destroy the image it contains. Turning it back   |
-   || on displays the same image. However, in earlier versions of the       |
-   || package, the contents of the framebuffer are lost when it is turned   |
-   || off.                                                                  |
-   +------------------------------------------------------------------------+
-
-   Review
-
-   In this lesson you:
+  <para>
+    In this lesson you:
 
    <itemizedlist mark='bullet'>
      <listitem>
@@ -2241,147 +2326,212 @@
        <para>Cleared the Graphics Window after raytracing a model.</para>
      </listitem>
    </itemizedlist>
- </sect1>
+  </para>
+
+  </sect1>
+</chapter>
 
 
- </chapter>
 
+<chapter id="Lesson-5">
+  <title>Lesson 5: Learning About Boolean Expressions</title>
 
-
-   Lesson 5: Learning About Boolean Expressions
-
+  <para>
    In this lesson, you will:
+   
+   <itemizedlist mark='bullet'>
+     <listitem>
+       <para>Learn about combinations and regions.</para>
+     </listitem>
+     <listitem>
+       <para>Learn about Boolean operations.</para>
+     </listitem>
+     <listitem>
+       <para>Make regions with Boolean operations.</para>
+     </listitem>
+   </itemizedlist>
 
-   +---------------------------------------------+
-   |   * Learn about combinations and regions.   |
-   |                                             |
-   |   * Learn about Boolean operations.         |
-   |                                             |
-   |   * Make regions with Boolean operations.   |
-   |---------------------------------------------|
-   +---------------------------------------------+
+   <caution>
+     <para>
+       This is an important lesson because Boolean operations are critical   
+       to the modeling process. The order in which shapes are combined and   
+       the operators used to combine the shapes will determine how the MGED  
+       program interprets your model.                                        
+     </para>
+     <para>
+       The correct use of Boolean expressions to modify geometric shapes is  
+       a key skill in constructive solid modeling. It important to review    
+       these concepts as many times as necessary. If it is difficult to      
+       absorb them all now, come back to them later.
+     </para>
+   </caution>
+  </para>
 
-   +------------------------------------------------------------------------+
-   || This is an important lesson because Boolean operations are critical   |
-   || to the modeling process. The order in which shapes are combined and   |
-   || the operators used to combine the shapes will determine how the MGED  |
-   || program interprets your model.                                        |
-   ||                                                                       |
-   || The correct use of Boolean expressions to modify geometric shapes is  |
-   || a key skill in constructive solid modeling. It important to review    |
-   || these concepts as many times as necessary. If it is difficult to      |
-   || absorb them all now, come back to them later.                         |
-   +------------------------------------------------------------------------+
+  <sect1><title>Combinations and Regions: Boolean Tools</title>
 
-   1. Combinations and Regions: Boolean Tools
+  <para>
+    There are conceptually two objects in MGED that support Boolean
+    operations. One is called a combination, the other is called a region.
+  </para>
 
-   There are conceptually two objects in MGED that support Boolean
-   operations. One is called a combination, the other is called a region.
+  <para>
+    As mentioned earlier, a typical geometric shape in MGED is called a
+    primitive. However, single primitives are often insufficient to fully
+    describe the complex shape of the object being modeled. So, combining two
+    or more primitive shapes into other shapes (called combinations) using
+    Boolean operators allows you to artfully imitate the shape and form of
+    most complicated objects.
+  </para>
 
-   As mentioned earlier, a typical geometric shape in MGED is called a
-   primitive. However, single primitives are often insufficient to fully
-   describe the complex shape of the object being modeled. So, combining two
-   or more primitive shapes into other shapes (called combinations) using
-   Boolean operators allows you to artfully imitate the shape and form of
-   most complicated objects.
+  <para>
+    The previous chapter noted that material properties are associated with
+    regions. Like combinations, regions use Boolean operations to create
+    complex shapes. The difference is that regions are shapes that have
+    material properties. They occupy three-dimensional space, rather than
+    simply defining a shape in space.
+  </para>
 
-   The previous chapter noted that material properties are associated with
-   regions. Like combinations, regions use Boolean operations to create
-   complex shapes. The difference is that regions are shapes that have
-   material properties. They occupy three-dimensional space, rather than
-   simply defining a shape in space.
+  <para>
+    You can think of primitives and combinations as a blueprint for an object.
+    The actual object is created when a region is made. For example, you might
+    make a blueprint of an object such as a coffee mug, but then create that
+    mug from different types of material (e.g., ceramic or glass). Regardless
+    of the material, the blueprint is the same.
+  </para>
 
-   You can think of primitives and combinations as a blueprint for an object.
-   The actual object is created when a region is made. For example, you might
-   make a blueprint of an object such as a coffee mug, but then create that
-   mug from different types of material (e.g., ceramic or glass). Regardless
-   of the material, the blueprint is the same.
+  <para>
+    When Boolean operations are used to build up complex shapes from simpler
+    shapes, we can call the result a shape combination. When they are used to
+    define other logical or hierarchical structure within the database, the
+    result may be referred to as a group or an assembly combination.
+  </para>
+  </sect1>
+  
+  <sect1><title>Boolean Operations</title>
 
-   When Boolean operations are used to build up complex shapes from simpler
-   shapes, we can call the result a shape combination. When they are used to
-   define other logical or hierarchical structure within the database, the
-   result may be referred to as a group or an assembly combination.
+  <para>
+    The three Boolean operators employed by the MGED program are union,
+    subtraction, and intersection. You can use Boolean operations to combine
+    shapes to produce more complex shapes.
 
-   2. Boolean Operations
+    <itemizedlist>
+      <listitem>
+	<para>Union Shapes: Merge two shapes.</para>
+      </listitem> 
+      <listitem>
+	<para>Subtract Shapes: Remove the volume of one shape from another.</para>
+      </listitem> 
+      <listitem>
+	<para>Intersect Shapes: Use only the parts of the two shapes that overlap.</para>
+      </listitem> 
+    </itemizedlist>
+  </para>
+  <sect2><title>Union</title>
+  <para>
+    The union operator, u, joins shapes so that any point in at least one of
+    them will be part of the result. Union is a powerful and frequently used
+    operator.
+  </para>
 
-   The three Boolean operators employed by the MGED program are union,
-   subtraction, and intersection. You can use Boolean operations to combine
-   shapes to produce more complex shapes.
+  <figure>
+    <title>The Union of Two Spheres</title>
+    <screenshot>
+      <graphic fileref="unionspheres.png"></graphic>
+    </screenshot>
+  </figure>
+  </sect2>
 
-    1. Union Shapes: Merge two shapes.
+  <sect2><title>Subtraction</title>
+  <para>
+    When a primitive shape has a second, overlapping shape subtracted from it,
+    the result is that the second shape disappears, together with any common
+    volume it had with the first shape. The - (minus sign) operator signifies
+    subtraction or difference. This operation is especially useful in
+    hollowing a body, removing an oddly shaped piece of a primitive shape, or
+    accounting for edge intersections of walls, plates, piping, or other
+    connected shapes.
+  </para>
+  <para>
+    In the following example, a dotted red line indicates that the sphere
+    being subtracted extends inside the sphere on the right. This overlapping
+    portion is partially out of view in the raytraced image.
+  </para>
+  <figure>
+    <title>Subtraction of One Sphere from Another Sphere</title>
+    <screenshot>
+      <graphic fileref="subtractionspheres.png"></graphic>
+    </screenshot>
+  </figure>
+  </sect2>
 
-    2. Subtract Shapes: Remove the volume of one shape from another.
+  <sect2><title>Intersection</title>
+  
+  <para>
+    The Boolean intersection operation, signified by a + (plus sign) operator,
+    combines two primitive shapes that overlap each other, saving only their
+    common volume (the nonoverlapped areas will not be present). An easy way
+    to understand intersections is to think of shapes as roads. The
+    intersection is the place where two roads overlap.
+  </para>
+  <para>
+    Although many people find intersection operations harder to understand
+    than unions and subtractions, unusual/complex shapes can be expressed
+    using the intersection operator. For example, you can model a magnifying
+    lens as the intersection of two spheres.
+  </para>
 
-    3. Intersect Shapes: Use only the parts of the two shapes that overlap.
+  <para>
+    The intersection operation is rarely useful unless, as shown in the
+    following figure, at least two shapes overlap. The intersection of two
+    shapes having no common points (i.e., no overlap) is the null set, so it
+    includes no points of space at all.
+  </para>
 
-   Union
+  <figure>
+    <title>Intersection of Two Spheres</title>
+    <screenshot>
+      <graphic fileref="subtractionspheres.png"></graphic>
+    </screenshot>
+  </figure>
+  
+  <para>
+    There is one important restriction when using the Boolean subtraction and
+    intersection operators. There must be a first shape from which a second
+    shape can be subtracted or intersected. If you have only one shape within
+    a region or combination, the operator will be ignored and the union
+    operator will always be used.
+  </para>
+  </sect2>
+  </sect1>
 
-   The union operator, u, joins shapes so that any point in at least one of
-   them will be part of the result. Union is a powerful and frequently used
-   operator.
+  <sect1><title>Making Regions with Boolean Operations</title>
+  
+  <para>
+    Begin by opening the database shapes.g that you created in Lesson 3. At
+    the Command Window prompt, type:
+    
+    <command>draw sph2.s rcc2.s[Enter]</command>
+  
+    This lets us see the shapes we will be using to create our regions. As
+    seen earlier, the two shapes should look something like the following:
+  </para>
 
-                            The Union of Two Spheres
+  <figure>
+    <title>Two Primitive Shapes</title>
+    <screenshot>
+      <graphic fileref="twoprimitivespheres.png"></graphic>
+    </screenshot>
+  </figure>
 
-   Subtraction
+  <para>
+    In this lesson, we will create different shapes to demonstrate the
+    function of Boolean operations. In the Command Window, type the following:
+    
+    <command>r part1.r u rcc2.s - sph2.s[Enter]</command>
+    
+    This command tells MGED to:
+  </para>
 
-   When a primitive shape has a second, overlapping shape subtracted from it,
-   the result is that the second shape disappears, together with any common
-   volume it had with the first shape. The - (minus sign) operator signifies
-   subtraction or difference. This operation is especially useful in
-   hollowing a body, removing an oddly shaped piece of a primitive shape, or
-   accounting for edge intersections of walls, plates, piping, or other
-   connected shapes.
-
-   In the following example, a dotted red line indicates that the sphere
-   being subtracted extends inside the sphere on the right. This overlapping
-   portion is partially out of view in the raytraced image.
-
-                 Subtraction of One Sphere from Another Sphere
-
-   Intersection
-
-   The Boolean intersection operation, signified by a + (plus sign) operator,
-   combines two primitive shapes that overlap each other, saving only their
-   common volume (the nonoverlapped areas will not be present). An easy way
-   to understand intersections is to think of shapes as roads. The
-   intersection is the place where two roads overlap.
-
-   Although many people find intersection operations harder to understand
-   than unions and subtractions, unusual/complex shapes can be expressed
-   using the intersection operator. For example, you can model a magnifying
-   lens as the intersection of two spheres.
-
-   The intersection operation is rarely useful unless, as shown in the
-   following figure, at least two shapes overlap. The intersection of two
-   shapes having no common points (i.e., no overlap) is the null set, so it
-   includes no points of space at all.
-
-                          Intersection of Two Spheres
-
-   There is one important restriction when using the Boolean subtraction and
-   intersection operators. There must be a first shape from which a second
-   shape can be subtracted or intersected. If you have only one shape within
-   a region or combination, the operator will be ignored and the union
-   operator will always be used.
-
-   3. Making Regions with Boolean Operations
-
-   Begin by opening the database shapes.g that you created in Lesson 3. At
-   the Command Window prompt, type:
-
-   draw sph2.s rcc2.s[Enter]
-
-   This lets us see the shapes we will be using to create our regions. As
-   seen earlier, the two shapes should look something like the following:
-
-                              Two Primitive Shapes
-
-   In this lesson, we will create different shapes to demonstrate the
-   function of Boolean operations. In the Command Window, type the following:
-
-   r part1.r u rcc2.s - sph2.s[Enter]
-
-   This command tells MGED to:
      <informaltable>
        <tgroup cols='6'>
 	 <tbody>
@@ -2405,42 +2555,56 @@
        </tgroup>
      </informaltable>
 
- 
-   +------------------------------------------------------------------------+
-   || Note: The first member always has a lowercase u for an operator. The  |
-   || second and subsequent members can use -, +, or u as needed. The       |
-   || process of determining which operators to use, and in what order, is  |
-   || discussed in a more advanced tutorial.                                |
-   +------------------------------------------------------------------------+
+  <note>
+    Note: The first member always has a lowercase u for an operator. The  
+    second and subsequent members can use -, +, or u as needed. The       
+    process of determining which operators to use, and in what order, is  
+    discussed in a more advanced tutorial.                                
+  </note>
 
-   In the previous lesson, we applied material properties to objects from the
-   Command Line. Now we are going to use the graphical interface to do the
-   same thing. From the Edit menu, choose Combination Editor. This will pop
-   up a dialog box. Click the button to the right of the Name entry box and
-   then click on Select from All. A drop-down menu will appear with the
-   regions you have created. Select part1.r. The result should look like the
-   following:
+  <para>
+    In the previous lesson, we applied material properties to objects from the
+    Command Line. Now we are going to use the graphical interface to do the
+    same thing. From the Edit menu, choose Combination Editor. This will pop
+    up a dialog box. Click the button to the right of the Name entry box and
+    then click on Select from All. A drop-down menu will appear with the
+    regions you have created. Select part1.r. The result should look like the
+    following:
+  </para>
+  
+  <figure>
+    <title>Combination Editor</title>
+    <screenshot>
+      <graphic fileref="combinationeditor.png"></graphic>
+    </screenshot>
+  </figure>
 
-                               Combination Editor
+  <para>
+    Click on the button next to Color and select red from the pull-down menu.
+  </para>
 
-   Click on the button next to Color and select red from the pull-down menu.
+  <para>
+    Now click the OK button at the bottom left of the dialog window. This will
+    apply your changes and close the panel.
+  </para>
 
-   Now click the OK button at the bottom left of the dialog window. This will
-   apply your changes and close the panel.
+  <para>
+    At the moment, we have only the primitive shapes displayed, not the
+    region. Before we can raytrace, we must remove the primitive shapes from
+    the display, and draw the region. Otherwise, we will not be able to see
+    the region with the color properties we applied. We can do this by typing:
+    
+    <command>B part1.r</command>
+  </para>
 
-   At the moment, we have only the primitive shapes displayed, not the
-   region. Before we can raytrace, we must remove the primitive shapes from
-   the display, and draw the region. Otherwise, we will not be able to see
-   the region with the color properties we applied. We can do this by typing:
-
-   B part1.r
-
-   We are now ready to raytrace this object. From the File menu, bring up the
-   Raytrace Control Panel and click the Raytrace button. The image you get
-   should look similar to the left-hand image that follows. Note that it may
-   take several minutes to raytrace the window, depending on the speed of
-   your particular system.
-
+  <para>
+    We are now ready to raytrace this object. From the File menu, bring up the
+    Raytrace Control Panel and click the Raytrace button. The image you get
+    should look similar to the left-hand image that follows. Note that it may
+    take several minutes to raytrace the window, depending on the speed of
+    your particular system.
+  </para>
+    
    +---------------------------------------+
    |-------------------+-------------------|
    | Raytraced part1.r | Raytraced part2.r |
@@ -2452,16 +2616,16 @@
    Next we will make a blue region using the intersection operator instead of
    subtraction. Once again, we start by creating a region:
 
-   r part2.r u rcc2.s + sph2.s[Enter]
+   <command>r part2.r u rcc2.s + sph2.s[Enter]</command>
 
    For comparison to the GUI approach used to make part1.r, let's use the
    Command Line to assign the color to part2.r:
 
-   mater part2.r plastic 0 0 255 0[Enter]
+   <command>mater part2.r plastic 0 0 255 0[Enter]</command>
 
    Finally, Blast this new region onto the display as follows:
 
-   B part2.r[Enter]
+   <command>B part2.r[Enter]</command>
 
    Now raytrace the object. It should look similar to the preceding
    right-hand image.
@@ -2481,13 +2645,13 @@
    shapes doesn't matter. We would have gotten the same results if we had
    specified the Boolean operation as
 
-   r part2.r u sph2.s + rcc2.s
+   <command>r part2.r u sph2.s + rcc2.s</command>
 
    However, when using the subtraction operator, the order of the two shapes
    is very important. Let's make a region with the order of the shapes
    reversed from that used for part1.r:
 
-   r part3.r u sph2.s - rcc2.s
+   <command>r part3.r u sph2.s - rcc2.s</command>
 
    This time we won't bother to set a color. (When no color is set for
    objects, the raytracer (rt) will use a color of white. However, these
@@ -2499,7 +2663,7 @@
    Now let's raytrace all three objects we have created together. To draw the
    three regions at once, we could type:
 
-   B part1.r part2.r part3.r
+   <command>B part1.r part2.r part3.r</command>
 
    Doing this once is no problem. However, if these were three parts that
    made up some complex object, we might like to be able to draw all of them
@@ -2508,7 +2672,7 @@
    will create one called dome.c for our three regions. This is accomplished
    by the following command:
 
-   comb dome.c u part1.r u part2.r u part3.r
+   <command>comb dome.c u part1.r u part2.r u part3.r</command>
 
    Notice the similarity between this command and the r command we used to
    create the regions.
@@ -2524,7 +2688,7 @@
    || is a shortcut command-the g (for group) command-to help make the task |
    || easier. Creating dome.c using this command would look as follows:     |
    ||                                                                       |
-   || g dome.c part1.r part2.r part3.r                                      |
+   || <command>g dome.c part1.r part2.r part3.r</command>                                      |
    ||                                                                       |
    || Notice that you don't have to type the u Boolean operators. The g     |
    || command unions all of its arguments.                                  |
@@ -2533,7 +2697,7 @@
    All that is necessary to draw all three objects is the much simpler
    command:
 
-   B dome.c
+   <command>B dome.c</command>
 
    Now we can raytrace the collected set and get the following image:
 
@@ -2550,7 +2714,7 @@
    subtraction and intersection operators both have higher precedence than
    the union operator has. So, for example:
 
-   comb demo.c u shape1 - shape2 u shape3 - shape4 + shape5
+   <command>comb demo.c u shape1 - shape2 u shape3 - shape4 + shape5</command>
 
    This would result in the following Boolean expression:
 
@@ -2671,9 +2835,9 @@
    An even easier way to make the copies is to use the cp (copy) command as
    follows:
 
-   cp ball1.s ball2.s[Enter]
+   <command>cp ball1.s ball2.s[Enter]</command>
 
-   cp ball1.s ball3.s[Enter]
+   <command>cp ball1.s ball3.s[Enter]</command>
 
    Editing the Balls of the Goblet Stem
 
@@ -2720,15 +2884,15 @@
 
    To make the stem a region, type at the Command Window prompt:
 
-   r stem1.r u ball1.s u ball2.s u ball3.s[Enter]
+   <command>r stem1.r u ball1.s u ball2.s u ball3.s[Enter]</command>
 
    To make the base a region, type at the prompt:
 
-   r base1.r u base1.s - ball1.s[Enter]
+   <command>r base1.r u base1.s - ball1.s[Enter]</command>
 
    To make the basin a region, type at the prompt:
 
-   r basin1.r u basin1.s - stem1.r[Enter]
+   <command>r basin1.r u basin1.s - stem1.r[Enter]</command>
 
    Note that when creating base1.r, we subtracted a primitive shape from
    another primitive shape. When creating basin1.r, we subtracted an entire
@@ -2739,7 +2903,7 @@
    To combine all the regions into one object, you will need to perform one
    last Boolean operation. At the prompt in the Command Window, type:
 
-   comb goblet1.c u basin1.r u stem1.r u base1.r[Enter]
+   <command>comb goblet1.c u basin1.r u stem1.r u base1.r[Enter]</command>
 
    This operation tells the MGED program to:
    <informaltable>
@@ -2780,7 +2944,7 @@
    To view the data tree for this combination, type at the Command Window
    prompt:
 
-   tree goblet1.c[Enter]
+   <command>tree goblet1.c[Enter]</command>
 
    MGED will respond with:
 
@@ -2901,7 +3065,7 @@
    again. The easiest way to do this is to open the database from the
    Terminal Window when first starting MGED. To do this, type at the prompt:
 
-   mged goblet.g[Enter]
+   <command>mged goblet.g[Enter]</command>
 
    Alternatively, you could start the MGED program, and select File from the
    menu bar and then Open. A dialog box will appear and ask you to enter an
@@ -2915,7 +3079,7 @@
    To draw the goblet you made in the previous lesson, move the mouse pointer
    to the Command Window and type at the prompt:
 
-   draw goblet1.c[Enter]
+   <command>draw goblet1.c[Enter]</command>
 
    A wireframe representation of the goblet should appear in the Graphics
    Window.
@@ -2946,7 +3110,7 @@
    Graphics Window doesn't reflect them yet. So, return the mouse pointer to
    the Command Window and type at the prompt:
 
-   B goblet1.c[Enter]
+   <command>B goblet1.c[Enter]</command>
 
    This command clears the screen and redraws the goblet with the color
    selections applied.
@@ -3317,14 +3481,14 @@
 
    To view contents of the database, type at the Command Window prompt:
 
-   ls[Enter]
+   <command>ls[Enter]</command>
 
    You should see cube1.s, cube2.s, and globe1.s listed as shapes you have
    created. To make regions of these shapes, type at the prompt:
 
-   r cube1.r u cube1.s - cube2.s[Enter]
+   <command>r cube1.r u cube1.s - cube2.s[Enter]</command>
 
-   r globe1.r u globe1.s[Enter]
+   <command>r globe1.r u globe1.s[Enter]</command>
 
    3. Using the Combination Editor to Assign Material Properties that Make
    the Objects Appear More Realistic
@@ -3348,7 +3512,7 @@
    by typing Z at the Command Window prompt because both shapes and regions
    are being displayed at this point. Next, type in the Command Window:
 
-   draw cube1.r globe1.r[Enter]
+   <command>draw cube1.r globe1.r[Enter]</command>
 
    The display box and globe should reappear in the Graphics Window. Go to
    the File menu and select Raytrace. Next, select the white option for
@@ -3399,7 +3563,7 @@
    Now we need to make a second trc named base2.s, which we will use for the
    top of the base. On the Command Line, type:
 
-   cp base1.s base2.s
+   <command>cp base1.s base2.s</command>
 
    The second trc will appear directly on top of the first trc, so we will
    have to use Primitive Selection under the edit menu to put base2.s in edit
@@ -3415,7 +3579,7 @@
    then type in the following parameters (abbreviated as p) on the Command
    Line:
 
-   p 180 0 0[Enter]
+   <command>p 180 0 0[Enter]</command>
 
    Our shape should have flipped upside down and jumped to the bottom of the
    first trc. (The two zeros you input indicate no rotation along the y and z
@@ -3433,7 +3597,7 @@
 
    To make a region of the base, type in the Command Window:
 
-   r base1.r u base1.s u base2.s[Enter]
+   <command>r base1.r u base1.s u base2.s[Enter]</command>
 
    5. Use the Color Tool of the Combination Editor to Produce Customized
    Colors.
@@ -3442,15 +3606,15 @@
    Name entry box and then Select From All. Choose base1.r. Assign the base a
    Shader of plastic. In the Color box, enter the numbers:
 
-   217 217 217
+   <command>217 217 217</command>
 
    Apply your changes. Before you can raytrace your completed design, you
    must first clear the Graphics Window and rebuild your design by typing at
    the Command Window prompt:
 
-   Z[Enter]
+   <command>Z[Enter]</command>
 
-   draw cube1.r globe1.r base1.r[Enter]
+   <command>draw cube1.r globe1.r base1.r[Enter]</command>
 
    Change your view to az35, el25 and then raytrace your design, which should
    appear similar to the following:
@@ -3520,7 +3684,7 @@
    To begin making the body, you will need to create an outside right
    circular cylinder. At the MGED prompt, type:
 
-   in bodyout.s rcc
+   <command>in bodyout.s rcc</command>
 
    The diagram of this command is as follows:
 
@@ -3545,15 +3709,15 @@
    make. Type in the values given in bold. Make sure you leave spaces between
    variable values.
 
-   Enter X, Y, Z of vertex: 0 0 0[Enter]
+  <command>Enter X, Y, Z of vertex: 0 0 0[Enter]</command>
 
-   Enter X, Y, Z of height (H) vector: 0 0 3.5[Enter]
+  <command>Enter X, Y, Z of height (H) vector: 0 0 3.5[Enter]</command>
 
-   Enter radius: 1.75[Enter]
+  <command>Enter radius: 1.75[Enter]</command>
 
    Note that the streamlined way to do this would be to type:
 
-   in bodyout.s rcc 0 0 0 0 0 3.5 1.75[Enter]
+  <command>in bodyout.s rcc 0 0 0 0 0 3.5 1.75[Enter]</command>
 
    The diagram of this command is as follows:
 
@@ -3592,7 +3756,7 @@
    will ensure that you don't inadvertently leave a thin film of material
    where the two surfaces meet.
 
-   in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5[Enter]
+   <command>in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5[Enter]</command>
 
    The diagram of this command is:
      <informaltable>
@@ -3627,7 +3791,7 @@
    shape type for the handle is an elliptical torus. At the Command Window
    prompt, type:
 
-   in handle.s eto 0 2.5 1.75 1 0 0[Enter]
+   <command>in handle.s eto 0 2.5 1.75 1 0 0[Enter]</command>
 
    The diagram of this command is:
      <informaltable>
@@ -3655,11 +3819,11 @@
    The program will ask you to enter more values for the elliptical torus you
    are creating. Type in the values shown in bold.
 
-   Enter X, Y, Z, of vector C: .6 0 0[Enter]
+   <command>Enter X, Y, Z, of vector C: .6 0 0[Enter]</command>
 
-   Enter radius of revolution, r: 1.45[Enter]
+   <command>Enter radius of revolution, r: 1.45[Enter]</command>
 
-   Enter elliptical semi-minor axis, d: 0.2[Enter]
+   <command>Enter elliptical semi-minor axis, d: 0.2[Enter]</command>
 
    A doughnut shape should appear on the right-hand side of the body. If you
    look carefully, you can see that about one-third of the elliptical torus
@@ -3670,7 +3834,7 @@
    The next step is to combine the two cylinders into the body of the mug. To
    do this, type:
 
-   comb body.c u bodyout.s - bodyin.s[Enter]
+   <command>comb body.c u bodyout.s - bodyin.s[Enter]</command>
 
    You have told the program to make the combination body.c out of the union
    of bodyout.s minus bodyin.s.
@@ -3703,7 +3867,7 @@
 
    To combine the handle with the outside cylinder, type:
 
-   comb handle.c u handle.s - bodyout.s[Enter]
+   <command>comb handle.c u handle.s - bodyout.s[Enter]</command>
 
      <informaltable>
        <tgroup cols='6'>
@@ -3734,7 +3898,7 @@
    The last step, of this part of making the mug is to make a region out of
    your combinations. Type:
 
-   r mug.r u body.c u handle.c[Enter]
+   <command>r mug.r u body.c u handle.c[Enter]</command>
 
      <informaltable>
        <tgroup cols='6'>
@@ -3830,7 +3994,7 @@
    lighting model. Select the plastic shader and set the color to a medium
    shade of green. The dialog in the Command Window should appear as follows:
 
-   mged> mater mug.r[Enter]
+   <command>mged> mater mug.r[Enter]</command>
 
    Shader =
 
@@ -3849,7 +4013,7 @@
    Enter the appropriate information that is shown in bold font. If you want
    to use the streamlined version, type:
 
-   mater mug.r plastic 32 128 32 0[Enter]
+   <command>mater mug.r plastic 32 128 32 0[Enter]</command>
 
    Diagrammed, this command says:
      <informaltable>
@@ -3895,7 +4059,7 @@
 
    At the MGED prompt, type:
 
-   in  rim.s tor 0 0 3.5 0 0 1 1.625 0.125[Enter]
+   <command>in  rim.s tor 0 0 3.5 0 0 1 1.625 0.125[Enter]</command>
 
      <informaltable>
        <tgroup cols='7'>
@@ -3926,7 +4090,7 @@
 
    To combine the torus with the cup, you will need to type at the prompt:
 
-   comb body.c u rim.s[Enter]
+   <command>comb body.c u rim.s[Enter]</command>
 
    Now you are faced with a unique situation. The shape rim.s was added to
    the list of objects being displayed when it was created. However, now it
@@ -3941,9 +4105,9 @@
    redisplay the objects you want to raytrace with the draw command. Type at
    the prompt:
 
-   Z[Enter]
+   <command>Z[Enter]</command>
 
-   draw mug.r[Enter]
+   <command>draw mug.r[Enter]</command>
 
    Raytrace your mug. It should now look similar to the following.
 
@@ -4151,7 +4315,7 @@
    To make the rim of the mug, go to the Create, select tor, and name it
    rim.s. Select the Rotate command and type on the Command Line:
 
-   p 0 90 0[Enter]
+   <command>p 0 90 0[Enter]</command>
 
    to rotate the torus on its side (90'0 about the y axis). Then, Scale and
    edit the various parameters of the torus using the front and top views
@@ -4165,11 +4329,11 @@
    To combine the various shapes of the mug, type the following commands at
    the Command Window prompt:
 
-   comb mug.c u outside.s - inside.s[Enter]
+   <command>comb mug.c u outside.s - inside.s[Enter]</command>
 
-   comb handle.c u handle.s - outside.s[Enter]
+   <command>comb handle.c u handle.s - outside.s[Enter]</command>
 
-   comb mug.c u rim.s[Enter]
+   <command>comb mug.c u rim.s[Enter]</command>
 
    Note: Refer to the previous two lessons to recall how each of these
    commands works.
@@ -4179,7 +4343,7 @@
    To make a region out of the combinations you just created, type at the
    Command Window prompt:
 
-   r mug.r u mug.c u handle.c[Enter]
+   <command>r mug.r u mug.c u handle.c[Enter]</command>
 
    6. Checking the Data Tree
 
@@ -4206,12 +4370,12 @@
    and figure out where you went wrong. If necessary, you can kill off a
    shape, combination, or region by typing at the Command Window prompt:
 
-   kill [name of shape, combination, or region][Enter]
+   <command>kill [name of shape, combination, or region][Enter]</command>
 
    For example, in this lesson you may have created an extra shape, named
    rim2.s, which you no longer want. To kill this shape, you would type:
 
-   kill rim2.s[Enter]
+   <command>kill rim2.s[Enter]</command>
 
    7. Assigning Material Properties Using the Combination Editor
 
@@ -4226,7 +4390,7 @@
    When you are finished, click on Apply and then Dismiss. In the Command
    Window then, type at the prompt:
 
-   B mug.r[Enter]
+   <command>B mug.r[Enter]</command>
 
    8. Raytracing the Design
 
@@ -4318,14 +4482,14 @@
 
    Make a region of the tabletop by typing at the Command Window prompt:
 
-   r table1.r u arb8.s[Enter]
+   <command>r table1.r u arb8.s[Enter]</command>
 
    2. Creating the Candle Base
 
    Create an eto and name it eto1.s. To create the bottom of the candle base,
    you will need to flip the eto 180'0. Type at the Command Window prompt:
 
-   rot 0 180 0[Enter]
+   <command>rot 0 180 0[Enter]</command>
 
    This tells MGED to rotate the shape 180'0 along the y axis. Next, select
    Scale and make the eto a little smaller than its default size. Place the
@@ -4396,11 +4560,11 @@ Move End H
    Make a region of the three shapes of the base. Name it base1.r. Your
    Boolean expression should read:
 
-   r base1.r u eto1.s u rcc1.s u eto2.s
+   <command>r base1.r u eto1.s u rcc1.s u eto2.s</command>
 
    Note that we could have written it
 
-   r base1.r u eto1.s u eto2.s u rcc1.s
+   <command>r base1.r u eto1.s u eto2.s u rcc1.s</command>
 
    but the first expression is preferred to be consistent with the order of a
    later example. In a moment, we will want to remove some material that
@@ -4419,12 +4583,12 @@ Move End H
 
    Make a region of the candle. Your Boolean statement should read:
 
-   r candle1.r u rcc2.s
+   <command>r candle1.r u rcc2.s</command>
 
    Now we create a cylindrical cutout in the base for the candle to sit in.
    To do this we can use the shape of the candle, as follows:
 
-   r base1.r - rcc2.s
+   <command>r base1.r - rcc2.s</command>
 
    Earlier we had mentioned that we would want to remove some material that
    we got from eto2.s. Now we have done it.
@@ -4438,14 +4602,14 @@ Move End H
 
    Make a region of the flame by typing at the Command Window prompt:
 
-   r flame1.r u part1.s[Enter]
+   <command>r flame1.r u part1.s[Enter]</command>
 
    5. Making a Combination of the Base, Candle, and Flame
 
    To make a combination of the parts of the candle, type at the Command
    Window prompt:
 
-   comb candle1.c u base1.r u candle1.r u flame1.r[Enter]
+   <command>comb candle1.c u base1.r u candle1.r u flame1.r[Enter]</command>
 
    6. Checking the Data Tree
 
@@ -4456,7 +4620,7 @@ Move End H
    the Combination Editor (refer to Lesson 5). At the Command Line prompt,
    type:
 
-   tree candle1.c[Enter]
+   <command>tree candle1.c[Enter]</command>
 
    Your Boolean expression should read:
 
@@ -4526,7 +4690,7 @@ Move End H
    the completed design and then Blast the old design by typing at the
    Command Window prompt:
 
-   B table1.r candle1.c[Enter]
+   <command>B table1.r candle1.c[Enter]</command>
 
    This command tells the MGED program to:
      <informaltable>
@@ -4675,27 +4839,27 @@ Move End H
    region of each sphere. To do this, type the following in the Command
    Window:
 
-   r sph1.r u sph1.s[Enter]
+   <command>r sph1.r u sph1.s[Enter]</command>
 
-   r sph2.r u sph2.s[Enter]
+   <command>r sph2.r u sph2.s[Enter]</command>
 
-   r sph3.r u sph3.s[Enter]
+   <command>r sph3.r u sph3.s[Enter]</command>
 
-   r sph4.r u sph4.s[Enter]
+   <command>r sph4.r u sph4.s[Enter]</command>
 
-   r sph5.r u sph5.s[Enter]
+   <command>r sph5.r u sph5.s[Enter]</command>
 
-   r sph6.r u sph6.s[Enter]
+   <command>r sph6.r u sph6.s[Enter]</command>
 
-   r sph7.r u sph7.s[Enter]
+   <command>r sph7.r u sph7.s[Enter]</command>
 
-   r sph8.r u sph8.s[Enter]
+   <command>r sph8.r u sph8.s[Enter]</command>
 
    +------------------------------------------------------------------------+
    || There are three easier ways to make all of the regions. The first     |
    || involves typing the first command:                                    |
    ||                                                                       |
-   || r sph1.r u sph1.s[Enter]                                              |
+   || <command>r sph1.r u sph1.s[Enter]</command>                                              |
    ||                                                                       |
    || and then using the up arrow to recall this command. Now use the left  |
    || arrow to move backward in the Command Line to replace both            |
@@ -4707,11 +4871,11 @@ Move End H
    || some convenient loop commands. The following will make all of the     |
    || regions for us in a single command:                                   |
    ||                                                                       |
-   || foreach i { 1 2 3 4 5 6 7 8 } { [Enter]                               |
+   || <command>foreach i { 1 2 3 4 5 6 7 8 } { [Enter]</command>                               |
    ||                                                                       |
-   || r sph$i.r u sph$i.s [Enter]                                           |
+   || <command>r sph$i.r u sph$i.s [Enter]</command>                                           |
    ||                                                                       |
-   || }[Enter]                                                              |
+   || <command>}[Enter]  </command>                                                            |
    ||                                                                       |
    || This is much easier and faster than either of the previous methods.   |
    || However, if there were many more spheres (say 1000 or more), then it  |
@@ -4739,11 +4903,11 @@ Move End H
    || Once again, we are performing the same operation multiple times. This |
    || is another good opportunity to use a loop.                            |
    ||                                                                       |
-   || foreach i { 1 2 3 4 5 6 7 8 } {[Enter]                                |
+   || <command>foreach i { 1 2 3 4 5 6 7 8 } {[Enter]</command>                                |
    ||                                                                       |
-   || mater sph$i.r "plastic" 255 0 0 0[Enter]                              |
+   || <command>mater sph$i.r "plastic" 255 0 0 0[Enter]</command>                              |
    ||                                                                       |
-   || }[Enter]                                                              |
+   || <command>}[Enter]</command>                                                              |
    ||                                                                       |
    || In general, the graphical interface is good for doing one thing at a  |
    || time or doing highly visual operations. Repetitive operations are     |
@@ -4771,8 +4935,8 @@ Move End H
 
    On the Command Line, create rcc1.c by typing:
 
-   comb rcc1.c u rcc1.s - sph1.r - sph2.r - sph3.r - sph4.r - sph5.r - sph6.r
-   - sph7.r - sph8.r[Enter]
+   <command>comb rcc1.c u rcc1.s - sph1.r - sph2.r - sph3.r - sph4.r - sph5.r - sph6.r
+   - sph7.r - sph8.r[Enter]</command>
 
    Next, bring up the Combination Editor and select base1.r. Change the union
    of rcc1.s in the Boolean Expression window to a union of rcc1.c, and click
@@ -4829,9 +4993,9 @@ Move End H
    || by using the rm (remove) command to remove rcc1.s from base1.r and    |
    || then adding rcc1.c:                                                   |
    ||                                                                       |
-   || rm base1.r rcc1.s[Enter]                                              |
+   || <command>rm base1.r rcc1.s[Enter] </command>                                             |
    ||                                                                       |
-   || r base1.r u rcc1.c[Enter]                                             |
+   || <command>r base1.r u rcc1.c[Enter] </command>                                            |
    ||                                                                       |
    || This would have resulted in a very similar tree as above:             |
    ||                                                                       |
@@ -4932,15 +5096,15 @@ Move End H
 
    Now we need to add the jewels to the whole of candle1.c:
 
-   comb candle1.c u sph1.r u sph2.r u sph3.r u sph4.r u sph5.r u sph6.r u
-   sph7.r u sph8.r[Enter]
+   <command>comb candle1.c u sph1.r u sph2.r u sph3.r u sph4.r u sph5.r u sph6.r u
+   sph7.r u sph8.r[Enter]</command>
 
    There are just a couple of things left to do before you raytrace your
    design. If you have enabled Multipanes or Draw Grid, go back to the Modes
    menu and disable them. Then, clear your screen and draw your new design by
    typing in the Command Window:
 
-   B candle1.c table1.r
+   <command>B candle1.c table1.r</command>
 
    Your new design should appear in the Graphics Window. Open the  Raytrace
    Control Panel and select a pale blue color (200 236 242) by typing the
@@ -5023,12 +5187,12 @@ Move End H
    To make the cab of the truck, you will create a right parallel piped using
    the in (insert) command. At the Command Window prompt, type:
 
-   in cab1.s rpp[Enter]
+   <command>in cab1.s rpp[Enter]</command>
 
    MGED will ask you to enter values for XMIN, XMAX, YMIN, YMAX, ZMIN, and
    ZMAX. Type at the prompt:
 
-   0 1 0 1 0 1[Enter]
+   <command>0 1 0 1 0 1[Enter]</command>
 
    This will tell MGED to:
      <informaltable>
@@ -5057,7 +5221,7 @@ Move End H
 
    You could also have used the streamlined version of:
 
-   in cab1.s rpp 0 1 0 1 0 1[Enter]
+   <command>in cab1.s rpp 0 1 0 1 0 1[Enter]</command>
 
    A cube shape should appear in the Graphics Window, as follows:
 
@@ -5075,7 +5239,7 @@ Move End H
    If you are using BRL-CAD version 6.0 or later, at the Command Window
    prompt, type:
 
-   inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]
+   <command>inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]</command>
 
    The inside command tells MGED to:
      <informaltable>
@@ -5117,7 +5281,7 @@ Move End H
    || are using a pre-6.0 release of the package, the following parameter   |
    || order must be used for the aforementioned inside command:             |
    ||                                                                       |
-   || inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]                  |
+   || <command>inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]</command>                  |
    ||                                                                       |
    || (The order of faces in this case is front, rear, right, left, bottom, |
    || top instead of that specified for versions 6.0 and later.)            |
@@ -5133,7 +5297,7 @@ Move End H
    Make a cylinder (rcc) to use for cutting away a space for the first wheel
    of the cab. At the Command Window prompt, type:
 
-   make well1.s rcc[Enter]
+   <command>make well1.s rcc[Enter]</command>
 
    Go to the Edit menu and click on Primitive Selection, then well1.s. After
    selecting a Left view, go back to Edit and select Scale. Reduce the size
@@ -5145,7 +5309,7 @@ Move End H
    exactly 90'0 along the x axis, a better choice is to use the Command Line
    and type:
 
-   p 90 0 0[Enter]
+   <command>p 90 0 0[Enter]</command>
 
    After doing so, you may still have to use the Set H and Scale editing
    options to resize and the SHIFT key and left mouse button to position your
@@ -5203,7 +5367,7 @@ Move End H
 
    It is now time to make a combination of the various cab shapes.
 
-   comb cab1.c u cab1.s - caboff1.s - well1.s - well2.s[Enter]
+   <command>comb cab1.c u cab1.s - caboff1.s - well1.s - well2.s[Enter]</command>
 
    This command tells MGED to:
 
@@ -5262,7 +5426,7 @@ Move End H
 
    To make the body of the truck, type at the Command Window prompt:
 
-   in body1.s rpp 0 2 0 1 0 1.5[Enter]
+   <command>in body1.s rpp 0 2 0 1 0 1.5[Enter]</command>
 
    By now, you should know what this command tells MGED to do. If you have
    forgotten, refer back to making the cab of the truck.
@@ -5303,7 +5467,7 @@ Move End H
    Before adding wheels to the truck, you need to make a region of the cab
    and body. At the Command Window prompt, type:
 
-   r truck1.r u cab1.c u body1.c[Enter]
+   <command>r truck1.r u cab1.c u body1.c[Enter]</command>
 
    11. Making Wheels for the Truck
 
@@ -5314,7 +5478,7 @@ Move End H
 
    To make the first wheel, type at the Command Window prompt:
 
-   in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08[Enter]
+   <command>in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08[Enter]</command>
 
    This command tells MGED to:
      <informaltable>
@@ -5463,9 +5627,9 @@ Move End H
    To make a combination of the two truck regions, type at the Command Window
    prompt:
 
-   comb truck1.c u truck1.r u wheel1.r[Enter]
+   <command>comb truck1.c u truck1.r u wheel1.r[Enter]</command>
 
-   B truck1.c[Enter]
+   <command>B truck1.c[Enter]</command>
 
    Your data tree for truck1.c should read:
 
@@ -5639,13 +5803,13 @@ Move End H
    room for internal components. To do this, we can use the inside command to
    create a shape, which we'll call cavity.s:
 
-   inside body.s cavity.s 1 1 1 1 1 1[Enter]
+   <command>inside body.s cavity.s 1 1 1 1 1 1[Enter]</command>
 
    Now, we'll make a region called case.r and define it as what's left of
    body.s after cavity.s has been subtracted out. The command should look
    like this:
 
-   r case.r u body.s - cavity.s[Enter]
+   <command>r case.r u body.s - cavity.s[Enter]</command>
 
    +------------------------------------------------------------------------+
    || Remember that the inside command was originally created to hollow out |
@@ -5659,18 +5823,18 @@ Move End H
    talk button. To do this, we must subtract the three shapes from the case
    as follows:
 
-   r case.r - ant.s - knob.s - btn.s[Enter]
+   <command>r case.r - ant.s - knob.s - btn.s[Enter]</command>
 
    Finally, we need to "glue" the lip around the speaker to the case's front
    face by typing
 
-   r case.r u spkr.s[Enter]
+   <command>r case.r u spkr.s[Enter]</command>
 
    Our body is now finished. Note that an experienced modeler would probably
    have combined the preceding three Boolean functions into a single command
    as follows:
 
-   r case.r u body.s - cavity.s - ant.s - knob.s - btn.s u spkr.s[Enter]
+   <command>r case.r u body.s - cavity.s - ant.s - knob.s - btn.s u spkr.s[Enter]</command>
 
    If we were to raytrace case.r at this point, we would see the following:
 
@@ -5693,17 +5857,16 @@ Move End H
    || does illustrate the implied parentheses that precede and follow the   |
    || union operators in our last command:                                  |
    ||                                                                       |
-   || r case.r u (body.s - cavity.s - ant.s - knob.s - btn.s) u (spkr.s)    |
-   || [Enter]                                                               |
+   || <command>r case.r u (body.s - cavity.s - ant.s - knob.s - btn.s) u (spkr.s)[Enter] </command>
    ||                                                                       |
    || Optionally, we could've unioned in spkr.s before body.s as follows:   |
    ||                                                                       |
-   || r case.r u spkr.s u body.s - cavity.s - ant.s - knob.s - btn.s[Enter] |
+   || <command>r case.r u spkr.s u body.s - cavity.s - ant.s - knob.s - btn.s[Enter]</command> |
    ||                                                                       |
    || Let's consider, however, what would have happened if we had done the  |
    || following:                                                            |
    ||                                                                       |
-   || r case.r u body.s u spkr.s - cavity.s - ant.s - knob.s - btn.s[Enter] |
+   || <command>r case.r u body.s u spkr.s - cavity.s - ant.s - knob.s - btn.s[Enter]</command> |
    ||                                                                       |
    || In this last case, operator precedence would have caused the program  |
    || to subtract cavity.s, ant.s, knob.s, and btn.s from spkr.s. Nothing   |
@@ -5721,14 +5884,14 @@ Move End H
    consists of the union of two primitive shapes. To make them into a region,
    type
 
-   r button.r u btn.s u btn2.s[Enter]
+   <command>r button.r u btn.s u btn2.s[Enter]</command>
 
    The volume knob and antenna are even simpler. They are single primitive
    shapes that can be made into regions by typing
 
-   r knob.r u knob.s[Enter]
+   <command>r knob.r u knob.s[Enter]</command>
 
-   r ant.r u ant.s[Enter]
+   <command>r ant.r u ant.s[Enter]</command>
 
     2. Gathering the Regions into an Assembly Combination
 
@@ -5737,11 +5900,11 @@ Move End H
    of these parts together. There are several ways to do this. One way would
    be to use a similar method to the one we used to make the regions:
 
-   comb radio.c u case.r u button.r u knob.r u ant.r[Enter]
+   <command>comb radio.c u case.r u button.r u knob.r u ant.r[Enter]</command>
 
    A shortcut, however, would be to use the g (group) command as follows:
 
-   g radio.c case.r button.r knob.r ant.r[Enter]
+   <command>g radio.c case.r button.r knob.r ant.r[Enter]</command>
 
    Unlike the comb command, the g command assumes that all of the items
    specified will be unioned together, and so no Boolean operators need to be
@@ -5752,7 +5915,7 @@ Move End H
 
    and easily specify all of the regions in the database:
 
-   g radio.c *.r[Enter]
+   <command>g radio.c *.r[Enter]</command>
 
    If we now tree radio.c, we should get the following output in the Command
    Window.
@@ -5815,9 +5978,9 @@ Move End H
    creating an ellipsoid (which we'll call ant2.s) and unioning it in with
    the rest of the antenna as follows:
 
-   in ant2.s ell1 2 2 94 0 0 1 3[Enter]
+   <command>in ant2.s ell1 2 2 94 0 0 1 3[Enter]</command>
 
-   r ant.r u ant2.s[Enter]
+   <command>r ant.r u ant2.s[Enter]</command>
 
     4. Adding Internal Components
 
@@ -5825,15 +5988,15 @@ Move End H
    hollow shell. Let's further improve it by making a circuit board to go
    inside the case. To do this, type:
 
-   in board.s rpp 3 4 1 31 1 47[Enter]
+   <command>in board.s rpp 3 4 1 31 1 47[Enter]</command>
 
-   r board.r u board.s[Enter]
+   <command>r board.r u board.s[Enter]</command>
 
    Let's give the board a green semi-shiny color. The easiest way to do this
    is via the Combination Editor, but this time let's use the Command Line
    approach. Type:
 
-   mater board.r "plastic sh=4" 0 198 0 1[Enter]
+   <command>mater board.r "plastic sh=4" 0 198 0 1[Enter]</command>
 
    Diagrammed, this command says to:
      <informaltable>
@@ -5860,7 +6023,7 @@ Move End H
    Finally, we'll include the board with the rest of the components in
    radio.c as follows:
 
-   g radio.c board.r[Enter]
+   <command>g radio.c board.r[Enter]</command>
 
    Our radio should now look like the following:
 
@@ -5949,7 +6112,7 @@ Move End H
    copy of our present radio case and modify its material properties. We'll
    call the specialty case case_clear.r. Type
 
-   cp case.r case_clear.r[Enter]
+   <command>cp case.r case_clear.r[Enter]</command>
 
    We can now use the Combination Editor to set the material properties on
    this case without affecting the "master" design of the radio. When this
@@ -5966,11 +6129,11 @@ Move End H
 
    Finally, create the specialty radio combination by typing:
 
-   g radio_clear.c case_clear.r button.r knob.r ant.r board.r[Enter]
+   <command>g radio_clear.c case_clear.r button.r knob.r ant.r board.r[Enter]</command>
 
    and then Blast the display with
 
-   B radio_clear.c[Enter]
+   <command>B radio_clear.c[Enter]</command>
 
    Now raytrace your design to view the resulting effect. The new transparent
    case should appear similar to the following:
@@ -6053,7 +6216,7 @@ Move End H
    combination that unions in radio.c and subtracts out the shape (cutaway.s)
    that is covering what you want to see (board.r):
 
-   comb radio_cutaway.c u radio.c - cutaway.s[Enter]
+   <command>comb radio_cutaway.c u radio.c - cutaway.s[Enter]</command>
 
                       Multipane View of Cutting Primitive
 
@@ -6241,18 +6404,18 @@ Move End H
    To accomplish this restructuring according to functionality, create an
    assembly called electronics.c to hold these components together. Type:
 
-   g electronics.c board.r knob.r button.r[Enter]
+   <command>g electronics.c board.r knob.r button.r[Enter]</command>
 
    Of course, we now need to remove board.r, knob.r, and button.r from the
    radio.c assembly so that when electronics.c is added to the radio.c
    assembly, we won't have the knob and button included twice in the model.
    To do this, use the rm (remove) command:
 
-   rm radio.c board.r knob.r button.r[Enter]
+   <command>rm radio.c board.r knob.r button.r[Enter]</command>
 
    and then union in the electronics assembly:
 
-   g radio.c electronics.c[Enter]
+   <command>g radio.c electronics.c[Enter]</command>
 
    Now the tree for radio.c should appear as follows:
 
@@ -6301,11 +6464,11 @@ Move End H
    First, we need to get rid of the old radio_cutaway.c, which was based on
    our previous structure. To do this, type
 
-   kill radio_cutaway.c[Enter]
+   <command>kill radio_cutaway.c[Enter]</command>
 
    and then remake the combination by typing
 
-   comb radio_cutaway.c u case.r - cutaway.s u electronics.c u ant.r[Enter]
+   <command>comb radio_cutaway.c u case.r - cutaway.s u electronics.c u ant.r[Enter]</command>
 
    Now when we Blast the display and raytrace radio_cutaway.c, we should see
    the following:
