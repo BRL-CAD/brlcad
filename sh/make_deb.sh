@@ -37,28 +37,28 @@
 
 set -e
 
-if [ ! -e /etc/debian_version ] ; then
+if test ! -e /etc/debian_version ; then
     echo "Refusing to build on a non-debian system."
     exit 1
 fi
 
-if [ ! -e /usr/bin/fakeroot ] ; then
+if test ! -e /usr/bin/fakeroot ; then
     echo "Need the fakeroot package."
     exit 1
 fi
 
-if [ ! -e /usr/bin/debuild ] ; then
+if test ! -e /usr/bin/debuild ; then
     echo "Need the devscripts package."
     exit 1
 fi
 
-if [ ! -e debian && ! -e debian/control ] ; then
+if test ! -e ./debian && test ! -e ./debian/control ; then
     ln -fs misc/debian debian
 fi
 
 fakeroot debian/rules binary && debuild -us -uc
 
-if [ -l debian ] ; then rm debian ; fi
+if test -L ./debian ; then rm debian ; fi
 
 # Local Variables:
 # mode: sh
