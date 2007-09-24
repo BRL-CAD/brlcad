@@ -2783,8 +2783,9 @@
   </sect1>
 </chapter>
 
-   Lesson 6: Creating a Goblet
-
+ <chapter id="Lesson-6">
+   <title>Creating a Goblet</title>
+   <para>
    In this lesson, you will:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -2806,32 +2807,44 @@
        <para>Raytrace your completed goblet.</para>
      </listitem>
    </itemizedlist>
-
+   </para>
+   <para>
    In this lesson, you will create a goblet similar to the one in the
    following example.
+   </para>
 
-                                Raytraced Goblet
+   <figure>
+     <title>Raytraced Goblet</title>
+     <screenshot>
+       <graphic fileref="rtgoblet.png"/>
+     </screenshot>
+   </figure>
 
-   1. Creating a New Database
 
+   <sect1><title>Creating a New Database</title>
+   <para>
    First, start MGED from the shell prompt. Select File from the menu bar and
    then New. A dialog box will appear, and it will ask you for a new database
    name. Type in goblet.g at the end of the path name and click on OK to
    create the new database. The program should tell you that the database was
    successfully created and it is using millimeters for its unit of measure.
+   </para>
+   </sect1>
 
-    2. Creating, Editing, and Copying the Parts of the Goblet
+   <sect1><title>Creating, Editing, and Copying the Parts of the Goblet</title>
+ 
+   <sect2><title>Creating the Goblet Base</title>
 
-   Creating the Goblet Base
-
+   <para>
    Go to the menu bar, select the Cones & Cylinders category, and then select
    rcc for right circular cylinder. A dialog box will appear asking you to
    name the rcc. Type in base1.s and then click on Apply (or press ENTER). A
    tall cylinder will appear in the Graphics Window that is ready for you to
    edit.
-
-   Editing the Base
-
+   </para>
+   </sect2>
+   <sect2><title>Editing the Base</title>
+   <para>
    Go to the menu bar and select Edit and then Set H. Place the mouse pointer
    in the lower half of the Graphics Window and click on the middle mouse
    button several times. The cylinder will become shorter as you click. (Note
@@ -2840,23 +2853,36 @@
    the changes will be greater.) Continue clicking until the cylinder looks
    like a flat disk, as shown in the following figure. Click on Accept when
    done.
+   </para>
+   <figure>
+     <title>The rcc Goblet Base</title>
+     <screenshot>
+       <graphic fileref="gobletbase.png"/>
+     </screenshot>
+   </figure>
+   </sect2>
 
-                              The rcc Goblet Base
-
-   Creating the Goblet Stem
-
+   <sect2><title>Creating the Goblet Stem</title>
+   <para>
    Go to the menu bar, select Create, select Ellipsoids, and then click on
    sph to select a sphere. You will be asked to provide a name for the
    sphere. Type ball1.s in the name box and then click on Apply. A large
    sphere will appear in your Graphics Window.
-
+   </para>
+   <para>
    Go to the Edit menu and click on Scale. Place the mouse cursor/pointer in
    the lower half of the Graphics Window and click the middle mouse button
    until your sphere is about one-quarter the diameter of the base, as shown
    in the illustration that follows.
-
-                          First Sphere on Goblet Stem
-
+   </para>
+   <figure>
+     <title>First Sphere on Goblet Stem</title>
+     <screenshot>
+       <graphic fileref="goblet1stsphere.png"/>
+     </screenshot>
+   </figure>
+   
+   <para>
    To move the ball on top of the goblet base, press the SHIFT key and left
    mouse button to drag the sphere into place. You can check your placement
    by going to the View option of the menu bar and selecting a Front view. In
@@ -2864,9 +2890,12 @@
    line of the rcc. Repeat this process from a Left view. When you believe
    the sphere is correctly aligned with the rcc, go back to the Edit option
    and click on Accept.
+   </para>
+   </sect2>
 
-   Adding Additional Balls to the Goblet Stem
+   <sect2><title>Adding Additional Balls to the Goblet Stem</title>
 
+   <para>
    The next step is to add more spheres to your goblet stem. An easy way to
    do this is to go to the Edit menu and select Primitive Editor. A dialog
    box will appear. Enter the name for the first sphere you created, ball1.s.
@@ -2874,21 +2903,24 @@
    ball1.s) or hit return in the Name box. Again in the Name box, change
    ball1.s to ball2.s by using the BACKSPACE key to erase the 1. Type in a 2
    and then click on Apply.
-
+   </para>
+   <para>
    Repeat this process with an sph named ball3.s. When you are done, click on
    OK to close the Primitive Editor box. You now have three balls for your
    stem, but you won't be able to see them until you edit them because they
    are in the same place.
-
+   </para>
+   <para>
    An even easier way to make the copies is to use the cp (copy) command as
    follows:
 
    <command>cp ball1.s ball2.s[Enter]</command>
 
    <command>cp ball1.s ball3.s[Enter]</command>
-
-   Editing the Balls of the Goblet Stem
-
+   </para>
+   </sect2>
+   <sect2><title>Editing the Balls of the Goblet Stem</title>
+   <para>
    To edit the new balls you have created, go to the Edit menu and click on
    Primitive Selection. A box will appear with the names of your base and
    balls. Double click on ball2.s to select it. You will see the first ball
@@ -2899,62 +2931,85 @@
    SHIFT and ALT keys and the right mouse button, which will constrain the
    movement of the ball to the Z direction.) Click on Accept under the Edit
    option when finished.
-
+   </para>
+   <para>
    If you were modeling a real goblet, you would want the balls of the stem
    to overlap slightly. If they barely touch, the stem would be very weak. If
    they do not touch, then the stem would be made of separate pieces of
    material suspended in space.
-
+   </para>
+   <para>
    Repeat these steps to move ball3.s into position. When you are finished,
    your goblet should look as follows from a front view:
-
-                             Goblet with Ball Stem
-
-   Making the Goblet Basin
-
+   </para>
+   <figure>
+     <title>Goblet with Ball Stem</title>
+     <screenshot>
+       <graphic fileref="gobballstem.png"/>
+     </screenshot>
+   </figure>
+   </sect2>
+   <sect2><title>Making the Goblet Basin</title>
+   <para>
    The next step is to make the goblet's basin. Go to the Create menu and
    click on eto to select an elliptical torus. Name the torus basin1.s. Click
    on Apply. A large eto will appear in your Graphics Window.
-
+   </para>
+   <para>
    Go to the Edit menu and select Set C. Place the mouse arrow in the upper
    half of the Graphics Window and click on the middle mouse button until
    your eto is approximately the size of the one in the following figure. If
    you need to, use Scale to make the basin more proportional to the rest
    object and use the Shift Grips and multiple views to position the basin.
+   </para>
+   <figure>
+     <title>Goblet Base, Stem, and Basin - Front View</title>
+     <screenshot>
+       <graphic fileref="gobbasestembasinfv.png"/>
+     </screenshot>
+   </figure>
+   </sect2>
+ </sect1>
 
-                   Goblet Base, Stem, and Basin - Front View
-
-   3. Making Regions of the Goblet's Base, Stem, and Basin
-
+ <sect1><title>Making Regions of the Goblet's Base, Stem, and Basin</title>
+ <para>
    In order for MGED to know what primitives to raytrace, you must first
    designate these areas through Boolean operations. In this example, the two
    Boolean operations used will be the union (u) and the subtraction (-).
-
+ </para>
+ <para>
    To make the stem a region, type at the Command Window prompt:
 
    <command>r stem1.r u ball1.s u ball2.s u ball3.s[Enter]</command>
-
+ </para>
+ <para>
    To make the base a region, type at the prompt:
 
    <command>r base1.r u base1.s - ball1.s[Enter]</command>
-
+ </para>
+ <para>
    To make the basin a region, type at the prompt:
 
    <command>r basin1.r u basin1.s - stem1.r[Enter]</command>
-
+ </para>
+ <para>
    Note that when creating base1.r, we subtracted a primitive shape from
    another primitive shape. When creating basin1.r, we subtracted an entire
    region from a primitive shape.
-
-   4. Making a Combination of the Regions
-
+ </para>
+ </sect1>
+ 
+ <sect1><title>Making a Combination of the Regions</title>
+ <para>
    To combine all the regions into one object, you will need to perform one
    last Boolean operation. At the prompt in the Command Window, type:
 
    <command>comb goblet1.c u basin1.r u stem1.r u base1.r[Enter]</command>
-
+ </para>
+ <para>
    This operation tells the MGED program to:
-   <informaltable>
+ </para>
+  <informaltable>
        <tgroup cols='8'>
 	 <tbody>
 	   <row>
@@ -2980,22 +3035,25 @@
 	 </tbody>
        </tgroup>
      </informaltable>
+ </sect1>
 
-   5. Viewing a Data Tree
-
+ <sect1><title>Viewing a Data Tree</title>
+ <para>
    MGED requires a certain logical order to the model data tree so it knows
    how to raytrace the various elements. In the goblet, the base and basin
    consist of regions composed of only one primitive shape each. The stem, in
    contrast, consists of a region composed of the union of three spheres. The
    three regions were combined to form a complex object.
-
+ </para>
+ <para>
    To view the data tree for this combination, type at the Command Window
    prompt:
 
    <command>tree goblet1.c[Enter]</command>
-
+ </para>
+ <para>
    MGED will respond with:
-
+   <literallayout>
    goblet1.c/
 
    u basin1.r/R
@@ -3023,14 +3081,17 @@
    u base1.s
 
    - ball1.s
-
+   </literallayout>
+ </para>
+ <para>
    The name of the overall combination of this design is goblet1.c. It is
    composed of the three regions: base1.r, stem1.r, and basin1.r. The region
    base1.r is composed of the primitive shape named base1.s minus ball1.s.
    The region stem1.r is composed of three primitive shapes named ball1.s,
    ball2.s, and ball3.s. The region basin1.r is composed of the primitive
    shape named basin1.s minus the region  stem1.r.
-
+ </para>
+ <para>
    Remember that regions define volumes of uniform material. In the real
    world (and in BRL-CAD), no two objects can occupy the same space. If two
    regions occupy the same space, they are said to overlap. To avoid having
@@ -3040,25 +3101,33 @@
    create an overlap with another. The following figure shows the overlap
    between ball1.s and base1.s in blue. This is the volume that is removed
    from base1.r.
+ </para>
+ </sect1>
 
-   6. Raytracing the Goblet
-
+ <sect1><title>Raytracing the Goblet</title>
+ <para>
    To raytrace the goblet using the default material properties of gray
    plastic, go to the File menu and click on Raytrace. When the Raytrace
    Control Panel appears, change the color of the background  by clicking on
    the button to the right of the Background Color box and then clicking on
    the white option  in the drop-down menu. Next, click on Raytrace.
-
+ </para>
+ <para>
    When you have finished viewing the goblet from the front view, go to the
    View option of the menu bar and select az35, el25 and then raytrace. If
    you want to view the goblet without the wireframe, go to the Framebuffer
    option of the Raytrace Control Panel and click on Overlay. The goblet
    should look similar to the following illustration:
-
-                  The Raytraced Goblet from an az35, el25 View
-
-   Review
-
+ </para>
+   <figure>
+     <title>The Raytraced Goblet from an az35, el25 View</title>
+     <screenshot>
+       <graphic fileref="rtgaz35e125.png"/>
+     </screenshot>
+   </figure>
+ </sect1>
+ <sect1><title>Review</title>
+ <para>
    In this lesson, you:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -3080,7 +3149,10 @@
        <para>Raytraced your completed goblet.</para>
      </listitem>
    </itemizedlist>
- 
+ </para>
+ </sect1>
+</chapter>
+
    Lesson 7: Assigning Material Properties to Your Goblet
 
    In this lesson, you will:
@@ -3183,6 +3255,12 @@
    option of the Raytrace Control Panel menu bar and click on Overlay. When
    the raytrace process is finished, you should have a goblet similar to the
    following example:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                               The Raytraced Goblet
 
@@ -3206,6 +3284,12 @@
    selected and type in .5 to make your region semi-transparent. Click on
    Apply and repeat this process for each of the other two regions. Then
    Raytrace the goblet, which should look similar to the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                      The Semi-Transparent Raytraced Goblet
 
@@ -3221,6 +3305,12 @@
 
    Click on Apply and Raytrace the design. The new image should appear
    similar to the following example:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                The Raytraced Goblet with Mirror Reflectance Added
 
@@ -3300,6 +3390,12 @@
    modified, the change can be seen in braces in the shader string box and in
    the appropriate attribute entry boxes, as indicated by the arrows in the
    following example:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                              The Combination Editor
 
@@ -3341,6 +3437,12 @@
    with a wall painted with flat paint, the more diffuse reflectivity that is
    produced. A model of the relationship between these reflectivities is
    shown in the following illustration:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                     Specular vs. Diffuse Reflectivity Model
 
@@ -3375,6 +3477,12 @@
    greater. This parameter is only useful for materials that have a
    transparency greater than 0. The following drawing of sunlight passing
    through water shows how refraction works.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                A Ray of Sunlight Passing Through a Body of Water
 
@@ -3417,15 +3525,33 @@
    object. The following are two examples of the goblet with various values
    of the plastic attributes (which do create a noticeable difference)
    applied to basin1.r.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
         Goblet Assigned .9 for Specular Reflectivity and .1 for Diffuse
                                   Reflectivity
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
              Same Goblet Also Assigned a Value of .5 for Extinction
 
    By the time you have finished experimenting with changing attributes of
    the plastic shader, your Combination Editor window might look something
    like this:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                          The Combination Editor Window
 
@@ -3494,6 +3620,12 @@
    name for the arb8, name it cube1.s. Click on Apply. Go to the Edit menu
    and click on Accept. You now have a cube for the outside of the display
    box, as in the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                          The Outside of the Display Box
 
@@ -3502,6 +3634,12 @@
    the mouse pointer in the lower half of the Graphics Window screen and
    click the middle mouse button until the second cube is slightly smaller
    than the first cube, as follows:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                    The Inside and Outside of the Display Box
 
@@ -3524,6 +3662,12 @@
    it will fit inside of the cube and then drag it into the center of the
    cube. Go to Edit and Accept your changes. Your globe and box should appear
    similar to the following in the az35, el25 view:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                Wireframe Representation of Globe and Display Box
 
@@ -3570,6 +3714,12 @@
    inside. To eliminate the wireframing, go to Framebuffer (in the Raytrace
    Panel) and select Overlay. The display should appear similar to the
    following illustration:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                         Raytraced Display Box and Globe
 
@@ -3640,6 +3790,12 @@
    did with the trc shapes, use the Shift Grips to drag the globe down until
    it is in place on the base. Go back to Edit and click on Accept. Your
    design should look as follows:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
            Wireframe Representation of Globe and Base in Display Box
 
@@ -3976,6 +4132,12 @@
    Defaulting item number to 1002
 
    Creating region id=1001, air=0, GIFTmaterial=1, los=100
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                                  Wireframe Mug
 
@@ -4095,6 +4257,12 @@
    image of a green mug on a dark background (we use a white background here
    to save printing ink). If your mug is not green, you probably need to
    redraw your wireframe before raytracing.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                            Raytraced Mug Without Rim
 
@@ -4158,6 +4326,12 @@
    <command>draw mug.r[Enter]</command>
 
    Raytrace your mug. It should now look similar to the following.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                      The Mug Made Through the Command Line
 
@@ -4288,6 +4462,12 @@
    left mouse button to drag the inside cylinder into position. Return your
    View to Front and Accept your changes when the cylinders are lined up.
    Your cylinders should look like those in the following example:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                      Two Cylinders Shown from a Front View
 
@@ -4383,6 +4563,12 @@
    edit the various parameters of the torus using the front and top views
    until the mug looks similar to the following example. Make sure you Accept
    your changes when you are finished.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                       Mug with Rim Shown from a Front View
 
@@ -4460,6 +4646,12 @@
    and then Raytrace. Select a white background color and Raytrace your
    design. Click on Overlay. When the raytracing is finished, it should look
    like the following example:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                           The Completed Raytraced Mug
 
@@ -4516,6 +4708,12 @@
    holder sitting on a table (as shown in the following figure). In the next
    lesson, you will add decorations and lighting to make the design more
    realistic.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                                The Candle Design
 
@@ -4539,6 +4737,12 @@
    button until the arb8 is about the thickness of a tabletop. Go back to
    Edit and Accept the changes, and then use the SHIFT and any mouse key to
    position the tabletop so that it appears similar to the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
               Wireframe Representation of Tabletop from Front View
 
@@ -4562,6 +4766,12 @@
    the center of the tabletop. Click on Accept when you are satisfied with
    its size and placement. Your base should be similar to the one shown as
    follows:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                Wireframe Representation of Tabletop and First eto
 
@@ -4609,6 +4819,12 @@ Move End H
    front to ensure that it is centered in the eto. Make sure the bottom of
    the rcc is not quite touching the tabletop. Accept your changes. When
    done, your design should look like the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
          Wireframe Representation of Tabletop, First eto and First rcc
 
@@ -4616,6 +4832,12 @@ Move End H
    eto2.s. Edit this shape as you did the previous eto and place it on top of
    the rcc, as shown in the following figure. Accept your changes when
    finished. Your candle base should now look like this:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
               Wireframe Representation of Tabletop and Candle Base
 
@@ -4640,6 +4862,12 @@ Move End H
    illustration. (Note: After you have accepted the changes, you can get all
    of your tabletop and candle in the Graphics Window by using the SHIFT key
    and left mouse button to move your view of the design.)
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
          Wireframe Representation of Tabletop, Candle Base, and Candle
 
@@ -4659,6 +4887,12 @@ Move End H
 
    Create a particle (part) and name it part1.s. Edit and position the shape
    until your design looks like the following one:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
               Wireframe Representation of Completed Candle Design
 
@@ -4728,6 +4962,12 @@ Move End H
    Notice that the checker shader for the tabletop includes two color values
    and a scale value. Type the values for red, white, and a scale of 10 in
    the boxes, as follows:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
               Combination Editor with the Checker Shader Selected
 
@@ -4776,6 +5016,12 @@ Move End H
 
    To provide the most light on your design, use a white background color.
    Your raytraced candle should look similar to the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                     Raytraced Candle Design in Overlay Mode
 
@@ -4828,6 +5074,12 @@ Move End H
    select Top view. Go to the Edit menu, select Scale, and size the sphere
    until it is proportionally about the same size as the one in the following
    illustration:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                    Sphere Placed on Candle Base from Top View
 
@@ -4844,6 +5096,12 @@ Move End H
    As discussed earlier, another feature that is available to help you
    position each sphere is the Multipane  option under the Modes  menu. This
    will allow you to see multiple views of the design you are creating.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                                Multipane Feature
 
@@ -4864,6 +5122,12 @@ Move End H
    click Apply. Continue doing this until you've made eight jewels. Because
    each of the new spheres is an exact copy of the first sphere, you won't be
    able to see them until you select and then move them.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                         The Primitive Editor Dialog Box
 
@@ -4871,6 +5135,12 @@ Move End H
    shapes you have created will drop down. Use the scrollbar to the right of
    the list of shapes to access the spheres you have created, as shown in the
    following illustration.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
        Drop-Down Menu of Primitives Available Through Primitive Selection
 
@@ -4906,6 +5176,12 @@ Move End H
    important to continually check your design from multiple views. A mistake
    in placement that doesn't appear from one view may be very noticeable from
    another view.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                          Candle Viewed from az35, el25
 
@@ -5186,6 +5462,12 @@ Move End H
    Control Panel and select a pale blue color (200 236 242) by typing the
    three values in the Background Color entry box. When you raytrace your
    design, it should look similar to the following one:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                        Raytraced Candle with Jeweled Base
 
@@ -5252,7 +5534,13 @@ Move End H
    toy truck, from the Command Window. Your completed truck should look
    similar to the following truck:
 
-                                       .
+        <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
+                                  .
 
                            Raytraced Toy Truck Design
 
@@ -5300,6 +5588,12 @@ Move End H
    <command>in cab1.s rpp 0 1 0 1 0 1[Enter]</command>
 
    A cube shape should appear in the Graphics Window, as follows:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                     Wireframe Representation of Shape cab1.s
 
@@ -5365,6 +5659,12 @@ Move End H
 
    When in Multipane mode, the design should resemble the following
    illustration.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                              Truck Cab with Cutoff
 
@@ -5391,6 +5691,12 @@ Move End H
    options to resize and the SHIFT key and left mouse button to position your
    wheel well. When satisfied, select Accept. Your design should look similar
    to the following in Multipane mode:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                Multipane View of Truck with First Wheel in Place
 
@@ -5427,6 +5733,12 @@ Move End H
    box). The parameter values of the old shape will be replaced by those of
    the new shape. The Primitive Editor will change and look something like
    the following example:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                               The Primitive Editor
 
@@ -5436,6 +5748,12 @@ Move End H
    wheel well into position, as shown in the following illustration. Check
    your alignment in Multipane mode and then click on Accept when you are
    finished.
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                          Placement of the Second Wheel
 
@@ -5511,6 +5829,12 @@ Move End H
    cab's back face. Check different views to make sure the body lines up
    correctly with the cab. Accept your changes when you are done, and then
    Blast your design. Your truck should now look like the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                                Truck Cab and Body
 
@@ -5520,6 +5844,12 @@ Move End H
    in making the second wheel well. Name your new shapes well3.s and well4.s.
    Using multiple views, move the new shapes into position so that your truck
    now looks similar to the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                Wireframe Representation of Truck with Wheel Wells
 
@@ -5591,6 +5921,12 @@ Move End H
    Using the Primitive Editor, make the second, third, and fourth wheels.
    Move each of these wheels into position until your truck looks like the
    following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                            Wireframe Truck and Wheels
 
@@ -5622,6 +5958,12 @@ Move End H
    design proportional to the truck, select a Noise Size of .25 and then
    Apply the selections. The Combination Editor window for the camo shader
    should look like this:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                                   Camo Shader
 
@@ -5913,6 +6255,12 @@ Move End H
    <command>r case.r u body.s - cavity.s - ant.s - knob.s - btn.s u spkr.s[Enter]</command>
 
    If we were to raytrace case.r at this point, we would see the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
           Radio with Component Cutouts and Default Material Properties
 
@@ -6045,6 +6393,12 @@ Move End H
    (button.r), let's keep it gray by leaving the default values in place. The
    design should appear similar to the following when raytraced in Underlay
    mode:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                     Radio with Material Properties Assigned
 
@@ -6102,6 +6456,12 @@ Move End H
    <command>g radio.c board.r[Enter]</command>
 
    Our radio should now look like the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                     Wireframe Radio with Circuit Board Added
 
@@ -6213,6 +6573,12 @@ Move End H
 
    Now raytrace your design to view the resulting effect. The new transparent
    case should appear similar to the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                          Transparent View of the Radio
 
@@ -6293,12 +6659,24 @@ Move End H
    that is covering what you want to see (board.r):
 
    <command>comb radio_cutaway.c u radio.c - cutaway.s[Enter]</command>
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                       Multipane View of Cutting Primitive
 
    Blast the radio_cutaway.c combination onto the display and raytrace.
    Depending on how your arb8 intersected the radio, the cutaway should look
    similar to the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                 Cutaway View of Radio with Circuit Board Cut Off
 
@@ -6548,6 +6926,12 @@ Move End H
 
    Now when we Blast the display and raytrace radio_cutaway.c, we should see
    the following:
+   <figure>
+     <title></title>
+     <screenshot>
+       <graphic fileref=".png"/>
+     </screenshot>
+   </figure>
 
                    View of Radio with Just the Case Cut Away
 
