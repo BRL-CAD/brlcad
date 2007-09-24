@@ -3502,7 +3502,7 @@ AM_CONDITIONAL(BUILD_ADRT, [test "x$build_brlcad_adrt" = "xyes"])
 
 # libfb and libdm interfaces
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
-AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno" && "x$build_against_x11" != "xno"])
+AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno" && test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
 AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
 #AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
