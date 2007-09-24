@@ -3153,8 +3153,9 @@
  </sect1>
 </chapter>
 
-   Lesson 7: Assigning Material Properties to Your Goblet
-
+<chapter id="Lesson-7">
+  <title>Assigning Material Properties to Your Goblet</title>
+  <para>
    In this lesson, you will:
 
    <itemizedlist mark='bullet'>
@@ -3171,48 +3172,59 @@
        <para>Raytrace various forms of your goblet.</para>
      </listitem>
    </itemizedlist>
-
-
+  </para>
+  <para>
    In this lesson, you will add material properties to the goblet you created
    in the previous lesson. The finished goblet should appear similar to the
    one in the following example.
+  </para>
 
-             The Completed Goblet with Material Properties Assigned
+  <figure>
+    <title>The Completed Goblet with Material Properties Assigned</title>
+    <screenshot>
+      <graphic fileref="completematgob.png"/>
+    </screenshot>
+  </figure>
 
-   1. Review of Opening an Existing Database
-
+  <sect1><title>Review of Opening an Existing Database</title>
+  <para>
    If you exited after the last lesson, open your goblet database (goblet.g)
    again. The easiest way to do this is to open the database from the
    Terminal Window when first starting MGED. To do this, type at the prompt:
 
    <command>mged goblet.g[Enter]</command>
-
+  </para>
+  <para>
    Alternatively, you could start the MGED program, and select File from the
    menu bar and then Open. A dialog box will appear and ask you to enter an
    existing database name. Type in goblet.g (or click on it in the directory
    listing) and then click on Open. The program should tell you that the
    database was successfully opened and it is using millimeters for its unit
    of measure. Click on OK.
-
-   Drawing the Goblet in the Graphics Window
-
+  </para>
+  <sect2><title>Drawing the Goblet in the Graphics Window</title>
+  <para>
    To draw the goblet you made in the previous lesson, move the mouse pointer
    to the Command Window and type at the prompt:
 
    <command>draw goblet1.c[Enter]</command>
-
+  </para>
+  <para>
    A wireframe representation of the goblet should appear in the Graphics
    Window.
-
-   2. Assigning Colors and the Plastic Shader to Regions of the Goblet
-
+  </para>
+  </sect2>
+  </sect1>
+  <sect1><title>Assigning Colors and the Plastic Shader to Regions of the Goblet</title>
+  <para>
    Go to the Edit menu and click on Combination Editor. To select the various
    regions of the goblet you made in the last lesson, go back to the Name box
    and click on the button  to the right of the entry box. A submenu will
    appear. Double click on Select From All Regions. A list of regions created
    for this database will appear, including base1.r, basin1.r, and stem1.r.
    Double click on base1.r to select that region.
-
+  </para>
+  <para>
    Click on the button to the right of Color  in the Combination Editor, and
    a drop-down menu will appear with a list of available colors along with a
    color tool that will let you create more colors. Click on blue. Next,
@@ -3220,79 +3232,85 @@
    shaders will appear. Click on plastic. A new set of options will appear.
    You will use two of these options in this lesson. Click on Apply to assign
    the color blue and the plastic shader to the goblet base.
-
+  </para>
+  <para>
    Repeat this process to assign the color green and plastic shader to the
    stem1.r region and the color yellow and plastic shader to the basin1.r
    region. When you are finished, click on OK to dismiss the Combination
    Editor box.
-
+  </para>
+  <para>
    Although the changes have been made to the database, the display in the
    Graphics Window doesn't reflect them yet. So, return the mouse pointer to
    the Command Window and type at the prompt:
 
    <command>B goblet1.c[Enter]</command>
-
+  </para>
+  <para>
    This command clears the screen and redraws the goblet with the color
    selections applied.
-
-   Raytracing the Goblet
-
+  </para>
+  <sect2><title>Raytracing the Goblet</title>
+  <para>
    To raytrace the goblet, go to the File menu and click on Raytrace. The
    Raytrace Control Panel will appear. Move your mouse pointer to the button
    to the right of Background Color and click on the white option. To make
    the raytracing go faster, you can resize the Graphics Window to make it
    smaller before you open the raytrace panel. When the window is resized,
    click on Raytrace to start the raytrace process.
-
-   +------------------------------------------------------------------------+
-   || Note: As mentioned previously, it is undesirable to have regions that |
-   || overlap. Although having overlaps may not always affect the           |
-   || raytracing process, if the model were going to be statistically       |
-   || analyzed, overlaps would create problems.                             |
-   +------------------------------------------------------------------------+
-
+  </para>
+  <note>
+    Note: As mentioned previously, it is undesirable to have regions that 
+    overlap. Although having overlaps may not always affect the           
+    raytracing process, if the model were going to be statistically       
+    analyzed, overlaps would create problems.                             
+  </note>
+  <para>
    While the goblet is raytracing, move your mouse cursor to the Framebuffer
    option of the Raytrace Control Panel menu bar and click on Overlay. When
    the raytrace process is finished, you should have a goblet similar to the
    following example:
+  </para>
    <figure>
-     <title></title>
+     <title>The Raytraced Goblet</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="rtg.png"/>
      </screenshot>
    </figure>
+  </sect2>
+  </sect1>
 
-                              The Raytraced Goblet
-
-    3. Using the Transparency and Mirror Reflectance Shader Options
-
+  <sect1><title>Using the Transparency and Mirror Reflectance Shader Options</title>
+  <para>
    The raytraced goblet looks fairly realistic, but it could be enhanced by
    using other options of the Combination Editor. When you selected the
    plastic shader, a new set of options appeared, allowing you to choose
    various properties or attributes of the shader. Among the options was
    Transparency. You can adjust this property on individual regions by
    entering any value between 0.0  (opaque) and 1.0 (transparent).
-
+  </para>
+  <para>
    Just as you applied color and a shader to each of the goblet's three
    regions, you can adjust the transparency of each region by (1) selecting
    the region in the Combination Editor, (2) left clicking on the box next to
    Transparency, and (3) entering any value between 0.0 and 1.0.
-
+  </para>
+  <para>
    For this lesson, open the Combination Editor, click on the button to the
    right of the Name box, choose Select From All Regions in the drop-down
    menu, and then choose the base1.r region. Make sure plastic is the shader
    selected and type in .5 to make your region semi-transparent. Click on
    Apply and repeat this process for each of the other two regions. Then
    Raytrace the goblet, which should look similar to the following:
+  </para>
    <figure>
-     <title></title>
+     <title>The Semi-Transparent Raytraced Goblet</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="strtg.png"/>
      </screenshot>
    </figure>
-
-                     The Semi-Transparent Raytraced Goblet
-
+   
+   <para>
    The colors of the semi-transparent goblet are brighter than those of the
    opaque goblet because more light is allowed to penetrate the plastic
    material. You could make the goblet more realistic in appearance by
@@ -3300,44 +3318,68 @@
    each region, place your mouse cursor in the box next to this option, click
    the left mouse button, and type in .45. This will cause about half of the
    available light to be reflected off the surface of the goblet.
-
-    4. Raytracing the New Forms of the Goblet
-
+   </para>
+  </sect1>
+  
+  <sect1><title>Raytracing the New Forms of the Goblet</title>
+  <para>
    Click on Apply and Raytrace the design. The new image should appear
    similar to the following example:
+  </para>
    <figure>
-     <title></title>
+     <title>The Raytraced Goblet with Mirror Reflectance Added</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="rtgmirrorref.png"/>
      </screenshot>
    </figure>
 
-               The Raytraced Goblet with Mirror Reflectance Added
-
+   <para>
    The new image is substantially different in appearance from the original
    image. Continue changing the values of transparency and mirror reflectance
    to see how they impact the resulting image.
-
+   </para>
+   <para>
    Remember that when using these options, the combined value of both options
    should be less than 1.0. The following table shows you just some of the
    many possible combinations you could use:
+   </para>
 
-   +-----------------------------------------------+
-   | Transparency Value | Mirror Reflectance Value |
-   |--------------------+--------------------------|
-   |        .50         |           .49            |
-   |--------------------+--------------------------|
-   |        .35         |           .64            |
-   |--------------------+--------------------------|
-   |        .20         |           .57            |
-   |--------------------+--------------------------|
-   |        .10         |           .89            |
-   |--------------------+--------------------------|
-   |        .89         |           .10            |
-   +-----------------------------------------------+
+   <informaltable frame="all">
+     <tgroup cols='2'>
+       <thread>
+	 <row>
+	   <entry>Transparency Value</entry>
+	   <entry>Mirror Reflectance Value</entry>
+	 </row>
+       </thread>
+       <tbody>
+	 <row>
+	   <entry>.50</entry>
+	   <entry>.49</entry>
+	 </row>
+	 <row>
+	   <entry>.35</entry>
+	   <entry>.64</entry>
+	 </row>
+ 	 <row>
+	   <entry>.20</entry>
+	   <entry>.57</entry>
+	 </row>
+ 	 <row>
+	   <entry>.10</entry>
+	   <entry>.89</entry>
+	 </row>
+ 	 <row>
+	   <entry>.89</entry>
+	   <entry>.10</entry>
+	 </row>
+        </tbody>
+     </tgroup>
+   </informaltable>
+  </sect1>
 
-   Review
-
+  <sect1><title>Review</title>
+  <para>
    In this lesson, you:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -3353,7 +3395,9 @@
        <para>Raytraced various forms of your goblet.</para>
      </listitem>
    </itemizedlist>
-
+  </para>
+  </sect1>
+</chapter>
 
    Lesson 8: Assigning More Material Properties to Your Goblet
 
