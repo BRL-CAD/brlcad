@@ -186,7 +186,7 @@ index_in_list(struct nametbl l, char *name)
     int i;
 
     for (i = 0; i < l.names_used; i++)
-	if (!strcmp(l.names[i].src.vls_str, name))
+	if (!strcmp(bu_vls_addr(&l.names[i].src), name))
 	    return i;
     return -1;
 }
@@ -258,12 +258,12 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
 	else
-	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1].vls_str, LOOKUP_QUIET), state, i);
+	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
 	bu_free((char *)name, "free get_name() name");
 
 	/* add the object to the directory */
-	dp = db_diradd(_dbip, obj_list.names[idx].dest[i].vls_str, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
+	dp = db_diradd(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
 	if ((dp == DIR_NULL) || (db_alloc(_dbip, dp, proto->d_len) < 0)) {
 	    TCL_ALLOC_ERR;
 	    return;
@@ -361,7 +361,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	if (i==0)
 	    dp = proto;
 	else
-	    dp = db_lookup(_dbip, obj_list.names[idx].dest[i-1].vls_str, LOOKUP_QUIET);
+	    dp = db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
 	name = get_name(_dbip, dp, state, i); /* get new name */
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
 
@@ -446,19 +446,19 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_log("ERROR: clone internal error looking up %s\n", rp[1].M.m_instname);
 		return NULL;
 	    }
-	    bu_vls_strcpy(&obj_list.names[idx].dest[i], obj_list.names[index_in_list(obj_list, rp[1].M.m_instname)].dest[i].vls_str);
+	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(&obj_list.names[index_in_list(obj_list, rp[1].M.m_instname)].dest[i]));
 	    /* bleh, odd convention going on here.. prefix regions with an 'r' */
-	    *obj_list.names[idx].dest[i].vls_str = 'r';
+	    *bu_vls_addr(&obj_list.names[idx].dest[i]) = 'r';
 	} else {
 	    const char *name = (const char *)NULL;
 	    if (i==0)
 		name = get_name(_dbip, proto, state, i);
 	    else
-		name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1].vls_str, LOOKUP_QUIET), state, i);
+		name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
 	    bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
 	    bu_free((char *)name, "free get_name() name");
 	}
-	strncpy(rp[0].c.c_name, obj_list.names[idx].dest[i].vls_str, NAMESIZE);
+	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), NAMESIZE);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -511,7 +511,7 @@ copy_v5_comb_tree(union tree *tree, int idx)
 	    break;
 	case OP_DB_LEAF:
 	    buf = tree->tr_l.tl_name;
-	    tree->tr_l.tl_name = bu_strdup(obj_list.names[index_in_list(obj_list,buf)].dest[idx].vls_str);
+	    tree->tr_l.tl_name = bu_strdup(bu_vls_addr(&obj_list.names[index_in_list(obj_list,buf)].dest[idx]));
 	    bu_free(buf, "node name");
 	    break;
 	default:
@@ -542,7 +542,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
 	else
-	    name = get_name(_dbip, db_lookup(_dbip, obj_list.names[idx].dest[i-1].vls_str, LOOKUP_QUIET), state, i);
+	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
 
 	/* we have a before and an after, do the copy */
@@ -724,7 +724,7 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 
 	idx = index_in_list(obj_list, state->src->d_namep);
 	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies) ; i++) {
-	    av[1] = obj_list.names[idx].dest[i].vls_str;
+	    av[1] = bu_vls_addr(&obj_list.names[idx].dest[i]);
 	    /* draw does not use clientdata */
 	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
 	}
@@ -1134,7 +1134,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    vargs[i] = (char *)bu_malloc(sizeof(char)*NAMESIZE, "alloc vargs1");
 
 	strcpy(vargs[0], "e");
-	strcpy(vargs[1], links[j].name.vls_str);
+	strcpy(vargs[1], bu_vls_addr(&links[j].name));
 	vargs[2] = NULL;
 
 	state.interp = interp;
@@ -1147,7 +1147,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* rots = (vect_t *)bu_malloc(sizeof(vect_t)*n_links, "alloc rots");*/
 	for (i = 0; i < n_links; i++) {
 	    /* global dbip */
-	    dps[i] = db_lookup(dbip, links[i].name.vls_str, LOOKUP_QUIET);
+	    dps[i] = db_lookup(dbip, bu_vls_addr(&links[i].name), LOOKUP_QUIET);
 	    /* VSET(rots[i], 0,0,0);*/
 	}
 
