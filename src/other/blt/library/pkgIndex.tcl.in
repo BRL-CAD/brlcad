@@ -23,8 +23,16 @@ proc LoadBLT { version dir } {
 	    set library [file join [file dirname $dir] $name]
 	}
 	if { ![file exists $library] } {
+	    # Try a source build directory.
+	    set library [file join [file dirname $dir] .libs/$name]
+	}
+	if { ![file exists $library] } {
+	    # Fall back to default blt path.
+	    set library [file join "@BLT_LIBRARY@" $name]
+	}
+	if { ![file exists $library] } {
 	    # Fall back to default path.
-	    set library [file join "/usr/brlcad/lib/blt2.4" $name]
+	    set library [file join "@BRLCAD_ROOT@" lib/$name]
 	}
     } else {
 	set library $name
@@ -32,7 +40,7 @@ proc LoadBLT { version dir } {
     load $library BLT
 }
 
-set version "2.4"
+set version "@BLT_VERSION@"
 
 package ifneeded BLT $version [list LoadBLT $version $dir]
 
