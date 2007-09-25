@@ -3399,8 +3399,9 @@
   </sect1>
 </chapter>
 
-   Lesson 8: Assigning More Material Properties to Your Goblet
-
+<chapter id="Lesson-8">
+  <title>Assigning More Material Properties to Your Goblet</title>
+  <para>
    In this lesson, you will:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -3419,10 +3420,12 @@
        <para>Experiment with various combinations of plastic shader options.</para>
      </listitem>
    </itemizedlist>
-
+  </para>
+  <para>
    Open the goblet.g database using whichever method you prefer. Go to the
    Edit menu and click on Combination Editor. Select basin1.r.
-
+  </para>
+  <para>
    In the last lesson, we assigned values for two shader
    attributes-transparency and mirror reflectance. In this lesson, we will
    assign values for still other shader properties. When the plastic shader
@@ -3434,24 +3437,23 @@
    modified, the change can be seen in braces in the shader string box and in
    the appropriate attribute entry boxes, as indicated by the arrows in the
    following example:
+  </para>
    <figure>
-     <title></title>
+     <title>The Combination Editor</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="combeditor.png"/>
      </screenshot>
    </figure>
 
-                             The Combination Editor
-
-   +------------------------------------------------------------------------+
-   || Note that in BRL-CAD versions prior to 5.2, the default values are    |
-   || used, but they are not displayed in the shader attribute boxes.       |
-   +------------------------------------------------------------------------+
-
+   <note>
+    Note that in BRL-CAD versions prior to 5.2, the default values are    
+    used, but they are not displayed in the shader attribute boxes.       
+   </note>
+   <para>
    In this example, the shader entry box indicates that the transparency (tr)
    is set at .5 and the mirror reflectance (re) is set at .45. The eight
    abbreviations currently used in the shader entry box are as follows:
-
+   </para>
       <informaltable>
        <tgroup cols='4'>
 	 <tbody>
@@ -3470,9 +3472,9 @@
 	 </tbody>
        </tgroup>
      </informaltable>
-
-   Specular and Diffuse Reflectivity
-
+   
+   <sect2><title>Specular and Diffuse Reflectivity</title>
+   <para>
    When light reflects off of a shiny surface, it produces two types of
    reflections. The most noticeable highlights are caused by specular
    reflectivity. The rest of the surface produces diffuse reflectivity. The
@@ -3481,33 +3483,37 @@
    with a wall painted with flat paint, the more diffuse reflectivity that is
    produced. A model of the relationship between these reflectivities is
    shown in the following illustration:
+   </para>
    <figure>
-     <title></title>
+     <title>Specular vs. Diffuse Reflectivity Model</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="specvsdiffmodel.png"/>
      </screenshot>
    </figure>
-
-                    Specular vs. Diffuse Reflectivity Model
-
+   <para>
    As seen in the illustration, diffuse reflectivity shows an object's color
    by reflecting ambient light off the object. The upper left ball exhibits
    the maximum value for diffuse reflectivity (1.0), and as a result, its
    surface color is uniform.
-
+   </para>
+   <para>
    Specular reflectivity, on the other hand, reflects the color of a light
    source. The lowest right ball, with the maximum value for specular
    reflectivity (1.0), shows a white light source being reflected off the
    surface of the ball.
-
+   </para>
+   <para>
    The range for both specular and diffuse reflectivity is 0.0 through 1.0.
    However, combined values for these are typically equal to 1.0. Remember,
    if you are going to set values for one of these attributes, you need to
    assign a corresponding value to the complementary attribute so that the
    combination of the values equals 1.0.
+   </para>
+   </sect2>
 
-   Refractive Index
+   <sect2><title>Refractive Index</title>
 
+   <para>
    When light passes through one medium (e.g., air) into another medium
    (e.g., water), it bends from its original path. The degree to which the
    light bends is called the refractive index. The more dissimilar the media
@@ -3516,42 +3522,49 @@
    through optical glass. The diamond would have a higher refractive index
    (approximately 2.42) whereas optical glass would have a lower refractive
    index (approximately 1.71).
-
+   </para>
+   <para>
    The range of index of refraction for MGED is 1.0 (the index for air) or
    greater. This parameter is only useful for materials that have a
    transparency greater than 0. The following drawing of sunlight passing
    through water shows how refraction works.
+   </para>
    <figure>
-     <title></title>
+     <title>A Ray of Sunlight Passing Through a Body of Water</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="raythroughwater.png"/>
      </screenshot>
    </figure>
-
-               A Ray of Sunlight Passing Through a Body of Water
-
-   Shininess
-
+   </sect2>
+   
+   <sect2><title>Shininess</title>
+   <para>
    The shininess of an object affects the size of the specular component of
    the plastic shader. The shinier an object's surface is, the smaller the
    reflection of the light source on the object's surface will be. The range
    for shininess is typically an integer value from 1 to 10.
-
-   Extinction
-
+   </para>
+   </sect2>
+   
+   <sect2><title>Extinction</title>
+   <para>
    The term extinction applies to the transmissive component of the plastic
    shader, and it indicates the amount of light absorbed by the object's
    material. The default value is 0.0, and the range can be any nonnegative
    number. Using this attribute can dramatically impact other attributes of
    the shader, especially the refractive index.
+   </para>
+   </sect2>
 
-   Emission
-
+   <sect2><title>Emission</title>
+   <para>
    Emission is a relatively new feature that has been added to the BRL-CAD
    package. It concerns the amount of artificial brightness of the object.
+   </para>
+   </sect2>
 
-   Applying Attributes of the Plastic Shader to the Goblet
-
+   <sect2><title> Applying Attributes of the Plastic Shader to the Goblet</title>
+   <para>
    Now that you understand the various attributes of the plastic shader, it
    is time to experiment with how they affect the final product-the goblet
    you created in the previous two lessons. You have already assigned values
@@ -3562,49 +3575,49 @@
    changes so that you can refer to them later, when you are creating other
    models using the plastic shader. Remember to click Apply in the
    Combination Editor to actually incorporate the changes.
-
+   </para>
+   <para>
    As you change the values for the attributes of the plastic shader, you
    will notice that some changes do not significantly alter the design. This
    is because there are a variety of ways to produce a particular look on an
    object. The following are two examples of the goblet with various values
    of the plastic attributes (which do create a noticeable difference)
    applied to basin1.r.
+   </para>
    <figure>
-     <title></title>
+     <title>Goblet Assigned .9 for Specular Reflectivity and .1 for Diffuse Reflectivity</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="gob9spec1diff.png"/>
      </screenshot>
    </figure>
 
-        Goblet Assigned .9 for Specular Reflectivity and .1 for Diffuse
-                                  Reflectivity
    <figure>
-     <title></title>
+     <title>Same Goblet Also Assigned a Value of .5 for Extinction</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="gob9spec1diff5extin.png"/>
      </screenshot>
    </figure>
 
-             Same Goblet Also Assigned a Value of .5 for Extinction
-
+   <para>
    By the time you have finished experimenting with changing attributes of
    the plastic shader, your Combination Editor window might look something
    like this:
+   </para>
    <figure>
-     <title></title>
+     <title>The Combination Editor Window</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="combedwindow.png"/>
      </screenshot>
    </figure>
-
-                         The Combination Editor Window
-
+   <para>
    Notice that while the shader string entry box reflects the values set by
    the user in the attribute entry boxes (e.g., the Transparency of .5), it
    does not reflect the default values (e.g., the Shininess of 10).
+   </para>
+   </sect2>
 
-   Review
-
+   <sect2><title>Review</title>
+   <para>
    In this lesson, you:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -3623,17 +3636,20 @@
        <para>Experimented with various combinations of plastic shader options.</para>
      </listitem>
    </itemizedlist>
+   </para>
+   </sect2>
+ </chapter>
 
-
-                            Intentionally Left Blank
-
-   Lesson 9: Creating a Globe in a Display Box
-
+ <chapter id="Lesson-9">
+   <title>Creating a Globe in a Display Box</title>
+   <para>
    In previous lessons, you combined various shapes into new objects. These
    new objects have been created using solid building blocks, much like those
    used in a wooden toy truck. However, in real life, most of the objects
    that you will design will consist of an outside shell and various inside
    parts. Therefore, in this lesson you will:
+   </para>
+
    <itemizedlist mark='bullet'>
      <listitem>
        <para>Use the GUI to create a display box using arb8 shapes.</para>
@@ -3653,120 +3669,135 @@
    </itemizedlist>
 
 
-   Create a New Database
-
+   <sect1><title>Create a New Database</title>
+   <para>
    Begin by creating a new database. Name your new file cube.g.
+   </para>
+   </sect1>
 
-   1. Creating the Display Box
-
+   <sect1><title>Creating the Display Box</title>
+   <para>
    Go to the Create menu, select the Arbs category, and then select an arb8
    (arbitrary convex polyhedron with eight vertices). When asked to provide a
    name for the arb8, name it cube1.s. Click on Apply. Go to the Edit menu
    and click on Accept. You now have a cube for the outside of the display
    box, as in the following:
+   </para>
    <figure>
-     <title></title>
+     <title>The Outside of the Display Box</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="outdisbox.png"/>
      </screenshot>
    </figure>
 
-                         The Outside of the Display Box
-
+   <para>
    Repeat the first part of this process to produce another arb8, this time
    calling this shape cube2.s. Go to the Edit menu and click on Scale. Place
    the mouse pointer in the lower half of the Graphics Window screen and
    click the middle mouse button until the second cube is slightly smaller
    than the first cube, as follows:
+   </para>
    <figure>
-     <title></title>
+     <title>The Inside and Outside of the Display Box</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="inoutdispbox.png"/>
      </screenshot>
    </figure>
 
-                   The Inside and Outside of the Display Box
-
+   <para>
    Go to the View menu and change view to Front. Go to the Edit menu and
    click on Translate (move). Hold down the SHIFT key and drag the inside
    cube into position in the center of the outside cube. Repeat this process
    from the Top view and Left view until the smaller cube is placed in the
    center of the outside cube when viewed from all perspectives. When you are
    finished, go back to Edit and click on Accept.
+   </para>
+   </sect1>
 
-   2. Create a Globe Inside the Display Box
-
+   <sect1><title>Create a Globe Inside the Display Box</title>
+   <para>
    Go to the Create menu and select sph from the list of Ellipsoids. Name the
    shape globe1.s and click on Apply.
-
+   </para>
+   <para>
    A sphere should appear inside the cube in the Graphics Window. Change View
    to Front.
-
+   </para>
+   <para>
    Go to the Edit menu and select Scale. Reduce the size of the sphere until
    it will fit inside of the cube and then drag it into the center of the
    cube. Go to Edit and Accept your changes. Your globe and box should appear
    similar to the following in the az35, el25 view:
+   </para>
    <figure>
-     <title></title>
+     <title>Wireframe Representation of Globe and Display Box</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="wirerepglobox.png"/>
      </screenshot>
    </figure>
 
-               Wireframe Representation of Globe and Display Box
-
+   <para>
    To view contents of the database, type at the Command Window prompt:
 
    <command>ls[Enter]</command>
-
+   </para>
+   <para>
    You should see cube1.s, cube2.s, and globe1.s listed as shapes you have
    created. To make regions of these shapes, type at the prompt:
 
    <command>r cube1.r u cube1.s - cube2.s[Enter]</command>
 
    <command>r globe1.r u globe1.s[Enter]</command>
+   </para>
+   </sect1>
 
-   3. Using the Combination Editor to Assign Material Properties that Make
-   the Objects Appear More Realistic
+   <sect1><title>Using the Combination Editor to Assign Material Properties that Make
+   the Objects Appear More Realistic</title>
 
+   <para>
    Go to Edit and select Combination Editor. In the dialog box, click the
    button next to the Name entry box. Select globe1.r from Select From All or
    Select From All Regions. Double click  on the globe1.r name. Assign this
    region a Shader of cloud. Check the Boolean Expression box to make sure
    the region is made up of u globe1.s. Click on Apply to accept your
    choices. Go to View and select az35, el25.
-
+   </para>
+   <para>
    Go back to Name and select cube1.r from the Select From All menu. Assign
    this region a Shader of glass. The glass shader is a shortcut to
    individually changing the attributes of the plastic shader to make it
    appear like glass.
-
+   </para>
+   <para>
    Go to the Color option and enter the values 244 255 255. This will give
    your glass box a light cyan color. Click on Apply to accept your changes.
-
+   </para>
+   <para>
    Before you can raytrace your design, you need to clear the Graphics Window
    by typing Z at the Command Window prompt because both shapes and regions
    are being displayed at this point. Next, type in the Command Window:
 
    <command>draw cube1.r globe1.r[Enter]</command>
-
+   </para>
+   <para>
    The display box and globe should reappear in the Graphics Window. Go to
    the File menu and select Raytrace. Next, select the white option for
    Background Color. Click on Raytrace.
-
+   </para>
+   <para>
    Your design should show a light cyan-colored glass cube with a blue globe
    inside. To eliminate the wireframing, go to Framebuffer (in the Raytrace
    Panel) and select Overlay. The display should appear similar to the
    following illustration:
+   </para>
    <figure>
-     <title></title>
+     <title>Raytraced Display Box and Globe</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="rtdisboxglobe.png"/>
      </screenshot>
    </figure>
 
-                        Raytraced Display Box and Globe
-
+   <para>
    To make this design more interesting, you can place the globe on a base.
    Do this by going back to Framebuffer and clicking on Active to deactivate
    the framebuffer. Next, go to the Create menu and select the trc 
@@ -3780,9 +3811,11 @@
    middle mouse button. You may need to switch back and forth between these
    two options a few times to get an acceptable size. When finished, however,
    do not click on Accept  yet, as we have more changes to make.
+   </para>
+   </sect1>
 
-   4. Moving and Rotating an Object
-
+   <sect1><title>Moving and Rotating an Object</title>
+   <para>
    As with other features in MGED, moving and rotating objects can be
    accomplished in several ways, according to the amount of precision
    desired. As previously described, the Shift Grip functions can be used as
@@ -3791,7 +3824,8 @@
    Translate (move) and Rotate commands under Edit can be selected and
    specific parameter numbers can be entered in the Command Window. In this
    lesson, we will experiment with both methods.
-
+   </para>
+   <para>
    With your trc still in edit mode and still in a Front view, use the SHIFT
    key and the left mouse button to drag your shape (the bottom of the base)
    and sit it on the floor of the cube (just touching the inside box). Note
@@ -3801,17 +3835,20 @@
    appropriate. At this point, you may notice that your trc needs to be
    resized a little to better fit the globe. Use Scale and Set H as needed 
    and then Accept your changes.
-
+   </para>
+   <para>
    Now we need to make a second trc named base2.s, which we will use for the
    top of the base. On the Command Line, type:
 
    <command>cp base1.s base2.s</command>
-
+   </para>
+   <para>
    The second trc will appear directly on top of the first trc, so we will
    have to use Primitive Selection under the edit menu to put base2.s in edit
    mode so that we can flip it upside down and then drag it to the top of the
    first trc.
-
+   </para>
+   <para>
    To do this, we could use  the CTRL and ALT (constrained rotation) keys and
    left mouse button and then move the mouse up or down until the trc is
    upside down. (If this method is used, note that you can release the mouse
@@ -3822,40 +3859,46 @@
    Line:
 
    <command>p 180 0 0[Enter]</command>
-
+   </para>
+   <para>
    Our shape should have flipped upside down and jumped to the bottom of the
    first trc. (The two zeros you input indicate no rotation along the y and z
    axes.) Now use the SHIFT key and the left mouse button to drag base2.s
    upward and sit it on top of base1.s. The two shapes should form a base in
    which to hold your globe. Check your alignment using multiple views and
    then Accept your changes.
-
+   </para>
+   <para>
    Go to Edit and Primitive Selection and click on globe1.r/globe1.s. As you
    did with the trc shapes, use the Shift Grips to drag the globe down until
    it is in place on the base. Go back to Edit and click on Accept. Your
    design should look as follows:
+   </para>
    <figure>
-     <title></title>
+     <title>Wireframe Representation of Globe and Base in Display Box</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="wireglobebasedispbox.png"/>
      </screenshot>
    </figure>
 
-           Wireframe Representation of Globe and Base in Display Box
-
+   <para>
    To make a region of the base, type in the Command Window:
 
    <command>r base1.r u base1.s u base2.s[Enter]</command>
+   </para>
+   </sect1>
 
-   5. Use the Color Tool of the Combination Editor to Produce Customized
-   Colors.
-
+   <sect1><title>Use the Color Tool of the Combination Editor to Produce Customized
+   Colors.</title>
+   
+   <para>
    In the Combination Editor window, click the button  to the right of the
    Name entry box and then Select From All. Choose base1.r. Assign the base a
    Shader of plastic. In the Color box, enter the numbers:
 
    <command>217 217 217</command>
-
+   </para>
+   <para>
    Apply your changes. Before you can raytrace your completed design, you
    must first clear the Graphics Window and rebuild your design by typing at
    the Command Window prompt:
@@ -3863,12 +3906,15 @@
    <command>Z[Enter]</command>
 
    <command>draw cube1.r globe1.r base1.r[Enter]</command>
-
+   </para>
+   <para>
    Change your view to az35, el25 and then raytrace your design, which should
    appear similar to the following:
+   </para>
+   </sect1>
 
-   Review
-
+   <sect1><title>Review</title>
+   <para>
    In this lesson, you:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -3887,7 +3933,9 @@
        <para>Used the color option of the Combination Editor to produce customized colors.</para>
      </listitem>
    </itemizedlist>
-
+   </para>
+   </sect1>
+ </chapter>
 
                             Intentionally Left Blank
 
