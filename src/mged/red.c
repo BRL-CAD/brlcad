@@ -111,6 +111,7 @@ print_matrix(FILE *fp, matp_t matrix)
 	    fprintf( fp, " %g", matrix[k] );
 	else
 	    fprintf( fp, " %.12e", matrix[k] );
+	if ((k&3)==3) fputc(' ', fp);
     }
 }
 
