@@ -135,6 +135,7 @@ vls_print_matrix(struct bu_vls *vls, matp_t matrix)
 	    bu_vls_printf(vls, " %g", matrix[k]);
 	else
 	    bu_vls_printf(vls, " %.12e", matrix[k]);
+	if ((k&3)==3) fputc(' ', fp);
     }
 }
 
