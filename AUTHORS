@@ -16,8 +16,8 @@ through the contributions and improvements by others.  We strive to
 recognize those groups and individuals that have helped make BRL-CAD
 the package that it is today here.
 
-Contributions of this large collective work are separated into a few
-major sections depending on the level and type of involvement that the
+Contributions of this collective work are separated into major
+sections depending on the level and type of involvement that the
 individual maintained.  Contributors are roughly ordered
 chronologically for each section, depending upon when involvement with
 BRL-CAD began.  The earliest contributors are named first; likewise,
@@ -25,10 +25,12 @@ the most recent contributors are listed at the bottom.
 
 Names are optionally followed by the organizations that may have
 supported their involvement to some degree, also listed in
-chronological order.  Many individuals including many with affiliated
-organizations have also supported the package of their own accord and
-on their own time.  Participation and contributions are graciously
-appreciated.
+chronological order.  Developers are only categorized as such and are
+only listed once as they tend to fit most categories, whereas the
+contributions of others are categorized and repeated as appropriate.
+Many individuals including many with affiliated organizations have
+also supported the package of their own accord and on their own time.
+Participation and contributions are graciously appreciated.
 
 Active developers are denoted with an "**", meaning that they have
 been actively involved within the past 12 months.
@@ -149,6 +151,20 @@ U.S. Army Research Laboratory
 
 Kregel, Dwayne  **
 SURVICE Engineering, Inc.
+
+
+DOCUMENTATION WRITERS
+---------------------
+
+Schueler, Betty J.
+
+Edwards, Eric
+Survice Engineering, Inc.
+
+Kregel, Dwayne
+SURVICE Engineering, Inc.
+
+Yapp, Cliff
 
 
 CODE CONTRIBUTIONS
@@ -372,9 +388,6 @@ Ousterhout, John
 
 Williams, John P.
 QUADRA Enterprises
-
-Edwards, Eric
-Survice Engineering, Inc.
 
 Bokkers, Wim
 TNO Prins Maurits Laboratory
