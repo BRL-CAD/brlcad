@@ -19,12 +19,12 @@ AM_CPPFLAGS = \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\""
 
 lib_LTLIBRARIES = \
-	libblt.la \
-	libblt@BLT_VERSION@.la
+	libBLT.la \
+	libBLT@BLT_SUFFIX@.la
 
-libblt_la_SOURCES =
+libBLT_la_SOURCES =
 # libblt_la_LDFLAGS = -module
-libblt_la_LIBADD = \
+libBLT_la_LIBADD = \
 	src/bltAlloc.lo \
 	src/bltArrayObj.lo \
 	src/bltBeep.lo \
@@ -99,9 +99,9 @@ libblt_la_LIBADD = \
 	${TCL} \
 	${TK}
 
-libblt@BLT_VERSION@_la_SOURCES = $(libblt_la_SOURCES)
-libblt@BLT_VERSION@_la_LDFLAGS = $(libblt_la_LDFLAGS)
-libblt@BLT_VERSION@_la_LIBADD = $(libblt_la_LIBADD)
+libBLT@BLT_SUFFIX@_la_SOURCES = $(libBLT_la_SOURCES)
+libBLT@BLT_SUFFIX@_la_LDFLAGS = $(libBLT_la_LDFLAGS)
+libBLT@BLT_SUFFIX@_la_LIBADD = $(libBLT_la_LIBADD)
 
 MAINTAINERCLEANFILES = Makefile.in
 
