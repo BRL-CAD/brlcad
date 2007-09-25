@@ -2008,18 +2008,19 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 				 */
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
+	const char *cmdname = argv[0];
 
 	bu_vls_init(&vls);
 
 	if (argc < 1 || MAXARGS < argc) {
-		bu_vls_printf(&vls, "helplib_alias wdb_ls %s", argv[0]);
+		bu_vls_printf(&vls, "helplib_alias wdb_ls %s", cmdname);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 
 	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, argv, "acrslpAo")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "acrslopA")) != EOF) {
 		switch (c) {
 		case 'A':
 			attr_flag = 1;
@@ -2050,8 +2051,9 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 			return TCL_ERROR;
 		}
 	}
-	argc -= (bu_optind - 1);
-	argv += (bu_optind - 1);
+	/* skip options processed plus command name, should just leave object names */
+	argc -= bu_optind;
+	argv += bu_optind;
 
 	/* create list of selected objects from database */
 	if( attr_flag ) {
@@ -2060,13 +2062,13 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 		struct bu_attribute_value_set avs;
 		int dir_flags;
 		int op;
-
-		if( argc < 3 || argc%2 != 1 ) {
-			/* should be odd number of args name/value pairs plus argv[0] */
-			bu_vls_printf(&vls, "helplib_alias wdb_ls %s", argv[0]);
-			Tcl_Eval(interp, bu_vls_addr(&vls));
-			bu_vls_free(&vls);
-			return TCL_ERROR;
+		if( (argc < 2) || (argc%2 != 0) ) {
+		    /* should be even number of name/value pairs */
+		    bu_log("ls -A option expects even number of 'name value' pairs\n");
+		    bu_vls_printf(&vls, "helplib_alias wdb_ls %s", cmdname);
+		    Tcl_Eval(interp, bu_vls_addr(&vls));
+		    bu_vls_free(&vls);
+		    return TCL_ERROR;
 		}
 
 		if( or_flag ) {
@@ -2082,31 +2084,34 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 		if( rflag ) dir_flags = DIR_REGION;
 		if( !dir_flags ) dir_flags = -1 ^ DIR_HIDDEN;
 
-		bu_avs_init( &avs, argc-1, "wdb_ls_cmd avs" );
-		for (i = 1; i < argc; i += 2) {
+		bu_avs_init( &avs, argc, "wdb_ls_cmd avs" );
+		for (i = 0; i < argc; i += 2) {
 			if( or_flag ) {
 				bu_avs_add_nonunique( &avs, argv[i], argv[i+1] );
 			} else {
 				bu_avs_add( &avs, argv[i], argv[i+1] );
 			}
 		}
+
 		tbl = db_lookup_by_attr( wdbp->dbip, dir_flags, &avs, op );
 		bu_avs_free( &avs );
+
 		dirp = wdb_getspace(wdbp->dbip, BU_PTBL_LEN( tbl ));
 		dirp0 = dirp;
 		for( i=0 ; i<BU_PTBL_LEN( tbl ) ; i++ ) {
 			*dirp++ = (struct directory *)BU_PTBL_GET( tbl, i );
 		}
+
 		bu_ptbl_free( tbl );
 		bu_free( (char *)tbl, "wdb_ls_cmd ptbl" );
-	} else if (argc > 1) {
+	} else if (argc > 0) {
 		/* Just list specified names */
-		dirp = wdb_getspace(wdbp->dbip, argc-1);
+		dirp = wdb_getspace(wdbp->dbip, argc);
 		dirp0 = dirp;
 		/*
 		 * Verify the names, and add pointers to them to the array.
 		 */
-		for (i = 1; i < argc; i++) {
+		for (i = 0; i < argc; i++) {
 			if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 				continue;
 			*dirp++ = dp;
