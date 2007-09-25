@@ -66,13 +66,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define STAT_SCALE	8
 
 /**
- *			M A T _ C A T E G O R I Z E
+ *	D B _ C O M B _ M A T _ C A T E G O R I Z E
  *
  *  Describe with a bit vector the effects this matrix will have.
-XXX Should have different name prefix.
  */
 static int
-mat_categorize(const fastf_t *matp)
+db_comb_mat_categorize(const fastf_t *matp)
 {
 	int	status = 0;
 
@@ -661,7 +660,7 @@ db_tree_flatten_describe(
 				bu_bomb("db_tree_flatten_describe() corrupt rt_tree_array");
 		}
 
-		status = mat_categorize( itp->tr_l.tl_mat );
+		status = db_comb_mat_categorize( itp->tr_l.tl_mat );
 		if( !indented )  bu_vls_spaces( vls, 2*lvl );
 		bu_vls_printf( vls, " %c %s", op, itp->tr_l.tl_name );
 		if( status & STAT_ROT ) {
@@ -721,7 +720,7 @@ db_tree_describe(
 	switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-		status = mat_categorize( tp->tr_l.tl_mat );
+		status = db_comb_mat_categorize( tp->tr_l.tl_mat );
 
 		/* One per line, out onto the vls */
 		if( !indented )  bu_vls_spaces( vls, 2*lvl );
