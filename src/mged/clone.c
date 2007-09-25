@@ -176,20 +176,6 @@ add_to_list(struct nametbl *l, char *name)
 }
 
 
-/**
- * returns truthfully if 'name' exists in the list
- */
-static int
-is_in_list(struct nametbl l, char *name)
-{
-    int i;
-
-    for (i = 0; i < l.names_used; i++)
-	if (!strcmp(l.names[i].src, name))
-	    return 1;
-    return 0;
-}
-
 
 /**
  * returns the location of 'name' in the list if it exists, returns
@@ -206,6 +192,14 @@ index_in_list(struct nametbl l, char *name)
     return -1;
 }
 
+/**
+ * returns truthfully if 'name' exists in the list
+ */
+static int
+is_in_list(struct nametbl l, char *name)
+{
+    return index_in_list(l,name) != -1;
+}
 
 /**
  * returns the next available/unused name, using a consistent naming
