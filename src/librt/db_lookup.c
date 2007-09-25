@@ -562,6 +562,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     } else {
 	attr_count = 0;
     }
+
     tbl = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "wdb_get_by_attr ptbl" );
     bu_ptbl_init( tbl, 128, "wdb_get_by_attr ptbl_init" );
 
@@ -570,6 +571,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	if( (dp->d_flags & dir_flags) == 0 ) continue;
 
 	if(attr_count ) {
+	    bu_avs_init_empty(&obj_avs);
 	    if( db5_get_attributes( dbip, &obj_avs, dp ) < 0 ) {
 		bu_log( "ERROR: failed to get attributes for %s\n", dp->d_namep );
 		return( (struct bu_ptbl *)NULL );
@@ -592,6 +594,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 		}
 		if( draw ) break;
 	    }
+
 	    bu_avs_free( &obj_avs );
 	} else {
 	    draw = 1;
