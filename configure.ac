@@ -2810,19 +2810,21 @@ AC_SUBST(IWIDGETS_VERSION)
 dnl *** BLT ***
 dnl figure out whether we need to build BLT
 BLT_VERSION="2.4"
+BLT_SUFFIX="`echo ${BLT_VERSION} | tr -d .`"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
-	 BLT_VERSION="`echo ${BLT_VERSION} | tr -d .`"
+	 BLT_VERSION=$BLT_SUFFIX
 	 ;;
 esac
 AC_SUBST(BLT_VERSION)
-BLT_LIBRARY='${prefix}/lib/blt${BLT_VERSION}'
+AC_SUBST(BLT_SUFFIX)
+BLT_LIBRARY="${BRLCAD_ROOT}/lib/blt${BLT_VERSION}"
 AC_SUBST(BLT_LIBRARY)
 AC_MSG_CHECKING(whether to build libblt)
 if test ! "x$bc_build_blt" = "xno" ; then
      build_brlcad_blt=yes
-     BLT='${top_builddir}/src/other/blt/libblt${BLT_VERSION}.la'
+     BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
      AC_MSG_RESULT(yes)
 else
      build_brlcad_blt=no
@@ -3835,6 +3837,18 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
 	src/other/awf/Makefile
+	src/other/blt/Makefile
+	src/other/blt/cf/Makefile
+	src/other/blt/demos/Makefile
+	src/other/blt/demos/bitmaps/Makefile
+	src/other/blt/examples/Makefile
+	src/other/blt/html/Makefile
+	src/other/blt/library/Makefile
+	src/other/blt/library/dd_protocols/Makefile
+	src/other/blt/library/pkgIndex.tcl
+	src/other/blt/man/Makefile
+	src/other/blt/src/Makefile
+	src/other/blt/win/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
@@ -3857,30 +3871,19 @@ AC_CONFIG_FILES([
 	src/other/jove/teach-jove
 	src/other/libpng/Makefile
 	src/other/libregex/Makefile
-	src/other/tcl/Makefile
-	src/other/tk/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
 	src/other/libz/Makefile
 	src/other/openNURBS/Makefile
+	src/other/tcl/Makefile
+	src/other/tk/Makefile
 	src/other/tkimg/Makefile
 	src/other/tkimg/base/Makefile
 	src/other/tkimg/png/Makefile
 	src/other/tkimg/pngtcl/Makefile
 	src/other/tkimg/zlibtcl/Makefile
 	src/other/tnt/Makefile
-	src/other/blt/Makefile
-	src/other/blt/cf/Makefile
-	src/other/blt/demos/Makefile
-	src/other/blt/demos/bitmaps/Makefile
-	src/other/blt/examples/Makefile
-	src/other/blt/html/Makefile
-	src/other/blt/library/Makefile
-	src/other/blt/library/dd_protocols/Makefile
-	src/other/blt/man/Makefile
-	src/other/blt/src/Makefile
-	src/other/blt/win/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
 	src/rt/Makefile
