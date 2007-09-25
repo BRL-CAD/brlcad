@@ -439,7 +439,7 @@ pixuntile_LDADD = ${BU}
 
 if WITH_X11
 pl_X_SOURCES = pl-X.c
-pl_X_LDADD = ${DM}
+pl_X_LDADD = ${DM} ${DM_LIBS}
 pl_X_CFLAGS = ${X_CFLAGS}
 endif
 
