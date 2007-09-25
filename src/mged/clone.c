@@ -154,7 +154,7 @@ init_list(struct nametbl *l, int s)
  * add a new name to the name list
  */
 static int
-add_to_list(struct nametbl *l, char name[NAMESIZE])
+add_to_list(struct nametbl *l, char *name)
 {
     int i, j;
 
@@ -180,7 +180,7 @@ add_to_list(struct nametbl *l, char name[NAMESIZE])
  * returns truthfully if 'name' exists in the list
  */
 static int
-is_in_list(struct nametbl l, char name[NAMESIZE])
+is_in_list(struct nametbl l, char *name)
 {
     int i;
 
@@ -196,7 +196,7 @@ is_in_list(struct nametbl l, char name[NAMESIZE])
  * -1 otherwise.
  */
 static int
-index_in_list(struct nametbl l, char name[NAMESIZE])
+index_in_list(struct nametbl l, char *name)
 {
     int i;
 
