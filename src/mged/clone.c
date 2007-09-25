@@ -175,8 +175,6 @@ add_to_list(struct nametbl *l, char *name)
     return l->names_used-1; /* return number of available slots */
 }
 
-
-
 /**
  * returns the location of 'name' in the list if it exists, returns
  * -1 otherwise.
@@ -330,10 +328,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 static void
 copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
-    register struct directory *dp = (struct directory *)NULL;
-    int i, ret;
-    char *argv[6] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL};
-    struct rt_db_internal intern;
+    int i;
     mat_t matrix;
     MAT_IDN(matrix);
 
@@ -356,7 +351,11 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	const char *name = (const char *)NULL;
+	char *argv[6] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL};
+	const char *name = (char *)NULL;
+	int ret;
+	register struct directory *dp = (struct directory *)NULL;
+	struct rt_db_internal intern;
 
 	if (i==0)
 	    dp = proto;
@@ -488,6 +487,39 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     return dp;
 }
 
+/*
+ * update the v5 combination tree with the new names.
+ * DESTRUCTIVE RECURSIVE
+ */
+int
+copy_v5_comb_tree(union tree *tree, int idx)
+{
+    char *buf;
+    switch(tree->tr_op){
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    /* copy right */
+	    copy_v5_comb_tree(tree->tr_b.tb_right, idx);
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* copy left */
+	    copy_v5_comb_tree(tree->tr_b.tb_left, idx);
+	    break;
+	case OP_DB_LEAF:
+	    buf = tree->tr_l.tl_name;
+	    tree->tr_l.tl_name = bu_strdup(obj_list.names[index_in_list(obj_list,buf)].dest[idx]);
+	    bu_free(buf, "node name");
+	    break;
+	default:
+	    bu_log("clone v5 - OPCODE NOT IMPLEMENTED: %d\n", tree->tr_op);
+	    return -1;
+    }
+    return 0;
+}
+
 /**
  * make n copies of a v5 combination.
  */
@@ -495,19 +527,14 @@ static struct directory *
 copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
     register struct directory *dp = (struct directory *)NULL;
-    union record *rp = (union record *)NULL;
     const char *name = (const char *)NULL;
-    int i, j;
+    int i;
 
     /* sanity */
     if (!proto) {
 	bu_log("ERROR: clone internal consistency error\n");
 	return (struct directory *)NULL;
     }
-
-    /* XXX still non-functional, but closer */
-    bu_log("ERROR: clone v5 IMPLEMENTATION INCOMPLETE, ABORTING\n");
-    return (struct directory *)NULL;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -519,12 +546,33 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
 	/* we have a before and an after, do the copy */
 	if (proto->d_namep && name) {
-	    const char*fromto[4] = {"wdb_copy", proto->d_namep, name, (const char*)NULL};
-	    j = wdb_copy_cmd(_dbip->dbi_wdbp, NULL, 3, (char**)fromto);
-	    if (j == TCL_ERROR) {
+	    struct rt_db_internal dbintern;
+	    struct rt_comb_internal *comb;
+
+	    dp = db_lookup(_dbip, proto->d_namep, LOOKUP_QUIET);
+	    if (rt_db_get_internal(&dbintern, dp, _dbip, bn_mat_identity, &rt_uniresource) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
-		return (struct directory *)NULL;
+		return NULL;
 	    }
+
+	    if ((dp=db_diradd(wdbp->dbip, name, -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+		bu_log("An error has occured while adding a new object to the database.");
+		return NULL;
+	    }
+
+	    RT_CK_DB_INTERNAL(&dbintern);
+	    comb = (struct rt_comb_internal *)dbintern.idb_ptr;
+	    RT_CK_COMB(comb);
+	    RT_CK_TREE(comb->tree);
+
+	    /* recursively update the tree */
+	    copy_v5_comb_tree(comb->tree, i);
+
+	    if (rt_db_put_internal(dp, wdbp->dbip, &dbintern, &rt_uniresource) < 0) {
+		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+		return NULL;
+	    }
+	    rt_db_free_internal(&dbintern, &rt_uniresource);
 	}
 
 	/* done with this name */
@@ -534,7 +582,6 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
     return dp;
 }
-
 
 /**
  * make n copies of a database combination by adding it to our
