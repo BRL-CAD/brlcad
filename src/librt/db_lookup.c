@@ -564,41 +564,44 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     }
     tbl = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "wdb_get_by_attr ptbl" );
     bu_ptbl_init( tbl, 128, "wdb_get_by_attr ptbl_init" );
-    FOR_ALL_DIRECTORY_START(dp,dbip)
-	if( (dp->d_flags & dir_flags) == 0 ) continue;
-    if(attr_count ) {
-	if( db5_get_attributes( dbip, &obj_avs, dp ) < 0 ) {
-	    bu_log( "ERROR: failed to get attributes for %s\n", dp->d_namep );
-	    return( (struct bu_ptbl *)NULL );
-	}
 
-	draw = 0;
-	match_count = 0;
-	for( i=0 ; i<avs->count ; i++ ) {
-	    for( j=0 ; j<obj_avs.count ; j++ ) {
-		if( !strcmp( avs->avp[i].name, obj_avs.avp[j].name ) ) {
-		    if( !strcmp( avs->avp[i].value, obj_avs.avp[j].value ) ) {
-			if( op == 2 ) {
-			    draw = 1;
-			    break;
-			} else {
-			    match_count++;
+    FOR_ALL_DIRECTORY_START(dp,dbip) {
+
+	if( (dp->d_flags & dir_flags) == 0 ) continue;
+
+	if(attr_count ) {
+	    if( db5_get_attributes( dbip, &obj_avs, dp ) < 0 ) {
+		bu_log( "ERROR: failed to get attributes for %s\n", dp->d_namep );
+		return( (struct bu_ptbl *)NULL );
+	    }
+	    
+	    draw = 0;
+	    match_count = 0;
+	    for( i=0 ; i<avs->count ; i++ ) {
+		for( j=0 ; j<obj_avs.count ; j++ ) {
+		    if( !strcmp( avs->avp[i].name, obj_avs.avp[j].name ) ) {
+			if( !strcmp( avs->avp[i].value, obj_avs.avp[j].value ) ) {
+			    if( op == 2 ) {
+				draw = 1;
+				break;
+			    } else {
+				match_count++;
+			    }
 			}
 		    }
 		}
+		if( draw ) break;
 	    }
-	    if( draw ) break;
+	    bu_avs_free( &obj_avs );
+	} else {
+	    draw = 1;
 	}
-	bu_avs_free( &obj_avs );
-    } else {
-	draw = 1;
-    }
-    if( draw || match_count == attr_count ) {
-	bu_ptbl_ins( tbl , (long *)dp );
-    }
-    FOR_ALL_DIRECTORY_END
+	if( draw || match_count == attr_count ) {
+	    bu_ptbl_ins( tbl , (long *)dp );
+	}
+    } FOR_ALL_DIRECTORY_END;
 
-	return( tbl );
+    return( tbl );
 }
 
 /** @} */
