@@ -3937,10 +3937,9 @@
    </sect1>
  </chapter>
 
-                            Intentionally Left Blank
-
-   Lesson 10: Creating a Mug
-
+ <chapter id="Lesson-10">
+   <title>Creating a Mug</title>
+   <para>
    In this lesson, you will:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -3962,28 +3961,33 @@
        <para>Create a region of combined shapes with the same material and color.</para>
      </listitem>
    </itemizedlist>
+   </para>
 
-
+   <para>
    In this lesson, you will be continuing your work creating real-life
    objects-in this case, the basic body shape of a coffee mug. In the next
    lesson, you will refine the body so that it is more realistic.
-
-   Creating a New Database
-
+   </para>
+   
+   <sect1><title>Creating a New Database</title>
+   <para>
    Create a new database and call it mug.g. Go back to the File menu and
    select Preferences, then Units, and then inches. This will create your
    body using inches. (Note: You could also do this by typing units in at the
    Command Window prompt.)
+   </para>
+   </sect1>
 
-   1. Creating the Outside Cylinder Using the In Command
-
+   <sect1><title>Creating the Outside Cylinder Using the In Command</title>
+   <para>
    To begin making the body, you will need to create an outside right
    circular cylinder. At the MGED prompt, type:
-
+   
    <command>in bodyout.s rcc</command>
-
+   </para>
+   <para>
    The diagram of this command is as follows:
-
+   </para>
      <informaltable>
        <tgroup cols='3'>
 	 <tbody>
@@ -4000,7 +4004,7 @@
 	 </tbody>
        </tgroup>
      </informaltable>
-
+   <para>
    MGED will ask you the following questions about the cylinder you want to
    make. Type in the values given in bold. Make sure you leave spaces between
    variable values.
@@ -4010,13 +4014,15 @@
   <command>Enter X, Y, Z of height (H) vector: 0 0 3.5[Enter]</command>
 
   <command>Enter radius: 1.75[Enter]</command>
-
+   </para>
+   <para>
    Note that the streamlined way to do this would be to type:
 
   <command>in bodyout.s rcc 0 0 0 0 0 3.5 1.75[Enter]</command>
-
+   </para>
+   <para>
    The diagram of this command is as follows:
-
+   </para>
       <informaltable>
        <tgroup cols='6'>
 	 <tbody>
@@ -4039,12 +4045,13 @@
 	 </tbody>
        </tgroup>
      </informaltable>
-
+   <para>
    A shape of a cylinder, in wireframe form, will appear in the Graphics
    Window.
-
-   2. Creating the Inside Cylinder
-
+   </par>
+ </sect1>
+ <sect1><title>Creating the Inside Cylinder</title>
+ <para>
    Using this same method, type in the information for the inside right
    circular cylinder. This cylinder will be used to hollow out the outside
    cylinder. Whenever you are creating a hole in the surface of an object,
@@ -4053,8 +4060,10 @@
    where the two surfaces meet.
 
    <command>in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5[Enter]</command>
-
+ </para>
+ <para>
    The diagram of this command is:
+ </para>
      <informaltable>
        <tgroup cols='6'>
 	 <tbody>
@@ -4077,20 +4086,24 @@
 	 </tbody>
        </tgroup>
      </informaltable>
-
+   <para>
    A second cylinder, inside the first cylinder, should now appear in the
    Graphics Window.
+   </para>
+ </sect1>
 
-   3. Creating the Handle
-
+ <sect1><title>Creating the Handle</title>
+ <para>
    Now you will want to enter some information about the body's handle. The
    shape type for the handle is an elliptical torus. At the Command Window
    prompt, type:
 
    <command>in handle.s eto 0 2.5 1.75 1 0 0[Enter]</command>
-
+ </para>
+ <para>
    The diagram of this command is:
-     <informaltable>
+ </para>
+   <informaltable>
        <tgroup cols='5'>
 	 <tbody>
 	   <row>
@@ -4111,7 +4124,7 @@
        </tgroup>
      </informaltable>
 
-
+  <para>
    The program will ask you to enter more values for the elliptical torus you
    are creating. Type in the values shown in bold.
 
@@ -4120,21 +4133,25 @@
    <command>Enter radius of revolution, r: 1.45[Enter]</command>
 
    <command>Enter elliptical semi-minor axis, d: 0.2[Enter]</command>
-
+  </para>
+  <para>
    A doughnut shape should appear on the right-hand side of the body. If you
    look carefully, you can see that about one-third of the elliptical torus
    intersects the body.
+  </para>
+ </sect1>
 
-   4. Creating the Bodyout.s-Bodyin.s Combination
-
+ <sect1><title>Creating the Bodyout.s-Bodyin.s Combination</title>
+ <para>
    The next step is to combine the two cylinders into the body of the mug. To
    do this, type:
-
+   
    <command>comb body.c u bodyout.s - bodyin.s[Enter]</command>
-
+ </para>
+ <para>
    You have told the program to make the combination body.c out of the union
    of bodyout.s minus bodyin.s.
-
+ </para>
      <informaltable>
        <tgroup cols='6'>
 	 <tbody>
@@ -4158,13 +4175,14 @@
        </tgroup>
      </informaltable>
 
- 
-   5. Creating the Handle.s - Bodyout.s Combination
+ </sect1>
 
+ <sect1><title>Creating the Handle.s - Bodyout.s Combination</title>
+ <para>
    To combine the handle with the outside cylinder, type:
-
+ 
    <command>comb handle.c u handle.s - bodyout.s[Enter]</command>
-
+ </para>
      <informaltable>
        <tgroup cols='6'>
 	 <tbody>
@@ -4187,15 +4205,16 @@
 	 </tbody>
        </tgroup>
      </informaltable>
+ </sect1>
 
+ <sect1><title>Creating the Region Mug.r</title>
 
-   6. Creating the Region Mug.r
-
+ <para>
    The last step, of this part of making the mug is to make a region out of
    your combinations. Type:
 
    <command>r mug.r u body.c u handle.c[Enter]</command>
-
+ </para>
      <informaltable>
        <tgroup cols='6'>
 	 <tbody>
@@ -4219,29 +4238,36 @@
        </tgroup>
      </informaltable>
 
+   <para>
    If you did this correctly, the program should say something similar to:
+   </para>
 
+   <literallayout>
    Defaulting item number to 1002
 
    Creating region id=1001, air=0, GIFTmaterial=1, los=100
+   </literallayout>
+
    <figure>
-     <title></title>
+     <title>Wireframe Mug</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="wiremug.png"/>
      </screenshot>
    </figure>
 
-                                 Wireframe Mug
-
+   <para>
    You should now have the region mug.r that is a combination of shapes
    containing the same material and color. You could assign color and
    material at this point, but you will want to do some more work on this
    design to make it more realistic. So, for now, review the lessons of this
    chapter. When you are ready to work again, you can continue refining your
    design in the next lesson.
+   </para>
 
-   Review
+ </sect1>
 
+ <sect1><title>Review</title>
+ <para>
    In this lesson you:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -4263,7 +4289,9 @@
        <para>Created a region of combined shapes with the same material and color.</para>
      </listitem>
    </itemizedlist>
-
+ </para>
+ </sect1>
+</chapter>
                             Intentionally Left Blank
 
    Lesson 11: Refining the Mug
@@ -5037,6 +5065,38 @@ Move End H
    To assign material properties to your design, go to the Edit menu and
    select the Combination Editor. Assign the following material properties to
    each of the elements:
+   <informaltable frame="all">
+     <tgroup cols='4'>
+       <thread>
+	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+       </thread>
+       <tbody>
+	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+ 	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+ 	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+ 	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+        </tbody>
+     </tgroup>
+   </informaltable>
 
    +------------------------------------------------------------------------+
    |   Element   | Shader  |             Color(s)              |   Other    |
@@ -12618,6 +12678,38 @@ Move End H
    special cases of those shapes. For example, a sphere (sph) is stored as an
    ellipsoid (ell) because, in actuality, it is an ellipsoid with
    equal-length vectors.
+   <informaltable frame="all">
+     <tgroup cols='4'>
+       <thread>
+	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+       </thread>
+       <tbody>
+	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+ 	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+ 	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+ 	 <row>
+	   <entry></entry>
+	   <entry></entry>
+	 </row>
+        </tbody>
+     </tgroup>
+   </informaltable>
 
    +------------------------------------------------------------------------+
    |    Primitive Shape/    |         Input Parameters/         | Raytraced |
