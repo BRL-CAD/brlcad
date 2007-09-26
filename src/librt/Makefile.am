@@ -187,7 +187,7 @@ librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1
 librt_la_LIBADD = \
 	librt_nil.la \
-	${BN} ${SYSV}
+	${RT_LIBS}
 
 comb_SOURCES = comb.c
 comb_LDADD = \
