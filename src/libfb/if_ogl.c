@@ -1193,11 +1193,10 @@ fb_ogl_close(FBIO *ifp)
      *  smashes some window-manager files.  Therefore, we content
      *  ourselves with eliminating stdin and stdout (fd 0,1), in the
      *  hopes that this will successfully terminate any pipes or
-     *  network connections.  Standard error is used to print
-     *  framebuffer debug messages, so it's kept around.
+     *  network connections.  Standard error/out may be used to print
+     *  framebuffer debug messages, so they're kept around.
      */
     fclose( stdin );
-    fclose( stdout );
 
     /* Ignore likely signals, perhaps in the background,
      * from other typing at the keyboard
