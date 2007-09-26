@@ -69,11 +69,10 @@ libfb_la_CFLAGS = \
 	${TCL_CPPFLAGS}
 
 libfb_la_LIBADD = \
-	  ${LIBSOCKET} ${LIBNSL} \
-	  ${PKG} \
-	  ${IF_X_LIBADD} \
-	  ${IF_OGL_LIBADD} \
-	  ${IF_TK_LIBADD}
+	${FB_LIBS} \
+	${IF_X_LIBADD} \
+	${IF_OGL_LIBADD} \
+	${IF_TK_LIBADD}
 
 noinst_HEADERS = \
 	adage.h \
