@@ -44,7 +44,7 @@ libwdb_la_SOURCES =
 libwdb_la_LDFLAGS = -version-info 19:1
 libwdb_la_LIBADD = \
 	libwdb_nil.la \
-	${RT}
+	${WDB_LIBS}
 
 man_MANS = libwdb.3
 

@@ -60,9 +60,7 @@ libdm_la_CFLAGS = \
 	${TK_CPPFLAGS}
 
 libdm_la_LIBADD = \
-	${RT} \
-	${FB} \
-	${TK}
+	${DM_LIBS}
 
 EXTRA_DIST = \
 	dm-glx.c \

@@ -8,7 +8,8 @@ AM_CPPFLAGS = \
 
 libmultispectral_la_LDFLAGS = -version-info 19:1
 libmultispectral_la_LIBADD = \
-	${top_builddir}/src/liboptical/librtms.la
+	${top_builddir}/src/liboptical/librtms.la \
+	${MULTISPECTRAL_LIBS}
 
 libmultispectral_la_SOURCES = \
 	init.c \

@@ -38,7 +38,7 @@ libbn_la_SOURCES =
 libbn_la_LDFLAGS = -version-info 19:1
 libbn_la_LIBADD = \
 	libbn_nil.la \
-	${BU}
+	${BN_LIBS}
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 

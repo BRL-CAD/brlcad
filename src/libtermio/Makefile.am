@@ -4,7 +4,7 @@ lib_LTLIBRARIES = libtermio.la
 
 libtermio_la_SOURCES = termio.c
 libtermio_la_LDFLAGS = -version-info 19:1
-libtermio_la_LIBADD = ${CURSOR_LIBS}
+libtermio_la_LIBADD = ${TERMIO_LIBS}
 
 EXTRA_DIST = \
 	libtermio.dsp \
