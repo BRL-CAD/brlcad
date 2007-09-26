@@ -198,7 +198,9 @@ static struct modeflags {
 	char	*help;
 } modeflags[] = {
 	{ 'l',	MODE_1MASK, MODE_1LINGERING,
-		"Lingering window - else transient" },
+		"Lingering window" },
+	{ 't',	MODE_1MASK, MODE_1TRANSIENT,
+		"Transient window" },
 	{ 'b',  MODE_2MASK, MODE_2_8BIT,
 		"8-bit Black and White from RED channel" },
 	{ 'm',  MODE_4MASK, MODE_4MEM,
@@ -268,10 +270,9 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 	/*
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
-	 *  file = "/dev/X###"
-	 *  The default mode is zero.
+	 *  file = "/dev/xold###"
 	 */
-	mode = 0;
+	mode = MODE_1LINGERING;
 
 	if( file != NULL )  {
 		register char *cp;
@@ -280,7 +281,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 		int	alpha;
 		struct	modeflags *mfp;
 
-		if( strncmp(file, "/dev/X", 6) ) {
+		if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 			/* How did this happen?? */
 			mode = 0;
 		}
@@ -309,7 +310,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 			}
 			*mp = '\0';
 			if( !alpha )
-				mode = atoi( modebuf );
+				mode |= atoi( modebuf );
 		}
 	}
 
@@ -429,12 +430,13 @@ X_close_fb(FBIO *ifp)
 {
 	XFlush( XI(ifp)->dpy );
 	if( (XI(ifp)->mode & MODE_1MASK) == MODE_1LINGERING ) {
-		if( x_linger(ifp) )
-			return(0);	/* parent leaves the display */
+	    if( x_linger(ifp) ) {
+		return(0);	/* parent leaves the display */
+	    }
 	}
 	if( XIL(ifp) != NULL ) {
-		XCloseDisplay( XI(ifp)->dpy );
-		(void)free( (char *)XIL(ifp) );
+	    XCloseDisplay( XI(ifp)->dpy );
+	    (void)free( (char *)XIL(ifp) );
 	}
 	return(0);
 }
@@ -1061,8 +1063,10 @@ static int alive = 1;
 HIDDEN
 x_linger(FBIO *ifp)
 {
+#if 0
 	if( fork() != 0 )
 		return 1;	/* release the parent */
+#endif
 
 	XSelectInput( XI(ifp)->dpy, XI(ifp)->win,
 		ExposureMask|ButtonPressMask );

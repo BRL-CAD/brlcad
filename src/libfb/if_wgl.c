@@ -342,7 +342,9 @@ HIDDEN struct modeflags {
 	{ 'p',	MODE_1MASK, MODE_1MALLOC,
 		"Private memory - else shared" },
 	{ 'l',	MODE_2MASK, MODE_2LINGERING,
-		"Lingering window - else transient" },
+		"Lingering window" },
+	{ 't',	MODE_2MASK, MODE_2TRANSIENT,
+		"Transient window" },
 	{ 'f',	MODE_3MASK, MODE_3FULLSCR,
 		"Full centered screen - else windowed" },
 	{ 'd',  MODE_4MASK, MODE_4NODITH,
@@ -689,9 +691,8 @@ int	width, height;
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
 	 *  file = "/dev/wgl###"
-	 *  The default mode is zero.
 	 */
-	mode = 0;
+	mode = MODE_2LINGERING;
 
 	if( file != NULL )  {
 		register char *cp;
@@ -700,8 +701,8 @@ int	width, height;
 		int	alpha;
 		struct	modeflags *mfp;
 
-		if( strncmp(file, "/dev/wgl", 8) ) {
-			/* How did this happen?? */
+		if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+			/* How did this happen? */
 			mode = 0;
 		} else {
 			/* Parse the options */
@@ -728,7 +729,7 @@ int	width, height;
 			}
 			*mp = '\0';
 			if( !alpha )
-				mode = atoi( modebuf );
+				mode |= atoi( modebuf );
 		}
 
 		if( (mode & MODE_15MASK) == MODE_15ZAP ) {
@@ -1033,37 +1034,30 @@ FBIO	*ifp;
 {
 
   if( CJDEBUG ) {
-    printf("wgl_final_close: All done...goodbye!\n");
+      printf("wgl_final_close: All done...goodbye!\n");
   }
 
-  /* if(WGL(ifp)->cursor)
-     XDestroyWindow(WGL(ifp)->dispp, WGL(ifp)->cursor);
-  */
-
-  /* XDestroyWindow(WGL(ifp)->dispp, WGL(ifp)->wind);
-     XFreeColormap(WGL(ifp)->dispp, WGL(ifp)->xcmap);
-  */
-
-  if (WGL(ifp)->glxc)
-	  wglDeleteContext(WGL(ifp)->glxc);
-  if (WGL(ifp)->hdc)
-	  ReleaseDC(WGL(ifp)->hwnd, WGL(ifp)->hdc);
-	DestroyWindow(WGL(ifp)->hwnd);
-
+  if (WGL(ifp)->glxc) {
+      wglDeleteContext(WGL(ifp)->glxc);
+  }
+  if (WGL(ifp)->hdc) {
+      ReleaseDC(WGL(ifp)->hwnd, WGL(ifp)->hdc);
+  }
+  DestroyWindow(WGL(ifp)->hwnd);
 
   if( SGIL(ifp) != NULL ) {
-    /* free up memory associated with image */
-
+      /* free up memory associated with image */
+      
       /* free private memory */
       (void)free( ifp->if_mem );
-    /* free state information */
-    (void)free( (char *)SGIL(ifp) );
-    SGIL(ifp) = NULL;
+      /* free state information */
+      (void)free( (char *)SGIL(ifp) );
+      SGIL(ifp) = NULL;
   }
 
   if( WGLL(ifp) != NULL) {
-    (void) free( (char *)WGLL(ifp) );
-    WGLL(ifp) = NULL;
+      (void) free( (char *)WGLL(ifp) );
+      WGLL(ifp) = NULL;
   }
 
   wgl_nwindows--;

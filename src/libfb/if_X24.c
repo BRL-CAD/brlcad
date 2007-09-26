@@ -322,7 +322,9 @@ static struct modeflags {
 	char		*help;
 } modeflags[] = {
 	{ 'l',	MODE1_MASK, MODE1_LINGERING,
-		"Lingering window - else transient" },
+		"Lingering window" },
+	{ 't',	MODE1_MASK, MODE1_TRANSIENT,
+		"Transient window" },
 	{ 's',  MODE10_MASK, MODE10_SHARED,
 		"Use shared memory backing store" },
 	{ 'z',	MODE11_MASK, MODE11_ZAP,
@@ -426,14 +428,13 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 #endif
 	FB_CK_FBIO(ifp);
 
-	mode = 0;
-
 	/*
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
 	 *  file = "/dev/X###"
-	 *  The default mode is zero.
 	 */
+	mode = MODE1_LINGERING;
+
 	if (file != NULL)  {
 		register char *cp;
 		char	modebuf[80];
@@ -470,7 +471,7 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 			}
 			*mp = '\0';
 			if (!alpha)
-				mode = atoi(modebuf);
+				mode |= atoi(modebuf);
 		}
 	}
 

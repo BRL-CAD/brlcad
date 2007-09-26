@@ -459,7 +459,9 @@ static struct modeflags {
 	{ 'p',	MODE_1MASK, MODE_1MALLOC,
 		"Private memory - else shared" },
 	{ 'l',	MODE_2MASK, MODE_2LINGERING,
-		"Lingering window - else transient" },
+		"Lingering window" },
+	{ 't',	MODE_2MASK, MODE_2TRANSIENT,
+		"Transient window" },
 	{ 'd',  MODE_3MASK, MODE_3DITHERGB,
 		"Color dithering - else undithered colors" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
@@ -918,16 +920,15 @@ int	width, height;
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
 	 *  file = "/dev/sun###"
-	 *  The default mode is zero.
 	 */
-	mode = 0;
+	mode = MODE_2LINGERING;
 
 	if( file != NULL )  {
 		register char *cp;
 		struct	modeflags *mfp;
 
-		if( strncmp(file, "/dev/sun", 8) ) {
-			/* How did this happen?? */
+		if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+			/* How did this happen? */
 			mode = 0;
 		}
 		else {

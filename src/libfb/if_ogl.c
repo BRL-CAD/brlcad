@@ -344,7 +344,9 @@ HIDDEN struct modeflags {
     { 'p',	MODE_1MASK, MODE_1MALLOC,
       "Private memory - else shared" },
     { 'l',	MODE_2MASK, MODE_2LINGERING,
-      "Lingering window - else transient" },
+      "Lingering window" },
+    { 't',	MODE_2MASK, MODE_2TRANSIENT,
+      "Transient window" },
     { 'f',	MODE_3MASK, MODE_3FULLSCR,
       "Full centered screen - else windowed" },
     { 'd',  MODE_4MASK, MODE_4NODITH,
@@ -696,9 +698,8 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
      *  First, attempt to determine operating mode for this open,
      *  based upon the "unit number" or flags.
      *  file = "/dev/ogl###"
-     *  The default mode is zero.
      */
-    mode = 0;
+    mode = MODE_2LINGERING;
 
     if( file != NULL )  {
 	register char *cp;
@@ -707,8 +708,8 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	int	alpha;
 	struct	modeflags *mfp;
 
-	if( strncmp(file, "/dev/ogl", 8) ) {
-	    /* How did this happen?? */
+	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	    /* How did this happen? */
 	    mode = 0;
 	} else {
 	    /* Parse the options */
@@ -734,8 +735,9 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 		cp++;
 	    }
 	    *mp = '\0';
-	    if( !alpha )
-		mode = atoi( modebuf );
+	    if( !alpha ) {
+		mode |= atoi( modebuf );
+	    }
 	}
 
 	if( (mode & MODE_15MASK) == MODE_15ZAP ) {
