@@ -1103,13 +1103,9 @@ FBIO	*ifp;
 	 *
 	 *  The simple for i=0..20 loop will not work, because that
 	 *  smashes some window-manager files.  Therefore, we content
-	 *  ourselves with eliminating stdin, stdout, and stderr,
-	 *  (fd 0,1,2), in the hopes that this will successfully
-	 *  terminate any pipes or network connections.
+	 *  ourselves with eliminating stdin.
 	 */
 	fclose( stdin );
-	fclose( stdout );
-	fclose( stderr );
 
 	/* Ignore likely signals, perhaps in the background,
 	 * from other typing at the keyboard
