@@ -208,12 +208,12 @@ view_pixel(register struct application *ap)
 			 * from doing it in 0..255 space later.
 			 */
 			double ex = 1.0/gamma_corr;
-			r = pow(ap->a_color[0], ex)*255.+
-				bn_rand0to1(ap->a_resource->re_randptr);
-			g = pow(ap->a_color[1], ex)*255.+
-				bn_rand0to1(ap->a_resource->re_randptr);
-			b = pow(ap->a_color[2], ex)*255.+
-				bn_rand0to1(ap->a_resource->re_randptr);
+			r = floor(pow(ap->a_color[0], ex)*255.+
+				  bn_rand0to1(ap->a_resource->re_randptr) + 0.5);
+			g = floor(pow(ap->a_color[1], ex)*255.+
+				  bn_rand0to1(ap->a_resource->re_randptr) + 0.5);
+			b = floor(pow(ap->a_color[2], ex)*255.+
+				  bn_rand0to1(ap->a_resource->re_randptr) + 0.5);
 		} else {
 			r = ap->a_color[0]*255.+bn_rand0to1(ap->a_resource->re_randptr);
 			g = ap->a_color[1]*255.+bn_rand0to1(ap->a_resource->re_randptr);
