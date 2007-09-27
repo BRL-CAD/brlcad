@@ -938,7 +938,7 @@ editit(const char *file)
 	}
 
 	bu_log("Invoking %s on %s\n", editor, file);
-	bu_log("NOTE: YOU MUST QUIT %s BEFORE MGED WILL RESPOND AND CONTINUE\n", editor);
+	bu_log("NOTE: YOU MUST QUIT %s BEFORE MGED WILL RESPOND AND CONTINUE\n", bu_basename(editor));
 
 #if defined(SIGINT) && defined(SIGQUIT)
 	s2 = signal( SIGINT, SIG_IGN );
