@@ -15,7 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
-* dbconcat apparently hangs on an empty tree node
+* nirt fails to report LOS and sometimes even hits on a BoT that is
+  marked as unoriented or is inverted (even though it sometimes will
+  report the segments, just without LOS)
+
+* entry/exit segments) dbconcat apparently hangs on an empty tree node
 
 * nirt/query_ray reports intersection messages in triplicate if the
   shot routines miss but still print out messages
