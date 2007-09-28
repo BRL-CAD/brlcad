@@ -8,9 +8,12 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2007-06-XX  Release 7.10.3                                     ---
+--- 2007-07-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
+* lingering framebuffer windows by default - Sean Morrison
+* improved matrix readability on mged 'red' command - Karel Kulhavy
+* "editor" for ted commands can be set in .mgedrc - Erik Greenwald
 * fixed benchmark results computation on Solaris - Erik Greenwald
 * fixed database corruption bug caused during dbconcat - John Anderson
 * mirror BoT primitives - Sean Morrison
