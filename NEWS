@@ -8,12 +8,18 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2007-06-XX  Release 7.10.3                                     ---
+--- 2007-08-XX  Release 7.11.0                                     ---
+----------------------------------------------------------------------
+
+* fixed crash in mged ls -A attribute listing command - Sean Morrison
+* fixed dbconcat of empty combinations, crash in mged - John Anderson
+
+
+----------------------------------------------------------------------
+--- 2007-07-XX  Release 7.10.3                                     ---
 ----------------------------------------------------------------------
 
 * lingering framebuffer windows by default - Sean Morrison
-* fixed crash in mged ls -A attribute listing command - Sean Morrison
-* fixed dbconcat of empty combinations, crash in mged - John Anderson
 * improved matrix readability on mged 'red' command - Karel Kulhavy
 * "editor" for ted commands can be set in .mgedrc - Erik Greenwald
 * fixed benchmark results computation on Solaris - Erik Greenwald
