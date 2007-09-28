@@ -12,6 +12,7 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 * new mged 'clone' object copy command - Sean Morrison, Erik Greenwald
+* new mged 'tracker' object routing command - Sean Morrison
 * fixed crash in mged ls -A attribute listing command - Sean Morrison
 * fixed dbconcat of empty combinations, crash in mged - John Anderson
 
