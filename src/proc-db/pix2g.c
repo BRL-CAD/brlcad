@@ -18,7 +18,10 @@
  * information.
  */
 /** @file pix2g.c
- * Generates geometry from an pixmap file
+ *
+ * Generates geometry from a pixmap file.
+ *
+ * Author: Christopher Sean Morrison
  *
  */
 #include "common.h"
