@@ -47,13 +47,13 @@ dm_x11_applicationfocus() {
 
     do {
 	status = GetNextProcess(&psn);
-	
+
 	/* Is this the psn for X11? */
 	CopyProcessName(&psn, &processName);
 	if (processName == NULL) {
 	    break;
 	}
-	
+
 	if (CFStringCompare(processName, CFSTR("X11"), 0) == kCFCompareEqualTo) {
 	    /* focus X11 */
 	    SetFrontProcess(&psn);

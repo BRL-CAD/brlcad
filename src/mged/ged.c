@@ -46,40 +46,22 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
-char MGEDCopyRight_Notice[] = "@(#) \
-BRL-CAD is Open Source software. \
-This software is Copyright (c) 1985-2007 by the United States Government \
-as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
+#include <errno.h>
+#include <string.h>
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
-#ifdef HAVE_SYS_ERRNO_H
-#  include <sys/errno.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
 #endif
-#ifdef HAVE_ERRNO_H
-#  include <errno.h>
-#endif
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
@@ -107,6 +89,12 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #include "brlcad_version.h"
 
 
+char MGEDCopyRight_Notice[] = "@(#) \
+BRL-CAD is Open Source software. \
+This software is Copyright (c) 1985-2007 by the United States Government \
+as represented by the U.S. Army Research Laboratory.  All rights reserved.";
+
+
 #ifdef DEBUG
 #  ifndef _WIN32
 #    ifndef LOGFILE
@@ -122,7 +110,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 #endif
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
-        
+
 extern void mged_setup(void); /* setup.c */
 extern void mged_global_variable_setup(Tcl_Interp *interp); /* cmd.c */
 
@@ -345,7 +333,7 @@ main(int argc, char **argv)
 	}
     }
 
-#ifdef HAVE_SIGNAL
+#if defined(SIGPIPE) && defined(SIGINT)
     (void)signal( SIGPIPE, SIG_IGN );
 
     /*
@@ -356,7 +344,7 @@ main(int argc, char **argv)
      */
     cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
     (void)signal( SIGINT, cur_sigint );		/* restore */
-#endif /* HAVE_SIGNAL */
+#endif /* SIGPIPE && SIGINT */
 
 #ifdef HAVE_PIPE
     if( !classic_mged && !run_in_foreground ) {
@@ -706,7 +694,7 @@ main(int argc, char **argv)
 	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan,TCL_READABLE, stdin_input, stdin_file);
 
-#ifdef HAVE_SIGNAL
+#ifdef SIGINT
 	(void)signal( SIGINT, SIG_IGN );
 #endif
 

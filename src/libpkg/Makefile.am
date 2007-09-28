@@ -12,16 +12,17 @@ libpkg_la_SOURCES = \
 	vers.c
 
 libpkg_la_LDFLAGS = -version-info 19:1
-libpkg_la_LIBADD = ${BU}
+libpkg_la_LIBADD = ${PKG_LIBS}
 
 tpkg_SOURCES = tpkg.c
-tpkg_LDADD = libpkg.la
+tpkg_LDADD = \
+	libpkg.la \
+	${BU}
 
 sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = tpkg.c
 
-EXTRA_DIST = \
-	libpkg.dsp
+EXTRA_DIST = libpkg.dsp
 
 DEPS=src/libbu
 

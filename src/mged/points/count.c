@@ -39,7 +39,7 @@
 
 static counter_t *counter = NULL;
 
-static void incr_token(id)
+static void incr_token(int id)
 {
     token_t *t;
 

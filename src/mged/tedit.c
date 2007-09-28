@@ -43,11 +43,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -867,8 +864,13 @@ editit(const char *file)
 	void (*s2)();
 	void (*s3)();
 
+	editor = Tcl_GetVar(interp,"editor", TCL_GLOBAL_ONLY);
+	if(!editor || editor[0] == '\0')
+	    editor = Tcl_GetVar(interp,"EDITOR", TCL_GLOBAL_ONLY);
+
 #ifdef HAVE_GETENV
-	editor = getenv("EDITOR");
+	if(!editor || editor[0] == '\0')
+	    editor = getenv("EDITOR");
 #endif
 
 	/* still unset? try windows */
@@ -936,9 +938,9 @@ editit(const char *file)
 	}
 
 	bu_log("Invoking %s on %s\n", editor, file);
-	bu_log("NOTE: YOU MUST QUIT %s BEFORE MGED WILL RESPOND AND CONTINUE\n", editor);
+	bu_log("NOTE: YOU MUST QUIT %s BEFORE MGED WILL RESPOND AND CONTINUE\n", bu_basename(editor));
 
-#ifdef HAVE_SIGNAL_H
+#if defined(SIGINT) && defined(SIGQUIT)
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );
 #endif
@@ -954,7 +956,7 @@ editit(const char *file)
 		register int i;
 		/* Don't call bu_log() here in the child! */
 
-#ifdef HAVE_SIGNAL_H
+#if defined(SIGINT) && defined(SIGQUIT)
 		/* deja vu */
 		(void)signal( SIGINT, SIG_DFL );
 		(void)signal( SIGQUIT, SIG_DFL );
@@ -1004,7 +1006,7 @@ editit(const char *file)
 	}
 #endif
 
-#ifdef HAVE_SIGNAL_H
+#if defined(SIGINT) && defined(SIGQUIT)
 	(void)signal(SIGINT, s2);
 	(void)signal(SIGQUIT, s3);
 #endif

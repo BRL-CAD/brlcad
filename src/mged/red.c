@@ -35,13 +35,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <errno.h>
 #include <ctype.h>
+
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -114,6 +111,7 @@ print_matrix(FILE *fp, matp_t matrix)
 	    fprintf( fp, " %g", matrix[k] );
 	else
 	    fprintf( fp, " %.12e", matrix[k] );
+	if ((k&3)==3) fputc(' ', fp);
     }
 }
 
@@ -137,6 +135,7 @@ vls_print_matrix(struct bu_vls *vls, matp_t matrix)
 	    bu_vls_printf(vls, " %g", matrix[k]);
 	else
 	    bu_vls_printf(vls, " %.12e", matrix[k]);
+	if ((k&3)==3) bu_vls_printf(vls, " ");
     }
 }
 

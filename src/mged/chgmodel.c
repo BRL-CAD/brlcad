@@ -55,11 +55,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -737,7 +734,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
-    
+
     /* validate the axis */
     k = -1;
     if( strcmp( argv[3], "x" ) == 0 )
@@ -750,13 +747,13 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp, "axis must be x, y or z\n", (char *)NULL);
 	return TCL_ERROR;
     }
-    
+
     /* no interrupts */
     (void)signal( SIGINT, SIG_IGN );
 
     /* mirror the object */
     rt_mirror(dbip, argv[1], argv[2], k, &rt_uniresource);
-    
+
     /* restore interrupts */
     (void)signal( SIGINT, SIG_DFL );
 

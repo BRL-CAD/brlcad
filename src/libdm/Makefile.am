@@ -48,6 +48,7 @@ libdm_la_SOURCES = \
 	vers.c
 
 libdm_la_LDFLAGS = -version-info 19:1
+
 # per-program CPPFLAGS wasn't added until automake 1.7
 libdm_la_CFLAGS = \
 	${DM_X_CFLAGS} \
@@ -57,10 +58,9 @@ libdm_la_CFLAGS = \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
+
 libdm_la_LIBADD = \
-	${RT} \
-	${FB} \
-	${TK}
+	${DM_LIBS}
 
 EXTRA_DIST = \
 	dm-glx.c \

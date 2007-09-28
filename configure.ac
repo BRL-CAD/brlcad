@@ -1868,10 +1868,15 @@ dnl profile flags
 if test "x$bc_use_profiling" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-pg], [profile_flag])
 	if test "x$bc_profile_flag_works" = "xno" ; then
+		# intel gprof compiler flag
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-p], [profile_flag])
+	fi
+
+	if test "x$bc_profile_flag_works" = "xno" ; then
 		if test "x$bc_use_profiling" = "xyes" ; then
 			dnl profiling was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Profiling was enabled but -pg does not work])
+			AC_MSG_NOTICE([Profiling was enabled but could not find a profile flag])
 			AC_MSG_ERROR([*** Don't know how to profile with this compiler ***])
 		fi
 		AC_MSG_WARN([Don't know how to profile with this compiler])
@@ -2813,19 +2818,21 @@ AC_SUBST(IWIDGETS_VERSION)
 dnl *** BLT ***
 dnl figure out whether we need to build BLT
 BLT_VERSION="2.4"
+BLT_SUFFIX="`echo ${BLT_VERSION} | tr -d .`"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
-	 BLT_VERSION="`echo ${BLT_VERSION} | tr -d .`"
+	 BLT_VERSION=$BLT_SUFFIX
 	 ;;
 esac
 AC_SUBST(BLT_VERSION)
-BLT_LIBRARY='${prefix}/lib/blt${BLT_VERSION}'
+AC_SUBST(BLT_SUFFIX)
+BLT_LIBRARY="${BRLCAD_ROOT}/lib/blt${BLT_VERSION}"
 AC_SUBST(BLT_LIBRARY)
 AC_MSG_CHECKING(whether to build libblt)
 if test ! "x$bc_build_blt" = "xno" ; then
      build_brlcad_blt=yes
-     BLT='${top_builddir}/src/other/blt/libblt${BLT_VERSION}.la'
+     BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
      AC_MSG_RESULT(yes)
 else
      build_brlcad_blt=no
@@ -3592,14 +3599,14 @@ BRLCAD='${top_builddir}/src/libbrlcad.la'
 ORLE_LIBS=
 PKG_LIBS=
 SYSV_LIBS=
-TERMIO_LIBS=
+TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
-TCLCAD_LIBS="${TK} ${TCLSTUB}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
-FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${TK} ${X_LIBS} ${LIBGL}"
-OPTICAL_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
+FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
+TCLCAD_LIBS="${FB} ${FB_LIBS} ${TK} ${TCLSTUB}"
+OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"

@@ -41,11 +41,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 /* Even on a platform that has no real X, I should be able to use the
  * Xutil that comes with Tk

@@ -45,11 +45,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <time.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -1954,7 +1951,7 @@ mged_global_variable_teardown(Tcl_Interp *interp)
     Tcl_UnlinkVar(interp, "mged_default(db_warn)");
     Tcl_UnlinkVar(interp, "mged_default(db_upgrade)");
     Tcl_UnlinkVar(interp, "mged_default(db_version)");
-    
+
     Tcl_UnlinkVar(interp, "edit_class");
     Tcl_UnlinkVar(interp, "edit_solid_flag");
     Tcl_UnlinkVar(interp, "edit_object_flag");

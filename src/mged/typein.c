@@ -73,11 +73,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -2706,7 +2702,7 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 	metaball->method = method;
 	BU_LIST_INIT( &metaball->metaball_ctrl_head );
 
-	/* 
+	/*
 	 * since we use args instead of the num_points, it's possible to have
 	 * MORE points than the value in the num_points field if it's all on one
 	 * line. Is that a bug, or a feature?

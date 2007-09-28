@@ -31,21 +31,11 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
-#define USE_OLD_MENUS 0
-
 #include "common.h"
 
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -57,6 +47,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+
+#define USE_OLD_MENUS 0
 
 int	state;
 char	*state_str[] = {

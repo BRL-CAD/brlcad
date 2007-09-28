@@ -33,12 +33,7 @@
 #include "common.h"
 
 #include <stdio.h>
-
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -62,6 +57,9 @@ static struct qray_color qray_even_color = { 255, 255, 0 };
 static struct qray_color qray_void_color = { 255, 0, 255 };
 static struct qray_color qray_overlap_color = { 255, 255, 255 };
 
+/* replaces (char)NULL to quiet cast size warnings */
+#define CNULL (char)0x0
+
 #ifndef _WIN32
 static struct qray_fmt_data def_qray_fmt_data[] = {
   {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
@@ -70,7 +68,7 @@ static struct qray_fmt_data def_qray_fmt_data[] = {
   {'f', "\"\""},
   {'m', "\"You missed the target\\n\""},
   {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
-  {(char)NULL, (char *)NULL}
+  {CNULL, (char *)NULL}
 };
 #else
 static struct qray_fmt_data def_qray_fmt_data[] = {
@@ -80,7 +78,7 @@ static struct qray_fmt_data def_qray_fmt_data[] = {
   {'f', "\\\"\\\""},
   {'m', "\\\"You missed the target\\\\n\\\""},
   {'o', "\\\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\\\n\\\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
-  {(char)NULL, (char *)NULL}
+  {CNULL, (char *)NULL}
 };
 #endif
 
@@ -416,7 +414,7 @@ qray_print_fmts(void)
 {
   int i;
 
-  for(i = 0; qray_fmts[i].type != (char)NULL; ++i)
+  for(i = 0; qray_fmts[i].type != CNULL; ++i)
     Tcl_AppendResult(interp, bu_vls_addr(&qray_fmts[i].fmt),
 		     "\n", (char *)NULL);
 }
@@ -450,7 +448,7 @@ qray_get_fmt_index(char c)
 {
   int i;
 
-  for(i = 0; qray_fmts[i].type != (char)NULL; ++i)
+  for(i = 0; qray_fmts[i].type != CNULL; ++i)
     if(c == qray_fmts[i].type)
       return i;
 
@@ -480,7 +478,7 @@ init_qray(void)
     bu_vls_strcpy(&qray_fmts[i].fmt, def_qray_fmt_data[i].fmt);
   }
 
-  qray_fmts[i].type = (char)NULL;
+  qray_fmts[i].type = CNULL;
 }
 
 void

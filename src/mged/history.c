@@ -36,15 +36,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+#include <time.h>
+
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#include <time.h>
 
 #include "tcl.h"
 

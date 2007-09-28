@@ -17,7 +17,8 @@ libfft_la_SOURCES = \
 	$(BUILT_SOURCES)
 
 libfft_la_LDFLAGS = -version-info 19:1
-libfft_la_LIBADD = ${LIBM}
+libfft_la_LIBADD = \
+	${FFT_LIBS}
 
 noinst_HEADERS = \
 	fft.h
