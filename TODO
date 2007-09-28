@@ -23,8 +23,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* clone and tracker
-
 * Endgame Framework importer plugin
 
 * get archer working, ensure functionality cross-platform
