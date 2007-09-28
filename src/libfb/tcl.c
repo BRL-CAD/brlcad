@@ -37,11 +37,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #include "tcl.h"
 #include "machine.h"

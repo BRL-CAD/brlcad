@@ -45,6 +45,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
 #ifdef HAVE_WRITEV
 #  include <sys/uio.h>		/* for struct iovec */
 #endif
@@ -53,11 +55,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
 #endif
 
 #include "machine.h"

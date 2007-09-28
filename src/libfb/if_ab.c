@@ -44,18 +44,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <time.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
 
 #include "machine.h"
 #include "fb.h"
