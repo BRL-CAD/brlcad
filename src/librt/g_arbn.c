@@ -85,8 +85,18 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	 *  which are used to make the bounding RPP.
 	 */
 
-	/* Zero face use counts */
+	/* Zero face use counts
+         * and make sure normal vectors are unit vectors
+         */
 	for( i=0; i<aip->neqn; i++ )  {
+                double normalLen = MAGNITUDE(aip->eqn[i]);
+                double scale;
+                if( NEAR_ZERO( normalLen, SMALL_FASTF) ) {
+                    bu_log( "arbn has zero length normal vector\n");
+                    return 1;
+                }
+                scale = 1.0 / normalLen;
+                HSCALE( aip->eqn[i], aip->eqn[i], scale );
 		used[i] = 0;
 	}
 	for( i=0; i<aip->neqn-2; i++ )  {
