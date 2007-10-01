@@ -2831,6 +2831,7 @@ else
      BLT=""
      AC_MSG_RESULT(no)
 fi
+AC_SUBST(BLT)
 
 
 dnl *** tkImg ***
@@ -2853,6 +2854,7 @@ else
     TKIMG=""
     AC_MSG_RESULT(no)
 fi
+AC_SUBST(TKIMG)
 
 
 dnl *** TNT ***
