@@ -62,7 +62,8 @@ proc LoadArcherLibs {dir} {
     if {![file exists $tkimgdir]} {
 	set tkimgdir [file join [bu_brlcad_data "src"] other tkimg .libs]
     }
-    
+
+    # can't use sharedlibextension without changing tkimg build
     if {![file exists [file join $tkimgdir tkimg.so]]} {
 	puts "ERROR: Unable to initialize Archer imagery"
 	exit 1
