@@ -110,16 +110,23 @@ Cad_AppInit(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
     Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
+
+    /* Initialize BLT */
+    if (Blt_Init(interp) == TCL_ERROR) {
+	bu_log("Blt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "BLT", Blt_Init, (Tcl_PackageInitProc *) NULL);
 #endif
 
-#ifdef IMPORT_TCL
+#ifdef IMPORT_ITCL
     /* Import [incr Tcl] commands into the global namespace. */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		   "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
 	bu_log("Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
-#endif
+#endif /* IMPORT_ITCL */
 
 #ifdef BWISH
 
@@ -149,20 +156,26 @@ Cad_AppInit(Tcl_Interp *interp)
 
 #endif  /* BWISH */
 
+#  ifdef IMPORT_ITCL
     if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
 	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+#  endif
 
 #ifdef BWISH
+#  ifdef IMPORT_ITCL
     if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
 	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+#  endif
+#  ifdef IMPORT_ITK
     if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
 	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+#  endif
 
     /* Initialize libdm */
     if (Dm_Init(interp) == TCL_ERROR) {
