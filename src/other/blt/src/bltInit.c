@@ -28,7 +28,7 @@
 
 #include <bltInt.h>
 
-#define EXACT 1
+#define EXACT 0
 
 #ifndef BLT_LIBRARY
 #ifdef WIN32
