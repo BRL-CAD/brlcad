@@ -35,9 +35,11 @@ tkimg_la_LIBADD = \
 	${LIBZ} \
 	${PNG} \
 	${TCL} \
-	${TK}
+	${TK} \
+	${TCLSTUB}
 
-#	${TCLSTUB}
+# TCLSTUB is necessary so it will load as a dylib on Mac OS X without
+# unresolved stub symbols.
 
 EXTRA_DIST = \
 	init.c
