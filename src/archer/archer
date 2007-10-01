@@ -140,7 +140,7 @@ proc createSplashScreen {} {
     global env
 
     # XXX disabled until tkimg is working better
-    set useImage 0
+    set useImage 1
 
     if {$useImage} {
 	set image [image create photo -file [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]]
