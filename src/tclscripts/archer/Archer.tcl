@@ -12324,8 +12324,17 @@ Popup Menu    Right or Ctrl-Left
     set pwd [::pwd]
 
     # developer & user plugins
-#    foreach plugindir [list [file join $env(ARCHER_HOME) $brlcadDataPath plugins archer]]
-    foreach plugindir [list [file join $brlcadDataPath plugins archer]] {
+    set pluginPath [file join [bu_brlcad_data "plugins"] archer]
+    if { ![file exists $pluginPath] } {
+	# try a source dir invocation
+	set pluginPath [file join [bu_brlcad_data "src"] archer plugins]
+    }
+    if { ![file exists $pluginPath] } {
+	# give up on loading any plugins
+	return
+    }
+
+    foreach plugindir [list $pluginPath] {
 	::cd $plugindir
 	pluginLoadCWDFiles
     }
