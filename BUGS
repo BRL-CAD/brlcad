@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rt options -g and -G no longer work due to change in default aspect
+  setting from 1 to 0.
+
 * nirt fails to report LOS and sometimes even hits on a BoT that is
   marked as unoriented or is inverted (even though it sometimes will
   report the segments, just without LOS)
