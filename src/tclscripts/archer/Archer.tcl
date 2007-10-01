@@ -68,9 +68,17 @@ namespace eval Archer {
     set methodImpls ""
     set extraMgedCommands ""
     set corePluginInit ""
-    if {[file exists [file join $env(ARCHER_HOME) plugins archer Core]]} {
+    set pluginsdir [file join $env(ARCHER_HOME) plugins archer]
+    if {![file exists $pluginsdir]} {
+	set pluginsdir [file join [bu_brlcad_data "plugins"] archer]
+    }
+    if {![file exists $pluginsdir]} {
+	set pluginsdir [file join [bu_brlcad_data "src"] archer plugins]
+    }
+
+    if {[file exists [file join $pluginsdir Core]]} {
 	set savePwd [pwd]
-	cd [file join $env(ARCHER_HOME) plugins archer Core]
+	cd [file join $pluginsdir Core]
 	catch {
 	    foreach filename [lsort [glob -nocomplain *]] {
 		if [file isfile $filename] {
@@ -93,9 +101,9 @@ namespace eval Archer {
 	}
 	cd $savePwd
     }
-    if {[file exists [file join $env(ARCHER_HOME) plugins archer Commands]]} {
+    if {[file exists [file join $pluginsdir Commands]]} {
 	set savePwd [pwd]
-	cd [file join $env(ARCHER_HOME) plugins archer Commands]
+	cd [file join $pluginsdir Commands]
 	catch {
 	    foreach filename [lsort [glob -nocomplain *]] {
 		if [file isfile $filename] {
