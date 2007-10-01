@@ -1284,7 +1284,7 @@ bu_tcl_brlcad_root(ClientData	clientData,
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
-	Tcl_AppendResult(interp, bu_brlcad_root(argv[1], 0), NULL);
+	Tcl_AppendResult(interp, bu_brlcad_root(argv[1], 1), NULL);
 	return TCL_OK;
 }
 
@@ -1312,7 +1312,7 @@ bu_tcl_brlcad_data(ClientData	clientData,
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
-	Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 0), NULL);
+	Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 1), NULL);
 	return TCL_OK;
 }
 
