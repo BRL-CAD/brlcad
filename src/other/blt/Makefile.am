@@ -23,7 +23,6 @@ lib_LTLIBRARIES = \
 	libBLT@BLT_SUFFIX@.la
 
 libBLT_la_SOURCES =
-# libblt_la_LDFLAGS = -module
 libBLT_la_LIBADD = \
 	src/bltAlloc.lo \
 	src/bltArrayObj.lo \
@@ -81,7 +80,6 @@ libBLT_la_LIBADD = \
 	src/bltTreeViewStyle.lo \
 	src/bltUnixDnd.lo \
 	src/bltUnixImage.lo \
-	src/bltUnixMain.lo \
 	src/bltUnixPipe.lo \
 	src/bltUtil.lo \
 	src/bltVecCmd.lo \
