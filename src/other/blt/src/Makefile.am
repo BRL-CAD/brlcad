@@ -71,7 +71,6 @@ libblts_la_SOURCES = \
 	bltUnixImage.c \
 	bltUnixPipe.c \
 	bltUtil.c \
-	bltVecCmd.c \
 	bltVecMath.c \
 	bltVecObjCmd.c \
 	bltVector.c \
@@ -85,6 +84,7 @@ libblts_la_SOURCES = \
 EXTRA_DIST = \
 	bltConfig.h \
 	bltUnixMain.c \
+	bltVecCmd.c \
 	bltWinConfig.h \
 	bltWinDde.c \
 	bltWinDraw.c \

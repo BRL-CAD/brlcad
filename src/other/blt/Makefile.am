@@ -82,7 +82,6 @@ libBLT_la_LIBADD = \
 	src/bltUnixImage.lo \
 	src/bltUnixPipe.lo \
 	src/bltUtil.lo \
-	src/bltVecCmd.lo \
 	src/bltVecMath.lo \
 	src/bltVecObjCmd.lo \
 	src/bltVector.lo \
