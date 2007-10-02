@@ -1116,8 +1116,8 @@ AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
 dnl check whether we ended up with functioning posix threading.
 AC_MSG_CHECKING([whether we are using POSIX threading])
 posix_threading=no
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBTHREAD"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTHREAD"
 AC_TRY_LINK([#include <pthread.h>], [
     pthread_t th;
     pthread_join(th, 0);
@@ -1126,7 +1126,7 @@ AC_TRY_LINK([#include <pthread.h>], [
     pthread_create(0,0,0,0);
     pthread_cleanup_pop(0);
 ], [posix_threading=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($posix_threading)
 
 dnl check whether the CoreFoundation framework is available (used when
@@ -2168,8 +2168,8 @@ fi
 dnl *** libpng ***
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBPNG"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBPNG"
 AC_TRY_RUN([
 #include <png.h>
 main() {
@@ -2177,7 +2177,7 @@ main() {
     return 0;
 }
 ], [png_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($png_works)
 
 dnl figure out whether we need to build libpng
@@ -2220,8 +2220,8 @@ dnl *** libregex ***
 dnl See if regular expression support works
 regex_works=no
 AC_MSG_CHECKING(for regular expression functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBREGEX"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBREGEX"
 AC_TRY_RUN([
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -2234,7 +2234,7 @@ int main() {
     return 0;
 }
 ], [regex_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($regex_works)
 
 dnl figure out whether we need to build libregex
@@ -2272,8 +2272,8 @@ dnl *** libz ***
 dnl See if zlib library support works
 zlib_works=no
 AC_MSG_CHECKING(for zlib compression functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBZLIB"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBZLIB"
 AC_TRY_RUN([
 #include <zlib.h>
 int main () {
@@ -2281,7 +2281,7 @@ int main () {
     return 0;
 }
 ], [zlib_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($zlib_works)
 
 dnl figure out whether we need to build libz
@@ -2380,8 +2380,8 @@ dnl *** openNURBS ***
 dnl See if openNURBS library support works
 opennurbs_works=no
 AC_MSG_CHECKING(for openNURBS functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBOPENNURBS $LIBZLIB"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBOPENNURBS $LIBZLIB"
 AC_LANG_PUSH([C++])
 AC_TRY_RUN([
 #include <opennurbs.h>
@@ -2391,7 +2391,7 @@ int main () {
 }
 ], [opennurbs_works=yes])
 AC_LANG_POP
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($opennurbs_works)
 
 dnl figure out whether we need to build openNURBS
@@ -2938,8 +2938,8 @@ dnl *** libtermlib ***
 dnl See if termlib library support works
 termlib_works=no
 AC_MSG_CHECKING(for termlib functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBTERMLIB"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTERMLIB"
 AC_TRY_RUN([
 #ifdef HAVE_TERMLIB_H
 #  include <termlib.h>
@@ -2973,7 +2973,7 @@ int main () {
     return 0;
 }
 ], [termlib_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($termlib_works)
 
 dnl figure out whether we need to build libtermlib
@@ -3216,7 +3216,7 @@ build_against_x11="no"
 if test "x$bc_with_x11" != "xno" ; then
     x11_works=no
     AC_MSG_CHECKING(for X11 header functionality)
-    PRELDFLAGS="$LDFLAGS"
+    PRELIBS="$LIBS"
     PRECPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
     AC_TRY_RUN([
@@ -3229,7 +3229,7 @@ main() {
     ],[x11_works=yes])
     AC_MSG_RESULT($x11_works)
     if test "x$x11_works" = "xyes" ; then
-	LDFLAGS="$LDFLAGS $X_LIBS"
+	LIBS="$LIBS $X_LIBS"
 	AC_MSG_CHECKING(for X11 link functionality)
 	AC_TRY_RUN([
 #include <X11/Xlib.h>
@@ -3241,7 +3241,7 @@ main() {
 	],,x11_works=no)
 	AC_MSG_RESULT($x11_works)
     fi
-    LDFLAGS="$PRELDFLAGS"
+    LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
 
     dnl figure out whether we need to build against X11
@@ -3282,9 +3282,9 @@ build_against_opengl="no"
 if test "x$bc_with_opengl" != "xno" ; then
     AC_MSG_CHECKING(for OpenGL functionality)
     opengl_works=no
-    PRELDFLAGS="$LDFLAGS"
+    PRELIBS="$LIBS"
     PRECPPFLAGS="$CPPFLAGS"
-    LDFLAGS="$LDFLAGS $LIBGL"
+    LIBS="$LIBS $LIBGL"
     CPPFLAGS="$CPPFLAGS $GL_CPPFLAGS"
     AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
@@ -3301,7 +3301,7 @@ main(int argc, char *argv[]) {
     return 0;
 }
     ], [opengl_works=yes])
-    LDFLAGS="$PRELDFLAGS"
+    LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
     AC_MSG_RESULT($opengl_works)
 
@@ -3328,8 +3328,8 @@ build_against_wgl="no"
 if test "x$bc_with_wgl" != "xno" ; then
     AC_MSG_CHECKING(for WindowsGL functionality)
     wgl_works=no
-    PRELDFLAGS="$LDFLAGS"
-    LDFLAGS="$LDFLAGS $LIBWGL"
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBWGL"
     AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -3345,7 +3345,7 @@ main(int argc, char *argv[]) {
     return 0;
 }
     ], [wgl_works=yes])
-    LDFLAGS="$PRELDFLAGS"
+    LIBS="$PRELIBS"
     AC_MSG_RESULT($wgl_works)
 
     dnl figure out whether we need to build against wgl
