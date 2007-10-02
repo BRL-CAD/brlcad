@@ -1407,6 +1407,8 @@ bu_log("mallocing curr_float_frame\n");
 				scanline[i].sl_left = width;
 		}
 
+#if 0
+		/* Reading pre-traced pixels is now disabled. */
 #ifdef HAVE_UNIX_IO
 		/*
 		 *  This code allows the computation of a particular frame
@@ -1460,6 +1462,7 @@ bu_log("mallocing curr_float_frame\n");
 			for( i = yy-1; i >= 0; i-- )
 				scanline[i].sl_left = 0;
 		}
+#endif
 #endif
 		break;
 	default:
