@@ -25,8 +25,6 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * Endgame Framework importer plugin
 
-* get archer working, ensure functionality cross-platform
-
 * modify the new tree traversal code to be generic
 
 * fix potential buffer overflows and security issues detected by
