@@ -218,8 +218,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * support for fillets and chamfers as object/combination operations
 
-* provide installation and post configuration support scripts
-
 * make the DSP primitive use less memory when data is coming from
   a binunif. allocating 160 times binunif size is a bit extravagant
   (which comes from sizeof(struct dsp_bb)).
