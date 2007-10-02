@@ -53,6 +53,7 @@ struct  frame {
 struct bu_list head = {MAGIC, &head, &head};
 struct frame globals;
 
+extern FILE *yyin;
 extern int yylex(void);
 
 extern int bu_optind;
