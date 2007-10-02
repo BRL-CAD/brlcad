@@ -71,20 +71,6 @@ proc LoadArcherLibs {dir} {
 
     load [file join $tkimgdir tkimg.so]
 
-    # load blt
-    set bltdir [bu_brlcad_root "lib"]
-    if {![file exists $bltdir]} {
-	set bltdir [file join [bu_brlcad_data "src"] other blt .libs]
-    }
-
-    set bltlibname libBLT[info sharedlibextension]
-    if {![file exists [file join $bltdir $bltlibname]]} {
-	puts "ERROR: Unable to initialize Archer interface"
-	exit 2
-    }
-
-    load [file join $bltdir $bltlibname]
-
     # Try to load Sdb
     if {[catch {package require Sdb 1.1}]} {
 	set Archer::haveSdb 0
