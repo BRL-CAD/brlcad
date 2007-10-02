@@ -275,19 +275,11 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * DEPRECATION LIST.  can remove these during a major update, after at
   least three minor updates, or after six months, whichever comes
   first:
-	include/msr.h (pre 7.0)
-		msr.h -> bu.h
-	include/rtlist.h (pre 7.0)
-		rtlist.h -> bu.h
-	include/rtstring.h (pre 7.0)
-		rtstring.h -> bu.h
 	include/raytrace.h (pre 7.0)
 		struct application.a_overlap -> a_multioverlap()
 		rt_overlap_quietly() -> struct application.a_logoverlap
 	include/compat4.h (pre 7.0)
 		compat4.h -> bu.h && bn.h
-	include/shortvect.h (pre 7.0)
-	include/shortvect-pr.h (pre 7.0)
 	include/bn.h (7.0)
 		bn_mat_zero() -> MAT_ZERO()
 		bn_mat_idn() -> MAT_IDN()

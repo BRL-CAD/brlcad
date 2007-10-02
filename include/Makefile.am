@@ -13,10 +13,8 @@ brlcadinclude_required = \
 	config_win.h \
 	raytrace.h \
 	rtgeom.h \
-	rtlist.h \
 	rtprivate.h \
 	rtserver.h \
-	rtstring.h \
 	tclcad.h
 
 brlcadinclude_wanted = \
@@ -47,7 +45,6 @@ brlcadinclude_wanted = \
 	light.h \
 	machine.h \
 	mater.h \
-	msr.h \
 	nmg.h \
 	noalias-prag.h \
 	noalias.h \
@@ -63,8 +60,6 @@ brlcadinclude_wanted = \
 	regex.h \
 	shadefuncs.h \
 	shadework.h \
-	shortvect-pr.h \
-	shortvect.h \
 	solid.h \
 	spectrum.h \
 	spm.h \
