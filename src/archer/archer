@@ -58,8 +58,7 @@ done
 #\
 exec $WISH $0 $@
 
-# Set the auto_path in order to constrain
-# where Archer finds its files.
+# normalize ARCHER_HOME
 if {[info exists env(ARCHER_HOME)]} {
     set dir [file normalize $env(ARCHER_HOME)]
 } else {
@@ -78,11 +77,13 @@ namespace eval Archer {
     }
 }
 
+# preload tk
 if { [ catch {package require Tk} _initialized ] } {
     puts ""
     puts "ERROR: Unable to initialize Archer"
     exit 1
 }
+# preload blt
 if { [ catch {package require BLT} _initialized ] } {
     puts "$_initialized"
     puts ""
@@ -90,9 +91,26 @@ if { [ catch {package require BLT} _initialized ] } {
     exit 1
 }
 
-package require Archer 1.0
-package require Iwidgets
-package require Swidgets
+# load archer guts
+if { [catch {package require Archer 1.0} _initialized] } {
+    puts "$_initialized"
+    puts ""
+    puts "ERROR: Unable to load Archer"
+    exit 1
+}
+
+if { [catch {package require Iwidgets} _initialized] } {
+    puts "$_initialized"
+    puts ""
+    puts "ERROR: Unable to load Archer GUI"
+    exit 1
+}
+if { [catch {package require Swidgets} _initialized] } {
+    puts "$_initialized"
+    puts ""
+    puts "ERROR: Unable to load Archer Scripting"
+    exit 1
+}
 
 set Archer::debug 0
 if { [info exists env(DEBUG)] } {
@@ -267,7 +285,13 @@ wm withdraw .
 createSplashScreen
 
 # do main procedure
-main
+if { [catch {main} _runnable] } {
+	puts "$_runnable"
+	puts ""
+	puts "Unexpected error encountered while running Archer."
+	puts "Aborting."
+	exit 1
+}
 set ::Archer::showWindow 1
 
 # Local Variables:
