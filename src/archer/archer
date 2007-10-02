@@ -91,6 +91,16 @@ if { [ catch {package require BLT} _initialized ] } {
     exit 1
 }
 
+# stupid blt needs blt_library to be set (must be done AFTER loading BLT...)
+set blt_library [file normalize [file join [bu_brlcad_root "lib"] blt2.4]]
+if {![file exists $blt_library]} {
+    set blt_library [file normalize [file join [bu_brlcad_data "src"] other blt library]]
+}
+if {![file exists $blt_library]} {
+    puts "ERROR: Unable to initialize Archer resources"
+    exit 1
+}
+
 # load archer guts
 if { [catch {package require Archer 1.0} _initialized] } {
     puts "$_initialized"
