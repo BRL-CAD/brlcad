@@ -1,0 +1,72 @@
+						 -*- coding: utf-8 -*-
+BRL-CAD Deprecation Log
+=======================
+
+Included below is a deprecation log and notes for BRL-CAD API changes
+that potentially impact developers.  The general practice is that
+public API changes may go from deprecated to obsolete during one of
+the following events:
+
+a) during a major release
+    (e.g. going from 7.*.* to 8.*.*)
+b) during a minor release provided that
+    1) change was publicly announced as deprecated beforehand
+    2) sufficient deprecation warning was been given
+	i) at least three minor releases have passed since deprecation
+	ii) at least three months have passed since deprecation
+
+Ideally, if a change is the addition of new routines, the change
+should be implemented in an addtive fashion that preserves existing
+functions and behavior as much as possible.  If the change will
+intentionally replace or remove routines, then those routines should
+be then marked as deprecated.
+
+Marking routines as deprecated can be done during compile-time with
+#warning pre-processor declarations or during run-time with printing
+statements.
+
+The items listed below are items that deprecated and/or now obsolete.
+
+**************
+* DEPRECATED *
+**************
+
+7.10
+----
+src/librt/bomb.c
+	rt_bomb() -> bu_bomb()
+
+7.4
+---
+src/libbu/brlcad_path.c
+	bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data()
+
+pre 7.0
+-------
+include/raytrace.h
+	struct application.a_overlap -> a_multioverlap()
+	rt_overlap_quietly() -> struct application.a_logoverlap
+include/compat4.h
+	compat4.h -> bu.h && bn.h
+include/bn.h
+	bn_mat_zero() -> MAT_ZERO()
+	bn_mat_idn() -> MAT_IDN()
+	bn_mat_copy() -> MAT_COPY()
+
+
+************
+* OBSOLETE *
+************
+
+7.12
+----
+
+include/msr.h (pre 7.0)
+	msr.h -> bu.h
+include/rtlist.h (pre 7.0)
+	rtlist.h -> bu.h
+include/rtstring.h (pre 7.0)
+	rtstring.h -> bu.h
+include/shortvect.h (pre 7.0)
+include/shortvect-pr.h (pre 7.0)
+

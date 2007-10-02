@@ -270,22 +270,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * add database support for constraints, expressions, parametric
   values, construction history, and timestamping.
 
-* DEPRECATION LIST.  can remove these during a major update, after at
-  least three minor updates, or after six months, whichever comes
-  first:
-	include/raytrace.h (pre 7.0)
-		struct application.a_overlap -> a_multioverlap()
-		rt_overlap_quietly() -> struct application.a_logoverlap
-	include/compat4.h (pre 7.0)
-		compat4.h -> bu.h && bn.h
-	include/bn.h (7.0)
-		bn_mat_zero() -> MAT_ZERO()
-		bn_mat_idn() -> MAT_IDN()
-		bn_mat_copy() -> MAT_COPY()
-	src/libbu/brlcad_path.c (7.4)
-		bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data()
-	src/librt/bomb.c (7.10)
-		rt_bomb() -> bu_bomb()
+* see doc/deprecation.txt for items that have been marked as
+  deprecated or are available for deprecation.
 
 
 DOCUMENTATION
