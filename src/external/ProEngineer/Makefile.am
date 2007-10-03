@@ -125,11 +125,13 @@ EXTRA_DIST = \
 	mk.in \
 	protk.dat.in
 
-CLEANFILES = libproe2brl.so proe-brl
+CLEANFILES = \
+	libproe2brl.so \
+	proe-brl
 
-DISTCLEANFILES = mk protk.dat
-
-MAINTAINERCLEANFILES = Makefile.in
+DISTCLEANFILES = \
+	mk \
+	protk.dat
 
 
 include $(top_srcdir)/misc/Makefile.defs

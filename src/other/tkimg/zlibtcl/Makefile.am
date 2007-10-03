@@ -21,6 +21,4 @@ EXTRA_DIST = \
 	zlibtclDeclsMask.h \
 	zlibtclDeclsUnmask.h
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

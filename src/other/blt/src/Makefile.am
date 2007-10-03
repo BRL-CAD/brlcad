@@ -133,6 +133,4 @@ include_HEADERS = \
 brlcadincludedir = $(includedir)/brlcad
 brlcadinclude_HEADERS = $(include_HEADERS)
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

@@ -111,8 +111,6 @@ DISTCLEANFILES = \
 	libtool \
 	so_locations
 
-MAINTAINERCLEANFILES = Makefile.in
-
 
 ##########################
 # packaged distributions #

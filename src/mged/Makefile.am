@@ -207,8 +207,6 @@ EXTRA_DIST = \
 
 DEPS=src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

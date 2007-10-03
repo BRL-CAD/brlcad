@@ -20,7 +20,5 @@ install-data-hook:
 		mv $(DESTDIR)$(mandir)/mann/$$manpage.new $(DESTDIR)$(mandir)/mann/$$manpage ; \
 	done
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 

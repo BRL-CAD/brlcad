@@ -30,6 +30,4 @@ include_HEADERS = \
 	tnt_vector.h \
 	tnt_version.h
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

@@ -44,8 +44,6 @@ EXTRA_DIST = \
 	NEWS \
 	README
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS = src/libbu
 
 include $(top_srcdir)/misc/Makefile.defs

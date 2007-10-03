@@ -139,6 +139,4 @@ DIST_SUBDIRS = \
 	tkimg \
 	tnt
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

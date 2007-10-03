@@ -57,6 +57,4 @@ EXTRA_DIST = \
 	images \
 	scripts
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

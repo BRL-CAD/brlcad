@@ -378,5 +378,5 @@ DISTCLEANFILES = \
 	unix/tclConfig.sh \
 	unix/tclsh
 
-MAINTAINERCLEANFILES = Makefile.in
-
+# INTENTIONALLY NOT INCLUDED
+# include $(top_srcdir)/misc/Makefile.defs

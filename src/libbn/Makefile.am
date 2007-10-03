@@ -47,8 +47,6 @@ EXTRA_DIST = \
 	libbn.dsp \
 	plot3.doc
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS=src/libbu
 
 include $(top_srcdir)/misc/Makefile.defs

@@ -98,7 +98,5 @@ man_MANS = \
 EXTRA_DIST = \
 	$(man_MANS)
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 

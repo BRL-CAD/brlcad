@@ -201,4 +201,5 @@ DISTCLEANFILES = \
 	unix/tkConfig.sh \
 	unix/wish
 
-MAINTAINERCLEANFILES = Makefile.in
+# INTENTIONALLY NOT INCLUDED
+# include $(top_srcdir)/misc/Makefile.defs

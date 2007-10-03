@@ -57,8 +57,6 @@ EXTRA_DIST = \
 	reg4.c \
 	spl.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS = src/librt
 
 include $(top_srcdir)/misc/Makefile.defs

@@ -74,6 +74,4 @@ DIST_SUBDIRS = \
 	ProEngineer \
 	Unigraphics
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

@@ -37,8 +37,6 @@ CLEANFILES = \
 	PATH \
 	USER
 DISTCLEANFILES = $(CLEANFILES)
-MAINTAINERCLEANFILES = \
-	COUNT \
-	Makefile.in
+MAINTAINERCLEANFILES = COUNT
 
 include $(top_srcdir)/misc/Makefile.defs

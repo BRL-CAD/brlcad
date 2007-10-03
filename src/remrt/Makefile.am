@@ -26,8 +26,6 @@ rtsrv_SOURCES = \
 
 noinst_HEADERS = ihost.h protocol.h
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

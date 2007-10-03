@@ -13,6 +13,4 @@ DISTCLEANFILES = \
         brlcad.install \
         brlcad.sh
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

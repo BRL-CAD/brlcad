@@ -100,6 +100,4 @@ libBLT@BLT_SUFFIX@_la_SOURCES = $(libBLT_la_SOURCES)
 libBLT@BLT_SUFFIX@_la_LDFLAGS = $(libBLT_la_LDFLAGS)
 libBLT@BLT_SUFFIX@_la_LIBADD = $(libBLT_la_LIBADD)
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

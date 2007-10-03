@@ -25,7 +25,5 @@ BUILT_SOURCES = termcap
 
 DISTCLEANFILES = $(BUILT_SOURCES)
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 

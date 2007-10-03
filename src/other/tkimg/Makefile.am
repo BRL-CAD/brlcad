@@ -44,6 +44,4 @@ tkimg_la_LIBADD = \
 EXTRA_DIST = \
 	init.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

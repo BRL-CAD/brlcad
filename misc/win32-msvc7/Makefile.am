@@ -50,6 +50,4 @@ EXTRA_DIST= \
 	tkstub/tkstub.vcproj \
 	wish/wish.vcproj
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

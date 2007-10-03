@@ -132,8 +132,6 @@ EXTRA_DIST = \
 	wing128.igs \
 	woodie.igs
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

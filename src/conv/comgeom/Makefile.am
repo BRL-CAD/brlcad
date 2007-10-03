@@ -22,8 +22,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	try.sh
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS=src/libwdb src/librt
 
 include $(top_srcdir)/misc/Makefile.defs

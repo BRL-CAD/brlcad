@@ -26,7 +26,6 @@ BUILT_SOURCES = \
 	points_scan.c
 
 DISTCLEANFILES = $(BUILT_SOURCES)
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -10,7 +10,4 @@ EXTRA_DIST = \
 	files \
 	rules
 
-
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

@@ -20,8 +20,6 @@ EXTRA_DIST = $(scripts)
 
 # CLEANFILES = $(BUILT_SOURCES)
 
-MAINTAINERCLEANFILES = Makefile.in
-
 pkgIndex.tcl:
 	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \
 	LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \

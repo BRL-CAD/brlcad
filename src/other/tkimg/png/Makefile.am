@@ -26,7 +26,5 @@ EXTRA_DIST = \
 	pkgIndex.tcl.in \
 	tests
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 

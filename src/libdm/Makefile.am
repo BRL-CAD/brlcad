@@ -69,6 +69,4 @@ EXTRA_DIST = \
 
 DEPS=src/librt src/libfb
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

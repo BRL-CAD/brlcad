@@ -269,8 +269,6 @@ sample_applications_DATA = \
 	g-xxx.c \
 	g-xxx_facets.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS=src/libwdb src/librt
 
 include $(top_srcdir)/misc/Makefile.defs

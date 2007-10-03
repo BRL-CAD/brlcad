@@ -652,8 +652,6 @@ EXTRA_DIST = \
 	pixt-ik.c \
 	pl-starbase.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS=src/liborle src/libdm src/libfb
 
 include $(top_srcdir)/misc/Makefile.defs

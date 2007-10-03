@@ -204,8 +204,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	rt.dsp
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS=src/librt src/libfb src/liboptical
 
 include $(top_srcdir)/misc/Makefile.defs

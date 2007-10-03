@@ -238,8 +238,6 @@ DEPADD=
 endif
 DEPS=src/libbn src/libsysv $(DEPADD)
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

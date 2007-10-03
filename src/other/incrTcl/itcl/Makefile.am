@@ -19,8 +19,5 @@ EXTRA_DIST = \
 
 DISTCLEANFILES = pkgIndex.tcl
 
-MAINTAINERCLEANFILES = Makefile.in
-
-
 include $(top_srcdir)/misc/Makefile.defs
 

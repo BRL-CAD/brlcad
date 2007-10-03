@@ -11,7 +11,5 @@ documentation_DATA = \
 EXTRA_DIST = \
 	$(documentation_DATA)
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

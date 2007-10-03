@@ -9,6 +9,4 @@ AM_CFLAGS = -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -
 
 noinst_HEADERS = adrt_common.h canim.h cdb.h env.h pack.h unpack.h
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

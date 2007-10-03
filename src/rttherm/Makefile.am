@@ -52,8 +52,6 @@ EXTRA_DIST = \
 	std_day_1km.dat \
 	test.sh
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

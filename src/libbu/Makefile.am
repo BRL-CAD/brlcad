@@ -100,8 +100,6 @@ else
 DEPS = include
 endif
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

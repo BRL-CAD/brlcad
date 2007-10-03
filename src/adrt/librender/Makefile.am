@@ -10,6 +10,4 @@ AM_CFLAGS = -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libcommon -
 
 noinst_HEADERS = component.h depth.h flat.h grid.h hit.h normal.h path.h plane.h phong.h render.h render_internal.h spall.h render_util.h
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

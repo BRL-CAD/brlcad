@@ -8,6 +8,4 @@ EXTRA_DIST = \
 	ptcloud.py \
 	shiva.sh
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs
