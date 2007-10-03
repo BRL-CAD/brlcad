@@ -26,10 +26,14 @@ man_MANS = \
 	tabinterp.1 \
 	tabsub.1
 
+BUILT_SOURCES = script.c
+DISTCLEANFILES = $(BUILT_SOURCES)
+
 EXTRA_DIST = \
+	$(BUILT_SOURCES) \
 	$(man_MANS) \
-	scriptsort.c \
 	script.l
+	scriptsort.c \
 
 include $(top_srcdir)/misc/Makefile.defs
 
