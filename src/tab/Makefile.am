@@ -32,8 +32,8 @@ DISTCLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	$(man_MANS) \
-	script.l
-	scriptsort.c \
+	script.l \
+	scriptsort.c
 
 include $(top_srcdir)/misc/Makefile.defs
 
