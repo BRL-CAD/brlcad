@@ -7,8 +7,6 @@
 
 # CAUTION: Do not use this makefile with gcc versions 2.7.2.2 and earlier.
 
-# WARNING: The assembler code in pnggccrd.c may not be thread safe.
-
 # NOTE:  When testing MMX performance on a multitasking system, make sure
 #        there are no floating-point programs (e.g., SETI@Home) running in
 #        the background!  Context switches between MMX and FPU are expensive.
@@ -16,7 +14,7 @@
 # Library name:
 LIBNAME = libpng12
 PNGMAJ = 0
-PNGMIN = 1.2.19
+PNGMIN = 1.2.21
 PNGVER = $(PNGMAJ).$(PNGMIN)
 
 # Shared library names:
@@ -66,11 +64,11 @@ CFLAGS=-DPNG_THREAD_UNSAFE_OK -I$(ZLIBINC) -Wall -O \
 ### for gcc 2.95.2 on 686:
 #CFLAGS=-DPNG_THREAD_UNSAFE_OK -I$(ZLIBINC) -Wall -O \
 #	-mcpu=i686 -malign-double -ffast-math -fstrict-aliasing \
-#	$(ALIGN) -funroll-loops -funroll-all-loops -fomit-frame-pointer
+#	$(ALIGN) -funroll-loops -funroll-all-loops -fomit-frame-pointer 
 ### for gcc 2.7.2.3 on 486 and up:
 #CFLAGS=-DPNG_THREAD_UNSAFE_OK -I$(ZLIBINC) -Wall -O \
 #	-m486 -malign-double -ffast-math \
-#	$(ALIGN) -funroll-loops -funroll-all-loops -fomit-frame-pointer
+#	$(ALIGN) -funroll-loops -funroll-all-loops -fomit-frame-pointer 
 
 LDFLAGS=-L. -Wl,-rpath,. -L$(ZLIBLIB) -Wl,-rpath,$(ZLIBLIB) -lpng12 -lz -lm
 LDFLAGS_A=-L$(ZLIBLIB) -Wl,-rpath,$(ZLIBLIB) libpng.a -lz -lm
@@ -98,7 +96,7 @@ DM=$(DESTDIR)$(MANPATH)
 
 OBJS = png.o pngset.o pngget.o pngrutil.o pngtrans.o pngwutil.o \
 	pngread.o pngrio.o pngwio.o pngwrite.o pngrtran.o \
-	pngwtran.o pngmem.o pngerror.o pngpread.o pnggccrd.o
+	pngwtran.o pngmem.o pngerror.o pngpread.o
 
 OBJSDLL = $(OBJS:.o=.pic.o)
 
@@ -114,7 +112,11 @@ libpng.a: $(OBJS)
 	$(RANLIB) $@
 
 libpng.pc:
-	cat scripts/libpng.pc.in | sed -e s\!@PREFIX@!$(prefix)! > libpng.pc
+	cat scripts/libpng.pc.in | sed -e s!@prefix@!$(prefix)! \
+	-e s!@exec_prefix@!$(exec_prefix)! \
+	-e s!@libdir@!$(LIBPATH)! \
+	-e s!@includedir@!$(INCPATH)! \
+	-e s!-lpng12!-lpng12\ -lz\ -lm! > libpng.pc
 
 libpng-config:
 	( cat scripts/libpng-config-head.in; \
@@ -126,12 +128,6 @@ libpng-config:
 	echo libs=\"-lpng12 -lz -lm\"; \
 	cat scripts/libpng-config-body.in ) > libpng-config
 	chmod +x libpng-config
-
-pnggccrd.o:	pnggccrd.c png.h pngconf.h
-	$(CC) -c $(CFLAGS) -o $@ $*.c
-
-pnggccrd.pic.o:	pnggccrd.c png.h pngconf.h
-	$(CC) -c $(CFLAGS) -fPIC -o $@ pnggccrd.c
 
 $(LIBSO): $(LIBSOMAJ)
 	$(LN_SF) $(LIBSOMAJ) $(LIBSO)

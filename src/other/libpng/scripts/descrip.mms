@@ -1,6 +1,6 @@
 
 cc_defs = /inc=$(ZLIBSRC)
-c_deb =
+c_deb = 
 
 .ifdef __DECC__
 pref = /prefix=all

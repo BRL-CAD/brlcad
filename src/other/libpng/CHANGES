@@ -1179,7 +1179,7 @@ version 1.2.4beta3 [June 28, 2002]
   Plugged memory leak of row_buf in pngtest.c when there is a png_error().
   Detect buffer overflow in pngpread.c when IDAT is corrupted with extra data.
   Added "test-installed" target to makefile.32sunu, makefile.64sunu,
-    makefile.beos, makefile.darwin, makefile.dec, makefile.macosx,
+    makefile.beos, makefile.darwin, makefile.dec, makefile.macosx, 
     makefile.solaris, makefile.hpux, makefile.hpgcc, and makefile.so9.
 version 1.2.4rc1 and 1.0.14rc1 [July 2, 2002]
   Added "test-installed" target to makefile.cygwin and makefile.sco.
@@ -1387,7 +1387,7 @@ version 1.2.8beta5 [November 20, 2004]
   Use png_ptr->flags instead of png_ptr->transformations to pass
     PNG_STRIP_ALPHA info to png_do_strip_filler(), to preserve ABI
     compatibility.
-  Revised handling of SPECIALBUILD, PRIVATEBUILD,
+  Revised handling of SPECIALBUILD, PRIVATEBUILD, 
     PNG_LIBPNG_BUILD_SPECIAL_STRING and PNG_LIBPNG_BUILD_PRIVATE_STRING.
 version 1.2.8rc1 [November 24, 2004]
   Moved handling of BUILD macros from pngconf.h to png.h
@@ -1480,7 +1480,7 @@ version 1.2.9beta5 [March 4, 2006]
   Restored scripts/makefile.elf which was inadvertently deleted.
 
 version 1.2.9beta6 [March 6, 2006]
-  Fixed typo (19) in configuration files.
+  Fixed typo (21) in configuration files.
 
 version 1.2.9beta7 [March 7, 2006]
   Removed libpng.vers and libpng.sym from libpng12_la_SOURCES in Makefile.am
@@ -1677,7 +1677,7 @@ version 1.2.15rc4 [December 27, 2006]
 version 1.2.15rc5 [December 31, 2006]
   Revised handling of rgb_to_gray.
 
-version 1.2.15 [January 5, 2007]
+version 1.0.23, 1.2.15 [January 5, 2007]
   Added some (unsigned long) typecasts in pngtest.c to avoid printing errors.
 
 version 1.2.16beta1 [January 6, 2007]
@@ -1685,14 +1685,14 @@ version 1.2.16beta1 [January 6, 2007]
 
 version 1.2.16beta2 [January 16, 2007]
   Revised scripts/CMakeLists.txt
-
-version 1.2.16 [January 31, 2007]
+ 
+version 1.0.24, 1.2.16 [January 31, 2007]
   No changes.
-
+ 
 version 1.2.17beta1 [March 6, 2007]
   Revised scripts/CMakeLists.txt to install both shared and static libraries.
   Deleted a redundant line from pngset.c.
-
+ 
 version 1.2.17beta2 [April 26, 2007]
   Relocated misplaced test for png_ptr == NULL in pngpread.c
   Change "==" to "&" for testing PNG_RGB_TO_GRAY_ERR & PNG_RGB_TO_GRAY_WARN
@@ -1713,7 +1713,7 @@ version 1.2.17rc2 [May 8, 2007]
   Added png_ptr->unknown_chunk to hold working unknown chunk data, so it
     can be free'ed in case of error.  Revised unknown chunk handling in
     pngrutil.c and pngpread.c to use this structure.
-
+ 
 version 1.2.17rc3 [May 8, 2007]
   Revised symbol-handling in configure script.
 
@@ -1894,6 +1894,77 @@ version 1.0.27rc6 and 1.2.19rc6 [August 15, 2007]
 
 version 1.0.27 and 1.2.19 [August 18, 2007]
   Conditionally restored row initialization error exit.
+
+version 1.2.20beta01 [August 19, 2007]
+  Fixed problem with compiling pnggccrd.c on Intel-Apple platforms.
+  Added PNG_NO_ERROR_TEXT feature, with demo in contrib/pngminim
+  Removed define PNG_WARN_UNINITIALIZED_ROW 1 /* 0: warning; 1: error */
+    because it caused some trouble.
+
+version 1.2.20beta02 [August 20, 2007]
+  Avoid compiling pnggccrd.c on Intel-Apple platforms.
+
+version 1.2.20beta03 [August 20, 2007]
+  Added "/D PNG_NO_MMX_CODE" to the non-mmx builds of projects/visualc6
+    and visualc71.
+
+version 1.2.20beta04 [August 21, 2007]
+  Revised pngvcrd.c for improved efficiency (Steve Snyder).
+
+version 1.2.20rc1 [August 23, 2007]
+  Revised pngconf.h to set PNG_NO_MMX_CODE for gcc-3.x compilers.
+
+version 1.2.20rc2 [August 27, 2007]
+  Revised scripts/CMakeLists.txt
+  Revised #ifdefs to ensure one and only one of pnggccrd.c, pngvcrd.c,
+    or part of pngrutil.c is selected.
+
+version 1.2.20rc3 [August 30, 2007]
+  Remove a little more code in pngwutil.c when PNG_NO_WRITE_FILTER is selected.
+  Added /D _CRT_SECURE_NO_WARNINGS to visual6c and visualc71 projects.
+  Compile png_mmx_support() in png.c even when PNG_NO_MMX_CODE is defined.
+  Restored a "superfluous" #ifdef that was removed from 1.2.20rc2 pnggccrd.c,
+    breaking the png_mmx_support() function.
+
+version 1.2.20rc4 [September 1, 2007]
+  Removed Intel contributions (MMX, Optimized C).
+
+version 1.2.20rc5 [September 2, 2007]
+  Restored configure and Makefile.in to rc3 and put a snippet of code in
+    pnggccrd.c, to ensure configure makes the same PNG_NO_MMX_CODE selection
+
+version 1.2.20rc6 [September 2, 2007]
+  Fixed bugs in scripts/CMakeLists.txt
+  Removed pngvcrd.c references from msvc projects.
+
+version 1.0.28 and 1.2.20 [September 8, 2007]
+  Removed "(NO READ SUPPORT)" from png_get_header_version() string.
+
+version 1.2.21beta1 [September 14, 2007]
+  Fixed various mistakes reported by George Cook and Jeff Phillips:
+  logical vs bitwise NOT in pngrtran.c, bug introduced in 1.2.19rc2
+  16-bit cheap transparency expansion, bug introduced in 1.2.19beta2
+  errors with sizeof(unknown_chunk.name), bugs introduced in 1.2.19beta11
+  <= compare with unsigned var in pngset.c, should be ==.
+
+version 1.2.21beta2 [September 18, 2007]
+  Removed some extraneous typecasts.
+
+version 1.2.21rc1 [September 25, 2007]
+  Fixed potential out-of-bounds reads in png_handle_pCAL() and
+    png_handle_ztXt() ("flayer" results reported by Tavis Ormandy).
+
+version 1.2.21rc2 [September 26, 2007]
+  Fixed potential out-of-bounds reads in png_handle_sCAL(),
+    png_handle_iTXt(), and png_push_read_tEXt().
+  Remove some PNG_CONST declarations from pngwutil.c to avoid compiler warnings
+  Revised makefiles to update paths in libpng.pc properly.
+
+version 1.2.21rc3 [September 27, 2007]
+  Revised makefiles to update "Libs" in libpng.pc properly.
+
+version 1.0.29 and 1.2.21rc3 [October 4, 2007]
+  No changes.
 
 Send comments/corrections/commendations to png-mng-implement at lists.sf.net
 (subscription required; visit

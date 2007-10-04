@@ -1,7 +1,7 @@
 
 /* pngset.c - storage of image information into info struct
  *
- * Last changed in libpng 1.2.17 May 15, 2007
+ * Last changed in libpng 1.2.21 [October 4, 2007]
  * For conditions of distribution and use, see copyright notice in png.h
  * Copyright (c) 1998-2007 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
@@ -222,7 +222,7 @@ png_set_hIST(png_structp png_ptr, png_infop info_ptr, png_uint_16p hist)
    png_debug1(1, "in %s storage function\n", "hIST");
    if (png_ptr == NULL || info_ptr == NULL)
       return;
-   if (info_ptr->num_palette <= 0 || info_ptr->num_palette
+   if (info_ptr->num_palette == 0 || info_ptr->num_palette
        > PNG_MAX_PALETTE_LENGTH)
    {
        png_warning(png_ptr,
@@ -690,7 +690,7 @@ png_set_iCCP(png_structp png_ptr, png_infop info_ptr,
       png_warning(png_ptr, "Insufficient memory to process iCCP chunk.");
       return;
    }
-   png_strncpy(new_iccp_name, name, png_sizeof(new_iccp_name));
+   png_strncpy(new_iccp_name, name, png_strlen(new_iccp_name)+1);
    new_iccp_profile = (png_charp)png_malloc_warn(png_ptr, proflen);
    if (new_iccp_profile == NULL)
    {
@@ -980,7 +980,7 @@ png_set_sPLT(png_structp png_ptr,
              "Out of memory while processing sPLT chunk");
         }
         /* TODO: use png_malloc_warn */
-        png_strncpy(to->name, from->name, png_strlen(from->name));
+        png_strncpy(to->name, from->name, png_strlen(from->name)+1);
         to->entries = (png_sPLT_entryp)png_malloc_warn(png_ptr,
             from->nentries * png_sizeof(png_sPLT_entry));
         /* TODO: use png_malloc_warn */
@@ -1202,51 +1202,13 @@ png_set_invalid(png_structp png_ptr, png_infop info_ptr, int mask)
 
 #ifndef PNG_1_0_X
 #ifdef PNG_ASSEMBLER_CODE_SUPPORTED
-/* this function was added to libpng 1.2.0 and should always exist by default */
+/* function was added to libpng 1.2.0 and should always exist by default */
 void PNGAPI
 png_set_asm_flags (png_structp png_ptr, png_uint_32 asm_flags)
 {
-#ifdef PNG_MMX_CODE_SUPPORTED
-    png_uint_32 settable_asm_flags;
-    png_uint_32 settable_mmx_flags;
-#endif
-    if (png_ptr == NULL)
-       return;
-#ifdef PNG_MMX_CODE_SUPPORTED
-
-    settable_mmx_flags =
-#ifdef PNG_HAVE_MMX_COMBINE_ROW
-                         PNG_ASM_FLAG_MMX_READ_COMBINE_ROW  |
-#endif
-#ifdef PNG_HAVE_MMX_READ_INTERLACE
-                         PNG_ASM_FLAG_MMX_READ_INTERLACE    |
-#endif
-#ifdef PNG_HAVE_MMX_READ_FILTER_ROW
-                         PNG_ASM_FLAG_MMX_READ_FILTER_SUB   |
-                         PNG_ASM_FLAG_MMX_READ_FILTER_UP    |
-                         PNG_ASM_FLAG_MMX_READ_FILTER_AVG   |
-                         PNG_ASM_FLAG_MMX_READ_FILTER_PAETH |
-#endif
-                         0;
-
-    /* could be some non-MMX ones in the future, but not currently: */
-    settable_asm_flags = settable_mmx_flags;
-
-    if (!(png_ptr->asm_flags & PNG_ASM_FLAG_MMX_SUPPORT_COMPILED) ||
-        !(png_ptr->asm_flags & PNG_ASM_FLAG_MMX_SUPPORT_IN_CPU))
-    {
-        /* clear all MMX flags if MMX isn't supported */
-        settable_asm_flags &= ~settable_mmx_flags;
-        png_ptr->asm_flags &= ~settable_mmx_flags;
-    }
-
-    /* we're replacing the settable bits with those passed in by the user,
-     * so first zero them out of the master copy, then bitwise-OR in the
-     * allowed subset that was requested */
-
-    png_ptr->asm_flags &= ~settable_asm_flags;               /* zero them */
-    png_ptr->asm_flags |= (asm_flags & settable_asm_flags);  /* set them */
-#endif /* ?PNG_MMX_CODE_SUPPORTED */
+/* Obsolete as of libpng-1.2.20 and will be removed from libpng-1.4.0 */
+    if (png_ptr != NULL)
+    png_ptr->asm_flags = 0;
 }
 
 /* this function was added to libpng 1.2.0 */
@@ -1255,12 +1217,9 @@ png_set_mmx_thresholds (png_structp png_ptr,
                         png_byte mmx_bitdepth_threshold,
                         png_uint_32 mmx_rowbytes_threshold)
 {
+/* Obsolete as of libpng-1.2.20 and will be removed from libpng-1.4.0 */
     if (png_ptr == NULL)
        return;
-#ifdef PNG_MMX_CODE_SUPPORTED
-    png_ptr->mmx_bitdepth_threshold = mmx_bitdepth_threshold;
-    png_ptr->mmx_rowbytes_threshold = mmx_rowbytes_threshold;
-#endif /* ?PNG_MMX_CODE_SUPPORTED */
 }
 #endif /* ?PNG_ASSEMBLER_CODE_SUPPORTED */
 

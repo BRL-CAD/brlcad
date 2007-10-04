@@ -8,7 +8,7 @@
 # Library name:
 LIBNAME = libpng12
 PNGMAJ = 0
-PNGMIN = 1.2.19
+PNGMIN = 1.2.21
 PNGVER = $(PNGMAJ).$(PNGMIN)
 
 # Shared library names:
@@ -69,7 +69,7 @@ DM=$(DESTDIR)$(MANPATH)
 
 OBJS = png.o pngset.o pngget.o pngrutil.o pngtrans.o pngwutil.o \
 	pngread.o pngrio.o pngwio.o pngwrite.o pngrtran.o \
-	pngwtran.o pngmem.o pngerror.o pngpread.o pnggccrd.o
+	pngwtran.o pngmem.o pngerror.o pngpread.o
 
 OBJSDLL = $(OBJS:.o=.pic.o)
 
@@ -85,7 +85,11 @@ libpng.a: $(OBJS)
 	$(RANLIB) $@
 
 libpng.pc:
-	cat scripts/libpng.pc.in | sed -e s\!@PREFIX@!$(prefix)! > libpng.pc
+	cat scripts/libpng.pc.in | sed -e s!@prefix@!$(prefix)! \
+	-e s!@exec_prefix@!$(exec_prefix)! \
+	-e s!@libdir@!$(LIBPATH)! \
+	-e s!@includedir@!$(INCPATH)! \
+	-e s!-lpng12!-lpng12\ -lz\ -lm! > libpng.pc
 
 libpng-config:
 	( cat scripts/libpng-config-head.in; \
@@ -232,7 +236,6 @@ pngwio.o pngwio.pic.o: png.h pngconf.h
 pngmem.o pngmem.pic.o: png.h pngconf.h
 pngset.o pngset.pic.o: png.h pngconf.h
 pngget.o pngget.pic.o: png.h pngconf.h
-pnggccrd.o pnggccrd.pic.o: png.h pngconf.h
 pngread.o pngread.pic.o: png.h pngconf.h
 pngrtran.o pngrtran.pic.o: png.h pngconf.h
 pngrutil.o pngrutil.pic.o: png.h pngconf.h

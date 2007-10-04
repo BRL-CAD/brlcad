@@ -1,4 +1,4 @@
-
+                                             
 project(PNG)
 
 # Copyright (C) 2007 Glenn Randers-Pehrson
@@ -6,7 +6,7 @@ project(PNG)
 
 set(PNGLIB_MAJOR 1)
 set(PNGLIB_MINOR 2)
-set(PNGLIB_RELEASE 19)
+set(PNGLIB_RELEASE 21)
 set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
 
@@ -30,11 +30,11 @@ endif(NOT WIN32)
 # COMMAND LINE OPTIONS
 option(PNG_SHARED "Build shared lib" YES)
 option(PNG_STATIC "Build static lib" YES)
-if(MSVC)
+if(MINGW)
   option(PNG_TESTS  "Build pngtest" NO)
-else(MSVC)
+else(MINGW)
   option(PNG_TESTS  "Build pngtest" YES)
-endif(MSVC)
+endif(MINGW)
 option(PNG_NO_CONSOLE_IO "FIXME" YES)
 option(PNG_NO_STDIO      "FIXME" YES)
 option(PNG_DEBUG         "Build with debug output" YES)
@@ -61,8 +61,6 @@ else(NOT WIN32)
   set(png_asm_tmp "ON")
  endif("$ENV{${TEXT}}" STREQUAL "")
 endif(NOT WIN32)
-
-option(PNG_MMX "Use MMX assembler code (x86 only)" ${png_asm_tmp})
 
 # SET LIBNAME
 # msvc does not append 'lib' - do it here to have consistent name
@@ -99,23 +97,14 @@ set(pngtest_sources
        pngtest.c
 )
 # SOME NEEDED DEFINITIONS
+if(MSVC)
+  add_definitions(-DPNG_NO_MODULEDEF -D_CRT_SECURE_NO_DEPRECATE)
+endif(MSVC)
+
 add_definitions(-DZLIB_DLL)
 
-if(PNG_MMX)
- if(MSVC)
-  add_definitions(-DPNG_NO_MODULEDEF -D_CRT_SECURE_NO_DEPRECATE)
-  set(libpng_sources ${libpng_sources}
-          pngvcrd.c
-  )
- else(MSVC)
-  set(libpng_sources ${libpng_sources}
-          pnggccrd.c
-  )
- endif(MSVC)
-else(PNG_MMX)
-  add_definitions(-DLIBPNG_NO_MMX)
-  add_definitions(-DPNG_NO_MMX_CODE)
-endif(PNG_MMX)
+add_definitions(-DLIBPNG_NO_MMX)
+add_definitions(-DPNG_NO_MMX_CODE)
 
 if(PNG_CONSOLE_IO_SUPPORTED)
  add_definitions(-DPNG_CONSOLE_IO_SUPPORTED)
@@ -180,7 +169,7 @@ configure_file(${PNG_SOURCE_DIR}/scripts/libpng-config.in
 
 # SET UP LINKS
 set_target_properties(${PNG_LIB_NAME} PROPERTIES
-#    VERSION 0.${PNGLIB_RELEASE}.1.2.19
+#    VERSION 0.${PNGLIB_RELEASE}.1.2.21
      VERSION 0.${PNGLIB_RELEASE}.0
      SOVERSION 0
      CLEAN_DIRECT_OUTPUT 1)
@@ -191,7 +180,11 @@ if(NOT WIN32)
      CLEAN_DIRECT_OUTPUT 1)
 endif(NOT WIN32)
 # INSTALL
-install_targets(/lib ${PNG_LIB_NAME} ${PNG_LIB_NAME_STATIC})
+install_targets(/lib ${PNG_LIB_NAME})
+if(PNG_STATIC)
+  install_targets(/lib ${PNG_LIB_NAME_STATIC})
+endif(PNG_STATIC)
+
 install(FILES png.h pngconf.h         DESTINATION include)
 install(FILES png.h pngconf.h         DESTINATION include/${PNGLIB_NAME})
 install(FILES libpng.3 libpngpf.3             DESTINATION man/man3)

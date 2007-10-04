@@ -31,9 +31,6 @@ endif
 
 DESTDIR=
 
-# To disable assembler optimizations, add '-DPNG_NO_MMX_CODE' to
-# $CFLAGS.  To enable, add pnggccrd.o to the dependencies.
-
 CC=gcc
 ifdef MINGW
 MINGW_CCFLAGS=-mno-cygwin -I/usr/include/mingw
@@ -77,7 +74,7 @@ CFLAGS= $(strip $(MINGW_CCFLAGS) $(addprefix -I,$(ZLIBINC)) \
 LIBNAME = libpng12
 PNGMAJ = 0
 CYGDLL = 12
-PNGMIN = 1.2.19
+PNGMIN = 1.2.21
 PNGVER = $(PNGMAJ).$(PNGMIN)
 
 SHAREDLIB=cygpng$(CYGDLL).dll
@@ -112,7 +109,7 @@ DL =$(D)$(LIBPATH)
 
 OBJS = png.o pngset.o pngget.o pngrutil.o pngtrans.o pngwutil.o \
 	pngread.o pngrio.o pngwio.o pngwrite.o pngrtran.o \
-	pngwtran.o pngmem.o pngerror.o pngpread.o # pnggccrd.o
+	pngwtran.o pngmem.o pngerror.o pngpread.o
 
 OBJSDLL = $(OBJS:.o=.pic.o)
 
@@ -137,8 +134,11 @@ buildsetup-tell:
 libpng.pc: scripts/libpng.pc.in
 	@echo -e Making pkg-config file for this libpng installation..'\n' \
            using PREFIX=\"$(prefix)\"'\n'
-	cat $(S)/scripts/libpng.pc.in | sed -e s\!@PREFIX@!$(prefix)! | \
-	   sed -e s/-lm// > libpng.pc
+	cat scripts/libpng.pc.in | sed -e s!@prefix@!$(prefix)! \
+	-e s!@exec_prefix@!$(exec_prefix)! \
+	-e s!@libdir@!$(LIBPATH)! \
+	-e s!@includedir@!$(INCPATH)! \
+	-e s!-lpng12!-lpng12\ -lz! > libpng.pc
 
 libpng-config: scripts/libpng-config-head.in scripts/libpng-config-body.in
 	@echo -e Making $(LIBNAME) libpng-config file for this libpng \
@@ -155,20 +155,6 @@ static: all-static
 shared: all-shared
 all-static: $(STATLIB) pngtest-stat$(EXE)
 all-shared: $(SHAREDLIB) pngtest$(EXE)
-
-# pnggccrd.o: pnggccrd.c png.h pngconf.h
-#	@echo ""
-#	@echo '    You can ignore the "control reaches end of non-void function"'
-#	@echo '    warning and "<variable> defined but not used" warnings:'
-#	@echo ""
-#	$(CC) -c $(CFLAGS) -o $@ $<
-
-# pnggccrd.pic.o:	pnggccrd.c png.h pngconf.h
-#	@echo ""
-#	@echo '    You can ignore the "control reaches end of non-void function"'
-#	@echo '    warning and "<variable> defined but not used" warnings:'
-#	@echo ""
-#	$(CC) -c $(CFLAGS) -DPNG_BUILD_DLL -o $@ $<
 
 $(STATLIB): $(OBJS)
 	ar rc $@ $(OBJS)
@@ -305,7 +291,6 @@ pngwrite.o pngwrite.pic.o:	png.h pngconf.h pngwrite.c
 pngwtran.o pngwtran.pic.o:	png.h pngconf.h pngwtran.c
 pngwutil.o pngwutil.pic.o:	png.h pngconf.h pngwutil.c
 pngpread.o pngpread.pic.o:	png.h pngconf.h pngpread.c
-# pnggccrd.o pnggccrd.pic.o:	png.h pngconf.h pnggccrd.c
 
 pngtest.o:			png.h pngconf.h pngtest.c
 pngtest-stat.o:			png.h pngconf.h pngtest.c

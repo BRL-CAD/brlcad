@@ -1,5 +1,5 @@
 #! /bin/sh
-# a quick hack script to generate necessary files from
+# a quick hack script to generate necessary files from 
 # auto* tools.
 #
 # WARNING: if you run this you will change the versions

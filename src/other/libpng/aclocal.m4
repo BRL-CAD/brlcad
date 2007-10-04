@@ -2450,7 +2450,7 @@ AC_DEFUN([AC_PROG_NM],
   lt_cv_path_NM="$NM"
 else
   lt_nm_to_check="${ac_tool_prefix}nm"
-  if test -n "$ac_tool_prefix" && test "$build" = "$host"; then
+  if test -n "$ac_tool_prefix" && test "$build" = "$host"; then 
     lt_nm_to_check="$lt_nm_to_check nm"
   fi
   for lt_tmp_nm in $lt_nm_to_check; do
@@ -5587,7 +5587,7 @@ EOF
 
     sysv5* | sco3.2v5* | sco5v6* | unixware* | OpenUNIX*)
       case `$LD -v 2>&1` in
-        *\ [[01]].* | *\ 2.[[0-9]].* | *\ 2.1[[0-5]].*)
+        *\ [[01]].* | *\ 2.[[0-9]].* | *\ 2.1[[0-5]].*) 
 	_LT_AC_TAGVAR(ld_shlibs, $1)=no
 	cat <<_LT_EOF 1>&2
 
