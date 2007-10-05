@@ -22,6 +22,7 @@ documentation_DATA = \
 	benchmark.tr \
 	cvs.txt \
 	description.txt \
+	deprecation.txt \
 	ged.tr \
 	history.txt \
 	hypot.txt \
