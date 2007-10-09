@@ -82,6 +82,7 @@ struct clone_state {
     hvect_t		rpnt;		/* Point to rotate about (default 0 0 0) */
     int			miraxis;	/* Axis to mirror copy */
     fastf_t		mirpos;		/* Point on axis to mirror copy */
+    int			autoview;	/* Execute autoview after drawing all objects */
 };
 #define INTERP state->interp
 
@@ -728,8 +729,10 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 	    /* draw does not use clientdata */
 	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
 	}
-	av[0] = "autoview";
-	cmd_autoview((ClientData)NULL, INTERP, 1, av);
+	if(state->autoview) {
+	    av[0] = "autoview";
+	    cmd_autoview((ClientData)NULL, INTERP, 1, av);
+	}
     }
 
     /* release our name allocations */
@@ -758,6 +761,7 @@ print_usage(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-f\t\t\t- Don't draw the new object.\n", (char *)NULL);
+    Tcl_AppendResult(interp, "-g\t\t\t- Don't resize the view after drawing new objects.\n", (char *)NULL);
     Tcl_AppendResult(interp, "-h\t\t\t- Prints this message.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-i <n>\t\t\t- Specifies the increment between each copy.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-m <axis> <pos>\t\t- Specifies the axis and point to mirror the group.\n", (char*)NULL);
@@ -785,11 +789,12 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     state->incr = 100;
     state->n_copies = 1;
     state->draw_obj = 1;
+    state->autoview = 1;
     state->rot[W] = 0;
     state->rpnt[W] = 0;
     state->trans[W] = 0;
     state->miraxis = W;
-    while ((k = bu_getopt(argc, argv, "a:b:fhi:m:n:p:r:t:v")) != EOF) {
+    while ((k = bu_getopt(argc, argv, "a:b:fhgi:m:n:p:r:t:v")) != EOF) {
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);
@@ -807,6 +812,9 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 		break;
 	    case 'f':
 		state->draw_obj = 0;
+		break;
+	    case 'g':
+		state->autoview = 0;
 		break;
 	    case 'h':
 		print_usage(interp);
