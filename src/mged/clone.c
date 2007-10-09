@@ -217,26 +217,22 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	newname = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc newname");
     sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
 
-    if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION))
-	/* primitives and regions */
-	do {
-	    if (suffix[0] == '.')
-		if ((i == 1) && is_in_list(obj_list, buf)) {
-		    j = index_in_list(obj_list, buf);
-		    snprintf(buf, NAMESIZE, "%s%d", prefix, num);
-		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], suffix);
-		} else
-		    snprintf(newname, NAMESIZE, "%s%d%s", prefix, num+i*state->incr, suffix);
-	    else
-		snprintf(newname, NAMESIZE, "%s%d", prefix, num+i*state->incr);
-	    i++;
-	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
-    else
-	/* non-region combinations */
-	do {
-	    snprintf(newname, NAMESIZE, "%s%d", prefix, (num==0)?2:num+i);
-	    i++;
-	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
+    do {
+        if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
+    	/* primitives and regions */
+    	    if (suffix[0] == '.')
+    		if ((i == 1) && is_in_list(obj_list, buf)) {
+    		    j = index_in_list(obj_list, buf);
+    		    snprintf(buf, NAMESIZE, "%s%d", prefix, num);
+    		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], suffix);
+    		} else
+    		    snprintf(newname, NAMESIZE, "%s%d%s", prefix, num+i*state->incr, suffix);
+    	    else
+    		snprintf(newname, NAMESIZE, "%s%d", prefix, num + i*state->incr);
+	} else /* non-region combinations */
+    	    snprintf(newname, NAMESIZE, "%s%d", prefix, (num==0)?2:num+i);
+	i++;
+    } while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
     return newname;
 }
 
