@@ -210,11 +210,11 @@ static const char *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
     char *newname = NULL;
-    char prefix[NAMESIZE] = {0}, suffix[NAMESIZE] = {0}, buf[NAMESIZE] = {0};
+    char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0};
     int num = 0, i = 1, j;
 
     if (!newname)
-	newname = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc newname");
+	newname = (char *)bu_calloc(BUFSIZ, sizeof(char), "alloc newname");
     sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
 
     do {
@@ -223,14 +223,14 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     	    if (suffix[0] == '.')
     		if ((i == 1) && is_in_list(obj_list, buf)) {
     		    j = index_in_list(obj_list, buf);
-    		    snprintf(buf, NAMESIZE, "%s%d", prefix, num);
-    		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], suffix);
+    		    snprintf(buf, BUFSIZ, "%s%d", prefix, num);
+    		    snprintf(newname, BUFSIZ, "%s%s", obj_list.names[j].dest[iter], suffix);
     		} else
-    		    snprintf(newname, NAMESIZE, "%s%d%s", prefix, num+i*state->incr, suffix);
+    		    snprintf(newname, BUFSIZ, "%s%d%s", prefix, num+i*state->incr, suffix);
     	    else
-    		snprintf(newname, NAMESIZE, "%s%d", prefix, num + i*state->incr);
+    		snprintf(newname, BUFSIZ, "%s%d", prefix, num + i*state->incr);
 	} else /* non-region combinations */
-    	    snprintf(newname, NAMESIZE, "%s%d", prefix, (num==0)?2:num+i);
+    	    snprintf(newname, BUFSIZ, "%s%d", prefix, (num==0)?2:num+i);
 	i++;
     } while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
     return newname;
@@ -273,7 +273,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	if (rp->u_id == ID_SOLID) {
-	    strncpy(rp->s.s_name, dp->d_namep, NAMESIZE);
+	    strncpy(rp->s.s_name, dp->d_namep, BUFSIZ);
 
 	    /* mirror */
 	    if (state->miraxis != W) {
@@ -455,7 +455,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
 	    bu_free((char *)name, "free get_name() name");
 	}
-	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), NAMESIZE);
+	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), BUFSIZ);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -469,7 +469,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_log("ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
-	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    snprintf(rp[j].M.m_instname, BUFSIZ, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
 	}
 
 	/* write the object to disk */
@@ -1135,7 +1135,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t *rots;
 
 	for (i = 0; i < 2; i++)
-	    vargs[i] = (char *)bu_malloc(sizeof(char)*NAMESIZE, "alloc vargs1");
+	    vargs[i] = (char *)bu_malloc(sizeof(char)*BUFSIZ, "alloc vargs1");
 
 	strcpy(vargs[0], "e");
 	strcpy(vargs[1], bu_vls_addr(&links[j].name));
