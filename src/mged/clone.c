@@ -233,7 +233,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     	    snprintf(newname, BUFSIZ, "%s%d", prefix, (num==0)?2:num+i);
 	i++;
     } while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
-    return newname;
+    return bu_realloc(newname, strlen(newname) + 1, "get_name realloc");
 }
 
 
