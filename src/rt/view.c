@@ -59,11 +59,6 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #include <math.h>
 
-#ifdef HAVE_UNIX_IO
-# include <sys/types.h>
-# include <sys/stat.h>
-#endif
-
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
@@ -1119,9 +1114,6 @@ reproject_splat(int ix, int iy, register struct floatpixel *ip, const fastf_t *n
 {
 	register struct floatpixel	*op;
 	int	count = 1;
-#if 0
-	static int foo;
-#endif
 
 	/* Reprojection lies on screen, see if dest pixel already occupied */
 	op = &curr_float_frame[iy*width + ix];
@@ -1132,16 +1124,6 @@ reproject_splat(int ix, int iy, register struct floatpixel *ip, const fastf_t *n
 		/* Recompute both distances from current eye_pt! */
 		/* Inefficient, only need Z component. */
 		MAT4X3PNT(o_pt, model2view, op->ff_hitpt);
-#if 0
-		if( foo != curframe )  {
-			extern int print_on;
-			foo = curframe;
-			print_on = 1;
-			bu_log("  ip=(%g,%g,%g) ip_view=(%g,%g,%g)\n  op=(%g,%g,%g), o_pt=(%g,%g,%g)\n",
-				V3ARGS(ip->ff_hitpt), V3ARGS(new_view_pt),
-				V3ARGS(op->ff_hitpt), V3ARGS(o_pt) );
-		}
-#endif
 		if( o_pt[Z] > new_view_pt[Z] )
 			return 0;	/* previous val closer to eye, leave it be. */
 		else
@@ -1275,9 +1257,6 @@ view_2init(register struct application *ap, char *framename)
 {
 	register int i;
 	struct bu_ptbl stps;
-#ifdef HAVE_UNIX_IO
-	struct stat sb;
-#endif
 
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
@@ -1393,78 +1372,22 @@ bu_log("mallocing curr_float_frame\n");
 		break;
 
 	case BUFMODE_SCANLINE:
-		bu_log("Low overhead scanline-per-CPU buffering\n");
-		/* Fall through... */
+	    bu_log("Low overhead scanline-per-CPU buffering\n");
+	    /* Fall through... */
 	case BUFMODE_DYNAMIC:
-		if( buf_mode == BUFMODE_DYNAMIC &&
-		    rt_verbosity & VERBOSE_OUTPUTFILE)
-			bu_log("Dynamic scanline buffering\n");
-		if( sub_grid_mode )  {
-			for( i=sub_ymin; i<=sub_ymax; i++ )
-				scanline[i].sl_left = sub_xmax-sub_xmin+1;
-		} else {
-			for( i=0; i<height; i++ )
+	    if( (buf_mode == BUFMODE_DYNAMIC) && (rt_verbosity & VERBOSE_OUTPUTFILE)) {
+		bu_log("Dynamic scanline buffering\n");
+	    }
+
+	    if( sub_grid_mode )  {
+		for( i=sub_ymin; i<=sub_ymax; i++ )
+		    scanline[i].sl_left = sub_xmax-sub_xmin+1;
+	    } else {
+		for( i=0; i<height; i++ )
 				scanline[i].sl_left = width;
-		}
-
-#if 0
-		/* Reading pre-traced pixels is now disabled. */
-#ifdef HAVE_UNIX_IO
-		/*
-		 *  This code allows the computation of a particular frame
-		 *  to a disk file to be resumed automaticly.
-		 *  This is worthwhile crash protection.
-		 *  This use of stat() and fseek() is UNIX-specific.
-		 *
-		 *  This code depends on the file having already been opened
-		 *  for both reading and writing for this special circumstance
-		 *  of having a pre-existing file with partial results.
-		 *  Ensure that positioning is precisely pixel aligned.
-		 *  The file size is almost certainly
-		 *  not an exact multiple of three bytes.
-		 */
-		if( outfp != NULL && pix_start == 0 &&
-		    stat( framename, &sb ) >= 0 &&
-		    sb.st_size > 0 )  {
-			/* File exists, with partial results */
-			register int	xx, yy;
-			int		got;
-
-			/* Replaced with new method of looking through whole image and calculating black pixels */
-			/* pix_start = sb.st_size / sizeof(RGBpixel); */
-
-			/* Protect against file being too large */
-			if( pix_start > pix_end )  pix_start = pix_end;
-
-			/* XXX Need to check for black interior regions! */
-
-			xx = pix_start % width;
-			yy = pix_start / width;
-			fprintf(stderr,
-				"Continuing with pixel %d (%d, %d) [size=%ld]\n",
-				pix_start,
-				xx, yy,
-				(long)sb.st_size );
-
-			scanline[yy].sl_buf = bu_calloc( width,
-				sizeof(RGBpixel),
-				"sl_buf scanline buffer (for continuation scanline)");
-			if( fseek( outfp, yy*width*pwidth, 0 ) != 0 )
-				bu_log("fseek error\n");
-			/* Read the fractional scanline */
-			got = fread( scanline[yy].sl_buf, sizeof(RGBpixel),
-			    xx, outfp );
-			if( got != xx )
-				bu_log("Unable to fread fractional scanline, wanted %d, got %d pixels\n", xx, got);
-
-			/* Account for pixels that don't need to be done */
-			scanline[yy].sl_left -= xx;
-			for( i = yy-1; i >= 0; i-- )
-				scanline[i].sl_left = 0;
-		}
-#endif
-#endif
-		break;
+	    }
+	    
+	    break;
 	default:
 		bu_bomb("bad buf_mode");
 	}
