@@ -662,6 +662,9 @@ view_end(struct application *ap)
 	}
     }
 
+    /* flush for good measure */
+    fflush(stdout); fflush(stderr);
+
     return;
 }
 
