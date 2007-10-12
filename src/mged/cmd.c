@@ -3341,6 +3341,9 @@ cmd_blast(ClientData	clientData,
 
 	if (cmd_zap(clientData, interp, 1, av) == TCL_ERROR)
 		return TCL_ERROR;
+        
+        if( argc == 1 ) /* "B" alone is same as "Z" */
+            return TCL_OK;
 
 	return edit_com(argc, argv, 1, 1);
 }
