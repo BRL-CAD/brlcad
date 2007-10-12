@@ -1,5 +1,7 @@
 # $Id$
 
+all: all-am
+
 all-am:
 	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
 
@@ -21,7 +23,9 @@ INSTALLED_INCLUDES = \
 	tkPlatDecls.h
 
 INSTALLED_ARCHIVES = \
+	libtk.* \
 	libtk8.5.* \
+	libtkstub.* \
 	libtkstub8.5.* \
 	tk8.5 \
 	tkConfig.sh
@@ -199,4 +203,5 @@ DISTCLEANFILES = \
 	unix/tkConfig.sh \
 	unix/wish
 
-MAINTAINERCLEANFILES = Makefile.in
+# INTENTIONALLY NOT INCLUDED
+# include $(top_srcdir)/misc/Makefile.defs

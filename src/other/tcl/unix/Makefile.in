@@ -535,8 +535,7 @@ MAC_OSX_SRCS = \
 # things like "make depend".
 
 SRCS = $(GENERIC_SRCS) $(TOMMATH_SRCS) \
-	$(UNIX_SRCS) $(NOTIFY_SRCS) $(STUB_SRCS) \
-	@PLAT_SRCS@
+	$(UNIX_SRCS) $(NOTIFY_SRCS) $(STUB_SRCS) @PLAT_SRCS@
 
 all: binaries libraries doc
 
@@ -551,10 +550,20 @@ doc:
 ${LIB_FILE}: ${OBJS} ${STUB_LIB_FILE}
 	rm -f $@
 	@MAKE_LIB@
+	@if test -f $(LIB_FILE) ; then \
+	    if test ! -f libtcl$(SHLIB_SUFFIX) ; then \
+		ln -s $(LIB_FILE) libtcl$(SHLIB_SUFFIX) ; \
+	    fi ; \
+	fi
 
 ${STUB_LIB_FILE}: ${STUB_LIB_OBJS}
 	rm -f $@
 	@MAKE_STUB_LIB@
+	@if test -f $(STUB_LIB_FILE) ; then \
+	    if test ! -f libtclstub.a ; then \
+		ln -s $(STUB_LIB_FILE) libtclstub.a ; \
+	    fi ; \
+	fi
 
 # Make target which outputs the list of the .o contained in the Tcl lib useful
 # to build a single big shared library containing Tcl and other extensions.
@@ -728,6 +737,7 @@ install-binaries: binaries
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
 	@chmod 555 $(LIB_INSTALL_DIR)/$(LIB_FILE)
+	@$(INSTALL_LIBRARY) libtcl$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtcl$(SHLIB_SUFFIX)
 	@if test "$(TCL_BUILD_EXP_FILE)" != ""; then \
 	    echo "Installing $(TCL_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    $(INSTALL_DATA) $(TCL_BUILD_EXP_FILE) \
@@ -740,6 +750,7 @@ install-binaries: binaries
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
+	    $(INSTALL_LIBRARY) libtclstub.a $(LIB_INSTALL_DIR)/libtclstub.a ; \
 	fi
 	@EXTRA_INSTALL_BINARIES@
 

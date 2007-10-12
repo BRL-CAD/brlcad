@@ -1,5 +1,7 @@
 # $Id$
 
+all: all-am
+
 all-am:
 	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
 
@@ -23,7 +25,9 @@ INSTALLED_INCLUDES = \
 	tclTomMathDecls.h
 
 INSTALLED_ARCHIVES = \
+	libtcl.* \
 	libtcl8.5.* \
+	libtclstub.* \
 	libtclstub8.5.* \
 	tcl8/8.4/http-2.5.3.tm \
 	tcl8/8.4/platform/shell-1.1.3.tm \
@@ -376,5 +380,5 @@ DISTCLEANFILES = \
 	unix/tclConfig.sh \
 	unix/tclsh
 
-MAINTAINERCLEANFILES = Makefile.in
-
+# INTENTIONALLY NOT INCLUDED
+# include $(top_srcdir)/misc/Makefile.defs
