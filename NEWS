@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-08-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged 'B' command behavior with -A and no args - John Anderson
 * updated bundled libpng to version 1.2.21 - Erik Greenwald
 * removed raytrace image continuation code - Erik Greenwald
 * new mged 'clone' command for performing deep copies of objects
