@@ -25,7 +25,9 @@ INSTALLED_INCLUDES = \
 	tclTomMathDecls.h
 
 INSTALLED_ARCHIVES = \
+	libtcl.* \
 	libtcl8.5.* \
+	libtclstub.* \
 	libtclstub8.5.* \
 	tcl8/8.4/http-2.5.3.tm \
 	tcl8/8.4/platform/shell-1.1.3.tm \

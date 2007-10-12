@@ -23,7 +23,9 @@ INSTALLED_INCLUDES = \
 	tkPlatDecls.h
 
 INSTALLED_ARCHIVES = \
+	libtk.* \
 	libtk8.5.* \
+	libtkstub.* \
 	libtkstub8.5.* \
 	tk8.5 \
 	tkConfig.sh
