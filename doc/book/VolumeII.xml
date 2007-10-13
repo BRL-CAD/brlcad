@@ -4292,10 +4292,10 @@
  </para>
  </sect1>
 </chapter>
-                            Intentionally Left Blank
 
-   Lesson 11: Refining the Mug
-
+<chapter id="Lesson-11">
+  <title>Refining the Mug</title>
+  <para>
    In this lesson, you will:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -4308,24 +4308,28 @@
        <para>Combine the shapes.</para>
      </listitem>
   </itemizedlist>
-
+  </para>
+  <para>
    In this lesson, you will refine the mug you made in the previous lesson.
    If you stopped at the end of that lesson, open the database mug.g before
    continuing.
-
-   1. Assigning Material Properties to the Mug Using the mater Command
-
+  </para>
+  <sect1><title> Assigning Material Properties to the Mug Using the mater Command</title>
+  <para>
    Assigning material properties to a region can be done with either the
    mater or shader command. The program will respond with a series of
    questions. These concern the various parameters of the shader you select
    to use in rendering the object.
-
+  </para>
+  <para>
    The most commonly used shader is the plastic shader, which uses a Phong
    lighting model. Select the plastic shader and set the color to a medium
    shade of green. The dialog in the Command Window should appear as follows:
-
+ 
    <command>mged> mater mug.r[Enter]</command>
+  </para>
 
+  <literallayout>
    Shader =
 
    Shader? ('del' to delete, CR to skip) plastic[Enter]
@@ -4339,12 +4343,15 @@
    Inherit = 0: lower nodes (towards leaves) override
 
    Inheritance (0|1)? (CR to skip) 0[Enter]
+  </literallayout>
 
+  <para>
    Enter the appropriate information that is shown in bold font. If you want
    to use the streamlined version, type:
 
    <command>mater mug.r plastic 32 128 32 0[Enter]</command>
-
+  </para>
+  <para>
    Diagrammed, this command says:
      <informaltable>
        <tgroup cols='5'>
@@ -4366,36 +4373,39 @@
 	 </tbody>
        </tgroup>
      </informaltable>
+  </para>
 
-
-   *Note: Inheritance is an advanced topic beyond the scope of the present
-   discussion.
-
-   2. Raytracing the Mug
-
+   <note>Inheritance is an advanced topic beyond the scope of the present
+   discussion.</note>
+  </sect1>
+  <sect1><title>Raytracing the Mug</title>
+  <para>
    Open the Raytrace Control Panel and select Raytrace. You should get an
    image of a green mug on a dark background (we use a white background here
    to save printing ink). If your mug is not green, you probably need to
    redraw your wireframe before raytracing.
+  </para>
    <figure>
-     <title></title>
+     <title>Raytraced Mug Without Rim</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="rtmugnorim.png"/>
      </screenshot>
    </figure>
+  </sect1>
 
-                           Raytraced Mug Without Rim
-
-   3. Refining the Mug
-
+  <sect1><title>Refining the Mug</title>
+  <para>
    Now let's improve the cup. Notice that the lip of the cup looks a little
    too squared off. To fix this, you will need to add a rounded top to the
    lip. You can do this by positioning a circular torus shape exactly at the
    top of the cup. Then you can add it to the combination body.c.
+  </para>
 
+  <para>
    At the MGED prompt, type:
 
    <command>in  rim.s tor 0 0 3.5 0 0 1 1.625 0.125[Enter]</command>
+  </para>
 
      <informaltable>
        <tgroup cols='7'>
@@ -4421,19 +4431,21 @@
 	 </tbody>
        </tgroup>
      </informaltable>
-
-   4. Combining the Shapes
-
+  </sect1>
+  <sect1><title>Combining the Shapes</title>
+  <para>
    To combine the torus with the cup, you will need to type at the prompt:
 
    <command>comb body.c u rim.s[Enter]</command>
-
+  </para>
+  <para>
    Now you are faced with a unique situation. The shape rim.s was added to
    the list of objects being displayed when it was created. However, now it
    is also a part of mug.r (via body.c). If you raytrace the current view,
    you will have two copies of this shape. The raytracer will complain that
    they overlap.
-
+  </para>
+  <para>
    One way to fix this is to clear the display, redisplay the new, complete
    object, and then raytrace. As discussed previously, the fbclear  command
    in the Raytrace Control Panel clears the framebuffer display, and the Z
@@ -4444,19 +4456,19 @@
    <command>Z[Enter]</command>
 
    <command>draw mug.r[Enter]</command>
-
+  </para>
+  <para>
    Raytrace your mug. It should now look similar to the following.
    <figure>
-     <title></title>
+     <title>The Mug Made Through the Command Line</title>
      <screenshot>
-       <graphic fileref=".png"/>
+       <graphic fileref="mugcommandline.png"/>
      </screenshot>
    </figure>
-
-                     The Mug Made Through the Command Line
-
-   Review
-
+  </para>
+  </sect1>
+  <sect1><title>Review</title>
+  <para>
    In this chapter, you:
    <itemizedlist mark='bullet'>
      <listitem>
@@ -4469,7 +4481,9 @@
        <para>Combined the shapes.</para>
      </listitem>
    </itemizedlist>
-
+  </para>
+  </sect1>
+</chapter>
 
    Lesson 12: Creating the Mug Through the GUI
 
