@@ -82,19 +82,22 @@ static int	clear = 0;
 static int	zoom = 0;
 static int	inverse = 0;		/* Draw upside-down */
 static int	one_line_only = 0;	/* insist on 1-line writes */
+static int	pause_sec = 0; /* Pause that many seconds before closing the FB
+			      and exiting */
 
 static char usage[] = "\
 Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.pix]\n";
+	[-S squarescrsize] [-W scr_width] [-N scr_height] [-p seconds]\n\
+	[file.pix]\n";
 
 int
 get_args(int argc, register char **argv)
 {
 	register int c;
 
-	while ( (c = bu_getopt( argc, argv, "1m:ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = bu_getopt( argc, argv, "1m:ahiczF:p:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case '1':
 			one_line_only = 1;
@@ -156,6 +159,9 @@ get_args(int argc, register char **argv)
 			break;
 		case 'N':
 			scr_height = atoi(bu_optarg);
+			break;
+		case 'p':
+			pause_sec=atoi(bu_optarg);
 			break;
 
 		default:		/* '?' */
@@ -368,6 +374,7 @@ main(int argc, char **argv)
 				skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
 		}
 	}
+	sleep(pause_sec);
 	if( fb_close( fbp ) < 0 )  {
 		fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
 	}
