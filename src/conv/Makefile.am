@@ -227,6 +227,7 @@ tankill_g_LDADD = ${WDB}
 viewpoint_g_SOURCES = viewpoint-g.c
 viewpoint_g_LDADD = ${WDB}
 
+dist_bin_SCRIPTS = intaval-g.py
 
 dist_man_MANS = \
 	asc-nmg.1 \
