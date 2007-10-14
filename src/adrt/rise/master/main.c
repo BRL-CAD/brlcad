@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
-  strcpy(proj, argv[0]);
+  strncpy(proj, argv[0], 64);
 
   if(proj[0]) {
     rise_master(port, obs_port, proj, list, exec, interval);

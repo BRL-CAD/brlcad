@@ -338,8 +338,9 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 		  {
 		    char *code, response[1024];
 		    int n;
+		    int size = (*content_lines+1) * 80;
 
-		    code = (char *)malloc((*content_lines+1) * 80);
+		    code = (char *)malloc(size);
 		    if (!code) {
 			perror("code");
 			exit(1);
@@ -347,8 +348,7 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
 		    code[0] = 0;
 		    for(i = 0; i <= *content_lines; i++) {
-		      strcat(code, content_buffer[i]);
-		      strcat(code, "\n");
+			snprintf(code, size, "%s\n", content_buffer[i]);
 		    }
 		    fcb_process(code, response);
 

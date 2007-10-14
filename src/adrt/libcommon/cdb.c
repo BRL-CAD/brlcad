@@ -42,11 +42,11 @@ int common_db_load(common_db_t *db, char *path);
 
 
 int common_db_load(common_db_t *db, char *path) {
-  char proj_path[256], *path_ptr;
+  char proj_path[ADRT_NAME_SIZE], *path_ptr;
   int i;
 
   /* Parse path out of proj file and chdir to it */
-  strcpy(proj_path, path);
+  strncpy(proj_path, path, ADRT_NAME_SIZE);
 
   path_ptr = strrchr(proj_path, '/');
   if(path_ptr) {

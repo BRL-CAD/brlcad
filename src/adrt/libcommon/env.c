@@ -86,22 +86,22 @@ void common_env_read(common_env_t *env, const char *fpath) {
     token = strtok(line, ",");
 
     if(!strcmp("geometry_file", token)) {
-      strcpy(env->geometry_file, strtok(NULL, ","));
+      strncpy(env->geometry_file, strtok(NULL, ","), ADRT_NAME_SIZE);
       env->geometry_file[strlen(env->geometry_file) - 1] = 0;
     } else if(!strcmp("kdtree_cache_file", token)) {
-      strcpy(env->kdtree_cache_file, strtok(NULL, ","));
+      strncpy(env->kdtree_cache_file, strtok(NULL, ","), ADRT_NAME_SIZE);
       env->kdtree_cache_file[strlen(env->kdtree_cache_file) - 1] = 0;
     } else if(!strcmp("properties_file", token)) {
-      strcpy(env->properties_file, strtok(NULL, ","));
+      strncpy(env->properties_file, strtok(NULL, ","), ADRT_NAME_SIZE);
       env->properties_file[strlen(env->properties_file) - 1] = 0;
     } else if(!strcmp("textures_file", token)) {
-      strcpy(env->textures_file, strtok(NULL, ","));
+      strncpy(env->textures_file, strtok(NULL, ","), ADRT_NAME_SIZE);
       env->textures_file[strlen(env->textures_file) - 1] = 0;
     } else if(!strcmp("mesh_map_file", token)) {
-      strcpy(env->mesh_map_file, strtok(NULL, ","));
+      strncpy(env->mesh_map_file, strtok(NULL, ","), ADRT_NAME_SIZE);
       env->mesh_map_file[strlen(env->mesh_map_file) - 1] = 0;
     } else if(!strcmp("frames_file", token)) {
-      strcpy(env->frames_file, strtok(NULL, ","));
+      strncpy(env->frames_file, strtok(NULL, ","), ADRT_NAME_SIZE);
       env->frames_file[strlen(env->frames_file) - 1] = 0;
     } else if(!strcmp("image_size", token)) {
       token = strtok(NULL, ",");

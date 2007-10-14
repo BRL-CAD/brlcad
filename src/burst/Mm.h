@@ -35,7 +35,7 @@
 #define MmFree( typ, ptr )	free( (char *) ptr )
 #define MmVAllo( ct, typ )	(typ *) malloc( (ct)*sizeof(typ) )
 #define MmVFree( ct, typ, ptr )	free( (char *) ptr )
-#define MmStrDup( str )		strcpy( malloc( strlen(str)+1 ), str )
+#define MmStrDup( str )		strncpy( malloc( strlen(str)+1 ), str, strlen(str)+1 )
 #define MmStrFree( str )	free( str )
 
 #endif  /* __MM_H__ */

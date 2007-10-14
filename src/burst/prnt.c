@@ -169,7 +169,7 @@ int	mode;
 		{
 		if( p > buf )
 			*p++ = NOTIFY_DELIM;
-		(void) strcpy( p, str );
+		(void) strncpy( p, str, LNBUFSZ );
 		}
 	else
 		*p = NUL;
@@ -900,7 +900,7 @@ va_dcl
 			(void) ScClrEOL();
 			/* Work around for problem with vprintf(): it doesn't
 				cause the screen to scroll, don't know why. */
-			(void) vsprintf( buf, format, ap );
+			(void) vsnprintf( buf, LNBUFSZ, format, ap );
 			(void) puts( buf );
 			/*(void) vprintf( format, ap );*/
 			(void) ScMvCursor( 1, SCROLL_BTM+1 );

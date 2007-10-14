@@ -531,7 +531,7 @@ genptr_t		client_data;
 			}
 			left = 0;
 		}
-		strcpy( op, regdp->d_namep );
+		strncpy( op, regdp->d_namep, 128 );
 		op += strlen(op);
 		*op++ = '\n';
 		*op = '\0';
@@ -1558,7 +1558,7 @@ register int	ct;
 		}
 		else
 		{
-			(void) strcpy( &buf[column], list[i] );
+			(void) strncpy( &buf[column], list[i], MAX_COL+2 );
 			column += strlen( list[i] );
 			spaces = NAMESIZE - (column % NAMESIZE );
 			if( column + spaces < MAX_COL )

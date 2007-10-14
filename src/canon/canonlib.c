@@ -1228,7 +1228,7 @@ int parse_args(ac, av)
     else
 	++progname;
 
-    strcpy(arg_buf, progname);
+    strncpy(arg_buf, progname, 10000);
     len = strlen(arg_buf) + 1;
     arg_v[arg_c = 0] = arg_buf;
     arg_v[++arg_c] = (char *)NULL;
@@ -1253,7 +1253,7 @@ int parse_args(ac, av)
 	    if (p[1] == ':') {
 		arg_v[arg_c++] = &arg_buf[len];
 		arg_v[arg_c] = (char *)NULL;
-		(void)sprintf(&arg_buf[len], "%s", bu_optarg);
+		(void)snprintf(&arg_buf[len], "%10000s", bu_optarg);
 		len += strlen(&arg_buf[len]) + 1;
 	    }
 	}

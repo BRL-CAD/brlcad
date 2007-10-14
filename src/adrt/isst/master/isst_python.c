@@ -70,11 +70,12 @@ static PyMethodDef ISST_Methods[] = {
 };
 
 
+#define IPR_SIZE 1024
 void isst_python_init() {
   Py_Initialize();
 
 
-  isst_python_response = (char *)malloc(1024);
+  isst_python_response = (char *)malloc(IPR_SIZE);
   if (!isst_python_response) {
       perror("isst_python_response");
       exit(1);
@@ -111,7 +112,7 @@ void isst_python_code(char *code) {
   isst_python_response[0] = 0;
 
   PyRun_SimpleString(code);
-  strcpy(code, isst_python_response);
+  strncpy(code, IPR_SIZE, isst_python_response);
 }
 
 
@@ -120,7 +121,7 @@ static PyObject* isst_python_stdout(PyObject *self, PyObject* args) {
   char *string;
 
   if(PyArg_ParseTuple(args, "s", &string))
-    strcat(isst_python_response, string);
+    strncat(isst_python_response, IPR_SIZE, string);
 
   return PyInt_FromLong(0);
 }
@@ -176,7 +177,7 @@ static PyObject* isst_python_save(PyObject *self, PyObject* args) {
   FILE *fh;
 
   if(PyArg_ParseTuple(args, "s", &string)) {
-    strcat(isst_python_response, string);
+    strncat(isst_python_response, string, IPR_SIZE - strlen(isst_python_response) - 1);
     /* Append the data to the file shots.txt */
     fh = fopen("shots.txt", "a");
 
@@ -191,7 +192,7 @@ static PyObject* isst_python_save(PyObject *self, PyObject* args) {
 
     fclose(fh);
 
-    strcpy(isst_python_response, "shot saved.\n");
+    strncpy(isst_python_response, "shot saved.\n", IPR_SIZE);
   }
 
   return PyInt_FromLong(0);
@@ -200,7 +201,7 @@ static PyObject* isst_python_save(PyObject *self, PyObject* args) {
 
 /* Load a Shot from shots.txt */
 static PyObject* isst_python_load(PyObject *self, PyObject *args) {
-  char *string, line[256];
+  char *string, line[ADRT_NAME_SIZE];
   FILE *fh;
 
   if(PyArg_ParseTuple(args, "s", &string)) {
@@ -215,7 +216,7 @@ static PyObject* isst_python_load(PyObject *self, PyObject *args) {
 
     /* Search for matching label using value in string */
     while(!feof(fh)) {
-      fgets(line, 256, fh);
+      fgets(line, ADRT_NAME_SIZE, fh);
       if(!strstr(line, "label:"))
 	continue;
 
@@ -225,13 +226,13 @@ static PyObject* isst_python_load(PyObject *self, PyObject *args) {
        /* Read in camera_position and camera_ae values */
        fscanf(fh, "camera_position: %f %f %f\n", &isst_master_camera_position.v[0], &isst_master_camera_position.v[1], &isst_master_camera_position.v[2]);
        fscanf(fh, "camera_ae: %f %f\n", &isst_master_camera_azimuth, &isst_master_camera_elevation);
-       sprintf(line, "succesfully loaded: %s\n", string);
-       strcpy(isst_python_response, line);
+       snprintf(line, ADRT_NAME_SIZE, "succesfully loaded: %s\n", string);
+       strncpy(isst_python_response, line, IPR_SIZE);
        return PyInt_FromLong(0);
     }
 
-    sprintf(line, "cannot find: %s\n", string);
-    strcpy(isst_python_response, line);
+    snprintf(line, ADRT_NAME_SIZE, "cannot find: %s\n", string);
+    strncpy(isst_python_response, line, IPR_SIZE);
   }
 
   return PyInt_FromLong(0);
@@ -255,7 +256,7 @@ static PyObject* isst_python_select(PyObject *self, PyObject *args) {
     tienet_master_broadcast(mesg, c + 4);
   }
 
-  strcpy(isst_python_response, "done.\n");
+  strncpy(isst_python_response, "done.\n", IPR_SIZE);
   return PyInt_FromLong(0);
 }
 
@@ -277,7 +278,7 @@ static PyObject* isst_python_deselect(PyObject *self, PyObject *args) {
     tienet_master_broadcast(mesg, c + 4);
   }
 
-  strcpy(isst_python_response, "done.\n");
+  strncpy(isst_python_response, "done.\n", IPR_SIZE);
   return PyInt_FromLong(0);
 }
 

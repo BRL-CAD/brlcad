@@ -177,8 +177,8 @@ void tienet_master_init(int port, void fcb_result(void *res_buf, int res_len), c
   tienet_master_comp_max = 0;
 #endif
 
-  strcpy(tienet_master_list, list);
-  strcpy(tienet_master_exec, exec);
+  strncpy(tienet_master_list, list, 64);
+  strncpy(tienet_master_exec, exec, 64);
 
   /* Copy version key to validate slaves of correct version are connecting */
   tienet_master_ver_key = ver_key;

@@ -62,7 +62,7 @@ imageInit()
 	else
 	if( lastfbfile[0] != NUL && strcmp( fbfile, lastfbfile ) != 0 )
 		needopen = 1; /* name changed */
-	(void) strcpy( lastfbfile, fbfile );
+	(void) strncpy( lastfbfile, fbfile, LNBUFSZ );
 
 	if( needopen )
 		{

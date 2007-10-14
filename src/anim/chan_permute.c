@@ -132,7 +132,7 @@ main(int argc, char **argv)
 		    num_done += 1;
 		else
 		    for(j=0;j<x->channels;j++)
-			fscanf(x->file,"%s ",arrayd[x->list[j]]);
+			fscanf(x->file, "%40s ", arrayd[x->list[j]]);
 	    }
 	    else if (x->i_o == 0){
 		for(j=0;j<x->channels;j++)

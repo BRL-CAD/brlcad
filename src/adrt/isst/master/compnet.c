@@ -107,13 +107,13 @@ void isst_compnet_connect(char *host, int port) {
 * Update the status of a component
 */
 void isst_compnet_update(char *string, char status) {
-  char message[256];
+  char message[ADRT_NAME_SIZE];
 
   if(!isst_master_compserv_active)
     return;
 
   /* format message */
-  sprintf(message, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
+  snprintf(message, ADRT_NAME_SIZE, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
 
   /* Send string */
   tienet_send(isst_master_compserv_socket, message, strlen(message), 0);
