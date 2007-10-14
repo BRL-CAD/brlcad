@@ -33,9 +33,6 @@
  *	Charles M. Kennedy
  *	Michael John Muuss
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
