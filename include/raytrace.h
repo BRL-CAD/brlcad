@@ -2328,13 +2328,13 @@ struct ray_data {
 #else
 #define GET_HITMISS(_p) { \
 	char str[64]; \
-	(void)sprintf(str, "GET_HITMISS %s %d", __FILE__, __LINE__); \
+	(void)snprintf(str, 64, "GET_HITMISS %s %d", __FILE__, __LINE__); \
 	(_p) = (struct hitmiss *)bu_calloc(1, sizeof(struct hitmiss), str); \
 	}
 
 #define FREE_HITMISS(_p) { \
 	char str[64]; \
-	(void)sprintf(str, "FREE_HITMISS %s %d", __FILE__, __LINE__); \
+	(void)snprintf(str, 64, "FREE_HITMISS %s %d", __FILE__, __LINE__); \
 	(void)bu_free( (char *)_p,  str); \
 	}
 
