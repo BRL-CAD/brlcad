@@ -226,7 +226,6 @@ EXTRA_DIST = \
 	sqrt.vax.s \
 	timer-nt.c \
 	timer52brl.c \
-	timercos.c \
 	timerhep.c \
 	timerunix.c \
 	vshoot.c
