@@ -271,7 +271,7 @@ region_register(int reg_num, int id, int air, int mat, int los)
 			char	paren[32];
 
 			/* Denote an empty region */
-			sprintf( paren, "(%s)", wp->wm_name );
+			snprintf( paren, 32, "(%s)", wp->wm_name );
 			col_pr( paren );
 		}
 		return;
@@ -331,7 +331,7 @@ group_register(char *name, int lo, int hi)
 	}
 	wp = &groups[ngroups].grp_wm;
 
-	sprintf( nbuf, "%s%s", name, name_it );
+	snprintf( nbuf, 32, "%s%s", name, name_it );
 	wp->wm_name = bu_strdup( nbuf );
 
 	BU_LIST_INIT( &wp->l );

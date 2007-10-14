@@ -257,7 +257,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     faces = bot->faces;
 
 
-    sprintf(Value,"%s.dxf",name);
+    snprintf(Value, 32, "%s.dxf", name);
     if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n",Value);
     FH= fopen(Value,"w");
 
@@ -275,7 +275,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "20\n0.0\n");
     fprintf(FH, "30\n0.0\n");
     fprintf(FH, "3\n");
-    sprintf(Value,"%s\n",name);
+    snprintf(Value, 32, "%s\n",name);
     fprintf(FH, Value);
     fprintf(FH, "0\n");
     fprintf(FH, "POLYLINE\n");
@@ -368,17 +368,13 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "8\n");
     fprintf(FH, "1\n");
     fprintf(FH, "2\n");
-    sprintf(Value,"%s\n",name);
-    fprintf(FH, Value);
+    fprintf(FH, "%s\n", name);
     fprintf(FH, "10\n");
-    sprintf(Value,"%.6f\n",0.0);
-    fprintf(FH, Value);
+    fprintf(FH, "%.6f\n", 0.0);
     fprintf(FH, "20\n");
-    sprintf(Value,"%.6f\n",0.0);
-    fprintf(FH, Value);
+    fprintf(FH, "%.6f\n", 0.0);
     fprintf(FH, "30\n");
-    sprintf(Value,"%.6f\n",0.0);
-    fprintf(FH, Value);
+    fprintf(FH, "%.6f\n", 0.0);
     fprintf(FH, "41\n");
     fprintf(FH, "1.000000\n");
     fprintf(FH, "42\n");

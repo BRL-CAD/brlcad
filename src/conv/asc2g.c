@@ -63,7 +63,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #define BUFSIZE			(16*1024)	/* input line buffer size */
-#define TYPELEN			100
+#define TYPE_LEN			200
 #define NAME_LEN			200
 
 void		identbld(void), polyhbld(void), pipebld(void), particlebld(void);
@@ -76,7 +76,7 @@ void		strsolbld(void), nmgbld(void);
 
 static union record	record;			/* GED database record */
 char 		*buf = NULL;		/* Record input buffer */
-char		name[NAMESIZE + 2] = {0};
+char		name[NAME_LEN + 2] = {0};
 
 FILE *ifp = NULL;
 struct rt_wdb *ofp = NULL;
@@ -455,7 +455,7 @@ sktbld(void)
     point_t V;
     vect_t u, v;
     point2d_t *verts;
-    char name[NAMESIZE+1];
+    char name[NAME_LEN+1];
     struct rt_sketch_internal *skt;
     struct curve *crv;
     struct line_seg *lsg;
@@ -467,7 +467,7 @@ sktbld(void)
     cp++;
     cp++;
 
-    (void)sscanf( cp, "%s %f %f %f %f %f %f %f %f %f %d %d",
+    (void)sscanf( cp, "%200s %f %f %f %f %f %f %f %f %f %d %d", /* NAME_LEN */
 		  name,
 		  &fV[0], &fV[1], &fV[2],
 		  &fu[0], &fu[1], &fu[2],
@@ -620,8 +620,8 @@ void
 extrbld(void)
 {
     register char *cp;
-    char name[NAMESIZE+1];
-    char sketch_name[NAMESIZE+1];
+    char name[NAME_LEN+1];
+    char sketch_name[NAME_LEN+1];
     int keypoint;
     float fV[3];
     float fh[3];
@@ -634,7 +634,7 @@ extrbld(void)
     cp++;
 
     cp++;
-    (void)sscanf( cp, "%s %s %d %f %f %f  %f %f %f %f %f %f %f %f %f",
+    (void)sscanf( cp, "%200s %200s %d %f %f %f  %f %f %f %f %f %f %f %f %f", /* NAME_LEN */
 		  name, sketch_name, &keypoint, &fV[0], &fV[1], &fV[2], &fh[0], &fh[1], &fh[2],
 		  &fu_vec[0], &fu_vec[1], &fu_vec[2], &fv_vec[0], &fv_vec[1], &fv_vec[2] );
 
@@ -1065,7 +1065,7 @@ membbld(struct bu_list *headp)
     register char 	*np;
     register int 	i;
     char		relation;	/* boolean operation */
-    char		inst_name[NAMESIZE+2];
+    char		inst_name[NAME_LEN+2];
     struct wmember	*memb;
 
     cp = buf;
@@ -1624,7 +1624,7 @@ botbld(void)
     int			*faces;
     struct bu_bitv		*facemode=NULL;
 
-    sscanf( buf, "%c %s %d %d %d %d %d", &type, my_name, &mode, &orientation,
+    sscanf( buf, "%c %200s %d %d %d %d %d", &type, my_name, &mode, &orientation, /* NAME_LEN */
 	    &error_mode, &num_vertices, &num_faces );
 
     /* get vertices */
@@ -1775,7 +1775,7 @@ particlebld(void)
      * particles fit into one granule.
      */
 
-    (void)sscanf(buf, "%c %s %le %le %le %le %le %le %le %le",
+    (void)sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
 		 &ident, name,
 		 &vertex[0],
 		 &vertex[1],
@@ -1800,7 +1800,7 @@ arbnbld(void)
 {
 
     char		name[NAME_LEN] = {0};
-    char		type[TYPELEN] = {0};
+    char		type[TYPE_LEN] = {0};
     int		i;
     int		neqn;			/* number of eqn expected */
     plane_t		*eqn;			/* pointer to plane equations for faces */
@@ -1840,7 +1840,7 @@ arbnbld(void)
      */
     for( i = 0; i < neqn; i++ )  {
 	bu_fgets( buf, BUFSIZE, ifp);
-	(void)sscanf( buf, "%s %le %le %le %le", type,
+	(void)sscanf( buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
 		      &eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
     }
 

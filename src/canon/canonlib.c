@@ -1253,7 +1253,7 @@ int parse_args(ac, av)
 	    if (p[1] == ':') {
 		arg_v[arg_c++] = &arg_buf[len];
 		arg_v[arg_c] = (char *)NULL;
-		(void)snprintf(&arg_buf[len], "%10000s", bu_optarg);
+		(void)snprintf(&arg_buf[len], 10000, "%s", bu_optarg);
 		len += strlen(&arg_buf[len]) + 1;
 	    }
 	}

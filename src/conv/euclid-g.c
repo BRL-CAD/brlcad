@@ -87,7 +87,7 @@ struct bu_ptbl groups[11];
 
 static int polysolids;
 static int debug;
-static char	usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
+static const char usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
 static struct bn_tol  tol;
 
 void
@@ -202,20 +202,20 @@ main(int argc, char **argv)
 
 	/* Output BRL-CAD database header.  No problem if more than one. */
 	if( efile == NULL )
-		sprintf( title, "Conversion from EUCLID (tolerance distance = %gmm)", tol.dist );
+		snprintf( title, BRLCAD_TITLE_LENGTH, "Conversion from EUCLID (tolerance distance = %gmm)", tol.dist );
 	else
 	{
 		char tol_str[BRLCAD_TITLE_LENGTH];
 		int title_len,tol_len;
 
-		sprintf( tol_str, " (tolerance distance = %gmm)", tol.dist );
-		sprintf( title, "%s", efile );
+		snprintf( tol_str, BRLCAD_TITLE_LENGTH, " (tolerance distance = %gmm)", tol.dist );
+		snprintf( title, BRLCAD_TITLE_LENGTH, "%s", efile );
 		title_len = strlen( title );
 		tol_len =  strlen( tol_str );
 		if( title_len + tol_len > BRLCAD_TITLE_LENGTH )
-			strcat( &title[BRLCAD_TITLE_LENGTH-tol_len-1], tol_str );
+			strncat( &title[BRLCAD_TITLE_LENGTH-tol_len-1], tol_str, BRLCAD_TITLE_LENGTH - title_len - tol_len  - 1);
 		else
-			strcat( title, tol_str );
+			strcat( title, tol_str);
 	}
 
 	if ((fpout = wdb_fopen(bfile)) == NULL) {
@@ -261,7 +261,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 	rname = bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
 	sname = bu_malloc(sizeof(id) + 3, "sname");	/* Solid name. */
 
-	sprintf(sname, "%s.s", id);
+	snprintf(sname, 80, "%s.s", id);
 	if( polysolids )
 		mk_bot_from_nmg( fpout , sname , s );
 	else
@@ -293,7 +293,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 	if( group_id > 10 )
 		group_id = 10;
 
-	sprintf(rname, "%s.r", id);
+	snprintf(rname, 80, "%s.r", id);
 
 	if( mk_addmember( sname, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 	{
@@ -405,7 +405,7 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 	int	reg_id;
 
 	/* skip first string in file (what is it??) */
-	if( fscanf( fpin , "%s" , str ) == EOF )
+	if( fscanf( fpin , "%80s" , str ) == EOF )
 		bu_bomb( "Failed on first attempt to read input" );
 
 	/* Id of first region. */
