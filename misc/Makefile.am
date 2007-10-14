@@ -29,6 +29,7 @@ EXTRA_DIST = \
 	brlcad-config.in \
 	brlcad.spec \
 	brlcad.spec.in \
+	flawfinder \
 	libtool.m4 \
 	rcs2log
 
