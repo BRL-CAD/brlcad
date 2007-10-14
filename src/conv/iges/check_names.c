@@ -63,7 +63,7 @@ char *name;
 
 	/* add this name to the list */
 	ptr = (struct name_list *)bu_malloc( sizeof( struct name_list ), "Add_brl_name: ptr" );
-	strcpy( ptr->name, name );
+	strncpy( ptr->name, name, NAMESIZE );
 	ptr->next = name_root;
 	name_root = ptr;
 

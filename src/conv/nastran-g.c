@@ -208,13 +208,13 @@ do_silly_nastran_shortcuts(void)
 	{
 		if( !strcmp( curr_rec[field_no], "=" ) )
 		{
-			strcpy( curr_rec[field_no], prev_rec[field_no] );
+			strncpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
 		}
 		else if( !strcmp( curr_rec[field_no], "==" ) )
 		{
 			while( field_no < NO_OF_FIELDS )
 			{
-				strcpy( curr_rec[field_no], prev_rec[field_no] );
+				strncpy( curr_rec[field_no], prev_rec[field_no], FIELD_LENGTH );
 				field_no++;
 			}
 		}
@@ -388,7 +388,7 @@ get_free_form_input(FILE *fd, int write_flag)
 
 		for( i=0 ; i<count ; i++ )
 		{
-			strcpy( line, prev_line );
+			strncpy( line, prev_line, MAXLINELEN );
 			get_free_form_input( fd, write_flag );
 		}
 		return;

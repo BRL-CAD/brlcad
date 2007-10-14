@@ -65,7 +65,7 @@ revolve( entityno )
 int entityno;
 {
 	struct wmember	head;			/* For region */
-	char		*trcform="rev.%d.%d";	/* Format for creating TRC names */
+	const char	*trcform="rev.%d.%d";	/* Format for creating TRC names */
 	int		sol_num;		/* IGES solid type number */
 	point_t		pt;			/* Point on axis of revolution */
 	vect_t		adir;			/* Direction of axis of revolution */

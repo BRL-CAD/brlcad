@@ -346,7 +346,7 @@ lookup_props( props , name )
     struct rt_comb_internal *comb;
     int id;
 
-    strcpy( props->name, name );
+    strncpy( props->name, name, NAMESIZE );
     props->material_name[0] = '\0';
     props->material_params[0] = '\0';
     props->region_flag = ' ';

@@ -610,7 +610,7 @@ int main(int argc, char *argv[]) {
   */
   strncpy(filename, argv[1], 256);
   strcat(filename, ".properties");
-  adrt_fh = fopen(filename, "w", 256);
+  adrt_fh = fopen(filename, "w");
   fprintf(adrt_fh, "properties,default\n");
   fprintf(adrt_fh, "color,0.8,0.8,0.8\n");
   fprintf(adrt_fh, "gloss,0.2\n");

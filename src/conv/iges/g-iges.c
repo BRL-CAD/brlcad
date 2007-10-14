@@ -564,10 +564,7 @@ genptr_t		client_data;
 				/* construct a unique file name */
 				len = strlen( output_file ) + strlen( dp->d_namep ) + 6 + SUFFIX_LEN;
 				multi_name = bu_malloc( sizeof( char )*len, "multi_name" );
-				strcpy( multi_name, output_file );
-				strcat( multi_name, "/" );
-				strcat( multi_name, dp->d_namep );
-				strcat( multi_name, ".igs" );
+				snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
 				strcpy( suffix, "a" );
 				suffix[0]--;
 				while( !unique )
@@ -602,11 +599,7 @@ genptr_t		client_data;
 						bu_log( "too many files with the same name (%s)\n", dp->d_namep );
 						exit( 1 );
 					}
-					strcpy( multi_name, output_file );
-					strcat( multi_name, "/" );
-					strcat( multi_name, dp->d_namep );
-					strcat( multi_name, suffix );
-					strcat( multi_name, ".igs" );
+					snprintf(multi_name, len, "%s/%s%s.igs", output_file, dp->d_namep, suffix);
 				}
 				if( (fp_dir=fopen( multi_name , "wb" )) == NULL ) {
 					bu_log( "Cannot open output file: %s\n" , multi_name );
@@ -819,7 +812,7 @@ genptr_t	ptr;
 		return;
 	}
 
-	strcpy( props.name, dp->d_namep );
+	strncpy( props.name, dp->d_namep, NAMESIZE );
 	props.material_name[0] = '\0';
 	props.material_params[0] = '\0';
 	props.region_flag = ' ';

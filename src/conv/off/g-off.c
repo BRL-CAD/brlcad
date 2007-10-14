@@ -54,7 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 
-static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -85,6 +85,7 @@ main(int argc, char **argv)
 	char		*dot, *fig_file;
 	register int	c;
 	double		percent;
+	int size;
 
 	bu_setlinebuf( stderr );
 
@@ -168,18 +169,20 @@ main(int argc, char **argv)
 	}
 
 	/* Create .fig file name and open it. */
-	fig_file = bu_malloc(sizeof(prefix) + sizeof(argv[0] + 4), "st");
+	size = sizeof(prefix) + sizeof(argv[0] + 4);
+	fig_file = bu_malloc(size, "st");
 	/* Ignore leading path name. */
 	if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
-		if (prefix)
-			strcat(strcpy(fig_file, prefix), 1 + dot);
-		else
-			strcpy(fig_file, 1 + dot);
+	    if (prefix) {
+		snprintf(fig_file, size, "%s%s", prefix, 1+dot);
+	    } else {
+		snprintf(fig_file, size, "%s", 1+dot);
+	    }
 	} else {
-		if (prefix)
-			strcat(strcpy(fig_file, prefix), argv[0]);
-		else
-			strcpy(fig_file, argv[0]);
+	    if (prefix)
+		snprintf(fig_file, size, "%s%s", prefix, argv[0]);
+	    else
+		snprintf(fig_file, size, "%s", argv[0]);
 	}
 
 	/* Get rid of any file name extension (probably .g). */

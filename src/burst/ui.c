@@ -31,6 +31,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "machine.h"
 #include "vmath.h"
@@ -1042,27 +1044,29 @@ HmItem *itemp;
 static void
 MgedFile( itemp )
 HmItem *itemp;
-	{	static Input input[] =
-			{
-			{ "Name of target (MGED) file", "", "%s", 0 },
-			};
-		register Input *ip = input;
-	if( getInput( ip ) )
-		(void) strncpy( gedfile, ip->buffer, LNBUFSZ );
-	if( access( gedfile, 04 ) == -1 )
-		{
-		    (void) snprintf( scrbuf, LNBUFSZ, 
-				"Read access denied for \"%s\"",
-				gedfile );
-		warning( scrbuf );
-		return;
-		}
-	(void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%s",
-			itemp != NULL ? itemp->text : cmdname,
-			gedfile );
-	logCmd( scrbuf );
+{
+    struct stat sb;
+    static Input input[] = {
+	{ "Name of target (MGED) file", "", "%s", 0 },
+    };
+    register Input *ip = input;
+
+    if( getInput( ip ) )
+	(void) strncpy( gedfile, ip->buffer, LNBUFSZ );
+
+    if (!bu_file_exists(gedfile)) {
+	(void) snprintf( scrbuf, LNBUFSZ, 
+			 "Unable to find file \"%s\"",
+			 gedfile );
+	warning( scrbuf );
 	return;
-	}
+    }
+    (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%s",
+		     itemp != NULL ? itemp->text : cmdname,
+		     gedfile );
+    logCmd( scrbuf );
+    return;
+}
 
 /*ARGSUSED*/
 static void

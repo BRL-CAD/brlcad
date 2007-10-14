@@ -162,9 +162,9 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 			strncpy(title, buf2, sizeof(title));
 /*		if (sscanf(buf, "author %[^\n]s", buf2) > 0)
 			strncpy(author, buf2, sizeof(author));
-*/		if (sscanf(buf, "geometry %[^\n]s", buf2) > 0) {
+*/		if (sscanf(buf, "geometry %200[^\n]s", buf2) > 0) {
 			char dtype[40], format[40];
-			if (sscanf(buf2, "%s %s %s", dtype, format, geom_fname) != 3)
+			if (sscanf(buf2, "%40s %40s %64s", dtype, format, geom_fname) != 3)
 				bu_bomb("Incomplete geometry field in input file.");
 			if (strcmp(dtype, "indexed_poly") != 0)
 				bu_bomb("Unknown geometry data type. Must be \"indexed_poly\".");
@@ -188,8 +188,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	read_faces(m, fgeom);
 	fclose(fgeom);
 
-	strcpy(sname, "s.");	strcat(sname, title);
-	strcpy(rname, "r.");	strcat(rname, title);
+	snprintf(sname, 67, "s.%s", title);
+	snprintf(rname, 67, "r.%s", title);
 
 	mk_id(fpout, title);
 	mk_nmg(fpout, sname, m);

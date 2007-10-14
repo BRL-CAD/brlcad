@@ -396,7 +396,7 @@ int material_id;
 				exit( 1 );
 			}
 		} else {
-			char buf[81];	/* need exactly 80 char for header */
+			char buf[81] = {0};	/* need exactly 80 char for header */
 
 			/* Open binary output file */
 #ifdef _WIN32
@@ -410,15 +410,14 @@ int material_id;
 				exit( 1 );
 			}
 
-			bzero( buf, sizeof( buf ) );
-			if (inches) {
-				strcpy( buf, "BRL-CAD generated STL FILE (Units=inches)");
+			if (!region_name) {
+			    snprintf( buf, 80, "BRL-CAD generated STL FILE (Units=%s)", inches?"inches":"mm");
 			} else {
-				strcpy( buf, "BRL-CAD generated STL FILE (Units=mm)");
-			}
-			if( strlen( buf ) + strlen( region_name ) + 1 < 80 ) {
-				strcat( buf, " " );
-				strcat( buf, region_name );
+			    if (region_name && strlen(region_name) > 0) {
+				snprintf( buf, 80, "BRL-CAD generated STL FILE (Units=%s) %s", inches?"inches":"mm", region_name);
+			    } else {
+				snprintf( buf, 80, "BRL-CAD generated STL FILE (Units=%s) %s", inches?"inches":"mm", region_name);
+			    }
 			}
 			write(bfd, &buf, 80);
 

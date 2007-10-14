@@ -69,7 +69,7 @@ int verbose = 0;
 static struct db_i		*dbip;
 static struct bn_tol		tol;
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
 
 int region_start (struct db_tree_state *tsp, struct db_full_path *pathp,

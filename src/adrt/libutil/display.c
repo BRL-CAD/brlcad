@@ -381,7 +381,7 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 		case SDLK_x: /* cut */
 		  strncpy(paste, content_buffer[v_ind], 80);
 		  for(i = v_ind; i < *content_lines; i++)
-		    strcpy(content_buffer[i], content_buffer[i+1]);
+		    strncpy(content_buffer[i], content_buffer[i+1], 80);
 		  if(*content_lines) {
 		    (*content_lines)--;
 		  } else {
@@ -392,7 +392,7 @@ void util_display_editor(char **content_buffer, int *content_lines, char **conso
 
 		case SDLK_v: /* paste */
 		  for(i = *content_lines; i >= v_ind; i--)
-		    strcpy(content_buffer[i+1], content_buffer[i]);
+		    strncpy(content_buffer[i+1], content_buffer[i], 80);
 		  strncpy(content_buffer[v_ind], paste, 80);
 		  (*content_lines)++;
 		  h_ind = 0;

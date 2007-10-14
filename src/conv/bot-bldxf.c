@@ -275,8 +275,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "20\n0.0\n");
     fprintf(FH, "30\n0.0\n");
     fprintf(FH, "3\n");
-    snprintf(Value, 32, "%s\n",name);
-    fprintf(FH, Value);
+    fprintf(FH, "%s\n", name);
     fprintf(FH, "0\n");
     fprintf(FH, "POLYLINE\n");
     fprintf(FH, "66\n");

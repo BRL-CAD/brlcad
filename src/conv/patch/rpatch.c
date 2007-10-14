@@ -44,7 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	MAXLINELEN	256
 
-static char *usage="Usage:\n\trpatch [-D] [-3] < fastgen_input_file > file.rp\n\
+static const char *usage="Usage:\n\trpatch [-D] [-3] < fastgen_input_file > file.rp\n\
 	where -D means that type 3 components are donuts (rather than triangles)\n\
 	and -3 indicates that the input is in FASTGEN3 format\n";
 

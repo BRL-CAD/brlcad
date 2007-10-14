@@ -61,7 +61,7 @@ struct vlist {
 
 static struct bn_tol	tol;
 
-static char	usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
+static const char usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
 
 BU_EXTERN( fastf_t nmg_loop_plane_area, (const struct loopuse *lu, plane_t pl ) );
 
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		else
 			base++;
 		reg_name = bu_malloc(sizeof(base)+1, "reg_name");
-		strcpy(reg_name, base);
+		strncpy(reg_name, base, sizeof(base));
 		/* Ignore .pss extension if it's there. */
 		doti = strlen(reg_name) - 4;
 		if (doti > 0 && !strcmp(".pss", reg_name+doti))
@@ -332,13 +332,13 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 	rname = bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
 	sname = bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
-	sprintf(sname, "s.%s", reg_name);
+	snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
 	nmg_kill_zero_length_edgeuses( m );
 	nmg_rebound( m, &tol );
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST( shell, &r->s_hd );
 	mk_bot_from_nmg(fpout, sname,  s);		/* Make BOT object. */
-	sprintf(rname, "r.%s", reg_name);
+	snprintf(rname, sizeof(reg_name) + 2, "r.%s", reg_name);
 	mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
 	if (grp_name) {
 		mk_comb1(fpout, grp_name, rname, 1);	/* Region in group. */

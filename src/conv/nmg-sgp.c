@@ -53,7 +53,7 @@ static char *out_file;
 static FILE *fd_in;
 static struct db_i *dbip;
 static struct bn_tol tol;
-static char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_debug_flag] [-o output_file] brlcad_model.g object1 [object2 object3...]\n";
+static const char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_debug_flag] [-o output_file] brlcad_model.g object1 [object2 object3...]\n";
 static long polygons=0;
 static int stats=0;
 static int triangles=0;

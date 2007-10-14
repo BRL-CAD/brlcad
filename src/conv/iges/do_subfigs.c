@@ -225,7 +225,7 @@ Do_subfigs()
 						strcpy( list_ptr->obj_name, dir[subfigdef_index]->name );
 					else
 					{
-						strcpy( list_ptr->obj_name, "subfig" );
+						strncpy( list_ptr->obj_name, "subfig", NAMESIZE );
 						(void) Make_unique_brl_name( list_ptr->obj_name );
 					}
 

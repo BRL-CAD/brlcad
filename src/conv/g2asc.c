@@ -83,7 +83,7 @@ void	strsol_dump(void);
 
 union record	record;		/* GED database record */
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: g2asc file.g file.asc\n\
  Convert a binary BRL-CAD database to machine-independent ASCII form\n\
 ";

@@ -57,7 +57,7 @@ void	jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map);
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
-static char	usage[] = "\
+static const char usage[] = "\
 Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n\
 	[-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n\
 	[-D dist_calc_tol]\n\

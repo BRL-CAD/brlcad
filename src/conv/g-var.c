@@ -68,7 +68,7 @@ struct mesh {
 };
 
 
-static char		usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] brlcad_db.h object\n";
+static const char	usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] brlcad_db.h object\n";
 
 static uint8_t 		verbose = 0;
 static uint8_t		yup = 0;
