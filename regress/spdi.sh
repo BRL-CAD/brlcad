@@ -66,7 +66,7 @@ NUMBER_WRONG=`tr , '\012' < spdi.log | awk '/many/ {print $1}'`
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
     /bin/echo '-> spdi.sh succeeded'
 else
-    /bin/echo '-> spdi.sh failed'
+    /bin/echo '-> spdi.sh FAILED'
 fi
 
 exit $NUMBER_WRONG

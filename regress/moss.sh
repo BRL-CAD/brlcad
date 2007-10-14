@@ -82,7 +82,7 @@ echo moss.pix $NUMBER_WRONG off by many
 if [ X$NUMBER_WRONG = X0 ] ; then
     echo '-> moss.sh succeeded'
 else
-    echo '-> moss.sh failed'
+    echo '-> moss.sh FAILED'
 fi
 
 exit $NUMBER_WRONG

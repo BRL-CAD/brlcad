@@ -912,7 +912,7 @@ NUMBER_WRONG=`tr , '\012' < solids-diff.log | awk '/many/ {print $1}'`
 if [ X$NUMBER_WRONG = X0 ] ; then
     /bin/echo '-> solids.sh succeeded'
 else
-    /bin/echo '-> solids.sh failed'
+    /bin/echo '-> solids.sh FAILED'
 fi
 
 exit $NUMBER_WRONG

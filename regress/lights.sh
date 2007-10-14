@@ -48,7 +48,7 @@ NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
 if [ X$NUMBER_WRONG = X0 ] ; then
     /bin/echo '-> lights.sh succeeded'
 else
-    /bin/echo '-> lights.sh failed'
+    /bin/echo '-> lights.sh FAILED'
 fi
 
 exit $NUMBER_WRONG

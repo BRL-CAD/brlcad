@@ -224452,7 +224452,7 @@ fi
 if [ X$NUMBER_WRONG = X0 ] ; then
     /bin/echo '-> shaders.sh succeeded'
 else
-    /bin/echo '-> shaders.sh failed'
+    /bin/echo '-> shaders.sh FAILED'
 fi
 
 exit $NUMBER_WRONG
