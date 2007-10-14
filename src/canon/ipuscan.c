@@ -38,6 +38,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
@@ -271,10 +272,10 @@ int main(int ac, char *av[])
     }
     /* All children are finished */
 
-    close(fd);
+
+    (void)fchmod(fd, 0444);
     (void)dsclose(dsp);
     (void)close(fd);
-    (void)chmod(av[arg_index], 0444);
     return(0);
 }
 

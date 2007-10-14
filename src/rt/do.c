@@ -917,8 +917,7 @@ do_frame(int framenumber)
 
 		strncpy( dn, outfp->ldn, sizeof(outfp->ldn) );	/* COS name */
 #endif
-		(void)fclose(outfp);
-		outfp = NULL;
+
 #ifdef CRAY_COS
 		status = 0;
 		/* Binary out */
@@ -935,8 +934,11 @@ do_frame(int framenumber)
 #else
 		/* Protect finished product */
 		if( outputfile != (char *)0 )
-			chmod( framename, 0444 );
+			fchmod( fileno(outfp), 0444 );
 #endif
+
+		(void)fclose(outfp);
+		outfp = NULL;
 	}
 
 	if(R_DEBUG&RDEBUG_STATS)  {

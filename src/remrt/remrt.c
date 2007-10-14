@@ -1568,9 +1568,15 @@ frame_is_done(register struct frame *fr)
 		if( unlink( fr->fr_filename ) < 0 )
 			perror( fr->fr_filename );
 	} else {
-		/* Write-protect file, to prevent re-computation */
-		if( chmod( fr->fr_filename, 0444 ) < 0 )
-			perror( fr->fr_filename );
+	    FILE *fp;
+	    if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
+		perror( fr->fr_filename );
+	    }
+	    /* Write-protect file, to prevent re-computation */
+	    if( fchmod( fileno(fp), 0444 ) < 0 ) {
+		perror( fr->fr_filename );
+	    }
+	    (void)fclose(fp);
 	}
 
 	/* Forget all about this frame */

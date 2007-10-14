@@ -58,10 +58,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include <sys/stat.h>		/* for chmod() */
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include <sys/stat.h>
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
@@ -1087,7 +1087,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     base = basename_without_suffix( argv[1], ".sh" );
-    (void)chmod( argv[1], 0755 );	/* executable */
+    (void)fchmod( fileno(fp), 0755 );	/* executable */
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
     (void)fprintf(fp, "#!/bin/sh\nrt -M ");
     if( view_state->vs_vop->vo_perspective > 0 )
