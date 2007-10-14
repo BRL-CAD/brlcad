@@ -527,8 +527,7 @@ vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		return TCL_ERROR;
 	}
 
-	sprintf(solid_name, RT_VDRW_PREFIX);
-	strncat(solid_name, dgop->dgo_currVHead->vdc_name, RT_VDRW_MAXNAME);
+	snprintf(solid_name, RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1, "%s%s", RT_VDRW_PREFIX, dgop->dgo_currVHead->vdc_name);
 	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, solid_name, LOOKUP_QUIET)) == DIR_NULL) {
 		real_flag = 0;
 	} else {
