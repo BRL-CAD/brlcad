@@ -155,7 +155,7 @@ else
     /bin/echo '-> gqa.sh FAILED'
 fi
 
-return $STATUS
+exit $STATUS
 
 # Local Variables:
 # mode: sh
