@@ -215,6 +215,9 @@ if {![info exists mged_browser]} {
 				} elseif { [file exists $path/mozilla] } {
 					set mged_browser $path/mozilla
 					break;
+				} elseif { [file exists $path/firefox] } {
+					set mged_browser $path/firefox
+					break;
 				} elseif { ($::tcl_platform(os) == "Darwin") && [file exists $path/open] } {
 					set mged_browser $path/open
 					break
