@@ -1,6 +1,7 @@
 # $Id$
 
 SUBDIRS = \
+	book \
 	html \
 	legal
 
