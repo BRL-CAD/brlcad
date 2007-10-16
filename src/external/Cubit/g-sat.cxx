@@ -1241,30 +1241,36 @@ make_bot( nmgregion *r,
 	}
 
     }
-    Body *BotBody, *RegBotBody;
+    DLIList <Body*> BodyList;
 
     CubitStatus status;
 
-    status = gmt->create_body_from_surfs(FaceList, BotBody);
+    status = gmt->create_solid_bodies_from_surfs(FaceList, BodyList);
+    // status = gmt->create_body_from_surfs(FaceList, BotBody);
 
-    if (status != CUBIT_FAILURE) {
-	cout << "make_bot made a Body!" << endl;
-	gmt->regularize_body(BotBody, RegBotBody);
-    }
-    else {
-	cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
+    Body *BotBody, *RegBotBody;
+    for (int i=0; i < BodyList.size(); i++) {
+	BotBody = BodyList[i];
 
-	double bb_width = fabs(bot_max[0] - bot_min[0]);
-	double bb_depth = fabs(bot_max[1] - bot_min[1]);
-	double bb_height = fabs(bot_max[2] - bot_min[2]);
-
-	gmt->brick(bb_width, bb_depth, bb_height);
-
-	VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
-	VADD2(bot_cp, bot_cp, bot_min);
-	CubitVector bbox_cp( V3ARGS(bot_cp) );
-
-	status = gqt->translate(gqt->get_last_body(), bbox_cp);
+	if (status != CUBIT_FAILURE) {
+	    cout << "make_bot made a Body!" << endl;
+	    gmt->regularize_body(BotBody, RegBotBody);
+	}
+	else {
+	    cout << "make_bot did not made a Body! Substituted bounding box instead of Body." << endl;
+	    
+	    double bb_width = fabs(bot_max[0] - bot_min[0]);
+	    double bb_depth = fabs(bot_max[1] - bot_min[1]);
+	    double bb_height = fabs(bot_max[2] - bot_min[2]);
+	    
+	    gmt->brick(bb_width, bb_depth, bb_height);
+	    
+	    VSUB2SCALE(bot_cp, bot_max, bot_min, 0.5);
+	    VADD2(bot_cp, bot_cp, bot_min);
+	    CubitVector bbox_cp( V3ARGS(bot_cp) );
+	    
+	    status = gqt->translate(gqt->get_last_body(), bbox_cp);
+	}
     }
 
     FaceList.clean_out();
