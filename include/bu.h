@@ -697,17 +697,17 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 
 #define BU_LIST_EACH( hp, p, type ) \
 	 for( (p)=(type *)BU_LIST_FIRST(bu_list,hp); \
-	      BU_LIST_NOT_HEAD(p,hp); \
+	      (p) && BU_LIST_NOT_HEAD(p,hp); \
 	      (p)=(type *)BU_LIST_PNEXT(bu_list,p) ) \
 
 #define BU_LIST_REVEACH( hp, p, type ) \
 	 for( (p)=(type *)BU_LIST_LAST(bu_list,hp); \
-	      BU_LIST_NOT_HEAD(p,hp); \
+	      (p) && BU_LIST_NOT_HEAD(p,hp); \
 	      (p)=(type *)BU_LIST_PREV(bu_list,((struct bu_list *)(p))) ) \
 
 #define BU_LIST_TAIL( hp, start, p, type ) \
 	 for( (p)=(type *)start ; \
-	      BU_LIST_NOT_HEAD(p,hp); \
+	      (p) && BU_LIST_NOT_HEAD(p,hp); \
 	      (p)=(type *)BU_LIST_PNEXT(bu_list,(p)) )
 
 /**
@@ -718,12 +718,12 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  */
 #define BU_LIST_FOR(p,structure,hp)	\
 	(p)=BU_LIST_FIRST(structure,hp); \
-	BU_LIST_NOT_HEAD(p,hp); \
+	(p) && BU_LIST_NOT_HEAD(p,hp); \
 	(p)=BU_LIST_PNEXT(structure,p)
 
 #define BU_LIST_FOR_BACKWARDS(p,structure,hp)	\
 	(p)=BU_LIST_LAST(structure,hp); \
-	BU_LIST_NOT_HEAD(p,hp); \
+	(p) && BU_LIST_NOT_HEAD(p,hp); \
 	(p)=BU_LIST_PLAST(structure,p)
 
 /**
@@ -732,7 +732,7 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
  */
 #define BU_LIST_FOR_CIRC(p,structure,hp)	\
 	(p)=BU_LIST_PNEXT_CIRC(structure,hp); \
-	(p) != (hp); \
+	(p) && (p) != (hp); \
 	(p)=BU_LIST_PNEXT_CIRC(structure,p)
 
 /*
@@ -745,8 +745,8 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 #define	BU_LIST_FOR2(p1,p2,structure,hp1,hp2)				\
 		(p1)=BU_LIST_FIRST(structure,hp1),			\
 		(p2)=BU_LIST_FIRST(structure,hp2);			\
-		BU_LIST_NOT_HEAD((struct bu_list *)(p1),(hp1)) &&	\
-		BU_LIST_NOT_HEAD((struct bu_list *)(p2),(hp2));		\
+		(p1) && BU_LIST_NOT_HEAD((struct bu_list *)(p1),(hp1)) &&	\
+		(p2) && BU_LIST_NOT_HEAD((struct bu_list *)(p2),(hp2));		\
 		(p1)=BU_LIST_NEXT(structure,(struct bu_list *)(p1)),	\
 		(p2)=BU_LIST_NEXT(structure,(struct bu_list *)(p2))
 
