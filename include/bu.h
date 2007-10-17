@@ -147,6 +147,36 @@ __BEGIN_DECLS
 #endif
 
 /**
+ * This is so we can use gcc's "format string vs arguments"-check for
+ * various printf-like functions, and still maintain compatability.
+ */
+#ifndef __attribute__
+/* This feature is only available in gcc versions 2.5 and later. */
+#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#    define __attribute__(ignore) /* empty */
+#  endif
+/* The __-protected variants of `format' and `printf' attributes
+ * are accepted by gcc versions 2.6.4 (effectively 2.7) and later.
+ */
+#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
+#    define __format__ format
+#    define __printf__ printf
+#    define __noreturn__ noreturn
+#  endif
+#endif
+
+/**
+ * shorthand declaration of a printf-style functions
+ */
+#define __BU_ATTR_FORMAT12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#define __BU_ATTR_FORMAT23 __attribute__ ((__format__ (__printf__, 2, 3)))
+
+/**
+ * shorthand declaration of a function that doesn't return
+ */
+#define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+
+/**
  *			B U _ F O R T R A N
  * @def BU_FORTRAN
  *
@@ -1038,7 +1068,7 @@ struct bu_ptbl {
     ip = cast BU_PTBL_LASTADDR(ptbl); ip >= cast BU_PTBL_BASEADDR(ptbl); ip--
 
 
-/* vlist, vlblock?  But they use vmath.h... */
+/* vlist, vlblock?  But they use vmath.h .. hrm. */
 /** @} */
 
 /*----------------------------------------------------------------------*/
@@ -1524,14 +1554,14 @@ struct bu_rb_list
  */
 typedef struct
 {
-    /* CLASS I - Applications may read directly... */
+    /* CLASS I - Applications may read directly. */
     long	 	rbt_magic;	  /**< @brief  Magic no. for integrity check */
     int			rbt_nm_nodes;	  /**< @brief  Number of nodes */
-    /* CLASS II - Applications may read/write directly... */
+    /* CLASS II - Applications may read/write directly. */
     void		(*rbt_print)();	  /**< @brief  Data pretty-print function */
     int			rbt_debug;	  /**< @brief  Debug bits */
     char		*rbt_description; /**< @brief  Comment for diagnostics */
-    /* CLASS III - Applications should not manipulate directly... */
+    /* CLASS III - Applications should not manipulate directly. */
     int		 	rbt_nm_orders;	  /**< @brief  Number of simultaneous orders */
     int			(**rbt_order)();  /**< @brief  Comparison functions */
     struct bu_rb_node	**rbt_root;	  /**< @brief  The actual trees */
@@ -1736,7 +1766,7 @@ BU_EXPORT BU_EXTERN(void bu_bitv_free,
 BU_EXPORT BU_EXTERN(int bu_backtrace, (FILE *fp));
 
 /* bomb.c */
-BU_EXPORT BU_EXTERN(void bu_bomb, (const char *str));
+BU_EXPORT BU_EXTERN(void bu_bomb, (const char *str)) __BU_ATTR_NORETURN;
 
 /* crashreport.c */
 BU_EXPORT BU_EXTERN(int bu_crashreport, (const char *filename));
@@ -1961,8 +1991,8 @@ BU_EXPORT BU_EXTERN(void bu_log_delete_hook,
 		    (bu_hook_t func,
 		     genptr_t clientdata));
 BU_EXPORT BU_EXTERN(void bu_putchar, (int c));
-BU_EXPORT BU_EXTERN(void bu_log, (char *, ... ));
-BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, char *, ... ));
+BU_EXPORT BU_EXTERN(void bu_log, (char *, ... )) __BU_ATTR_FORMAT12;
+BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, char *, ... )) __BU_ATTR_FORMAT23;
 
 /** @} */
 /** @addtogroup magic */
@@ -2397,7 +2427,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_vprintf,
 #if defined(HAVE_STDARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_printf,
 		    (struct bu_vls *vls,
-		     char *fmt, ...));
+		     char *fmt, ...)) __BU_ATTR_FORMAT23;
 #else  /* !HAVE_STDARG_H */
 #  if defined(HAVE_VARARGS_H)
 BU_EXPORT BU_EXTERN(void bu_vls_printf,
@@ -2411,7 +2441,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_printf,
 #if defined(HAVE_STDARG_H)
 BU_EXPORT BU_EXTERN(void bu_vls_sprintf,
 		    (struct bu_vls *vls,
-		     char *fmt, ...));
+		     char *fmt, ...)) __BU_ATTR_FORMAT23;
 #else  /* !HAVE_STDARG_H */
 #  if defined(HAVE_VARARGS_H)
 BU_EXPORT BU_EXTERN(void bu_vls_sprintf,
