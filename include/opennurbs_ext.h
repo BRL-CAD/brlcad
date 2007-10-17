@@ -230,7 +230,7 @@ namespace brlcad {
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);
     if (intersects && isLeaf()) {
-      if (results_opt != 0) results_opt->push_back(segment(this, tnear, tfar));
+      if (results_opt != 0) results_opt->push_back(BVSegment<BV>(this, tnear, tfar));
     } else if (intersects) {
       // XXX: bug in g++? had to typedef the below to get it to work!
       //       for (std::list<BVNode<BV>*>::iterator j = m_children.begin(); j != m_children.end(); j++) {
