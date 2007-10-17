@@ -78,7 +78,6 @@ namespace brlcad {
   class BVNode {
   public:
     typedef vector<BVNode<BV>*> ChildList;
-    typedef BVSegment<BV> segment;
     typedef list<BVSegment<BV> > IsectList;
 
     ChildList m_children;
@@ -102,7 +101,7 @@ namespace brlcad {
     void GetBBox(double* min, double* max);
 
     virtual bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-    virtual bool intersectsHierarchy(ON_Ray& ray, std::list<segment>* results = 0);
+    virtual bool intersectsHierarchy(ON_Ray& ray, std::list<BVSegment<BV> >* results = 0);
 
   private:
     BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
@@ -227,11 +226,7 @@ namespace brlcad {
 
   template<class BV>
   bool
-#if defined(_WIN32) && defined(_MSC_VER) defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
-  BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results_opt) {
-#else
-  BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<typename BVNode<BV>::segment>* results_opt) {
-#endif
+  BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BVSegment<BV> >* results_opt) {
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);
     if (intersects && isLeaf()) {
