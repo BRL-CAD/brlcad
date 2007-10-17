@@ -246,7 +246,6 @@ static int wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 static int wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_title_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_track_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_color_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_prcolor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_tol_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -377,7 +376,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"tol",		wdb_tol_tcl},
 	{"tops",	wdb_tops_tcl},
 	{"track",	wdb_track_tcl},
-	{"tree",	wdb_tree_tcl},
 	{"unhide",	wdb_unhide_tcl},
 	{"units",	wdb_units_tcl},
 	{"version",	wdb_version_tcl},
@@ -5351,7 +5349,7 @@ wdb_version_tcl(ClientData	clientData,
  *@brief
  *  NON-PARALLEL due to rt_uniresource
  */
-static void
+void
 wdb_print_node(struct rt_wdb		*wdbp,
 	       Tcl_Interp		*interp,
 	       register struct directory *dp,
@@ -5490,93 +5488,6 @@ wdb_track_tcl(ClientData clientData,
   return wdb_track_cmd(wdbp, interp, argc-1, argv+1);
 }
 
-/**
- *
- *
- */
-int
-wdb_tree_cmd(struct rt_wdb	*wdbp,
-	     Tcl_Interp		*interp,
-	     int		argc,
-	     char 		**argv)
-{
-	register struct directory	*dp;
-	register int			j;
-	int				cflag = 0;
-	int				indentSize = -1;
-	int				c;
-	struct bu_vls			vls;
-	FILE				*fdout = NULL;
-
-	if (argc < 2 || MAXARGS < argc) {
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	/* Parse options */
-	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((c=bu_getopt(argc, argv, "i:o:c")) != EOF) {
-		switch (c) {
-		case 'i':
-			indentSize = atoi(bu_optarg);
-			break;
-		case 'c':
-		    cflag = 1;
-			break;
-		case 'o':
-		    if( (fdout = fopen( bu_optarg, "w+" )) == NULL ) {
-			Tcl_SetErrno( errno );
-			Tcl_AppendResult( interp, "Failed to open output file, ",
-					  strerror( errno ), (char *)NULL );
-			return TCL_ERROR;
-		    }
-		    break;
-		case '?':
-		default:
-		    bu_vls_init(&vls);
-		    bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
-		    Tcl_Eval(interp, bu_vls_addr(&vls));
-		    bu_vls_free(&vls);
-		    return TCL_ERROR;
-		    break;
-		}
-	}
-
-	argc -= (bu_optind - 1);
-	argv += (bu_optind - 1);
-
-	for (j = 1; j < argc; j++) {
-		if (j > 1)
-			Tcl_AppendResult(interp, "\n", (char *)NULL);
-		if ((dp = db_lookup(wdbp->dbip, argv[j], LOOKUP_NOISY)) == DIR_NULL)
-			continue;
-		wdb_print_node(wdbp, interp, dp, 0, indentSize, 0, cflag);
-	}
-
-	if( fdout != NULL ) {
-	    fprintf( fdout, "%s", Tcl_GetStringResult( interp ) );
-	    Tcl_ResetResult( interp );
-	    fclose( fdout );
-	}
-
-	return TCL_OK;
-}
-
-/**
- * Usage:
- *        procname tree object(s)
- */
-static int
-wdb_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-
-	return wdb_tree_cmd(wdbp, interp, argc-1, argv+1);
-}
 
 /**
  *  			W D B _ C O L O R _ P U T R E C

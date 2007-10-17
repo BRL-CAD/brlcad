@@ -2764,7 +2764,7 @@ cmd_tree(ClientData	clientData,
 	 * routine with the name _mged_tree. So, we put back the original name.
 	 */
 	argv[0] = "tree";
-	ret = wdb_tree_cmd(wdbp, interp, argc, argv);
+	ret = dgo_tree_cmd(dgop, interp, argc, argv);
 
 #if 0
 	(void)signal(SIGINT, SIG_IGN);

@@ -47,6 +47,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
+#include <errno.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -145,6 +146,9 @@ extern void	dgo_free_qray(struct dg_obj *dgop);
 
 int dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
+/* in wdb_obj.c */
+void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, register struct directory *dp, int pathpos, int indentSize, char prefix, int cflag);
+
 static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_headSolid_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_illum_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -171,6 +175,7 @@ static int dgo_autoview_tcl(ClientData clientData, Tcl_Interp *interp, int argc,
 static int dgo_qray_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_nirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dgo_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static union tree *dgo_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
@@ -231,6 +236,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 #if 0
 	{"tol",			dgo_tol_tcl},
 #endif
+	{"tree",		dgo_tree_tcl},
 	{"vdraw",		dgo_vdraw_tcl},
 	{"vnirt",		dgo_vnirt_tcl},
 	{"who",			dgo_who_tcl},
@@ -245,7 +251,7 @@ static struct bu_cmdtab dgo_cmds[] = {
  * Usage:
  *        procname cmd ?args?
  *
- * Returns: result of dbo command.
+ * Returns: result of dgo command.
  */
 int
 dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -4900,6 +4906,123 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
 
     return curtree;
 }
+
+/**
+ *
+ *
+ */
+int
+dgo_tree_cmd(struct dg_obj	*dgop,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char 		**argv)
+{
+	register struct directory	*dp;
+	register int			j;
+	int				cflag = 0;
+	int				indentSize = -1;
+	int				c;
+	struct bu_vls			vls;
+	FILE				*fdout = NULL;
+	char				*buffer = NULL;
+#define WHOARGVMAX 256
+	char				*whoargv[WHOARGVMAX] = {0};
+
+	if (!dgop || !dgop->dgo_wdbp || dgop->dgo_wdbp->dbip == DBI_NULL)
+		return TCL_ERROR;
+
+	if (argc < 1 || MAXARGS < argc) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* Parse options */
+	bu_optind = 1;	/* re-init bu_getopt() */
+	while ((c=bu_getopt(argc, argv, "i:o:c")) != EOF) {
+		switch (c) {
+		case 'i':
+			indentSize = atoi(bu_optarg);
+			break;
+		case 'c':
+		    cflag = 1;
+			break;
+		case 'o':
+		    if( (fdout = fopen( bu_optarg, "w+" )) == NULL ) {
+			Tcl_SetErrno( errno );
+			Tcl_AppendResult( interp, "Failed to open output file, ",
+					  strerror( errno ), (char *)NULL );
+			return TCL_ERROR;
+		    }
+		    break;
+		case '?':
+		default:
+		    bu_vls_init(&vls);
+		    bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
+		    Tcl_Eval(interp, bu_vls_addr(&vls));
+		    bu_vls_free(&vls);
+		    return TCL_ERROR;
+		    break;
+		}
+	}
+
+	argc -= (bu_optind - 1);
+	argv += (bu_optind - 1);
+
+	/* tree of all displayed objects */
+	if (argc == 1) {
+	    char *whocmd[2] = {"who", NULL};
+	    if (dgo_who_cmd(dgop, interp, 1, whocmd) == TCL_OK) {
+		const char *result = Tcl_GetStringResult(interp);
+		const char *space = NULL;
+		buffer = bu_strdup(result);
+		Tcl_ResetResult(interp);
+
+		argc += bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
+	    }
+	}
+
+	for (j = 1; j < argc; j++) {
+	    const char *next = argv[j];
+	    if (buffer) {
+		next = whoargv[j-1];
+	    }
+
+	    if (j > 1)
+		Tcl_AppendResult(interp, "\n", (char *)NULL);
+	    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, next, LOOKUP_NOISY)) == DIR_NULL)
+		continue;
+	    wdb_print_node(dgop->dgo_wdbp, interp, dp, 0, indentSize, 0, cflag);
+	}
+
+	if (buffer) {
+	    bu_free(buffer, "free who buffer");
+	    buffer = NULL;
+	}
+
+	if( fdout != NULL ) {
+	    fprintf( fdout, "%s", Tcl_GetStringResult( interp ) );
+	    Tcl_ResetResult( interp );
+	    fclose( fdout );
+	}
+
+	return TCL_OK;
+}
+
+/**
+ * Usage:
+ *        procname tree object(s)
+ */
+static int
+dgo_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	return dgo_tree_cmd(dgop, interp, argc-1, argv+1);
+}
+
 
 /** @} */
 /*
