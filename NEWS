@@ -10,7 +10,8 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 --- 2007-08-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
-  
+
+* fixed bug with -g/-G cell size options to rt - John Anderson
 * 'tree' command without args now shows e'd objects - Sean Morrison
 * new pix-fb -p option to pause before exiting - Karel Kulhavy
 * fixed mged 'B' command behavior with -A and no args - John Anderson

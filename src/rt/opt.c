@@ -75,7 +75,7 @@ int		stereo = 0;		/* stereo viewing */
 int		hypersample = 0;		/* number of extra rays to fire */
 unsigned int	jitter = 0;		/* ray jitter control variable */
 fastf_t		rt_perspective = (fastf_t)0.0;	/* presp (degrees X) 0 => ortho */
-fastf_t		aspect = (fastf_t)0.0;	/* view aspect ratio X/Y */
+fastf_t		aspect = (fastf_t)1.0;	/* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 vect_t		dx_unit;		/* view delta-X as unit-len vect */
@@ -561,6 +561,11 @@ int get_args( int argc, register char **argv )
 			fprintf(stderr,"unknown option %c\n", c);
 			return(0);	/* BAD */
 		}
+	}
+
+	/* sanity checks for sane values */
+	if( aspect <= 0.0 ) {
+	    aspect = 1.0;
 	}
 
 	/* Compat */
