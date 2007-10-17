@@ -172,7 +172,7 @@ itcl::class swidgets::Tree {
 
     public {
 	method component {{name ""}}
-	method insert {index parent text {type ""} {color ""} {clientData ""}}
+	method insert {index parent text {type ""} {color ""} {clientData ""} {doDraw 1}}
 	method find {text {parent "root"} {firstOnly 1}}
 	method remove {node {redraw 1}}
 	method removeall {}
@@ -727,7 +727,7 @@ proc ::swidgets::tree {args} {
     }
 }
 
-::itcl::body swidgets::Tree::insert {index parent text {type ""} {color ""} {clientData ""}} {
+::itcl::body swidgets::Tree::insert {index parent text {type ""} {color ""} {clientData ""} {doDraw 1}} {
     # create node
     if { [string equal $parent "root"] } {
 	set parent $root
@@ -745,16 +745,17 @@ proc ::swidgets::tree {args} {
     $parent addchild $newnode $index
     $newnode configure -level [expr [$parent cget -level] + 1]
 
-    # set
-    if { [string equal $parent "root"] } {
-	_redraw_idle
-    } else {
-	if {[$parent open]} {
-	    # ...and opened -> redraw whole
+    if {$doDraw} {
+	if { [string equal $parent "root"] } {
 	    _redraw_idle
 	} else {
-	    # ...and closed -> redraw cross
-	    _redraw_idle
+	    if {[$parent open]} {
+		# ...and opened -> redraw whole
+		_redraw_idle
+	    } else {
+		# ...and closed -> redraw cross
+		_redraw_idle
+	    }
 	}
     }
 
