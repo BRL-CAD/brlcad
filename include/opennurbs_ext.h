@@ -227,7 +227,11 @@ namespace brlcad {
 
   template<class BV>
   bool
+#if defined(_WIN32) && defined(_MSC_VER) defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
+  BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BVNode<BV>::segment>* results_opt) {
+#else
   BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<typename BVNode<BV>::segment>* results_opt) {
+#endif
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);
     if (intersects && isLeaf()) {
