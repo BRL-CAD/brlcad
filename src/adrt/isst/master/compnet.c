@@ -24,6 +24,11 @@
  *
  */
 
+/*
+ * $Id$
+ */
+
+/* compnet is first as it includes $(top_srcdir)/include/common.h */
 #include "compnet.h"
 
 #include <stdio.h>
@@ -33,6 +38,8 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+#include "adrt_common.h"
 #include "tienet.h"
 
 int isst_master_compserv_socket;
