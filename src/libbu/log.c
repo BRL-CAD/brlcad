@@ -252,6 +252,7 @@ bu_putchar(int c)
     }
 }
 
+
 /**
  *  			B U _ L O G
  *
@@ -259,18 +260,21 @@ bu_putchar(int c)
  */
 void
 #if defined(HAVE_STDARG_H)
-bu_log(char *fmt, ...)                      /* ANSI C */
+/* ANSI C */
+bu_log(char *fmt, ...)
 {
     va_list ap;
 #else
 #  if defined(HAVE_VARARGS_H)
-bu_log(va_alist)                            /* VARARGS */
+/* VARARGS */
+bu_log(va_alist)
 va_dcl
 {
     va_list ap;
     char *fmt;
 #  else
-bu_log(fmt, a,b,c,d,e,f,g,h,i,j)            /* Cray XMP */
+/* Cray XMP */
+bu_log(fmt, a,b,c,d,e,f,g,h,i,j)
 char *fmt;
 {
 #  endif
@@ -280,7 +284,9 @@ char *fmt;
 
     bu_vls_init(&output);
 
-#if defined(HAVE_STDARG_H)                  /* ANSI C */
+#if defined(HAVE_STDARG_H)
+/* ANSI C */
+
     va_start(ap, fmt);
 
     if (!fmt || strlen(fmt) == 0) {
@@ -295,10 +301,11 @@ char *fmt;
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
-	bu_vls_vprintf(&output, fmt, ap);   /* VARARGS */
+	bu_vls_vprintf(&output, fmt, ap);
     }
 #else
 #  if defined(HAVE_VARARGS_H)
+/* VARARGS */
     va_start(ap);
     fmt = va_arg(ap, char *);
 
@@ -316,7 +323,8 @@ char *fmt;
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-#  else                                     /* Cray XMP */
+#  else
+/* Cray XMP */
     if (!fmt || strlen(fmt) == 0) {
 	return;
     }
@@ -374,19 +382,22 @@ char *fmt;
  */
 void
 #if defined(HAVE_STDARG_H)
-bu_flog(FILE *fp, char *fmt, ...)                      /* ANSI C */
+/* ANSI C */
+bu_flog(FILE *fp, char *fmt, ...)
 {
     va_list ap;
 #else
 #  if defined(HAVE_VARARGS_H)
-bu_flog(va_alist)                            /* VARARGS */
+/* VARARGS */
+bu_flog(va_alist)
 va_dcl
 {
     va_list ap;
     FILE *fp;
     char *fmt;
 #  else
-bu_flog(fp, fmt, a,b,c,d,e,f,g,h,i,j)            /* Cray XMP */
+/* Cray XMP */
+bu_flog(fp, fmt, a,b,c,d,e,f,g,h,i,j)
 FILE *fp;
 char *fmt;
 {
@@ -397,7 +408,8 @@ char *fmt;
 
     bu_vls_init(&output);
 
-#if defined(HAVE_STDARG_H)                  /* ANSI C */
+#if defined(HAVE_STDARG_H)
+/* ANSI C */
     va_start(ap, fmt);
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
@@ -407,10 +419,11 @@ char *fmt;
 	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
 	bu_vls_free(&newfmt);
     } else {
-	bu_vls_vprintf(&output, fmt, ap);   /* VARARGS */
+	bu_vls_vprintf(&output, fmt, ap);
     }
 #else
 #  if defined(HAVE_VARARGS_H)
+/* VARARGS */
     va_start(ap);
     fp = va_arg(ap, FILE *);
     fmt = va_arg(ap, char *);
@@ -424,7 +437,8 @@ char *fmt;
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-#  else                                     /* Cray XMP */
+#  else
+/* Cray XMP */
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
