@@ -81,8 +81,7 @@ do_file(void)
 		exit(1);
 	}
 	output_file = (char *)malloc( strlen(input_file)+10 );
-	strcpy( output_file, "MOD_" );
-	strcat( output_file, input_file );
+	snprintf(output_file, strlen(input_file)+9, "MOD_%s", input_file);
 
 	if( (ofp = fopen( output_file, "w" )) == NULL )  {
 		perror(output_file);

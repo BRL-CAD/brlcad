@@ -404,7 +404,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     int i;
 
 
-    i = sscanf(buf, "%lg%s", &a, units_string);
+    i = sscanf(buf, "%lg%256s", &a, units_string);
 
     if (i < 0) return 1;
 

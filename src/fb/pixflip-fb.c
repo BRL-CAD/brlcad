@@ -221,9 +221,9 @@ main(int argc, char **argv)
 			/* See if we read all the files */
 			if( bu_optind >= argc )
 				goto done;
-			strcpy(name, argv[bu_optind++]);
+			strncpy(name, argv[bu_optind++], 256);
 		} else {
-			sprintf(name,"%s.%d", input_basename, framenumber);
+			snprintf(name, 256, "%s.%d", input_basename, framenumber);
 		}
 		if( (fd=open(name,0))<0 )  {
 			perror(name);

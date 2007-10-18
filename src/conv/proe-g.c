@@ -769,9 +769,9 @@ Convert_part(char *line)
 		len = strlen( name );
 		suff_len = strlen( tmp_str );
 		if( len + suff_len < MAX_LINE_LEN )
-			strncat( name, tmp_str, MAX_LINE_LEN - strlen(name) - 1 );
+			strncat( name, tmp_str, MAX_LINE_LEN - len - 1 );
 		else
-			snprintf( &name[MAX_LINE_LEN-suff_len-1], MAX_LINE_LEN, tmp_str );
+			snprintf( &name[MAX_LINE_LEN-suff_len-1], MAX_LINE_LEN, "%s", tmp_str );
 	} else {
 		strcpy( name, "noname" );
 	}

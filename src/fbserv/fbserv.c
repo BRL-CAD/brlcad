@@ -128,6 +128,8 @@ static	int	port_set = 0;		/* !0 if user supplied port num */
 static	int	once_only = 0;
 static 	int	netfd;
 
+#define OUTBUFSZ 4096
+
 #define MAX_CLIENTS	32
 struct pkg_conn	*clients[MAX_CLIENTS];
 
@@ -283,7 +285,8 @@ drop_client(int sub)
 int
 main(int argc, char **argv)
 {
-	char	portname[32];
+#define PORTSZ 32
+	char	portname[PORTSZ];
 
 	max_fd = 0;
 
@@ -345,7 +348,7 @@ main(int argc, char **argv)
 			if( port < 1024 )
 				port += 5559;
 		}
-		sprintf(portname,"%d",port);
+		snprintf(portname, PORTSZ, "%d",port);
 
 		/*
 		 * Hang an unending listen for PKG connections
@@ -552,7 +555,7 @@ comm_error(char *str)
 {
 #if defined(HAVE_SYSLOG_H)
     if( use_syslog ) {
-	syslog( LOG_ERR, str );
+	syslog( LOG_ERR, "%s", str );
     } else {
 	fprintf( stderr, "%s", str );
     }
@@ -583,7 +586,7 @@ void
 fb_log( char *fmt, ... )
 {
 	va_list ap;
-	char	outbuf[4096];			/* final output string */
+	char	outbuf[OUTBUFSZ];			/* final output string */
 	int	want;
 	int	i;
 	int	nsent = 0;
@@ -622,7 +625,7 @@ va_dcl
 	int	longify;
 	char	fbuf[64];			/* % format buffer */
 	char	nfmt[256];
-	char	outbuf[4096];			/* final output string */
+	char	outbuf[OUTBUFSZ];			/* final output string */
 	char	*op;				/* output buf pointer */
 	int	want, got;
 	int	i;
@@ -685,7 +688,7 @@ va_dcl
 			{
 				register double d;
 				d = va_arg(ap, double);
-				sprintf( op, fbuf, d );
+				snprintf( op, OUTBUFSZ-strlen(outbuf)-1, fbuf, d );
 				op = &outbuf[strlen(outbuf)];
 			}
 			break;
@@ -695,13 +698,13 @@ va_dcl
 				register long ll;
 				/* Long int */
 				ll = va_arg(ap, long);
-				sprintf( op, fbuf, ll );
+				snprintf( op, OUTBUFSZ-strlen(outbuf)-1, fbuf, ll );
 				op = &outbuf[strlen(outbuf)];
 			} else {
 				register int i;
 				/* Regular int */
 				i = va_arg(ap, int);
-				sprintf( op, fbuf, i );
+				snprintf( op, OUTBUFSZ-strlen(outbuf)-1, fbuf, i );
 				op = &outbuf[strlen(outbuf)];
 			}
 			break;

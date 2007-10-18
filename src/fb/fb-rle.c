@@ -44,11 +44,12 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #include "fb.h"
 #include "rle.h"
 
+#define COMMENT_SIZE 128
 static rle_hdr	outrle;
 #define		outfp		outrle.rle_file
-static char			comment[128];
+static char			comment[COMMENT_SIZE];
 #if HAVE_GETHOSTNAME
-static char			host[128];
+static char			host[COMMENT_SIZE];
 #endif
 static rle_pixel		**rows;
 static time_t			now;
@@ -144,7 +145,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 	if( argv[bu_optind] != NULL )  {
-		if( access( argv[bu_optind], 0 ) == 0 )  {
+		if (bu_file_exists(argv[bu_optind])) {
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
 				argv[bu_optind] );
@@ -267,18 +268,18 @@ main(int argc, char **argv)
 	/* Add comments to the header file, since we have one */
 	if( framebuffer == (char *)0 )
 		framebuffer = fbp->if_name;
-	sprintf( comment, "encoded_from=%s", framebuffer );
+	snprintf( comment, COMMENT_SIZE, "encoded_from=%s", framebuffer );
 	rle_putcom( bu_strdup(comment), &outrle );
 	now = time(0);
-	sprintf( comment, "encoded_date=%24.24s", ctime(&now) );
+	snprintf( comment, COMMENT_SIZE, "encoded_date=%24.24s", ctime(&now) );
 	rle_putcom( bu_strdup(comment), &outrle );
 	if( (who = getenv("USER")) != (char *)0 ) {
-		sprintf( comment, "encoded_by=%s", who);
+		snprintf( comment, COMMENT_SIZE, "encoded_by=%s", who);
 		rle_putcom( bu_strdup(comment), &outrle );
 	}
 #	if HAVE_GETHOSTNAME
 	gethostname( host, sizeof(host) );
-	sprintf( comment, "encoded_host=%s", host);
+	snprintf( comment, COMMENT_SIZE, "encoded_host=%s", host);
 	rle_putcom( bu_strdup(comment), &outrle );
 #	endif
 

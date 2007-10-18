@@ -222,7 +222,7 @@ Do_subfigs()
 
 					list_ptr->file_name = file_name;
 					if( no_of_members == 1 )
-						strcpy( list_ptr->obj_name, dir[subfigdef_index]->name );
+						strncpy( list_ptr->obj_name, dir[subfigdef_index]->name, NAMESIZE );
 					else
 					{
 						strncpy( list_ptr->obj_name, "subfig", NAMESIZE );

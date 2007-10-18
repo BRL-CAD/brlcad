@@ -1311,6 +1311,7 @@ booltree_evaluate( tree *tp, resource *resp )
     int                     op;
     const char              *op_str;
     char                    *name;
+    int			     namelen;
 
     enum BOOL_ENUM_TYPE { ADD, ISECT, SUBTR };
 
@@ -1372,13 +1373,10 @@ booltree_evaluate( tree *tp, resource *resp )
     cout << "******" << tl->tr_d.td_name << op_str << tr->tr_d.td_name << "***********" << endl;
 
     /* Build string of result name */
-    name = (char *)bu_malloc( strlen(tl->tr_d.td_name)+3+strlen(tr->tr_d.td_name)+2+1,
-			      "booltree_evaluate name");
-    name[0] = '(';
-    strcpy( name+1, tl->tr_d.td_name );
-    strcat( name+1, op_str );
-    strcat( name+1, tr->tr_d.td_name );
-    strcat( name+1, ")" );
+    namelen = strlen(tl->tr_d.td_name)+strlen(op_str)+strlen(tr->tr_d.td_name)+3;
+    name = (char *)bu_malloc( namelen, "booltree_evaluate name");
+
+    snprintf(name, namelen, "(%s%s%s)", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
 
     /* Clean up child tree nodes (and their names) */
     db_free_tree(tl, resp);

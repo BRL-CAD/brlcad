@@ -49,8 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define DEBUG_UI	0
 
 static char promptbuf[LNBUFSZ];
-static const char *bannerp = "BURST (%s)";
-static const char *pgmverp = "2.2";
+static const char *bannerp = "BURST (2.2)";
 
 #define AddCmd( nm, f )\
 	{	Trie	*p;\
@@ -427,7 +426,7 @@ Ftable *tp;
 static void
 banner()
 	{
-	(void) snprintf( scrbuf, LNBUFSZ, bannerp, pgmverp );
+	(void) snprintf( scrbuf, LNBUFSZ, "%s", bannerp );
 	HmBanner( scrbuf, BORDER_CHR );
 	return;
 	}

@@ -760,7 +760,7 @@ readinfont(void)
 
 	fnum = new_font_num;
 	size = new_pt_size;
-	sprintf(cbuf, "%s.%d", fontname[fnum], size);
+	snprintf(cbuf, BUFSIZ, "%s.%d", fontname[fnum], size);
 
 	if( (vfp = vfont_get( cbuf )) == VFONT_NULL )  {
 		/* Ignore font change */

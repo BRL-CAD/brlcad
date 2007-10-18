@@ -89,8 +89,8 @@ int entityno;
 	BU_LIST_INIT( &head.l );
 
 	/* Default values */
-	VSET( adir , 0.0 , 0.0 , 1.0 );
-	VSET( pt , 0.0 , 0.0 , 0.0 );
+	VSET( adir, 0.0, 0.0, 1.0 );
+	VSET( pt, 0.0, 0.0, 0.0 );
 	fract = 1.0;
 
 	/* Acquire data */
@@ -98,27 +98,27 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 
 	/* Read pointer to directory entry for curve to be extruded */
 
-	Readint( &curve , "" );
+	Readint( &curve, "" );
 
 	/* Convert this to a "dir" index */
 
 	curve = (curve-1)/2;
 
-	Readflt( &fract , "" );
-	Readflt( &pt[X] , "" );
-	Readflt( &pt[Y] , "" );
-	Readflt( &pt[Z] , "" );
-	Readflt( &adir[X] , "" );
-	Readflt( &adir[Y] , "" );
-	Readflt( &adir[Z] , "" );
+	Readflt( &fract, "" );
+	Readflt( &pt[X], "" );
+	Readflt( &pt[Y], "" );
+	Readflt( &pt[Z], "" );
+	Readflt( &adir[X], "" );
+	Readflt( &adir[Y], "" );
+	Readflt( &adir[Z], "" );
 
 	/* just to be safe */
 	VUNITIZE( adir );
@@ -126,7 +126,7 @@ int entityno;
 	if( fract <= 0.0 || fract > 1.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-			dir[entityno]->direct , dir[entityno]->name );
+			dir[entityno]->direct, dir[entityno]->name );
 		return( 0 );
 	}
 
@@ -134,12 +134,12 @@ int entityno;
 
 	/* Get the curve in the form of a series of straight line segments */
 
-	npts = Getcurve( curve , &curv_pts );
+	npts = Getcurve( curve, &curv_pts );
 	if( npts == 0 )
 	{
 		bu_log( "Could not get points along curve for revovling\n" );
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-			dir[entityno]->direct , dir[entityno]->name );
+			dir[entityno]->direct, dir[entityno]->name );
 		return( 0 );
 	}
 
@@ -149,13 +149,13 @@ int entityno;
 	ptr = curv_pts;
 
 	/* Calculate radius at start of curve */
-	VSUB2( v1 , ptr->pt , pt );
-	VCROSS( tmp , v1 , adir );
+	VSUB2( v1, ptr->pt, pt );
+	VCROSS( tmp, v1, adir );
 	r2 = MAGNITUDE( tmp );
 	if( r2 < TOL )
 		r2 = TOL;
 	rmax = r2;
-	hmax = VDOT( v1 , adir );
+	hmax = VDOT( v1, adir );
 	hmin = hmax;
 
 	trcptr = NULL;
@@ -186,11 +186,11 @@ int entityno;
 		trcptr->name[0] = '\0';
 
 		/* Calculate base point of TRC */
-		VSUB2( v1 , ptr->pt , pt );
-		VJOIN1( trcptr->base , pt , VDOT( v1 , adir ) , adir );
+		VSUB2( v1, ptr->pt, pt );
+		VJOIN1( trcptr->base, pt, VDOT( v1, adir ), adir );
 
 		/* Height along axis of rotation */
-		h1 = VDOT( v1 , adir );
+		h1 = VDOT( v1, adir );
 		if( h1 < hmin )
 			hmin = h1;
 		if( h1 > hmax )
@@ -200,8 +200,8 @@ int entityno;
 		trcptr->r1 = r2;
 
 		/* Calculate new top radius */
-		VSUB2( v1 , ptr->next->pt , pt );
-		VCROSS( tmp , v1 , adir );
+		VSUB2( v1, ptr->next->pt, pt );
+		VCROSS( tmp, v1, adir );
 		trcptr->r2 = MAGNITUDE( tmp );
 		if( trcptr->r2 < TOL )
 			trcptr->r2 = TOL;
@@ -210,25 +210,25 @@ int entityno;
 			rmax = r2;
 
 		/* Calculate height of TRC */
-		VSUB2( v1 , ptr->next->pt , pt );
-		VJOIN1( trcptr->top , pt , VDOT( v1 , adir ) , adir );
-		VSUB2( v1 , trcptr->top , trcptr->base );
+		VSUB2( v1, ptr->next->pt, pt );
+		VJOIN1( trcptr->top, pt, VDOT( v1, adir ), adir );
+		VSUB2( v1, trcptr->top, trcptr->base );
 		h = MAGNITUDE( v1 );
 		/* If height is zero, don't make a TRC */
-		if( NEAR_ZERO( h , TOL ) )
+		if( NEAR_ZERO( h, TOL ) )
 		{
 			ptr = ptr->next;
 			continue;
 		}
 
 		/* Make a name for the TRC */
-		sprintf( trcptr->name , trcform , entityno , ntrcs );
+		snprintf( trcptr->name, NAMESIZE, trcform, entityno, ntrcs );
 
 		/* Make the TRC */
 		if( mk_trc_top( fdout, trcptr->name, trcptr->base,
 		    trcptr->top, trcptr->r1, trcptr->r2 ) < 0 )  {
 			bu_log( "Unable to write TRC for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 			return( 0 );
 		}
 
@@ -254,9 +254,9 @@ int entityno;
 			fastf_t tmpp;	/* temp storage */
 
 			/* Calculate distances to top and base */
-			VSUB2( tmp , trcptr->base , pt );
+			VSUB2( tmp, trcptr->base, pt );
 			hb1 = MAGNITUDE( tmp );
-			VSUB2( tmp , trcptr->top , pt );
+			VSUB2( tmp, trcptr->top, pt );
 			ht1 = MAGNITUDE( tmp );
 			/* Make sure distance to base is smaller */
 			if( ht1 < hb1 )
@@ -275,9 +275,9 @@ int entityno;
 				else
 				{
 					/* Calculate heights */
-					VSUB2( tmp , ptr2->base , pt );
+					VSUB2( tmp, ptr2->base, pt );
 					hb2 = MAGNITUDE( tmp );
-					VSUB2( tmp , ptr2->top , pt );
+					VSUB2( tmp, ptr2->top, pt );
 					ht2 = MAGNITUDE( tmp );
 					/* and order them */
 					if( ht2 < hb2 )
@@ -294,13 +294,13 @@ int entityno;
 						if( rtmp > ptr2->r1 )
 						{
 							/* ptr2 must be an inside solid, so subtract it */
-							Addsub( trcptr , ptr2 );
+							Addsub( trcptr, ptr2 );
 							ptr2->op = 1;
 						}
 						else if( rtmp < ptr2->r1 )
 						{
 							/* trcptr must be an inside solid */
-							Addsub( ptr2 , trcptr );
+							Addsub( ptr2, trcptr );
 							trcptr->op = 1;
 						}
 					}
@@ -312,13 +312,13 @@ int entityno;
 						if( rtmp > ptr2->r2 )
 						{
 							/* ptr2 must be an inside solid, so subtract it */
-							Addsub( trcptr , ptr2 );
+							Addsub( trcptr, ptr2 );
 							ptr2->op = 1;
 						}
 						else if( rtmp < ptr2->r1 )
 						{
 							/* trcptr must be an inside solid */
-							Addsub( ptr2 , trcptr );
+							Addsub( ptr2, trcptr );
 							trcptr->op = 1;
 						}
 					}
@@ -341,15 +341,15 @@ int entityno;
 		ptr = curv_pts;
 		while( len == 0.0 )
 		{
-			VSUB2( pdir , ptr->pt , pt );
-			VJOIN1( startdir , pdir , -VDOT( pdir , adir ) , adir );
+			VSUB2( pdir, ptr->pt, pt );
+			VJOIN1( startdir, pdir, -VDOT( pdir, adir ), adir );
 			len = MAGNITUDE( startdir );
 			ptr = ptr->next;
 		}
 		VUNITIZE( startdir );
 
 		/* Calculate direction towards solid from axis */
-		VCROSS( pdir , adir , startdir );
+		VCROSS( pdir, adir, startdir );
 		VUNITIZE( pdir );
 
 		if( fract < 0.5 )
@@ -368,20 +368,20 @@ int entityno;
 			theta = PI;
 			cutop = Intersect;
 			/* Construct vertices for cutting solid */
-			VJOIN2( pts[0] , pt , hmin , adir , rmax , startdir );
-			VJOIN1( pts[1] , pts[0] , (-2.0*rmax) , startdir );
-			VJOIN1( pts[2] , pts[1] , rmax , pdir );
-			VJOIN1( pts[3] , pts[0] , rmax , pdir );
+			VJOIN2( pts[0], pt, hmin, adir, rmax, startdir );
+			VJOIN1( pts[1], pts[0], (-2.0*rmax), startdir );
+			VJOIN1( pts[2], pts[1], rmax, pdir );
+			VJOIN1( pts[3], pts[0], rmax, pdir );
 			for( i=0 ; i<4 ; i++ )
 			{
-				VJOIN1( pts[i+4] , pts[i] , (hmax-hmin) , adir );
+				VJOIN1( pts[i+4], pts[i], (hmax-hmin), adir );
 			}
 		}
 		if( fract != 0.5 )
 		{
 			/* Calculate direction to end of revolve */
-			VSCALE( enddir , startdir , cos( theta ) );
-			VJOIN1( enddir , enddir , sin( theta ) , pdir );
+			VSCALE( enddir, startdir, cos( theta ) );
+			VJOIN1( enddir, enddir, sin( theta ), pdir );
 			VUNITIZE( enddir );
 
 			/* Calculate required length of a side */
@@ -389,28 +389,28 @@ int entityno;
 
 			/* Construct vertices for cutting solid */
 				/* Point at bottom center of revolution */
-			VJOIN1( pts[0] , pt , hmin , adir );
+			VJOIN1( pts[0], pt, hmin, adir );
 				/* Point at bottom on curve */
-			VJOIN1( pts[1] , pts[0] , len , startdir );
+			VJOIN1( pts[1], pts[0], len, startdir );
 				/* Point at bottom at end of revolution */
-			VJOIN1( pts[3] , pts[0] , len , enddir );
+			VJOIN1( pts[3], pts[0], len, enddir );
 				/* Calculate direction to pts[2] */
-			VADD2( enddir , enddir , startdir );
+			VADD2( enddir, enddir, startdir );
 			VUNITIZE( enddir );
 				/* Calculate pts[2] */
-			VJOIN1( pts[2] , pts[0] , len , enddir );
+			VJOIN1( pts[2], pts[0], len, enddir );
 
 			/* Calculate top vertices */
 			for( i=0 ; i<4 ; i++ )
 			{
-				VJOIN1( pts[i+4] , pts[i] , (hmax-hmin) , adir );
+				VJOIN1( pts[i+4], pts[i], (hmax-hmin), adir );
 			}
 		}
 
 		/* Make the BRL-CAD solid */
-		if( mk_arb8( fdout , cutname , &pts[0][X] ) < 0 )  {
+		if( mk_arb8( fdout, cutname, &pts[0][X] ) < 0 )  {
 			bu_log( "Unable to write ARB8 for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 			return( 0 );
 		}
 	}
@@ -422,19 +422,19 @@ int entityno;
 		/* Union together all the TRC's that are not subtracts */
 		if( trcptr->op != 1 )
 		{
-			(void)mk_addmember( trcptr->name , &head.l, NULL, operator[Union] );
+			(void)mk_addmember( trcptr->name, &head.l, NULL, operator[Union] );
 
 			if( fract < 1.0 )
 			{
 				/* include cutting solid */
-				(void)mk_addmember( cutname , &head.l, NULL, operator[cutop] );
+				(void)mk_addmember( cutname, &head.l, NULL, operator[cutop] );
 			}
 
 			subp = trcptr->subtr;
 			/* Subtract the inside TRC's */
 			while( subp != NULL )
 			{
-				(void)mk_addmember( subp->name , &head.l, NULL, operator[Subtract] );
+				(void)mk_addmember( subp->name, &head.l, NULL, operator[Subtract] );
 				subp = subp->next;
 			}
 		}
@@ -442,10 +442,10 @@ int entityno;
 	}
 
 	/* Make the object */
-	if( mk_lcomb( fdout , dir[entityno]->name , &head , 0 ,
-	    (char *)0 , (char *)0 , (unsigned char *)0 , 0 ) < 0 )  {
+	if( mk_lcomb( fdout, dir[entityno]->name, &head, 0 ,
+	    (char *)0, (char *)0, (unsigned char *)0, 0 ) < 0 )  {
 		bu_log( "Unable to make combination for entity D%07d (%s)\n" ,
-			dir[entityno]->direct , dir[entityno]->name );
+			dir[entityno]->direct, dir[entityno]->name );
 		return( 0 );
 	}
 
@@ -462,7 +462,7 @@ int entityno;
 
 /* Routine to add a name to the list of subtractions */
 void
-Addsub( trc , ptr )
+Addsub( trc, ptr )
 struct trclist *trc,*ptr;
 {
 	struct subtracts *subp;

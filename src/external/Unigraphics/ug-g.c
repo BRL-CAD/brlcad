@@ -1389,7 +1389,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		}
 	}
 
-	strcpy( skt_name, skt_info.name );
+	strncpy( skt_name, skt_info.name, 31 );
 
 	seg_count = num_curves;
 
@@ -5726,7 +5726,7 @@ int parse_args(int ac, char *av[])
 	return(bu_optind);
 }
 
-static char *usage="Usage: %s [-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o output_file.g part_filename [subpart1 subpart2 ...]\n";
+static const char *usage="Usage: %s [-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o output_file.g part_filename [subpart1 subpart2 ...]\n";
 
 int
 main(int ac, char *av[])
@@ -5754,7 +5754,7 @@ main(int ac, char *av[])
     tol.para = 1.0 - tol.perp;
 
     if (i+1 > ac) {
-	printf( usage, *av);
+	printf( usage, av[0]);
 	return -1;
     }
 
@@ -5789,7 +5789,7 @@ main(int ac, char *av[])
 
     if( !output_file ) {
 	printf( "ERROR: Output file name is required!!\n" );
-	printf( usage, *av);
+	printf( usage, av[0]);
 	return -1;
     }
 

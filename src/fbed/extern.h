@@ -26,6 +26,19 @@
 #define STATIC static
 #endif
 
+#define MAX_LN			81
+#define Toggle(f)		(f) = ! (f)
+#define De_Bounce_Pen()		while( do_Bitpad( &cursor_pos ) ) ;
+#define BOTTOM_STATUS_AREA	2
+#define TOP_SCROLL_WIN		(BOTTOM_STATUS_AREA-1)
+#define PROMPT_LINE		(LI-2)
+#define MACROBUFSZ		(BUFSIZ*10)
+#define Malloc_Bomb() \
+		fb_log(	"\"%s\"(%d) Malloc() no more space.\n", \
+				__FILE__, __LINE__ \
+				); \
+		return 0;
+
 typedef struct
 	{
 	int p_x;
@@ -57,9 +70,8 @@ extern Point windo_center;
 extern Point windo_anchor;
 extern Try *try_rootp;
 extern bool isSGI;
-extern char cread_buf[BUFSIZ*10], *cptr;
-extern char macro_buf[];
-extern char *macro_ptr;
+extern char cread_buf[MACROBUFSZ], *cptr;
+extern char macro_buf[MACROBUFSZ], *macro_ptr;
 extern int brush_sz;
 extern int gain;
 extern int pad_flag;
@@ -128,19 +140,6 @@ extern int ClrEOL();
 extern int SetScrlReg();
 extern int ResetScrlReg();
 extern void set_HUPCL();
-
-#define MAX_LN			81
-#define Toggle(f)		(f) = ! (f)
-#define De_Bounce_Pen()		while( do_Bitpad( &cursor_pos ) ) ;
-#define BOTTOM_STATUS_AREA	2
-#define TOP_SCROLL_WIN		(BOTTOM_STATUS_AREA-1)
-#define PROMPT_LINE		(LI-2)
-#define MACROBUFSZ		(BUFSIZ*10)
-#define Malloc_Bomb() \
-		fb_log(	"\"%s\"(%d) Malloc() no more space.\n", \
-				__FILE__, __LINE__ \
-				); \
-		return 0;
 
 /*
  * Local Variables:

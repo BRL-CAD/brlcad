@@ -208,14 +208,16 @@ main(int argc, char **argv)
 		char tol_str[BRLCAD_TITLE_LENGTH];
 		int title_len,tol_len;
 
-		snprintf( tol_str, BRLCAD_TITLE_LENGTH, " (tolerance distance = %gmm)", tol.dist );
 		snprintf( title, BRLCAD_TITLE_LENGTH, "%s", efile );
 		title_len = strlen( title );
+
+		snprintf( tol_str, BRLCAD_TITLE_LENGTH, " (tolerance distance = %gmm)", tol.dist );
 		tol_len =  strlen( tol_str );
-		if( title_len + tol_len > BRLCAD_TITLE_LENGTH )
-			strncat( &title[BRLCAD_TITLE_LENGTH-tol_len-1], tol_str, BRLCAD_TITLE_LENGTH - title_len - tol_len  - 1);
-		else
-			strcat( title, tol_str);
+
+		/* add the tolerance only if it'll completely fit */
+		if( title_len + tol_len < BRLCAD_TITLE_LENGTH ) {
+		    strncat(title, tol_str, tol_len);
+		}
 	}
 
 	if ((fpout = wdb_fopen(bfile)) == NULL) {
