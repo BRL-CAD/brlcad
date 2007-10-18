@@ -37,7 +37,6 @@ EXTRA_DIST = \
 	acinclude.m4 \
 	AUTHORS \
 	ChangeLog \
-	config.h \
 	configure.ac \
 	COPYING \
 	Doxyfile \
