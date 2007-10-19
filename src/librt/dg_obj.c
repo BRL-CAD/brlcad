@@ -144,8 +144,6 @@ extern int	dgo_qray_cmd(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char 
 extern void	dgo_init_qray(struct dg_obj *dgop);
 extern void	dgo_free_qray(struct dg_obj *dgop);
 
-int dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
 /* in wdb_obj.c */
 void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, register struct directory *dp, int pathpos, int indentSize, char prefix, int cflag);
 
