@@ -6033,11 +6033,6 @@ RT_EXPORT BU_EXTERN(int	wdb_get_tcl,
 		    (ClientData clientData,
 		     Tcl_Interp *interp,
 		     int argc, char **argv));
-RT_EXPORT BU_EXTERN(int dgo_cmd,
-		    (ClientData clientData,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
 RT_EXPORT BU_EXTERN(int	wdb_init_obj,
 		    (Tcl_Interp *interp,
 		     struct rt_wdb *wdbp,
@@ -6361,6 +6356,16 @@ RT_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
 		     char **argv));
 
 /* defined in dg_obj.c */
+RT_EXPORT BU_EXTERN(int dgo_cmd,
+		    (ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+RT_EXPORT BU_EXTERN(int dgo_tree_cmd,
+		    (ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
 RT_EXPORT BU_EXTERN(int dgo_set_outputHandler_cmd,
 		    (struct dg_obj	*dgop,
 		     Tcl_Interp		*interp,
