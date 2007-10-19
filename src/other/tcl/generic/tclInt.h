@@ -2285,7 +2285,12 @@ MODULE_SCOPE void	TclInitLimitSupport(Tcl_Interp *interp);
 MODULE_SCOPE void	TclInitNamespaceSubsystem(void);
 MODULE_SCOPE void	TclInitNotifier(void);
 MODULE_SCOPE void	TclInitObjSubsystem(void);
+#ifdef __WIN32__
+/* This is a quick hack for BLT on Windows */
+EXTERN void	TclInitSubsystems(void);
+#else
 MODULE_SCOPE void	TclInitSubsystems(void);
+#endif
 MODULE_SCOPE int	TclInterpReady(Tcl_Interp *interp);
 MODULE_SCOPE int	TclIsLocalScalar(CONST char *src, int len);
 MODULE_SCOPE int	TclJoinThread(Tcl_ThreadId id, int *result);
