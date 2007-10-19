@@ -934,7 +934,11 @@ do_frame(int framenumber)
 #else
 		/* Protect finished product */
 		if( outputfile != (char *)0 )
+#if defined(_WIN32) && !defined(__CYGWIN__)
+			chmod( framename, 0444 );
+#else
 			fchmod( fileno(outfp), 0444 );
+#endif
 #endif
 
 		(void)fclose(outfp);
