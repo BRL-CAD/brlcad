@@ -39,12 +39,28 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define WIN32_INCLUDE_ORDER_HACK
+#endif
+
+#if defined(WIN32_INCLUDE_ORDER_HACK)
+#ifdef _WIN32
+#  include <winsock2.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>		/* for struct timeval */
+#endif
+
+#include "itk.h"
+#endif
+
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
+#if !defined(WIN32_INCLUDE_ORDER_HACK)
 #ifdef _WIN32
 #  include <winsock2.h>
 #endif
@@ -55,6 +71,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tcl.h"
 #include "tk.h"
 #include "itk.h"
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -67,7 +84,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
-
 
 #define NEED_GUI(_type) ( \
 	IS_DM_TYPE_WGL(_type) || \
