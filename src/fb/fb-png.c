@@ -133,7 +133,11 @@ get_args(int argc, register char **argv)
 				file_name );
 			return(0);
 		}
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		(void)chmod(file_name, 0444);
+#else
 		(void)fchmod(fileno(outfp), 0444);
+#endif
 	}
 
 	if ( argc > ++bu_optind )
