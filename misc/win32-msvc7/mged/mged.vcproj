@@ -1271,9 +1271,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\vers_win.c">
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\vparse.c">
 				<FileConfiguration
 					Name="Release|Win32">

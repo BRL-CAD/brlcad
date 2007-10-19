@@ -62,7 +62,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="../../../include"/>
+				AdditionalIncludeDirectories="../../../src/other/tcl/generic"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -160,24 +160,10 @@
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclsh.ico">
+				RelativePath="..\..\..\src\other\tcl\win\tclsh.ico">
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libtcl\win\tclsh.rc">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtcl\win"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions=""
-						AdditionalIncludeDirectories="\Documents and Settings\bob\src\Crossbow\Archer\brlcad\src\other\libtcl\win"/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\other\tcl\win\tclsh.rc">
 			</File>
 		</Filter>
 		<Filter

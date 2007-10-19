@@ -493,9 +493,6 @@ copy &quot;$(TargetDir)&quot;libwdb_d.lib ..\..\..\lib
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libwdb\vers_win.c">
-			</File>
-			<File
 				RelativePath="..\..\..\src\libwdb\wdb.c">
 				<FileConfiguration
 					Name="Release|Win32">
