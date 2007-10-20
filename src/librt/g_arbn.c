@@ -822,6 +822,13 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 		point_t	orig_pt;
 		point_t	pt;
 		vect_t	norm;
+                fastf_t factor;
+
+                /* unitize the plane equation first */
+                factor = 1.0 / MAGNITUDE( aip->eqn[i] );
+                VSCALE( aip->eqn[i], aip->eqn[i], factor );
+                aip->eqn[i][3] = aip->eqn[i][3] * factor;
+
 
 		/* Pick a point on the original halfspace */
 		VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
@@ -937,6 +944,12 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 			point_t	orig_pt;
 			point_t	pt;
 			vect_t	norm;
+                        fastf_t factor;
+
+                        /* unitize the plane equation first */
+                        factor = 1.0 / MAGNITUDE( aip->eqn[i] );
+                        VSCALE( aip->eqn[i], aip->eqn[i], factor );
+                        aip->eqn[i][3] = aip->eqn[i][3] * factor;
 
 			/* Pick a point on the original halfspace */
 			VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
