@@ -16,7 +16,7 @@ Recent Bugs
 -----------
 
 * rtedge seems to get stuck in a loop at the end of rendering, never
-  terminates (unless you rtabort/kill the process)
+  terminates (unless you rtabort/kill the process); works with -P1
 
 * rt options -g and -G no longer work due to change in default aspect
   setting from 1 to 0.
