@@ -14,18 +14,35 @@ b) during a minor release provided that
     2) sufficient deprecation warning was been given
 	i) at least three minor releases have passed since deprecation
 	ii) at least three months have passed since deprecation
+c) during a minor release provided that
+    1) the API was never publicly announced or otherwise documented
+    2) the interface was declared in a public header
+    3) there exists a an equivalent alternative interface
+    (e.g. changing the name of a function)
 
-Ideally, if a change is the addition of new routines, the change
-should be implemented in an addtive fashion that preserves existing
-functions and behavior as much as possible.  If the change will
-intentionally replace or remove routines, then those routines should
-be then marked as deprecated.
+Otherwise, changes to interfaces that are never publicly announced,
+are not part of publicly available documentation, and are not in
+public headers are fair game to implement as needed at any time.
+
+If a change will intentionally replace or remove routines, then those
+routines should be then marked as deprecated first.  If the change is
+"minimally impacting", i.e. a change to a non-critical routine that
+has a suitable and completely equivalent alternative, can generally be
+changed during minor releases.  An example of minimally impacting
+changes include modifications like adding a new parameter to a
+function or renaming a non-critical function.  Critical functions are
+those related directly to geometry creation, loading, processing, and
+ray-tracing; as well as the common library facilities in bu and bn.
 
 Marking routines as deprecated can be done during compile-time with
-#warning pre-processor declarations or during run-time with printing
+#warning pre-processor declarations or during run-time with print
 statements.
 
-The items listed below are items that deprecated and/or now obsolete.
+The items listed below are items that are deprecated or obsolete,
+categorized by the release in which the change was made.  If the
+change involved a rename/removal of a routine, both the original and
+new names should be listed for reference.
+
 
 **************
 * DEPRECATED *
@@ -58,8 +75,13 @@ include/bn.h
 * OBSOLETE *
 ************
 
-7.12
-----
+7.12.0
+------
+src/librt/wdb_obj.c
+	removed wdb_tree_cmd(), added to dg_obj.c as dgo_tree_cmd()
+
+7.10.4
+------
 
 include/msr.h (pre 7.0)
 	msr.h -> bu.h
