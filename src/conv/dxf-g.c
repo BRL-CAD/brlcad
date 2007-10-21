@@ -3513,13 +3513,15 @@ main( int argc, char *argv[] )
 				verbose = 1;
 				break;
 			default:
-				bu_bomb( usage );
+				bu_log( usage );
+				exit(1);
 				break;
 		}
 	}
 
 	if( argc - bu_optind < 2 ) {
-		bu_bomb( usage );
+		bu_log( usage );
+		exit(1);
 	}
 
 	dxf_file = argv[bu_optind++];
@@ -3528,13 +3530,15 @@ main( int argc, char *argv[] )
 	if( (out_fp = wdb_fopen( output_file )) == NULL ) {
 		bu_log( "Cannot open output file (%s)\n", output_file );
 		perror( output_file );
-		bu_bomb( "Cannot open output file\n" );
+		bu_log( "Cannot open output file\n" );
+		exit(1);
 	}
 
 	if( (dxf=fopen( dxf_file, "r")) == NULL ) {
 		bu_log( "Cannot open DXF file (%s)\n", dxf_file );
 		perror( dxf_file );
-		bu_bomb( "Cannot open DXF file\n" );
+		bu_log( "Cannot open DXF file\n" );
+		exit(1);
 	}
 
 	ptr1 = strrchr( dxf_file , '/' );
