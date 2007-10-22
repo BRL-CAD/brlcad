@@ -2339,6 +2339,8 @@ BU_EXPORT BU_EXTERN(void bu_semaphore_release,
 /** @{ */
 
 /* vls.c */
+#define bu_vls_strcmp(a,b) strcmp(bu_vls_addr(a),bu_vls_addr(b));
+#define bu_vls_strncmp(a,b,n) strncmp(bu_vls_addr(a),bu_vls_addr(b),(n));
 BU_EXPORT BU_EXTERN(void bu_vls_init,
 		    (struct bu_vls *vp));
 BU_EXPORT BU_EXTERN(void bu_vls_init_if_uninit,
