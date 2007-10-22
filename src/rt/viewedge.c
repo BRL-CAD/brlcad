@@ -695,7 +695,6 @@ view_eol( struct application *ap )
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
     if( outputfile != NULL ) {
-	bu_log("SHOULD NOT BE GETTING HERE\n");
 	/*
 	 * Write to a file.
 	 */
