@@ -60,11 +60,12 @@ int triangulate = 0;
  */
 void usage(char *s)
 {
-    if (s) (void)fputs(s, stderr);
+    if (s) {
+	bu_log(s);
+    }
 
-    (void) fprintf(stderr, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",
+    (void) bu_exit(1, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",
 		   progname);
-    exit(1);
 }
 
 /*
@@ -201,34 +202,30 @@ int main(int ac, char **av)
     /* open the database */
     if ((dbip = db_open(av[arg_index], "r")) == DBI_NULL) {
 	perror(av[arg_index]);
-	return 255;
+	bu_exit(255, "ERROR: unable to open geometry database (%s)\n", av[arg_index]);
     }
 
     if (++arg_index >= ac) usage("No NMG specified\n");
 
     if( db_dirbuild( dbip ) ) {
-	bu_log( "db_dirbuild failed\n" );
-	exit(1);
+	bu_exit(1, "db_dirbuild failed\n" );
     }
 
     /* process each remaining argument */
     for ( ; arg_index < ac ; arg_index++ ) {
 
 	if ( ! (dp = db_lookup(dbip, av[arg_index], 1)) ) {
-	    fprintf(stderr, "%s: db_lookup failed\n", progname);
-	    return 255;
+	    bu_exit(255, "%s: db_lookup failed\n", progname);
 	}
 
 	MAT_IDN( my_mat );
 	if ((rt_db_get_internal( &ip, dp, dbip, my_mat, &rt_uniresource ))<0) {
-	    fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname );
-	    return 255;
+	    bu_exit(255, "%s: rt_db_get_internal() failed\n", progname );
 	}
 
 	if (ip.idb_type != ID_NMG) {
-	    fprintf(stderr, "%s: solid type (%d) is NOT NMG!\n",
+	    bu_exit(255, "%s: solid type (%d) is NOT NMG!\n",
 		    progname, ip.idb_type);
-	    return 255;
 	}
 	nmg_to_rib((struct model *)ip.idb_ptr );
     }

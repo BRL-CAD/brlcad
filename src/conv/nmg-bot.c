@@ -68,11 +68,11 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
 	NMG_CK_MODEL( m );
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 	if(r && BU_LIST_NEXT( nmgregion, &r->l ) !=  (struct nmgregion *)&m->r_hd )
-		bu_bomb( "ERROR: this code works only for NMG models with one region!!!\n" );
+		bu_exit(1, "ERROR: this code works only for NMG models with one region!\n" );
 
 	s = BU_LIST_FIRST( shell, &r->s_hd );
 	if(s && BU_LIST_NEXT( shell, &s->l) != (struct shell *)&r->s_hd )
-		bu_bomb( "ERROR: this code works only for NMG models with one shell!!!\n" );
+		bu_exit(1, "ERROR: this code works only for NMG models with one shell!\n" );
 
 	if (BU_SETJUMP) {
 		BU_UNSETJUMP;
@@ -95,8 +95,7 @@ main(int argc, char **argv)
 
 	if( argc != 3 && argc != 4 )
 	{
-		bu_log( "Usage:\n\t%s [-v] input.g output.g\n", argv[0] );
-		return 1;
+		bu_exit(1, "Usage:\n\t%s [-v] input.g output.g\n", argv[0] );
 	}
 
 	if( argc == 4 )
@@ -106,8 +105,7 @@ main(int argc, char **argv)
 		else
 		{
 			bu_log( "Illegal option: %s\n", argv[1] );
-			bu_log( "Usage:\n\t%s [-v] input.g output.g\n", argv[0] );
-			return 1;
+			bu_exit(1, "Usage:\n\t%s [-v] input.g output.g\n", argv[0] );
 		}
 	}
 
@@ -116,20 +114,17 @@ main(int argc, char **argv)
 	dbip = db_open( argv[argc-2], "r" );
 	if( dbip == DBI_NULL )
 	{
-		bu_log( "Cannot open file (%s)\n", argv[argc-2] );
 		perror( argv[0] );
-		bu_bomb( "Cannot open database file\n" );
+		bu_exit(1, "Cannot open file (%s)\n", argv[argc-2] );
 	}
 
 	if( (fdout=wdb_fopen( argv[argc-1] )) == NULL )
 	{
-		bu_log( "Cannot open file (%s)\n", argv[argc-1] );
 		perror( argv[0] );
-		bu_bomb( "Cannot open output file\n" );
+		bu_exit(1, "Cannot open file (%s)\n", argv[argc-1] );
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
 	/* Visit all records in input database, and spew them out,

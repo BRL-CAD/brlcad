@@ -93,8 +93,7 @@ main(int argc, char **argv)
 			reg_name = bu_optarg;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			return 1;
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
@@ -106,10 +105,8 @@ main(int argc, char **argv)
 	} else {
 		jfile = argv[bu_optind];
 		if ((fpin = fopen(jfile, "r")) == NULL) {
-			fprintf(stderr,
-				"%s: cannot open %s for reading\n",
-				argv[0], jfile);
-			return 1;
+		    bu_exit(1, "%s: cannot open %s for reading\n",
+			    argv[0], jfile);
 		}
 	}
 
@@ -117,15 +114,12 @@ main(int argc, char **argv)
 	bu_optind++;
 	if (bu_optind >= argc) {
 		bfile = "-";
-		fprintf(stderr, usage, argv[0]);
-		return 1;
+		bu_exit(1, usage, argv[0]);
 	} else {
 		bfile = argv[bu_optind];
 		if ((fpout = wdb_fopen(bfile)) == NULL) {
-			fprintf(stderr,
-				"%s: cannot open %s for writing\n",
-				argv[0], bfile);
-			return 1;
+		    bu_exit(1, "%s: cannot open %s for writing\n",
+			    argv[0], bfile);
 		}
 	}
 
@@ -205,8 +199,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 
 	if( bomb )
 	{
-		bu_log( "Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
-		bu_bomb( "jack-g\n" );
+		bu_exit(1, "ERROR: Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
 	}
 
 	return(i);

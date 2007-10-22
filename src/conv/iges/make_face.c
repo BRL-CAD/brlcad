@@ -66,8 +66,7 @@ int face_orient;
 	Readint( &sol_num , "" );
 	if( sol_num != 508 )
 	{
-		bu_log( "Entity #%d is not a loop (it's a %s)\n" , entityno , iges_type(sol_num) );
-		bu_bomb( "Fatal error\n" );
+		bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n" , entityno , iges_type(sol_num) );
 	}
 
 	Readint( &no_of_edges , "" );
@@ -201,12 +200,12 @@ int face_orient;
 			{
 				fu = fu->fumate_p;
 				if( fu->orientation != OT_SAME )
-					bu_bomb( "Make_face: no OT_SAME use for a face!!!\n" );
+					bu_exit(1, "ERROR: no OT_SAME use for a face!\n" );
 			}
 		}
 	}
 	else
-		bu_log( "No edges left!!\n" );
+		bu_log( "No edges left!\n" );
 
   err:
 	bu_free( (char *)edge_list , "Make_face (edge_list)" );

@@ -57,7 +57,7 @@ fastf_t values[];	/* knot values */
 	if( n < 2 )
 	{
 		bu_log( "Knot: ERROR %d knot values\n" , n );
-		bu_bomb( "Knot: cannot have less than 2 knot values\n" );
+		bu_exit(1, "Knot: cannot have less than 2 knot values\n" );
 	}
 
 	if( numknots )

@@ -369,7 +369,7 @@ struct face_g_snurb *srf;
 	if( u < srf->u.knots[0] || v < srf->v.knots[0] ||
 		u > srf->u.knots[srf->u.k_size-1] || v > srf->v.knots[srf->v.k_size-1] )
 	{
-		bu_log( "WARNING: UV point outside of domain of surface!!!:\n" );
+		bu_log( "WARNING: UV point outside of domain of surface!:\n" );
 		bu_log( "\tUV = (%g %g)\n", u, v );
 		bu_log( "\tsrf domain: (%g %g) <-> (%g %g)\n",
 			srf->u.knots[0], srf->v.knots[0],
@@ -402,7 +402,7 @@ struct face_g_snurb *srf;
 	}
 
 	nmg_vertex_gv( vu->v_p, pt_on_srf );
-	/* XXXXX Need w coord!!!!! */
+	/* XXXXX Need w coord! */
 	VSET( uvw, u, v, 1.0 );
 
 	for( BU_LIST_FOR( vu1, vertexuse, &vu->v_p->vu_hd ) )
@@ -642,7 +642,7 @@ struct faceuse *fu;
 					nmg_keu( eu );
 				else
 				{
-					bu_log( "ERROR: composite trimming curve is not closed!!!!\n" );
+					bu_log( "ERROR: composite trimming curve is not closed!\n" );
 					bu_log( "\ttrim curve is entity #%d, parameters at line #%d\n",
 						entity_no, dir[entity_no]->param );
 					bu_log( "\tThis is likely to result in failure to convert (core dump)\n" );
@@ -969,7 +969,7 @@ struct face_g_snurb *srf;
 	NMG_CK_FACE( f );
 
 	if( f->g.snurb_p )
-		bu_bomb( "Assign_surface_to_fu: fu already has geometry\n" );
+		bu_exit(1, "Assign_surface_to_fu: fu already has geometry\n" );
 
 	fu->orientation = OT_SAME;
 	fu->fumate_p->orientation = OT_OPPOSITE;
@@ -1094,7 +1094,7 @@ struct shell *s;
 	{
 		bu_log( "barriercheck before nmg_snurb_calc_lu_uv_orient(():\n" );
 		bu_mem_barriercheck();
-		bu_log( "check complete!!!\n" );
+		bu_log( "check complete!\n" );
 	}
 
 	lu_uv_orient = nmg_snurb_calc_lu_uv_orient( lu );
@@ -1161,9 +1161,9 @@ struct faceuse *fu;
 			ot_opps += nmg_uv_in_lu( u, v, lu );
 		else
 		{
-			bu_log( "isect_ray_snurb_face: lu orientation = %s!!\n",
+			bu_log( "isect_ray_snurb_face: lu orientation = %s!\n",
 				nmg_orientation( lu->orientation ) );
-			bu_bomb( "isect_ray_snurb_face: bad lu orientation\n" );
+			bu_exit(1, "isect_ray_snurb_face: bad lu orientation\n" );
 		}
 	}
 
@@ -1199,7 +1199,7 @@ struct bu_list *hit_list;
 	f = fu->f_p;
 
 	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
-		bu_bomb( "ERROR: find_intersections(): face is not a TNURB surface!!!!\n" );
+		bu_exit(1, "ERROR: find_intersections(): face is not a TNURB surface!\n" );
 
 	fg = f->g.snurb_p;
 
@@ -1549,7 +1549,7 @@ Convtrimsurfs()
 		{
 			bu_log( "Convtrimsurfs: Cannot find a point in fu (x%x)\n", fu );
 			nmg_pr_fu( fu, " " );
-			bu_bomb( "Convtrimsurfs: Cannot find a point in fu\n" );
+			bu_exit(1, "Convtrimsurfs: Cannot find a point in fu\n" );
 		}
 
 		/* find intersections with all the faces

@@ -221,13 +221,11 @@ skip( int type )
 
 	if( ply_file_type != PLY_ASCII ) {
 		if( !fread( buf, 1, length[type], ply_fp ) ) {
-			bu_log( "Unexpected EOF while reading data\n" );
-			exit( 1 );
+			bu_exit(1, "Unexpected EOF while reading data\n" );
 		}
 	} else {
 		if( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
-			bu_log( "ERROR parsing data\n" );
-			exit( 1 );
+			bu_exit(1, "ERROR: unable to parse data\n" );
 		}
 	}
 }
@@ -250,65 +248,56 @@ get_double( int type )
 		switch( type ) {
 		case TYPE_CHAR:
 			if( fscanf( ply_fp, " %c", &val_char ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_char;
 			break;
 		case TYPE_UCHAR:
 			if( fscanf( ply_fp, " %c", &val_uchar ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_uchar;
 			break;
 		case TYPE_SHORT:
 			if( fscanf( ply_fp, "%hd", &val_short ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_short;
 			break;
 		case TYPE_USHORT:
 			if( fscanf( ply_fp, "%hu", &val_ushort ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_ushort;
 			break;
 		case TYPE_INT:
 			if( fscanf( ply_fp, "%d", &val_int ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_int;
 			break;
 		case TYPE_UINT:
 			if( fscanf( ply_fp, "%u", &val_uint ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_uint;
 			break;
 		case TYPE_FLOAT:
 			if( fscanf( ply_fp, "%f", &val_float ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_float;
 			break;
 		case TYPE_DOUBLE:
 			if( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_double;
 			break;
 		}
 	} else {
 		if( !fread( buf1, 1, length[type], ply_fp ) ) {
-			bu_log( "Unexpected EOF while reading data\n" );
-			exit( 1 );
+			bu_exit(1, "Unexpected EOF while reading data\n" );
 		}
 		if( ply_file_type != endianness ) {
 			/* need to swap bytes */
@@ -327,8 +316,7 @@ get_double( int type )
 				lswap8( (unsigned long long *)buf1, (unsigned long long *)buf2 );
 				break;
 			default:
-				bu_log( "Property has illegal length (%d)!!!\n", length[type] );
-				exit( 1 );
+				bu_exit(1, "Property has illegal length (%d)!\n", length[type] );
 				break;
 			}
 		} else {
@@ -384,31 +372,27 @@ get_int( int type )
 		case TYPE_USHORT:
 		case TYPE_INT:
 			if( fscanf( ply_fp, "%d", &val_int ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_int;
 			break;
 		case TYPE_UINT:
 			if( fscanf( ply_fp, "%u", &val_uint ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_uint;
 			break;
 		case TYPE_FLOAT:
 		case TYPE_DOUBLE:
 			if( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
-				bu_log( "ERROR parsing data\n" );
-				exit( 1 );
+				bu_exit(1, "ERROR parsing data\n" );
 			}
 			val = val_double;
 			break;
 		}
 	} else {
 		if( !fread( buf1, 1, length[type], ply_fp ) ) {
-			bu_log( "Unexpected EOF while reading data\n" );
-			exit( 1 );
+			bu_exit(1, "Unexpected EOF while reading data\n" );
 		}
 		if( ply_file_type != endianness ) {
 			/* need to swap bytes */
@@ -427,8 +411,7 @@ get_int( int type )
 				lswap8( (unsigned long long *)buf1, (unsigned long long *)buf2 );
 				break;
 			default:
-				bu_log( "Property has illegal length (%d)!!!\n", length[type] );
-				exit( 1 );
+				bu_exit(1, "Property has illegal length (%d)!\n", length[type] );
 				break;
 			}
 		} else {
@@ -548,18 +531,15 @@ get_property( struct element *ptr )
 	c = strtok( tmp_buf, " \t" );
 	if( c ) {
 		if( strcmp( c, "property" ) ) {
-			bu_log( "get_property called for non-property, line = %s\n", line );
-			exit( 1 );
+			bu_exit(1, "get_property called for non-property, line = %s\n", line );
 		}
 	} else {
-		bu_log( "Unexpected EOL while parsing property, line = %s\n", line );
-		exit( 1 );
+		bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
 	}
 
 	c = strtok( (char *)NULL, " \t" );
 	if( !c ) {
-		bu_log( "Unexpected EOL while parsing property, line = %s\n", line );
-		exit( 1 );
+		bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
 	}
 
 	if( !strcmp( c, "list" ) ) {
@@ -571,8 +551,7 @@ get_property( struct element *ptr )
 
 		c = strtok( (char *)NULL, " \t" );
 		if( !c ) {
-			bu_log( "Unexpected EOL while parsing property, line = %s\n", line );
-			exit( 1 );
+			bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
 		}
 		i = 0;
 		while( types[i] ) {
@@ -584,15 +563,13 @@ get_property( struct element *ptr )
 		}
 
 		if( !types[i] ) {
-			bu_log( "Cannot find property type for line %s\n", line );
-			exit( 1 );
+			bu_exit(1, "Cannot find property type for line %s\n", line );
 		}
 
 
 		c = strtok( (char *)NULL, " \t" );
 		if( !c ) {
-			bu_log( "Unexpected EOL while parsing property, line = %s\n", line );
-			exit( 1 );
+			bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
 		}
 		i = 0;
 		while( types[i] ) {
@@ -605,8 +582,7 @@ get_property( struct element *ptr )
 
 		if( !types[i] ) {
 			bu_log( "Cannot find property type for line %s\n", line );
-			bu_log( "type = %s\n", c );
-			exit( 1 );
+			bu_exit(1, "type = %s\n", c );
 		}
 
 
@@ -622,15 +598,13 @@ get_property( struct element *ptr )
 
 		if( !types[i] ) {
 			bu_log( "Cannot find property type for line %s\n", line );
-			bu_log( "type = %s\n", c );
-			exit( 1 );
+			bu_exit(1, "type = %s\n", c );
 		}
 	}
 
 	c = strtok( (char *)NULL, " \t" );
 	if( !c ) {
-		bu_log( "Unexpected EOL while parsing property, line = %s\n", line );
-		exit( 1 );
+		bu_exit(1, "Unexpected EOL while parsing property, line = %s\n", line );
 	}
 
 	p->name = bu_strdup( c );
@@ -647,11 +621,11 @@ read_ply_header()
 		bu_log( "Reading header...\n" );
 	}
 	if( bu_fgets( line, LINELEN, ply_fp ) == NULL ) {
-		bu_log( "Unexpected EOF in input file!!!\n" );
+		bu_log( "Unexpected EOF in input file!\n" );
 		return( 1 );
 	}
 	if( strncmp( line, "ply", 3 ) ) {
-		bu_log( "Input file does not appear to be a PLY file!!!\n" );
+		bu_log( "Input file does not appear to be a PLY file!\n" );
 		return( 1 );
 	}
 	while( bu_fgets( line, LINELEN, ply_fp ) ) {
@@ -820,8 +794,7 @@ main( int argc, char *argv[] )
 				scale_factor = atof( bu_optarg );
 				if( scale_factor < SQRT_SMALL_FASTF ) {
 					bu_log( "scale factor too small\n" );
-					bu_log( "%s\n", usage );
-					exit( 1 );
+					bu_exit(1, "%s\n", usage );
 				}
 				break;
 			case 'd':	/* debug */
@@ -837,23 +810,20 @@ main( int argc, char *argv[] )
 	}
 
 	if( argc - bu_optind < 2 ) {
-		bu_log( "%s\n",usage );
-		exit( 1 );
+		bu_exit(1, "%s\n",usage );
 	}
 
 	ply_file = argv[bu_optind++];
 	brlcad_file = argv[bu_optind];
 
 	if( (out_fp = wdb_fopen( brlcad_file )) == NULL ) {
-		bu_log( "Cannot open output file (%s)\n", brlcad_file );
 		perror( brlcad_file );
-		bu_bomb( "Cannot open output file\n" );
+		bu_exit(1, "ERROR: Cannot open output file (%s)\n", brlcad_file );
 	}
 
 	if( (ply_fp=fopen( ply_file, "r")) == NULL ) {
-		bu_log( "Cannot open PLY file (%s)\n", ply_file );
 		perror( ply_file );
-		bu_bomb( "Cannot open PLY file\n" );
+		bu_exit(1, "ERROR: Cannot open PLY file (%s)\n", ply_file );
 	}
 
 	endianness = get_endianness();
@@ -867,7 +837,7 @@ main( int argc, char *argv[] )
 
 	/* read header */
 	if( read_ply_header() ) {
-		exit( 1 );
+		bu_exit( 1, "ERROR: File does not seem to be a PLY file\n" );
 	}
 
 	if( verbose ) {
@@ -896,7 +866,7 @@ main( int argc, char *argv[] )
 	}
 
 	if( bot->num_faces < 1 || bot->num_vertices < 1 ) {
-		bu_log( "This PLY file appears to contain no geometry!!!\n" );
+		bu_log( "This PLY file appears to contain no geometry!\n" );
 		return( 0 );
 	}
 

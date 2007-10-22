@@ -49,7 +49,7 @@ int face_orient;
 		bu_log( "fu x%x (%s) and mate x%x (%s) have no OT_SAME use\n" ,
 			fu , nmg_orientation( fu->orientation ) ,
 			fu->fumate_p , nmg_orientation( fu->fumate_p->orientation ) );
-		bu_bomb( "Faceuse and mate have no OT_SAME use\n" );
+		bu_exit(1, "Faceuse and mate have no OT_SAME use\n" );
 
 	}
 
@@ -66,7 +66,7 @@ int face_orient;
 		bu_log( "fu_tmp x%x (%s) nad mate x%x (%s) have no OT_SAME use\n" ,
 			fu_tmp , nmg_orientation( fu_tmp->orientation ) ,
 			fu_tmp->fumate_p , nmg_orientation( fu_tmp->fumate_p->orientation ) );
-		bu_bomb( "Faceuse and mate have no OT_SAME use\n" );
+		bu_exit(1, "Faceuse and mate have no OT_SAME use\n" );
 
 	}
 

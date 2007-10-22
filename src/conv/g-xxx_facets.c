@@ -159,15 +159,13 @@ char	*argv[];
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
-			bu_log(  usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		bu_log( usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	/* Open output file */
@@ -178,11 +176,10 @@ char	*argv[];
 	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "ERROR: Unable to open geometry file (%s)\n", argv[0]);
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
 	BN_CK_TOL(tree_state.ts_tol);
@@ -352,6 +349,7 @@ genptr_t		client_data;
 		return  curtree;
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
@@ -364,7 +362,7 @@ genptr_t		client_data;
 			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before bu_bomb().
+			 * it detects an internal error, before before bombing out.
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -448,7 +446,7 @@ genptr_t		client_data;
 				bu_free( (char *)sofar, "sofar" );
 
 				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before bu_bomb().
+				 * it detects an internal error, before before bombing out.
 				 */
 				rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

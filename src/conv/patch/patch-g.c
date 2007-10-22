@@ -175,8 +175,7 @@ main(int argc, char **argv)
 				if( tol.dist < 0.0 )
 				{
 					bu_log( "Illegal tolerance distance (%g inches) (must be non-negative).\n", tol.dist );
-					bu_log(usage);
-					exit( 1 );
+					bu_exit(1, usage);
 				}
 				tol.dist *= mmtin;
 				tol.dist_sq = tol.dist * tol.dist;
@@ -188,8 +187,7 @@ main(int argc, char **argv)
 				if( tol.perp < 0.0 || tol.perp > 1.0 )
 				{
 					bu_log( "Illegal angular tolerance (%g) (must be non-negative between 0 and 1).\n", tol.perp );
-					bu_log(usage);
-					exit( 1 );
+					bu_exit(1, usage);
 				}
 				tol.para = 1 - tol.perp;
 				break;
@@ -239,8 +237,7 @@ main(int argc, char **argv)
 							    */
 
 				if( (num_unions = atoi( bu_optarg )) <= 0 ) {
-					bu_log( "%d: bad number of unions to put in a region\n", num_unions );
-					exit( 1 );
+					bu_exit(1, "%d: bad number of unions to put in a region\n", num_unions );
 				}
 				break;
 
@@ -275,18 +272,16 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				(void)fputs(usage, stderr);
-				exit(1);
+				bu_exit(1, usage);
 			}
 	}
 
 	if( bu_optind >= argc )  {
-		(void)fputs(usage, stderr);
-		exit(1);
+		bu_exit(1, usage);
 	}
 	if( (outfp = wdb_fopen(argv[bu_optind])) == RT_WDB_NULL )  {
 		perror(argv[bu_optind]);
-		exit(3);
+		bu_exit(3, "ERROR: unable to open geometry database file (%s)\n", argv[bu_optind]);
 	}
 
 	if( debug )
@@ -309,7 +304,7 @@ main(int argc, char **argv)
 	if( patchfile != (char *)0 )  {
 		if((fd = open( patchfile, 0664)) < 0) {
 			perror(patchfile);
-			exit(1);
+			bu_exit(1, "ERROR: unable to open patchfile (%s)\n", patchfile);
 		}
 	} else {
 		fd = 0;		/* stdin */
@@ -319,14 +314,14 @@ main(int argc, char **argv)
 	if( labelfile != (char *)0 )  {
 		if(( gfp = fopen( labelfile, "r" )) == NULL ) {
 			perror(labelfile);
-			exit(1);
+			bu_exit(1, "ERROR: unable to open labelfile (%s)\n", labelfile);
 		}
 	}
 
 	if( matfile != (char *)0 ) {
 		if(( mfp = fopen( matfile, "r" )) == NULL ) {
 			perror(matfile);
-			exit(1);
+			bu_exit(1, "ERROR: unable to open matfile (%s)\n", matfile);
 		}
 	}
 
@@ -386,8 +381,7 @@ main(int argc, char **argv)
 			if( sscanf(s,"%6d%*66c%3d%5d",
 			    &i,&eqlos,&matcode) != 3 ) {
 
-				bu_log( "Incomplete line in materials file for component '%.4d'\n",i);
-				exit(1);
+				bu_exit(1, "Incomplete line in materials file for component '%.4d'\n",i);
 			}
 			nm[i].matcode = matcode;
 			nm[i].eqlos = eqlos;
@@ -932,7 +926,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 				prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
 				/* The prev_fu can never be the head */
 				if( BU_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
-					bu_bomb("prev is head?\n");
+					bu_exit(1, "ERROR: prev is head?\n");
 
 				nmg_jf( fu1, fu2 );
 
@@ -1191,8 +1185,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			face_count++;
 			if( face_count >= 2*l )
 			{
-				bu_log( "Face count = %d, only allowed for %d\n" , face_count , 2*l );
-				bu_bomb( "Build_solid\n" );
+				bu_exit(1, "Face count = %d, only allowed for %d\n" , face_count , 2*l );
 			}
 
 			/* Assign geometry */
@@ -1353,7 +1346,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		if( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
 		if( fu->orientation != OT_SAME )
-			bu_bomb( "Neither faceuse nor mate have an OT_SAME side\n" );
+			bu_exit(1, "Neither faceuse nor mate have an OT_SAME side\n" );
 		NMG_GET_FU_NORMAL( normal , fu );
 
 		if( !planar )
@@ -1436,8 +1429,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		fu = NMG_INDEX_GETP( faceuse , copy_tbl , p_faces[i].fu );
 		if( !fu )
 		{
-			bu_log( "No fu in duplicate shell corresponding to fu #%d (x%x) in original\n" , i , p_faces[i].fu );
-			bu_bomb( "patch-g\n" );
+			bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (x%x) in original\n" , i , p_faces[i].fu );
 		}
 
 		NMG_CK_FACEUSE( fu );
@@ -1447,7 +1439,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			NMG_CK_FACEUSE( fu );
 		}
 		if( fu->orientation != OT_SAME )
-			bu_bomb( "patch-g: neither faceuse nor mate has orientation of OT_SAME\n" );
+			bu_exit(1, "patch-g: neither faceuse nor mate has orientation of OT_SAME\n" );
 
 		fg_p = fu->f_p->g.plane_p;
 		NMG_CK_FACE_G_PLANE( fg_p );
@@ -2128,7 +2120,7 @@ proc_plate(int cnt)
 				if( thk[l] < tol.dist )
 				{
 					bu_log( "Proc_plate: Found a bad thickness, should have been fixed by now!!!\n" );
-					bu_bomb( "Proc_plate: thickness less tahn tolerance.\n" );
+					bu_exit(1, "Proc_plate: thickness less than tolerance.\n" );
 				}
 				l= l+1;
 			}

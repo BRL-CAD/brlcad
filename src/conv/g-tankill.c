@@ -188,7 +188,7 @@ long *flags;
 		if( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
 		if( fu->orientation != OT_SAME )
-			bu_bomb( "nmg_find_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+			bu_exit(1, "nmg_find_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
 
 		NMG_GET_FU_NORMAL( normal , fu );
 		if( normal[dir] > 0.0 )
@@ -477,7 +477,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 
 		if( lu->orientation != OT_SAME )
 		{
-			bu_log( "g-tankill: Found a hole in a triangulated face!!!\n" );
+			bu_log( "g-tankill: Found a hole in a triangulated face!\n" );
 			nmg_pr_fu_briefly( fu , (char *)NULL );
 			goto outt;
 		}
@@ -553,10 +553,10 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 						if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 							continue;
 
-						/* shouldn't be any holes!!! */
+						/* shouldn't be any holes! */
 						if( lu->orientation != OT_SAME )
 						{
-							bu_log( "g-tankill: Found a hole in a triangulated face!!!\n" );
+							bu_log( "g-tankill: Found a hole in a triangulated face!\n" );
 							nmg_pr_fu_briefly( fu , (char *)NULL );
 							goto outt;
 						}
@@ -723,27 +723,23 @@ main(int argc, char **argv)
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[bu_optind] , "r")) == DBI_NULL)
 	{
-		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "Cannot open %s\n" , argv[bu_optind] );
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
 	if( out_file == NULL )
@@ -869,6 +865,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )
 	{
@@ -882,7 +879,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		bu_free( (char *)sofar, "sofar" );
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before bu_bomb().
+		 * it detects an internal error, before before bombing out.
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -957,7 +954,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				bu_free( (char *)sofar, "sofar" );
 
 				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before bu_bomb().
+				 * it detects an internal error, before before bombing out.
 				 */
 				rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

@@ -70,17 +70,15 @@ int face_orient;
 
 	if( dir[loop_entityno]->type != 508 )
 	{
-		bu_log( "Entity #%d is not a loop (it's a %s)\n" , loop_entityno , iges_type(dir[loop_entityno]->type) );
-		bu_bomb( "Fatal error\n" );
+		bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n" , loop_entityno , iges_type(dir[loop_entityno]->type) );
 	}
 
 	Readrec( dir[loop_entityno]->param );
 	Readint( &entity_type , "" );
 	if( entity_type != 508 )
 	{
-		bu_log( "Add_nurb_loop_to_face: Entity #%d is not a loop (it's a %s)\n",
+		bu_exit(1, "Add_nurb_loop_to_face ERROR: Entity #%d is not a loop (it's a %s)\n",
 				loop_entityno , iges_type(entity_type) );
-		bu_bomb( "Add_nurb_loop_to_face: Fatal error\n" );
 	}
 
 	Readint( &no_of_edges , "" );
@@ -141,8 +139,7 @@ int face_orient;
 		{
 			if( !Put_vertex( verts[i], &edge_uses[i] ) )
 			{
-				bu_log( "Cannot put vertex x%x\n", verts[i] );
-				bu_bomb( "Cannot put vertex\n" );
+				bu_exit(1, "Cannot put vertex x%x\n", verts[i] );
 			}
 		}
 	}
@@ -174,8 +171,7 @@ int face_orient;
 		ivert = Get_iges_vertex( verts[vert_no] );
 		if( !ivert )
 		{
-			bu_log( "Vertex x%x not in vertex list\n" , verts[vert_no] );
-			bu_bomb( "Can't get geometry for vertex" );
+			bu_exit(1, "ERROR: Can't get geometry, vertex x%x not in vertex list\n" , verts[vert_no] );
 		}
 		nmg_vertex_gv( ivert->v, ivert->pt );
 	}
@@ -194,16 +190,16 @@ int face_orient;
 
 		ivert = (*Get_vertex( &edge_uses[i] ) );
 		if( !ivert )
-			bu_bomb( "Cannot get vertex for edge_use!\n" );
+			bu_exit(1, "Cannot get vertex for edge_use!\n" );
 		jvert = (*Get_vertex( &edge_uses[next_edge_no] ) );
 		if( !jvert )
-			bu_bomb( "Cannot get vertex for edge_use!\n" );
+			bu_exit(1, "Cannot get vertex for edge_use!\n" );
 
 		if( ivert != eu->vu_p->v_p || jvert != eu->eumate_p->vu_p->v_p )
 		{
 			bu_log( "ivert=x%x, jvert=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x\n",
 				ivert,jvert,eu->vu_p->v_p,eu->eumate_p->vu_p->v_p );
-			bu_bomb( "Add_nurb_loop_to_face: Edgeuse/vertex mixup!\n" );
+			bu_exit(1, "Add_nurb_loop_to_face: Edgeuse/vertex mixup!\n" );
 		}
 
 		param = edge_uses[i].root;

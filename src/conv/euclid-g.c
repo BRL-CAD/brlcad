@@ -1010,7 +1010,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 
 			}
 			if( !outer_shell )
-				bu_bomb( "Cannot find outer shell for inner shell!\n" );
+				bu_exit(1, "Cannot find outer shell for inner shell!\n" );
 
 			/* Place this inner shell in the outer shell */
 			nmg_js( outer_shell, shells[shell1_no], &tol );

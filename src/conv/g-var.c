@@ -422,15 +422,13 @@ int main(int argc, char *argv[])
 		break;
 
 	    default:
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 		break;
 	}
     }
     /* param check */
     if (bu_optind+1 >= argc) {
-	fprintf(stderr, usage, argv[0]);
-	exit(1);
+	bu_exit(1, usage, argv[0]);
     }
     /* get database filename and object */
     db_file = argv[bu_optind++];
@@ -438,12 +436,11 @@ int main(int argc, char *argv[])
 
     /* open BRL-CAD database */
     if ( (dbip = db_open( db_file, "r") ) == DBI_NULL ) {
-	bu_log( "Cannot open %s\n", db_file );
 	perror(argv[0]);
-	exit(1);
+	bu_exit(1, "Cannot open %s\n", db_file );
     }
     if ( db_dirbuild( dbip ) ) {
-	bu_bomb( "db_dirbuild() failed!\n" );
+	bu_exit(1, "db_dirbuild() failed!\n" );
     }
     if ( verbose ) {
 	fprintf(stderr, ">> opened db '%s'\n", dbip->dbi_title);
@@ -465,8 +462,7 @@ int main(int argc, char *argv[])
 
     dp = db_lookup( dbip, object, 0 );
     if ( dp == DIR_NULL ) {
-	bu_log( "Object %s not found in database!\n", object );
-	exit(1);
+	bu_exit(1, "Object %s not found in database!\n", object );
     }
 
     /* generate mesh list */

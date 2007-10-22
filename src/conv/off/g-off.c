@@ -145,15 +145,13 @@ main(int argc, char **argv)
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	/* Open BRL-CAD database */
@@ -161,11 +159,10 @@ main(int argc, char **argv)
 	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "ERROR: Unable to open geometry database (%s)\n", argv[0]);
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
 	/* Create .fig file name and open it. */
@@ -250,6 +247,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
@@ -257,7 +255,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			BU_UNSETJUMP;		/* Relinquish the protection */
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before bu_bomb().
+			 * it detects an internal error, before bombing out.
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

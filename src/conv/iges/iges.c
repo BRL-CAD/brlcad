@@ -277,7 +277,7 @@ nmg_to_winged_edge( r )
 
 				    /* kill the new edge (I only wanted it for its vertices) */
 				    if( nmg_keu( eu_new ) )
-					bu_bomb( "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!!!!\n" );
+					bu_bomb( "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!\n" );
 
 				    /* move the other edgeuse to the same edge */
 				    if( eu2 == eu1 || eu2 == eu1->eumate_p )
@@ -380,7 +380,7 @@ lookup_props( props , name )
     if( id != ID_COMBINATION )
 	{
 	    rt_db_free_internal( &intern , &rt_uniresource);
-	    bu_log( "Directory/Database mismatch!!!! is %s a combination or not???\n", dp->d_namep );
+	    bu_log( "Directory/Database mismatch! is %s a combination or not???\n", dp->d_namep );
 	    return( 1 );
 	}
 
@@ -904,7 +904,7 @@ nmgregion_to_iges( name , r , dependent , fp_dir , fp_param )
 					v = eu->vu_p->v_p;
 					NMG_CK_VERTEX( v );
 					if( !v->vg_p )
-					    bu_log( "vertex with no geometry!!\n" );
+					    bu_log( "vertex with no geometry!\n" );
 				    }
 			    }
 		    }
@@ -1095,7 +1095,7 @@ nmg_loop_to_tcurve( lu , surf_de , u_dir , v_dir , u_max , v_max , base_pt , fp_
 	    vg = eu->vu_p->v_p->vg_p;
 
 	    if( i >= vert_count )
-		bu_bomb( "nmg_loop_to_tcurve: too many vertices in loop!!!!\n" );
+		bu_exit(1, "nmg_loop_to_tcurve: too many vertices in loop!\n" );
 
 	    VMOVE( model_pts[i] , vg->coord );
 
@@ -2771,7 +2771,7 @@ nmg_to_iges( ip , name , fp_dir , fp_param )
 		    struct rt_bot_internal *bot=(struct rt_bot_internal *)ip->idb_ptr;
 		    if( bot->mode != RT_BOT_SOLID )
 			{
-			    bu_log( "%s is a plate mode primitive, and cannot be converted to IGES format!!!\n", name );
+			    bu_log( "%s is a plate mode primitive, and cannot be converted to IGES format!\n", name );
 			    return( 0 );
 			}
 		}
@@ -3065,7 +3065,7 @@ igs_tree( str, tp, length, de_pointers )
 		de_pointer_number++;
 		break;
 	    default:
-		bu_log( "Unrecognized operation in combination!!\n" );
+		bu_log( "Unrecognized operation in combination!\n" );
 		break;
 	}
 }

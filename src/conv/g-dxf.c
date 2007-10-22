@@ -880,6 +880,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	return  curtree;
 
     regions_tried++;
+
     /* Begin bu_bomb() protection */
     if( ncpu == 1 ) {
 	if( BU_SETJUMP )  {

@@ -229,7 +229,7 @@ select_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 
 	if( id != ID_COMBINATION )
 	{
-		bu_log( "Directory/database mismatch!!\n\t is '%s' a combination or not???\n",
+		bu_log( "Directory/database mismatch!\n\t is '%s' a combination or not?\n",
 			dp->d_namep );
 		return( -1 );
 	}
@@ -617,21 +617,18 @@ main(int argc, char **argv)
 			scale_factor = bu_units_conversion( units );
 			if( scale_factor == 0.0 )
 			{
-				bu_log( "Unrecognized units (%s)\n", units );
-				bu_bomb( "Unrecognized units\n" );
+				bu_exit(1, "Unrecognized units (%s)\n", units );
 			}
 			scale_factor = 1.0 / scale_factor;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	if( !units )
@@ -640,12 +637,11 @@ main(int argc, char **argv)
 	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[bu_optind] , "r")) == DBI_NULL)
 	{
-		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "Cannot open %s\n" , argv[bu_optind] );
 	}
 	if( db_dirbuild( dbip ) ) {
-		bu_bomb( "db_dirbuild() failed!\n" );
+		bu_exit(1, "db_dirbuild() failed!\n" );
 	}
 
 	if( out_file == NULL )
@@ -654,9 +650,8 @@ main(int argc, char **argv)
 	{
 		if ((fp_out = fopen( out_file , "w")) == NULL)
 		{
-			bu_log( "Cannot open %s\n" , out_file );
 			perror( argv[0] );
-			return 2;
+			bu_exit(1, "Cannot open %s\n" , out_file );
 		}
 	}
 
@@ -797,7 +792,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 
 	if( id != ID_COMBINATION )
 	{
-		bu_log( "Directory/database mismatch!!\n\t is '%s' a combination or not???\n",
+		bu_log( "Directory/database mismatch!\n\t is '%s' a combination or not?\n",
 			dp->d_namep );
 		return;
 	}
@@ -1010,7 +1005,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 							if( BU_SETJUMP )
 							{
 								BU_UNSETJUMP;
-								bu_log( "A face has failed triangulation!!!!\n" );
+								bu_log( "A face has failed triangulation!\n" );
 								if( next_fu == fu->fumate_p )
 									next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
 								if( nmg_kfu( fu ) )
@@ -1300,15 +1295,16 @@ union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_pa
 	bu_log( "Attempting %s\n", name );
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )
 	{
 		/* Error, bail out */
 		BU_UNSETJUMP;		/* Relinquish the protection */
-		bu_log( "conversion of %s FAILED!!!\n", name );
+		bu_log( "conversion of %s FAILED!\n", name );
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before bu_bomb().
+		 * it detects an internal error, before before bombing out.
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

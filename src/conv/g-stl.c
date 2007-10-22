@@ -204,27 +204,23 @@ char	*argv[];
 			inches = 1;
 			break;
 		default:
-			bu_log(  usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		bu_log( usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	if( output_file && output_directory ) {
 		bu_log( "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n" );
-		bu_log( usage, argv[0] );
-		exit( 1 );
+		bu_exit(1, usage, argv[0] );
 	}
 
 	if( !output_file && !output_directory ) {
 		if( binary ) {
-			bu_log( "Can't output binary to stdout\n");
-			exit( 1 );
+			bu_exit(1, "Can't output binary to stdout\n");
 		}
 		fp = stdout;
 	} else if( output_file ) {
@@ -232,9 +228,8 @@ char	*argv[];
 			/* Open ASCII output file */
 			if( (fp=fopen( output_file, "w+" )) == NULL )
 			{
-				bu_log( "Cannot open ASCII output file (%s) for writing\n", output_file );
 				perror( argv[0] );
-				exit( 1 );
+				bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file );
 			}
 		} else {
 			/* Open binary output file */
@@ -244,9 +239,8 @@ char	*argv[];
 			if( (bfd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
 #endif
 			{
-				bu_log( "Cannot open binary output file (%s) for writing\n", output_file );
 				perror( argv[0] );
-				exit( 1 );
+				bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file );
 			}
 		}
 	}
@@ -256,11 +250,10 @@ char	*argv[];
 	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "Unable to open geometry file (%s)\n", argv[0]);
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "ERROR: db_dirbuild failed\n" );
 	}
 
 	BN_CK_TOL(tree_state.ts_tol);
@@ -391,9 +384,8 @@ int material_id;
 			/* Open ASCII output file */
 			if( (fp=fopen( bu_vls_addr( &file_name ), "w+" )) == NULL )
 			{
-				bu_log( "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr( &file_name ) );
 				perror( "g-stl" );
-				exit( 1 );
+				bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr( &file_name ) );
 			}
 		} else {
 			char buf[81] = {0};	/* need exactly 80 char for header */
@@ -405,9 +397,8 @@ int material_id;
 			if( (bfd=open( bu_vls_addr( &file_name ), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
 #endif
 			{
-				bu_log( "Cannot open binary output file (%s) for writing\n", bu_vls_addr( &file_name ) );
 				perror( "g-stl" );
-				exit( 1 );
+				bu_log( "ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr( &file_name ) );
 			}
 
 			if (!region_name) {
@@ -510,8 +501,8 @@ int material_id;
 				if( vert_count > 3 )
 				{
 					bu_free( region_name, "region name" );
-					bu_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
-					bu_bomb( "LU is not a triangle" );
+					bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
+					bu_exit(1, "ERROR: LU is not a triangle" );
 				}
 				else if( vert_count < 3 )
 					continue;
@@ -592,6 +583,7 @@ genptr_t		client_data;
 		return  curtree;
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
@@ -604,7 +596,7 @@ genptr_t		client_data;
 			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before bu_bomb().
+			 * it detects an internal error, before bombing out.
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -689,7 +681,7 @@ genptr_t		client_data;
 				bu_free( (char *)sofar, "sofar" );
 
 				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before bu_bomb().
+				 * it detects an internal error, before before bombing out.
 				 */
 				rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

@@ -572,6 +572,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
@@ -586,7 +587,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before bu_bomb().
+			 * it detects an internal error, before bombing out.
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -664,7 +665,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				bu_free( (char *)sofar, "sofar" );
 
 				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before bu_bomb().
+				 * it detects an internal error, before bombing out.
 				 */
 				rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
