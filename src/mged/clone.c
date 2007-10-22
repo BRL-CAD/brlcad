@@ -130,7 +130,6 @@ struct link {
     fastf_t pct;
 };
 
-
 /**
  * initialize the name list used for stashing destination names
  */
@@ -150,7 +149,6 @@ init_list(struct nametbl *l, int s)
     l->names_len = 10;
     l->names_used = 0;
 }
-
 
 /**
  * add a new name to the name list
@@ -212,11 +210,21 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 {
     char *newname = NULL;
     char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0};
-    int num = 0, i = 1, j;
+    int num = 0, i = 1, j = 0;
 
     if (!newname)
 	newname = (char *)bu_calloc(BUFSIZ, sizeof(char), "alloc newname");
-    sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
+
+    /* Ugh. This needs much repair/cleanup. */
+    if( state->updpos == 0 )
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
+    else if ( state->updpos == 1 ) {
+	int num2 = 0;
+	char suffix2[BUFSIZ] = {0};
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
+	snprintf(prefix, BUFSIZ, "%s%d%s", prefix, num2, suffix2);
+    } else
+	bu_bomb("multiple -c options not supported yet.");
 
     do {
         if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
@@ -318,7 +326,6 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     return;
 }
 
-
 /**
  * make a copy of a v5 solid by adding it to our book-keeping list,
  * adding it to the db directory, and writing it out to disk.
@@ -387,7 +394,6 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     return;
 }
 
-
 /**
  * make n copies of a database combination by adding it to our
  * book-keeping list, adding it to the directory, then writing it out
@@ -417,7 +423,6 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 	(void)copy_v5_solid(_dbip, proto, (struct clone_state *)state, idx);
     return;
 }
-
 
 /**
  * make n copies of a v4 combination.
@@ -612,7 +617,6 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
     return;
 }
 
-
 /**
  * recursively copy a tree of geometry
  */
@@ -694,7 +698,6 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     return copy;
 }
 
-
 /**
  * copy an object, recursivley copying all of the object's contents
  * if it's a combination/region.
@@ -746,7 +749,6 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
     return copy;
 }
 
-
 /**
  * how to use clone.  blissfully simple interface.
  */
@@ -770,7 +772,6 @@ print_usage(Tcl_Interp *interp)
     return;
 }
 
-
 /**
  * process the user-provided arguments. stash their operations into
  * our state structure.
@@ -791,6 +792,7 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     state->rpnt[W] = 0;
     state->trans[W] = 0;
     state->miraxis = W;
+    state->updpos = 0;
     while ((k = bu_getopt(argc, argv, "a:b:cfhgi:m:n:p:r:t:v")) != EOF) {
 	switch (k) {
 	    case 'a':
@@ -808,7 +810,12 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 		state->rot[W] = 1;
 		break;
 	    case 'c':
-		/* XXX */
+		/* I'd like to have an optional argument to -c, but for now,
+		 * just let multiple -c's add it up as a hack. I believe the
+		 * variant of this that was lost used this as a binary
+		 * operation, so it SHOULD be functionally equivelant for a user
+		 * who's dealt with this before. */
+		state->updpos++;
 		break;
 	    case 'f':
 		state->draw_obj = 0;
@@ -886,7 +893,6 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     return TCL_OK;
 }
 
-
 /**
  * master hook function for the 'clone' command.
  */
@@ -917,7 +923,6 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-
 /**
  * helper function that computes where a point is along a spline
  * given some distance 't'.
@@ -946,7 +951,6 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
     pt[Y] = spl.k[i].c[Y][0] + spl.k[i].c[Y][1]*s + spl.k[i].c[Y][2]*s2 + spl.k[i].c[Y][3]*s3;
     pt[Z] = spl.k[i].c[Z][0] + spl.k[i].c[Z][1]*s + spl.k[i].c[Z][2]*s2 + spl.k[i].c[Z][3]*s3;
 }
-
 
 /**
  * master hook function for the 'tracker' command used to create
