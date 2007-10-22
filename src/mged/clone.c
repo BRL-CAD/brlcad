@@ -232,7 +232,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 
         if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
     	/* primitives and regions */
-    	    if (suffix[0] == '.')
+    	    if (suffix[0] != 0)
     		if ((i == 1) && is_in_list(obj_list, buf)) {
     		    j = index_in_list(obj_list, buf);
     		    snprintf(buf, BUFSIZ, "%s%d", prefix, num);	/* save the name for the next pass */
