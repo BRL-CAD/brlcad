@@ -1766,7 +1766,7 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_strcpy(&vls, argv[2]);
 
 	FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-		if(!strcmp(bu_vls_addr(&vls), bu_vls_addr(&dlp->dml_dmp->dm_pathName)))
+		if(!bu_vls_strcmp(&vls, &dlp->dml_dmp->dm_pathName))
 			break;
 
 	if(dlp == &head_dm_list){

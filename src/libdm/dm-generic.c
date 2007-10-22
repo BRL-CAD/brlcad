@@ -116,7 +116,7 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
    */
   if(dmp2 != DM_NULL)
     if(dmp1->dm_type != dmp2->dm_type ||
-       strcmp(bu_vls_addr(&dmp1->dm_dName), bu_vls_addr(&dmp2->dm_dName)))
+       bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
       return TCL_ERROR;
 
   switch(dmp1->dm_type){

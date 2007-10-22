@@ -453,7 +453,7 @@ share_dlist(struct dm_list *dlp2)
   FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l){
     if(dlp1 != dlp2 &&
        dlp1->dml_dmp->dm_type == dlp2->dml_dmp->dm_type &&
-       !strcmp(bu_vls_addr(&dlp1->dml_dmp->dm_dName), bu_vls_addr(&dlp2->dml_dmp->dm_dName))){
+       !bu_vls_strcmp(&dlp1->dml_dmp->dm_dName, &dlp2->dml_dmp->dm_dName)) {
       if (dm_share_dlist(dlp1->dml_dmp, dlp2->dml_dmp) == TCL_OK) {
 	struct bu_vls vls;
 

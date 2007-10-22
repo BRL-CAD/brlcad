@@ -169,7 +169,7 @@ vr_viewpoint_hook(void)
 		      V3ARGS(view_state->vs_vop->vo_eye_pos),
 		      view_state->vs_vop->vo_perspective);
 
-	if( strcmp( bu_vls_addr(&old_str), bu_vls_addr(&str) ) == 0 )  {
+	if( bu_vls_strcmp( &old_str, &str ) == 0 )  {
 		bu_vls_free( &str );
 		return;
 	}
