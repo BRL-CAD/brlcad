@@ -205,15 +205,14 @@ is_in_list(struct nametbl l, char *name)
  * convention specific to combinations/regions and solids.
  * state->incr is used for each number level increase.
  */
-static const char *
+static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
-    char *newname = NULL;
+    struct bu_vls *newname;
     char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0};
     int num = 0, i = 1, j = 0;
 
-    if (!newname)
-	newname = (char *)bu_calloc(BUFSIZ, sizeof(char), "alloc newname");
+    newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
     if( state->updpos == 0 )
@@ -227,22 +226,28 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	bu_bomb("multiple -c options not supported yet.");
 
     do {
+	/* choke the name back to the prefix */
+	bu_vls_trunc(newname, 0);
+	bu_vls_strcpy(newname, prefix);
+
         if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
     	/* primitives and regions */
     	    if (suffix[0] == '.')
     		if ((i == 1) && is_in_list(obj_list, buf)) {
     		    j = index_in_list(obj_list, buf);
-    		    snprintf(buf, BUFSIZ, "%s%d", prefix, num);
-    		    snprintf(newname, BUFSIZ, "%s%s", obj_list.names[j].dest[iter], suffix);
+    		    snprintf(buf, BUFSIZ, "%s%d", prefix, num);	/* save the name for the next pass */
+		    /* clear and set the name */
+		    bu_vls_trunc(newname, 0);
+		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
     		} else
-    		    snprintf(newname, BUFSIZ, "%s%d%s", prefix, num+i*state->incr, suffix);
+		    bu_vls_printf(newname, "%d%s", num+i*state->incr, suffix);
     	    else
-    		snprintf(newname, BUFSIZ, "%s%d", prefix, num + i*state->incr);
+    		bu_vls_printf(newname, "%d", num + i*state->incr);
 	} else /* non-region combinations */
-    	    snprintf(newname, BUFSIZ, "%s%d", prefix, (num==0)?2:num+i);
+    	    bu_vls_printf(newname, "%d", (num==0)?2:num+i);
 	i++;
-    } while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
-    return bu_realloc(newname, strlen(newname) + 1, "get_name realloc");
+    } while (db_lookup(_dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
+    return newname;
 }
 
 /**
@@ -258,14 +263,16 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	const char *name = (const char *)NULL;
+	struct bu_vls *name;
 
 	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
 	else
 	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
-	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
-	bu_free((char *)name, "free get_name() name");
+
+	/* XXX: this can probably be optimized. */
+	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
+	bu_vls_free(name);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -357,7 +364,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
 	char *argv[6] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL};
-	const char *name = (char *)NULL;
+	struct bu_vls *name;
 	int ret;
 	register struct directory *dp = (struct directory *)NULL;
 	struct rt_db_internal intern;
@@ -366,12 +373,13 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	    dp = proto;
 	else
 	    dp = db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
+
 	name = get_name(_dbip, dp, state, i); /* get new name */
-	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
+	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* actually copy the primitive to the new name */
 	argv[1] = proto->d_namep;
-	argv[2] = (char *)name;
+	argv[2] = bu_vls_addr(name);
 	ret = wdb_copy_cmd(_dbip->dbi_wdbp, INTERP, 3, argv);
 	if (ret != TCL_OK)
 	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
@@ -379,12 +387,13 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	    bu_vls_free(name);
 	    return;
 	}
 	RT_CK_DB_INTERNAL(&intern);
 	/* pull the new name */
-	dp = db_lookup(_dbip, name, LOOKUP_QUIET);
-	bu_free((char *)name, "free get_name() name");
+	dp = db_lookup(_dbip, bu_vls_addr(name), LOOKUP_QUIET);
+	bu_vls_free(name);
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
@@ -452,13 +461,13 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    /* bleh, odd convention going on here.. prefix regions with an 'r' */
 	    *bu_vls_addr(&obj_list.names[idx].dest[i]) = 'r';
 	} else {
-	    const char *name = (const char *)NULL;
+	    struct bu_vls *name;
 	    if (i==0)
 		name = get_name(_dbip, proto, state, i);
 	    else
 		name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
-	    bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
-	    bu_free((char *)name, "free get_name() name");
+	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
+	    bu_vls_free(name);
 	}
 	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), BUFSIZ);
 
@@ -530,7 +539,7 @@ static struct directory *
 copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
     register struct directory *dp = (struct directory *)NULL;
-    const char *name = (const char *)NULL;
+    struct bu_vls *name;
     int i;
 
     /* sanity */
@@ -545,10 +554,10 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    name = get_name(_dbip, proto, state, i);
 	else
 	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
-	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
+	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* we have a before and an after, do the copy */
-	if (proto->d_namep && name) {
+	if (proto->d_namep && bu_vls_addr(name)) {
 	    struct rt_db_internal dbintern;
 	    struct rt_comb_internal *comb;
 
@@ -558,7 +567,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(wdbp->dbip, name, -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
 		bu_log("An error has occured while adding a new object to the database.");
 		return NULL;
 	    }
@@ -573,14 +582,15 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
 	    if (rt_db_put_internal(dp, wdbp->dbip, &dbintern, &rt_uniresource) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+		bu_vls_free(name);
 		return NULL;
 	    }
+	    bu_vls_free(name);
 	    rt_db_free_internal(&dbintern, &rt_uniresource);
 	}
 
 	/* done with this name */
-	bu_free((char *)name, "free get_name() name");
-	name = (const char *)NULL;
+	bu_vls_free(name);
     }
 
     return dp;
@@ -628,8 +638,8 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     register struct directory *mdp = (struct directory *)NULL;
     register struct directory *copy = (struct directory *)NULL;
 
-    const char *copyname = (const char *)NULL;
-    const char *nextname = (const char *)NULL;
+    struct bu_vls *copyname;
+    struct bu_vls *nextname;
 
     /* get the name of what the object "should" get cloned to */
     copyname = get_name(_dbip, dp, state, 0);
@@ -682,10 +692,10 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     }
 
     nextname = get_name(_dbip, dp, state, 0);
-    if (strcmp(copyname, nextname) == 0)
+    if (bu_vls_strcmp(copyname, nextname) == 0)
 	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
     else
-	copy = db_lookup(_dbip, copyname, LOOKUP_QUIET);
+	copy = db_lookup(_dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
  done_copy_tree:
     if (rp)
