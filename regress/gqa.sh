@@ -150,9 +150,9 @@ $CMD >> gqa.log 2>&1
 
 
 if [ $STATUS = 0 ] ; then
-    /bin/echo '-> gqa.sh succeeded'
+    echo "-> gqa.sh succeeded"
 else
-    /bin/echo '-> gqa.sh FAILED'
+    echo "-> gqa.sh FAILED"
 fi
 
 exit $STATUS

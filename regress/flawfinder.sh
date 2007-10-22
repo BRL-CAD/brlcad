@@ -5,13 +5,13 @@ if test "x$TOPSRC" = "x" ; then
     TOPSRC="."
 fi
 if test ! -f "$TOPSRC/misc/flawfinder" ; then
-    /bin/echo "Unable to find flawfinder in misc directory, aborting"
+    echo "Unable to find flawfinder in misc directory, aborting"
     exit 1
 fi
 
 rm -f flawfinder.log
 
-/bin/echo running flawfinder...
+echo running flawfinder...
 
 ${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
 
@@ -21,12 +21,12 @@ if test "x`grep \"No hits found.\" flawfinder.log`" = "x" ; then
 fi
 
 if test "x$NUMBER_WRONG" = "x0" ; then
-    /bin/echo '-> flawfinder.sh succeeded'
+    echo "-> flawfinder.sh succeeded"
 else
     if test -f flawfinder.log ; then
-	/bin/cat flawfinder.log
+	cat flawfinder.log
     fi
-    /bin/echo '-> flawfinder.sh FAILED'
+    echo "-> flawfinder.sh FAILED"
 fi
 
 exit $NUMBER_WRONG

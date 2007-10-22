@@ -25,27 +25,27 @@ EOF
 ../src/conv/iges/iges-g -o iges_new.g -p iges_file.iges 2>> iges.log
 
 if [ $? != 0 ] ; then
-    /bin/echo g-iges/iges-g FAILED
+    echo g-iges/iges-g FAILED
     STATUS=-1
 else
-    /bin/echo g-iges/iges-g completed successfully
+    echo g-iges/iges-g completed successfully
 fi
 
 
 ../src/conv/iges/iges-g -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
 
 if [ $? != 0 ] ; then
-    /bin/echo g-iges/iges-g FAILED
+    echo g-iges/iges-g FAILED
     STATUS=-1
 else
-    /bin/echo g-iges/iges-g completed successfully
+    echo g-iges/iges-g completed successfully
 fi
 
 
 if [ X$STATUS = X0 ] ; then
-    /bin/echo '-> iges.sh succeeded'
+    echo "-> iges.sh succeeded"
 else
-    /bin/echo '-> iges.sh FAILED'
+    echo "-> iges.sh FAILED"
 fi
 
 exit $STATUS

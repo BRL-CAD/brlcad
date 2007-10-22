@@ -17,7 +17,7 @@ if [ $# = 1 ] ; then
 
        if [ $DELTA -gt 300 ] ; then
 	   # we log that we're quitting
-	   /bin/echo $1 does not exist giving up at $NOW >> $LOG_FILE
+	   echo "$1 does not exist giving up at $NOW" >> $LOG_FILE
 	   exit 1
        fi
     fi
@@ -37,14 +37,14 @@ while [ ! -f $MYNAME ] ; do
 
     if [ $DELTA -gt 300 ] ; then
 	# we log that we're quitting
-	/bin/echo $MYNAME giving up at $NOW >> $LOG_FILE
+	echo "$MYNAME giving up at $NOW" >> $LOG_FILE
 	exit 1
     fi
 
     sleep 10
 done
 
-/bin/echo "Starting build"
+echo "Starting build"
 VERSION=`cat $MYNAME`
 rm $MYNAME
 
@@ -77,7 +77,7 @@ cocoa)
     export MAKE_CMD="make" ;
     export MAKE_OPTS="-j2" ;;
 *)
-    echo hostname \"$MYNAME\" not recognized
+    echo "hostname \"$MYNAME\" not recognized"
     exit 1
 esac
 
@@ -88,7 +88,7 @@ BUILD_DIR=`pwd`/${MYNAME}_${START_TIME}.dir
 rm -f $BUILD_DIR
 mkdir $BUILD_DIR
 if [ ! -d $BUILD_DIR ] ; then
-    echo create $BUILD_DIR failed
+    echo "Creation of $BUILD_DIR failed"
     exit 1
 fi
 
@@ -112,7 +112,7 @@ echo ../brlcad-$VERSION/configure \
     --prefix=/usr/brlcad/rel-$VERSION \
     >> $LOG_FILE 2>&1
 
-echo runnig: $MAKE_CMD $MAKE_OPTS >> $LOG_FILE 2>&1
+echo "running: $MAKE_CMD $MAKE_OPTS" >> $LOG_FILE 2>&1
 
 #
 # build
@@ -120,7 +120,7 @@ echo runnig: $MAKE_CMD $MAKE_OPTS >> $LOG_FILE 2>&1
 $MAKE_CMD $MAKE_OPTS > build.log 2>&1
 STATUS=$?
 if [ $STATUS != 0 ] ; then
-    echo build failed status $STATUS
+    echo "Build failed with status $STATUS"
     exit 1
 fi
 
@@ -128,15 +128,15 @@ fi
 # run the regression tests
 #
 if [ ! -s build.log ] ; then
-    echo build failed zero length log
+    echo "Build failed, zero length log file"
     exit 1
 fi
 
 cd regress
 make test > test.log 2>&1
 if [ X`grep failed test.log` != X ] ; then
-    /bin/echo regression test failed
+    echo "regression testing FAILED"
 else
-    /bin/echo regression test succeeded
+    echo "regression testing succeeded"
 fi
 make install

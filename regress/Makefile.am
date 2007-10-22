@@ -111,13 +111,13 @@ CLEANFILES = \
 	shaders.rt.pixdiff.log \
 	shaders.txt \
 	shaders_ref.pix \
-	solids \
 	solids-diff.log \
 	solids.g \
 	solids.log \
 	solids.mged \
-	solids.pix \
 	solids.pix.diff \
+	solids.rt \
+	solids.rt.pix \
 	solids_ref.pix \
 	spdi \
 	spdi.g \

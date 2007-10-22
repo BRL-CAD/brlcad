@@ -75,9 +75,9 @@ fi
 rm -f weight.out_ns weight.ref_ns
 
 if [ X$STATUS = X0 ] ; then
-    /bin/echo '-> weight.sh succeeded'
+    echo "-> weight.sh succeeded"
 else
-    /bin/echo '-> weight.sh FAILED'
+    echo "-> weight.sh FAILED"
 fi
 
 exit $STATUS
