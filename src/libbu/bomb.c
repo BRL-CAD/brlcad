@@ -153,7 +153,6 @@ bu_bomb(const char *str)
 	    fprintf(stderr,"bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
 	} else {
 	    /* Application is non-parallel, so this is safe */
-	    fprintf(stderr,"bu_bomb(): taking longjmp up to application handler\n");
 	    longjmp( (void *)(bu_jmpbuf), 1 );
 	    /* NOTREACHED */
 	}
