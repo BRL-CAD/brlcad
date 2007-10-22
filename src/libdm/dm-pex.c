@@ -1214,7 +1214,6 @@ register const mat_t	src;
   k = 0;
 
   /* Copy all elements */
-#include "noalias.h"
 #if 1
   /* regular copy */
   for( i=0; i<4; ++i)
@@ -1223,6 +1222,7 @@ register const mat_t	src;
 #else
   /* transpose copy */
   for( i=0; i<4; ++i)
+    for( j=0; j<4; ++j)
       dest[j][i] = src[k++];
 #endif
 }
