@@ -209,17 +209,17 @@ static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
     struct bu_vls *newname;
-    char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0};
+    char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0}, suffix2[BUFSIZ] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
-    if( state->updpos == 0 )
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
-    else if ( state->updpos == 1 ) {
+    if( state->updpos == 0 ) {
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%s", &prefix, &num, &suffix, &suffix2);
+	strncat(suffix, suffix2, BUFSIZ);
+    } else if ( state->updpos == 1 ) {
 	int num2 = 0;
-	char suffix2[BUFSIZ] = {0};
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
 	snprintf(prefix, BUFSIZ, "%s%d%s", prefix, num2, suffix2);
     } else
