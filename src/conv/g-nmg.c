@@ -494,8 +494,7 @@ main(int argc, char **argv)
 			bu_log("\n");
 			break;
 		default:
-			bu_log(1, usage, argv[0]);
-			break;
+			bu_exit(1, usage, argv[0]);
 		}
 	}
 
