@@ -4,7 +4,7 @@ LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
-rm -f dsp.dat ebm.bw solids solids.g solids.log solids.pix solids.mged
+rm -f dsp.dat ebm.bw solids.rt solids.g solids.log solids.rt.pix solids.pix.diff solids.mged
 
 ../src/conv/asc2pix > dsp.dat << EOF
 01BF01
@@ -874,7 +874,7 @@ center 0 -96 0
 set perspective 30
 size 1600
 ae 25 45
-saveview solids
+saveview solids.rt
 q
 EOF
 
@@ -882,37 +882,38 @@ EOF
 `cat solids.mged`
 EOF
 
-if [ ! -f solids ] ; then
-	echo 'mged failed'
-	exit 1
+if [ ! -f solids.rt ] ; then
+    echo "mged failed to create solids.rt script"
+    echo "-> solids.sh FAILED"
+    exit 1
 fi
-mv solids solids.orig
-sed "s,^rt,../src/rt/rt -B -P 1 ," < solids.orig > solids
-rm solids.orig
-chmod 775 solids
+mv solids.rt solids.orig.rt
+sed "s,^rt,../src/rt/rt -B -P 1 ," < solids.orig.rt > solids.rt
+rm -f solids.orig.rt
+chmod 775 solids.rt
 
 echo 'rendering solids...'
-./solids
-if [ ! -f solids.pix ] ; then
+./solids.rt
+if [ ! -f solids.rt.pix ] ; then
 	echo raytrace failed
 	exit 1
 fi
 if [ ! -f $1/regress/solidspix.asc ] ; then
-	echo No reference file for solids.pix
+	echo No reference file for solids.rt.pix
 	exit 1
 fi
 ../src/conv/asc2pix < $1/regress/solidspix.asc > solids_ref.pix
-../src/util/pixdiff solids.pix solids_ref.pix > solids.pix.diff \
+../src/util/pixdiff solids.rt.pix solids_ref.pix > solids.pix.diff \
     2> solids-diff.log
 
 tr , '\012' < solids-diff.log | awk '/many/ {print $0}'
 NUMBER_WRONG=`tr , '\012' < solids-diff.log | awk '/many/ {print $1}'`
-/bin/echo solids.pix $NUMBER_WRONG off by many
+echo "solids.rt.pix $NUMBER_WRONG off by many"
 
 if [ X$NUMBER_WRONG = X0 ] ; then
-    /bin/echo '-> solids.sh succeeded'
+    echo "-> solids.sh succeeded"
 else
-    /bin/echo '-> solids.sh FAILED'
+    echo "-> solids.sh FAILED"
 fi
 
 exit $NUMBER_WRONG
