@@ -271,7 +271,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */
 #else
-	int	i;
+	unsigned int	i;
 
 	if( bu_nsemaphores != 0 )  return;	/* Already called */
 	bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores) );
