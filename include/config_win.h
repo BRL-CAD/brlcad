@@ -134,6 +134,7 @@
 #define eof _eof
 #endif
 #define execvp _execvp
+#define fchmod _fchmod
 #define fdopen _fdopen
 #define fileno _fileno
 #define fork() -1
