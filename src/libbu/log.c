@@ -287,11 +287,11 @@ char *fmt;
 #if defined(HAVE_STDARG_H)
 /* ANSI C */
 
-    va_start(ap, fmt);
-
     if (!fmt || strlen(fmt) == 0) {
 	return;
     }
+
+    va_start(ap, fmt);
 
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
