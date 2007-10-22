@@ -173,15 +173,13 @@ main(int argc, char **argv)
 			inches = 1;
 			break;
 		default:
-			bu_log(  usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		bu_log( usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	if( !output_file )
@@ -191,9 +189,8 @@ main(int argc, char **argv)
 		/* Open output file */
 		if( (fp=fopen( output_file, "w+" )) == NULL )
 		{
-			bu_log( "Cannot open output file (%s) for writing\n", output_file );
 			perror( argv[0] );
-			exit( 1 );
+			bu_exit(1, "Cannot open output file (%s) for writing\n", output_file );
 		}
 	}
 
@@ -203,9 +200,8 @@ main(int argc, char **argv)
 	else
 	if( (fpe=fopen( error_file, "w" )) == NULL )
 	{
-	bu_log( "Cannot open output file (%s) for writing\n", error_file );
 		perror( argv[0] );
-		exit( 1 );
+		bu_exit(1, "Cannot open output file (%s) for writing\n", error_file );
 	}
 
 	/* Open BRL-CAD database */
@@ -213,11 +209,10 @@ main(int argc, char **argv)
 	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "Cannot open geometry file (%s) for reading\n", argv[0]);
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
 	BN_CK_TOL(tree_state.ts_tol);
@@ -377,16 +372,16 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 					{
 		/*XXX*/				bu_ptbl_free( &verts);
 		/*XXX*/				bu_free( region_name, "region name" );
-						bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
-						bu_bomb( "Can't find vertex in list!!!" );
+						bu_log("Vertex from eu x%x is not in nmgregion x%x\n", eu, r);
+						bu_exit(1, "ERROR: Triangle vertex was not located\n");
 					}
 				}
 				if( vert_count > 3 )
 				{
 		/*XXX*/			bu_ptbl_free( &verts);
 		/*XXX*/			bu_free( region_name, "region name" );
-					bu_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
-					bu_bomb( "LU is not a triangle" );
+					bu_log( "lu x%x has too many (%d) vertices!\n", lu, vert_count );
+					bu_exit(1, "ERROR: LU is not a triangle\n");
 				}
 				else if( vert_count < 3 )
 					continue;
@@ -465,7 +460,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 						bu_ptbl_free( &verts);
 						bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
 		/*XXX*/				bu_free( region_name, "region name" );
-		/*XXX*/				bu_bomb( "Can't find vertex in list!!!" );
+		/*XXX*/				bu_exit(1, "ERROR: Can't find vertex in list!\n");
 					}
 
 					fprintf( fp, " %d", i+1 );
@@ -480,8 +475,8 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 				{
 					bu_ptbl_free( &verts);
 					bu_free( region_name, "region name" );
-					bu_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
-					bu_bomb( "LU is not a triangle" );
+					bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
+					bu_exit(1, "ERROR: LU is not a triangle\n");
 				}
 				else if( vert_count < 3 )
 					continue;
@@ -546,7 +541,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			bu_free( (char *)sofar, "sofar" );
 
 			/* Sometimes the NMG library adds debugging bits when
-			 * it detects an internal error, before bu_bomb().
+			 * it detects an internal error, before bombing out.
 			 */
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
@@ -635,7 +630,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 				bu_free( (char *)sofar, "sofar" );
 
 				/* Sometimes the NMG library adds debugging bits when
-				 * it detects an internal error, before bu_bomb().
+				 * it detects an internal error, before bombing out.
 				 */
 				rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

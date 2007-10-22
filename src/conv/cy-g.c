@@ -190,7 +190,7 @@ main(int argc, char **argv)
 			ptr = &curves[y+1][x*3];
 
 			if( fread( &r, 2, 1, infp ) != 1 )
-				bu_bomb( "Unexpected EOF\n" );
+				bu_exit(1, "Unexpected end-of-file encountered in [%s]\n", argv[1]);
 			if( r < 0 )
 				rad = 0.0;
 			else

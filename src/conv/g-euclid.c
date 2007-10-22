@@ -119,8 +119,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 	ptr = strchr( buffer, '.' );
 	if( (ptr - buffer) > length )
 	{
-		bu_log( "Value (%f) too large for format length (%d)\n" , f, length );
-		bu_bomb( "fastf_print\n" );
+		bu_exit(1, "ERROR: Value (%f) too large for format length (%d)\n" , f, length );
 	}
 
 	for( i=0 ; i<length ; i++ )
@@ -172,18 +171,14 @@ get_reg_id(register struct db_tree_state *tsp, struct db_full_path *pathp, const
 static union tree *
 region_stub(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-	bu_log( "region stub called, this shouldn't happen\n" );
-	bu_bomb( "region_stub\n" );
-
+	bu_exit(1, "ERROR; region stub called, this shouldn't happen\n" );
 	return( (union tree *)NULL ); /* just to keep the compilers happy */
 }
 
 static union tree *
 leaf_stub(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
-	bu_log( "leaf stub called, this shouldn't happen\n" );
-	bu_bomb( "leaf_stub\n" );
-
+	bu_exit(1, "ERROR: leaf stub called, this shouldn't happen\n" );
 	return( (union tree *)NULL ); /* just to keep the compilers happy */
 }
 
@@ -565,27 +560,23 @@ main(int argc, char **argv)
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[bu_optind] , "r")) == DBI_NULL)
 	{
-		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "Cannot open %s\n" , argv[bu_optind]);
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n");
 	}
 
 	if( out_file == NULL )
@@ -710,6 +701,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		return  curtree;
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )
 	{
@@ -717,7 +709,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		BU_UNSETJUMP;		/* Relinquish the protection */
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before bu_bomb().
+		 * it detects an internal error, before bombing out.
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

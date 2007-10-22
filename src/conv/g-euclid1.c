@@ -115,8 +115,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 	ptr = strchr( buffer, '.' );
 	if( (ptr - buffer) > length )
 	{
-		bu_log( "Value (%f) too large for format length (%d)\n" , f, length );
-		bu_bomb( "fastf_print\n" );
+		bu_exit(1, "ERROR: Value (%f) too large for format length (%d)\n" , f, length );
 	}
 
 	for( i=0 ; i<length ; i++ )
@@ -501,27 +500,23 @@ main(int argc, char **argv)
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	/* Open BRL-CAD database */
 	if ((dbip = db_open( argv[bu_optind] , "r")) == DBI_NULL)
 	{
-		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "Cannot open %s\n" , argv[bu_optind] );
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 	bu_optind++;
 
@@ -608,14 +603,14 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 	dir = DB_FULL_PATH_CUR_DIR( pathp );
 	if( (fp_out = fopen( dir->d_namep , "w" )) == NULL )
 	{
-		bu_log(" Cannot open file %s\n" , dir->d_namep );
 		perror( "g-euclid" );
-		bu_bomb( "g-euclid: Cannot open output file\n" );
+		bu_exit(1, "ERROR: Cannot open file %s\n" , dir->d_namep);
 	}
 
 	bu_log( "\n\nProcessing region %s:\n" , dir->d_namep );
 
 	regions_tried++;
+
 	/* Begin bu_bomb() protection */
 	if( BU_SETJUMP )
 	{
@@ -625,7 +620,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		(void)alarm( 0 );
 
 		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before bu_bomb().
+		 * it detects an internal error, before bombing out.
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 

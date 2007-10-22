@@ -329,8 +329,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			break;
 
 		default:
-			bu_log("descr_to_nmg: unexpected token \"%s\"\n", token);
-			bu_bomb("");
+			bu_exit(1, "descr_to_nmg: unexpected token \"%s\"\n", token);
 			break;
 		}
 	} while (stat != EOF);

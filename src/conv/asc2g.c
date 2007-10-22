@@ -151,8 +151,7 @@ main(int argc, char *argv[])
     ofp = wdb_fopen(argv[2]);
     if( !ofp )  perror(argv[2]);
     if (ifp == NULL || ofp == NULL) {
-	(void)fprintf(stderr, "asc2g: can't open files.");
-	Tcl_Exit(1);
+	bu_exit(1, "asc2g: can't open files.");
     }
 
     rt_init_resource( &rt_uniresource, 0, NULL );
@@ -160,7 +159,7 @@ main(int argc, char *argv[])
     if( bu_fgets( c1, 6, ifp ) == NULL ) {
 	fclose(ifp); ifp = NULL;
 	wdb_close(ofp); ofp = NULL;
-	bu_bomb( "Unexpected EOF\n" );
+	bu_exit(1, "Unexpected EOF\n");
     }
 
     /* new style ascii database */
@@ -180,13 +179,12 @@ main(int argc, char *argv[])
 	interp = Tcl_CreateInterp();
 	if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
 	    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
-	    bu_bomb( "Failed to initialize wdb_obj!\n" );
+	    bu_exit(1, "Failed to initialize wdb_obj!\n");
 	}
 
 	/* Create the safe interpreter */
 	if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
-	    bu_log("Failed to create safe interpreter");
-	    Tcl_Exit(1);
+	    bu_exit(1, "Failed to create safe interpreter");
 	}
 
 	/* Create aliases */
@@ -1153,24 +1151,19 @@ arsbbld(void)
 	cp = nxt_spc( cp );
 	ars_curves[ars_curve][ars_pt*3 + 2] = atof( cp );
 	if( ars_curve > 0 || ars_pt > 0 )
-	    VADD2( &ars_curves[ars_curve][ars_pt*3], &ars_curves[ars_curve][ars_pt*3], &ars_curves[0][0] )
+	    VADD2( &ars_curves[ars_curve][ars_pt*3], &ars_curves[ars_curve][ars_pt*3], &ars_curves[0][0] );
 
-		incr_ret = incr_ars_pt();
-	if( incr_ret == 2 )
-	    {
-		/* finished, write out the ARS solid */
-		if( mk_ars( ofp, ars_name, ars_ncurves, ars_ptspercurve, ars_curves ) )
-		    {
-			bu_log( "Failed trying to make ARS (%s)\n", ars_name );
-			bu_bomb( "Failed trying to make ARS\n" );
-		    }
-		return;
+	incr_ret = incr_ars_pt();
+	if( incr_ret == 2 ) {
+	    /* finished, write out the ARS solid */
+	    if( mk_ars( ofp, ars_name, ars_ncurves, ars_ptspercurve, ars_curves ) ) {
+		bu_exit(1, "Failed trying to make ARS (%s)\n", ars_name );
 	    }
-	else if( incr_ret == 1 )
-	    {
-		/* end of curve, ignore remainder of reocrd */
-		return;
-	    }
+	    return;
+	} else if( incr_ret == 1 ) {
+	    /* end of curve, ignore remainder of reocrd */
+	    return;
+	}
     }
 }
 
@@ -1340,7 +1333,7 @@ polyhbld(void)
 	register int	i;
 
 	if( bu_fgets( buf, BUFSIZE, ifp ) == NULL )  break;
-	if( buf[0] != ID_P_DATA )  bu_bomb("mis-count of Q records?\n");
+	if( buf[0] != ID_P_DATA )  bu_exit(1, "mis-count of Q records?\n");
 
 	/* Input always has 5 points, even if all aren't significant */
 	fp->verts = (fastf_t *)bu_malloc( 5*3*sizeof(fastf_t), "verts[]" );
@@ -1381,7 +1374,7 @@ polyhbld(void)
     tol.para = 1 - tol.perp;
 
     if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )
-	bu_bomb("rt_pg_to_bot() failed\n");
+	bu_exit(1, "Failed to convert [%s] polysolid object to triangle mesh\n", name);
     /* The polysolid is freed by the converter */
 
     /*
@@ -1389,7 +1382,7 @@ polyhbld(void)
      * calling mk_bot().
      */
     if( wdb_put_internal( ofp, name, &intern, mk_conv2mm ) < 0 )
-	bu_bomb("wdb_put_internal() failure on BoT from polysolid\n");
+	bu_exit(1, "Failed to create [%s] triangle mesh representation from polysolid object\n", name);
     /* BoT internal has been freed */
 }
 
@@ -1456,7 +1449,7 @@ bsplbld(void)
 
     mk_bsolid(ofp, name, nsurf, resolution);
 #else
-    bu_bomb("bsplbld() needs to be upgraded to v5\n");
+    bu_exit(1, "bsplbld() needs to be upgraded to v5\n");
 #endif
 }
 
@@ -1561,7 +1554,7 @@ bsurfbld(void)
     /* Free the control mesh memory */
     (void)bu_free( (char *)fp, "mesh data" );
 #else
-    bu_bomb("bsrfbld() needs to be upgraded to v5\n");
+    bu_exit(1, "bsrfbld() needs to be upgraded to v5\n");
 #endif
 }
 

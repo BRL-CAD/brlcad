@@ -65,18 +65,18 @@ main(void)
 			int j;
 
 			if( scanf( "%d %f %f %f" , &j , &a , &b , &c ) == EOF )
-				bu_bomb( "Unexpected EOF\n" );
+				bu_exit(1, "Unexpected EOF\n");
 
 			if( j != i+1 )
 			{
-				bu_bomb( "Points out of order\n" );
+				bu_exit(1, "Points out of order\n");
 			}
 
 			VSET( pts[i] , a , b , c );
 		}
 
 		if( scanf( "%d %f %f %f %f" , &face_no , &a , &b , &c , &d ) == EOF )
-			bu_bomb( "Unexpected EOF\n" );
+			bu_exit(1, "Unexpected EOF\n" );
 		VSET( pl , a , b , c );
 		pl[3] = d;
 
