@@ -110,8 +110,7 @@ main(int ac, char *av[])
 	if (autosize) fprintf(stderr, "Cannot autosize stdin\n");
 
     } else if (arg_index+1 < ac)
-	(void)fprintf(stderr,
-		      "%s: Excess command line arguments ignored\n", *av);
+	(void)fprintf(stderr, "%s: Excess command line arguments ignored\n", *av);
     else if (freopen(av[arg_index], "r", stdin) == NULL) {
 	perror(av[arg_index]);
 	return(-1);
@@ -126,18 +125,18 @@ main(int ac, char *av[])
 
     /* Read the image */
     if( fread( header, 8, 1, stdin ) != 1 )
-	bu_bomb( "png-ipu: ERROR: Failed while reading file header!!!\n" );
+	bu_exit(1, "png-ipu: ERROR: Failed while reading file header!");
 
     if( !png_check_sig( (png_bytep)header, 8 ) )
-	bu_bomb( "png-ipu: This is not a PNG file!!!\n" );
+	bu_exit(2, "png-ipu: This is not a valid PNG file\n");
 
     png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
     if( !png_p )
-	bu_bomb( "png_create_read_struct() failed!!\n" );
+	bu_exit(3, "png_create_read_struct() failed!\n");
 
     info_p = png_create_info_struct( png_p );
     if( !info_p )
-	bu_bomb( "png_create_info_struct() failed!!\n" );
+	bu_exit(4, "png_create_info_struct() failed!!\n");
 
     png_init_io( png_p, stdin );
 
