@@ -1767,6 +1767,7 @@ BU_EXPORT BU_EXTERN(int bu_backtrace, (FILE *fp));
 
 /* bomb.c */
 BU_EXPORT BU_EXTERN(void bu_bomb, (const char *str)) __BU_ATTR_NORETURN;
+BU_EXPORT BU_EXTERN(void bu_exit, (int status, const char *fmt, ...)) __BU_ATTR_NORETURN __BU_ATTR_FORMAT23;
 
 /* crashreport.c */
 BU_EXPORT BU_EXTERN(int bu_crashreport, (const char *filename));
