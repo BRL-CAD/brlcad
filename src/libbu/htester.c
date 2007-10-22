@@ -41,20 +41,61 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bu.h"
+
 
 #define	NUM	3000
 double	orig[NUM], after[NUM];
 
-char	buf[NUM*8];
+unsigned char	buf[NUM*8];
 
+void
+flpr(unsigned char *cp)
+{
+	unsigned int i;
+	for( i=0; i<sizeof(double); i++ )  {
+		putchar("0123456789ABCDEFx"[*cp>>4]);
+		putchar("0123456789ABCDEFx"[*cp&0xF]);
+		cp++;
+	}
+	return;
+}
+
+int
+ckbytes(unsigned char *a, unsigned char *b, int n)
+{
+#ifndef vax
+	while( n-- > 0 )  {
+		if( *a++ != *b++ )
+			return(-1);	/* BAD */
+	}
+	return(0);			/* OK */
+#else
+	/* VAX floating point has bytes swapped, vis-a-vis normal VAX order */
+	int i;
+	for( i=0; i<n; i++ )  {
+		if( a[i^1] != b[i^1] )
+			return(-1);	/* BAD */
+	}
+	return(0);			/* OK */
+#endif
+}
+
+int
 main(int argc, char **argv)
 {
-	register int i;
-	register int nbytes;
+	unsigned int i;
+	unsigned int nbytes;
 
-	if( argc != 2 || argv[1][0] != '-' )  {
-		fprintf(stderr,"Usage:  htester [-i|-o]\n");
+#define A argv[1][1]
+	if( argc != 2 || argv[1][0] != '-' || ( A != 'o' && A != 'i' && A != 'v' )) {
+		fprintf(stderr,"Usage:  htester [-i|-o|-v] < input\n");
 		exit(1);
+	}
+
+	if( argv[1][1] == 'v' ) {
+	    printf("%s\n", RCSid);
+	    return 0;
 	}
 
 	/* First stage, generate the reference pattern */
@@ -75,7 +116,7 @@ main(int argc, char **argv)
 	/* Second stage, write out, or read and compare */
 	if( argv[1][1] == 'o' )  {
 		/* Write out */
-		htond( buf, (char *)orig, NUM );
+		htond( (unsigned char *)buf, (unsigned char *)orig, NUM );
 		fwrite( buf, 8, NUM, stdout );
 		exit(0);
 	}
@@ -86,9 +127,9 @@ main(int argc, char **argv)
 	else
 		nbytes = 4;
 	fread( buf, 8, NUM, stdin );
-/*	ntohd( (char *)after, buf, NUM );	/* bulk conversion */
+/*	ntohd( (char *)after, buf, NUM );	*//* bulk conversion */
 	for( i=0; i<NUM; i++ )  {
-		ntohd( (char *)&after[i], &buf[i*8], 1 );	/* incremental */
+		ntohd( (unsigned char *)&after[i], (unsigned char *)&buf[i*8], 1 );	/* incremental */
 		/* Floating point compare */
 		if( orig[i] == after[i] )  continue;
 
@@ -99,10 +140,10 @@ main(int argc, char **argv)
 
 		/* Wrong */
 		printf("%4d: calc ", i);
-		flpr( &orig[i] );
+		flpr( (unsigned char *)&orig[i] );
 		printf(" %g\n", orig[i]);
 		printf("      aftr ");
-		flpr( &after[i] );
+		flpr( (unsigned char *)&after[i] );
 		printf(" %g\n", after[i] );
 		printf("      buf  ");
 		flpr( &buf[i*8] );
@@ -111,34 +152,6 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-flpr(register unsigned char *cp)
-{
-	register int i;
-	for( i=0; i<sizeof(double); i++ )  {
-		putchar("0123456789ABCDEFx"[*cp>>4]);
-		putchar("0123456789ABCDEFx"[*cp&0xF]);
-		cp++;
-	}
-}
-
-ckbytes(register unsigned char *a, register unsigned char *b, register int n)
-{
-#ifndef vax
-	while( n-- > 0 )  {
-		if( *a++ != *b++ )
-			return(-1);	/* BAD */
-	}
-	return(0);			/* OK */
-#else
-	/* VAX floating point has bytes swapped, vis-a-vis normal VAX order */
-	register int i;
-	for( i=0; i<n; i++ )  {
-		if( a[i^1] != b[i^1] )
-			return(-1);	/* BAD */
-	}
-	return(0);			/* OK */
-#endif
-}
 /** @} */
 /*
  * Local Variables:
