@@ -247,7 +247,6 @@ rt_shootray( struct application *ap )
 			register bitv_t *out = regionbits;	/* XXX sb [ray] */
 
 			words = RT_BITV_BITS2WORDS(ary_stp[i]->st_maxreg);
-#			include "noalias.h"
 			for( --words; words >= 0; words-- )
 				regionbits[words] |= in[words];
 		}
@@ -504,7 +503,6 @@ rt_bitv_or( bitv_t *out, bitv_t *in, int nbits )
 
 	words = RT_BITV_BITS2WORDS(nbits);
 #ifdef VECTORIZE
-#	include "noalias.h"
 	for( --words; words >= 0; words-- )
 		out[words] |= in[words];
 #else

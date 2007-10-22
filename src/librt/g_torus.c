@@ -572,11 +572,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "tor proj");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
-#	include "noalias.h"
 	for(i = 0; i < n; i++) segp[i].seg_stp = stp[i];
 
 	/* for each ray/torus pair */
-#	include "noalias.h"
 	for(i = 0; i < n; i++){
 		if( segp[i].seg_stp == 0) continue;	/* Skip */
 		tor = (struct tor_specific *)stp[i]->st_specific;
@@ -689,7 +687,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* for each ray/torus pair */
-#	include "noalias.h"
 	for(i = 0; i < n; i++){
 		if( segp[i].seg_stp == 0) continue; /* Skip */
 
@@ -729,7 +726,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	/* Process each one segment hit */
-#	include "noalias.h"
 	for(i = 0; i < n; i++){
 		if( segp[i].seg_stp == 0) continue; /* Skip */
 		if( C[i].dgr != 2 )  continue;  /* Not one segment */

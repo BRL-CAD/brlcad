@@ -46,8 +46,6 @@ brlcadinclude_wanted = \
 	machine.h \
 	mater.h \
 	nmg.h \
-	noalias-prag.h \
-	noalias.h \
 	nurb.h \
 	opennurbs_ext.h \
 	optical.h \

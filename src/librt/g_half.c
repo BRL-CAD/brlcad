@@ -220,7 +220,6 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	FAST fastf_t	norm_dist;
 
 	/* for each ray/halfspace pair */
-#	include "noalias.h"
 	for(i = 0; i < n; i++){
 		if (stp[i] == 0) continue; /* indicates "skip this pair" */
 

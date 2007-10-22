@@ -1260,7 +1260,6 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 void
 rt_fastf_float(register fastf_t *ff, register const dbfloat_t *fp, register int n)
 {
-#	include "noalias.h"
     while( n-- )  {
 	*ff++ = *fp++;
 	*ff++ = *fp++;

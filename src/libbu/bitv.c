@@ -123,7 +123,6 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-#	include "noalias.h"
     for( --words; words >= 0; words-- )
 	out[words] |= in[words];
 #else
@@ -147,7 +146,6 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-#	include "noalias.h"
     for( --words; words >= 0; words-- )
 	out[words] &= in[words];
 #else

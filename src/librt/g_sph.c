@@ -294,7 +294,6 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	register int    i;
 
 	/* for each ray/sphere pair */
-#	include "noalias.h"
 	for(i = 0; i < n; i++){
 		if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 

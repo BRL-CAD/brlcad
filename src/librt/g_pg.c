@@ -691,7 +691,6 @@ rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fast
 			pp->npts * 3 * sizeof(fastf_t), "pg verts[]" );
 		pp->norms = (fastf_t *)bu_malloc(
 			pp->npts * 3 * sizeof(fastf_t), "pg norms[]" );
-#		include "noalias.h"
 		for( i=0; i < pp->npts; i++ )  {
 			/* Note:  side effect of importing dbfloat_t */
 			MAT4X3PNT( &pp->verts[i*3], mat,
@@ -749,7 +748,6 @@ rt_pg_export(struct bu_external *ep, const struct rt_db_internal *ip, double loc
 
 		rec[rno].q.q_id = ID_P_DATA;
 		rec[rno].q.q_count = pp->npts;
-#		include "noalias.h"
 		for( i=0; i < pp->npts; i++ )  {
 			/* NOTE: type conversion to dbfloat_t */
 			VSCALE( rec[rno].q.q_verts[i],

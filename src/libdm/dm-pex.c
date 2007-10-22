@@ -1223,7 +1223,6 @@ register const mat_t	src;
 #else
   /* transpose copy */
   for( i=0; i<4; ++i)
-    for( j=0; j<4; ++j)
       dest[j][i] = src[k++];
 #endif
 }

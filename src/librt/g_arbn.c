@@ -816,7 +816,6 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 	ntohd( (unsigned char *)aip->eqn, (unsigned char *)(&rp[1]), aip->neqn*4 );
 
 	/* Transform by the matrix */
-#	include "noalias.h"
 	if (mat == NULL) mat = bn_mat_identity;
 	for( i=0; i < aip->neqn; i++ )  {
 		point_t	orig_pt;
@@ -938,7 +937,6 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	ntohd((unsigned char *)aip->eqn, (unsigned char *)ep->ext_buf + 4, double_count);
 
 	/* Transform by the matrix, if we have one that is not the identity */
-#	include "noalias.h"
 	if( mat && !bn_mat_is_identity( mat ) ) {
 		for (i=0; i < aip->neqn; i++) {
 			point_t	orig_pt;

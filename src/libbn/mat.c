@@ -198,7 +198,6 @@ register const mat_t	src;
 	register int i;
 
 	/* Copy all elements */
-#	include "noalias.h"
 	bu_log("libbn/mat.c:  bn_mat_copy() is deprecated, use MAT_COPY()\n");
 	for( i=15; i>=0; i--)
 		dest[i] = src[i];

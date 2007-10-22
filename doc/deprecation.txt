@@ -77,6 +77,10 @@ include/bn.h
 
 7.12.0
 ------
+include/noalias-prag.h
+	removed, non-stdc
+include/noalias.h
+	removed, non-stdc
 src/librt/wdb_obj.c
 	removed wdb_tree_cmd(), added to dg_obj.c as dgo_tree_cmd()
 

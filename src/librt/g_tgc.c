@@ -945,11 +945,9 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
-#       include "noalias.h"
 	for(ix = 0; ix < n; ix++) segp[ix].seg_stp = stp[ix];
 
 	/* for each ray/cone pair */
-#   include "noalias.h"
 	for(ix = 0; ix < n; ix++) {
 		if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
 
@@ -1197,7 +1195,6 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	}
 
 	/* for each ray/cone pair */
-#   include "noalias.h"
 	for(ix = 0; ix < n; ix++) {
 		if (segp[ix].seg_stp == 0) continue; /* Skip */
 

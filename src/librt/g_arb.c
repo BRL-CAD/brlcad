@@ -534,7 +534,6 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	 *  so this dual-strategy is required.  (What a bug hunt!).
 	 */
 	VSETALL( sum, 0 );
-#	include "noalias.h"
 	for( i=0; i<8; i++ )  {
 		VADD2( sum, sum, aip->pt[i] );
 	}
@@ -588,7 +587,6 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 			/* Verify that this point is not the same
 			 * as an earlier point, by checking point indices
 			 */
-#			include "noalias.h"
 			for( k = npts-1; k >= 0; k-- )  {
 				if( pap->pa_pindex[k][pap->pa_faces] == pt_index )  {
 					/* Point is the same -- skip it */
@@ -706,7 +704,6 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 		LOCAL vect_t		work;
 		register fastf_t	f;
 
-#		include "noalias.h"
 		for( i=0; i< 8; i++ ) {
 			VMINMAX( stp->st_min, stp->st_max, aip->pt[i] );
 		}
@@ -893,7 +890,6 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	FAST fastf_t	s;
 
 	/* Intialize return values */
-#	include "noalias.h"
 	for(i = 0; i < n; i++){
 		segp[i].seg_stp = stp[i];	/* Assume hit, if 0 then miss */
 		segp[i].seg_in.hit_dist = -INFINITY;    /* used as in */
@@ -906,7 +902,6 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* consider each face */
 	for(j = 0; j < 6; j++)  {
 		/* for each ray/arb_face pair */
-#		include "noalias.h"
 		for(i = 0; i < n; i++)  {
 			if (stp[i] == 0) continue;	/* skip this ray */
 			if ( segp[i].seg_stp == 0 ) continue;	/* miss */
@@ -947,7 +942,6 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	 *  Segment was initialized as "good" (seg_stp set valid);
 	 *  that is revoked here on misses.
 	 */
-#	include "noalias.h"
 	for(i = 0; i < n; i++){
 		if (stp[i] == 0) continue;		/* skip this ray */
 		if ( segp[i].seg_stp == 0 ) continue;	/* missed */
@@ -1202,7 +1196,6 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	if (mat == NULL) mat = bn_mat_identity;
 	MAT4X3PNT( aip->pt[0], mat, &vec[0] );
 
-#	include "noalias.h"
 	for( i=1; i<8; i++ )  {
 		VADD2( work, &vec[0*3], &vec[i*3] );
 		MAT4X3PNT( aip->pt[i], mat, work );
