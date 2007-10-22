@@ -83,6 +83,7 @@ struct clone_state {
     int			miraxis;	/* Axis to mirror copy */
     fastf_t		mirpos;		/* Point on axis to mirror copy */
     int			autoview;	/* Execute autoview after drawing all objects */
+    int			updpos;		/* Position of number to update (for -c) */
 };
 #define INTERP state->interp
 
@@ -235,7 +236,6 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     } while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
     return bu_realloc(newname, strlen(newname) + 1, "get_name realloc");
 }
-
 
 /**
  * make a copy of a v4 solid by adding it to our book-keeping list,
@@ -756,6 +756,7 @@ print_usage(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "Usage: clone [-abfhimnprtv] <object>\n\n", (char *)NULL);
     Tcl_AppendResult(interp, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n", (char*)NULL);
+    Tcl_AppendResult(interp, "-c\t\t\t- Increment the second number in object names.\n", (char *)NULL);
     Tcl_AppendResult(interp, "-f\t\t\t- Don't draw the new object.\n", (char *)NULL);
     Tcl_AppendResult(interp, "-g\t\t\t- Don't resize the view after drawing new objects.\n", (char *)NULL);
     Tcl_AppendResult(interp, "-h\t\t\t- Prints this message.\n", (char*)NULL);
@@ -790,7 +791,7 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     state->rpnt[W] = 0;
     state->trans[W] = 0;
     state->miraxis = W;
-    while ((k = bu_getopt(argc, argv, "a:b:fhgi:m:n:p:r:t:v")) != EOF) {
+    while ((k = bu_getopt(argc, argv, "a:b:cfhgi:m:n:p:r:t:v")) != EOF) {
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);
@@ -805,6 +806,9 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 		state->rot[Y] = atof(argv[bu_optind++]) / state->n_copies;
 		state->rot[Z] = atof(argv[bu_optind++]) / state->n_copies;
 		state->rot[W] = 1;
+		break;
+	    case 'c':
+		/* XXX */
 		break;
 	    case 'f':
 		state->draw_obj = 0;
