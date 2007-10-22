@@ -79,11 +79,7 @@ struct rt_ebm_specific {
 #define RT_EBM_O(m)	bu_offsetof(struct rt_ebm_internal, m)
 
 const struct bu_structparse rt_ebm_parse[] = {
-#if CRAY && !__STDC__
-	{"%s",	RT_EBM_NAME_LEN, "file",	1,	BU_STRUCTPARSE_FUNC_NULL },
-#else
 	{"%s",	RT_EBM_NAME_LEN, "file", bu_offsetofarray(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL },
-#endif
 	{"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n",		RT_EBM_O(ydim),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "d",		RT_EBM_O(tallness),	BU_STRUCTPARSE_FUNC_NULL },

@@ -274,11 +274,7 @@ main(int argc, char **argv)
 		 *  drop to the lowest sensible priority.
 		 */
 		if( !interactive )  {
-#ifdef CRAY
-			bu_nice_set(6);		/* highest "free" priority */
-#else
 			bu_nice_set(19);		/* lowest priority */
-#endif
 		}
 
 		/* Close off the world */

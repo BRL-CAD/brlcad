@@ -510,9 +510,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
  Skip_dials:
-#ifndef CRAY2
     (void)X_configureWin_guts(dmp, 1);
-#endif
 
     Tk_SetWindowBackground(pubvars->xtkwin,
 			   privars->bg);

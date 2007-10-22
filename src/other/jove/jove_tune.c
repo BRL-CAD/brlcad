@@ -27,27 +27,19 @@ char	cerrfmt[] = "\\([^:]*\\):\\([0-9][0-9]*\\):";
 	 * filename:linenum: error message
 	 */
 #else
-# ifdef CRAY
-	/* Cray has their own stupid error format */
-char	cerrfmt[] = " \\* [FW] \\* :\\([^:]*\\): \\([0-9][0-9]*\\):";
-	/* C error scanf format string for errors of the form
-	 * sp * sp [FW] sp * sp :filename: sp linenum:sp error message.
-	 */
-# else
-#    if	(defined(__sgi) && defined(__mips))
+#  if	(defined(__sgi) && defined(__mips))
 char	cerrfmt[] = "[^:]*: [^:]*: \\([^:]*\\), line \\([0-9][0-9]*\\):";
 	/* SGI has a new format, too.
 	 * accom: Error: filename, line linenum: error message.
 	 *         ^___ or "Warning ###" here
 	 */
-#    else
+#  else
 char	cerrfmt[] = "\"\\([^:]*\\)\", line \\([0-9][0-9]*\\):";
 	/* C error scanf format string for errors of the form
 	 * "filename", line linenum: error message.
 	 * used on all SYSV and all modern BSD systems.
 	 */
-#    endif
-# endif
+#  endif
 #endif
 
 char	lerrfmt[] = "\"\\([^:]*\\)\", line \\([0-9][0-9]*\\):";

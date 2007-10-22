@@ -188,9 +188,6 @@ __BEGIN_DECLS
  *  because there is no way to get the C preprocessor to change the
  *  case of a token.
  */
-#if defined(CRAY)
-#	define	BU_FORTRAN(lc,uc)	uc
-#endif
 #if defined(apollo) || defined(mips) || defined(aux) || defined(linux)
 	/* Lower case, with a trailing underscore */
 #ifdef __STDC__

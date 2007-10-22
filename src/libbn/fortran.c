@@ -104,9 +104,6 @@ pl_strncpy(register char *out, register char *in, register int sz)
  *  because there is no way to get the C preprocessor to change the
  *  case of a token.
  */
-#if CRAY
-#	define	F(lc,uc)	uc
-#endif
 #if defined(apollo) || defined(mips) || defined(aux)
 	/* Lower case, with a trailing underscore */
 #ifdef __STDC__

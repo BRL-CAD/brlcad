@@ -342,8 +342,6 @@ Pex_open(struct dm *dmp)
     gcv.foreground = ((struct pex_vars *)dmp->dmr_vars)->fg;
     gcv.background = ((struct pex_vars *)dmp->dmr_vars)->bg;
 
-#ifndef CRAY2
-#if 1
     cp = FONT6;
     if ( (((struct pex_vars *)dmp->dmr_vars)->fontstruct =
 	 XLoadQueryFont(((struct pex_vars *)dmp->dmr_vars)->dpy, cp)) == NULL ) {
@@ -355,17 +353,10 @@ Pex_open(struct dm *dmp)
       }
     }
     gcv.font = ((struct pex_vars *)dmp->dmr_vars)->fontstruct->fid;
-#endif
     ((struct pex_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct pex_vars *)dmp->dmr_vars)->dpy,
 					       ((struct pex_vars *)dmp->dmr_vars)->win,
 					       (GCFont|GCForeground|GCBackground),
 						&gcv);
-#else
-    ((struct pex_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct pex_vars *)dmp->dmr_vars)->dpy,
-					       ((struct pex_vars *)dmp->dmr_vars)->win,
-					       (GCForeground|GCBackground),
-					       &gcv);
-#endif
 
 /* Begin PEX stuff. */
     if(PEXInitialize(((struct pex_vars *)dmp->dmr_vars)->dpy,

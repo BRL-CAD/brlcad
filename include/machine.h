@@ -325,11 +325,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		4	/* Max number of processors */
 #define DEFAULT_PSW	1
 #define PARALLEL	1
-
-#  if 0
-#	define CRAY_COS	1	/* Running on Cray under COS w/bugs */
-#  endif
-#endif
+#endif /* CRAY */
 
 #if defined(convex) || defined(__convex__)
 /********************************

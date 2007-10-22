@@ -951,10 +951,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	/* for each ray/cone pair */
 #   include "noalias.h"
 	for(ix = 0; ix < n; ix++) {
-
-#if !CRAY       /* XXX currently prevents vectorization on cray */
 		if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
-#endif
 
 		tgc = (struct tgc_specific *)stp[ix]->st_specific;
 

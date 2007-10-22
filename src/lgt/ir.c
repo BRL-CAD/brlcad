@@ -443,26 +443,21 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 int
 pixel_To_Temp(register RGBpixel (*pixelp))
 {
-#ifdef CRAY2 /* Compiler bug, register pointers don't always compile. */
-		RGBpixel	*p;
-		RGBpixel	*q = (RGBpixel *) ir_table[ir_max-ir_min];
-#else
-		register RGBpixel *p;
-		register RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
-#endif
-		register int	temp = ir_min;
-	for( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ )
-		{
-		if( same_Hue( p, pixelp ) )
-			return	temp;
-		}
-/*	prnt_Scroll( "Pixel=(%d,%d,%d): not assigned a temperature.\n",
-		(int)(*pixelp)[RED],
-		(int)(*pixelp)[GRN],
-		(int)(*pixelp)[BLU]
-		);*/
-	return	ABSOLUTE_ZERO;
-	}
+    register RGBpixel *p;
+    register RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
+    register int	temp = ir_min;
+    for( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ ) {
+	if( same_Hue( p, pixelp ) )
+	    return	temp;
+    }
+    /*	prnt_Scroll( "Pixel=(%d,%d,%d): not assigned a temperature.\n",
+	(int)(*pixelp)[RED],
+	(int)(*pixelp)[GRN],
+	(int)(*pixelp)[BLU]
+	);*/
+    return	ABSOLUTE_ZERO;
+}
+
 int
 f_IR_Model(register struct application *ap, Octree *op)
 {	fastf_t		octnt_min[3], octnt_max[3];

@@ -45,10 +45,10 @@
 #define bneg(x,y)	NEGY, brt(x,y)
 #define dneg(x,y)	NEGY, drk(x,y)
 
-#if defined(CRAY1) || defined(CRAY2) || defined(mips)
-#define TINY	int
+#if defined(mips)
+#  define TINY	int
 #else
-#define TINY	char		/**< @brief  must be signed */
+#  define TINY	char		/**< @brief  must be signed */
 #endif
 
 extern TINY	*tp_cindex[256];	/**< @brief  index to stroke tokens */

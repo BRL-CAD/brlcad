@@ -78,11 +78,7 @@ struct rt_vol_specific {
 #define VOL_O(m)	bu_offsetof(struct rt_vol_internal, m)
 
 const struct bu_structparse rt_vol_parse[] = {
-#if CRAY && !__STDC__
-	{"%s",	RT_VOL_NAME_LEN, "file",	1,		BU_STRUCTPARSE_FUNC_NULL },
-#else
 	{"%s",	RT_VOL_NAME_LEN, "file",	bu_offsetofarray(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL },
-#endif
 	{"%d",	1, "w",		VOL_O(xdim),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n",		VOL_O(ydim),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "d",		VOL_O(zdim),	BU_STRUCTPARSE_FUNC_NULL },

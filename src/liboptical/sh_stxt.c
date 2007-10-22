@@ -67,14 +67,8 @@ struct	stxt_specific  {
 #define SOL_O(m)	bu_offsetof(struct stxt_specific, m)
 
 struct	bu_structparse stxt_parse[] = {
-#if CRAY && !__STDC__
-	/* Hack for Cray compiler */
-	{"%d",	1, "transp",		0,		stxt_transp_hook },
-	{"%s",	STX_NAME_LEN, "file",	1,			BU_STRUCTPARSE_FUNC_NULL },
-#else
 	{"%d",	1, "transp",	bu_offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook },
 	{"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	BU_STRUCTPARSE_FUNC_NULL },
-#endif
 	{"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "d",			SOL_O(stx_d),		BU_STRUCTPARSE_FUNC_NULL },

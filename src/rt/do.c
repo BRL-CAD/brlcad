@@ -692,11 +692,7 @@ do_frame(int framenumber)
 	 *  We assume that the Cray can produce MINRATE pixels/sec
 	 *  on images with extreme amounts of glass & mirrors.
 	 */
-#ifdef CRAY2
-#define MINRATE	35
-#else
 #define MINRATE	65
-#endif
 	npix = width*height*(hypersample+1);
 	if( (lim = bu_cpulimit_get()) > 0 )  {
 		bu_cpulimit_set( lim + npix / MINRATE + 100 );
@@ -723,21 +719,6 @@ do_frame(int framenumber)
 	 *  On UNIX only, check to see if this is a "restart".
 	 */
 	if( outputfile != (char *)0 )  {
-#ifdef CRAY_COS
-		/* Dots in COS file names make them permanant files. */
-		sprintf( framename, "F%d", framenumber );
-		if( (outfp = fopen( framename, "w" )) == NULL )  {
-			perror( framename );
-			if( matflag )  return(0);
-			return(-1);
-		}
-		/* Dispose to shell script starts with "!" */
-		if( framenumber <= 0 || outputfile[0] == '!' )  {
-			sprintf( framename, outputfile );
-		}  else  {
-			sprintf( framename, "%s.%d", outputfile, framenumber );
-		}
-#else
 		if( framenumber <= 0 )  {
 			sprintf( framename, outputfile );
 		}  else  {
@@ -782,15 +763,16 @@ do_frame(int framenumber)
 
 		/* Ordinary case for creating output file */
 #if defined(_WIN32) && !defined(__CYGWIN__)
-		if( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )  {
+		if( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )
 #else
-		if( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )  {
+		if( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )
 #endif
+		    {
 			perror( framename );
 			if( matflag )  return(0);	/* OK */
 			return(-1);			/* Bad */
-		}
-#endif /* CRAY_COS */
+		    }
+
 		if (rt_verbosity & VERBOSE_OUTPUTFILE)
 			bu_log("Output file is '%s' %dx%d pixels\n",
 				framename, width, height);
@@ -910,32 +892,9 @@ do_frame(int framenumber)
 			wallclock, ((double)(rtip->rti_nrays))/wallclock );
 	}
 	if( outfp != NULL )  {
-#ifdef CRAY_COS
-		int status;
-		char dn[16];
-		char message[128];
-
-		strncpy( dn, outfp->ldn, sizeof(outfp->ldn) );	/* COS name */
-#endif
-
-#ifdef CRAY_COS
-		status = 0;
-		/* Binary out */
-		(void)DISPOSE( &status, "DN      ", dn,
-			"TEXT    ", framename,
-			"NOWAIT  ",
-			"DF      ", "BB      " );
-		sprintf(message,
-			"%s Dispose,dn='%s',text='%s'.  stat=0%o",
-			(status==0) ? "Good" : "---BAD---",
-			dn, framename, status );
-		bu_log( "%s\n", message);
-		remark(message);	/* Send to log files */
-#else
 		/* Protect finished product */
 		if( outputfile != (char *)0 )
 			fchmod( fileno(outfp), 0444 );
-#endif
 
 		(void)fclose(outfp);
 		outfp = NULL;

@@ -78,11 +78,7 @@
  *  The ultimate intention is to store everything in 8 bytes, using
  *  IEEE double precision in network order.
  */
-#if defined(CRAY)
-typedef double dbfloat_t;
-#else
 typedef float dbfloat_t;
-#endif
 
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 

@@ -491,9 +491,8 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
  Skip_dials:
-#ifndef CRAY2
     (void)tk_configureWin_guts(dmp, 1);
-#endif
+
     /*
       Tk_SetWindowBackground(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
       ((struct x_vars *)dmp->dm_vars.priv_vars)->bg);

@@ -576,28 +576,3 @@ extern void b_format(),
 #define	SAVE_NO		0
 #define	SAVE_ASK	1
 #define	SAVE_ALWAYS	2
-
-#ifdef CRAY2
-/* Common SYSV definitions not supported on the CRAY2 */
-#  define SIGBUS  SIGPRE
-#  define SIGSEGV SIGORE
-
-#  define VQUIT   1
-#  define VERASE  2
-#  define VKILL   3
-#  define VMIN    4
-#  define VTIME   5
-#  define INLCR	0000100
-#  define ICRNL 0000400
-#  define IUCLC 0001000
-#  define OLCUC	0000002
-#  define ONLCR	0000004
-#  define OCRNL	0000010
-#  define ONOCR	0000020
-#  define ONLRET	0000040
-#  define OFILL	0000100
-#  define TABDLY  0014000
-#  define TAB3  0014000
-#  define CBAUD 0000017
-#  define ISIG	0000001		/* line disc. 0 modes */
-#endif

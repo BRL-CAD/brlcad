@@ -106,10 +106,10 @@ int	fd;
 #endif
 #ifdef SYSV
 	curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
-#ifndef CRAY2
+
 	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
 	curr_tio[fd].c_cc[VEOL] = 0;		/*   best we can do.... */
-#endif
+
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -134,10 +134,10 @@ int	fd;
 #endif
 #ifdef SYSV
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
-#ifndef CRAY2
+
 	curr_tio[fd].c_cc[VMIN] = 1;
 	curr_tio[fd].c_cc[VTIME] = 0;
-#endif
+
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -162,11 +162,11 @@ int	fd;
 #endif
 #ifdef SYSV
 	curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
-#ifndef CRAY2
+
 	curr_tio[fd].c_lflag |= ISIG;		/* Signals ON.		*/
 	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
 	curr_tio[fd].c_cc[VEOL] = 0;		/*   best we can do.... */
-#endif
+
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -192,11 +192,11 @@ int	fd;
 #endif
 #ifdef SYSV
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
-#ifndef CRAY2
+
 	curr_tio[fd].c_lflag &= ~ISIG;		/* Signals OFF.		*/
 	curr_tio[fd].c_cc[VMIN] = 1;
 	curr_tio[fd].c_cc[VTIME] = 0;
-#endif
+
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -265,9 +265,9 @@ int	fd;
 	(void) ioctl( fd, TIOCSETP, &curr_tio[fd] );
 #endif
 #ifdef SYSV
-#ifndef CRAY2
+
 	curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
-#endif
+
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -289,9 +289,9 @@ int	fd;
 	(void) ioctl( fd, TIOCSETP, &curr_tio[fd] );
 #endif
 #ifdef SYSV
-#ifndef CRAY2
+
 	curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
-#endif
+
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -308,15 +308,15 @@ void
 set_HUPCL( fd )
 int	fd;
 	{
-#ifndef CRAY2
 #ifdef BSD
 	(void) ioctl( fd, TIOCHPCL, NULL );
 #endif
+
 #ifdef SYSV
 	curr_tio[fd].c_cflag |= HUPCL;
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#endif
+
 #ifdef HAVE_TERMIOS_H
 	curr_tio[fd].c_cflag |= HUPCL;
 	(void)tcsetattr( fd, TCSANOW, &curr_tio[fd] );
@@ -335,10 +335,10 @@ clr_CRNL( fd )
 	(void) ioctl( fd, TIOCSETP, &curr_tio[fd] );
 #endif
 #ifdef SYSV
-#ifndef CRAY2
+
 	curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
 	curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
-#endif
+
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -358,9 +358,7 @@ get_O_Speed( fd )
 	return	(unsigned short) save_tio[fd].sg_ospeed;
 #endif
 #ifdef SYSV
-#ifndef CRAY2
 	return	save_tio[fd].c_cflag & CBAUD;
-#endif
 #endif
 #ifdef HAVE_TERMIOS_H
 	return	cfgetospeed( &save_tio[fd] );

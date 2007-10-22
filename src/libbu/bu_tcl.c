@@ -244,12 +244,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 			/* if we get this far, we've got a name match
 			 * with a name in the structure description
 			 */
-
-#if CRAY && !__STDC__
-			loc = (char *)(base+((int)sdp->sp_offset*sizeof(int)));
-#else
 			loc = (char *)(base+((int)sdp->sp_offset));
-#endif
 			if (sdp->sp_fmt[0] != '%') {
 				bu_log("bu_structparse_argv: unknown format\n");
 				bu_vls_free(&str);
