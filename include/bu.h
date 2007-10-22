@@ -27,7 +27,7 @@
  *  This library provides several layers of low-level utility routines,
  *  providing features that make coding much easier.
  *	Parallel processing support:  threads, sempahores, parallel-malloc.
- *	Consolodated logging support:  bu_log(), bu_bomb().
+ *	Consolodated logging support:  bu_log(), bu_exit(), and bu_bomb().
  *
  *  The intention is that these routines are general extensions to
  *  the data types offered by the C language itself, and to the
@@ -291,14 +291,14 @@ __BEGIN_DECLS
 	if( !(_equation) )  { \
 		bu_log("BU_ASSERT( " #_equation " ) failed, file %s, line %d\n", \
 			__FILE__, __LINE__ ); \
-		bu_bomb("assertion failure\n"); \
+		bu_bomb("BU_ASSERT failure\n"); \
 	}
 #  else
 #    define BU_ASSERT(_equation)	\
 	if( !(_equation) )  { \
 		bu_log("BU_ASSERT( _equation ) failed, file %s, line %d\n", \
 			__FILE__, __LINE__ ); \
-		bu_bomb("assertion failure\n"); \
+		bu_bomb("BU_ASSERT failure\n"); \
 	}
 #  endif
 #endif
