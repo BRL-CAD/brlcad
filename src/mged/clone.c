@@ -692,7 +692,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     }
 
     nextname = get_name(_dbip, dp, state, 0);
-    if (bu_vls_strcmp(copyname, nextname) == 0)
+    if (strcmp(bu_vls_addr(copyname), bu_vls_addr(nextname)) == 0)
 	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
     else
 	copy = db_lookup(_dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
