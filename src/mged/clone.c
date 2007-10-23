@@ -82,6 +82,8 @@ struct clone_state {
     hvect_t		rpnt;		/* Point to rotate about (default 0 0 0) */
     int			miraxis;	/* Axis to mirror copy */
     fastf_t		mirpos;		/* Point on axis to mirror copy */
+    int			autoview;	/* Execute autoview after drawing all objects */
+    int			updpos;		/* Position of number to update (for -c) */
 };
 #define INTERP state->interp
 
@@ -128,7 +130,6 @@ struct link {
     fastf_t pct;
 };
 
-
 /**
  * initialize the name list used for stashing destination names
  */
@@ -148,7 +149,6 @@ init_list(struct nametbl *l, int s)
     l->names_len = 10;
     l->names_used = 0;
 }
-
 
 /**
  * add a new name to the name list
@@ -205,40 +205,50 @@ is_in_list(struct nametbl l, char *name)
  * convention specific to combinations/regions and solids.
  * state->incr is used for each number level increase.
  */
-static const char *
+static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
-    char *newname = NULL;
-    char prefix[NAMESIZE] = {0}, suffix[NAMESIZE] = {0}, buf[NAMESIZE] = {0};
-    int num = 0, i = 1, j;
+    struct bu_vls *newname;
+    char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0}, suffix2[BUFSIZ] = {0};
+    int num = 0, i = 1, j = 0;
 
-    if (!newname)
-	newname = (char *)bu_calloc(NAMESIZE, sizeof(char), "alloc newname");
-    sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num, &suffix);
+    newname = bu_vls_vlsinit();
 
-    if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION))
-	/* primitives and regions */
-	do {
-	    if (suffix[0] == '.')
-		if ((i == 1) && is_in_list(obj_list, buf)) {
-		    j = index_in_list(obj_list, buf);
-		    snprintf(buf, NAMESIZE, "%s%d", prefix, num);
-		    snprintf(newname, NAMESIZE, "%s%s", obj_list.names[j].dest[iter], suffix);
-		} else
-		    snprintf(newname, NAMESIZE, "%s%d%s", prefix, num+i*state->incr, suffix);
-	    else
-		snprintf(newname, NAMESIZE, "%s%d", prefix, num+i*state->incr);
-	    i++;
-	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
-    else
-	/* non-region combinations */
-	do {
-	    snprintf(newname, NAMESIZE, "%s%d", prefix, (num==0)?2:num+i);
-	    i++;
-	} while (db_lookup(_dbip, newname, LOOKUP_QUIET) != NULL);
+    /* Ugh. This needs much repair/cleanup. */
+    if( state->updpos == 0 ) {
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%s", &prefix, &num, &suffix, &suffix2);
+	strncat(suffix, suffix2, BUFSIZ);
+    } else if ( state->updpos == 1 ) {
+	int num2 = 0;
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
+	snprintf(prefix, BUFSIZ, "%s%d%s", prefix, num2, suffix2);
+    } else
+	bu_bomb("multiple -c options not supported yet.");
+
+    do {
+	/* choke the name back to the prefix */
+	bu_vls_trunc(newname, 0);
+	bu_vls_strcpy(newname, prefix);
+
+        if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
+    	/* primitives and regions */
+    	    if (suffix[0] != 0)
+    		if ((i == 1) && is_in_list(obj_list, buf)) {
+    		    j = index_in_list(obj_list, buf);
+    		    snprintf(buf, BUFSIZ, "%s%d", prefix, num);	/* save the name for the next pass */
+		    /* clear and set the name */
+		    bu_vls_trunc(newname, 0);
+		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
+    		} else
+		    bu_vls_printf(newname, "%d%s", num+i*state->incr, suffix);
+    	    else
+    		bu_vls_printf(newname, "%d", num + i*state->incr);
+	} else /* non-region combinations */
+    	    bu_vls_printf(newname, "%d", (num==0)?2:num+i);
+	i++;
+    } while (db_lookup(_dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
 }
-
 
 /**
  * make a copy of a v4 solid by adding it to our book-keeping list,
@@ -253,14 +263,16 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	const char *name = (const char *)NULL;
+	struct bu_vls *name;
 
 	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
 	else
 	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
-	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
-	bu_free((char *)name, "free get_name() name");
+
+	/* XXX: this can probably be optimized. */
+	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
+	bu_vls_free(name);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -276,7 +288,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	if (rp->u_id == ID_SOLID) {
-	    strncpy(rp->s.s_name, dp->d_namep, NAMESIZE);
+	    strncpy(rp->s.s_name, dp->d_namep, BUFSIZ);
 
 	    /* mirror */
 	    if (state->miraxis != W) {
@@ -321,7 +333,6 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     return;
 }
 
-
 /**
  * make a copy of a v5 solid by adding it to our book-keeping list,
  * adding it to the db directory, and writing it out to disk.
@@ -353,7 +364,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
 	char *argv[6] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL};
-	const char *name = (char *)NULL;
+	struct bu_vls *name;
 	int ret;
 	register struct directory *dp = (struct directory *)NULL;
 	struct rt_db_internal intern;
@@ -362,12 +373,13 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	    dp = proto;
 	else
 	    dp = db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
+
 	name = get_name(_dbip, dp, state, i); /* get new name */
-	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
+	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* actually copy the primitive to the new name */
 	argv[1] = proto->d_namep;
-	argv[2] = (char *)name;
+	argv[2] = bu_vls_addr(name);
 	ret = wdb_copy_cmd(_dbip->dbi_wdbp, INTERP, 3, argv);
 	if (ret != TCL_OK)
 	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
@@ -375,12 +387,13 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+	    bu_vls_free(name);
 	    return;
 	}
 	RT_CK_DB_INTERNAL(&intern);
 	/* pull the new name */
-	dp = db_lookup(_dbip, name, LOOKUP_QUIET);
-	bu_free((char *)name, "free get_name() name");
+	dp = db_lookup(_dbip, bu_vls_addr(name), LOOKUP_QUIET);
+	bu_vls_free(name);
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
@@ -389,7 +402,6 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     return;
 }
-
 
 /**
  * make n copies of a database combination by adding it to our
@@ -421,7 +433,6 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
     return;
 }
 
-
 /**
  * make n copies of a v4 combination.
  */
@@ -450,15 +461,15 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    /* bleh, odd convention going on here.. prefix regions with an 'r' */
 	    *bu_vls_addr(&obj_list.names[idx].dest[i]) = 'r';
 	} else {
-	    const char *name = (const char *)NULL;
+	    struct bu_vls *name;
 	    if (i==0)
 		name = get_name(_dbip, proto, state, i);
 	    else
 		name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
-	    bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
-	    bu_free((char *)name, "free get_name() name");
+	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
+	    bu_vls_free(name);
 	}
-	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), NAMESIZE);
+	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), BUFSIZ);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -472,7 +483,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_log("ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
-	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    snprintf(rp[j].M.m_instname, BUFSIZ, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
 	}
 
 	/* write the object to disk */
@@ -528,7 +539,7 @@ static struct directory *
 copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
     register struct directory *dp = (struct directory *)NULL;
-    const char *name = (const char *)NULL;
+    struct bu_vls *name;
     int i;
 
     /* sanity */
@@ -543,10 +554,10 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    name = get_name(_dbip, proto, state, i);
 	else
 	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
-	bu_vls_strcpy(&obj_list.names[idx].dest[i], name);
+	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* we have a before and an after, do the copy */
-	if (proto->d_namep && name) {
+	if (proto->d_namep && bu_vls_addr(name)) {
 	    struct rt_db_internal dbintern;
 	    struct rt_comb_internal *comb;
 
@@ -556,7 +567,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(wdbp->dbip, name, -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
 		bu_log("An error has occured while adding a new object to the database.");
 		return NULL;
 	    }
@@ -571,14 +582,15 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
 	    if (rt_db_put_internal(dp, wdbp->dbip, &dbintern, &rt_uniresource) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
+		bu_vls_free(name);
 		return NULL;
 	    }
+	    bu_vls_free(name);
 	    rt_db_free_internal(&dbintern, &rt_uniresource);
 	}
 
 	/* done with this name */
-	bu_free((char *)name, "free get_name() name");
-	name = (const char *)NULL;
+	bu_vls_free(name);
     }
 
     return dp;
@@ -615,7 +627,6 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
     return;
 }
 
-
 /**
  * recursively copy a tree of geometry
  */
@@ -627,8 +638,8 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     register struct directory *mdp = (struct directory *)NULL;
     register struct directory *copy = (struct directory *)NULL;
 
-    const char *copyname = (const char *)NULL;
-    const char *nextname = (const char *)NULL;
+    struct bu_vls *copyname;
+    struct bu_vls *nextname;
 
     /* get the name of what the object "should" get cloned to */
     copyname = get_name(_dbip, dp, state, 0);
@@ -681,10 +692,10 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     }
 
     nextname = get_name(_dbip, dp, state, 0);
-    if (strcmp(copyname, nextname) == 0)
+    if (bu_vls_strcmp(copyname, nextname) == 0)
 	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
     else
-	copy = db_lookup(_dbip, copyname, LOOKUP_QUIET);
+	copy = db_lookup(_dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
  done_copy_tree:
     if (rp)
@@ -696,7 +707,6 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
     return copy;
 }
-
 
 /**
  * copy an object, recursivley copying all of the object's contents
@@ -728,8 +738,10 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 	    /* draw does not use clientdata */
 	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
 	}
-	av[0] = "autoview";
-	cmd_autoview((ClientData)NULL, INTERP, 1, av);
+	if(state->autoview) {
+	    av[0] = "autoview";
+	    cmd_autoview((ClientData)NULL, INTERP, 1, av);
+	}
     }
 
     /* release our name allocations */
@@ -747,7 +759,6 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
     return copy;
 }
 
-
 /**
  * how to use clone.  blissfully simple interface.
  */
@@ -757,7 +768,9 @@ print_usage(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "Usage: clone [-abfhimnprtv] <object>\n\n", (char *)NULL);
     Tcl_AppendResult(interp, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n", (char*)NULL);
+    Tcl_AppendResult(interp, "-c\t\t\t- Increment the second number in object names.\n", (char *)NULL);
     Tcl_AppendResult(interp, "-f\t\t\t- Don't draw the new object.\n", (char *)NULL);
+    Tcl_AppendResult(interp, "-g\t\t\t- Don't resize the view after drawing new objects.\n", (char *)NULL);
     Tcl_AppendResult(interp, "-h\t\t\t- Prints this message.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-i <n>\t\t\t- Specifies the increment between each copy.\n", (char*)NULL);
     Tcl_AppendResult(interp, "-m <axis> <pos>\t\t- Specifies the axis and point to mirror the group.\n", (char*)NULL);
@@ -768,7 +781,6 @@ print_usage(Tcl_Interp *interp)
     Tcl_AppendResult(interp, "-v\t\t\t- Prints version info.\n", (char*)NULL);
     return;
 }
-
 
 /**
  * process the user-provided arguments. stash their operations into
@@ -785,11 +797,13 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     state->incr = 100;
     state->n_copies = 1;
     state->draw_obj = 1;
+    state->autoview = 1;
     state->rot[W] = 0;
     state->rpnt[W] = 0;
     state->trans[W] = 0;
     state->miraxis = W;
-    while ((k = bu_getopt(argc, argv, "a:b:fhi:m:n:p:r:t:v")) != EOF) {
+    state->updpos = 0;
+    while ((k = bu_getopt(argc, argv, "a:b:cfhgi:m:n:p:r:t:v")) != EOF) {
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);
@@ -805,8 +819,19 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 		state->rot[Z] = atof(argv[bu_optind++]) / state->n_copies;
 		state->rot[W] = 1;
 		break;
+	    case 'c':
+		/* I'd like to have an optional argument to -c, but for now,
+		 * just let multiple -c's add it up as a hack. I believe the
+		 * variant of this that was lost used this as a binary
+		 * operation, so it SHOULD be functionally equivelant for a user
+		 * who's dealt with this before. */
+		state->updpos++;
+		break;
 	    case 'f':
 		state->draw_obj = 0;
+		break;
+	    case 'g':
+		state->autoview = 0;
 		break;
 	    case 'h':
 		print_usage(interp);
@@ -878,7 +903,6 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
     return TCL_OK;
 }
 
-
 /**
  * master hook function for the 'clone' command.
  */
@@ -909,7 +933,6 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-
 /**
  * helper function that computes where a point is along a spline
  * given some distance 't'.
@@ -938,7 +961,6 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
     pt[Y] = spl.k[i].c[Y][0] + spl.k[i].c[Y][1]*s + spl.k[i].c[Y][2]*s2 + spl.k[i].c[Y][3]*s3;
     pt[Z] = spl.k[i].c[Z][0] + spl.k[i].c[Z][1]*s + spl.k[i].c[Z][2]*s2 + spl.k[i].c[Z][3]*s3;
 }
-
 
 /**
  * master hook function for the 'tracker' command used to create
@@ -1131,7 +1153,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t *rots;
 
 	for (i = 0; i < 2; i++)
-	    vargs[i] = (char *)bu_malloc(sizeof(char)*NAMESIZE, "alloc vargs1");
+	    vargs[i] = (char *)bu_malloc(sizeof(char)*BUFSIZ, "alloc vargs1");
 
 	strcpy(vargs[0], "e");
 	strcpy(vargs[1], bu_vls_addr(&links[j].name));
