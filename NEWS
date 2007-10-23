@@ -8,8 +8,27 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2007-07-XX  Release 7.10.3                                     ---
+--- 2007-10-XX  Release 7.10.4                                     ---
 ----------------------------------------------------------------------
+
+A major productivity change introduced in this release is
+tab-completion in mged.  John Anderson's addition of tab-completion to
+mged allows modelers to have command and object names automatically
+completed when they press the tab key when operating on the mged
+command line.  If there are multiple matches, the user is presented
+with the list of those possible matches, similar to what one might see
+in a UNIX shell.
+
+After much debate and demand, this minor release marks a rather
+significant change in default behaviors for rt and mged.  The
+ray-tracers that utilize a framebuffer interface now all create
+lingering windows by default instead of transient windows.  One of the
+main impacts of this change is that users should no longer need to
+specify the linger option when ray-tracing to a window via the -F
+framebuffer option nor do they need to set the FB_FILE environment
+variable in order to get the window to remain displayed.
+Additionally, the default mged preference setting for Z clipping is
+now disabled in order to reduce confusion with clipped geometry.
 
 * lingering framebuffer windows by default - Sean Morrison
 * improved matrix readability on mged 'red' command - Karel Kulhavy
@@ -20,7 +39,7 @@ entire history of the project is available through CVS.
 * BoT vertex selection in mged reports local units - Sean Morrison
 * improved photon map irradiance progress reporting - Erik Greenwald
 * tab-completion for mged - John Anderson
-* fixed various issues reported by flawfinder - Erik Greenwald
+* quelled various flawfinder security warnings - Erik Greenwald
 * fixed photon-mapping lighting model crash - Erik Greenwald
 * ADRT libtie bug fixes and performance enhancements - Justin Shumaker
 * mged now tests for vim before vi for text editing - Sean Morrison
