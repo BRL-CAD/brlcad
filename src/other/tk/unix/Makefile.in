@@ -216,6 +216,9 @@ INSTALL_PROGRAM		= ${INSTALL}
 INSTALL_LIBRARY		= ${INSTALL}
 INSTALL_DATA		= ${INSTALL} -m 644
 
+SHLIB_SUFFIX		= @SHLIB_SUFFIX@
+#SHLIB_SUFFIX		=
+
 # The symbol below provides support for dynamic loading and shared
 # libraries.  See configure.in for a description of what it means.
 # The value of the symbol is normally set by the configure script.
