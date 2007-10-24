@@ -779,7 +779,7 @@ Itk_ArchCompAddCmd(dummy, interp, objc, objv)
             contextObj->accessCmd, tmpNamePtr);
         Tcl_AppendToObj(tmpNamePtr, "-widget-", -1);
         Tcl_IncrRefCount(tmpNamePtr);
-
+        
         result = TclRenameCommand(interp,
             Tcl_GetStringFromObj(objNamePtr, (int*)NULL),
             Tcl_GetStringFromObj(tmpNamePtr, (int*)NULL));
@@ -2888,7 +2888,7 @@ Itk_ArchConfigOption(interp, info, name, value)
     char *value;               /* new value for configuration option */
 {
     int result;
-    CONST char *v;
+    CONST char *v; 
     char *lastval;
     Tcl_HashEntry *entry;
     ArchOption *archOpt;

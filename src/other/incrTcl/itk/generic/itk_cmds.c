@@ -25,10 +25,10 @@
  */
 #include "itk.h"
 
-/*
+/*  
  * The following script is used to initialize Itcl in a safe interpreter.
  */
-
+ 
 static char safeInitScript[] =
 "proc ::itcl::local {class name args} {\n\
     set ptr [uplevel [list $class $name] $args]\n\
@@ -36,7 +36,7 @@ static char safeInitScript[] =
     set cmd [uplevel namespace which -command $ptr]\n\
     uplevel [list trace variable itcl-local-$ptr u \"::itcl::delete object $cmd; list\"]\n\
     return $ptr\n\
-}";
+}";  
 
 /*
  *  FORWARD DECLARATIONS
@@ -50,8 +50,7 @@ static int Initialize _ANSI_ARGS_((Tcl_Interp *interp));
  * initialization.
  */
 
-static char *initScript;
-static char initScriptA[] = "\n\
+static char initScript[] = "\n\
 namespace eval ::itk {\n\
     proc _find_init {} {\n\
         global env tcl_library\n\
@@ -74,18 +73,14 @@ namespace eval ::itk {\n\
             lappend dirs [file join $bindir .. library]\n\
             lappend dirs [file join $bindir .. .. library]\n\
             lappend dirs [file join $bindir .. .. itk library]\n\
-            lappend dirs [file join $bindir .. .. .. itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. .. itk library]\n\
-            lappend dirs [file join $bindir src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. .. src other incrTcl itk library]\n\
+            # On MacOSX, check the directories in the tcl_pkgPath\n\
+            if {[string equal $::tcl_platform(platform) \"unix\"] && \
+                    [string equal $::tcl_platform(os) \"Darwin\"]} {\n\
+                foreach d $::tcl_pkgPath {\n\
+                    lappend dirs [file join $d itk$version]\n\
+                }\n\
+            }\n\
         }\n\
-";
-static char initScriptB[] = "\n\
         foreach i $dirs {\n\
             set library $i\n\
             set itkfile [file join $i itk.tcl]\n\
@@ -266,13 +261,6 @@ int
 Itk_Init(interp)
     Tcl_Interp *interp;  /* interpreter to be updated */
 {
-    int lenA = strlen(initScriptA);
-    int lenB = strlen(initScriptB);
-
-    initScript = ckalloc(lenA + lenB + 1);
-    strcpy(initScript, initScriptA);
-    strcpy(initScript+lenA, initScriptB);
-
     if (Initialize(interp) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -284,21 +272,21 @@ Itk_Init(interp)
 /*
  * ------------------------------------------------------------------------
  *  Itk_SafeInit()
- *
+ *   
  *  Invoked whenever a new SAFE INTERPRETER is created to install
  *  the [incr Tcl] package.
- *
+ *      
  *  Creates the "::itk" namespace and installs access commands for
  *  creating classes and querying info.
- *
- *  Returns TCL_OK on success, or TCL_ERROR (along with an error
+ *  
+ *  Returns TCL_OK on success, or TCL_ERROR (along with an error 
  *  message in the interpreter) if anything goes wrong.
  * ------------------------------------------------------------------------
- */
-int
+ */  
+int 
 Itk_SafeInit(interp)
-    Tcl_Interp *interp;  /* interpreter to be updated */
-{
+    Tcl_Interp *interp;  /* interpreter to be updated */ 
+{   
     if (Initialize(interp) != TCL_OK) {
         return TCL_ERROR;
     }

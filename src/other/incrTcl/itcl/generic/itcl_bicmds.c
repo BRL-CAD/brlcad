@@ -488,7 +488,7 @@ Itcl_BiConfigureCmd(clientData, interp, objc, objv)
          *    set up for public variable access.
          */
         mcode = member->code;
-        if (mcode && mcode->procPtr->bodyPtr) {
+        if (mcode && Itcl_IsMemberCodeImplemented(mcode)) {
 
             uplevelFramePtr = _Tcl_GetCallFrame(interp, 1);
             oldFramePtr = _Tcl_ActivateCallFrame(interp, uplevelFramePtr);
@@ -589,13 +589,9 @@ Itcl_BiCgetCmd(clientData, interp, objc, objv)
         contextObj, contextObj->classDefn);
 
     if (val) {
-	/*
-	 * Casting away CONST of val is safe because TCL_VOLATILE
-	 * guranatees CONST treatment.
-	 */
-        Tcl_SetResult(interp, (char *) val, TCL_VOLATILE);
+        Tcl_SetObjResult(interp, Tcl_NewStringObj(val, -1));
     } else {
-        Tcl_SetResult(interp, "<undefined>", TCL_STATIC);
+        Tcl_SetObjResult(interp, Tcl_NewStringObj("<undefined>", -1));
     }
     return TCL_OK;
 }
@@ -830,12 +826,10 @@ Itcl_BiInfoClassCmd(dummy, interp, objc, objv)
      *  signal an error.
      */
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
-        name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
-        Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-            "\nget info like this instead: ",
-            "\n  namespace eval className { info ", name, "... }",
-            (char*)NULL);
+	Tcl_Obj *msg = Tcl_NewStringObj("\nget info like this instead: " \
+		"\n  namespace eval className { info ", -1);
+	Tcl_AppendStringsToObj(msg, Tcl_GetString(objv[0]), "... }", NULL);
+        Tcl_SetObjResult(interp, msg);
         return TCL_ERROR;
     }
 
@@ -860,7 +854,7 @@ Itcl_BiInfoClassCmd(dummy, interp, objc, objv)
         name = contextNs->fullName;
     }
 
-    Tcl_SetResult(interp, name, TCL_VOLATILE);
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(name, -1));
     return TCL_OK;
 }
 
@@ -1138,7 +1132,7 @@ Itcl_BiInfoFunctionCmd(dummy, interp, objc, objv)
                     break;
 
                 case BIfBodyIdx:
-                    if (mcode && mcode->procPtr->bodyPtr) {
+                    if (mcode && Itcl_IsMemberCodeImplemented(mcode)) {
                         objPtr = mcode->procPtr->bodyPtr;
                     } else {
                         objPtr = Tcl_NewStringObj("<undefined>", -1);
@@ -1339,7 +1333,7 @@ Itcl_BiInfoVariableCmd(dummy, interp, objc, objv)
         for (i=0 ; i < objc; i++) {
             switch (ivlist[i]) {
                 case BIvConfigIdx:
-                    if (member->code && member->code->procPtr->bodyPtr) {
+                    if (member->code && Itcl_IsMemberCodeImplemented(member->code)) {
                         objPtr = member->code->procPtr->bodyPtr;
                     } else {
                         objPtr = Tcl_NewStringObj("", -1);
@@ -1531,7 +1525,7 @@ Itcl_BiInfoBodyCmd(dummy, interp, objc, objv)
     /*
      *  Return a string describing the implementation.
      */
-    if (mcode && mcode->procPtr->bodyPtr) {
+    if (mcode && Itcl_IsMemberCodeImplemented(mcode)) {
         objPtr = mcode->procPtr->bodyPtr;
     } else {
         objPtr = Tcl_NewStringObj("<undefined>", -1);

@@ -45,8 +45,7 @@ static void ItclDeleteStub _ANSI_ARGS_((ClientData cdata));
  * directory and loads it in.
  */
 
-static char *initScript;
-static char initScriptA[] = "\n\
+static char initScript[] = "\n\
 namespace eval ::itcl {\n\
     proc _find_init {} {\n\
         global env tcl_library\n\
@@ -70,17 +69,14 @@ namespace eval ::itcl {\n\
             lappend dirs [file join $bindir .. .. library]\n\
             lappend dirs [file join $bindir .. .. itcl library]\n\
             lappend dirs [file join $bindir .. .. .. itcl library]\n\
-            lappend dirs [file join $bindir .. .. .. .. itcl library]\n\
-            lappend dirs [file join $bindir .. .. .. .. .. itcl library]\n\
-            lappend dirs [file join $bindir src other incrTcl itcl library]\n\
-            lappend dirs [file join $bindir .. src other incrTcl itcl library]\n\
-            lappend dirs [file join $bindir .. .. src other incrTcl itcl library]\n\
-            lappend dirs [file join $bindir .. .. .. src other incrTcl itcl library]\n\
-            lappend dirs [file join $bindir .. .. .. .. src other incrTcl itcl library]\n\
-            lappend dirs [file join $bindir .. .. .. .. .. src other incrTcl itcl library]\n\
+            # On MacOSX, check the directories in the tcl_pkgPath\n\
+            if {[string equal $::tcl_platform(platform) \"unix\"] && \
+                    [string equal $::tcl_platform(os) \"Darwin\"]} {\n\
+                foreach d $::tcl_pkgPath {\n\
+                    lappend dirs [file join $d itcl$version]\n\
+                }\n\
+            }\n\
         }\n\
-";
-static char initScriptB[] = "\n\
         foreach i $dirs {\n\
             set library $i\n\
             set itclfile [file join $i itcl.tcl]\n\
@@ -139,11 +135,11 @@ Initialize(interp)
     ItclObjectInfo *info;
 
 #ifndef USE_TCL_STUBS
-    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 0) == NULL) {
+    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 1) == NULL) {
       return TCL_ERROR;
     }
 #else
-    if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
       return TCL_ERROR;
     }
 #endif
@@ -159,10 +155,8 @@ Initialize(interp)
     /*
      *  Set the compatability options.  Stubs allows us to load into many
      *  version of the Tcl core.  Some problems have crept-in, and we need
-     *  to adapt dynamically regarding use of some internal structures that
-     *  have changed since 8.1.0
-     *
-     *  TODO: make a TIP for exporting a Tcl_CommandIsDeleted function in the core.
+     *  to adapt dynamically regarding use of some internal structures and
+     *  functions that have changed (or have been added) since 8.1.0
      */
 #if TCL_DOES_STUBS
     if (itclCompatFlags == -1) {
@@ -171,8 +165,11 @@ Initialize(interp)
 	itclCompatFlags = 0;
 	Tcl_GetVersion(&maj, &min, &ptch, &type);
 
+	/* ver >= 8.4a1 */
 	if ((maj == 8) && (min >= 4)) {
-	    itclCompatFlags = ITCL_COMPAT_USECMDFLAGS;
+	    /* TODO: make a TIP for exporting a Tcl_CommandIsDeleted
+	     * function in the core. */
+	    itclCompatFlags |= ITCL_COMPAT_USECMDFLAGS;
 	}
     }
 #else
@@ -348,7 +345,7 @@ Initialize(interp)
      *  command exports, so that the itcl::is command can *not* be
      *  exported. This is done for concern that the itcl::is command
      *  imported might be confusing ("is").
-     */
+     */   
     if (!itclNs ||
 	    (Tcl_Export(interp, itclNs, "body", /* reset */ 1) != TCL_OK) ||
 	    (Tcl_Export(interp, itclNs, "class", 0) != TCL_OK) ||
@@ -413,13 +410,6 @@ int
 Itcl_Init(interp)
     Tcl_Interp *interp;  /* interpreter to be updated */
 {
-    int lenA = strlen(initScriptA);
-    int lenB = strlen(initScriptB);
-
-    initScript = ckalloc(lenA + lenB + 1);
-    strcpy(initScript, initScriptA);
-    strcpy(initScript+lenA, initScriptB);
-
     if (Initialize(interp) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1588,7 +1578,7 @@ Itcl_IsObjectCmd(clientData, interp, objc, objv)
         }
 
     } /* end for objc loop */
-
+        
 
     /*
      *  The object name may be a scoped value of the form

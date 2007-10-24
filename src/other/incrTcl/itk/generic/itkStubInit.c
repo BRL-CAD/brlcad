@@ -1,4 +1,4 @@
-/*
+/* 
  * tkStubInit.c --
  *
  *	This file contains the initializers for the Itk stub vectors.

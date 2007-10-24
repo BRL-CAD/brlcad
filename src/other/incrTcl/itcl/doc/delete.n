@@ -13,7 +13,7 @@
 .SH NAME
 delete \- delete things in the interpreter
 .SH SYNOPSIS
-\fBdelete \fIoption\fR ?\fIarg arg ...\fR?
+\fBitcl::delete \fIoption\fR ?\fIarg arg ...\fR?
 .BE
 
 .SH DESCRIPTION
@@ -47,7 +47,7 @@ the \fIname\fR is removed as a command from the interpreter.
 If the access command for an object resides in another namespace,
 then its qualified name can be used:
 .CS
-delete object foo::bar::x
+itcl::delete object foo::bar::x
 .CE
 If an error is encountered while destructing an object, the
 \fBdelete\fR command is aborted and the object remains alive.

@@ -1,5 +1,5 @@
 # itclConfig.sh --
-#
+# 
 # This shell script (for sh) is generated automatically by Itcl's
 # configure script.  It will create shell variables for most of
 # the configuration options discovered by the configure script.
@@ -12,14 +12,8 @@
 # The information in this file is specific to a single platform.
 
 # Itcl's version number.
-itcl_VERSION='@VERSION@'
-ITCL_VERSION='@VERSION@'
-itcl_MAJOR_VERSION='@MAJOR_VERSION@'
-ITCL_MAJOR_VERSION='@MAJOR_VERSION@'
-itcl_MINOR_VERSION='@MINOR_VERSION@'
-ITCL_MINOR_VERSION='@MINOR_VERSION@'
-itcl_RELEASE_LEVEL='@PATCHLEVEL@'
-ITCL_RELEASE_LEVEL='@PATCHLEVEL@'
+itcl_VERSION='@PACKAGE_VERSION@'
+ITCL_VERSION='@PACKAGE_VERSION@'
 
 # The name of the Itcl library (may be either a .a file or a shared library):
 itcl_LIB_FILE=@itcl_LIB_FILE@
@@ -36,8 +30,8 @@ itcl_LIB_SPEC='@itcl_LIB_SPEC@'
 ITCL_LIB_SPEC='@itcl_LIB_SPEC@'
 
 # The name of the Itcl stub library (a .a file):
-itcl_STUB_LIB_FILE=@itclstub_LIB_FILE@
-ITCL_STUB_LIB_FILE=@itclstub_LIB_FILE@
+itcl_STUB_LIB_FILE=@itcl_STUB_LIB_FILE@
+ITCL_STUB_LIB_FILE=@itcl_STUB_LIB_FILE@
 
 # String to pass to linker to pick up the Itcl stub library from its
 # build directory.

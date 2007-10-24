@@ -68,7 +68,7 @@ user can dismiss by pushing the "Dismiss" button.
 .CS
 option add *MessageInfo.title "Notice" widgetDefault
 
-class MessageInfo {
+itcl::class MessageInfo {
     inherit itk::Toplevel
 
     constructor {args} {
@@ -117,7 +117,7 @@ class MessageInfo {
     }
 }
 
-usual MessageInfo {
+itk::usual MessageInfo {
     keep -background -cursor -foreground -font
     keep -activebackground -activeforeground -disabledforeground
     keep -highlightcolor -highlightthickness

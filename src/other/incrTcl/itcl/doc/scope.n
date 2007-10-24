@@ -13,7 +13,7 @@
 .SH NAME
 scope \- capture the namespace context for a variable
 .SH SYNOPSIS
-\fBscope \fIname\fR
+\fBitcl::scope \fIname\fR
 .BE
 
 .SH DESCRIPTION

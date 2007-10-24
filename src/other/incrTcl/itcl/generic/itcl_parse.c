@@ -364,7 +364,7 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
          *  parent namespace (currently active).  If not, try
          *  to autoload its definition.
          */
-        token = Tcl_GetStringFromObj(*objv, (int*)NULL);
+        token = Tcl_GetString(*objv);
         baseCdefnPtr = Itcl_FindClass(interp, token, /* autoload */ 1);
         if (!baseCdefnPtr) {
             Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
@@ -643,13 +643,13 @@ Itcl_ClassConstructorCmd(clientData, interp, objc, objv)
      *  If there is an object initialization statement, pick this
      *  out and take the last argument as the constructor body.
      */
-    arglist = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+    arglist = Tcl_GetString(objv[1]);
     if (objc == 3) {
-        body = Tcl_GetStringFromObj(objv[2], (int*)NULL);
+        body = Tcl_GetString(objv[2]);
     } else {
         cdefnPtr->initCode = objv[2];
         Tcl_IncrRefCount(cdefnPtr->initCode);
-        body = Tcl_GetStringFromObj(objv[3], (int*)NULL);
+        body = Tcl_GetString(objv[3]);
     }
 
     if (Itcl_CreateMethod(interp, cdefnPtr, name, arglist, body) != TCL_OK) {

@@ -3,7 +3,7 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
+# 
 # Copyright (c) 1993-1998 Lucent Technologies, Inc.
 # RCS: $Id$
 #------------------------------------------------------------------------------
@@ -14,7 +14,7 @@
 MSG = ^
 You must run this makefile only from the directory it is in.^
 Please `cd` to its location first.
-!error $(MSG)
+!error $(MSG) 
 !endif
 
 PROJECT	= itk
@@ -63,11 +63,11 @@ STUBPREFIX	= $(PROJECT)stub
 
 PKGINDEX	= "$(TMP_DIR)\pkgIndex.tcl"
 
-ITCLLIBNAME	= $(PROJECT)$(ITCL_VERSION)$(SUFX).$(EXT)
-ITCLLIB		= "$(OUT_DIR)\$(ITCLLIBNAME)"
-ITKIMPLIB	= "$(OUT_DIR)\$(PROJECT)$(ITCL_VERSION)$(SUFX).lib"
-ITKSTUBLIBNAME	= $(STUBPREFIX)$(ITCL_VERSION).lib
-ITKSTUBLIB	= "$(OUT_DIR)\$(ITCLSTUBLIBNAME)"
+ITCLLIBNAME	= itcl$(ITCL_VERSION)$(SUFX).$(EXT)
+ITCLLIB		= "$(ITCLDIR)\win\$(OUT_DIR)\$(ITCLLIBNAME)"
+ITKIMPLIB	= "$(OUT_DIR)\$(PROJECT)$(ITK_VERSION)$(SUFX).lib"
+ITKSTUBLIBNAME	= $(STUBPREFIX)$(ITK_VERSION).lib
+ITKSTUBLIB	= "$(OUT_DIR)\$(ITKSTUBLIBNAME)"
 
 !if $(TCL_DOES_STUBS)
 ITKLIBNAME	= $(PROJECT)$(ITK_VERSION)$(SUFX).$(EXT)
@@ -79,15 +79,22 @@ ITCLIMPLIBNAME	= itcl$(ITCL_VERSION)80$(SUFX).lib
 ITKLIB		= "$(OUT_DIR)\$(ITKLIBNAME)"
 ITCLIMPLIB	= "$(ITCLDIR)\win\Release\$(ITCLIMPLIBNAME)"
 
+
 !if $(TCLINSTALL)
 TKSTUBLIB	= "$(TCLDIR)\lib\tkstub$(TCL_VERSION).lib"
 TKIMPLIB	= "$(TCLDIR)\lib\tk$(TCL_VERSION)$(DBGX).lib"
 WISH		= "$(TCLDIR)\bin\wish$(TCL_VERSION)$(DBGX).exe"
+TCL_LIBRARY	= 
+TK_LIBRARY	= 
 !else
 TKSTUBLIB	= "$(TKDIR)\win\Release\tkstub$(TCL_VERSION).lib"
 TKIMPLIB	= "$(TKDIR)\win\$(OUT_DIR)\tk$(TCL_VERSION)$(DBGX).lib"
-WISH		= "$(TCLDIR)\win\$(OUT_DIR)\wish$(TCL_VERSION)$(DBGX).exe"
+WISH		= "$(TKDIR)\win\$(OUT_DIR)\wish$(TCL_VERSION)$(DBGX).exe"
+TCL_LIBRARY	= "$(TCLDIR)\library"
+TK_LIBRARY	= "$(TKDIR)\library"
 !endif
+ITCL_LIBRARY	= "$(ITCLDIR:\=/)/library"
+ITK_LIBRARY	= "$(ROOT)/library
 
 ITCLSTUBLIBNAME	= itclstub$(ITCL_VERSION).lib
 ITCLSTUBLIB	= "$(ITCLDIR)\win\Release\$(ITCLSTUBLIBNAME)"
@@ -98,9 +105,6 @@ TCLSTUBLIB	= $(TCLIMPLIB)
 TKSTUBLIB	= $(TKIMPLIB)
 ITCLSTUBLIB	= $(ITCLIMPLIB)
 !endif
-
-ITKSTUBLIBNAME = $(STUBPREFIX)$(ITK_VERSION).lib
-ITKSTUBLIB     = "$(OUT_DIR)\$(ITKSTUBLIBNAME)"
 
 
 BIN_INSTALL_DIR		= $(_INSTALLDIR)\bin
@@ -205,9 +209,9 @@ crt = -MT$(DBGX)
 
 !if $(TCLINSTALL)
 TCL_INCLUDES	= -I"$(TCLDIR)\include"
-TK_INCLUDES	=
+TK_INCLUDES	= 
 !else
-TCL_INCLUDES	= -I"$(TCLDIR)\generic"
+TCL_INCLUDES	= -I"$(TCLDIR)\generic" -I"$(TCLDIR)\win"
 TK_INCLUDES	= -I"$(TKDIR)\generic" -I"$(TKDIR)\xlib"
 !endif
 
@@ -235,11 +239,20 @@ all :     setup $(ITKLIB) $(ITKSTUBLIB)
 release : setup $(ITKLIB) $(ITKSTUBLIB)
 install	: install-binaries install-docs
 
-test:	setup $(ITKLIB) $(ITKSTUBLIB) $(ITKWISH)
-	-@copy $(TCLDLL) $(TMPDIR)
-	-@copy $(TKDLL) $(TMPDIR)
-	-@copy $(ITCLDLL) $(TMPDIR)
-#	$(ITKWISH)
+!if $(STATIC_BUILD)
+test :
+	@echo test target not supported for a static library.
+!else
+test : setup $(ITKLIB) $(ITKSTUBLIB)
+	set TCL_LIBRARY=$(TCL_LIBRARY)
+	set TK_LIBRARY=$(TK_LIBRARY)
+	set ITCL_LIBRARY=$(ITCL_LIBRARY)
+	set ITK_LIBRARY=$(ITK_LIBRARY)
+	$(TCLSH) ..\tests\all.tcl $(TESTFLAGS) -loadfile <<
+	load [file normalize $(ITCLLIB:\=/)] Itcl
+	load [file normalize $(ITKLIB:\=/)] Itk
+<<
+!endif
 
 setup :
 	@if not exist $(TMP_DIR)\nul mkdir $(TMP_DIR)
@@ -267,7 +280,7 @@ install-binaries:
 	if not exist "$(SCRIPT_INSTALL_DIR)" mkdir "$(SCRIPT_INSTALL_DIR)"
 	if not exist "$(INCLUDE_INSTALL_DIR)" mkdir "$(INCLUDE_INSTALL_DIR)"
 	copy $(ITKLIB) "$(SCRIPT_INSTALL_DIR)"
-!if "$(ITKSTUBLIB)" != ""
+!if $(ITKSTUBLIB) != ""
 	copy $(ITKSTUBLIB) "$(LIB_INSTALL_DIR)"
 !endif
 	copy $(ROOT)\generic\itk.h "$(INCLUDE_INSTALL_DIR)"

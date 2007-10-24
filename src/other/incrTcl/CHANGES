@@ -1979,7 +1979,7 @@
   above, in the standard TEA place.
 
 7/11/00 (stubs cleanup) <welch@ajubasolutions.com>
-  Fix the build so static links do not use the stubs library.
+  Fix the build so static links do not use the stubs library. 
 
 8/1/00 (stubs cleanup) <davygrvy@ajubasolutions.com>
   Added missing declarations for Itcl_InitStubs and Itk_InitStubs

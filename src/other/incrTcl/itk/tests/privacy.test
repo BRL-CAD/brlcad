@@ -16,9 +16,8 @@
 package require tcltest
 namespace import -force ::tcltest::*
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+::tcltest::loadTestedCommands
 
-package require Itk
 
 # ----------------------------------------------------------------------
 #  Define a base class with public variables and a simple mega-widget

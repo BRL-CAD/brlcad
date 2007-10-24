@@ -17,5 +17,5 @@ foreach i [lsort [glob *.test]] {
     puts stdout $i
     if [catch {source $i} msg] {
 	puts $msg
-    }
+    }	
 }

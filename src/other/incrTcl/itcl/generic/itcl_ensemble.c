@@ -606,7 +606,7 @@ Itcl_GetEnsembleUsageForObj(interp, ensObjPtr, objPtr)
  *
  * GetEnsembleUsage --
  *
- *
+ *      
  *      Returns a summary of all of the parts of an ensemble and
  *      the meaning of their arguments.  Each part is listed on
  *      a separate line.  This procedure is used internally to
@@ -1112,7 +1112,7 @@ CreateEnsemblePart(interp, ensData, partName, ensPartPtr)
  *
  * DeleteEnsemblePart --
  *
- *      Deletes a single part from an ensemble.  The part must have
+ *      Deletes a single part from an ensemble.  The part must have 
  *      been created previously by CreateEnsemblePart.
  *
  *      If the part has a delete proc, then it is called to free the
@@ -1267,7 +1267,7 @@ FindEnsemblePart(interp, ensData, partName, rensPart)
             if (strncmp(partName, ensData->parts[i]->name, nlen) != 0) {
                 break;
             }
-            Tcl_AppendToObj(resultPtr, "\n  ", 3);
+            Tcl_AppendToObj(resultPtr, "\n  ", 3); 
             GetEnsemblePartUsage(ensData->parts[i], resultPtr);
         }
         Tcl_SetObjResult(interp, resultPtr);
@@ -1674,7 +1674,7 @@ Itcl_EnsembleCmd(clientData, interp, objc, objv)
     /*
      *  At this point, we have the data for the ensemble that is
      *  being manipulated.  Plug this into the parser, and then
-     *  interpret the rest of the arguments in the ensemble parser.
+     *  interpret the rest of the arguments in the ensemble parser. 
      */
     status = TCL_OK;
     savedEnsData = ensInfo->ensData;

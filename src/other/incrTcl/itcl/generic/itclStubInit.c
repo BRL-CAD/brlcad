@@ -1,4 +1,4 @@
-/*
+/* 
  * itclStubInit.c --
  *
  *	This file contains the initializers for the Itcl stub vectors.

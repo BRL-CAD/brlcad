@@ -61,7 +61,7 @@ all \fItag\fR names previously registered.
 Following is the \fBusual\fR declaration for the standard
 Tk button widget:
 .CS
-usual Button {
+itk::usual Button {
     keep -background -cursor -foreground -font
     keep -activebackground -activeforeground -disabledforeground
     keep -highlightcolor -highlightthickness

@@ -11,7 +11,7 @@
  *  it encourages better organization of Tcl applications through the
  *  object-oriented paradigm, leading to code that is easier to
  *  understand and maintain.
- *
+ *  
  *  ADDING [incr Tcl] TO A Tcl-BASED APPLICATION:
  *
  *    To add [incr Tcl] facilities to a Tcl application, modify the
@@ -27,12 +27,12 @@
  *         if (Itcl_Init(interp) == TCL_ERROR) {
  *             return TCL_ERROR;
  *         }
- *
+ * 
  *    3) Link your application with libitcl.a
  *
  *    NOTE:  An example file "tclAppInit.c" containing the changes shown
  *           above is included in this distribution.
- *
+ *  
  * ========================================================================
  *  AUTHOR:  Michael J. McLennan
  *           Bell Labs Innovations for Lucent Technologies
@@ -49,8 +49,9 @@
 #ifndef ITCLINT_H
 #define ITCLINT_H
 
-/* included so we avoid tcl's compat headers */
-#include "common.h"
+#ifdef HAVE_CONFIG_H
+# include "brlcad_config.h"
+#endif
 
 #include "tclInt.h"
 #include "itcl.h"
@@ -222,6 +223,9 @@ typedef struct ItclMemberCode {
     ClientData clientData;      /* client data for C implementations */
 
 } ItclMemberCode;
+
+#define Itcl_IsMemberCodeImplemented(mcode) \
+    (((mcode)->flags & ITCL_IMPLEMENT_NONE) == 0)
 
 /*
  *  Basic representation for class members (commands/variables)

@@ -1,4 +1,4 @@
-/*
+/* 
  * dllEntryPoint.c --
  *
  *	This file implements the Dll entry point as needed by Windows.

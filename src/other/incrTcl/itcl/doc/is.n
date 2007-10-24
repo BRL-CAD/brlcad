@@ -13,7 +13,7 @@
 .SH NAME
 is \- test argument to see if it is a class or an object
 .SH SYNOPSIS
-\fBis \fIoption\fR ?\fIarg arg ...\fR?
+\fBitcl::is \fIoption\fR ?\fIarg arg ...\fR?
 .BE
 
 .SH DESCRIPTION
@@ -33,7 +33,7 @@ Returns 1 if command is a class, and returns 0 otherwise.
 .sp
 The fully qualified name of the class needs to be given as the \fIcommand\fR
 argument. So, if a class resides in a namespace, then the namespace needs to
-be specified as well. So, if a class \fBC resides in a namespace \fBN, then
+be specified as well. So, if a class \fBC resides in a namespace \fBN, then 
 the command should be called like:
 .CS
 \fBis N::C\fR
@@ -55,10 +55,10 @@ So, if \fBc\fR is an object in the class \fBC\fR, in namespace N then
 these are the possibilities (all return 1):
 .CS
 set obj [N::C c]
-is object N::c
-is object c
-is object $obj
-is object [code c]
+itcl::is object N::c
+itcl::is object c
+itcl::is object $obj
+itcl::is object [itcl::code c]
 .CE
 
 .SH KEYWORDS

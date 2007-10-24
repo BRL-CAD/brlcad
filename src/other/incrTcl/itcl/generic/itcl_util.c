@@ -750,6 +750,10 @@ Itcl_SaveInterpState(interp, status)
     InterpState *info;
     CONST char *val;
 
+#ifndef ERR_IN_PROGRESS  /* this disappeared in 8.5a2 */
+    return (Itcl_InterpState) Tcl_SaveInterpState(interp, status);
+#endif
+
     info = (InterpState*)ckalloc(sizeof(InterpState));
     info->validate = TCL_STATE_VALID;
     info->status = status;
@@ -767,19 +771,23 @@ Itcl_SaveInterpState(interp, status)
     /*
      *  If an error is in progress, preserve its state.
      */
-/* XXX     if ((iPtr->flags & ERR_IN_PROGRESS) != 0) { */
-/*         val = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY); */
-/*         if (val) { */
-/*             info->errorInfo = ckalloc((unsigned)(strlen(val)+1)); */
-/*             strcpy(info->errorInfo, val); */
-/*         } */
+#ifdef ERR_IN_PROGRESS   /* this disappeared in 8.5a2 */
+    if ((iPtr->flags & ERR_IN_PROGRESS) != 0) {
+#else
+    if (iPtr->errorInfo != NULL) {
+#endif
+        val = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
+        if (val) {
+            info->errorInfo = ckalloc((unsigned)(strlen(val)+1));
+            strcpy(info->errorInfo, val);
+        }
 
-/*         val = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY); */
-/*         if (val) { */
-/*             info->errorCode = ckalloc((unsigned)(strlen(val)+1)); */
-/*             strcpy(info->errorCode, val); */
-/*         } */
-/*     } */
+        val = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY);
+        if (val) {
+            info->errorCode = ckalloc((unsigned)(strlen(val)+1));
+            strcpy(info->errorCode, val);
+        }
+    }
 
     /*
      *  Now, reset the interpreter to a clean state.
@@ -808,9 +816,12 @@ Itcl_RestoreInterpState(interp, state)
     Tcl_Interp* interp;       /* interpreter being modified */
     Itcl_InterpState state;   /* token representing interpreter state */
 {
-    Interp *iPtr = (Interp*)interp;
     InterpState *info = (InterpState*)state;
     int status;
+
+#ifndef ERR_IN_PROGRESS  /* this disappeared in 8.5a2 */
+    return Tcl_RestoreInterpState(interp, (Tcl_InterpState)state);
+#endif
 
     if (info->validate != TCL_STATE_VALID) {
         Tcl_Panic("bad token in Itcl_RestoreInterpState");
@@ -829,10 +840,7 @@ Itcl_RestoreInterpState(interp, state)
     }
 
     if (info->errorCode) {
-        (void) Tcl_SetVar2(interp, "errorCode", (char*)NULL,
-            info->errorCode, TCL_GLOBAL_ONLY);
-/* XXX        iPtr->flags |= ERROR_CODE_SET; */
-
+        Tcl_SetObjErrorCode(interp, Tcl_NewStringObj(info->errorCode, -1));
         ckfree(info->errorCode);
     }
 
@@ -867,6 +875,11 @@ Itcl_DiscardInterpState(state)
     Itcl_InterpState state;  /* token representing interpreter state */
 {
     InterpState *info = (InterpState*)state;
+
+#ifndef ERR_IN_PROGRESS  /* this disappeared in 8.5a2 */
+    Tcl_DiscardInterpState((Tcl_InterpState)state);
+    return;
+#endif
 
     if (info->validate != TCL_STATE_VALID) {
         Tcl_Panic("bad token in Itcl_DiscardInterpState");

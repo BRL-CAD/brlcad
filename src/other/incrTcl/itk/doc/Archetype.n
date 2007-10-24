@@ -192,7 +192,7 @@ override settings determined from the X11 resource database.
 The arguments to the constructor are usually passed along
 to this method as follows:
 .CS
-class MyWidget {
+itcl::class MyWidget {
     inherit Widget
 
     constructor {args} {
@@ -230,7 +230,7 @@ for their "hull" component:  -background and -cursor.  A derived
 class can override this decision, and add options that control
 the border of the "hull" component as well:
 .CS
-class MyWidget {
+itcl::class MyWidget {
     inherit Widget
 
     constructor {args} {
@@ -267,7 +267,7 @@ new value is reported to standard output.  Note that this synthetic
 option is integrated with the rest of the "-background" options
 that have been kept from component widgets:
 .CS
-class MyWidget {
+itcl::class MyWidget {
     inherit Widget
     constructor {args} {
         itk_component add label {
@@ -295,8 +295,8 @@ used to remove options at a later time.  For example, a derived
 class can override an option defined in a base class by removing
 and redefining the option:
 .CS
-class Base {
-    inherit Widget
+itcl::class Base {
+    inherit itk::Widget
     constructor {args} {
         eval itk_initialize $args
     }
@@ -306,7 +306,7 @@ class Base {
     }
 }
 
-class Derived {
+itcl::class Derived {
     inherit Base
 
     constructor {args} {

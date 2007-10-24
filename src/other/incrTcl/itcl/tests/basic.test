@@ -213,7 +213,13 @@ test basic-4.4 {objects can be created from the new class} {
     list [Counter #auto] [Counter #auto]
 } {counter0 counter1}
 
-test basic-4.5 {when a class is destroyed, its objects are deleted} {
+test basic-4.5 {namespaces for #auto are prepended to the command name} {
+    namespace eval someNS1 {}
+    namespace eval someNS2 {}
+    list [Counter someNS1::#auto] [Counter someNS2::#auto]
+} [list someNS1::counter2 someNS2::counter3]
+
+test basic-4.6 {when a class is destroyed, its objects are deleted} {
     list [lsort [itcl::find objects counter*]] \
          [itcl::delete class Counter] \
          [lsort [itcl::find objects counter*]]
@@ -324,7 +330,7 @@ test basic-6.2 {test array access for instance variables} {
 
 test basic-6.3 {test array access for commons} {
     lsort [test_arrays0 do array get colors]
-} {#0000ff #00ff00 #ff0000 blue green red}
+} [list #0000ff #00ff00 #ff0000 blue green red]
 
 test basic-6.4 {test array access for instance variables via "upvar"} {
     test_arrays0 do test_arrays_get nums

@@ -93,13 +93,13 @@ if {$tcl_platform(platform) == "unix"} {
     set testConfig(tempNotPc) 1
 } else {
     set testConfig(unixOnly) 0
-}
+} 
 if {$tcl_platform(platform) == "macintosh"} {
     set testConfig(tempNotPc) 1
     set testConfig(macOnly) 1
 } else {
     set testConfig(macOnly) 0
-}
+} 
 if {$tcl_platform(platform) == "windows"} {
     set testConfig(pcOnly) 1
 } else {
@@ -186,7 +186,7 @@ if {($testConfig(unixExecs) == 1) && ($tcl_platform(platform) == "windows")} {
 	puts stdout "Warning: Unix-style executables are not available, so"
 	puts stdout "some tests will be skipped."
     }
-}
+}    
 
 proc print_verbose {name description script code answer} {
     puts stdout "\n"
@@ -271,7 +271,7 @@ proc test {name description script answer args} {
     if {$code != 0} {
 	print_verbose $name $description $script \
 		$code $result
-    } elseif {[string compare $result $answer] == 0} then {
+    } elseif {[string compare $result $answer] == 0} then { 
 	if $VERBOSE then {
 	    if {$VERBOSE > 0} {
 		print_verbose $name $description $script \
@@ -279,12 +279,12 @@ proc test {name description script answer args} {
 	    }
 	    puts stdout "++++ $name PASSED"
 	}
-    } else {
+    } else { 
 	print_verbose $name $description $script \
 		$code $result
 	puts stdout "---- Result should have been:"
 	puts stdout "$answer"
-	puts stdout "---- $name FAILED"
+	puts stdout "---- $name FAILED" 
     }
 }
 

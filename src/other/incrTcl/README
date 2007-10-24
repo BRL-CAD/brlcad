@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
-         [incr Tcl] - version 3.2 for Tcl/Tk 8.0.3 and beyond
+         [incr Tcl] - version 3.3 for Tcl/Tk 8.0.3 and beyond
 ------------------------------------------------------------------------
   This is a bug-fix release in the itcl3.x series.
 
@@ -11,6 +11,7 @@
   read the INCOMPATIBLE file in this directory, or check out the itcl
   web site:
 
+      http://incrtcl.sourceforge.net/
       http://www.tcltk.com/itcl/
 
   Many people through the years have helped me with [incr Tcl]
@@ -73,7 +74,7 @@
    - scrolledframe
    - messagedialog
    - and many others...
-
+ 
  Classes and/or related procedures can also be encapsulated in their
  own "namespace".  A namespace is a collection of commands, variables,
  classes and other namespaces that is set apart from the usual global
@@ -125,34 +126,28 @@
 
  Check out our web site for the latest news:
 
-     http://www.tcltk.com/itcl/
-
+      http://incrtcl.sourceforge.net/
 
  Installation on Unix Systems
 ------------------------------------------------------------------------
   1)  Obtain this distribution from an archive site like this:
 
-        ftp ftp.tcltk.com
-        cd pub/itcl
-        binary
-        get itcl3.2.tar.gz
-        quit
-
+        http://incrtcl.sourceforge.net/
+        http://sourceforge.net/project/showfiles.php?group_id=13244
 
   2)  Uncompress and untar the distribution:
 
-        gunzip itcl3.2.tar.gz
-        tar xvf itcl3.2.tar
-
+        gunzip itcl<version>.tar.gz
+        tar xvf itcl<version>.tar
 
   3)  Run the configuration script:
 
-        cd itcl3.2
+        cd itcl<version>
         ./configure
 
       or, for systems that don't recognize "#!" in shell scripts:
 
-        cd itcl3.2
+        cd itcl<version>
         /bin/sh ./configure
 
       The "configure" script finds the appropriate compiler flags and
@@ -170,23 +165,19 @@
 
         ./configure --with-tcl=/usr/local/tcl/lib
 
-      If you like the gcc compiler and/or want to debug, you can add
-      those options as well:
+      If you want to debug, you can add this option as well:
 
-        ./configure --enable-gcc --enable-symbols
-
+        ./configure --enable-symbols
 
   4)  Build the libraries and the executables.  From the toplevel
       directory type:
 
         make all
 
-
   5)  Install the libraries, executables, man pages and script files.
       From the toplevel directory type:
 
         make install
-
 
   6)  Use the final product:
 
@@ -209,7 +200,7 @@
         % optionmenu .om
 
 
- Installation on Windows 95/98/NT
+ Installation on Windows
 ------------------------------------------------------------------------
  Follow the usual TEA instructions for building under Windows.
  Requires Cygwin and Visual C++ 6.0.
