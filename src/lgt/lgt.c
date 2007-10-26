@@ -109,22 +109,6 @@ main(int argc, char **argv)
 	    return	1;
 	}
 
-    /* XXX - ismex() uses dgl on SGI servers which causes problems when client
-       machine does not grant access to server via 'xhost'. */
-#if 0
-    if( ismex() && tty )
-	{
-	    sgi_console = substr( getenv( "TERM" ), "iris" );
-	    (void) sprintf( prompt,
-			    "Do you want to use the IRIS mouse ? [y|n](%c) ",
-			    sgi_usemouse ? 'y' : 'n'
-			    );
-	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		sgi_usemouse = input_ln[0] != 'n';
-	    if( sgi_usemouse )
-		sgi_Init_Popup_Menu();
-	}
-#endif
     for( i = 0; i < NSIG; i++ )
 	switch( i )
 	    {
