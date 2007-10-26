@@ -113,10 +113,10 @@ CLEANFILES = \
 	shaders_ref.pix \
 	solids-diff.log \
 	solids.g \
-	solids.log \
 	solids.mged \
 	solids.pix.diff \
 	solids.rt \
+	solids.rt.log \
 	solids.rt.pix \
 	solids_ref.pix \
 	spdi \
