@@ -253,8 +253,8 @@ label(double x, double y, char *str)
 void
 xsetup(int argc, char **argv)
 {
-	char	hostname[80];
-	char	display[80];
+	char	hostname[81];
+	char	display[81];
 	char	*envp;
 	unsigned long	bd, bg, fg, bw;
 	XSizeHints xsh;
@@ -266,20 +266,18 @@ xsetup(int argc, char **argv)
 	if( (envp = getenv("DISPLAY")) == NULL ) {
 		/* Env not set, use local host */
 		gethostname( hostname, 80 );
-		sprintf( display, "%s:0", hostname );
+		snprintf( display, 81, "%s:0", hostname );
 		envp = display;
 	}
 
 	/* Open the display - XXX see what NULL does now */
 	if( (dpy = XOpenDisplay( envp )) == NULL ) {
-		fprintf( stderr, "pl-X: Can't open X display\n" );
-		exit( 2 );
+		bu_exit(2, "pl-X: Can't open X display\n");
 	}
 
 	/* Load the font to use */
 	if( (fontstruct = XLoadQueryFont(dpy, FONT)) == NULL ) {
-		fprintf( stderr, "pl-X: Can't open font\n" );
-		exit( 4 );
+		bu_exit(4, "pl-X: Can't open font\n" );
 	}
 
 	/* Select border, background, foreground colors,

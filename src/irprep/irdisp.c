@@ -83,7 +83,7 @@ main(void)
 	/*  Find name of .g file to be used.  */
 	(void)printf("Enter .g file to be raytraced (15 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%s",gfile);
+	(void)scanf("%15s",gfile);
 	/*  Find number of groups to be raytraced.  */
 	(void)printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
@@ -100,7 +100,7 @@ main(void)
 	{
 	   (void)printf("Enter group %d (25 char max).\n\t",j);
 	   (void)fflush(stdout);
-	   (void)scanf("%s",group);
+	   (void)scanf("%25s",group);
 	   showtherm[i] = ' ';
 	   i++;
 	   k = 0;
@@ -129,7 +129,7 @@ main(void)
 
    if( (ichoice == 1) || (ichoice == 2) )
    {
-	char choice[80];
+	char choice[81];
 
 	/*  Call the program ir-X or ir-sgi so that a file that has been raytraced  */
 	/*  may be displayed.  */
@@ -138,7 +138,7 @@ main(void)
 	{
 		(void)printf("\nSelect display ('X' or 'sgi') -> " );
 		(void)fflush(stdout);
-		(void)scanf( "%s", choice );
+		(void)scanf( "%80s", choice );
 	}
 	if( !strcmp( choice , "X" ) || !strcmp( choice , "x" ) )
 		X_or_SGI = irX;

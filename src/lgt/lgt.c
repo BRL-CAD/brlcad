@@ -238,7 +238,7 @@ ready_Output_Device(int frame)
 	{	char	framefile[MAX_LN];
 	/* We must be doing full-screen frames. */
 	size = grid_sz;
-	(void) sprintf( framefile, "%s.%04d", prefix, frame );
+	(void) snprintf( framefile, MAX_LN, "%s.%04d", prefix, frame );
 	if( ! fb_Setup( framefile, size ) )
 	    return	0;
 	}

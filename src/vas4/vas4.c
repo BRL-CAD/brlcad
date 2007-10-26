@@ -675,10 +675,10 @@ int
 str2frames(char *str)
 {
 	int	num;
-	char	suffix[32];
+	char	suffix[33];
 
 	suffix[0] = '\0';
-	sscanf( str, "%d%s", &num, suffix );
+	sscanf( str, "%d%32s", &num, suffix );
 	switch( suffix[0] )  {
 	case 'f':
 	case '\0':

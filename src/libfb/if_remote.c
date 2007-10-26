@@ -178,8 +178,8 @@ numeric(register char *s)
  *
  *  Return -1 on error, else 0.
  */
-int
-parse_file(char *file, char *host, int *portp, char *device)
+static int
+parse_file(char *file, char *host, int *portp, char *device, int length)
 		/* input file spec */
 		/* host part */
 		/* port number */
@@ -194,7 +194,7 @@ parse_file(char *file, char *host, int *portp, char *device)
 	if( numeric(file) ) {
 		/* 0 */
 		port = atoi(file);
-		strcpy( host, "localhost" );
+		strncpy( host, "localhost", length );
 		dev = "";
 		goto done;
 	}
@@ -205,12 +205,12 @@ parse_file(char *file, char *host, int *portp, char *device)
 		if( numeric(prefix) ) {
 			/* 0:[dev] */
 			port = atoi(prefix);
-			strcpy( host, "localhost" );
+			strncpy( host, "localhost", length );
 			dev = rest;
 			goto done;
 		} else {
 			/* :[dev] or host:[dev] */
-			strcpy( host, prefix );
+			strncpy( host, prefix, length );
 			if( numeric(rest) ) {
 				/* :0 or host:0 */
 				port = atoi(rest);
@@ -246,7 +246,7 @@ parse_file(char *file, char *host, int *portp, char *device)
 done:
 	/* Default hostname */
 	if( strlen(host) == 0 ) {
-		strcpy( host, "localhost" );
+		strncpy( host, "localhost", length );
 	}
 	/* Magic port number mapping */
 	if( port < 0 )
@@ -259,11 +259,11 @@ done:
 	 * out what to do about socket pathnames).
 	 */
 	if( strcmp(host,"unix") == 0 )
-		strcpy( host, "localhost" );
+		strncpy( host, "localhost", length );
 
 	/* copy out port and device */
 	*portp = port;
-	strcpy( device, dev );
+	strncpy( device, dev, length );
 
 	return( 0 );
 }
@@ -297,7 +297,7 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
 	portname[0] = '\0';
 	port = 0;
 
-	if( file == NULL || parse_file(file, hostname, &port, device) < 0 ) {
+	if( file == NULL || parse_file(file, hostname, &port, device, MAX_HOSTNAME) < 0 ) {
 		/* too wild for our tastes */
 		fb_log( "rem_open: bad device name \"%s\"\n",
 			file == NULL ? "(null)" : file );
@@ -340,7 +340,7 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
 
 	(void)fbputlong( width, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[1*NET_LONG_LEN] );
-	(void) strcpy( &buf[2*NET_LONG_LEN], device );
+	(void) strncpy( &buf[2*NET_LONG_LEN], device, 128 );
 	i = strlen(device)+2*NET_LONG_LEN;
 	if( pkg_send( MSG_FBOPEN, buf, i, pc ) != i )
 		return	-5;

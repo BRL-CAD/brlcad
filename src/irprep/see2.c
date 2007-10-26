@@ -93,7 +93,7 @@ main()
    /*  Get file name to be read.  */
    (void)printf("Enter name of file to be read (%d char max).\n\t",MAXFIL);
    (void)fflush(stdout);
-   (void)scanf("%s",file);
+   (void)scanf("%25s",file);
 
    /*  Determine what color scale should be used.  */
    (void)printf("Indicate color scale to be used.\n");
@@ -120,7 +120,7 @@ main()
 	(void)printf("Enter the name of the pix file to be created ");
 	(void)printf("(%d char max).\n\t",MAXFIL);
 	(void)fflush(stdout);
-	(void)scanf("%s",file_pix);
+	(void)scanf("%25s",file_pix); /* MAXFIL */
    }
 
    (void)printf("Setting color scale - ");
@@ -297,7 +297,7 @@ main()
    {
 	(void)printf("\nThe file does not exist, try again.\n");
 	(void)fflush(stdout);
-	(void)scanf("%s",file);
+	(void)scanf("%25s",file); /* MAXFIL */
 	fpr = fopen(file,"r");
    }
 

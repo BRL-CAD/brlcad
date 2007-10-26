@@ -153,7 +153,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	*ifp = X24_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(X_device_name) + 1);
-	(void)strcpy(ifp->if_name, X_device_name);
+	(void)strncpy(ifp->if_name, X_device_name, strlen(X_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
@@ -176,7 +176,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	*ifp = tk_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(tk_device_name) + 1);
-	(void)strcpy(ifp->if_name, tk_device_name);
+	(void)strncpy(ifp->if_name, tk_device_name, strlen(tk_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
@@ -198,7 +198,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	*ifp = wgl_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(wgl_device_name) + 1);
-	(void)strcpy(ifp->if_name, wgl_device_name);
+	(void)strncpy(ifp->if_name, wgl_device_name, strlen(wgl_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
@@ -219,7 +219,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 	*ifp = ogl_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(ogl_device_name) + 1);
-	(void)strcpy(ifp->if_name, ogl_device_name);
+	(void)strncpy(ifp->if_name, ogl_device_name, strlen(ogl_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;

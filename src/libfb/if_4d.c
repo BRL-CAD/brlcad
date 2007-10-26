@@ -1119,7 +1119,7 @@ int	width, height;
 	}
 
 	/* Build a descriptive window title bar */
-	(void)sprintf( title, "BRL libfb /dev/sgi %s, %s",
+	(void)snprintf( title, 128, "BRL libfb /dev/sgi %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 			"Transient Win" :
 			"Lingering Win",

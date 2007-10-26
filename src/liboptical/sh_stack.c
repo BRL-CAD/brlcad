@@ -304,7 +304,7 @@ sh_stk_render(struct application *ap, struct partition *pp, struct shadework *sw
 
 	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
 		if (rdebug&RDEBUG_SHADE)  {
-			sprintf(tmp, "before stacked \"%s\" shader", sp->mfuncs[i]->mf_name);
+			snprintf(tmp, 128, "before stacked \"%s\" shader", sp->mfuncs[i]->mf_name);
 
 			pr_shadework( tmp, swp );
 		}

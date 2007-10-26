@@ -134,7 +134,7 @@ dm_bestXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	obj = Tcl_GetObjResult(interp);
 	if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
-	snprintf(buffer, 256, argv[1]);
+	snprintf(buffer, 256, "%s", argv[1]);
 	best_dm = dm_bestXType(buffer);
 	if (best_dm) {
 	    Tcl_AppendStringsToObj(obj, best_dm, (char *)NULL);

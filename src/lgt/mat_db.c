@@ -216,7 +216,7 @@ mat_Edit_Db_Entry(int id)
 		bu_log( "Material table full, MAX_DB_ENTRY too small.\n" );
 		return	0;
 		}
-	(void) sprintf( prompt, "material name ? (%s) ", entry->name );
+	(void) snprintf( prompt, MAX_LN, "material name ? (%s) ", entry->name );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) strncpy( entry->name, input_buf, MAX_MAT_NM );
 	(void) sprintf( prompt, "shine ? [1 to n](%d) ", entry->shine );

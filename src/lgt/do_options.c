@@ -1058,7 +1058,7 @@ keybd_input :
 					bu_log( "to<%d,%d> from<%d,%d> delta<%d,%d>\n",
 						tx, ty, fx, fy, ir_mapx, ir_mapy );
 					ir_offset = TRUE;
-					(void) sprintf( IR_AUTO_MAP_PTR, "%4s", "ON" );
+					(void) snprintf( IR_AUTO_MAP_PTR, TEMPLATE_COLS, "%4s", "ON" );
 					update_Screen();
 					prnt_Prompt( "Cursor input module (type '?' for help) : " );
 					}
@@ -1076,7 +1076,7 @@ keybd_input :
 					bu_log( "to<%d,%d> from<%d,%d> delta<%d,%d>\n",
 						tx, ty, fx, fy, ir_mapx, ir_mapy );
 					ir_offset = TRUE;
-					(void) sprintf( IR_AUTO_MAP_PTR, "%4s", "ON" );
+					(void) snprintf( IR_AUTO_MAP_PTR, TEMPLATE_COLS, "%4s", "ON" );
 					update_Screen();
 					prnt_Prompt( "Cursor input module (type '?' for help) : " );
 					}
@@ -1228,11 +1228,10 @@ f_Animate(HMitem *itemp, char **args)
 	if( movie.m_fullscreen )
 		{	char		movie_file[MAX_LN];
 			char		*suffixptr;
-		(void) sprintf( prompt, "Movie file prefix ? (%s) ",
-				prefix );
+		snprintf(prompt, MAX_LN, "Movie file prefix ? (%s) ", prefix);
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( prefix, input_ln );
-		(void) strcpy( movie_file, prefix );
+			strncpy( prefix, input_ln, MAX_LN );
+		strncpy(movie_file, prefix, MAX_LN);
 		suffixptr = movie_file + strlen( movie_file );
 		(void) sprintf( prompt, "Number of frames ? (%d) ", noframes );
 		if(	get_Input( input_ln, MAX_LN, prompt ) != NULL
@@ -1250,7 +1249,7 @@ f_Animate(HMitem *itemp, char **args)
 			if( frame_no == noframes )
 				frame_no = 0;
 			(void) sprintf( suffixptr, ".%04d", frame_no );
-			if( access( movie_file, 0 ) == -1 )
+			if( !bu_file_exists(movie_file) )
 				continue;
 			if( (movie_fbiop = fb_open( movie_file, grid_sz, grid_sz )) == FBIO_NULL )
 				{
@@ -1459,17 +1458,13 @@ f_Wrt_Fb(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( save_fb_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"File name for saved image ? (%s) ",
-				save_fb_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( save_fb_file, input_ln );
-		}
-	else
-		return	-1;
+	if( tty ) {
+	    snprintf( prompt, MAX_LN, "File name for saved image ? (%s) ", save_fb_file);
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		strncpy( save_fb_file, input_ln, MAX_LN );
+	} else {
+	    return -1;
+	}
 	if( save_fb_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -1533,12 +1528,9 @@ f_Rd_Fb(HMitem *itemp, char **args)
 	else
 	if( tty )
 		{
-		(void) sprintf( prompt,
-				"File name of image ? (%s) ",
-				save_fb_file
-				);
+		snprintf( prompt, MAX_LN, "File name of image ? (%s) ", save_fb_file);
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( save_fb_file, input_ln );
+			strncpy( save_fb_file, input_ln, MAX_LN );
 		}
 	else
 		return	-1;
@@ -1616,7 +1608,7 @@ f_Prnt_Lgt_Db(HMitem *itemp, char **args)
 	if( (args == NULL || args[1] == NULL ) && tty )
 		{
 		(void) sprintf( input_ln, "%d", light_id );
-		(void) sprintf( prompt,
+		(void) snprintf( prompt, MAX_LN,
 				"Light source id ? [0-%d or * for all](%s) ",
 				MAX_LGTS-1,
 				input_ln[0] == '-' ? "*" : input_ln
@@ -1650,7 +1642,7 @@ f_Prnt_Mat_Db(HMitem *itemp, char **args)
 	if( (args == NULL || args[1] == NULL) && tty )
 		{
 		(void) sprintf( input_ln, "%d", material_id );
-		(void) sprintf( prompt,
+		(void) snprintf( prompt, MAX_LN,
 				"Material id ? [0-99 or * for all](%s) ",
 				input_ln[0] == '-' ? "*" : input_ln
 				);
@@ -1683,17 +1675,16 @@ f_Rd_Raw_IR(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( ir_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name of IR data file ? (%s) ",
-				ir_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( ir_file, input_ln );
-		}
-	else
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN, 
+			     "Name of IR data file ? (%s) ",
+			     ir_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( ir_file, input_ln, MAX_LN );
+	} else {
 		return	-1;
+	}
 	if( ir_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -1780,15 +1771,14 @@ f_Movie(HMitem *itemp, char **args)
 			);
 	if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
 		movie.m_fullscreen = input_ln[0] != 'n';
-	if( movie.m_fullscreen )
-		{
-		(void) sprintf( prompt,
-				"Output file prefix for frames ? (%s) ",
-				prefix
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( prefix, input_ln );
-		}
+	if( movie.m_fullscreen ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Output file prefix for frames ? (%s) ",
+			     prefix
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( prefix, input_ln, MAX_LN );
+	}
 	/* Setup default frame size to match grid size. */
 	if( movie.m_frame_sz < 0 )
 		movie.m_frame_sz = grid_sz;
@@ -1848,12 +1838,12 @@ f_Movie(HMitem *itemp, char **args)
 		movie.m_keys = input_ln[0] != 'n';
 	if( movie.m_keys )
 		{	register int	i;
-		(void) sprintf( prompt,
+		(void) snprintf( prompt, MAX_LN,
 				"Name of key frame file ? (%s) ",
 				svkey_file[0] == '\0' ? "STDIN" : svkey_file
 				);
 		if( get_Input( input_ln, MAX_LN, prompt) != NULL )
-			(void) strcpy( svkey_file, input_ln );
+			(void) strncpy( svkey_file, input_ln, MAX_LN );
 		if( svkey_file[0] == '\0' )
 			movie.m_keys_fp = NULL; /* Will use STDIN. */
 		else
@@ -2095,9 +2085,9 @@ f_Err_File(HMitem *itemp, char **args)
 	else
 	if( tty )
 		{
-		(void) sprintf( prompt, "Name of log file ? (%s) ", err_file );
+		(void) snprintf( prompt, MAX_LN, "Name of log file ? (%s) ", err_file );
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( err_file, input_ln );
+			(void) strncpy( err_file, input_ln, MAX_LN );
 		}
 	else
 		(void) strncpy( err_file, "/dev/tty", MAX_LN );
@@ -2212,17 +2202,16 @@ f_Wrt_IR_Db(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( ir_db_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name for IR data base file ? (%s) ",
-				ir_db_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( ir_db_file, input_ln );
-		}
-	else
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Name for IR data base file ? (%s) ",
+			     ir_db_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( ir_db_file, input_ln, MAX_LN );
+	} else {
 		return	-1;
+	}
 	if( ir_db_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -2254,17 +2243,16 @@ f_Wrt_Lgt_Db(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( lgt_db_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name for light source data base file ? (%s) ",
-				lgt_db_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( lgt_db_file, input_ln );
-		}
-	else
-		return	-1;
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Name for light source data base file ? (%s) ",
+			     lgt_db_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( lgt_db_file, input_ln, MAX_LN );
+	} else {
+	    return	-1;
+	}
 	if( lgt_db_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -2286,17 +2274,16 @@ f_Wrt_Mat_Db(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( mat_db_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name for material data base file ? (%s) ",
-				mat_db_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( mat_db_file, input_ln );
-		}
-	else
-		return	-1;
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN, 
+			     "Name for material data base file ? (%s) ",
+			     mat_db_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( mat_db_file, input_ln, MAX_LN );
+	} else {
+	    return	-1;
+	}
 	if( mat_db_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -2528,15 +2515,14 @@ f_Rd_IR_Db(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( ir_db_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name of IR data base file ? (%s) ",
-				ir_db_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( ir_db_file, input_ln );
-		}
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Name of IR data base file ? (%s) ",
+			     ir_db_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( ir_db_file, input_ln, MAX_LN );
+	}
 	if( ir_db_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -2572,15 +2558,14 @@ f_Rd_Lgt_Db(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( lgt_db_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name of light source data base file ? (%s) ",
-				lgt_db_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( lgt_db_file, input_ln );
-		}
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Name of light source data base file ? (%s) ",
+			     lgt_db_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( lgt_db_file, input_ln, MAX_LN);
+	}
 	if( lgt_db_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -2602,15 +2587,14 @@ f_Rd_Mat_Db(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( mat_db_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name of material data base file ? (%s) ",
-				mat_db_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( mat_db_file, input_ln );
-		}
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Name of material data base file ? (%s) ",
+			     mat_db_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( mat_db_file, input_ln, MAX_LN);
+	}
 	if( mat_db_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -2752,12 +2736,12 @@ f_Key_Frame(HMitem *itemp, char **args)
 			save_view_flag = FALSE;
 			return	1;
 			}
-		(void) sprintf( prompt,
+		(void) snprintf( prompt, MAX_LN,
 				"Name of key frame file ? (%s) ",
 				svkey_file
 				);
 		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( svkey_file, input_ln );
+			(void) strncpy( svkey_file, input_ln, MAX_LN );
 		if( svkey_file[0] == '\0' )
 			{
 			bu_log( "No default, must specify file name!\n" );
@@ -2864,7 +2848,7 @@ f_Entr_Lgt_Db(HMitem *itemp, char **args)
 	if( (args == NULL || args[1] == NULL ) && tty )
 		{
 		(void) sprintf( input_ln, "%d", light_id );
-		(void) sprintf( prompt,
+		(void) snprintf( prompt, MAX_LN, 
 				"Light source id ? [0 to %d](%s) ",
 				MAX_LGTS-1,
 				input_ln
@@ -2897,7 +2881,7 @@ f_Entr_Mat_Db(HMitem *itemp, char **args)
 	if( (args == NULL || args[1] == NULL) && tty )
 		{
 		(void) sprintf( input_ln, "%d", material_id );
-		(void) sprintf( prompt,
+		(void) snprintf( prompt, MAX_LN, 
 				"Material id ? [0 to 99](%s) ",
 				input_ln
 				);
@@ -2965,19 +2949,18 @@ f_Raster_File(HMitem *itemp, char **args)
 	if( args != NULL && args[1] != NULL )
 		(void) strncpy( fb_file, args[1], MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Frame buffer name ? (%s) ",
-				fb_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( fb_file, input_ln );
-		}
-	else
-		fb_file[0] = '\0';
-	return	1;
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Frame buffer name ? (%s) ",
+			     fb_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( fb_file, input_ln, MAX_LN );
+	} else {
+	    fb_file[0] = '\0';
 	}
+	return	1;
+}
 
 /*	f _ P e r s p e c t i v e ( ) */
 /*ARGSUSED*/
@@ -3576,15 +3559,14 @@ make_Script(char *file)
 	if( file != NULL )
 		(void) strncpy( script_file, file, MAX_LN );
 	else
-	if( tty )
-		{
-		(void) sprintf( prompt,
-				"Name of script file ? (%s) ",
-				script_file
-				);
-		if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-			(void) strcpy( script_file, input_ln );
-		}
+	if( tty ) {
+	    (void) snprintf( prompt, MAX_LN,
+			     "Name of script file ? (%s) ",
+			     script_file
+			     );
+	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
+		(void) strncpy( script_file, input_ln, MAX_LN );
+	}
 	if( script_file[0] == '\0' )
 		{
 		bu_log( "No default, must specify file name!\n" );
@@ -3761,7 +3743,7 @@ pars_Argv(int argc, register char **argv)
 		{
 		if( tty )
 			{	char	prnt_buf[MAX_LN];
-			(void) sprintf(	prnt_buf,
+			(void) snprintf(prnt_buf, MAX_LN,
 					"Loading \"%s\"...",
 					argv[bu_optind]
 					);

@@ -270,7 +270,7 @@ int main(int argc, char **argv)
 	  (void)printf("Enter name of file output is to be written ");
 	  (void)printf("to (15 char max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%s",filename);
+	  (void)scanf("%15s",filename);
 	  fp=fopen(filename,"w");
 	}
 
@@ -278,25 +278,25 @@ int main(int argc, char **argv)
       (void)printf("Enter name of error file to be created ");
       (void)printf("(15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",fileerr);
+      (void)scanf("%15s",fileerr);
 
       /*  Get second pass file name.  */
       (void)printf("Enter name of second pass file to be ");
       (void)printf("created (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",spfile);
+      (void)scanf("%15s",spfile);
 
       /*  Get region # & name file (for use w/shapefact).  */
       (void)printf("Enter name of region # & name file to be  ");
       (void)printf("created (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",filernn);
+      (void)scanf("%15s",filernn);
 
       /*  Get name of material id file.  */
       (void)printf("Enter name of material id file to be read ");
       (void)printf("(15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",fileden);
+      (void)scanf("%15s",fileden);
 
       /*  What types of files are to be written?  */
       (void)printf("Enter type of file to be written.\n");
@@ -312,7 +312,7 @@ int main(int argc, char **argv)
 	  (void)printf("Enter name of facet file to be created. ");
 	  (void)printf("(15 char max)  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%s",facfile);
+	  (void)scanf("%15s",facfile);
 
 	  /*  Find which PRISM release is being used.  The facet number  */
 	  /*  in release 3.0 is written with an I6 & in release 2.0 it  */
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
 	  (void)printf("Enter name of generic file to be created. ");
 	  (void)printf("(15 char max)  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%s",filegen);
+	  (void)scanf("%15s",filegen);
 	}
 
       /*  Get geometric file name.  */
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
 	  (void)printf("Enter name of geometric properties file to be ");
 	  (void)printf("created (15 char max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%s",filegeo);
+	  (void)scanf("%15s",filegeo);
 	}
 
       /*

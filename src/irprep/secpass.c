@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 	{
 	  (void)fprintf(stdout,"Enter name of output file (15 char max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%s",filename);
+	  (void)scanf("%15s",filename);
 	  fp3 = fopen(filename,"w");
 	}
 
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
       (void)fprintf(stdout,"Enter name of file that has second pass ");
       (void)fprintf(stdout,"information\nin it (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",spfile);
+      (void)scanf("%15s",spfile);
 
       /*  Ask for type of output file to be generated.  */
       (void)printf("Enter type of output file to be generated.\n");
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
 	  (void)fprintf(stdout,"Enter name of file to be created for PRISM ");
 	  (void)fprintf(stdout,"conductivity\ninformation (15 char max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%s",confile);
+	  (void)scanf("%15s",confile);
 
 	  /*  Find which release of PRISM is being used.  The format  */
 	  /*  for writing region numbers is I3 for PRISM 2.0 & I6 for  */
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 	  (void)printf("Enter name of generic file to be created (15 char ");
 	  (void)printf("max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%s",genfile);
+	  (void)scanf("%15s",genfile);
 	}
 
       /*  Which calculated length should be used when writing to  */
@@ -253,19 +253,19 @@ int main(int argc, char **argv)
       (void)fprintf(stdout,"Enter name of file to be created for ");
       (void)fprintf(stdout,"conductivity\ntable (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",tblfile);
+      (void)scanf("%15s",tblfile);
 
       /*  Read name of material file that contains thermal  */
       /*  conductivity information.  */
       (void)fprintf(stdout,"Enter name of material file (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",filemat);
+      (void)scanf("%15s",filemat);
 
       /*  Read name of error file.  */
       (void)fprintf(stdout,"Enter name of error file to be created ");
       (void)fprintf(stdout,"(15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%s",fileerr);
+      (void)scanf("%15s",fileerr);
 
       /*  Choose whether 3 orthogonal sets of rays are to be fired  */
       /*  or 1 set of rays is to be fired.  */

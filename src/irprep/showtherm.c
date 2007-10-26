@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 	{
 	  (void)fprintf(stderr,"Enter name of the PRISM output ");
 	  (void)fprintf(stderr,"file to be read (%d char max).\n\t",MAXFIL);
-	  (void)scanf("%s",filetmp);
+	  (void)scanf("%25s",filetmp); /* MAXFIL */
 
 	  /*  Ask for number of regions.  */
 	  (void)fprintf(stderr,"Enter the number of regions in the PRISM ");
@@ -165,17 +165,17 @@ int main(int argc, char **argv)
 	{
 	  (void)fprintf(stderr,"Enter name of the generic output file to be ");
 	  (void)fprintf(stderr,"read (%d char max).\n\t",MAXFIL);
-	  (void)scanf("%s",filetmp);
+	  (void)scanf("%25s",filetmp); /* MAXFIL */
 	}
 
       /*  Find name of region # & name file.  */
       (void)fprintf(stderr,"Enter name of region # & name file to be read ");
       (void)fprintf(stderr,"(%d char max).\n\t",MAXFIL);
-      (void)scanf("%s",filernn);
+      (void)scanf("%25s",filernn); /* MAXFIL */
 
       /*  Find name of output file.  */
       (void)fprintf(stderr,"Enter name of output file (%d char max).\n\t",MAXFIL);
-      (void)scanf("%s",fileout);
+      (void)scanf("%25s",fileout); /*MAXFIL */
 
       /*  Find elasped time to create graphical representation of.  */
       (void)fprintf(stderr,"Enter the elapsed time to create graphical ");
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
 	{
 	  (void)ungetc(c,fpr);
 	  (void)bu_fgets(line,150,fpr);
-	  (void)sscanf(line,"%*d%s",tmpstrng);
+	  (void)sscanf(line,"%*d%149s",tmpstrng);
 	  for(i=0; i<150; i++)
 	    {
 	      info[numreg_read].regname[i] = tmpstrng[i];

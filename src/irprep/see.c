@@ -124,7 +124,7 @@ main(void)
    /*  Get file name to be read.  */
    (void)printf("Enter name of file to be read (%d char max).\n\t",MAXFIL);
    (void)fflush(stdout);
-   (void)scanf("%s",file);
+   (void)scanf("%25s",file);
 
    /*  Find what color shading to use.  */
    (void)printf("Indicate type of color shading to use.\n");
@@ -147,7 +147,7 @@ main(void)
 	(void)printf("Enter name of the pix file to be created ");
 	(void)printf("(%d char max).\n\t",MAXFIL);
 	(void)fflush(stdout);
-	(void)scanf("%s",file_pix);
+	(void)scanf("%25s",file_pix);
    }
 
    (void)printf("Zeroing color info array ");
@@ -354,7 +354,7 @@ main(void)
    {
 	(void)printf("\nThis file does not exist, please try again.\n");
 	(void)fflush(stdout);
-	(void)scanf("%s",file);
+	(void)scanf("%25s",file);
 	fpr = fopen(file,"r");
    }
 

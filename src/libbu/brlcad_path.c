@@ -212,8 +212,7 @@ bu_getprogname(void) {
 	name = bu_argv0();
     }
 
-    snprintf(bu_progname, MAXPATHLEN, name ? name : "unknown");
-
+    snprintf(bu_progname, MAXPATHLEN, "%s", name?name:"unknown");
 
     return bu_basename(bu_progname);
 }
@@ -234,7 +233,7 @@ bu_setprogname(const char *argv0) {
 #endif
 
     if (argv0) {
-	snprintf(bu_progname, MAXPATHLEN, argv0);
+	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
     }
 
     (void)bu_ipwd();

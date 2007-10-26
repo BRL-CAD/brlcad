@@ -138,7 +138,7 @@ stxt_read(register struct stxt_specific *stp)
 	/* LOOP: through list of basename.n files */
 	for( frame=0; frame <= stp->stx_d-1; frame++ )  {
 
-		sprintf(name, "%s.%d", stp->stx_file, frame);
+		snprintf(name, 256, "%s.%d", stp->stx_file, frame);
 
 		if ((fp = fopen(name, "r")) == NULL )  {
 			bu_log("stxt_read(%s):  can't open\n", name);

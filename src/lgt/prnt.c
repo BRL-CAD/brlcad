@@ -195,7 +195,7 @@ prnt_Status(void)
 	(void) sprintf( scratchbuf, "%3d %3d %3d",
 			background[0], background[1], background[2] );
 	(void) strncpy( BACKGROU_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf,
+	(void) snprintf( scratchbuf, TEMPLATE_COLS+1,
 			"%4s",	pix_buffered == B_PAGE ? "PAGE" :
 				pix_buffered == B_PIO ? "PIO" :
 				pix_buffered == B_LINE ? "LINE" : "?"
@@ -205,9 +205,9 @@ prnt_Status(void)
 	(void) strncpy( DEBUGGER_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf, "%-2d", max_bounce );
 	(void) strncpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, " LGT %s", version );
+	(void) snprintf( scratchbuf, TEMPLATE_COLS+1, " LGT %s", version );
 	(void) strncpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
-	(void) sprintf( scratchbuf, " %s ",
+	(void) snprintf( scratchbuf, TEMPLATE_COLS+1, " %s ",
 			ged_file == NULL ? "(null)" : ged_file );
 	(void) strncpy( F_GED_DB_PTR, scratchbuf,
 			Min( strlen( scratchbuf ), 26 ) );

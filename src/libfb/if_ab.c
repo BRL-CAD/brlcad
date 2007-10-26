@@ -686,9 +686,9 @@ ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
 
     if( !to_network )  {
 	if( frame >= 0 )
-	    sprintf( xmit_buf, "%s%d.yuv", host, frame );
+	    snprintf( xmit_buf, 128, "%s%d.yuv", host, frame );
 	else
-	    sprintf( xmit_buf, "%s.yuv", host);
+	    snprintf( xmit_buf, 128, "%s.yuv", host);
 	if( output )
 	    netfd = creat( xmit_buf, 0444 );
 	else

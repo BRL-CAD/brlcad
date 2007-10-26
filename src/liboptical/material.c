@@ -106,7 +106,7 @@ try_load(const char *path, const char *material, const char *shader_name)
 	}
 
 	/* Find the {shader}_mfuncs symbol in the library */
-	sprintf(sym, "%s_mfuncs", shader_name);
+	snprintf(sym, MAXPATHLEN, "%s_mfuncs", shader_name);
 	shader_mfuncs = dlsym(handle, sym);
 	if ( (dl_error_str=dlerror()) == (char *)NULL) goto found;
 
@@ -176,13 +176,13 @@ load_dynamic_shader(const char *material,
 
 	if ( cwd ) {
 		/* Look in the current working directory for {sh_name}.so */
-		sprintf(libname, "%s/%s.so", cwd, sh_name);
+		snprintf(libname, MAXPATHLEN, "%s/%s.so", cwd, sh_name);
 		if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 			goto done;
 
 
 		/* Look in the current working directory for shaders.so */
-		sprintf(libname, "%s/shaders.so", cwd);
+		snprintf(libname, MAXPATHLEN, "%s/shaders.so", cwd);
 		if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 			goto done;
 
@@ -193,13 +193,13 @@ load_dynamic_shader(const char *material,
 	/* Look in the location indicated by $LD_LIBRARY_PATH for
 	 * lib{sh_name}.so
 	 */
-	sprintf(libname, "lib%s.so", sh_name);
+	snprintf(libname, MAXPATHLEN, "lib%s.so", sh_name);
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 		goto done;
 
 	/* Look in BRL-CAD install dir under lib dir for lib{sh_name}.so */
-	sprintf(libpath, "/lib/lib%s.so", sh_name);
-	strcpy(libname, bu_brlcad_root(libpath, 0));
+	snprintf(libpath, MAXPATHLEN, "/lib/lib%s.so", sh_name);
+	strncpy(libname, bu_brlcad_root(libpath, 0), MAXPATHLEN);
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 		goto done;
 

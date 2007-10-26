@@ -424,15 +424,17 @@ hmenuhit(HMenu *menup, int menux, int menuy)
 				}
 			if( gitemp->text != NULL )
 				{
-				Alloc( itemp->text, char, strlen( gitemp->text ) + 1 );
-				(void) strcpy( itemp->text, gitemp->text );
+				    size_t len = strlen( gitemp->text ) + 1;
+				    Alloc(itemp->text, char, len);
+				    (void) strncpy( itemp->text, gitemp->text, len );
 				}
 			else
 				itemp->text = NULL;
 			if( gitemp->help != NULL )
 				{
-				Alloc( itemp->help, char, strlen( gitemp->help ) + 1 );
-				(void) strcpy( itemp->help, gitemp->help );
+				    size_t len = strlen( gitemp->help ) + 1;
+				    Alloc( itemp->help, char, len);
+				    (void) strncpy( itemp->help, gitemp->help, len );
 				}
 			else
 				itemp->help = NULL;

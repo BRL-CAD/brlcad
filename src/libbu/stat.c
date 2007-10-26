@@ -71,18 +71,6 @@ bu_file_exists(const char *path)
 	return 0;
     }
 
-#if defined(HAVE_ACCESS) && defined(F_OK)
-#  define bu_file_exists_method 1
-    /* access() is posix */
-    if( access( path, F_OK )  == 0 ) {
-	if (bu_debug & BU_DEBUG_PATHS) {
-	    bu_log("YES\n");
-	}
-	/* OK */
-	return 1;
-    }
-#endif
-
     /* does it exist as a filesystem entity? */
 #if defined(HAVE_STAT)
 #  define bu_file_exists_method 1
@@ -96,6 +84,18 @@ bu_file_exists(const char *path)
 	    /* OK */
 	    return 1;
 	}
+    }
+#endif
+
+#if defined(HAVE_ACCESS) && defined(F_OK)
+#  define bu_file_exists_method 1
+    /* access() is posix */
+    if( access( path, F_OK )  == 0 ) {
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("YES\n");
+	}
+	/* OK */
+	return 1;
     }
 #endif
 

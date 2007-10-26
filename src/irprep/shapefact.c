@@ -187,19 +187,19 @@ int main(int argc, char **argv)
       /*  Enter names of files to be used.  */
       (void)fprintf(stderr,"Enter name of output file (15 char max).\n\t");
       (void)fflush(stderr);
-      (void)scanf("%s",outfile);
+      (void)scanf("%15s",outfile);
 
       /*  Read name of the error file to be written.  */
       (void)printf("Enter the name of the error file (15 char max).\n\t");
       (void)fflush(stdout);
-      (void)scanf("%s",errfile);
+      (void)scanf("%15s",errfile);
 
       /*  Enter name of region # & name file to be read.  */
       {
 	(void)printf("Enter region # & name file to be read ");
 	(void)printf("(15 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%s",rnnfile);
+	(void)scanf("%15s",rnnfile);
       }
 
       /*  Check if dump is to occur.  */
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 	{
 	  (void)ungetc(c,fp1);
 	  (void)bu_fgets(line,200,fp1);
-	  (void)sscanf(line,"%d%s",&tmpreg,tmpname);
+	  (void)sscanf(line,"%d%149s",&tmpreg,tmpname);
 	  for(i=0; i<150; i++)
 	    {
 	      rnnname[rnnnum][i] = tmpname[i];

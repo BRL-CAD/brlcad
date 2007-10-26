@@ -844,7 +844,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     /* Build a descriptive window title bar */
-    (void)sprintf( title, "BRL-CAD /dev/ogl %s, %s",
+    (void)snprintf( title, 128, "BRL-CAD /dev/ogl %s, %s",
 		   ((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 		   "Transient Win":
 		   "Lingering Win",

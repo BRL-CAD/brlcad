@@ -135,11 +135,8 @@ get_args(int argc, register char **argv)
 		infile = "-";
 	}
 	if( argv[bu_optind] != NULL )  {
-		if( access( argv[bu_optind], 0 ) == 0 )  {
-			(void) fprintf( stderr,
-				"rle-pix: \"%s\" already exists.\n",
-				argv[bu_optind] );
-			exit( 1 );
+		if (bu_file_exists(argv[bu_optind])) {
+		    bu_exit( 1, "rle-pix: \"%s\" already exists.\n", argv[bu_optind]);
 		}
 		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
 			perror(argv[bu_optind]);

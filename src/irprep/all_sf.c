@@ -123,19 +123,19 @@ int main(int argc, char **argv)
 	/*  Find name of output file.  */
 	(void)printf("Enter name of output file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%s",outfile);
+	(void)scanf("%25s",outfile);
 
 	/*  Find name of longwave radiation exchange (lwx) file  */
 	/*  for use with PRISM (not quite PRISM ready).  */
 	(void)printf("Enter name of longwave radiation exchange");
 	(void)printf(" file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%s",lwxfile);
+	(void)scanf("%25s",lwxfile);
 
 	/*  Find name of error file.  */
 	(void)printf("Enter name of error file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%s",errfile);
+	(void)scanf("%25s",errfile);
 
 	/*  Open files.  */
 	fpw = fopen(outfile,"w");

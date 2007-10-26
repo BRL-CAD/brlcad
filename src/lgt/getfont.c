@@ -59,7 +59,7 @@ get_Font(char *fontname)
 	if( fontname == NULL )
 		fontname = FONTNAME;
 	if( fontname[0] != '/' )		/* absolute path */
-		(void) sprintf( fname, "%s/%s", FONTDIR, fontname );
+		(void) snprintf( fname, FONTNAMESZ, "%s/%s", FONTDIR, fontname );
 	else
 		(void) strncpy( fname, fontname, FONTNAMESZ );
 
