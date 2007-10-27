@@ -160,7 +160,7 @@ load_dynamic_shader(const char *material,
 	char sh_name[128]; /* XXX constants are bogus */
 
 	if (mlen < sizeof(sh_name)) {
-	    strncpy(sh_name, material, mlen);
+	    strncpy(sh_name, material, 128);
 	    sh_name[mlen] = '\0';
 	} else {
 	    bu_log("shader name too long \"%s\" %d > %d\n",
@@ -199,7 +199,7 @@ load_dynamic_shader(const char *material,
 
 	/* Look in BRL-CAD install dir under lib dir for lib{sh_name}.so */
 	snprintf(libpath, MAXPATHLEN, "/lib/lib%s.so", sh_name);
-	strncpy(libname, bu_brlcad_root(libpath, 0), MAXPATHLEN);
+	strncpy(libname, bu_brlcad_root(libpath, 1), MAXPATHLEN);
 	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 		goto done;
 
@@ -211,7 +211,7 @@ done:
 	if (shader_mfuncs)
 		bu_log("loaded from %s\n", libname);
 	else
-		bu_log("Not found\n");
+		bu_log("WARNING: shader [%s] not found\n", sh_name);
 
 	rdebug = old_rdebug;
 
