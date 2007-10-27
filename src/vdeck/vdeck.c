@@ -1739,11 +1739,7 @@ register int	w;
 }
 
 void
-vls_ftoa_vec_cvt( v, vec, w, d )
-struct bu_vls	*v;
-vect_t		vec;
-int		w;
-int		d;
+vls_ftoa_vec_cvt(struct bu_vls *v, const vect_t vec, int w, int d)
 {
 	vls_ftoa( v, vec[X]*dbip->dbi_base2local, w, d );
 	vls_ftoa( v, vec[Y]*dbip->dbi_base2local, w, d );
@@ -1751,11 +1747,7 @@ int		d;
 }
 
 void
-vls_ftoa_vec( v, vec, w, d )
-struct bu_vls	*v;
-vect_t		vec;
-int		w;
-int		d;
+vls_ftoa_vec(struct bu_vls *v, const vect_t vec, int w, int d)
 {
 	vls_ftoa( v, vec[X], w, d );
 	vls_ftoa( v, vec[Y], w, d );
@@ -1763,10 +1755,7 @@ int		d;
 }
 
 void
-vls_ftoa_cvt( v, f, w, d )
-struct bu_vls	*v;
-register double	f;
-register int	w, d;
+vls_ftoa_cvt(struct bu_vls *v, double f, int w, int d)
 {
 	vls_ftoa( v, f*dbip->dbi_base2local, w, d );
 }
@@ -1777,10 +1766,7 @@ register int	w, d;
  *	Convert float to ascii  w.df format.
  */
 void
-vls_ftoa( v, f, w, d )
-struct bu_vls	*v;
-register double	f;
-register int	w, d;
+vls_ftoa( struct bu_vls *v, double f, int w, int d )
 {
 	register char	*s;
 	register int	c, i, j;
