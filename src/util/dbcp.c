@@ -218,7 +218,7 @@ main(int argc, char **argv)
 	}
 	if (msgchar == STOP) {
 	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fpritnf(stderr, "write error on output\n");
+	    fprintf(stderr, "write error on output\n");
 	    break;
 	}
 	if (read(rfd, &msgchar, 1) != 1) {
