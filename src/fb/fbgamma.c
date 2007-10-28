@@ -98,15 +98,8 @@ void disp_image(FBIO *fb)
 	patch_width = scr_width / 8;
 	patch_height = scr_height / 14;
 
-	if ((line = (unsigned char *) malloc(scr_width*3)) == (unsigned char *)NULL) {
-		exit(-1);
-	}
-
-	if ((altline = (unsigned char *) malloc(scr_width*3)) == (unsigned char *)NULL) {
-		exit(-1);
-	} else {
-		bzero( (char *)altline, scr_width*3);
-	}
+	line = (unsigned char *) bu_malloc(scr_width*3, "line");
+	altline = (unsigned char *) bu_calloc(scr_width*3, sizeof(unsigned char), "altline");
 
 	mk_ramp(fb, 1, 1, 1, 0);
 	mk_ramp(fb, 1, 0, 0, 2);
@@ -116,8 +109,8 @@ void disp_image(FBIO *fb)
 	mk_ramp(fb, 0, 0, 1, 10);
 	mk_ramp(fb, 1, 0, 1, 12);
 
-	(void)free(line);
-	(void)free(altline);
+	(void)bu_free(line, "line");
+	(void)bu_free(altline, "altline");
 }
 
 
@@ -165,12 +158,11 @@ main(int argc, char **argv)
 		checkgamma( f );
 		gamb = 1.0 / f;
 	} else {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	if( (fbp = fb_open( framebuffer, fbsize, fbsize )) == FBIO_NULL ) {
-		exit( 2 );
+		bu_exit( 2, "Unable to open framebuffer\n" );
 	}
 
 	/* draw the gamma image if requested */
@@ -218,8 +210,7 @@ checkgamma(double g)
 {
 	if( fabs(g) < 1.0e-10 ) {
 		fprintf( stderr, "fbgamma: gamma too close to zero\n" );
-		fprintf( stderr, usage );
-		exit( 3 );
+		bu_exit(3, "%s", usage );
 	}
 }
 
