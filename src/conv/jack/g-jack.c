@@ -172,15 +172,13 @@ main(int argc, char **argv)
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 	}
 
 	/* Open BRL-CAD database */
@@ -188,11 +186,10 @@ main(int argc, char **argv)
 	argv += bu_optind;
 	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 		perror(argv[0]);
-		exit(1);
+		bu_exit(1, "Unable to open geometry database file [%s]\n", argv[0]);
 	}
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
 	/* Create .fig file name and open it. */
@@ -218,7 +215,7 @@ main(int argc, char **argv)
 
 	if ((fp_fig = fopen(bu_vls_addr(&fig_file), "w")) == NULL)  {
 		perror(bu_vls_addr(&fig_file));
-		return 2;
+		bu_exit(2, "Unable to open fig file [%s]\n", bu_vls_addr(&fig_file));
 	}
 	fprintf(fp_fig, "figure {\n");
 	bu_vls_init(&base_seg);		/* .fig figure file's main segment. */

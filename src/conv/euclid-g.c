@@ -175,10 +175,9 @@ main(int argc, char **argv)
 			efile = bu_optarg;
 			if ((fpin = fopen(efile, "r")) == NULL)
 			{
-				fprintf(stderr,	"%s: cannot open %s for reading\n",
-					argv[0], efile);
 				perror( argv[0] );
-				exit(1);
+				bu_exit(1, "%s: cannot open %s for reading\n",
+					argv[0], efile);
 			}
 			break;
 		case 'o':
@@ -194,8 +193,7 @@ main(int argc, char **argv)
 			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
@@ -221,10 +219,9 @@ main(int argc, char **argv)
 	}
 
 	if ((fpout = wdb_fopen(bfile)) == NULL) {
-		fprintf(stderr,	"%s: cannot open %s for writing\n",
-			argv[0], bfile);
 		perror( argv[0] );
-		exit(1);
+		bu_exit(1, "%s: cannot open %s for writing\n",
+			argv[0], bfile);
 	}
 
 	mk_id( fpout, title );

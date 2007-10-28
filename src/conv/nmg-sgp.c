@@ -175,33 +175,24 @@ char	*argv[];
 			bu_log("\n");
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			return 1;
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}
 
 	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		return 1;
+		bu_exit(1, usage, argv[0]);
 	}
 
 	/* Open BRL-CAD database */
 	if( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
 	{
-		bu_log( "Cannot open %s\n" , argv[bu_optind] );
 		perror(argv[0]);
-		return 1;
+		bu_exit(1, "Cannot open %s\n" , argv[bu_optind] );
 	}
-#if 0
-	if( stats )
-	{
-		edge_len_limits =
-	}
-#endif
+
 	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
+	    bu_exit(1, "db_dirbuild failed\n" );
 	}
 
 	if( out_file == NULL )
@@ -210,9 +201,8 @@ char	*argv[];
 	{
 		if ((fp_out = fopen( out_file , "w")) == NULL)
 		{
-			bu_log( "Cannot open %s\n" , out_file );
 			perror( argv[0] );
-			return 1;
+			bu_exit(1, "Cannot open %s\n" , out_file );
 		}
 	}
 

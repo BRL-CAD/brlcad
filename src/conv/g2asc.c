@@ -137,8 +137,7 @@ main(int argc, char **argv)
 	int i;
 
 	if (argc != 3) {
-		(void)fprintf(stderr, usage);
-		exit(1);
+		bu_exit(1, "%s", usage);
 	}
 
 #ifdef _WIN32
@@ -177,13 +176,11 @@ main(int argc, char **argv)
 		}
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
-			(void)fprintf(stderr, "g2asc: can't open files.");
-			exit(1);
+			bu_exit(1, "g2asc: can't open files.");
 		}
 	}
 	if (isatty(fileno(ifp))) {
-		(void)fprintf(stderr, usage);
-		exit(1);
+		bu_exit(1, "%s", usage);
 	}
 
 	Tcl_FindExecutable(argv[0]);
@@ -192,9 +189,8 @@ main(int argc, char **argv)
 
 	/* First, determine what version database this is */
 	if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )  {
-		bu_log("g2asc(%s) ERROR, file too short to be BRL-CAD database\n",
+		bu_exit(2, "g2asc(%s) ERROR, file too short to be BRL-CAD database\n",
 			iname);
-		exit(2);
 	}
 
 	if( db5_header_is_valid( (unsigned char *)&record ) )  {
@@ -205,8 +201,7 @@ main(int argc, char **argv)
 
 		if( ifp == stdin || ofp == stdout ) {
 			bu_log( "Cannot use stdin or stdout for Release 6 or later databases\n");
-			bu_log( "Please use the \"g2asc input.g output.g\" form\n" );
-			exit( 1 );
+			bu_exit(1, "Please use the \"g2asc input.g output.g\" form\n" );
 		}
 
 		bu_log("Exporting Release 6 database\n" );
@@ -219,13 +214,11 @@ main(int argc, char **argv)
 			bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
 		if( (dbip = db_open( iname, "rb" )) == NULL )  {
-			bu_log("Unable to db_open() file '%s', aborting\n", iname );
-			exit(4);
+			bu_exit(4, "Unable to db_open() file '%s', aborting\n", iname );
 		}
 		RT_CK_DBI(dbip);
 		if( db_dirbuild( dbip ) ) {
-		    bu_log( "db_dirbuild failed\n" );
-		    exit(1);
+		    bu_exit(1, "db_dirbuild failed\n" );
 		}
 
 		/* write out the title and units special */

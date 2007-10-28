@@ -208,8 +208,7 @@ main(int argc, char **argv)
 	fast3 = 0;
 	if( argc > 2 )
 	{
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	/* Get command line arguments. */
@@ -226,8 +225,7 @@ main(int argc, char **argv)
 			default:
 				fprintf( stderr, "Illegal option (%c)\n", c );
 			case '?':
-				fprintf( stderr, usage );
-				exit( 1 );
+				bu_exit(1, "%s", usage );
 		}
 	}
 

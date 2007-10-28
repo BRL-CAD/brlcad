@@ -65,7 +65,6 @@ revolve( entityno )
 int entityno;
 {
 	struct wmember	head;			/* For region */
-	const char	*trcform="rev.%d.%d";	/* Format for creating TRC names */
 	int		sol_num;		/* IGES solid type number */
 	point_t		pt;			/* Point on axis of revolution */
 	vect_t		adir;			/* Direction of axis of revolution */
@@ -222,7 +221,7 @@ int entityno;
 		}
 
 		/* Make a name for the TRC */
-		snprintf( trcptr->name, NAMESIZE, trcform, entityno, ntrcs );
+		snprintf( trcptr->name, NAMESIZE, "rev.%d.%d", entityno, ntrcs ); /* Format for creating TRC names */
 
 		/* Make the TRC */
 		if( mk_trc_top( fdout, trcptr->name, trcptr->base,

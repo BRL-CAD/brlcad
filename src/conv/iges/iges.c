@@ -71,13 +71,13 @@ static int	param_seq=0;	/* IGES file parameter section sequence number */
 static int	start_len=0;	/* Length of Start Section */
 static int	global_len=0;	/* Length of Global Section */
 static int	attribute_de;	/* DE of attribute definition entity */
-static char	*global_form="%-72.72s%c%07d\n"; /* format for global section */
-static char	*param_form="%-64.64s %7d%c%07d\n"; /* format for parameter section */
-static char	*att_string="BRL-CAD attribute definition:material name,material parameters,region flag,ident number,air code,material code (GIFT),los density,inheritance";
+static const char	*global_form="%-72.72s%c%07d\n"; /* format for global section */
+static const char	*param_form="%-64.64s %7d%c%07d\n"; /* format for parameter section */
+static const char	*att_string="BRL-CAD attribute definition:material name,material parameters,region flag,ident number,air code,material code (GIFT),los density,inheritance";
 static struct bn_tol tol;	/* tolerances */
 static struct rt_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip=NULL;
-static char	*unknown="Unknown";
+static const char	*unknown="Unknown";
 static int	unknown_count=0;
 static int	de_pointer_number;
 extern char	**independent;

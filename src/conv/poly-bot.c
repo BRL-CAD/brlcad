@@ -93,13 +93,11 @@ main(int argc, char **argv)
 		ofp = fopen(argv[2],"w");
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
-			(void)fprintf(stderr, "poly-bot: can't open files.");
-			return 1;
+			bu_exit(1, "poly-bot: can't open files.");
 		}
 	}
 	if (isatty(fileno(ifp))) {
-		(void)fprintf(stderr, usage);
-		return 1;
+		bu_exit(1, "%s", usage);
 	}
 
 	poly = (union record *)bu_malloc( POLY_BLOCK * sizeof( union record ), "poly" );
@@ -119,104 +117,104 @@ top:
 				num_rec = bu_glong( (const unsigned char *)&record.skt.skt_count );
 				others += num_rec + 1;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying a SKETCH\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying a SKETCH\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case DBID_EXTR:
 				num_rec = bu_glong( (const unsigned char *)&record.extr.ex_count );
 				others += num_rec + 1;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying an EXTUSION\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying an EXTUSION\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case DBID_NMG:
 				num_rec = bu_glong( (const unsigned char *)&record.nmg.N_count );
 				others += num_rec + 1;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying an ARBN\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying an ARBN\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case DBID_PIPE:
 				num_rec = bu_glong( (const unsigned char *)&record.pwr.pwr_count );
 				others += num_rec + 1;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying a PIPE\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying a PIPE\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case DBID_ARBN:
 				num_rec = bu_glong( (const unsigned char *)&record.n.n_grans );
 				others += num_rec + 1;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying an ARBN\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying an ARBN\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case DBID_STRSOL:
 				num_rec = DB_SS_NGRAN - 1;
 				others += num_rec + 1;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying a STRSOL\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying a STRSOL\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case ID_BSURF:
 				num_rec = record.d.d_nknots + record.d.d_nctls;
 				others += num_rec + 1;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying a NURB\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying a NURB\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case DBID_BOT:
 				bots++;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 				num_rec = bu_glong( (const unsigned char *)&record.bot.bot_nrec );
 				for( i=0 ; i<num_rec ; i++ )
 				{
 					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-						bu_bomb( "Unexpected EOF encountered while copying a BOT\n" );
+						bu_exit(1, "Unexpected EOF encountered while copying a BOT\n" );
 					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-						bu_bomb( "Write failed!!!\n" );
+						bu_exit(1, "Write failed!\n" );
 				}
 				break;
 			case ID_P_HEAD:
@@ -245,25 +243,21 @@ top:
 				ext.ext_buf = (char *)poly;
 				if( rt_functab[ID_POLY].ft_import( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
 				{
-					bu_log( "Import failed for polysolid %s\n", poly[0].p.p_name );
-					bu_bomb( "Import failed for polysolid\n" );
+					bu_exit(1, "Import failed for polysolid %s\n", poly[0].p.p_name );
 				}
 				/* Don't free this ext buffer! */
 
 				if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )  {
-					bu_log( "Unable to convert polysolid %s\n", poly[0].p.p_name );
-					bu_bomb( "Unable to convert!!!\n" );
+					bu_exit(1, "Unable to convert polysolid %s\n", poly[0].p.p_name );
 				}
 
 				BU_INIT_EXTERNAL( &ext2 );
 				if( rt_functab[ID_POLY].ft_export( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
-					bu_log( "Unable to export v4 BoT %s\n", poly[0].p.p_name );
-					bu_bomb( "Unable to convert!!!\n" );
+					bu_exit(1, "Unable to export v4 BoT %s\n", poly[0].p.p_name );
 				}
 				rt_db_free_internal( &intern, &rt_uniresource );
 				if( db_fwrite_external( ofp, poly[0].p.p_name, &ext2 ) < 0 )  {
-					bu_log( "Unable to fwrite v4 BoT %s\n", poly[0].p.p_name );
-					bu_bomb( "Unable to convert!!!\n" );
+					bu_exit(1, "Unable to fwrite v4 BoT %s\n", poly[0].p.p_name );
 				}
 				db_free_external( &ext2 );
 
@@ -272,21 +266,20 @@ top:
 				goto top;
 			}
 			case ID_P_DATA:
-				/* This should not happen!!!! */
-				bu_log( "ERROR: Unattached polysolid data record!!!!\n" );
+				/* This should not happen! */
+				bu_log( "ERROR: Unattached polysolid data record!\n" );
 				continue;
 			default:
 				if( first )
 				{
 					if( record.u_id != ID_IDENT ) {
-						bu_log( "This is not a BRL-CAD 'v4' database, aborting.\n" );
-						return 1;
+						bu_exit(1, "This is not a BRL-CAD 'v4' database, aborting.\n" );
 					}
 					first = 0;
 				}
 				others++;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
-					bu_bomb( "Write failed!!!\n" );
+					bu_exit(1, "Write failed!\n" );
 		}
 	}
 
