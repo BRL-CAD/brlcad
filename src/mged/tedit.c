@@ -859,7 +859,7 @@ editit(const char *file)
 	register int pid = 0;
 	register int xpid = 0;
 	char buffer[RT_MAXLINE] = {0};
-	char *editor = (char *)NULL;
+	const char *editor = (char *)NULL;
 	int stat = 0;
 	void (*s2)();
 	void (*s3)();
