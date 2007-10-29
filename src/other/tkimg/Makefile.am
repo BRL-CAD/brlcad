@@ -35,9 +35,8 @@ tkimg_la_LIBADD = \
 	${LIBZ} \
 	${PNG} \
 	${TCL} \
-	${TK}
-
-#	${TCLSTUB}
+	${TK} \
+	${TCLSTUB}
 
 EXTRA_DIST = \
 	init.c
