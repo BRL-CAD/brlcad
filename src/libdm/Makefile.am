@@ -17,8 +17,10 @@ endif
 
 if WITH_OPENGL
 DM_OGL_CFLAGS = -DDM_OGL -DIF_OGL $(GL_CFLAGS)
+DM_OGL_LIBS = ${LIBGL}
 else
 DM_OGL_CFLAGS =
+DM_OGL_LIBS =
 endif
 
 if WITH_TK
@@ -60,7 +62,8 @@ libdm_la_CFLAGS = \
 	${TK_CPPFLAGS}
 
 libdm_la_LIBADD = \
-	${DM_LIBS}
+	${DM_LIBS} \
+	${DM_OGL_LIBS}
 
 EXTRA_DIST = \
 	dm-glx.c \
