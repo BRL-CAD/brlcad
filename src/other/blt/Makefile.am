@@ -18,6 +18,8 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\""
 
+AM_CFLAGS = ${X_CFLAGS}
+
 lib_LTLIBRARIES = \
 	libBLT.la \
 	libBLT@BLT_SUFFIX@.la
@@ -94,7 +96,8 @@ libBLT_la_LIBADD = \
 	${LIBM} \
 	${LIBNSL} \
 	${TCL} \
-	${TK}
+	${TK} \
+	${X_LIBS}
 
 libBLT@BLT_SUFFIX@_la_SOURCES = $(libBLT_la_SOURCES)
 libBLT@BLT_SUFFIX@_la_LDFLAGS = $(libBLT_la_LDFLAGS)
