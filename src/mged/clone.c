@@ -217,7 +217,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     /* Ugh. This needs much repair/cleanup. */
     if( state->updpos == 0 ) {
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%s", &prefix, &num, &suffix, &suffix2);
-	snprintf(suffix, BUFXIZE, "%s", suffix2);
+	snprintf(suffix, BUFSIZ, "%s", suffix2);
     } else if ( state->updpos == 1 ) {
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
