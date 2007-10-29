@@ -707,7 +707,7 @@ add_to_done_part( wchar_t *name )
 
 	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
 					   "part name for done list" );
-	wcscpy( name_copy, name );
+	wcslcpy( name_copy, name, wcslen(name)+1 );
 
 	if( bu_rb_insert( done_list_part, name_copy ) < 0 ) {
 		bu_free( (char *)name_copy, "part name for done list" );
@@ -748,7 +748,7 @@ add_to_done_asm( wchar_t *name )
 
 	name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
 					   "asm name for done list" );
-	wcscpy( name_copy, name );
+	wcslcpy( name_copy, name, wcslen(name)+1 );
 
 	if( bu_rb_insert( done_list_asm, name_copy ) < 0 ) {
 		bu_free( (char *)name_copy, "asm name for done list" );
@@ -1966,7 +1966,7 @@ output_part( ProMdl model )
 		if( logger ) {
 			fprintf( logger, "Failed to tessellate %s!!!\n", curr_part_name );
 		}
-		sprintf( astr, "Failed to tessellate part (%s)", curr_part_name );
+		snprintf( astr, sizeof(astr), "Failed to tessellate part (%s)", curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 		ProMessageClear();
 		fprintf( stderr, "%s\n", astr );
@@ -1978,7 +1978,7 @@ output_part( ProMdl model )
 		if( logger ) {
 			fprintf( logger, "part (%s) is empty\n", curr_part_name );
 		}
-		sprintf( astr, "%s has no surfaces, ignoring", curr_part_name );
+		snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
 		ProMessageClear();
 		fprintf( stderr, "%s\n", astr );
@@ -2000,7 +2000,7 @@ output_part( ProMdl model )
 			if( logger ) {
 				fprintf( logger, "part (%s) has no surfaces\n", curr_part_name );
 			}
-			sprintf( astr, "%s has no surfaces, ignoring", curr_part_name );
+			snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
 			(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
 			ProMessageClear();
 			fprintf( stderr, "%s\n", astr );
@@ -2070,7 +2070,7 @@ output_part( ProMdl model )
 			/* first the BOT solid with a made-up name */
 			brl_name = get_brlcad_name( curr_part_name );
 			sol_name = (char *)bu_malloc( strlen( brl_name ) + 3, "aol_name" );
-			sprintf( sol_name, "s.%s", brl_name );
+			snprintf( sol_name, strlen(brl_name)+3, "s.%s", brl_name );
 			if( logger ) {
 				fprintf( logger, "Creating bot primitive (%s) for part %s\n",
 					 sol_name, brl_name );
@@ -2231,7 +2231,7 @@ output_part( ProMdl model )
 				fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 				return( 0 );
 			}
-			sprintf( err_mess, err_mess_form, feat_id_count, curr_part_name );
+			snprintf( err_mess, 512, err_mess_form, feat_id_count, curr_part_name );
 			(void)ProStringToWstring( werr_mess, err_mess );
 			status = ProUITextareaValueSet( "proe_brl_error", "the_message", werr_mess );
 			if( status != PRO_TK_NO_ERROR ) {
@@ -2333,10 +2333,10 @@ output_assembly( ProMdl model )
 	}
 
 	/* everything starts out in "curr_part_name", copy name to "curr_asm_name" */
-	strcpy( curr_asm_name, curr_part_name );
+	strncpy( curr_asm_name, curr_part_name, sizeof(curr_asm_name)-1 );
 
 	/* start filling in assembly info */
-	strcpy( curr_assem.name, curr_part_name );
+	strncpy( curr_assem.name, curr_part_name, sizeof(curr_assem.name)-1 );
 	curr_assem.members = NULL;
 	curr_assem.model = model;
 
@@ -2492,7 +2492,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	id_table[0] = feat->id;
 	status = ProAsmcomppathInit( (ProSolid)curr_assem->model, id_table, 1, &comp_path );
 	if( status != PRO_TK_NO_ERROR ) {
-		sprintf( astr, "Failed to get path from %s to %s (aborting)", curr_asm_name,
+		snprintf( astr, sizeof(astr), "Failed to get path from %s to %s (aborting)", curr_asm_name,
 			 curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 		ProMessageClear();
@@ -2504,7 +2504,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	/* this call accumulates the xform matrix along the path created above */
 	status = ProAsmcomppathTrfGet( &comp_path, PRO_B_TRUE, xform );
 	if( status != PRO_TK_NO_ERROR ) {
-		sprintf( astr, "Failed to get transformation matrix %s/%s, error = %d, id = %d",
+		snprintf( astr, sizeof(astr), "Failed to get transformation matrix %s/%s, error = %d, id = %d",
 			 curr_asm_name, curr_part_name, status, feat->id );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 		ProMessageClear();
@@ -2554,7 +2554,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	/* get the model for this member */
 	status = ProAsmcompMdlGet( feat, &model );
 	if( status != PRO_TK_NO_ERROR ) {
-		sprintf( astr, "Failed to get model for component %s",
+		snprintf( astr, sizeof(astr), "Failed to get model for component %s",
 			 curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 		ProMessageClear();
@@ -2566,7 +2566,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	/* get its type (part or assembly are the only ones that should make it here) */
 	status = ProMdlTypeGet( model, &type );
 	if( status != PRO_TK_NO_ERROR ) {
-		sprintf( astr, "Failed to get type for component %s",
+		snprintf( astr, sizeof(astr), "Failed to get type for component %s",
 			 curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 		ProMessageClear();
@@ -2699,7 +2699,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
 	}
 
 	/* save name */
-	strcpy( top_level, curr_part_name );
+	strlcpy( top_level, curr_part_name, sizeof(top_level) );
 
 	if( logger ) {
 		fprintf( logger, "Output top level object (%s)\n", top_level );
@@ -2713,7 +2713,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
 		/* visit all members of assembly */
 		output_assembly( model );
 	} else {
-		sprintf( astr, "Object %s is neither PART nor ASSEMBLY, skipping",
+		snprintf( astr, sizeof(astr), "Object %s is neither PART nor ASSEMBLY, skipping",
 			 curr_part_name );
 		(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
 		ProMessageClear();

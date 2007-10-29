@@ -66,8 +66,7 @@ main(int argc, char **argv)
 			overlay++;
 		} else if( argv[1][0] == '-' ) {
 			/* unknown flag */
-			fprintf( stderr, usage );
-			exit( 1 );
+			bu_exit(1, "%s", usage );
 		} else
 			break;	/* must be a filename */
 		argc--;
@@ -77,14 +76,13 @@ main(int argc, char **argv)
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1], "r")) == NULL ) {
 			fprintf( stderr, "cmap-fb: can't open \"%s\"\n", argv[1] );
-			fprintf( stderr, usage );
-			exit( 2 );
+			bu_exit(2, "%s", usage );
 		}
 	} else
 		fp = stdin;
 
 	if( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL )
-		exit( 3 );
+		bu_exit( 3, "Unable to open framebuffer\n" );
 
 	if( overlay )
 		fb_rmap( fbp, &cm );
@@ -113,10 +111,10 @@ main(int argc, char **argv)
 	ret = fb_wmap( fbp, &cm );
 	fb_close( fbp );
 	if( ret < 0 ) {
-		fprintf( stderr, "cmap-fb: couldn't write colormap\n" );
-		exit(1);
+		bu_exit(1, "cmap-fb: couldn't write colormap\n" );
 	}
-	exit(0);
+
+	return 0;
 }
 
 /*

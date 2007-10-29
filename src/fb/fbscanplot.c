@@ -114,29 +114,28 @@ main(int argc, char **argv)
 	int	yoffset;	/* position of plot on screen */
 
 	if ( !get_args( argc, argv ) )  {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	if( (fbp = fb_open( NULL, scr_width, scr_height )) == NULL )
-		exit( 2 );
+		bu_exit( 2, "Unable to open framebuffer\n" );
 	scr_width = fb_getwidth(fbp);
 	scr_height = fb_getheight(fbp);
 
 	if( outframebuffer != NULL ) {
 		if( (fboutp = fb_open( outframebuffer, scr_width, scr_width )) == NULL )
-			exit( 3 );
+			bu_exit( 3, "Unable to open framebuffer\n" );
 	} else
 		fboutp = fbp;
 
 	/* Allocate the buffers */
-	scan = (unsigned char *)malloc( (scr_width+2) * sizeof(RGBpixel) );
-	outline = (unsigned char *)malloc( (scr_width+2) * sizeof(RGBpixel) );
-	backgnd = (unsigned char *)malloc( (scr_width+2) * sizeof(RGBpixel) );
+	scan = (unsigned char *)bu_malloc( (scr_width+2) * sizeof(RGBpixel), "scan" );
+	outline = (unsigned char *)bu_malloc( (scr_width+2) * sizeof(RGBpixel), "outline");
+	backgnd = (unsigned char *)bu_malloc( (scr_width+2) * sizeof(RGBpixel), "backgnd" );
 
 	/* Read the scanline to be examined */
 	if( fb_read( fbp, 0, yline, scan+3, scr_width ) != scr_width )
-		exit(4);
+		bu_exit(4, "Unable to read scanline from framebuffer\n");
 
 	fb_make_linear_cmap(&map);
 	if( cmap_crunch )  {
@@ -243,11 +242,15 @@ main(int argc, char **argv)
 			   scan[(x+1)*3+RED], scan[(x+1)*3+GRN], scan[(x+1)*3+BLU] );
 	}
 
+	bu_free(scan, "scan");
+	bu_free(outline, "outline");
+	bu_free(backgnd, "backgnd");
+
 	fb_close( fbp );
 	if( fboutp != fbp )
 		fb_close( fboutp );
 
-	exit( 0 );
+	return 0;
 }
 
 /*

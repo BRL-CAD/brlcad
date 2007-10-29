@@ -259,17 +259,13 @@ create_name_hash( FILE *fd )
 
 		ptr = strtok( line, " \t\n" );
 		if( !ptr ) {
-			bu_log( "*****Error processing part name file at line:\n" );
-			bu_log( "\t%s\n", line );
-			exit( 1 );
+			bu_exit(1, "*****Error processing part name file at line:\n\t%s\n", line );
 		}
 		part_no = bu_strdup( ptr );
 		lower_case( part_no );
 		ptr = strtok( (char *)NULL, " \t\n" );
 		if( !ptr ) {
-			bu_log( "*****Error processing part name file at line:\n" );
-			bu_log( "\t%s\n", line );
-			exit( 1 );
+			bu_exit(1, "*****Error processing part name file at line:\n\t%s\n", line );
 		}
 		desc = bu_strdup( ptr );
 		lower_case( desc );
@@ -384,8 +380,7 @@ Add_vert( fastf_t *vertex )
 
 		part_verts = (fastf_t *)realloc( part_verts, sizeof( fastf_t ) * max_vert * 3 );
 		if( !part_verts ) {
-			fprintf( stderr, "ERROR: Failed to allocate memory for part vertices\n" );
-			exit( 1 );
+			bu_exit(1, "ERROR: Failed to allocate memory for part vertices\n" );
 		}
 	}
 
@@ -470,8 +465,7 @@ add_triangle( int v1, int v2, int v3 )
 		max_tri += TRI_BLOCK;
 		part_tris = (int *)realloc( part_tris, sizeof( int ) * max_tri * 3 );
 		if( !part_tris ) {
-			fprintf( stderr, "ERROR: Failed to allocate memory for part triangles\n" );
-			exit( 1 );
+			bu_exit(1, "ERROR: Failed to allocate memory for part triangles\n" );
 		}
 	}
 
@@ -493,8 +487,7 @@ add_face_normals( int v1, int v2, int v3 )
 		max_norm += NORM_BLOCK;
 		part_norms = (int *)realloc( part_norms, sizeof( int ) * max_norm * 3 );
 		if( !part_norms ) {
-			fprintf( stderr, "ERROR: Failed to allocate memory for part triangles\n" );
-			exit( 1 );
+			bu_exit(1, "ERROR: Failed to allocate memory for part triangles\n" );
 		}
 	}
 
@@ -829,7 +822,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		    (is_end && BU_LIST_NEXT_IS_HEAD( &pt->l, &pt_head.l )) ) {
 			if( mk_rcc( wdb_fd, outer_solid_name, pt->pt, height, outer_radius ) ) {
 				UF_EVAL_free( evaluator );
-				bu_log( "Failed to make RCC primitive!!!\n" );
+				bu_log( "Failed to make RCC primitive!\n" );
 				bu_free( outer_solid_name, "outer_solid_name" );
 				if( inner_solid_name ) {
 					bu_free( inner_solid_name, "inner_solid_name" );
@@ -840,7 +833,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 			if( inner_solid_name ) {
 				if( mk_rcc( wdb_fd, inner_solid_name, pt->pt, height, inner_radius ) ) {
 					UF_EVAL_free( evaluator );
-					bu_log( "Failed to make RCC primitive!!!\n" );
+					bu_log( "Failed to make RCC primitive!\n" );
 					bu_free( outer_solid_name, "outer_solid_name" );
 					bu_free( inner_solid_name, "inner_solid_name" );
 					return( 1 );
@@ -850,7 +843,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		} else {
 			if( mk_particle( wdb_fd, outer_solid_name, pt->pt, height, outer_radius, outer_radius ) ) {
 				UF_EVAL_free( evaluator );
-				bu_log( "Failed to make particle primitive!!!\n" );
+				bu_log( "Failed to make particle primitive!\n" );
 				bu_free( outer_solid_name, "outer_solid_name" );
 				if( inner_solid_name ) {
 					bu_free( inner_solid_name, "inner_solid_name" );
@@ -861,7 +854,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 			if( inner_solid_name ) {
 				if( mk_particle( wdb_fd, inner_solid_name, pt->pt, height, inner_radius, inner_radius ) ) {
 					UF_EVAL_free( evaluator );
-					bu_log( "Failed to make particle primitive!!!\n" );
+					bu_log( "Failed to make particle primitive!\n" );
 					bu_free( outer_solid_name, "outer_solid_name" );
 					bu_free( inner_solid_name, "inner_solid_name" );
 					return( 1 );
@@ -928,7 +921,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	if( is_start || is_end ) {
 		if( mk_rcc( wdb_fd, outer_solid_name, start_f, height, outer_radius ) ) {
 			UF_EVAL_free( evaluator );
-			bu_log( "Failed to make RCC primitive!!!\n" );
+			bu_log( "Failed to make RCC primitive!\n" );
 			bu_free( outer_solid_name, "outer_solid_name" );
 			if( inner_solid_name ) {
 				bu_free( inner_solid_name, "inner_solid_name" );
@@ -939,7 +932,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		if( inner_solid_name ) {
 			if( mk_rcc( wdb_fd, inner_solid_name, start_f, height, inner_radius ) ) {
 				UF_EVAL_free( evaluator );
-				bu_log( "Failed to make RCC primitive!!!\n" );
+				bu_log( "Failed to make RCC primitive!\n" );
 				bu_free( outer_solid_name, "outer_solid_name" );
 				bu_free( inner_solid_name, "inner_solid_name" );
 				return( 1 );
@@ -949,7 +942,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	} else {
 		if( mk_particle( wdb_fd, outer_solid_name, start_f, height, outer_radius, outer_radius ) ) {
 			UF_EVAL_free( evaluator );
-			bu_log( "Failed to make particle primitive!!!\n" );
+			bu_log( "Failed to make particle primitive!\n" );
 			bu_free( outer_solid_name, "outer_solid_name" );
 			if( inner_solid_name ) {
 				bu_free( inner_solid_name, "inner_solid_name" );
@@ -960,7 +953,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		if( inner_solid_name ) {
 			if( mk_particle( wdb_fd, inner_solid_name, start_f, height, inner_radius, inner_radius ) ) {
 				UF_EVAL_free( evaluator );
-				bu_log( "Failed to make particle primitive!!!\n" );
+				bu_log( "Failed to make particle primitive!\n" );
 				bu_free( outer_solid_name, "outer_solid_name" );
 				bu_free( inner_solid_name, "inner_solid_name" );
 				return( 1 );
@@ -1038,10 +1031,9 @@ get_blend_radius( tag_t feat_tag, char *part_name, double units_conv, double *bl
 
 	UF_func( UF_MODL_ask_exp_desc_of_feat(feat_tag, &n_exps, &descs, &exps ) );
 	if( get_exp_value( "Default Radius", n_exps, exps, descs, &tmp ) ) {
-		bu_log( "Failed to get radius for blend in part %s\n", part_name );
 		UF_free( exps );
 		UF_free( descs );
-		bu_bomb( "Failed to get radius for blend\n" );
+		bu_exit(1, "Failed to get radius for blend in part %s\n", part_name );
 	}
 	*blend_radius = tmp * units_conv;
 
@@ -2167,7 +2159,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 		VSCALE( height, dir, CB_depth );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_rcc( wdb_fd, solid_name, base, height, CB_radius ) ) {
-			bu_log( "Failed to make RCC for simple hole feature!!\n" );
+			bu_log( "Failed to make RCC for simple hole feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2182,7 +2174,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 		VSCALE( height, dir, CS_depth );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, base, height, CS_radius, Radius ) ) {
-			bu_log( "Failed to make TRC for conter sink feature!!\n" );
+			bu_log( "Failed to make TRC for conter sink feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2194,7 +2186,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 	VSCALE( height, dir, Depth );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, base, height, Radius ) ) {
-		bu_log( "Failed to make RCC for simple hole feature!!\n" );
+		bu_log( "Failed to make RCC for simple hole feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -2211,7 +2203,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 		solid_name = create_unique_brlcad_solid_name();
 		DO_INDENT;
 		if( mk_trc_h( wdb_fd, solid_name, base, height, Radius, MIN_RADIUS ) ) {
-			bu_log( "Failed to make TRC for simple hole (tip) feature!!\n" );
+			bu_log( "Failed to make TRC for simple hole (tip) feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2327,7 +2319,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2345,7 +2337,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2358,7 +2350,7 @@ do_rect_pocket(
 		VSUB2( trc_height, trc_top, trc_base );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2368,7 +2360,7 @@ do_rect_pocket(
 		VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, -zlen/2.0+c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2378,7 +2370,7 @@ do_rect_pocket(
 		VJOIN2( trc_base, base, -ylen/2.0+c_radius, diry, zlen/2.0-c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2388,7 +2380,7 @@ do_rect_pocket(
 		VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, zlen/2.0-c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2407,7 +2399,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2418,7 +2410,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[3], &pts[0] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[0], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2428,7 +2420,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[6], &pts[3] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[3], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2438,7 +2430,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[9], &pts[6] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[6], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2448,7 +2440,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[0], &pts[9] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[9], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2471,7 +2463,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2490,7 +2482,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2501,7 +2493,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[3], &pts[0] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[0], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2511,7 +2503,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[6], &pts[3] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[3], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2521,7 +2513,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[9], &pts[6] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[6], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2531,7 +2523,7 @@ do_rect_pocket(
 		VSUB2( part_height, &pts[0], &pts[9] );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, &pts[9], part_height, f_radius, f_radius ) ) {
-			bu_log( "Failed to make Particle for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2544,7 +2536,7 @@ do_rect_pocket(
 		VSUB2( trc_height, trc_top, trc_base );
 		rcc1 = create_unique_brlcad_solid_name();
 		if( mk_rcc( wdb_fd, rcc1, trc_base, trc_height, f_radius ) ) {
-			bu_log( "Failed to make RCC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 			bu_free( rcc1, "rcc1" );
 			return( 1 );
 		}
@@ -2555,7 +2547,7 @@ do_rect_pocket(
 		VSUB2( trc_height, trc_top, trc_base );
 		rcc2 = create_unique_brlcad_solid_name();
 		if( mk_rcc( wdb_fd, rcc2, trc_base, trc_height, f_radius ) ) {
-			bu_log( "Failed to make RCC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 			bu_free( rcc2, "rcc2" );
 			return( 1 );
 		}
@@ -2566,7 +2558,7 @@ do_rect_pocket(
 		VSUB2( trc_height, trc_top, trc_base );
 		rcc3 = create_unique_brlcad_solid_name();
 		if( mk_rcc( wdb_fd, rcc3, trc_base, trc_height, f_radius ) ) {
-			bu_log( "Failed to make RCC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 			bu_free( rcc3, "rcc3" );
 			return( 1 );
 		}
@@ -2577,7 +2569,7 @@ do_rect_pocket(
 		VSUB2( trc_height, trc_top, trc_base );
 		rcc4 = create_unique_brlcad_solid_name();
 		if( mk_rcc( wdb_fd, rcc4, trc_base, trc_height, f_radius ) ) {
-			bu_log( "Failed to make RCC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 			bu_free( rcc4, "rcc4" );
 			return( 1 );
 		}
@@ -2628,7 +2620,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2646,7 +2638,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2659,7 +2651,7 @@ do_rect_pocket(
 		VSUB2( trc_height, trc_top, trc_base );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2669,7 +2661,7 @@ do_rect_pocket(
 		VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, -zlen/2.0+c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2679,7 +2671,7 @@ do_rect_pocket(
 		VJOIN2( trc_base, base, -ylen/2.0+c_radius, diry, zlen/2.0-c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2689,7 +2681,7 @@ do_rect_pocket(
 		VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, zlen/2.0-c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2709,7 +2701,7 @@ do_rect_pocket(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2800,7 +2792,7 @@ do_cyl_pocket(
 
 			solid_name = create_unique_brlcad_solid_name();
 			if( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
-				bu_log( "Failed to make TRC for Cylindrical Pocket feature!!\n" );
+				bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 				bu_free( solid_name, "solid_name" );
 				return( 1 );
 			}
@@ -2811,7 +2803,7 @@ do_cyl_pocket(
 			VADD2( center, base, height );
 			solid_name = create_unique_brlcad_solid_name();
 			if( mk_sph( wdb_fd, solid_name, center, radius2 ) ) {
-				bu_log( "Failed to make SPH for Cylindrical Pocket feature!!\n" );
+				bu_log( "Failed to make SPH for Cylindrical Pocket feature!\n" );
 				bu_free( solid_name, "solid_name" );
 				return( 1 );
 			}
@@ -2826,7 +2818,7 @@ do_cyl_pocket(
 
 				solid_name = create_unique_brlcad_solid_name();
 				if( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
-					bu_log( "Failed to make TRC for Cylindrical Pocket feature!!\n" );
+					bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 					bu_free( solid_name, "solid_name" );
 					return( 1 );
 				}
@@ -2836,7 +2828,7 @@ do_cyl_pocket(
 			}
 			solid_name = create_unique_brlcad_solid_name();
 			if( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
-				bu_log( "Failed to make TRC for Cylindrical Pocket feature!!\n" );
+				bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 				bu_free( solid_name, "solid_name" );
 				return( 1 );
 			}
@@ -2848,7 +2840,7 @@ do_cyl_pocket(
 			VSCALE( height, dir, ht - tmp_ht );
 			solid_name = create_unique_brlcad_solid_name();
 			if( mk_rcc( wdb_fd, solid_name, base2, height, radius4 ) ) {
-				bu_log( "Failed to make RCC for cylinderical pocket feature!!\n" );
+				bu_log( "Failed to make RCC for cylinderical pocket feature!\n" );
 				bu_free( solid_name, "solid_name" );
 				return( 1 );
 			}
@@ -2858,7 +2850,7 @@ do_cyl_pocket(
 			VJOIN1( base2, base, ht - round_rad, dir );
 			solid_name = create_unique_brlcad_solid_name();
 			if( mk_tor( wdb_fd, solid_name, base2, dir, radius4, round_rad ) ) {
-				bu_log( "Failed to make TOR for cylinderical pocket feature!!\n" );
+				bu_log( "Failed to make TOR for cylinderical pocket feature!\n" );
 				bu_free( solid_name, "solid_name" );
 				return( 1 );
 			}
@@ -2874,7 +2866,7 @@ do_cyl_pocket(
 		VSCALE( height, dir, ht );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
-			bu_log( "Failed to make TRC for Cylindrical Pocket feature!!\n" );
+			bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -2958,7 +2950,7 @@ do_rect_slot(
 
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-		bu_log( "Failed to make ARB8 for Rectangular Slot feature!!\n" );
+		bu_log( "Failed to make ARB8 for Rectangular Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3049,7 +3041,7 @@ do_rect_pad(
 		VJOIN3( &pts[21], &pts[9], depth, dirx, d, diry, -d, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pad feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pad feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3069,7 +3061,7 @@ do_rect_pad(
 		VJOIN2( &pts[21], &pts[9], depth, dirx, -d, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pad feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pad feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3086,7 +3078,7 @@ do_rect_pad(
 		VJOIN2( &pts[21], &pts[9], depth, dirx, d, diry );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Rectangular Pad feature!!\n" );
+			bu_log( "Failed to make ARB8 for Rectangular Pad feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3098,7 +3090,7 @@ do_rect_pad(
 		VSCALE( height, dirx, depth );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pad feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3108,7 +3100,7 @@ do_rect_pad(
 		VJOIN2( trc_base, base, ylen/2.0 - c_radius, diry, -zlen/2.0 + c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pad feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3118,7 +3110,7 @@ do_rect_pad(
 		VJOIN2( trc_base, base, ylen/2.0 - c_radius, diry, zlen/2.0 - c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pad feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3128,7 +3120,7 @@ do_rect_pad(
 		VJOIN2( trc_base, base, -ylen/2.0 + c_radius, diry, zlen/2.0 - c_radius, dirz );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
-			bu_log( "Failed to make TRC for Rectangular Pad feature!!\n" );
+			bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3220,7 +3212,7 @@ do_ball_end_slot(
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for Ball End Slot feature!!\n" );
+			bu_log( "Failed to make ARB8 for Ball End Slot feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3232,7 +3224,7 @@ do_ball_end_slot(
 		VSCALE( part_height, diry, length-radius*2.0 );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, part_base, part_height, radius, radius ) ) {
-			bu_log( "Failed to make particle solid for Ball End Slot feature!!\n" );
+			bu_log( "Failed to make particle solid for Ball End Slot feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3246,7 +3238,7 @@ do_ball_end_slot(
 		bu_log( "Creating RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 			solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), radius );
 		if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
-			bu_log( "Failed to make RCC for Ball End Slot feature!!\n" );
+			bu_log( "Failed to make RCC for Ball End Slot feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3258,7 +3250,7 @@ do_ball_end_slot(
 		bu_log( "Creating RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 			solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), radius );
 		if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
-			bu_log( "Failed to make RCC for Ball End Slot feature!!\n" );
+			bu_log( "Failed to make RCC for Ball End Slot feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3269,7 +3261,7 @@ do_ball_end_slot(
 		VSCALE( part_height, dirx, -depth+radius );
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_particle( wdb_fd, solid_name, base, part_height, radius, radius ) ) {
-			bu_log( "Failed to make particle solid for Ball End Slot feature!!\n" );
+			bu_log( "Failed to make particle solid for Ball End Slot feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			return( 1 );
 		}
@@ -3370,7 +3362,7 @@ do_t_slot( tag_t feat_tag,
 
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-		bu_log( "Failed to make ARB8 for T Slot feature!!\n" );
+		bu_log( "Failed to make ARB8 for T Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3388,7 +3380,7 @@ do_t_slot( tag_t feat_tag,
 
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-		bu_log( "Failed to make ARB8 for T Slot feature!!\n" );
+		bu_log( "Failed to make ARB8 for T Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3399,7 +3391,7 @@ do_t_slot( tag_t feat_tag,
 	VSCALE( rcc_height, dirx, -top_depth );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, top_radius ) ) {
-		bu_log( "Failed to make RCC for T Slot feature!!\n" );
+		bu_log( "Failed to make RCC for T Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3409,7 +3401,7 @@ do_t_slot( tag_t feat_tag,
 	VJOIN1( rcc_base, base, -length/2.0 + bottom_radius, diry );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, top_radius ) ) {
-		bu_log( "Failed to make RCC for T Slot feature!!\n" );
+		bu_log( "Failed to make RCC for T Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3420,7 +3412,7 @@ do_t_slot( tag_t feat_tag,
 	VSCALE( rcc_height, dirx, -bottom_depth );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, bottom_radius ) ) {
-		bu_log( "Failed to make RCC for T Slot feature!!\n" );
+		bu_log( "Failed to make RCC for T Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3431,7 +3423,7 @@ do_t_slot( tag_t feat_tag,
 	VSCALE( rcc_height, dirx, -bottom_depth );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, bottom_radius ) ) {
-		bu_log( "Failed to make RCC for T Slot feature!!\n" );
+		bu_log( "Failed to make RCC for T Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3533,7 +3525,7 @@ do_u_slot( tag_t feat_tag,
 
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-		bu_log( "Failed to make ARB8 for U Slot feature!!\n" );
+		bu_log( "Failed to make ARB8 for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3551,7 +3543,7 @@ do_u_slot( tag_t feat_tag,
 
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-		bu_log( "Failed to make ARB8 for U Slot feature!!\n" );
+		bu_log( "Failed to make ARB8 for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3563,7 +3555,7 @@ do_u_slot( tag_t feat_tag,
 	VSCALE( rcc_height, dirx, -depth+corner_radius );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
-		bu_log( "Failed to make RCC for U Slot feature!!\n" );
+		bu_log( "Failed to make RCC for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3573,7 +3565,7 @@ do_u_slot( tag_t feat_tag,
 	VJOIN1( rcc_base, base, +length/2.0 - radius, diry );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
-		bu_log( "Failed to make RCC for U Slot feature!!\n" );
+		bu_log( "Failed to make RCC for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3585,7 +3577,7 @@ do_u_slot( tag_t feat_tag,
 	VSCALE( rcc_height, dirx, -corner_radius );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius-corner_radius ) ) {
-		bu_log( "Failed to make RCC for U Slot feature!!\n" );
+		bu_log( "Failed to make RCC for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3595,7 +3587,7 @@ do_u_slot( tag_t feat_tag,
 	VJOIN1( rcc_base, rcc_base, -length+radius*2.0, diry );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius-corner_radius ) ) {
-		bu_log( "Failed to make RCC for U Slot feature!!\n" );
+		bu_log( "Failed to make RCC for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3605,7 +3597,7 @@ do_u_slot( tag_t feat_tag,
 	/* Two torii for the rounded edges on the bottom ends */
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_tor( wdb_fd, solid_name, rcc_base, dirx, radius-corner_radius, corner_radius ) ) {
-		bu_log( "Failed to make Torus for U Slot feature!!\n" );
+		bu_log( "Failed to make Torus for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3615,7 +3607,7 @@ do_u_slot( tag_t feat_tag,
 	VJOIN1( rcc_base, rcc_base, +length-radius*2.0, diry );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_tor( wdb_fd, solid_name, rcc_base, dirx, radius-corner_radius, corner_radius ) ) {
-		bu_log( "Failed to make Torus for U Slot feature!!\n" );
+		bu_log( "Failed to make Torus for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3628,7 +3620,7 @@ do_u_slot( tag_t feat_tag,
 	VSCALE( rcc_height, diry, length - radius*2.0 );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, corner_radius ) ) {
-		bu_log( "Failed to make RCC for U Slot feature!!\n" );
+		bu_log( "Failed to make RCC for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3638,7 +3630,7 @@ do_u_slot( tag_t feat_tag,
 	VJOIN1( rcc_base, rcc_base, (radius-corner_radius)*2.0, dirz );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, corner_radius ) ) {
-		bu_log( "Failed to make RCC for U Slot feature!!\n" );
+		bu_log( "Failed to make RCC for U Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3731,7 +3723,7 @@ do_dove_tail_slot( tag_t feat_tag,
 
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-		bu_log( "Failed to make ARB8 for Dovetail Slot feature!!\n" );
+		bu_log( "Failed to make ARB8 for Dovetail Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3742,7 +3734,7 @@ do_dove_tail_slot( tag_t feat_tag,
 	VSCALE( trc_height, dirx, -depth );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, top_radius, bottom_radius ) ) {
-		bu_log( "Failed to make TRC for Dovetail Slot feature!!\n" );
+		bu_log( "Failed to make TRC for Dovetail Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3752,7 +3744,7 @@ do_dove_tail_slot( tag_t feat_tag,
 	VJOIN1( trc_base, base, -length/2.0+top_radius, diry );
 	solid_name = create_unique_brlcad_solid_name();
 	if( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, top_radius, bottom_radius ) ) {
-		bu_log( "Failed to make TRC for Dovetail Slot feature!!\n" );
+		bu_log( "Failed to make TRC for Dovetail Slot feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( 1 );
 	}
@@ -3779,7 +3771,7 @@ build_rect_torus( point_t rcc_base,
 	bu_log( "\tbuilding RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 		solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), outer_radius );
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, outer_radius ) ) {
-		bu_log( "Failed to make RCC for rectangular torus!!\n" );
+		bu_log( "Failed to make RCC for rectangular torus!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( (char *)NULL );
 	}
@@ -3790,7 +3782,7 @@ build_rect_torus( point_t rcc_base,
 	bu_log( "\tbuilding RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 		solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), inner_radius );
 	if( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, inner_radius ) ) {
-		bu_log( "Failed to make RCC for rectangular torus!!\n" );
+		bu_log( "Failed to make RCC for rectangular torus!\n" );
 		bu_free( solid_name, "solid_name" );
 		return( (char *)NULL );
 	}
@@ -3958,7 +3950,7 @@ do_groove( int groove_type,
 	switch( groove_type ) {
 		case RECT_GROOVE:
 			if( outer_radius <= 0.0 ) {
-				bu_log( "Unable to build rectangular groove!!\n" );
+				bu_log( "Unable to build rectangular groove!\n" );
 				return( 0 );
 			}
 			VJOIN1( rcc_base, base, -groove_width/2.0, dirx );
@@ -3978,13 +3970,13 @@ do_groove( int groove_type,
 			solid_name = create_unique_brlcad_solid_name();
 			if( internal_groove ) {
 				if( mk_tor( wdb_fd, solid_name, base, dirx, groove_radius - ball_radius, ball_radius ) ) {
-					bu_log( "Failed to make TOR for Ball End Groove feature!!\n" );
+					bu_log( "Failed to make TOR for Ball End Groove feature!\n" );
 					bu_free( solid_name, "solid_name" );
 					return( 1 );
 				}
 			} else {
 				if( mk_tor( wdb_fd, solid_name, base, dirx, groove_radius + ball_radius, ball_radius ) ) {
-					bu_log( "Failed to make TOR for Ball End Groove feature!!\n" );
+					bu_log( "Failed to make TOR for Ball End Groove feature!\n" );
 					bu_free( solid_name, "solid_name" );
 					return( 1 );
 				}
@@ -4016,13 +4008,13 @@ do_groove( int groove_type,
 			solid_name = create_unique_brlcad_solid_name();
 			if( internal_groove ) {
 				if( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius-corner_radius, corner_radius ) ) {
-					bu_log( "Failed to make TOR for U Groove feature!!\n" );
+					bu_log( "Failed to make TOR for U Groove feature!\n" );
 					bu_free( solid_name, "solid_name" );
 					return( 1 );
 				}
 			} else {
 				if( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius+corner_radius, corner_radius ) ) {
-					bu_log( "Failed to make TOR for U Groove feature!!\n" );
+					bu_log( "Failed to make TOR for U Groove feature!\n" );
 					bu_free( solid_name, "solid_name" );
 					return( 1 );
 				}
@@ -4034,13 +4026,13 @@ do_groove( int groove_type,
 			solid_name = create_unique_brlcad_solid_name();
 			if( internal_groove ) {
 				if( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius-corner_radius, corner_radius ) ) {
-					bu_log( "Failed to make TOR for U Groove feature!!\n" );
+					bu_log( "Failed to make TOR for U Groove feature!\n" );
 					bu_free( solid_name, "solid_name" );
 					return( 1 );
 				}
 			} else {
 				if( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius+corner_radius, corner_radius ) ) {
-					bu_log( "Failed to make TOR for U Groove feature!!\n" );
+					bu_log( "Failed to make TOR for U Groove feature!\n" );
 					bu_free( solid_name, "solid_name" );
 					return( 1 );
 				}
@@ -4100,7 +4092,7 @@ convert_a_feature( tag_t feat_tag,
 
 	if( UF_MODL_ask_exp_desc_of_feat(feat_tag, &n_exps, &descs, &exps ) ) {
 		DO_INDENT;
-		bu_log( "UF_MODL_ask_exp_desc_of_feat() failed!!!\n" );
+		bu_log( "UF_MODL_ask_exp_desc_of_feat() failed!\n" );
 		return( 1 );
 	}
 
@@ -4111,7 +4103,7 @@ convert_a_feature( tag_t feat_tag,
 		feat_name, feat_type, feat_sign[sign], prim_no );
 #if 0
 	if( !strncmp( feat_name, "UNITE", 5 ) ) {
-		bu_log( "Cannot handle UNITE features yet!!\n" );
+		bu_log( "Cannot handle UNITE features yet!\n" );
 		UF_free( feat_name );
 		UF_free( feat_type );
 		return( 1 );
@@ -4143,7 +4135,7 @@ convert_a_feature( tag_t feat_tag,
 		}
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_rcc( wdb_fd, solid_name, base, height, radius ) ) {
-			bu_log( "Failed to make RCC for cylinder feature!!\n" );
+			bu_log( "Failed to make RCC for cylinder feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			failed = 1;
 			goto out;
@@ -4162,7 +4154,7 @@ convert_a_feature( tag_t feat_tag,
 		}
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_arb8( wdb_fd, solid_name, pts ) ) {
-			bu_log( "Failed to make ARB8 for block feature!!\n" );
+			bu_log( "Failed to make ARB8 for block feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			failed = 1;
 			goto out;
@@ -4183,7 +4175,7 @@ convert_a_feature( tag_t feat_tag,
 		}
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_sph( wdb_fd, solid_name, center, radius ) ) {
-			bu_log( "Failed to make SPHERE for sphere feature!!\n" );
+			bu_log( "Failed to make SPHERE for sphere feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			failed = 1;
 			goto out;
@@ -4205,7 +4197,7 @@ convert_a_feature( tag_t feat_tag,
 		}
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_cone( wdb_fd, solid_name, base, dirv, height, radbase, radtop ) ) {
-			bu_log( "Failed to make TRC for cone feature!!\n" );
+			bu_log( "Failed to make TRC for cone feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			failed = 1;
 			goto out;
@@ -4482,7 +4474,7 @@ convert_a_feature( tag_t feat_tag,
 
 		solid_name = create_unique_brlcad_solid_name();
 		if( mk_trc_h( wdb_fd, solid_name, base, Height, radius1, radius2 ) ) {
-			bu_log( "Failed to make TRC for BOSS feature!!\n" );
+			bu_log( "Failed to make TRC for BOSS feature!\n" );
 			bu_free( solid_name, "solid_name" );
 			failed = 1;
 			goto out;
@@ -5014,7 +5006,7 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
 	bn_mat_mul( new_xform, curr_xform, tmp_xform );
 
 	if( child_tag == NULL_TAG ) {
-		bu_log( "Child is not loaded!!!\n" );
+		bu_log( "Child is not loaded!\n" );
 	} else {
 		curr_level++;
 		comp_name = process_part( child_tag, new_xform, subpart_name,
@@ -5754,8 +5746,7 @@ main(int ac, char *av[])
     tol.para = 1.0 - tol.perp;
 
     if (i+1 > ac) {
-	printf( usage, av[0]);
-	return -1;
+	bu_exit(1, usage, av[0]);
     }
 
     vert_tree_root = create_vert_tree();
@@ -5780,24 +5771,21 @@ main(int ac, char *av[])
 
     if( use_part_name_hash ) {
 	    if( (fd_parts=fopen( part_name_file, "r" )) == NULL ) {
-		    bu_log( "Cannot open part name file (%s)\n", part_name_file );
 		    perror( av[0] );
-		    exit( 1 );
+		    bu_exit(1, "Cannot open part name file (%s)\n", part_name_file );
 	    }
 	    create_name_hash( fd_parts );
     }
 
     if( !output_file ) {
-	printf( "ERROR: Output file name is required!!\n" );
-	printf( usage, av[0]);
-	return -1;
+	printf( "ERROR: Output file name is required!\n" );
+	bu_exit(1, usage, av[0]);
     }
 
     /* open BRL-CAD database */
     if( (wdb_fd=wdb_fopen( output_file ) ) == NULL ) {
-	    fprintf( stderr, "ERROR: Cannot open output file (%s)\n", output_file );
 	    perror( *av );
-	    return -1;
+	    bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file );
     }
 
     /* start up UG interface */

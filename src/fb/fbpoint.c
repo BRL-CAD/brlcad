@@ -180,8 +180,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 	if( argc > 1 ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	/* fix up pointers for printf */
@@ -191,7 +190,7 @@ main(int argc, char **argv)
 		yprefix = &null_str;
 
 	if( (fbp = fb_open( NULL, width, height )) == NULL )
-		exit(12);
+		bu_exit(12, "Unable to open framebuffer\n");
 
 	JumpSpeed = fb_getwidth(fbp)/16;
 	if( JumpSpeed < 2 )  JumpSpeed = 2;
@@ -247,7 +246,7 @@ main(int argc, char **argv)
 		printf( "%s%d %s%d\n", xprefix, curX, yprefix, curY );
 
 	fb_close( fbp );
-	exit( 0 );
+	return 0;
 }
 
 /*

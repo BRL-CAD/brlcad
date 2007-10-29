@@ -346,7 +346,7 @@ main(int argc, char *argv[])
 
     cout << "Number of primitives processed: " << g_body_cnt << endl;
     cout << "GOT HERE!" << endl;
-    abort();
+    abort(); /* !!! should not need this */
 
     return 0;
 }
@@ -361,8 +361,7 @@ void usage(char *s)
 	fputs( s, stderr );
     }
 
-    fprintf(stderr, usage_msg, prog_name);
-    exit(1);
+    bu_exit(1, usage_msg, prog_name);
 }
 
 
@@ -583,8 +582,7 @@ describe_tree(  tree *tree,
 	    bu_vls_strcat( str, "NOP" );
 	    break;
 	default:
-	    bu_log( "ERROR: describe_tree() got unrecognized op (%d)\n", tree->tr_op );
-	    bu_bomb( "ERROR: bad op\n" );
+	    bu_exit(2, "ERROR: describe_tree() got unrecognized op (%d)\n", tree->tr_op );
 	}
 }
 
@@ -1071,7 +1069,7 @@ primitive_func( db_tree_state *tsp,
 		    NMG_CK_MODEL(m);
 
 		    if (rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, tsp->ts_ttol, tsp->ts_tol) != 0) {
-			exit(-1);
+			bu_exit(1, "Failed to tessellate!\n");
 		    }
 
 		    //bu_log("triangulate %d\n", ip->idb_minor_type);
@@ -1366,8 +1364,8 @@ booltree_evaluate( tree *tp, resource *resp )
 	/* For sub and add, if rhs is 0, result is lhs */
 	return tl;
     }
-    if( tl->tr_op != OP_DB_LEAF )  bu_bomb("booltree_evaluate() bad left tree\n");
-    if( tr->tr_op != OP_DB_LEAF )  bu_bomb("booltree_evaluate() bad right tree\n");
+    if( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
+    if( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
 
     bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
     cout << "******" << tl->tr_d.td_name << op_str << tr->tr_d.td_name << "***********" << endl;

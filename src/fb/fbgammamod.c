@@ -80,13 +80,14 @@ do_file(void)
 		perror(input_file);
 		exit(1);
 	}
-	output_file = (char *)malloc( strlen(input_file)+10 );
+	output_file = (char *)bu_malloc( strlen(input_file)+10, "output_file" );
 	snprintf(output_file, strlen(input_file)+9, "MOD_%s", input_file);
 
 	if( (ofp = fopen( output_file, "w" )) == NULL )  {
 		perror(output_file);
 		exit(2);
 	}
+	bu_free(output_file, "output_file");
 
 	/* Shift cmap to be more useful */
 	for( i=0; i<256; i++ )  {
@@ -116,7 +117,7 @@ do_fb(void)
 	FBIO	*fbp;
 
 	if( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
-		exit( 2 );
+		bu_exit( 2, "Unable to open framebuffer\n" );
 	}
 	if( fb_wmap( fbp, &map ) < 0 )
 		fprintf( stderr, "fbgammamod: unable to write color map\n");
@@ -149,15 +150,13 @@ main(int argc, char **argv)
 			input_file = bu_optarg;
 			break;
 		default:
-			fprintf( stderr, "fbgammamod: Unrecognized option '%c'\n%s",
+			bu_exit(2, "fbgammamod: Unrecognized option '%c'\n%s",
 				i, usage);
-			exit(2);
 		}
 	}
 
 	if( bu_optind != argc - 13 )  {
-		fprintf( stderr, usage );
-		exit(1);
+		bu_exit(1, "%s", usage );
 	}
 
 	/* Gobble 13 positional args */
@@ -240,11 +239,13 @@ main(int argc, char **argv)
 				map.cm_red[i], map.cm_green[i], map.cm_blue[i] );
 	}
 
-	if( !input_file )
+	if (!input_file) {
 		do_fb();
-	else
+	} else {
 		do_file();
-	exit(0);
+	}
+
+	return 0;
 }
 
 /*
