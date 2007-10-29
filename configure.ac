@@ -2334,6 +2334,72 @@ AC_SUBST(LIBZ)
 AC_SUBST(LIBZ_CPPFLAGS)
 
 
+dnl *** X11 interface compilation ***
+build_against_x11="no"
+if test "x$bc_with_x11" != "xno" ; then
+    x11_works=no
+    AC_MSG_CHECKING(for X11 header functionality)
+    PRELIBS="$LIBS"
+    PRECPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+    AC_TRY_RUN([
+#include <X11/Xlib.h>
+main() {
+    XPoint pt;
+    pt.x = pt.y = 0;
+    return pt.x;
+}
+    ],[x11_works=yes])
+    AC_MSG_RESULT($x11_works)
+    if test "x$x11_works" = "xyes" ; then
+	LIBS="$LIBS $X_LIBS"
+	AC_MSG_CHECKING(for X11 link functionality)
+	AC_TRY_RUN([
+#include <X11/Xlib.h>
+main() {
+    XModifierKeymap *xmkm;
+    xmkm=XNewModifiermap(1);
+    return xmkm==NULL;
+}
+	],,x11_works=no)
+	AC_MSG_RESULT($x11_works)
+    fi
+    LIBS="$PRELIBS"
+    CPPFLAGS="$PRECPPFLAGS"
+
+    dnl figure out whether we need to build against X11
+    if test "x$bc_with_x11" != "xno" ; then
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    X_LIBS=""
+	    LIBGL=""
+	    X_CFLAGS=""
+	    build_against_opengl="no"
+	    if test "x$bc_with_x11" = "xyes" ; then
+		AC_MSG_ERROR([*** X11 was requested, but tk will be built for AquaTk ***])
+	    fi
+	else
+	    if test "x$x11_works" = "xyes" ; then
+		build_against_x11="yes"
+	    else
+		if test "x$bc_with_x11" = "xyes" ; then
+		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
+		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		    AC_MSG_NOTICE([Try adding --without-x11])
+		    AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
+		else
+		    AC_MSG_NOTICE([X11 does not appear to be functionally available])
+		fi
+	    fi
+	fi
+    fi
+fi
+AC_SUBST(X_PREFIX)
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LIBS)
+AC_MSG_CHECKING(whether to build against X11)
+AC_MSG_RESULT($build_against_x11)
+
+
 dnl *** utah raster toolkit ***
 dnl See if libutahrle seems to work
 urt_works=no
@@ -2838,14 +2904,18 @@ AC_SUBST(BLT_SUFFIX)
 BLT_LIBRARY="${BRLCAD_ROOT}/lib/blt${BLT_VERSION}"
 AC_SUBST(BLT_LIBRARY)
 AC_MSG_CHECKING(whether to build libblt)
+if test "x$build_against_x11" = "xno" ; then
+    # BLT *requires* X11
+    bc_built_blt=no
+fi
 if test ! "x$bc_build_blt" = "xno" ; then
-     build_brlcad_blt=yes
-     BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
-     AC_MSG_RESULT(yes)
+    build_brlcad_blt=yes
+    BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
+    AC_MSG_RESULT(yes)
 else
-     build_brlcad_blt=no
-     BLT=""
-     AC_MSG_RESULT(no)
+    build_brlcad_blt=no
+    BLT=""
+    AC_MSG_RESULT(no)
 fi
 AC_SUBST(BLT)
 
@@ -3225,72 +3295,6 @@ if test "x$bc_with_proe" != "xno" ; then
       fi
    fi
 fi
-
-
-dnl *** X11 interface compilation ***
-build_against_x11="no"
-if test "x$bc_with_x11" != "xno" ; then
-    x11_works=no
-    AC_MSG_CHECKING(for X11 header functionality)
-    PRELIBS="$LIBS"
-    PRECPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-    AC_TRY_RUN([
-#include <X11/Xlib.h>
-main() {
-    XPoint pt;
-    pt.x = pt.y = 0;
-    return pt.x;
-}
-    ],[x11_works=yes])
-    AC_MSG_RESULT($x11_works)
-    if test "x$x11_works" = "xyes" ; then
-	LIBS="$LIBS $X_LIBS"
-	AC_MSG_CHECKING(for X11 link functionality)
-	AC_TRY_RUN([
-#include <X11/Xlib.h>
-main() {
-    XModifierKeymap *xmkm;
-    xmkm=XNewModifiermap(1);
-    return xmkm==NULL;
-}
-	],,x11_works=no)
-	AC_MSG_RESULT($x11_works)
-    fi
-    LIBS="$PRELIBS"
-    CPPFLAGS="$PRECPPFLAGS"
-
-    dnl figure out whether we need to build against X11
-    if test "x$bc_with_x11" != "xno" ; then
-	if test "x$bc_build_aquatk" = "xyes" ; then
-	    X_LIBS=""
-	    LIBGL=""
-	    X_CFLAGS=""
-	    build_against_opengl="no"
-	    if test "x$bc_with_x11" = "xyes" ; then
-		AC_MSG_ERROR([*** X11 was requested, but tk will be built for AquaTk ***])
-	    fi
-	else
-	    if test "x$x11_works" = "xyes" ; then
-		build_against_x11="yes"
-	    else
-		if test "x$bc_with_x11" = "xyes" ; then
-		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
-		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		    AC_MSG_NOTICE([Try adding --without-x11])
-		    AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
-		else
-		    AC_MSG_NOTICE([X11 does not appear to be functionally available])
-		fi
-	    fi
-	fi
-    fi
-fi
-AC_SUBST(X_PREFIX)
-AC_SUBST(X_CFLAGS)
-AC_SUBST(X_LIBS)
-AC_MSG_CHECKING(whether to build against X11)
-AC_MSG_RESULT($build_against_x11)
 
 
 dnl *** OpenGL interface compilation ***
