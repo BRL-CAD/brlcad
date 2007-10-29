@@ -18,6 +18,8 @@ AM_CPPFLAGS = \
 	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\""
 
+AM_CFLAGS = ${X_CFLAGS}
+
 lib_LTLIBRARIES = \
 	libblt.la \
 	libblt@BLT_VERSION@.la
@@ -97,7 +99,8 @@ libblt_la_LIBADD = \
 	${LIBM} \
 	${LIBNSL} \
 	${TCL} \
-	${TK}
+	${TK} \
+	${X_LIBS}
 
 libblt@BLT_VERSION@_la_SOURCES = $(libblt_la_SOURCES)
 libblt@BLT_VERSION@_la_LDFLAGS = $(libblt_la_LDFLAGS)
