@@ -15,3 +15,6 @@ The conversion will transfer the primitives in the following way:
 	Minus N Point Box ---> Bag of Triangles (Plate Mode)
 	Ring Mode Box -------> Bag of Triangles (Plate Mode)
 	CAD Type Box --------> Bag of Triangles (Solid Mode)
+
+TGF is an INTAVAL Target Geometry File
+DRA is the Defence Research Agency established by the UK Ministry of Defence
