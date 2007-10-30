@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = tgf-g
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 
 tgf_g_SOURCES = \
 	read_dra.cpp \
