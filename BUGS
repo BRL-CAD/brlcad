@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* invalid shaders result in an "Unable to locate where BRL-CAD ... is
+  installed" message that refers to being unable to find a
+  /lib/libSHADER.so file.  Quite a bogus message and probably not
+  something that should abort the ray-trace.
+
 * rtedge seems to get stuck in a loop at the end of rendering, never
   terminates (unless you rtabort/kill the process); works with -P1
 
