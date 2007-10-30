@@ -3483,6 +3483,10 @@ dnl should come after the system services checks otherwise or our headers
 dnl may conflict.
 CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\${top_srcdir}/include"
 
+dnl opennurbs header files are required when compiling C++ files due
+dnl to the brep.h header
+CXXCPPFLAGS ="$CXXCPPFLAGS $OPENNURBS_CPPFLAGS"
+
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
     ECHO=echo
