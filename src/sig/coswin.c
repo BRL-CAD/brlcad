@@ -38,7 +38,44 @@ static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;
 static double	*coswintab = NULL;
 
-int init_coswintab( int size );
+/*
+ *		I N I T _ C O S W I N T A B
+ *
+ * Internal routine to initialize the cosine window table for
+ *  a given effect length (number of sample at each end effected).
+ */
+int
+init_coswintab(int size)
+{
+	int	i;
+	double	theta;
+
+	if( size > maxinitlen ) {
+		if( coswintab != NULL ) {
+			bu_free( coswintab, "coswintab" );
+			maxinitlen = 0;
+		}
+		coswintab = (double *)bu_malloc(size*sizeof(double), "coswintab");
+		maxinitlen = size;
+	}
+
+	/* Check for odd lengths? XXX */
+
+	/*
+	 * Size is okay.  Set up tables.
+	 */
+	for( i = 0; i < size; i++ ) {
+		theta = M_PI * i / (double)(size);
+		coswintab[ i ] = 0.5 - 0.5 * cos( theta );
+	}
+
+	/*
+	 * Mark size and return success.
+	 */
+	_init_length = size;
+	return( 1 );
+}
+
 
 void
 coswin(double *data, int length, double percent)
@@ -60,6 +97,8 @@ coswin(double *data, int length, double percent)
 		data[i] *= coswintab[i];
 		data[length-i-1] *= coswintab[i];
 	}
+
+	bu_free(coswintab, "coswintab");
 }
 
 /*
@@ -85,47 +124,8 @@ ccoswin(bn_complex_t *data, int length, double percent)
 		data[i].re *= coswintab[i];
 		data[length-i-1].re *= coswintab[i];
 	}
-}
 
-/*
- *		I N I T _ C O S W I N T A B
- *
- * Internal routine to initialize the cosine window table for
- *  a given effect length (number of sample at each end effected).
- */
-int
-init_coswintab(int size)
-{
-	int	i;
-	double	theta;
-
-	if( size > maxinitlen ) {
-		if( coswintab != NULL ) {
-			free( coswintab );
-			maxinitlen = 0;
-		}
-		if( (coswintab = (double *)malloc(size*sizeof(double))) == NULL ) {
-			fprintf( stderr, "coswin: couldn't malloc space for %d elements\n", size );
-			return( 0 );
-		}
-		maxinitlen = size;
-	}
-
-	/* Check for odd lengths? XXX */
-
-	/*
-	 * Size is okay.  Set up tables.
-	 */
-	for( i = 0; i < size; i++ ) {
-		theta = M_PI * i / (double)(size);
-		coswintab[ i ] = 0.5 - 0.5 * cos( theta );
-	}
-
-	/*
-	 * Mark size and return success.
-	 */
-	_init_length = size;
-	return( 1 );
+	bu_free(coswintab, "coswintab");
 }
 
 /*

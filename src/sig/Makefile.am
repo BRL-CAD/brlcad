@@ -65,7 +65,7 @@ u_bw_SOURCES = u-bw.c
 #  Processors
 
 dwin_SOURCES = dwin.c coswin.c hamwin.c
-dwin_LDADD = ${LIBM}
+dwin_LDADD = ${BU} ${LIBM}
 
 dauto_SOURCES = dauto.c
 dauto_LDADD = ${BU}
