@@ -5,12 +5,14 @@ EXTRA_DIST= \
 	asc2g/asc2g.vcproj \
 	brlcad/brlcad.sln \
 	dbupgrade/dbupgrade.vcproj \
+	dxf2g/dxf2g.vcproj \
 	fast42g/fast42g.vcproj \
 	fb2pix/fb2pix.vcproj \
 	fb2png/fb2png.vcproj \
 	fbclear/fbclear.vcproj \
 	fbserv/fbserv.vcproj \
 	g2asc/g2asc.vcproj \
+	g2dxf/g2dxf.vcproj \
 	g2iges/g2iges.vcproj \
 	g2stl/g2stl.vcproj \
 	iges2g/iges2g.vcproj \
