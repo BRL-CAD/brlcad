@@ -953,7 +953,6 @@ editit(const char *file)
 #endif
 
 	if (pid == 0) {
-		register int i;
 		/* Don't call bu_log() here in the child! */
 
 #if defined(SIGINT) && defined(SIGQUIT)
@@ -988,7 +987,7 @@ editit(const char *file)
 			(void)execlp(XTERM_BINARY, XTERM_BINARY, "-e", editor, file, (char *)0);
 		    }
 #  endif /* DM_X || DM_OGL */
-		    (void)execlp(editor, editor, file, 0);
+		    (void)execlp(editor, editor, file, NULL);
 
 #endif /* DM_WGL */
 		    /* should not reach */
