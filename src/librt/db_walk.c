@@ -23,8 +23,6 @@
  *
  * Functions -
  *	db_functree	No-frills tree-walk
- *	comb_functree	No-frills combination-walk (deprecated)
- *
  *
  *  Authors -
  *	Michael John Muuss
