@@ -39,21 +39,27 @@
 .\"
 .\".\".\"
 .SH NAME
-pix-png	\- convert a BRL PIX(5) format image to a PNG (Portable Network Graphics) format
+pix-png	\- convert a BRL-CAD PIX format image to a PNG format image
 .SH SYNOPSIS
 .B pix-png
 .RB [ \-a ]
 .RB [ \-s squaresize]
 .RB [ \-w file_width]
 .RB [ \-n file_height]
- [BRLpixfile] > PNG_file
+ [PIX_file] > PNG_file
 .SH DESCRIPTION
 .I pix-png
 converts a
 .I BRL PIX(5)
 format file to a
 .I PNG
-format file on the standard output. The PNG file created will be an RGB file with a bit-depth of 8 and a file gamma of 1.0.
+(Portable Network Graphics) format file on the standard output. The
+PNG file created will be an RGB file with a bit-depth of 8 and a file
+gamma of 1.0.
+.LP
+PIX image files do not contain information about their size.  The size
+of the input PIX image file must be specified if the dimensions are
+not the default 512x512 size.
 .SH OPTIONS
 .TP
 .B \-a
