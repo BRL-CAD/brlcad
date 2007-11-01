@@ -41,6 +41,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 
 #include "zlib.h"
 #include "pngconf.h"
@@ -133,10 +139,13 @@ int
 main(int argc, char **argv)
 {
 	int i;
+	unsigned long int w, h;
 	unsigned char *scanbuf;
 	unsigned char **rows;
+        struct stat sb;
 	png_structp png_p;
 	png_infop info_p;
+
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -145,7 +154,6 @@ main(int argc, char **argv)
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
-		unsigned long int	w, h;
 		if( fb_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = (long)w;
 			file_height = (long)h;
@@ -156,11 +164,11 @@ main(int argc, char **argv)
 
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if( !png_p )
-		bu_bomb( "Could not create PNG write structure\n" );
+		bu_exit(1, "Could not create PNG write structure\n" );
 
 	info_p = png_create_info_struct( png_p );
 	if( !info_p )
-		bu_bomb( "Could not create PNG info structure\n" );
+		bu_exit(1, "Could not create PNG info structure\n" );
 
 	/* allocate space for the image */
 	scanbuf = (unsigned char *)bu_calloc( SIZE, sizeof( unsigned char ), "scanbuf" );
@@ -172,7 +180,26 @@ main(int argc, char **argv)
 
 	/* read the pix file */
 	if( fread( scanbuf, SIZE, 1, infp ) != 1 )
-		bu_bomb( "pix-png: Short read\n");
+		bu_exit(1, "pix-png: Short read\n");
+
+	/* warn if we only read part of the input */
+        if (fstat(fileno(infp), &sb) < 0) {
+            perror("pix-png: unable to stat file:");
+            return 1;
+        }
+        if (SIZE * sizeof(unsigned char) < sb.st_size) {
+	    bu_log("WARNING: Output PNG image dimensions are smaller than the PIX input image\n");
+	    bu_log("Input image is %ld pixels, output image is %ld pixels\n", sb.st_size / 3, SIZE * sizeof(unsigned char) / 3);
+	    if (fb_common_file_size(&w, &h, file_name, 3)) {
+		bu_log("Input PIX dimensions appear to be %ldx%ld pixels.  ", w, h);
+		if (w == h) {
+		    bu_log("Try using the -s%ld option.\n", w);
+		} else {
+		    bu_log("Try using the -w%ld -n%ld options.\n", w, h);
+		}
+	    }
+	}
+
 
 	png_init_io( png_p, outfp );
 	png_set_filter( png_p, 0, PNG_FILTER_NONE );
