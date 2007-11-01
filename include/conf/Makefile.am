@@ -39,4 +39,6 @@ CLEANFILES = \
 DISTCLEANFILES = $(CLEANFILES)
 MAINTAINERCLEANFILES = COUNT
 
+all-am: $(BUILT_SOURCES)
+
 include $(top_srcdir)/misc/Makefile.defs
