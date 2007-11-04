@@ -155,6 +155,7 @@ Wgl_fb_open()
 			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
 			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
+			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			   dmp->dm_width, dmp->dm_height,
 			   ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc,
 			   ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
