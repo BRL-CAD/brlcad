@@ -45,8 +45,15 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>		/* For htonl(), etc */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  include <process.h>
+#  include <winsock.h>
+#  include <fcntl.h>
+#  include <io.h>
+#else
+#  include <sys/socket.h>
+#  include <netinet/in.h>		/* For htonl(), etc */
+#endif
 
 #include "tcl.h"
 #include "machine.h"
@@ -56,13 +63,16 @@
 #include "dm.h"
 
 #include "fbmsg.h"
+#include "fbserv_obj.h"
 
-int fbs_open(Tcl_Interp *interp, struct fbserv_obj *fbsp, int port);
-int fbs_close(Tcl_Interp *interp, struct fbserv_obj *fbsp);
-
-HIDDEN void new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp);
 HIDDEN void drop_client(struct fbserv_obj *fbsp, int sub);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+HIDDEN void new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan);
+HIDDEN void new_client_handler(ClientData clientData, Tcl_Channel chan, char *host, int port);
+#else
+HIDDEN void new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp);
 HIDDEN void new_client_handler(ClientData clientData, int mask);
+#endif
 HIDDEN void existing_client_handler(ClientData clientData, int mask);
 HIDDEN void comm_error(char *str);
 HIDDEN void setup_socket(int fd);
@@ -132,8 +142,146 @@ static struct pkg_switch pkg_switch[] = {
 
 static FBIO *curr_fbp;		/* current framebuffer pointer */
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
 int
-fbs_open(Tcl_Interp *interp, struct fbserv_obj *fbsp, int port)
+fbs_open(struct fbserv_obj *fbsp, int port)
+{
+    struct bu_vls vls;
+    char hostname[32];
+    register int i;
+    Tcl_DString ds;
+
+    /* Already listening; nothing more to do. */
+    if (fbsp->fbs_listener.fbsl_chan != NULL) {
+	return TCL_OK;
+    }
+
+    /*XXX hardwired for now */
+    sprintf(hostname,"localhost");
+
+    if (port < 0)
+	port = 5559;
+    else if (port < 1024)
+	port += 5559;
+
+    Tcl_DStringInit(&ds);
+
+    /* Try a reasonable number of times to hang a listen */
+    for (i = 0; i < MAX_PORT_TRIES; ++i) {
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer(fbsp->fbs_interp,
+							 port,
+							 hostname,
+							 new_client_handler,
+							 (ClientData)&fbsp->fbs_listener);
+
+	if (fbsp->fbs_listener.fbsl_chan == NULL) {
+	    /* This clobbers the result string which probably has junk related to the failed open */
+	    Tcl_DStringResult(fbsp->fbs_interp, &ds);
+	    ++port;
+	} else
+	    break;
+    }
+
+    if (fbsp->fbs_listener.fbsl_chan == NULL) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n",
+		      fbsp->fbs_listener.fbsl_port, fbsp->fbs_listener.fbsl_port + MAX_PORT_TRIES - 1);
+	Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	fbsp->fbs_listener.fbsl_port = -1;
+
+	return TCL_ERROR;
+    }
+
+    fbsp->fbs_listener.fbsl_port = port;
+    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, &fbsp->fbs_listener.fbsl_fd);
+
+    return TCL_OK;
+}
+
+/*
+ *			N E W _ C L I E N T
+ */
+HIDDEN void
+new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
+{
+    register int	i;
+
+    if (pcp == PKC_ERROR)
+	return;
+
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	/* this slot is being used */
+	if (fbsp->fbs_clients[i].fbsc_fd != 0)
+	    continue;
+
+	/* Found an available slot */
+	fbsp->fbs_clients[i].fbsc_fd = pcp->pkc_fd;
+	fbsp->fbs_clients[i].fbsc_pkg = pcp;
+	fbsp->fbs_clients[i].fbsc_fbsp = fbsp;
+	setup_socket(pcp->pkc_fd);
+
+	fbsp->fbs_clients[i].fbsc_chan = chan;
+	fbsp->fbs_clients[i].fbsc_handler = existing_client_handler;
+	Tcl_CreateChannelHandler(fbsp->fbs_clients[i].fbsc_chan, TCL_READABLE,
+				 fbsp->fbs_clients[i].fbsc_handler,
+				 (ClientData)&fbsp->fbs_clients[i]);
+
+	return;
+    }
+
+    bu_log("new_client: too many clients\n");
+    pkg_close(pcp);
+}
+
+
+static struct pkg_conn *
+fbserv_makeconn(int fd,
+		const struct pkg_switch *switchp)
+{
+    register struct pkg_conn *pc;
+
+    if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
+	comm_error("fbserv_makeconn: malloc failure\n");
+	return(PKC_ERROR);
+    }
+
+    bzero((char *)pc, sizeof(struct pkg_conn));
+    pc->pkc_magic = PKG_MAGIC;
+    pc->pkc_fd = fd;
+    pc->pkc_switch = switchp;
+    pc->pkc_errlog = 0;
+    pc->pkc_left = -1;
+    pc->pkc_buf = (char *)0;
+    pc->pkc_curpos = (char *)0;
+    pc->pkc_strpos = 0;
+    pc->pkc_incur = pc->pkc_inend = 0;
+
+    return pc;
+}
+
+HIDDEN void
+new_client_handler(ClientData	 clientData,
+		   Tcl_Channel	 chan,
+		   char		 *host,
+		   int		 port)
+{
+    struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
+    struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
+    int fd;
+
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, &fd) == TCL_OK)
+	new_client(fbsp, fbserv_makeconn(fd, pkg_switch), chan);
+}
+
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+int
+fbs_open(struct fbserv_obj *fbsp, int port)
 {
   struct bu_vls vls;
   char portname[32];
@@ -166,7 +314,7 @@ fbs_open(Tcl_Interp *interp, struct fbserv_obj *fbsp, int port)
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n",
 	   fbsp->fbs_listener.fbsl_port, fbsp->fbs_listener.fbsl_port + MAX_PORT_TRIES - 1);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     fbsp->fbs_listener.fbsl_port = -1;
@@ -180,72 +328,38 @@ fbs_open(Tcl_Interp *interp, struct fbserv_obj *fbsp, int port)
   return TCL_OK;
 }
 
-int
-fbs_close(Tcl_Interp *interp, struct fbserv_obj *fbsp)
-{
-  register int i;
-
-  /* first drop all clients */
-  for(i = 0; i < MAX_CLIENTS; ++i)
-    drop_client(fbsp, i);
-
-  Tcl_DeleteFileHandler(fbsp->fbs_listener.fbsl_fd);
-  close(fbsp->fbs_listener.fbsl_fd);
-  fbsp->fbs_listener.fbsl_fd = -1;
-  fbsp->fbs_listener.fbsl_port = -1;
-
-  return TCL_OK;
-}
-
 /*
  *			N E W _ C L I E N T
  */
 HIDDEN void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp)
 {
-  register int	i;
+    register int	i;
 
-  if (pcp == PKC_ERROR)
-    return;
+    if (pcp == PKC_ERROR)
+	return;
 
-  for (i = MAX_CLIENTS-1; i >= 0; i--) {
-    /* this slot is being used */
-    if (fbsp->fbs_clients[i].fbsc_fd != 0)
-      continue;
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	/* this slot is being used */
+	if (fbsp->fbs_clients[i].fbsc_fd != 0)
+	    continue;
 
-    /* Found an available slot */
-    fbsp->fbs_clients[i].fbsc_fd = pcp->pkc_fd;
-    fbsp->fbs_clients[i].fbsc_pkg = pcp;
-    fbsp->fbs_clients[i].fbsc_fbsp = fbsp;
-    setup_socket(pcp->pkc_fd);
+	/* Found an available slot */
+	fbsp->fbs_clients[i].fbsc_fd = pcp->pkc_fd;
+	fbsp->fbs_clients[i].fbsc_pkg = pcp;
+	fbsp->fbs_clients[i].fbsc_fbsp = fbsp;
+	setup_socket(pcp->pkc_fd);
 
-    Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
-			  existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
+	Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
+			      existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
 
-    return;
-  }
+	return;
+    }
 
-  bu_log("new_client: too many clients\n");
-  pkg_close(pcp);
+    bu_log("new_client: too many clients\n");
+    pkg_close(pcp);
 }
 
-/*
- *			D R O P _ C L I E N T
- */
-HIDDEN void
-drop_client(struct fbserv_obj *fbsp, int sub)
-{
-  if(fbsp->fbs_clients[sub].fbsc_pkg != PKC_NULL)  {
-    pkg_close(fbsp->fbs_clients[sub].fbsc_pkg);
-    fbsp->fbs_clients[sub].fbsc_pkg = PKC_NULL;
-  }
-
-  if(fbsp->fbs_clients[sub].fbsc_fd != 0)  {
-    Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].fbsc_fd);
-    close(fbsp->fbs_clients[sub].fbsc_fd);
-    fbsp->fbs_clients[sub].fbsc_fd = 0;
-  }
-}
 
 /*
  * Accept any new client connections.
@@ -253,12 +367,72 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 HIDDEN void
 new_client_handler(ClientData clientData, int mask)
 {
-  struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
-  struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
-  int fd = fbslp->fbsl_fd;
+    struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
+    struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
+    int fd = fbslp->fbsl_fd;
 
-  new_client(fbsp, pkg_getclient(fd, pkg_switch, comm_error, 0));
+    new_client(fbsp, pkg_getclient(fd, pkg_switch, comm_error, 0));
 }
+#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+
+int
+fbs_close(struct fbserv_obj *fbsp)
+{
+    register int i;
+
+    /* first drop all clients */
+    for(i = 0; i < MAX_CLIENTS; ++i)
+	drop_client(fbsp, i);
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (fbsp->fbs_listener.fbsl_chan != NULL) {
+	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan,
+				 new_client_handler,
+				 fbsp->fbs_listener.fbsl_fd);
+
+	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_listener.fbsl_chan);
+	fbsp->fbs_listener.fbsl_chan = NULL;
+    }
+#else
+    Tcl_DeleteFileHandler(fbsp->fbs_listener.fbsl_fd);
+#endif
+
+    close(fbsp->fbs_listener.fbsl_fd);
+    fbsp->fbs_listener.fbsl_fd = -1;
+    fbsp->fbs_listener.fbsl_port = -1;
+
+    return TCL_OK;
+}
+
+
+/*
+ *			D R O P _ C L I E N T
+ */
+HIDDEN void
+drop_client(struct fbserv_obj *fbsp, int sub)
+{
+    if(fbsp->fbs_clients[sub].fbsc_pkg != PKC_NULL)  {
+	pkg_close(fbsp->fbs_clients[sub].fbsc_pkg);
+	fbsp->fbs_clients[sub].fbsc_pkg = PKC_NULL;
+    }
+
+    if(fbsp->fbs_clients[sub].fbsc_fd != 0)  {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan,
+				 fbsp->fbs_clients[sub].fbsc_handler,
+				 fbsp->fbs_clients[sub].fbsc_fd);
+
+	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_clients[sub].fbsc_chan);
+	fbsp->fbs_clients[sub].fbsc_chan = NULL;
+#else
+	Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].fbsc_fd);
+#endif
+	close(fbsp->fbs_clients[sub].fbsc_fd);
+	fbsp->fbs_clients[sub].fbsc_fd = 0;
+    }
+}
+
 
 /*
  * Process arrivals from existing clients.
