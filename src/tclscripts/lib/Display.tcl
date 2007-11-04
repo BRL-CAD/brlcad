@@ -172,8 +172,8 @@
     public method zbuffer {args}
     public method zclip {args}
     if {$tcl_platform(os) != "Windows NT"} {
-	public method fb_active {args}
     }
+    public method fb_active {args}
 
     public method toggle_modelAxesEnable {}
     public method toggle_modelAxesTickEnable {}
@@ -721,11 +721,9 @@
 
     if {![info exists itk_option(-fb_active)] || $itk_option(-fb_active) < 2} {
 
-	if {$tcl_platform(os) != "Windows NT"} {
-	    if {$itk_option(-fb_active)} {
-		# underlay
-		Dm::refreshfb
-	    }
+	if {$itk_option(-fb_active)} {
+	    # underlay
+	    Dm::refreshfb
 	}
 
 	foreach geo $geolist {
@@ -804,8 +802,7 @@
 	    Dm::drawCenterDot $itk_option(-centerDotColor)
 	}
 
-    } elseif {$tcl_platform(os) != "Windows NT"} {
-	# overlay
+    } else {
 	Dm::refreshfb
     }
 
@@ -899,11 +896,13 @@
     }
 
     set v_obj [View::get_viewname]
-    if {$tcl_platform(os) != "Windows NT"} {
-	eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
-    } else {
-	eval $geo rt $v_obj $args
-    }
+#    if {$tcl_platform(os) != "Windows NT"} {
+#	eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+#    } else {
+#	eval $geo rt $v_obj $args
+#    }
+
+    eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
 }
 
 ::itcl::body Display::rtabort {{gi 0}} {
@@ -974,11 +973,13 @@
     }
 
     set v_obj [View::get_viewname]
-    if {$tcl_platform(os) != "Windows NT"} {
-	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
-    } else {
-	eval $geo rtedge $v_obj $args
-    }
+#    if {$tcl_platform(os) != "Windows NT"} {
+#	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+#    } else {
+#	eval $geo rtedge $v_obj $args
+#    }
+
+    eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
 }
 
 ::itcl::body Display::rtweight {args} {
@@ -1136,13 +1137,13 @@
 }
 
 if {$tcl_platform(os) != "Windows NT"} {
-    ::itcl::body Display::fb_active {args} {
-	if {$args == ""} {
-	    return $itk_option(-fb_active)
-	} else {
-	    eval Dm::fb_active $args
-	    refresh
-	}
+}
+::itcl::body Display::fb_active {args} {
+    if {$args == ""} {
+	return $itk_option(-fb_active)
+    } else {
+	eval Dm::fb_active $args
+	refresh
     }
 }
 

@@ -130,9 +130,9 @@ option add *QuadDisplay.height 400 widgetDefault
     public method zclip {args}
 
     if {$tcl_platform(os) != "Windows NT"} {
-	public method fb_active {args}
-	public method fb_observe {args}
     }
+    public method fb_active {args}
+    public method fb_observe {args}
 
     public method toggle_centerDotEnable {args}
     public method toggle_centerDotEnableAll {}
@@ -971,13 +971,13 @@ option add *QuadDisplay.height 400 widgetDefault
 }
 
 if {$tcl_platform(os) != "Windows NT"} {
-    ::itcl::body QuadDisplay::fb_active {args} {
-	eval $itk_component($itk_option(-pane)) fb_active $args
-    }
+}
+::itcl::body QuadDisplay::fb_active {args} {
+    eval $itk_component($itk_option(-pane)) fb_active $args
+}
 
-    ::itcl::body QuadDisplay::fb_observe {args} {
-	eval $itk_component($itk_option(-pane)) fb_observe $args
-    }
+::itcl::body QuadDisplay::fb_observe {args} {
+    eval $itk_component($itk_option(-pane)) fb_observe $args
 }
 
 ::itcl::body QuadDisplay::mouse_nirt {x y} {

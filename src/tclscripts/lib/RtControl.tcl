@@ -898,10 +898,12 @@ option add *RtControl*tearoff 0 widgetDefault
 #
 ::itcl::body RtControl::get_cooked_dest {} {
     set dest $itk_option(-dest)
+
     if {$dest == ""} {
 	# use the active pane
 	set dest [$itk_option(-mged) pane]
     }
+
     set cooked_dest [cook_dest $dest]
     if {$cooked_dest == -1} {
 	switch -- $dest {
