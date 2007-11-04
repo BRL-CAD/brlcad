@@ -34,20 +34,32 @@
 #define FBS_CALLBACK_NULL	(void (*)())NULL
 
 struct fbserv_listener {
-  int			fbsl_fd;			/**< @brief socket to listen for connections */
-  int			fbsl_port;			/**< @brief port number to listen on */
-  int			fbsl_listen;			/**< @brief !0 means listen for connections */
-  struct fbserv_obj	*fbsl_fbsp;			/**< @brief points to its fbserv object */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    HANDLE		fbsl_fd;
+    Tcl_Channel		fbsl_chan;
+#else
+    int			fbsl_fd;			/**< @brief socket to listen for connections */
+#endif
+    int			fbsl_port;			/**< @brief port number to listen on */
+    int			fbsl_listen;			/**< @brief !0 means listen for connections */
+    struct fbserv_obj	*fbsl_fbsp;			/**< @brief points to its fbserv object */
 };
 
 struct fbserv_client {
-  int			fbsc_fd;
-  struct pkg_conn	*fbsc_pkg;
-  struct fbserv_obj	*fbsc_fbsp;			/**< @brief points to its fbserv object */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    HANDLE		fbsc_fd;
+    Tcl_Channel         fbsc_chan;
+    Tcl_FileProc        *fbsc_handler;
+#else
+    int			fbsc_fd;
+#endif
+    struct pkg_conn	*fbsc_pkg;
+    struct fbserv_obj	*fbsc_fbsp;			/**< @brief points to its fbserv object */
 };
 
 struct fbserv_obj {
   FBIO				*fbs_fbp;			/**< @brief framebuffer pointer */
+  Tcl_Interp			*fbs_interp;			/**< @brief tcl interpreter */
   struct fbserv_listener	fbs_listener;			/**< @brief data for listening */
   struct fbserv_client		fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
   void				(*fbs_callback)();		/**< @brief callback function */
