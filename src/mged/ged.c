@@ -1890,7 +1890,6 @@ refresh(void)
 
 	    DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
-#ifndef _WIN32
 	    if (dbip != DBI_NULL) {
 		/* do framebuffer underlay */
 		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
@@ -1972,59 +1971,6 @@ refresh(void)
 			       color_scheme->cs_center_dot[2], 1, 1.0);
 		DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
 	    }
-#else
-	    if (dbip != DBI_NULL) {
-		/*  Draw each solid in it's proper place on the screen
-		 *  by applying zoom, rotation, & translation.
-		 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
-		 */
-
-		if (dmp->dm_stereo == 0 ||
-		    mged_variables->mv_eye_sep_dist <= 0) {
-		    /* Normal viewing */
-		    dozoom(0);
-		} else {
-		    /* Stereo viewing */
-		    dozoom(1);
-		    dozoom(2);
-		}
-
-		/* Restore to non-rotated, full brightness */
-		DM_NORMAL(dmp);
-
-		if (rubber_band->rb_active || rubber_band->rb_draw)
-		    draw_rect();
-
-		if (grid_state->gr_draw)
-		    draw_grid();
-
-		/* Compute and display angle/distance cursor */
-		if (adc_state->adc_draw)
-		    adcursor();
-
-		if (axes_state->ax_view_draw)
-		    draw_v_axes();
-
-		if (axes_state->ax_model_draw)
-		    draw_m_axes();
-
-		if (axes_state->ax_edit_draw &&
-		    (state == ST_S_EDIT || state == ST_O_EDIT))
-		    draw_e_axes();
-
-		/* Display titles, etc., if desired */
-		bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-		dotitles(&tmp_vls);
-		bu_vls_trunc(&tmp_vls, 0);
-
-		/* Draw center dot */
-		DM_SET_FGCOLOR(dmp,
-			       color_scheme->cs_center_dot[0],
-			       color_scheme->cs_center_dot[1],
-			       color_scheme->cs_center_dot[2], 1, 1.0);
-		DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
-	    }
-#endif
 
 	    DM_DRAW_END(dmp);
 	}
