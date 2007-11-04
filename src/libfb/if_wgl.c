@@ -896,47 +896,71 @@ FBIO *ifp;
 int argc;
 char **argv;
 {
-  Display *dpy;
-  Window win;
-  Colormap cmap;
-  PIXELFORMATDESCRIPTOR *vip;
-  int width;
-  int height;
-  HGLRC glxc;
-  int double_buffer;
-  int soft_cmap;
+    Display *dpy;
+    Window win;
+    Colormap cmap;
+    PIXELFORMATDESCRIPTOR *vip;
+    HDC hdc;
+    int width;
+    int height;
+    HGLRC glxc;
+    int double_buffer;
+    int soft_cmap;
 
-  if(argc != 10)
-    return -1;
+    if(argc != 11)
+	return -1;
 
-  if(sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
-   return -1;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if(sscanf(argv[1], "%llu", (unsigned __int64 *)&dpy) != 1)
+	return -1;
 
-  if(sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
-    return -1;
+    if(sscanf(argv[2], "%llu", (unsigned __int64 *)&win) != 1)
+	return -1;
 
-  if(sscanf(argv[3], "%lu", (unsigned long *)&cmap) != 1)
-    return -1;
+    if(sscanf(argv[3], "%llu", (unsigned __int64 *)&cmap) != 1)
+	return -1;
 
-  if(sscanf(argv[4], "%lu", (unsigned long *)&vip) != 1)
-    return -1;
+    if(sscanf(argv[4], "%llu", (unsigned __int64 *)&vip) != 1)
+	return -1;
 
-  if(sscanf(argv[5], "%d", &width) != 1)
-    return -1;
+    if(sscanf(argv[5], "%llu", (unsigned __int64 *)&hdc) != 1)
+	return -1;
 
-  if(sscanf(argv[6], "%d", &height) != 1)
-    return -1;
+    if(sscanf(argv[8], "%llu", (unsigned __int64 *)&glxc) != 1)
+	return -1;
+#else
+    if(sscanf(argv[1], "%llu", (unsigned long long *)&dpy) != 1)
+	return -1;
 
-  if(sscanf(argv[7], "%lu", (unsigned long *)&glxc) != 1)
-    return -1;
+    if(sscanf(argv[2], "%llu", (unsigned long long *)&win) != 1)
+	return -1;
 
-  if(sscanf(argv[8], "%d", &double_buffer) != 1)
-    return -1;
+    if(sscanf(argv[3], "%llu", (unsigned long long *)&cmap) != 1)
+	return -1;
 
-  if(sscanf(argv[9], "%d", &soft_cmap) != 1)
-    return -1;
+    if(sscanf(argv[4], "%llu", (unsigned long long *)&vip) != 1)
+	return -1;
 
-  return _wgl_open_existing(ifp, dpy, win, cmap, vip, width, height,
+    if(sscanf(argv[5], "%llu", (unsigned long long *)&hdc) != 1)
+	return -1;
+
+    if(sscanf(argv[8], "%llu", (unsigned long long *)&glxc) != 1)
+	return -1;
+#endif
+
+    if(sscanf(argv[6], "%d", &width) != 1)
+	return -1;
+
+    if(sscanf(argv[7], "%d", &height) != 1)
+	return -1;
+
+    if(sscanf(argv[9], "%d", &double_buffer) != 1)
+	return -1;
+
+    if(sscanf(argv[10], "%d", &soft_cmap) != 1)
+	return -1;
+
+  return _wgl_open_existing(ifp, dpy, win, cmap, vip, hdc, width, height,
 			    glxc, double_buffer, soft_cmap);
 }
 
@@ -959,6 +983,7 @@ _wgl_open_existing(FBIO *ifp,
 		   Window win,
 		   Colormap cmap,
 		   PIXELFORMATDESCRIPTOR *vip,
+		   HDC hdc,
 		   int width,
 		   int height,
 		   HGLRC glxc,
@@ -1018,6 +1043,7 @@ _wgl_open_existing(FBIO *ifp,
   WGL(ifp)->xcmap = cmap;
 
   WGL(ifp)->wind = win;
+  WGL(ifp)->hdc = hdc;
   ++wgl_nwindows;
 
   WGL(ifp)->alive = 1;
@@ -1505,7 +1531,7 @@ int	count;
 
 	if (multiple_windows) {
 		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
-			fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
+		    fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
 		}
 	}
 
@@ -1542,8 +1568,8 @@ int	count;
 	}
 
 	if (multiple_windows) {
-		/* unattach context for other threads to use */
-		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
+	    /* unattach context for other threads to use */
+	    wglMakeCurrent(WGL(ifp)->hdc,NULL);
 	}
 	}
 
