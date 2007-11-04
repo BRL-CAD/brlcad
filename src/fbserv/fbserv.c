@@ -112,8 +112,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 fd_set	select_list;			/* master copy */
 int	max_fd;
 
-extern	int	_fb_disk_enable;
-
 static  void	main_loop(void);
 static	void	comm_error(char *str);
 static	void	init_syslog(void);
@@ -226,6 +224,7 @@ is_socket(int fd)
 	return	0;
 }
 
+#ifdef SIGALRM
 static void
 sigalarm(int code)
 {
@@ -238,6 +237,7 @@ sigalarm(int code)
 #endif
 	alarm(1);
 }
+#endif
 
 /*
  *			N E W _ C L I E N T
@@ -497,6 +497,7 @@ main_loop(void)
 	}
 }
 
+#ifndef _WIN32
 static void
 init_syslog(void)
 {
@@ -507,6 +508,7 @@ init_syslog(void)
 	openlog( "fbserv", LOG_PID );				/* 4.2 style */
 #endif
 }
+#endif
 
 static void
 setup_socket(int fd)
