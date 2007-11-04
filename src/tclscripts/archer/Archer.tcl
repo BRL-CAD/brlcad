@@ -4272,7 +4272,7 @@ Popup Menu    Right or Ctrl-Left
 	-menu $itk_component(exportMenu) \
 	-state disabled
     $itk_component(filemenu) add separator
-#    $itk_component(filemenu) add command \
+    $itk_component(filemenu) add command \
 	-label "Raytrace Control Panel..." \
 	-command [::itcl::code $this _ray_trace_panel] \
 	-state disabled
@@ -4857,7 +4857,7 @@ Popup Menu    Right or Ctrl-Left
 	-command [::itcl::code $this exportStl]
     $itk_component(menubar) menuconfigure .file.export.exportVrml \
 	-command [::itcl::code $this exportVrml]
-#    $itk_component(menubar) menuconfigure .file.rt \
+    $itk_component(menubar) menuconfigure .file.rt \
 	-command [::itcl::code $this _ray_trace_panel] \
 	-state disabled
 #    $itk_component(menubar) menuconfigure .file.png \
@@ -5102,8 +5102,8 @@ Popup Menu    Right or Ctrl-Left
     } {
 	usual
     }
-#    $itk_component(mged) fb_active 0
-#    $itk_component(rtcntrl) update_fb_mode
+    $itk_component(mged) fb_active 0
+    $itk_component(rtcntrl) update_fb_mode
 
     # create view axes control panel
 #    itk_component add vac {
@@ -5149,7 +5149,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {!$mViewOnly} {
 	if {$Archer::inheritFromToplevel} {
-	    #$itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
+	    $itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Compact" -state disabled
 	    catch {$itk_component(filemenu) delete "Compact"}
@@ -5169,7 +5169,7 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(displaymenu) entryconfigure "Clear" -state normal
 	    $itk_component(displaymenu) entryconfigure "Refresh" -state normal
 	} else {
-	    #$itk_component(menubar) menuconfigure .file.rt  -state normal
+	    $itk_component(menubar) menuconfigure .file.rt  -state normal
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
 	    #$itk_component(menubar) menuconfigure .file.compact -state disabled
 	    catch {$itk_component(menubar) delete .file.compact}
@@ -5291,7 +5291,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {!$mViewOnly} {
 	if {$Archer::inheritFromToplevel} {
-	    #$itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state normal
+	    $itk_component(filemenu) entryconfigure "Raytrace Control Panel..." -state disabled
 	    #$itk_component(filemenu) entryconfigure "Export Geometry to PNG..." -state normal
 	    #$itk_component(filemenu) entryconfigure "Compact" -state normal
 	    catch {$itk_component(filemenu) delete "Purge History"}
@@ -5309,7 +5309,7 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(modesmenu) entryconfigure "View Axes" -state normal
 	    $itk_component(modesmenu) entryconfigure "Model Axes" -state normal
 	} else {
-	    #$itk_component(menubar) menuconfigure .file.rt  -state normal
+	    $itk_component(menubar) menuconfigure .file.rt  -state disabled
 	    #$itk_component(menubar) menuconfigure .file.png -state normal
 	    #$itk_component(menubar) menuconfigure .file.compact -state normal
 	    catch {$itk_component(menubar) delete .file.purgeHist}
@@ -8839,7 +8839,6 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body Archer::_ray_trace_panel {} {
     $itk_component(rtcntrl) configure -size "Size of Pane"
-    $itk_component(rtcntrl) center [namespace tail $this]
     $itk_component(rtcntrl) activate
 }
 
@@ -12231,7 +12230,9 @@ Popup Menu    Right or Ctrl-Left
 ##################################### Plugin Commands #####################################
 ::itcl::body Archer::initArcher {} {
     # Load plugins
-    pluginLoader
+    if {[catch {pluginLoader} msg]} {
+	tk_messageBox -message "Failed to load plugins\n$msg"
+    }
 }
 
 ::itcl::body Archer::pluginUpdateSaveMode {mode} {
