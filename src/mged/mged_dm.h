@@ -121,7 +121,7 @@ struct trail {
 #endif
 
 struct client {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
     HANDLE		c_fd;
     Tcl_Channel         c_chan;
     Tcl_FileProc        *c_handler;
@@ -401,7 +401,7 @@ struct dm_list {
   struct dm		*dml_dmp;
   FBIO			*dml_fbp;
   int			dml_netfd;			/* socket used to listen for connections */
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
   Tcl_Channel		dml_netchan;
 #endif
   struct client		dml_clients[MAX_CLIENTS];
@@ -460,7 +460,7 @@ struct dm_list {
 #define dmp curr_dm_list->dml_dmp
 #define fbp curr_dm_list->dml_fbp
 #define netfd curr_dm_list->dml_netfd
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #define netchan curr_dm_list->dml_netchan
 #endif
 #define clients curr_dm_list->dml_clients
