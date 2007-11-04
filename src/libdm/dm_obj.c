@@ -411,6 +411,7 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
 	dmop->dmo_fbs.fbs_callback = dmo_fbs_callback;
 	dmop->dmo_fbs.fbs_clientData = dmop;
+	dmop->dmo_fbs.fbs_interp = interp;
 #endif
 
 	BU_LIST_INIT(&dmop->dmo_observers.l);
@@ -3484,6 +3485,7 @@ dmo_openFb(dmop, interp)
 				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
 				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
 				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+				   ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->hdc,
 				   dmop->dmo_dmp->dm_width,
 				   dmop->dmo_dmp->dm_height,
 				   ((struct wgl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
@@ -3623,9 +3625,9 @@ dmo_listen_tcl(clientData, interp, argc, argv)
 		}
 
 		if (port >= 0)
-			fbs_open(interp, &dmop->dmo_fbs, port);
+			fbs_open(&dmop->dmo_fbs, port);
 		else {
-			fbs_close(interp, &dmop->dmo_fbs);
+			fbs_close(&dmop->dmo_fbs);
 		}
 		bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
 		Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
