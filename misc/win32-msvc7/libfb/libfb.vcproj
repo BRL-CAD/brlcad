@@ -103,16 +103,18 @@ copy &quot;$(TargetDir)&quot;libfb_d.lib ..\..\..\lib
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib tcl84.lib tk84.lib libbu.lib libpkg.lib"
+				AdditionalDependencies="ws2_32.lib opengl32.lib tcl84.lib tk84.lib libbu.lib libpkg.lib"
 				OutputFile=".\Release/libfb.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/libfb.pdb"
 				ImportLibrary=".\Release/libfb.lib"
 				TargetMachine="1"/>
@@ -170,7 +172,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -189,7 +190,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -208,7 +208,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -227,7 +226,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -246,7 +244,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -265,7 +262,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -284,28 +280,11 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libfb\fbserv_obj_win32.c">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;FB_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;IF_WGL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""/>
-				</FileConfiguration>
+				RelativePath="..\..\..\src\libfb\fbserv_obj.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\libfb\getput.c">
@@ -322,7 +301,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -341,7 +319,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -360,7 +337,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -379,7 +355,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -398,7 +373,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -417,7 +391,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -436,7 +409,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -455,7 +427,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -474,7 +445,6 @@ copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
