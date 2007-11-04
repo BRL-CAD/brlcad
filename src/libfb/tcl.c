@@ -412,10 +412,15 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
     int status=0;
 
+#if 1
+    if (w == 0 || h == 0)
+	return TCL_OK;
+#else
     if (w <= 0 || h <= 0) {
 	/* nothing to refresh */
 	return TCL_OK;
     }
+#endif
 
     if (!ifp || !ifp->if_name) {
 	/* unset/unknown framebuffer */
