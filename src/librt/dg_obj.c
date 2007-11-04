@@ -4280,7 +4280,9 @@ dgo_rt_output_handler(ClientData	clientData,
 				 dgo_rt_output_handler,
 				 (ClientData)drcdp);
 	Tcl_Close(drcdp->interp, run_rtp->chan);
+#if 0
 	CloseHandle(run_rtp->fd);
+#endif
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
@@ -4540,7 +4542,6 @@ dgo_run_rt(struct dg_obj *dgop,
 
 	/* As parent, send view information down pipe */
 	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "wb" );
-	_setmode(_fileno(fp_in), _O_BINARY);
 
 	dgo_rt_set_eye_model(dgop, vop, eye_model);
 	dgo_rt_write(dgop, vop, fp_in, eye_model);
@@ -4567,7 +4568,6 @@ dgo_run_rt(struct dg_obj *dgop,
 				 (ClientData)drcdp);
 
 	return 0;
-
 #endif
 
 }

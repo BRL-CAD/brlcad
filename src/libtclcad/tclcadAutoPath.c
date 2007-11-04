@@ -34,11 +34,14 @@
 #include "tcl.h"
 #include "tk.h"
 #include "itcl.h"
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
 #include "itk.h"
 
 #define SEARCH_ARCHER 1
 #ifdef SEARCH_ARCHER
 #  include "blt.h"
+#endif
 #endif
 
 /* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
@@ -48,6 +51,14 @@
 
 #include "machine.h"
 #include "bu.h"
+#include "tclcad.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef BU_DIR_SEPARATOR
+#undef BU_DIR_SEPARATOR
+#endif
+#define BU_DIR_SEPARATOR '/'
+#endif
 
 #define MAX_BUF 2048
 
@@ -192,6 +203,24 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     root = bu_brlcad_root("", 1);
     data = bu_brlcad_data("", 1);
+
+#ifdef _WIN32 */
+    {
+	char *cp;
+
+	if (root != (char *)0) {
+	    for (cp = root; *cp != '\0'; ++cp)
+		if (*cp == '\\') 
+		    *cp = '/';
+ 	}
+
+	if (data != (char *)0) {
+	    for (cp = data; *cp != '\0'; ++cp)
+		if (*cp == '\\') 
+		    *cp = '/';
+ 	}
+     }
+#endif
 
     bu_vls_init(&auto_path);
     bu_vls_init(&lappend);
@@ -375,9 +404,15 @@ tclcad_auto_path(Tcl_Interp *interp)
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
 
     /* iterate over the auto_path list and modify the real Tcl auto_path */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    for (srcpath = strtok(bu_vls_addr(&auto_path), pathsep);
+	 srcpath;
+	 srcpath = strtok(NULL, pathsep)) {
+#else
     for (srcpath = strtok_r(bu_vls_addr(&auto_path), pathsep, &stp);
 	 srcpath;
 	 srcpath = strtok_r(NULL, pathsep, &stp)) {
+#endif
 
 	/* make sure it exists before appending */
 	if (bu_file_exists(srcpath)) {
