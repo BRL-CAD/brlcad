@@ -43,12 +43,14 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <ctype.h>
 
-#ifndef _WIN32
-#  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc */
-#else
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #  include <process.h>
 #  include <winsock.h>
+#  include <fcntl.h>
+#  include <io.h>
+#else
+#  include <sys/socket.h>
+#  include <netinet/in.h>		/* For htonl(), etc */
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -76,14 +78,208 @@ void set_port(void);
 #endif
 #define LOCAL_STATIC static
 
-LOCAL_STATIC void new_client(struct pkg_conn *pcp);
 LOCAL_STATIC void drop_client(int sub);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+LOCAL_STATIC void new_client(struct pkg_conn *pcp, Tcl_Channel chan);
+LOCAL_STATIC void new_client_handler(ClientData clientData, Tcl_Channel chan, char *host, int port);
+#else
+LOCAL_STATIC void new_client(struct pkg_conn *pcp);
 LOCAL_STATIC void new_client_handler(ClientData clientData, int mask);
+#endif
 LOCAL_STATIC void existing_client_handler(ClientData clientData, int mask);
 LOCAL_STATIC void comm_error(char *str);
 LOCAL_STATIC void setup_socket(int fd);
 
 
+/*
+ *			D R O P _ C L I E N T
+ */
+LOCAL_STATIC void
+drop_client(int sub)
+{
+    if (clients[sub].c_pkg != PKC_NULL) {
+	pkg_close(clients[sub].c_pkg);
+	clients[sub].c_pkg = PKC_NULL;
+    }
+
+    if (clients[sub].c_fd != 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	Tcl_DeleteChannelHandler(clients[sub].c_chan,
+				 clients[sub].c_handler,
+				 clients[sub].c_fd);
+
+	Tcl_Close(dmp->dm_interp, clients[sub].c_chan);
+	clients[sub].c_chan = NULL;
+#else
+	Tcl_DeleteFileHandler(clients[sub].c_fd);
+#endif
+	close(clients[sub].c_fd);
+	clients[sub].c_fd = 0;
+    }
+}
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+LOCAL_STATIC void
+new_client(struct pkg_conn	*pcp,
+	   Tcl_Channel		chan)
+	   
+{
+    register int	i;
+
+    if (pcp == PKC_ERROR)
+	return;
+
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	if (clients[i].c_fd != 0)
+	    continue;
+
+	/* Found an available slot */
+	clients[i].c_pkg = pcp;
+	clients[i].c_fd = pcp->pkc_fd;
+	setup_socket(pcp->pkc_fd);
+
+	clients[i].c_chan = chan;
+	clients[i].c_handler = existing_client_handler;
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE,
+				 clients[i].c_handler,
+				 (ClientData)clients[i].c_fd);
+
+	return;
+    }
+
+    bu_log("new_client: too many clients\n");
+    pkg_close(pcp);
+}
+
+/*
+ *			S E T _ P O R T
+ */
+void
+set_port(void)
+{
+    register int i;
+    int save_port;
+    int port;
+    char hostname[32];
+
+    /* Check to see if previously active --- if so then deactivate */
+    if (netchan != NULL) {
+	/* first drop all clients */
+	for (i = 0; i < MAX_CLIENTS; ++i)
+	    drop_client(i);
+
+	Tcl_DeleteChannelHandler(netchan,
+				 new_client_handler,
+				 netfd);
+
+	Tcl_Close(dmp->dm_interp, netchan);
+	netchan = NULL;
+
+	close(netfd);
+	netfd = -1;
+    }
+
+    if (!mged_variables->mv_listen)
+	return;
+
+    if (!mged_variables->mv_fb) {
+	mged_variables->mv_listen = 0;
+	return;
+    }
+
+    /*XXX hardwired for now */
+    sprintf(hostname,"localhost");
+
+#define MAX_PORT_TRIES 100
+
+    save_port = mged_variables->mv_port;
+
+    if(mged_variables->mv_port < 0)
+	port = 5559;
+    else if (mged_variables->mv_port < 1024)
+	port = mged_variables->mv_port + 5559;
+    else
+	port = mged_variables->mv_port;
+
+    /* Try a reasonable number of times to hang a listen */
+    for (i = 0; i < MAX_PORT_TRIES; ++i) {
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+	netchan = Tcl_OpenTcpServer(dmp->dm_interp, port, hostname, new_client_handler, (ClientData)curr_dm_list);
+
+	if (netchan == NULL)
+	    ++port;
+	else
+	    break;
+    }
+
+    if (netchan == NULL) {
+	mged_variables->mv_port = save_port;
+	mged_variables->mv_listen = 0;
+	bu_log("set_port: failed to hang a listen on ports %d - %d\n",
+	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+    } else {
+	mged_variables->mv_port = port;
+	Tcl_GetChannelHandle(netchan, TCL_READABLE, &netfd);
+    }
+}
+
+static struct pkg_conn *
+fbserv_makeconn(int fd,
+		const struct pkg_switch *switchp)
+{
+    register struct pkg_conn *pc;
+
+    if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
+	comm_error("fbserv_makeconn: malloc failure\n");
+	return(PKC_ERROR);
+    }
+
+    bzero((char *)pc, sizeof(struct pkg_conn));
+    pc->pkc_magic = PKG_MAGIC;
+    pc->pkc_fd = fd;
+    pc->pkc_switch = switchp;
+    pc->pkc_errlog = 0;
+    pc->pkc_left = -1;
+    pc->pkc_buf = (char *)0;
+    pc->pkc_curpos = (char *)0;
+    pc->pkc_strpos = 0;
+    pc->pkc_incur = pc->pkc_inend = 0;
+
+    return pc;
+}
+
+LOCAL_STATIC void
+new_client_handler(ClientData	 clientData,
+		   Tcl_Channel	 chan,
+		   char		 *host,
+		   int		 port)
+{
+    struct dm_list *dlp = (struct dm_list *)clientData;
+    struct dm_list *scdlp;  /* save current dm_list pointer */
+    int fd;
+    int ret;
+
+    if (dlp == NULL)
+	return;
+
+    /* save */
+    scdlp = curr_dm_list;
+
+    curr_dm_list = dlp;
+
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, &fd) == TCL_OK)
+	new_client(fbserv_makeconn(fd, pkg_switch), chan);
+
+    /* restore */
+    curr_dm_list = scdlp;
+}
+
+
+#else /* defined(_WIN32) && !defined(__CYGWIN__) */
+
+    
 /*
  *			N E W _ C L I E N T
  */
@@ -104,16 +300,8 @@ new_client(struct pkg_conn *pcp)
 	clients[i].c_fd = pcp->pkc_fd;
 	setup_socket(pcp->pkc_fd);
 
-#ifndef _WIN32
 	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
 			      existing_client_handler, (ClientData)clients[i].c_fd);
-#else
-	clients[i].c_chan = Tcl_MakeTcpClientChannel(clients[i].c_fd);
-	clients[i].c_handler = existing_client_handler;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE,
-				 clients[i].c_handler,
-				 (ClientData)clients[i].c_fd);
-#endif
 
 	return;
     }
@@ -122,29 +310,6 @@ new_client(struct pkg_conn *pcp)
     pkg_close(pcp);
 }
 
-/*
- *			D R O P _ C L I E N T
- */
-LOCAL_STATIC void
-drop_client(int sub)
-{
-    if (clients[sub].c_pkg != PKC_NULL) {
-	pkg_close(clients[sub].c_pkg);
-	clients[sub].c_pkg = PKC_NULL;
-    }
-
-    if (clients[sub].c_fd != 0) {
-#ifndef _WIN32
-	Tcl_DeleteFileHandler(clients[sub].c_fd);
-#else
-	Tcl_DeleteChannelHandler(clients[sub].c_chan,
-				 clients[sub].c_handler,
-				 clients[sub].c_fd);
-#endif
-	close(clients[sub].c_fd);
-	clients[sub].c_fd = 0;
-    }
-}
 
 /*
  *			S E T _ P O R T
@@ -162,13 +327,7 @@ set_port(void)
 	for (i = 0; i < MAX_CLIENTS; ++i)
 	    drop_client(i);
 
-#ifndef _WIN32
 	Tcl_DeleteFileHandler(netfd);
-#else
-	Tcl_DeleteChannelHandler(netchan,
-				 new_client_handler,
-				 netfd);
-#endif
 	close(netfd);
 	netfd = -1;
     }
@@ -181,69 +340,38 @@ set_port(void)
 	return;
     }
 
-#if 1
 #define MAX_PORT_TRIES 100
 
-  save_port = mged_variables->mv_port;
-  if(mged_variables->mv_port < 0)
-    mged_variables->mv_port = 0;
+    save_port = mged_variables->mv_port;
+    if(mged_variables->mv_port < 0)
+	mged_variables->mv_port = 0;
 
-  /* Try a reasonable number of times to hang a listen */
-  for(i = 0; i < MAX_PORT_TRIES; ++i){
-    if(mged_variables->mv_port < 1024)
-      sprintf(portname,"%d", mged_variables->mv_port + 5559);
-    else
-      sprintf(portname,"%d", mged_variables->mv_port);
+    /* Try a reasonable number of times to hang a listen */
+    for(i = 0; i < MAX_PORT_TRIES; ++i){
+	if(mged_variables->mv_port < 1024)
+	    sprintf(portname,"%d", mged_variables->mv_port + 5559);
+	else
+	    sprintf(portname,"%d", mged_variables->mv_port);
 
-    /*
-     * Hang an unending listen for PKG connections
-     */
-    if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 )
-      ++mged_variables->mv_port;
-    else
-      break;
-  }
-#else
-  if(mged_variables->mv_port < 0){
-    mged_variables->mv_listen = 0;
-    bu_log("set_port: invalid port number - %d\n", mged_variables->mv_port);
-    return;
-  }
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+	if ((netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0)
+	    ++mged_variables->mv_port;
+	else
+	    break;
+    }
 
-  if(mged_variables->mv_port < 1024)
-     sprintf(portname,"%d", mged_variables->mv_port + 5559);
-  else
-    sprintf(portname,"%d", mged_variables->mv_port);
-
-  /*
-   * Hang an unending listen for PKG connections
-   */
-  if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ){
-    bu_log("set_port: failed to hang a listen on port %d\n", mged_variables->mv_port);
-    mged_variables->mv_listen = 0;
-
-    return;
-  }
-#endif
-
-  if (netfd < 0) {
-      mged_variables->mv_port = save_port;
-      mged_variables->mv_listen = 0;
-      bu_log("set_port: failed to hang a listen on ports %d - %d\n",
-	     mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-  } else {
-#ifndef _WIN32
-      Tcl_CreateFileHandler(netfd, TCL_READABLE,
-			    new_client_handler, (ClientData)netfd);
-#else
-      netchan = Tcl_MakeTcpClientChannel(netfd);
-      Tcl_CreateChannelHandler(netchan,
-			       TCL_READABLE,
-			       new_client_handler,
-			       (ClientData)netfd);
-#endif
-  }
+    if (netfd < 0) {
+	mged_variables->mv_port = save_port;
+	mged_variables->mv_listen = 0;
+	bu_log("set_port: failed to hang a listen on ports %d - %d\n",
+	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+    } else
+	Tcl_CreateFileHandler(netfd, TCL_READABLE,
+			      new_client_handler, (ClientData)netfd);
 }
+
 
 /*
  * Accept any new client connections.
@@ -271,6 +399,7 @@ found:
   /* restore */
   curr_dm_list = scdlp;
 }
+#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 /*
  * Process arrivals from existing clients.
