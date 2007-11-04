@@ -66,6 +66,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../include;../../../src/other/libregex"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;REGEX_EXPORT_DLL;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"

@@ -23,7 +23,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../include;../../../src/mged;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;DM_WGL;IF_WGL"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;DM_WGL;IF_WGL;USE_FBSERV"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
@@ -34,6 +34,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -44,6 +45,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/mged.pdb"
 				SubSystem="1"
 				TargetMachine="1"/>
@@ -149,7 +151,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -168,7 +169,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -187,7 +187,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -206,7 +205,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -225,7 +223,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -244,7 +241,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -263,7 +259,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -282,7 +277,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -301,7 +295,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -320,7 +313,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -339,7 +331,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -358,7 +349,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -380,7 +370,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -399,7 +388,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -418,7 +406,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -437,7 +424,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -456,7 +442,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -475,7 +460,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -494,7 +478,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -513,7 +496,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -532,7 +514,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -551,7 +532,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -570,7 +550,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -589,7 +568,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -608,7 +586,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -627,7 +604,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -646,7 +622,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -665,7 +640,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -684,7 +658,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -703,7 +676,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -722,7 +694,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -741,7 +712,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -760,7 +730,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -779,7 +748,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -798,7 +766,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -817,7 +784,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -836,7 +802,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -855,7 +820,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -874,7 +838,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -893,7 +856,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -912,7 +874,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -931,7 +892,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -950,7 +910,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -969,7 +928,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -988,7 +946,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1007,7 +964,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1026,7 +982,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1045,7 +1000,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1067,7 +1021,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1086,7 +1039,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1105,7 +1057,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1124,7 +1075,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1143,7 +1093,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1162,7 +1111,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1181,7 +1129,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1200,7 +1147,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1219,7 +1165,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1238,7 +1183,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1257,7 +1201,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1276,7 +1219,6 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration

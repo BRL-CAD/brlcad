@@ -103,6 +103,7 @@ copy &quot;$(TargetDir)&quot;libtclcad_d.lib ..\..\..\lib
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -113,6 +114,7 @@ copy &quot;$(TargetDir)&quot;libtclcad_d.lib ..\..\..\lib
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/libtclcad.pdb"
 				ImportLibrary=".\Release/libtclcad.lib"
 				TargetMachine="1"/>
@@ -170,7 +172,6 @@ copy &quot;$(TargetDir)&quot;libtclcad.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -189,7 +190,6 @@ copy &quot;$(TargetDir)&quot;libtclcad.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -208,7 +208,6 @@ copy &quot;$(TargetDir)&quot;libtclcad.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>

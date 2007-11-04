@@ -97,6 +97,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -107,6 +108,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/nirt.pdb"
 				SubSystem="1"
 				TargetMachine="1"/>

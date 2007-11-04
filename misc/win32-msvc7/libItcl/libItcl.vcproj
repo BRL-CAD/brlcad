@@ -104,6 +104,7 @@ copy &quot;$(TargetDir)&quot;itcl33_d.lib ..\..\..\lib
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -115,6 +116,7 @@ copy &quot;$(TargetDir)&quot;itcl33_d.lib ..\..\..\lib
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
 				IgnoreDefaultLibraryNames="libcmt"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/itcl33.pdb"
 				ImportLibrary=".\Release/itcl33.lib"
 				TargetMachine="1"/>

@@ -23,7 +23,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../include;../../../src/other/libz;../../../src/other/libpng;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/xlib"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DM_EXPORT_DLL;DM_WGL;IF_WGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DM_EXPORT_DLL;DM_WGL;IF_WGL;IF_REMOTE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;USE_FBSERV"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
@@ -34,6 +34,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -44,6 +45,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/libdm.pdb"
 				ImportLibrary=".\Release/libdm.lib"
 				TargetMachine="1"/>
@@ -161,7 +163,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -180,7 +181,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -199,7 +199,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -218,7 +217,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -237,7 +235,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -256,7 +253,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -278,7 +274,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -297,7 +292,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -316,7 +310,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -335,7 +328,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -354,7 +346,6 @@ copy &quot;$(TargetDir)&quot;libdm_d.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 				<FileConfiguration
