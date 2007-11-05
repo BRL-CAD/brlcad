@@ -1266,17 +1266,20 @@ AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; LIBREGEX="-lc",
     )]
 )
 
-dnl check if a png library links
-png_link_works=no
-LIBPNG=""
-AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes ; LIBPNG="-lpng")
-
 dnl check if zlib library links
 z_link_works=no
 LIBZLIB=""
 if test "x$bc_build_zlib" != "xyes" ; then
     AC_CHECK_LIB(z, deflate, z_link_works=yes ; LIBZLIB="-lz")
 fi
+
+dnl check if a png library links
+png_link_works=no
+LIBPNG=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBZLIB"
+AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes ; LIBPNG="-lpng $LIBZLIB")
+LIBS="$PRELIBS"
 
 dnl check if utahrle library links
 utahrle_link_works=no
