@@ -43,7 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <ctype.h>
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
 #  include <process.h>
 #  include <winsock.h>
 #  include <fcntl.h>

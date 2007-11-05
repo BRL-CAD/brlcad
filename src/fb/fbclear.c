@@ -45,7 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "pkg.h"
 
-#ifdef _WIN32
+#ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
 

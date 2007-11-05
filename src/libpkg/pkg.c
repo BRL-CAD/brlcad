@@ -70,7 +70,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <sys/time.h>
 #endif
 
-#if defined(HAVE_WINSOCK_H) && !defined(__CYGWIN__)
+#ifdef HAVE_WINSOCK_H
 #  include <process.h>
 #  include <winsock.h>
 #  include <fcntl.h>
