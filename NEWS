@@ -14,6 +14,7 @@ entire history of the project is available through CVS.
 * pix-png warns if PNG is smaller than the PIX input - Sean Morrison
 * new tgf-g INTAVAL importer - TNO PML, IABG mbH
 * removed longjmp warning message from applications - Sean Morrison
+* upgraded bundled incrTcl to version 3.3 - Erik Greenwald
 * fixed bug with -g/-G cell size options to rt - John Anderson
 * 'tree' command without args now shows e'd objects - Sean Morrison
 * new pix-fb -p option to pause before exiting - Karel Kulhavy
