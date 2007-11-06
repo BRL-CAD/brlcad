@@ -44,9 +44,9 @@ itcl::class itk::Toplevel {
         itk_component add hull {
             toplevel $itk_hull -class [namespace tail [info class]]
         } {
-            keep -background -cursor -takefocus
+            keep -menu -background -cursor -takefocus
         }
-        bind itk-delete-$itk_hull <Destroy> "itcl::delete object $this"
+        bind itk-delete-$itk_hull <Destroy> [list itcl::delete object $this]
 
         set tags [bindtags $itk_hull]
         bindtags $itk_hull [linsert $tags 0 itk-delete-$itk_hull]

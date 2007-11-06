@@ -149,7 +149,7 @@ Initialize(interp)
         (Tcl_Namespace*)NULL, /* flags */ 0);
 
     if (!parserNs) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot initialize [incr Tk]: [incr Tcl] has not been installed\n",
             "Make sure that Itcl_Init() is called before Itk_Init()",
             (char*)NULL);
@@ -348,7 +348,7 @@ Itk_ConfigBodyCmd(dummy, interp, objc, objv)
     Itcl_ParseNamespPath(token, &buffer, &head, &tail);
 
     if (!head || *head == '\0') {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "missing class specifier for body declaration \"", token, "\"",
             (char*)NULL);
         result = TCL_ERROR;

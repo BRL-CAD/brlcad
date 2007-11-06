@@ -60,12 +60,12 @@
 
 
 #define ITK_MAJOR_VERSION	3
-#define ITK_MINOR_VERSION	3
+#define ITK_MINOR_VERSION	4
 #define ITK_RELEASE_LEVEL	TCL_FINAL_RELEASE
 #define ITK_RELEASE_SERIAL	0
 
-#define ITK_VERSION		"3.3"
-#define ITK_PATCH_LEVEL		"3.3.0"
+#define ITK_VERSION		"3.4"
+#define ITK_PATCH_LEVEL		"3.4.0"
 
 
 /*
