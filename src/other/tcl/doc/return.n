@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH return n 8.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -27,7 +27,7 @@ return \- Return from a procedure, or set return code of a script
 In its simplest usage, the \fBreturn\fR command is used without options
 in the body of a procedure to immediately return control to the caller
 of the procedure.  If a \fIresult\fR argument is provided, its value
-becomes the result of the procedure passed back to the caller.
+becomes the result of the procedure passed back to the caller.  
 If \fIresult\fR is not specified then an empty string will be returned
 to the caller as the result of the procedure.
 .PP
@@ -111,7 +111,7 @@ is meant to be additional information about the error,
 presented as a Tcl list for further processing by programs.
 If no \fB-errorcode\fR option is provided to \fBreturn\fR when
 the \fB-code error\fR option is provided, Tcl will set the value
-of the \fB-errorcode\fR entry in the return options dictionary
+of the \fB-errorcode\fR entry in the return options dictionary 
 to the default value of \fBNONE\fR.  The \fB-errorcode\fR return
 option will also be stored in the global variable \fBerrorCode\fR.
 .TP
@@ -120,7 +120,7 @@ The \fB-errorinfo\fR option receives special treatment only when the value
 of the \fB-code\fR option is \fBTCL_ERROR\fR.  Then \fIinfo\fR is the initial
 stack trace, meant to provide to a human reader additional information
 about the context in which the error occurred.  The stack trace will
-also be stored in the global variable \fBerrorInfo\fR.
+also be stored in the global variable \fBerrorInfo\fR.  
 If no \fB-errorinfo\fR option is provided to \fBreturn\fR when
 the \fB-code error\fR option is provided, Tcl will provide its own
 initial stack trace value in the entry for \fB-errorinfo\fR.  Tcl's
@@ -179,7 +179,7 @@ their documented interpretation in loops.
 .VS 8.5
 Procedure invocation also involves evaluation of a script, the body
 of the procedure.  Procedure invocation provides special treatment
-when evaluation of the procedure body returns the return code
+when evaluation of the procedure body returns the return code 
 \fBTCL_RETURN\fR.  In that circumstance, the \fB-level\fR entry in the
 return options dictionary is decremented.  If after decrementing,
 the value of the \fB-level\fR entry is 0, then the value of
@@ -211,7 +211,7 @@ procedure, interrupting the procedure body.
 .CS
 proc printOneLine {} {
    puts "line 1"    ;# This line will be printed.
-   \fBreturn\fR
+   \fBreturn\fR		
    puts "line 2"    ;# This line will not be printed.
 }
 .CE

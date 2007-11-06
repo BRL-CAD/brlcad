@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH error n "" Tcl "Tcl Built-In Commands"
 .BS
@@ -30,7 +30,7 @@ the Tcl interpreter adds information to the \fB-errorinfo\fR
 return option.  If the \fIinfo\fR argument is present, it is
 used to initialize the \fB-errorinfo\fR return options and
 the first increment of unwind information
-will not be added by the Tcl interpreter.
+will not be added by the Tcl interpreter.  
 In other
 words, the command containing the \fBerror\fR command will not appear
 in the stack trace; in its place will be \fIinfo\fR.

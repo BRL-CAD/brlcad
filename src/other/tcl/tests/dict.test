@@ -1058,6 +1058,35 @@ test dict-21.15 {dict update command: compilation} {
     }
     dicttest {k 1 l 2}
 } {}
+test dict-21.16 {dict update command: no recursive structures [Bug 1786481]} {
+    set foo {a {b {c {d {e 1}}}}}
+    dict update foo a t {
+	dict update t b t {
+	    dict update t c t {
+		dict update t d t {
+		    dict incr t e
+		}
+	    }
+	}
+    }
+    string range [append foo OK] end-1 end
+} OK
+test dict-21.17 {dict update command: no recursive structures [Bug 1786481]} {
+    proc dicttest {} {
+	set foo {a {b {c {d {e 1}}}}}
+	dict update foo a t {
+	    dict update t b t {
+		dict update t c t {
+		    dict update t d t {
+			dict incr t e
+		    }
+		}
+	    }
+	}
+    }
+    dicttest
+    string range [append foo OK] end-1 end
+} OK
 
 test dict-22.1 {dict with command} -body {
     dict with
@@ -1127,6 +1156,19 @@ test dict-22.10 {dict with command: result handling tricky case} {
     }
     list $i $a
 } {0 {}}
+test dict-22.11 {dict with command: no recursive structures [Bug 1786481]} {
+    set foo {t {t {t {inner 1}}}}
+    dict with foo {
+	dict with t {
+	    dict with t {
+		dict with t {
+		    incr inner
+		}
+	    }
+	}
+    }
+    string range [append foo OK] end-1 end
+} OK
 
 # cleanup
 ::tcltest::cleanupTests

@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		F90509300913A72400327603 /* tclAppInit.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D445508F272B9004A47F5 /* tclAppInit.c */; settings = {COMPILER_FLAGS = "-DTCL_TEST -DTCL_BUILDTIME_LIBRARY=\\\"$(TCL_SRCROOT)/library\\\""; }; };
-		F9408AF30B195C08009F7CAC /* tclMathOp.c in Sources */ = {isa = PBXBuildFile; fileRef = F9408AF20B195C08009F7CAC /* tclMathOp.c */; };
 		F966C07508F2820D005CB29B /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F966C07408F2820D005CB29B /* CoreFoundation.framework */; };
 		F96D456F08F272BB004A47F5 /* regcomp.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED008F272A7004A47F5 /* regcomp.c */; };
 		F96D457208F272BB004A47F5 /* regerror.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D3ED308F272A7004A47F5 /* regerror.c */; };
@@ -161,6 +160,7 @@
 		F9E61D30090A48E2002B3151 /* bn_mp_to_unsigned_bin_n.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C708F272B3004A47F5 /* bn_mp_to_unsigned_bin_n.c */; };
 		F9E61D31090A48F9002B3151 /* bn_mp_to_unsigned_bin.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42C608F272B3004A47F5 /* bn_mp_to_unsigned_bin.c */; };
 		F9E61D32090A48FA002B3151 /* bn_mp_unsigned_bin_size.c in Sources */ = {isa = PBXBuildFile; fileRef = F96D42CC08F272B3004A47F5 /* bn_mp_unsigned_bin_size.c */; };
+		F9F4415E0C8BAE6F00BCCD67 /* tclDTrace.d in Sources */ = {isa = PBXBuildFile; fileRef = F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */; };
 		F9FC77B80AB29E9100B7077D /* tclUnixCompat.c in Sources */ = {isa = PBXBuildFile; fileRef = F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */; };
 /* End PBXBuildFile section */
 
@@ -176,7 +176,7 @@
 
 /* Begin PBXFileReference section */
 		8DD76FB20486AB0100D96B5E /* tcltest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tcltest; sourceTree = BUILT_PRODUCTS_DIR; };
-		F9408AF20B195C08009F7CAC /* tclMathOp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tclMathOp.c; sourceTree = "<group>"; };
+		F91E62260C1AE686006C9D96 /* Tclsh-Info.plist.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "Tclsh-Info.plist.in"; sourceTree = "<group>"; };
 		F95FAFF90B34F1130072E431 /* macOSXLoad.test */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = macOSXLoad.test; sourceTree = "<group>"; };
 		F966C07408F2820D005CB29B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		F96D3DFA08F272A4004A47F5 /* ChangeLog */ = {isa = PBXFileReference; explicitFileType = text; fileEncoding = 4; path = ChangeLog; sourceTree = "<group>"; };
@@ -821,7 +821,6 @@
 		F96D444708F272B9004A47F5 /* pkgc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pkgc.c; sourceTree = "<group>"; };
 		F96D444808F272B9004A47F5 /* pkgd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pkgd.c; sourceTree = "<group>"; };
 		F96D444908F272B9004A47F5 /* pkge.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pkge.c; sourceTree = "<group>"; };
-		F96D444A08F272B9004A47F5 /* pkgf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pkgf.c; sourceTree = "<group>"; };
 		F96D444B08F272B9004A47F5 /* pkgua.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pkgua.c; sourceTree = "<group>"; };
 		F96D444C08F272B9004A47F5 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		F96D444D08F272B9004A47F5 /* install-sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "install-sh"; sourceTree = "<group>"; };
@@ -910,6 +909,7 @@
 		F9ECB1CB0B26534C00A28025 /* mathop.test */ = {isa = PBXFileReference; explicitFileType = text.script; fileEncoding = 4; path = mathop.test; sourceTree = "<group>"; };
 		F9ECB1E10B26543C00A28025 /* platform_shell.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = platform_shell.n; sourceTree = "<group>"; };
 		F9ECB1E20B26543C00A28025 /* platform.n */ = {isa = PBXFileReference; explicitFileType = text.man; fileEncoding = 4; path = platform.n; sourceTree = "<group>"; };
+		F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = tclDTrace.d; sourceTree = "<group>"; };
 		F9FC77B70AB29E9100B7077D /* tclUnixCompat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tclUnixCompat.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -974,8 +974,7 @@
 				F96D432B08F272B4004A47F5 /* license.terms */,
 			);
 			name = "Tcl Sources";
-			path = ../../tcl;
-			sourceTree = SOURCE_ROOT;
+			sourceTree = TCL_SRCROOT;
 		};
 		F96D3DFC08F272A4004A47F5 /* doc */ = {
 			isa = PBXGroup;
@@ -1228,6 +1227,7 @@
 				F96D3EEA08F272A7004A47F5 /* tclDate.c */,
 				F96D3EEB08F272A7004A47F5 /* tclDecls.h */,
 				F96D3EEC08F272A7004A47F5 /* tclDictObj.c */,
+				F9F4415D0C8BAE6F00BCCD67 /* tclDTrace.d */,
 				F96D3EED08F272A7004A47F5 /* tclEncoding.c */,
 				F96D3EEE08F272A7004A47F5 /* tclEnv.c */,
 				F96D3EEF08F272A7004A47F5 /* tclEvent.c */,
@@ -1258,7 +1258,6 @@
 				F96D3F0808F272A7004A47F5 /* tclLoad.c */,
 				F96D3F0908F272A7004A47F5 /* tclLoadNone.c */,
 				F96D3F0A08F272A7004A47F5 /* tclMain.c */,
-				F9408AF20B195C08009F7CAC /* tclMathOp.c */,
 				F96D3F0B08F272A7004A47F5 /* tclNamesp.c */,
 				F96D3F0C08F272A7004A47F5 /* tclNotify.c */,
 				F96D3F0D08F272A7004A47F5 /* tclObj.c */,
@@ -1535,6 +1534,7 @@
 				F96D433D08F272B5004A47F5 /* tclMacOSXFCmd.c */,
 				F96D433E08F272B5004A47F5 /* tclMacOSXNotify.c */,
 				F96D433208F272B5004A47F5 /* Tcl-Info.plist.in */,
+				F91E62260C1AE686006C9D96 /* Tclsh-Info.plist.in */,
 				F97AE7F10B65C1E900310EA2 /* Tcl-Common.xcconfig */,
 				F97AE8330B65C87F00310EA2 /* Tcl-Debug.xcconfig */,
 				F97AE82B0B65C69B00310EA2 /* Tcl-Release.xcconfig */,
@@ -1775,7 +1775,6 @@
 				F96D444708F272B9004A47F5 /* pkgc.c */,
 				F96D444808F272B9004A47F5 /* pkgd.c */,
 				F96D444908F272B9004A47F5 /* pkge.c */,
-				F96D444A08F272B9004A47F5 /* pkgf.c */,
 				F96D444B08F272B9004A47F5 /* pkgua.c */,
 				F96D444C08F272B9004A47F5 /* README */,
 			);
@@ -1897,11 +1896,15 @@
 /* Begin PBXProject section */
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = NO;
+			};
 			buildConfigurationList = F95CC8B509158F3100EA5ACE /* Build configuration list for PBXProject "Tcl" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* Tcl */;
 			projectDirPath = "";
-			projectRoot = "";
+			projectRoot = ..;
 			targets = (
 				F9E61D16090A3E94002B3151 /* Tcl */,
 				8DD76FA90486AB0100D96B5E /* tcltest */,
@@ -1924,7 +1927,6 @@
 				"$(TCL_SRCROOT)/unix/dltest/pkgc.c",
 				"$(TCL_SRCROOT)/unix/dltest/pkgd.c",
 				"$(TCL_SRCROOT)/unix/dltest/pkge.c",
-				"$(TCL_SRCROOT)/unix/dltest/pkgf.c",
 				"$(TCL_SRCROOT)/unix/dltest/pkgua.c",
 			);
 			outputPaths = (
@@ -1933,6 +1935,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "## dltest build script phase\n\nrm -f \"${DERIVED_FILE_DIR}/tcl/dltest.marker\"\nmake -C \"${DERIVED_FILE_DIR}/tcl\" dltest.marker\nln -fsh \"${DERIVED_FILE_DIR}/tcl/dltest\" \"${CONFIGURATION_BUILD_DIR}\"\n";
+			showEnvVarsInLog = 0;
 		};
 		F97258A40A86873C00096C78 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1946,6 +1949,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "if [ \"${ACTION:-build}\" == \"build\" ]; then\nif [ -z \"${HOME}\" ]; then export HOME=\"$(echo ~)\"; fi\ncd \"${TARGET_TEMP_DIR}\"; rm -rf \"${DERIVED_FILE_DIR}\"; mkdir -p \"${DERIVED_FILE_DIR}\"\nprintf '%s%s%s%s%s' '\npackage require tcltest 2.2\nnamespace import tcltest::*\nconfigure -testdir [file normalize {' \"${TCL_SRCROOT}\" '/tests}]\nconfigure -tmpdir [file normalize {' \"${DERIVED_FILE_DIR}\" '}]\nconfigure -verbose [concat [configure -verbose] line]\n# following test only fails when testsuite is run from inside Xcode, so skip it\nconfigure -skip [concat [configure -skip] stack-3.1]\nrunAllTests\n' | \"${TEST_RIG}\"; TEST_RIG_RESULT=$?\n[ ${TEST_RIG_RESULT} -ne 0 ] && echo \"tcltest:0: error: tcltest exited abnormally with code ${TEST_RIG_RESULT}.\"\nexit ${TEST_RIG_RESULT}\nfi";
+			showEnvVarsInLog = 0;
 		};
 		F97AF02F0B665DA900310EA2 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1959,6 +1963,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "if [ -e \"${BUILT_PRODUCTS_DIR}/tclsh\" ]; then\n    mv -f \"${BUILT_PRODUCTS_DIR}/tclsh\" \"${BUILT_PRODUCTS_DIR}/tclsh${VERSION}\"\nfi\ngnumake -C \"${TCL_SRCROOT}/macosx\" -j \"$(sysctl -n hw.activecpu)\" \"$(echo \"${ACTION}\" | sed -e s/build// -e s/clean/distclean/ -e s/..\\*/\\&-/)${MAKE_TARGET}\" CFLAGS_WARNING=\"${WARNING_CFLAGS}\" SYMROOT=\"${BUILT_PRODUCTS_DIR}\" OBJ_DIR=\"${OBJECT_FILE_DIR}\" INSTALL_ROOT=\"${DSTROOT}\" PREFIX=\"${PREFIX}\" BINDIR=\"${BINDIR}\" LIBDIR=\"${FRAMEWORK_INSTALL_PATH}\" MANDIR=\"${MANDIR}\" EXTRA_CONFIGURE_ARGS=\"${CONFIGURE_ARGS}\" ${EXTRA_MAKE_FLAGS}\nresult=$?\nif [ -e \"${BUILT_PRODUCTS_DIR}/tclsh${VERSION}\" ]; then\n    mv -f \"${BUILT_PRODUCTS_DIR}/tclsh${VERSION}\" \"${BUILT_PRODUCTS_DIR}/tclsh\"\nfi\nif [ -e \"${BUILT_PRODUCTS_DIR}/tcltest\" ]; then\n\trm -f \"${BUILT_PRODUCTS_DIR}/tcltest\"\nfi\necho \"Done\"\nexit ${result}\n";
+			showEnvVarsInLog = 0;
 		};
 		F9A5C5F508F651A2008AE941 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1979,7 +1984,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "## tcl configure shell script phase\n\ncd \"${TCL_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tcl/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-/usr/bin/autoconf} && ${AUTOHEADER:-/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tcl && cd tcl &&\nif [ \"${TCL_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tcl\"\n    \"${TCL_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi\n";
+			shellScript = "## tcl configure shell script phase\n\ncd \"${TCL_SRCROOT}\"/macosx &&\nif [ configure.ac -nt configure -o ../unix/configure.in -nt configure -o ../unix/tcl.m4 -nt configure -o ../unix/aclocal.m4 -nt configure ]; then\n    echo \"Running autoconf & autoheader in tcl/macosx\"\n    rm -rf autom4te.cache\n    ${AUTOCONF:-${DEVELOPER_DIR}/usr/bin/autoconf} && ${AUTOHEADER:-${DEVELOPER_DIR}/usr/bin/autoheader} || exit $?\n    rm -rf autom4te.cache\nfi\n\ncd \"${DERIVED_FILE_DIR}\" && mkdir -p tcl && cd tcl &&\nif [ \"${TCL_SRCROOT}\"/macosx/configure -nt config.status ]; then\n    echo \"Configuring Tcl\"\n    \"${TCL_SRCROOT}\"/macosx/configure --cache-file=../config.cache --prefix=${PREFIX} --bindir=${BINDIR} --libdir=${LIBDIR} --mandir=${MANDIR} --includedir=${INCLUDEDIR} --disable-shared ${CONFIGURE_ARGS}\nelse\n    ./config.status\nfi\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -2029,7 +2035,6 @@
 				F96D45A608F272BC004A47F5 /* tclLiteral.c in Sources */,
 				F96D45A708F272BC004A47F5 /* tclLoad.c in Sources */,
 				F96D45A908F272BC004A47F5 /* tclMain.c in Sources */,
-				F9408AF30B195C08009F7CAC /* tclMathOp.c in Sources */,
 				F96D45AA08F272BC004A47F5 /* tclNamesp.c in Sources */,
 				F96D45AB08F272BC004A47F5 /* tclNotify.c in Sources */,
 				F96D45AC08F272BC004A47F5 /* tclObj.c in Sources */,
@@ -2142,6 +2147,7 @@
 				F96D4AD308F272CA004A47F5 /* tclUnixTest.c in Sources */,
 				F96D4AD408F272CA004A47F5 /* tclUnixThrd.c in Sources */,
 				F96D4AD608F272CA004A47F5 /* tclUnixTime.c in Sources */,
+				F9F4415E0C8BAE6F00BCCD67 /* tclDTrace.d in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2181,7 +2187,7 @@
 					x86_64,
 				);
 				CFLAGS = "-arch ppc -arch ppc64 -arch i386 -arch x86_64 $(CFLAGS)";
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = (
 					"-Wl,-no_arch_warnings",
 					"$(OTHER_LDFLAGS)",
@@ -2219,7 +2225,7 @@
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Tcl-Debug.xcconfig */;
 			buildSettings = {
 				CONFIGURE_ARGS = "$(CONFIGURE_ARGS) --enable-symbols=all";
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 			};
 			name = DebugMemCompile;
@@ -2249,11 +2255,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CONFIGURE_ARGS = "tcl_cv_cc_visibility_hidden=no $(CONFIGURE_ARGS)";
+				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"__private_extern__=extern",
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
 				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				PRODUCT_NAME = tcltest;
 				ZERO_LINK = YES;
 			};
@@ -2277,7 +2285,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Tcl-Debug.xcconfig */;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 			};
 			name = Debug;
@@ -2286,7 +2294,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Tcl-Release.xcconfig */;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = YES;
 			};
 			name = Release;
@@ -2295,7 +2303,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Tcl-Debug.xcconfig */;
 			buildSettings = {
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 			};
 			name = DebugNoFixZL;
@@ -2401,10 +2409,81 @@
 				ARCHS = "$(NATIVE_ARCH_64_BIT)";
 				CONFIGURE_ARGS = "--enable-64bit $(CONFIGURE_ARGS)";
 				CPPFLAGS = "-arch $(NATIVE_ARCH_64_BIT) $(CPPFLAGS)";
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 			};
 			name = Debug64bit;
+		};
+		F99EE73B0BE835310060D4AF /* DebugUnthreaded */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tclsh;
+			};
+			name = DebugUnthreaded;
+		};
+		F99EE73C0BE835310060D4AF /* DebugLeaks */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tclsh;
+			};
+			name = DebugLeaks;
+		};
+		F99EE73D0BE835310060D4AF /* DebugUnthreaded */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tcltest;
+			};
+			name = DebugUnthreaded;
+		};
+		F99EE73E0BE835310060D4AF /* DebugLeaks */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tcltest;
+			};
+			name = DebugLeaks;
+		};
+		F99EE73F0BE835310060D4AF /* DebugUnthreaded */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tests;
+				TCLTEST_OPTIONS = "";
+				TCL_LIBRARY = "$(TCL_SRCROOT)/library";
+				TEST_RIG = "$(OBJROOT)/$(CONFIGURATION)/tcltest";
+			};
+			name = DebugUnthreaded;
+		};
+		F99EE7400BE835310060D4AF /* DebugLeaks */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tests;
+				TCLTEST_OPTIONS = "";
+				TCL_LIBRARY = "$(TCL_SRCROOT)/library";
+				TEST_RIG = "$(OBJROOT)/$(CONFIGURATION)/tcltest";
+			};
+			name = DebugLeaks;
+		};
+		F99EE7410BE835310060D4AF /* DebugUnthreaded */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Tcl-Debug.xcconfig */;
+			buildSettings = {
+				CONFIGURE_ARGS = "$(CONFIGURE_ARGS) --disable-threads";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				PREBINDING = NO;
+			};
+			name = DebugUnthreaded;
+		};
+		F99EE7420BE835310060D4AF /* DebugLeaks */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F97AE8330B65C87F00310EA2 /* Tcl-Debug.xcconfig */;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					PURIFY,
+					"$(GCC_PREPROCESSOR_DEFINITIONS)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				PREBINDING = NO;
+			};
+			name = DebugLeaks;
 		};
 		F9DB62080B65ADA800A370FB /* ReleaseUniversal10.4uSDK */ = {
 			isa = XCBuildConfiguration;
@@ -2464,7 +2543,7 @@
 				ARCHS = ppc;
 				CFLAGS = "$(PER_ARCH_CFLAGS_ppc) $(CFLAGS)";
 				CPPFLAGS = "-arch ppc -isysroot $(SDKROOT) $(CPPFLAGS)";
-				MACOSX_DEPLOYMENT_TARGET = 10.2;
+				MACOSX_DEPLOYMENT_TARGET = 10.3;
 				PREBINDING = YES;
 				SDKROOT = /Developer/SDKs/MacOSX10.3.9.sdk;
 			};
@@ -2492,8 +2571,9 @@
 				CFLAGS = "$(PER_ARCH_CFLAGS_ppc) -fconstant-cfstrings $(CFLAGS)";
 				CPPFLAGS = "-arch ppc -D__CONSTANT_CFSTRINGS__ -DMAC_OS_X_VERSION_MIN_REQUIRED=1020 -nostdinc -isystem $(SDKROOT)/usr/include/gcc/darwin/$(GCC_VERSION) -isystem $(SDKROOT)/usr/include -F$(SDKROOT)/System/Library/Frameworks";
 				DEBUG_INFORMATION_FORMAT = stabs;
+				GCC = /usr/bin/gcc;
 				GCC_VERSION = 3.3;
-				LDFLAGS = "-L$(SDKROOT)/usr/lib/gcc/darwin/$(GCC_VERSION) -Wl,-syslibroot,$(SDKROOT) ";
+				LDFLAGS = "-L$(SDKROOT)/usr/lib/gcc/darwin/$(GCC_VERSION) -Wl,-syslibroot,$(SDKROOT)";
 				MACOSX_DEPLOYMENT_TARGET = 10.2;
 				PREBINDING = YES;
 				SDKROOT = /Developer/SDKs/MacOSX10.2.8.sdk;
@@ -2504,6 +2584,48 @@
 			};
 			name = ReleasePPC10.2.8SDK;
 		};
+		F9EEED960C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tclsh;
+			};
+			name = ReleaseUniversal10.5SDK;
+		};
+		F9EEED970C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tcltest;
+			};
+			name = ReleaseUniversal10.5SDK;
+		};
+		F9EEED980C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = tests;
+				TCLTEST_OPTIONS = "";
+				TCL_LIBRARY = "$(TCL_SRCROOT)/library";
+				TEST_RIG = "$(OBJROOT)/$(CONFIGURATION)/tcltest";
+			};
+			name = ReleaseUniversal10.5SDK;
+		};
+		F9EEED990C2FEFD300396116 /* ReleaseUniversal10.5SDK */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F97AE82B0B65C69B00310EA2 /* Tcl-Release.xcconfig */;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					ppc64,
+					i386,
+					x86_64,
+				);
+				CFLAGS = "-arch ppc -arch ppc64 -arch i386 -arch x86_64 $(CFLAGS)";
+				CPPFLAGS = "-isysroot $(SDKROOT) $(CPPFLAGS)";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+			};
+			name = ReleaseUniversal10.5SDK;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2512,10 +2634,13 @@
 			buildConfigurations = (
 				F95CC8AC09158F3100EA5ACE /* Debug */,
 				F95CC8AE09158F3100EA5ACE /* DebugNoFixZL */,
+				F99EE73B0BE835310060D4AF /* DebugUnthreaded */,
 				F93084370BB93D2800CD0B9E /* DebugMemCompile */,
+				F99EE73C0BE835310060D4AF /* DebugLeaks */,
 				F97AED1B0B660B2100310EA2 /* Debug64bit */,
 				F95CC8AD09158F3100EA5ACE /* Release */,
 				F91BCC4F093152310042A6BF /* ReleaseUniversal */,
+				F9EEED960C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
 				F9DB62080B65ADA800A370FB /* ReleaseUniversal10.4uSDK */,
 				F9DB621F0B65AFDE00A370FB /* ReleasePPC10.3.9SDK */,
 				F9DB62350B65B03A00A370FB /* ReleasePPC10.2.8SDK */,
@@ -2528,10 +2653,13 @@
 			buildConfigurations = (
 				F95CC8B109158F3100EA5ACE /* Debug */,
 				F95CC8B309158F3100EA5ACE /* DebugNoFixZL */,
+				F99EE73D0BE835310060D4AF /* DebugUnthreaded */,
 				F93084380BB93D2800CD0B9E /* DebugMemCompile */,
+				F99EE73E0BE835310060D4AF /* DebugLeaks */,
 				F97AED1C0B660B2100310EA2 /* Debug64bit */,
 				F95CC8B209158F3100EA5ACE /* Release */,
 				F91BCC50093152310042A6BF /* ReleaseUniversal */,
+				F9EEED970C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
 				F9DB62090B65ADA800A370FB /* ReleaseUniversal10.4uSDK */,
 				F9DB62200B65AFDE00A370FB /* ReleasePPC10.3.9SDK */,
 				F9DB62360B65B03A00A370FB /* ReleasePPC10.2.8SDK */,
@@ -2544,10 +2672,13 @@
 			buildConfigurations = (
 				F95CC8B609158F3100EA5ACE /* Debug */,
 				F95CC8B809158F3100EA5ACE /* DebugNoFixZL */,
+				F99EE7410BE835310060D4AF /* DebugUnthreaded */,
 				F930843A0BB93D2800CD0B9E /* DebugMemCompile */,
+				F99EE7420BE835310060D4AF /* DebugLeaks */,
 				F97AED1E0B660B2100310EA2 /* Debug64bit */,
 				F95CC8B709158F3100EA5ACE /* Release */,
 				F91BCC51093152310042A6BF /* ReleaseUniversal */,
+				F9EEED990C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
 				F9DB620A0B65ADA800A370FB /* ReleaseUniversal10.4uSDK */,
 				F9DB62210B65AFDE00A370FB /* ReleasePPC10.3.9SDK */,
 				F9DB62370B65B03A00A370FB /* ReleasePPC10.2.8SDK */,
@@ -2560,10 +2691,13 @@
 			buildConfigurations = (
 				F97258A90A86873D00096C78 /* Debug */,
 				F97258AB0A86873D00096C78 /* DebugNoFixZL */,
+				F99EE73F0BE835310060D4AF /* DebugUnthreaded */,
 				F93084390BB93D2800CD0B9E /* DebugMemCompile */,
+				F99EE7400BE835310060D4AF /* DebugLeaks */,
 				F97AED1D0B660B2100310EA2 /* Debug64bit */,
 				F97258AA0A86873D00096C78 /* Release */,
 				F97258AC0A86873D00096C78 /* ReleaseUniversal */,
+				F9EEED980C2FEFD300396116 /* ReleaseUniversal10.5SDK */,
 				F97AED080B660A6C00310EA2 /* ReleaseUniversal10.4uSDK */,
 				F97AED0F0B660AA300310EA2 /* ReleasePPC10.3.9SDK */,
 				F97AED160B660AF100310EA2 /* ReleasePPC10.2.8SDK */,

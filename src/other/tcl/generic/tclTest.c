@@ -1213,9 +1213,25 @@ TestcmdtraceCmd(
 	} else {
 	    return result;
 	}
+    } else if ( strcmp(argv[1], "doubletest" ) == 0 ) {
+	Tcl_Trace t1, t2;
+
+	Tcl_DStringInit(&buffer);
+	t1 = Tcl_CreateTrace(interp, 1,
+		(Tcl_CmdTraceProc *) CmdTraceProc, (ClientData) &buffer);
+	t2 = Tcl_CreateTrace(interp, 50000,
+		(Tcl_CmdTraceProc *) CmdTraceProc, (ClientData) &buffer);
+	result = Tcl_Eval(interp, argv[2]);
+	if (result == TCL_OK) {
+	    Tcl_ResetResult(interp);
+	    Tcl_AppendResult(interp, Tcl_DStringValue(&buffer), NULL);
+	}
+	Tcl_DeleteTrace(interp, t2);
+	Tcl_DeleteTrace(interp, t1);
+	Tcl_DStringFree(&buffer);
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
-		"\": must be tracetest, deletetest or resulttest", NULL);
+		"\": must be tracetest, deletetest, doubletest or resulttest", NULL);
 	return TCL_ERROR;
     }
     return TCL_OK;
@@ -6805,7 +6821,6 @@ SimpleMatchInDirectory(
     resPtr = Tcl_NewObj();
     Tcl_IncrRefCount(resPtr);
     origPtr = SimpleRedirect(dirPtr);
-    Tcl_IncrRefCount(origPtr);
     res = Tcl_FSMatchInDirectory(interp, resPtr, origPtr, pattern, types);
     if (res == TCL_OK) {
 	int gLength, j;

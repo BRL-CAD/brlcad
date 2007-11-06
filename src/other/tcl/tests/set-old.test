@@ -550,7 +550,7 @@ test set-old-8.38.6 {array command, set with non-existent namespace} {
 } {1 {can't set "bogusnamespace::var": parent namespace doesn't exist}}
 test set-old-8.38.7 {array command, set with non-existent namespace} {
     list [catch {array set bogusnamespace::var(0) {a b}} msg] $msg
-} {1 {can't set "bogusnamespace::var(0)": variable isn't array}}
+} {1 {can't set "bogusnamespace::var(0)": parent namespace doesn't exist}}
 test set-old-8.39 {array command, size option} {
     catch {unset a}
     array size a
@@ -916,4 +916,4 @@ catch {unset aVaRnAmE}
 
 # cleanup
 ::tcltest::cleanupTests
-return
+return 

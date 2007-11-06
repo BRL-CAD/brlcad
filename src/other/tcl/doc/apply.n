@@ -14,11 +14,11 @@ apply \- Apply an anonymous function
 .SH DESCRIPTION
 .PP
 The command \fBapply\fR applies the function \fIfunc\fR to the arguments
-\fIarg1 arg2 ...\fR and returns the result.
+\fIarg1 arg2 ...\fR and returns the result. 
 .PP
 The function \fIfunc\fR is a two element list \fI{args body}\fR or a three
 element list \fI{args body namespace}\fR (as if the
-\fBlist\fR command had been used).
+\fBlist\fR command had been used). 
 The first element \fIargs\fR specifies the formal arguments to
 \fIfunc\fR. The specification of the formal arguments \fIargs\fR
 is shared with the \fBproc\fR command, and is described in detail in the
@@ -41,7 +41,7 @@ The invocation of \fBapply\fR adds a call frame to Tcl's evaluation stack
 proceeds in this call frame, in the namespace given by \fInamespace\fR or
 in the global namespace if none was specified. If given, \fInamespace\fR is
 interpreted relative to the global namespace even if its name does not start
-with '::'.
+with '::'. 
 .PP
 The semantics of \fBapply\fR can also be described by:
 .PP

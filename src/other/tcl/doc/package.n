@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH package n 7.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -17,9 +17,11 @@ package \- Facilities for package loading and version control
 \fBpackage forget ?\fIpackage package ...\fR?
 \fBpackage ifneeded \fIpackage version\fR ?\fIscript\fR?
 \fBpackage names\fR
-\fBpackage present \fR?\fB\-exact\fR? \fIpackage \fR?\fIversion\fR?
+\fBpackage present \fIpackage \fR?\fIrequirement...\fR?
+\fBpackage present \-exact \fIpackage version\fR
 \fBpackage provide \fIpackage \fR?\fIversion\fR?
-\fBpackage require \fR?\fB\-exact\fR? \fIpackage \fR?\fIrequirement...\fR?
+\fBpackage require \fIpackage \fR?\fIrequirement...\fR?
+\fBpackage require \-exact \fIpackage version\fR
 \fBpackage unknown \fR?\fIcommand\fR?
 \fBpackage vcompare \fIversion1 version2\fR
 \fBpackage versions \fIpackage\fR
@@ -77,7 +79,7 @@ interpreter for which a version has been provided (via
 script is available.
 The order of elements in the list is arbitrary.
 .TP
-\fBpackage present \fR?\fB\-exact\fR? \fIpackage \fR?\fIversion\fR?
+\fBpackage present\fR
 This command is equivalent to \fBpackage require\fR except that it
 does not try and load the package if it is not already loaded.
 .TP
@@ -91,21 +93,7 @@ provided by a previous \fBpackage provide\fR command.
 If the \fIversion\fR argument is omitted, then the command
 returns the version number that is currently provided, or an
 empty string if no \fBpackage provide\fR command has been
-invoked for \fIpackage\fR in this interpreter.
-.TP
-\fBpackage require \fR\fB\-exact\fR \fIpackage \fR\fIversion\fR
-This form of the command is translated to the form below using the
-bounded requirement "version-(version+1)", making only the given
-\fIversion\fR acceptable, within the specified level of detail. Deeper
-levels are allowed to vary. Examples:
-.CS
-	-exact 8      => 8-9
-	-exact 8.4    => 8.4-8.5
-	-exact 8.4.14 => 8.4.14-8.4.15
-.CE
-.RS
-For more explanations see below.
-.RE
+invoked for \fIpackage\fR in this interpreter.  
 .TP
 \fBpackage require \fR\fIpackage \fR?\fIrequirement...\fR?
 This command is typically invoked by Tcl code that wishes to use
@@ -148,6 +136,11 @@ or if there is a \fBpackage ifneeded\fR script for it.
 If all of these steps fail to provide an acceptable version of the
 package, then the command returns an error.
 .RE
+.TP
+\fBpackage require \-exact \fIpackage version\fR
+This form of the command is used when only the given \fIversion\fR
+of \fIpackage\fR is acceptable to the caller.  This command is
+equivalent to \fBpackage require \fIpackage version\fR-\fIversion\fR.
 .TP
 \fBpackage unknown \fR?\fIcommand\fR?
 This command supplies a ``last resort'' command to invoke during

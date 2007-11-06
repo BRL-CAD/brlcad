@@ -88,14 +88,17 @@ select based notifier).
 
 - It is also possible to build with Apple's IDE via the projects in tcl/macosx,
 take care to only use the project matching your DevTools and OS version:
-    * Tcl.pbproj for ProjectBuilder on 10.2 and earlier, this has a 'Tcl' target
-	that simply calls through to the tcl/macosx/GNUMakefile.
-    * Tcl.xcode for Xcode 1.5 on 10.3, this additionally has a native 'tcltest'
-	target useful for debugging, this target's 'Development' buildstyle
-	has ZeroLink and Fix&Continue enabled, use the 'DevelNoFixZL' buildstyle
-	if you need a debug build without these features.
-    * Tcl.xcodeproj for Xcode 2.4 on 10.4 or later, which has the following
-	additional configurations for the 'Tcl' and 'tcltest' targets:
+    * Tcl.pbproj for Xcode or ProjectBuilder on 10.3 and earlier, this has a
+	'Tcl' target that simply calls through to the tcl/macosx/GNUMakefile.
+    * Tcl.xcode for Xcode 2.4 on 10.4 and Xcode 2.5 on 10.4 and later, which
+	additionally has a native 'tcltest' target useful for debugging, this
+	target's 'Debug' build configuration has ZeroLink and Fix&Continue
+	enabled, use the 'DebugNoFixZL' build configuration if you need a debug
+	build without these features. The following additional build
+	configurations are available for the 'Tcl' and 'tcltest' targets:
+	'DebugUnthreaded': debug build with threading turned off.
+	'DebugMemCompile': debug build with memory and bytecode debugging on.
+	'DebugLeaks': debug build with PURIFY defined.
 	'Debug64bit': builds the targets as 64bit with debugging enabled,
 		requires a 64bit capable processor (i.e. G5 or Core2/Xeon).
 	'ReleaseUniversal': builds the targets as universal binaries for the
@@ -108,22 +111,26 @@ take care to only use the project matching your DevTools and OS version:
 	'ReleasePPC10.2.8SDK': builds for PowerPC with gcc-3.3 against the
 		10.2.8 SDK, useful to verify on Tiger that building on Jaguar
 		would succeed.
+    * Tcl.xcodeproj for Xcode 3.0 on 10.5 and later, which has the following
+	additional build configuration:
+	'ReleaseUniversal10.5SDK': same as 'ReleaseUniversal' but builds
+		against the 10.5 SDK on Leopard (with 10.5 deployment target).
+
 Notes about the native targets of the Xcode projects:
-    * the Xcode projects refer to the tcl source directory with a relative path
-	of ../../tcl to the project location, if your source directory is named
-	differently you'll need to enter the correct path in the info panel of
-	the 'Tcl Sources' group.
-    * XCode 1.5 has a bug that causes Fix&Continue and the Build menu items
-	Compile/Preprocess/ShowAssembly to fail in presence of relative paths to
-	source files, as a workaround change the Path Type of the 'Tcl Sources'
-	group to 'Absolute Path' in the group's Info panel. (fixed in Xcode 2.2)
+    * the Xcode projects refer to the toplevel tcl source directory through the
+	TCL_SRCROOT user build setting, by default this is set to the
+	project-relative path '../../tcl', if your tcl source directory is named
+	differently, e.g. '../../tcl8.5', you'll need to manually change the
+	TCL_SRCROOT setting by editing your ${USER}.pbxuser file (located inside
+	the Tcl.xcodeproj bundle directory) with a text editor.
     * the native targets need a version of the unix configure script with config
 	headers enabled, this is automatically generated as tcl/macosx/configure
-	by the project but this requires 2.59 versions of autoconf & autoheader,
-	which are not available on on Mac OS X 10.3 by default, and so need to
-	be installed manually. By default they are assumed to be installed as
+	by the project but that requires 2.59 versions of autoconf & autoheader.
+	These are not available on Mac OS X 10.5 by default and need to be
+	installed manually. By default they are assumed to be installed as
 	/usr/local/bin/autoconf-2.59 and /usr/local/bin/autoheader-2.59, set the
-	env vars AUTOCONF and AUTOHEADER to their true locations if necessary.
+	AUTOCONF and AUTOHEADER build settings in ${USER}.pbxuser to their true
+	locations if necessary.
 
 - To build universal binaries outside of Tcl.xcodeproj, set CFLAGS as follows:
     export CFLAGS="-arch ppc -arch ppc64 -arch i386 -arch x86_64 \
@@ -143,8 +150,8 @@ to the minimal OS version (>= 10.2) the binaries should be able to run on, e.g:
 This requires Mac OS X 10.2 and gcc 3.1; if you have gcc 4 or later you can set
 CFLAGS instead:
     export CFLAGS="-mmacosx-version-min=10.2"
-The Tcl.xcodeproj is setup to produce binaries that can run on 10.2 or later,
-except for the 'ReleaseUniversal*' configurations, where they require 10.4.
+The Tcl.xcode project is setup to produce binaries that can run on 10.2 or
+later (except for the Universal and SDK configurations).
 Support for weak-linking was added to the code for 8.4.14/8.5a5.
 
 Detailed Instructions for building with macosx/GNUmakefile

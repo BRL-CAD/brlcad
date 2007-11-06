@@ -411,7 +411,7 @@ catch {unset a}
 #
 # Tests for 'namespace upvar'. As the implementation is essentially the same as
 # for 'upvar', we only test that the variables are linked correctly. Ie, we
-# assume that the behaviour of variables once the link is established has
+# assume that the behaviour of variables once the link is established has 
 # already been tested above.
 #
 #
@@ -455,7 +455,7 @@ test upvar-NS-1.3 {nsupvar links to correct variable} \
 	    set w
 	}
     } \
-    -result {namespace "test_ns_0" does not exist} \
+    -result {namespace "test_ns_0" not found in "::test_ns_1"} \
     -returnCodes error \
     -cleanup {namespace delete test_ns_1}
 
@@ -469,7 +469,7 @@ test upvar-NS-1.4 {nsupvar links to correct variable} \
 	    return [a]
 	}
     } \
-    -result {namespace "test_ns_0" does not exist} \
+    -result {namespace "test_ns_0" not found in "::test_ns_1"} \
     -returnCodes error \
     -cleanup {namespace delete test_ns_1}
 
@@ -540,7 +540,7 @@ test upvar-NS-1.9 {nsupvar links to correct variable} \
 	    return [a]
 	}
     } \
-    -result {namespace "test_ns_0" does not exist} \
+    -result {namespace "test_ns_0" not found in "::test_ns_1"} \
     -returnCodes error \
     -cleanup {namespace delete test_ns_1}
 

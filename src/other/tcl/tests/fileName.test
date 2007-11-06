@@ -1374,7 +1374,7 @@ test filename-15.4.1 {no complain: errors, sequencing} {
 } {1 {user "wontexist" doesn't exist} 1 {user "blahxyz" doesn't exist}}
 test filename-15.4.2 {no complain: errors, sequencing} {
     # test used to fail because if an error occurs, the interp's result
-    # is reset...
+    # is reset... 
     string equal \
       [list [catch {glob -nocomplain ~wontexist *} res1] $res1] \
       [list [catch {glob -nocomplain * ~wontexist} res2] $res2]
@@ -1382,7 +1382,7 @@ test filename-15.4.2 {no complain: errors, sequencing} {
 test filename-15.5 {unix specific globbing} {unix nonPortable} {
     glob ~ouster/.csh*
 } "/home/ouster/.cshrc"
-catch {close [open globTest/odd\\\[\]*?\{\}name w]}
+catch {close [open globTest/odd\\\[\]*?\{\}name w]} 
 test filename-15.6 {unix specific globbing} {unix} {
     global env
     set temp $env(HOME)

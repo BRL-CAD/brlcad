@@ -53,7 +53,7 @@ proc createChildProcess { ddeServerName {handler {}}} {
 	    package require tcltest
 	    namespace import -force ::tcltest::*
 	}
-
+        
         # If an error occurs during the tests, this process may end up not
         # being closed down. To deal with this we create a 30s timeout.
         proc ::DoTimeout {} {
@@ -63,16 +63,16 @@ proc createChildProcess { ddeServerName {handler {}}} {
             flush stdout
         }
         set timeout [after 30000 ::DoTimeout]
-
+        
         # Define a restricted handler.
         proc Handler1 {cmd} {
             if {$cmd eq "stop"} {set ::done 1}
-            puts $cmd ; flush stdout
+            puts $cmd ; flush stdout 
             return
         }
         proc Handler2 {cmd} {
             if {$cmd eq "stop"} {set ::done 1}
-            puts [uplevel \#0 $cmd] ; flush stdout
+            puts [uplevel \#0 $cmd] ; flush stdout 
             return
         }
         proc Handler3 {prefix cmd} {
@@ -86,7 +86,7 @@ proc createChildProcess { ddeServerName {handler {}}} {
         puts $f [list dde servername $ddeServerName]
     } else {
         puts $f [list dde servername -handler $handler -- $ddeServerName]
-    }
+    }        
     puts $f {
         # run the server and handle final cleanup.
         after 200;# give dde a chance to get going.
@@ -101,7 +101,7 @@ proc createChildProcess { ddeServerName {handler {}}} {
 	exit
     }
     close $f
-
+    
     # run the child server script.
     set f [open |[list [interpreter] $::scriptName] r]
     fconfigure $f -buffering line

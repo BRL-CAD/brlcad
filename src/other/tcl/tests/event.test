@@ -304,8 +304,47 @@ test event-7.5 {correct behaviour when there is no bgerror [Bug 219142]} {exec} 
 "error hello"
     ("after" script)}}
 
+test event-7.6 {safe hidden bgerror fallback} {
+    variable result {}
+    interp create -safe safe
+    safe alias puts puts
+    safe alias result ::append [namespace which -variable result]
+    safe eval {proc bgerror m {result $m\n$::errorCode\n$::errorInfo\n}}
+    safe hide bgerror
+    safe eval after 0 error foo
+    update
+    interp delete safe
+    set result
+} {foo
+NONE
+foo
+    while executing
+"error foo"
+    ("after" script)
+}
 
-# someday : add a test checking that
+test event-7.7 {safe hidden bgerror fallback} {
+    variable result {}
+    interp create -safe safe
+    safe alias puts puts
+    safe alias result ::append [namespace which -variable result]
+    safe eval {proc bgerror m {result $m\n$::errorCode\n$::errorInfo\n}}
+    safe hide bgerror
+    safe eval {proc bgerror m {error bar soom baz}}
+    safe eval after 0 error foo
+    update
+    interp delete safe
+    set result
+} {foo
+NONE
+foo
+    while executing
+"error foo"
+    ("after" script)
+}
+
+
+# someday : add a test checking that 
 # when there is no bgerror, an error msg goes to stderr
 # ideally one would use sub interp and transfer a fake stderr
 # to it, unfortunatly the current interp tcl API does not allow

@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tcl_Obj 3 8.5 Tcl "Tcl Library Procedures"
 .BS
@@ -96,7 +96,7 @@ Also, most Tcl values are only read and never modified.
 This is especially true for procedure arguments,
 which can be shared between the caller and the called procedure.
 Assignment and argument binding is done by
-simply assigning a pointer to the value.
+simply assigning a pointer to the value. 
 Reference counting is used to determine when it is safe to
 reclaim an object's storage.
 .PP
@@ -106,7 +106,6 @@ Seven types are predefined in the Tcl core
 including integer, double, list, and bytecode.
 Extension writers can extend the set of types
 by using the procedure \fBTcl_RegisterObjType\fR .
-
 .SH "THE TCL_OBJ STRUCTURE"
 .PP
 Each Tcl object is represented by a \fBTcl_Obj\fR structure
@@ -230,7 +229,6 @@ creates a new internal representation for an object
 and changes its \fItypePtr\fR.
 See the man page for \fBTcl_RegisterObjType\fR
 to see how to create a new object type.
-
 .SH "EXAMPLE OF THE LIFETIME OF AN OBJECT"
 .PP
 As an example of the lifetime of an object,
@@ -270,7 +268,6 @@ The string representation of \fIx\fR's object is needed
 and is recomputed.
 The string representation is now \fB124\fR
 and both representations are again valid.
-
 .SH "STORAGE MANAGEMENT OF OBJECTS"
 .PP
 Tcl objects are allocated on the heap and are shared as much as possible
@@ -323,21 +320,22 @@ For example, the following code appears in the command procedure
 that implements \fBlinsert\fR.
 This procedure modifies the list object passed to it in \fIobjv[1]\fR
 by inserting \fIobjc-3\fR new elements before \fIindex\fR.
+.PP
 .CS
 listPtr = objv[1];
 if (Tcl_IsShared(listPtr)) {
-        listPtr = Tcl_DuplicateObj(listPtr);
+    listPtr = Tcl_DuplicateObj(listPtr);
 }
-result = Tcl_ListObjReplace(interp, listPtr, index, 0, (objc-3), &(objv[3]));
+result = Tcl_ListObjReplace(interp, listPtr, index, 0,
+        (objc-3), &(objv[3]));
 .CE
+.PP
 As another example, \fBincr\fR's command procedure
 must check whether the variable's object is shared before
 incrementing the integer in its internal representation.
 If it is shared, it needs to duplicate the object
 in order to avoid accidentally changing values in other data structures.
-
 .SH "SEE ALSO"
-Tcl_ConvertToType, Tcl_GetIntFromObj, Tcl_ListObjAppendElement, Tcl_ListObjIndex, Tcl_ListObjReplace, Tcl_RegisterObjType
-
+Tcl_ConvertToType(3), Tcl_GetIntFromObj(3), Tcl_ListObjAppendElement(3), Tcl_ListObjIndex(3), Tcl_ListObjReplace(3), Tcl_RegisterObjType(3)
 .SH KEYWORDS
 internal representation, object, object creation, object type, reference counting, string representation, type conversion

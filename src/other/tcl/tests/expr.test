@@ -983,7 +983,127 @@ test expr-23.47 {INST_EXPON: Bug 1561260} {
 test expr-23.48 {INST_EXPON: TIP 274: right assoc} {
 expr 2**3**4
 } 2417851639229258349412352
-
+test expr-23.49 {INST_EXPON: optimize powers of 2} {
+    set trouble {test powers of 2}
+    for {set tval 0} {$tval <= 66} {incr tval} {
+	set is [expr {2 ** $tval}]
+	set sb [expr {1 << $tval}]
+	if {$is != $sb} {
+	    append trouble \n "2**" $tval " is " $is " should be " $sb
+	}
+	if {$tval >= 1} {
+	    set is [expr {-2 ** $tval}]
+	    set sb [expr {1 << $tval}]
+	    if {$tval & 1} {
+		set sb [expr {-$sb}]
+	    }
+	    if {$is != $sb} {
+		append trouble \n "-2**" $tval " is " $is " should be " $sb
+	    }
+	}
+    }
+    set trouble
+} {test powers of 2}
+test expr-23.50 {INST_EXPON: small powers of 32-bit integers} {
+    set trouble {test small powers of 32-bit ints}
+    for {set base 3} {$base <= 45} {incr base} {
+	set sb $base
+	set sbm [expr {-$base}]
+	for {set expt 2} {$expt <= 8} {incr expt} {
+	    set sb [expr {$sb * $base}]
+	    set is [expr {$base ** $expt}]
+	    if {$sb != $is} {
+		append trouble \n $base ** $expt " is " $is " should be " $sb
+	    }
+	    set sbm [expr {-$sbm * $base}]
+	    set ism [expr {(-$base) ** $expt}]
+	    if {$sbm != $ism} {
+		append trouble \n - $base ** $expt " is " $ism \
+		    " should be " $sbm
+	    }
+	}
+    }
+    set trouble
+} {test small powers of 32-bit ints}
+test expr-23.51 {INST_EXPON: intermediate powers of 32-bit integers} {
+    set trouble {test intermediate powers of 32-bit ints}
+    for {set base 3} {$base <= 11} {incr base} {
+	set sb [expr {$base ** 8}]
+	set sbm $sb
+	for {set expt 9} {$expt <= 21} {incr expt} {
+	    set sb [expr {$sb * $base}]
+	    set sbm [expr {$sbm * -$base}]
+	    set is [expr {$base ** $expt}]
+	    set ism [expr {-$base ** $expt}]
+	    if {$sb != $is} {
+		append trouble \n $base ** $expt " is " $is " should be " $sb
+	    }
+	    if {$sbm != $ism} {
+		append trouble \n - $base ** $expt " is " $ism  \
+		    " should be " $sbm
+	    }
+	}
+    }
+    set trouble
+} {test intermediate powers of 32-bit ints}
+test expr-23.52 {INST_EXPON: small integer powers with 64-bit results} {
+    set trouble {test small int powers with 64-bit results}
+    for {set exp 2} {$exp <= 16} {incr exp} {
+	set base [expr {entier(pow(double(0x7fffffffffffffff),(1.0/$exp)))}]
+	set sb 1
+	set sbm 1
+	for {set i 0} {$i < $exp} {incr i} {
+	    set sb [expr {$sb * $base}]
+	    set sbm [expr {$sbm * -$base}]
+	}
+	set is [expr {$base ** $exp}]
+	set ism [expr {-$base ** $exp}]
+	if {$sb != $is} {
+	    append trouble \n $base ** $exp " is " $is " should be " $sb
+	}
+	if {$sbm != $ism} {
+	    append trouble \n - $base ** $exp " is " $ism " should be " $sbm
+	}
+	incr base
+	set sb 1
+	set sbm 1
+	for {set i 0} {$i < $exp} {incr i} {
+	    set sb [expr {$sb * $base}]
+	    set sbm [expr {$sbm * -$base}]
+	}
+	set is [expr {$base ** $exp}]
+	set ism [expr {-$base ** $exp}]
+	if {$sb != $is} {
+	    append trouble \n $base ** $exp " is " $is " should be " $sb
+	}
+	if {$sbm != $ism} {
+	    append trouble \n - $base ** $exp " is " $ism " should be " $sbm
+	}
+    }
+    set trouble
+} {test small int powers with 64-bit results}
+test expr-23.53 {INST_EXPON: intermediate powers of 64-bit integers} {
+    set trouble {test intermediate powers of 64-bit ints}
+    for {set base 3} {$base <= 13} {incr base} {
+	set sb [expr {$base ** 15}]
+	set sbm [expr {-$sb}]
+	for {set expt 16} {$expt <= 39} {incr expt} {
+	    set sb [expr {$sb * $base}]
+	    set sbm [expr {$sbm * -$base}]
+	    set is [expr {$base ** $expt}]
+	    set ism [expr {-$base ** $expt}]
+	    if {$sb != $is} {
+		append trouble \n $base ** $expt " is " $is " should be " $sb
+	    }
+	    if {$sbm != $ism} {
+		append trouble \n - $base ** $expt " is " $ism  \
+		    " should be " $sbm
+	    }
+	}
+    }
+    set trouble
+} {test intermediate powers of 64-bit ints}
+	
 # Some compilers get this wrong; ensure that we work around it correctly
 test expr-24.1 {expr edge cases; shifting} {expr int(5)>>32} 0
 test expr-24.2 {expr edge cases; shifting} {expr int(5)>>63} 0
@@ -5331,7 +5451,7 @@ test expr-32.1 {expr mod basics} {
     0 1 0 3 3 \
     0 -1 0 -1 -2 \
     ]
-
+        
 test expr-32.2 {expr div basics} {
     set mod_nums [list \
         {-3 1} {-3 2} {-3 3} {-3 4} {-3 5} \
@@ -6294,7 +6414,7 @@ test expr-39.16 {Tcl_ExprLongObj handles overflows} \
 	list [catch {testexprlongobj 4294967296.} result] $result
     } \
     -result {1 {integer value too large to represent*}}
-
+    
 test expr-39.17 {Check that Tcl_ExprDoubleObj doesn't modify interpreter result if no error} testexprdoubleobj {
     testexprdoubleobj 4.+1.
 } {This is a result: 5.0}
@@ -6657,6 +6777,10 @@ test expr-47.12 {isqrt of various sizes of integer} {
     }
     set trouble
 } {}
+
+test expr-48.1 {Bug 1770224} {
+    expr {-0x8000000000000001 >> 0x8000000000000000}
+} -1
 
 # cleanup
 if {[info exists a]} {

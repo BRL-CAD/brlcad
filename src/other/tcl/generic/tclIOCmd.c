@@ -872,7 +872,7 @@ Tcl_ExecObjCmd(
      * Free the argv array.
      */
 
-    TclStackFree(interp);	/* argv */
+    TclStackFree(interp, (void *)argv);
 
     if (chan == (Tcl_Channel) NULL) {
 	return TCL_ERROR;
@@ -1284,7 +1284,7 @@ AcceptCallbackProc(
 	result = Tcl_VarEval(interp, script, " ", Tcl_GetChannelName(chan),
 		" ", address, " ", portBuf, NULL);
 	if (result != TCL_OK) {
-	    Tcl_BackgroundError(interp);
+	    TclBackgroundException(interp, result);
 	    Tcl_UnregisterChannel(interp, chan);
 	}
 
@@ -1621,8 +1621,8 @@ Tcl_FcopyObjCmd(
  *
  * TclChanPendingObjCmd --
  *
- *	This function is invoked to process the Tcl "chan pending"
- *	command (TIP #287). See the user documentation for details on
+ *	This function is invoked to process the Tcl "chan pending" 
+ *	command (TIP #287). See the user documentation for details on 
  *	what it does.
  *
  * Results:
@@ -1655,7 +1655,7 @@ TclChanPendingObjCmd(
 	return TCL_ERROR;
     }
 
-    if (Tcl_GetIndexFromObj(interp, objv[1], options, "mode", 0,
+    if (Tcl_GetIndexFromObj(interp, objv[1], options, "mode", 0, 
 	    &index) != TCL_OK) {
 	return TCL_ERROR;
     }

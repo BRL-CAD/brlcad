@@ -6,9 +6,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH info n 8.4 Tcl "Tcl Built-In Commands"
 .BS
@@ -82,7 +82,6 @@ into variable \fIvarname\fR.
 Returns \fB1\fR if the variable named \fIvarName\fR exists in the
 current context (either as a global or local variable) and has been
 defined by being given a value, returns \fB0\fR otherwise.
-
 .TP
 \fBinfo frame\fR ?\fInumber\fR?
 This command provides access to all frames on the stack, even those
@@ -116,17 +115,17 @@ for the command. The recognized values are \fBsource\fR, \fBproc\fR,
 \fBeval\fR, and \fBprecompiled\fR.
 .RS
 .TP
-\fBsource\fR
+\fBsource\fR\0\0\0\0\0\0\0\0
 means that the command is found in a script loaded by the \fBsource\fR
 command.
 .TP
-\fBproc\fR
+\fBproc\fR\0\0\0\0\0\0\0\0
 means that the command is found in dynamically created procedure body.
 .TP
-\fBeval\fR
+\fBeval\fR\0\0\0\0\0\0\0\0
 means that the command is executed by \fBeval\fR or \fBuplevel\fR.
 .TP
-\fBprecompiled\fR
+\fBprecompiled\fR\0\0\0\0\0\0\0\0
 means that the command is found in a precompiled script (loadable by
 the package \fBtbcload\fR), and no further information will be
 available.
@@ -163,28 +162,26 @@ definition of the lambda in question.
 This entry is present only if the queried frame has a corresponding
 frame returned by \fBinfo level\fR. It provides the index of this
 frame, relative to the current level (0 and negative numbers).
-.RE
-.sp
-.RS
+.PP
 A thing of note is that for procedures statically defined in files the
 locations of commands in their bodies will be reported with type
 \fBsource\fR and absolute line numbers, and not as type
 \fBproc\fR. The same is true for procedures nested in statically
 defined procedures, and literal eval scripts in files or statically
 defined procedures.
-.sp
+.PP
 In contrast, a procedure definition or \fBeval\fR within a dynamically
 \fBeval\fRuated environment count linenumbers relative to the start of
 their script, even if they would be able to count relative to the
 start of the outer dynamic script. That type of number usually makes
 more sense.
-.sp
+.PP
 A different way of describing this behaviour is that file based
 locations are tracked as deeply as possible, and where this is not
 possible the lines are counted based on the smallest possible
 \fBeval\fR or procedure body, as that scope is usually easier to find
 than any dynamic outer scope.
-.sp
+.PP
 The syntactic form \fB{expand}\fR is handled like \fBeval\fR. I.e. if it
 is given a literal list argument the system tracks the linenumber
 within the list words as well, and otherwise all linenumbers are
@@ -321,6 +318,7 @@ been set (e.g. a variable declared but not set by \fBvariable\fR).
 .SH EXAMPLE
 This command prints out a procedure suitable for saving in a Tcl
 script:
+.PP
 .CS
 proc printProc {procName} {
     set result [list proc $procName]
@@ -337,10 +335,8 @@ proc printProc {procName} {
     puts [lappend result $formals [\fBinfo body\fR $procName]]
 }
 .CE
-
 .SH "SEE ALSO"
 global(n), proc(n)
-
 .SH KEYWORDS
 command, information, interpreter, level, namespace, procedure, variable
 

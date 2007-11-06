@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tcl_BooleanObj 3 8.5 Tcl "Tcl Library Procedures"
 .BS
@@ -52,7 +52,7 @@ value \fIboolValue\fR in it, and returns a pointer to the new Tcl_Obj.
 The new Tcl_Obj has reference count of zero.
 .PP
 \fBTcl_SetBooleanObj\fR accepts \fIobjPtr\fR, a pointer to
-an existing Tcl_Obj, and stores in the Tcl_Obj \fI*objPtr\fR
+an existing Tcl_Obj, and stores in the Tcl_Obj \fI*objPtr\fR 
 the boolean value \fIboolValue\fR.  This is a write operation
 on \fI*objPtr\fR, so \fIobjPtr\fR must be unshared.  Attempts to
 write to a shared Tcl_Obj will panic.  A successful write
@@ -63,7 +63,7 @@ any former value stored in \fI*objPtr\fR.
 from the value stored in \fI*objPtr\fR.
 If \fIobjPtr\fR holds a string value recognized by \fBTcl_GetBoolean\fR,
 then the recognized boolean value is written at the address given
-by \fIboolPtr\fR.
+by \fIboolPtr\fR.  
 If \fIobjPtr\fR holds any value recognized as
 a number by Tcl, then if that value is zero a 0 is written at
 the address given by \fIboolPtr\fR and if that
@@ -71,10 +71,10 @@ value is non-zero a 1 is written at the address given by \fIboolPtr\fR.
 In all cases where a value is written at the address given
 by \fIboolPtr\fR, \fBTcl_GetBooleanFromObj\fR returns \fBTCL_OK\fR.
 If the value of \fIobjPtr\fR does not meet any of the conditions
-above, then \fBTCL_ERROR\fR is returned and an error message is
+above, then \fBTCL_ERROR\fR is returned and an error message is 
 left in the interpreter's result unless \fIinterp\fR is NULL.
 \fBTcl_GetBooleanFromObj\fR may also make changes to the internal
-fields of \fI*objPtr\fR so that future calls to
+fields of \fI*objPtr\fR so that future calls to 
 \fBTcl_GetBooleanFromObj\fR on the same \fIobjPtr\fR can be
 performed more efficiently.
 .PP

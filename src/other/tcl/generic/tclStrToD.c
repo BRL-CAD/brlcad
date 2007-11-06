@@ -124,7 +124,7 @@ static int n770_fp;		/* Flag is 1 on Nokia N770 floating point.
  */
 
 static double		AbsoluteValue(double v, int *signum);
-static int		AccumulateDecimalDigit(unsigned, int,
+static int		AccumulateDecimalDigit(unsigned, int, 
 			    Tcl_WideUInt *, mp_int *, int);
 static double		BignumToBiasedFrExp(mp_int *big, int* machexp);
 static int		GetIntegerTimesPower(double v, mp_int *r, int *e);
@@ -158,7 +158,7 @@ static double		SafeLdExp(double fraction, int exponent);
  *	determines the number of bytes to be scanned.  If numBytes is
  *	negative, the first NUL byte encountered will terminate the scan.
  *	If numBytes is non-negative, then no more than numBytes bytes will
- *	be scanned.
+ *	be scanned.  
  *
  *	The argument flags is an input that controls the numeric formats
  *	recognized by the parser.  The flag bits are:
@@ -222,7 +222,7 @@ static double		SafeLdExp(double fraction, int exponent);
  *	cases the internal rep will be in agreement with only some substring
  *	of the string rep.  This might happen if the caller passes in a
  * 	non-NULL bytes value that points somewhere into the string rep.  It
- *	might happen if the caller passes in a numBytes value that limits the
+ *	might happen if the caller passes in a numBytes value that limits the 
  * 	scan to only a prefix of the string rep.  Or it might happen if a
  *	non-NULL value of endPtrPtr permits a TCL_OK return from only a partial
  *	string match.  It is the responsibility of the caller to detect and
@@ -233,7 +233,7 @@ static double		SafeLdExp(double fraction, int exponent);
  *
  * Side effects:
  *	The string representaton of objPtr may be generated.
- *
+ *	
  *	The internal representation and Tcl_ObjType of objPtr may be changed.
  *	This may involve allocation and/or freeing of memory.
  *
@@ -245,7 +245,7 @@ TclParseNumber(
     Tcl_Interp *interp,		/* Used for error reporting. May be NULL */
     Tcl_Obj *objPtr,		/* Object to receive the internal rep */
     const char *expected,	/* Description of the type of number the caller
-				 * expects to be able to parse ("integer",
+				 * expects to be able to parse ("integer", 
 				 * "boolean value", etc.). */
     const char *bytes,		/* Pointer to the start of the string to scan */
     int numBytes,		/* Maximum number of bytes to scan, see above */
@@ -254,9 +254,9 @@ TclParseNumber(
     int flags)			/* Flags governing the parse */
 {
     enum State {
-	INITIAL, SIGNUM, ZERO, ZERO_X,
+	INITIAL, SIGNUM, ZERO, ZERO_X, 
 	ZERO_O, ZERO_B, BINARY,
-	HEXADECIMAL, OCTAL, BAD_OCTAL, DECIMAL,
+	HEXADECIMAL, OCTAL, BAD_OCTAL, DECIMAL, 
 	LEADING_RADIX_POINT, FRACTION,
 	EXPONENT_START, EXPONENT_SIGNUM, EXPONENT,
 	sI, sIN, sINF, sINFI, sINFIN, sINFINI, sINFINIT, sINFINITY
@@ -306,7 +306,7 @@ TclParseNumber(
 #define ALL_BITS	(~(Tcl_WideUInt)0)
 #define MOST_BITS	(ALL_BITS >> 1)
 
-    /*
+    /* 
      * Initialize bytes to start of the object's string rep if the caller
      * didn't pass anything else.
      */
@@ -341,9 +341,9 @@ TclParseNumber(
 		signum = 1;
 		state = SIGNUM;
 		break;
-	    }
+	    } 
 	    /* FALLTHROUGH */
-
+	    
 	case SIGNUM:
 	    /*
 	     * Scanned a leading + or -. Acceptable characters are digits,
@@ -449,9 +449,9 @@ TclParseNumber(
 			 * too large shifts first.
 			 */
 
-			if ((octalSignificandWide != 0)
-				&& (((size_t)shift >= CHAR_BIT*sizeof(Tcl_WideUInt))
-				|| (octalSignificandWide
+			if ((octalSignificandWide != 0) 
+				&& (((size_t)shift >= CHAR_BIT*sizeof(Tcl_WideUInt)) 
+				|| (octalSignificandWide 
 				> (~(Tcl_WideUInt)0 >> shift)))) {
 			    octalSignificandOverflow = 1;
 			    TclBNInitBignumFromWideUInt(&octalSignificandBig,
@@ -528,7 +528,7 @@ TclParseNumber(
 	    } else if (c == 'E' || c == 'e') {
 		state = EXPONENT_START;
 		break;
-	    }
+	    } 
 #endif
 	    goto endgame;
 
@@ -646,8 +646,8 @@ TclParseNumber(
 	    } else if (isdigit(UCHAR(c))) {
 		if (objPtr != NULL) {
 		    significandOverflow = AccumulateDecimalDigit(
-			    (unsigned)(c - '0'), numTrailZeros,
-			    &significandWide, &significandBig,
+			    (unsigned)(c - '0'), numTrailZeros, 
+			    &significandWide, &significandBig, 
 			    significandOverflow);
 		}
 		numSigDigs += numTrailZeros+1;
@@ -665,7 +665,7 @@ TclParseNumber(
 	    }
 	    goto endgame;
 
-	    /*
+	    /* 
 	     * Found a decimal point. If no digits have yet been scanned, E is
 	     * not allowed; otherwise, it introduces the exponent. If at least
 	     * one digit has been found, we have a possible complete number.
@@ -691,8 +691,8 @@ TclParseNumber(
 		++numDigitsAfterDp;
 		if (objPtr != NULL) {
 		    significandOverflow = AccumulateDecimalDigit(
-			    (unsigned)(c-'0'), numTrailZeros,
-			    &significandWide, &significandBig,
+			    (unsigned)(c-'0'), numTrailZeros, 
+			    &significandWide, &significandBig, 
 			    significandOverflow);
 		}
 		if (numSigDigs != 0) {
@@ -707,7 +707,7 @@ TclParseNumber(
 	    goto endgame;
 
 	case EXPONENT_START:
-	    /*
+	    /* 
 	     * Scanned the E at the start of an exponent. Make sure a legal
 	     * character follows before using the C library strtol routine,
 	     * which allows whitespace.
@@ -737,7 +737,7 @@ TclParseNumber(
 	    goto endgame;
 
 	case EXPONENT:
-	    /*
+	    /* 
 	     * Found an exponent with at least one digit. Accumulate it,
 	     * making sure to hard-pin it to LONG_MAX on overflow.
 	     */
@@ -765,13 +765,13 @@ TclParseNumber(
 	    if (c == 'n' || c == 'N') {
 		state = sIN;
 		break;
-	    }
+	    } 
 	    goto endgame;
 	case sIN:
 	    if (c == 'f' || c == 'F') {
 		state = sINF;
 		break;
-	    }
+	    } 
 	    goto endgame;
 	case sINF:
 	    acceptState = state;
@@ -868,7 +868,7 @@ TclParseNumber(
 	    acceptLen = len;
 	    goto endgame;
 	}
-	++p;
+	++p; 
 	--len;
     }
 
@@ -987,7 +987,7 @@ TclParseNumber(
 		}
 	    }
 	    if (!octalSignificandOverflow) {
-		if (octalSignificandWide >
+		if (octalSignificandWide > 
 			(Tcl_WideUInt)(((~(unsigned long)0) >> 1) + signum)) {
 #ifndef NO_WIDE_TYPE
 		    if (octalSignificandWide <= (MOST_BITS + signum)) {
@@ -1021,7 +1021,7 @@ TclParseNumber(
 		    mp_neg(&octalSignificandBig, &octalSignificandBig);
 		}
 		TclSetBignumIntRep(objPtr, &octalSignificandBig);
-	    }
+	    }		
 	    break;
 
 	case ZERO:
@@ -1034,7 +1034,7 @@ TclParseNumber(
 	    }
 	returnInteger:
 	    if (!significandOverflow) {
-		if (significandWide >
+		if (significandWide > 
 			(Tcl_WideUInt)(((~(unsigned long)0) >> 1) + signum)) {
 #ifndef NO_WIDE_TYPE
 		    if (significandWide <= MOST_BITS+signum) {
@@ -1202,7 +1202,7 @@ AccumulateDecimalDigit(
 	     * Wide multiplication will overflow.  Expand the
 	     * number to a bignum and fall through into the bignum case.
 	     */
-
+	    
 	    TclBNInitBignumFromWideUInt (bignumRepPtr, w);
 	} else {
 	    /*
@@ -1226,7 +1226,7 @@ AccumulateDecimalDigit(
 		bignumRepPtr);
 	mp_add_d(bignumRepPtr, (mp_digit) digit, bignumRepPtr);
     } else {
-	/*
+	/* 
 	 * More than single digit multiplication. Multiply by the appropriate
 	 * small powers of 5, and then shift. Large strings of zeroes are
 	 * eaten 256 at a time; this is less efficient than it could be, but
@@ -1304,7 +1304,7 @@ MakeLowPrecisionDouble(
     if (numSigDigs <= DBL_DIG) {
 	if (exponent >= 0) {
 	    if (exponent <= mmaxpow) {
-		/*
+		/* 
 		 * The significand is an exact integer, and so is
 		 * 10**exponent. The product will be correct to within 1/2 ulp
 		 * without special handling.
@@ -1315,7 +1315,7 @@ MakeLowPrecisionDouble(
 	    } else {
 		int diff = DBL_DIG - numSigDigs;
 		if (exponent-diff <= mmaxpow) {
-		    /*
+		    /* 
 		     * 10**exponent is not an exact integer, but
 		     * 10**(exponent-diff) is exact, and so is
 		     * significand*10**diff, so we can still compute the value
@@ -1330,7 +1330,7 @@ MakeLowPrecisionDouble(
 	    }
 	} else {
 	    if (exponent >= -mmaxpow) {
-		/*
+		/* 
 		 * 10**-exponent is an exact integer, and so is the
 		 * significand. Compute the result by one division, again with
 		 * only one rounding.
@@ -1351,7 +1351,7 @@ MakeLowPrecisionDouble(
     retval = MakeHighPrecisionDouble(0, &significandBig, numSigDigs,
 	    exponent);
     mp_clear(&significandBig);
-
+    
     /*
      * Come here to return the computed value.
      */
@@ -1428,7 +1428,7 @@ MakeHighPrecisionDouble(
 	goto returnValue;
     }
 
-    /*
+    /* 
      * Develop a first approximation to the significand. It is tempting simply
      * to force bignum to double, but that will overflow on input numbers like
      * 1.[string repeat 0 1000]1; while this is a not terribly likely
@@ -1448,7 +1448,7 @@ MakeHighPrecisionDouble(
 	retval = tiny;
     }
 
-    /*
+    /* 
      * Refine the result twice. (The second refinement should be necessary
      * only if the best approximation is a power of 2 minus 1/2 ulp).
      */
@@ -1585,7 +1585,7 @@ RefineApproximation(
 	}
     }
 
-    /*
+    /* 
      * The floating point number is significand*2**binExponent. Compute the
      * large integer significand*2**(binExponent+M2+1). The 2**-1 bit of the
      * significand (the most significant) corresponds to the
@@ -1610,8 +1610,8 @@ RefineApproximation(
 	    mp_mul(&twoMv, pow5+i, &twoMv);
 	}
     }
-
-    /*
+    
+    /* 
      * Collect the decimal significand as a high precision integer. The least
      * significant bit corresponds to bit M2+exponent+1 so it will need to be
      * shifted left by that many bits after being multiplied by
@@ -1659,7 +1659,7 @@ RefineApproximation(
 	return approxResult;
     }
 
-    /*
+    /* 
      * Convert the numerator and denominator of the corrector term accurately
      * to floating point numbers.
      */
@@ -1752,8 +1752,8 @@ TclDoubleDigits(
 	return 1;
     }
 
-    /*
-     * Find a large integer r, and integer e, such that
+    /* 
+     * Find a large integer r, and integer e, such that 
      *         v = r * FLT_RADIX**e
      * and r is as small as possible. Also determine whether the significand
      * is the smallest possible.
@@ -2153,7 +2153,7 @@ TclInitDoubleConversion(void)
     mantBits = DBL_MANT_DIG * log2FLT_RADIX;
     d = 1.0;
 
-    /*
+    /* 
      * Initialize a table of powers of ten that can be exactly represented
      * in a double.
      */
@@ -2181,10 +2181,10 @@ TclInitDoubleConversion(void)
 	mp_sqr(pow5+i, pow5+i+1);
     }
 
-    /*
+    /* 
      * Determine the number of decimal digits to the left and right of the
      * decimal point in the largest and smallest double, the smallest double
-     * that differs from zero, and the number of mp_digits needed to represent
+     * that differs from zero, and the number of mp_digits needed to represent 
      * the significand of a double.
      */
 
@@ -2255,7 +2255,7 @@ TclFinalizeDoubleConversion(void)
  *	None.
  *
  * Side effects:
- *	Initializes the bignum supplied, and stores the converted number
+ *	Initializes the bignum supplied, and stores the converted number 
  *      in it.
  *
  *----------------------------------------------------------------------
@@ -2557,7 +2557,7 @@ Pow10TimesFrExp(
 	/*
 	 * Multiply by 10**exponent
 	 */
-
+	
 	retval = frexp(retval * pow10[exponent&0xf], &j);
 	expt += j;
 	for (i=4; i<9; ++i) {

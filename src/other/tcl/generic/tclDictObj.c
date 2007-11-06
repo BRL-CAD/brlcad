@@ -2744,6 +2744,14 @@ DictUpdateCmd(
 	objPtr = Tcl_ObjGetVar2(interp, objv[i+1], NULL, 0);
 	if (objPtr == NULL) {
 	    Tcl_DictObjRemove(interp, dictPtr, objv[i]);
+	} else if (objPtr == dictPtr) {
+	    /*
+	     * Someone is messing us around, trying to build a recursive
+	     * structure. [Bug 1786481]
+	     */
+
+	    Tcl_DictObjPut(interp, dictPtr, objv[i],
+		    Tcl_DuplicateObj(objPtr));
 	} else {
 	    /* Shouldn't fail */
 	    Tcl_DictObjPut(interp, dictPtr, objv[i], objPtr);
@@ -2915,6 +2923,13 @@ DictWithCmd(
 	valPtr = Tcl_ObjGetVar2(interp, keyv[i], NULL, 0);
 	if (valPtr == NULL) {
 	    Tcl_DictObjRemove(NULL, leafPtr, keyv[i]);
+	} else if (leafPtr == valPtr) {
+	    /*
+	     * Someone is messing us around, trying to build a recursive
+	     * structure. [Bug 1786481]
+	     */
+
+	    Tcl_DictObjPut(NULL, leafPtr, keyv[i], Tcl_DuplicateObj(valPtr));
 	} else {
 	    Tcl_DictObjPut(NULL, leafPtr, keyv[i], valPtr);
 	}

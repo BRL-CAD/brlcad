@@ -1,7 +1,7 @@
 # checkLibraryDoc.tcl --
 #
-# This script attempts to determine what APIs exist in the source base that
-# have not been documented.  By grepping through all of the doc/*.3 man
+# This script attempts to determine what APIs exist in the source base that 
+# have not been documented.  By grepping through all of the doc/*.3 man 
 # pages, looking for "Pkg_*" (e.g., Tcl_ or Tk_), and comparing this list
 # against the list of Pkg_ APIs found in the source (e.g., tcl8.2/*/*.[ch])
 # we create six lists:
@@ -11,14 +11,14 @@
 #      4) Misc APIs and structs that we are not documenting.
 #      5) Command APIs (e.g., Tcl_ArrayObjCmd.)
 #      6) Proc pointers (e.g., Tcl_CloseProc.)
-#
+# 
 # Note: Each list is "a best guess" approximation.  If developers write
 # non-standard code, this script will produce erroneous results.  Each
-# list should be carefully checked for accuracy.
+# list should be carefully checked for accuracy. 
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
+# 
 # RCS: @(#) $Id$
 
 
@@ -88,7 +88,7 @@ set StructList {
     Tk_Window \
 }
 
-# Misc junk that appears in the comments of the source.  This just
+# Misc junk that appears in the comments of the source.  This just 
 # allows us to filter comments that "fool" the script.
 
 set CommentList {
@@ -101,8 +101,8 @@ set CommentList {
 # Main entry point to this script.
 
 proc main {} {
-    global argv0
-    global argv
+    global argv0 
+    global argv 
 
     set len [llength $argv]
     if {($len != 2) && ($len != 3)} {
@@ -128,7 +128,7 @@ proc main {} {
     }
     return
 }
-
+    
 # Intersect the two list and write out the sets of APIs in one
 # list that is not in the other.
 
@@ -147,7 +147,7 @@ proc filter {code docs dir pkg {outFile stdout}} {
     # This list should just be verified for accuracy.
 
     set cmds  {}
-
+    
     # A list of proc pointer structs.  These are not documented.
     # This list should just be verified for accuracy.
 
@@ -164,7 +164,7 @@ proc filter {code docs dir pkg {outFile stdout}} {
     set misc [grepMisc $dir $pkg]
 
     set pat1 ".*(${pkg}_\[A-z0-9]+).*$"
-
+    
     # A list of APIs in the source, not in the docs.
     # This list should just be verified for accuracy.
 
@@ -242,7 +242,7 @@ proc grepDocs {dir pkg} {
 # (e.g., Tcl_Export).  Return a list of APIs.
 
 proc grepDecl {dir pkg} {
-    set file [file join $dir generic "[string tolower $pkg]IntDecls.h"]
+    set file [file join $dir generic "[string tolower $pkg]IntDecls.h"] 
     set apis [myGrep "^EXTERN.*\[ \t\]${pkg}_.*" $file]
     set pat1 ".*(${pkg}_\[A-z0-9]+).*$"
 
@@ -260,7 +260,7 @@ proc grepDecl {dir pkg} {
 proc grepMisc {dir pkg} {
     global CommentList
     global StructList
-
+    
     set apis [myGrep "^EXTERN.*\[ \t\]${pkg}_Db.*" "${dir}/\*/\*\.\[ch\]"]
     set pat1 ".*(${pkg}_\[A-z0-9]+).*$"
 

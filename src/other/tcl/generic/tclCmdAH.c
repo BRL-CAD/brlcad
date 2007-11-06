@@ -1746,7 +1746,7 @@ Tcl_ForeachObjCmd(
 
     maxj = 0;
     for (i=0 ; i<numLists ; i++) {
-
+	
 	vCopyList[i] = TclListObjCopy(interp, objv[1+i*2]);
 	if (vCopyList[i] == NULL) {
 	    result = TCL_ERROR;
@@ -1838,9 +1838,9 @@ Tcl_ForeachObjCmd(
 	    Tcl_DecrRefCount(aCopyList[i]);
 	}
     }
-    TclStackFree(interp);	/* Tcl_Obj * arrays */
-    TclStackFree(interp);	/* Tcl_Obj ** arrays */
-    TclStackFree(interp);	/* int arrays */
+    TclStackFree(interp, vCopyList);	/* Tcl_Obj * arrays */
+    TclStackFree(interp, varvList);	/* Tcl_Obj ** arrays */
+    TclStackFree(interp, index);	/* int arrays */
     return result;
 }
 

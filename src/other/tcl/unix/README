@@ -82,7 +82,11 @@ How To Compile And Install Tcl:
 				should be reachable under several names.
 	--enable-man-compression=PROG
 				Compress the manpages using PROG.
-    Mac OS X only:
+	--enable-dtrace		Enable tcl DTrace provider (if DTrace is
+				available on the platform), c.f. tclDTrace.d
+				for descriptions of the probes made available,
+				see http://wiki.tcl.tk/DTrace for more details.
+    Mac OS X only: 
 	--enable-framework	package Tcl as a framework.
 	--disable-corefoundation disable use of CoreFoundation API and revert to
 				standard select based notifier, required when

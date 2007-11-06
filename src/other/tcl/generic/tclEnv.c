@@ -37,16 +37,6 @@ static int environSize = 0;	/* Non-zero means that the environ array was
 #endif
 
 /*
- * For MacOS X
- */
-
-#if defined(__APPLE__) && defined(__DYNAMIC__)
-#include <crt_externs.h>
-__private_extern__ char **environ;
-char **environ = NULL;
-#endif
-
-/*
  * Declarations for local functions defined in this file:
  */
 
@@ -89,14 +79,6 @@ TclSetupEnv(
     Tcl_DString envString;
     char *p1, *p2;
     int i;
-
-    /*
-     * For MacOS X, need to get the real system environment.
-     */
-
-#if defined(__APPLE__) && defined(__DYNAMIC__)
-    environ = *_NSGetEnviron();
-#endif
 
     /*
      * Synchronize the values in the environ array with the contents of the
@@ -210,18 +192,6 @@ TclSetEnv(
 	    }
 	    environ = ourEnviron = newEnviron;
 	    environSize = length + 5;
-
-#if defined(__APPLE__) && defined(__DYNAMIC__)
-	    /*
-	     * Install the new environment array where the system routines can
-	     * see it.
-	     */
-
-	    {
-		char ***e = _NSGetEnviron();
-		*e = environ;
-	    }
-#endif /* __APPLE__ && __DYNAMIC__ */
 	}
 	index = length;
 	environ[index + 1] = NULL;
@@ -674,7 +644,7 @@ ReplaceString(
 
 	const int growth = 5;
 
-	environCache = (char **) ckrealloc ((char *) environCache,
+	environCache = (char **) ckrealloc ((char *) environCache, 
 		(cacheSize + growth) * sizeof(char *));
 	environCache[cacheSize] = newStr;
 	(void) memset(environCache+cacheSize+1, (int) 0,

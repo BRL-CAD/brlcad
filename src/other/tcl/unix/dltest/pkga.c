@@ -1,35 +1,36 @@
 /*
  * pkga.c --
  *
- *	This file contains a simple Tcl package "pkga" that is intended
- *	for testing the Tcl dynamic loading facilities.
+ *	This file contains a simple Tcl package "pkga" that is intended for
+ *	testing the Tcl dynamic loading facilities.
  *
  * Copyright (c) 1995 Sun Microsystems, Inc.
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
+
 #include "tcl.h"
 
 /*
  * Prototypes for procedures defined later in this file:
  */
 
-static int    Pkga_EqObjCmd _ANSI_ARGS_((ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[]));
-static int    Pkga_QuoteObjCmd _ANSI_ARGS_((ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[]));
+static int    Pkga_EqObjCmd(ClientData clientData,
+		Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
+static int    Pkga_QuoteObjCmd(ClientData clientData,
+		Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 
 /*
  *----------------------------------------------------------------------
  *
  * Pkga_EqObjCmd --
  *
- *	This procedure is invoked to process the "pkga_eq" Tcl command.
- *	It expects two arguments and returns 1 if they are the same,
- *	0 if they are different.
+ *	This procedure is invoked to process the "pkga_eq" Tcl command. It
+ *	expects two arguments and returns 1 if they are the same, 0 if they
+ *	are different.
  *
  * Results:
  *	A standard Tcl result.
@@ -41,11 +42,11 @@ static int    Pkga_QuoteObjCmd _ANSI_ARGS_((ClientData clientData,
  */
 
 static int
-Pkga_EqObjCmd(dummy, interp, objc, objv)
-    ClientData dummy;		/* Not used. */
-    Tcl_Interp *interp;		/* Current interpreter. */
-    int objc;			/* Number of arguments. */
-    Tcl_Obj * CONST objv[];	/* Argument objects. */
+Pkga_EqObjCmd(
+    ClientData dummy,		/* Not used. */
+    Tcl_Interp *interp,		/* Current interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     int result;
     CONST char *str1, *str2;
@@ -72,8 +73,8 @@ Pkga_EqObjCmd(dummy, interp, objc, objv)
  *
  * Pkga_QuoteObjCmd --
  *
- *	This procedure is invoked to process the "pkga_quote" Tcl command.
- *	It expects one argument, which it returns as result.
+ *	This procedure is invoked to process the "pkga_quote" Tcl command. It
+ *	expects one argument, which it returns as result.
  *
  * Results:
  *	A standard Tcl result.
@@ -85,11 +86,11 @@ Pkga_EqObjCmd(dummy, interp, objc, objv)
  */
 
 static int
-Pkga_QuoteObjCmd(dummy, interp, objc, objv)
-    ClientData dummy;			/* Not used. */
-    Tcl_Interp *interp;			/* Current interpreter. */
-    int objc;                         /* Number of arguments. */
-    Tcl_Obj * CONST objv[];           /* Argument strings. */
+Pkga_QuoteObjCmd(
+    ClientData dummy,		/* Not used. */
+    Tcl_Interp *interp,		/* Current interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument strings. */
 {
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "value");
@@ -104,8 +105,8 @@ Pkga_QuoteObjCmd(dummy, interp, objc, objv)
  *
  * Pkga_Init --
  *
- *	This is a package initialization procedure, which is called
- *	by Tcl when this package is to be added to an interpreter.
+ *	This is a package initialization procedure, which is called by Tcl
+ *	when this package is to be added to an interpreter.
  *
  * Results:
  *	None.
@@ -117,9 +118,9 @@ Pkga_QuoteObjCmd(dummy, interp, objc, objv)
  */
 
 int
-Pkga_Init(interp)
-    Tcl_Interp *interp;		/* Interpreter in which the package is
-				 * to be made available. */
+Pkga_Init(
+    Tcl_Interp *interp)		/* Interpreter in which the package is to be
+				 * made available. */
 {
     int code;
 

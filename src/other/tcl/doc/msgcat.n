@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" SCCS: @(#) msgcat.n
-'\"
+'\" 
 .so man.macros
 .TH "msgcat" n 1.4 msgcat "Tcl Bundled Packages"
 .BS
@@ -76,7 +76,7 @@ of the longest translated string.  This is useful when designing
 localized GUIs, which may require that all buttons, for example, be a
 fixed width (which will be the width of the widest button).
 .TP
-\fB::msgcat::mclocale \fR?\fInewLocale\fR?
+\fB::msgcat::mclocale \fR?\fInewLocale\fR?  
 This function sets the locale to \fInewLocale\fR.  If \fInewLocale\fR
 is omitted, the current locale is returned, otherwise the current locale
 is set to \fInewLocale\fR.  msgcat stores and compares the locale in a
@@ -101,7 +101,7 @@ returns \fB{en_US_funky en_US en {}}\fR.
 Searches the specified directory for files that match
 the language specifications returned by \fB::msgcat::mcpreferences\fR
 (note that these are all lowercase), extended by the file
-extension ``.msg''.  Each matching file is
+extension ``.msg''.  Each matching file is 
 read in order, assuming a UTF-8 encoding.  The file contents are
 then evaluated as a Tcl script.  This means that Unicode characters
 may be present in the message file either directly in their UTF-8
@@ -134,7 +134,7 @@ application, for example to log error messages for each unknown
 string.  The \fB::msgcat::mcunknown\fR procedure is invoked at the
 same stack context as the call to \fB::msgcat::mc\fR.  The return value
 of \fB::msgcat::mcunknown\fR is used as the return value for the call
-to \fB::msgcat::mc\fR.
+to \fB::msgcat::mc\fR.  
 .SH "LOCALE SPECIFICATION"
 .PP
 The locale is specified to \fBmsgcat\fR by a locale string
@@ -155,7 +155,7 @@ initial locale.  The value is parsed according to the XPG4 pattern
 language[_country][.codeset][@modifier]
 .CE
 to extract its parts.  The initial locale is then set by calling
-\fB::msgcat::mclocale\fR with the argument
+\fB::msgcat::mclocale\fR with the argument 
 .CS
 language[_country][_modifier]
 .CE
@@ -204,7 +204,7 @@ then the parent of the current namespace, and so on until
 the global namespace is reached.  This allows child namespaces
 to "inherit" messages from their parent namespace.
 .PP
-For example, executing (in the ``en'' locale) the code
+For example, executing (in the ``en'' locale) the code 
 .CS
 \fB::msgcat::mcset\fR en m1 ":: message1"
 \fB::msgcat::mcset\fR en m2 ":: message2"

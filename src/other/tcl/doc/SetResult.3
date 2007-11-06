@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tcl_SetResult 3 8.0 Tcl "Tcl Library Procedures"
 .BS
@@ -187,7 +187,7 @@ and write the result using \fBTcl_SetObjResult\fR or \fBTcl_SetResult\fR.
 
 .SH "THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT"
 .PP
-\fBTcl_SetResult\fR's \fIfreeProc\fR argument specifies how
+\fBTcl_SetResult\fR's \fIfreeProc\fR argument specifies how 
 the Tcl system is to manage the storage for the \fIresult\fR argument.
 If \fBTcl_SetResult\fR or \fBTcl_SetObjResult\fR are called
 at a time when \fIinterp\fR holds a string result,

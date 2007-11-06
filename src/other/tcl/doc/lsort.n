@@ -6,9 +6,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH lsort n 8.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -78,25 +78,31 @@ sublists, \fBlsort\fR will extract the \fIindexList\fR'th element from
 each sublist
 .VS 8.5
 (as if the overall element and the \fIindexList\fR were passed to
-\fBlindex\fR) and sort based on the given element.
+\fBlindex\fR) and sort based on the given element.  
 .VE 8.5
 For example,
 .RS
 .CS
-lsort -integer -index 1 {{First 24} {Second 18} {Third 30}}
+lsort -integer -index 1 \\
+      {{First 24} {Second 18} {Third 30}}
 .CE
 returns \fB{Second 18} {First 24} {Third 30}\fR, and
 '\"
 '\" This example is from the test suite!
 '\"
 .CS
-lsort -index end-1 {{a 1 e i} {b 2 3 f g} {c 4 5 6 d h}}
+lsort -index end-1 \\
+      {{a 1 e i} {b 2 3 f g} {c 4 5 6 d h}}
 .CE
 returns \fB{c 4 5 6 d h} {a 1 e i} {b 2 3 f g}\fR,
 .VS 8.5
 and
 .CS
-lsort -index {0 1} {{{b i g} 12345} {{d e m o} 34512} {{c o d e} 54321}}
+lsort -index {0 1} {
+   {{b i g} 12345}
+   {{d e m o} 34512}
+   {{c o d e} 54321}
+}
 .CE
 returns \fB{{d e m o} 34512} {{b i g} 12345} {{c o d e} 54321}\fR
 (because \fBe\fR sorts before \fBi\fR which sorts before \fBo\fR.)
@@ -108,14 +114,14 @@ to achieve the same effect.
 .TP 20
 \fB\-nocase\fR
 Causes comparisons to be handled in a case-insensitive manner.  Has no
-effect if combined with the \fB\-dictionary\fR, \fB\-integer\fR, or
+effect if combined with the \fB\-dictionary\fR, \fB\-integer\fR, or 
 \fB\-real\fR options.
 .VE 8.5
 .TP 20
 \fB\-unique\fR
 If this option is specified, then only the last set of duplicate
 elements found in the list will be retained.  Note that duplicates are
-determined relative to the comparison used in the sort.  Thus if
+determined relative to the comparison used in the sort.  Thus if 
 \fI-index 0\fR is used, \fB{1 a}\fR and \fB{1 b}\fR would be
 considered duplicates and only the second element, \fB{1 b}\fR, would
 be retained.
@@ -194,7 +200,7 @@ More complex sorting using a comparison function:
 .CE
 
 .SH "SEE ALSO"
-list(n), lappend(n), lindex(n), linsert(n), llength(n), lsearch(n),
+list(n), lappend(n), lindex(n), linsert(n), llength(n), lsearch(n), 
 lset(n), lrange(n), lreplace(n)
 
 .SH KEYWORDS

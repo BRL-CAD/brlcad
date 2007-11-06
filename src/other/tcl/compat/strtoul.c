@@ -1,4 +1,4 @@
-/*
+/* 
  * strtoul.c --
  *
  *	Source code for the "strtoul" library procedure.
@@ -92,7 +92,7 @@ strtoul(
      * If no base was provided, pick one from the leading characters of the
      * string.
      */
-
+    
     if (base == 0) {
 	if (*p == '0') {
 	    p += 1;
@@ -208,7 +208,7 @@ strtoul(
     if (overflow) {
 	errno = ERANGE;
 	return ULONG_MAX;
-    }
+    } 
     if (negative) {
 	return -result;
     }

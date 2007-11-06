@@ -43,9 +43,9 @@ CFG=tcl - Win32 Debug Static
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release\tcl_Dynamic"
-# PROP Cmd_Line "nmake -nologo -f makefile.vc OPTS=none MSVCDIR=IDE"
-# PROP Rebuild_Opt "-a"
-# PROP Target_File "Release\tclsh85.exe"
+# PROP Cmd_Line "nmake -nologo -f makefile.vc OPTS=threads MSVCDIR=IDE"
+# PROP Rebuild_Opt "clean release"
+# PROP Target_File "Release\tclsh85t.exe"
 # PROP Bsc_Name ""
 # PROP Target_Dir ""
 
@@ -64,9 +64,9 @@ CFG=tcl - Win32 Debug Static
 # PROP Use_Debug_Libraries 1
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug\tcl_Dynamic"
-# PROP Cmd_Line "nmake -nologo -f makefile.vc OPTS=symbols MSVCDIR=IDE"
-# PROP Rebuild_Opt "-a"
-# PROP Target_File "Debug\tclsh85g.exe"
+# PROP Cmd_Line "nmake -nologo -f makefile.vc OPTS=threads,symbols MSVCDIR=IDE"
+# PROP Rebuild_Opt "clean release"
+# PROP Target_File "Debug\tclsh85tg.exe"
 # PROP Bsc_Name ""
 # PROP Target_Dir ""
 

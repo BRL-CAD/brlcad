@@ -1,4 +1,4 @@
-/*
+/* 
  * strtoull.c --
  *
  *	Source code for the "strtoull" library procedure.
@@ -102,7 +102,7 @@ strtoull(
      * If no base was provided, pick one from the leading characters of the
      * string.
      */
-
+    
     if (base == 0) {
 	if (*p == '0') {
 	    p += 1;

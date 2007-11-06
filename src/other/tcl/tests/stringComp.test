@@ -222,7 +222,7 @@ test stringComp-3.8 {string equal with length, unequal strings} {
 test stringComp-4.1 {string first, too few args} {
     proc foo {} {string first a}
     list [catch {foo} msg] $msg
-} {1 {wrong # args: should be "string first subString string ?startIndex?"}}
+} {1 {wrong # args: should be "string first needleString haystackString ?startIndex?"}}
 test stringComp-4.2 {string first, bad args} {
     proc foo {} {string first a b c}
     list [catch {foo} msg] $msg
@@ -230,7 +230,7 @@ test stringComp-4.2 {string first, bad args} {
 test stringComp-4.3 {string first, too many args} {
     proc foo {} {string first a b 5 d}
     list [catch {foo} msg] $msg
-} {1 {wrong # args: should be "string first subString string ?startIndex?"}}
+} {1 {wrong # args: should be "string first needleString haystackString ?startIndex?"}}
 test stringComp-4.4 {string first} {
     proc foo {} {string first bq abcdefgbcefgbqrs}
     foo

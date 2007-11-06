@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH binary n 8.0 Tcl "Tcl Built-In Commands"
 .BS
@@ -185,7 +185,7 @@ example,
 .CS
 \fBbinary format\fR s3 {3 -3 258 1}
 .CE
-will return a string equivalent to
+will return a string equivalent to 
 \fB\\x03\\x00\\xfd\\xff\\x02\\x01\fR.
 .RE
 .IP \fBS\fR 5
@@ -196,7 +196,7 @@ example,
 .CS
 \fBbinary format\fR S3 {3 -3 258 1}
 .CE
-will return a string equivalent to
+will return a string equivalent to 
 \fB\\x00\\x03\\xff\\xfd\\x01\\x02\fR.
 .RE
 .IP \fBt\fR 5
@@ -217,7 +217,7 @@ example,
 .CS
 \fBbinary format\fR i3 {3 -3 65536 1}
 .CE
-will return a string equivalent to
+will return a string equivalent to 
 \fB\\x03\\x00\\x00\\x00\\xfd\\xff\\xff\\xff\\x00\\x00\\x01\\x00\fR
 .RE
 .IP \fBI\fR 5
@@ -228,7 +228,7 @@ For example,
 .CS
 \fBbinary format\fR I3 {3 -3 65536 1}
 .CE
-will return a string equivalent to
+will return a string equivalent to 
 \fB\\x00\\x00\\x00\\x03\\xff\\xff\\xff\\xfd\\x00\\x01\\x00\\x00\fR
 .RE
 .IP \fBn\fR 5
@@ -288,7 +288,7 @@ on a Windows system running on an Intel Pentium processor,
 .CS
 \fBbinary format\fR f2 {1.6 3.4}
 .CE
-will return a string equivalent to
+will return a string equivalent to 
 \fB\\xcd\\xcc\\xcc\\x3f\\x9a\\x99\\x59\\x40\fR.
 .RE
 .IP \fBr\fR 5
@@ -313,7 +313,7 @@ Windows system running on an Intel Pentium processor,
 .CS
 \fBbinary format\fR d1 {1.6}
 .CE
-will return a string equivalent to
+will return a string equivalent to 
 \fB\\x9a\\x99\\x99\\x99\\x99\\x99\\xf9\\x3f\fR.
 .RE
 .IP \fBq\fR 5
@@ -569,7 +569,7 @@ order.  For example,
 \fBbinary scan\fR \\x00\\x05\\x00\\x07\\xff\\xf0 S2S* var1 var2
 .CE
 will return \fB2\fR with \fB5 7\fR stored in \fIvar1\fR and \fB-16\fR
-stored in \fIvar2\fR.
+stored in \fIvar2\fR. 
 .RE
 .IP \fBt\fR 5
 .VS 8.5

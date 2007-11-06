@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH filename n 7.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -25,26 +25,24 @@ to be portable should not assume a particular form for file names.
 Instead, portable scripts must use the \fBfile split\fR and \fBfile
 join\fR commands to manipulate file names (see the \fBfile\fR manual
 entry for more details).
-
 .SH "PATH TYPES"
 .PP
 File names are grouped into three general types based on the starting point
 for the path used to specify the file: absolute, relative, and
 volume-relative.  Absolute names are completely qualified, giving a path to
 the file relative to a particular volume and the root directory on that
-volume.  Relative names are unqualified, giving a path to the file relative
+volume.  Relative names are unqualified, giving a path to the file relative 
 to the current working directory.  Volume-relative names are partially
 qualified, either giving the path relative to the root directory on the
 current volume, or relative to the current directory of the specified
 volume.  The \fBfile pathtype\fR command can be used to determine the
 type of a given path.
-
 .SH "PATH SYNTAX"
 .PP
 The rules for native names depend on the value reported in the Tcl
 array element \fBtcl_platform(platform)\fR:
 .TP 10
-\fBunix\fR
+\fBUnix\fR
 On Unix and Apple MacOS X platforms, Tcl uses path names where the
 components are separated by slashes.  Path names may be relative or
 absolute, and file names may contain any character other than slash.
@@ -55,10 +53,10 @@ separator.  Any number of trailing slash characters at the end of a
 path are simply ignored, so the paths \fBfoo\fR, \fBfoo/\fR and
 \fBfoo//\fR are all identical, and in particular \fBfoo/\fR does not
 necessarily mean a directory is being referred.
+.RS
 .PP
 The following examples illustrate various forms of path
 names:
-.RS
 .TP 15
 \fB/\fR
 Absolute path to the root directory.
@@ -79,16 +77,16 @@ current directory.
 .TP 15
 \fB\&../foo\fR
 Relative path to the file \fBfoo\fR in the directory above the current
-directory.
+directory. 
 .RE
 .TP
-\fBwindows\fR
+\fBWindows\fR
 On Microsoft Windows platforms, Tcl supports both drive-relative and UNC
 style names.  Both \fB/\fR and \fB\e\fR may be used as directory separators
 in either type of name.  Drive-relative names consist of an optional drive
 specifier followed by an absolute or relative path.  UNC paths follow the
 general form \fB\e\eservername\esharename\epath\efile\fR, but must at
-the very least contain the server and share components, i.e.
+the very least contain the server and share components, i.e. 
 \fB\e\eservername\esharename\fR.  In both forms,
 the file names \fB.\fR and \fB..\fR are special and refer to the current
 directory and the parent of the current directory respectively.  The
@@ -122,7 +120,6 @@ Volume-relative path to a file \fBfoo\fR in the root directory of the current
 volume.  This is not a valid UNC path, so the assumption is that the
 extra backslashes are superfluous.
 .RE
-
 .SH "TILDE SUBSTITUTION"
 .PP
 In addition to the file name rules described above, Tcl also supports
@@ -143,7 +140,6 @@ file.  The behaviour of these paths when not trying to interpret them is
 the same as on Unix.  File names that have a tilde without a user name
 will be correctly substituted using the \fB$HOME\fR environment
 variable, just like for Unix.
-
 .SH "PORTABILITY ISSUES"
 .PP
 Not all file systems are case sensitive, so scripts should avoid code
@@ -158,7 +154,7 @@ native path names).  Also Windows 3.1 only supports file
 names with a root of no more than 8 characters and an extension of no
 more than 3 characters.
 .PP
-On Windows platforms there are file and path length restrictions.
+On Windows platforms there are file and path length restrictions. 
 Complete paths or filenames longer than about 260 characters will lead
 to errors in most file operations.
 .PP
@@ -172,6 +168,5 @@ illegal.
 .SH KEYWORDS
 current directory, absolute file name, relative file name,
 volume-relative file name, portability
-
 .SH "SEE ALSO"
 file(n), glob(n)

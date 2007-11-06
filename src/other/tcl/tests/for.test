@@ -420,7 +420,7 @@ proc formatMail {} {
 	set climit [expr $limit-1]
 	set cutoff 50
 	set continuation 0
-
+	
 	while {[string length $line] > $limit} {
 	    for {set c [expr $limit-1]} {$c >= $cutoff} {incr c -1} {
 		set char [string index $line $c]
@@ -494,76 +494,76 @@ releases of the Tcl scripting language and the Tk toolk
 it. The first beta versions of these
 releases were released on August 30, 1996. These releas
 es contain only minor changes,
-so we hope to have only a single beta release and to
+so we hope to have only a single beta release and to 
 go final in early October, 1996.
 
 
-What's new
+What's new 
 
 The most important changes in the releases are summariz
 ed below. See the README
 and changes files in the distributions for more complet
 e information on what has
-changed, including both feature changes and bug fixes.
+changed, including both feature changes and bug fixes. 
 
-     There are new options to the file command for
+     There are new options to the file command for 
 copying files (file copy),
-     deleting files and directories (file delete),
+     deleting files and directories (file delete), 
 creating directories (file
-     mkdir), and renaming files (file rename).
+     mkdir), and renaming files (file rename). 
      The implementation of exec has been improved great
 ly for Windows 95 and
-     Windows NT.
-     There is a new memory allocator for the Macintosh
+     Windows NT. 
+     There is a new memory allocator for the Macintosh 
 version, which should be
-     more efficient than the old one.
-     Tk's grid geometry manager has been completely
+     more efficient than the old one. 
+     Tk's grid geometry manager has been completely 
 rewritten. The layout
      algorithm produces much better layouts than before
 , especially where rows or
-     columns were stretchable.
-     There are new commands for creating common dialog
+     columns were stretchable. 
+     There are new commands for creating common dialog 
 boxes:
      tk_chooseColor, tk_getOpenFile, tk_getSaveFile and
-     tk_messageBox. These use native dialog boxes if
+     tk_messageBox. These use native dialog boxes if 
 they are available.
      There is a new virtual event mechanism for handlin
 g events in a more portable
-     way. See the new command event. It also allows
+     way. See the new command event. It also allows 
 events (both physical and
-     virtual) to be generated dynamically.
+     virtual) to be generated dynamically. 
 
-Tcl 7.6 and Tk 4.2 are backwards-compatible with Tcl
+Tcl 7.6 and Tk 4.2 are backwards-compatible with Tcl 
 7.5 and Tk 4.1 except for
 changes in the C APIs for custom channel drivers. Scrip
 ts written for earlier releases
-should work on these new releases as well.
+should work on these new releases as well. 
 
 Obtaining The Releases
 
 Binary Releases
 
-Pre-compiled releases are available for the following
+Pre-compiled releases are available for the following 
 platforms:
 
      Windows 3.1, Windows 95, and Windows NT: Fetch
-     ftp://ftp.sunlabs.com/pub/tcl/win42b1.exe, then
+     ftp://ftp.sunlabs.com/pub/tcl/win42b1.exe, then 
 execute it. The file is a
-     self-extracting executable. It will install the
+     self-extracting executable. It will install the 
 Tcl and Tk libraries, the wish and
-     tclsh programs, and documentation.
+     tclsh programs, and documentation. 
      Macintosh (both 68K and PowerPC): Fetch
-     ftp://ftp.sunlabs.com/pub/tcl/mactk4.2b1.sea.hqx.
+     ftp://ftp.sunlabs.com/pub/tcl/mactk4.2b1.sea.hqx. 
 The file is in binhex format,
-     which is understood by Fetch, StuffIt, and many
+     which is understood by Fetch, StuffIt, and many 
 other Mac utilities. The
-     unpacked file is a self-installing executable:
+     unpacked file is a self-installing executable: 
 double-click on it and it will create a
-     folder containing all that you need to run Tcl
+     folder containing all that you need to run Tcl 
 and Tk.
-        UNIX (Solaris 2.* and SunOS, other systems
+        UNIX (Solaris 2.* and SunOS, other systems 
 soon to follow). Easy to install
-     binary packages are now for sale at the Sun Labs
+     binary packages are now for sale at the Sun Labs 
 Tcl/Tk Shop. Check it out!
 }
 

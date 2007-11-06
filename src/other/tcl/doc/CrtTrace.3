@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tcl_CreateTrace 3 "" Tcl "Tcl Library Procedures"
 .BS
@@ -66,7 +66,7 @@ interpreter.
 \fIobjProc\fR should have arguments and result that match the type,
 \fBTcl_CmdObjTraceProc\fR:
 .CS
-typedef int \fBTcl_CmdObjTraceProc\fR(
+typedef int \fBTcl_CmdObjTraceProc\fR( 
         \fBClientData\fR \fIclientData\fR,
         \fBTcl_Interp\fR* \fIinterp\fR,
         int \fIlevel\fR,
@@ -142,7 +142,7 @@ When \fBTcl_DeleteTrace\fR is called, the interpreter invokes the
 \fBTcl_CreateObjTrace\fR.  The \fIdeleteProc\fR must match the type,
 \fBTcl_CmdObjTraceDeleteProc\fR:
 .CS
-typedef void \fBTcl_CmdObjTraceDeleteProc\fR(
+typedef void \fBTcl_CmdObjTraceDeleteProc\fR( 
         \fBClientData\fR \fIclientData\fR);
 .CE
 The \fIclientData\fR parameter will be the same as the

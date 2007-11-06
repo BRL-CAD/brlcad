@@ -8,6 +8,7 @@
  * Copyright (c) 1994-1998 Sun Microsystems, Inc.
  * Copyright (c) 1998-1999 by Scriptics Corporation.
  * Copyright (c) 2001, 2002 by Kevin B. Kenny.  All rights reserved.
+ * Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -17,6 +18,10 @@
 
 #ifndef _TCLINT
 #define _TCLINT
+
+#ifdef HAVE_CONFIG_H
+# include "brlcad_config.h"
+#endif
 
 /*
  * Some numerics configuration options
@@ -81,7 +86,7 @@ typedef int ptrdiff_t;
 #    ifdef BIG_ENDIAN
 #	 if BYTE_ORDER == BIG_ENDIAN
 #	     undef WORDS_BIGENDIAN
-#	     define WORDS_BIGENDIAN
+#	     define WORDS_BIGENDIAN 1
 #	 endif
 #    endif
 #    ifdef LITTLE_ENDIAN
@@ -171,14 +176,16 @@ typedef int (Tcl_ResolveCmdProc) (Tcl_Interp *interp, CONST84 char *name,
 	Tcl_Namespace *context, int flags, Tcl_Command *rPtr);
 
 typedef struct Tcl_ResolverInfo {
-    Tcl_ResolveCmdProc *cmdResProc;	/* Procedure handling command name
-					 * resolution. */
-    Tcl_ResolveVarProc *varResProc;	/* Procedure handling variable name
-					 * resolution for variables that
-					 * can only be handled at runtime. */
+    Tcl_ResolveCmdProc *cmdResProc;
+				/* Procedure handling command name
+				 * resolution. */
+    Tcl_ResolveVarProc *varResProc;
+				/* Procedure handling variable name resolution
+				 * for variables that can only be handled at
+				 * runtime. */
     Tcl_ResolveCompiledVarProc *compiledVarResProc;
-					/* Procedure handling variable name
-					 * resolution at compile time. */
+				/* Procedure handling variable name resolution
+				 * at compile time. */
 } Tcl_ResolverInfo;
 
 /*
@@ -189,6 +196,26 @@ typedef struct Tcl_ResolverInfo {
 
 typedef struct Tcl_Ensemble Tcl_Ensemble;
 typedef struct NamespacePathEntry NamespacePathEntry;
+
+/*
+ * Special hashtable for variables: this is just a Tcl_HashTable with an nsPtr
+ * field added at the end: in this way variables can find their namespace
+ * without having to copy a pointer in their struct: they can access it via
+ * their hPtr->tablePtr.
+ */
+
+typedef struct TclVarHashTable {
+    Tcl_HashTable table;
+    struct Namespace *nsPtr;
+} TclVarHashTable;
+
+/*
+ * This is for itcl - it likes to search our varTables directly :(
+ */
+
+#define TclVarHashFindVar(tablePtr, key) \
+    TclVarHashCreateVar((tablePtr), (key), NULL)
+
 
 /*
  * The structure below defines a namespace.
@@ -234,7 +261,7 @@ typedef struct Namespace {
 				 * ImportedCmdRef structure) to the Command
 				 * structure in the source namespace's command
 				 * table. */
-    Tcl_HashTable varTable;	/* Contains all the (global) variables
+    TclVarHashTable varTable;	/* Contains all the (global) variables
 				 * currently in this namespace. Indexed by
 				 * strings; values have type (Var *). */
     char **exportArrayPtr;	/* Points to an array of string patterns
@@ -357,6 +384,27 @@ struct NamespacePathEntry {
 #define TCL_FIND_ONLY_NS		0x1000
 
 /*
+ * The data cached in an ensemble subcommand's Tcl_Obj rep (reference in
+ * otherValuePtr field). This structure is not shared between Tcl_Objs
+ * referring to the same subcommand, even where one is a duplicate of another.
+ */
+
+typedef struct {
+    Namespace *nsPtr;		/* The namespace backing the ensemble which
+				 * this is a subcommand of. */
+    int epoch;			/* Used to confirm when the data in this
+				 * really structure matches up with the
+				 * ensemble. */
+    Tcl_Command token;		/* Reference to the comamnd for which this
+				 * structure is a cache of the resolution. */
+    char *fullSubcmdName;	/* The full (local) name of the subcommand,
+				 * allocated with ckalloc(). */
+    Tcl_Obj *realPrefixObj;	/* Object containing the prefix words of the
+				 * command that implements this ensemble
+				 * subcommand. */
+} EnsembleCmdRep;
+
+/*
  *----------------------------------------------------------------
  * Data structures related to variables. These are used primarily in tclVar.c
  *----------------------------------------------------------------
@@ -476,10 +524,12 @@ typedef struct ArraySearch {
  */
 
 typedef struct Var {
+    int flags;			/* Miscellaneous bits of information about
+				 * variable. See below for definitions. */
     union {
 	Tcl_Obj *objPtr;	/* The variable's object value. Used for
 				 * scalar variables and array elements. */
-	Tcl_HashTable *tablePtr;/* For array variables, this points to
+	TclVarHashTable *tablePtr;/* For array variables, this points to
 				 * information about the hash table used to
 				 * implement the associative array. Points to
 				 * ckalloc-ed data. */
@@ -488,48 +538,30 @@ typedef struct Var {
 				 * "upvar", this field points to the
 				 * referenced variable's Var struct. */
     } value;
-    char *name;			/* NULL if the variable is in a hashtable,
-				 * otherwise points to the variable's name. It
-				 * is used, e.g., by TclLookupVar and "info
-				 * locals". The storage for the characters of
-				 * the name is not owned by the Var and must
-				 * not be freed when freeing the Var. */
-    Namespace *nsPtr;		/* Points to the namespace that contains this
-				 * variable or NULL if the variable is a local
-				 * variable in a Tcl procedure. */
-    Tcl_HashEntry *hPtr;	/* If variable is in a hashtable, either the
-				 * hash table entry that refers to this
-				 * variable or NULL if the variable has been
-				 * detached from its hash table (e.g. an array
-				 * is deleted, but some of its elements are
-				 * still referred to in upvars). NULL if the
-				 * variable is not in a hashtable. This is
-				 * used to delete an variable from its
-				 * hashtable if it is no longer needed. */
-    int refCount;		/* Counts number of active uses of this
-				 * variable, not including its entry in the
-				 * call frame or the hash table: 1 for each
-				 * additional variable whose linkPtr points
-				 * here, 1 for each nested trace active on
-				 * variable, and 1 if the variable is a
-				 * namespace variable. This record can't be
-				 * deleted until refCount becomes 0. */
-    VarTrace *tracePtr;		/* First in list of all traces set for this
-				 * variable. */
-    ArraySearch *searchPtr;	/* First in list of all searches active for
-				 * this variable, or NULL if none. */
-    int flags;			/* Miscellaneous bits of information about
-				 * variable. See below for definitions. */
 } Var;
 
+typedef struct VarInHash {
+    Var var;
+    int refCount;		/* Counts number of active uses of this
+				 * variable: 1 for the entry in the hash
+				 * table, 1 for each additional variable whose
+				 * linkPtr points here, 1 for each nested
+				 * trace active on variable, and 1 if the
+				 * variable is a namespace variable. This
+				 * record can't be deleted until refCount
+				 * becomes 0. */
+    Tcl_HashEntry entry;	/* The hash table entry that refers to this
+				 * variable. This is used to find the name of
+				 * the variable and to delete it from its
+				 * hashtable if it is no longer needed. It
+				 * also holds the variable's name. */
+} VarInHash;
+
 /*
- * Flag bits for variables. The first three (VAR_SCALAR, VAR_ARRAY, and
- * VAR_LINK) are mutually exclusive and give the "type" of the variable.
- * VAR_UNDEFINED is independent of the variable's type.
+ * Flag bits for variables. The first two (VAR_ARRAY and VAR_LINK) are
+ * mutually exclusive and give the "type" of the variable. If none is set,
+ * this is a scalar variable.
  *
- * VAR_SCALAR -			1 means this is a scalar variable and not an
- *				array or link. The "objPtr" field points to
- *				the variable's value, a Tcl object.
  * VAR_ARRAY -			1 means this is an array variable rather than
  *				a scalar variable or link. The "tablePtr"
  *				field points to the array's hashtable for its
@@ -541,21 +573,17 @@ typedef struct Var {
  *				through "upvar" and "global" commands, or
  *				through references to variables in enclosing
  *				namespaces.
- * VAR_UNDEFINED -		1 means that the variable is in the process of
- *				being deleted. An undefined variable logically
- *				does not exist and survives only while it has
- *				a trace, or if it is a global variable
- *				currently being used by some procedure.
+ *
+ * Flags that indicate the type and status of storage; none is set for
+ * compiled local variables (Var structs).
+ *
  * VAR_IN_HASHTABLE -		1 means this variable is in a hashtable and
  *				the Var structure is malloced. 0 if it is a
  *				local variable that was assigned a slot in a
  *				procedure frame by the compiler so the Var
  *				storage is part of the call frame.
- * VAR_TRACE_ACTIVE -		1 means that trace processing is currently
- *				underway for a read or write access, so new
- *				read or write accesses should not cause trace
- *				procedures to be called and the variable can't
- *				be deleted.
+ * VAR_DEAD_HASH                1 means that this var's entry in the hashtable
+ *                              has already been deleted.
  * VAR_ARRAY_ELEMENT -		1 means that this variable is an array
  *				element, so it is not legal for it to be an
  *				array itself (the VAR_ARRAY flag had better
@@ -569,6 +597,19 @@ typedef struct Var {
  *				incremented to reflect the "reference" from
  *				its namespace.
  *
+ * Flag values relating to the variable's trace and search status.
+ *
+ * VAR_TRACED_READ
+ * VAR_TRACED_WRITE
+ * VAR_TRACED_UNSET
+ * VAR_TRACED_ARRAY
+ * VAR_TRACE_ACTIVE -		1 means that trace processing is currently
+ *				underway for a read or write access, so new
+ *				read or write accesses should not cause trace
+ *				procedures to be called and the variable can't
+ *				be deleted.
+ * VAR_SEARCH_ACTIVE
+ *
  * The following additional flags are used with the CompiledLocal type defined
  * below:
  *
@@ -579,21 +620,50 @@ typedef struct Var {
  *				name.
  * VAR_RESOLVED -		1 if name resolution has been done for this
  *				variable.
+ * VAR_IS_ARGS                  1 if this variable is the last argument and is
+ *                              named "args".
  */
 
-#define VAR_SCALAR		0x1
-#define VAR_ARRAY		0x2
-#define VAR_LINK		0x4
-#define VAR_UNDEFINED		0x8
-#define VAR_IN_HASHTABLE	0x10
-#define VAR_TRACE_ACTIVE	0x20
-#define VAR_ARRAY_ELEMENT	0x40
-#define VAR_NAMESPACE_VAR	0x80
+/*
+ * FLAGS RENUMBERED: everything breaks already, make things simpler.
+ *
+ * IMPORTANT: skip the values 0x10, 0x20, 0x40, 0x800 corresponding to
+ * TCL_TRACE_(READS/WRITES/UNSETS/ARRAY): makes code simpler in tclTrace.c
+ *
+ * Keep the flag values for VAR_ARGUMENT and VAR_TEMPORARY so that old values
+ * in precompiled scripts keep working.
+ */
 
-#define VAR_ARGUMENT		0x100
-#define VAR_TEMPORARY		0x200
-#define VAR_RESOLVED		0x400
-#define VAR_IS_ARGS		0x800
+
+/* Type of value (0 is scalar) */
+#define VAR_ARRAY		0x1
+#define VAR_LINK		0x2
+
+/* Type of storage (0 is compiled local) */
+#define VAR_IN_HASHTABLE	0x4
+#define VAR_DEAD_HASH           0x8
+#define VAR_ARRAY_ELEMENT	0x1000
+#define VAR_NAMESPACE_VAR	0x80      /* KEEP OLD VALUE for Itcl */
+
+#define VAR_ALL_HASH (VAR_IN_HASHTABLE|VAR_DEAD_HASH|VAR_NAMESPACE_VAR|VAR_ARRAY_ELEMENT)
+
+/* Trace and search state */
+
+#define VAR_TRACED_READ        0x10       /* TCL_TRACE_READS  */
+#define VAR_TRACED_WRITE       0x20       /* TCL_TRACE_WRITES */
+#define VAR_TRACED_UNSET       0x40       /* TCL_TRACE_UNSETS */
+#define VAR_TRACED_ARRAY       0x800      /* TCL_TRACE_ARRAY  */
+#define VAR_TRACE_ACTIVE       0x2000
+#define VAR_SEARCH_ACTIVE      0x4000
+#define VAR_ALL_TRACES \
+   (VAR_TRACED_READ|VAR_TRACED_WRITE|VAR_TRACED_ARRAY|VAR_TRACED_UNSET)
+
+
+/* Special handling on initialisation (only CompiledLocal) */
+#define VAR_ARGUMENT		0x100     /* KEEP OLD VALUE! See tclProc.c */
+#define VAR_TEMPORARY		0x200     /* KEEP OLD VALUE! See tclProc.c */
+#define VAR_IS_ARGS		0x400
+#define VAR_RESOLVED		0x8000
 
 /*
  * Macros to ensure that various flag bits are set properly for variables.
@@ -608,22 +678,22 @@ typedef struct Var {
  */
 
 #define TclSetVarScalar(varPtr) \
-    (varPtr)->flags = ((varPtr)->flags & ~(VAR_ARRAY|VAR_LINK)) | VAR_SCALAR
+    (varPtr)->flags &= ~(VAR_ARRAY|VAR_LINK)
 
 #define TclSetVarArray(varPtr) \
-    (varPtr)->flags = ((varPtr)->flags & ~(VAR_SCALAR|VAR_LINK)) | VAR_ARRAY
+    (varPtr)->flags = ((varPtr)->flags & ~VAR_LINK) | VAR_ARRAY
 
 #define TclSetVarLink(varPtr) \
-    (varPtr)->flags = ((varPtr)->flags & ~(VAR_SCALAR|VAR_ARRAY)) | VAR_LINK
+    (varPtr)->flags = ((varPtr)->flags & ~VAR_ARRAY) | VAR_LINK
 
 #define TclSetVarArrayElement(varPtr) \
     (varPtr)->flags = ((varPtr)->flags & ~VAR_ARRAY) | VAR_ARRAY_ELEMENT
 
 #define TclSetVarUndefined(varPtr) \
-    (varPtr)->flags |= VAR_UNDEFINED
+    (varPtr)->flags &= ~(VAR_ARRAY|VAR_LINK);\
+    (varPtr)->value.objPtr = NULL
 
-#define TclClearVarUndefined(varPtr) \
-    (varPtr)->flags &= ~VAR_UNDEFINED
+#define TclClearVarUndefined(varPtr)
 
 #define TclSetVarTraceActive(varPtr) \
     (varPtr)->flags |= VAR_TRACE_ACTIVE
@@ -632,10 +702,16 @@ typedef struct Var {
     (varPtr)->flags &= ~VAR_TRACE_ACTIVE
 
 #define TclSetVarNamespaceVar(varPtr) \
-    (varPtr)->flags |= VAR_NAMESPACE_VAR
+    if (!TclIsVarNamespaceVar(varPtr)) {\
+        (varPtr)->flags |= VAR_NAMESPACE_VAR;\
+        ((VarInHash *)(varPtr))->refCount++;\
+    } 
 
 #define TclClearVarNamespaceVar(varPtr) \
-    (varPtr)->flags &= ~VAR_NAMESPACE_VAR
+    if (TclIsVarNamespaceVar(varPtr)) {\
+        (varPtr)->flags &= ~VAR_NAMESPACE_VAR;\
+        ((VarInHash *)(varPtr))->refCount--;\
+    }
 
 /*
  * Macros to read various flag bits of variables.
@@ -652,7 +728,7 @@ typedef struct Var {
  */
 
 #define TclIsVarScalar(varPtr) \
-    ((varPtr)->flags & VAR_SCALAR)
+    !((varPtr)->flags & (VAR_ARRAY|VAR_LINK))
 
 #define TclIsVarLink(varPtr) \
     ((varPtr)->flags & VAR_LINK)
@@ -661,7 +737,7 @@ typedef struct Var {
     ((varPtr)->flags & VAR_ARRAY)
 
 #define TclIsVarUndefined(varPtr) \
-    ((varPtr)->flags & VAR_UNDEFINED)
+    ((varPtr)->value.objPtr == NULL)
 
 #define TclIsVarArrayElement(varPtr) \
     ((varPtr)->flags & VAR_ARRAY_ELEMENT)
@@ -681,24 +757,50 @@ typedef struct Var {
 #define TclIsVarTraceActive(varPtr) \
     ((varPtr)->flags & VAR_TRACE_ACTIVE)
 
-#define TclIsVarUntraced(varPtr) \
-    ((varPtr)->tracePtr == NULL)
+#define TclIsVarTraced(varPtr) \
+   ((varPtr)->flags & VAR_ALL_TRACES)
+
+#define TclIsVarInHash(varPtr) \
+    ((varPtr)->flags & VAR_IN_HASHTABLE)
+
+#define TclIsVarDeadHash(varPtr) \
+    ((varPtr)->flags & VAR_DEAD_HASH)
+
+#define TclGetVarNsPtr(varPtr) \
+    (TclIsVarInHash(varPtr) \
+         ? ((TclVarHashTable *) ((((VarInHash *) (varPtr))->entry.tablePtr)))->nsPtr \
+	 : NULL)
+
+#define VarHashRefCount(varPtr) \
+    ((VarInHash *) (varPtr))->refCount
 
 /*
  * Macros for direct variable access by TEBC
  */
 
 #define TclIsVarDirectReadable(varPtr) \
-	(TclIsVarScalar(varPtr) \
-    && !TclIsVarUndefined(varPtr) \
-    && TclIsVarUntraced(varPtr))
+    (   !((varPtr)->flags & (VAR_ARRAY|VAR_LINK|VAR_TRACED_READ)) \
+    &&  (varPtr)->value.objPtr)
 
 #define TclIsVarDirectWritable(varPtr) \
-    (   !(((varPtr)->flags & VAR_IN_HASHTABLE) \
-		&& ((varPtr)->hPtr == NULL)) \
-     && TclIsVarUntraced(varPtr) \
-     && (TclIsVarScalar(varPtr) \
-	     || TclIsVarUndefined(varPtr)))
+    !((varPtr)->flags & (VAR_ARRAY|VAR_LINK|VAR_TRACED_WRITE|VAR_DEAD_HASH))
+
+#define TclIsVarDirectModifyable(varPtr) \
+    (   !((varPtr)->flags & (VAR_ARRAY|VAR_LINK|VAR_TRACED_READ|VAR_TRACED_WRITE)) \
+    &&  (varPtr)->value.objPtr)
+
+#define TclIsVarDirectReadable2(varPtr, arrayPtr) \
+    (TclIsVarDirectReadable(varPtr) &&\
+        (!(arrayPtr) || !((arrayPtr)->flags & VAR_TRACED_READ)))
+
+#define TclIsVarDirectWritable2(varPtr, arrayPtr) \
+    (TclIsVarDirectWritable(varPtr) &&\
+        (!(arrayPtr) || !((arrayPtr)->flags & VAR_TRACED_WRITE)))
+
+#define TclIsVarDirectModifyable2(varPtr, arrayPtr) \
+    (TclIsVarDirectModifyable(varPtr) &&\
+        (!(arrayPtr) || !((arrayPtr)->flags & (VAR_TRACED_READ|VAR_TRACED_WRITE))))
+
 
 /*
  *----------------------------------------------------------------
@@ -739,9 +841,8 @@ typedef struct CompiledLocal {
 				 * variables in the procedure call frame. */
     int flags;			/* Flag bits for the local variable. Same as
 				 * the flags for the Var structure above,
-				 * although only VAR_SCALAR, VAR_ARRAY,
-				 * VAR_LINK, VAR_ARGUMENT, VAR_TEMPORARY, and
-				 * VAR_RESOLVED make sense. */
+				 * although only VAR_ARGUMENT, VAR_TEMPORARY,
+				 * and VAR_RESOLVED make sense. */
     Tcl_Obj *defValuePtr;	/* Pointer to the default value of an
 				 * argument, if any. NULL if not an argument
 				 * or, if an argument, no default value. */
@@ -879,6 +980,22 @@ typedef struct AssocData {
  * Tcl_CallFrame structure in tcl.h. If you change one, change the other.
  */
 
+/*
+ * Will be grown to contain: pointers to the varnames (allocated at the end),
+ * plus the init values for each variable (suitable to be memcopied on init)
+ */
+
+typedef struct LocalCache {
+    int refCount;
+    int numVars;
+    Tcl_Obj *varName0;
+} LocalCache;
+
+#define localName(framePtr, i) \
+    ((&((framePtr)->localCachePtr->varName0))[(i)])
+
+MODULE_SCOPE void TclFreeLocalCache(Tcl_Interp *interp, LocalCache *localCachePtr);
+
 typedef struct CallFrame {
     Namespace *nsPtr;		/* Points to the namespace used to resolve
 				 * commands and global variables. */
@@ -912,7 +1029,8 @@ typedef struct CallFrame {
 				 * the number of compiled local variables
 				 * (local variables assigned entries ["slots"]
 				 * in the compiledLocals array below). */
-    Tcl_HashTable *varTablePtr;	/* Hash table containing local variables not
+    TclVarHashTable *varTablePtr;
+                                /* Hash table containing local variables not
 				 * recognized by the compiler, or created at
 				 * execution time through, e.g., upvar.
 				 * Initially NULL and created if needed. */
@@ -931,104 +1049,108 @@ typedef struct CallFrame {
 				 * have some means of discovering what the
 				 * meaning of the value is, which we do not
 				 * specify. */
+    LocalCache *localCachePtr;
 } CallFrame;
 
-#define FRAME_IS_PROC 0x1
+#define FRAME_IS_PROC   0x1
+#define FRAME_IS_LAMBDA 0x2
 
 /*
  * TIP #280
- * The structure below defines a command frame. A command frame
- * provides location information for all commands executing a tcl
- * script (source, eval, uplevel, procedure bodies, ...). The runtime
- * structure essentially contains the stack trace as it would be if
- * the currently executing command were to throw an error.
+ * The structure below defines a command frame. A command frame provides
+ * location information for all commands executing a tcl script (source, eval,
+ * uplevel, procedure bodies, ...). The runtime structure essentially contains
+ * the stack trace as it would be if the currently executing command were to
+ * throw an error.
  *
- * For commands where it makes sense it refers to the associated
- * CallFrame as well.
+ * For commands where it makes sense it refers to the associated CallFrame as
+ * well.
  *
- * The structures are chained in a single list, with the top of the
- * stack anchored in the Interp structure.
+ * The structures are chained in a single list, with the top of the stack
+ * anchored in the Interp structure.
  *
- * Instances can be allocated on the C stack, or the heap, the former
- * making cleanup a bit simpler.
+ * Instances can be allocated on the C stack, or the heap, the former making
+ * cleanup a bit simpler.
  */
 
 typedef struct CmdFrame {
-  /* General data. Always available. */
+    /* General data. Always available. */
 
-  int              type;     /* Values see below */
-  int              level;    /* #Frames in stack, prevent O(n) scan of list */
-  int*             line;     /* Lines the words of the command start on */
-  int              nline;
+    int type;			/* Values see below. */
+    int level;			/* #Frames in stack, prevent O(n) scan of
+				 * list. */
+    int *line;			/* Lines the words of the command start on. */
+    int nline;
 
-  CallFrame*       framePtr; /* Procedure activation record, may be NULL */
-  struct CmdFrame* nextPtr;  /* Link to calling frame */
+    CallFrame *framePtr;	/* Procedure activation record, may be
+				 * NULL. */
+    struct CmdFrame *nextPtr;	/* Link to calling frame */
 
-  /* Data needed for Eval vs TEBC
-   *
-   * EXECUTION CONTEXTS and usage of CmdFrame
-   *
-   * Field      TEBC            EvalEx          EvalObjEx
-   * =======    ====            ======          =========
-   * level      yes             yes             yes
-   * type       BC/PREBC        SRC/EVAL        EVAL_LIST
-   * line0      yes             yes             yes
-   * framePtr   yes             yes             yes
-   * =======    ====            ======          =========
-   *
-   * =======    ====            ======          ========= union data
-   * line1      -               yes             -
-   * line3      -               yes             -
-   * path       -               yes             -
-   * -------    ----            ------          ---------
-   * codePtr    yes             -               -
-   * pc         yes             -               -
-   * =======    ====            ======          =========
-   *
-   * =======    ====            ======          ========= | union cmd
-   * listPtr    -               -               yes       |
-   * -------    ----            ------          --------- |
-   * cmd        yes             yes             -         |
-   * cmdlen     yes             yes             -         |
-   * -------    ----            ------          --------- |
-   */
+    /*
+     * Data needed for Eval vs TEBC
+     *
+     * EXECUTION CONTEXTS and usage of CmdFrame
+     *
+     * Field      TEBC            EvalEx          EvalObjEx
+     * =======    ====            ======          =========
+     * level      yes             yes             yes
+     * type       BC/PREBC        SRC/EVAL        EVAL_LIST
+     * line0      yes             yes             yes
+     * framePtr   yes             yes             yes
+     * =======    ====            ======          =========
+     *
+     * =======    ====            ======          ========= union data
+     * line1      -               yes             -
+     * line3      -               yes             -
+     * path       -               yes             -
+     * -------    ----            ------          ---------
+     * codePtr    yes             -               -
+     * pc         yes             -               -
+     * =======    ====            ======          =========
+     *
+     * =======    ====            ======          ========= | union cmd
+     * listPtr    -               -               yes       |
+     * -------    ----            ------          --------- |
+     * cmd        yes             yes             -         |
+     * cmdlen     yes             yes             -         |
+     * -------    ----            ------          --------- |
+     */
 
-  union {
-    struct {
-      Tcl_Obj*     path;     /* Path of the sourced file the command
-			      * is in. */
-    } eval;
-    struct {
-      CONST void*  codePtr;  /* Byte code currently executed */
-      CONST char*  pc;       /* and instruction pointer.     */
-    } tebc;
-  } data;
-
-  union {
-    struct {
-      CONST char*  cmd;      /* The executed command, if possible */
-      int          len;      /* And its length */
-    } str;
-    Tcl_Obj*       listPtr;  /* Tcl_EvalObjEx, cmd list */
-  } cmd;
-
+    union {
+	struct {
+	    Tcl_Obj *path;	/* Path of the sourced file the command is
+				 * in. */
+	} eval;
+	struct {
+	    CONST void *codePtr;/* Byte code currently executed */
+	    CONST char *pc;	/* and instruction pointer.     */
+	} tebc;
+    } data;
+    union {
+	struct {
+	    CONST char *cmd;	/* The executed command, if possible */
+	    int len;		/* And its length */
+	} str;
+	Tcl_Obj *listPtr;	/* Tcl_EvalObjEx, cmd list */
+    } cmd;
 } CmdFrame;
 
-/* The following macros define the allowed values for the type field
- * of the CmdFrame structure above. Some of the values occur only in
- * the extended location data referenced via the 'baseLocPtr'.
+/*
+ * The following macros define the allowed values for the type field of the
+ * CmdFrame structure above. Some of the values occur only in the extended
+ * location data referenced via the 'baseLocPtr'.
  *
  * TCL_LOCATION_EVAL      : Frame is for a script evaluated by EvalEx.
  * TCL_LOCATION_EVAL_LIST : Frame is for a script evaluated by the list
  *                          optimization path of EvalObjEx.
  * TCL_LOCATION_BC        : Frame is for bytecode.
  * TCL_LOCATION_PREBC     : Frame is for precompiled bytecode.
- * TCL_LOCATION_SOURCE    : Frame is for a script evaluated by EvalEx,
- *                          from a sourced file.
+ * TCL_LOCATION_SOURCE    : Frame is for a script evaluated by EvalEx, from a
+ *                          sourced file.
  * TCL_LOCATION_PROC      : Frame is for bytecode of a procedure.
  *
- * A TCL_LOCATION_BC type in a frame can be overridden by _SOURCE and
- * _PROC types, per the context of the byte code in execution.
+ * A TCL_LOCATION_BC type in a frame can be overridden by _SOURCE and _PROC
+ * types, per the context of the byte code in execution.
  */
 
 #define TCL_LOCATION_EVAL      (0) /* Location in a dynamic eval script */
@@ -1039,6 +1161,28 @@ typedef struct CmdFrame {
 #define TCL_LOCATION_PROC      (5) /* Location in a dynamic proc */
 
 #define TCL_LOCATION_LAST      (6) /* Number of values in the enum */
+
+/*
+ * Structure passed to describe procedure-like "procedures" that are not
+ * procedures (e.g. a lambda) so that their details can be reported correctly
+ * by [info frame]. Contains a sub-structure for each extra field.
+ */
+
+typedef Tcl_Obj *(*GetFrameInfoValueProc)(ClientData clientData);
+typedef struct {
+    const char *name;		/* Name of this field. */
+    GetFrameInfoValueProc proc;	/* Function to generate a Tcl_Obj* from the
+				 * clientData, or just use the clientData
+				 * directly (after casting) if NULL. */
+    ClientData clientData;	/* Context for above function, or Tcl_Obj* if
+				 * proc field is NULL. */
+} ExtraFrameInfoField;
+typedef struct {
+    int length;			/* Length of array. */
+    ExtraFrameInfoField fields[2];
+				/* Really as long as necessary, but this is
+				 * long enough for nearly anything. */
+} ExtraFrameInfo;
 
 /*
  *----------------------------------------------------------------
@@ -1057,39 +1201,9 @@ typedef void **TclHandle;
  * It will probably go away in a later release.
  *----------------------------------------------------------------
  */
-#define TCL_REG_BOSONLY         002000  /* prepend \A to pattern so it only
-					 * matches at the beginning of the
-					 * string. */
 
-/*
- *----------------------------------------------------------------
- * Data structures related to expressions.
- *----------------------------------------------------------------
- */
-
-/*
- * The data structure below defines a math function (e.g. sin or hypot) for
- * use in Tcl expressions.
- */
-
-#define MAX_MATH_ARGS 5
-typedef struct MathFunc {
-    int builtinFuncIndex;	/* If this is a builtin math function, its
-				 * index in the array of builtin functions.
-				 * (tclCompilation.h lists these indices.)
-				 * The value is -1 if this is a new function
-				 * defined by Tcl_CreateMathFunc. The value is
-				 * also -1 if a builtin function is replaced
-				 * by a Tcl_CreateMathFunc call. */
-    int numArgs;		/* Number of arguments for function. */
-    Tcl_ValueType argTypes[MAX_MATH_ARGS];
-				/* Acceptable types for each argument. */
-    Tcl_MathProc *proc;		/* Procedure that implements this function.
-				 * NULL if isBuiltinFunc is 1. */
-    ClientData clientData;	/* Additional argument to pass to the function
-				 * when invoking it. NULL if isBuiltinFunc is
-				 * 1. */
-} MathFunc;
+#define TCL_REG_BOSONLY 002000	/* Prepend \A to pattern so it only matches at
+				 * the beginning of the string. */
 
 /*
  * These are a thin layer over TclpThreadKeyDataGet and TclpThreadKeyDataSet
@@ -1158,20 +1272,30 @@ typedef int (CompileHookProc) (Tcl_Interp *interp,
 	struct CompileEnv *compEnvPtr, ClientData clientData);
 
 /*
+ * The data structure for a (linked list of) execution stacks.
+ */
+
+typedef struct ExecStack {
+    struct ExecStack *prevPtr;
+    struct ExecStack *nextPtr;
+    Tcl_Obj **markerPtr;
+    Tcl_Obj **endPtr;
+    Tcl_Obj **tosPtr;
+    Tcl_Obj *stackWords[1];
+} ExecStack;
+
+
+/*
  * The data structure defining the execution environment for ByteCode's.
  * There is one ExecEnv structure per Tcl interpreter. It holds the evaluation
  * stack that holds command operands and results. The stack grows towards
- * increasing addresses. The "stackTop" member is cached by TclExecuteByteCode
- * in a local variable: it must be set before calling TclExecuteByteCode and
- * will be restored by TclExecuteByteCode before it returns.
+ * increasing addresses. The member stackPtr points to the stackItems of the
+ * currently active execution stack.
  */
 
 typedef struct ExecEnv {
-    Tcl_Obj **stackPtr;		/* Points to the first item in the evaluation
+    ExecStack *execStackPtr;	/* Points to the first item in the evaluation
 				 * stack on the heap. */
-    Tcl_Obj **tosPtr;		/* Points to current top of stack;
-				 * (stackPtr-1) when the stack is empty. */
-    Tcl_Obj **endPtr;		/* Points to last usable item in stack. */
     Tcl_Obj *constants[2];	/* Pointers to constant "0" and "1" objs. */
 } ExecEnv;
 
@@ -1482,10 +1606,7 @@ typedef struct Interp {
     ClientData interpInfo;	/* Information used by tclInterp.c to keep
 				 * track of master/slave interps on a
 				 * per-interp basis. */
-    Tcl_HashTable mathFuncTable;/* Contains all the math functions currently
-				 * defined for the interpreter. Indexed by
-				 * strings (function names); values have type
-				 * (MathFunc *). */
+    Tcl_HashTable unused2;	/* No longer used (was mathFuncTable) */
 
     /*
      * Information related to procedures and variables. See tclProc.c and
@@ -1712,6 +1833,14 @@ typedef struct Interp {
     int packagePrefer;          /* Current package selection mode. */
 
     /*
+     * Hashtables for variable traces and searches
+     */
+
+    Tcl_HashTable varTraces;   /* Hashtable holding the start of a variable's
+				 * active trace list; varPtr is the key. */
+    Tcl_HashTable varSearches; /* Hashtable holding the start of a variable's
+				 * active searches list; varPtr is the key */
+    /*
      * Statistical information about the bytecode compiler and interpreter's
      * operation.
      */
@@ -1813,6 +1942,7 @@ typedef struct InterpList {
 #define SAFE_INTERP			 0x80
 #define INTERP_TRACE_IN_PROGRESS	0x200
 #define INTERP_ALTERNATE_WRONG_ARGS	0x400
+#define ERR_LEGACY_COPY			0x800
 
 /*
  * Maximum number of levels of nesting permitted in Tcl commands (used to
@@ -2158,7 +2288,7 @@ MODULE_SCOPE Tcl_ObjType tclDictType;
 MODULE_SCOPE Tcl_ObjType tclProcBodyType;
 MODULE_SCOPE Tcl_ObjType tclStringType;
 MODULE_SCOPE Tcl_ObjType tclArraySearchType;
-MODULE_SCOPE Tcl_ObjType tclNsNameType;
+MODULE_SCOPE Tcl_ObjType tclEnsembleCmdType;
 #ifndef NO_WIDE_TYPE
 MODULE_SCOPE Tcl_ObjType tclWideIntType;
 #endif
@@ -2203,7 +2333,7 @@ MODULE_SCOPE char	tclEmptyString;
  */
 
 MODULE_SCOPE void       TclAdvanceLines(int* line, CONST char* start,
-					CONST char* end);
+			    CONST char* end);
 MODULE_SCOPE int	TclArraySet(Tcl_Interp *interp,
 			    Tcl_Obj *arrayNameObj, Tcl_Obj *arrayElemObj);
 MODULE_SCOPE double	TclBignumToDouble(mp_int *bignum);
@@ -2222,9 +2352,6 @@ MODULE_SCOPE void       TclDeleteNamespaceVars(Namespace *nsPtr);
 /* TIP #280 - Modified token based evulation, with line information */
 MODULE_SCOPE int        TclEvalEx (Tcl_Interp *interp, CONST char *script,
 				   int numBytes, int flags, int line);
-MODULE_SCOPE int        TclEvalObjEx(Tcl_Interp *interp,
-				     register Tcl_Obj *objPtr, int flags,
-				     CONST CmdFrame* invoker, int word);
 MODULE_SCOPE void	TclExpandTokenArray(Tcl_Parse *parsePtr);
 MODULE_SCOPE int	TclFileAttrsCmd(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *CONST objv[]);
@@ -2238,7 +2365,6 @@ MODULE_SCOPE int	TclFileRenameCmd(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *CONST objv[]);
 MODULE_SCOPE void	TclFinalizeAllocSubsystem(void);
 MODULE_SCOPE void	TclFinalizeAsync(void);
-MODULE_SCOPE void	TclFinalizeCompilation(void);
 MODULE_SCOPE void	TclFinalizeDoubleConversion(void);
 MODULE_SCOPE void	TclFinalizeEncodingSubsystem(void);
 MODULE_SCOPE void	TclFinalizeEnvironment(void);
@@ -2253,6 +2379,7 @@ MODULE_SCOPE void	TclFinalizeNotifier(void);
 MODULE_SCOPE void	TclFinalizeObjects(void);
 MODULE_SCOPE void	TclFinalizePreserve(void);
 MODULE_SCOPE void	TclFinalizeSynchronization(void);
+MODULE_SCOPE void	TclFinalizeThreadAlloc(void);
 MODULE_SCOPE void	TclFinalizeThreadData(void);
 MODULE_SCOPE double	TclFloor(mp_int *a);
 MODULE_SCOPE void	TclFormatNaN(double value, char *buffer);
@@ -2266,7 +2393,7 @@ MODULE_SCOPE int	TclGetOpenModeEx(Tcl_Interp *interp,
 			    CONST char *modeString, int *seekFlagPtr,
 			    int *binaryPtr);
 MODULE_SCOPE Tcl_Obj *	TclGetProcessGlobalValue(ProcessGlobalValue *pgvPtr);
-MODULE_SCOPE void       TclGetSrcInfoForPc (CmdFrame* cfPtr);
+MODULE_SCOPE const char *TclGetSrcInfoForCmd(Interp *iPtr, int *lenPtr);
 MODULE_SCOPE int	TclGlob(Tcl_Interp *interp, char *pattern,
 			    Tcl_Obj *unquotedPrefix, int globFlags,
 			    Tcl_GlobTypeData *types);
@@ -2274,6 +2401,13 @@ MODULE_SCOPE int	TclIncrObj(Tcl_Interp *interp, Tcl_Obj *valuePtr,
 			    Tcl_Obj *incrPtr);
 MODULE_SCOPE Tcl_Obj *	TclIncrObjVar2(Tcl_Interp *interp, Tcl_Obj *part1Ptr,
 			    Tcl_Obj *part2Ptr, Tcl_Obj *incrPtr, int flags);
+MODULE_SCOPE Tcl_Obj *	TclInfoFrame(Tcl_Interp *interp, CmdFrame *framePtr);
+MODULE_SCOPE int	TclInfoGlobalsCmd(ClientData dummy, Tcl_Interp *interp,
+			    int objc, Tcl_Obj *CONST objv[]);
+MODULE_SCOPE int	TclInfoLocalsCmd(ClientData dummy, Tcl_Interp *interp,
+			    int objc, Tcl_Obj *CONST objv[]);
+MODULE_SCOPE int	TclInfoVarsCmd(ClientData dummy, Tcl_Interp *interp,
+			    int objc, Tcl_Obj *CONST objv[]);
 MODULE_SCOPE void	TclInitAlloc(void);
 MODULE_SCOPE void	TclInitDbCkalloc(void);
 MODULE_SCOPE void	TclInitDoubleConversion(void);
@@ -2285,12 +2419,7 @@ MODULE_SCOPE void	TclInitLimitSupport(Tcl_Interp *interp);
 MODULE_SCOPE void	TclInitNamespaceSubsystem(void);
 MODULE_SCOPE void	TclInitNotifier(void);
 MODULE_SCOPE void	TclInitObjSubsystem(void);
-#ifdef __WIN32__
-/* This is a quick hack for BLT on Windows */
-EXTERN void	TclInitSubsystems(void);
-#else
 MODULE_SCOPE void	TclInitSubsystems(void);
-#endif
 MODULE_SCOPE int	TclInterpReady(Tcl_Interp *interp);
 MODULE_SCOPE int	TclIsLocalScalar(CONST char *src, int len);
 MODULE_SCOPE int	TclJoinThread(Tcl_ThreadId id, int *result);
@@ -2321,9 +2450,14 @@ MODULE_SCOPE int	TclMergeReturnOptions(Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[], Tcl_Obj **optionsPtrPtr,
 			    int *codePtr, int *levelPtr);
 MODULE_SCOPE int	TclNokia770Doubles();
+MODULE_SCOPE void       TclObjVarErrMsg(Tcl_Interp *interp, Tcl_Obj *part1Ptr,
+	                    Tcl_Obj *part2Ptr, const char *operation,
+	                    const char *reason, int index);
 MODULE_SCOPE int	TclObjInvokeNamespace(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *CONST objv[],
 			    Tcl_Namespace *nsPtr, int flags);
+MODULE_SCOPE int	TclObjUnsetVar2(Tcl_Interp *interp,
+			    Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr, int flags);
 MODULE_SCOPE int	TclParseBackslash(CONST char *src,
 			    int numBytes, int *readPtr, char *dst);
 MODULE_SCOPE int	TclParseHex(CONST char *src, int numBytes,
@@ -2333,9 +2467,6 @@ MODULE_SCOPE int	TclParseNumber(Tcl_Interp *interp, Tcl_Obj *objPtr,
 			    int numBytes, CONST char **endPtrPtr, int flags);
 MODULE_SCOPE void	TclParseInit(Tcl_Interp *interp, CONST char *string,
 			    int numBytes, Tcl_Parse *parsePtr);
-#if 0
-MODULE_SCOPE int	TclParseInteger(CONST char *string, int numBytes);
-#endif
 MODULE_SCOPE int	TclParseAllWhiteSpace(CONST char *src, int numBytes);
 MODULE_SCOPE int	TclProcessReturn(Tcl_Interp *interp,
 			    int code, int level, Tcl_Obj *returnOpts);
@@ -2410,6 +2541,8 @@ MODULE_SCOPE void	TclSetBignumIntRep (Tcl_Obj *objPtr,
 MODULE_SCOPE void	TclSetProcessGlobalValue(ProcessGlobalValue *pgvPtr,
 			    Tcl_Obj *newValue, Tcl_Encoding encoding);
 MODULE_SCOPE void	TclSignalExitThread(Tcl_ThreadId id, int result);
+MODULE_SCOPE void *	TclStackRealloc(Tcl_Interp *interp, void *ptr,
+			    int numBytes);
 MODULE_SCOPE Tcl_Obj *	TclStringObjReverse(Tcl_Obj *objPtr);
 MODULE_SCOPE int	TclSubstTokens(Tcl_Interp *interp, Tcl_Token *tokenPtr,
 			    int count, int *tokensLeftPtr, int line);
@@ -2561,9 +2694,7 @@ MODULE_SCOPE int	Tcl_IfObjCmd(ClientData clientData,
 MODULE_SCOPE int	Tcl_IncrObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[]);
-MODULE_SCOPE int	Tcl_InfoObjCmd(ClientData clientData,
-			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]);
+MODULE_SCOPE Tcl_Command TclInitInfoCmd(Tcl_Interp *interp);
 MODULE_SCOPE int	Tcl_InterpObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int argc,
 			    Tcl_Obj *CONST objv[]);
@@ -2889,32 +3020,37 @@ MODULE_SCOPE int	TclCompileStreqOpCmd(Tcl_Interp *interp,
  * the public interface.
  */
 
+MODULE_SCOPE Var *	TclObjLookupVarEx(Tcl_Interp * interp,
+			    Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr, int flags,
+			    CONST char * msg, CONST int createPart1,
+			    CONST int createPart2, Var **arrayPtrPtr);
 MODULE_SCOPE Var *	TclLookupArrayElement(Tcl_Interp *interp,
-			    CONST char *arrayName, CONST char *elName,
+			    Tcl_Obj *arrayNamePtr, Tcl_Obj *elNamePtr,
 			    CONST int flags, CONST char *msg,
 			    CONST int createPart1, CONST int createPart2,
-			    Var *arrayPtr);
+			    Var *arrayPtr, int index);
 MODULE_SCOPE Tcl_Obj *	TclPtrGetVar(Tcl_Interp *interp,
-			    Var *varPtr, Var *arrayPtr, CONST char *part1,
-			    CONST char *part2, CONST int flags);
+			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
+			    Tcl_Obj *part2Ptr, CONST int flags, int index);
 MODULE_SCOPE Tcl_Obj *	TclPtrSetVar(Tcl_Interp *interp,
-			    Var *varPtr, Var *arrayPtr, CONST char *part1,
-			    CONST char *part2, Tcl_Obj *newValuePtr,
-			    CONST int flags);
+			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
+			    Tcl_Obj *part2Ptr, Tcl_Obj *newValuePtr,
+			    CONST int flags, int index);
 MODULE_SCOPE Tcl_Obj *	TclPtrIncrObjVar (Tcl_Interp *interp,
-			    Var *varPtr, Var *arrayPtr, CONST char *part1,
-			    CONST char *part2, Tcl_Obj *incrPtr,
-			    CONST int flags);
-#if 0
-MODULE_SCOPE Tcl_Obj *	TclPtrIncrVar(Tcl_Interp *interp,
-			    Var *varPtr, Var *arrayPtr, CONST char *part1,
-			    CONST char *part2, CONST long i, CONST int flags);
-MODULE_SCOPE Tcl_Obj *	TclPtrIncrWideVar(Tcl_Interp *interp,
-			    Var *varPtr, Var *arrayPtr, CONST char *part1,
-			    CONST char *part2, CONST Tcl_WideInt i,
-			    CONST int flags);
-#endif
+			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
+			    Tcl_Obj *part2Ptr, Tcl_Obj *incrPtr,
+			    CONST int flags, int index);
+MODULE_SCOPE int        TclPtrObjMakeUpvar(Tcl_Interp *interp, Var *otherPtr,
+	                    Tcl_Obj *myNamePtr, int myFlags, int index);
 MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
+
+/*
+ * The new extended interface to the variable traces.
+ */
+
+MODULE_SCOPE int	TclObjCallVarTraces(Interp *iPtr, Var *arrayPtr,
+			    Var *varPtr, Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr,
+			    int flags, int leaveErrMsg, int index);
 
 /*
  *----------------------------------------------------------------
@@ -2937,6 +3073,19 @@ MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
  *----------------------------------------------------------------
  */
 
+/*
+ * DTrace object allocation probe macros.
+ */
+
+#ifdef USE_DTRACE
+#include "tclDTrace.h"
+#define	TCL_DTRACE_OBJ_CREATE(objPtr)	TCL_OBJ_CREATE(objPtr)
+#define	TCL_DTRACE_OBJ_FREE(objPtr)	TCL_OBJ_FREE(objPtr)
+#else /* USE_DTRACE */
+#define	TCL_DTRACE_OBJ_CREATE(objPtr)	{}
+#define	TCL_DTRACE_OBJ_FREE(objPtr)	{}
+#endif /* USE_DTRACE */
+
 #ifdef TCL_COMPILE_STATS
 #  define TclIncrObjsAllocated() \
     tclObjsAlloced++
@@ -2954,7 +3103,8 @@ MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
     (objPtr)->refCount = 0; \
     (objPtr)->bytes    = tclEmptyStringRep; \
     (objPtr)->length   = 0; \
-    (objPtr)->typePtr  = NULL
+    (objPtr)->typePtr  = NULL; \
+    TCL_DTRACE_OBJ_CREATE(objPtr)
 
 /*
  * Invalidate the string rep first so we can use the bytes value for our
@@ -2966,6 +3116,7 @@ MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
 # define TclDecrRefCount(objPtr) \
     if (--(objPtr)->refCount > 0) ; else { \
 	if (!(objPtr)->typePtr || !(objPtr)->typePtr->freeIntRepProc) { \
+	    TCL_DTRACE_OBJ_FREE(objPtr); \
   	    if ((objPtr)->bytes \
 	            && ((objPtr)->bytes != tclEmptyStringRep)) { \
 	        ckfree((char *) (objPtr)->bytes); \
@@ -2993,6 +3144,7 @@ MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
 #  define TclFreeObjStorage(objPtr) \
 	ckfree((char *) (objPtr))
 
+#undef USE_THREAD_ALLOC
 #elif defined(TCL_THREADS) && defined(USE_THREAD_ALLOC)
 
 /*
@@ -3006,7 +3158,6 @@ MODULE_SCOPE Tcl_Mutex *TclpNewAllocMutex(void);
 MODULE_SCOPE void	TclFreeAllocCache(void *);
 MODULE_SCOPE void *	TclpGetAllocCache(void);
 MODULE_SCOPE void	TclpSetAllocCache(void *);
-MODULE_SCOPE void	TclFinalizeThreadAlloc(void);
 MODULE_SCOPE void	TclpFreeAllocMutex(Tcl_Mutex *mutex);
 MODULE_SCOPE void	TclpFreeAllocCache(void *);
 
@@ -3046,7 +3197,8 @@ MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr);
 # define TclDbNewObj(objPtr, file, line) \
     TclIncrObjsAllocated(); \
     (objPtr) = (Tcl_Obj *) Tcl_DbCkalloc(sizeof(Tcl_Obj), (file), (line)); \
-    TclDbInitNewObj(objPtr);
+    TclDbInitNewObj(objPtr); \
+    TCL_DTRACE_OBJ_CREATE(objPtr)
 
 # define TclNewObj(objPtr) \
     TclDbNewObj(objPtr, __FILE__, __LINE__);
@@ -3134,23 +3286,6 @@ MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr);
 	}\
 	objPtr->bytes = NULL;\
     }\
-
-
-#if 0
-/*
- *----------------------------------------------------------------
- * Macro used by the Tcl core to get a Tcl_WideInt value out of a Tcl_Obj of
- * the "wideInt" type.
- *----------------------------------------------------------------
- */
-
-#ifndef NO_WIDE_TYPE
-#    define TclGetWide(resultVar, objPtr) \
-	(resultVar) = (objPtr)->internalRep.wideValue
-#    define TclGetLongFromWide(resultVar, objPtr) \
-	(resultVar) = Tcl_WideAsLong((objPtr)->internalRep.wideValue)
-#endif
-#endif
 
 /*
  *----------------------------------------------------------------
@@ -3310,7 +3445,8 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
     (objPtr)->refCount = 0; \
     (objPtr)->bytes = NULL; \
     (objPtr)->internalRep.longValue = (long)(i); \
-    (objPtr)->typePtr = &tclIntType
+    (objPtr)->typePtr = &tclIntType; \
+    TCL_DTRACE_OBJ_CREATE(objPtr)
 
 #define TclNewLongObj(objPtr, l) \
     TclNewIntObj((objPtr), (l))
@@ -3328,11 +3464,16 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
     (objPtr)->refCount = 0; \
     (objPtr)->bytes = NULL; \
     (objPtr)->internalRep.doubleValue = (double)(d); \
-    (objPtr)->typePtr = &tclDoubleType
+    (objPtr)->typePtr = &tclDoubleType; \
+    TCL_DTRACE_OBJ_CREATE(objPtr)
 
 #define TclNewStringObj(objPtr, s, len) \
-    TclNewObj(objPtr); \
-    TclInitStringRep((objPtr), (s), (len))
+    TclIncrObjsAllocated(); \
+    TclAllocObjStorage(objPtr); \
+    (objPtr)->refCount = 0; \
+    TclInitStringRep((objPtr), (s), (len));\
+    (objPtr)->typePtr = NULL; \
+    TCL_DTRACE_OBJ_CREATE(objPtr)
 
 #else /* TCL_MEM_DEBUG */
 #define TclNewIntObj(objPtr, i)   \
@@ -3375,14 +3516,68 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
 #define TclIsNaN(d)		((d) != (d))
 #endif
 
+/*
+ * ----------------------------------------------------------------------
+ * Macro to use to find the offset of a field in a structure.
+ * Computes number of bytes from beginning of structure to a given field.
+ */
+
+#ifdef offsetof
+#define TclOffset(type, field) ((int) offsetof(type, field))
+#else
+#define TclOffset(type, field) ((int) ((char *) &((type *) 0)->field))
+#endif
+
+/*
+ *----------------------------------------------------------------
+ * Inline version of Tcl_GetCurrentNamespace and Tcl_GetGlobalNamespace
+ */
+
+#define TclGetCurrentNamespace(interp) \
+    (Tcl_Namespace *) ((Interp *)(interp))->varFramePtr->nsPtr
+
+#define TclGetGlobalNamespace(interp) \
+    (Tcl_Namespace *) ((Interp *)(interp))->globalNsPtr
+
+/*
+ *----------------------------------------------------------------
+ * Inline version of TclCleanupCommand; still need the function as it is in
+ * the internal stubs, but the core can use the macro instead.
+ */
+
+#define TclCleanupCommandMacro(cmdPtr) \
+    if (--(cmdPtr)->refCount <= 0) { \
+	ckfree((char *) (cmdPtr));\
+    }
+
+/*
+ *----------------------------------------------------------------
+ * Inline versions of Tcl_LimitReady() and Tcl_LimitExceeded to limit number
+ * of calls out of the critical path. Note that this code isn't particularly
+ * readable; the non-inline version (in tclInterp.c) is much easier to
+ * understand. Note also that these macros takes different args (iPtr->limit)
+ * to the non-inline version.
+ */
+
+#define TclLimitExceeded(limit) ((limit).exceeded != 0)
+
+#define TclLimitReady(limit)						\
+    (((limit).active == 0) ? 0 :					\
+    (++(limit).granularityTicker,					\
+    ((((limit).active & TCL_LIMIT_COMMANDS) &&				\
+	    (((limit).cmdGranularity == 1) ||				\
+	    ((limit).granularityTicker % (limit).cmdGranularity == 0)))	\
+	    ? 1 :							\
+    (((limit).active & TCL_LIMIT_TIME) &&				\
+	    (((limit).timeGranularity == 1) ||				\
+	    ((limit).granularityTicker % (limit).timeGranularity == 0)))\
+	    ? 1 : 0)))
+
+
 #include "tclPort.h"
 #include "tclIntDecls.h"
 #include "tclIntPlatDecls.h"
 #include "tclTomMathDecls.h"
-
-
-
-MODULE_SCOPE void TclPrintTokens (Tcl_Token* token, int words, int level);
 
 #endif /* _TCLINT */
 

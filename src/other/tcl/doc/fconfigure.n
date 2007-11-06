@@ -1,4 +1,4 @@
-'\"
+'\" 
 '\" Copyright (c) 1995-1996 Sun Microsystems, Inc.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
@@ -123,7 +123,7 @@ reading and the empty string for writing.
 .TP
 \fB\-translation\fR \fImode\fR
 .TP
-\fB\-translation\fR \fB{\fIinMode outMode\fB}\fR
+\fB\-translation\fR \fB{\fIinMode outMode\fB}\fR 
 .
 In Tcl scripts the end of a line is always represented using a single
 newline character (\en).  However, in actual files and devices the end of
@@ -161,15 +161,15 @@ Tcl chooses \fBcrlf\fR, for all Unix flavors, it chooses \fBlf\fR, and
 for the various flavors of Windows it chooses \fBcrlf\fR.  The default
 setting for \fB\-translation\fR is \fBauto\fR for both input and output.
 .TP
-\fBbinary\fR
+\fBbinary\fR 
 .
 No end-of-line translations are performed.  This is nearly identical to
 \fBlf\fR mode, except that in addition \fBbinary\fR mode also sets the
 end-of-file character to the empty string (which disables it) and sets the
 encoding to \fBbinary\fR (which disables encoding filtering).  See the
 description of \fB\-eofchar\fR and \fB\-encoding\fR for more information.
-.PP
 .RS
+.PP
 Internally, i.e. when it comes to the actual behaviour of the
 translator this value \fBis\fR identical to \fBlf\fR and is therefore
 reported as such when queried. Even if \fBbinary\fR was used to set

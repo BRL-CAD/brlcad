@@ -73,7 +73,7 @@ set path(sh) [makeFile {
     lappend cmd ";"
 
     set newcmd {}
-
+    
     foreach arg $cmd {
 	if {$arg == ";"} {
 	    eval exec >@stdout 2>@stderr [list [info nameofexecutable]] $newcmd
@@ -95,7 +95,7 @@ set path(sh2) [makeFile {
     lappend cmd ";"
 
     set newcmd {}
-
+    
     foreach arg $cmd {
 	if {$arg == ";"} {
 	    eval exec -ignorestderr >@stdout [list [info nameofexecutable]] $newcmd
@@ -155,7 +155,7 @@ test exec-2.5 {redirecting input from immediate source} {exec} {
 test exec-2.6 {redirecting input from immediate source, with UTF} {exec} {
     # If this fails, it may give back:
     # "\uC3\uA9\uC3\uA0\uC3\uBC\uC3\uB1"
-    # If it does, this means that the UTF -> external conversion did not
+    # If it does, this means that the UTF -> external conversion did not 
     # occur before writing out the temp file.
     exec [interpreter] $path(cat) << "\uE9\uE0\uFC\uF1"
 } "\uE9\uE0\uFC\uF1"
@@ -544,7 +544,7 @@ test exec-13.5 {extended exit result codes: max value} {
     -result {1 {CHILDSTATUS {} 1073741823}}
 }
 
-test exec-13.6 {extended exit result codes: signalled} {
+test exec-13.6 {extended exit result codes: signalled} {   
     -constraints {win}
     -setup {
         set tmp [makeFile {exit 0xC0000016} tmpfile.exec-13.6]

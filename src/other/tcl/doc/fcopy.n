@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH fcopy n 8.0 Tcl "Tcl Built-In Commands"
 .BS
@@ -25,9 +25,9 @@ avoid extra copies and to avoid buffering too much data in
 main memory when copying large files to slow destinations like
 network sockets.
 .PP
-The \fBfcopy\fR
+The \fBfcopy\fR 
 command transfers data from \fIinchan\fR until end of file
-or \fIsize\fR bytes have been
+or \fIsize\fR bytes have been 
 transferred. If no \fB\-size\fR argument is given,
 then the copy goes until end of file.
 All the data read from \fIinchan\fR is copied to \fIoutchan\fR.
@@ -38,7 +38,7 @@ The \fB\-command\fR argument makes \fBfcopy\fR work in the background.
 In this case it returns immediately and the \fIcallback\fR is invoked
 later when the copy completes.
 The \fIcallback\fR is called with
-one or two additional
+one or two additional 
 arguments that indicates how many bytes were written to \fIoutchan\fR.
 If an error occurred during the background copy, the second argument is the
 error string associated with the error.
@@ -103,7 +103,7 @@ fconfigure $out -translation binary
 This second example shows how the callback gets
 passed the number of bytes transferred.
 It also uses vwait to put the application into the event loop.
-Of course, this simplified example could be done without the command
+Of course, this simplified example could be done without the command 
 callback.
 .DS
 proc Cleanup {in out bytes {error {}}} {
@@ -132,15 +132,16 @@ proc CopyMore {in out chunk bytes {error {}}} {
 	close $in
 	close $out
     } else {
-	\fBfcopy\fR $in $out -command [list CopyMore $in $out $chunk] \\
-	    -size $chunk
+	\fBfcopy\fR $in $out -size $chunk \\
+                -command [list CopyMore $in $out $chunk]
     }
 }
 set in [open $file1]
 set out [socket $server $port]
 set chunk 1024
 set total 0
-\fBfcopy\fR $in $out -command [list CopyMore $in $out $chunk] -size $chunk
+\fBfcopy\fR $in $out -size $chunk \\
+        -command [list CopyMore $in $out $chunk]
 vwait done
 .DE
 

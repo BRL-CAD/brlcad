@@ -50,7 +50,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright \251 2001 by ActiveState Corporation, et al\0"
             VALUE "ProductName", "Tcl " TCL_VERSION " for Windows\0"
             VALUE "ProductVersion", TCL_PATCH_LEVEL
-        END
+        END		    
     END
     BLOCK "VarFileInfo"
     BEGIN

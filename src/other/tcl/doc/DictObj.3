@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tcl_DictObj 3 8.5 Tcl "Tcl Library Procedures"
 .BS
@@ -158,16 +158,20 @@ The order of iteration is implementation-defined.  If the
 \fBTcl_DictObjFirst\fR returns \fBTCL_ERROR\fR and the iteration is not
 commenced, and otherwise it returns \fBTCL_OK\fR.
 .PP
-If the last call to \fBTcl_DictObjFirst\fR or \fBTcl_DictObjNext\fR
-(for a particular \fIsearchPtr\fR) set the variable indicated by the
-\fIdonePtr\fR argument to zero but no further key/value pairs are
-desired from that particular iteration, the \fIsearchPtr\fR argument
-must be passed to \fBTcl_DictObjDone\fR to release any internal locks
-held by the searching process.  If \fBTcl_DictObjNext\fR is called on
-a particular \fIsearchPtr\fR after \fBTcl_DictObjDone\fR is called on
-it, the variable pointed to by \fIdonePtr\fR will always be set to 1
-(and nothing else will happen). It is safe to call
-\fBTcl_DictObjDone\fR multiple times on the same \fIsearchPtr\fR.
+When \fBTcl_DictObjFirst\fR is called upon a dictionary, a lock is placed on
+the dictionary to enable that dictionary to be iterated over safely without
+regard for whether the dictionary is modified during the iteration. Because of
+this, once the iteration over a dictionary's keys has finished (whether
+because all values have been iterated over as indicated by the variable
+indicated by the \fIdonePtr\fR argument being set to one, or because no
+further values are required) the \fBTcl_DictObjDone\fR function must be called
+with the same \fIsearchPtr\fR as was passed to \fBTcl_DictObjFirst\fR so that
+the internal locks can be released. Once a particular \fIsearchPtr\fR is
+passed to \fBTcl_DictObjDone\fR, passing it to \fBTcl_DictObjNext\fR (without
+first initializing it with \fBTcl_DictObjFirst\fR) will result in no values
+being produced and the variable pointed to by \fIdonePtr\fR being set to one.
+It is safe to call \fBTcl_DictObjDone\fR multiple times on the same
+\fIsearchPtr\fR for each call to \fBTcl_DictObjFirst\fR.
 .PP
 The procedures \fBTcl_DictObjPutKeyList\fR and
 \fBTcl_DictObjRemoveKeyList\fR are the close analogues of
@@ -203,11 +207,11 @@ int done;
  * is performed. However it is safe to try to release the lock
  * even if we've finished iterating over the loop.
  */
-if (Tcl_DictObjFirst(interp, objPtr, &search,
+if (\fBTcl_DictObjFirst\fR(interp, objPtr, &search,
         &key, &value, &done) != TCL_OK) {
     return TCL_ERROR;
 }
-for (; done ; Tcl_DictObjNext(&search, &key, &value, &done)) {
+for (; done ; \fBTcl_DictObjNext\fR(&search, &key, &value, &done)) {
     /*
      * Note that strcmp() is not a good way of comparing
      * objects and is just used here for demonstration
@@ -217,7 +221,7 @@ for (; done ; Tcl_DictObjNext(&search, &key, &value, &done)) {
         break;
     }
 }
-Tcl_DictObjDone(&search);
+\fBTcl_DictObjDone\fR(&search);
 Tcl_SetObjResult(interp, Tcl_NewBooleanObj(!done));
 return TCL_OK;
 .CE

@@ -32,7 +32,7 @@ proc TestOp {op args} {
     set results {}
 
     # Non byte compiled version, shared args
-    if {[catch {::tcl::mathop::$op {expand}$args} res]} {
+    if {[catch {::tcl::mathop::$op {*}$args} res]} {
         append res " $::errorCode"
     }
     lappend results $res
@@ -48,7 +48,7 @@ proc TestOp {op args} {
     lappend results $res
 
     # Non byte compiled imported
-    if {[catch {::testmathop2::$op {expand}$args} res]} {
+    if {[catch {::testmathop2::$op {*}$args} res]} {
         append res " $::errorCode"
     }
     lappend results [string map {testmathop2 tcl::mathop} $res]
@@ -70,18 +70,18 @@ proc TestOp {op args} {
     proc _TestOp3 $argList1 "::testmathop2::$op [join $argList2]"
 
     set ::tcl_traceCompile 0  ;# Set to 2 to help with debug
-    if {[catch {_TestOp {expand}$args} res]} {
+    if {[catch {_TestOp {*}$args} res]} {
         append res " $::errorCode"
     }
     set ::tcl_traceCompile 0
     lappend results $res
 
-    if {[catch {_TestOp2 {expand}$args} res]} {
+    if {[catch {_TestOp2 {*}$args} res]} {
         append res " $::errorCode"
     }
     lappend results $res
 
-    if {[catch {_TestOp3 {expand}$args} res]} {
+    if {[catch {_TestOp3 {*}$args} res]} {
         append res " $::errorCode"
     }
     lappend results [string map {testmathop2 tcl::mathop} $res]
@@ -776,7 +776,7 @@ test mathop-20.6 { one arg, error } {
     foreach vals {x {1 x} {1 1 x} {1 x 1}} {
         # skipping - for now, knownbug...
         foreach op {+ * / & | ^ **} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
             lappend exp "can't use non-numeric string as operand of \"$op\" NONE"
         }
     }
@@ -786,20 +786,21 @@ test mathop-20.7 { multi arg } {
     set res {}
     foreach vals {{1 2} {3 4 5} {4 3 2 1}} {
         foreach op {+ - * /} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set res
 } [list 3 -1 2 0  12 -6 60 0  10 -2 24 0]
 test mathop-20.8 { multi arg, double } {
     set res {}
-    foreach vals {{1.0 2} {3.0 4 5} {4 3.0 2 1}} {
+    foreach vals {{1.0 2} {3.0 4 5} {4 3.0 2 1}
+	    {1.0 -1.0 1e-18} {1.0 1.0 1e-18}} {
         foreach op {+ - * /} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set res
-} [list 3.0 -1.0 2.0 0.5  12.0 -6.0 60.0 0.15  10.0 -2.0 24.0 [expr {2.0/3}]]
+} [list 3.0 -1.0 2.0 0.5  12.0 -6.0 60.0 0.15  10.0 -2.0 24.0 [expr {2.0/3}] 1e-18 2.0 -1e-18 [expr {-1.0/1e-18}] 2.0 -1e-18 1e-18 [expr {1.0/1e-18}]]
 
 test mathop-21.1 { unary ops, bitnot } {
     set res {}
@@ -873,7 +874,7 @@ test mathop-22.1 { bitwise ops } {
     set res {}
     foreach vals {5 {1 6} {1 2 3} {1 2 3 4}} {
         foreach op {& | ^} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set res
@@ -890,7 +891,7 @@ test mathop-22.2 { bitwise ops on bignums } {
     foreach vals [list [list $a $b] [list $a $c] [list $b $c] \
                           [list $a $bn] [list $bn $c] [list $bn $cn]] {
         foreach op {& | ^} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set exp {}
@@ -981,7 +982,7 @@ test mathop-23.1 { comparison ops, numerical } {
     lappend todo [list $a $a] ;# Same object
     foreach vals $todo {
         foreach op {< <= > >= == eq} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set res
@@ -1007,7 +1008,7 @@ test mathop-23.2 { comparison ops, string } {
     lappend todo [list $a $a]
     foreach vals $todo {
         foreach op {< <= > >= == eq} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set res
@@ -1023,7 +1024,7 @@ test mathop-23.3 { comparison ops, nonequal} {
     set res {}
     foreach vals {{a b} {17.0 0x11} {foo foo} {10 10}} {
         foreach op {!= ne} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set res
@@ -1034,7 +1035,7 @@ test mathop-24.1 { binary ops } {
     foreach vals {{3 5} {17 7} {199 5} {293234675763434238476239486 17} \
                   {5 1} {0 7}} {
         foreach op {% << >> in ni} {
-            lappend res [TestOp $op {expand}$vals]
+            lappend res [TestOp $op {*}$vals]
         }
     }
     set res

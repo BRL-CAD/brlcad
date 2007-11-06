@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH catch n "8.5" Tcl "Tcl Built-In Commands"
 .BS
@@ -47,7 +47,7 @@ stored in \fIresultVarName\fR is the value returned from \fIscript\fR.
 .VS 8.5
 If the \fIoptionsVarName\fR argument is given, then the variable it
 names is set to a dictionary of return options returned by evaluation
-of \fIscript\fR.  Tcl specifies two entries that are always
+of \fIscript\fR.  Tcl specifies two entries that are always 
 defined in the dictionary: \fB-code\fR and \fB-level\fR.  When
 the return code from evaluation of \fIscript\fR is not \fBTCL_RETURN\fR,
 the value of the \fB-level\fR entry will be 0, and the value
@@ -58,7 +58,7 @@ further described in the documentation for the \fBreturn\fR command.
 .PP
 When the return code from evaluation of \fIscript\fR is \fBTCL_ERROR\fR,
 three additional entries are defined in the dictionary of return options
-stored in \fIoptionsVarName\fR: \fB-errorinfo\fR, \fB-errorcode\fR,
+stored in \fIoptionsVarName\fR: \fB-errorinfo\fR, \fB-errorcode\fR, 
 and \fB-errorline\fR.  The value of the \fB-errorinfo\fR entry
 is a formatted stack trace containing more information about
 the context in which the error happened.  The formatted stack
@@ -91,7 +91,7 @@ if { [\fBcatch\fR {open $someFile w} fid] } {
 There are more complex examples of \fBcatch\fR usage in the
 documentation for the \fBreturn\fR command.
 
-.SH "SEE ALSO"
+.SH "SEE ALSO" 
 break(n), continue(n), dict(n), error(n), return(n), tclvars(n)
 
 .SH KEYWORDS

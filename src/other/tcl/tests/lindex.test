@@ -428,8 +428,30 @@ test lindex-16.7 {data reuse} {
     set result
 } {}
 
+test lindex-17.0 {Bug 1718580} {*}{
+    -body {
+        lindex {} end foo
+    } 
+    -match glob
+    -result {bad index "foo"*}
+    -returnCodes 1
+}
+
+test lindex-17.1 {Bug 1718580} {*}{
+    -body {
+        lindex a end foo
+    } 
+    -match glob
+    -result {bad index "foo"*}
+    -returnCodes 1
+}
+
 catch { unset minus }
 
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

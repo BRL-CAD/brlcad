@@ -291,7 +291,6 @@ TCLOBJS = \
 	$(TMP_DIR)\tclLiteral.obj \
 	$(TMP_DIR)\tclLoad.obj \
 	$(TMP_DIR)\tclMain.obj \
-	$(TMP_DIR)\tclMathOp.obj \
 	$(TMP_DIR)\tclNamesp.obj \
 	$(TMP_DIR)\tclNotify.obj \
 	$(TMP_DIR)\tclObj.obj \
@@ -423,11 +422,11 @@ cdebug	= -O2 $(OPTIMIZATIONS)
 !else
 cdebug	=
 !endif
-!else if "$(MACHINE)" == "IA64"
+!else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
 ### Warnings are too many, can't support warnings into errors.
-cdebug	= -Z7 -Od $(DEBUGFLAGS)
+cdebug	= -Zi -Od $(DEBUGFLAGS)
 !else
-cdebug	= -Z7 -WX $(DEBUGFLAGS)
+cdebug	= -Zi -WX $(DEBUGFLAGS)
 !endif
 
 ### Declarations common to all compiler options
@@ -457,7 +456,7 @@ crt = -MT
 TCL_INCLUDES	= -I"$(WINDIR)" -I"$(GENERICDIR)" -I"$(TOMMATHDIR)"
 BASE_CFLAGS	= $(cflags) $(cdebug) $(crt) $(TCL_INCLUDES) \
 			-DTCL_PIPE_DLL=\"$(TCLPIPEDLLNAME)\" -DTCL_TOMMATH \
-			-DMP_PREC=4
+			-DMP_PREC=4 -Dinline=__inline
 CON_CFLAGS	= $(cflags) $(cdebug) $(crt) -DCONSOLE
 TCL_CFLAGS	= $(BASE_CFLAGS) $(OPTDEFINES)
 STUB_CFLAGS     = $(cflags) $(cdebug) $(OPTDEFINES)
@@ -737,77 +736,65 @@ install-docs:
 # Build tclConfig.sh for the TEA build system.
 #---------------------------------------------------------------------
 
-tclConfig:
-!if !exist($(TCLSH))
-	@echo Build tclsh first!
-!else
+tclConfig: $(OUT_DIR)\tclConfig.sh
+
+$(OUT_DIR)\tclConfig.sh: $(WINDIR)\tclConfig.sh.in
 	@echo Creating tclConfig.sh
-	@set TCL_LIBRARY=$(ROOT)/library
-	@$(TCLSH) <<
-	set debug $(DEBUG)
-	set thread $(TCL_THREADS)
-	set static $(STATIC_BUILD)
-	set config(@TCL_DLL_FILE@)       {$(TCLLIBNAME)}
-	set config(@TCL_VERSION@)        [info tcl]
-	set config(@TCL_MAJOR_VERSION@)  [lindex [split [info tclversion] .] 0]
-	set config(@TCL_MINOR_VERSION@)  [lindex [split [info tclversion] .] 1]
-	set config(@TCL_PATCH_LEVEL@)    [string range [info patchlevel] [string length [info tclversion]] end]
-	set config(@CC@)                 {$(CC)}
-	set config(@DEFS@)               {}
-	if {$$static} {lappend config(@DEFS@) "-DSTATIC_BUILD=1"}
-	if {$$thread} {lappend config(@DEFS@) "-DTHREAD=1"}
-	set config(@TCL_DBGX@)           {$(DBGX)}
-	set config(@CFLAGS_DEBUG@)       {-nologo -c -W3 -YX -Fp$(TMP_DIR)\ -MDd}
-	set config(@CFLAGS_OPTIMIZE@)    {-nologo -c -W3 -YX -Fp$(TMP_DIR)\ -MD}
-	set config(@LDFLAGS_DEBUG@)      {-nologo -machine:$(MACHINE) -debug:full -debugtype:cv}
-	set config(@LDFLAGS_OPTIMIZE@)   {-nologo -machine:$(MACHINE) -release -opt:ref -opt:icf,3}
-	set config(@TCL_SHARED_BUILD@)   [expr {$$static ? 0 : 1}]
-	set config(@TCL_LIB_FILE@)       {$(PROJECT)$(VERSION)$(SUFX).lib}
-	set config(@TCL_NEEDS_EXP_FILE@) {}
-	set config(@CFG_TCL_EXPORT_FILE_SUFFIX@) {$${NODOT_VERSION}$${DBGX}.lib}
-	set config(@LIBS@)               {$(baselibs)}
-	set config(@prefix@)             {$(_INSTALLDIR)}
-	set config(@exec_prefix@)        {$(BIN_INSTALL_DIR)}
-	set config(@SHLIB_CFLAGS@)       {}
-	set config(@STLIB_CFLAGS@)       {}
-	set config(@CFLAGS_WARNING@)     {-W3}
-	set config(@EXTRA_CFLAGS@)       {-YX}
-	set config(@SHLIB_LD@)           {$(link32) $(dlllflags)}
-	set config(@STLIB_LD@)           {$(lib32) -nologo}
-	set config(@SHLIB_LD_LIBS@)      {$(baselibs)}
-	set config(@SHLIB_SUFFIX@)       {.dll}
-	set config(@DL_LIBS@)            {}
-	set config(@LDFLAGS@)            {}
-	set config(@TCL_LD_SEARCH_FLAGS@) {}
-	set config(@LIBOBJS@)            {}
-	set config(@RANLIB@)             {}
-	set config(@TCL_LIB_FLAG@)       {}
-	set config(@TCL_BUILD_LIB_SPEC@) {}
-	set config(@TCL_LIB_SPEC@)       {$(LIB_INSTALL_DIR)\$(PROJECT)$(VERSION)$(SUFX).lib}
-	set config(@TCL_INCLUDE_SPEC@)   {-I$(INCLUDE_INSTALL_DIR)}
-	set config(@TCL_LIB_VERSIONS_OK@)  {}
-	set config(@CFG_TCL_SHARED_LIB_SUFFIX@) {$${NODOT_VERSION}$${DBGX}.dll}
-	set config(@CFG_TCL_UNSHARED_LIB_SUFFIX@) {$${NODOT_VERSION}$${DBGX}.lib}
-	set config(@TCL_SRC_DIR@)        [file nativename [file normalize {$(ROOT)}]]
-	set config(@TCL_PACKAGE_PATH@)   {}
-	set config(@TCL_STUB_LIB_FILE@)   {$(TCLSTUBLIBNAME)}
-	set config(@TCL_STUB_LIB_FLAG@)  {$(TCLSTUBLIBNAME)}
-	set config(@TCL_BUILD_STUB_LIB_SPEC@) "-L[file nativename [file normalize {$(OUT_DIR)}]] $(TCLSTUBLIBNAME)"
-	set config(@TCL_STUB_LIB_SPEC@)  {-L$(LIB_INSTALL_DIR) $(TCLSTUBLIBNAME)}
-	set config(@TCL_BUILD_STUB_LIB_PATH@) [file nativename [file normalize {$(TCLSTUBLIB)}]]
-	set config(@TCL_STUB_LIB_PATH@) [file nativename [file normalize {$(LIB_INSTALL_DIR)\\$(TCLSTUBLIBNAME)}]]
-	set config(@TCL_THREADS@)       {$(TCL_THREADS)}
-	set f [open tclConfig.sh.in r]
-	set data [read $$f]
-	close $$f
-	foreach {anchor subst} [array get config] {
-	   regsub -all $$anchor $$data $$subst data
-	}
-	set f [open [file join [file normalize {$(OUT_DIR)}] tclConfig.sh] w]
-	puts $$f $$data
-	close $$f
-<<
+        @nmakehlp -s << $** >$@
+@TCL_DLL_FILE@       $(TCLLIBNAME)
+@TCL_VERSION@        $(DOTVERSION)
+@TCL_MAJOR_VERSION@  $(TCL_MAJOR_VERSION)
+@TCL_MINOR_VERSION@  $(TCL_MINOR_VERSION)
+@TCL_PATCH_LEVEL@    $(TCL_PATCH_LEVEL)
+@CC@                 $(CC)
+@DEFS@               $(TCL_CFLAGS)
+@CFLAGS_DEBUG@       -nologo -c -W3 -YX -Fp$(TMP_DIR)\ -MDd
+@CFLAGS_OPTIMIZE@    -nologo -c -W3 -YX -Fp$(TMP_DIR)\ -MD
+@LDFLAGS_DEBUG@      -nologo -machine:$(MACHINE) -debug:full -debugtype:cv
+@LDFLAGS_OPTIMIZE@   -nologo -machine:$(MACHINE) -release -opt:ref -opt:icf,3
+@TCL_DBGX@           $(SUFX)
+@TCL_LIB_FILE@       $(PROJECT)$(VERSION)$(SUFX).lib
+@TCL_NEEDS_EXP_FILE@
+@LIBS@               $(baselibs)
+@prefix@             $(_INSTALLDIR)
+@exec_prefix@        $(BIN_INSTALL_DIR)
+@SHLIB_CFLAGS@       
+@STLIB_CFLAGS@       
+@CFLAGS_WARNING@     -W3
+@EXTRA_CFLAGS@       -YX
+@SHLIB_LD@           $(link32) $(dlllflags)
+@STLIB_LD@           $(lib32) -nologo
+@SHLIB_LD_LIBS@      $(baselibs)
+@SHLIB_SUFFIX@       .dll
+@DL_LIBS@
+@LDFLAGS@
+@TCL_LD_SEARCH_FLAGS@
+@LIBOBJS@
+@RANLIB@
+@TCL_LIB_FLAG@
+@TCL_BUILD_LIB_SPEC@
+@TCL_LIB_SPEC@       $(LIB_INSTALL_DIR)\$(PROJECT)$(VERSION)$(SUFX).lib
+@TCL_INCLUDE_SPEC@   -I$(INCLUDE_INSTALL_DIR)
+@TCL_LIB_VERSIONS_OK@
+@TCL_SRC_DIR@        $(ROOT)
+@TCL_PACKAGE_PATH@   
+@TCL_STUB_LIB_FILE@  $(TCLSTUBLIBNAME)
+@TCL_STUB_LIB_FLAG@  $(TCLSTUBLIBNAME)
+@TCL_STUB_LIB_SPEC@  -L$(LIB_INSTALL_DIR) $(TCLSTUBLIBNAME)
+@TCL_THREADS@        $(TCL_THREADS)
+@TCL_BUILD_STUB_LIB_SPEC@ -L$(OUT_DIR) $(TCLSTUBLIBNAME)
+@TCL_BUILD_STUB_LIB_PATH@ $(TCLSTUBLIB)
+@TCL_STUB_LIB_PATH@  $(LIB_INSTALL_DIR)\$(TCLSTUBLIBNAME)
+@CFG_TCL_EXPORT_FILE_SUFFIX@  $(VERSION)$(SUFX).lib
+@CFG_TCL_SHARED_LIB_SUFFIX@   $(VERSION)$(SUFX).dll
+@CFG_TCL_UNSHARED_LIB_SUFFIX@ $(VERSION)$(SUFX).lib
+!if $(STATIC_BUILD)
+@TCL_SHARED_BUILD@   0
+!else
+@TCL_SHARED_BUILD@   1
 !endif
+<<
+
 
 # The following target generates the file generic/tclDate.c 
 # from the yacc grammar found in generic/tclGetDate.y.  This is

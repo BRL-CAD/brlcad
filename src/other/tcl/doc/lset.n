@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH lset n 8.4 Tcl "Tcl Built-In Commands"
 .BS
@@ -18,7 +18,7 @@ lset \- Change an element in a list
 .SH DESCRIPTION
 .PP
 The \fBlset\fR command accepts a parameter, \fIvarName\fR, which
-it interprets as the name of a variable containing a Tcl list.
+it interprets as the name of a variable containing a Tcl list. 
 It also accepts zero or more \fIindices\fR into
 the list.  The indices may be presented either consecutively on the
 command line, or grouped in a
@@ -38,7 +38,7 @@ In this case, \fInewValue\fR replaces the old value of the variable
 .PP
 When presented with a single index, the \fBlset\fR command
 treats the content of the \fIvarName\fR variable as a Tcl list.
-It addresses the \fIindex\fR'th element in it
+It addresses the \fIindex\fR'th element in it 
 (0 refers to the first element of the list).
 When interpreting the list, \fBlset\fR observes the same rules
 concerning braces and quotes and backslashes as the Tcl command
@@ -108,7 +108,7 @@ lset x 1 1 0 j => {{a b} {c d}} {{e f} {j h}}
 lset x {1 1 0} j => {{a b} {c d}} {{e f} {j h}}
 .CE
 .SH "SEE ALSO"
-list(n), lappend(n), lindex(n), linsert(n), llength(n), lsearch(n),
+list(n), lappend(n), lindex(n), linsert(n), llength(n), lsearch(n), 
 lsort(n), lrange(n), lreplace(n),
 .VS 8.5
 string(n)

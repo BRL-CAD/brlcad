@@ -740,7 +740,7 @@ test execute-8.2 {Stack restoration} -body {
 
 test execute-8.3 {Stack restoration} -body {
     # Test for [Bug #1055676], correct restoration
-    # of the stack top after the epoch is bumped and
+    # of the stack top after the epoch is bumped and 
     # the stack is grown in a call from a nested evaluation
      set arglst [string repeat "a " 1000]
      proc f {args} "f $arglst"

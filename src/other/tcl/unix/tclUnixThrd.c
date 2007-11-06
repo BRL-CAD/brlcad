@@ -158,12 +158,16 @@ Tcl_JoinThread(
     Tcl_ThreadId threadId,	/* Id of the thread to wait upon. */
     int *state)			/* Reference to the storage the result of the
 				 * thread we wait upon will be written
-				 * into. */
+				 * into.  May be NULL. */
 {
 #ifdef TCL_THREADS
     int result;
+    unsigned long retcode;
 
-    result = pthread_join((pthread_t) threadId, (void**) state);
+    result = pthread_join((pthread_t) threadId, (void**) &retcode);
+    if (state) {
+	*state = (int) retcode;
+    }
     return (result == 0) ? TCL_OK : TCL_ERROR;
 #else
     return TCL_ERROR;
@@ -237,7 +241,7 @@ TclpThreadGetStackSize(void)
     /*
      * On Darwin, the API below does not return the correct stack size for the
      * main thread (which is not a real pthread), so fallback to getrlimit().
-     */
+     */  
     if (!pthread_main_np())
 #endif
     stackSize = pthread_get_stacksize_np(pthread_self());

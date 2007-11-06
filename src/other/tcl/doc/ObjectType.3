@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tcl_ObjType 3 8.0 Tcl "Tcl Library Procedures"
 .BS
@@ -82,7 +82,6 @@ unless \fIinterp\fR is NULL.
 Otherwise, it returns \fBTCL_OK\fR.
 Passing a NULL \fIinterp\fR allows this procedure to be used
 as a test whether the conversion can be done (and in fact was done).
-
 .SH "THE TCL_OBJTYPE STRUCTURE"
 .PP
 Extension writers can define new object types by defining four
@@ -90,28 +89,34 @@ procedures,
 initializing a Tcl_ObjType structure to describe the type,
 and calling \fBTcl_RegisterObjType\fR.
 The \fBTcl_ObjType\fR structure is defined as follows:
+.PP
 .CS
 typedef struct Tcl_ObjType {
-        char *\fIname\fR;
-        Tcl_FreeInternalRepProc *\fIfreeIntRepProc\fR;
-        Tcl_DupInternalRepProc *\fIdupIntRepProc\fR;
-        Tcl_UpdateStringProc *\fIupdateStringProc\fR;
-        Tcl_SetFromAnyProc *\fIsetFromAnyProc\fR;
+    char *\fIname\fR;
+    Tcl_FreeInternalRepProc *\fIfreeIntRepProc\fR;
+    Tcl_DupInternalRepProc *\fIdupIntRepProc\fR;
+    Tcl_UpdateStringProc *\fIupdateStringProc\fR;
+    Tcl_SetFromAnyProc *\fIsetFromAnyProc\fR;
 } Tcl_ObjType;
 .CE
+.SS "THE NAME FIELD"
 .PP
 The \fIname\fR member describes the name of the type, e.g. \fBint\fR.
 Extension writers can look up an object type using its name
 with the \fBTcl_GetObjType\fR procedure.
 The remaining four members are pointers to procedures
 called by the generic Tcl object code:
+.SS "THE SETFROMANYPROC FIELD"
 .PP
 The \fIsetFromAnyProc\fR member contains the address of a function
 called to create a valid internal representation
 from an object's string representation.
+.PP
 .CS
-typedef int (Tcl_SetFromAnyProc) (Tcl_Interp *\fIinterp\fR, Tcl_Obj *\fIobjPtr\fR);
+typedef int (Tcl_SetFromAnyProc) (Tcl_Interp *\fIinterp\fR,
+        Tcl_Obj *\fIobjPtr\fR);
 .CE
+.PP
 If an internal representation can't be created from the string,
 it returns \fBTCL_ERROR\fR and puts a message
 describing the error in the result object for \fIinterp\fR
@@ -135,13 +140,16 @@ and sets \fIobjPtr\fR's \fItypePtr\fR member to point to the integer type's
 Tcl_ObjType structure.
 Do not release \fIobjPtr\fR's old internal representation unless you
 replace it with a new one or reset the \fItypePtr\fR member to NULL.
+.SS "THE UPDATESTRINGPROC FIELD"
 .PP
 The \fIupdateStringProc\fR member contains the address of a function
 called to create a valid string representation
 from an object's internal representation.
+.PP
 .CS
 typedef void (Tcl_UpdateStringProc) (Tcl_Obj *\fIobjPtr\fR);
 .CE
+.PP
 \fIobjPtr\fR's \fIbytes\fR member is always NULL when it is called.
 It must always set \fIbytes\fR non-NULL before returning.
 We require the string representation's byte array
@@ -156,12 +164,16 @@ builds an array of strings for each element object
 and then calls \fBTcl_Merge\fR
 to construct a string with proper Tcl list structure.
 It stores this string as the list object's string representation.
+.SS "THE DUPINTREPPROC FIELD"
 .PP
 The \fIdupIntRepProc\fR member contains the address of a function
 called to copy an internal representation from one object to another.
+.PP
 .CS
-typedef void (Tcl_DupInternalRepProc) (Tcl_Obj *\fIsrcPtr\fR, Tcl_Obj *\fIdupPtr\fR);
+typedef void (Tcl_DupInternalRepProc) (Tcl_Obj *\fIsrcPtr\fR,
+        Tcl_Obj *\fIdupPtr\fR);
 .CE
+.PP
 \fIdupPtr\fR's internal representation is made a copy of \fIsrcPtr\fR's
 internal representation.
 Before the call,
@@ -174,12 +186,15 @@ The built-in list type's \fIdupIntRepProc\fR
 allocates a new array that points at the original element objects;
 the elements are shared between the two lists
 (and their reference counts are incremented to reflect the new references).
+.SS "THE FREEINTREPPROC FIELD"
 .PP
 The \fIfreeIntRepProc\fR member contains the address of a function
 that is called when an object is freed.
+.PP
 .CS
 typedef void (Tcl_FreeInternalRepProc) (Tcl_Obj *\fIobjPtr\fR);
 .CE
+.PP
 The \fIfreeIntRepProc\fR function can deallocate the storage
 for the object's internal representation
 and do other type-specific processing necessary when an object is freed.
@@ -194,9 +209,7 @@ to indicate that the internal representation does not require freeing.
 The \fIfreeIntRepProc\fR implementation should not access the
 \fIbytes\fR member of the object, as this may potentially have already
 been deleted.
-
 .SH "SEE ALSO"
 Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount
-
 .SH KEYWORDS
 internal representation, object, object type, string representation, type conversion

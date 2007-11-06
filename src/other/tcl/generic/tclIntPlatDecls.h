@@ -42,7 +42,7 @@
 #ifndef TclGetAndDetachPids_TCL_DECLARED
 #define TclGetAndDetachPids_TCL_DECLARED
 /* 0 */
-EXTERN void		TclGetAndDetachPids (Tcl_Interp * interp,
+EXTERN void		TclGetAndDetachPids (Tcl_Interp * interp, 
 				Tcl_Channel chan);
 #endif
 #ifndef TclpCloseFile_TCL_DECLARED
@@ -53,22 +53,22 @@ EXTERN int		TclpCloseFile (TclFile file);
 #ifndef TclpCreateCommandChannel_TCL_DECLARED
 #define TclpCreateCommandChannel_TCL_DECLARED
 /* 2 */
-EXTERN Tcl_Channel	TclpCreateCommandChannel (TclFile readFile,
-				TclFile writeFile, TclFile errorFile,
+EXTERN Tcl_Channel	TclpCreateCommandChannel (TclFile readFile, 
+				TclFile writeFile, TclFile errorFile, 
 				int numPids, Tcl_Pid * pidPtr);
 #endif
 #ifndef TclpCreatePipe_TCL_DECLARED
 #define TclpCreatePipe_TCL_DECLARED
 /* 3 */
-EXTERN int		TclpCreatePipe (TclFile * readPipe,
+EXTERN int		TclpCreatePipe (TclFile * readPipe, 
 				TclFile * writePipe);
 #endif
 #ifndef TclpCreateProcess_TCL_DECLARED
 #define TclpCreateProcess_TCL_DECLARED
 /* 4 */
-EXTERN int		TclpCreateProcess (Tcl_Interp * interp, int argc,
-				CONST char ** argv, TclFile inputFile,
-				TclFile outputFile, TclFile errorFile,
+EXTERN int		TclpCreateProcess (Tcl_Interp * interp, int argc, 
+				CONST char ** argv, TclFile inputFile, 
+				TclFile outputFile, TclFile errorFile, 
 				Tcl_Pid * pidPtr);
 #endif
 /* Slot 5 is reserved */
@@ -115,8 +115,8 @@ EXTERN char *		TclpInetNtoa (struct in_addr addr);
 #ifndef TclUnixCopyFile_TCL_DECLARED
 #define TclUnixCopyFile_TCL_DECLARED
 /* 14 */
-EXTERN int		TclUnixCopyFile (CONST char * src, CONST char * dst,
-				CONST Tcl_StatBuf * statBufPtr,
+EXTERN int		TclUnixCopyFile (CONST char * src, CONST char * dst, 
+				CONST Tcl_StatBuf * statBufPtr, 
 				int dontCopyAtts);
 #endif
 #endif /* UNIX */
@@ -134,13 +134,13 @@ EXTERN void		TclWinConvertWSAError (DWORD errCode);
 #ifndef TclWinGetServByName_TCL_DECLARED
 #define TclWinGetServByName_TCL_DECLARED
 /* 2 */
-EXTERN struct servent *	 TclWinGetServByName (CONST char * nm,
+EXTERN struct servent *	 TclWinGetServByName (CONST char * nm, 
 				CONST char * proto);
 #endif
 #ifndef TclWinGetSockOpt_TCL_DECLARED
 #define TclWinGetSockOpt_TCL_DECLARED
 /* 3 */
-EXTERN int		TclWinGetSockOpt (int s, int level, int optname,
+EXTERN int		TclWinGetSockOpt (int s, int level, int optname, 
 				char FAR * optval, int FAR * optlen);
 #endif
 #ifndef TclWinGetTclInstance_TCL_DECLARED
@@ -157,7 +157,7 @@ EXTERN u_short		TclWinNToHS (u_short ns);
 #ifndef TclWinSetSockOpt_TCL_DECLARED
 #define TclWinSetSockOpt_TCL_DECLARED
 /* 7 */
-EXTERN int		TclWinSetSockOpt (int s, int level, int optname,
+EXTERN int		TclWinSetSockOpt (int s, int level, int optname, 
 				CONST char FAR * optval, int optlen);
 #endif
 #ifndef TclpGetPid_TCL_DECLARED
@@ -174,7 +174,7 @@ EXTERN int		TclWinGetPlatformId (void);
 #ifndef TclGetAndDetachPids_TCL_DECLARED
 #define TclGetAndDetachPids_TCL_DECLARED
 /* 11 */
-EXTERN void		TclGetAndDetachPids (Tcl_Interp * interp,
+EXTERN void		TclGetAndDetachPids (Tcl_Interp * interp, 
 				Tcl_Channel chan);
 #endif
 #ifndef TclpCloseFile_TCL_DECLARED
@@ -185,22 +185,22 @@ EXTERN int		TclpCloseFile (TclFile file);
 #ifndef TclpCreateCommandChannel_TCL_DECLARED
 #define TclpCreateCommandChannel_TCL_DECLARED
 /* 13 */
-EXTERN Tcl_Channel	TclpCreateCommandChannel (TclFile readFile,
-				TclFile writeFile, TclFile errorFile,
+EXTERN Tcl_Channel	TclpCreateCommandChannel (TclFile readFile, 
+				TclFile writeFile, TclFile errorFile, 
 				int numPids, Tcl_Pid * pidPtr);
 #endif
 #ifndef TclpCreatePipe_TCL_DECLARED
 #define TclpCreatePipe_TCL_DECLARED
 /* 14 */
-EXTERN int		TclpCreatePipe (TclFile * readPipe,
+EXTERN int		TclpCreatePipe (TclFile * readPipe, 
 				TclFile * writePipe);
 #endif
 #ifndef TclpCreateProcess_TCL_DECLARED
 #define TclpCreateProcess_TCL_DECLARED
 /* 15 */
-EXTERN int		TclpCreateProcess (Tcl_Interp * interp, int argc,
-				CONST char ** argv, TclFile inputFile,
-				TclFile outputFile, TclFile errorFile,
+EXTERN int		TclpCreateProcess (Tcl_Interp * interp, int argc, 
+				CONST char ** argv, TclFile inputFile, 
+				TclFile outputFile, TclFile errorFile, 
 				Tcl_Pid * pidPtr);
 #endif
 /* Slot 16 is reserved */
@@ -262,30 +262,30 @@ EXTERN int		TclWinCPUID (unsigned int index, unsigned int * regs);
 #ifndef TclMacOSXGetFileAttribute_TCL_DECLARED
 #define TclMacOSXGetFileAttribute_TCL_DECLARED
 /* 15 */
-EXTERN int		TclMacOSXGetFileAttribute (Tcl_Interp * interp,
-				int objIndex, Tcl_Obj * fileName,
+EXTERN int		TclMacOSXGetFileAttribute (Tcl_Interp * interp, 
+				int objIndex, Tcl_Obj * fileName, 
 				Tcl_Obj ** attributePtrPtr);
 #endif
 #ifndef TclMacOSXSetFileAttribute_TCL_DECLARED
 #define TclMacOSXSetFileAttribute_TCL_DECLARED
 /* 16 */
-EXTERN int		TclMacOSXSetFileAttribute (Tcl_Interp * interp,
-				int objIndex, Tcl_Obj * fileName,
+EXTERN int		TclMacOSXSetFileAttribute (Tcl_Interp * interp, 
+				int objIndex, Tcl_Obj * fileName, 
 				Tcl_Obj * attributePtr);
 #endif
 #ifndef TclMacOSXCopyFileAttributes_TCL_DECLARED
 #define TclMacOSXCopyFileAttributes_TCL_DECLARED
 /* 17 */
-EXTERN int		TclMacOSXCopyFileAttributes (CONST char * src,
-				CONST char * dst,
+EXTERN int		TclMacOSXCopyFileAttributes (CONST char * src, 
+				CONST char * dst, 
 				CONST Tcl_StatBuf * statBufPtr);
 #endif
 #ifndef TclMacOSXMatchType_TCL_DECLARED
 #define TclMacOSXMatchType_TCL_DECLARED
 /* 18 */
-EXTERN int		TclMacOSXMatchType (Tcl_Interp * interp,
-				CONST char * pathName, CONST char * fileName,
-				Tcl_StatBuf * statBufPtr,
+EXTERN int		TclMacOSXMatchType (Tcl_Interp * interp, 
+				CONST char * pathName, CONST char * fileName, 
+				Tcl_StatBuf * statBufPtr, 
 				Tcl_GlobTypeData * types);
 #endif
 #endif /* MAC_OSX_TCL */

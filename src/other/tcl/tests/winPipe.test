@@ -29,14 +29,14 @@ testConstraint RealConsole  [expr {![testConstraint AllocConsole]}]
 
 set big bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n
 append big $big
-append big $big
+append big $big	
 append big $big
 append big $big
 append big $big
 append big $big
 
 set path(little) [makeFile {} little]
-set f [open $path(little) w]
+set f [open $path(little) w] 
 puts -nonewline $f "little"
 close $f
 
@@ -236,7 +236,7 @@ set env(TEMP) c:/
 test winpipe-5.1 {TclpCreateTempFile: cleanup temp files} {win exec} {
     set x {}
     set existing [glob -nocomplain c:/tcl*.tmp]
-    exec [interpreter] < nothing
+    exec [interpreter] < nothing 
     foreach p [glob -nocomplain c:/tcl*.tmp] {
 	if {[lsearch $existing $p] == -1} {
 	    lappend x $p

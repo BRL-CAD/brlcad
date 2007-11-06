@@ -16,7 +16,7 @@
 
 #include "tclInt.h"
 #if defined(TCL_THREADS) && defined(USE_THREAD_ALLOC)
-
+
 /*
  * If range checking is enabled, an additional byte will be allocated to store
  * the magic number at the end of the requested memory.
@@ -40,12 +40,14 @@
 #define NOBJHIGH	1200
 
 /*
- * The following defines the number of buckets in the bucket cache and those
- * block sizes from (1<<4) to (1<<(3+NBUCKETS))
+ * Alignment for allocated memory.
  */
 
-#define NBUCKETS	11
-#define MAXALLOC	16284
+#if defined(__APPLE__)
+#define ALLOCALIGN	16
+#else
+#define ALLOCALIGN	8
+#endif
 
 /*
  * The following union stores accounting information for each block including
@@ -54,23 +56,36 @@
  * is also maintained.
  */
 
-typedef struct Block {
-    union {
-	struct Block *next;	/* Next in free list. */
-	struct {
-	    unsigned char magic1;	/* First magic number. */
-	    unsigned char bucket;	/* Bucket block allocated from. */
-	    unsigned char unused;	/* Padding. */
-	    unsigned char magic2;	/* Second magic number. */
-	} s;
-    } u;
-    size_t reqSize;		/* Requested allocation size. */
+typedef union Block {
+    struct {
+	union {
+	    union Block *next;		/* Next in free list. */
+	    struct {
+		unsigned char magic1;	/* First magic number. */
+		unsigned char bucket;	/* Bucket block allocated from. */
+		unsigned char unused;	/* Padding. */
+		unsigned char magic2;	/* Second magic number. */
+	    } s;
+	} u;
+	size_t reqSize;			/* Requested allocation size. */
+    } b;
+    unsigned char padding[ALLOCALIGN];
 } Block;
-#define nextBlock	u.next
-#define sourceBucket	u.s.bucket
-#define magicNum1	u.s.magic1
-#define magicNum2	u.s.magic2
+#define nextBlock	b.u.next
+#define sourceBucket	b.u.s.bucket
+#define magicNum1	b.u.s.magic1
+#define magicNum2	b.u.s.magic2
 #define MAGIC		0xEF
+#define blockReqSize	b.reqSize
+
+/*
+ * The following defines the minimum and and maximum block sizes and the number
+ * of buckets in the bucket cache.
+ */
+
+#define MINALLOC	((sizeof(Block) + 8 + (ALLOCALIGN-1)) & ~(ALLOCALIGN-1))
+#define NBUCKETS	(11 - (MINALLOC >> 5))
+#define MAXALLOC	(MINALLOC << (NBUCKETS - 1))
 
 /*
  * The following structure defines a bucket of blocks with various accounting
@@ -114,19 +129,7 @@ static struct {
     int maxBlocks;		/* Max blocks before move to share. */
     int numMove;		/* Num blocks to move to share. */
     Tcl_Mutex *lockPtr;		/* Share bucket lock. */
-} bucketInfo[NBUCKETS] = {
-    {   16, 1024, 512, NULL},
-    {   32,  512, 256, NULL},
-    {   64,  256, 128, NULL},
-    {  128,  128,  64, NULL},
-    {  256,   64,  32, NULL},
-    {  512,   32,  16, NULL},
-    { 1024,   16,   8, NULL},
-    { 2048,    8,   4, NULL},
-    { 4096,    4,   2, NULL},
-    { 8192,    2,   1, NULL},
-    {16284,    1,   1, NULL},
-};
+} bucketInfo[NBUCKETS];
 
 /*
  * Static functions defined in this file.
@@ -178,7 +181,7 @@ GetCache(void)
 
     if (listLockPtr == NULL) {
 	Tcl_Mutex *initLockPtr;
-	int i;
+	unsigned int i;
 
 	initLockPtr = Tcl_GetAllocMutex();
 	Tcl_MutexLock(initLockPtr);
@@ -186,6 +189,10 @@ GetCache(void)
 	    listLockPtr = TclpNewAllocMutex();
 	    objLockPtr = TclpNewAllocMutex();
 	    for (i = 0; i < NBUCKETS; ++i) {
+		bucketInfo[i].blockSize = MINALLOC << i;
+		bucketInfo[i].maxBlocks = 1 << (NBUCKETS - 1 - i);
+		bucketInfo[i].numMove = i < NBUCKETS - 1 ?
+			1 << (NBUCKETS - 2 - i) : 1;
 		bucketInfo[i].lockPtr = TclpNewAllocMutex();
 	    }
 	}
@@ -234,7 +241,7 @@ TclFreeAllocCache(
 {
     Cache *cachePtr = arg;
     Cache **nextPtrPtr;
-    register int bucket;
+    register unsigned int bucket;
 
     /*
      * Flush blocks.
@@ -379,12 +386,12 @@ TclpFree(
     blockPtr = Ptr2Block(ptr);
     bucket = blockPtr->sourceBucket;
     if (bucket == NBUCKETS) {
-	cachePtr->totalAssigned -= blockPtr->reqSize;
+	cachePtr->totalAssigned -= blockPtr->blockReqSize;
 	free(blockPtr);
 	return;
     }
 
-    cachePtr->buckets[bucket].totalAssigned -= blockPtr->reqSize;
+    cachePtr->buckets[bucket].totalAssigned -= blockPtr->blockReqSize;
     blockPtr->nextBlock = cachePtr->buckets[bucket].firstPtr;
     cachePtr->buckets[bucket].firstPtr = blockPtr;
     ++cachePtr->buckets[bucket].numFree;
@@ -450,12 +457,12 @@ TclpRealloc(
 	    min = 0;
 	}
 	if (size > min && size <= bucketInfo[bucket].blockSize) {
-	    cachePtr->buckets[bucket].totalAssigned -= blockPtr->reqSize;
+	    cachePtr->buckets[bucket].totalAssigned -= blockPtr->blockReqSize;
 	    cachePtr->buckets[bucket].totalAssigned += reqSize;
 	    return Block2Ptr(blockPtr, bucket, reqSize);
 	}
     } else if (size > MAXALLOC) {
-	cachePtr->totalAssigned -= blockPtr->reqSize;
+	cachePtr->totalAssigned -= blockPtr->blockReqSize;
 	cachePtr->totalAssigned += reqSize;
 	blockPtr = realloc(blockPtr, size);
 	if (blockPtr == NULL) {
@@ -470,8 +477,8 @@ TclpRealloc(
 
     new = TclpAlloc(reqSize);
     if (new != NULL) {
-	if (reqSize > blockPtr->reqSize) {
-	    reqSize = blockPtr->reqSize;
+	if (reqSize > blockPtr->blockReqSize) {
+	    reqSize = blockPtr->blockReqSize;
 	}
 	memcpy(new, ptr, reqSize);
 	TclpFree(ptr);
@@ -617,7 +624,7 @@ Tcl_GetMemoryInfo(
 {
     Cache *cachePtr;
     char buf[200];
-    int n;
+    unsigned int n;
 
     Tcl_MutexLock(listLockPtr);
     cachePtr = firstCachePtr;
@@ -719,7 +726,7 @@ Block2Ptr(
 
     blockPtr->magicNum1 = blockPtr->magicNum2 = MAGIC;
     blockPtr->sourceBucket = bucket;
-    blockPtr->reqSize = reqSize;
+    blockPtr->blockReqSize = reqSize;
     ptr = ((void *) (blockPtr + 1));
 #if RCHECK
     ((unsigned char *)(ptr))[reqSize] = MAGIC;
@@ -739,10 +746,10 @@ Ptr2Block(
 		blockPtr, blockPtr->magicNum1, blockPtr->magicNum2);
     }
 #if RCHECK
-    if (((unsigned char *) ptr)[blockPtr->reqSize] != MAGIC) {
+    if (((unsigned char *) ptr)[blockPtr->blockReqSize] != MAGIC) {
 	Tcl_Panic("alloc: invalid block: %p: %x %x %x",
 		blockPtr, blockPtr->magicNum1, blockPtr->magicNum2,
-		((unsigned char *) ptr)[blockPtr->reqSize]);
+		((unsigned char *) ptr)[blockPtr->blockReqSize]);
     }
 #endif
     return blockPtr;
@@ -973,7 +980,8 @@ GetBlocks(
 void
 TclFinalizeThreadAlloc(void)
 {
-    int i;
+    unsigned int i;
+
     for (i = 0; i < NBUCKETS; ++i) {
         TclpFreeAllocMutex(bucketInfo[i].lockPtr);
         bucketInfo[i].lockPtr = NULL;

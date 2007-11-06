@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Notifier 3 8.1 Tcl "Tcl Library Procedures"
 .BS
@@ -146,7 +146,7 @@ servicing at a future time.  Threaded applications work in a
 similar manner, except that there is a separate event queue for
 each thread containing a Tcl interpreter.
 \fBTcl_QueueEvent\fR is used (primarily
-by event sources) to add events to the event queue and
+by event sources) to add events to the event queue and 
 \fBTcl_DeleteEvents\fR is used to remove events from the queue without
 processing them.  In a threaded application, \fBTcl_QueueEvent\fR adds
 an event to the current thread's queue, and \fBTcl_ThreadQueueEvent\fR

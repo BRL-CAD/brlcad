@@ -160,7 +160,7 @@ test cmdMZ-return-2.15 {return opton handling} -setup {
     } -cleanup {
         rename p {}
     } -result {1 c {a b}}
-
+   
 test cmdMZ-return-2.16 {return opton handling} -setup {
         proc p {} {
             return -code error -errorcode [list a b] c
@@ -170,7 +170,7 @@ test cmdMZ-return-2.16 {return opton handling} -setup {
     } -cleanup {
         rename p {}
     } -result {1 c {a b}}
-
+   
 test cmdMZ-return-2.17 {return opton handling} -setup {
         proc p {} {
             return -code error -errorcode a\ b c
@@ -180,7 +180,7 @@ test cmdMZ-return-2.17 {return opton handling} -setup {
     } -cleanup {
         rename p {}
     } -result {1 c {a b}}
-
+   
 
 # Check that the result of a [return -options $opts $result] is
 # indistinguishable from that of the originally caught script, no
@@ -299,7 +299,7 @@ test cmdMZ-4.10 {Tcl_SplitObjCmd: basic split commands} {
         foreach f [split {]\n} {}] {
             append x $f
         }
-        return $x
+        return $x	
     }
     foo
 } {]\n}

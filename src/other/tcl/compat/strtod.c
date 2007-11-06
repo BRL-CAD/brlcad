@@ -1,4 +1,4 @@
-/*
+/* 
  * strtod.c --
  *
  *	Source code for the "strtod" library procedure.
@@ -139,7 +139,7 @@ strtod(
      * has more than 18 digits, ignore the extras, since they can't affect the
      * value anyway.
      */
-
+    
     pExp  = p;
     p -= mantSize;
     if (decPt < 0) {
@@ -219,7 +219,7 @@ strtod(
      * by processing the exponent one bit at a time to combine many powers of
      * 2 of 10. Then combine the exponent with the fraction.
      */
-
+    
     if (exp < 0) {
 	expSign = TRUE;
 	exp = -exp;

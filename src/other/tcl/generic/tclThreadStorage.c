@@ -136,7 +136,8 @@ AllocThreadStorageEntry(
 
     hPtr = (Tcl_HashEntry *) TclpSysAlloc(sizeof(Tcl_HashEntry), 0);
     hPtr->key.oneWordValue = keyPtr;
-
+    hPtr->clientData = NULL;
+    
     return hPtr;
 }
 

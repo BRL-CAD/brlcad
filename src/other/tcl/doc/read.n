@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH read n 8.1 Tcl "Tcl Built-In Commands"
 .BS
@@ -62,11 +62,11 @@ configured to be nonblocking: \fBfconfigure \fIchannelId \fB\-blocking
 \fI0\fR.  Then \fBread\fR behaves much like described above.  Care
 must be taken when using \fBread\fR on blocking serial ports:
 .TP
-\fBread \fIchannelId numChars\fR
+\fBread \fIchannelId numChars\fR 
 In this form \fBread\fR blocks until \fInumChars\fR have been received
 from the serial port.
 .TP
-\fBread \fIchannelId\fR
+\fBread \fIchannelId\fR 
 In this form \fBread\fR blocks until the reception of the end-of-file
 character, see \fBfconfigure -eofchar\fR. If there no end-of-file
 character has been configured for the channel, then \fBread\fR will

@@ -75,9 +75,6 @@
 /*
  * Ask for the winsock function typedefs, also.
  */
-#ifdef INCL_WINSOCK_API_TYPEDEFS
-#undef INCL_WINSOCK_API_TYPEDEFS
-#endif
 #define INCL_WINSOCK_API_TYPEDEFS   1
 #include <winsock2.h>
 
@@ -406,7 +403,7 @@
 
 
 #ifdef __WATCOMC__
-    /*
+    /* 
      * OpenWatcom uses a wine derived winsock2.h that is missing the
      * LPFN_* typedefs.
      */
@@ -435,8 +432,8 @@
 
 /*
  *---------------------------------------------------------------------------
- * The following macros and declarations represent the interface between
- * generic and windows-specific parts of Tcl.  Some of the macros may
+ * The following macros and declarations represent the interface between 
+ * generic and windows-specific parts of Tcl.  Some of the macros may 
  * override functions declared in tclInt.h.
  *---------------------------------------------------------------------------
  */
@@ -510,14 +507,14 @@
 
 
 /*
- * The following macros have trivial definitions, allowing generic code to
+ * The following macros have trivial definitions, allowing generic code to 
  * address platform-specific issues.
  */
 
 #define TclpReleaseFile(file)	ckfree((char *) file)
 
 /*
- * The following macros and declarations wrap the C runtime library
+ * The following macros and declarations wrap the C runtime library 
  * functions.
  */
 

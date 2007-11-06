@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH interp n 7.6 Tcl "Tcl Built-In Commands"
 .BS
@@ -660,97 +660,97 @@ command, by making the current namespace be different from the global one.
 .SH "RESOURCE LIMITS"
 .VS 8.5
 .PP
-Every interpreter has two kinds of resource limits that may be imposed
-by any master interpreter upon its slaves.  Command limits (of type
-\fBcommand\fR) restrict the total number of Tcl commands that may be
-executed by an interpreter (as can be inspected via the \fBinfo
-cmdcount\fR command), and time limits (of type \fBtime\fR) place a
-limit by which execution within the interpreter must complete.
+Every interpreter has two kinds of resource limits that may be imposed by any
+master interpreter upon its slaves. Command limits (of type \fBcommand\fR)
+restrict the total number of Tcl commands that may be executed by an
+interpreter (as can be inspected via the \fBinfo cmdcount\fR command), and
+time limits (of type \fBtime\fR) place a limit by which execution within the
+interpreter must complete. Note that time limits are expressed as
+\fIabsolute\fR times (as in \fBclock seconds\fR) and not relative times (as in
+\fBafter\fR) because they may be modified after creation.
 .PP
-When a limit is exceeded for an interpreter, first any handler
-callbacks defined by master interpreters are called.  If those
-callbacks increase or remove the limit, execution within the
-(previously) limited interpreter continues.  If the limit is still in
-force, an error is generated at that point and normal processing of
-errors within the interpreter (by the \fBcatch\fR command) is
-disabled, so the error propagates outwards (building a stack-trace as
-it goes) to the point where the limited interpreter was invoked
-(e.g. by \fBinterp eval\fR) where it becomes the responsibility of the
-calling code to catch and handle.
+When a limit is exceeded for an interpreter, first any handler callbacks
+defined by master interpreters are called. If those callbacks increase or
+remove the limit, execution within the (previously) limited interpreter
+continues. If the limit is still in force, an error is generated at that point
+and normal processing of errors within the interpreter (by the \fBcatch\fR
+command) is disabled, so the error propagates outwards (building a stack-trace
+as it goes) to the point where the limited interpreter was invoked (e.g. by
+\fBinterp eval\fR) where it becomes the responsibility of the calling code to
+catch and handle.
+.SS "LIMIT OPTIONS"
 .PP
-Every limit has a number of options associated with it, some of which
-are common across all kinds of limits, and others of which are
-particular to the kind of limit.
+Every limit has a number of options associated with it, some of which are
+common across all kinds of limits, and others of which are particular to the
+kind of limit.
 .TP
 \fB\-command\fR
-This option (common for all limit types) specifies (if non-empty) a
-Tcl script to be executed in the global namespace of the interpreter
-reading and writing the option when the particular limit in the
-limited interpreter is exceeded.  The callback may modify the limit on
-the interpreter if it wishes the limited interpreter to continue
-executing.  If the callback generates an error, it is reported through
-the background error mechanism (see \fBBACKGROUND ERROR HANDLING\fR).
-Note that the
-callbacks defined by one interpreter are completely isolated from the
-callbacks defined by another, and that the order in which those
-callbacks are called is undefined.
+.
+This option (common for all limit types) specifies (if non-empty) a Tcl script
+to be executed in the global namespace of the interpreter reading and writing
+the option when the particular limit in the limited interpreter is exceeded.
+The callback may modify the limit on the interpreter if it wishes the limited
+interpreter to continue executing. If the callback generates an error, it is
+reported through the background error mechanism (see \fBBACKGROUND ERROR
+HANDLING\fR). Note that the callbacks defined by one interpreter are
+completely isolated from the callbacks defined by another, and that the order
+in which those callbacks are called is undefined.
 .TP
 \fB\-granularity\fR
-This option (common for all limit types) specifies how frequently (out
-of the points when the Tcl interpreter is in a consistent state where
-limit checking is possible) that the limit is actually checked.  This
-allows the tuning of how frequently a limit is checked, and hence how
-often the limit-checking overhead (which may be substantial in the
-case of time limits) is incurred.
+.
+This option (common for all limit types) specifies how frequently (out of the
+points when the Tcl interpreter is in a consistent state where limit checking
+is possible) that the limit is actually checked. This allows the tuning of how
+frequently a limit is checked, and hence how often the limit-checking overhead
+(which may be substantial in the case of time limits) is incurred.
 .TP
 \fB\-milliseconds\fR
-This option specifies the number of milliseconds after the moment
-defined in the \fB\-seconds\fR option that the time limit will fire.
-It should only ever be specified in conjunction with the
-\fB\-seconds\fR option (whether it was set previously or is being set
-this invocation.)
+.
+This option specifies the number of milliseconds after the moment defined in
+the \fB\-seconds\fR option that the time limit will fire. It should only ever
+be specified in conjunction with the \fB\-seconds\fR option (whether it was
+set previously or is being set this invocation.)
 .TP
 \fB\-seconds\fR
-This option specifies the number of seconds after the epoch (see
-\fBclock seconds\fR) that the time limit for the interpreter will be
-triggered. The limit will be triggered at the start of the second
-unless specified at a sub-second level using the \fB\-milliseconds\fR
-option.  This option may be the empty string, which indicates that a
-time limit is not set for the interpreter.
+.
+This option specifies the number of seconds after the epoch (see \fBclock
+seconds\fR) that the time limit for the interpreter will be triggered. The
+limit will be triggered at the start of the second unless specified at a
+sub-second level using the \fB\-milliseconds\fR option. This option may be the
+empty string, which indicates that a time limit is not set for the
+interpreter.
 .TP
 \fB\-value\fR
-This option specifies the number of commands that the interpreter may
-execute before triggering the command limit.  This option may be the
-empty string, which indicates that a command limit is not set for the
-interpreter.
+.
+This option specifies the number of commands that the interpreter may execute
+before triggering the command limit. This option may be the empty string,
+which indicates that a command limit is not set for the interpreter.
 .PP
 Where an interpreter with a resource limit set on it creates a slave
-interpreter, that slave interpreter will have resource limits imposed
-on it that are at least as restrictive as the limits on the creating
-master interpreter. If the master interpreter of the limited master
-wishes to relax these conditions, it should hide the \fBinterp\fR
-command in the child and then use aliases and the \fBinterp
-invokehidden\fR subcommand to provide such access as it chooses to the
-\fBinterp\fR command to the limited master as necessary.
-.VE 8.5
+interpreter, that slave interpreter will have resource limits imposed on it
+that are at least as restrictive as the limits on the creating master
+interpreter. If the master interpreter of the limited master wishes to relax
+these conditions, it should hide the \fBinterp\fR command in the child and
+then use aliases and the \fBinterp invokehidden\fR subcommand to provide such
+access as it chooses to the \fBinterp\fR command to the limited master as
+necessary.
 .SH "BACKGROUND ERROR HANDLING"
-.VS 8.5
-When an error happens in a situation where it cannot be reported
-directly up the stack (e.g. when processing events in an \fBupdate\fR
-or \fBvwait\fR call) the error is instead reported through the
-background error handling mechanism. Every interpreter has a
-background error handler registered; the default error handler
-arranges for the \fBbgerror\fR command in the interpreter's global
-namespace to be called, but other error handlers may be installed and
-process background errors in substantially different ways.
 .PP
-A background error handler consists of a non-empty list of words to
-which will, at invocation time, be appended two further words. The
-first word will be the error message string, and the second will a
-dictionary of return options (this is also the sort of information
-that can be obtained by trapping a normal error using \fBcatch\fR of
-course.) The resulting list will then be executed in the interpreter's
-global namespace without further substitutions being performed.
+When an error happens in a situation where it cannot be reported directly up
+the stack (e.g. when processing events in an \fBupdate\fR or \fBvwait\fR call)
+the error is instead reported through the background error handling mechanism.
+Every interpreter has a background error handler registered; the default error
+handler arranges for the \fBbgerror\fR command in the interpreter's global
+namespace to be called, but other error handlers may be installed and process
+background errors in substantially different ways.
+.PP
+A background error handler consists of a non-empty list of words to which will
+be appended two further words at invocation time. The first word will be the
+error message string, and the second will a dictionary of return options (this
+is also the sort of information that can be obtained by trapping a normal
+error using \fBcatch\fR of course.) The resulting list will then be executed
+in the interpreter's global namespace without further substitutions being
+performed.
 .VE 8.5
 .SH CREDITS
 This mechanism is based on the Safe-Tcl prototype implemented

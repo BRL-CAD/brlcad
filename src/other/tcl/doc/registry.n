@@ -6,7 +6,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH registry n 1.1 registry "Tcl Bundled Packages"
 .BS
@@ -58,12 +58,22 @@ milliseconds, to wait for applications to respond to the broadcast message.
 It defaults to 3000.  The following example demonstrates how to add a path
 to the global Environment and notify applications of the change without
 requiring a logoff/logon step (assumes admin privileges):
+.RS
+.PP
 .CS
-set regPath {HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment}
-set curPath [registry get $regPath "Path"]
-registry set $regPath "Path" "$curPath;$addPath"
-registry broadcast "Environment"
+set regPath [join {
+    HKEY_LOCAL_MACHINE
+    SYSTEM
+    CurrentControlSet
+    Control
+    {Session Manager}
+    Environment
+} "\\\\"]
+set curPath [\fBregistry get\fR $regPath "Path"]
+\fBregistry set\fR $regPath "Path" "$curPath;$addPath"
+\fBregistry broadcast\fR "Environment"
 .CE
+.RE
 .TP
 \fBregistry delete \fIkeyName\fR ?\fIvalueName\fR?
 .
@@ -111,7 +121,6 @@ If \fIpattern\fR isn't specified, returns a list of names of all the
 values of \fIkeyName\fR.  If \fIpattern\fR is specified, only those
 names matching \fIpattern\fR are returned.  Matching is determined
 using the same rules as for \fBstring\fR \fBmatch\fR.
-
 .SH "SUPPORTED TYPES"
 Each value under a key in the registry contains some data of a
 particular type in a type-specific representation.  The \fBregistry\fR
@@ -136,7 +145,7 @@ nulls.
 .TP
 \fBsz\fR
 .
-The registry value contains a null-terminated string.  The data is
+The registry value contains a null-terminated string.  The data is 
 represented in Tcl as a string.
 .TP
 \fBexpand_sz\fR
@@ -180,6 +189,7 @@ The registry command is only available on Windows.
 .SH EXAMPLE
 Print out how double-clicking on a Tcl script file will invoke a Tcl
 interpreter:
+.PP
 .CS
 package require registry
 set ext .tcl
@@ -193,6 +203,5 @@ set command [\fBregistry get\fR $path {}]
 
 puts "$ext opens with $command"
 .CE
-
 .SH KEYWORDS
 registry

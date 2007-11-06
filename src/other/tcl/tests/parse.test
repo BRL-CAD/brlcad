@@ -50,10 +50,10 @@ test parse-1.7 {Tcl_ParseCommand procedure, missing continuation line in leading
 test parse-1.8 {Tcl_ParseCommand procedure, eof in leading space} testparser {
     testparser "      foo" 3
 } {- {} 0 {   foo}}
-test parse-1.9 {Tcl_ParseCommand procedure, backslash newline + newline} {
+test parse-1.9 {Tcl_ParseCommand procedure, backslash newline + newline} testparser {
     testparser "cmd1\\\n\ncmd2" 0
 } {- cmd1\\\n\n 1 simple cmd1 1 text cmd1 0 cmd2}
-test parse-1.10 {Tcl_ParseCommand procedure, backslash newline + newline} {
+test parse-1.10 {Tcl_ParseCommand procedure, backslash newline + newline} testparser {
     testparser "list \\\nA B\\\n\nlist C D" 0
 } {- list\ \\\nA\ B\\\n\n 3 simple list 1 text list 0 simple A 1 text A 0 simple B 1 text B 0 {list C D}}
 
@@ -217,7 +217,7 @@ test parse-5.23 {Tcl_ParseCommand: {*} parsing} testparser {
 } {- {{*} } 1 simple {{*}} 1 text * 0 {}}
 test parse-5.24 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser {{*}x} 0
-} {- {{*}x} 1 expand {{*}x} 1 text x 0 {}}
+} {- {{*}x} 1 simple x 1 text x 0 {}}
 test parse-5.25 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser {{*}
 } 0
@@ -351,7 +351,7 @@ test parse-8.8 {Tcl_EvalObjv procedure, async handlers} -constraints {
     variable ::aresult
     variable ::acode
     proc async1 {result code} {
-	variable ::aresult
+	variable ::aresult 
 	variable ::acode
 	set aresult $result
 	set acode $code

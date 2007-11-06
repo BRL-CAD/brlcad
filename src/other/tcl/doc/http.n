@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH "http" n 2.5 http "Tcl Bundled Packages"
 .BS
@@ -59,7 +59,7 @@ a custom \fBsocket\fR command, via \fB::http::register\fR.
 .PP
 The \fB::http::geturl\fR procedure does a HTTP transaction.
 Its \fIoptions \fR determine whether a GET, POST, or HEAD transaction
-is performed.
+is performed.  
 The return value of \fB::http::geturl\fR is a token for the transaction.
 The value is also the name of an array in the ::http namespace
 that contains state information about the transaction.  The elements
@@ -87,7 +87,7 @@ flags and values that define the configuration:
 .TP
 \fB\-accept\fR \fImimetypes\fR
 The Accept header of the request.  The default is */*, which means that
-all types of documents are accepted.  Otherwise you can supply a
+all types of documents are accepted.  Otherwise you can supply a 
 comma-separated list of mime type patterns that you are
 willing to receive.  For example, "image/gif, image/jpeg, text/*".
 .TP
@@ -123,7 +123,7 @@ The value of the User-Agent header in the HTTP request.  The default
 is \fB"Tcl http client package 2.4."\fR
 .RE
 .TP
-\fB::http::geturl\fR \fIurl\fR ?\fIoptions\fR?
+\fB::http::geturl\fR \fIurl\fR ?\fIoptions\fR? 
 The \fB::http::geturl\fR command is the main procedure in the package.
 The \fB\-query\fR option causes a POST operation and
 the \fB\-validate\fR option causes a HEAD operation;
@@ -179,10 +179,12 @@ of bytes read from the socket.  Here is a template for the callback:
 proc httpHandlerCallback {socket token} {
     upvar #0 $token state
     # Access socket, and state as a Tcl array
+    # For example...
     ...
-    (example: set data [read $socket 1000];set nbytes [string length $data])
+    set data [read $socket 1000]
+    set nbytes [string length $data]
     ...
-    return nbytes
+    return $nbytes
 }
 .CE
 .RE
@@ -223,7 +225,7 @@ do the formatting.
 .TP
 \fB\-queryblocksize\fR \fIsize\fR
 The block size used when posting query data to the URL.
-At most
+At most 
 \fIsize\fR
 bytes are written at once.  After each block, a call to the
 \fB\-queryprogress\fR
@@ -357,7 +359,7 @@ cleanup and there's no issue of your app having to call
 \fB::http::cleanup\fR.
 .PP
 For asynchronous \fB::http::geturl\fR calls, all of the above error
-situations apply, except that if there's any error while
+situations apply, except that if there's any error while 
 reading the
 HTTP reply headers or data, no exception is thrown.  This is because
 after writing the HTTP headers, \fB::http::geturl\fR returns, and the

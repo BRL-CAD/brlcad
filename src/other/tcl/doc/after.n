@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH after n 7.5 Tcl "Tcl Built-In Commands"
 .BS
@@ -48,7 +48,7 @@ The delayed command is formed by concatenating all the \fIscript\fR
 arguments in the same fashion as the \fBconcat\fR command.
 The command will be executed at global level (outside the context
 of any Tcl procedure).
-If an error occurs while executing the delayed command then
+If an error occurs while executing the delayed command then 
 the background error will be reported by the command
 registered with \fB interp bgerror\fR.
 The \fBafter\fR command returns an identifier that can be used

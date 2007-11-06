@@ -130,8 +130,8 @@ VERSION		= 85
 DDEVERSION = 13
 DDEDOTVERSION = 1.3
 
-REGVERSION = 11
-REGDOTVERSION = 1.1
+REGVERSION = 12
+REGDOTVERSION = 1.2
 
 BINROOT		= ..
 !IF "$(NODEBUG)" == "1"
@@ -231,7 +231,6 @@ TCLOBJS	= \
 	$(TMPDIR)\tclListObj.obj \
 	$(TMPDIR)\tclLoad.obj \
 	$(TMPDIR)\tclMain.obj \
-	$(TMPDIR)\tclMathOp.obj \
 	$(TMPDIR)\tclNamesp.obj \
 	$(TMPDIR)\tclNotify.obj \
 	$(TMPDIR)\tclObj.obj \
@@ -449,9 +448,9 @@ install-libraries:
 	-@copy "$(TCLDDEDLL)" "$(SCRIPT_INSTALL_DIR)\dde1.3"
 	-@copy "$(ROOT)\library\dde\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\dde1.3"
 	@echo installing $(TCLREGDLLNAME)
-	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\reg1.1"
-	-@copy "$(TCLREGDLL)" "$(SCRIPT_INSTALL_DIR)\reg1.1"
-	-@copy "$(ROOT)\library\reg\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\reg1.1"
+	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\reg1.2"
+	-@copy "$(TCLREGDLL)" "$(SCRIPT_INSTALL_DIR)\reg1.2"
+	-@copy "$(ROOT)\library\reg\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\reg1.2"
 	@echo installing encoding files
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\encoding"
 	-@copy "$(ROOT)\library\encoding\*.enc" "$(SCRIPT_INSTALL_DIR)\encoding"

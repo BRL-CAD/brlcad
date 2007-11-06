@@ -181,12 +181,12 @@ test autoMkindex-3.1 {slaveHook} {
     auto_mkindex_parser::slavehook { _%@namespace import -force ::blt::* }
     file delete tclIndex
     auto_mkindex . autoMkindex.tcl
-
+     
     # Reset initCommands to avoid trashing other tests
 
     AutoMkindexTestReset
     file exists tclIndex
-} 1
+} 1 
 
 # The auto_mkindex_parser::command is used to register commands
 # that create new commands.
@@ -257,7 +257,7 @@ test autoMkindex-3.3 {auto_mkindex_parser::command} {knownBug} {
 makeDirectory pkg
 makeFile {
 package provide football 1.0
-
+    
 namespace eval ::pro:: {
     #
     # export only public functions.

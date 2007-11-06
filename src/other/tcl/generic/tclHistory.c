@@ -131,22 +131,22 @@ Tcl_RecordAndEvalObj(
     if (call) {
 
 	/*
-	 * Do recording by eval'ing a tcl history command: history add $cmd.
+	 * Do recording by eval'ing a tcl history command: history add $cmd. 
 	 */
 
 	TclNewLiteralStringObj(list[0], "history");
 	TclNewLiteralStringObj(list[1], "add");
 	list[2] = cmdPtr;
-
+	
 	objPtr = Tcl_NewListObj(3, list);
 	Tcl_IncrRefCount(objPtr);
 	(void) Tcl_EvalObjEx(interp, objPtr, TCL_EVAL_GLOBAL);
 	Tcl_DecrRefCount(objPtr);
-
+	
 	/*
 	 * One possible failure mode above: exceeding a resource limit.
 	 */
-
+	
 	if (Tcl_LimitExceeded(interp)) {
 	    return TCL_ERROR;
 	}

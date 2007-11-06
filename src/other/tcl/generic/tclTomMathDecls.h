@@ -205,13 +205,13 @@ EXTERN int		TclBN_mp_count_bits (mp_int* a);
 #ifndef TclBN_mp_div_TCL_DECLARED
 #define TclBN_mp_div_TCL_DECLARED
 /* 13 */
-EXTERN int		TclBN_mp_div (mp_int* a, mp_int* b, mp_int* q,
+EXTERN int		TclBN_mp_div (mp_int* a, mp_int* b, mp_int* q, 
 				mp_int* r);
 #endif
 #ifndef TclBN_mp_div_d_TCL_DECLARED
 #define TclBN_mp_div_d_TCL_DECLARED
 /* 14 */
-EXTERN int		TclBN_mp_div_d (mp_int* a, mp_digit b, mp_int* q,
+EXTERN int		TclBN_mp_div_d (mp_int* a, mp_digit b, mp_int* q, 
 				mp_digit* r);
 #endif
 #ifndef TclBN_mp_div_2_TCL_DECLARED
@@ -222,7 +222,7 @@ EXTERN int		TclBN_mp_div_2 (mp_int* a, mp_int* q);
 #ifndef TclBN_mp_div_2d_TCL_DECLARED
 #define TclBN_mp_div_2d_TCL_DECLARED
 /* 16 */
-EXTERN int		TclBN_mp_div_2d (mp_int* a, int b, mp_int* q,
+EXTERN int		TclBN_mp_div_2d (mp_int* a, int b, mp_int* q, 
 				mp_int* r);
 #endif
 #ifndef TclBN_mp_div_3_TCL_DECLARED
@@ -323,7 +323,7 @@ EXTERN int		TclBN_mp_radix_size (mp_int* a, int radix, int* size);
 #ifndef TclBN_mp_read_radix_TCL_DECLARED
 #define TclBN_mp_read_radix_TCL_DECLARED
 /* 36 */
-EXTERN int		TclBN_mp_read_radix (mp_int* a, const char* str,
+EXTERN int		TclBN_mp_read_radix (mp_int* a, const char* str, 
 				int radix);
 #endif
 #ifndef TclBN_mp_rshd_TCL_DECLARED
@@ -364,19 +364,19 @@ EXTERN int		TclBN_mp_sub_d (mp_int* a, mp_digit b, mp_int* c);
 #ifndef TclBN_mp_to_unsigned_bin_TCL_DECLARED
 #define TclBN_mp_to_unsigned_bin_TCL_DECLARED
 /* 44 */
-EXTERN int		TclBN_mp_to_unsigned_bin (mp_int* a,
+EXTERN int		TclBN_mp_to_unsigned_bin (mp_int* a, 
 				unsigned char* b);
 #endif
 #ifndef TclBN_mp_to_unsigned_bin_n_TCL_DECLARED
 #define TclBN_mp_to_unsigned_bin_n_TCL_DECLARED
 /* 45 */
-EXTERN int		TclBN_mp_to_unsigned_bin_n (mp_int* a,
+EXTERN int		TclBN_mp_to_unsigned_bin_n (mp_int* a, 
 				unsigned char* b, unsigned long* outlen);
 #endif
 #ifndef TclBN_mp_toradix_n_TCL_DECLARED
 #define TclBN_mp_toradix_n_TCL_DECLARED
 /* 46 */
-EXTERN int		TclBN_mp_toradix_n (mp_int* a, char* str, int radix,
+EXTERN int		TclBN_mp_toradix_n (mp_int* a, char* str, int radix, 
 				int maxlen);
 #endif
 #ifndef TclBN_mp_unsigned_bin_size_TCL_DECLARED
@@ -402,7 +402,7 @@ EXTERN void		TclBN_reverse (unsigned char* s, int len);
 #ifndef TclBN_fast_s_mp_mul_digs_TCL_DECLARED
 #define TclBN_fast_s_mp_mul_digs_TCL_DECLARED
 /* 51 */
-EXTERN int		TclBN_fast_s_mp_mul_digs (mp_int * a, mp_int * b,
+EXTERN int		TclBN_fast_s_mp_mul_digs (mp_int * a, mp_int * b, 
 				mp_int * c, int digs);
 #endif
 #ifndef TclBN_fast_s_mp_sqr_TCL_DECLARED
@@ -413,7 +413,7 @@ EXTERN int		TclBN_fast_s_mp_sqr (mp_int* a, mp_int* b);
 #ifndef TclBN_mp_karatsuba_mul_TCL_DECLARED
 #define TclBN_mp_karatsuba_mul_TCL_DECLARED
 /* 53 */
-EXTERN int		TclBN_mp_karatsuba_mul (mp_int* a, mp_int* b,
+EXTERN int		TclBN_mp_karatsuba_mul (mp_int* a, mp_int* b, 
 				mp_int* c);
 #endif
 #ifndef TclBN_mp_karatsuba_sqr_TCL_DECLARED
@@ -439,7 +439,7 @@ EXTERN int		TclBN_s_mp_add (mp_int* a, mp_int* b, mp_int* c);
 #ifndef TclBN_s_mp_mul_digs_TCL_DECLARED
 #define TclBN_s_mp_mul_digs_TCL_DECLARED
 /* 58 */
-EXTERN int		TclBN_s_mp_mul_digs (mp_int* a, mp_int* b, mp_int* c,
+EXTERN int		TclBN_s_mp_mul_digs (mp_int* a, mp_int* b, mp_int* c, 
 				int digs);
 #endif
 #ifndef TclBN_s_mp_sqr_TCL_DECLARED

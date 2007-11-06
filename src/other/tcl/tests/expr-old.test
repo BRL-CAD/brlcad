@@ -421,13 +421,13 @@ test expr-old-21.3 {parenthesization} {expr +(3-4)} -1
 
 # Embedded commands and variable names.
 
-set a 16
-test expr-old-22.1 {embedded variables} {expr {2*$a}} 32
+set a 16 
+test expr-old-22.1 {embedded variables} {expr {2*$a}} 32 
 test expr-old-22.2 {embedded variables} {
     set x -5
     set y 10
     expr {$x + $y}
-} {5}
+} {5} 
 test expr-old-22.3 {embedded variables} {
     set x "  -5"
     set y "  +10"
@@ -1121,7 +1121,7 @@ test expr-old-37.25 {Tcl_ExprDouble and NaN} \
     {ieeeFloatingPoint testexprdouble} {
 	list [catch {testexprdouble 0.0/0.0} result] $result
     } {1 {domain error: argument not in valid range}}
-
+    
 test expr-old-38.1 {Verify Tcl_ExprString's basic operation} -constraints {testexprstring} -body {
     list [testexprstring "1+4"] [testexprstring "2*3+4.2"] \
 	    [catch {testexprstring "1+"} msg] $msg

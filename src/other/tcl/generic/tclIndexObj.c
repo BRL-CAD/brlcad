@@ -449,9 +449,8 @@ Tcl_WrongNumArgs(
 {
     Tcl_Obj *objPtr;
     int i, len, elemLen, flags;
-    register IndexRep *indexRep;
     Interp *iPtr = (Interp *) interp;
-    char *elementStr;
+    const char *elementStr;
 
     /*
      * [incr Tcl] does something fairly horrific when generating error
@@ -521,16 +520,30 @@ Tcl_WrongNumArgs(
 	     * Add the element, quoting it if necessary.
 	     */
 
-	    elementStr = Tcl_GetStringFromObj(origObjv[i], &elemLen);
+	    if (origObjv[i]->typePtr == &indexType) {
+		register IndexRep *indexRep =
+			origObjv[i]->internalRep.otherValuePtr;
+
+		elementStr = EXPAND_OF(indexRep);
+		elemLen = strlen(elementStr);
+	    } else if (origObjv[i]->typePtr == &tclEnsembleCmdType) {
+		register EnsembleCmdRep *ecrPtr =
+			origObjv[i]->internalRep.otherValuePtr;
+
+		elementStr = ecrPtr->fullSubcmdName;
+		elemLen = strlen(elementStr);
+	    } else {
+		elementStr = Tcl_GetStringFromObj(origObjv[i], &elemLen);
+	    }
 	    len = Tcl_ScanCountedElement(elementStr, elemLen, &flags);
 
 	    if (MAY_QUOTE_WORD && len != elemLen) {
-		char *quotedElementStr = TclStackAlloc(interp, (unsigned) len);
+		char *quotedElementStr = TclStackAlloc(interp, (unsigned)len);
 
 		len = Tcl_ConvertCountedElement(elementStr, elemLen,
 			quotedElementStr, flags);
 		Tcl_AppendToObj(objPtr, quotedElementStr, len);
-		TclStackFree(interp);	/* quotedElementStr */
+		TclStackFree(interp, quotedElementStr);
 	    } else {
 		Tcl_AppendToObj(objPtr, elementStr, elemLen);
 	    }
@@ -562,8 +575,14 @@ Tcl_WrongNumArgs(
 	 */
 
 	if (objv[i]->typePtr == &indexType) {
-	    indexRep = (IndexRep *) objv[i]->internalRep.otherValuePtr;
+	    register IndexRep *indexRep = objv[i]->internalRep.otherValuePtr;
+
 	    Tcl_AppendStringsToObj(objPtr, EXPAND_OF(indexRep), NULL);
+	} else if (objv[i]->typePtr == &tclEnsembleCmdType) {
+	    register EnsembleCmdRep *ecrPtr =
+		    objv[i]->internalRep.otherValuePtr;
+
+	    Tcl_AppendStringsToObj(objPtr, ecrPtr->fullSubcmdName, NULL);
 	} else {
 	    /*
 	     * Quote the argument if it contains spaces (Bug 942757).
@@ -578,7 +597,7 @@ Tcl_WrongNumArgs(
 		len = Tcl_ConvertCountedElement(elementStr, elemLen,
 			quotedElementStr, flags);
 		Tcl_AppendToObj(objPtr, quotedElementStr, len);
-		TclStackFree(interp);	/* quotedElementStr */
+		TclStackFree(interp, quotedElementStr);
 	    } else {
 		Tcl_AppendToObj(objPtr, elementStr, elemLen);
 	    }

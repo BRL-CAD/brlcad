@@ -1,4 +1,4 @@
-'\"
+'\" 
 '\" Copyright (c) 2005-2006 Donal K. Fellows
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
@@ -176,7 +176,7 @@ for writing.
 .TP
 \fB\-translation\fR \fImode\fR
 .TP
-\fB\-translation\fR \fB{\fIinMode outMode\fB}\fR
+\fB\-translation\fR \fB{\fIinMode outMode\fB}\fR 
 .
 In Tcl scripts the end of a line is always represented using a single
 newline character (\en).  However, in actual files and devices the end
@@ -216,7 +216,7 @@ all platforms Tcl chooses \fBcrlf\fR, for all Unix flavors, it chooses
 \fBcrlf\fR.  The default setting for \fB\-translation\fR is \fBauto\fR
 for both input and output.
 .TP
-\fBbinary\fR
+\fBbinary\fR 
 .
 No end-of-line translations are performed.  This is nearly identical
 to \fBlf\fR mode, except that in addition \fBbinary\fR mode also sets
@@ -330,6 +330,7 @@ returned as the result of the \fBchan create\fR command, and the
 channel is open. Use either \fBclose\fR or \fBchan close\fR to remove
 the channel.
 .RS
+.PP
 The argument \fImode\fR specifies if the new channel is opened for
 reading, writing, or both. It has to be a list containing any of the
 strings "\fBread\fR" or "\fBwrite\fR". The list must have at least one
@@ -495,9 +496,9 @@ only those channel names that match it (according to the rules of
 .TP
 \fBchan pending \fImode channelId\fR
 .
-Depending on whether \fImode\fR is "input" or "output", returns the number of
-bytes of input or output (respectively) currently buffered
-internally for \fIchannelId\fR (especially useful in a readable event
+Depending on whether \fImode\fR is "input" or "output", returns the number of 
+bytes of input or output (respectively) currently buffered 
+internally for \fIchannelId\fR (especially useful in a readable event 
 callback to impose application-specific limits on input line lengths to avoid
 a potential denial-of-service attack where a hostile user crafts
 an extremely long line that exceeds the available memory to buffer it).
@@ -513,6 +514,7 @@ occurred. The argument has to be a list containing any of the strings
 element as it does not make sense to invoke the command if there are
 no events to post.
 .RS
+.PP
 Note that this subcommand can only be used with channel handles that
 were created/opened by \fBchan create\fR. All other channels will
 cause this subcommand to report an error.
@@ -687,6 +689,7 @@ omitted). The channel is flushed before truncation.
 This opens a file using a known encoding (CP1252, a very common encoding
 on Windows), searches for a string, rewrites that part, and truncates the
 file after a further two lines.
+.PP
 .CS
 set f [open somefile.txt r+]
 \fBchan configure\fR $f -encoding cp1252

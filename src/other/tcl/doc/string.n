@@ -4,9 +4,9 @@
 .\"
 .\" See the file "license.terms" for information on usage and redistribution
 .\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-.\"
+.\" 
 .\" RCS: @(#) $Id$
-.\"
+.\" 
 .so man.macros
 .TH string n 8.1 Tcl "Tcl Built-In Commands"
 .BS
@@ -49,13 +49,13 @@ the first \fIlength\fR characters are used in the comparison.  If
 \fB\-length\fR is negative, it is ignored.  If \fB\-nocase\fR is
 specified, then the strings are compared in a case-insensitive manner.
 .TP
-\fBstring first \fIstring1 string2\fR ?\fIstartIndex\fR?
-Search \fIstring2\fR for a sequence of characters that exactly match
-the characters in \fIstring1\fR.  If found, return the index of the
-first character in the first such match within \fIstring2\fR.  If not
+\fBstring first \fIneedleString haystackString\fR ?\fIstartIndex\fR?
+Search \fIhaystackString\fR for a sequence of characters that exactly match
+the characters in \fIneedleString\fR.  If found, return the index of the
+first character in the first such match within \fIhaystackString\fR.  If not
 found, return \-1.  If \fIstartIndex\fR is specified (in any of the
 forms accepted by the \fBindex\fR method), then the search is
-constrained to start with the character in \fIstring2\fR specified by
+constrained to start with the character in \fIhaystackString\fR specified by
 the index.  For example,
 .RS
 .CS
@@ -88,11 +88,11 @@ The last char of the string minus the specified integer offset \fIN\fR
 The last char of the string plus the specified integer offset \fIN\fR
 (e.g. \fBend\fR+\-1 would refer to the "c" in "abcd").
 .IP \fIM\fR+\fIN\fR 10
-The char specified at the integral index that is the sum of
+The char specified at the integral index that is the sum of 
 integer values \fIM\fR and \fIN\fR
 (e.g. \fB1+1\fR would refer to the "c" in "abcd").
 .IP \fIM\fR\-\fIN\fR 10
-The char specified at the integral index that is the difference of
+The char specified at the integral index that is the difference of 
 integer values \fIM\fR and \fIN\fR
 (e.g. \fB2\-1\fR would refer to the "b" in "abcd").
 .PP
@@ -177,13 +177,13 @@ function will return 0, then the \fIvarname\fR will always be set to
 0, due to the varied nature of a valid boolean value.
 .RE
 .TP
-\fBstring last \fIstring1 string2\fR ?\fIlastIndex\fR?
-Search \fIstring2\fR for a sequence of characters that exactly match
-the characters in \fIstring1\fR.  If found, return the index of the
-first character in the last such match within \fIstring2\fR.  If there
+\fBstring last \fIneedleString haystackString\fR ?\fIlastIndex\fR?
+Search \fIhaystackString\fR for a sequence of characters that exactly match
+the characters in \fIneedleString\fR.  If found, return the index of the
+first character in the last such match within \fIhaystackString\fR.  If there
 is no match, then return \-1.  If \fIlastIndex\fR is specified (in any
 of the forms accepted by the \fBindex\fR method), then only the
-characters in \fIstring2\fR at or before the specified \fIlastIndex\fR
+characters in \fIhaystackString\fR at or before the specified \fIlastIndex\fR
 will be considered by the search.  For example,
 .RS
 .CS

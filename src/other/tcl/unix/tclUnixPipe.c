@@ -485,8 +485,8 @@ TclpCreateProcess(
     for (i = 0; i < argc; i++) {
 	Tcl_DStringFree(&dsArray[i]);
     }
-    TclStackFree(interp);	/* newArgv */
-    TclStackFree(interp); 	/* dsArray */
+    TclStackFree(interp, newArgv);
+    TclStackFree(interp, dsArray);
 
     if (pid == -1) {
 	Tcl_AppendResult(interp, "couldn't fork child process: ",

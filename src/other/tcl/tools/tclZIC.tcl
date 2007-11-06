@@ -989,7 +989,7 @@ proc applyRules {ruleSet year startSecs stdGMTOffset DSTOffset nextGMTOffset
 	set date [::tcl::clock::GetJulianDayFromEraYearMonthDay \
 		[dict create era CE year $year month 1 dayOfMonth 1] 2361222]
 	set startSecs [expr {
-	    [dict get $date julianDay] * wide(86400) - 210866803200
+	    [dict get $date julianDay] * wide(86400) - 210866803200 
 		- $stdGMTOffset - $DSTOffset
 	}]
 

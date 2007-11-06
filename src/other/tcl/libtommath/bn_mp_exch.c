@@ -15,7 +15,7 @@
  * Tom St Denis, tomstdenis@gmail.com, http://math.libtomcrypt.com
  */
 
-/* swap the elements of two integers, for cases where you can't simply swap the
+/* swap the elements of two integers, for cases where you can't simply swap the 
  * mp_int pointers around
  */
 void

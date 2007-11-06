@@ -15,7 +15,7 @@
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2.2
     namespace import -force ::tcltest::*
 }
 
@@ -79,32 +79,26 @@ test apply-2.5 {malformed lambda} {
 
 # Tests for runtime errors in the lambda expression
 
-test apply-3.1 {non-existing namespace} {
-    set lambda [list x {set x 1} ::NONEXIST::FOR::SURE]
-    set res [catch {apply $lambda x} msg]
-    list $res $msg
-} {1 {cannot find namespace "::NONEXIST::FOR::SURE"}}
-test apply-3.2 {non-existing namespace} {
+test apply-3.1 {non-existing namespace} -body {
+    apply [list x {set x 1} ::NONEXIST::FOR::SURE] x
+} -returnCodes error -result {namespace "::NONEXIST::FOR::SURE" not found}
+test apply-3.2 {non-existing namespace} -body {
     namespace eval ::NONEXIST::FOR::SURE {}
     set lambda [list x {set x 1} ::NONEXIST::FOR::SURE]
     apply $lambda x
     namespace delete ::NONEXIST
-    set res [catch {apply $lambda x} msg]
-    list $res $msg
-} {1 {cannot find namespace "::NONEXIST::FOR::SURE"}}
-test apply-3.3 {non-existing namespace} {
-    set lambda [list x {set x 1} NONEXIST::FOR::SURE]
-    set res [catch {apply $lambda x} msg]
-    list $res $msg
-} {1 {cannot find namespace "::NONEXIST::FOR::SURE"}}
-test apply-3.4 {non-existing namespace} {
+    apply $lambda x
+} -returnCodes error -result {namespace "::NONEXIST::FOR::SURE" not found}
+test apply-3.3 {non-existing namespace} -body {
+    apply [list x {set x 1} NONEXIST::FOR::SURE] x
+} -returnCodes error -result {namespace "::NONEXIST::FOR::SURE" not found}
+test apply-3.4 {non-existing namespace} -body {
     namespace eval ::NONEXIST::FOR::SURE {}
     set lambda [list x {set x 1} NONEXIST::FOR::SURE]
     apply $lambda x
     namespace delete ::NONEXIST
-    set res [catch {apply $lambda x} msg]
-    list $res $msg
-} {1 {cannot find namespace "::NONEXIST::FOR::SURE"}}
+    apply $lambda x
+} -returnCodes error -result {namespace "::NONEXIST::FOR::SURE" not found}
 
 test apply-4.1 {error in arguments to lambda expression} {
     set lambda [list x {set x 1}]
@@ -244,7 +238,7 @@ test apply-8.3 {args treatment} {
     apply [list {x args} $applyBody] 1 2 3
 } {{x 1} {args {2 3}}}
 test apply-8.4 {default values} {
-    apply [list {{x 1} {y 2}} $applyBody]
+    apply [list {{x 1} {y 2}} $applyBody] 
 } {{x 1} {y 2}}
 test apply-8.5 {default values} {
     apply [list {{x 1} {y 2}} $applyBody] 3 4

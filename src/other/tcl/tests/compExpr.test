@@ -21,6 +21,9 @@ if {[catch {expr T1()} msg] && $msg eq {invalid command name "tcl::mathfunc::T1"
     testConstraint testmathfunctions 1
 }
 
+# Constrain memory leak tests
+testConstraint memory [llength [info commands memory]]
+
 catch {unset a}
 
 test compExpr-1.1 {TclCompileExpr procedure, successful expr parse and compile} {
@@ -318,6 +321,26 @@ test compExpr-5.9 {CompileMathFuncCall procedure, too many arguments} -body {
 test compExpr-6.1 {LogSyntaxError procedure, error in expr longer than 60 chars} -body {
     expr {(+0123456)*(+0123456)*(+0123456)*(+0123456)*(+0123456)*(+0123456)*(+0123456)/} -1 foo 3
 } -returnCodes error -match glob -result *
+
+test compExpr-7.1 {Memory Leak} -constraints memory -setup {
+    proc getbytes {} {
+	set lines [split [memory info] \n]
+	lindex $lines 3 3
+    }
+} -body {
+    set end [getbytes]
+    for {set i 0} {$i < 5} {incr i} {
+	interp create slave
+	slave eval expr 1+2+3+4+5+6+7+8+9+10+11+12+13
+	interp delete slave
+	set tmp $end
+	set end [getbytes]
+    }
+    set leakedBytes [expr {$end - $tmp}]
+} -cleanup {
+    unset end i tmp
+    rename getbytes {}
+} -result 0
 
 # cleanup
 catch {unset a}

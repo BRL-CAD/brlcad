@@ -6,7 +6,7 @@
 # RCS: @(#) $Id$
 
 AC_INIT(../generic/tcl.h)
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 # The following define is needed when building with Cygwin since newer
 # versions of autoconf incorrectly set SHELL to /bin/bash instead of
@@ -16,7 +16,7 @@ SHELL=/bin/sh
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL="a6"
+TCL_PATCH_LEVEL="b1"
 VER=$TCL_MAJOR_VERSION$TCL_MINOR_VERSION
 
 TCL_DDE_VERSION=1.3
@@ -28,7 +28,7 @@ DDEVER=$TCL_DDE_MAJOR_VERSION$TCL_DDE_MINOR_VERSION
 TCL_REG_VERSION=1.2
 TCL_REG_MAJOR_VERSION=1
 TCL_REG_MINOR_VERSION=2
-TCL_REG_PATCH_LEVEL=""
+TCL_REG_PATCH_LEVEL="1"
 REGVER=$TCL_REG_MAJOR_VERSION$TCL_REG_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -55,6 +55,7 @@ if test "${CFLAGS+set}" != "set" ; then
 fi
 
 AC_PROG_CC
+AC_C_INLINE
 
 # To properly support cross-compilation, one would
 # need to use these tool checks instead of
@@ -145,7 +146,7 @@ fi
 #
 # Check to see if the excpt.h include file provided contains the
 # definition for EXCEPTION_DISPOSITION; if not, which is the case
-# with Cygwin's version as of 2002-04-10, define it to be int,
+# with Cygwin's version as of 2002-04-10, define it to be int, 
 # sufficient for getting the current code to work.
 #
 AC_CACHE_CHECK(for EXCEPTION_DISPOSITION support in include files,
@@ -335,7 +336,7 @@ SC_TCL_CFG_ENCODING
 SC_ENABLE_SHARED
 
 #--------------------------------------------------------------------
-# The statements below define a collection of compile flags.  This
+# The statements below define a collection of compile flags.  This 
 # macro depends on the value of SHARED_BUILD, and should be called
 # after SC_ENABLE_SHARED checks the configure switches.
 #--------------------------------------------------------------------
@@ -343,7 +344,7 @@ SC_ENABLE_SHARED
 SC_CONFIG_CFLAGS
 
 #--------------------------------------------------------------------
-# Set the default compiler switches based on the --enable-symbols
+# Set the default compiler switches based on the --enable-symbols 
 # option.  This macro depends on C flags, and should be called
 # after SC_CONFIG_CFLAGS macro is called.
 #--------------------------------------------------------------------

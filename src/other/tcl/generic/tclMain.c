@@ -527,22 +527,30 @@ Tcl_Main(
 		break;
 	    }
 
-	    if (!TclObjCommandComplete(commandPtr)) {
-		/*
-		 * Add the newline removed by Tcl_GetsObj back to the string.
-		 */
+	    /*
+	     * Add the newline removed by Tcl_GetsObj back to the string.
+	     * Have to add it back before testing completeness, because
+	     * it can make a difference.  [Bug 1775878].
+	     */
 
-		if (Tcl_IsShared(commandPtr)) {
-		    Tcl_DecrRefCount(commandPtr);
-		    commandPtr = Tcl_DuplicateObj(commandPtr);
-		    Tcl_IncrRefCount(commandPtr);
-		}
-		Tcl_AppendToObj(commandPtr, "\n", 1);
+	    if (Tcl_IsShared(commandPtr)) {
+		Tcl_DecrRefCount(commandPtr);
+		commandPtr = Tcl_DuplicateObj(commandPtr);
+		Tcl_IncrRefCount(commandPtr);
+	    }
+	    Tcl_AppendToObj(commandPtr, "\n", 1);
+	    if (!TclObjCommandComplete(commandPtr)) {
 		prompt = PROMPT_CONTINUE;
 		continue;
 	    }
 
 	    prompt = PROMPT_START;
+	    /*
+	     * The final newline is syntactically redundant, and causes
+	     * some error messages troubles deeper in, so lop it back off.
+	     */
+	    Tcl_GetStringFromObj(commandPtr, &length);
+	    Tcl_SetObjLength(commandPtr, --length);
 	    code = Tcl_RecordAndEvalObj(interp, commandPtr, TCL_EVAL_GLOBAL);
 	    inChannel = Tcl_GetStdChannel(TCL_STDIN);
 	    outChannel = Tcl_GetStdChannel(TCL_STDOUT);
@@ -758,17 +766,19 @@ StdinProc(
 	return;
     }
 
+    if (Tcl_IsShared(commandPtr)) {
+	Tcl_DecrRefCount(commandPtr);
+	commandPtr = Tcl_DuplicateObj(commandPtr);
+	Tcl_IncrRefCount(commandPtr);
+    }
+    Tcl_AppendToObj(commandPtr, "\n", 1);
     if (!TclObjCommandComplete(commandPtr)) {
-	if (Tcl_IsShared(commandPtr)) {
-	    Tcl_DecrRefCount(commandPtr);
-	    commandPtr = Tcl_DuplicateObj(commandPtr);
-	    Tcl_IncrRefCount(commandPtr);
-	}
-	Tcl_AppendToObj(commandPtr, "\n", 1);
 	isPtr->prompt = PROMPT_CONTINUE;
 	goto prompt;
     }
     isPtr->prompt = PROMPT_START;
+    Tcl_GetStringFromObj(commandPtr, &length);
+    Tcl_SetObjLength(commandPtr, --length);
 
     /*
      * Disable the stdin channel handler while evaluating the command;

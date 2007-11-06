@@ -88,29 +88,29 @@ test subst-5.4 {command substitutions} {
 } {1 {invalid command name "bogus_command"}}
 test subst-5.5 {command substitutions} {
     set a 0
-    list [catch {subst {[set a 1}} msg] $a $msg
+    list [catch {subst {[set a 1}} msg] $a $msg 
 } {1 0 {missing close-bracket}}
 test subst-5.6 {command substitutions} {
     set a 0
-    list [catch {subst {0[set a 1}} msg] $a $msg
+    list [catch {subst {0[set a 1}} msg] $a $msg 
 } {1 0 {missing close-bracket}}
 test subst-5.7 {command substitutions} {
     set a 0
-    list [catch {subst {0[set a 1; set a 2}} msg] $a $msg
+    list [catch {subst {0[set a 1; set a 2}} msg] $a $msg 
 } {1 1 {missing close-bracket}}
 
 # repeat the tests above simulating cmd line input
 test subst-5.8 {command substitutions} {
     set script {[subst {[set a 1}]}
-    list [catch {exec [info nameofexecutable] << $script} msg] $msg
+    list [catch {exec [info nameofexecutable] << $script} msg] $msg 
 } {1 {missing close-bracket}}
 test subst-5.9 {command substitutions} {
     set script {[subst {0[set a 1}]}
-    list [catch {exec [info nameofexecutable] << $script} msg] $msg
+    list [catch {exec [info nameofexecutable] << $script} msg] $msg 
 } {1 {missing close-bracket}}
 test subst-5.10 {command substitutions} {
     set script {[subst {0[set a 1; set a 2}]}
-    list [catch {exec [info nameofexecutable] << $script} msg] $msg
+    list [catch {exec [info nameofexecutable] << $script} msg] $msg 
 } {1 {missing close-bracket}}
 
 test subst-6.1 {clear the result after command substitution} {

@@ -5,7 +5,7 @@ dnl	to configure the system for the local environment.
 #
 # RCS: @(#) $Id$
 
-dnl	Ensure that the config (auto)headers support is used, then just
+dnl	Ensure that the config (auto)headers support is used, then just 
 dnl	include the configure sources from ../unix:
 
 m4_include(../unix/aclocal.m4)

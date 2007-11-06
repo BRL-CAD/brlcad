@@ -42,11 +42,6 @@ static int		TestbignumobjCmd(ClientData dummy, Tcl_Interp *interp,
 static int		TestbooleanobjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *const objv[]);
-#if 0
-static int		TestconvertobjCmd(ClientData dummy,
-			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
-#endif
 static int		TestdoubleobjCmd(ClientData dummy, Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
 static int		TestindexobjCmd(ClientData dummy, Tcl_Interp *interp,
@@ -97,10 +92,6 @@ TclObjTest_Init(
 	    (ClientData) 0, NULL);
     Tcl_CreateObjCommand(interp, "testbooleanobj", TestbooleanobjCmd,
 	    (ClientData) 0, NULL);
-#if 0
-    Tcl_CreateObjCommand(interp, "testconvertobj", TestconvertobjCmd,
-	    (ClientData) 0, NULL);
-#endif
     Tcl_CreateObjCommand(interp, "testdoubleobj", TestdoubleobjCmd,
 	    (ClientData) 0, NULL);
     Tcl_CreateObjCommand(interp, "testintobj", TestintobjCmd,
@@ -361,62 +352,6 @@ TestbooleanobjCmd(
     }
     return TCL_OK;
 }
-
-#if 0
-/*
- *----------------------------------------------------------------------
- *
- * TestconvertobjCmd --
- *
- *	This function implements the "testconvertobj" command. It is used to
- *	test converting objects to new types.
- *
- * Results:
- *	A standard Tcl object result.
- *
- * Side effects:
- *	Converts objects to new types.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-TestconvertobjCmd(
-    ClientData clientData,	/* Not used. */
-    Tcl_Interp *interp,		/* Current interpreter. */
-    int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
-{
-    char *subCmd;
-    char buf[20];
-
-    if (objc < 3) {
-	wrongNumArgs:
-	Tcl_WrongNumArgs(interp, 1, objv, "option arg ?arg ...?");
-	return TCL_ERROR;
-    }
-
-    subCmd = Tcl_GetString(objv[1]);
-    if (strcmp(subCmd, "double") == 0) {
-	double d;
-
-	if (objc != 3) {
-	    goto wrongNumArgs;
-	}
-	if (Tcl_GetDoubleFromObj(interp, objv[2], &d) != TCL_OK) {
-	    return TCL_ERROR;
-	}
-	sprintf(buf, "%f", d);
-        Tcl_AppendToObj(Tcl_GetObjResult(interp), buf, -1);
-    } else {
-	Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-		"bad option \"", Tcl_GetString(objv[1]),
-		"\": must be double", NULL);
-	return TCL_ERROR;
-    }
-    return TCL_OK;
-}
-#endif
 
 /*
  *----------------------------------------------------------------------

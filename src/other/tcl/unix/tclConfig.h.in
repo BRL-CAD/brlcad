@@ -418,6 +418,9 @@
 /* May we include <dirent2.h>? */
 #undef USE_DIRENT2_H
 
+/* Are we building with DTrace support? */
+#undef USE_DTRACE
+
 /* Should we use FIONBIO? */
 #undef USE_FIONBIO
 
@@ -474,6 +477,12 @@
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
 
 /* Signed integer type wide enough to hold a pointer. */
 #undef intptr_t

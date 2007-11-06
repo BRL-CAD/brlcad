@@ -301,6 +301,27 @@ test ioUtil-3.8 {TclOpenFileChannelDeleteProc: Verify that all procs have been d
     list $err9 $err10 $err11
 } {{"TestOpenFileChannelProc1": could not be deleteed} {"TestOpenFileChannelProc2": could not be deleteed} {"TestOpenFileChannelProc3": could not be deleteed}}
 
+test ioUtil-4.1 {open ... a+ must not use O_APPEND: Bug 1773127} -setup {
+    set f [tcltest::makeFile {} ioutil41.tmp]
+    set fid [open $f wb]
+    puts -nonewline $fid 123
+    close $fid
+} -body {
+    set fid [open $f ab+]
+    puts -nonewline $fid 456
+    seek $fid 2
+    set d [read $fid 2]
+    seek $fid 4
+    puts -nonewline $fid x
+    close $fid
+    set fid [open $f rb]
+    append d [read $fid]
+    close $fid
+    return $d
+} -cleanup {
+    tcltest::removeFile $f
+} -result 341234x6
+
 cd $oldpwd
 
 # cleanup

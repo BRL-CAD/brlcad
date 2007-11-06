@@ -729,7 +729,7 @@ namespace eval ::tcl::test::main {
     } -result "Exit MainLoop\nIn exit\neven 0\n"
 
     test Tcl_Main-5.9 {
-	Tcl_Main: interactive mode: delete interp
+	Tcl_Main: interactive mode: delete interp 
 		-> main loop & exit handlers, but no [exit]
     } -constraints {
 	exec Tcltest
@@ -818,6 +818,20 @@ namespace eval ::tcl::test::main {
 	close $f
 	file delete result
     } -result "Exit MainLoop\nIn exit\neven 0\n"
+
+    test Tcl_Main-5.13 {
+	Bug 1775878
+    } -constraints {
+	exec
+    } -setup {
+	catch {set f [open "|[list [interpreter]]" w+]}
+    } -body {
+	type $f "puts \\"
+	type $f return
+	list [catch {gets $f} line] $line
+    } -cleanup {
+	close $f
+    } -result [list 0 return]
 
     # Tests Tcl_Main-6.*: interactive operations with prompts
 
@@ -1201,6 +1215,21 @@ namespace eval ::tcl::test::main {
 	close $f
 	file delete result
     } -result "1\nExit MainLoop\n"
+
+    test Tcl_Main-8.13 {
+	Bug 1775878
+    } -constraints {
+	exec Tcltest
+    } -setup {
+	catch {set f [open "|[list [interpreter]]" w+]}
+    } -body {
+	exec [interpreter] << "testsetmainloop\nputs \\\npwd\ntestexitmainloop" >& result
+	set f [open result]
+	read $f
+    } -cleanup {
+	close $f
+	file delete result
+    } -result "pwd\nExit MainLoop\n"
 
     # Tests Tcl_Main-9.*: Prompt operations
 

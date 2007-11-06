@@ -39,6 +39,10 @@ set alreadyTotalLoaded [info loaded]
 
 testConstraint teststaticpkg [llength [info commands teststaticpkg]]
 
+# Test load-10.1 requires the 'testsimplefilesystem' command from tcltest
+
+testConstraint testsimplefilesystem \
+	[llength [info commands testsimplefilesystem]]
 
 test load-1.1 {basic errors} {} {
     list [catch {load} msg] $msg
@@ -196,6 +200,12 @@ test load-9.1 {Tcl_StaticPackage, load already-loaded package into another inter
     -result {{{{} Loadninepointone} {{} Tcltest}} {{{} Loadninepointone} {{} Tcltest}}} \
     -cleanup { interp delete child1 ; interp delete child2 }
 
+test load-10.1 {load from vfs} \
+    -constraints [list $dll $loaded testsimplefilesystem] \
+    -setup {set dir [pwd]; cd $testDir; testsimplefilesystem 1} \
+    -body {list [catch {load simplefs:/pkgd$ext pkgd} msg] $msg} \
+    -result {0 {}} \
+    -cleanup {testsimplefilesystem 0; cd $dir; unset dir}
 
 # cleanup
 unset ext

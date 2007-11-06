@@ -1,5 +1,5 @@
 # This file contains a collection of tests for the procedures in the
-# file tclParseExpr.c.  Sourcing this file into Tcl runs the tests and
+# file tclCompExpr.c.  Sourcing this file into Tcl runs the tests and
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
@@ -15,7 +15,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
-# Note that the Tcl expression parser (tclParseExpr.c) does not check
+# Note that the Tcl expression parser (tclCompExpr.c) does not check
 # the semantic validity of the expressions it parses. It does not check,
 # for example, that a math function actually exists, or that the operands
 # of "<<" are integers.
@@ -772,11 +772,11 @@ test parseExpr-21.8 {error messages} -body {
 in expression "0_@_8x";
 looks like invalid octal number}
 test parseExpr-21.9 {error messages} -body {
-    expr {"}
+    expr {"} 
 } -returnCodes error -result {missing "
 in expression """}
 test parseExpr-21.10 {error messages} -body {
-    expr \{
+    expr \{ 
 } -returnCodes error -result "missing close-brace
 in expression \"\{\""
 test parseExpr-21.11 {error messages} -body {
@@ -911,6 +911,97 @@ in expression "...%s" @ 0"
     (parsing expression ""%s...")
     invoked from within
 "expr [format {"%%s" @ 0} [string repeat \u00a7 25]]"} [string repeat \u00a7 10] [string repeat \u00a7 10]]
+test parseExpr-21.42 {error message} -body {
+    expr {123456789012345678901234567890*"abcdefghijklmnopqrstuvwxyz}
+} -returnCodes error -result {missing "
+in expression "...012345678901234567890*"abcdefghijklmnopqrstuv..."}
+test parseExpr-21.43 {error message} -body {
+    expr "123456789012345678901234567890*\"foobar\$\{abcdefghijklmnopqrstuvwxyz\""
+} -returnCodes error -result "missing close-brace for variable name
+in expression \"...8901234567890*\"foobar\$\{abcdefghijklmnopqrstuv...\""
+test parseExpr-21.44 {error message} -body {
+    expr {123456789012345678901234567890*"foo$bar(abcdefghijklmnopqrstuvwxyz"}
+} -returnCodes error -result {missing )
+in expression "...8901234567890*"foo$bar(abcdefghijklmnopqrstuv..."}
+test parseExpr-21.45 {error message} -body {
+    expr {123456789012345678901234567890*"foo$bar([{}abcdefghijklmnopqrstuvwxyz])"}
+} -returnCodes error -result {extra characters after close-brace
+in expression "...234567890*"foo$bar([{}abcdefghijklmnopqrstuv..."}
+test parseExpr-21.46 {error message} -body {
+    expr {123456789012345678901234567890*"foo$bar([""abcdefghijklmnopqrstuvwxyz])"}
+} -returnCodes error -result {extra characters after close-quote
+in expression "...234567890*"foo$bar([""abcdefghijklmnopqrstuv..."}
+test parseExpr-21.47 {error message} -body {
+    expr {123456789012345678901234567890*"foo$bar([abcdefghijklmnopqrstuvwxyz)"}
+} -returnCodes error -result {missing close-bracket
+in expression "...901234567890*"foo$bar([abcdefghijklmnopqrstuv..."}
+test parseExpr-21.48 {error message} -body {
+    expr "123456789012345678901234567890*\"foo\$bar(\[\{abcdefghijklmnopqrstuvwxyz])\""
+} -returnCodes error -result "missing close-brace
+in expression \"...01234567890*\"foo\$bar(\[\{abcdefghijklmnopqrstuv...\""
+
+test parseExpr-21.49 {error message} -body {
+    expr "123456789012345678901234567890*\{abcdefghijklmnopqrstuvwxyz"
+} -returnCodes error -result "missing close-brace
+in expression \"...012345678901234567890*\{abcdefghijklmnopqrstuv...\""
+
+test parseExpr-21.50 {error message} -body {
+    expr {123456789012345678901234567890*$foo(["abcdefghijklmnopqrstuvwxyz])}
+} -returnCodes error -result {missing "
+in expression "...678901234567890*$foo(["abcdefghijklmnopqrstuv..."}
+test parseExpr-21.51 {error message} -body {
+    expr "123456789012345678901234567890*\$\{abcdefghijklmnopqrstuvwxyz"
+} -returnCodes error -result "missing close-brace for variable name
+in expression \"...12345678901234567890*\$\{abcdefghijklmnopqrstuv...\""
+test parseExpr-21.52 {error message} -body {
+    expr {123456789012345678901234567890*$bar(abcdefghijklmnopqrstuvwxyz}
+} -returnCodes error -result {missing )
+in expression "...45678901234567890*$bar(abcdefghijklmnopqrstuv..."}
+test parseExpr-21.53 {error message} -body {
+    expr {123456789012345678901234567890*$bar([{}abcdefghijklmnopqrstuvwxyz])"}
+} -returnCodes error -result {extra characters after close-brace
+in expression "...8901234567890*$bar([{}abcdefghijklmnopqrstuv..."}
+test parseExpr-21.54 {error message} -body {
+    expr {123456789012345678901234567890*$bar([""abcdefghijklmnopqrstuvwxyz])"}
+} -returnCodes error -result {extra characters after close-quote
+in expression "...8901234567890*$bar([""abcdefghijklmnopqrstuv..."}
+test parseExpr-21.55 {error message} -body {
+    expr {123456789012345678901234567890*$bar([abcdefghijklmnopqrstuvwxyz)"}
+} -returnCodes error -result {missing close-bracket
+in expression "...5678901234567890*$bar([abcdefghijklmnopqrstuv..."}
+test parseExpr-21.56 {error message} -body {
+    expr "123456789012345678901234567890*\$bar(\[\{abcdefghijklmnopqrstuvwxyz])"
+} -returnCodes error -result "missing close-brace
+in expression \"...678901234567890*\$bar(\[\{abcdefghijklmnopqrstuv...\""
+
+test parseExpr-21.57 {error message} -body {
+    expr {123456789012345678901234567890*["abcdefghijklmnopqrstuvwxyz]}
+} -returnCodes error -result {missing "
+in expression "...12345678901234567890*["abcdefghijklmnopqrstuv..."}
+test parseExpr-21.58 {error message} -body {
+    expr "123456789012345678901234567890*\[\$\{abcdefghijklmnopqrstuvwxyz]"
+} -returnCodes error -result "missing close-brace for variable name
+in expression \"...2345678901234567890*\[\$\{abcdefghijklmnopqrstuv...\""
+test parseExpr-21.59 {error message} -body {
+    expr {123456789012345678901234567890*[$bar(abcdefghijklmnopqrstuvwxyz]}
+} -returnCodes error -result {missing )
+in expression "...5678901234567890*[$bar(abcdefghijklmnopqrstuv..."}
+test parseExpr-21.60 {error message} -body {
+    expr {123456789012345678901234567890*[{}abcdefghijklmnopqrstuvwxyz]"}
+} -returnCodes error -result {extra characters after close-brace
+in expression "...345678901234567890*[{}abcdefghijklmnopqrstuv..."}
+test parseExpr-21.61 {error message} -body {
+    expr {123456789012345678901234567890*[""abcdefghijklmnopqrstuvwxyz]"}
+} -returnCodes error -result {extra characters after close-quote
+in expression "...345678901234567890*[""abcdefghijklmnopqrstuv..."}
+test parseExpr-21.62 {error message} -body {
+    expr {123456789012345678901234567890*[abcdefghijklmnopqrstuvwxyz"}
+} -returnCodes error -result {missing close-bracket
+in expression "...012345678901234567890*[abcdefghijklmnopqrstuv..."}
+test parseExpr-21.63 {error message} -body {
+    expr "123456789012345678901234567890*\[\{abcdefghijklmnopqrstuvwxyz]"
+} -returnCodes error -result "missing close-brace
+in expression \"...12345678901234567890*\[\{abcdefghijklmnopqrstuv...\""
 
 # cleanup
 ::tcltest::cleanupTests

@@ -52,7 +52,7 @@ test stack-2.1 {maxNestingDepth reached on infinite recursion} {minStack2400} {
 	puts $msg
     }
 } {too many nested evaluations (infinite loop?)}
-
+    
 # Make sure that there is enough stack to run regexp even if we're
 # close to the recursion limit. [Bug 947070] [Patch 746378]
 test stack-3.1 {enough room for regexp near recursion limit} -body {

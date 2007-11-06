@@ -694,20 +694,20 @@ CopyRenameOneFile(
 		 * cross-filesystem copy. We do this through our Tcl library.
 		 */
 
-		Tcl_Obj *copyCommand = Tcl_NewListObj(0, NULL);
+		Tcl_Obj *copyCommand, *cmdObj, *opObj;
 
-		Tcl_IncrRefCount(copyCommand);
-		Tcl_ListObjAppendElement(interp, copyCommand,
-			Tcl_NewStringObj("::tcl::CopyDirectory",-1));
+		TclNewObj(copyCommand);
+		TclNewLiteralStringObj(cmdObj, "::tcl::CopyDirectory");
+		Tcl_ListObjAppendElement(interp, copyCommand, cmdObj);
 		if (copyFlag) {
-		    Tcl_ListObjAppendElement(interp, copyCommand,
-			    Tcl_NewStringObj("copying",-1));
+		    TclNewLiteralStringObj(opObj, "copying");
 		} else {
-		    Tcl_ListObjAppendElement(interp, copyCommand,
-			    Tcl_NewStringObj("renaming",-1));
+		    TclNewLiteralStringObj(opObj, "renaming");
 		}
+		Tcl_ListObjAppendElement(interp, copyCommand, opObj);
 		Tcl_ListObjAppendElement(interp, copyCommand, source);
 		Tcl_ListObjAppendElement(interp, copyCommand, target);
+		Tcl_IncrRefCount(copyCommand);
 		result = Tcl_EvalObjEx(interp, copyCommand,
 			TCL_EVAL_GLOBAL | TCL_EVAL_DIRECT);
 		Tcl_DecrRefCount(copyCommand);
@@ -1112,7 +1112,7 @@ TclFileAttrsCmd(
 	 * Free up the array we allocated.
 	 */
 
-	TclStackFree(interp);	/* attributeStrings */
+	TclStackFree(interp, (void *)attributeStrings);
 
 	/*
 	 * We don't need this object that was passed to us any more.

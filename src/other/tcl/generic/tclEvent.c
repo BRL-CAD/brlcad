@@ -140,13 +140,25 @@ Tcl_BackgroundError(
     Tcl_Interp *interp)		/* Interpreter in which an error has
 				 * occurred. */
 {
+    TclBackgroundException(interp, TCL_ERROR);
+}
+void
+TclBackgroundException(
+    Tcl_Interp *interp,		/* Interpreter in which an exception has
+				 * occurred. */
+    int code)			/* The exception code value */
+{
     BgError *errPtr;
     ErrAssocData *assocPtr;
+
+    if (code == TCL_OK) {
+	return;
+    }
 
     errPtr = (BgError *) ckalloc(sizeof(BgError));
     errPtr->errorMsg = Tcl_GetObjResult(interp);
     Tcl_IncrRefCount(errPtr->errorMsg);
-    errPtr->returnOpts = Tcl_GetReturnOptions(interp, TCL_ERROR);
+    errPtr->returnOpts = Tcl_GetReturnOptions(interp, code);
     Tcl_IncrRefCount(errPtr->returnOpts);
     errPtr->nextPtr = NULL;
 
@@ -297,28 +309,66 @@ TclDefaultBgErrorHandlerObjCmd(
 {
     Tcl_Obj *keyPtr, *valuePtr;
     Tcl_Obj *tempObjv[2];
-    int code;
+    int code, level;
+    Tcl_InterpState saved;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 1, objv, "msg options");
 	return TCL_ERROR;
     }
 
+    /* Construct the bgerror command */
+    TclNewLiteralStringObj(tempObjv[0], "bgerror");
+    Tcl_IncrRefCount(tempObjv[0]);
+
     /*
-     * Restore important state variables to what they were at the time the
-     * error occurred.
-     *
-     * Need to set the variables, not the interp fields, because Tcl_EvalObjv
-     * calls Tcl_ResetResult which would destroy anything we write to the
-     * interp fields.
+     * Determine error message argument.  Check the return options in case
+     * a non-error exception brought us here.
      */
+
+    TclNewLiteralStringObj(keyPtr, "-level");
+    Tcl_IncrRefCount(keyPtr);
+    Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
+    Tcl_DecrRefCount(keyPtr);
+    Tcl_GetIntFromObj(NULL, valuePtr, &level);
+    if (level != 0) {
+	/* We're handling a TCL_RETURN exception */
+	code = TCL_RETURN;
+    } else {
+	TclNewLiteralStringObj(keyPtr, "-code");
+	Tcl_IncrRefCount(keyPtr);
+	Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
+	Tcl_DecrRefCount(keyPtr);
+	Tcl_GetIntFromObj(NULL, valuePtr, &code);
+    }
+    switch (code) {
+    case TCL_ERROR:
+	tempObjv[1] = objv[1];
+	break;
+    case TCL_BREAK:
+	TclNewLiteralStringObj(tempObjv[1],
+		"invoked \"break\" outside of a loop");
+	break;
+    case TCL_CONTINUE:
+	TclNewLiteralStringObj(tempObjv[1],
+		"invoked \"continue\" outside of a loop");
+	break;
+    default:
+	tempObjv[1] = Tcl_ObjPrintf("command returned bad code: %d", code);
+	break;
+    }
+    Tcl_IncrRefCount(tempObjv[1]);
+
+    if (code != TCL_ERROR) {
+	Tcl_SetObjResult(interp, tempObjv[1]);
+    }
 
     TclNewLiteralStringObj(keyPtr, "-errorcode");
     Tcl_IncrRefCount(keyPtr);
     Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
     Tcl_DecrRefCount(keyPtr);
     if (valuePtr) {
-	Tcl_SetVar2Ex(interp, "errorCode", NULL, valuePtr, TCL_GLOBAL_ONLY);
+	Tcl_SetObjErrorCode(interp, valuePtr);
     }
 
     TclNewLiteralStringObj(keyPtr, "-errorinfo");
@@ -326,16 +376,22 @@ TclDefaultBgErrorHandlerObjCmd(
     Tcl_DictObjGet(NULL, objv[2], keyPtr, &valuePtr);
     Tcl_DecrRefCount(keyPtr);
     if (valuePtr) {
-	Tcl_SetVar2Ex(interp, "errorInfo", NULL, valuePtr, TCL_GLOBAL_ONLY);
+	Tcl_IncrRefCount(valuePtr);
+	Tcl_AppendObjToErrorInfo(interp, valuePtr);
+    }
+
+    if (code == TCL_ERROR) {
+	Tcl_SetObjResult(interp, tempObjv[1]);
     }
 
     /*
-     * Create and invoke the bgerror command.
+     * Save interpreter state so we can restore it if multiple handler
+     * attempts are needed.
      */
 
-    TclNewLiteralStringObj(tempObjv[0], "bgerror");
-    Tcl_IncrRefCount(tempObjv[0]);
-    tempObjv[1] = objv[1];
+    saved = Tcl_SaveInterpState(interp, code);
+    
+    /* Invoke the bgerror command. */
     Tcl_AllowExceptions(interp);
     code = Tcl_EvalObjv(interp, 2, tempObjv, TCL_EVAL_GLOBAL);
     if (code == TCL_ERROR) {
@@ -350,7 +406,7 @@ TclDefaultBgErrorHandlerObjCmd(
 	 */
 
 	if (Tcl_IsSafe(interp)) {
-	    Tcl_ResetResult(interp);
+	    Tcl_RestoreInterpState(interp, saved);
 	    TclObjInvoke(interp, 2, tempObjv, TCL_INVOKE_HIDDEN);
 	} else {
 	    Tcl_Channel errChannel = Tcl_GetStdChannel(TCL_STDERR);
@@ -360,15 +416,16 @@ TclDefaultBgErrorHandlerObjCmd(
 		Tcl_IncrRefCount(resultPtr);
 		if (Tcl_FindCommand(interp, "bgerror", NULL,
 			TCL_GLOBAL_ONLY) == NULL) {
-		    if (valuePtr) {
-			Tcl_WriteObj(errChannel, valuePtr);
-			Tcl_WriteChars(errChannel, "\n", -1);
-		    }
+		    Tcl_RestoreInterpState(interp, saved);
+		    Tcl_WriteObj(errChannel, Tcl_GetVar2Ex(interp,
+			    "errorInfo", NULL, TCL_GLOBAL_ONLY));
+		    Tcl_WriteChars(errChannel, "\n", -1);
 		} else {
+		    Tcl_DiscardInterpState(saved);
 		    Tcl_WriteChars(errChannel,
 			    "bgerror failed to handle background error.\n",-1);
 		    Tcl_WriteChars(errChannel, "    Original error: ", -1);
-		    Tcl_WriteObj(errChannel, objv[1]);
+		    Tcl_WriteObj(errChannel, tempObjv[1]);
 		    Tcl_WriteChars(errChannel, "\n", -1);
 		    Tcl_WriteChars(errChannel, "    Error in bgerror: ", -1);
 		    Tcl_WriteObj(errChannel, resultPtr);
@@ -376,11 +433,17 @@ TclDefaultBgErrorHandlerObjCmd(
 		}
 		Tcl_DecrRefCount(resultPtr);
 		Tcl_Flush(errChannel);
+	    } else {
+		Tcl_DiscardInterpState(saved);
 	    }
 	}
 	code = TCL_OK;
+    } else {
+	Tcl_DiscardInterpState(saved);
     }
+
     Tcl_DecrRefCount(tempObjv[0]);
+    Tcl_DecrRefCount(tempObjv[1]);
     Tcl_ResetResult(interp);
     return code;
 }
@@ -458,7 +521,10 @@ TclGetBgErrorHandler(
 	    Tcl_GetAssocData(interp, "tclBgError", NULL);
 
     if (assocPtr == NULL) {
-	TclSetBgErrorHandler(interp, Tcl_NewStringObj("::tcl::Bgerror", -1));
+	Tcl_Obj *bgerrorObj;
+
+	TclNewLiteralStringObj(bgerrorObj, "::tcl::Bgerror");
+	TclSetBgErrorHandler(interp, bgerrorObj);
 	assocPtr = (ErrAssocData *)
 		Tcl_GetAssocData(interp, "tclBgError", NULL);
     }
@@ -888,7 +954,6 @@ Tcl_Finalize(void)
      * after the exit handlers, because there are order dependencies.
      */
 
-    TclFinalizeCompilation();
     TclFinalizeExecution();
     TclFinalizeEnvironment();
 

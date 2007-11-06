@@ -394,10 +394,10 @@ test stringObj-13.3 {Tcl_GetCharLength with byte-size chars} testobj {
     list [string length $a] [string length $a]
 } {6 6}
 test stringObj-13.4 {Tcl_GetCharLength with mixed width chars} testobj {
-    string length "�"
+    string length "�" 
 } 1
 test stringObj-13.5 {Tcl_GetCharLength with mixed width chars} testobj {
-    # string length "￮￮"
+    # string length "￮￮" 
     # Use \uXXXX notation below instead of hardcoding the values, otherwise
     # the test will fail in multibyte locales.
     string length "\u00EF\u00BF\u00AE\u00EF\u00BF\u00AE"

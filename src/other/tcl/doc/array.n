@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH array n 8.3 Tcl "Tcl Built-In Commands"
 .BS
@@ -62,8 +62,8 @@ match \fIpattern\fR (using the matching rules of
 \fBstring match\fR) are included.
 If \fIarrayName\fR isn't the name of an array variable, or if
 the array contains no elements, then an empty list is returned.
-If traces on the array modify the list of elements, the elements
-returned are those that exist both before and after the call to
+If traces on the array modify the list of elements, the elements 
+returned are those that exist both before and after the call to 
 \fBarray get\fR.
 .TP
 \fBarray names \fIarrayName\fR ?\fImode\fR? ?\fIpattern\fR?

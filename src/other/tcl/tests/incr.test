@@ -238,7 +238,7 @@ test incr-1.30 {TclCompileIncrCmd: array var, braced (no subs)} {
     set array(\$foo) 4
     incr {array($foo)}
 } 5
-
+    
 # Check "incr" and computed command names.
 
 test incr-2.0 {incr and computed command names} {

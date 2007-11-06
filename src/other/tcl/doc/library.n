@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
 .so man.macros
 .TH library n "8.0" Tcl "Tcl Built-In Commands"
@@ -136,7 +136,7 @@ as its first characters then it is assumed to be a procedure
 definition and the next word of the line is taken as the
 procedure's name.
 Procedure definitions that don't appear in this way (e.g. they
-have spaces before the \fBproc\fR) will not be indexed.  If your
+have spaces before the \fBproc\fR) will not be indexed.  If your 
 script contains "dangerous" code, such as global initialization
 code or procedure names with special characters like \fB$\fR,
 \fB*\fR, \fB[\fR or \fB]\fR, you are safer using auto_mkindex_old.
@@ -172,7 +172,7 @@ performing the actual auto-loading of functions at runtime.
 This is a standard search procedure for use by extensions during
 their initialization.  They call this procedure to look for their
 script library in several standard directories.
-The last component of the name of the library directory is
+The last component of the name of the library directory is 
 normally \fIbasenameversion\fR
 (e.g., tk8.0), but it might be "library" when in the build hierarchies.
 The \fIinitScript\fR file will be sourced into the interpreter
@@ -270,7 +270,7 @@ a default value is used.
 .TP
 \fBenv(TCLLIBPATH)\fR
 If set, then it must contain a valid Tcl list giving directories to
-search during auto-load operations.  Directories must be specified in
+search during auto-load operations.  Directories must be specified in 
 Tcl format, using "/" as the path separator, regardless of platform.
 This variable is only used when initializing the \fBauto_path\fR variable.
 .TP
@@ -295,4 +295,4 @@ Unix, words are comprised of numbers, letters or underscores.
 info(n), re_syntax(n)
 
 .SH KEYWORDS
-auto-exec, auto-load, library, unknown, word, whitespace
+auto-exec, auto-load, library, unknown, word, whitespace 

@@ -40,7 +40,7 @@ package require Tcl 8.4
 #
 # footer -	info inserted at bottom of each page. Normally read
 #		from the xref.tcl file
-
+	
 # initGlobals --
 #
 # This procedure is invoked to set the initial values of all of the
@@ -122,7 +122,7 @@ proc text string {
     	text [string range $string 0 [expr $pos-1]]
     	tab
     	text [string range $string [expr $pos+1] end]
-	return
+	return    	
     }
     incr charCnt [string length $string]
     regsub -all {&} $string {\&amp;}  string
@@ -130,12 +130,12 @@ proc text string {
     regsub -all {>} $string {\&gt;}  string
     regsub -all \"  $string {\&quot;}  string
     switch $textState {
-	REF {
+	REF { 
 	    if {$inDT eq ""} {
 		set string [insertRef $string]
 	    }
 	}
-	SEE {
+	SEE { 
 	    global NAME_file
 	    foreach i [split $string] {
 		if ![regexp -nocase {^[a-z_]+} [string trim $i] i ] {
@@ -200,7 +200,7 @@ proc macro {name args} {
 	}
 	AS {}				;# next page and previous page
 	br {
-	    lineBreak
+	    lineBreak	
 	}
 	BS {}
 	BE {}
@@ -245,13 +245,13 @@ proc macro {name args} {
 	    set noFillCount 1000000
 	}
 	OP {
-	    global inDT file inPRE
+	    global inDT file inPRE 
 	    if {[llength $args] != 3} {
 		puts stderr "Bad .OP macro: .$name [join $args " "]"
 	    }
 	    nest para DL DT
 	    set inPRE 1
-	    puts -nonewline $file <PRE>
+	    puts -nonewline $file <PRE>				
 	    setTabs 4c
 	    text "Command-Line Name:"
 	    tab
@@ -272,8 +272,8 @@ proc macro {name args} {
 	    font B
 	    text [lindex $args 2]
 	    font R
-	    puts -nonewline $file </PRE>
-	    set inDT "\n<DD>"			;# next newline writes inDT
+	    puts -nonewline $file </PRE>				
+	    set inDT "\n<DD>"			;# next newline writes inDT 
 	    set inPRE 0
 	    newline
 	}
@@ -283,7 +283,7 @@ proc macro {name args} {
 	    newPara
 	}
 	RE {
-	    nest decr
+	    nest decr    
 	}
 	RS {
 	    nest incr
@@ -649,7 +649,7 @@ proc macro2 {name args} {
 #
 # Arguments:
 # name -		Section name.
-# style -		Type of section (optional)
+# style -		Type of section (optional) 
 
 proc SHmacro {argList {style section}} {
     global file noFillCount textState charCnt
@@ -673,7 +673,7 @@ proc SHmacro {argList {style section}} {
 #	? args textState
 
     # control what the text proc does with text
-
+    
     switch $args {
 	NAME {set textState NAME}
 	DESCRIPTION {set textState INSERT}
@@ -749,7 +749,7 @@ proc IPmacro argList {
 proc TPmacro {argList} {
     global inDT
     nest para DL DT
-    set inDT "\n<DD>"			;# next newline writes inDT
+    set inDT "\n<DD>"			;# next newline writes inDT 
     setTabs 0.5i
 }
 
@@ -782,7 +782,7 @@ proc THmacro {argList} {
     puts -nonewline $file "<HTML><HEAD><TITLE>"
     text "$lib - $name ($page)"
     puts $file "</TITLE></HEAD><BODY>\n"
-
+    
     puts -nonewline $file "<H1><CENTER>"
     text $pname
     puts $file "</CENTER></H1>\n"
@@ -801,9 +801,9 @@ proc THmacro {argList} {
 
 proc newPara {} {
     global file nestStk
-
+	
     if {[lindex $nestStk end] ne "NEW"} {
-	nest decr
+	nest decr    
     }
     puts -nonewline $file "<P>"
 }

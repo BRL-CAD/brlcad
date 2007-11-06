@@ -1,4 +1,4 @@
-/*
+/* 
  * tclStubInit.c --
  *
  *	This file contains the initializers for the Tcl stub vectors.
@@ -31,10 +31,8 @@
 #undef Tcl_NewStringObj
 #undef Tcl_DumpActiveMemory
 #undef Tcl_ValidateAllMemory
-#if TCL_PRESERVE_BINARY_COMPATABILITY
-#   undef Tcl_FindHashEntry
-#   undef Tcl_CreateHashEntry
-#endif
+#undef Tcl_FindHashEntry
+#undef Tcl_CreateHashEntry
 
 /*
  * Keep a record of the original Notifier procedures, created in the
@@ -323,6 +321,11 @@ TclIntStubs tclIntStubs = {
     TclPtrMakeUpvar, /* 229 */
     TclObjLookupVar, /* 230 */
     TclGetNamespaceFromObj, /* 231 */
+    TclEvalObjEx, /* 232 */
+    TclGetSrcInfoForPc, /* 233 */
+    TclVarHashCreateVar, /* 234 */
+    TclInitVarHashTable, /* 235 */
+    TclBackgroundException, /* 236 */
 };
 
 TclIntPlatStubs tclIntPlatStubs = {

@@ -1,14 +1,14 @@
 /*
  * pkgua.c --
  *
- *	This file contains a simple Tcl package "pkgua" that is intended
- *	for testing the Tcl dynamic unloading facilities.
+ *	This file contains a simple Tcl package "pkgua" that is intended for
+ *	testing the Tcl dynamic unloading facilities.
  *
  * Copyright (c) 1995 Sun Microsystems, Inc.
  * Copyright (c) 2004 Georgios Petasis
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -19,19 +19,19 @@
  * Prototypes for procedures defined later in this file:
  */
 
-static int    PkguaEqObjCmd _ANSI_ARGS_((ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[]));
-static int    PkguaQuoteObjCmd _ANSI_ARGS_((ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[]));
+static int    PkguaEqObjCmd(ClientData clientData,
+		Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
+static int    PkguaQuoteObjCmd(ClientData clientData,
+		Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 
 /*
- * In the following hash table we are going to store a struct that
- * holds all the command tokens created by Tcl_CreateObjCommand in an
- * interpreter, indexed by the interpreter. In this way, we can find
- * which command tokens we have registered in a specific interpreter,
- * in order to unload them. We need to keep the various command tokens
- * we have registered, as they are the only safe way to unregister our
- * registered commands, even if they have been renamed.
+ * In the following hash table we are going to store a struct that holds all
+ * the command tokens created by Tcl_CreateObjCommand in an interpreter,
+ * indexed by the interpreter. In this way, we can find which command tokens
+ * we have registered in a specific interpreter, in order to unload them. We
+ * need to keep the various command tokens we have registered, as they are the
+ * only safe way to unregister our registered commands, even if they have been
+ * renamed.
  *
  * Note that this code is utterly single-threaded.
  */
@@ -50,7 +50,7 @@ PkguaInitTokensHashTable(void)
     Tcl_InitHashTable(&interpTokenMap, TCL_ONE_WORD_KEYS);
     interpTokenMapInitialised = 1;
 }
-
+
 void
 PkguaFreeTokensHashTable(void)
 {
@@ -63,10 +63,10 @@ PkguaFreeTokensHashTable(void)
     }
     interpTokenMapInitialised = 0;
 }
-
+
 static Tcl_Command *
-PkguaInterpToTokens(interp)
-    Tcl_Interp *interp;
+PkguaInterpToTokens(
+    Tcl_Interp *interp)
 {
     int newEntry;
     Tcl_Command *cmdTokens;
@@ -85,10 +85,10 @@ PkguaInterpToTokens(interp)
     }
     return cmdTokens;
 }
-
+
 static void
-PkguaDeleteTokens(interp)
-    Tcl_Interp *interp;
+PkguaDeleteTokens(
+    Tcl_Interp *interp)
 {
     Tcl_HashEntry *entryPtr =
 	    Tcl_FindHashEntry(&interpTokenMap, (char *) interp);
@@ -104,9 +104,9 @@ PkguaDeleteTokens(interp)
  *
  * PkguaEqObjCmd --
  *
- *	This procedure is invoked to process the "pkgua_eq" Tcl command.
- *	It expects two arguments and returns 1 if they are the same,
- *	0 if they are different.
+ *	This procedure is invoked to process the "pkgua_eq" Tcl command. It
+ *	expects two arguments and returns 1 if they are the same, 0 if they
+ *	are different.
  *
  * Results:
  *	A standard Tcl result.
@@ -118,11 +118,11 @@ PkguaDeleteTokens(interp)
  */
 
 static int
-PkguaEqObjCmd(dummy, interp, objc, objv)
-    ClientData dummy;		/* Not used. */
-    Tcl_Interp *interp;		/* Current interpreter. */
-    int objc;			/* Number of arguments. */
-    Tcl_Obj * CONST objv[];	/* Argument objects. */
+PkguaEqObjCmd(
+    ClientData dummy,		/* Not used. */
+    Tcl_Interp *interp,		/* Current interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     int result;
     CONST char *str1, *str2;
@@ -149,8 +149,8 @@ PkguaEqObjCmd(dummy, interp, objc, objv)
  *
  * PkguaQuoteObjCmd --
  *
- *	This procedure is invoked to process the "pkgua_quote" Tcl command.
- *	It expects one argument, which it returns as result.
+ *	This procedure is invoked to process the "pkgua_quote" Tcl command. It
+ *	expects one argument, which it returns as result.
  *
  * Results:
  *	A standard Tcl result.
@@ -162,11 +162,11 @@ PkguaEqObjCmd(dummy, interp, objc, objv)
  */
 
 static int
-PkguaQuoteObjCmd(dummy, interp, objc, objv)
-    ClientData dummy;		/* Not used. */
-    Tcl_Interp *interp;		/* Current interpreter. */
-    int objc;			/* Number of arguments. */
-    Tcl_Obj * CONST objv[];	/* Argument strings. */
+PkguaQuoteObjCmd(
+    ClientData dummy,		/* Not used. */
+    Tcl_Interp *interp,		/* Current interpreter. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument strings. */
 {
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "value");
@@ -181,8 +181,8 @@ PkguaQuoteObjCmd(dummy, interp, objc, objv)
  *
  * Pkgua_Init --
  *
- *	This is a package initialization procedure, which is called
- *	by Tcl when this package is to be added to an interpreter.
+ *	This is a package initialization procedure, which is called by Tcl
+ *	when this package is to be added to an interpreter.
  *
  * Results:
  *	None.
@@ -194,9 +194,9 @@ PkguaQuoteObjCmd(dummy, interp, objc, objv)
  */
 
 int
-Pkgua_Init(interp)
-    Tcl_Interp *interp;		/* Interpreter in which the package is
-				 * to be made available. */
+Pkgua_Init(
+    Tcl_Interp *interp)		/* Interpreter in which the package is to be
+				 * made available. */
 {
     int code, cmdIndex = 0;
     Tcl_Command *cmdTokens;
@@ -206,8 +206,8 @@ Pkgua_Init(interp)
     }
 
     /*
-     * Initialise our Hash table, where we store the registered
-     * command tokens for each interpreter.
+     * Initialise our Hash table, where we store the registered command tokens
+     * for each interpreter.
      */
 
     PkguaInitTokensHashTable();
@@ -221,11 +221,11 @@ Pkgua_Init(interp)
 
     cmdTokens = PkguaInterpToTokens(interp);
     cmdTokens[cmdIndex++] =
-	Tcl_CreateObjCommand(interp, "pkgua_eq", PkguaEqObjCmd,
-			     (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+	    Tcl_CreateObjCommand(interp, "pkgua_eq", PkguaEqObjCmd,
+		    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
     cmdTokens[cmdIndex++] =
-	Tcl_CreateObjCommand(interp, "pkgua_quote", PkguaQuoteObjCmd,
-			     (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
+	    Tcl_CreateObjCommand(interp, "pkgua_quote", PkguaQuoteObjCmd,
+		    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
     return TCL_OK;
 }
 
@@ -234,8 +234,8 @@ Pkgua_Init(interp)
  *
  * Pkgua_SafeInit --
  *
- *	This is a package initialization procedure, which is called
- *	by Tcl when this package is to be added to an unsafe interpreter.
+ *	This is a package initialization procedure, which is called by Tcl
+ *	when this package is to be added to a safe interpreter.
  *
  * Results:
  *	None.
@@ -247,9 +247,9 @@ Pkgua_Init(interp)
  */
 
 int
-Pkgua_SafeInit(interp)
-    Tcl_Interp *interp;		/* Interpreter in which the package is
-				 * to be made available. */
+Pkgua_SafeInit(
+    Tcl_Interp *interp)		/* Interpreter in which the package is to be
+				 * made available. */
 {
     return Pkgua_Init(interp);
 }
@@ -259,9 +259,8 @@ Pkgua_SafeInit(interp)
  *
  * Pkgua_Unload --
  *
- *	This is a package unloading initialization procedure, which is
- *	called by Tcl when this package is to be unloaded form an
- *	interpreter.
+ *	This is a package unloading initialization procedure, which is called
+ *	by Tcl when this package is to be unloaded from an interpreter.
  *
  * Results:
  *	None.
@@ -273,10 +272,10 @@ Pkgua_SafeInit(interp)
  */
 
 int
-Pkgua_Unload(interp, flags)
-    Tcl_Interp *interp;		/* Interpreter from which the package is
-				 * to be unloaded. */
-    int flags;			/* Flags passed by the unloading mechanism */
+Pkgua_Unload(
+    Tcl_Interp *interp,		/* Interpreter from which the package is to be
+				 * unloaded. */
+    int flags)			/* Flags passed by the unloading mechanism */
 {
     int code, cmdIndex;
     Tcl_Command *cmdTokens = PkguaInterpToTokens(interp);
@@ -297,12 +296,12 @@ Pkgua_Unload(interp, flags)
 
     if (flags == TCL_UNLOAD_DETACH_FROM_PROCESS) {
 	/*
-	 * Tcl is ready to detach this library from the running
-	 * application. We should free all the memory that is not
-	 * related to any interpreter.
+	 * Tcl is ready to detach this library from the running application.
+	 * We should free all the memory that is not related to any
+	 * interpreter.
 	 */
-	PkguaFreeTokensHashTable();
 
+	PkguaFreeTokensHashTable();
 	Tcl_SetVar(interp, "::pkgua_unloaded", ".", TCL_APPEND_VALUE);
     }
     return TCL_OK;
@@ -313,9 +312,8 @@ Pkgua_Unload(interp, flags)
  *
  * Pkgua_SafeUnload --
  *
- *	This is a package unloading initialization procedure, which is
- *	called by Tcl when this package is to be unloaded form an
- *	interpreter.
+ *	This is a package unloading initialization procedure, which is called
+ *	by Tcl when this package is to be unloaded from an interpreter.
  *
  * Results:
  *	None.
@@ -327,10 +325,10 @@ Pkgua_Unload(interp, flags)
  */
 
 int
-Pkgua_SafeUnload(interp, flags)
-    Tcl_Interp *interp;		/* Interpreter from which the package is
-				 * to be unloaded. */
-    int flags;			/* Flags passed by the unloading mechanism */
+Pkgua_SafeUnload(
+    Tcl_Interp *interp,		/* Interpreter from which the package is to be
+				 * unloaded. */
+    int flags)			/* Flags passed by the unloading mechanism */
 {
     return Pkgua_Unload(interp, flags);
 }

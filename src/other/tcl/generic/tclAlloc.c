@@ -44,6 +44,16 @@ typedef unsigned long caddr_t;
 #endif
 
 /*
+ * Alignment for allocated memory.
+ */
+
+#if defined(__APPLE__)
+#define ALLOCALIGN	16
+#else
+#define ALLOCALIGN	8
+#endif
+
+/*
  * The overhead on a block is at least 8 bytes. When free, this space contains
  * a pointer to the next free block, and the bottom two bits must be zero.
  * When in use, the first byte is set to MAGIC, and the second byte is the
@@ -55,17 +65,17 @@ typedef unsigned long caddr_t;
  */
 
 union overhead {
-    union overhead *next;	/* when free */
-    unsigned char padding[8];	/* Ensure the structure is 8-byte aligned. */
+    union overhead *next;		/* when free */
+    unsigned char padding[ALLOCALIGN];	/* align struct to ALLOCALIGN bytes */
     struct {
-	unsigned char magic0;	/* magic number */
-	unsigned char index;	/* bucket # */
-	unsigned char unused;	/* unused */
-	unsigned char magic1;	/* other magic number */
+	unsigned char magic0;		/* magic number */
+	unsigned char index;		/* bucket # */
+	unsigned char unused;		/* unused */
+	unsigned char magic1;		/* other magic number */
 #ifdef RCHECK
-	unsigned short rmagic;	/* range magic number */
-	unsigned long size;	/* actual block size */
-	unsigned short unused2;	/* padding to 8-byte align */
+	unsigned short rmagic;		/* range magic number */
+	unsigned long size;		/* actual block size */
+	unsigned short unused2;		/* padding to 8-byte align */
 #endif
     } ovu;
 #define overMagic0	ovu.magic0
@@ -96,11 +106,12 @@ union overhead {
 
 /*
  * nextf[i] is the pointer to the next free block of size 2^(i+3). The
- * smallest allocatable block is 8 bytes. The overhead information precedes
- * the data area returned to the user.
+ * smallest allocatable block is MINBLOCK bytes. The overhead information
+ * precedes the data area returned to the user.
  */
 
-#define NBUCKETS	13
+#define MINBLOCK	((sizeof(union overhead) + (ALLOCALIGN-1)) & ~(ALLOCALIGN-1))
+#define NBUCKETS	(13 - (MINBLOCK >> 4))
 #define MAXMALLOC	(1<<(NBUCKETS+2))
 static union overhead *nextf[NBUCKETS];
 
@@ -211,7 +222,7 @@ TclInitAlloc(void)
 void
 TclFinalizeAllocSubsystem(void)
 {
-    int i;
+    unsigned int i;
     struct block *blockPtr, *nextPtr;
 
     Tcl_MutexLock(allocMutexPtr);
@@ -319,13 +330,8 @@ TclpAlloc(
      * for accounting.
      */
 
-#ifndef RCHECK
-    amount = 8;		/* size of first bucket */
-    bucket = 0;
-#else
-    amount = 16;	/* size of first bucket */
-    bucket = 1;
-#endif
+    amount = MINBLOCK;		/* size of first bucket */
+    bucket = MINBLOCK >> 4;
 
     while (numBytes + OVERHEAD > amount) {
 	amount <<= 1;

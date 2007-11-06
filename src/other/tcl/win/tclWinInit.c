@@ -499,7 +499,7 @@ TclpSetVariables(
 {
     CONST char *ptr;
     char buffer[TCL_INTEGER_SPACE * 2];
-    SYSTEM_INFO sysInfo;
+    SYSTEM_INFO sysInfo, *sysInfoPtr = &sysInfo;
     OemId *oemId;
     OSVERSIONINFOA osInfo;
     Tcl_DString ds;
@@ -512,7 +512,7 @@ TclpSetVariables(
     osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
     GetVersionExA(&osInfo);
 
-    oemId = (OemId *) &sysInfo;
+    oemId = (OemId *) sysInfoPtr;
     GetSystemInfo(&sysInfo);
 
     /*

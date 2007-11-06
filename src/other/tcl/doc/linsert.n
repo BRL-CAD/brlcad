@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH linsert n 8.2 Tcl "Tcl Built-In Commands"
 .BS
@@ -24,7 +24,7 @@ This command produces a new list from \fIlist\fR by inserting all of the
 \fIelement\fR arguments just before the \fIindex\fR'th element of
 \fIlist\fR.  Each \fIelement\fR argument will become a separate element of
 the new list.  If \fIindex\fR is less than or equal to zero, then the new
-elements are inserted at the beginning of the list.
+elements are inserted at the beginning of the list.  
 .VS 8.5
 The interpretation of the \fIindex\fR value is the same as
 for the command \fBstring index\fR, supporting simple index
@@ -42,7 +42,7 @@ set newerList [\fBlinsert\fR [\fBlinsert\fR $oldList end-1 quick] 1 lazy]
 .CE
 
 .SH "SEE ALSO"
-list(n), lappend(n), lindex(n), llength(n), lsearch(n),
+list(n), lappend(n), lindex(n), llength(n), lsearch(n), 
 lset(n), lsort(n), lrange(n), lreplace(n),
 .VS 8.5
 string(n)

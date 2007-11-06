@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tcl_CreateObjCommand 3 8.0 Tcl "Tcl Library Procedures"
 .BS
@@ -150,7 +150,7 @@ However, if the existing command was created by a previous call to
 but instead arranges for the Tcl interpreter to call the
 \fBTcl_ObjCmdProc\fR \fIproc\fR in the future.
 The old string-based \fBTcl_CmdProc\fR associated with the command
-is retained and its address can be obtained by subsequent
+is retained and its address can be obtained by subsequent 
 \fBTcl_GetCommandInfo\fR calls. This is done for backwards compatibility.
 .PP
 \fIDeleteProc\fR will be invoked when (if) \fIname\fR is deleted.
@@ -284,7 +284,7 @@ command isn't deleted or renamed;  callers should copy the string if
 they need to keep it for a long time.
 .PP
 \fBTcl_GetCommandFullName\fR produces the fully qualified name
-of a command from a command token.
+of a command from a command token.  
 The name, including all namespace prefixes,
 is appended to the object specified by \fIobjPtr\fR.
 .PP

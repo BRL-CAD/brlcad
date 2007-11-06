@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH lindex n 8.4 Tcl "Tcl Built-In Commands"
 .BS
@@ -47,7 +47,7 @@ If \fIindex\fR is negative or greater than or equal to the number
 of elements in \fIvalue\fR, then an empty
 string is returned.
 .VS 8.5
-The interpretation of each simple \fIindex\fR value is the same as
+The interpretation of each simple \fIindex\fR value is the same as 
 for the command \fBstring index\fR, supporting simple index
 arithmetic and indices relative to the end of the list.
 .VE 8.5
@@ -80,7 +80,7 @@ lindex [lindex [lindex $a 1] 2] 3
 \fBlindex\fR {{{a b} {c d}} {{e f} {g h}}} {1 1 0} \fI=> g\fR
 .CE
 .SH "SEE ALSO"
-list(n), lappend(n), linsert(n), llength(n), lsearch(n),
+list(n), lappend(n), linsert(n), llength(n), lsearch(n), 
 lset(n), lsort(n), lrange(n), lreplace(n),
 .VS 8.5
 string(n)

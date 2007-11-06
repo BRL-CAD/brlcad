@@ -415,7 +415,8 @@ TclpInitPlatform(void)
     /*
      * Find local symbols. Don't report an error if we fail.
      */
-    (void) dlopen (NULL, RTLD_NOW);			/* INTL: Native. */
+
+    (void) dlopen(NULL, RTLD_NOW);			/* INTL: Native. */
 #endif
 
     /*
@@ -441,6 +442,7 @@ TclpInitPlatform(void)
 #ifdef GET_DARWIN_RELEASE
     {
 	struct utsname name;
+
 	if (!uname(&name)) {
 	    tclMacOSXDarwinRelease = strtol(name.release, NULL, 10);
 	}
@@ -762,7 +764,6 @@ TclpSetVariables(
     struct utsname name;
 #endif
     int unameOK;
-    CONST char *user;
     Tcl_DString ds;
 
 #ifdef HAVE_COREFOUNDATION
@@ -772,8 +773,9 @@ TclpSetVariables(
     /*
      * Set msgcat fallback locale to current CFLocale identifier.
      */
-    CFLocaleRef localeRef;
 
+    CFLocaleRef localeRef;
+    
     if (CFLocaleCopyCurrent != NULL && CFLocaleGetIdentifier != NULL &&
 	    (localeRef = CFLocaleCopyCurrent())) {
 	CFStringRef locale = CFLocaleGetIdentifier(localeRef);
@@ -790,11 +792,10 @@ TclpSetVariables(
 	}
 	CFRelease(localeRef);
     }
-#endif
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED > 1020 */
 
     if (MacOSXGetLibraryPath(interp, MAXPATHLEN, tclLibPath) == TCL_OK) {
 	CONST char *str;
-	Tcl_DString ds;
 	CFBundleRef bundleRef;
 
 	Tcl_SetVar(interp, "tclDefaultLibrary", tclLibPath, TCL_GLOBAL_ONLY);
@@ -912,12 +913,12 @@ TclpSetVariables(
 	    Tcl_SetVar2(interp, "tcl_platform", "osVersion", name.release,
 		    TCL_GLOBAL_ONLY|TCL_APPEND_VALUE);
 
-#endif
+#endif /* DJGPP */
 	}
 	Tcl_SetVar2(interp, "tcl_platform", "machine", name.machine,
 		TCL_GLOBAL_ONLY);
     }
-#endif
+#endif /* !NO_UNAME */
     if (!unameOK) {
 	Tcl_SetVar2(interp, "tcl_platform", "os", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, "tcl_platform", "osVersion", "", TCL_GLOBAL_ONLY);
@@ -925,19 +926,24 @@ TclpSetVariables(
     }
 
     /*
-     * Copy USER or LOGNAME environment variable into tcl_platform(user).
+     * Copy the username of the real user (according to getuid()) into
+     * tcl_platform(user).
      */
 
-    Tcl_DStringInit(&ds);
-    user = TclGetEnv("USER", &ds);
-    if (user == NULL) {
-	user = TclGetEnv("LOGNAME", &ds);
-	if (user == NULL) {
+    {
+	struct passwd *pwEnt = TclpGetPwUid(getuid());
+	const char *user;
+
+	if (pwEnt == NULL) {
 	    user = "";
+	    Tcl_DStringInit(&ds);	/* ensure cleanliness */
+	} else {
+	    user = Tcl_ExternalToUtfDString(NULL, pwEnt->pw_name, -1, &ds);
 	}
+
+	Tcl_SetVar2(interp, "tcl_platform", "user", user, TCL_GLOBAL_ONLY);
+	Tcl_DStringFree(&ds);
     }
-    Tcl_SetVar2(interp, "tcl_platform", "user", user, TCL_GLOBAL_ONLY);
-    Tcl_DStringFree(&ds);
 }
 
 /*

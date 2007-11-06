@@ -906,15 +906,19 @@ Tcl_ResetResult(
     iPtr->resultSpace[0] = 0;
     if (iPtr->errorCode) {
 	/* Legacy support */
-	Tcl_ObjSetVar2(interp, iPtr->ecVar, NULL,
-		iPtr->errorCode, TCL_GLOBAL_ONLY);
+	if (iPtr->flags & ERR_LEGACY_COPY) {
+	    Tcl_ObjSetVar2(interp, iPtr->ecVar, NULL,
+		    iPtr->errorCode, TCL_GLOBAL_ONLY);
+	}
 	Tcl_DecrRefCount(iPtr->errorCode);
 	iPtr->errorCode = NULL;
     }
     if (iPtr->errorInfo) {
 	/* Legacy support */
-	Tcl_ObjSetVar2(interp, iPtr->eiVar, NULL,
-		iPtr->errorInfo, TCL_GLOBAL_ONLY);
+	if (iPtr->flags & ERR_LEGACY_COPY) {
+	    Tcl_ObjSetVar2(interp, iPtr->eiVar, NULL,
+		    iPtr->errorInfo, TCL_GLOBAL_ONLY);
+	}
 	Tcl_DecrRefCount(iPtr->errorInfo);
 	iPtr->errorInfo = NULL;
     }
@@ -924,7 +928,7 @@ Tcl_ResetResult(
 	Tcl_DecrRefCount(iPtr->returnOpts);
 	iPtr->returnOpts = NULL;
     }
-    iPtr->flags &= ~ERR_ALREADY_LOGGED;
+    iPtr->flags &= ~(ERR_ALREADY_LOGGED | ERR_LEGACY_COPY);
 }
 
 /*
@@ -1237,6 +1241,9 @@ TclProcessReturn(
 	iPtr->returnCode = code;
 	return TCL_RETURN;
     }
+    if (code == TCL_ERROR) {
+	iPtr->flags |= ERR_LEGACY_COPY;
+    }
     return code;
 }
 
@@ -1445,14 +1452,13 @@ Tcl_GetReturnOptions(
     }
 
     if (result == TCL_ERROR) {
-	/*
-	 * When result was an error, fill in any missing values for
-	 * -errorinfo, -errorcode, and -errorline.
-	 */
-
 	Tcl_AddObjErrorInfo(interp, "", -1);
-	Tcl_DictObjPut(NULL, options, keys[KEY_ERRORINFO], iPtr->errorInfo);
+    }
+    if (iPtr->errorCode) {
 	Tcl_DictObjPut(NULL, options, keys[KEY_ERRORCODE], iPtr->errorCode);
+    }
+    if (iPtr->errorInfo) {
+	Tcl_DictObjPut(NULL, options, keys[KEY_ERRORINFO], iPtr->errorInfo);
 	Tcl_DictObjPut(NULL, options, keys[KEY_ERRORLINE],
 		Tcl_NewIntObj(iPtr->errorLine));
     }

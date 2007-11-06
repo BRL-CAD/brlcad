@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Threads 3 "8.1" Tcl "Tcl Library Procedures"
 .BS
@@ -128,7 +128,7 @@ will cause a memory leak.
 .PP
 The \fBTcl_GetThreadData\fR call returns a pointer to a block of
 thread-private data.  Its argument is a key that is shared by all threads
-and a size for the block of storage.  The storage is automatically
+and a size for the block of storage.  The storage is automatically 
 allocated and initialized to all zeros the first time each thread asks for it.
 The storage is automatically deallocated by \fBTcl_FinalizeThread\fR.
 .SS "SYNCHRONIZATION AND COMMUNICATION"

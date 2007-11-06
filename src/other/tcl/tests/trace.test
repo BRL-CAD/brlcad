@@ -165,30 +165,30 @@ test trace-1.10 {trace variable reads} {
 } {}
 test trace-1.11 {read traces that modify the array structure} {
     catch {unset x}
-    set x(bar) 0
-    trace variable x r {set x(foo) 1 ;#}
-    trace variable x r {unset -nocomplain x(bar) ;#}
+    set x(bar) 0 
+    trace variable x r {set x(foo) 1 ;#} 
+    trace variable x r {unset -nocomplain x(bar) ;#} 
     array get x
 } {}
 test trace-1.12 {read traces that modify the array structure} {
     catch {unset x}
-    set x(bar) 0
-    trace variable x r {unset -nocomplain x(bar) ;#}
-    trace variable x r {set x(foo) 1 ;#}
+    set x(bar) 0 
+    trace variable x r {unset -nocomplain x(bar) ;#} 
+    trace variable x r {set x(foo) 1 ;#} 
     array get x
 } {}
 test trace-1.13 {read traces that modify the array structure} {
     catch {unset x}
-    set x(bar) 0
-    trace variable x r {set x(foo) 1 ;#}
-    trace variable x r {unset -nocomplain x;#}
+    set x(bar) 0 
+    trace variable x r {set x(foo) 1 ;#} 
+    trace variable x r {unset -nocomplain x;#} 
     list [catch {array get x} res] $res
 } {1 {can't read "x(bar)": no such variable}}
 test trace-1.14 {read traces that modify the array structure} {
     catch {unset x}
-    set x(bar) 0
-    trace variable x r {unset -nocomplain x;#}
-    trace variable x r {set x(foo) 1 ;#}
+    set x(bar) 0 
+    trace variable x r {unset -nocomplain x;#} 
+    trace variable x r {set x(foo) 1 ;#} 
     list [catch {array get x} res] $res
 } {1 {can't read "x(bar)": no such variable}}
 
@@ -231,6 +231,34 @@ test trace-2.5 {trace variable writes} {
     unset x
     set info
 } {}
+test trace-2.6 {trace variable writes on compiled local} {
+    #
+    # Check correct function of whole array traces on compiled local
+    # arrays [Bug 1770591]. The corresponding function for read traces is
+    # already indirectly tested in trace-1.7
+    #
+    catch {unset x}
+    set info {}
+    proc p {} {
+	trace add variable x write traceArray
+	set x(X) willy
+    }
+    p
+    set info
+} {x X write 0 willy}
+test trace-2.7 {trace variable writes on errorInfo} -body {
+   #
+   # Check correct behaviour of write traces on errorInfo.
+   # [Bug 1773040]
+   trace add variable ::errorInfo write traceScalar
+   catch {set dne}
+   lrange [set info] 0 2
+} -cleanup {
+   # always remove trace on errorInfo otherwise further tests will fail
+   unset ::errorInfo
+} -result {::errorInfo {} write}
+
+
 
 # append no longer triggers read traces when fetching the old values of
 # variables before doing the append operation. However, lappend _does_
@@ -392,7 +420,7 @@ test trace-5.8 {array traces fire for undefined variables} {
     trace add variable x array {set x(foo) 1 ;#}
     set res "names: [array names x]"
 } {names: foo}
-
+    
 # Trace multiple trace types at once.
 
 test trace-6.1 {multiple ops traced at once} {
@@ -740,7 +768,7 @@ test trace-13.1 {delete one trace from another} {
     trace add variable x read {traceTag 2}
     trace add variable x read {traceTag 3}
     trace add variable x read {traceTag 4}
-    trace add variable x read delTraces
+    trace add variable x read delTraces 
     trace add variable x read {traceTag 5}
     set x
     set info
@@ -845,7 +873,7 @@ test trace-14.5 {trace command, invalid option} {
 } [list 1 "bad option \"gorp\": must be add, info, remove, variable, vdelete, or vinfo"]
 
 # Again, [trace ... command] and [trace ... variable] share syntax and
-# error message styles for their opList options; these loops test those
+# error message styles for their opList options; these loops test those 
 # error messages.
 
 set i 0
@@ -2037,7 +2065,7 @@ foo foo 0 1 leave}
 test trace-28.2 {exec traces with 'error'} {
     set info {}
     set res {}
-
+    
     proc foo {} {
 	if {[catch {bar}]} {
 	    return "error"
@@ -2059,7 +2087,7 @@ test trace-28.2 {exec traces with 'error'} {
 
     trace remove execution foo {enter enterstep leave leavestep} \
       [list traceExecute foo]
-
+    
     list $res [join $info \n]
 } {{error error} {foo foo enter
 foo {if {[catch {bar}]} {
@@ -2085,7 +2113,7 @@ foo foo 0 error leave}}
 test trace-28.3 {exec traces with 'return -code error'} {
     set info {}
     set res {}
-
+    
     proc foo {} {
 	if {[catch {bar}]} {
 	    return "error"
@@ -2107,7 +2135,7 @@ test trace-28.3 {exec traces with 'return -code error'} {
 
     trace remove execution foo {enter enterstep leave leavestep} \
       [list traceExecute foo]
-
+    
     list $res [join $info \n]
 } {{error error} {foo foo enter
 foo {if {[catch {bar}]} {
@@ -2137,7 +2165,7 @@ test trace-28.4 {exec traces in slave with 'return -code error'} {
     set res [interp eval slave {
 	set info {}
 	set res {}
-
+	
 	proc foo {} {
 	    if {[catch {bar}]} {
 		return "error"
@@ -2145,21 +2173,21 @@ test trace-28.4 {exec traces in slave with 'return -code error'} {
 		return "ok"
 	    }
 	}
-
+	
 	proc bar {} { return -code error "msg" }
-
+	
 	lappend res [foo]
-
+	
 	trace add execution foo {enter enterstep leave leavestep} \
 	  [list traceExecute foo]
-
+	
 	# With the trace active
-
+	
 	lappend res [foo]
-
+	
 	trace remove execution foo {enter enterstep leave leavestep} \
 	  [list traceExecute foo]
-
+	
 	list $res
     }]
     interp delete slave
@@ -2249,7 +2277,7 @@ test trace-29.1 {Tcl_CreateTrace, correct command and argc/argv arguments of tra
 } {{expr 14 + 16} {expr 14 + 16} {set stuff [expr 14 + 16]} {set stuff 30}}
 test trace-29.2 {Tcl_CreateTrace, correct command and argc/argv arguments of trace proc} {testcmdtrace} {
     testcmdtrace tracetest {set stuff [info tclversion]}
-} [list {info tclversion} {info tclversion} {set stuff [info tclversion]} "set stuff [info tclversion]"]
+} [concat {{info tclversion} {info tclversion} ::tcl::Info_tclversion {::tcl::Info_tclversion} {set stuff [info tclversion]}} [list "set stuff [info tclversion]"]]
 test trace-29.3 {Tcl_CreateTrace, correct command and argc/argv arguments of trace proc} {testcmdtrace} {
     testcmdtrace deletetest {set stuff [info tclversion]}
 } [info tclversion]
@@ -2305,6 +2333,10 @@ test trace-29.10 {Tcl_CreateTrace, correct level interpretation} {testcmdtrace} 
     proc fascinating {} {}
     testcmdtrace leveltest {foo}
 } {foo {foo} {uplevel 1 bar} {uplevel 1 bar} bar {bar} {uplevel 1 grok} {uplevel 1 grok}}
+
+test trace-29.11 {Tcl_CreateTrace, multiple traces} {testcmdtrace} {
+    testcmdtrace doubletest {format xx}
+} {{format xx} {format xx}}
 
 test trace-30.1 {Tcl_DeleteTrace} {emptyTest} {
     # the above tests have tested Tcl_DeleteTrace
@@ -2465,14 +2497,83 @@ test trace-35.1 {527164: Keep -errorinfo of traces} -setup {
 "set y 1"}}
 
 
+#
+# Test for the correct(?) dynamics of execution traces. This test insures that
+# the dynamics of the original implementation remain valid; note that
+# these aspects are neither documented nor do they appear in TIP 62
+
+proc traceproc {tracevar args} {
+    append ::$tracevar *
+}
+proc untraced {type} {
+    trace add execution untraced $type {traceproc tracevar}
+    append ::tracevar -
+}
+proc runbase {results base} {
+    set tt {enter leave enterstep leavestep}
+    foreach n {1 2 3 4} t $tt r $results {
+	eval [subst $base]
+    }
+}
+set base {
+    test trace-36.$n {dynamic trace creation: $t} -setup {
+	set ::tracevar {}
+    } -cleanup {
+	unset ::tracevar
+	trace remove execution untraced $t {traceproc tracevar}
+    } -body {
+	untraced $t
+	set ::tracevar
+    } -result {$r}
+}
+runbase {- - - -} $base
+
+set base {
+    test trace-37.$n {dynamic trace addition: $t} -setup {
+	set ::tracevar {}
+	set ::tracevar2 {}
+	trace add execution untraced enter {traceproc tracevar2}
+    } -cleanup {
+	trace remove execution untraced $t {traceproc tracevar}
+	trace remove execution untraced enter {traceproc tracevar2}
+	unset ::tracevar ::tracevar2
+    } -body {
+	untraced $t
+	list \$::tracevar \$::tracevar2
+    } -result {$r}
+}
+runbase {{- *} {-* *} {- *} {- *}} $base
+
+set base {
+    test trace-38.$n {dynamic trace addition: $t} -setup {
+	set ::tracevar {}
+	set ::tracevar2 {}
+	trace add execution untraced leave {traceproc tracevar2}
+    } -cleanup {
+	trace remove execution untraced $t {traceproc tracevar}
+	trace remove execution untraced leave {traceproc tracevar2}
+	unset ::tracevar ::tracevar2
+    } -body {
+	untraced $t
+	list \$::tracevar \$::tracevar2
+    } -result {$r}
+}
+runbase {{- *} {-* *} {- *} {- *}} $base
+
+
+
 # Delete procedures when done, so we don't clash with other tests
 # (e.g. foobar will clash with 'unknown' tests).
 catch {rename foobar {}}
 catch {rename foo {}}
 catch {rename bar {}}
+catch {rename untraced {}}
+catch {rename traceproc {}}
+catch {rename runbase {}}
 
-# Unset the varaible when done
+# Unset the variable when done
 catch {unset info}
+catch {unset base}
 
 # cleanup
 ::tcltest::cleanupTests

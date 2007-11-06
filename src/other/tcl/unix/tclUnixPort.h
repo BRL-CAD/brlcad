@@ -484,10 +484,16 @@ extern int errno;
  * Variables provided by the C library:
  */
 
-#if defined(_sgi) || defined(__sgi) || (defined(__APPLE__) && defined(__DYNAMIC__))
-#   define environ _environ
-#endif
+#if defined(__APPLE__) && defined(__DYNAMIC__)
+#   include <crt_externs.h>
+#   define environ (*_NSGetEnviron())
+#   define USE_PUTENV 1
+#else
+#   if defined(_sgi) || defined(__sgi)
+#       define environ _environ
+#   endif
 extern char **environ;
+#endif
 
 /*
  * At present (12/91) not all stdlib.h implementations declare strtod.
@@ -590,8 +596,8 @@ extern double strtod();
 
 /*
  *---------------------------------------------------------------------------
- * The following macros and declarations represent the interface between
- * generic and unix-specific parts of Tcl.  Some of the macros may override
+ * The following macros and declarations represent the interface between 
+ * generic and unix-specific parts of Tcl.  Some of the macros may override 
  * functions declared in tclInt.h.
  *---------------------------------------------------------------------------
  */
@@ -608,7 +614,7 @@ typedef int socklen_t;
 #endif
 
 /*
- * The following macros have trivial definitions, allowing generic code to
+ * The following macros have trivial definitions, allowing generic code to 
  * address platform-specific issues.
  */
 
@@ -663,7 +669,7 @@ EXTERN int pthread_getattr_np _ANSI_ARGS_((pthread_t, pthread_attr_t *));
  * known-to-be-MT-unsafe library calls.
  * Instead of returning pointers to the
  * static storage, those return pointers
- * to the TSD data.
+ * to the TSD data. 
  */
 
 #include <pwd.h>

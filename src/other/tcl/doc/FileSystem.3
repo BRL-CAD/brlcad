@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Filesystem 3 8.4 Tcl "Tcl Library Procedures"
 .BS
@@ -376,8 +376,8 @@ directory for all files which match a given pattern.  The appropriate
 function for the filesystem to which \fIpathPtr\fR belongs will be called.
 .PP
 The return value is a standard Tcl result indicating whether an error
-occurred in globbing.  Error messages are placed in interp (unless
-interp is NULL, which is allowed), but good results are placed in the
+occurred in globbing.  Error messages are placed in interp (unless 
+interp is NULL, which is allowed), but good results are placed in the 
 resultPtr given.
 .PP
 Note that the \fBglob\fR code implements recursive patterns internally, so
@@ -1098,8 +1098,8 @@ not, so code should be flexible to both possibilities.
 The return value is a standard Tcl result indicating whether an error
 occurred in the matching process.  Error messages are placed in
 \fIinterp\fR, unless \fIinterp\fR in NULL in which case no error
-message need be generated; on a \fBTCL_OK\fR result, results should be
-added to the \fIresultPtr\fR object given (which can be assumed to be a
+message need be generated; on a \fBTCL_OK\fR result, results should be 
+added to the \fIresultPtr\fR object given (which can be assumed to be a 
 valid unshared Tcl list).  The matches added
 to \fIresultPtr\fR should include any path prefix given in \fIpathPtr\fR
 (this usually means they will be absolute path specifications).
@@ -1107,7 +1107,7 @@ Note that if no matches are found, that simply leads to an empty
 result; errors are only signaled for actual file or filesystem
 problems which may occur during the matching process.
 .PP
-The \fBTcl_GlobTypeData\fR structure passed in the \fItypes\fR
+The \fBTcl_GlobTypeData\fR structure passed in the \fItypes\fR 
 parameter contains the following fields:
 .CS
 typedef struct Tcl_GlobTypeData {
@@ -1438,7 +1438,7 @@ cleanup action required.
 typedef void Tcl_FSUnloadFileProc(
         Tcl_LoadHandle \fIloadHandle\fR);
 .CE
-.SS GETCWDPROC
+.SS GETCWDPROC     
 .PP
 Function to process a \fBTcl_FSGetCwd\fR call.  Most filesystems need not
 implement this.  It will usually only be called once, if \fBgetcwd\fR is

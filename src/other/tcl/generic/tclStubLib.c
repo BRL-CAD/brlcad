@@ -28,15 +28,8 @@
 #include "tclInt.h"
 
 /*
- * Ensure that Tcl_InitStubs is built as an exported symbol. The other stub
- * symbols should be built as non-exported symbols.
+ * Tcl_InitStubs and stub table pointers are built as exported symbols.
  */
-
-MODULE_SCOPE TclStubs *tclStubsPtr;
-MODULE_SCOPE TclPlatStubs *tclPlatStubsPtr;
-MODULE_SCOPE TclIntStubs *tclIntStubsPtr;
-MODULE_SCOPE TclIntPlatStubs *tclIntPlatStubsPtr;
-MODULE_SCOPE TclTomMathStubs *tclTomMathStubsPtr;
 
 TclStubs *tclStubsPtr = NULL;
 TclPlatStubs *tclPlatStubsPtr = NULL;
@@ -61,6 +54,15 @@ HasStubSupport(
 }
 
 /*
+ * Use our own isdigit to avoid linking to libc on windows
+ */
+
+static int isDigit(const int c)
+{
+    return (c >= '0' && c <= '9');
+}
+
+/*
  *----------------------------------------------------------------------
  *
  * Tcl_InitStubs --
@@ -82,7 +84,7 @@ HasStubSupport(
 #undef Tcl_InitStubs
 #endif
 
-MODULE_SCOPE CONST char *
+CONST char *
 Tcl_InitStubs(
     Tcl_Interp *interp,
     CONST char *version,
@@ -102,9 +104,33 @@ Tcl_InitStubs(
 	return NULL;
     }
 
-    actualVersion = Tcl_PkgRequireEx(interp, "Tcl", version, exact, &pkgData);
+    actualVersion = Tcl_PkgRequireEx(interp, "Tcl", version, 0, &pkgData);
     if (actualVersion == NULL) {
 	return NULL;
+    }
+    if (exact) {
+	CONST char *p = version;
+	int count = 0;
+
+	while (*p) {
+	    count += !isDigit(*p++);
+	}
+	if (count == 1) {
+	    CONST char *q = actualVersion;
+
+	    p = version;
+	    while (*p && (*p == *q)) {
+		p++; q++;
+	    }
+	    if (*p) {
+		return NULL;
+	    }
+	} else {
+	    actualVersion = Tcl_PkgRequireEx(interp, "Tcl", version, 1, NULL);
+	    if (actualVersion == NULL) {
+		return NULL;
+	    }
+	}
     }
     tclStubsPtr = (TclStubs*)pkgData;
 
@@ -142,7 +168,7 @@ Tcl_InitStubs(
 #undef TclTomMathInitializeStubs
 #endif
 
-MODULE_SCOPE CONST char*
+CONST char*
 TclTomMathInitializeStubs(
     Tcl_Interp* interp,		/* Tcl interpreter */
     CONST char* version,	/* Tcl version needed */
@@ -154,7 +180,7 @@ TclTomMathInitializeStubs(
     const char* packageName = "tcl::tommath";
     const char* errMsg = NULL;
     ClientData pkgClientData = NULL;
-    const char* actualVersion =
+    const char* actualVersion = 
 	Tcl_PkgRequireEx(interp, packageName, version, exact, &pkgClientData);
     TclTomMathStubs* stubsPtr = (TclTomMathStubs*) pkgClientData;
     if (actualVersion == NULL) {

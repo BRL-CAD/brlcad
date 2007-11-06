@@ -5,11 +5,11 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
+# 
 # Copyright (c) 2000 Ajuba Solutions.
 # Copyright (c) 2000 Andreas Kupries.
 # All rights reserved.
-#
+# 
 # RCS: @(#) $Id$
 
 if {[catch {package require tcltest 2.1}]} {

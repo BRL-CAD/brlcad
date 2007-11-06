@@ -1026,7 +1026,7 @@ Tcl_SplitObjCmd(
 
 	    hPtr = Tcl_CreateHashEntry(&charReuseTable, (char*)0+ch, &isNew);
 	    if (isNew) {
-		objPtr = Tcl_NewStringObj(stringPtr, len);
+		TclNewStringObj(objPtr, stringPtr, len);
 
 		/*
 		 * Don't need to fiddle with refcount...
@@ -1054,7 +1054,7 @@ Tcl_SplitObjCmd(
 	    Tcl_ListObjAppendElement(NULL, listPtr, objPtr);
 	    stringPtr = p + 1;
 	}
-	objPtr = Tcl_NewStringObj(stringPtr, end - stringPtr);
+	TclNewStringObj(objPtr, stringPtr, end - stringPtr);
 	Tcl_ListObjAppendElement(NULL, listPtr, objPtr);
     } else {
 	char *element, *p, *splitEnd;
@@ -1073,7 +1073,7 @@ Tcl_SplitObjCmd(
 	    for (p = splitChars; p < splitEnd; p += splitLen) {
 		splitLen = TclUtfToUniChar(p, &splitChar);
 		if (ch == splitChar) {
-		    objPtr = Tcl_NewStringObj(element, stringPtr - element);
+		    TclNewStringObj(objPtr, element, stringPtr - element);
 		    Tcl_ListObjAppendElement(NULL, listPtr, objPtr);
 		    element = stringPtr + len;
 		    break;
@@ -1081,7 +1081,7 @@ Tcl_SplitObjCmd(
 	    }
 	}
 
-	objPtr = Tcl_NewStringObj(element, stringPtr - element);
+	TclNewStringObj(objPtr, element, stringPtr - element);
 	Tcl_ListObjAppendElement(NULL, listPtr, objPtr);
     }
     Tcl_SetObjResult(interp, listPtr);
@@ -1286,7 +1286,8 @@ Tcl_StringObjCmd(
 	int match, start;
 
 	if (objc < 4 || objc > 5) {
-	    Tcl_WrongNumArgs(interp, 2,objv, "subString string ?startIndex?");
+	    Tcl_WrongNumArgs(interp, 2, objv,
+		    "needleString haystackString ?startIndex?");
 	    return TCL_ERROR;
 	}
 
@@ -1745,7 +1746,7 @@ Tcl_StringObjCmd(
 
 	if (objc < 4 || objc > 5) {
 	    Tcl_WrongNumArgs(interp, 2, objv,
-		    "subString string ?startIndex?");
+		    "needleString haystackString ?startIndex?");
 	    return TCL_ERROR;
 	}
 
@@ -1887,6 +1888,7 @@ Tcl_StringObjCmd(
 	    for (i=2 ; i<mapElemc ; i+=2) {
 		Tcl_DictObjNext(&search, mapElemv+i, mapElemv+i+1, &done);
 	    }
+	    Tcl_DictObjDone(&search);
 	} else {
 	    if (Tcl_ListObjGetElements(interp, objv[objc-2],
 		    &mapElemc, &mapElemv) != TCL_OK) {
@@ -1928,7 +1930,7 @@ Tcl_StringObjCmd(
 	     */
 
 	    if (mapWithDict) {
-		TclStackFree(interp);
+		TclStackFree(interp, mapElemv);
 	    }
 	    if (copySource) {
 		Tcl_DecrRefCount(sourceObj);
@@ -2052,10 +2054,10 @@ Tcl_StringObjCmd(
 		}
 	    }
 	    if (nocase) {
-		TclStackFree(interp);  /* u2lc */
+		TclStackFree(interp, u2lc);
 	    }
-	    TclStackFree(interp);  /* mapLens */
-	    TclStackFree(interp);  /* mapStrings */
+	    TclStackFree(interp, mapLens);
+	    TclStackFree(interp, mapStrings);
 	}
 	if (p != ustring1) {
 	    /*
@@ -2065,7 +2067,7 @@ Tcl_StringObjCmd(
 	    Tcl_AppendUnicodeToObj(resultPtr, p, ustring1 - p);
 	}
 	if (mapWithDict) {
-	    TclStackFree(interp);
+	    TclStackFree(interp, mapElemv);
 	}
 	if (copySource) {
 	    Tcl_DecrRefCount(sourceObj);
@@ -2594,7 +2596,7 @@ Tcl_SwitchObjCmd(
     int pc = 0;
     int bidx = 0;		/* Index of body argument. */
     Tcl_Obj *blist = NULL;	/* List obj which is the body */
-    CmdFrame ctx;		/* Copy of the topmost cmdframe, to allow us
+    CmdFrame *ctxPtr;		/* Copy of the topmost cmdframe, to allow us
 				 * to mess with the line information */
 
     /*
@@ -2928,7 +2930,8 @@ Tcl_SwitchObjCmd(
      */
 
   matchFound:
-    ctx = *iPtr->cmdFramePtr;
+    ctxPtr = (CmdFrame *) TclStackAlloc(interp, sizeof(CmdFrame));
+    *ctxPtr = *iPtr->cmdFramePtr;
 
     if (splitObjs) {
 	/*
@@ -2939,13 +2942,13 @@ Tcl_SwitchObjCmd(
 	 * special handling done in 'info frame', or the bc compiler
 	 */
 
-	if (ctx.type == TCL_LOCATION_BC) {
+	if (ctxPtr->type == TCL_LOCATION_BC) {
 	    /*
-	     * Type BC => ctx.data.eval.path    is not used.
-	     *            ctx.data.tebc.codePtr is used instead.
+	     * Type BC => ctxPtr->data.eval.path    is not used.
+	     *            ctxPtr->data.tebc.codePtr is used instead.
 	     */
 
-	    TclGetSrcInfoForPc(&ctx);
+	    TclGetSrcInfoForPc(ctxPtr);
 	    pc = 1;
 
 	    /*
@@ -2954,12 +2957,12 @@ Tcl_SwitchObjCmd(
 	     */
 	}
 
-	if (ctx.type == TCL_LOCATION_SOURCE && ctx.line[bidx] >= 0) {
-	    int bline = ctx.line[bidx];
+	if (ctxPtr->type == TCL_LOCATION_SOURCE && ctxPtr->line[bidx] >= 0) {
+	    int bline = ctxPtr->line[bidx];
 
-	    ctx.line = (int *) ckalloc(objc * sizeof(int));
-	    ctx.nline = objc;
-	    TclListLines(Tcl_GetString(blist), bline, objc, ctx.line);
+	    ctxPtr->line = (int *) ckalloc(objc * sizeof(int));
+	    ctxPtr->nline = objc;
+	    TclListLines(Tcl_GetString(blist), bline, objc, ctxPtr->line);
 	} else {
 	    /*
 	     * This is either a dynamic code word, when all elements are
@@ -2971,10 +2974,10 @@ Tcl_SwitchObjCmd(
 
 	    int k;
 
-	    ctx.line = (int *) ckalloc(objc * sizeof(int));
-	    ctx.nline = objc;
+	    ctxPtr->line = (int *) ckalloc(objc * sizeof(int));
+	    ctxPtr->nline = objc;
 	    for (k=0; k < objc; k++) {
-		ctx.line[k] = -1;
+		ctxPtr->line[k] = -1;
 	    }
 	}
     }
@@ -2997,15 +3000,15 @@ Tcl_SwitchObjCmd(
      * TIP #280. Make invoking context available to switch branch.
      */
 
-    result = TclEvalObjEx(interp, objv[j], 0, &ctx, j);
+    result = TclEvalObjEx(interp, objv[j], 0, ctxPtr, j);
     if (splitObjs) {
-	ckfree((char *) ctx.line);
-	if (pc && (ctx.type == TCL_LOCATION_SOURCE)) {
+	ckfree((char *) ctxPtr->line);
+	if (pc && (ctxPtr->type == TCL_LOCATION_SOURCE)) {
 	    /*
 	     * Death of SrcInfo reference.
 	     */
 
-	    Tcl_DecrRefCount(ctx.data.eval.path);
+	    Tcl_DecrRefCount(ctxPtr->data.eval.path);
 	}
     }
 
@@ -3022,6 +3025,7 @@ Tcl_SwitchObjCmd(
 		(overflow ? limit : patternLength), pattern,
 		(overflow ? "..." : ""), interp->errorLine));
     }
+    TclStackFree(interp, ctxPtr);
     return result;
 }
 
