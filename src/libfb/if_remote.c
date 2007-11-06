@@ -340,7 +340,7 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
 
 	(void)fbputlong( width, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[1*NET_LONG_LEN] );
-	(void) strncpy( &buf[2*NET_LONG_LEN], device, 128 );
+	(void) strncpy(&buf[2*NET_LONG_LEN], device, 128-2*NET_LONG_LEN);
 	i = strlen(device)+2*NET_LONG_LEN;
 	if( pkg_send( MSG_FBOPEN, buf, i, pc ) != i )
 		return	-5;
