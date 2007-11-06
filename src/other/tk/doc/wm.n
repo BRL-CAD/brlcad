@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH wm n 8.5 Tk "Tk Built-In Commands"
 .BS
@@ -135,7 +135,7 @@ Requests that the window should be maximized.
 This is the same as \fB[wm state zoomed]\fR on Windows and Mac OS X.
 .TP
 \fB-fullscreen\fR
-Requests that the window should fill the entire screen
+Requests that the window should fill the entire screen 
 and have no window decorations.
 .RE
 .PP
@@ -307,8 +307,8 @@ If \fIbitmap\fR is specified then the command returns an empty string.
 Otherwise it returns the name of
 the current icon bitmap associated with \fIwindow\fR, or an empty
 string if \fIwindow\fR has no icon bitmap.  On the Windows operating
-system, an additional flag is supported:
-\fBwm iconbitmap \fIwindow\fR ?\fB\-default\fR? ?\fIimage\fR?.
+system, an additional flag is supported: 
+\fBwm iconbitmap \fIwindow\fR ?\fB\-default\fR? ?\fIimage\fR?.  
 If the \fB\-default\fR
 flag is given, the icon is applied to all toplevel windows (existing
 and future) to which no other specific icon has yet been applied.
@@ -627,7 +627,7 @@ Gridded geometry management is typically invoked by turning on
 the \fBsetGrid\fR option for a widget;  it can also be invoked
 with the \fBwm grid\fR command or by calling \fBTk_SetGrid\fR.
 In each of these approaches the particular widget (or sometimes
-code in the application as a whole) specifies the relationship between
+code in the application as a whole) specifies the relationship between 
 integral grid sizes for the window and pixel sizes.
 To return to non-gridded geometry management, invoke
 \fBwm grid\fR with empty argument strings.

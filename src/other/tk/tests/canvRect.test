@@ -294,7 +294,7 @@ test canvRect-10.1 {TranslateRectOval procedure} {
 test canvRect-11.1 {RectOvalToPostscript procedure} {nonPortable macCrash} {
     # Crashes on Mac because the XGetImage() call isn't implemented, causing a
     # dereference of NULL.
-
+    
     .c configure -bd 0 -highlightthickness 0
     .c delete withtag all
     .c create rect 50 60 90 80 -fill black -stipple gray50 -outline {}

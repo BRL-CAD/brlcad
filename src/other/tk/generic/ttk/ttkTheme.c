@@ -333,7 +333,7 @@ static Theme *NewTheme(Ttk_ResourceCache cache, Ttk_Theme parent)
      */
     entryPtr = Tcl_CreateHashEntry(&themePtr->styleTable, ".", &unused);
     themePtr->rootStyle = NewStyle();
-    themePtr->rootStyle->styleName =
+    themePtr->rootStyle->styleName = 
 	Tcl_GetHashKey(&themePtr->styleTable, entryPtr);
     themePtr->rootStyle->cache = themePtr->cache;
     Tcl_SetHashValue(entryPtr, (ClientData)themePtr->rootStyle);
@@ -499,7 +499,7 @@ void Ttk_RegisterCleanup(
     pkgPtr->cleanupList = cleanup;
 }
 
-/* ThemeChangedProc --
+/* ThemeChangedProc -- 
  * 	Notify all widgets that the theme has been changed.
  * 	Scheduled as an idle callback; clientData is a StylePackageData *.
  *
@@ -508,7 +508,7 @@ void Ttk_RegisterCleanup(
  * 	which in turn recreates the layout.
  *
  * 	The Tk C API doesn't doesn't provide an easy way to traverse
- * 	the widget hierarchy, so this is done by evaluating a Tcl script.
+ * 	the widget hierarchy, so this is done by evaluating a Tcl script. 
  */
 
 static void ThemeChangedProc(ClientData clientData)
@@ -587,7 +587,7 @@ void Ttk_SetThemeEnabledProc(
 
 /*
  * LookupTheme --
- *	Retrieve a registered theme by name.  If not found,
+ *	Retrieve a registered theme by name.  If not found, 
  *	returns NULL and leaves an error message in interp's result.
  */
 
@@ -866,7 +866,7 @@ static int Ttk_CloneElement(
 /* Ttk_RegisterElement--
  *	Register an element in the given theme.
  *	Returns: Element handle if successful, NULL otherwise.
- *	On failure, leaves an error message in interp's result
+ *	On failure, leaves an error message in interp's result 
  *	if interp is non-NULL.
  */
 
@@ -914,7 +914,7 @@ Ttk_ElementImpl Ttk_RegisterElement(
 int Ttk_RegisterElementSpec(Ttk_Theme theme,
     const char *name, Ttk_ElementSpec *specPtr, void *clientData)
 {
-    return Ttk_RegisterElement(NULL, theme, name, specPtr, clientData)
+    return Ttk_RegisterElement(NULL, theme, name, specPtr, clientData) 
 	   ? TCL_OK : TCL_ERROR;
 }
 
@@ -1154,7 +1154,7 @@ static int EnumerateHashTable(Tcl_Interp *interp, Tcl_HashTable *ht)
 }
 
 /* HashTableToDict --
- * 	Helper routine.  Converts a TCL_STRING_KEYS Tcl_HashTable
+ * 	Helper routine.  Converts a TCL_STRING_KEYS Tcl_HashTable 
  * 	with Tcl_Obj * entries into a dictionary.
  */
 static Tcl_Obj* HashTableToDict(Tcl_HashTable *ht)
@@ -1209,7 +1209,7 @@ usage:
 	return TCL_OK;
     } else if (objc == 4) {	/* style map $styleName -option */
 	const char *optionName = Tcl_GetString(objv[3]);
-	Tcl_HashEntry *entryPtr =
+	Tcl_HashEntry *entryPtr = 
 	    Tcl_FindHashEntry(&stylePtr->settingsTable, optionName);
 	if (entryPtr) {
 	    Tcl_SetObjResult(interp, (Tcl_Obj*)Tcl_GetHashValue(entryPtr));
@@ -1270,7 +1270,7 @@ usage:
 	return TCL_OK;
     } else if (objc == 4) {	/* style default $styleName -option */
 	const char *optionName = Tcl_GetString(objv[3]);
-	Tcl_HashEntry *entryPtr =
+	Tcl_HashEntry *entryPtr = 
 	    Tcl_FindHashEntry(&stylePtr->defaultsTable, optionName);
 	if (entryPtr) {
 	    Tcl_SetObjResult(interp, (Tcl_Obj*)Tcl_GetHashValue(entryPtr));
@@ -1528,7 +1528,7 @@ static int StyleElementOptionsCmd(
 	return TCL_OK;
     }
 
-    Tcl_AppendResult(interp,
+    Tcl_AppendResult(interp, 
 	"element ", Tcl_GetString(objv[3]), " not found",
 	NULL);
     return TCL_ERROR;

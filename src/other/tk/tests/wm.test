@@ -306,7 +306,7 @@ test wm-attributes-1.4.1 {setting fullscreen does not generate FocusIn on wrappe
     lappend focusin 1
     focus -force .t.e
     after 200 "set done 1" ; vwait done
-
+    
     lappend focusin 2
     wm attributes .t -fullscreen 1
     after 200 "set done 1" ; vwait done
@@ -314,7 +314,7 @@ test wm-attributes-1.4.1 {setting fullscreen does not generate FocusIn on wrappe
     lappend focusin 3
     wm attributes .t -fullscreen 0
     after 200 "set done 1" ; vwait done
-
+    
     lappend focusin final [focus]
 
     bind . <FocusIn> {}
@@ -608,7 +608,7 @@ test wm-focusmodel-1.3 {usage} {
 stdWindow
 
 test wm-focusmodel-2.1 {setting and reading values} {
-    set result {}
+    set result {} 
     lappend result [wm focusmodel .t]
     wm focusmodel .t active
     lappend result [wm focusmodel .t]
@@ -1605,7 +1605,7 @@ test wm-transient-1.8 {usage} {
 
 test wm-transient-2.1 { basic get/set of master } {
     deleteWindows
-    set results [list]
+    set results [list]    
     toplevel .master
     toplevel .subject
     lappend results [wm transient .subject]
@@ -1807,8 +1807,8 @@ test wm-transient-6.3 { a withdrawn transient does not track
 #
 test wm-transient-7.1 {Destroying transient} {
     deleteWindows
-    toplevel .t
-    toplevel .transient
+    toplevel .t 
+    toplevel .transient 
     wm transient .transient .t
     destroy .transient
     destroy .t
@@ -1817,7 +1817,7 @@ test wm-transient-7.1 {Destroying transient} {
 test wm-transient-7.2 {Destroying master} {
     deleteWindows
     toplevel .t
-    toplevel .transient
+    toplevel .transient 
     wm transient .transient .t
     destroy .t
     set result [wm transient .transient]
@@ -1826,19 +1826,19 @@ test wm-transient-7.2 {Destroying master} {
 } {}
 test wm-transient-7.3 {Reassign transient, destroy old master} {
     deleteWindows
-    toplevel .t1
-    toplevel .t2
+    toplevel .t1 
+    toplevel .t2 
     toplevel .transient
     wm transient .transient .t1
     wm transient .transient .t2
     destroy .t1	;# Caused panic in 8.4b1
-    destroy .t2
+    destroy .t2 
     destroy .transient
 } {}
 test wm-transient-7.4 {Reassign transient, destroy new master} {
     deleteWindows
-    toplevel .t1
-    toplevel .t2
+    toplevel .t1 
+    toplevel .t2 
     toplevel .transient
     wm transient .transient .t1
     wm transient .transient .t2
@@ -1848,8 +1848,8 @@ test wm-transient-7.4 {Reassign transient, destroy new master} {
 } {}
 test wm-transient-7.5 {Reassign transient, destroy transient} {
     deleteWindows
-    toplevel .t1
-    toplevel .t2
+    toplevel .t1 
+    toplevel .t2 
     toplevel .transient
     wm transient .transient .t1
     wm transient .transient .t2

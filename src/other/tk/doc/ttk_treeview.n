@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_treeview n 8.5 Tk "Tk Themed Widget"
 .\" Use _ instead of :: as the name becomes a filename on install
@@ -17,15 +17,15 @@ ttk_treeview \- hierarchical multicolumn data display widget
 
 .SH DESCRIPTION
 The \fBttk::treeview\fR widget displays a hierarchical collection of items.
-Each item has a textual label, an optional image,
+Each item has a textual label, an optional image, 
 and an optional list of data values.
 The data values are displayed in successive columns after
 the tree label.
 .PP
 The order in which data values are displayed may be controlled
-by setting the \fB-displaycolumns\fR widget option.
+by setting the \fB-displaycolumns\fR widget option.  
 The tree widget can also display column headings.
-Columns may be accessed by number or by symbolic names
+Columns may be accessed by number or by symbolic names 
 listed in the \fB-columns\fR widget option;
 see \fBCOLUMN IDENTIFIERS\fR.
 .PP
@@ -42,7 +42,7 @@ and control the appearance of the item.
 .\" @@@HERE: describe selection, focus item
 .PP
 Treeview widgets support horizontal and vertical scrolling with the
-standard \fB-[xy]scrollcommand\fR options
+standard \fB-[xy]scrollcommand\fR options 
 and \fB[xyview\fR widget commands.
 .SO
 \-class	\-cursor	\-takefocus	\-style
@@ -51,14 +51,14 @@ and \fB[xyview\fR widget commands.
 
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-columns columns Columns
-A list of column identifiers,
+A list of column identifiers, 
 specifying the number of columns and their names.
 .\"X: This is a read-only option; it may only be set when the widget is created.
 .OP \-displaycolumns displayColumns DisplayColumns
-A list of column identifiers
+A list of column identifiers 
 (either symbolic names or integer indices)
-specifying which data columns are displayed
-and the order in which they appear,
+specifying which data columns are displayed 
+and the order in which they appear, 
 or the string \fB#all\fP.
 .br
 If set to \fB#all\fP (the default), all columns are shown in the order given.
@@ -78,14 +78,14 @@ If set to \fBextended\fR (the default), multiple items may be selected.
 If \fBbrowse\fR, only a single item will be selected at a time.
 If \fBnone\fR, the selection will not be changed.
 .br
-Note that application code and tag bindings can set the selection
+Note that application code and tag bindings can set the selection 
 however they wish, regardless of the value of \fB-selectmode\fR.
 .OP \-show show Show
 A list containing zero or more of the following values, specifying
 which elements of the tree to display.
 .RS
 .IP \fBtree\fR
-Display tree labels in column #0.
+Display tree labels in column #0.  
 .IP \fBheadings\fR
 Display the heading row.
 .PP
@@ -102,7 +102,7 @@ Returns the bounding box (relative to the treeview widget's window)
 of the specified \fIitem\fR
 in the form \fIx y width height\fR.
 If \fIcolumn\fR is specified, returns the bounding box of that cell.
-If the \fIitem\fR is not visible
+If the \fIitem\fR is not visible 
 (i.e., if it is a descendant of a closed item or is scrolled offscreen),
 returns the empty list.
 .TP
@@ -114,7 +114,7 @@ If \fInewchildren\fR is not specified,
 returns the list of children belonging to \fIitem\fR.
 .br
 If \fInewchildren\fR is specified, replaces \fIitem\fR's child list
-with \fInewchildren\fR.
+with \fInewchildren\fR.  
 Items in the old child list not present in the new child list
 are detached from the tree.
 None of the items in \fInewchildren\fR may be an ancestor
@@ -124,7 +124,7 @@ of \fIitem\fR.
 Query or modify the options for the specified \fIcolumn\fR.
 If no \fI-option\fR is specified,
 returns a dictionary of option/value pairs.
-If a single \fI-option\fR is specified,
+If a single \fI-option\fR is specified, 
 returns the value of that option.
 Otherwise, the options are updated with the specified values.
 The following options may be set on each column:
@@ -132,8 +132,8 @@ The following options may be set on each column:
 .TP
 \fB-id \fIname\fR
 The column name.  This is a read-only option.
-For example, [\fI$pathname \fBcolumn #\fIn \fB-id\fR]
-returns the data column associated with data column #\fIn\fR.
+For example, [\fI$pathname \fBcolumn #\fIn \fB-id\fR] 
+returns the data column associated with data column #\fIn\fR. 
 .TP
 \fB-anchor\fR
 Specifies how the text in this column should be aligned
@@ -144,7 +144,7 @@ with respect to the cell. One of
 \fB-minwidth\fR
 The minimum width of the column in pixels.
 The treeview widget will not make the column any smaller than
-\fB-minwidth\fR when the widget is resized or the user drags a
+\fB-minwidth\fR when the widget is resized or the user drags a 
 column separator.
 .TP
 \fB-stretch\fR
@@ -182,7 +182,7 @@ Returns 1 if the specified \fIitem\fR is present in the tree,
 If \fIitem\fR is specified, sets the focus item to \fIitem\fR.
 Otherwise, returns the current focus item, or \fB{}\fR if there is none.
 .\" Need: way to clear the focus item.  {} works for this...
-.TP
+.TP 
 \fIpathname \fBheading\fR \fIcolumn\fR ?\fI-option \fR?\fIvalue -option value...\fR?
 Query or modify the heading options for the specified \fIcolumn\fR.
 Valid options are:
@@ -226,13 +226,13 @@ and data columns.
 Returns the integer index of \fIitem\fR within its parent's list of children.
 .TP
 \fIpathname \fBinsert\fR \fIparent\fR \fIindex\fR ?\fB-id \fIid\fR? \fIoptions...\fR
-Creates a new item.
+Creates a new item.  
 \fIparent\fR is the item ID of the parent item,
 or the empty string \fB{}\fR
 to create a new top-level item.
 \fIindex\fR is an integer, or the value \fBend\fR, specifying where in the
 list of \fIparent\fR's children to insert the new item.
-If \fIindex\fR is less than or equal to zero,
+If \fIindex\fR is less than or equal to zero, 
 the new node is inserted at the beginning;
 if \fIindex\fR is greater than or equal to the current number of children,
 it is inserted at the end.
@@ -249,9 +249,9 @@ Test the widget state; see \fIttk_widget(n)\fR.
 .TP
 \fIpathname \fBitem\fR \fIitem\fR ?\fI-option \fR?\fIvalue -option value...\fR?
 Query or modify the options for the specified \fIitem\fR.
-If no \fI-option\fR is specified,
+If no \fI-option\fR is specified, 
 returns a dictionary of option/value pairs.
-If a single \fI-option\fR is specified,
+If a single \fI-option\fR is specified, 
 returns the value of that option.
 Otherwise, the item's options are updated with the specified values.
 See \fBITEM OPTIONS\fR for the list of available options.
@@ -263,7 +263,7 @@ It is illegal to move an item under one of its descendants.
 If \fIindex\fR is less than or equal to zero, \fIitem\fR is moved
 to the beginning; if greater than or equal to the number of children,
 it's moved to the end.
-.TP
+.TP 
 \fIpathname \fBnext \fIitem\fR
 Returns the identifier of \fIitem\fR's next sibling,
 or \fB{}\fR if \fIitem\fR is the last child of its parent.
@@ -271,7 +271,7 @@ or \fB{}\fR if \fIitem\fR is the last child of its parent.
 \fIpathname \fBparent \fIitem\fR
 Returns the ID of the parent of \fIitem\fR,
 or \fB{}\fR if \fIitem\fR is at the top level of the hierarchy.
-.TP
+.TP 
 \fIpathname \fBprev \fIitem\fR
 Returns the identifier of \fIitem\fR's previous sibling,
 or \fB{}\fR if \fIitem\fR is the first child of its parent.
@@ -279,7 +279,7 @@ or \fB{}\fR if \fIitem\fR is the first child of its parent.
 \fIpathname \fBsee\fR \fIitem\fR
 Ensure that \fIitem\fR is visible:
 sets all of \fIitem\fR's ancestors to \fB-open true\fR,
-and scrolls the widget if necessary so that \fIitem\fR is
+and scrolls the widget if necessary so that \fIitem\fR is 
 within the visible portion of the tree.
 .TP
 \fIpathname \fBselection\fR ?\fIselop\fR \fIitemList\fR?
@@ -302,7 +302,7 @@ Toggle the selection state of each item in \fIitemList\fR.
 .TP
 \fIpathname \fBset\fR \fIitem\fR ?\fIcolumn\fR ?\fIvalue\fR??
 With one argument, returns a dictionary of column/value pairs
-for the specified \fIitem\fR.
+for the specified \fIitem\fR.  
 With two arguments, returns the current value of the specified \fIcolumn\fR.
 With three arguments, sets the value of column \fIcolumn\fR
 in item \fIitem\fR to the specified \fIvalue\fR.
@@ -315,7 +315,7 @@ Modify or query the widget state; see \fIttk_widget(n)\fR.
 .RS
 .TP
 \fIpathName \fBtag bind \fItagName \fR?\fIsequence \fR?\fIscript\fR??
-Add a Tk binding script for the event sequence \fIsequence\fR
+Add a Tk binding script for the event sequence \fIsequence\fR 
 to the tag \fItagName\fR.  When an X event is delivered to an item,
 binding scripts for each of the item's \fB-tags\fR are evaluated
 in order as per \fIbindtags(n)\fR.
@@ -323,20 +323,20 @@ in order as per \fIbindtags(n)\fR.
 \fB<KeyPress>\fR, \fB<KeyRelease>\fR, and virtual events
 are sent to the focus item.
 \fB<ButtonPress>\fR, \fB<ButtonRelease>\fR, and \fB<Motion>\fR events
-are sent to the item under the mouse pointer.
+are sent to the item under the mouse pointer.  
 No other event types are supported.
 .br
-The binding \fIscript\fR undergoes \fB%\fR-substitutions before
+The binding \fIscript\fR undergoes \fB%\fR-substitutions before 
 evaluation; see \fBbind(n)\fR for details.
 .TP
 \fIpathName \fBtag configure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 Query or modify the options for the specified \fItagName\fR.
 If one or more \fIoption/value\fR pairs are specified,
 sets the value of those options for the specified tag.
-If a single \fIoption\fR is specified,
-returns the value of that option
+If a single \fIoption\fR is specified, 
+returns the value of that option 
 (or the empty string if the option has not been specified for \fItagName\fR).
-With no additional arguments,
+With no additional arguments, 
 returns a dictionary of the option settings for \fItagName\fR.
 See \fBTAG OPTIONS\fR for the list of available options.
 .RE
@@ -365,10 +365,10 @@ the remaining values are assumed empty.
 If there are more values than columns,
 the extra values are ignored.
 .OP \-open open Open
-A boolean value indicating whether the items's children
+A boolean value indicating whether the item's children
 should be displayed (\fB-open true\fR) or hidden (\fB-open false\fR).
 .OP \-tags tags Tags
-A list of tags associated with this item.
+A list of tags associated with this item.  
 .SH "TAG OPTIONS"
 The following options may be specified on tags:
 .IP \-foreground
@@ -395,8 +395,8 @@ An integer \fIn\fR, specifying the \fIn\fRth data column.
 A string of the form \fB#\fIn\fR, where \fIn\fR is an integer,
 specifying the \fIn\fRth display column.
 .PP
-\fBNOTE:\fR
-Item \fB-values\fR may be displayed in a different order than
+\fBNOTE:\fR 
+Item \fB-values\fR may be displayed in a different order than 
 the order in which they are stored.
 .PP
 \fBNOTE:\fR Column #0 always refers to the tree column,
@@ -404,7 +404,7 @@ even if \fB-show tree\fR is not specified.
 .PP
 A \fIdata column number\fR is an index into an item's \fB-values\fR list;
 a \fIdisplay column number\fR is the column number in the tree
-where the values are displayed.
+where the values are displayed.  
 Tree labels are displayed in column #0.
 If \fB-displaycolumns\fR is not set,
 then data column \fIn\fR is displayed in display column \fB#\fIn+1\fR.

@@ -14,7 +14,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 
 /*
@@ -180,7 +179,7 @@ typedef struct StackLevel {
 } StackLevel;
 
 typedef struct ThreadSpecificData {
-    int initialized;            /* 0 means the ThreadSpecific Data structure
+    int initialized;		/* 0 means the ThreadSpecific Data structure
 				 * for the current thread needs to be
 				 * initialized. */
     ElArray *stacks[NUM_STACKS];
@@ -193,9 +192,9 @@ typedef struct ThreadSpecificData {
      * This array grows dynamically to become as large as needed.
      */
 
-    StackLevel *levels;	        /* Array describing current stack. */
-    int numLevels;	        /* Total space allocated. */
-    int curLevel;	        /* Highest level currently in use. Note:
+    StackLevel *levels;		/* Array describing current stack. */
+    int numLevels;		/* Total space allocated. */
+    int curLevel;		/* Highest level currently in use. Note:
 				 * curLevel is never 0! (I don't remember why
 				 * anymore...) */
     int serial;			/* A serial number for all options entered
@@ -204,9 +203,8 @@ typedef struct ThreadSpecificData {
 				 * used in computing option priorities, so
 				 * that the most recent entry wins when
 				 * choosing between options at the same
-				 * priority level.
-				 */
-    Element defaultMatch;       /* Special "no match" Element to use as
+				 * priority level. */
+    Element defaultMatch;	/* Special "no match" Element to use as
 				 * default for searches.*/
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
@@ -267,7 +265,7 @@ Tk_AddOption(
 #define TMP_SIZE 100
     char tmp[TMP_SIZE+1];
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->mainPtr->optionRootPtr == NULL) {
 	OptionInit(winPtr->mainPtr);
@@ -339,7 +337,8 @@ Tk_AddOption(
 		if (count == 0) {
 		    newEl.child.arrayPtr = NewArray(5);
 		    *arrayPtrPtr = ExtendArray(*arrayPtrPtr, &newEl);
-		    arrayPtrPtr = &((*arrayPtrPtr)->nextToUse[-1].child.arrayPtr);
+		    arrayPtrPtr = &((*arrayPtrPtr)
+			    ->nextToUse[-1].child.arrayPtr);
 		    break;
 		}
 		if ((elPtr->nameUid == newEl.nameUid)
@@ -414,7 +413,7 @@ Tk_GetOption(
     StackLevel *levelPtr;
     int stackDepth[NUM_STACKS];
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * Note: no need to call OptionInit here: it will be done by the
@@ -619,7 +618,7 @@ Tk_OptionObjCmd(
     Tk_Window tkwin = (Tk_Window) clientData;
     int index, result;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     static CONST char *optionCmds[] = {
 	"add", "clear", "get", "readfile", NULL
@@ -744,14 +743,14 @@ TkOptionDeadWindow(
     register TkWindow *winPtr)	/* Window to be cleaned up. */
 {
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * If this window is in the option stacks, then clear the stacks.
      *
      * XXX: OptionThreadExitProc will be invoked before DeleteWindowsExitProc
      * XXX: if it is thread-specific (which it should be), invalidating the
-     * XXX: tsd.  Tk shutdown needs to be verified to handle this correctly.
+     * XXX: tsd. Tk shutdown needs to be verified to handle this correctly.
      */
 
     if (tsdPtr->initialized && (winPtr->optionLevel != -1)) {
@@ -800,7 +799,7 @@ TkOptionClassChanged(
     int i, j, *basePtr;
     ElArray *arrayPtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->optionLevel == -1) {
 	return;
@@ -880,7 +879,7 @@ ParsePriority(
 	priority = strtoul(string, &end, 0);
 	if ((end == string) || (*end != 0) || (priority < 0)
 		|| (priority > 100)) {
-	    Tcl_AppendResult(interp,  "bad priority level \"", string,
+	    Tcl_AppendResult(interp, "bad priority level \"", string,
 		    "\": must be widgetDefault, startupFile, userDefault, ",
 		    "interactive, or a number between 0 and 100", NULL);
 	    return -1;
@@ -1084,9 +1083,9 @@ ReadOptionFile(
      */
 
     if (Tcl_IsSafe(interp)) {
-        Tcl_AppendResult(interp, "can't read options from a file in a",
-                " safe interpreter", NULL);
-        return TCL_ERROR;
+	Tcl_AppendResult(interp, "can't read options from a file in a",
+		" safe interpreter", NULL);
+	return TCL_ERROR;
     }
 
     realName = Tcl_TranslateFileName(interp, fileName, &newName);
@@ -1096,7 +1095,7 @@ ReadOptionFile(
     chan = Tcl_OpenFileChannel(interp, realName, "r", 0);
     Tcl_DStringFree(&newName);
     if (chan == NULL) {
-        Tcl_ResetResult(interp);
+	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "couldn't open \"", fileName,
 		"\": ", Tcl_PosixError(interp), NULL);
 	return TCL_ERROR;
@@ -1237,7 +1236,7 @@ SetupStacks(
     register StackLevel *levelPtr;
     register ElArray *arrayPtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * The following array defines the order in which the current stacks are
@@ -1399,15 +1398,15 @@ ExtendStacks(
     register int count;
     register Element *elPtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     for (elPtr = arrayPtr->els, count = arrayPtr->numUsed;
 	    count > 0; elPtr++, count--) {
 	if (!(elPtr->flags & (NODE|WILDCARD)) && !leaf) {
 	    continue;
 	}
-	tsdPtr->stacks[elPtr->flags] = ExtendArray(
-                tsdPtr->stacks[elPtr->flags], elPtr);
+	tsdPtr->stacks[elPtr->flags] =
+		ExtendArray(tsdPtr->stacks[elPtr->flags], elPtr);
     }
 }
 
@@ -1432,7 +1431,7 @@ OptionThreadExitProc(
     ClientData clientData)	/* not used */
 {
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (tsdPtr->initialized) {
 	int i;
@@ -1470,7 +1469,7 @@ OptionInit(
     int i;
     Tcl_Interp *interp;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Element *defaultMatchPtr = &tsdPtr->defaultMatch;
 
     /*
@@ -1478,14 +1477,14 @@ OptionInit(
      */
 
     if (tsdPtr->initialized == 0) {
-        tsdPtr->initialized = 1;
-        tsdPtr->cachedWindow = NULL;
+	tsdPtr->initialized = 1;
+	tsdPtr->cachedWindow = NULL;
 	tsdPtr->numLevels = 5;
 	tsdPtr->curLevel = -1;
 	tsdPtr->serial = 0;
 
-	tsdPtr->levels = (StackLevel *) ckalloc((unsigned)
-                (5*sizeof(StackLevel)));
+	tsdPtr->levels = (StackLevel *)
+		ckalloc((unsigned) (5*sizeof(StackLevel)));
 	for (i = 0; i < NUM_STACKS; i++) {
 	    tsdPtr->stacks[i] = NewArray(10);
 	    tsdPtr->levels[0].bases[i] = 0;
@@ -1569,7 +1568,7 @@ GetDefaultOptions(
     TkWindow *winPtr)		/* Fetch option defaults for main window
 				 * associated with this. */
 {
-    char *regProp;
+    char *regProp, **regPropPtr = &regProp;
     int result, actualFormat;
     unsigned long numItems, bytesAfter;
     Atom actualType;
@@ -1580,10 +1579,9 @@ GetDefaultOptions(
 
     regProp = NULL;
     result = XGetWindowProperty(winPtr->display,
-	    RootWindow(winPtr->display, 0),
-	    XA_RESOURCE_MANAGER, 0, 100000,
-	    False, XA_STRING, &actualType, &actualFormat,
-	    &numItems, &bytesAfter, (unsigned char **) &regProp);
+	    RootWindow(winPtr->display, 0), XA_RESOURCE_MANAGER, 0, 100000,
+	    False, XA_STRING, &actualType, &actualFormat, &numItems,
+	    &bytesAfter, (unsigned char **) regPropPtr);
 
     if ((result == Success) && (actualType == XA_STRING)
 	    && (actualFormat == 8)) {

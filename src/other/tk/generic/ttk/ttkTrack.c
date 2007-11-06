@@ -29,7 +29,7 @@
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
-typedef struct
+typedef struct 
 {
     WidgetCore		*corePtr;	/* Widget to track */
     Ttk_LayoutNode	*activeElement;	/* element under the mouse cursor */
@@ -55,7 +55,7 @@ static void ActivateElement(ElementStateTracker *es, Ttk_LayoutNode *node)
 	if (es->activeElement) {
 	    /* Deactivate old element */
 	    Ttk_ChangeElementState(es->activeElement, 0,TTK_STATE_ACTIVE);
-	}
+	} 
 	if (node) {
 	    /* Activate new element */
 	    Ttk_ChangeElementState(node, TTK_STATE_ACTIVE,0);
@@ -109,10 +109,10 @@ static void PressElement(ElementStateTracker *es, Ttk_LayoutNode *node)
  */
 
 static const unsigned ElementStateMask =
-      ButtonPressMask
-    | ButtonReleaseMask
-    | PointerMotionMask
-    | LeaveWindowMask
+      ButtonPressMask 
+    | ButtonReleaseMask 
+    | PointerMotionMask 
+    | LeaveWindowMask 
     | EnterWindowMask
     | StructureNotifyMask
     ;
@@ -141,14 +141,14 @@ ElementStateEventProc(ClientData clientData, XEvent *ev)
 	case ButtonPress:
 	    node = Ttk_LayoutIdentify(
 		es->corePtr->layout, ev->xbutton.x, ev->xbutton.y);
-	    if (node)
+	    if (node) 
 		PressElement(es, node);
 	    break;
 	case ButtonRelease:
 	    ReleaseElement(es);
 	    break;
 	case DestroyNotify:
-	    /* Unregister this event handler and free client data.
+	    /* Unregister this event handler and free client data. 
 	     */
 	    Tk_DeleteEventHandler(es->corePtr->tkwin,
 		    ElementStateMask, ElementStateEventProc, es);

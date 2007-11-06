@@ -15,7 +15,6 @@
  */
 
 #include "default.h"
-#include "tkPort.h"
 #include "tkInt.h"
 
 /*

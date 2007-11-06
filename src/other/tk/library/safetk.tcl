@@ -57,16 +57,16 @@ namespace eval ::safe {
     }
 
 
-# tkInterpLoadTk :
-# Do additional configuration as needed (calling tkInterpInit)
+# tkInterpLoadTk : 
+# Do additional configuration as needed (calling tkInterpInit) 
 # and actually load Tk into the slave.
-#
+# 
 # Either contained in the specified windowId (-use) or
 # creating a decorated toplevel for it.
 
 # empty definition for auto_mkIndex
 proc ::safe::loadTk {} {}
-
+   
 ::tcl::OptProc loadTk {
     {slave -interp "name of the slave interpreter"}
     {-use  -windowId {} "window Id to use (new toplevel otherwise)"}
@@ -74,10 +74,10 @@ proc ::safe::loadTk {} {}
 } {
     set displayGiven [::tcl::OptProcArgGiven "-display"]
     if {!$displayGiven} {
-
+	
 	# Try to get the current display from "."
 	# (which might not exist if the master is tk-less)
-
+	
 	if {[catch {set display [winfo screen .]}]} {
 	    if {[info exists ::env(DISPLAY)]} {
 		set display $::env(DISPLAY)
@@ -88,9 +88,9 @@ proc ::safe::loadTk {} {}
 	}
     }
     if {![::tcl::OptProcArgGiven "-use"]} {
-
+	
 	# create a decorated toplevel
-
+	
 	::tcl::Lassign [tkTopLevel $slave $display] w use
 
 	# set our delete hook (slave arg is added by interpDelete)
@@ -101,11 +101,11 @@ proc ::safe::loadTk {} {}
 
 	# set our delete hook (slave arg is added by interpDelete)
 	# to clean up tkInit(slave)
-
+	    
 	Set [DeleteHookName $slave] [list disallowTk]
 
 	# Let's be nice and also accept tk window names instead of ids
-
+	
 	if {[string match ".*" $use]} {
 	    set windowName $use
 	    set use [winfo id $windowName]
@@ -116,13 +116,13 @@ proc ::safe::loadTk {} {}
 	    # (works only for multi screens on single host, but not
 	    #  cross hosts, for that a tk window name would be better
 	    #  but embeding is also usefull for non tk names)
-
+	    
 	    if {![catch {winfo pathname $use} name]} {
 		set nDisplay [winfo screen $name]
 	    } else {
 
 		# Can't have a better one
-
+		
 		set nDisplay $display
 	    }
 	}
@@ -137,9 +137,9 @@ proc ::safe::loadTk {} {}
     }
 
     # Prepares the slave for tk with those parameters
-
+    
     tkInterpInit $slave [list "-use" $use "-display" $display]
-
+    
     load {} Tk $slave
 
     return $slave
@@ -223,7 +223,7 @@ proc ::safe::tkDelete {W window slave} {
 	Log $slave "Destroy toplevel $window" NOTICE
 	destroy $window
     }
-
+    
     # clean up tkInit(slave)
     disallowTk $slave
     return
@@ -271,7 +271,7 @@ proc ::safe::tkTopLevel {slave display} {
     # Container frame
     frame $w.c -container 1
     pack $w.c -fill both -expand 1
-
+    
     # return both the toplevel window name and the id to use for embedding
     list $w [winfo id $w.c]
 }

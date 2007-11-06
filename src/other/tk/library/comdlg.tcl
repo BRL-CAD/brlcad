@@ -175,7 +175,7 @@ proc ::tk::FocusGroup_Destroy {t w} {
 
     if {$t eq $w} {
 	unset Priv(fg,$t)
-	unset Priv(focus,$t)
+	unset Priv(focus,$t) 
 
 	foreach name [array names FocusIn $t,*] {
 	    unset FocusIn($name)
@@ -259,7 +259,7 @@ proc ::tk::FDGetFileTypes {string} {
 	if {[llength $t] < 2 || [llength $t] > 3} {
 	    error "bad file type \"$t\", should be \"typeName {extension ?extensions ...?} ?{macType ?macTypes ...?}?\""
 	}
-	lappend fileTypes([lindex $t 0]) {expand}[lindex $t 1]
+	lappend fileTypes([lindex $t 0]) {*}[lindex $t 1]
     }
 
     set types {}
@@ -271,7 +271,7 @@ proc ::tk::FDGetFileTypes {string} {
 	    continue
 	}
 
-	# Validate each macType.  This is to agree with the
+	# Validate each macType.  This is to agree with the 
 	# behaviour of TkGetFileFilters().  This list may be
 	# empty.
 	foreach macType [lindex $t 2] {
@@ -279,7 +279,7 @@ proc ::tk::FDGetFileTypes {string} {
 		error "bad Macintosh file type \"$macType\""
 	    }
 	}
-
+	
 	set name "$label \("
 	set sep ""
 	set doAppend 1

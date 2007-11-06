@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH Tk_MapWindow 3 "" Tk "Tk Library Procedures"
 .BS
@@ -38,9 +38,9 @@ deferred window creation.
 from the screen.
 .PP
 If \fItkwin\fR is a child window (i.e. \fBTk_CreateWindow\fR was
-used to create a child window), then event handlers interested in map
-and unmap events are invoked immediately.  If \fItkwin\fR isn't an
-internal window, then the event handlers will be invoked later, after
+used to create a child window), then event handlers interested in map 
+and unmap events are invoked immediately.  If \fItkwin\fR isn't an 
+internal window, then the event handlers will be invoked later, after 
 X has seen the request and returned an event for it.
 .PP
 These procedures should be used in place of the X procedures

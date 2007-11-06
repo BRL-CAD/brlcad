@@ -13,7 +13,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 
 /*
@@ -58,12 +57,14 @@ typedef struct Slave {
 
     int x, y;			/* X and Y pixel coordinates for tkwin. */
     Tcl_Obj *xPtr, *yPtr;	/* Tcl_Obj rep's of x, y coords, to keep pixel
-				 * spec. information */
+				 * spec. information. */
     double relX, relY;		/* X and Y coordinates relative to size of
 				 * master. */
     int width, height;		/* Absolute dimensions for tkwin. */
-    Tcl_Obj *widthPtr;		/* Tcl_Obj rep of width, to keep pixel spec */
-    Tcl_Obj *heightPtr;		/* Tcl_Obj rep of height, to keep pixel spec */
+    Tcl_Obj *widthPtr;		/* Tcl_Obj rep of width, to keep pixel
+				 * spec. */
+    Tcl_Obj *heightPtr;		/* Tcl_Obj rep of height, to keep pixel
+				 * spec. */
     double relWidth, relHeight;	/* Dimensions for tkwin relative to size of
 				 * master. */
     Tcl_Obj *relWidthPtr;
@@ -154,9 +155,9 @@ static void		PlaceLostSlaveProc(ClientData clientData,
 			    Tk_Window tkwin);
 
 static const Tk_GeomMgr placerType = {
-    "place",				/* name */
-    PlaceRequestProc,			/* requestProc */
-    PlaceLostSlaveProc,			/* lostSlaveProc */
+    "place",			/* name */
+    PlaceRequestProc,		/* requestProc */
+    PlaceLostSlaveProc,		/* lostSlaveProc */
 };
 
 /*
@@ -170,7 +171,7 @@ static int		ConfigureSlave(Tcl_Interp *interp, Tk_Window tkwin,
 			    Tcl_Obj *CONST objv[]);
 static int		PlaceInfoCommand(Tcl_Interp *interp, Tk_Window tkwin);
 static Slave *		CreateSlave(Tk_Window tkwin, Tk_OptionTable table);
-static void             FreeSlave(Slave *slavePtr);
+static void		FreeSlave(Slave *slavePtr);
 static Slave *		FindSlave(Tk_Window tkwin);
 static Master *		CreateMaster(Tk_Window tkwin);
 static Master *		FindMaster(Tk_Window tkwin);
@@ -380,20 +381,25 @@ CreateSlave(
     TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
     hPtr = Tcl_CreateHashEntry(&dispPtr->slaveTable, (char *) tkwin, &isNew);
-    if (isNew) {
-	slavePtr = (Slave *) ckalloc(sizeof(Slave));
-	memset(slavePtr, 0, sizeof(Slave));
-	slavePtr->tkwin = tkwin;
-	slavePtr->inTkwin = None;
-	slavePtr->anchor = TK_ANCHOR_NW;
-	slavePtr->borderMode = BM_INSIDE;
-	slavePtr->optionTable = table;
-	Tcl_SetHashValue(hPtr, slavePtr);
-	Tk_CreateEventHandler(tkwin, StructureNotifyMask, SlaveStructureProc,
-		(ClientData) slavePtr);
-    } else {
-	slavePtr = (Slave *) Tcl_GetHashValue(hPtr);
+    if (!isNew) {
+	return (Slave *) Tcl_GetHashValue(hPtr);
     }
+
+    /*
+     * No preexisting slave structure for that window, so make a new one and
+     * populate it with some default values.
+     */
+
+    slavePtr = (Slave *) ckalloc(sizeof(Slave));
+    memset(slavePtr, 0, sizeof(Slave));
+    slavePtr->tkwin = tkwin;
+    slavePtr->inTkwin = None;
+    slavePtr->anchor = TK_ANCHOR_NW;
+    slavePtr->borderMode = BM_INSIDE;
+    slavePtr->optionTable = table;
+    Tcl_SetHashValue(hPtr, slavePtr);
+    Tk_CreateEventHandler(tkwin, StructureNotifyMask, SlaveStructureProc,
+	    (ClientData) slavePtr);
     return slavePtr;
 }
 
@@ -446,7 +452,7 @@ FindSlave(
 {
     Tcl_HashEntry *hPtr;
     register Slave *slavePtr;
-    TkDisplay * dispPtr = ((TkWindow *) tkwin)->dispPtr;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
     hPtr = Tcl_FindHashEntry(&dispPtr->slaveTable, (char *) tkwin);
     if (hPtr == NULL) {
@@ -524,7 +530,7 @@ CreateMaster(
     Tcl_HashEntry *hPtr;
     register Master *masterPtr;
     int isNew;
-    TkDisplay * dispPtr = ((TkWindow *) tkwin)->dispPtr;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
     hPtr = Tcl_CreateHashEntry(&dispPtr->masterTable, (char *) tkwin, &isNew);
     if (isNew) {
@@ -566,7 +572,7 @@ FindMaster(
 {
     Tcl_HashEntry *hPtr;
     register Master *masterPtr;
-    TkDisplay * dispPtr = ((TkWindow *) tkwin)->dispPtr;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
     hPtr = Tcl_FindHashEntry(&dispPtr->masterTable, (char *) tkwin);
     if (hPtr == NULL) {
@@ -703,8 +709,8 @@ ConfigureSlave(
      */
 
     if (masterWin == NULL) {
-        masterWin = Tk_Parent(slavePtr->tkwin);
-        slavePtr->inTkwin = masterWin;
+	masterWin = Tk_Parent(slavePtr->tkwin);
+	slavePtr->inTkwin = masterWin;
     }
 
     /*
@@ -860,13 +866,13 @@ RecomputePlacement(
 	if (slavePtr->borderMode == BM_INSIDE) {
 	    masterX = Tk_InternalBorderLeft(masterPtr->tkwin);
 	    masterY = Tk_InternalBorderTop(masterPtr->tkwin);
-            masterWidth -= masterX + Tk_InternalBorderRight(masterPtr->tkwin);
-            masterHeight -= masterY +
+	    masterWidth -= masterX + Tk_InternalBorderRight(masterPtr->tkwin);
+	    masterHeight -= masterY +
 		    Tk_InternalBorderBottom(masterPtr->tkwin);
 	} else if (slavePtr->borderMode == BM_OUTSIDE) {
 	    masterX = masterY = -Tk_Changes(masterPtr->tkwin)->border_width;
-            masterWidth -= 2 * masterX;
-            masterHeight -= 2 * masterY;
+	    masterWidth -= 2 * masterX;
+	    masterHeight -= 2 * masterY;
 	}
 
 	/*
@@ -1104,7 +1110,7 @@ SlaveStructureProc(
     XEvent *eventPtr)		/* Describes what just happened. */
 {
     register Slave *slavePtr = (Slave *) clientData;
-    TkDisplay * dispPtr = ((TkWindow *) slavePtr->tkwin)->dispPtr;
+    TkDisplay *dispPtr = ((TkWindow *) slavePtr->tkwin)->dispPtr;
 
     if (eventPtr->type == DestroyNotify) {
 	if (slavePtr->masterPtr != NULL) {
@@ -1182,7 +1188,7 @@ PlaceLostSlaveProc(
     Tk_Window tkwin)		/* Tk's handle for the slave window. */
 {
     register Slave *slavePtr = (Slave *) clientData;
-    TkDisplay * dispPtr = ((TkWindow *) slavePtr->tkwin)->dispPtr;
+    TkDisplay *dispPtr = ((TkWindow *) slavePtr->tkwin)->dispPtr;
 
     if (slavePtr->masterPtr->tkwin != Tk_Parent(slavePtr->tkwin)) {
 	Tk_UnmaintainGeometry(slavePtr->tkwin, slavePtr->masterPtr->tkwin);
@@ -1190,7 +1196,7 @@ PlaceLostSlaveProc(
     Tk_UnmapWindow(tkwin);
     UnlinkSlave(slavePtr);
     Tcl_DeleteHashEntry(Tcl_FindHashEntry(&dispPtr->slaveTable,
-            (char *) tkwin));
+	    (char *) tkwin));
     Tk_DeleteEventHandler(tkwin, StructureNotifyMask, SlaveStructureProc,
 	    (ClientData) slavePtr);
     FreeSlave(slavePtr);

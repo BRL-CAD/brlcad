@@ -2,7 +2,7 @@
  *
  * Copyright 2005, Joe English.  Freely redistributable.
  *
- * Ttk widget set: support routines for geometry managers.
+ * Support routines for geometry managers.
  */
 
 #include <string.h>
@@ -41,18 +41,37 @@
  * in this case Tk does _not_ call the LostSlaveProc (documented behavior).
  * Tk doesn't handle case (3) either; to account for that we
  * register an event handler on the slave widget to track <Destroy> events.
- *
  */
 
-/* ++ manager->flags bits:
+/* ++ Data structures.
+ */
+typedef struct
+{
+    Tk_Window 		slaveWindow;
+    Ttk_Manager 	*manager;
+    void 		*slaveData;
+    unsigned		flags;
+} Ttk_Slave;
+
+/* slave->flags bits:
+ */
+#define SLAVE_MAPPED 		0x1	/* slave to be mapped when master is */
+
+struct TtkManager_
+{
+    Ttk_ManagerSpec	*managerSpec;
+    void 		*managerData;
+    Tk_Window   	masterWindow;
+    unsigned		flags;
+    int 	 	nSlaves;
+    Ttk_Slave 		**slaves;
+};
+
+/* manager->flags bits:
  */
 #define MGR_UPDATE_PENDING	0x1
 #define MGR_RESIZE_REQUIRED	0x2
 #define MGR_RELAYOUT_REQUIRED	0x4
-
-/* ++ slave->flags bits:
- */
-#define SLAVE_MAPPED 		0x1	/* slave to be mapped when master is */
 
 static void ManagerIdleProc(void *);	/* forward */
 
@@ -159,7 +178,7 @@ static void SlaveEventHandler(ClientData clientData, XEvent *eventPtr)
     Ttk_Slave *slave = clientData;
     if (eventPtr->type == DestroyNotify) {
 	slave->manager->managerSpec->tkGeomMgr.lostSlaveProc(
-	    clientData, slave->slaveWindow);
+	    slave->manager, slave->slaveWindow);
     }
 }
 
@@ -167,40 +186,21 @@ static void SlaveEventHandler(ClientData clientData, XEvent *eventPtr)
  * +++ Slave initialization and cleanup.
  */
 
-static Ttk_Slave *CreateSlave(
-    Tcl_Interp *interp, Ttk_Manager *mgr, Tk_Window slaveWindow)
+static Ttk_Slave *NewSlave(
+    Ttk_Manager *mgr, Tk_Window slaveWindow, void *slaveData)
 {
     Ttk_Slave *slave = (Ttk_Slave*)ckalloc(sizeof(*slave));
-    int status;
 
     slave->slaveWindow = slaveWindow;
     slave->manager = mgr;
     slave->flags = 0;
-    slave->slaveData = ckalloc(mgr->managerSpec->slaveSize);
-    memset(slave->slaveData, 0, mgr->managerSpec->slaveSize);
-
-    if (!mgr->slaveOptionTable) {
-	mgr->slaveOptionTable =
-	    Tk_CreateOptionTable(interp, mgr->managerSpec->slaveOptionSpecs);
-    }
-
-    status = Tk_InitOptions(
-	interp, slave->slaveData, mgr->slaveOptionTable, slaveWindow);
-
-    if (status != TCL_OK) {
-	ckfree((ClientData)slave->slaveData);
-	ckfree((ClientData)slave);
-	return NULL;
-    }
+    slave->slaveData = slaveData;
 
     return slave;
 }
 
 static void DeleteSlave(Ttk_Slave *slave)
 {
-    Tk_FreeConfigOptions(
-	slave->slaveData, slave->manager->slaveOptionTable, slave->slaveWindow);
-    ckfree((ClientData)slave->slaveData);
     ckfree((ClientData)slave);
 }
 
@@ -216,7 +216,6 @@ Ttk_Manager *Ttk_CreateManager(
     mgr->managerSpec 	= managerSpec;
     mgr->managerData	= managerData;
     mgr->masterWindow	= masterWindow;
-    mgr->slaveOptionTable= 0;
     mgr->nSlaves 	= 0;
     mgr->slaves 	= NULL;
     mgr->flags  	= 0;
@@ -237,9 +236,6 @@ void Ttk_DeleteManager(Ttk_Manager *mgr)
     }
     if (mgr->slaves) {
 	ckfree((ClientData)mgr->slaves);
-    }
-    if (mgr->slaveOptionTable) {
-	Tk_DeleteOptionTable(mgr->slaveOptionTable);
     }
 
     Tk_CancelIdleCall(ManagerIdleProc, mgr);
@@ -268,7 +264,7 @@ static void InsertSlave(Ttk_Manager *mgr, Ttk_Slave *slave, int index)
     mgr->slaves[index] = slave;
 
     Tk_ManageGeometry(slave->slaveWindow,
-	&mgr->managerSpec->tkGeomMgr, (ClientData)slave);
+	&mgr->managerSpec->tkGeomMgr, (ClientData)mgr);
 
     Tk_CreateEventHandler(slave->slaveWindow,
 	SlaveEventMask, SlaveEventHandler, (ClientData)slave);
@@ -320,85 +316,31 @@ static void RemoveSlave(Ttk_Manager *mgr, int index)
 
 void Ttk_GeometryRequestProc(ClientData clientData, Tk_Window slaveWindow)
 {
-    Ttk_Slave *slave = clientData;
-    ScheduleUpdate(slave->manager, MGR_RESIZE_REQUIRED);
+    Ttk_Manager *mgr = clientData;
+    ScheduleUpdate(mgr, MGR_RESIZE_REQUIRED);
 }
 
 void Ttk_LostSlaveProc(ClientData clientData, Tk_Window slaveWindow)
 {
-    Ttk_Slave *slave = clientData;
-    int index = Ttk_SlaveIndex(slave->manager, slave->slaveWindow);
+    Ttk_Manager *mgr = clientData;
+    int index = Ttk_SlaveIndex(mgr, slaveWindow);
 
     /* ASSERT: index >= 0 */
-    RemoveSlave(slave->manager, index);
+    RemoveSlave(mgr, index);
 }
 
 /*------------------------------------------------------------------------
  * +++ Public API.
  */
 
-/* ++ Ttk_AddSlave --
- * 	Create and configure new slave window, insert at specified index.
- *
- * Returns:
- * 	TCL_OK or TCL_ERROR; in the case of TCL_ERROR, the slave
- * 	is not added and an error message is left in interp.
+/* ++ Ttk_InsertSlave --
+ * 	Add a new slave window at the specified index.
  */
-int Ttk_AddSlave(
-    Tcl_Interp *interp, Ttk_Manager *mgr, Tk_Window slaveWindow,
-    int index, int objc, Tcl_Obj *CONST objv[])
+void Ttk_InsertSlave(
+    Ttk_Manager *mgr, int index, Tk_Window tkwin, void *slaveData)
 {
-    Ttk_Slave *slave;
-
-    /* Sanity-checks:
-     */
-    if (!Ttk_Maintainable(interp, slaveWindow, mgr->masterWindow)) {
-	return TCL_ERROR;
-    }
-    if (Ttk_SlaveIndex(mgr, slaveWindow) >= 0) {
-	Tcl_AppendResult(interp,
-	    Tk_PathName(slaveWindow), " already added",
-	    NULL);
-	return TCL_ERROR;
-    }
-
-    /* Create, configure, and insert slave:
-     */
-    slave = CreateSlave(interp, mgr, slaveWindow);
-    if (Ttk_ConfigureSlave(interp, mgr, slave, objc, objv) != TCL_OK) {
-	DeleteSlave(slave);
-	return TCL_ERROR;
-    }
+    Ttk_Slave *slave = NewSlave(mgr, tkwin, slaveData);
     InsertSlave(mgr, slave, index);
-    mgr->managerSpec->SlaveAdded(mgr, index);
-    return TCL_OK;
-}
-
-/* ++ Ttk_ConfigureSlave --
- */
-int Ttk_ConfigureSlave(
-    Tcl_Interp *interp, Ttk_Manager *mgr, Ttk_Slave *slave,
-    int objc, Tcl_Obj *CONST objv[])
-{
-    Tk_SavedOptions savedOptions;
-    int mask = 0;
-
-    /* ASSERT: mgr->slaveOptionTable != NULL */
-
-    if (Tk_SetOptions(interp, slave->slaveData, mgr->slaveOptionTable,
-	    objc, objv, slave->slaveWindow, &savedOptions, &mask) != TCL_OK)
-    {
-	return TCL_ERROR;
-    }
-
-    if (mgr->managerSpec->SlaveConfigured(interp,mgr,slave,mask) != TCL_OK) {
-	Tk_RestoreSavedOptions(&savedOptions);
-	return TCL_ERROR;
-    }
-
-    Tk_FreeSavedOptions(&savedOptions);
-    ScheduleUpdate(mgr, MGR_RELAYOUT_REQUIRED);
-    return TCL_OK;
 }
 
 /* ++ Ttk_ForgetSlave --
@@ -462,6 +404,10 @@ int Ttk_NumberSlaves(Ttk_Manager *mgr)
 {
     return mgr->nSlaves;
 }
+void *Ttk_ManagerData(Ttk_Manager *mgr)
+{
+    return mgr->managerData;
+}
 void *Ttk_SlaveData(Ttk_Manager *mgr, int slaveIndex)
 {
     return mgr->slaves[slaveIndex]->slaveData;
@@ -487,17 +433,16 @@ int Ttk_SlaveIndex(Ttk_Manager *mgr, Tk_Window slaveWindow)
     return -1;
 }
 
-/* ++ Ttk_GetSlaveFromObj(interp, mgr, objPtr, indexPtr) --
+/* ++ Ttk_GetSlaveIndexFromObj(interp, mgr, objPtr, indexPtr) --
  * 	Return the index of the slave specified by objPtr.
  * 	Slaves may be specified as an integer index or
  * 	as the name of the managed window.
  *
  * Returns:
- * 	Pointer to slave; stores slave index in *indexPtr.
- * 	On error, returns NULL and leaves an error message in interp.
+ * 	Standard Tcl completion code.  Leaves an error message in case of error.
  */
 
-Ttk_Slave *Ttk_GetSlaveFromObj(
+int Ttk_GetSlaveIndexFromObj(
     Tcl_Interp *interp, Ttk_Manager *mgr, Tcl_Obj *objPtr, int *indexPtr)
 {
     const char *string = Tcl_GetString(objPtr);
@@ -512,10 +457,10 @@ Ttk_Slave *Ttk_GetSlaveFromObj(
 	    Tcl_AppendResult(interp,
 		"Slave index ", Tcl_GetString(objPtr), " out of bounds",
 		NULL);
-	    return NULL;
+	    return TCL_ERROR;
 	}
 	*indexPtr = slaveIndex;
-	return mgr->slaves[slaveIndex];
+	return TCL_OK;
     }
 
     /* Try interpreting as a slave window name;
@@ -529,15 +474,15 @@ Ttk_Slave *Ttk_GetSlaveFromObj(
 	    Tcl_AppendResult(interp,
 		string, " is not managed by ", Tk_PathName(mgr->masterWindow),
 		NULL);
-	    return NULL;
+	    return TCL_ERROR;
 	}
 	*indexPtr = slaveIndex;
-	return mgr->slaves[slaveIndex];
+	return TCL_OK;
     }
 
     Tcl_ResetResult(interp);
     Tcl_AppendResult(interp, "Invalid slave specification ", string, NULL);
-    return NULL;
+    return TCL_ERROR;
 }
 
 /* ++ Ttk_ReorderSlave(mgr, fromIndex, toIndex) --

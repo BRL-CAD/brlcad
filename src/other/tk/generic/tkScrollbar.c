@@ -14,7 +14,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
+#include "tkInt.h"
 #include "tkScrollbar.h"
 #include "default.h"
 
@@ -288,8 +288,7 @@ ScrollbarWidgetCmd(
 	    && (length >= 2)) {
 	if (argc == 2) {
 	    result = Tk_ConfigureInfo(interp, scrollPtr->tkwin,
-		    tkpScrollbarConfigSpecs, (char *) scrollPtr,
-		    NULL, 0);
+		    tkpScrollbarConfigSpecs, (char *) scrollPtr, NULL, 0);
 	} else if (argc == 3) {
 	    result = Tk_ConfigureInfo(interp, scrollPtr->tkwin,
 		    tkpScrollbarConfigSpecs, (char *) scrollPtr, argv[2], 0);
@@ -597,7 +596,7 @@ TkScrollbarEventProc(
 	if (scrollPtr->tkwin != NULL) {
 	    scrollPtr->tkwin = NULL;
 	    Tcl_DeleteCommandFromToken(scrollPtr->interp,
-                    scrollPtr->widgetCmd);
+		    scrollPtr->widgetCmd);
 	}
 	if (scrollPtr->flags & REDRAW_PENDING) {
 	    Tcl_CancelIdleCall(TkpDisplayScrollbar, (ClientData) scrollPtr);

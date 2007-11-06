@@ -19,7 +19,7 @@ pack append . .t {top expand fill}
 update
 .t debug on
 wm geometry . {}
-
+  
 # The statements below reset the main window;  it's needed if the window
 # manager is mwm to make mwm forget about a previous minimum size setting.
 
@@ -76,7 +76,7 @@ test textIndex-1.9 {TkTextMakeByteIndex: shortcut for 0} {testtext} {
     testtext .t byteindex 3 80
 } {3.5 5}
 test textIndex-1.10 {TkTextMakeByteIndex: verify index is in range} {testtext} {
-    # for (segPtr = indexPtr->linePtr->segPtr; ; segPtr = segPtr->nextPtr)
+    # for (segPtr = indexPtr->linePtr->segPtr; ; segPtr = segPtr->nextPtr) 
     # one segment
 
     testtext .t byteindex 3 5
@@ -86,7 +86,7 @@ test textIndex-1.11 {TkTextMakeByteIndex: verify index is in range} {testtext} {
     #     index += segPtr->size
     # Multiple segments, make sure add segment size to index.
 
-    .t mark set foo 3.2
+    .t mark set foo 3.2 
     set x [testtext .t byteindex 3 7]
     .t mark unset foo
     set x
@@ -119,7 +119,7 @@ test textIndex-1.16 {TkTextMakeByteIndex: UTF-8 characters} {testtext} {
 } {5.18 20}
 test textIndex-1.17 {TkTextMakeByteIndex: prevent splitting UTF-8 character} \
 	{testtext} {
-    # ((byteIndex > index) && (segPtr->typePtr == &tkTextCharType))
+    # ((byteIndex > index) && (segPtr->typePtr == &tkTextCharType)) 
     # Wrong answer would be \xb9 (the 2nd byte of UTF rep of 0x4e4f).
 
     set x [testtext .t byteindex 5 2]
@@ -127,7 +127,7 @@ test textIndex-1.17 {TkTextMakeByteIndex: prevent splitting UTF-8 character} \
 } {{5.2 4} y}
 test textIndex-1.18 {TkTextMakeByteIndex: prevent splitting UTF-8 character} \
 	{testtext} {
-    # ((byteIndex > index) && (segPtr->typePtr == &tkTextCharType))
+    # ((byteIndex > index) && (segPtr->typePtr == &tkTextCharType)) 
     testtext .t byteindex 5 1
     .t get insert
 } "\u4e4f"
@@ -170,7 +170,7 @@ test textIndex-2.9 {TkTextMakeCharIndex: verify index is in range} {
     # for (segPtr = indexPtr->linePtr->segPtr; ; segPtr = segPtr->nextPtr)
     # Multiple segments, make sure add segment size to index.
 
-    .t mark set foo 3.2
+    .t mark set foo 3.2 
     set x [.t index 3.7]
     .t mark unset foo
     set x
@@ -419,7 +419,7 @@ test textIndex-12.5 {TkTextIndexForwChars: find index} {
 test textIndex-12.6 {TkTextIndexForwChars: find index} {
     # for ( ; segPtr != NULL; segPtr = segPtr->nextPtr)
     # border condition: segPtr == NULL -> beginning of next line
-
+    
     .t index {2.3 + 11 chars}
 } 3.0
 test textIndex-12.7 {TkTextIndexForwChars: find index} {
@@ -438,7 +438,7 @@ test textIndex-12.9 {TkTextIndexForwChars: find index} {
     .t image create 2.4 -image textimage
     set x [.t get {2.3 + 3 chars}]
     .t delete 2.4
-    set x
+    set x    
 } "f"
 test textIndex-12.10 {TkTextIndexForwChars: find index} {
     # dstPtr->byteIndex += segPtr->size - byteOffset
@@ -568,11 +568,11 @@ test textIndex-14.11 {TkTextIndexBackChars: move to previous segment} {
     set x
 } 2.9
 test textIndex-14.12 {TkTextIndexBackChars: move to previous line} {
-    # (lineIndex == 0)
+    # (lineIndex == 0) 
     .t index {1.5 - 10 chars}
 } 1.0
 test textIndex-14.13 {TkTextIndexBackChars: move to previous line} {
-    # not (lineIndex == 0)
+    # not (lineIndex == 0) 
     .t index {2.5 - 10 chars}
 } 1.2
 test textIndex-14.14 {TkTextIndexBackChars: move to previous line} {

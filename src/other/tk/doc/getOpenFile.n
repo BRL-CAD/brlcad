@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH tk_getOpenFile n 4.2 Tk "Tk Built-In Commands"
 .BS
@@ -86,7 +86,7 @@ dialog is displayed on top of its parent window.
 .TP
 \fB\-title\fR \fItitleString\fR
 Specifies a string to display as the title of the dialog box. If this
-option is not specified, then a default title is displayed.
+option is not specified, then a default title is displayed. 
 .PP
 If the user selects a file, both \fBtk_getOpenFile\fR and
 \fBtk_getSaveFile\fR return the full pathname of this file. If the

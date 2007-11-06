@@ -1,7 +1,7 @@
 # mkpsenc.tcl --
 #
 # Creates Postscript encoding vector for given encoding
-#
+# 
 
 proc ::tk::CreatePostscriptEncoding {encoding} {
     # now check for known. Even if it is known, it can be other
@@ -1081,7 +1081,7 @@ array set psglyphs {
    FB4B afii57700
 }
 
-# precalculate entire prolog when this file is loaded
+# precalculate entire prolog when this file is loaded 
 # (to speed things up)
 set ps_preamable "%%BeginProlog\n"
 append ps_preamable [CreatePostscriptEncoding [encoding system]]
@@ -1124,10 +1124,10 @@ append ps_preamable {
     0 exch 0 exch
     {
 	dup type /stringtype eq
-	{ stringwidth } {
-	    currentfont /Encoding get exch 1 exch put (\001) stringwidth
+	{ stringwidth } { 
+	    currentfont /Encoding get exch 1 exch put (\001) stringwidth 
         }
-	ifelse
+	ifelse 
 	exch 3 1 roll add 3 1 roll add exch
     }
     forall
@@ -1319,8 +1319,8 @@ append ps_preamable {
 	dup cstringwidth pop
 	justify neg mul 0 moveto
 	stipple {
-
-
+	   
+ 
 	    % The text is stippled, so turn it into a path and print
 	    % by calling StippledText, which in turn calls StippleFill.
 	    % Unfortunately, many Postscript interpreters will get
@@ -1352,7 +1352,7 @@ append ps_preamable {
 		    moveto
 		} ifelse
 	    } forall
-	    grestore
+	    grestore 
 	} {cstringshow} ifelse
 	0 spacing neg translate
     } forall

@@ -15,7 +15,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 #include "tkText.h"
 
@@ -1552,6 +1551,7 @@ LayoutDLine(
 		 */
 
 		TkTextLine *linePtr = TkBTreeNextLine(NULL, curIndex.linePtr);
+
 		if (linePtr != NULL) {
 		    dlPtr->logicalLinesMerged++;
 		    curIndex.byteIndex = 0;
@@ -1610,11 +1610,15 @@ LayoutDLine(
 	    }
 	    FreeStyle(textPtr, chunkPtr->stylePtr);
 	    breakChunkPtr->nextPtr = chunkPtr->nextPtr;
-	    (*chunkPtr->undisplayProc)(textPtr, chunkPtr);
+	    if (chunkPtr->undisplayProc != NULL) {
+		(*chunkPtr->undisplayProc)(textPtr, chunkPtr);
+	    }
 	    ckfree((char *) chunkPtr);
 	}
 	if (breakByteOffset != breakChunkPtr->numBytes) {
-	    (*breakChunkPtr->undisplayProc)(textPtr, breakChunkPtr);
+	    if (breakChunkPtr->undisplayProc != NULL) {
+		(*breakChunkPtr->undisplayProc)(textPtr, breakChunkPtr);
+	    }
 	    segPtr = TkTextIndexToSeg(&breakIndex, &byteOffset);
 	    (*segPtr->typePtr->layoutProc)(textPtr, &breakIndex,
 		    segPtr, byteOffset, maxX, breakByteOffset, 0,
@@ -2722,7 +2726,7 @@ DisplayLineBackground(
 		    rightX2 + xOffset, y, sValuePtr->borderWidth,
 		    sValuePtr->borderWidth, 1, sValuePtr->relief);
 	    Tk_3DHorizontalBevel(textPtr->tkwin, pixmap, sValuePtr->border,
-		    leftX + xOffset, y, rightX2 + sValuePtr->borderWidth -
+		    leftX + xOffset, y, rightX2 + sValuePtr->borderWidth - 
 		    leftX, sValuePtr->borderWidth, leftXIn, 0, 1,
 		    sValuePtr->relief);
 	}
@@ -8450,7 +8454,9 @@ RemoveFromBaseChunk(
     BaseCharInfo *bciPtr;
 
     if (chunkPtr->displayProc != CharDisplayProc) {
+#ifdef DEBUG_LAYOUT_WITH_BASE_CHUNKS
 	fprintf(stderr,"RemoveFromBaseChunk called with wrong chunk type\n");
+#endif
 	return;
     }
 
@@ -8469,11 +8475,13 @@ RemoveFromBaseChunk(
 
     if ((ciPtr->baseOffset + ciPtr->numBytes)
 	    != Tcl_DStringLength(&bciPtr->baseChars)) {
+#ifdef DEBUG_LAYOUT_WITH_BASE_CHUNKS
 	fprintf(stderr,"RemoveFromBaseChunk called with wrong chunk "
 		"(not last)\n");
+#endif
     }
 
-    Tcl_DStringSetLength(&bciPtr->baseChars,ciPtr->baseOffset);
+    Tcl_DStringSetLength(&bciPtr->baseChars, ciPtr->baseOffset);
 
     /*
      * Invalidate the stored pixel width of the base chunk.

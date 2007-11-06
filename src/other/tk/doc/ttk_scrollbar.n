@@ -4,16 +4,16 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" SOURCE: tk/doc/scrollbar.n, r1.4
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_scrollbar n 8.5 Tk "Tk Themed Widget"
 .BS
 .\" Use _ instead of :: as the name becomes a filename on install
 .SH NAME
-ttk_scrollbar \- Control the viewport of a scrollable widget
+ttk_scrollbar \- Control the viewport of a scrollable widget 
 .SH SYNOPSIS
 \fBttk::scrollbar\fR \fIpathName \fR?\fIoptions...\fR?
 .BE
@@ -34,7 +34,7 @@ these are used to scroll the visible region in discrete units.
 
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-command command Command
-A Tcl script prefix to evaluate
+A Tcl script prefix to evaluate 
 to change the view in the widget associated with the scrollbar.
 Additional arguments are appended to the value of this option,
 as described in \fBSCROLLING COMMANDS\fR below,
@@ -65,7 +65,7 @@ elements are the arguments to the most recent \fBset\fR widget command.
 Test the widget state; see \fIttk_widget(n)\fR.
 .TP
 \fIpathName \fBset\fR \fIfirst last\fR
-This command is normally invoked by the scrollbar's associated widget
+This command is normally invoked by the scrollbar's associated widget 
 from an \fB-xscrollcommand\fR or \fB-yscrollcommand\fR callback.
 Specifies the visible range to be displayed.
 \fIfirst\fR and \fIlast\fR are real fractions between 0 and 1.
@@ -99,7 +99,7 @@ If \fIx\fR and \fIy\fR refer to a point outside the trough, the closest
 point in the trough is used.
 .TP
 \fIpathName \fBidentify\fR \fIx y\fR
-Returns the name of the element under the point given
+Returns the name of the element under the point given 
 by \fIx\fR and \fIy\fR, or an empty string if the point does
 not lie in any element of the scrollbar.
 \fIX\fR and \fIy\fR are pixel coordinates relative to the scrollbar widget.
@@ -152,7 +152,7 @@ of individual elements, based on the position and state of the mouse pointer.
 set f [frame .f]
 ttk::scrollbar $f.hsb -orient horizontal -command [list $f.t xview]
 ttk::scrollbar $f.vsb -orient vertical -command [list $f.t yview]
-text $f.t -xscrollcommand [list $f.hsb set] -yscrollcommand [list $f.vsb set]
+text $f.t -xscrollcommand [list $f.hsb set] -yscrollcommand [list $f.vsb set] 
 grid $f.t -row 0 -column 0 -sticky nsew
 grid $f.vsb -row 0 -column 1 -sticky nsew
 grid $f.hsb -row 1 -column 0 -sticky nsew

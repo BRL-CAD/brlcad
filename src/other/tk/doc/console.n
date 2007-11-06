@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
 '\"
 .so man.macros
@@ -132,9 +132,7 @@ often has the following code fragment in it so output produced by
 .CS
 catch {\fBconsole show\fR}
 .CE
-
-.SH KEYWORDS
-console, interpreter, window, interactive, output channels
-
 .SH "SEE ALSO"
 destroy(n), fconfigure(n), history(n), interp(n), puts(n), text(n), wm(n)
+.SH KEYWORDS
+console, interpreter, window, interactive, output channels

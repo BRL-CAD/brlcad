@@ -2007,12 +2007,10 @@ Tk_MessageBoxObjCmd(
 {
     Tk_Window tkwin, parent;
     HWND hWnd;
-    char *message, *title, *detail;
+    Tcl_Obj *messageObj, *titleObj, *detailObj, *tmpObj;
     int defaultBtn, icon, type;
     int i, oldMode, winCode;
     UINT flags;
-    Tcl_DString messageString, titleString;
-    Tcl_Encoding unicodeEncoding = TkWinGetUnicodeEncoding();
     static CONST char *optionStrings[] = {
 	"-default",	"-detail",	"-icon",	"-message",
 	"-parent",	"-title",	"-type",	NULL
@@ -2024,14 +2022,15 @@ Tk_MessageBoxObjCmd(
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
+    (void) TkWinGetUnicodeEncoding();
     tkwin = (Tk_Window) clientData;
 
     defaultBtn = -1;
-    detail = NULL;
+    detailObj = NULL;
     icon = MB_ICONINFORMATION;
-    message = NULL;
+    messageObj = NULL;
     parent = tkwin;
-    title = NULL;
+    titleObj = NULL;
     type = MB_OK;
 
     for (i = 1; i < objc; i += 2) {
@@ -2053,7 +2052,6 @@ Tk_MessageBoxObjCmd(
 	    return TCL_ERROR;
 	}
 
-	string = Tcl_GetString(valuePtr);
 	switch ((enum options) index) {
 	case MSG_DEFAULT:
 	    defaultBtn = TkFindStateNumObj(interp, optionPtr, buttonMap,
@@ -2064,7 +2062,7 @@ Tk_MessageBoxObjCmd(
 	    break;
 
 	case MSG_DETAIL:
-	    detail = string;
+	    detailObj = valuePtr;
 	    break;
 
 	case MSG_ICON:
@@ -2075,18 +2073,18 @@ Tk_MessageBoxObjCmd(
 	    break;
 
 	case MSG_MESSAGE:
-	    message = string;
+	    messageObj = valuePtr;
 	    break;
 
 	case MSG_PARENT:
-	    parent = Tk_NameToWindow(interp, string, tkwin);
+	    parent = Tk_NameToWindow(interp, Tcl_GetString(valuePtr), tkwin);
 	    if (parent == NULL) {
 		return TCL_ERROR;
 	    }
 	    break;
 
 	case MSG_TITLE:
-	    title = string;
+	    titleObj = valuePtr;
 	    break;
 
 	case MSG_TYPE:
@@ -2103,9 +2101,8 @@ Tk_MessageBoxObjCmd(
 
     flags = 0;
     if (defaultBtn >= 0) {
-	int defaultBtnIdx;
+	int defaultBtnIdx = -1;
 
-	defaultBtnIdx = -1;
 	for (i = 0; i < NUM_TYPES; i++) {
 	    if (type == allowedTypes[i].type) {
 		int j;
@@ -2130,24 +2127,13 @@ Tk_MessageBoxObjCmd(
 
     flags |= icon | type | MB_SYSTEMMODAL;
 
-    Tcl_UtfToExternalDString(unicodeEncoding, message, -1, &messageString);
-    if (detail != NULL) {
-	Tcl_DString detailString;
-
-	if (message != NULL) {
-	    Tcl_UtfToExternalDString(unicodeEncoding, "\n\n", -1,
-		    &detailString);
-	    Tcl_DStringAppend(&messageString, Tcl_DStringValue(&detailString),
-		    Tcl_DStringLength(&detailString));
-	    Tcl_DStringFree(&detailString);
-	}
-	Tcl_UtfToExternalDString(unicodeEncoding, detail, -1,
-		&detailString);
-	Tcl_DStringAppend(&messageString, Tcl_DStringValue(&detailString),
-		Tcl_DStringLength(&detailString));
-	Tcl_DStringFree(&detailString);
+    tmpObj = messageObj ? Tcl_DuplicateObj(messageObj)
+	    : Tcl_NewUnicodeObj(NULL, 0);
+    Tcl_IncrRefCount(tmpObj);
+    if (detailObj) {
+	Tcl_AppendUnicodeToObj(tmpObj, L"\n\n", 2);
+	Tcl_AppendObjToObj(tmpObj, detailObj);
     }
-    Tcl_UtfToExternalDString(unicodeEncoding, title, -1, &titleString);
 
     oldMode = Tcl_SetServiceMode(TCL_SERVICE_ALL);
 
@@ -2164,8 +2150,8 @@ Tk_MessageBoxObjCmd(
     tsdPtr->hBigIcon   = TkWinGetIcon(parent, ICON_BIG);
     tsdPtr->hMsgBoxHook = SetWindowsHookEx(WH_CBT, MsgBoxCBTProc, NULL,
 	    GetCurrentThreadId());
-    winCode = MessageBoxW(hWnd, (WCHAR *) Tcl_DStringValue(&messageString),
-		(WCHAR *) Tcl_DStringValue(&titleString), flags);
+    winCode = MessageBoxW(hWnd, Tcl_GetUnicode(tmpObj),
+	    titleObj ? Tcl_GetUnicode(titleObj) : NULL, flags);
     UnhookWindowsHookEx(tsdPtr->hMsgBoxHook);
     (void) Tcl_SetServiceMode(oldMode);
 
@@ -2177,8 +2163,7 @@ Tk_MessageBoxObjCmd(
 
     EnableWindow(hWnd, 1);
 
-    Tcl_DStringFree(&messageString);
-    Tcl_DStringFree(&titleString);
+    Tcl_DecrRefCount(tmpObj);
 
     Tcl_SetResult(interp, TkFindStateString(buttonMap, winCode), TCL_STATIC);
     return TCL_OK;

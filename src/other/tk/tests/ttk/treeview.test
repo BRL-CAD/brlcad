@@ -248,7 +248,7 @@ test treeview-3.15 "Consecutive duplicate entries in children list" -constraints
 } -result [list x1 x2 x3]
 
 test treeview-3.16 "Insert child after self" -constraints treeview -body {
-    .tv move x2 newfirstone 1
+    .tv move x2 newfirstone 1 
     consistencyCheck .tv
     .tv children newfirstone
 } -result [list x1 x2 x3]
@@ -293,12 +293,12 @@ test treeview-5.3 "Heading" -constraints treeview -body {
 test treeview-5.4 "get cell" -constraints treeview -body {
     set l [list a b c]
     .tv item newnode -values $l
-    .tv set newnode 1
+    .tv set newnode 1 
 } -result b
 
 test treeview-5.5 "set cell" -constraints treeview -body {
     .tv set newnode 1 XXX
-    .tv item newnode -values
+    .tv item newnode -values 
 } -result [list a XXX c]
 
 test treeview-5.6 "set illegal cell" -constraints treeview -body {
@@ -349,7 +349,7 @@ test treeview-6.1 "deletion - setup" -constraints treeview -body {
     .tv children dtest
 } -result [list a b c d e]
 
-test treeview-6.1 "delete" -constraints treeview -body {
+test treeview-6.1.1 "delete" -constraints treeview -body {
     .tv delete b
     consistencyCheck .tv
     list [.tv exists b] [.tv children dtest]
@@ -411,11 +411,11 @@ test treeview-7.1 "move" -constraints treeview -body {
 
 test treeview-7.2 "illegal move" -constraints treeview -body {
    .tv move d d2 end
-} -returnCodes 1 -result "Cannot insert d as a descendant of d2"
+} -returnCodes 1 -result "Cannot insert d as a descendant of d2" 
 
 test treeview-7.3 "illegal move has no effect" -constraints treeview -body {
     consistencyCheck .tv
-    .tv children d
+    .tv children d 
 } -result [list d3 d1 d2]
 
 test treeview-7.4 "Replace children" -constraints treeview -body {

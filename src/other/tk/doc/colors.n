@@ -2,9 +2,9 @@
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" Copyright (c) 2003 ActiveState Corporation.
 '\" Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 '\"
 .so man.macros
 .TH colors n 8.3 Tk "Tk Built-In Commands"
@@ -746,7 +746,7 @@ thistle1                   255   225   255
 thistle2                   238   210   238
 thistle3                   205   181   205
 thistle4                   139   123   139
-tomato                     255    99    71
+tomato                     255    99    71 
 tomato1                    255    99    71
 tomato2                    238    92    66
 tomato3                    205    79    57

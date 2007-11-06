@@ -1,4 +1,4 @@
-/*
+/* 
  * tkUnixConfig.c --
  *
  *	This module implements the Unix system defaults for the configuration
@@ -12,7 +12,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tk.h"
 #include "tkInt.h"
 
 

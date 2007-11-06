@@ -188,12 +188,12 @@ proc createwindows {} {
     #
 
     frame .buttons
-    button .buttons.ok	   -default active -command ok     -text "Ok"
+    button .buttons.ok	   -default active -command ok     -text "Ok"    
     button .buttons.apply  -default normal -command apply  -text "Apply" \
 	    -state disabled
     button .buttons.cancel -default normal -command cancel -text "Cancel" \
 	    -state disabled
-    button .buttons.quit   -default normal -command quit   -text "Quit"
+    button .buttons.quit   -default normal -command quit   -text "Quit"  
 
     pack .buttons.ok .buttons.apply .buttons.cancel .buttons.quit \
 	    -side left -expand yes -pady 5

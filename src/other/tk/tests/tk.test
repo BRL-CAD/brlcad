@@ -67,7 +67,7 @@ test tk-3.8 {tk command: scaling: negative} {
 test tk-3.9 {tk command: scaling: too big} {
     tk scaling 1000000
     expr {[tk scaling] < 10000}
-} {1}
+} {1}    
 test tk-3.10 {tk command: scaling: widthmm} {
     tk scaling 1.25
     expr {int((25.4*[winfo screenwidth .])/(72*1.25)+0.5)-[winfo screenmmwidth .]}

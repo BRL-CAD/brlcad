@@ -847,7 +847,7 @@ ConvertSelection(
 	incr.multAtoms = singleInfo;
 	incr.numConversions = 1;
     } else {
-	Atom type;
+	Atom type, **multAtomsPtr = &incr.multAtoms;
 	int format, result;
 	unsigned long bytesAfter;
 
@@ -859,7 +859,7 @@ ConvertSelection(
 	result = XGetWindowProperty(eventPtr->display, eventPtr->requestor,
 		eventPtr->property, 0, MAX_PROP_WORDS, False, XA_ATOM,
 		&type, &format, &incr.numConversions, &bytesAfter,
-		(unsigned char **) &incr.multAtoms);
+		(unsigned char **) multAtomsPtr);
 	if ((result != Success) || (bytesAfter != 0) || (format != 32)
 		|| (type == None)) {
 	    if (incr.multAtoms != NULL) {

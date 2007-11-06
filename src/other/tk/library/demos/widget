@@ -33,12 +33,27 @@ if {[tk windowingsystem] eq "x11"} {
 }
 
 if {[lsearch -exact [font names] defaultFont] == -1} {
-    font create mainFont   -family Helvetica -size 12
-    font create fixedFont  -family Courier   -size 10
-    font create boldFont   -family Helvetica -size 12 -weight bold
-    font create titleFont  -family Helvetica -size 18 -weight bold
-    font create statusFont -family Helvetica -size 10
-    font create varsFont   -family Helvetica -size 14
+    # TIP #145 defines some standard named fonts
+    if {[lsearch -exact [font names] TkDefaultFont] != -1 &&
+	    [lsearch -exact [font names] TkFixedFont] != -1} {
+        # FIX ME: the following tecnique of cloning the font to copy it works
+        #         fine but means that if the system font is changed by
+        #         Tk cannot update the copied font. font alias might be
+        #         useful here -- or fix the app to use TkDefaultFont etc.
+        font create mainFont   {*}[font configure TkDefaultFont]
+        font create fixedFont  {*}[font configure TkFixedFont]
+        font create boldFont   {*}[font configure TkDefaultFont] -weight bold
+        font create titleFont  {*}[font configure TkDefaultFont] -weight bold
+        font create statusFont {*}[font configure TkDefaultFont]
+        font create varsFont   {*}[font configure TkDefaultFont]
+    } else {        
+        font create mainFont   -family Helvetica -size 12
+        font create fixedFont  -family Courier   -size 10
+        font create boldFont   -family Helvetica -size 12 -weight bold
+        font create titleFont  -family Helvetica -size 18 -weight bold
+        font create statusFont -family Helvetica -size 10
+        font create varsFont   -family Helvetica -size 14
+    }
 }
 
 set widgetDemo 1

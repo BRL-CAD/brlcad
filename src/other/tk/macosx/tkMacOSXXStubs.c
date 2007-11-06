@@ -16,7 +16,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXEvent.h"
 
 #include <IOKit/IOKitLib.h>
@@ -51,12 +51,14 @@ static int DefaultErrorHandler(Display* display, XErrorEvent* err_evt);
  * Other declarations
  */
 
-static int TkMacOSXXDestroyImage(XImage *image);
-static unsigned long TkMacOSXXGetPixel(XImage *image, int x, int y);
-static int TkMacOSXXPutPixel(XImage *image, int x, int y, unsigned long pixel);
-static XImage *TkMacOSXXSubImage(XImage *image, int x, int y,
+static int DestroyImage(XImage *image);
+static unsigned long ImageGetPixel(XImage *image, int x, int y);
+static int PutPixel(XImage *image, int x, int y, unsigned long pixel);
+#if 0
+static XImage *SubImage(XImage *image, int x, int y,
 	unsigned int width, unsigned int height);
-static int TkMacOSXXAddPixel(XImage *image, long value);
+static int AddPixel(XImage *image, long value);
+#endif
 
 
 /*
@@ -400,59 +402,6 @@ XRootWindow(Display *display, int screen_number)
     return ROOT_ID;
 }
 
-XImage *
-XGetImage(display, d, x, y, width, height, plane_mask, format)
-    Display *display;
-    Drawable d;
-    int x;
-    int y;
-    unsigned int width;
-    unsigned int height;
-    unsigned long plane_mask;
-    int format;
-{
-    XImage *   imagePtr = NULL;
-    Pixmap     pixmap = (Pixmap) NULL;
-    Tk_Window  win = (Tk_Window) ((MacDrawable *) d)->winPtr;
-    GC	       gc;
-    int	       depth = 32;
-    int	       offset = 0;
-    int	       bitmap_pad = 32;
-    int	       bytes_per_line = 0;
-
-    if (TkMacOSXGetDrawablePort(d)) {
-	if (format == ZPixmap) {
-	    if (width > 0 && height > 0) {
-		/* Tk_GetPixmap fails for zero width or height */
-		pixmap = Tk_GetPixmap(display, d, width, height, depth);
-	    }
-	    if (win) {
-		XGCValues values;
-		gc = Tk_GetGC(win, 0, &values);
-	    } else {
-		gc = XCreateGC(display, pixmap, 0, NULL);
-	    }
-	    if (pixmap) {
-		XCopyArea(display, d, pixmap, gc, x, y, width, height, 0, 0);
-	    }
-	    imagePtr = XCreateImage(display, NULL, depth, format, offset,
-		(char*)TkMacOSXGetDrawablePort(pixmap),
-		width, height, bitmap_pad, bytes_per_line);
-	    /* Track Pixmap underlying the XImage in the unused obdata field *
-	     * so that we can treat XImages coming from XGetImage specially. */
-	    imagePtr->obdata = (XPointer) pixmap;
-	    if (!win) {
-		XFreeGC(display, gc);
-	    }
-	} else {
-	    TkpDisplayWarning(
-		"XGetImage: only ZPixmap types are implemented",
-		"XGetImage Failure");
-	}
-    }
-    return imagePtr;
-}
-
 int
 XGetGeometry(display, d, root_return, x_return, y_return, width_return,
 	height_return, border_width_return, depth_return)
@@ -547,65 +496,14 @@ XAllocSizeHints(void)
 }
 #endif
 
-XImage *
-XCreateImage(
-    Display* display,
-    Visual* visual,
-    unsigned int depth,
-    int format,
-    int offset,
-    char* data,
-    unsigned int width,
-    unsigned int height,
-    int bitmap_pad,
-    int bytes_per_line)
-{
-    XImage *ximage;
-
-    display->request++;
-    ximage = (XImage *) ckalloc(sizeof(XImage));
-
-    ximage->height = height;
-    ximage->width = width;
-    ximage->depth = depth;
-    ximage->xoffset = offset;
-    ximage->format = format;
-    ximage->data = data;
-    ximage->bitmap_pad = bitmap_pad;
-    if (bytes_per_line == 0) {
-	ximage->bytes_per_line = width * 4;  /* assuming 32 bits per pixel */
-    } else {
-	ximage->bytes_per_line = bytes_per_line;
-    }
-
-    if (format == ZPixmap) {
-	ximage->bits_per_pixel = 32;
-	ximage->bitmap_unit = 32;
-    } else {
-	ximage->bits_per_pixel = 1;
-	ximage->bitmap_unit = 8;
-    }
-    ximage->byte_order = LSBFirst;
-    ximage->bitmap_bit_order = LSBFirst;
-    ximage->red_mask = 0x00FF0000;
-    ximage->green_mask = 0x0000FF00;
-    ximage->blue_mask = 0x000000FF;
-
-    ximage->obdata = NULL;
-    ximage->f.destroy_image = TkMacOSXXDestroyImage;
-    ximage->f.get_pixel = TkMacOSXXGetPixel;
-    ximage->f.put_pixel = TkMacOSXXPutPixel;
-    ximage->f.sub_image = TkMacOSXXSubImage;
-    ximage->f.add_pixel = TkMacOSXXAddPixel;
-
-    return ximage;
-}
-
 GContext
 XGContextFromGC(
     GC gc)
 {
-    /* TODO - currently a no-op */
+    /*
+     * TODO: currently a no-op
+     */
+
     return 0;
 }
 
@@ -780,7 +678,7 @@ XForceScreenSaver(
 }
 
 void
-Tk_FreeXId (
+Tk_FreeXId(
     Display *display,
     XID xid)
 {
@@ -788,12 +686,48 @@ Tk_FreeXId (
 }
 
 int
-XSync (Display *display, Bool flag)
+XSync(
+    Display *display,
+    Bool flag)
 {
     TkMacOSXFlushWindows();
     display->request++;
     return 0;
 }
+
+#if 0
+int
+XSetClipRectangles(
+    Display *d,
+    GC gc,
+    int clip_x_origin,
+    int clip_y_origin,
+    XRectangle* rectangles,
+    int n,
+    int ordering)
+{
+    TkRegion clipRgn;
+
+    if (gc->clip_mask && ((TkpClipMask*)gc->clip_mask)->type
+	    == TKP_CLIP_REGION) {
+	clipRgn = ((TkpClipMask*)gc->clip_mask)->value.region;
+	SetEmptyRgn((RgnHandle) clipRgn);
+    } else {
+	clipRgn = TkCreateRegion(); /* LEAK! */
+    }
+
+    while (n--) {
+	XRectangle rect = *rectangles;
+	
+	rect.x += clip_x_origin;
+	rect.y += clip_y_origin;
+	TkUnionRectWithRegion(&rect, clipRgn, clipRgn);
+	rectangles++;
+    }
+    TkSetRegion(d, gc, clipRgn);
+    return 1;
+}
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -829,21 +763,209 @@ TkGetServerInfo(
     Tcl_AppendResult(interp, buffer, ServerVendor(Tk_Display(tkwin)),
 	    buffer2, NULL);
 }
+
+#pragma mark XImage handling
 /*
- * Image stuff
+ *----------------------------------------------------------------------
+ *
+ * XCreateImage --
+ *
+ *	Allocates storage for a new XImage.
+ *
+ * Results:
+ *	Returns a newly allocated XImage.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+XImage *
+XCreateImage(
+    Display* display,
+    Visual* visual,
+    unsigned int depth,
+    int format,
+    int offset,
+    char* data,
+    unsigned int width,
+    unsigned int height,
+    int bitmap_pad,
+    int bytes_per_line)
+{
+    XImage *ximage;
+
+    display->request++;
+    ximage = (XImage *) ckalloc(sizeof(XImage));
+
+    ximage->height = height;
+    ximage->width = width;
+    ximage->depth = depth;
+    ximage->xoffset = offset;
+    ximage->format = format;
+    ximage->data = data;
+
+    if (format == ZPixmap) {
+	ximage->bits_per_pixel = 32;
+	ximage->bitmap_unit = 32;
+    } else {
+	ximage->bits_per_pixel = 1;
+	ximage->bitmap_unit = 8;
+    }
+    if (bitmap_pad) {
+	ximage->bitmap_pad = bitmap_pad;
+    } else {
+	/* Use 16 byte alignment for best Quartz perfomance */
+	ximage->bitmap_pad = 128;
+    }
+    if (bytes_per_line) {
+	ximage->bytes_per_line = bytes_per_line;
+    } else {
+	ximage->bytes_per_line = ((width * ximage->bits_per_pixel +
+		(ximage->bitmap_pad - 1)) >> 3) &
+		~((ximage->bitmap_pad >> 3) - 1);
+    }
+#ifdef WORDS_BIGENDIAN
+    ximage->byte_order = MSBFirst;
+    ximage->bitmap_bit_order = MSBFirst;
+#else
+    ximage->byte_order = LSBFirst;
+    ximage->bitmap_bit_order = LSBFirst;
+#endif
+    ximage->red_mask = 0x00FF0000;
+    ximage->green_mask = 0x0000FF00;
+    ximage->blue_mask = 0x000000FF;
+    ximage->obdata = NULL;
+    ximage->f.create_image = NULL;
+    ximage->f.destroy_image = DestroyImage;
+    ximage->f.get_pixel = ImageGetPixel;
+    ximage->f.put_pixel = PutPixel;
+    ximage->f.sub_image = NULL;
+    ximage->f.add_pixel = NULL;
+
+    return ximage;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * XGetImage --
+ *
+ *	This function copies data from a pixmap or window into an XImage.
+ *
+ * Results:
+ *	Returns a newly allocated image containing the data from the given
+ *	rectangle of the given drawable.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+XImage *
+XGetImage(
+    Display *display,
+    Drawable d,
+    int x,
+    int y,
+    unsigned int width,
+    unsigned int height,
+    unsigned long plane_mask,
+    int format)
+{
+    XImage *   imagePtr = NULL;
+    Pixmap     pixmap = (Pixmap) NULL;
+    Tk_Window  win = (Tk_Window) ((MacDrawable *) d)->winPtr;
+    GC	       gc;
+    int	       depth = 32;
+    int	       offset = 0;
+    int	       bitmap_pad = 32;
+    int	       bytes_per_line = 0;
+
+    if (TkMacOSXGetDrawablePort(d)) {
+	if (format == ZPixmap) {
+	    if (width > 0 && height > 0) {
+		/* Tk_GetPixmap fails for zero width or height */
+		pixmap = Tk_GetPixmap(display, d, width, height, depth);
+	    }
+	    if (win) {
+		XGCValues values;
+		gc = Tk_GetGC(win, 0, &values);
+	    } else {
+		gc = XCreateGC(display, pixmap, 0, NULL);
+	    }
+	    if (pixmap) {
+		XCopyArea(display, d, pixmap, gc, x, y, width, height, 0, 0);
+	    }
+	    imagePtr = XCreateImage(display, NULL, depth, format, offset,
+		(char*)TkMacOSXGetDrawablePort(pixmap),
+		width, height, bitmap_pad, bytes_per_line);
+	    /* Track Pixmap underlying the XImage in the unused obdata field *
+	     * so that we can treat XImages coming from XGetImage specially. */
+	    imagePtr->obdata = (XPointer) pixmap;
+	    if (!win) {
+		XFreeGC(display, gc);
+	    }
+	} else {
+	    TkpDisplayWarning(
+		"XGetImage: only ZPixmap types are implemented",
+		"XGetImage Failure");
+	}
+    }
+    return imagePtr;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * DestroyImage --
+ *
+ *	Destroys storage associated with an image.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Deallocates the image.
+ *
+ *----------------------------------------------------------------------
  */
 
 static int
-TkMacOSXXDestroyImage(
+DestroyImage(
     XImage *image)
 {
-    if (image->obdata)
-	Tk_FreePixmap((Display*)gMacDisplay,(Pixmap)image->obdata);
+    if (image) {
+	if (image->obdata) {
+	    Tk_FreePixmap((Display*) gMacDisplay, (Pixmap) image->obdata);
+	} else if (image->data) {
+	    ckfree(image->data);
+	}
+	ckfree((char*) image);
+    }
     return 0;
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * ImageGetPixel --
+ *
+ *	Get a single pixel from an image.
+ *
+ * Results:
+ *	Returns the 32 bit pixel value.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
 
 static unsigned long
-TkMacOSXXGetPixel(
+ImageGetPixel(
     XImage *image,
     int x,
     int y)
@@ -872,9 +994,25 @@ TkMacOSXXGetPixel(
     }
     return c;
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * PutPixel --
+ *
+ *	Set a single pixel in an image.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
 
 static int
-TkMacOSXXPutPixel(
+PutPixel(
     XImage *image,
     int x,
     int y,
@@ -907,8 +1045,9 @@ TkMacOSXXPutPixel(
     return 0;
 }
 
+#if 0
 static XImage *
-TkMacOSXXSubImage(
+SubImage(
     XImage *image,
     int x,
     int y,
@@ -920,13 +1059,14 @@ TkMacOSXXSubImage(
 }
 
 static int
-TkMacOSXXAddPixel(
+AddPixel(
     XImage *image,
     long value)
 {
     Debugger();
     return 0;
 }
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -1104,7 +1244,6 @@ Tk_GetUserInactiveTime(Display *dpy)
     timeObj = CFDictionaryGetValue(props, CFSTR("HIDIdleTime"));
 
     if (timeObj) {
-	CFRetain(timeObj);
 	CFTypeID type = CFGetTypeID(timeObj);
 
 	if (type == CFDataGetTypeID()) { /* Jaguar */
@@ -1122,8 +1261,6 @@ Tk_GetUserInactiveTime(Display *dpy)
 	} else {
 	    ret = -1l;
 	}
-
-	CFRelease(timeObj);
     }
     /* Cleanup */
     CFRelease(props);

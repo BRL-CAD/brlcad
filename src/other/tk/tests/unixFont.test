@@ -1,4 +1,4 @@
-# This file is a Tcl script to test out the procedures in tkUnixFont.c.
+# This file is a Tcl script to test out the procedures in tkUnixFont.c. 
 # It is organized in the standard fashion for Tcl tests.
 #
 # Many of these tests are visually oriented and cannot be checked
@@ -6,7 +6,7 @@
 # underlined?"); these tests attempt to exercise the code in question,
 # but there are no results that can be checked.  Some tests depend on the
 # fonts having or not having certain properties, which may not be valid
-# at all sites.
+# at all sites.  
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
@@ -28,7 +28,7 @@ foreach {constraint font} {
     if {[llength $xlsf]} {
 	if {![catch {eval exec $xlsf [list *-$font-*]} res]
 		&& ![string match *unmatched* $res]} {
-	    # Newer Unix systems have more default fonts installed,
+	    # Newer Unix systems have more default fonts installed, 
 	    # so we can't rely on fallbacks for fonts to need to
 	    # fall back on anything.
 	    testConstraint $constraint 0
@@ -120,7 +120,7 @@ test unixfont-2.11 {TkpGetFontFromAttributes: font cannot be loaded} unix {
 
     font actual {-size 14}
     set x {}
-} {}
+} {}    
 
 test unixfont-3.1 {TkpDeleteFont procedure} unix {
     font actual {-family xyz}

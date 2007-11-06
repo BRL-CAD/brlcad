@@ -17,7 +17,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 #include "tkText.h"
 
 #ifdef __WIN32__
@@ -61,17 +60,10 @@ typedef struct TImageInstance {
  * The type record for test images:
  */
 
-#ifdef USE_OLD_IMAGE
-static int		ImageCreate(Tcl_Interp *interp,
-			    char *name, int argc, char **argv,
-			    Tk_ImageType *typePtr, Tk_ImageMaster master,
-			    ClientData *clientDataPtr);
-#else
 static int		ImageCreate(Tcl_Interp *interp,
 			    char *name, int argc, Tcl_Obj *CONST objv[],
 			    Tk_ImageType *typePtr, Tk_ImageMaster master,
 			    ClientData *clientDataPtr);
-#endif
 static ClientData	ImageGet(Tk_Window tkwin, ClientData clientData);
 static void		ImageDisplay(ClientData clientData,
 			    Display *display, Drawable drawable,
@@ -83,7 +75,7 @@ static void		ImageDelete(ClientData clientData);
 
 static Tk_ImageType imageType = {
     "test",			/* name */
-    (Tk_ImageCreateProc *) ImageCreate, /* createProc */
+    ImageCreate,		/* createProc */
     ImageGet,			/* getProc */
     ImageDisplay,		/* displayProc */
     ImageFree,			/* freeProc */
@@ -220,6 +212,11 @@ static void		TrivialEventProc(ClientData clientData,
 #else
 MODULE_SCOPE int	TkplatformtestInit(Tcl_Interp *interp);
 #endif
+
+/*
+ * External legacy testing initialization routine:
+ */
+MODULE_SCOPE int	TkOldTestInit(Tcl_Interp *interp);
 
 /*
  *----------------------------------------------------------------------
@@ -298,6 +295,14 @@ Tktest_Init(
     if (!initialized) {
 	initialized = 1;
 	Tk_CreateImageType(&imageType);
+    }
+
+    /*
+     *	Enable testing of legacy interfaces.
+     */
+
+    if (TkOldTestInit(interp) != TCL_OK) {
+	return TCL_ERROR;
     }
 
     /*
@@ -1487,15 +1492,9 @@ ImageCreate(
     Tcl_Interp *interp,		/* Interpreter for application containing
 				 * image. */
     char *name,			/* Name to use for image. */
-#ifdef USE_OLD_IMAGE
-    int argc,			/* Number of arguments. */
-    char **argv,		/* Argument strings for options (doesn't
-				 * include image name or type). */
-#else
     int objc,			/* Number of arguments. */
     Tcl_Obj *CONST objv[],	/* Argument strings for options (doesn't
 				 * include image name or type). */
-#endif /* USE_OLD_IMAGE */
     Tk_ImageType *typePtr,	/* Pointer to our type record (not used). */
     Tk_ImageMaster master,	/* Token for image, to be used by us in later
 				 * callbacks. */
@@ -1506,23 +1505,6 @@ ImageCreate(
     char *varName;
     int i;
 
-#ifdef USE_OLD_IMAGE
-    Tk_InitImageArgs(interp, argc, &argv);
-    varName = "log";
-    for (i = 0; i < argc; i += 2) {
-	if (strcmp(argv[i], "-variable") != 0) {
-	    Tcl_AppendResult(interp, "bad option name \"",
-		    argv[i], "\"", NULL);
-	    return TCL_ERROR;
-	}
-	if ((i+1) == argc) {
-	    Tcl_AppendResult(interp, "no value given for \"",
-		    argv[i], "\" option", NULL);
-	    return TCL_ERROR;
-	}
-	varName = argv[i+1];
-    }
-#else
     varName = "log";
     for (i = 0; i < objc; i += 2) {
 	if (strcmp(Tcl_GetString(objv[i]), "-variable") != 0) {
@@ -1537,7 +1519,6 @@ ImageCreate(
 	}
 	varName = Tcl_GetString(objv[i+1]);
     }
-#endif /* USE_OLD_IMAGE */
 
     timPtr = (TImageMaster *) ckalloc(sizeof(TImageMaster));
     timPtr->master = master;
@@ -1988,7 +1969,8 @@ TestpropCmd(
     int result, actualFormat;
     unsigned long bytesAfter, length, value;
     Atom actualType, propName;
-    char *property, *p, *end;
+    unsigned char *property, *p;
+    char *end;
     Window w;
     char buffer[30];
 
@@ -2004,7 +1986,7 @@ TestpropCmd(
     result = XGetWindowProperty(Tk_Display(mainWin),
 	    w, propName, 0, 100000, False, AnyPropertyType,
 	    &actualType, &actualFormat, &length,
-	    &bytesAfter, (unsigned char **) &property);
+	    &bytesAfter, &property);
     if ((result == Success) && (actualType != None)) {
 	if ((actualFormat == 8) && (actualType == XA_STRING)) {
 	    for (p = property; ((unsigned long)(p-property)) < length; p++) {
@@ -2012,7 +1994,7 @@ TestpropCmd(
 		    *p = '\n';
 		}
 	    }
-	    Tcl_SetResult(interp, property, TCL_VOLATILE);
+	    Tcl_SetResult(interp, (/*!unsigned*/char*)property, TCL_VOLATILE);
 	} else {
 	    for (p = property; length > 0; length--) {
 		if (actualFormat == 32) {

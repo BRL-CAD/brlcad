@@ -65,18 +65,18 @@ int Ttk_GetOrientFromObj(
 static const char *ttkStateStrings[] = {
     "normal", "readonly", "disabled", "active", NULL
 };
-enum {
+enum { 
     TTK_COMPAT_STATE_NORMAL,
     TTK_COMPAT_STATE_READONLY,
     TTK_COMPAT_STATE_DISABLED,
     TTK_COMPAT_STATE_ACTIVE
 };
 
-/* TtkCheckStateOption --
+/* TtkCheckStateOption -- 
  * 	Handle -state compatibility option.
  *
- *	NOTE: setting -state disabled / -state enabled affects the
- *	widget state, but the internal widget state does *not* affect
+ *	NOTE: setting -state disabled / -state enabled affects the 
+ *	widget state, but the internal widget state does *not* affect 
  *	the value of the -state option.
  *	This option is present for compatibility only.
  */
@@ -174,7 +174,7 @@ int TtkGetOptionValue(
  * type name dbName dbClass default objOffset intOffset flags clientData mask
  */
 
-/* public */
+/* public */ 
 Tk_OptionSpec ttkCoreOptionSpecs[] =
 {
     {TK_OPTION_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -276,9 +276,7 @@ Ttk_Init(Tcl_Interp *interp)
 
     Ttk_PlatformInit(interp);
 
-#if 0
     Tcl_PkgProvideEx(interp, "Ttk", TTK_PATCH_LEVEL, (void*)&ttkStubs);
-#endif
 
     return TCL_OK;
 }

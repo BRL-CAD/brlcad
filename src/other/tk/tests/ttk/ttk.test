@@ -305,12 +305,12 @@ test ttk-7.6 "First radiobutton state" -body {
     .rb1 instate selected
 } -result 0
 
-test ttk-7.6 "Unset radiobutton variable" -body {
+test ttk-7.7 "Unset radiobutton variable" -body {
     unset ::choice
     list [info exists ::choice] [.rb1 instate alternate] [.rb2 instate alternate]
 } -result {0 1 1}
 
-test ttk-7.6 "Reset radiobutton variable" -body {
+test ttk-7.8 "Reset radiobutton variable" -body {
     set ::choice 2
     list [info exists ::choice] [.rb1 instate alternate] [.rb2 instate alternate]
 } -result {1 0 0}

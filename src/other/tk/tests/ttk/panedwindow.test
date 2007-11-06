@@ -113,8 +113,8 @@ test panedwindow-2.end "Cleanup" -body { destroy .pw }
 #
 test panedwindow-3.0 "configure pane" -body {
     ttk::panedwindow .pw
-    .pw add [listbox .pw.lb1]
-    .pw add [listbox .pw.lb2]
+    .pw add [listbox .pw.lb1] 
+    .pw add [listbox .pw.lb2] 
     .pw pane 1 -weight 2
     .pw pane 1 -weight
 } -result 2
@@ -156,10 +156,11 @@ test panedwindow-4.2 "forget forgotten" -body {
 #
 proc checkorder {winlist} {
     set pos -1
+    set positions [list]
     foreach win $winlist {
-    	set nextpos [winfo y $win]
+    	lappend positions [set nextpos [winfo y $win]]
 	if {$nextpos <= $pos} {
-	    error "window $win out of order"
+	    error "window $win out of order ($positions)"
 	}
 	set pos $nextpos
     }
@@ -181,7 +182,7 @@ test panedwindow-4.END "cleanup" -body {
 
 # See #1292219
 
-test panedwindow-5.1 "Propage Map/Unmap state to children" -body {
+test panedwindow-5.1 "Propagate Map/Unmap state to children" -body {
     set result [list]
     pack [ttk::panedwindow .pw]
     .pw add [ttk::button .pw.b]
@@ -197,5 +198,52 @@ test panedwindow-5.1 "Propage Map/Unmap state to children" -body {
 } -result [list 1 1 0 0] -cleanup {
     destroy .pw
 }
+
+### sashpos tests.
+#
+proc sashpositions {pw} {
+    set positions [list]
+    set npanes [llength [winfo children $pw]]
+    for {set i 0} {$i < $npanes - 1} {incr i} {
+    	lappend positions [$pw sashpos $i]
+    }
+    return $positions
+}
+
+test paned-sashpos-setup "Setup for sash position test" -body {
+    ttk::style theme use default
+    ttk::style configure -sashthickness 5
+
+    ttk::panedwindow .pw
+    .pw add [frame .pw.f1 -width 20 -height 20]
+    .pw add [frame .pw.f2 -width 20 -height 20]
+    .pw add [frame .pw.f3 -width 20 -height 20]
+    .pw add [frame .pw.f4 -width 20 -height 20]
+
+    update idletasks
+    list [winfo reqwidth .pw] [winfo reqheight .pw]
+} -result [list 20 [expr {20*4 + 5*3}]]
+
+test paned-sashpos-attempt-restore "Attempt to set sash positions" -body {
+    # This is not expected to succeed, since .pw isn't large enough yet.
+    #
+    .pw sashpos 0 30
+    .pw sashpos 1 60
+    .pw sashpos 2 90
+
+    list [winfo reqwidth .pw] [winfo reqheight .pw] [sashpositions .pw]
+} -result [list 20 95 [list 0 5 10]]
+
+test paned-sashpos-restore "Set height then sash positions" -body {
+    # Setting sash positions after setting -height _should_ succeed.
+    #
+    .pw configure -height 120
+    .pw sashpos 0 30
+    .pw sashpos 1 60
+    .pw sashpos 2 90
+    list [winfo reqwidth .pw] [winfo reqheight .pw] [sashpositions .pw]
+} -result [list 20 120 [list 30 60 90]]
+
+test paned-sashpos-cleanup "Clean up" -body { destroy .pw }
 
 tcltest::cleanupTests

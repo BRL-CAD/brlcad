@@ -159,8 +159,10 @@ typedef struct CanUse {
 
 static const TkStateMap systemMap[] = {
     {ANSI_FIXED_FONT,	    "ansifixed"},
+    {ANSI_FIXED_FONT,	    "fixed"},
     {ANSI_VAR_FONT,	    "ansi"},
     {DEVICE_DEFAULT_FONT,   "device"},
+    {DEFAULT_GUI_FONT,	    "defaultgui"},
     {OEM_FIXED_FONT,	    "oemfixed"},
     {SYSTEM_FIXED_FONT,	    "systemfixed"},
     {SYSTEM_FONT,	    "system"},
@@ -208,6 +210,11 @@ static void		InitFont(Tk_Window tkwin, HFONT hFont,
 			    int overstrike, WinFont *tkFontPtr);
 static void		InitSubFont(HDC hdc, HFONT hFont, int base,
 			    SubFont *subFontPtr);
+static int		CreateNamedSystemLogFont(Tcl_Interp *interp,
+			    Tk_Window tkwin, CONST char* name,
+			    LOGFONT* logFontPtr);
+static int		CreateNamedSystemFont(Tcl_Interp *interp,
+			    Tk_Window tkwin, CONST char* name, HFONT hFont);
 static int		LoadFontRanges(HDC hdc, HFONT hFont,
 			    USHORT **startCount, USHORT **endCount,
 			    int *symbolPtr);
@@ -260,6 +267,8 @@ TkpFontPkgInit(
 
 	systemEncoding = TkWinGetUnicodeEncoding();
     }
+
+    TkWinSetupSystemFonts(mainPtr);
 }
 
 /*
@@ -270,7 +279,6 @@ TkpFontPkgInit(
  *	Map a platform-specific native font name to a TkFont.
  *
  * Results:
-
  *	The return value is a pointer to a TkFont that represents the native
  *	font. If a native font by the given name could not be found, the
  *	return value is NULL.
@@ -307,6 +315,138 @@ TkpGetNativeFont(
     InitFont(tkwin, GetStockObject(object), 0, fontPtr);
 
     return (TkFont *) fontPtr;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ * CreateNamedSystemFont --
+ *
+ *	This function registers a Windows logical font description with the Tk
+ *	named font mechanism.
+ *
+ * Side effects
+ *
+ *	A new named font is added to the Tk font registry.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static int
+CreateNamedSystemLogFont(
+    Tcl_Interp *interp,
+    Tk_Window tkwin,
+    CONST char* name,
+    LOGFONT* logFontPtr)
+{
+    HFONT hFont;
+    int r;
+    
+    hFont = CreateFontIndirect(logFontPtr);
+    r = CreateNamedSystemFont(interp, tkwin, name, hFont);
+    DeleteObject((HGDIOBJ)hFont);
+    return r;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ * CreateNamedSystemFont --
+ *
+ *	This function registers a Windows font with the Tk
+ *	named font mechanism.
+ *
+ * Side effects
+ *
+ *	A new named font is added to the Tk font registry.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static int
+CreateNamedSystemFont(
+    Tcl_Interp *interp,
+    Tk_Window tkwin,
+    CONST char* name,
+    HFONT hFont)
+{
+    TkFontAttributes *faPtr;
+    WinFont *fontPtr;
+    int r;
+    
+    TkDeleteNamedFont(interp, tkwin, name);
+    
+    fontPtr = (WinFont *) ckalloc(sizeof(WinFont));
+    InitFont(tkwin, hFont, 0, fontPtr);
+    faPtr = (TkFontAttributes*)ckalloc(sizeof(TkFontAttributes));
+    memcpy(faPtr, &fontPtr->font.fa, sizeof(TkFontAttributes));
+    r = TkCreateNamedFont(interp, tkwin, name, faPtr);
+    TkpDeleteFont((TkFont *)fontPtr);
+    ckfree((char *) fontPtr);
+    return r;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ * TkWinSystemFonts --
+ *
+ *	Create some platform specific named fonts that to give access to the
+ *	system fonts. These are all defined for the Windows desktop parameters.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+void
+TkWinSetupSystemFonts(TkMainInfo *mainPtr)
+{
+    Tcl_Interp *interp;
+    Tk_Window tkwin;
+    const TkStateMap *mapPtr;
+    NONCLIENTMETRICS ncMetrics;
+    ICONMETRICS iconMetrics;
+    HFONT hFont;
+    
+    interp = (Tcl_Interp *) mainPtr->interp;
+    tkwin = (Tk_Window) mainPtr->winPtr;
+    
+    /* force this for now */
+    if (((TkWindow *) tkwin)->mainPtr == NULL)
+        ((TkWindow *) tkwin)->mainPtr = mainPtr;
+    
+    ncMetrics.cbSize = sizeof(ncMetrics);
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncMetrics),
+	    &ncMetrics, 0);
+    
+    CreateNamedSystemLogFont(interp, tkwin, "TkDefaultFont",
+	    &ncMetrics.lfMessageFont);
+    CreateNamedSystemLogFont(interp, tkwin, "TkHeadingFont",
+	    &ncMetrics.lfMessageFont);
+    CreateNamedSystemLogFont(interp, tkwin, "TkTextFont",
+	    &ncMetrics.lfMessageFont);
+    CreateNamedSystemLogFont(interp, tkwin, "TkMenuFont",
+	    &ncMetrics.lfMenuFont);
+    CreateNamedSystemLogFont(interp, tkwin, "TkTooltipFont",
+	    &ncMetrics.lfStatusFont);
+    CreateNamedSystemLogFont(interp, tkwin, "TkCaptionFont",
+	    &ncMetrics.lfCaptionFont);
+    CreateNamedSystemLogFont(interp, tkwin, "TkSmallCaptionFont",
+	    &ncMetrics.lfSmCaptionFont);
+
+    iconMetrics.cbSize = sizeof(iconMetrics);
+    SystemParametersInfo(SPI_GETICONMETRICS, sizeof(iconMetrics),
+	    &iconMetrics, 0);
+    CreateNamedSystemLogFont(interp, tkwin, "TkIconFont",
+	    &iconMetrics.lfFont);
+    
+    hFont = (HFONT)GetStockObject(ANSI_FIXED_FONT);
+    CreateNamedSystemFont(interp, tkwin, "TkFixedFont", hFont);
+    
+    /* 
+     * Setup the remaining standard Tk font names as named fonts.
+     */
+
+    for (mapPtr = systemMap; mapPtr->strKey != NULL; mapPtr++) {
+        hFont = (HFONT)GetStockObject(mapPtr->numKey);
+        CreateNamedSystemFont(interp, tkwin, mapPtr->strKey, hFont);
+    }
 }
 
 /*
@@ -359,10 +499,10 @@ TkpGetFontFromAttributes(
     char ***fontFallbacks;
     Tk_Uid faceName, fallback, actualName;
 
-    tkwin   = (Tk_Window) ((TkWindow *) tkwin)->mainPtr->winPtr;
-    window  = Tk_WindowId(tkwin);
-    hwnd    = (window == None) ? NULL : TkWinGetHWND(window);
-    hdc	    = GetDC(hwnd);
+    tkwin = (Tk_Window) ((TkWindow *) tkwin)->mainPtr->winPtr;
+    window = Tk_WindowId(tkwin);
+    hwnd = (window == None) ? NULL : TkWinGetHWND(window);
+    hdc = GetDC(hwnd);
 
     /*
      * Algorithm to get the closest font name to the one requested.
@@ -472,9 +612,9 @@ TkpGetFontFamilies(
     HWND hwnd;
     Window window;
 
-    window  = Tk_WindowId(tkwin);
-    hwnd    = (window == None) ? NULL : TkWinGetHWND(window);
-    hdc	    = GetDC(hwnd);
+    window = Tk_WindowId(tkwin);
+    hwnd = (window == None) ? NULL : TkWinGetHWND(window);
+    hdc = GetDC(hwnd);
 
     /*
      * On any version NT, there may fonts with international names. Use the
@@ -565,8 +705,8 @@ TkpGetSubFonts(
  *
  * TkpGetFontAttrsForChar --
  *
- *	Retrieve the font attributes of the actual font used to render
- *	a given character.
+ *	Retrieve the font attributes of the actual font used to render a given
+ *	character.
  *
  * Results:
  *	None.
@@ -600,8 +740,9 @@ TkpGetFontAttrsForChar(
     HFONT oldfont;		/* Saved font from the device context */
     TEXTMETRIC tm;		/* Font metrics of the selected subfont */
 
-
-    /* Get the font attributes */
+    /*
+     * Get the font attributes.
+     */
 
     oldfont = SelectObject(hdc, thisSubFontPtr->hFont);
     GetTextMetrics(hdc, &tm);
@@ -609,7 +750,7 @@ TkpGetFontAttrsForChar(
     ReleaseDC(fontPtr->hwnd, hdc);
     faPtr->family = familyPtr->faceName;
     faPtr->size = TkFontGetPoints(tkwin,
-				  tm.tmInternalLeading - tm.tmHeight);
+	    tm.tmInternalLeading - tm.tmHeight);
     faPtr->weight = (tm.tmWeight > FW_MEDIUM) ? TK_FW_BOLD : TK_FW_NORMAL;
     faPtr->slant = tm.tmItalic ? TK_FS_ITALIC : TK_FS_ROMAN;
     faPtr->underline = (tm.tmUnderlined != 0);
@@ -664,14 +805,12 @@ Tk_MeasureChars(
     HDC hdc;
     HFONT oldFont;
     WinFont *fontPtr;
-    int curX;
+    int curX, moretomeasure;
     Tcl_UniChar ch;
     SIZE size;
-    int moretomeasure;
     FontFamily *familyPtr;
     Tcl_DString runString;
-    SubFont *thisSubFontPtr;
-    SubFont *lastSubFontPtr;
+    SubFont *thisSubFontPtr, *lastSubFontPtr;
     CONST char *p, *end, *next = NULL, *start;
 
     if (numBytes == 0) {
@@ -846,19 +985,18 @@ Tk_MeasureChars(
  *  TkpMeasureCharsInContext --
  *
  *	Determine the number of bytes from the string that will fit in the
- *	given horizontal span.	The measurement is done under the assumption
+ *	given horizontal span. The measurement is done under the assumption
  *	that TkpDrawCharsInContext() will be used to actually display the
  *	characters.
  *
  *	This one is almost the same as Tk_MeasureChars(), but with access to
- *	all the characters on the line for context.  On Windows this context
+ *	all the characters on the line for context. On Windows this context
  *	isn't consulted, so we just call Tk_MeasureChars().
  *
  * Results:
- *	The return value is the number of bytes from source that
- *	fit into the span that extends from 0 to maxLength.  *lengthPtr is
- *	filled with the x-coordinate of the right edge of the last
- *	character that did fit.
+ *	The return value is the number of bytes from source that fit into the
+ *	span that extends from 0 to maxLength. *lengthPtr is filled with the
+ *	x-coordinate of the right edge of the last character that did fit.
  *
  * Side effects:
  *	None.
@@ -868,30 +1006,30 @@ Tk_MeasureChars(
 
 int
 TkpMeasureCharsInContext(
-    Tk_Font tkfont,	    /* Font in which characters will be drawn. */
-    CONST char * source,    /* UTF-8 string to be displayed.  Need not be
-			     * '\0' terminated. */
-    int numBytes,	    /* Maximum number of bytes to consider from
-			     * source string in all. */
-    int rangeStart,	    /* Index of first byte to measure. */
-    int rangeLength,	    /* Length of range to measure in bytes. */
-    int maxLength,	    /* If >= 0, maxLength specifies the longest
-			     * permissible line length; don't consider any
-			     * character that would cross this x-position.
-			     * If < 0, then line length is unbounded and the
-			     * flags argument is ignored. */
-    int flags,		    /* Various flag bits OR-ed together:
-			     * TK_PARTIAL_OK means include the last char
-			     * which only partially fit on this line.
-			     * TK_WHOLE_WORDS means stop on a word boundary,
-			     * if possible.  TK_AT_LEAST_ONE means return at
-			     * least one character even if no characters fit.
-			     * TK_ISOLATE_END means that the last character
-			     * should not be considered in context with the
-			     * rest of the string (used for breaking
-			     * lines).	*/
-    int * lengthPtr)	    /* Filled with x-location just after the
-			     * terminating character. */
+    Tk_Font tkfont,		/* Font in which characters will be drawn. */
+    CONST char *source,		/* UTF-8 string to be displayed. Need not be
+				 * '\0' terminated. */
+    int numBytes,		/* Maximum number of bytes to consider from
+				 * source string in all. */
+    int rangeStart,		/* Index of first byte to measure. */
+    int rangeLength,		/* Length of range to measure in bytes. */
+    int maxLength,		/* If >= 0, maxLength specifies the longest
+				 * permissible line length; don't consider any
+				 * character that would cross this x-position.
+				 * If < 0, then line length is unbounded and
+				 * the flags argument is ignored. */
+    int flags,			/* Various flag bits OR-ed together:
+				 * TK_PARTIAL_OK means include the last char
+				 * which only partially fit on this line.
+				 * TK_WHOLE_WORDS means stop on a word
+				 * boundary, if possible. TK_AT_LEAST_ONE
+				 * means return at least one character even if
+				 * no characters fit. TK_ISOLATE_END means
+				 * that the last character should not be
+				 * considered in context with the rest of the
+				 * string (used for breaking lines). */
+    int *lengthPtr)		/* Filled with x-location just after the
+				 * terminating character. */
 {
     (void) numBytes; /*unused*/
     return Tk_MeasureChars(tkfont, source + rangeStart, rangeLength,
@@ -1066,8 +1204,8 @@ Tk_DrawChars(
  * TkpDrawCharsInContext --
  *
  *	Draw a string of characters on the screen like Tk_DrawChars(), but
- *	with access to all the characters on the line for context.  On
- *	Windows this context isn't consulted, so we just call Tk_DrawChars().
+ *	with access to all the characters on the line for context. On Windows
+ *	this context isn't consulted, so we just call Tk_DrawChars().
  *
  * Results:
  *	None.
@@ -1080,24 +1218,24 @@ Tk_DrawChars(
 
 void
 TkpDrawCharsInContext(
-    Display * display,	    /* Display on which to draw. */
-    Drawable drawable,	    /* Window or pixmap in which to draw. */
-    GC gc,		    /* Graphics context for drawing characters. */
-    Tk_Font tkfont,	    /* Font in which characters will be drawn; must
-			     * be the same as font used in GC. */
-    CONST char * source,    /* UTF-8 string to be displayed.  Need not be
-			     * '\0' terminated.	 All Tk meta-characters
-			     * (tabs, control characters, and newlines)
-			     * should be stripped out of the string that is
-			     * passed to this function.	 If they are not
-			     * stripped out, they will be displayed as
-			     * regular printing characters. */
-    int numBytes,	    /* Number of bytes in string. */
-    int rangeStart,	    /* Index of first byte to draw. */
-    int rangeLength,	    /* Length of range to draw in bytes. */
-    int x, int y)	    /* Coordinates at which to place origin of the
-			     * whole (not just the range) string when
-			     * drawing. */
+    Display *display,		/* Display on which to draw. */
+    Drawable drawable,		/* Window or pixmap in which to draw. */
+    GC gc,			/* Graphics context for drawing characters. */
+    Tk_Font tkfont,		/* Font in which characters will be drawn;
+				 * must be the same as font used in GC. */
+    CONST char *source,		/* UTF-8 string to be displayed. Need not be
+				 * '\0' terminated. All Tk meta-characters
+				 * (tabs, control characters, and newlines)
+				 * should be stripped out of the string that
+				 * is passed to this function. If they are not
+				 * stripped out, they will be displayed as
+				 * regular printing characters. */
+    int numBytes,		/* Number of bytes in string. */
+    int rangeStart,		/* Index of first byte to draw. */
+    int rangeLength,		/* Length of range to draw in bytes. */
+    int x, int y)		/* Coordinates at which to place origin of the
+				 * whole (not just the range) string when
+				 * drawing. */
 {
     (void) numBytes; /*unused*/
     Tk_DrawChars(display, drawable, gc, tkfont,
@@ -1230,9 +1368,9 @@ InitFont(
     TkFontAttributes *faPtr;
     char buf[LF_FACESIZE * sizeof(WCHAR)];
 
-    window  = Tk_WindowId(tkwin);
-    hwnd    = (window == None) ? NULL : TkWinGetHWND(window);
-    hdc	    = GetDC(hwnd);
+    window = Tk_WindowId(tkwin);
+    hwnd = (window == None) ? NULL : TkWinGetHWND(window);
+    hdc = GetDC(hwnd);
     oldFont = SelectObject(hdc, hFont);
 
     GetTextMetrics(hdc, &tm);
@@ -1389,9 +1527,9 @@ ReleaseSubFont(
  *
  * AllocFontFamily --
  *
- *	Find the FontFamily structure associated with the given font name.
- *	The information should be stored by the caller in a SubFont and used
- *	when determining if that SubFont supports a character.
+ *	Find the FontFamily structure associated with the given font name. The
+ *	information should be stored by the caller in a SubFont and used when
+ *	determining if that SubFont supports a character.
  *
  *	Cannot use the string name used to construct the font as the key,
  *	because the capitalization may not be canonical. Therefore use the

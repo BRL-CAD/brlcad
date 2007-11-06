@@ -139,7 +139,7 @@ proc ::tk::MessageBox {args} {
 
     #
     # The default value of the title is space (" ") not the empty string
-    # because for some window managers, a
+    # because for some window managers, a 
     #		wm title .foo ""
     # causes the window title to be "foo" instead of the empty string.
     #
@@ -165,6 +165,9 @@ proc ::tk::MessageBox {args} {
 	    "warning"   {set data(-icon) "caution"}
 	    "info"      {set data(-icon) "note"}
 	}
+	option add *Dialog*background systemDialogBackgroundActive widgetDefault
+	option add *Dialog*Button.highlightBackground \
+		systemDialogBackgroundActive widgetDefault
     }
 
     if {![winfo exists $data(-parent)]} {
@@ -172,7 +175,7 @@ proc ::tk::MessageBox {args} {
     }
 
     switch -- $data(-type) {
-	abortretryignore {
+	abortretryignore { 
 	    set names [list abort retry ignore]
 	    set labels [list &Abort &Retry &Ignore]
 	    set cancel abort
@@ -214,7 +217,7 @@ proc ::tk::MessageBox {args} {
 	lappend buttons [list $name -text [mc $lab]]
     }
 
-    # If no default button was specified, the default default is the
+    # If no default button was specified, the default default is the 
     # first button (Bug: 2218).
 
     if {$data(-default) eq ""} {
@@ -261,10 +264,10 @@ proc ::tk::MessageBox {args} {
     #
     if {[winfo viewable [winfo toplevel $data(-parent)]] } {
 	wm transient $w $data(-parent)
-    }
+    }    
 
     if {$windowingsystem eq "aqua"} {
-	unsupported::MacWindowStyle style $w dBoxProc
+	::tk::unsupported::MacWindowStyle style $w moveableModal {}
     }
 
     frame $w.bot -background $bg
@@ -368,6 +371,16 @@ proc ::tk::MessageBox {args} {
 	}
 	grid $w.$name -in $w.bot -row 0 -column $i -padx 3m -pady 2m -sticky ew
 	grid columnconfigure $w.bot $i -uniform buttons
+	# We boost the size of some Mac buttons for l&f
+	if {$windowingsystem eq "aqua"} {
+	    set tmp [string tolower $name]
+	    if {$tmp eq "ok" || $tmp eq "cancel" || $tmp eq "yes" ||
+		    $tmp eq "no" || $tmp eq "abort" || $tmp eq "retry" ||
+		    $tmp eq "ignore"} {
+		grid columnconfigure $w.bot $i -minsize 90
+	    }
+	    grid configure $w.$name -pady 7
+	}
         incr i
 
 	# create the binding for the key accelerator, based on the underline

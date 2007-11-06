@@ -13,7 +13,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 
 /*
  * There are three different ways to set the cursor on the Mac.

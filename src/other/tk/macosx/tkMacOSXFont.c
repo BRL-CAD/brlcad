@@ -38,7 +38,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXFont.h"
 
 /*
@@ -316,7 +316,7 @@ GetThemeFontAndFamily(
 TkFont *
 TkpGetNativeFont(
     Tk_Window tkwin,		/* For display where font will be used. */
-    const char * name)		/* Platform-specific font name. */
+    const char *name)		/* Platform-specific font name. */
 {
     ThemeFontID themeFontId;
     FMFontFamily fontFamily;
@@ -704,7 +704,8 @@ TkpMeasureCharsInContext(
     const MacFont *fontPtr = (const MacFont *) tkfont;
     int curX = -1, curByte = 0;
     UniChar *uchars;
-    int ulen, urstart, urlen, urend;
+    int ulen;
+    UniCharArrayOffset urstart, urlen, urend;
     Tcl_DString ucharBuffer;
 
     /*
@@ -792,53 +793,47 @@ TkpMeasureCharsInContext(
 	     * also something we like to decide for ourself.
 	     */
 
-	    while ((offset > (UniCharArrayOffset)urstart) &&
+	    while ((offset > urstart) &&
 		    (uchars[offset-1] == ' ')) {
 		offset--;
 	    }
+	}
 
-	    /*
-	     * Fix up left-overs for the TK_WHOLE_WORDS case.
-	     */
+	/*
+	 * Fix up left-overs for the TK_WHOLE_WORDS case.
+	 */
 
-	    if (flags & TK_WHOLE_WORDS) {
-		if (flags & TK_AT_LEAST_ONE) {
-		    /*
-		     * If we are the the start of the range, we need to look
-		     * forward. If we are not at the end of a word, we must
-		     * be in the middle of the first word, so we also look
-		     * forward.
-		     */
+	if (flags & TK_WHOLE_WORDS) {
+	    if (flags & TK_AT_LEAST_ONE) {
+		/*
+		 * If we are the the start of the range, we need to look
+		 * forward. If we are not at the end of a word, we must be in
+		 * the middle of the first word, so we also look forward.
+		 */
 
-		    if ((offset == (UniCharArrayOffset)urstart) ||
-			    (uchars[offset] != ' ')) {
-			while ((offset < (UniCharArrayOffset)urend)
-				&& (uchars[offset] != ' ')) {
-			    offset++;
-			}
+		if ((offset == urstart) || (uchars[offset] != ' ')) {
+		    while ((offset < urend) && (uchars[offset] != ' ')) {
+			offset++;
 		    }
-		} else {
-		    /*
-		     * If we are not at the end of a word, we need to look
-		     * backward.
-		     */
+		}
+	    } else {
+		/*
+		 * If we are not at the end of a word, we need to look
+		 * backward.
+		 */
 
-		    if ((offset != (UniCharArrayOffset)urend) &&
-			    (uchars[offset] != ' ')) {
-			while ((offset > (UniCharArrayOffset)urstart)
-				&& (uchars[offset-1] != ' ')) {
-			    offset--;
-			}
-			while ((offset > (UniCharArrayOffset)urstart)
-				&& (uchars[offset-1] == ' ')) {
-			    offset--;
-			}
+		if ((offset != urend) && (uchars[offset] != ' ')) {
+		    while ((offset > urstart) && (uchars[offset-1] != ' ')) {
+			offset--;
+		    }
+		    while ((offset > urstart) && (uchars[offset-1] == ' ')) {
+			offset--;
 		    }
 		}
 	    }
 	}
 
-	if (offset > (UniCharArrayOffset)urend) {
+	if (offset > urend) {
 	    offset = urend;
 	}
 
@@ -850,13 +845,13 @@ TkpMeasureCharsInContext(
 
 	if ((err != kATSULineBreakInWord)
 		&& !(flags & TK_WHOLE_WORDS)
-		&& (offset <= (UniCharArrayOffset)urend)) {
+		&& (offset <= urend)) {
 	    UniCharArrayOffset lastOffset = offset;
 	    UniCharArrayOffset nextoffset;
 	    int lastX = -1;
 	    int wantonemorechar = -1; /* undecided */
 
-	    while (offset <= (UniCharArrayOffset)urend) {
+	    while (offset <= urend) {
 		if (flags & TK_ISOLATE_END) {
 		    LayoutSetString(fontPtr, NULL, uchars, offset);
 		}
@@ -876,7 +871,7 @@ TkpMeasureCharsInContext(
 
 		    if (wantonemorechar == -1) {
 			wantonemorechar = ((flags & TK_AT_LEAST_ONE) &&
-				(lastOffset == (UniCharArrayOffset)urstart)) ||
+				(lastOffset == urstart)) ||
 				((flags & TK_PARTIAL_OK) &&
 				(lastX != maxLength));
 			if (!wantonemorechar) {
@@ -907,7 +902,7 @@ TkpMeasureCharsInContext(
 		 * into account.
 		 */
 
-		if (offset >= (UniCharArrayOffset)urend) {
+		if (offset >= urend) {
 		    break;
 		}
 		nextoffset = 0;
@@ -952,13 +947,14 @@ TkpMeasureCharsInContext(
     Tcl_DStringFree(&ucharBuffer);
 
 #ifdef TK_MAC_DEBUG_FONTS
-    TkMacOSXDbgMsg("measure: '%.*s', maxpix=%d, -> width=%d, bytes=%d, "
-	    "flags=%s%s%s%s", rangeLength, source+rangeStart, maxLength, curX,
-	    curByte,
+    TkMacOSXDbgMsg("measure: '%.*s', maxLength=%d, flags=%s%s%s%s "
+	    "-> width=%d, bytes=%d",
+	    rangeLength, source+rangeStart, maxLength,
 	    flags & TK_PARTIAL_OK   ? "partialOk "  : "",
 	    flags & TK_WHOLE_WORDS  ? "wholeWords " : "",
 	    flags & TK_AT_LEAST_ONE ? "atLeastOne " : "",
-	    flags & TK_ISOLATE_END  ? "isolateEnd " : "");
+	    flags & TK_ISOLATE_END  ? "isolateEnd " : "",
+	    curX, curByte);
 #endif
 
     *lengthPtr = curX;
@@ -1058,10 +1054,14 @@ TkpDrawCharsInContext(
     Tcl_DString runString;
 #endif
 
-    TkMacOSXSetupDrawingContext(drawable, gc, 1, &drawingContext);
+    TkMacOSXSetupDrawingContext(drawable, gc, tkMacOSXUseCGDrawing,
+	    &drawingContext);
 
 #if 0
-    /* TODO: implement stippled text drawing */
+    /*
+     * TODO: implement stippled text drawing
+     */
+
     if ((gc->fill_style == FillStippled
 	    || gc->fill_style == FillOpaqueStippled)
 	    && gc->stipple != None) {
@@ -2288,8 +2288,7 @@ TkMacOSXInitControlFontStyle(
  *	disabling of antialiased text from tcl.
  *	The possible values for this variable are:
  *
- *	-1 - Use system default as configurable in "System Preferences" ->
- *	   "General".
+ *	-1 - Use system default as configurable in "System Prefs" -> "General".
  *	 0 - Unconditionally disable antialiasing.
  *	 1 - Unconditionally enable antialiasing.
  *

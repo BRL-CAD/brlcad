@@ -253,7 +253,7 @@ test canvas-9.1 {canvas id creation and deletion} -setup {
 	    .c delete $id
 	}
     }] 0]
-
+	
     set x ""
 } -result {}
 test canvas-10.1 {find items using tag expressions} -setup {
@@ -401,10 +401,10 @@ test canvas-12.1 {canvas mm obj, patch SF-403327, 102471} -setup {
     destroy .c
     pack [canvas .c]
 } -body {
-    set qx [expr {1.+1.}]
-    # qx has type double and no string representation
+    set qx [expr {1.+1.}] 
+    # qx has type double and no string representation 
     .c scale all $qx 0 1. 1.
-    # qx has now type MMRep and no string representation
+    # qx has now type MMRep and no string representation 
     list $qx [string length $qx]
 } -result {2.0 3}
 test canvas-12.2 {canvas mm obj, patch SF-403327, 102471} -setup {
@@ -413,9 +413,9 @@ test canvas-12.2 {canvas mm obj, patch SF-403327, 102471} -setup {
 } -body {
     set val 10
     incr val
-    # qx has type double and no string representation
+    # qx has type double and no string representation 
     .c scale all $val 0 1 1
-    # qx has now type MMRep and no string representation
+    # qx has now type MMRep and no string representation 
     incr val
 } -result 12
 

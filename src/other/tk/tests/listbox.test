@@ -890,7 +890,7 @@ test listbox-4.12 {ConfigureListbox procedure, listvar -> different listvar} {
     catch {destroy .l}
     set x [list a b c d]
     set y [list 1 2 3 4]
-    listbox .l
+    listbox .l 
     .l configure -listvar x
     .l configure -listvar y
     .l insert end 5 6 7 8
@@ -996,7 +996,7 @@ test listbox-5.6 {ListboxComputeGeometry procedure} {
     pack [listbox .l -font {{open look glyph}}]
     update
 } {}
-
+    
 
 catch {destroy .l}
 listbox .l -height 2 -xscrollcommand "record x" -yscrollcommand "record y"
@@ -2069,7 +2069,7 @@ test listbox-25.2 {listbox item configurations and widget based inserts} {
     .l insert 0 1 2 3 4
     list [.l itemcget 0 -fg] [.l itemcget 4 -fg]
 } [list {} red]
-
+    
 # state issues
 test listbox-26.1 {listbox disabled state disallows inserts} {
     catch {destroy .l}

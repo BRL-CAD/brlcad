@@ -15,8 +15,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
-#include "tkInt.h"
 #include "tkUnixInt.h"
 
 /*
@@ -982,7 +980,7 @@ TkWmSetClass(
  *
  * Tk_WmObjCmd --
  *
- *	This function is invoked to process the "wm" Tcl command.
+ *	This function is invoked to process the "wm" Tcl command. 
  *
  *----------------------------------------------------------------------
  */

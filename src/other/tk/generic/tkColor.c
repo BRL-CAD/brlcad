@@ -14,6 +14,7 @@
  * RCS: @(#) $Id$
  */
 
+#include "tkInt.h"
 #include "tkColor.h"
 
 /*

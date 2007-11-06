@@ -12,6 +12,7 @@
  * RCS: @(#) $Id$
  */
 
+#include "tkInt.h"
 #include "tkUndo.h"
 
 static int		EvaluateActionList(Tcl_Interp *interp,

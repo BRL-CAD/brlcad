@@ -28,6 +28,16 @@ pack $btns -side bottom -fill x
 proc colorrefresh {w col} {
     $w configure -bg $col
     $w.buttons configure -bg $col
+    if {[tk windowingsystem] eq "aqua"} {
+	# set highlightbackground of all buttons in $w
+	set l [list $w]
+	while {[llength $l]} {
+	    set l [concat [lassign $l b] [winfo children $b]]
+	    if {[winfo class $b] eq "Button"} {
+		$b configure -highlightbackground $col
+	    }
+	}
+    }
 }
 
 button $w.b1 -text "Peach Puff" -width 10 \

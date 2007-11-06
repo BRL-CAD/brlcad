@@ -3255,7 +3255,7 @@ could be listed twice, if a long list of files were shown, and the view
 scrolled to the right, and then a different file file was shown, the
 scrollregion on the canvas wasn't being reset, so the file dialog was
 broken from then on, added an update idletasks so that the watch
-cursor was shown when the dialog was thinking. For the motif file
+cursor was shown when the dialog was thinking. For the motif file 
 dialog, fixed the weights for resizing.  On the clrpicker, fixed the
 finalColor variable which caused problems when the OK button was
 "clicked" before the dialog was mapped (in the test suite). Added Ioi's
@@ -3303,13 +3303,13 @@ to use the new event gereating mechanism.
 9/18/96 (bug fix) Long-standing bug in bind where <Button-1><Button-1> was
 reported as <Double-Button-1>, but <Double-Key-a> was reported as "aa". (CS)
 
-9/27/96 (bug fix) Bindings didn't work on 64-bit machines due to changes
+9/27/96 (bug fix) Bindings didn't work on 64-bit machines due to changes 
 made for virtual events. (CS)
 
-9/30/96 (feature change) Binding for new virtual events included both
-lower and upper-case, e.g., <<Copy>> was defined as <Control-c> and
+9/30/96 (feature change) Binding for new virtual events included both 
+lower and upper-case, e.g., <<Copy>> was defined as <Control-c> and 
 <Control-C>.  Previously, widgets were directly bound to only lower-case
-bindings.  The upper-case binding caused incompatibility with some existing
+bindings.  The upper-case binding caused incompatibility with some existing 
 Tcl programs, so the upper case bindings for <<Cut>>, <<Copy>>, and <<Paste>>
 were removed. (CS)
 
@@ -3335,7 +3335,7 @@ constraints. It used to return an error. (SAU)
 10/1/96 (bug fix)  "The way grid handles '^' short-cuts was re-written
 to eliminate core dumps. (SAU)
 
-10/3/96 (feature change) A virtual event binding associated with a
+10/3/96 (feature change) A virtual event binding associated with a 
 given physical event is now considered less specific than a binding for
 that same physical event, all other things being equal. (CS).
 
@@ -3380,13 +3380,13 @@ error due to a misplaced common in library/menu.tcl. (JO)
 error mechanism. (RJ)
 
 10/23/96 (bug fix) Fixed a bug in the Mac subwindow implementation
-that caused refreshes to not occur for canvases with embedded
+that caused refreshes to not occur for canvases with embedded 
 windows. (RJ)
 
 10/24/96 (bug fix) Provided workaround for Apple bug that doesn't
 handle zooming correctly for floating windows. (RJ)
 
-10/24/96 (bug fix) Macintosh tearoff menus are now correctly
+10/24/96 (bug fix) Macintosh tearoff menus are now correctly 
 displayed as Mac floating windows. (RJ)
 
 11/1/96 (bug fix) Restored manual page for procedures like
@@ -3488,10 +3488,10 @@ child of the master. (SS)
 widget command, which allows a menu to operate as a menubar. On the
 Macintosh, the menubar is displayed accross the top of the main monitor,
 just like with other applications. Under Windows and Unix, the menu is
-attached to the toplevel window. Also, changed some semantics.
-Tearoff menus will now reflect changes to the menu it was
+attached to the toplevel window. Also, changed some semantics.  
+Tearoff menus will now reflect changes to the menu it was 
 torn off from, and are deleted when the master menu is
-deleted. Tearoffs also reflect more look-and-feel of the
+deleted. Tearoffs also reflect more look-and-feel of the 
 platforms they are running on. (SRP)
 
 10/31/96 (bug fix) Under Windows, missing system cursors would
@@ -3577,9 +3577,9 @@ correctly if it contained the literal characters \" (CS)
 12/17/96 (feature change) Native Windows labels do not get a focus-ring
 border.  (CS)
 
-12/17/96 (bug fix) Under Windows, colors specified as "#XXYYZZ" where XX, YY,
+12/17/96 (bug fix) Under Windows, colors specified as "#XXYYZZ" where XX, YY, 
 or ZZ were not valid hex digits were getting a random color value instead of
-being an error. (CS)
+being an error. (CS) 
 
 ----------------- Released 8.0a1, 12/17/96 -----------------------
 
@@ -3601,7 +3601,7 @@ first time. (SS)
 
 1/6/97 (bug fix) Under Windows, the initialization code was not
 looking in the right directory for the Tk libraries when the program
-being run was not in the Tcl installation heirarchy. (SS)
+being run was not in the Tcl installation heirarchy. (SS) 
 
 1/8/97 (bug fix) Under Windows, the windows were not being unmapped
 properly, which led to strange packer behavior. (SS)
@@ -3614,10 +3614,10 @@ menubars. (JO)
 cause Tk to crash because TkMainInfo was freed before menu released its
 resources.  This bug had already been fixed for scrollbars and buttons. (CS)
 
-1/15/97 (bug fix) Tk is now working under Win32s again, including Win32
+1/15/97 (bug fix) Tk is now working under Win32s again, including Win32 
 version 1.25.  Fixed separate problems in fonts and dialogs. (CS)
 
-1/15/97 (feature change) Under Windows, font sizes are now specified in
+1/15/97 (feature change) Under Windows, font sizes are now specified in 
 points, not pixels.  The mapping between pointsize and pixels depends on
 Windows having accurate metrics for the monitor (plug&play helps).  Font
 metrics are still reported in pixels. (CS)
@@ -3762,7 +3762,7 @@ unix-centric fonts in scripts don't break when run on Windows or Mac.
 now, a minimal XLFD (such as "*-times-*") will be accepted, and all
 unspecified attributes will be given default values.  (2) Previously, in the
 {name size style ...} format, only the style was optional; now both the size
-and the style are optional; this solves the problem of old scripts that
+and the style are optional; this solves the problem of old scripts that 
 contain specifications of the form "-font fixed" or "-font times". (CCS)
 
 5/7/97 (new feature) Menus now send a virtual event <<MenuSelect>>
@@ -3797,7 +3797,7 @@ Ie. You can now use -stick, in addition to -sticky. (RJ)
 finding the library files when they are installed in a directory
 containing a space in the name. (SS)
 
-6/2/97 (bug fix) Virtual events associated with <Enter>/<Leave> in text
+6/2/97 (bug fix) Virtual events associated with <Enter>/<Leave> in text 
 widget tag caused panic. (CCS)
 
 6/6/97 (bug fix) On some systems, struct timeval.tv_sec is unsigned. (SS)
@@ -3828,7 +3828,7 @@ position the insertion point after the last character, and @x,y indices were
 computed incorrectly if -scrollregion had been specified and canvas was
 scrolled. (CCS)
 
-6/13/97 (bug fix) Hitting up/down arrows in a text widget packed in a
+6/13/97 (bug fix) Hitting up/down arrows in a text widget packed in a 
 toplevel window created with the "-screen" option would cause an error dialog
 to pop up. (CCS)
 
@@ -3901,7 +3901,7 @@ impossible under Windows, and is not done for Unix. (SRP)
 7/21/97 (bug fix) After fixing the bug that in canvas text item the insertion
 cursor wasn't shown if insertion point was at end of text item, introduced a
 different bug in where clicking in entry widget with 0 characters would
-crash or display garbage. (CCS)
+crash or display garbage. (CCS) 
 
 7/22/97 (bug fix) If there were a whole bunch of returns or tabs in a row in
 a canvas text item, then the temporary buffer used when outputting
@@ -3936,7 +3936,7 @@ window could cause an X error if the window had just been withdrawn.  (JO)
 8/4/97 (feature change) tkerror and bgerror are not anymore hard links
 maintained by the Tcl core. The implementation of bgerror provided by
 Tk tries, for backward compatibility only, to to call "tkerror" and
-if that fails, falls back to the usual dialog and stack trace option
+if that fails, falls back to the usual dialog and stack trace option 
 posting. You can thus still use either "bgerror" or "tkerror" as your
 application error handling proc, but using "bgerror" is strongly
 recommended as support for "tkerror" will eventually vanish in upcoming
@@ -3958,7 +3958,7 @@ no window manager. (BW)
 different interpreters could get confused if they had the same name. (JO)
 
 8/8/97 (new feature) Added new procedure Tk_GetImageMasterData for
-mapping image names to master data.  (JO)
+mapping image names to master data.  (JO) 
 
 8/8/97 (feature change) Modified Tk_FindPhoto procedure to require
 extra "interp" argument (needed for bug fix above).  (JO)
@@ -4020,9 +4020,9 @@ some conditions (such as an image named "place").  (JO)
 10/9/97 (bug fix) Fixed bug that sometimes prevented listboxes from
 scrolling far enough horizontally to see the rightmost character.  (JO)
 
-10/10/97 (bug fix) In canvas text items, if the text ended with a \n, it
-was not counted in the bbox height, as it did in tk4.2.  This caused
-"hello\n" to be the same height as "hello" and you couldn't see the
+10/10/97 (bug fix) In canvas text items, if the text ended with a \n, it 
+was not counted in the bbox height, as it did in tk4.2.  This caused 
+"hello\n" to be the same height as "hello" and you couldn't see the 
 cursor positioned on the next line. (CCS)
 
 10/10/97 (bug fix) The grid geometry manager didn't always properly
@@ -4070,10 +4070,10 @@ its place, and the replacement deleted would cause a panic. On Unix,
 instead of everytime the active menu item changed. (SRP)
 
 10/27/97 (bug fix) If a particular race condition occurred under Windows,
-Tk would crash complaining about trying to free a color that wasn't
+Tk would crash complaining about trying to free a color that wasn't 
 allocated. (SS)
 
-10/28/97 (bug fix) Under Windows, button grabs did not report motion
+10/28/97 (bug fix) Under Windows, button grabs did not report motion 
 events that occurred outside of Tk windows. (SS)
 
 10/28/97 (bug fix) Fixed incorrect display of transparent images on
@@ -4092,9 +4092,9 @@ the Macintosh port was not. (RJ)
 on the Macintosh.  Tk now also will iconify a toplevel window on the
 Mac if the new Appearance Manager is present. (RJ)
 
-10/28/97 (bug fixes) In canvas' postscript command: User name
+10/28/97 (bug fixes) In canvas' postscript command: User name 
 information was leaked in safe interpreters on Unix (security fix).
-Errors while reading prolog.ps were not propagated and the error
+Errors while reading prolog.ps were not propagated and the error 
 message was mixed with partial data. Note: postscript output does
 not work in safe interpreters on unix and windows. (DL)
 
@@ -4110,7 +4110,7 @@ the keyboard under Unix. (SRP)
 architectures. (SS)
 
 11/5/97 (bug fix) Embedding on Windows was using freed data (crashing
-in safe.test with TCL_MEM_DEBUG). NB: Embedding is still not fully
+in safe.test with TCL_MEM_DEBUG). NB: Embedding is still not fully 
 implemented on Windows ! (It works mostly when Tk is embeded into it's
 own Tk frame (safe::loadTk case), but not well with respect to resizing
 with a toplevel container or with an external process). (DL)
@@ -4142,7 +4142,7 @@ evaluation you always use "expr {...}" instead of "expr ..." and
 "if {...} ..." instead of "if ... ...". It will also be faster
 thanks to the byte compiler. (DL)
 
-12/3/97 (new feature) Added support for browser/plugin style embedding,
+12/3/97 (new feature) Added support for browser/plugin style embedding, 
 and made various other fixes to get the plugin working on the Mac. (JI)
 
 12/8/97 (bug fix) on Windows, using "winfo pathname" before "." was mapped
@@ -4156,14 +4156,14 @@ Jan/9/98 (improvement) Allow applications to have custom init script
 without  having to patch the Tk core: Tk_Init will use an existing
 "tkInit" proc if one exists in the interp where one tries to install Tk
 instead of defining it's own (tkInit is the transient proc defined in
-generic/tkInitScript.h that searches and sources tk.tcl and defines
+generic/tkInitScript.h that searches and sources tk.tcl and defines 
 the 'correct' tk_library). (DL)
 
 ---- Shipped as part of the plugin2.0 as 8.0p2Plugin2, Jan 15th 98 ----
 
 6/3/98 (bug fix) Fixed bugs in the tk_getOpenFile under Unix.
  1) If the -initialdir option was "." the result would be "././foo.tcl"
-    instead of an absolute path, like the Windows interface.
+    instead of an absolute path, like the Windows interface.  
  2) There is a traceVar on the data(selectPath) where the script was
     assumes the window exists. (BS)
 
@@ -4207,10 +4207,10 @@ including the center of the coord as part of the bound area.  (RJ)
 
 8/4/98 (bug fix) Fixed memory leak in Windows menu code. (SS)
 
-8/4/98 (bug fix) Fixed bug where bgerror's were not being generated
+8/4/98 (bug fix) Fixed bug where bgerror's were not being generated 
 from menu callbacks on Windows. (SS)
 
-8/4/98 (bug fix) Alt-key bindings were not being handled properly
+8/4/98 (bug fix) Alt-key bindings were not being handled properly 
 under Windows, resulting in annoying beeps. (SS)
 
 8/4/98 (bug fix) Fixed bug in Windows menubar handling that allowed
@@ -4355,10 +4355,10 @@ Changes for Tk 8.1 go below this line.
       characters.  For those familiar with the Japanese or Chinese patches,
       there is no "-kanjifont" option.  Characters from any available fonts
       will automatically be used if the widget's originally selected font is
-      not capable of displaying a given character.
+      not capable of displaying a given character.  
     - Textual widgets are international aware.  For instance, cursor
       positioning commands would now move the cursor forwards/back by 1
-      international character, not by 1 byte.
+      international character, not by 1 byte.  
     - Input Method Editors (IMEs) work on Mac and Windows.  Unix is still in
       progress.
 
@@ -4646,7 +4646,7 @@ library/menu.tcl. [Bug: 2425] (redman)
 calling from the Makefile. [Bug: 2413] (redman)
 
 7/22/99 (bug fix) Block out sys/stat.h include with #if to allow
-extension writers to use the MetroWerks compiler on Windows.
+extension writers to use the MetroWerks compiler on Windows. 
 [Bug: 2385] (redman)
 
 7/29/99 (bug fix) Allow tcl to opn CON and NUL on Windows, moved check
@@ -4659,7 +4659,7 @@ sets of makefiles (nmake and gmake). (redman)
 Njitmans.  [Bug: 2446] (hobbs)
 
 8/1/99  (bug fix) Wrapped #define of panic() inside #ifndef blocks to
-avoid compiler errors on Macintosh.  Patch from Vince Darley.
+avoid compiler errors on Macintosh.  Patch from Vince Darley.  
 [Bug: 2389] (hobbs)
 
 --------------- Released 8.2b2, August 5, 1999 ----------------------
@@ -5123,7 +5123,7 @@ expansion to the Win/Mac console. (hobbs)
 
 2001-08-14 (bug fix)[450545] Tk's Tcl_ObjTypes now registered (fellows)
 
-2001-08-20 (performance enhancement) internal use of a "window" Tcl_ObjType
+2001-08-20 (performance enhancement) internal use of a "window" Tcl_ObjType 
 (fellows)
 
 2001-08-20 (performance enhancement) Obj-ified [grid] and [pack] (spjuth)
@@ -5889,46 +5889,46 @@ Updated test suite, documentation, and demos.
 
 2004-12-09 (performance)[1081966] BMP, JPG image load speed (fellows)
 
-2004-12-17 (feature change) Modified DisplayFrame to draw a container's
+2004-12-17 (feature change) Modified DisplayFrame to draw a container's 
 background when the embedded window is NULL (chengyemao)
 
-2004-12-17 (bug fix)[842945][831627] Fixed a bug in ContainerEventProc
-to handle ConfigureNotify event properly; Changed CleanupContainList to
-TkWinCleanupContainerList to be invoked in TkWinXCleanup; Changed Intialize
-and CreateTopLevelWindow to create the DeleteWindowsExitProc after TkpInit
-so that finalization will be done in a proper sequence (to avoid painics
+2004-12-17 (bug fix)[842945][831627] Fixed a bug in ContainerEventProc  
+to handle ConfigureNotify event properly; Changed CleanupContainList to 
+TkWinCleanupContainerList to be invoked in TkWinXCleanup; Changed Intialize 
+and CreateTopLevelWindow to create the DeleteWindowsExitProc after TkpInit 
+so that finalization will be done in a proper sequence (to avoid painics 
 and potential crashes in exit). (chengyemao)
 
-2004-12-17 (platform support) Added TkWinClenupContainerList into stublib.
+2004-12-17 (platform support) Added TkWinClenupContainerList into stublib. 
 (chengyemao)
 
-2004-12-18 (buf fix)[222677] Close the embedded window (of a different
+2004-12-18 (buf fix)[222677] Close the embedded window (of a different 
 process) when its container is destroyed. (chengyemao)
 
-2004-12-19 (Windows feature implementation of embedded/embedding
-Tk and bug fix) Implemented container identification, focus, raise, set
-title of and move window so that an embedded widget is able to identify
-a container, to get focus and to receive key press input. Fixed bugs include
-[1024364][1096047] and an incorrect wm overrideredirect for an embedded
+2004-12-19 (Windows feature implementation of embedded/embedding 
+Tk and bug fix) Implemented container identification, focus, raise, set 
+title of and move window so that an embedded widget is able to identify 
+a container, to get focus and to receive key press input. Fixed bugs include 
+[1024364][1096047] and an incorrect wm overrideredirect for an embedded 
 window. (chengyemao)
 
-2004-12-20 (Windows feature implementation of embedded/embedding Tk)
-Implemented overrideredirect for an embedded toplevel; correctly updated a
-frame's upper left x and y of an embedded toplevel after its container
-(of another process) moved. (chengyemao)
+2004-12-20 (Windows feature implementation of embedded/embedding Tk) 
+Implemented overrideredirect for an embedded toplevel; correctly updated a 
+frame's upper left x and y of an embedded toplevel after its container 
+(of another process) moved. (chengyemao) 
 
-2004-12-28 (feature implementatoin of embedded/embedding Tk of Windows)
-Implemented embedded/embedding toplevel menu. A menu may be embedded in
-a container of either the same process or a different process. Working
-fine with Windows 98. But having a problem when invoked with a mouse click
-(Windows XP): if an embedded menu is in a different process, the menu items
-may show as a blank window at the pull-down time and require the mouse
+2004-12-28 (feature implementatoin of embedded/embedding Tk of Windows) 
+Implemented embedded/embedding toplevel menu. A menu may be embedded in 
+a container of either the same process or a different process. Working 
+fine with Windows 98. But having a problem when invoked with a mouse click 
+(Windows XP): if an embedded menu is in a different process, the menu items 
+may show as a blank window at the pull-down time and require the mouse 
 moves over the menu items to complete display. (chengyemao)
 
 2004-12-29 (platform support)[1092952,1091967] MSVC7, gcc OPT compiles (hobbs)
 
 2005-01-03 (feature implementation of embedded/embedding Tk of Windows) Added
-a separated window handler for an embedded menu; solved the problem of
+a separated window handler for an embedded menu; solved the problem of 
 a blank menu display with a mouse click in XP. (chengyemao)
 
 2005-01-07 (feature implementation of embedded/embedding Tk of Window) Added
@@ -5936,9 +5936,9 @@ TK_STATE message (Windows) to support {wm state} for embedded windows; forced
 redraw of container after the embedded window detached; removed unnecessary
 panic in using embedded window; embeded toplevel menu of an embedded window
 automatically in wrapper updating.  Modified and added functions: WmStateCmd,
-UpdateWrapper, TkpWmGetState (added) in tkWinWm.c; TkpUseWindow,
-TkWinEmbeddedEventProc in tkWinEmbed.c; TkWinChildProc in tkWinX.c.
-(chengyemao)
+UpdateWrapper, TkpWmGetState (added) in tkWinWm.c; TkpUseWindow, 
+TkWinEmbeddedEventProc in tkWinEmbed.c; TkWinChildProc in tkWinX.c. 
+(chengyemao) 
 
 2005-01-08 (bug fix)[1098625] Wrong toplevel geometry when created with a menu;
 [637653] Deleting a popup menu crashes wish (chengyemao)
@@ -6251,7 +6251,7 @@ ttk::radiobutton, ttk::checkbutton, ttk::treeview, ttk::separator,
 ttk::scrollbar, ttk::entry, ttk::frame and ttk::labelframe widgets.  Adds
 ttk::style command.
 
-2006-11-02 (enhancement) Improve OS X Carbon event handling.
+2006-11-02 (enhancement) Improve OS X Carbon Update event handling.
 
 2006-11-07 (configure change) Unix --enable-xft is enabled by default now.
 
@@ -6259,6 +6259,8 @@ ttk::style command.
 
 2006-11-24 (bug fix)[1487701] Better handling of tcl_interactive on OS X to
 control display of console.
+
+2006-11-26 (platform support)[1230558] --enable-64bit on more systems.
 
 2006-11-30 (bug fix) Fix handling of Escape binding on OS X dialogs.
 
@@ -6271,7 +6273,7 @@ control display of console.
 2006-12-11 (enhancement) Improved EWMH support for _NET_WM_PID and
 _NET_WM_PING.
 
-2007-01-19 (configure change) Ensure CPPFLAGS env var is used when set.
+2007-01-25 (configure change) Ensure CPPFLAGS env var is used when set.
 
 2007-02-19 (configure change) Use SHLIB_SUFFIX=".so" on HP-UX IA64 (was
 ".sl").
@@ -6281,7 +6283,7 @@ _NET_WM_PING.
 2007-04-23 (enhancement) Allow empty value for -selectforeground option.
 
 2007-04-23 (platform support) Aqua: remove Tk-internal double buffering that is
-wasteful on Aqua; allows direct-to-window CoreGraphics drawing (e.g. adding
+wasteful on Aqua; allows direct-to-window CoreGraphics drawing (e.g. adding 
 support for colors with alpha).
 
 2007-04-23 (platform support) Aqua: add all OS theme colors/brushes (patterns)
@@ -6323,3 +6325,58 @@ window class of already existing windows.
 to Wish.app's Info.plist.
 
 --- Released 8.5a6, April 25, 2007 --- See ChangeLog for details ---
+
+2007-05-04 (new feature)[TIP 145] Enhanced font handling (thoyts)
+
+2007-05-14 (bug fix)[1712081] restored USE_OLD_IMAGE support (porter)
+
+2007-05-15 (bug fix)[1717830,800149] memory leaks (jenglish)
+
+2007-05-15 (bug fix)[1677608] [grid *configure] crash (porter)
+
+2007-05-31 (platform support) Aqua: improve interaction of Expose events and
+idle-time redraws (steffen)
+
+2007-05-31 (bug fix) Aqua: gridded window max-size calculation (steffen)
+
+2007-06-02 (bug fix)[1731734] Aqua: menu cascades outside menubar (steffen)
+
+2007-06-06 (platform support) Aqua: enable MouseWheel events in background
+windows (steffen)
+
+2007-06-09 (bug fix)[1724223] Unicode menu entry crash (hobbs)
+
+2007-06-09 (bug fix)[1467997] Blue/red reversal in icons (hobbs,janssen)
+
+2007-06-23 (bug fix) Aqua: nav dialog sheet crash (steffen)
+
+2007-06-29 (platform support) Aqua: remove private internal declarations from
+installed tkMacOSXInt.h header (steffen)
+
+2007-06-29 (bug fix) Aqua: scrollbar thumb size calculation (steffen)
+
+2007-07-09 (bug fix) Aqua: app-is-frontmost detection (steffen)
+
+2007-07-09 (bug fix) Aqua: window click activation & titlebar click handling
+in presence of grabs or modal windows (steffen)
+
+2007-07-25 (bug fix)[1743786] Aqua: tk_getOpenFile result (steffen)
+
+2007-08-01 (bug fix)[1692927] [tk_messageBox -detail] buffer (davies,thoyts)
+
+2007-08-27 (bug fix)[1782105] Aqua: tk_chooseColor result (steffen)
+
+2007-09-06 (platform support) Aqua: drop support for Xcode 1.5 project, add
+project for Xcode 3.0 (steffen)
+
+2007-09-11 (bug fix) Animated GIF buffer overrun (max)
+
+2007-09-15 (platform support) SunOS-5.1x link with cc, not ld (steffen)
+
+2007-09-17 (enhancement)[1780286] Aqua: combobox appearance (english)
+
+2007-09-17 (platform support)[1748251] Fix NetBSD link failures (english)
+
+2007-09-20 (bug fix)[1791052] [text] DLine layout crash (khomoutov,fellows)
+
+--- Released 8.5b1, September 26, 2007 --- See ChangeLog for details ---

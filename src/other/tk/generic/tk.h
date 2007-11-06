@@ -18,6 +18,11 @@
 #ifndef _TK
 #define _TK
 
+#include <tcl.h>
+#if (TCL_MAJOR_VERSION != 8) || (TCL_MINOR_VERSION != 5)
+#	error Tk 8.5 must be compiled with tcl.h from Tcl 8.5
+#endif
+
 /*
  * For C++ compilers, use extern "C"
  */
@@ -47,18 +52,11 @@ extern "C" {
 
 #define TK_MAJOR_VERSION	8
 #define TK_MINOR_VERSION	5
-#define TK_RELEASE_LEVEL	TCL_ALPHA_RELEASE
-#define TK_RELEASE_SERIAL	6
+#define TK_RELEASE_LEVEL	TCL_BETA_RELEASE
+#define TK_RELEASE_SERIAL	1
 
 #define TK_VERSION		"8.5"
-#define TK_PATCH_LEVEL		"8.5a6"
-
-#ifndef _TCL
-#   include <tcl.h>
-#   if (TCL_MAJOR_VERSION != 8) || (TCL_MINOR_VERSION != 5)
-#	error Tk 8.5 must be compiled with tcl.h from Tcl 8.5
-#   endif
-#endif
+#define TK_PATCH_LEVEL		"8.5b1"
 
 /*
  * A special definition used to allow this header file to be included from
@@ -1365,12 +1363,7 @@ struct Tk_PhotoImageFormat {
 				 * image format handler. */
 };
 
-EXTERN void		Tk_CreateOldImageType _ANSI_ARGS_((
-			    Tk_ImageType *typePtr));
-EXTERN void		Tk_CreateOldPhotoImageFormat _ANSI_ARGS_((
-			    Tk_PhotoImageFormat *formatPtr));
-
-#if !defined(USE_TK_STUBS) && defined(USE_OLD_IMAGE)
+#ifdef USE_OLD_IMAGE
 #define Tk_CreateImageType Tk_CreateOldImageType
 #define Tk_CreatePhotoImageFormat Tk_CreateOldPhotoImageFormat
 #endif
@@ -1493,22 +1486,18 @@ typedef struct Tk_ElementSpec {
 
 const char *		Tk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
 			    const char *version, int exact));
+const char *		Tk_PkgInitStubsCheck _ANSI_ARGS_((Tcl_Interp *interp,
+			    const char *version, int exact));
 
 #ifndef USE_TK_STUBS
 
 #define Tk_InitStubs(interp, version, exact) \
-    Tcl_PkgRequire(interp, "Tk", version, exact)
+    Tk_PkgInitStubsCheck(interp, version, exact)
 
 #endif
-
-void			Tk_InitImageArgs _ANSI_ARGS_((Tcl_Interp *interp,
-			    int argc, char ***argv));
-
-#if !defined(USE_TK_STUBS) || !defined(USE_OLD_IMAGE)
 
 #define Tk_InitImageArgs(interp, argc, argv) /**/
 
-#endif
 
 /*
  *--------------------------------------------------------------

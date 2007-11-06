@@ -13,7 +13,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXEvent.h"
 #include "tkMacOSXDebug.h"
 
@@ -24,7 +24,7 @@
  * TkMacOSXFlushWindows --
  *
  *	This routine flushes all the Carbon windows of the application. It
- *	is called by the setup procedure for the Tcl/Carbon event source.
+ *	is called by XSync().
  *
  * Results:
  *	None.
@@ -41,10 +41,15 @@ TkMacOSXFlushWindows(void)
     WindowRef wRef = GetWindowList();
 
     while (wRef) {
-	CGrafPtr portPtr = GetWindowPort(wRef);
-	if (QDIsPortBuffered(portPtr)) {
-	    QDFlushPortBuffer(portPtr, NULL);
-	}
+	TK_IF_MAC_OS_X_API (3, HIWindowFlush,
+	    ChkErr(HIWindowFlush, wRef);
+	) TK_ELSE_MAC_OS_X (3,
+	    CGrafPtr portPtr = GetWindowPort(wRef);
+
+	    if (QDIsPortBuffered(portPtr)) {
+		QDFlushPortBuffer(portPtr, NULL);
+	    }
+	) TK_ENDIF
 	wRef = GetNextWindow(wRef);
     }
 }

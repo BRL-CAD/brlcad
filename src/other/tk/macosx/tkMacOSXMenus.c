@@ -14,7 +14,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 
 #define kAppleMenu		256
 #define kAppleAboutItem		1
@@ -91,7 +91,10 @@ TkMacOSXHandleMenuSelect(
 	case kFileMenu:
 	    switch (theItem) {
 		case kSourceItem:
-		    /* TODO: source script */
+		    /*
+		     * TODO: source script
+		     */
+
 		    SourceDialog();
 		    break;
 		case kCloseItem:

@@ -4,13 +4,13 @@
 #	functions that are exported by the Tk library via the stubs table.
 #	This file is used to generate the tkDecls.h, tkPlatDecls.h,
 #	tkStub.c, and tkPlatStub.c files.
-#
+#	
 #
 # Copyright (c) 1998-2000 Ajuba Solutions.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
+# 
 # RCS: @(#) $Id$
 
 library tk
@@ -524,7 +524,7 @@ declare 102 generic {
 }
 
 declare 103 generic {
-    Tk_Uid Tk_GetOption (Tk_Window tkwin, CONST char *name,
+    Tk_Uid Tk_GetOption (Tk_Window tkwin, CONST char *name, 
 	    CONST char *className)
 }
 
@@ -1275,6 +1275,23 @@ declare 271 generic {
     Tcl_Interp * Tk_Interp (Tk_Window tkwin)
 }
 
+# Now that the Tk 8.2 -> 8.3 transition is long past, use more conventional
+# means to continue support for extensions using the USE_OLD_IMAGE to 
+# continue use of their string-based Tcl_ImageTypes and Tcl_PhotoImageFormats.
+#
+# Note that this restores the usual rules for stub compatibility.  Stub-enabled
+# extensions compiled against 8.5 headers and linked to the 8.5 stub library
+# will produce a file [load]able into an interp with Tk 8.X, for X >= 5.
+# It will *not* be [load]able into interps with Tk 8.4 (or Tk 8.2!).
+# Developers who need to produce a file [load]able into legacy interps must
+# build against legacy sources.
+declare 272 generic {
+    void Tk_CreateOldImageType(Tk_ImageType *typePtr)
+}
+declare 273 generic {
+    void Tk_CreateOldPhotoImageFormat(Tk_PhotoImageFormat *formatPtr)
+}
+
 # Define the platform specific public Tk interface.  These functions are
 # only available on the designated platform.
 
@@ -1320,7 +1337,7 @@ declare 0 aqua {
 	    Tk_MacOSXEmbedGetClipProc *getClipProc, \
 	    Tk_MacOSXEmbedGetOffsetInParentProc *getOffsetProc)
 }
-
+ 
 declare 1 aqua {
     void Tk_MacOSXTurnOffMenus (void)
 }
@@ -1361,3 +1378,23 @@ declare 9 aqua {
 declare 10 aqua {
     int Tk_MacOSXIsAppInFront (void)
 }
+
+##############################################################################
+
+# Public functions that are not accessible via the stubs table:
+# (listed here _as comments_ so that the 'checkstubs' make target does not 
+# complain about them) 
+
+# const char *Tk_InitStubs(Tcl_Interp *interp, const char *version, int exact)
+# const char *Tk_PkgInitStubsCheck(Tcl_Interp *interp, const char *version,
+#	int exact);
+
+# Global variables that need to be exported from the tcl shared library:
+# (listed here _as comments_ so that the 'checkstubs' make target does not 
+# complain about them, c.f. tk bug bug 1716117)
+
+# TkStubs *tkStubsPtr                   (fool checkstubs)
+# TkPlatStubs *tkPlatStubsPtr           (fool checkstubs)
+# TkIntStubs *tkIntStubsPtr             (fool checkstubs)
+# TkIntPlatStubs *tkIntPlatStubsPtr     (fool checkstubs)
+# TkIntXlibStubs *tkIntXlibStubsPtr     (fool checkstubs)

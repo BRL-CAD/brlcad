@@ -14,10 +14,8 @@ namespace eval ::ttk {
     }
 }
 
-source [file join $::ttk::library keynav.tcl]
 source [file join $::ttk::library fonts.tcl]
 source [file join $::ttk::library cursors.tcl]
-source [file join $::ttk::library icons.tcl]
 source [file join $::ttk::library utils.tcl]
 
 ## ttk::deprecated $old $new --
@@ -47,7 +45,7 @@ proc ttk::deprecated'warning {old new} {
 ### Backward-compatibility.
 #
 
-package ifneeded tile 0.8.0 { package provide tile 0.8.0 }
+package ifneeded tile 0.8.0 { package require Tk ; package provide tile 0.8.0 }
 
 # ttk::panedwindow used to be named ttk::paned.  Keep the alias for now.
 #
@@ -109,7 +107,6 @@ source [file join $::ttk::library entry.tcl]
 source [file join $::ttk::library combobox.tcl]	;# dependency: entry.tcl
 source [file join $::ttk::library treeview.tcl]
 source [file join $::ttk::library sizegrip.tcl]
-source [file join $::ttk::library dialog.tcl]
 
 ## Label and Labelframe bindings:
 #  (not enough to justify their own file...)
@@ -123,7 +120,7 @@ proc ttk::LoadThemes {} {
     variable library
 
     # "default" always present:
-    uplevel #0 [list source [file join $library defaults.tcl]]
+    uplevel #0 [list source [file join $library defaults.tcl]] 
 
     set builtinThemes [style theme names]
     foreach {theme script} {
@@ -144,7 +141,7 @@ ttk::LoadThemes; rename ::ttk::LoadThemes {}
 
 ### Select platform-specific default theme:
 #
-# Notes:
+# Notes: 
 #	+ On OSX, aqua theme is the default
 #	+ On Windows, xpnative takes precedence over winnative if available.
 #	+ On X11, users can use the X resource database to

@@ -380,6 +380,49 @@ test notebook-7.7d "insert - current tab undisturbed" -body {
     .nb index current
 } -result 4
 
+test notebook-7.8a "move tabs - current tab undisturbed - exhaustive" -body {
+    .nb select .nb.f0
+    foreach i {0 1 2 3 4} {
+    	.nb insert $i .nb.f$i
+    }
+
+    foreach i {0 1 2 3 4} {
+	.nb select .nb.f$i
+	foreach j {0 1 2 3 4} {
+	    foreach k {0 1 2 3 4} {
+		.nb insert $j $k
+		set current [lindex [.nb tabs] [.nb index current]]
+		if {$current != ".nb.f$i"} {
+		    error "($i,$j,$k) current = $current"
+		}
+		.nb insert $k $j
+		if {[.nb tabs] ne [list .nb.f0 .nb.f1 .nb.f2 .nb.f3 .nb.f4]} {
+		    error "swap $j $k; swap $k $j => [.nb tabs]"
+		}
+	    }
+	}
+    }
+    .nb tabs
+} -result [list .nb.f0 .nb.f1 .nb.f2 .nb.f3 .nb.f4]
+
+test notebook-7.8b "insert new - current tab undisturbed - exhaustive" -body {
+    foreach i {0 1 2 3 4} {
+	.nb select .nb.f$i
+	foreach j {0 1 2 3 4} {
+.nb select .nb.f$i
+	    .nb insert $j [frame .nb.newf]
+	    set current [lindex [.nb tabs] [.nb index current]]
+	    if {$current != ".nb.f$i"} {
+		puts stderr "new tab at $j, current = $current, expect .nb.f$i"
+	    }
+	    destroy .nb.newf
+	    if {[.nb tabs] ne [list .nb.f0 .nb.f1 .nb.f2 .nb.f3 .nb.f4]} {
+		error "tabs disturbed"
+	    }
+	}
+    }
+}
+
 test notebook-7.end "insert - cleanup" -body {
     destroy .nb
 }

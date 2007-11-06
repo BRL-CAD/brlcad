@@ -259,4 +259,25 @@ test entry-8.2a "Followup to test 8.2" -body {
 } -result ::test::foo -cleanup { destroy .e }
 # For 8.2a, -result {} would also be sensible.
 
+test entry-9.1 "Index range invariants" -setup {
+    # See bug#1721532 for discussion
+    proc entry-9.1-trace {n1 n2 op} {
+    	set ::V NO!
+    }
+    variable V
+    trace add variable V write entry-9.1-trace
+    ttk::entry .e -textvariable V
+} -body {
+    set result [list]
+    .e insert insert a ; lappend result [.e index insert] [.e index end]
+    .e insert insert b ; lappend result [.e index insert] [.e index end]
+    .e insert insert c ; lappend result [.e index insert] [.e index end]
+    .e insert insert d ; lappend result [.e index insert] [.e index end]
+    .e insert insert e ; lappend result [.e index insert] [.e index end]
+    set result
+} -result [list 1 3  2 3  3 3  3 3  3 3] -cleanup {
+    unset V
+    destroy .e
+}
+
 tcltest::cleanupTests

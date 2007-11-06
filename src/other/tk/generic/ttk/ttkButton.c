@@ -57,24 +57,24 @@ typedef struct
 static Tk_OptionSpec BaseOptionSpecs[] =
 {
     {TK_OPTION_STRING, "-text", "text", "Text", "",
-	Tk_Offset(Base,base.textObj), -1,
+	Tk_Offset(Base,base.textObj), -1, 
 	0,0,GEOMETRY_CHANGED },
     {TK_OPTION_STRING, "-textvariable", "textVariable", "Variable", "",
-	Tk_Offset(Base,base.textVariableObj), -1,
+	Tk_Offset(Base,base.textVariableObj), -1, 
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
     {TK_OPTION_INT, "-underline", "underline", "Underline",
-	"-1", Tk_Offset(Base,base.underlineObj), -1,
+	"-1", Tk_Offset(Base,base.underlineObj), -1, 
 	0,0,0 },
     /* SB: OPTION_INT, see <<NOTE-NULLOPTIONS>> */
     {TK_OPTION_STRING, "-width", "width", "Width",
-	NULL, Tk_Offset(Base,base.widthObj), -1,
+	NULL, Tk_Offset(Base,base.widthObj), -1, 
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
 
     /*
      * Image options
      */
     {TK_OPTION_STRING, "-image", "image", "Image", NULL/*default*/,
-	Tk_Offset(Base,base.imageObj), -1,
+	Tk_Offset(Base,base.imageObj), -1, 
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
 
     /*
@@ -133,7 +133,7 @@ BaseCleanup(void *recordPtr)
     Base *basePtr = recordPtr;
     if (basePtr->base.textVariableTrace)
 	Ttk_UntraceVariable(basePtr->base.textVariableTrace);
-    if (basePtr->base.imageSpec)
+    if (basePtr->base.imageSpec) 
     	TtkFreeImageSpec(basePtr->base.imageSpec);
 }
 
@@ -221,23 +221,23 @@ typedef struct
 
 static Tk_OptionSpec LabelOptionSpecs[] =
 {
-    {TK_OPTION_BORDER, "-background", "frameColor", "FrameColor",
+    {TK_OPTION_BORDER, "-background", "frameColor", "FrameColor", 
 	NULL, Tk_Offset(Label,label.backgroundObj), -1,
 	TK_OPTION_NULL_OK,0,0 },
-    {TK_OPTION_COLOR, "-foreground", "textColor", "TextColor",
+    {TK_OPTION_COLOR, "-foreground", "textColor", "TextColor", 
 	NULL, Tk_Offset(Label,label.foregroundObj), -1,
 	TK_OPTION_NULL_OK,0,0 },
     {TK_OPTION_FONT, "-font", "font", "Font",
 	NULL, Tk_Offset(Label,label.fontObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
-    {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
+    {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth", 
 	NULL, Tk_Offset(Label,label.borderWidthObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
 	NULL, Tk_Offset(Label,label.reliefObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
     {TK_OPTION_ANCHOR, "-anchor", "anchor", "Anchor",
-	NULL, Tk_Offset(Label,label.anchorObj), -1,
+	NULL, Tk_Offset(Label,label.anchorObj), -1, 
 	TK_OPTION_NULL_OK, 0, GEOMETRY_CHANGED},
     {TK_OPTION_JUSTIFY, "-justify", "justify", "Justify",
 	NULL, Tk_Offset(Label, label.justifyObj), -1,
@@ -613,7 +613,7 @@ static Tk_OptionSpec RadiobuttonOptionSpecs[] =
 /*
  * Variable trace procedure for radiobuttons.
  */
-static void
+static void 
 RadiobuttonVariableChanged(void *clientData, const char *value)
 {
     Radiobutton *radioPtr = clientData;

@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH button n 4.4 Tk "Tk Built-In Commands"
 .BS
@@ -97,7 +97,7 @@ one of the characters may optionally be underlined using the
 \fBunderline\fR option.
 It can display itself in either of three different ways, according
 to
-the \fBstate\fR option;
+the \fBstate\fR option; 
 it can be made to appear raised, sunken, or flat;
 and it can be made to flash.  When a user invokes the
 button (by pressing mouse button 1 with the cursor over the
@@ -177,8 +177,24 @@ actions occur:  the button is completely non-responsive.
 The behavior of buttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
+.SH EXAMPLES
+This is the classic Tk "Hello, World!" demonstration:
+.PP
+.CS
+    \fBbutton\fR .b -text "Hello, World!" -command exit
+    pack .b
+.CE
+.PP
+This example demonstrates how to handle button accelerators:
+.PP
+.CS
+    \fBbutton\fR .b1 -text Hello -underline 0
+    \fBbutton\fR .b2 -text World -underline 0
+    bind . <Key-h> {.b1 flash; .b1 invoke}
+    bind . <Key-w> {.b2 flash; .b2 invoke}
+    pack .b1 .b2
+.CE
 .SH "SEE ALSO"
 ttk_button(n)
-
 .SH KEYWORDS
 button, widget

@@ -240,12 +240,15 @@ TkpUseWindow(
     TkWindow *winPtr = (TkWindow *) tkwin;
     int id;
     HWND hwnd;
+/*
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+*/
 
 /*
     if (winPtr->window != None) {
-	Tcl_AppendResult(interp, "can't modify container after widget is created", NULL);
+	Tcl_AppendResult(interp,
+		"can't modify container after widget is created", NULL);
 	return TCL_ERROR;
     }
 */
@@ -315,15 +318,15 @@ TkpUseWindow(
 
     winPtr->privatePtr = (struct TkWindowPrivate*) hwnd;
     winPtr->flags |= TK_EMBEDDED;
-    winPtr->flags &= (~(TK_MAPPED));
+    winPtr->flags &= ~(TK_MAPPED);
 
     /*
      * Preserve the winPtr and create an idle handler to map the embedded
      * window.
      */
 
-    Tcl_Preserve((ClientData)winPtr);
-    Tcl_DoWhenIdle(Tk_MapEmbeddedWindow,(ClientData)winPtr);
+    Tcl_Preserve((ClientData) winPtr);
+    Tcl_DoWhenIdle((Tcl_IdleProc*) Tk_MapEmbeddedWindow, (ClientData) winPtr);
 
     return TCL_OK;
 }
@@ -386,6 +389,7 @@ TkpMakeContainer(
 	    ContainerEventProc, (ClientData) containerPtr);
 }
 
+#if 0
 /*
  *----------------------------------------------------------------------
  *
@@ -416,6 +420,7 @@ EmbeddedEventProc(
 	EmbedWindowDeleted(winPtr);
     }
 }
+#endif
 
 /*
  *----------------------------------------------------------------------

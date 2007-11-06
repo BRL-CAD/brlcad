@@ -19,7 +19,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "default.h"
 #include "tkInt.h"
 #include "tkScale.h"
@@ -50,15 +49,15 @@ static const Tk_OptionSpec optionSpecs[] = {
 	DEF_SCALE_BG_COLOR, -1, Tk_Offset(TkScale, bgBorder),
 	0, (ClientData) DEF_SCALE_BG_MONO, 0},
     {TK_OPTION_DOUBLE, "-bigincrement", "bigIncrement", "BigIncrement",
-        DEF_SCALE_BIG_INCREMENT, -1, Tk_Offset(TkScale, bigIncrement),
-        0, 0, 0},
+	DEF_SCALE_BIG_INCREMENT, -1, Tk_Offset(TkScale, bigIncrement),
+	0, 0, 0},
     {TK_OPTION_SYNONYM, "-bd", NULL, NULL,
 	NULL, 0, -1, 0, (ClientData) "-borderwidth", 0},
     {TK_OPTION_SYNONYM, "-bg", NULL, NULL,
 	NULL, 0, -1, 0, (ClientData) "-background", 0},
     {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
 	DEF_SCALE_BORDER_WIDTH, -1, Tk_Offset(TkScale, borderWidth),
-        0, 0, 0},
+	0, 0, 0},
     {TK_OPTION_STRING, "-command", "command", "Command",
 	DEF_SCALE_COMMAND, -1, Tk_Offset(TkScale, command),
 	TK_OPTION_NULL_OK, 0, 0},
@@ -67,20 +66,20 @@ static const Tk_OptionSpec optionSpecs[] = {
 	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_INT, "-digits", "digits", "Digits",
 	DEF_SCALE_DIGITS, -1, Tk_Offset(TkScale, digits),
-        0, 0, 0},
+	0, 0, 0},
     {TK_OPTION_SYNONYM, "-fg", "foreground", NULL,
 	NULL, 0, -1, 0, (ClientData) "-foreground", 0},
     {TK_OPTION_FONT, "-font", "font", "Font",
 	DEF_SCALE_FONT, -1, Tk_Offset(TkScale, tkfont), 0, 0, 0},
     {TK_OPTION_COLOR, "-foreground", "foreground", "Foreground",
 	DEF_SCALE_FG_COLOR, -1, Tk_Offset(TkScale, textColorPtr), 0,
-        (ClientData) DEF_SCALE_FG_MONO, 0},
+	(ClientData) DEF_SCALE_FG_MONO, 0},
     {TK_OPTION_DOUBLE, "-from", "from", "From", DEF_SCALE_FROM, -1,
-        Tk_Offset(TkScale, fromValue), 0, 0, 0},
+	Tk_Offset(TkScale, fromValue), 0, 0, 0},
     {TK_OPTION_BORDER, "-highlightbackground", "highlightBackground",
 	"HighlightBackground", DEF_SCALE_HIGHLIGHT_BG_COLOR,
 	-1, Tk_Offset(TkScale, highlightBorder),
-        0, (ClientData) DEF_SCALE_HIGHLIGHT_BG_MONO, 0},
+	0, (ClientData) DEF_SCALE_HIGHLIGHT_BG_MONO, 0},
     {TK_OPTION_COLOR, "-highlightcolor", "highlightColor", "HighlightColor",
 	DEF_SCALE_HIGHLIGHT, -1, Tk_Offset(TkScale, highlightColorPtr),
 	0, 0, 0},
@@ -93,42 +92,42 @@ static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_PIXELS, "-length", "length", "Length",
 	DEF_SCALE_LENGTH, -1, Tk_Offset(TkScale, length), 0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-orient", "orient", "Orient",
-        DEF_SCALE_ORIENT, -1, Tk_Offset(TkScale, orient),
-        0, (ClientData) orientStrings, 0},
+	DEF_SCALE_ORIENT, -1, Tk_Offset(TkScale, orient),
+	0, (ClientData) orientStrings, 0},
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
 	DEF_SCALE_RELIEF, -1, Tk_Offset(TkScale, relief), 0, 0, 0},
     {TK_OPTION_INT, "-repeatdelay", "repeatDelay", "RepeatDelay",
-        DEF_SCALE_REPEAT_DELAY, -1, Tk_Offset(TkScale, repeatDelay),
-        0, 0, 0},
+	DEF_SCALE_REPEAT_DELAY, -1, Tk_Offset(TkScale, repeatDelay),
+	0, 0, 0},
     {TK_OPTION_INT, "-repeatinterval", "repeatInterval", "RepeatInterval",
-        DEF_SCALE_REPEAT_INTERVAL, -1, Tk_Offset(TkScale, repeatInterval),
-        0, 0, 0},
+	DEF_SCALE_REPEAT_INTERVAL, -1, Tk_Offset(TkScale, repeatInterval),
+	0, 0, 0},
     {TK_OPTION_DOUBLE, "-resolution", "resolution", "Resolution",
-        DEF_SCALE_RESOLUTION, -1, Tk_Offset(TkScale, resolution),
-        0, 0, 0},
+	DEF_SCALE_RESOLUTION, -1, Tk_Offset(TkScale, resolution),
+	0, 0, 0},
     {TK_OPTION_BOOLEAN, "-showvalue", "showValue", "ShowValue",
-        DEF_SCALE_SHOW_VALUE, -1, Tk_Offset(TkScale, showValue),
-        0, 0, 0},
+	DEF_SCALE_SHOW_VALUE, -1, Tk_Offset(TkScale, showValue),
+	0, 0, 0},
     {TK_OPTION_PIXELS, "-sliderlength", "sliderLength", "SliderLength",
-        DEF_SCALE_SLIDER_LENGTH, -1, Tk_Offset(TkScale, sliderLength),
-        0, 0, 0},
+	DEF_SCALE_SLIDER_LENGTH, -1, Tk_Offset(TkScale, sliderLength),
+	0, 0, 0},
     {TK_OPTION_RELIEF, "-sliderrelief", "sliderRelief", "SliderRelief",
 	DEF_SCALE_SLIDER_RELIEF, -1, Tk_Offset(TkScale, sliderRelief),
-        0, 0, 0},
+	0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-state", "state", "State",
-        DEF_SCALE_STATE, -1, Tk_Offset(TkScale, state),
-        0, (ClientData) stateStrings, 0},
+	DEF_SCALE_STATE, -1, Tk_Offset(TkScale, state),
+	0, (ClientData) stateStrings, 0},
     {TK_OPTION_STRING, "-takefocus", "takeFocus", "TakeFocus",
 	DEF_SCALE_TAKE_FOCUS, Tk_Offset(TkScale, takeFocusPtr), -1,
 	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_DOUBLE, "-tickinterval", "tickInterval", "TickInterval",
-        DEF_SCALE_TICK_INTERVAL, -1, Tk_Offset(TkScale, tickInterval),
-        0, 0, 0},
+	DEF_SCALE_TICK_INTERVAL, -1, Tk_Offset(TkScale, tickInterval),
+	0, 0, 0},
     {TK_OPTION_DOUBLE, "-to", "to", "To",
-        DEF_SCALE_TO, -1, Tk_Offset(TkScale, toValue), 0, 0, 0},
+	DEF_SCALE_TO, -1, Tk_Offset(TkScale, toValue), 0, 0, 0},
     {TK_OPTION_COLOR, "-troughcolor", "troughColor", "Background",
-        DEF_SCALE_TROUGH_COLOR, -1, Tk_Offset(TkScale, troughColorPtr),
-        0, (ClientData) DEF_SCALE_TROUGH_MONO, 0},
+	DEF_SCALE_TROUGH_COLOR, -1, Tk_Offset(TkScale, troughColorPtr),
+	0, (ClientData) DEF_SCALE_TROUGH_MONO, 0},
     {TK_OPTION_STRING, "-variable", "variable", "Variable",
 	DEF_SCALE_VARIABLE, Tk_Offset(TkScale, varNamePtr), -1,
 	TK_OPTION_NULL_OK, 0, 0},
@@ -217,7 +216,7 @@ Tk_ScaleObjCmd(
     }
 
     tkwin = Tk_CreateWindowFromPath(interp, Tk_MainWindow(interp),
-            Tcl_GetString(objv[1]), NULL);
+	    Tcl_GetString(objv[1]), NULL);
     if (tkwin == NULL) {
 	return TCL_ERROR;
     }
@@ -338,11 +337,11 @@ ScaleWidgetObjCmd(
     int index, result;
 
     if (objc < 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
     result = Tcl_GetIndexFromObj(interp, objv[1], commandNames,
-            "option", 0, &index);
+	    "option", 0, &index);
     if (result != TCL_OK) {
 	return result;
     }
@@ -620,10 +619,10 @@ ConfigureScale(
 	 */
 
 	scalePtr->fromValue = TkRoundToResolution(scalePtr,
-                scalePtr->fromValue);
+		scalePtr->fromValue);
 	scalePtr->toValue = TkRoundToResolution(scalePtr, scalePtr->toValue);
 	scalePtr->tickInterval = TkRoundToResolution(scalePtr,
-	        scalePtr->tickInterval);
+		scalePtr->tickInterval);
 
 	/*
 	 * Make sure that the tick interval has the right sign so that
@@ -648,7 +647,7 @@ ConfigureScale(
 	break;
     }
     if (!error) {
-        Tk_FreeSavedOptions(&savedOptions);
+	Tk_FreeSavedOptions(&savedOptions);
     }
 
     /*
@@ -678,27 +677,26 @@ ConfigureScale(
 		valuePtr, &varValue) != TCL_OK)) {
 	    ScaleSetVariable(scalePtr);
 	} else {
-	    char varString[TCL_DOUBLE_SPACE];
-	    char scaleString[TCL_DOUBLE_SPACE];
+	    char varString[TCL_DOUBLE_SPACE], scaleString[TCL_DOUBLE_SPACE];
+
 	    sprintf(varString, scalePtr->format, varValue);
 	    sprintf(scaleString, scalePtr->format, scalePtr->value);
 	    if (strcmp(varString, scaleString)) {
 		ScaleSetVariable(scalePtr);
 	    }
 	}
-        Tcl_TraceVar(interp, Tcl_GetString(scalePtr->varNamePtr),
-	        TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-	        ScaleVarProc, (ClientData) scalePtr);
+	Tcl_TraceVar(interp, Tcl_GetString(scalePtr->varNamePtr),
+		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+		ScaleVarProc, (ClientData) scalePtr);
     }
 
     ScaleWorldChanged((ClientData) scalePtr);
     if (error) {
-        Tcl_SetObjResult(interp, errorResult);
+	Tcl_SetObjResult(interp, errorResult);
 	Tcl_DecrRefCount(errorResult);
 	return TCL_ERROR;
-    } else {
-	return TCL_OK;
     }
+    return TCL_OK;
 }
 
 /*
@@ -1212,10 +1210,10 @@ ScaleVarProc(
     }
     resultStr = NULL;
     valuePtr = Tcl_ObjGetVar2(interp, scalePtr->varNamePtr, NULL,
-            TCL_GLOBAL_ONLY);
+	    TCL_GLOBAL_ONLY);
     result = Tcl_GetDoubleFromObj(interp, valuePtr, &value);
     if (result != TCL_OK) {
-        resultStr = "can't assign non-numeric value to scale variable";
+	resultStr = "can't assign non-numeric value to scale variable";
 	ScaleSetVariable(scalePtr);
     } else {
 	scalePtr->value = TkRoundToResolution(scalePtr, value);

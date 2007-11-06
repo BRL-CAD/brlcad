@@ -57,7 +57,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXWm.h"
 #include "tkMacOSXEvent.h"
 #include "tkMacOSXDebug.h"
@@ -69,23 +69,14 @@
 */
 
 /*
- * Declarations of global variables defined in this file.
- */
-
-static int tkMacOSXAppInFront = true;	/* Boolean variable for determining if
-					 * we are the frontmost app. Only set
-					 * in TkMacOSXProcessApplicationEvent
-					 */
-static RgnHandle gDamageRgn = NULL;
-
-/*
  * Declaration of functions used only in this file
  */
 
-static int GenerateUpdateEvent( Window window);
-static int GenerateUpdates( RgnHandle updateRgn, TkWindow *winPtr);
-static int GenerateActivateEvents( Window window, int activeFlag);
-static void ClearPort(CGrafPtr port);
+static int GenerateUpdateEvent(Window window);
+static int GenerateUpdates(RgnHandle updateRgn, Rect *updateBounds,
+	TkWindow *winPtr);
+static int GenerateActivateEvents(Window window, int activeFlag);
+static void ClearPort(CGrafPtr port, RgnHandle updateRgn);
 
 
 /*
@@ -100,7 +91,7 @@ static void ClearPort(CGrafPtr port);
  *	0.
  *
  * Side effects:
- *	Hide or reveal floating windows, and set tkMacOSXAppInFront.
+ *	Hide or reveal floating windows.
  *
  *----------------------------------------------------------------------
  */
@@ -122,12 +113,10 @@ TkMacOSXProcessApplicationEvent(
 
     switch (eventPtr->eKind) {
 	case kEventAppActivated:
-	    tkMacOSXAppInFront = true;
 	    ShowFloatingWindows();
 	    break;
 	case kEventAppDeactivated:
 	    TkSuspendClipboard();
-	    tkMacOSXAppInFront = false;
 	    HideFloatingWindows();
 	    break;
 	case kEventAppQuit:
@@ -266,10 +255,10 @@ TkMacOSXProcessWindowEvent(
     dispPtr = TkGetDisplayList();
     winPtr = (TkWindow *)Tk_IdToWindow(dispPtr->display, window);
 
-    if (window != None) {
-	switch (eventPtr->eKind) {
-	    case kEventWindowActivated:
-	    case kEventWindowDeactivated: {
+    switch (eventPtr->eKind) {
+	case kEventWindowActivated:
+	case kEventWindowDeactivated:
+	    if (window != None) {
 		int activate = (eventPtr->eKind == kEventWindowActivated);
 
 		eventFound |= GenerateActivateEvents(window, activate);
@@ -278,146 +267,147 @@ TkMacOSXProcessWindowEvent(
 		    TkMacOSXEnterExitFullscreen(winPtr, activate);
 		}
 		statusPtr->stopProcessing = 1;
-		break;
 	    }
-	    case kEventWindowUpdate:
-		if (GenerateUpdateEvent(window)) {
-		    eventFound = true;
-		    statusPtr->stopProcessing = 1;
-		}
-		break;
-	    case kEventWindowExpanded:
-		if (winPtr) {
-		    TkpWmSetState(winPtr, TkMacOSXIsWindowZoomed(winPtr) ?
-			    ZoomState : NormalState);
-		}
-		break;
-	    case kEventWindowBoundsChanged:
-		if (winPtr) {
-		    WmInfo *wmPtr = winPtr->wmInfoPtr;
-		    UInt32 attr;
-		    Rect bounds;
-		    int x = -1, y = -1, width = -1, height = -1, flags = 0;
+	    break;
+	case kEventWindowUpdate:
+	    if (window != None && GenerateUpdateEvent(window)) {
+		eventFound = true;
+		statusPtr->stopProcessing = 1;
+	    }
+	    break;
+	case kEventWindowExpanded:
+	    if (winPtr) {
+		TkpWmSetState(winPtr, TkMacOSXIsWindowZoomed(winPtr) ?
+			ZoomState : NormalState);
+	    }
+	    break;
+	case kEventWindowBoundsChanged:
+	    if (winPtr) {
+		WmInfo *wmPtr = winPtr->wmInfoPtr;
+		UInt32 attr;
+		Rect bounds;
+		int x = -1, y = -1, width = -1, height = -1, flags = 0;
 
-		    ChkErr(GetEventParameter, eventPtr->eventRef,
-			    kEventParamAttributes, typeUInt32,
-			    NULL, sizeof(attr), NULL, &attr);
-		    ChkErr(GetEventParameter, eventPtr->eventRef,
-			    kEventParamCurrentBounds, typeQDRectangle,
-			    NULL, sizeof(bounds), NULL, &bounds);
-		    if (attr & kWindowBoundsChangeOriginChanged) {
-			x = bounds.left - wmPtr->xInParent;
-			y = bounds.top	- wmPtr->yInParent;
-			flags |= TK_LOCATION_CHANGED;
-		    }
-		    if (attr & kWindowBoundsChangeSizeChanged) {
-			width = bounds.right  - bounds.left;
-			height = bounds.bottom - bounds.top;
-			flags |= TK_SIZE_CHANGED;
-		    }
-		    TkGenWMConfigureEvent((Tk_Window)winPtr, x, y, width,
-			    height, flags);
-		    if (attr & kWindowBoundsChangeUserResize ||
-			    attr & kWindowBoundsChangeUserDrag) {
-			TkMacOSXRunTclEventLoop();
-		    }
-		    if (wmPtr->attributes & kWindowResizableAttribute) {
-			HIViewRef growBoxView;
+		ChkErr(GetEventParameter, eventPtr->eventRef,
+			kEventParamAttributes, typeUInt32,
+			NULL, sizeof(attr), NULL, &attr);
+		ChkErr(GetEventParameter, eventPtr->eventRef,
+			kEventParamCurrentBounds, typeQDRectangle,
+			NULL, sizeof(bounds), NULL, &bounds);
+		if (attr & kWindowBoundsChangeOriginChanged) {
+		    x = bounds.left - wmPtr->xInParent;
+		    y = bounds.top	- wmPtr->yInParent;
+		    flags |= TK_LOCATION_CHANGED;
+		}
+		if (attr & kWindowBoundsChangeSizeChanged) {
+		    width = bounds.right  - bounds.left;
+		    height = bounds.bottom - bounds.top;
+		    flags |= TK_SIZE_CHANGED;
+		}
+		TkMacOSXInvalClipRgns((Tk_Window) winPtr);
+		TkMacOSXInvalidateWindow((MacDrawable *) window,
+			TK_PARENT_WINDOW);
+		TkGenWMConfigureEvent((Tk_Window)winPtr, x, y, width,
+			height, flags);
+		if (attr & kWindowBoundsChangeUserResize ||
+			attr & kWindowBoundsChangeUserDrag) {
+		    TkMacOSXRunTclEventLoop();
+		}
+		if (wmPtr->attributes & kWindowResizableAttribute) {
+		    HIViewRef growBoxView;
 
-			err = HIViewFindByID(HIViewGetRoot(whichWindow),
-				kHIViewWindowGrowBoxID, &growBoxView);
-			if (err == noErr) {
-			    ChkErr(HIViewSetNeedsDisplay, growBoxView, true);
-			}
+		    err = HIViewFindByID(HIViewGetRoot(whichWindow),
+			    kHIViewWindowGrowBoxID, &growBoxView);
+		    if (err == noErr) {
+			ChkErr(HIViewSetNeedsDisplay, growBoxView, true);
 		    }
 		}
-		break;
-	    case kEventWindowDragStarted:
-		if (winPtr) {
-		    TkMacOSXTrackingLoop(1);
-		}
-		break;
-	    case kEventWindowDragCompleted:
-		if (winPtr) {
-		    Rect maxBounds, bounds, strWidths;
-		    int h = 0, v = 0;
+	    }
+	    break;
+	case kEventWindowDragStarted:
+	    if (!(TkMacOSXModifierState() & cmdKey)) { 
+		TkMacOSXBringWindowForward(whichWindow);
+	    }
+	    TkMacOSXTrackingLoop(1);
+	    break;
+	case kEventWindowDragCompleted: {
+	    Rect maxBounds, bounds, strWidths;
+	    int h = 0, v = 0;
 
-		    TkMacOSXTrackingLoop(0);
-		    ChkErr(GetWindowGreatestAreaDevice, whichWindow,
-			    kWindowDragRgn, NULL, &maxBounds);
-		    ChkErr(GetWindowBounds, whichWindow, kWindowStructureRgn,
-			    &bounds);
-		    ChkErr(GetWindowStructureWidths, whichWindow, &strWidths);
-		    if (bounds.left > maxBounds.right - strWidths.left) {
-			h = maxBounds.right
-				- (strWidths.left ? strWidths.left : 40)
-				- bounds.left;
-		    } else if (bounds.right < maxBounds.left
-			    + strWidths.right) {
-			h = maxBounds.left
-				+ (strWidths.right ? strWidths.right : 40)
-				- bounds.right;
-		    }
-		    if (bounds.top > maxBounds.bottom - strWidths.top) {
-			v = maxBounds.bottom
-				- (strWidths.top ? strWidths.top : 40)
-				- bounds.top;
-		    } else if (bounds.bottom < maxBounds.top
-			    + strWidths.bottom) {
-			v = maxBounds.top
-				+ (strWidths.bottom ? strWidths.bottom : 40)
-				- bounds.bottom;
-		    } else if (strWidths.top && bounds.top < maxBounds.top) {
-			v = maxBounds.top - bounds.top;
-		    }
-		    if (h || v) {
-			OffsetRect(&bounds, h, v);
-			ChkErr(SetWindowBounds, whichWindow,
-			    kWindowStructureRgn, &bounds);
-		    }
-		}
-		break;
-	    case kEventWindowConstrain:
-		if (winPtr) {
-		    if (winPtr->wmInfoPtr->flags & WM_FULLSCREEN &&
-			    TkMacOSXMakeFullscreen(winPtr, whichWindow, 1,
-			    NULL) == TCL_OK) {
+	    TkMacOSXTrackingLoop(0);
+	    ChkErr(GetWindowGreatestAreaDevice, whichWindow,
+		    kWindowDragRgn, NULL, &maxBounds);
+	    ChkErr(GetWindowBounds, whichWindow, kWindowStructureRgn,
+		    &bounds);
+	    ChkErr(GetWindowStructureWidths, whichWindow, &strWidths);
+	    if (bounds.left > maxBounds.right - strWidths.left) {
+		h = maxBounds.right
+			- (strWidths.left ? strWidths.left : 40)
+			- bounds.left;
+	    } else if (bounds.right < maxBounds.left
+		    + strWidths.right) {
+		h = maxBounds.left
+			+ (strWidths.right ? strWidths.right : 40)
+			- bounds.right;
+	    }
+	    if (bounds.top > maxBounds.bottom - strWidths.top) {
+		v = maxBounds.bottom
+			- (strWidths.top ? strWidths.top : 40)
+			- bounds.top;
+	    } else if (bounds.bottom < maxBounds.top
+		    + strWidths.bottom) {
+		v = maxBounds.top
+			+ (strWidths.bottom ? strWidths.bottom : 40)
+			- bounds.bottom;
+	    } else if (strWidths.top && bounds.top < maxBounds.top) {
+		v = maxBounds.top - bounds.top;
+	    }
+	    if (h || v) {
+		OffsetRect(&bounds, h, v);
+		ChkErr(SetWindowBounds, whichWindow,
+		    kWindowStructureRgn, &bounds);
+	    }
+	    break;
+	}
+	case kEventWindowConstrain:
+	    if (winPtr && (winPtr->wmInfoPtr->flags & WM_FULLSCREEN) &&
+		    TkMacOSXMakeFullscreen(winPtr, whichWindow, 1,
+		    NULL) == TCL_OK) {
+		statusPtr->stopProcessing = 1;
+	    }
+	    break;
+	case kEventWindowGetRegion:
+	    if (winPtr && (winPtr->wmInfoPtr->flags & WM_TRANSPARENT)) {
+		WindowRegionCode code;
+
+		statusPtr->stopProcessing = (CallNextEventHandler(
+			eventPtr->callRef, eventPtr->eventRef) == noErr);
+		err = ChkErr(GetEventParameter, eventPtr->eventRef,
+			kEventParamWindowRegionCode, typeWindowRegionCode,
+			NULL, sizeof(code), NULL, &code);
+		if (err == noErr && code == kWindowOpaqueRgn) {
+		    RgnHandle rgn;
+
+		    err = ChkErr(GetEventParameter, eventPtr->eventRef,
+			    kEventParamRgnHandle, typeQDRgnHandle, NULL,
+			    sizeof(rgn), NULL, &rgn);
+		    if (err == noErr) {
+			SetEmptyRgn(rgn);
 			statusPtr->stopProcessing = 1;
 		    }
 		}
-		break;
-	    case kEventWindowGetRegion:
-		if (winPtr && (winPtr->wmInfoPtr->flags & WM_TRANSPARENT)) {
-		    WindowRegionCode code;
+	    }
+	    break;
+	case kEventWindowDrawContent:
+	    if (winPtr && (winPtr->wmInfoPtr->flags & WM_TRANSPARENT)) {
+		CGrafPtr port;
 
-		    statusPtr->stopProcessing = (CallNextEventHandler(
-			    eventPtr->callRef, eventPtr->eventRef) == noErr);
-		    err = ChkErr(GetEventParameter, eventPtr->eventRef,
-			    kEventParamWindowRegionCode, typeWindowRegionCode,
-			    NULL, sizeof(code), NULL, &code);
-		    if (err == noErr && code == kWindowOpaqueRgn) {
-			RgnHandle rgn;
-
-			err = ChkErr(GetEventParameter, eventPtr->eventRef,
-				kEventParamRgnHandle, typeQDRgnHandle, NULL,
-				sizeof(rgn), NULL, &rgn);
-			if (err == noErr) {
-			    SetEmptyRgn(rgn);
-			    statusPtr->stopProcessing = 1;
-			}
-		    }
-		}
-		break;
-	    case kEventWindowDrawContent:
-		if (winPtr && (winPtr->wmInfoPtr->flags & WM_TRANSPARENT)) {
-		    CGrafPtr port;
-
-		    GetPort(&port);
-		    ClearPort(port);
-		}
-		break;
-	}
+		GetPort(&port);
+		ClearPort(port, NULL);
+	    }
+	    break;
     }
+
     return 0;
 }
 
@@ -440,11 +430,12 @@ TkMacOSXProcessWindowEvent(
 static int
 GenerateUpdateEvent(Window window)
 {
-    CGrafPtr	destPort;
-    WindowRef	macWindow;
-    TkDisplay * dispPtr;
-    TkWindow  * winPtr;
-    int		result = 0;
+    CGrafPtr destPort;
+    WindowRef macWindow;
+    TkDisplay *dispPtr;
+    TkWindow  *winPtr;
+    int result = 0;
+    Rect updateBounds, bounds;
 
     dispPtr = TkGetDisplayList();
     winPtr = (TkWindow *)Tk_IdToWindow(dispPtr->display, window);
@@ -452,31 +443,32 @@ GenerateUpdateEvent(Window window)
     if (winPtr ==NULL ){
 	return result;
     }
-    if (gDamageRgn == NULL) {
-	gDamageRgn = NewRgn();
-    }
-    TkMacOSXCheckTmpRgnEmpty(1);
+    TkMacOSXCheckTmpQdRgnEmpty();
     destPort = TkMacOSXGetDrawablePort(window);
     macWindow = GetWindowFromPort(destPort);
-    GetWindowRegion(macWindow, kWindowUpdateRgn, tkMacOSXtmpRgn1);
-    QDGlobalToLocalRegion(destPort, tkMacOSXtmpRgn1);
-    SectRegionWithPortVisibleRegion(destPort, tkMacOSXtmpRgn1);
+    ChkErr(GetWindowRegion, macWindow, kWindowUpdateRgn, tkMacOSXtmpQdRgn);
+    ChkErr(GetWindowBounds, macWindow, kWindowContentRgn, &bounds);
+    OffsetRgn(tkMacOSXtmpQdRgn, -bounds.left, -bounds.top);
+    SectRegionWithPortVisibleRegion(destPort, tkMacOSXtmpQdRgn);
+    GetRegionBounds(tkMacOSXtmpQdRgn, &updateBounds);
 #ifdef TK_MAC_DEBUG_CLIP_REGIONS
-    TkMacOSXInitNamedDebugSymbol(HIToolbox, int, QDDebugFlashRegion,
-				CGrafPtr port, RgnHandle region);
-    if (QDDebugFlashRegion) {
-	/* Carbon-internal region flashing SPI (c.f. Technote 2124) */
-	QDDebugFlashRegion(destPort, tkMacOSXtmpRgn1);
-    }
+    TkMacOSXDebugFlashRegion(window, tkMacOSXtmpQdRgn);
 #endif /* TK_MAC_DEBUG_CLIP_REGIONS */
     BeginUpdate(macWindow);
     if (winPtr->wmInfoPtr->flags & WM_TRANSPARENT) {
-	ClearPort(destPort);
+	ClearPort(destPort, tkMacOSXtmpQdRgn);
     }
-    result = GenerateUpdates(tkMacOSXtmpRgn1, winPtr);
+    result = GenerateUpdates(tkMacOSXtmpQdRgn, &updateBounds, winPtr);
     EndUpdate(macWindow);
-    SetEmptyRgn(tkMacOSXtmpRgn1);
-    SetEmptyRgn(gDamageRgn);
+    SetEmptyRgn(tkMacOSXtmpQdRgn);
+    if (result) {
+	/*
+	 * Ensure there are no pending idle-time redraws that could prevent
+	 * the just posted Expose events from generating new redraws.
+	 */
+
+	Tcl_DoOneEvent(TCL_IDLE_EVENTS|TCL_DONT_WAIT);
+    }
     return result;
  }
 
@@ -502,51 +494,50 @@ GenerateUpdateEvent(Window window)
 static int
 GenerateUpdates(
     RgnHandle updateRgn,
+    Rect *updateBounds,
     TkWindow *winPtr)
 {
     TkWindow *childPtr;
     XEvent event;
-    Rect bounds, updateBounds, damageBounds;
+    Rect bounds, damageBounds;
+    static RgnHandle damageRgn = NULL;
 
     TkMacOSXWinBounds(winPtr, &bounds);
-    GetRegionBounds(updateRgn,&updateBounds);
-
-    if (bounds.top > updateBounds.bottom ||
-	updateBounds.top > bounds.bottom ||
-	bounds.left > updateBounds.right ||
-	updateBounds.left > bounds.right ||
-	!RectInRgn(&bounds, updateRgn)) {
+    if (bounds.top > updateBounds->bottom ||
+	updateBounds->top > bounds.bottom ||
+	bounds.left > updateBounds->right ||
+	updateBounds->left > bounds.right) {
 	return 0;
     }
     if (!RectInRgn(&bounds, updateRgn)) {
 	return 0;
     }
 
-    event.xany.serial = Tk_Display(winPtr)->request;
-    event.xany.send_event = false;
-    event.xany.window = Tk_WindowId(winPtr);
-    event.xany.display = Tk_Display(winPtr);
-
-    event.type = Expose;
-
     /*
      * Compute the bounding box of the area that the damage occured in.
      */
 
-    /*
-     * CopyRgn(TkMacOSXVisableClipRgn(winPtr), rgn);
-     * TODO: this call doesn't work doing resizes!!!
-     */
-    RectRgn(gDamageRgn, &bounds);
-    SectRgn(gDamageRgn, updateRgn, gDamageRgn);
-    OffsetRgn(gDamageRgn, -bounds.left, -bounds.top);
-    GetRegionBounds(gDamageRgn,&damageBounds);
-    event.xexpose.x = damageBounds.left;
-    event.xexpose.y = damageBounds.top;
-    event.xexpose.width = damageBounds.right-damageBounds.left;
-    event.xexpose.height = damageBounds.bottom-damageBounds.top;
-    event.xexpose.count = 0;
+    if (damageRgn == NULL) {
+	damageRgn = NewRgn();
+    }
+    RectRgn(damageRgn, &bounds);
+    SectRgn(damageRgn, updateRgn, damageRgn);
+    GetRegionBounds(damageRgn, &damageBounds);
+    RectRgn(damageRgn, &bounds);
+    UnionRgn(damageRgn, updateRgn, updateRgn);
+    GetRegionBounds(updateRgn, updateBounds);
+    SetEmptyRgn(damageRgn);
 
+    event.xany.serial = Tk_Display(winPtr)->request;
+    event.xany.send_event = false;
+    event.xany.window = Tk_WindowId(winPtr);
+    event.xany.display = Tk_Display(winPtr);
+    event.type = Expose;
+    event.xexpose.x = damageBounds.left - bounds.left;
+    event.xexpose.y = damageBounds.top - bounds.top;
+    event.xexpose.width = damageBounds.right - damageBounds.left;
+    event.xexpose.height = damageBounds.bottom - damageBounds.top;
+    event.xexpose.count = 0;
     Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
 
     /*
@@ -554,12 +545,11 @@ GenerateUpdates(
      */
 
     for (childPtr = winPtr->childList; childPtr != NULL;
-				       childPtr = childPtr->nextPtr) {
+	    childPtr = childPtr->nextPtr) {
 	if (!Tk_IsMapped(childPtr) || Tk_IsTopLevel(childPtr)) {
 	    continue;
 	}
-
-	GenerateUpdates(updateRgn, childPtr);
+	GenerateUpdates(updateRgn, updateBounds, childPtr);
     }
 
     /*
@@ -569,13 +559,12 @@ GenerateUpdates(
     if (Tk_IsContainer(winPtr)) {
 	childPtr = TkpGetOtherWindow(winPtr);
 	if (childPtr != NULL && Tk_IsMapped(childPtr)) {
-	    GenerateUpdates(updateRgn, childPtr);
+	    GenerateUpdates(updateRgn, updateBounds, childPtr);
 	}
 
 	/*
-	 * NOTE: Here we should handle out of process embedding.
+	 * TODO: Here we should handle out of process embedding.
 	 */
-
     }
 
     return 1;
@@ -924,9 +913,18 @@ TkWmProtocolEventProc(
  */
 
 int
-Tk_MacOSXIsAppInFront (void)
+Tk_MacOSXIsAppInFront(void)
 {
-    return tkMacOSXAppInFront;
+    OSStatus err;
+    ProcessSerialNumber frontPsn, ourPsn = {0, kCurrentProcess};
+    Boolean isFrontProcess = true;
+
+    err = ChkErr(GetFrontProcess, &frontPsn);
+    if (err == noErr) {
+	ChkErr(SameProcess, &frontPsn, &ourPsn, &isFrontProcess);
+    }
+    
+    return (isFrontProcess == true);
 }
 
 /*
@@ -945,13 +943,22 @@ Tk_MacOSXIsAppInFront (void)
  *----------------------------------------------------------------------
  */
 static void
-ClearPort(CGrafPtr port) {
+ClearPort(
+    CGrafPtr port,
+    RgnHandle updateRgn)
+{
     CGContextRef context;
     Rect bounds;
     CGRect rect;
 
     GetPortBounds(port, &bounds);
     QDBeginCGContext(port, &context);
+    SyncCGContextOriginWithPort(context, port);
+    CGContextConcatCTM(context, CGAffineTransformMake(1.0, 0.0, 0.0, -1.0, 0.0,
+	    bounds.bottom - bounds.top));
+    if (updateRgn) {
+	ClipCGContextToRegion(context, &bounds, updateRgn);
+    }
     rect = CGRectMake(0, 0, bounds.right, bounds.bottom);
     CGContextClearRect(context, rect);
     QDEndCGContext(port, &context);

@@ -192,7 +192,7 @@ test clrpick-3.2 {tk_chooseColor: background events} {nonUnixUserInteraction} {
     tk_chooseColor -parent $parent -title "Press Cancel"
 } ""
 
-test clrpick-4.1 {tk_chooseColor: screen is inherited from parent} unix {
+test clrpick-4.1 {tk_chooseColor: screen is inherited from parent} {unix notAqua} {
     after 50 {set ::scr [winfo screen .__tk__color]}
     ToPressButton $parent cancel
     tk_chooseColor -parent $parent

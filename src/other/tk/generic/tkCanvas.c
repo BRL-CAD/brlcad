@@ -19,7 +19,6 @@
 
 #include "default.h"
 #include "tkInt.h"
-#include "tkPort.h"
 #include "tkCanvas.h"
 #ifdef TK_NO_DOUBLE_BUFFERING
 #ifdef MAC_OSX_TK

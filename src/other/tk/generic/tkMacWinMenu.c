@@ -12,6 +12,7 @@
  * RCS: @(#) $Id$
  */
 
+#include "tkInt.h"
 #include "tkMenu.h"
 
 typedef struct ThreadSpecificData {

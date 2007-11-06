@@ -561,7 +561,7 @@ test grid-9.11 {slaves} {
 	lappend a $col{[grid slaves . -column $col]}
     }
     set a
-} {{0{.0-x .0}} {1{.1-x .1}} {2{.2-x .2}} 3{} 0{.0} {1{.1 .0-x}} {2{.2 .1-x}} 3{.2-x}}
+} {{0{.0-x .0}} {1{.1-x .1}} {2{.2-x .2}} 3{} 0{.0} {1{.1 .0-x}} {2{.2 .1-x}} 3{.2-x}} 
 grid_reset 9.11
 
 # column/row configure
@@ -1028,7 +1028,7 @@ test grid-11.16 {default widget placement} {
     foreach l {a b c d e} {
         frame .$l -width 50 -height 50
     }
-    grid .a .b .c .d -sticky news
+    grid .a .b .c .d -sticky news 
     grid  x  ^  x .e -sticky news
     update
     set res ""
@@ -1121,13 +1121,13 @@ test grid-12.1 {-sticky} {
 (nesw) 0 0 250 150
 }
 grid_reset 12.1
-
+   
 test grid-12.2 {-sticky} {
     frame .f -bg red
     list [catch "grid .f -sticky glue" msg] $msg
 } {1 {bad stickyness value "glue": must be a string containing n, e, s, and/or w}}
 grid_reset 12.2
-
+   
 test grid-12.3 {-sticky} {
     frame .f -bg red
     grid .f -sticky {n,s,e,w}
@@ -1317,8 +1317,8 @@ grid_reset 13.13
 test grid-14.1 {structure notify} {
     frame .f -width 200 -height 100 -highlightthickness 0 -bg red
     frame .g -width 200 -height 100 -highlightthickness 0 -bg red
-    grid .f
-    grid .g -in .f
+    grid .f 
+    grid .g -in .f    
     update
     set a ""
     lappend a "[winfo x .g],[winfo y .g] \
@@ -1332,9 +1332,9 @@ test grid-14.1 {structure notify} {
 grid_reset 14.1
 
 test grid-14.2 {structure notify} {
-    frame .f -width 200 -height 100
-    frame .f.g -width 200 -height 100
-    grid .f
+    frame .f -width 200 -height 100 
+    frame .f.g -width 200 -height 100 
+    grid .f 
     grid .f.g
     update
     set a ""

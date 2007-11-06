@@ -56,7 +56,7 @@ pack $btns -side bottom -fill x
 scrollbar $w.s
 
 # The button metrics are a bit bigger in Aqua, and since we are
-# using place which doesn't autosize, then we need to have a
+# using place which doesn't autosize, then we need to have a 
 # slightly larger frame here...
 
 if {[tk windowingsystem] eq "aqua"} {

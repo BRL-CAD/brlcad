@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" Author: Paul Mackerras (paulus@cs.anu.edu.au),
 '\"	    Department of Computer Science,
 '\"	    Australian National University.
@@ -12,7 +12,7 @@
 '\" RCS: @(#) $Id$
 '\"
 .so man.macros
-.TH Tk_CreatePhotoImageFormat 3 8.3 Tk "Tk Library Procedures"
+.TH Tk_CreatePhotoImageFormat 3 8.5 Tk "Tk Library Procedures"
 .BS
 .SH NAME
 Tk_CreatePhotoImageFormat \- define new file format for photo images
@@ -68,14 +68,6 @@ structure should be set to NULL.  The handler must provide the
 procedure, and the \fIstringMatchProc\fR procedure if it provides the
 \fIstringReadProc\fR procedure.
 
-.SH PORTABILITY
-.PP
-In Tk 8.2 and earlier, a different interface was used. Tk 8.3 will
-still support the old format handlers if the format name is in upper
-case. If you still want to compile old format handlers with Tk8.3,
-use the flag -DUSE_OLD_IMAGE. This will restore all function prototypes
-to match the pre-8.3 situation.
-
 .SH NAME
 .PP
 \fIformatPtr->name\fR provides a name for the image type.
@@ -83,9 +75,10 @@ Once \fBTk_CreatePhotoImageFormat\fR returns, this name may be used
 in the \fB\-format\fR photo image configuration and subcommand option.
 The manual page for the photo image (photo(n)) describes how image
 file formats are chosen based on their names and the value given to
-the \fB\-format\fR option. For new format handlers, the name should
-be in lower case. Pre-8.3 format handlers are assumed to be in
-upper case.
+the \fB\-format\fR option. The first character of \fIformatPtr->name\fR
+must not be an uppercase character from the ASCII character set
+(that is, one of the characters \fBA\fR-\fBZ\fR).  Such names are used
+only for legacy interface support (see below).
 
 .SH FILEMATCHPROC
 \fIformatPtr->fileMatchProc\fR provides the address of a procedure for
@@ -237,6 +230,45 @@ after the name of the format.  If appropriate, the
 \fIformatPtr->stringWriteProc\fR procedure may interpret these
 characters to specify further details about the image file.
 The return value is a standard Tcl return value.
+
+.SH LEGACY INTERFACE SUPPORT
+.PP
+In Tk 8.2 and earlier, the definition of all the function pointer
+types stored in fields of a \fBTk_PhotoImageFormat\fR struct were
+incompatibly different.  Legacy programs and libraries dating from
+those days may still contain code that defines extended Tk photo image
+formats using the old interface.  The Tk header file will still support
+this legacy interface if the code is compiled with the
+macro \fBUSE_OLD_IMAGE\fR defined.  Alternatively, the legacy interfaces
+are used if the first character of \fIformatPtr->name\fR is an
+uppercase ASCII character (\fBA\fR-\fBZ\fR), and explicit casts
+are used to forgive the type mismatch.  For example,
+.CS
+static Tk_PhotoImageFormat myFormat = {
+    "MyFormat",
+    (Tk_ImageFileMatchProc *) FileMatch,
+    NULL,
+    (Tk_ImageFileReadProc *) FileRead,
+    NULL,
+    NULL,
+    NULL
+};
+.CE
+would define a minimal \fBTk_PhotoImageFormat\fR that operates provide
+only file reading capability, where \fBFileMatch\fR and \fBFileRead\fR
+are written according to the legacy interfaces of Tk 8.2 or earlier.
+.PP
+Any stub-enabled extension providing an extended photo image format
+via the legacy interface enabled by the \fBUSE_OLD_IMAGE\fR macro
+that is compiled against Tk 8.5 headers and linked against the
+Tk 8.5 stub library will produce a file that can be loaded only
+into interps with Tk 8.5 or later; that is, the normal stub-compatibility
+rules.  If a developer needs to generate from such code a file
+that is loadable into interps with Tk 8.4 or earlier, they must
+use Tk 8.4 headers and stub libraries to do so.
+.PP
+Any new code written today should not make use of the legacy
+interfaces.  Expect their support to go away in Tk 9.
 
 .SH "SEE ALSO"
 Tk_FindPhoto, Tk_PhotoPutBlock

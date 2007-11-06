@@ -305,7 +305,7 @@ test place-9.12 {PlaceObjCmd, slaves errors} {
     destroy .foo
     set res
 } [list 1 "wrong # args: should be \"place slaves pathName\""]
-
+    
 test place-10.1 {ConfigureSlave} {
     catch {destroy .foo}
     frame .foo
@@ -334,7 +334,7 @@ test place-10.4 {ConfigureSlave} {
     destroy .foo
     set res
 } [list 1 "value for \"-y\" missing"]
-
+	
 test place-11.1 {PlaceObjCmd, slaves command} {
     catch {destroy .foo}
     frame .foo

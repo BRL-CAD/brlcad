@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH tk n 8.4 Tk "Tk Built-In Commands"
 .BS
@@ -28,6 +28,7 @@ The command can take any of a number of different forms
 depending on the \fIoption\fR argument.  The legal forms are:
 .TP
 \fBtk appname \fR?\fInewName\fR?
+.
 If \fInewName\fR isn't specified, this command returns the name
 of the application (the name that may be used in \fBsend\fR
 commands to communicate with the application).
@@ -62,7 +63,7 @@ Sets and queries the current scaling factor used by Tk to convert between
 physical units (for example, points, inches, or millimeters) and pixels.  The
 \fInumber\fR argument is a floating point number that specifies the number of
 pixels per point on \fIwindow\fR's display.  If the \fIwindow\fR argument is
-omitted, it defaults to the main window.  If the \fInumber\fR argument is
+omitted, it defaults to the main window.  If the \fInumber\fR argument is 
 omitted, the current value of the scaling factor is returned.
 .RS
 .PP
@@ -76,7 +77,7 @@ factor is set when the application starts, based on properties of the
 installed monitor, but it can be changed at any time.  Measurements made
 after the scaling factor is changed will use the new scaling factor, but it
 is undefined whether existing widgets will resize themselves dynamically to
-accomodate the new scaling factor.
+accommodate the new scaling factor.
 .RE
 .TP
 \fBtk inactive \fR?\fB\-displayof \fIwindow\fR? ?\fBreset\fR?
@@ -110,5 +111,7 @@ state is returned.  This is turned on by default for the main display.
 Returns the current Tk windowing system, one of
 \fBx11\fR (X11-based), \fBwin32\fR (MS Windows),
 or \fBaqua\fR (Mac OS X Aqua).
+.SH "SEE ALSO"
+send(n), winfo(n)
 .SH KEYWORDS
 application name, send

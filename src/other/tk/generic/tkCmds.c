@@ -14,7 +14,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 
 #if defined(WIN32)

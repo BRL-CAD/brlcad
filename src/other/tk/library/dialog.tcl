@@ -45,6 +45,13 @@ proc ::tk_dialog {w title text bitmap default args} {
 	set default [lsearch -exact $args $default]
     }
 
+    set windowingsystem [tk windowingsystem]
+    if {$windowingsystem eq "aqua"} {
+	option add *Dialog*background systemDialogBackgroundActive widgetDefault
+	option add *Dialog*Button.highlightBackground \
+		systemDialogBackgroundActive widgetDefault
+    }
+
     # 1. Create the top-level window and divide it into top
     # and bottom parts.
 
@@ -65,12 +72,8 @@ proc ::tk_dialog {w title text bitmap default args} {
 	wm transient $w [winfo toplevel [winfo parent $w]]
     }
 
-    set windowingsystem [tk windowingsystem]
     if {$windowingsystem eq "aqua"} {
 	::tk::unsupported::MacWindowStyle style $w moveableModal {}
-	option add *Dialog*background systemDialogBackgroundActive widgetDefault
-	option add *Dialog*Button.highlightBackground \
-		systemDialogBackgroundActive widgetDefault
     }
 
     frame $w.bot
@@ -121,7 +124,7 @@ proc ::tk_dialog {w title text bitmap default args} {
 	if {$windowingsystem eq "aqua"} {
 	    set tmp [string tolower $but]
 	    if {$tmp eq "ok" || $tmp eq "cancel"} {
-		grid columnconfigure $w.bot $i -minsize [expr {59 + 20}]
+		grid columnconfigure $w.bot $i -minsize 90
 	    }
 	    grid configure $w.button$i -pady 7
 	}

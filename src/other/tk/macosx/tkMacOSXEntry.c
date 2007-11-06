@@ -56,7 +56,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXDefault.h"
 #include "tkEntry.h"
 
@@ -80,40 +80,37 @@ static ThemeButtonKind ComputeIncDecParameters (int height, int *width);
  *--------------------------------------------------------------
  */
 static ThemeButtonKind
-ComputeIncDecParameters (int height, int *width)
+ComputeIncDecParameters(int height, int *width)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
-    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1030
-	    && &kHIToolboxVersionNumber != NULL
-	    && kHIToolboxVersionNumber >= kHIToolboxVersionNumber10_3
-#endif
-    ) {
+    ThemeButtonKind kind;
+
+    TK_IF_HI_TOOLBOX (3,
 	if (height < 11 || height > 28) {
 	    *width = 0;
-	    return (ThemeButtonKind) 0;
-	}
-
-	if (height >= 21) {
-	    *width = 13;
-	    return kThemeIncDecButton;
-	} else if (height >= 18) {
-	    *width = 12;
-	    return kThemeIncDecButtonSmall;
+	    kind = (ThemeButtonKind) 0;
 	} else {
-	    *width = 11;
-	    return kThemeIncDecButtonMini;
+	    if (height >= 21) {
+		*width = 13;
+		kind = kThemeIncDecButton;
+	    } else if (height >= 18) {
+		*width = 12;
+		kind = kThemeIncDecButtonSmall;
+	    } else {
+		*width = 11;
+		kind = kThemeIncDecButtonMini;
+	    }
 	}
-    } else
-#endif
-    {
+    ) TK_ELSE_HI_TOOLBOX (3,
 	if (height < 21 || height > 28) {
 	    *width = 0;
-	    return (ThemeButtonKind) 0;
+	    kind = (ThemeButtonKind) 0;
+	} else {
+	    *width = 13;
+	    kind = kThemeIncDecButton;
 	}
-	*width = 13;
-	return kThemeIncDecButton;
-    }
+    ) TK_ENDIF
+
+    return kind;
 }
 
 /*
@@ -257,7 +254,10 @@ TkpDrawSpinboxButtons(Spinbox *sbPtr, Drawable d)
     GC bgGC;
     MacDrawable *macDraw = (MacDrawable *) d;
 
-    /* FIXME RAISED really makes more sense */
+    /*
+     * FIXME: RAISED really makes more sense
+     */
+
     if (sbPtr->buRelief != TK_RELIEF_FLAT) {
 	return 0;
     }

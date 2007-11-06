@@ -235,6 +235,7 @@ TKTESTOBJS = \
 	$(TMP_DIR)\testMain.obj \
 	$(TMP_DIR)\tkSquare.obj \
 	$(TMP_DIR)\tkTest.obj \
+	$(TMP_DIR)\tkOldTest.obj \
 	$(TMP_DIR)\tkWinTest.obj
 
 XLIBOBJS = \
@@ -389,8 +390,7 @@ TTK_OBJS = \
         $(TMP_DIR)\ttkStubLib.obj
 
 TKSTUBOBJS = \
-	$(TMP_DIR)\tkStubLib.obj \
-	$(TMP_DIR)\tkStubImg.obj
+	$(TMP_DIR)\tkStubLib.obj
 
 
 WINDIR          = $(ROOT)\win
@@ -540,7 +540,9 @@ install:  install-binaries install-libraries install-docs
 tktest:	  setup $(TKTEST) $(CAT32)
 
 
-test: setup $(TKTEST) $(TKLIB) $(CAT32)
+test: test-classic test-ttk
+
+test-classic: setup $(TKTEST) $(TKLIB) $(CAT32)
 	set TCL_LIBRARY=$(TCL_LIBRARY)
 	set TK_LIBRARY=$(TK_LIBRARY)
 !if $(TCLINSTALL)
@@ -552,6 +554,20 @@ test: setup $(TKTEST) $(TKLIB) $(CAT32)
 	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
 !else
 	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
+!endif
+
+test-ttk: setup $(TKTEST) $(TKLIB) $(CAT32)
+	set TCL_LIBRARY=$(TCL_LIBRARY)
+	set TK_LIBRARY=$(TK_LIBRARY)
+!if $(TCLINSTALL)
+	set PATH=$(_TCLDIR)\bin;$(PATH)
+!else
+	set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+!endif
+!if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
+	$(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
+!else
+	$(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
 !endif
 
 runtest: setup $(TKTEST) $(TKLIB) $(CAT32)
@@ -762,6 +778,9 @@ $(TMP_DIR)\testMain.obj: $(WINDIR)\winMain.c
 $(TMP_DIR)\tkTest.obj: $(GENERICDIR)\tkTest.c
 	$(cc32) $(WISH_CFLAGS) -Fo$@ $?
 
+$(TMP_DIR)\tkOldTest.obj: $(GENERICDIR)\tkOldTest.c
+	$(cc32) $(WISH_CFLAGS) -Fo$@ $?
+
 $(TMP_DIR)\tkWinTest.obj: $(WINDIR)\tkWinTest.c
 	$(cc32) $(WISH_CFLAGS) -Fo$@ $?
 
@@ -778,9 +797,6 @@ $(TMP_DIR)\winMain.obj: $(WINDIR)\winMain.c
 # and no reference made to a C runtime.
 
 $(TMP_DIR)\tkStubLib.obj : $(GENERICDIR)\tkStubLib.c
-	$(cc32) $(STUB_CFLAGS) $(TK_INCLUDES) -Zl -DSTATIC_BUILD -Fo$@ $?
-
-$(TMP_DIR)\tkStubImg.obj : $(GENERICDIR)\tkStubImg.c
 	$(cc32) $(STUB_CFLAGS) $(TK_INCLUDES) -Zl -DSTATIC_BUILD -Fo$@ $?
 
 
@@ -947,8 +963,7 @@ install-binaries:
 !if !$(STATIC_BUILD)
 	@echo creating package index
 	@type << > $(OUT_DIR)\pkgIndex.tcl
-if {![package vsatisfies [package provide Tcl] $(TCL_DOTVERSION)]} { return }
-if {[package vcompare [package provide Tcl] $(TCL_DOTVERSION)$(TCL_PATCHLEVEL)] != 0} { return }
+if {[catch {package present Tcl $(TCL_DOTVERSION)$(TCL_PATCHLEVEL)}]} { return }
 package ifneeded Tk $(DOTVERSION)$(TCL_PATCHLEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
 <<
 	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"

@@ -5,7 +5,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
 '\"
 .so man.macros
@@ -53,9 +53,9 @@ one of: \fBnormal\fR, \fBdisabled\fR, or \fBhidden\fR. Individual canvas
 objects all have their own state option which may override the default
 state.  Many options can take separate specifications such that the
 appearance of the item can be different in different situations. The
-options that start with \fBactive\fR control the appearence when the mouse
+options that start with \fBactive\fR control the appearance when the mouse
 pointer is over it, while the option starting with \fBdisabled\fR controls
-the appearence when the state is disabled.  Canvas items which are
+the appearance when the state is disabled.  Canvas items which are
 \fBdisabled\fR will not react to canvas bindings.
 .OP \-width width width
 Specifies a desired window width that the canvas widget should request from
@@ -1392,7 +1392,7 @@ Specifies the ways in which joints are to be drawn at the vertices
 of the line.
 \fIStyle\fR may have any of the forms accepted by \fBTk_GetCapStyle\fR
 (\fBbevel\fR, \fBmiter\fR, or \fBround\fR).
-If this option isn't specified then it defaults to \fBmiter\fR.
+If this option isn't specified then it defaults to \fBround\fR.
 If the line only contains two points then this option is
 irrelevant.
 .TP
@@ -1526,7 +1526,7 @@ Specifies the ways in which joints are to be drawn at the vertices
 of the outline.
 \fIStyle\fR may have any of the forms accepted by \fBTk_GetCapStyle\fR
 (\fBbevel\fR, \fBmiter\fR, or \fBround\fR).
-If this option isn't specified then it defaults to \fBmiter\fR.
+If this option isn't specified then it defaults to \fBround\fR.
 .TP
 \fB\-smooth \fIboolean\fR
 \fIBoolean\fR must have one of the forms accepted by \fBTcl_GetBoolean\fR

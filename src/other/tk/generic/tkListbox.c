@@ -14,7 +14,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "default.h"
 #include "tkInt.h"
 
@@ -40,7 +39,7 @@ typedef struct {
     Tk_Window tkwin;		/* Window that embodies the listbox. NULL
 				 * means that the window has been destroyed
 				 * but the data structures haven't yet been
-				 * cleaned up.*/
+				 * cleaned up. */
     Display *display;		/* Display containing widget. Used, among
 				 * other things, so that resources can be
 				 * freed even after tkwin has gone away. */
@@ -206,7 +205,8 @@ typedef struct {
 
 /*
  * The following enum is used to define a type for the -state option of the
- * Entry widget. These values are used as indices into the string table below.
+ * Listbox widget. These values are used as indices into the string table
+ * below.
  */
 
 enum state {
@@ -610,6 +610,7 @@ ListboxWidgetObjCmd(
      * Parse the command by looking up the second argument in the list of
      * valid subcommand names
      */
+
     result = Tcl_GetIndexFromObj(interp, objv[1], commandNames,
 	    "option", 0, &cmdIndex);
     if (result != TCL_OK) {
@@ -718,7 +719,7 @@ ListboxWidgetObjCmd(
 	 * search functions (Tcl_FirstHashEntry, Tcl_NextHashEntry), but then
 	 * the result wouldn't be in sorted order. So instead we loop through
 	 * the indices in order, adding them to the result if they are
-	 * selected
+	 * selected.
 	 */
 
 	for (i = 0; i < listPtr->nElements; i++) {
@@ -816,6 +817,7 @@ ListboxWidgetObjCmd(
 	    /*
 	     * One element request - we return a string
 	     */
+
 	    Tcl_SetObjResult(interp, elemPtrs[first]);
 	} else {
 	    Tcl_SetListObj(Tcl_GetObjResult(interp), (last - first + 1),
@@ -1421,7 +1423,7 @@ ListboxGetItemAttributes(
 
 static void
 DestroyListbox(
-    char *memPtr)	/* Info about listbox widget. */
+    char *memPtr)		/* Info about listbox widget. */
 {
     register Listbox *listPtr = (Listbox *) memPtr;
     Tcl_HashEntry *entry;
@@ -1632,6 +1634,7 @@ ConfigureListbox(
 	    /*
 	     * Make sure the object is a good list object.
 	     */
+
 	    if (Tcl_ListObjLength(listPtr->interp, listVarObj, &dummy)
 		    != TCL_OK) {
 		Tcl_AppendResult(listPtr->interp,
@@ -1711,10 +1714,12 @@ ConfigureListboxItem(
 	return TCL_ERROR;
     }
     Tk_FreeSavedOptions(&savedOptions);
+
     /*
-     * Redraw this index - ListboxWorldChanged would need to be called
-     * if item attributes were checked in the "world".
+     * Redraw this index - ListboxWorldChanged would need to be called if item
+     * attributes were checked in the "world".
      */
+
     EventuallyRedrawRange(listPtr, index, index);
     return TCL_OK;
 }
@@ -2567,8 +2572,8 @@ ListboxDeleteSubCmd(
  *	None.
  *
  * Side effects:
- *	When the window gets deleted, internal structures get cleaned up.
- *	When it gets exposed, it is redisplayed.
+ *	When the window gets deleted, internal structures get cleaned up. When
+ *	it gets exposed, it is redisplayed.
  *
  *--------------------------------------------------------------
  */
@@ -2981,10 +2986,10 @@ NearestListboxElement(
  *
  * Side effects:
  *	All of the elements in the range between first and last are marked as
- *	either selected or deselected, depending on the "select" argument.
- *	Any items whose state changes are redisplayed. The selection is
- *	claimed from X when the number of selected elements changes from zero
- *	to non-zero.
+ *	either selected or deselected, depending on the "select" argument. Any
+ *	items whose state changes are redisplayed. The selection is claimed
+ *	from X when the number of selected elements changes from zero to
+ *	non-zero.
  *
  *----------------------------------------------------------------------
  */

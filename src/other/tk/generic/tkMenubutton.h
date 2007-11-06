@@ -88,7 +88,7 @@ typedef struct {
      * Information used when displaying widget:
      */
 
-    enum state state;          	/* State of button for display purposes:
+    enum state state;		/* State of button for display purposes:
 				 * normal, active, or disabled. */
     Tk_3DBorder normalBorder;	/* Structure used to draw 3-D border and
 				 * background when window isn't active. NULL
@@ -111,8 +111,8 @@ typedef struct {
 				 * borders. */
     Tk_Font tkfont;		/* Information about text font, or NULL. */
     XColor *normalFg;		/* Foreground color in normal mode. */
-    XColor *activeFg;		/* Foreground color in active mode.  NULL
-				 * means use normalFg instead. */
+    XColor *activeFg;		/* Foreground color in active mode. NULL means
+				 * use normalFg instead. */
     XColor *disabledFg;		/* Foreground color when disabled. NULL means
 				 * use normalFg with a 50% stipple instead. */
     GC normalTextGC;		/* GC for drawing text in normal mode. */
@@ -120,19 +120,22 @@ typedef struct {
 				 * means use normalTextGC). */
     Pixmap gray;		/* Pixmap for displaying disabled text/icon if
 				 * disabledFg is NULL. */
-    GC disabledGC;		/* Used to produce disabled effect for text */
+    GC disabledGC;		/* Used to produce disabled effect for
+				 * text. */
     GC stippleGC;		/* Used to produce disabled stipple effect for
 				 * images when disabled. */
     int leftBearing;		/* Distance from text origin to leftmost drawn
 				 * pixel (positive means to right). */
-    int rightBearing;		/* Amount text sticks right from its origin */
-    char *widthString;		/* Value of -width option.  Malloc'ed. */
-    char *heightString;		/* Value of -height option.  Malloc'ed. */
+    int rightBearing;		/* Amount text sticks right from its
+				 * origin. */
+    char *widthString;		/* Value of -width option. Malloc'ed. */
+    char *heightString;		/* Value of -height option. Malloc'ed. */
     int width, height;		/* If > 0, these specify dimensions to request
 				 * for window, in characters for text and in
 				 * pixels for bitmaps. In this case the actual
 				 * size of the text string or bitmap is
-				 * ignored in computing desired window size */
+				 * ignored in computing desired window
+				 * size. */
     int wrapLength;		/* Line length (in pixels) at which to wrap
 				 * onto next line. <= 0 means don't wrap
 				 * except at newlines. */
@@ -140,7 +143,8 @@ typedef struct {
 				 * on each side). */
     Tk_Anchor anchor;		/* Where text/bitmap should be displayed
 				 * inside window region. */
-    Tk_Justify justify;		/* Justification to use for multi-line text */
+    Tk_Justify justify;		/* Justification to use for multi-line
+				 * text. */
     int textWidth;		/* Width needed to display text as requested,
 				 * in pixels. */
     int textHeight;		/* Height needed to display text as requested,
@@ -150,7 +154,8 @@ typedef struct {
 				 * don't display. */
     int indicatorHeight;	/* Height of indicator in pixels. This same
 				 * amount of extra space is also left on each
-				 * side of the indicator. 0 if no indicator */
+				 * side of the indicator. 0 if no
+				 * indicator. */
     int indicatorWidth;		/* Width of indicator in pixels, including
 				 * indicatorHeight in padding on each side. 0
 				 * if no indicator. */
@@ -159,10 +164,9 @@ typedef struct {
      * Miscellaneous information:
      */
 
-    int compound;               /* Value of -compound option; specifies
-                                 * whether the menubutton should show both an
-                                 * image and text, and, if so, how. */
-
+    int compound;		/* Value of -compound option; specifies
+				 * whether the menubutton should show both an
+				 * image and text, and, if so, how. */
     enum direction direction;	/* Direction for where to pop the menu. Valid
     				 * directions are "above", "below", "left",
     				 * "right", and "flush". "flush" means that
@@ -177,7 +181,8 @@ typedef struct {
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
-    int flags;			/* Various flags; see below for definitions */
+    int flags;			/* Various flags; see below for
+				 * definitions. */
 } TkMenuButton;
 
 /*

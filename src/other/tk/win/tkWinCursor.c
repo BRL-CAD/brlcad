@@ -222,7 +222,7 @@ void
 TkpFreeCursor(
     TkCursor *cursorPtr)
 {
-    TkWinCursor *winCursorPtr = (TkWinCursor *) cursorPtr;
+    /* TkWinCursor *winCursorPtr = (TkWinCursor *) cursorPtr; */
 }
 
 /*

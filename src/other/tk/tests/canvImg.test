@@ -252,8 +252,8 @@ foreach check {
 } {
     lassign $check name rectCoords testPoint result
     test $name {ImageToPoint procedure} testImageType {
-	.c coords rect {expand}$rectCoords
-	.c gettags [.c find closest {expand}$testPoint]
+	.c coords rect {*}$rectCoords
+	.c gettags [.c find closest {*}$testPoint]
     } $result
 }
 

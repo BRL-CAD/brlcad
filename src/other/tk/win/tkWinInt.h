@@ -226,6 +226,7 @@ EXTERN TkWinProcs *tkWinProcs;
 
 extern Tcl_Encoding	TkWinGetKeyInputEncoding(void);
 extern Tcl_Encoding	TkWinGetUnicodeEncoding(void);
+extern void		TkWinSetupSystemFonts(TkMainInfo *mainPtr);
 
 /*
  * Values returned by TkWinGetPlatformTheme.

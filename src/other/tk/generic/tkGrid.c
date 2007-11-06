@@ -938,6 +938,7 @@ GridRowColumnConfigureCommand(
 	ROWCOL_MINSIZE, ROWCOL_PAD, ROWCOL_UNIFORM, ROWCOL_WEIGHT
     };
     int index;
+    Tcl_Obj *listCopy;
 
     if (((objc % 2 != 0) && (objc > 6)) || (objc < 4)) {
 	Tcl_WrongNumArgs(interp, 2, objv, "master index ?-option value...?");
@@ -948,7 +949,10 @@ GridRowColumnConfigureCommand(
 	return TCL_ERROR;
     }
 
-    if (Tcl_ListObjGetElements(interp, objv[3], &lObjc, &lObjv) != TCL_OK) {
+    listCopy = Tcl_DuplicateObj(objv[3]);
+    Tcl_IncrRefCount(listCopy);
+    if (Tcl_ListObjGetElements(interp, listCopy, &lObjc, &lObjv) != TCL_OK) {
+	Tcl_DecrRefCount(listCopy);
 	return TCL_ERROR;
     }
 
@@ -958,6 +962,7 @@ GridRowColumnConfigureCommand(
 	Tcl_AppendResult(interp, "no ",
 		(slotType == COLUMN) ? "column" : "row",
 		" indices specified", NULL);
+	Tcl_DecrRefCount(listCopy);
 	return TCL_ERROR;
     }
 
@@ -970,12 +975,14 @@ GridRowColumnConfigureCommand(
 	    Tcl_AppendResult(interp, Tcl_GetString(objv[0]), " ",
 		    Tcl_GetString(objv[1]),
 		    ": must specify a single element on retrieval", NULL);
+	    Tcl_DecrRefCount(listCopy);
 	    return TCL_ERROR;
 	}
 	if (Tcl_GetIntFromObj(interp, lObjv[0], &slot) != TCL_OK) {
 	    Tcl_AppendResult(interp,
 		    " (when retreiving options only integer indices are "
 		    "allowed)", NULL);
+	    Tcl_DecrRefCount(listCopy);
 	    return TCL_ERROR;
 	}
 	ok = CheckSlotData(masterPtr, slot, slotType, /* checkOnly */ 1);
@@ -1016,6 +1023,7 @@ GridRowColumnConfigureCommand(
 		    Tcl_NewStringObj("-weight", -1));
 	    Tcl_ListObjAppendElement(interp, res, Tcl_NewIntObj(weight));
 	    Tcl_SetObjResult(interp, res);
+	    Tcl_DecrRefCount(listCopy);
 	    return TCL_OK;
 	}
 
@@ -1026,6 +1034,7 @@ GridRowColumnConfigureCommand(
 
 	if (Tcl_GetIndexFromObj(interp, objv[4], optionStrings, "option", 0,
 		&index) != TCL_OK) {
+	    Tcl_DecrRefCount(listCopy);
 	    return TCL_ERROR;
 	}
 	if (index == ROWCOL_MINSIZE) {
@@ -1043,6 +1052,7 @@ GridRowColumnConfigureCommand(
 	    Tcl_SetObjResult(interp,
 		    Tcl_NewIntObj((ok == TCL_OK) ? slotPtr[slot].pad : 0));
 	}
+	Tcl_DecrRefCount(listCopy);
 	return TCL_OK;
     }
 
@@ -1076,13 +1086,15 @@ GridRowColumnConfigureCommand(
 		Tcl_AppendResult(interp, Tcl_GetString(objv[0]), " ",
 			Tcl_GetString(objv[1]), ": the window \"",
 			Tcl_GetString(lObjv[j]), "\" is not managed by \"",
-			Tcl_GetString(objv[2]), "\"", NULL);
+		 	Tcl_GetString(objv[2]), "\"", NULL);
+		Tcl_DecrRefCount(listCopy);
 		return TCL_ERROR;
 	    }
 	} else {
 	    Tcl_AppendResult(interp, Tcl_GetString(objv[0]), " ",
 		    Tcl_GetString(objv[1]), ": illegal index \"",
 		    Tcl_GetString(lObjv[j]), "\"", NULL);
+	    Tcl_DecrRefCount(listCopy);
 	    return TCL_ERROR;
 	}
 
@@ -1105,6 +1117,7 @@ GridRowColumnConfigureCommand(
 			    Tcl_GetString(objv[1]), ": \"",
 			    Tcl_GetString(lObjv[j]),
 			    "\" is out of range", NULL);
+   		    Tcl_DecrRefCount(listCopy);
 		    return TCL_ERROR;
 		}
 		slotPtr = (slotType == COLUMN) ?
@@ -1119,11 +1132,13 @@ GridRowColumnConfigureCommand(
 		for (i = 4; i < objc; i += 2) {
 		    if (Tcl_GetIndexFromObj(interp, objv[i], optionStrings,
 			    "option", 0, &index) != TCL_OK) {
+   			Tcl_DecrRefCount(listCopy);
 			return TCL_ERROR;
 		    }
 		    if (index == ROWCOL_MINSIZE) {
 			if (Tk_GetPixelsFromObj(interp, master, objv[i+1],
 				&size) != TCL_OK) {
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else {
 			    slotPtr[slot].minSize = size;
@@ -1132,11 +1147,13 @@ GridRowColumnConfigureCommand(
 			int wt;
 
 			if (Tcl_GetIntFromObj(interp,objv[i+1],&wt)!=TCL_OK) {
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else if (wt < 0) {
 			    Tcl_AppendResult(interp, "invalid arg \"",
 				    Tcl_GetString(objv[i]),
 				    "\": should be non-negative", NULL);
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else {
 			    slotPtr[slot].weight = wt;
@@ -1151,11 +1168,13 @@ GridRowColumnConfigureCommand(
 		    } else if (index == ROWCOL_PAD) {
 			if (Tk_GetPixelsFromObj(interp, master, objv[i+1],
 				&size) != TCL_OK) {
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else if (size < 0) {
 			    Tcl_AppendResult(interp, "invalid arg \"",
 				    Tcl_GetString(objv[i]),
 				    "\": should be non-negative", NULL);
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else {
 			    slotPtr[slot].pad = size;
@@ -1168,6 +1187,7 @@ GridRowColumnConfigureCommand(
 	    }
 	} while ((allSlaves == 1) && (slavePtr != NULL));
     }
+    Tcl_DecrRefCount(listCopy);
 
     /*
      * We changed a property, re-arrange the table, and check for constraint

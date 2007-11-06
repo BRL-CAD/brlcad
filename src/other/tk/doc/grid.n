@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH grid n 8.5 Tk "Tk Built-In Commands"
 .BS
@@ -27,7 +27,7 @@ on the \fIoption\fR argument:
 \fBgrid \fIslave \fR?\fIslave ...\fR? ?\fIoptions\fR?
 If the first argument to \fBgrid\fR is suitable as the first slave
 argument to \fBgrid configure\fR, either a window name (any value
-starting with \fB.\fR) or one of the characters \fBx\fR or \fB^\fR
+starting with \fB.\fR) or one of the characters \fBx\fR or \fB^\fR 
 (see the \fBRELATIVE PLACEMENT\fR section below), then the command is
 processed in the same way as \fBgrid configure\fR.
 .VS 8.5
@@ -39,23 +39,23 @@ for further details.  The default \fIanchor\fR is \fInw\fR.
 .VE 8.5
 .TP
 \fBgrid bbox \fImaster\fR ?\fIcolumn row\fR? ?\fIcolumn2 row2\fR?
-With no arguments,
+With no arguments, 
 the bounding box (in pixels) of the grid is returned.
 The return value consists of 4 integers.  The first two are the pixel
 offset from the master window (x then y) of the top-left corner of the
 grid, and the second two integers are the width and height of the grid,
-also in pixels.  If a single \fIcolumn\fR and \fIrow\fR is specified on
+also in pixels.  If a single \fIcolumn\fR and \fIrow\fR is specified on 
 the command line, then the bounding box for that cell is returned, where the
 top left cell is numbered from zero.  If both \fIcolumn\fR and \fIrow\fR
 arguments are specified, then the bounding box spanning the rows and columns
 indicated is returned.
 .TP
 \fBgrid columnconfigure \fImaster index \fR?\fI\-option value...\fR?
-Query or set the column properties of the \fIindex\fR column of the
+Query or set the column properties of the \fIindex\fR column of the 
 geometry master, \fImaster\fR.
 The valid options are \fB\-minsize\fR, \fB\-weight\fR, \fB\-uniform\fR
 and \fB-pad\fR.
-If one or more options are provided, then \fIindex\fR may be given as
+If one or more options are provided, then \fIindex\fR may be given as 
 a list of column indices to which the configuration options will operate on.
 .VS 8.5
 Indices may be integers, window names or the keyword \fIall\fR. For \fIall\fR
@@ -90,7 +90,7 @@ are returned in a list of "-option value" pairs.
 The arguments consist of the names of one or more slave windows
 followed by pairs of arguments that specify how
 to manage the slaves.
-The characters \fB\-\fR,  \fBx\fR and \fB^\fR,
+The characters \fB\-\fR,  \fBx\fR and \fB^\fR, 
 can be specified instead of a window name to alter the default
 location of a \fIslave\fR, as described in the \fBRELATIVE PLACEMENT\fR
 section, below.
@@ -194,7 +194,7 @@ The first two elements of the list are ``\fB\-in \fImaster\fR'' where
 \fImaster\fR is the slave's master.
 .TP
 \fBgrid location \fImaster x y\fR
-Given  \fIx\fR and \fIy\fR values in screen units relative to the master window,
+Given  \fIx\fR and \fIy\fR values in screen units relative to the master window, 
 the column and row number at that \fIx\fR and \fIy\fR location is returned.
 For locations that are above or to the left of the grid, \fB-1\fR is returned.
 .TP
@@ -211,11 +211,11 @@ for \fImaster\fR.
 Propagation is enabled by default.
 .TP
 \fBgrid rowconfigure \fImaster index \fR?\fI\-option value...\fR?
-Query or set the row properties of the \fIindex\fR row of the
+Query or set the row properties of the \fIindex\fR row of the 
 geometry master, \fImaster\fR.
 The valid options are \fB\-minsize\fR, \fB\-weight\fR, \fB\-uniform\fR
 and \fB-pad\fR.
-If one or more options are provided, then \fIindex\fR may be given as
+If one or more options are provided, then \fIindex\fR may be given as 
 a list of row indices to which the configuration options will operate on.
 .VS 8.5
 Indices may be integers, window names or the keyword \fIall\fR. For \fIall\fR
@@ -258,7 +258,7 @@ values are retained.
 \fBgrid size \fImaster\fR
 Returns the size of the grid (in columns then rows) for \fImaster\fR.
 The size is determined either by the \fIslave\fR occupying the largest
-row or column, or the largest column or row with a \fBminsize\fR,
+row or column, or the largest column or row with a \fBminsize\fR, 
 \fBweight\fR, or \fBpad\fR that is non-zero.
 .TP
 \fBgrid slaves \fImaster\fR ?\fI\-option value\fR?
@@ -270,11 +270,11 @@ to be returned.
 .SH "RELATIVE PLACEMENT"
 .PP
 The \fBgrid\fR command contains a limited set of capabilities that
-permit layouts to be created without specifying the row and column
-information for each slave.  This permits slaves to be rearranged,
+permit layouts to be created without specifying the row and column 
+information for each slave.  This permits slaves to be rearranged, 
 added, or removed without the need to explicitly specify row and
 column information.
-When no column or row information is specified for a \fIslave\fR,
+When no column or row information is specified for a \fIslave\fR, 
 default values are chosen for
 \fBcolumn\fR, \fBrow\fR, \fBcolumnspan\fR and \fBrowspan\fR
 at the time the \fIslave\fR is managed. The values are chosen
@@ -329,9 +329,9 @@ allocated to them is always in proportion to their weights. (A weight
 of zero is considered to be 1.)  In other words, a row or column
 configured with \fB-weight 1 -uniform a\fR will have exactly the same
 size as any other row or column configured with \fB-weight 1 -uniform
-a\fR.  A row or column configured with \fB-weight 2 -uniform b\fR will
+a\fR.  A row or column configured with \fB-weight 2 -uniform b\fR will 
 be exactly twice as large as one that is configured with \fB-weight 1
--uniform b\fR.
+-uniform b\fR.  
 .PP
 More technically, each row or column in the group will have a size
 equal to \fIk*weight\fR for some constant \fIk\fR.  The constant
@@ -346,7 +346,7 @@ space is apportioned according to the row and column weights.  If all of
 the weights are zero, the layout is placed within its master according to
 the \fIanchor\fR value.
 For masters whose size is smaller than the requested layout, space is taken
-away from columns and rows according to their weights.  However, once a
+away from columns and rows according to their weights.  However, once a 
 column or row shrinks to its minsize, its weight is taken to be zero.
 If more space needs to be removed from a layout than would be permitted, as
 when all the rows or columns are at their minimum sizes, the layout is

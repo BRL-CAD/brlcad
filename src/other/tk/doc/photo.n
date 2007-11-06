@@ -4,13 +4,13 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" Author: Paul Mackerras (paulus@cs.anu.edu.au),
 '\"	    Department of Computer Science,
 '\"	    Australian National University.
 '\"
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH photo n 4.0 Tk "Tk Built-In Commands"
 .BS
@@ -41,8 +41,9 @@ command.
 Photos support the following \fIoptions\fR:
 .TP
 \fB\-data \fIstring\fR
-Specifies the contents of the image as a string.  The string can
-contain base64 encoded data or binary data.  The format of the
+Specifies the contents of the image as a string.  The string should
+contain binary data or, for some formats, base64-encoded data (this is
+currently guaranteed to be supported for GIF images).  The format of the
 string must be one of those for which there is an image file format
 handler that will accept string data.  If both the \fB\-data\fR
 and \fB\-file\fR options are specified, the \fB\-file\fR option takes

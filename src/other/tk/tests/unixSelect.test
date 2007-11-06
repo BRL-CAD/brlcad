@@ -347,7 +347,7 @@ test unixSelect-1.19 {TkSelGetSelection procedure: INCR i18n text, utf-8} unix {
 } {1 2122 4222}
 test unixSelect-1.20 {Automatic UTF8_STRING support for selection handle} unix {
     # See Bug #666346 "Selection handling crashes under KDE 3.0"
-    label .l
+    label .l 
     selection handle .l  [list handler STRING]
     set selValue "This is the selection value"
     selection own .l

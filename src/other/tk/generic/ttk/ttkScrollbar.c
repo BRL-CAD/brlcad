@@ -22,7 +22,7 @@ typedef struct
     double	first;			/* top fraction */
     double	last;			/* bottom fraction */
 
-    Ttk_Box	troughBox;		/* trough parcel */
+    Ttk_Box	troughBox;		/* trough parcel */ 
     int 	minSize;		/* minimum size of thumb */
 } ScrollbarPart;
 
@@ -49,7 +49,7 @@ static Tk_OptionSpec ScrollbarOptionSpecs[] =
  * +++ Widget hooks.
  */
 
-static int
+static int 
 ScrollbarInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Scrollbar *sb = recordPtr;
@@ -242,7 +242,7 @@ ScrollbarDeltaCommand(
 
 /* $sb fraction $x $y --
  * 	Returns a real number between 0 and 1 indicating  where  the
- * 	point given by x and y lies in the trough area of the scrollbar.
+ * 	point given by x and y lies in the trough area of the scrollbar. 
  */
 static int
 ScrollbarFractionCommand(
@@ -321,6 +321,6 @@ MODULE_SCOPE
 void TtkScrollbar_Init(Tcl_Interp *interp)
 {
     RegisterWidget(interp, "ttk::scrollbar", &ScrollbarWidgetSpec);
-}
+} 
 
 /*EOF*/

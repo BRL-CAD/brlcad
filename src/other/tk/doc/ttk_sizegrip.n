@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_sizegrip n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -21,20 +21,20 @@ A \fBttk::sizegrip\fR widget (also known as a \fIgrow box\fR)
 allows the user to resize the containing toplevel window
 by pressing and dragging the grip.
 .SO
-\-class	\-cursor	\-state	\-style
+\-class	\-cursor	\-state	\-style	
 \-takefocus
 .SE
 
 .SH "WIDGET COMMAND"
-Sizegrip widgets support the standard
-\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR
+Sizegrip widgets support the standard 
+\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
 methods.  No other widget methods are used.
 
 .SH "PLATFORM-SPECIFIC NOTES"
 On Mac OSX, toplevel windows automatically include a built-in
 size grip by default.
-Adding an \fBttk::sizegrip\fR there is harmless, since
-the built-in grip will just mask the widget.
+Adding an \fBttk::sizegrip\fR there is harmless, since 
+the built-in grip will just mask the widget. 
 .SH EXAMPLES
 .CS
 # Using pack:
@@ -50,7 +50,7 @@ grid [ttk::sizegrip $top.statusbar.grip] \
 
 .SH "BUGS"
 If the containing toplevel's position was specified
-relative to the right or bottom of the sceen
+relative to the right or bottom of the screen
 (e.g., \fB[wm geometry ... \fIw\fBx\fIh\fB-\fIx\fB-\fIy\fB]\fR
 instead of \fB[wm geometry ... \fIw\fBx\fIh\fB+\fIx\fB+\fIy\fB]\fR),
 the sizegrip widget will not resize the window.

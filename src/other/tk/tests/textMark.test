@@ -21,7 +21,7 @@ pack append . .t {top expand fill}
 update
 .t debug on
 wm geometry . {}
-
+  
 # The statements below reset the main window;  it's needed if the window
 # manager is mwm to make mwm forget about a previous minimum size setting.
 

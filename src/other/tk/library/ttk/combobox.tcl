@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# Ttk widget set: combobox bindings.
+# Combobox bindings.
 #
 # Each combobox $cb has a child $cb.popdown, which contains
 # a listbox $cb.popdown.l and a scrollbar.  The listbox -listvariable
@@ -80,19 +80,25 @@ switch -- [tk windowingsystem] {
 ### Option database settings.
 #
 
-if {[tk windowingsystem] eq "x11"} {
-    option add *TCombobox*Listbox.background white
-}
-
-# The following ensures that the popdown listbox uses the same font
-# as the combobox entry field (at least for the standard Ttk themes).
-#
 option add *TCombobox*Listbox.font TkTextFont
+option add *TCombobox*Listbox.relief flat
+option add *TCombobox*Listbox.highlightThickness 0
+
+## Platform-specific settings.
+#
+switch -- [tk windowingsystem] {
+    x11 {
+	option add *TCombobox*Listbox.background white
+    }
+    aqua {
+	option add *TCombobox*Listbox.borderWidth 0
+    }
+}
 
 ### Binding procedures.
 #
 
-## combobox::Press $mode $x $y --
+## Press $mode $x $y --
 #	ButtonPress binding for comboboxes.
 #	Either post/unpost the listbox, or perform Entry widget binding,
 #	depending on widget state and location of button press.
@@ -104,8 +110,8 @@ proc ttk::combobox::Press {mode w x y} {
 	&& [string match *textarea [$w identify $x $y]]
     }]
 
+    focus $w
     if {$State(entryPress)} {
-	focus $w
 	switch -- $mode {
 	    s 	{ ttk::entry::Shift-Press $w $x 	; # Shift }
 	    2	{ ttk::entry::Select $w $x word 	; # Double click}
@@ -118,7 +124,7 @@ proc ttk::combobox::Press {mode w x y} {
     }
 }
 
-## combobox::Drag --
+## Drag --
 #	B1-Motion binding for comboboxes.
 #	If the initial ButtonPress event was handled by Entry binding,
 #	perform Entry widget drag binding; otherwise nothing.
@@ -203,33 +209,29 @@ proc ttk::combobox::LBTab {lb dir} {
     }
 }
 
-## PopdownShell --
-#	Returns the popdown shell widget associated with a combobox,
+namespace eval ::ttk::combobox {
+    # @@@ Until we have a proper native scrollbar on Aqua, use
+    # @@@ the regular Tk one.  Use ttk::scrollbar on other platforms.
+    if {[tk windowingsystem] ne "aqua"} {
+	namespace import -force ::ttk::scrollbar
+    }
+}
+
+## PopdownWindow --
+#	Returns the popdown widget associated with a combobox,
 #	creating it if necessary.
 #
-proc ttk::combobox::PopdownShell {cb} {
+proc ttk::combobox::PopdownWindow {cb} {
     if {![winfo exists $cb.popdown]} {
-	set popdown [toplevel $cb.popdown -relief solid -bd 1]
-	wm withdraw $popdown
-	wm overrideredirect $popdown 1
-	wm transient $popdown [winfo toplevel $cb]
+	set popdown [PopdownToplevel $cb.popdown]
 
-	# XXX Until we have a proper native scrollbar on Aqua, use
-	# XXX the regular Tk one
-	if {[tk windowingsystem] eq "aqua"} {
-	    scrollbar $popdown.sb -orient vertical \
-		-command [list $popdown.l yview]
-	} else {
-	    ttk::scrollbar $popdown.sb -orient vertical \
-		-command [list $popdown.l yview]
-	}
+	scrollbar $popdown.sb \
+	    -orient vertical -command [list $popdown.l yview]
 	listbox $popdown.l \
 	    -listvariable ttk::combobox::Values($cb) \
 	    -yscrollcommand [list $popdown.sb set] \
 	    -exportselection false \
 	    -selectmode browse \
-	    -borderwidth 2 -relief flat \
-	    -highlightthickness 0 \
 	    -activestyle none \
 	    ;
 
@@ -243,7 +245,30 @@ proc ttk::combobox::PopdownShell {cb} {
     return $cb.popdown
 }
 
-## combobox::Post $cb --
+## PopdownToplevel -- Create toplevel window for the combobox popdown
+#
+proc ttk::combobox::PopdownToplevel {w} {
+    toplevel $w -class Popdown
+    wm withdraw $w
+    wm overrideredirect $w true
+    wm transient $w [winfo toplevel [winfo parent $w]]
+    switch -- [tk windowingsystem] {
+	default -
+	x11 {
+	    $w configure -relief solid -borderwidth 1
+	}
+	win32 {
+	    $w configure -relief solid -borderwidth 1
+	}
+	aqua {
+	    $w configure -relief solid -borderwidth 0
+	    # @@@ tk::unsupported::MacWindowStyle style $w help none
+	}
+    }
+    return $w
+}
+
+## Post $cb --
 #	Pop down the associated listbox.
 #
 proc ttk::combobox::Post {cb} {
@@ -262,7 +287,7 @@ proc ttk::combobox::Post {cb} {
     #
     $cb state pressed
 
-    set popdown [PopdownShell $cb]
+    set popdown [PopdownWindow $cb]
     set values [$cb cget -values]
     set current [$cb current]
     if {$current < 0} {
@@ -320,7 +345,7 @@ proc ttk::combobox::Post {cb} {
     focus $popdown.l
 }
 
-## combobox::Unpost $cb --
+## Unpost $cb --
 #	Unpost the listbox, restore focus to combobox widget.
 #
 proc ttk::combobox::Unpost {cb} {
@@ -332,7 +357,7 @@ proc ttk::combobox::Unpost {cb} {
     focus $cb
 }
 
-## combobox::TogglePost $cb --
+## TogglePost $cb --
 #	Post the listbox if unposted, unpost otherwise.
 #
 proc ttk::combobox::TogglePost {cb} {

@@ -61,7 +61,7 @@
 # This file is tricky because there are five different ways that menus
 # can be used:
 #
-# 1. As a pulldown from a menubutton. In this style, the variable
+# 1. As a pulldown from a menubutton. In this style, the variable 
 #    tk::Priv(postedMb) identifies the posted menubutton.
 # 2. As a torn-off menu copied from some other menu.  In this style
 #    tk::Priv(postedMb) is empty, and menu's type is "tearoff".
@@ -351,7 +351,7 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     } msg]} {
 	# Error posting menu (e.g. bogus -postcommand). Unpost it and
 	# reflect the error.
-
+	
 	set savedInfo $errorInfo
 	MenuUnpost {}
 	error $msg $savedInfo
@@ -665,7 +665,7 @@ proc ::tk::MenuInvoke {w buttonRelease} {
 	set isCascade [string equal [$w type $active] "cascade"]
 
 	# Only de-activate the active item if it's a cascade; this prevents
-	# the annoying "activation flicker" you otherwise get with
+	# the annoying "activation flicker" you otherwise get with 
 	# checkbuttons/commands/etc. on menubars
 
 	if { $isCascade } {
@@ -1174,7 +1174,7 @@ proc ::tk::MenuFindName {menu s} {
 
 proc ::tk::PostOverPoint {menu x y {entry {}}}  {
     global tcl_platform
-
+    
     if {$entry ne ""} {
 	if {$entry == [$menu index last]} {
 	    incr y [expr {-([$menu yposition $entry] \
@@ -1257,7 +1257,7 @@ proc ::tk_menuSetFocus {menu} {
     }
     focus $menu
 }
-
+    
 proc ::tk::GenerateMenuSelect {menu} {
     variable ::tk::Priv
 

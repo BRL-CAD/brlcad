@@ -12,8 +12,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tk.h"
-#include "tkInt.h"
 #include "tkWinInt.h"
 
 

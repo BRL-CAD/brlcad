@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_checkbutton n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -18,8 +18,8 @@ ttk_checkbutton \- On/off widget
 
 .SH DESCRIPTION
 A \fBttk::checkbutton\fR widget is used to show or change a setting.
-It has two states, selected and deselected.
-The state of the checkbuton may be linked to a Tcl variable.
+It has two states, selected and deselected.  
+The state of the checkbutton may be linked to a Tcl variable.
 .SO
 \-class	\-compound	\-cursor	\-image
 \-state	\-style	\-takefocus	\-text
@@ -30,18 +30,18 @@ The state of the checkbuton may be linked to a Tcl variable.
 .OP \-command command Command
 A Tcl script to execute whenever the widget is invoked.
 .OP \-offvalue offValue OffValue
-The value to store in the associated \fI-variable\fR
+The value to store in the associated \fI-variable\fR 
 when the widget is deselected.  Defaults to \fB0\fR.
 .OP \-onvalue onValue OnValue
-The value to store in the associated \fI-variable\fR
+The value to store in the associated \fI-variable\fR 
 when the widget is selected.  Defaults to \fB1\fR.
 .OP \-variable variable Variable
 The name of a global variable whose value is linked to the widget.
 Defaults to the widget pathname if not specified.
 
 .SH "WIDGET COMMAND"
-In addition to the standard
-\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR
+In addition to the standard 
+\fBcget\fR, \fBconfigure\fR, \fBinstate\fR, and \fBstate\fR 
 commands, checkbuttons support the following additional
 widget commands:
 .TP
@@ -52,18 +52,18 @@ If the widget is currently selected, sets the \fI-variable\fR
 to the \fI-offvalue\fR and deselects the widget;
 otherwise, sets the \fI-variable\fR to the \fI-onvalue\fR
 Returns the result of the \fI-command\fR.
-.\" Missing: select, deselect, toggle
+.\" Missing: select, deselect, toggle 
 .\" Are these useful?  They don't invoke the -command
 .\" Missing: flash.  This is definitely not useful.
 
 .SH "WIDGET STATES"
 The widget does not respond to user input if the \fBdisabled\fR state is set.
-The widget sets the \fBselected\fR state whenever
+The widget sets the \fBselected\fR state whenever 
 the linked \fB-variable\fR is set to the widget's \fB-onvalue\fR,
 and clears it otherwise.
-The widget sets the \fBalternate\fR state whenever the
-linked \fB-variable\fR is unset.
-(The \fBalternate\fR state may be used to indicate a ``tri-state''
+The widget sets the \fBalternate\fR state whenever the 
+linked \fB-variable\fR is unset.  
+(The \fBalternate\fR state may be used to indicate a ``tri-state'' 
 or ``indeterminate'' selection.)
 
 .SH "SEE ALSO"

@@ -143,7 +143,7 @@ if {$tcl_platform(platform) == "windows"} {
 test text-2.5 {Tk_TextCmd procedure} {
     catch {destroy .t2}
     text .t2
-    .t2 tag cget sel -relief
+    .t2 tag cget sel -relief 
 } $relief
 test text-2.6 {Tk_TextCmd procedure} {
     catch {destroy .t2}
@@ -528,7 +528,7 @@ test text-9.26 {TextWidgetCmd procedure, "get" option} {
 test text-9.26a {TextWidgetCmd procedure, "get" option} {
     list [.t index "5.6 -4a chars"] [.t index "5.8-4d chars"]
 } {5.1 5.1}
-.t delete 5.4
+.t delete 5.4 
 .t tag add elide 5.5 5.6
 test text-9.27 {TextWidgetCmd procedure, "get" option} {
     .t get -displaychars 5.2 5.8
@@ -801,7 +801,7 @@ test text-0.2.51 {counting with tag priority eliding} {
     lappend res [.t index "1.0 +1 indices"]
     lappend res [.t index "1.0 +1 display indices"]
     lappend res [.t index "1.0 +1 display chars"]
-    lappend res [.t index end]
+    lappend res [.t index end] 
     lappend res [.t index "end -1 indices"]
     lappend res [.t index "end -1 display indices"]
     lappend res [.t index "end -1 display chars"]
@@ -1489,7 +1489,7 @@ test text-20.35a {TextSearchCmd procedure, regexp finds empty lines} {
     tk::TextSetCursor .t 4.0
     .t search -forward -regexp {^$} insert end
 } {4.0}
-
+    
 catch {destroy .t2}
 toplevel .t2
 wm geometry .t2 +0+0
@@ -1958,7 +1958,7 @@ test text-20.105 {TextSearchCmd, multiline regexp matching} {
     deleteWindows
     pack [text .t2]
     .t2 insert 1.0 {    Tcl_Obj *objPtr));
-static Tcl_Obj*         FSNormalizeAbsolutePath
+static Tcl_Obj*         FSNormalizeAbsolutePath 
 			    _ANSI_ARGS_((Tcl_Interp* interp, Tcl_Obj *pathPtr));}
     set markExpr "^(\[A-Za-z0-9~_\]+\[ \t\n\r\]*\\(|(\[^ \t\(#\n\r/@:\*\]\[^=\(\r\n\]*\[ \t\]+\\*?)?"
     append markExpr "(\[A-Za-z0-9~_\]+(<\[^>\]*>)?(::)?(\[A-Za-z0-9~_\]+::)*\[-A-Za-z0-9~_+ <>\|\\*/\]+|\[A-Za-z0-9~_\]+)"
@@ -1974,7 +1974,7 @@ test text-20.106 {TextSearchCmd, multiline regexp matching} {
     pack [text .t2]
     .t2 insert 1.0 {static int		SetFsPathFromAny _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *objPtr));
-static Tcl_Obj*         FSNormalizeAbsolutePath
+static Tcl_Obj*         FSNormalizeAbsolutePath 
 			    _ANSI_ARGS_((Tcl_Interp* interp, Tcl_Obj *pathPtr));}
     set markExpr "^(\[A-Za-z0-9~_\]+\[ \t\n\r\]*\\(|(\[^ \t\(#\n\r/@:\*\]\[^=\(\r\n\]*\[ \t\]+\\*?)?"
     append markExpr "(\[A-Za-z0-9~_\]+(<\[^>\]*>)?(::)?(\[A-Za-z0-9~_\]+::)*\[-A-Za-z0-9~_+ <>\|\\*/\]+|\[A-Za-z0-9~_\]+)"
@@ -1987,7 +1987,7 @@ test text-20.107 {TextSearchCmd, multiline regexp matching} {
     .t2 insert 1.0 {
 static int		SetFsPathFromAny _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *objPtr));
-static Tcl_Obj*         FSNormalizeAbsolutePath
+static Tcl_Obj*         FSNormalizeAbsolutePath 
 			    _ANSI_ARGS_((Tcl_Interp* interp, Tcl_Obj *pathPtr));}
     set markExpr "^(\[A-Za-z0-9~_\]+\[ \t\n\r\]*\\(|(\[^ \t\(#\n\r/@:\*\]\[^=\(\r\n\]*\[ \t\]+\\*?)?"
     append markExpr "(\[A-Za-z0-9~_\]+(<\[^>\]*>)?(::)?(\[A-Za-z0-9~_\]+::)*\[-A-Za-z0-9~_+ <>\|\\*/\]+|\[A-Za-z0-9~_\]+)"
@@ -3215,8 +3215,8 @@ test text-29.5 {peer widgets} {
     update ; update
     set p1 [.tt.t count -update -ypixels 1.0 end]
     set p2 [.t count -update -ypixels 5.0 11.0]
-    if {$p1 == $p2} {
-	set res "ok"
+    if {$p1 == $p2} { 
+	set res "ok" 
     } else {
         set res "$p1 and $p2 not equal"
     }
@@ -3313,7 +3313,7 @@ test text-29.12 {peer widgets} {
     for {set i 1} {$i < 20} {incr i} {
 	.t insert end "Line $i\n"
     }
-    .t tag add sel 1.0 3.0 5.0 7.0 9.0 11.0 13.0 15.0 17.0 19.0
+    .t tag add sel 1.0 3.0 5.0 7.0 9.0 11.0 13.0 15.0 17.0 19.0 
     set res {}
     lappend res [.t tag prevrange sel 1.0]
     .t configure -start 6 -end 12
@@ -3333,7 +3333,7 @@ test text-29.13 {peer widgets} {
     for {set i 1} {$i < 20} {incr i} {
 	.t insert end "Line $i\n"
     }
-    .t tag add sel 1.0 3.0 9.0 11.0 13.0 15.0 17.0 19.0
+    .t tag add sel 1.0 3.0 9.0 11.0 13.0 15.0 17.0 19.0 
     set res {}
     .t configure -start 6 -end 12
     lappend res [.t tag ranges sel]
@@ -3352,7 +3352,7 @@ test text-29.14 {peer widgets} {
     for {set i 1} {$i < 20} {incr i} {
 	.t insert end "Line $i\n"
     }
-    .t tag add sel 1.0 7.0 9.0 11.0 13.0 15.0 17.0 19.0
+    .t tag add sel 1.0 7.0 9.0 11.0 13.0 15.0 17.0 19.0 
     set res {}
     .t configure -start 6 -end 12
     lappend res [.t tag ranges sel]
@@ -3395,7 +3395,7 @@ test text-29.16 {peer widgets} {
     lappend res [.t index sel.last]
     destroy .t
     set res
-} {1.0 11.0}
+} {1.0 11.0} 
 test text-29.17 {peer widgets} {
     destroy .t
     pack [text .t]
@@ -3407,7 +3407,7 @@ test text-29.17 {peer widgets} {
     set res [list [catch {.t index sel.first} msg] $msg]
     destroy .t
     set res
-} {1 {text doesn't contain any characters tagged with "sel"}}
+} {1 {text doesn't contain any characters tagged with "sel"}} 
 
 proc makeText {} {
     set w .g

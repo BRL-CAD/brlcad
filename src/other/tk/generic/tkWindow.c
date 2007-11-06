@@ -14,7 +14,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 
 #if !( defined(__WIN32__) || defined(MAC_OSX_TK))
@@ -2949,7 +2948,7 @@ Initialize(
      * only an issue when Tk is loaded dynamically.
      */
 
-    if (Tcl_InitStubs(interp, TCL_PATCH_LEVEL, 1) == NULL) {
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
 	return TCL_ERROR;
     }
 
@@ -3182,7 +3181,7 @@ Initialize(
 	geometry = NULL;
     }
 
-    if (Tcl_PkgRequire(interp, "Tcl", TCL_PATCH_LEVEL, 1) == NULL) {
+    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 0) == NULL) {
 	code = TCL_ERROR;
 	goto done;
     }
@@ -3233,6 +3232,28 @@ Initialize(
     }
     code = TkpInit(interp);
     if (code == TCL_OK) {
+
+	/*
+	 * In order to find tk.tcl during initialization, we evaluate the
+	 * following script.  It calls on the Tcl command [tcl_findLibrary]
+	 * to perform the search.  See the docs for that command for details
+	 * on where it looks.
+	 *
+	 * Note that this entire search mechanism can be bypassed by defining
+	 * an alternate [tkInit] command before calling Tk_Init().
+	 */
+
+	code = Tcl_Eval(interp,
+"if {[namespace which -command tkInit] eq \"\"} {\n\
+  proc tkInit {} {\n\
+    global tk_library tk_version tk_patchLevel\n\
+      rename tkInit {}\n\
+    tcl_findLibrary tk $tk_version $tk_patchLevel tk.tcl TK_LIBRARY tk_library\n\
+  }\n\
+}\n\
+tkInit");
+    }
+    if (code == TCL_OK) {
 	/*
 	 * Create exit handlers to delete all windows when the application or
 	 * thread exits. The handler need to be invoked before other platform
@@ -3251,6 +3272,50 @@ Initialize(
     return code;
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_PkgInitStubsCheck --
+ *
+ *	This is a replacement routine for Tk_InitStubs() that is called
+ *	from code where -DUSE_TK_STUBS has not been enabled.
+ *
+ * Results:
+ *	Returns the version of a conforming Tk stubs table, or NULL, if
+ *	the table version doesn't satisfy the requested requirements,
+ *	according to historical practice.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+CONST char *
+Tk_PkgInitStubsCheck(
+    Tcl_Interp *interp,
+    CONST char * version,
+    int exact)
+{
+    CONST char *actualVersion = Tcl_PkgRequire(interp, "Tk", version, 0);
+
+    if (exact && actualVersion) {
+	CONST char *p = version;
+	int count = 0;
+
+	while (*p) {
+	    count += !isdigit(*p++);
+	}
+	if (count == 1) {
+	    if (0 != strncmp(version, actualVersion, strlen(version))) {
+		return NULL;
+	    }
+	} else {
+	    return Tcl_PkgPresent(interp, "Tk", version, 1);
+	}
+    }
+    return actualVersion;
+}
 /*
  * Local Variables:
  * mode: c

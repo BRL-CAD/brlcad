@@ -27,7 +27,7 @@ typedef struct {
 				 * first in structure. */
     UnixFtFace *faces;
     int nfaces;
-    FcCharSet *charset;
+    FcFontSet *fontset;
     FcPattern *pattern;
 
     Display *display;
@@ -37,14 +37,6 @@ typedef struct {
     XftColor color;
 } UnixFtFont;
 
-/*
- * Forward declarations...
- */
-
-static void		FinishedWithFont(UnixFtFont *fontPtr);
-static XftFont *	GetFont(UnixFtFont *fontPtr, FcChar32 ucs4);
-static UnixFtFont *	InitFont(Tk_Window tkwin, FcPattern *pattern,
-			    UnixFtFont *fontPtr);
 
 /*
  * Package initialization:
@@ -119,7 +111,7 @@ InitFont(
 {
     TkFontAttributes *faPtr;
     TkFontMetrics *fmPtr;
-    char *family;
+    char *family, **familyPtr = &family;
     int weight, slant, spacing, i;
     double size;
     FcFontSet *set;
@@ -138,14 +130,14 @@ InitFont(
      * Generate the list of fonts
      */
 
-    set = FcFontSort(0, pattern, FcTrue, &charset, &result);
+    set = FcFontSort(0, pattern, FcTrue, NULL, &result);
     if (!set) {
 	FcPatternDestroy(pattern);
-	ckfree((char *) fontPtr);
+	ckfree((char *)fontPtr);
 	return NULL;
     }
 
-    fontPtr->charset = charset;
+    fontPtr->fontset = set;
     fontPtr->pattern = pattern;
     fontPtr->faces = (UnixFtFace *) ckalloc(set->nfont * sizeof(UnixFtFace));
     fontPtr->nfaces = set->nfont;
@@ -183,7 +175,7 @@ InitFont(
      */
 
     if (XftPatternGetString(ftFont->pattern, XFT_FAMILY, 0,
-	    &family) != XftResultMatch) {
+	    familyPtr) != XftResultMatch) {
 	family = "Unknown";
     }
 
@@ -256,18 +248,24 @@ FinishedWithFont(
 	if (fontPtr->faces[i].ftFont) {
 	    XftFontClose(fontPtr->display, fontPtr->faces[i].ftFont);
 	}
-	if (fontPtr->faces[i].source) {
-	    FcPatternDestroy(fontPtr->faces[i].source);
-	}
 	if (fontPtr->faces[i].charset) {
 	    FcCharSetDestroy(fontPtr->faces[i].charset);
 	}
+    }
+    if (fontPtr->faces) {
+	ckfree((char *)fontPtr->faces);
+    }
+    if (fontPtr->pattern) {
+	FcPatternDestroy(fontPtr->pattern);
     }
     if (fontPtr->ftDraw) {
 	XftDrawDestroy(fontPtr->ftDraw);
     }
     if (fontPtr->font.fid) {
 	XUnloadFont(fontPtr->display, fontPtr->font.fid);
+    }
+    if (fontPtr->fontset) {
+	FcFontSetDestroy(fontPtr->fontset);
     }
     Tk_DeleteErrorHandler(handler);
 }
@@ -399,15 +397,16 @@ TkpGetFontFamilies(
     Tcl_Obj *resultPtr, *strPtr;
     XftFontSet *list;
     int i;
-    char *family;
+    char *family, **familyPtr = &family;
 
     resultPtr = Tcl_NewListObj(0, NULL);
 
-    list = XftListFonts(Tk_Display(tkwin), Tk_ScreenNumber(tkwin), 0,
-	    XFT_FAMILY, 0);
+    list = XftListFonts(Tk_Display(tkwin), Tk_ScreenNumber(tkwin),
+		(char*)0,		/* pattern elements */
+		XFT_FAMILY, (char*)0);	/* fields */
     for (i = 0; i < list->nfont; i++) {
 	if (XftPatternGetString(list->fonts[i], XFT_FAMILY, 0,
-		&family) == XftResultMatch) {
+		familyPtr) == XftResultMatch) {
 	    strPtr = Tcl_NewStringObj(Tk_GetUid(family), -1);
 	    Tcl_ListObjAppendElement(NULL, resultPtr, strPtr);
 	}
@@ -438,7 +437,9 @@ TkpGetSubFonts(
     Tcl_Obj *objv[3], *listPtr, *resultPtr;
     UnixFtFont *fontPtr = (UnixFtFont *) tkfont;
     FcPattern *pattern;
-    char *family, *foundry, *encoding;
+    char *family, **familyPtr = &family;
+    char *foundry, **foundryPtr = &foundry;
+    char *encoding, **encodingPtr = &encoding;
     int i;
 
     resultPtr = Tcl_NewListObj(0, NULL);
@@ -448,15 +449,15 @@ TkpGetSubFonts(
 		fontPtr->faces[i].source);
 
 	if (XftPatternGetString(pattern, XFT_FAMILY, 0,
-		&family) != XftResultMatch) {
+		familyPtr) != XftResultMatch) {
 	    family = "Unknown";
 	}
 	if (XftPatternGetString(pattern, XFT_FOUNDRY, 0,
-		&foundry) != XftResultMatch) {
+		foundryPtr) != XftResultMatch) {
 	    foundry = "Unknown";
 	}
 	if (XftPatternGetString(pattern, XFT_ENCODING, 0,
-		&encoding) != XftResultMatch) {
+		encodingPtr) != XftResultMatch) {
 	    encoding = "Unknown";
 	}
 	objv[0] = Tcl_NewStringObj(family, -1);
@@ -473,8 +474,8 @@ TkpGetSubFonts(
  *
  * TkpGetFontAttrsForChar --
  *
- *	Retrieve the font attributes of the actual font used to render
- *	a given character.
+ *	Retrieve the font attributes of the actual font used to render a given
+ *	character.
  *
  * Results:
  *	None.
@@ -499,12 +500,13 @@ TkpGetFontAttrsForChar(
     XftFont *xftFontPtr = GetFont(fontPtr, ucs4);
 				/* Actual font used to render the character */
     const char *family;		/* Font family name */
+    const char **familyPtr = &family;
     double size;		/* Font size */
     int weight;			/* Font weight */
     int slant;			/* Font slant */
 
     if (XftPatternGetString(xftFontPtr->pattern, XFT_FAMILY, 0,
-	    &family) != XftResultMatch) {
+	    familyPtr) != XftResultMatch) {
 	family = "Unknown";
     }
     if (XftPatternGetDouble(xftFontPtr->pattern, XFT_SIZE, 0,
@@ -733,11 +735,3 @@ Tk_DrawChars(
 	XftDrawGlyphFontSpec(fontPtr->ftDraw, &fontPtr->color, specs, nspec);
     }
 }
-
-/*
- * Local Variables:
- * mode: c
- * c-basic-offset: 4
- * fill-column: 78
- * End:
- */

@@ -10,7 +10,7 @@
 # (If the button is released off the widget, the grab deactivates and
 # we get a <Leave> event then, which turns off the "active" state)
 #
-# Normally, <ButtonRelease> and <ButtonN-Enter/Leave> events are
+# Normally, <ButtonRelease> and <ButtonN-Enter/Leave> events are 
 # delivered to the widget which received the initial <ButtonPress>
 # event.  However, Tk [grab]s (#1223103) and menu interactions
 # (#1222605) can interfere with this.  To guard against spurious

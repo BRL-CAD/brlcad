@@ -15,7 +15,6 @@
 
 #include <stdio.h>
 #include "tkInt.h"
-#include "tkPort.h"
 #include "tkCanvas.h"
 
 /*
@@ -525,7 +524,7 @@ ConfigureLine(
 	newGC = Tk_GetGC(tkwin, mask, &gcValues);
 #ifdef MAC_OSX_TK
 	/*
-	 * Mac OS X CG drawing needs access to linewidth even for
+	 * Mac OS X CG drawing needs access to linewidth even for 
 	 * arrow fills (as linewidth controls antialiasing).
 	 */
 	mask |= GCLineWidth;

@@ -16,7 +16,7 @@ tcltest::loadTestedCommands
 
 # Create entries in the option database to be sure that geometry options
 # like border width have predictable values.
-
+ 
 option add *Label.borderWidth 2
 option add *Label.highlightThickness 0
 option add *Label.font {Helvetica -12 bold}

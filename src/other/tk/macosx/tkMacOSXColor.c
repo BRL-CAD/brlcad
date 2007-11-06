@@ -16,7 +16,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkColor.h"
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
@@ -198,8 +198,11 @@ static const struct SystemColorMapEntry systemColorMap[] = {
  */
 
 static int
-GetThemeFromPixelCode(unsigned char code, ThemeBrush *brush,
-	ThemeTextColor *textColor, ThemeBackgroundKind *background)
+GetThemeFromPixelCode(
+    unsigned char code,
+    ThemeBrush *brush,
+    ThemeTextColor *textColor,
+    ThemeBackgroundKind *background)
 {
     if (code >= MIN_PIXELCODE && code <= MAX_PIXELCODE && code != PIXEL_MAGIC) {
 	*brush = systemColorMap[code - MIN_PIXELCODE].brush;
@@ -234,8 +237,12 @@ GetThemeFromPixelCode(unsigned char code, ThemeBrush *brush,
  */
 
 static OSStatus
-GetThemeColor(unsigned long pixel, ThemeBrush brush, ThemeTextColor textColor,
-	ThemeBackgroundKind background, RGBColor *c)
+GetThemeColor(
+    unsigned long pixel,
+    ThemeBrush brush,
+    ThemeTextColor textColor,
+    ThemeBackgroundKind background,
+    RGBColor *c)
 {
     OSStatus err = noErr;
 
@@ -293,7 +300,7 @@ TkSetMacColor(
  *
  * TkMacOSXSetColorInPort --
  *
- *	Sets fore or back color in the current QD port from an X pixel
+ *	Sets fore or back color in the given QD port from an X pixel
  *	value, and if the pixel code indicates a system color, sets
  *	the corresponding brush, textColor or background via
  *	Appearance mgr APIs.
@@ -308,25 +315,32 @@ TkSetMacColor(
  */
 
 void
-TkMacOSXSetColorInPort(unsigned long pixel, int fg, PixPatHandle penPat)
+TkMacOSXSetColorInPort(
+    unsigned long pixel,
+    int fg,
+    PixPatHandle penPat,
+    CGrafPtr port)
 {
     OSStatus err;
     RGBColor c;
     ThemeBrush brush;
     ThemeTextColor textColor;
     ThemeBackgroundKind background;
+    int setPenPat = 0;
 
     if (GetThemeFromPixelCode((pixel >> 24) & 0xff, &brush, &textColor,
 	    &background)) {
-	CGrafPtr port;
+	CGrafPtr savePort;
+	Boolean portChanged;
 
-	GetPort(&port);
+	portChanged = QDSwapPort(port, &savePort);
 	err = ChkErr(GetThemeColor, pixel, brush, textColor, background, &c);
 	if (err == noErr) {
 	    if (fg) {
 		RGBForeColor(&c);
 		if (penPat) {
 		    MakeRGBPat(penPat, &c);
+		    setPenPat = 1;
 		}
 	    } else {
 		RGBBackColor(&c);
@@ -346,9 +360,18 @@ TkMacOSXSetColorInPort(unsigned long pixel, int fg, PixPatHandle penPat)
 	    err = ChkErr(ApplyThemeBackground, background, &bounds,
 		    kThemeStateActive, 32, true);
 	}
-	if (penPat && err == noErr && !textColor) {
+	if (penPat && err == noErr && (brush || background)) {
 	    GetPortBackPixPat(port, penPat);
+	    setPenPat = 1;
 	}
+	if (portChanged) {
+	    QDSwapPort(savePort, NULL);
+	}
+    } else {
+	TkMacOSXDbgMsg("Ignored unknown pixel value 0x%lx", pixel);
+    }
+    if (penPat && !setPenPat) {
+	GetPortBackPixPat(port, penPat);
     }
 }
 
@@ -372,7 +395,9 @@ TkMacOSXSetColorInPort(unsigned long pixel, int fg, PixPatHandle penPat)
  */
 
 void
-TkMacOSXSetColorInContext(unsigned long pixel, CGContextRef context)
+TkMacOSXSetColorInContext(
+    unsigned long pixel,
+    CGContextRef context)
 {
     OSStatus err = -1;
     RGBColor c;
@@ -382,50 +407,34 @@ TkMacOSXSetColorInContext(unsigned long pixel, CGContextRef context)
 
     if (GetThemeFromPixelCode((pixel >> 24) & 0xff, &brush, &textColor,
 	    &background)) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1040
 	if (brush) {
-	    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
-		    && HIThemeSetFill != NULL && HIThemeSetStroke != NULL
-#endif
-	    ) {
+	    TK_IF_MAC_OS_X_API (4, HIThemeSetFill,
 		err = ChkErr(HIThemeSetFill, brush, NULL, context,
 			kHIThemeOrientationNormal);
-		if (err == noErr) {
+		TK_IF_MAC_OS_X_API_COND (4, HIThemeSetFill, err == noErr,
 		    err = ChkErr(HIThemeSetStroke, brush, NULL, context,
 			    kHIThemeOrientationNormal);
-		}
-	    }
+		) TK_ENDIF
+	    ) TK_ENDIF
 	} else if (textColor) {
-	    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
-		    && HIThemeSetTextFill != NULL
-#endif
-	    ) {
+	    TK_IF_MAC_OS_X_API (4, HIThemeSetTextFill,
 		err = ChkErr(HIThemeSetTextFill, textColor, NULL, context,
 			kHIThemeOrientationNormal);
-	    }
-	} else
-#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1040 */
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
-	if (background) {
-	    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1030
-		    && CGContextGetClipBoundingBox != NULL
-		    && HIThemeApplyBackground != NULL
-		    && &kHIToolboxVersionNumber != NULL /* c.f. QA1377 */
-		    && kHIToolboxVersionNumber >= kHIToolboxVersionNumber10_3
-#endif
-	    ) {
+	    ) TK_ENDIF
+	} else if (background) {
+	    TK_IF_MAC_OS_X_API (3, CGContextGetClipBoundingBox,
 		CGRect rect = CGContextGetClipBoundingBox(context);
 		HIThemeBackgroundDrawInfo info = { 0, kThemeStateActive,
 			background };
 
-		err = ChkErr(HIThemeApplyBackground, &rect, &info, context,
-			kHIThemeOrientationNormal);
-	    }
+		TK_IF_MAC_OS_X_API (3, HIThemeApplyBackground,
+		    TK_IF_HI_TOOLBOX (3, /* c.f. QA1377 */
+			err = ChkErr(HIThemeApplyBackground, &rect, &info,
+				context, kHIThemeOrientationNormal);
+		    ) TK_ENDIF
+		) TK_ENDIF
+	    ) TK_ENDIF
 	}
-#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1030 */
 	if (err == noErr) {
 	    return;
 	}
@@ -458,19 +467,12 @@ TkMacOSXSetColorInContext(unsigned long pixel, CGContextRef context)
 		    Tcl_Panic("TkMacOSXSetColorInContext(): "
 			"pattern initialization failed !");
 		}
-		bitmapInfo =
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1040
-			(1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
-		    && &kHIToolboxVersionNumber != NULL
-		    && kHIToolboxVersionNumber >= kHIToolboxVersionNumber10_4
-#endif
-		    ) ? kCGBitmapByteOrder32Host :
-#endif
-		    0;
+		TK_IF_HI_TOOLBOX (4,
+		    bitmapInfo = kCGBitmapByteOrder32Host;
+		) TK_ENDIF
 	    }
 	    portChanged = QDSwapPort(patGWorld, &savePort);
-	    TkMacOSXSetColorInPort(pixel, 1, pixpat);
+	    TkMacOSXSetColorInPort(pixel, 1, pixpat, patGWorld);
 #ifdef TK_MAC_DEBUG
 	    Rect patBounds;
 	    GetPixBounds((**pixpat).patMap, &patBounds);
@@ -521,6 +523,8 @@ TkMacOSXSetColorInContext(unsigned long pixel, CGContextRef context)
     } else if (((pixel >> 24) & 0xff) == TRANSPARENT_PIXEL) {
 	CGContextSetRGBFillColor(context, 0.0, 0.0, 0.0, 0.0);
 	CGContextSetRGBStrokeColor(context, 0.0, 0.0, 0.0, 0.0);
+    } else {
+	TkMacOSXDbgMsg("Ignored unknown pixel value 0x%lx", pixel);
     }
 }
 

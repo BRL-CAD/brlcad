@@ -15,9 +15,9 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
+#if 0
 #define __NO_OLD_CONFIG
-#include "tk.h"
+#endif
 #include "tkInt.h"
 
 /*

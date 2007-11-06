@@ -14,7 +14,6 @@
  */
 
 #include "tkPort.h"
-#include "tk.h"
 
 /*
  * Default table of argument descriptors. These are normally available in
@@ -121,36 +120,35 @@ Tk_ParseArgv(
 	    }
 	    for (; (infoPtr != NULL) && (infoPtr->type != TK_ARGV_END);
 		    infoPtr++) {
-		 if (infoPtr->key == NULL) {
-		     continue;
-		 }
-		 if ((infoPtr->key[1] != c)
-			 || (strncmp(infoPtr->key, curArg, length) != 0)) {
-		     continue;
-		 }
-		 if ((tkwin == NULL)
-			 && ((infoPtr->type == TK_ARGV_CONST_OPTION)
-			 || (infoPtr->type == TK_ARGV_OPTION_VALUE)
-			 || (infoPtr->type == TK_ARGV_OPTION_NAME_VALUE))) {
-		     continue;
-		 }
-		 if (infoPtr->key[length] == 0) {
-		     matchPtr = infoPtr;
-		     goto gotMatch;
-		 }
-		 if (flags & TK_ARGV_NO_ABBREV) {
-		     continue;
-		 }
-		 if (matchPtr != NULL) {
-		     Tcl_AppendResult(interp, "ambiguous option \"", curArg,
-			     "\"", NULL);
-		     return TCL_ERROR;
-		 }
-		 matchPtr = infoPtr;
+		if (infoPtr->key == NULL) {
+		    continue;
+		}
+		if ((infoPtr->key[1] != c)
+			|| (strncmp(infoPtr->key, curArg, length) != 0)) {
+		    continue;
+		}
+		if ((tkwin == NULL)
+			&& ((infoPtr->type == TK_ARGV_CONST_OPTION)
+			|| (infoPtr->type == TK_ARGV_OPTION_VALUE)
+			|| (infoPtr->type == TK_ARGV_OPTION_NAME_VALUE))) {
+		    continue;
+		}
+		if (infoPtr->key[length] == 0) {
+		    matchPtr = infoPtr;
+		    goto gotMatch;
+		}
+		if (flags & TK_ARGV_NO_ABBREV) {
+		    continue;
+		}
+		if (matchPtr != NULL) {
+		    Tcl_AppendResult(interp, "ambiguous option \"", curArg,
+			    "\"", NULL);
+		    return TCL_ERROR;
+		}
+		matchPtr = infoPtr;
 	    }
 	}
 	if (matchPtr == NULL) {
-
 	    /*
 	     * Unrecognized argument. Just copy it down, unless the caller
 	     * prefers an error to be registered.
@@ -185,8 +183,8 @@ Tk_ParseArgv(
 		*((int *) infoPtr->dst) = strtol(argv[srcIndex], &endPtr, 0);
 		if ((endPtr == argv[srcIndex]) || (*endPtr != 0)) {
 		    Tcl_AppendResult(interp,"expected integer argument for \"",
-			    infoPtr->key, "\" but got \"", argv[srcIndex],"\"",
-			    NULL);
+			    infoPtr->key, "\" but got \"", argv[srcIndex],
+			    "\"", NULL);
 		    return TCL_ERROR;
 		}
 		srcIndex++;
@@ -196,20 +194,18 @@ Tk_ParseArgv(
 	case TK_ARGV_STRING:
 	    if (argc == 0) {
 		goto missingArg;
-	    } else {
-		*((CONST char **)infoPtr->dst) = argv[srcIndex];
-		srcIndex++;
-		argc--;
 	    }
+	    *((CONST char **)infoPtr->dst) = argv[srcIndex];
+	    srcIndex++;
+	    argc--;
 	    break;
 	case TK_ARGV_UID:
 	    if (argc == 0) {
 		goto missingArg;
-	    } else {
-		*((Tk_Uid *)infoPtr->dst) = Tk_GetUid(argv[srcIndex]);
-		srcIndex++;
-		argc--;
 	    }
+	    *((Tk_Uid *)infoPtr->dst) = Tk_GetUid(argv[srcIndex]);
+	    srcIndex++;
+	    argc--;
 	    break;
 	case TK_ARGV_REST:
 	    *((int *) infoPtr->dst) = dstIndex;
@@ -233,21 +229,19 @@ Tk_ParseArgv(
 	    break;
 	case TK_ARGV_FUNC: {
 	    typedef int (ArgvFunc)(char *, char *, CONST char *);
-	    ArgvFunc *handlerProc;
+	    ArgvFunc *handlerProc = (ArgvFunc *) infoPtr->src;
 
-	    handlerProc = (ArgvFunc *) infoPtr->src;
 	    if ((*handlerProc)(infoPtr->dst, infoPtr->key, argv[srcIndex])) {
-		srcIndex += 1;
-		argc -= 1;
+		srcIndex++;
+		argc--;
 	    }
 	    break;
 	}
 	case TK_ARGV_GENFUNC: {
 	    typedef int (ArgvGenFunc)(char *, Tcl_Interp *, char *, int,
 		    CONST char **);
-	    ArgvGenFunc *handlerProc;
+	    ArgvGenFunc *handlerProc = (ArgvGenFunc *) infoPtr->src;
 
-	    handlerProc = (ArgvGenFunc *) infoPtr->src;
 	    argc = (*handlerProc)(infoPtr->dst, interp, infoPtr->key,
 		    argc, argv+srcIndex);
 	    if (argc < 0) {

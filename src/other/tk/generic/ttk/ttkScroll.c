@@ -8,7 +8,7 @@
  *
  * Scrollable interface:
  *
- * 	+ 'first' is controlled by [xy]view widget command
+ * 	+ 'first' is controlled by [xy]view widget command 
  * 	  and other scrolling commands like 'see';
  *      + 'total' depends on widget contents;
  *      + 'last' depends on first, total, and widget size.
@@ -17,15 +17,15 @@
  *
  * 	1. User adjusts scrollbar, scrollbar widget calls its -command
  * 	2. Scrollbar -command invokes the scrollee [xy]view widget method
- * 	3. TtkScrollviewCommand calls TtkScrollTo(), which updates
+ * 	3. TtkScrollviewCommand calls TtkScrollTo(), which updates 
  * 	   'first' and schedules a redisplay.
- * 	4. Once the scrollee knows 'total' and 'last' (typically in
- * 	   the LayoutProc), call TtkScrolled(h,first,last,total) to
+ * 	4. Once the scrollee knows 'total' and 'last' (typically in 
+ * 	   the LayoutProc), call TtkScrolled(h,first,last,total) to 
  * 	   synchronize the scrollbar.
  * 	5. The scrollee -[xy]scrollcommand is called (in an idle callback)
  * 	6. Which calls the scrollbar 'set' method and redisplays the scrollbar.
  *
- * If the scrollee has internal scrolling (e.g., a 'see' method),
+ * If the scrollee has internal scrolling (e.g., a 'see' method), 
  * it should TtkScrollTo() directly (step 2).
  *
  * If the widget value changes, it should call TtkScrolled() (step 4).
@@ -135,7 +135,7 @@ static void UpdateScrollbarBG(ClientData clientData)
 void TtkScrolled(ScrollHandle h, int first, int last, int total)
 {
     Scrollable *s = h->scrollPtr;
-
+    
     /* Sanity-check inputs:
      */
     if (total <= 0) {

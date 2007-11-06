@@ -13,7 +13,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 
 /*
  * For each top-level window that has ever received the focus, there is a

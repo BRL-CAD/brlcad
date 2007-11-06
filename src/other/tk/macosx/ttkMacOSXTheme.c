@@ -24,30 +24,59 @@
  *	(Aqua doesn't use this kind of feedback).
  *
  *	The QuickDraw/Carbon coordinate system is relative to the
- *	top-level window, *not* to the Tk_Window. However,
- *	since we're drawing into an off-screen port (Tk "Pixmap),
- *	we don't need to account for this.
+ *	top-level window, not to the Tk_Window.  BoxToRect()
+ *	accounts for this.
  *
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "ttk/ttkTheme.h"
+
+#define BEGIN_DRAWING(d) { \
+	TkMacOSXDrawingContext dc; \
+	TkMacOSXSetupDrawingContext((d), NULL, 0, &dc);
+#define END_DRAWING \
+	TkMacOSXRestoreDrawingContext(&dc); }
 
 /*----------------------------------------------------------------------
  * +++ Utilities.
  */
 
-static
-Rect BoxToRect(Ttk_Box b)
+/* BoxToRect --
+ *	Convert a Ttk_Box in Tk coordinates relative to the given Drawable
+ *	to a native Rect relative to the containing port.
+ */
+static Rect BoxToRect(Drawable d, Ttk_Box b)
 {
+    MacDrawable *md = (MacDrawable*)d;
     Rect rect;
 
-    rect.top	= b.y;
-    rect.left	= b.x;
-    rect.bottom	= b.y + b.height;
-    rect.right	= b.x + b.width;
+    rect.top	= b.y + md->yOff;
+    rect.left	= b.x + md->xOff;
+    rect.bottom	= rect.top + b.height;
+    rect.right	= rect.left + b.width;
+
     return rect;
+}
+
+/* PatternOrigin --
+ *	Compute brush pattern origin for a Drawable relative to a Tk_Window.
+ *
+ * Notes: This will only be nonzero if the Drawable is an off-screen pixmap.
+ * See also SF bug #1157739.
+ */
+static Point PatternOrigin(Tk_Window tkwin, Drawable d)
+{
+    MacDrawable *md = (MacDrawable*)d;
+    Rect bounds;
+    Point origin;
+
+    TkMacOSXWinBounds((TkWindow *) tkwin, &bounds);
+    origin.h = md->xOff - bounds.left;
+    origin.v = md->yOff - bounds.top;
+
+    return origin;
 }
 
 /* DontErase --
@@ -56,19 +85,6 @@ Rect BoxToRect(Ttk_Box b)
 static void DontErase(
     const Rect *bounds, UInt32 eraseData, SInt16 depth, Boolean isColorDev)
 {  }
-
-#define BEGIN_DRAWING(d) do { \
-	TkMacOSXDrawingContext dc; \
-	TkMacOSXSetupDrawingContext((d), NULL, 0, &dc)
-#define END_DRAWING() \
-	TkMacOSXRestoreDrawingContext(&dc); \
-	} while (0)
-#define OFFSET_RECT(d, r) do { \
-	OffsetRect(&(r), ((MacDrawable*)(d))->xOff, ((MacDrawable*)(d))->yOff);\
-	} while (0)
-#define OFFSET_POINT(d, p) do { \
-	(p).h += ((MacDrawable*)(d))->xOff; (p).v += ((MacDrawable*)(d))->yOff;\
-	} while (0)
 
 /* Table mapping Tk states to Appearance manager ThemeStates
  */
@@ -165,8 +181,9 @@ static void ButtonElementGeometry(
     Rect scratchRect, contentsRect;
     const int scratchSize = 100;
 
-    ButtonElementGeometryNoPadding(clientData, elementRecord, tkwin, widthPtr,
-	    heightPtr, paddingPtr);
+    ButtonElementGeometryNoPadding(
+	clientData, elementRecord, tkwin,
+	widthPtr, heightPtr, paddingPtr);
 
     /* To compute internal padding, query the appearance manager
      * for the content bounds of a dummy rectangle, then use
@@ -194,15 +211,14 @@ static void ButtonElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, Ttk_State state)
 {
-    Rect bounds = BoxToRect(Ttk_PadBox(b, ButtonMargins));
+    Rect bounds = BoxToRect(d, Ttk_PadBox(b, ButtonMargins));
     ThemeButtonParms *parms = clientData;
     ThemeButtonDrawInfo info = computeButtonDrawInfo(parms, state);
 
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeButton(&bounds, parms->kind, &info,
 	NULL/*prevInfo*/,NULL/*eraseProc*/,NULL/*labelProc*/,0/*userData*/);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec ButtonElementSpec = {
@@ -248,15 +264,14 @@ static void TabElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, Ttk_State state)
 {
-    Rect bounds = BoxToRect(b);
+    Rect bounds = BoxToRect(d, b);
 
     bounds.bottom += TAB_OVERLAP;
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeTab(
 	&bounds, Ttk_StateTableLookup(TabStyleTable, state), kThemeTabNorth,
 	0/*labelProc*/,0/*userData*/);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec TabElementSpec = {
@@ -281,13 +296,12 @@ static void PaneElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, Ttk_State state)
 {
-    Rect bounds = BoxToRect(b);
+    Rect bounds = BoxToRect(d, b);
 
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeTabPane(
 	&bounds, Ttk_StateTableLookup(ThemeStateTable, state));
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec PaneElementSpec = {
@@ -318,12 +332,12 @@ static void GroupElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, Ttk_State state)
 {
-    Rect bounds = BoxToRect(b);
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    Rect bounds = BoxToRect(d, b);
+
+    BEGIN_DRAWING(d)
     DrawThemePrimaryGroup(
 	&bounds, Ttk_StateTableLookup(ThemeStateTable, state));
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec GroupElementSpec = {
@@ -364,7 +378,7 @@ static void EntryElementDraw(
     EntryElement *e = elementRecord;
     Tk_3DBorder backgroundPtr = Tk_Get3DBorderFromObj(tkwin,e->backgroundObj);
     Ttk_Box inner = Ttk_PadBox(b, Ttk_UniformPadding(3));
-    Rect bounds = BoxToRect(inner);
+    Rect bounds = BoxToRect(d, inner);
 
     /* Erase w/background color:
     */
@@ -372,8 +386,7 @@ static void EntryElementDraw(
 	Tk_3DBorderGC(tkwin, backgroundPtr, TK_3D_FLAT_GC),
 	inner.x,inner.y, inner.width, inner.height);
 
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     /* Draw border:
     */
     DrawThemeEditTextFrame(
@@ -383,7 +396,7 @@ static void EntryElementDraw(
     */
     if (state & TTK_STATE_FOCUS)
 	DrawThemeFocusRect(&bounds, 1);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec EntryElementSpec = {
@@ -412,7 +425,7 @@ static void PopupArrowElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, Ttk_State state)
 {
-    Rect bounds = BoxToRect(b);
+    Rect bounds = BoxToRect(d, b);
     ThemeButtonParms *parms = clientData;
     ThemeButtonDrawInfo info = computeButtonDrawInfo(parms, state);
 
@@ -421,24 +434,22 @@ static void PopupArrowElementDraw(
     bounds.right -= 6;
     bounds.bottom -= 2;
 
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeButton(&bounds, kThemeArrowButton, &info,
 	NULL/*prevInfo*/,NULL/*eraseProc*/,NULL/*labelProc*/,0/*userData*/);
 
-    bounds = BoxToRect(Ttk_PadBox(b, ButtonMargins));
+    bounds = BoxToRect(d, Ttk_PadBox(b, ButtonMargins));
     bounds.top += 2;
     bounds.bottom += 2;
     bounds.left -= 2;
     bounds.right -= 2;
 
-    OFFSET_RECT(d, bounds);
     DrawThemePopupArrow(&bounds,
 	kThemeArrowDown,
 	kThemeArrow9pt,		/* ??? */
 	Ttk_StateTableLookup(ThemeStateTable, state),
 	NULL /*eraseProc*/,0/*eraseData*/);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec PopupArrowElementSpec = {
@@ -515,7 +526,7 @@ static void TrackElementDraw(
      * @@@ if finer than 1.0, conversion to int breaks.
      */
     drawInfo.kind = data->kind;
-    drawInfo.bounds = BoxToRect(b);
+    drawInfo.bounds = BoxToRect(d, b);
     drawInfo.min = (int)from;		/* @@@ */
     drawInfo.max = (int)to;		/* @@@ */
     drawInfo.value = (int)value;	/* @@@ */
@@ -536,11 +547,10 @@ static void TrackElementDraw(
 	    break;
     }
 
-    OFFSET_RECT(d, drawInfo.bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeTrack(&drawInfo,
 	NULL/*rgnGhost*/,NULL/*eraseProc*/,0/*eraseData*/);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec TrackElementSpec = {
@@ -550,7 +560,6 @@ static Ttk_ElementSpec TrackElementSpec = {
     TrackElementGeometry,
     TrackElementDraw
 };
-
 
 /* Slider element -- <<NOTE-TRACKS>>
  * Has geometry only. The Scale widget adjusts the position of this element,
@@ -636,7 +645,7 @@ static void PbarElementDraw(
     } else {
 	drawInfo.kind = kThemeProgressBar;
     }
-    drawInfo.bounds = BoxToRect(b);
+    drawInfo.bounds = BoxToRect(d, b);
     drawInfo.min = 0;
     drawInfo.max = (int)maximum;	/* @@@ See note above */
     drawInfo.value = (int)value;
@@ -646,11 +655,10 @@ static void PbarElementDraw(
     drawInfo.enableState = Ttk_StateTableLookup(ThemeTrackEnableTable, state);
     drawInfo.trackInfo.progress.phase = phase;
 
-    OFFSET_RECT(d, drawInfo.bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeTrack(&drawInfo,
 	NULL/*rgnGhost*/,NULL/*eraseProc*/,0/*eraseData*/);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec PbarElementSpec = {
@@ -680,15 +688,14 @@ static void SeparatorElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, unsigned int state)
 {
-    Rect bounds = BoxToRect(b);
+    Rect bounds = BoxToRect(d, b);
 
     /* DrawThemeSeparator only supports kThemeStateActive / kThemeStateInactive
     */
     state &= TTK_STATE_BACKGROUND;
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeSeparator(&bounds, Ttk_StateTableLookup(ThemeStateTable, state));
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec SeparatorElementSpec = {
@@ -722,19 +729,19 @@ static void SizegripElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, unsigned int state)
 {
+    Rect bounds = BoxToRect(d, b);
     Point origin;
 
-    origin.h = b.x; origin.v = b.y;
+    origin.h = bounds.left; origin.v = bounds.top;
 
     /* Grow box only supports kThemeStateActive, kThemeStateInactive */
     state &= TTK_STATE_BACKGROUND;
 
-    OFFSET_POINT(d, origin);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeStandaloneGrowBox(
 	origin, sizegripGrowDirection, false,
 	Ttk_StateTableLookup(ThemeStateTable, state));
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec SizegripElementSpec = {
@@ -745,7 +752,6 @@ static Ttk_ElementSpec SizegripElementSpec = {
     SizegripElementDraw
 };
 
-
 /*----------------------------------------------------------------------
  * +++ Background element -- an experiment.
  *
@@ -754,9 +760,8 @@ static Ttk_ElementSpec SizegripElementSpec = {
  *	and the type of the top-level window.
  *
  *	Also: patterned backgrounds should be aligned with the coordinate
- *	system of the top-level window. Since we're drawing into an
- *	off-screen graphics port with its own coordinate system,
- *	this leads to alignment glitches.
+ *	system of the top-level window.  If we're drawing into an
+ *	off-screen graphics port this leads to alignment glitches.
  *
  *	Available kTheme constants:
  *	kThemeBackgroundTabPane,
@@ -765,7 +770,7 @@ static Ttk_ElementSpec SizegripElementSpec = {
  *	kThemeBackgroundListViewWindowHeader,
  *	kThemeBackgroundSecondaryGroupBox,
  *
- *	GetThemeBrush() and SetThemeBackground() offer more choices.
+ *	SetThemeBackground() offers more kThemeBrush* choices.
  *
  */
 
@@ -774,33 +779,22 @@ static void BackgroundElementDraw(
     Drawable d, Ttk_Box b, Ttk_State state)
 {
     ThemeBackgroundKind kind = kThemeBackgroundWindowHeader;
-    Rect bounds;
+    Rect bounds = BoxToRect(d, Ttk_WinBox(tkwin));
     SInt32 depth = 32;	/* ??? */
     Boolean inColor = true;
-    Point origin;
 
     /* Avoid kThemeStatePressed, which seems to give bad results
      * for ApplyThemeBackground:
      */
     state &= ~TTK_STATE_PRESSED;
 
-    TkMacOSXWinBounds((TkWindow *) tkwin, &bounds);
-    origin.v = -bounds.top;
-    origin.h = -bounds.left;
-
-    bounds.top = bounds.left = 0;
-    bounds.right = Tk_Width(tkwin);
-    bounds.bottom = Tk_Height(tkwin);
-
-    OFFSET_POINT(d, origin);
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     ApplyThemeBackground(kind, &bounds,
 	Ttk_StateTableLookup(ThemeStateTable, state),
 	depth, inColor);
-    QDSetPatternOrigin(origin);
+    QDSetPatternOrigin(PatternOrigin(tkwin, d));
     EraseRect(&bounds);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec BackgroundElementSpec = {
@@ -829,20 +823,15 @@ static void ToolbarBackgroundElementDraw(
     Drawable d, Ttk_Box b, Ttk_State state)
 {
     ThemeBrush brush = kThemeBrushToolbarBackground;
-    Rect bounds;
+    Rect bounds = BoxToRect(d, Ttk_WinBox(tkwin));
     SInt32 depth = 32;		/* ??? */
     Boolean inColor = true;
 
-    bounds.top = bounds.left = 0;
-    bounds.right = Tk_Width(tkwin);
-    bounds.bottom = Tk_Height(tkwin);
-
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
-    SetThemeBackground(brush,
-	depth, inColor);
+    BEGIN_DRAWING(d)
+    SetThemeBackground(brush, depth, inColor);
+    QDSetPatternOrigin(PatternOrigin(tkwin, d));
     EraseRect(&bounds);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec ToolbarBackgroundElementSpec = {
@@ -868,7 +857,7 @@ static void TreeHeaderElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, Ttk_State state)
 {
-    Rect bounds = BoxToRect(b);
+    Rect bounds = BoxToRect(d, b);
     ThemeButtonParms *parms = clientData;
     ThemeButtonDrawInfo info;
 
@@ -876,11 +865,10 @@ static void TreeHeaderElementDraw(
     info.value = Ttk_StateTableLookup(ButtonValueTable, state);
     info.adornment = Ttk_StateTableLookup(TreeHeaderAdornmentTable, state);
 
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeButton(&bounds, parms->kind, &info,
 	NULL/*prevInfo*/,NULL/*eraseProc*/,NULL/*labelProc*/,0/*userData*/);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec TreeHeaderElementSpec = {
@@ -913,7 +901,7 @@ static void DisclosureElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, Ttk_State state)
 {
-    Rect bounds = BoxToRect(b);
+    Rect bounds = BoxToRect(d, b);
     ThemeButtonDrawInfo info;
 
     if (state & TTK_TREEVIEW_STATE_LEAF) {
@@ -924,11 +912,10 @@ static void DisclosureElementDraw(
     info.value = Ttk_StateTableLookup(DisclosureValueTable, state);
     info.adornment = kThemeAdornmentDrawIndicatorOnly;
 
-    OFFSET_RECT(d, bounds);
-    BEGIN_DRAWING(d);
+    BEGIN_DRAWING(d)
     DrawThemeButton(&bounds, kThemeDisclosureTriangle, &info,
 	NULL/*prevInfo*/,DontErase,NULL/*labelProc*/,0/*userData*/);
-    END_DRAWING();
+    END_DRAWING
 }
 
 static Ttk_ElementSpec DisclosureElementSpec = {

@@ -12,9 +12,12 @@
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-# Insist on running with compatible versions of Tcl and Tk.
-package require -exact Tcl 8.5a6
-package require -exact Tk  8.5a6
+package require Tcl 8.5	;# Guard against [source] in an 8.4- interp
+			;# before using 8.5 [package] features.
+# Insist on running with compatible version of Tcl
+package require Tcl 8.5b1-8.6
+# Verify that we have Tk binary and script components from the same release
+package require -exact Tk  8.5b1
 
 # Create a ::tk namespace
 namespace eval ::tk {
@@ -25,7 +28,7 @@ namespace eval ::tk {
             # The msgcat package is not available.  Supply our own
             # minimal replacement.
             proc mc {src args} {
-                return [format $src {expand}$args]
+                return [format $src {*}$args]
             }
             proc mcmax {args} {
                 set max 0
@@ -296,7 +299,7 @@ tk::ScreenChanged [winfo screen .]
 
 proc ::tk::EventMotifBindings {n1 dummy dummy} {
     upvar $n1 name
-
+    
     if {$name} {
 	set op delete
     } else {
@@ -304,47 +307,47 @@ proc ::tk::EventMotifBindings {n1 dummy dummy} {
     }
 
     event $op <<Cut>> <Control-Key-w>
-    event $op <<Copy>> <Meta-Key-w>
+    event $op <<Copy>> <Meta-Key-w> 
     event $op <<Paste>> <Control-Key-y>
     event $op <<Undo>> <Control-underscore>
 }
 
 #----------------------------------------------------------------------
-# Define common dialogs on platforms where they are not implemented
+# Define common dialogs on platforms where they are not implemented 
 # using compiled code.
 #----------------------------------------------------------------------
 
 if {![llength [info commands tk_chooseColor]]} {
     proc ::tk_chooseColor {args} {
-	return [tk::dialog::color:: {expand}$args]
+	return [tk::dialog::color:: {*}$args]
     }
 }
 if {![llength [info commands tk_getOpenFile]]} {
     proc ::tk_getOpenFile {args} {
 	if {$::tk_strictMotif} {
-	    return [tk::MotifFDialog open {expand}$args]
+	    return [tk::MotifFDialog open {*}$args]
 	} else {
-	    return [::tk::dialog::file:: open {expand}$args]
+	    return [::tk::dialog::file:: open {*}$args]
 	}
     }
 }
 if {![llength [info commands tk_getSaveFile]]} {
     proc ::tk_getSaveFile {args} {
 	if {$::tk_strictMotif} {
-	    return [tk::MotifFDialog save {expand}$args]
+	    return [tk::MotifFDialog save {*}$args]
 	} else {
-	    return [::tk::dialog::file:: save {expand}$args]
+	    return [::tk::dialog::file:: save {*}$args]
 	}
     }
 }
 if {![llength [info commands tk_messageBox]]} {
     proc ::tk_messageBox {args} {
-	return [tk::MessageBox {expand}$args]
+	return [tk::MessageBox {*}$args]
     }
 }
 if {![llength [info command tk_chooseDirectory]]} {
     proc ::tk_chooseDirectory {args} {
-	return [::tk::dialog::file::chooseDir:: {expand}$args]
+	return [::tk::dialog::file::chooseDir:: {*}$args]
     }
 }
 
@@ -354,7 +357,7 @@ if {![llength [info command tk_chooseDirectory]]} {
 
 switch -- [tk windowingsystem] {
     "x11" {
-	event add <<Cut>> <Control-Key-x> <Key-F20>
+	event add <<Cut>> <Control-Key-x> <Key-F20> 
 	event add <<Copy>> <Control-Key-c> <Key-F16>
 	event add <<Paste>> <Control-Key-v> <Key-F18>
 	event add <<PasteSelection>> <ButtonRelease-2>
@@ -362,7 +365,7 @@ switch -- [tk windowingsystem] {
 	event add <<Redo>> <Control-Key-Z>
 	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym
 	# that is returned when the user presses <Shift-Tab>.  In order for
-	# tab traversal to work, we have to add these keysyms to the
+	# tab traversal to work, we have to add these keysyms to the 
 	# PrevWindow event.
 	# We use catch just in case the keysym isn't recognized.
 	# This is needed for XFree86 systems
@@ -385,7 +388,7 @@ switch -- [tk windowingsystem] {
 	event add <<Redo>> <Control-Key-y>
     }
     "aqua" {
-	event add <<Cut>> <Command-Key-x> <Key-F2>
+	event add <<Cut>> <Command-Key-x> <Key-F2> 
 	event add <<Copy>> <Command-Key-c> <Key-F3>
 	event add <<Paste>> <Command-Key-v> <Key-F4>
 	event add <<PasteSelection>> <ButtonRelease-2>
@@ -439,7 +442,7 @@ proc ::tk::CancelRepeat {} {
 
 # ::tk::TabToWindow --
 # This procedure moves the focus to the given widget.
-# It sends a <<TraverseOut>> virtual event to the previous focus window,
+# It sends a <<TraverseOut>> virtual event to the previous focus window, 
 # if any, before changing the focus, and a <<TraverseIn>> event
 # to the new focus window afterwards.
 #
@@ -483,7 +486,7 @@ proc ::tk::UnderlineAmpersand {text} {
     return [list $text $idx]
 }
 
-# ::tk::SetAmpText --
+# ::tk::SetAmpText -- 
 # Given widget path and text with "magic ampersands",
 # sets -text and -underline options for the widget
 #
@@ -506,7 +509,7 @@ proc ::tk::AmpWidget {class path args} {
 	    lappend options $opt $val
 	}
     }
-    set result [$class $path {expand}$options]
+    set result [$class $path {*}$options]
     if {$class eq "button"} {
 	bind $path <<AltUnderlined>> [list $path invoke]
     }
@@ -527,7 +530,7 @@ proc ::tk::AmpMenuArgs {widget add type args} {
 	    lappend options $opt $val
 	}
     }
-    $widget add $type {expand}$options
+    $widget add $type {*}$options
 }
 
 # ::tk::FindAltKeyTarget --

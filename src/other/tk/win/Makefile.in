@@ -9,6 +9,7 @@
 TCLVERSION		= @TCL_VERSION@
 TCLPATCHL		= @TCL_PATCH_LEVEL@
 VERSION			= @TK_VERSION@
+PATCH_LEVEL		= @TK_PATCH_LEVEL@
 
 #----------------------------------------------------------------
 # Things you can change to personalize the Makefile for your own
@@ -146,7 +147,7 @@ MAN2TCL			= man2tcl$(EXEEXT)
 
 @SET_MAKE@
 
-# Setting the VPATH variable to a list of paths will cause the
+# Setting the VPATH variable to a list of paths will cause the 
 # makefile to look into these paths when resolving .c to .obj
 # dependencies.
 
@@ -236,6 +237,7 @@ TKTEST_OBJS = \
 	testMain.$(OBJEXT) \
 	tkSquare.$(OBJEXT) \
 	tkTest.$(OBJEXT) \
+	tkOldTest.$(OBJEXT) \
 	tkWinTest.$(OBJEXT)
 
 XLIB_OBJS = \
@@ -387,8 +389,7 @@ TTK_OBJS = \
 	ttkStubLib.$(OBJEXT)
 
 STUB_OBJS = \
-	tkStubLib.$(OBJEXT) \
-	tkStubImg.$(OBJEXT)
+	tkStubLib.$(OBJEXT)
 
 TCL_DOCS = "$(TCL_SRC_DIR_NATIVE)"/doc/*.[13n]
 TK_DOCS = "$(ROOT_DIR_NATIVE)"/doc/*.[13n]
@@ -401,7 +402,7 @@ SHELL_ENV = \
 	TK_LIBRARY="$(ROOT_DIR_NATIVE)/library"; export TK_LIBRARY; \
 	PATH="$(TCL_BIN_DIR):$(PATH)"; export PATH;
 
-# Main targets.  The default target -- all -- builds the binaries,
+# Main targets.  The default target -- all -- builds the binaries, 
 # performs any post processing on libraries or documents.
 
 all: binaries libraries doc
@@ -476,13 +477,12 @@ install-binaries: binaries
 		$(COPY) $$i "$(BIN_INSTALL_DIR)"; \
 	    fi; \
 	    done
-	@echo "Creating package index $(PKG_INDEX)";
+	@echo "Creating package index $(PKG_INDEX)"; 
 	@$(RM) $(PKG_INDEX);
 	@(\
-	echo "if {![package vsatisfies [package provide Tcl] $(TCLVERSION)]} { return }";\
-	echo "if {[package vcompare [package provide Tcl]\
-		$(TCLVERSION)$(TCLPATCHL)] != 0} { return }";\
-	echo "package ifneeded Tk $(VERSION)$(TCLPATCHL)\
+	echo "if {[catch {package present Tcl\
+		$(TCLVERSION)$(TCLPATCHL)}]} { return }";\
+	echo "package ifneeded Tk $(VERSION)$(PATCH_LEVEL)\
 		[list load [file join \$$dir .. .. bin $(TK_DLL_FILE)] Tk]";\
 	) > $(PKG_INDEX);
 	@for i in tkConfig.sh $(TK_LIB_FILE) $(TK_STUB_LIB_FILE); \
@@ -612,7 +612,7 @@ $(TKTEST): $(TK_LIB_FILE) $(TKTEST_OBJS) wish.$(RES) $(CAT32)
 $(TCL_SRC_DIR)/win/cat.c:
 
 cat32.${OBJEXT}: $(TCL_SRC_DIR)/win/cat.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) "$(TCL_SRC_DIR)/win/cat.c" $(CC_OBJNAME)
 
 $(CAT32): cat32.${OBJEXT}
 	$(CC) $(CFLAGS) cat32.$(OBJEXT) $(CC_EXENAME) $(LIBS) $(LDFLAGS_CONSOLE)
@@ -643,6 +643,9 @@ testMain.$(OBJEXT): winMain.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ -DTK_TEST $(CC_OBJNAME)
 
 tkTest.$(OBJEXT): tkTest.c
+	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+
+tkOldTest.$(OBJEXT): tkOldTest.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
 
 tkWinTest.$(OBJEXT): tkWinTest.c

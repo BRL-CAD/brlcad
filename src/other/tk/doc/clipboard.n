@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH clipboard n 8.4 Tk "Tk Built-In Commands"
 .BS
@@ -20,7 +20,7 @@ clipboard \- Manipulate Tk clipboard
 .SH DESCRIPTION
 .PP
 This command provides a Tcl interface to the Tk clipboard,
-which stores data for later retrieval using the selection mechanism
+which stores data for later retrieval using the selection mechanism 
 (via the \fB-selection CLIPBOARD\fR option).
 In order to copy data into the clipboard, \fBclipboard clear\fR must
 be called, followed by a sequence of one or more calls to \fBclipboard
@@ -58,7 +58,7 @@ STRING, the selection is transmitted as 8-bit ASCII characters.  If
 divided into fields separated by white space; each field is converted
 to its atom value, and the 32-bit atom value is transmitted instead of
 the atom name.  For any other \fIformat\fR,  \fIdata\fR is divided
-into fields separated by white space and each
+into fields separated by white space and each 
 field is converted to a 32-bit integer; an array of integers is
 transmitted to the selection requester.  Note that strings passed to
 \fBclipboard append\fR are concatenated before conversion, so the

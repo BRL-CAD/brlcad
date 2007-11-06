@@ -15,13 +15,13 @@
 #include <tkInt.h>
 
 #if !defined(MAC_OSX_TK)
-#	include <X11/Xlib.h>
+#   include <X11/Xlib.h>
 #endif
 #ifdef MAC_OSX_TK
-#	include <X11/Xlib.h>
-#	include <X11/X.h>
-#	define Cursor XCursor
-#	define Region XRegion
+#   include <X11/Xlib.h>
+#   include <X11/X.h>
+#   define Cursor XCursor
+#   define Region XRegion
 #endif
 
 /*
@@ -68,8 +68,10 @@ XCreateGC(
 
     InitField(function,		  GCFunction,		GXcopy);
     InitField(plane_mask,	  GCPlaneMask,		(unsigned long)(~0));
-    InitField(foreground,	  GCForeground,		0);
-    InitField(background,	  GCBackground,		0xffffff);
+    InitField(foreground,	  GCForeground,		
+	    BlackPixelOfScreen(DefaultScreenOfDisplay(display)));
+    InitField(background,	  GCBackground,		
+	    WhitePixelOfScreen(DefaultScreenOfDisplay(display)));
     InitField(line_width,	  GCLineWidth,		1);
     InitField(line_style,	  GCLineStyle,		LineSolid);
     InitField(cap_style,	  GCCapStyle,		0);
@@ -342,8 +344,9 @@ XSetClipOrigin(
  *	Sets the clipping region/pixmap for a GC.
  *
  *	Note that unlike the Xlib equivalent, it is not safe to delete the
- *	region after setting it into the GC. The only use of TkSetRegion is
- *	currently in ImgPhotoDisplay, which uses the GC immediately.
+ *	region after setting it into the GC. The only uses of TkSetRegion
+ *	are currently in DisplayFrame and in ImgPhotoDisplay, which use the
+ *	GC immediately.
  *
  * Results:
  *	None.
@@ -360,6 +363,8 @@ TkSetRegion(
     GC gc,
     TkRegion r)
 {
+    TkpClipMask *clip_mask;
+
     if (r == None) {
 	if (gc->clip_mask) {
 	    ckfree((char*) gc->clip_mask);
@@ -371,8 +376,9 @@ TkSetRegion(
     if (gc->clip_mask == None) {
 	gc->clip_mask = (Pixmap)ckalloc(sizeof(TkpClipMask));
     }
-    ((TkpClipMask*) gc->clip_mask)->type = TKP_CLIP_REGION;
-    ((TkpClipMask*) gc->clip_mask)->value.region = r;
+    clip_mask = (TkpClipMask*) gc->clip_mask;
+    clip_mask->type = TKP_CLIP_REGION;
+    clip_mask->value.region = r;
 }
 
 void
@@ -381,6 +387,8 @@ XSetClipMask(
     GC gc,
     Pixmap pixmap)
 {
+    TkpClipMask *clip_mask;
+
     if (pixmap == None) {
 	if (gc->clip_mask) {
 	    ckfree((char*) gc->clip_mask);
@@ -392,8 +400,9 @@ XSetClipMask(
     if (gc->clip_mask == None) {
 	gc->clip_mask = (Pixmap)ckalloc(sizeof(TkpClipMask));
     }
-    ((TkpClipMask*) gc->clip_mask)->type = TKP_CLIP_PIXMAP;
-    ((TkpClipMask*) gc->clip_mask)->value.pixmap = pixmap;
+    clip_mask = (TkpClipMask*) gc->clip_mask;
+    clip_mask->type = TKP_CLIP_PIXMAP;
+    clip_mask->value.pixmap = pixmap;
 }
 
 /*

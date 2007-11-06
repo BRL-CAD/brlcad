@@ -1021,7 +1021,7 @@ test pack-18.1 {unmap slaves when master unmapped} {tempNotPc} {
 
     wm geometry .pack +100+100
 
-    # On the PC, when the width/height is configured while the window is
+    # On the PC, when the width/height is configured while the window is 
     # unmapped, the changes don't take effect until the window is remapped.
     # Who knows why?
 

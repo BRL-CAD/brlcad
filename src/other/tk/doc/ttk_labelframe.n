@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_labelframe n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -25,7 +25,7 @@ another widget.
 .SE
 
 .SH "WIDGET-SPECIFIC OPTIONS"
-'\" XXX: Currently included, but may go away:
+'\" XXX: Currently included, but may go away: 
 '\" XXX: .OP -borderwidth borderWidth BorderWidth
 '\" XXX: The desired width of the widget border.  Default is theme-dependent.
 '\" XXX: .OP -relief relief Relief
@@ -34,7 +34,7 @@ another widget.
 '\" XXX: \fBsolid\fR, or \fBsunken\fR.
 '\" XXX: Default is theme-dependent.
 .OP -labelanchor labelAnchor LabelAnchor
-Specifies where to place the label.
+Specifies where to place the label.  
 Allowed values are (clockwise from the top upper left corner):
 \fBnw\fR, \fBn\fR, \fBne\fR, \fBen\fR, \fBe\fR, \fBes\fR,
 \fBse\fR, \fBs\fR,\fBsw\fR, \fBws\fR, \fBw\fR and \fBwn\fR.
@@ -46,10 +46,10 @@ The default value is theme-dependent.
 .OP -text text Text
 Specifies the text of the label.
 .OP -underline underline Underline
-If set, specifies the integer index (0-based) of a character to
+If set, specifies the integer index (0-based) of a character to 
 underline in the text string.
-The underlined character is used for mnemonic activation.
-Mnemonic activation for a \fBttk::labelframe\fR
+The underlined character is used for mnemonic activation.  
+Mnemonic activation for a \fBttk::labelframe\fR 
 sets the keyboard focus to the first child of the \fBttk::labelframe\fR widget.
 .OP -padding padding Padding
 Additional padding to include inside the border.

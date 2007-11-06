@@ -74,7 +74,7 @@ test labelframe-3.6 "Destroy child slave" -body {
 # @@@ but seems to succeed if it's some other widget class.
 # @@@ I suspect a race condition; unable to track it down ATM.
 #
-# @@@ FOLLOWUP: This *may* have been caused by a bug in ManagerIdleProc
+# @@@ FOLLOWUP: This *may* have been caused by a bug in ManagerIdleProc 
 # @@@ (see manager.c r1.11). There's still probably a race condition in here.
 #
 test labelframe-4.1 "Add nonchild slave" -body {

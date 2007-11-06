@@ -16,7 +16,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkScrollbar.h"
 #include "tkMacOSXWm.h"
 #include "tkMacOSXEvent.h"
@@ -804,17 +804,9 @@ static int WmSetAttribute(
 		err = ChkErr(FSPathMakeRef, (const unsigned char*) path, &ref,
 			&d);
 		if (err == noErr) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1040
-		    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
-			    && HIWindowSetProxyFSRef != NULL
-#endif
-		    ) {
+		    TK_IF_MAC_OS_X_API (4, HIWindowSetProxyFSRef,
 			err = ChkErr(HIWindowSetProxyFSRef, macWindow, &ref);
-		    } else
-#endif
-		    {
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
+		    ) TK_ELSE_MAC_OS_X (4,
 			AliasHandle alias;
 
 			err = ChkErr(FSNewAlias, NULL, &ref, &alias);
@@ -823,8 +815,7 @@ static int WmSetAttribute(
 				    alias);
 			    DisposeHandle((Handle) alias);
 			}
-#endif
-		    }
+		    ) TK_ENDIF
 		}
 	    } else {
 		int len;
@@ -871,12 +862,7 @@ static int WmSetAttribute(
 		if (boolean) {
 		    wmPtr->flags |= WM_TRANSPARENT;
 		    wmPtr->attributes |= kWindowNoShadowAttribute;
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
-		    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1030
-			    && HIWindowChangeFeatures != NULL
-#endif
-		    ) {
+		    TK_IF_MAC_OS_X_API (3, HIWindowChangeFeatures,
 			UInt32 features;
 
 			ChkErr(GetWindowFeatures, macWindow, &features);
@@ -884,8 +870,7 @@ static int WmSetAttribute(
 			    ChkErr(HIWindowChangeFeatures, macWindow, 0,
 				    kWindowIsOpaque);
 			}
-		    }
-#endif
+		    ) TK_ENDIF
 		} else {
 		    wmPtr->flags &= ~WM_TRANSPARENT;
 		    wmPtr->attributes &= ~kWindowNoShadowAttribute;
@@ -894,7 +879,7 @@ static int WmSetAttribute(
 			wmPtr->macClass, oldAttributes, 1);
 		ChkErr(ReshapeCustomWindow, macWindow);
 		TkMacOSXInvalidateWindow((MacDrawable *)(winPtr->window),
-			TK_WINDOW_ONLY);
+			TK_PARENT_WINDOW);
 	    }
 	    break;
 	case _WMATT_LAST_ATTRIBUTE:
@@ -944,17 +929,9 @@ static Tcl_Obj *WmGetAttribute(
 	    UInt8 path[PATH_MAX+1];
 	    OSStatus err;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1040
-	    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
-		    && HIWindowSetProxyFSRef != NULL
-#endif
-	    ) {
+	    TK_IF_MAC_OS_X_API (4, HIWindowSetProxyFSRef,
 		err = ChkErr(HIWindowGetProxyFSRef, macWindow, &ref);
-	    } else
-#endif
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
-	    {
+	    ) TK_ELSE_MAC_OS_X (4,
 		Boolean wasChanged;
 		AliasHandle alias;
 
@@ -963,8 +940,7 @@ static Tcl_Obj *WmGetAttribute(
 		    err = ChkErr(FSResolveAlias, NULL, alias, &ref,
 			    &wasChanged);
 		}
-	    }
-#endif
+	    ) TK_ENDIF
 	    if (err == noErr) {
 		err = ChkErr(FSRefMakePath, &ref, path, PATH_MAX);
 	    }
@@ -1021,7 +997,7 @@ WmAttributesCmd(
     if (!TkMacOSXHostToplevelExists(winPtr)) {
 	TkMacOSXMakeRealWindowExist(winPtr);
     }
-    macWindow = GetWindowFromPort(TkMacOSXGetDrawablePort(winPtr->window));
+    macWindow = TkMacOSXDrawableWindow(winPtr->window);
 
     if (objc == 3) {		/* wm attributes $win */
 	Tcl_Obj *result = Tcl_NewListObj(0,0);
@@ -1672,8 +1648,8 @@ WmIconbitmapCmd(
     if (!TkMacOSXHostToplevelExists(winPtr)) {
 	TkMacOSXMakeRealWindowExist(winPtr);
     }
-    if (WmSetAttribute(winPtr, GetWindowFromPort(TkMacOSXGetDrawablePort(
-	    winPtr->window)), interp, WMATT_TITLEPATH, objv[3]) == TCL_OK) {
+    if (WmSetAttribute(winPtr, TkMacOSXDrawableWindow(winPtr->window), interp,
+	    WMATT_TITLEPATH, objv[3]) == TCL_OK) {
 	if (!len) {
 	    if (wmPtr->hints.icon_pixmap != None) {
 		Tk_FreeBitmap(winPtr->display, wmPtr->hints.icon_pixmap);
@@ -3340,7 +3316,7 @@ UpdateGeometryInfo(
 	TkWindow *contWinPtr = TkpGetOtherWindow(winPtr);
 
 	/*
-	 * NOTE: Here we should handle out of process embedding.
+	 * TODO: Here we should handle out of process embedding.
 	 */
 
 	if (contWinPtr != NULL) {
@@ -3743,11 +3719,9 @@ Tk_CoordsToWindow(
 		}
 	    }
 
-
 	    /*
-	     * NOTE: Here we should handle out of process embedding.
+	     * TODO: Here we should handle out of process embedding.
 	     */
-
 	} else {
 	    for (childPtr = winPtr->childList; childPtr != NULL;
 		    childPtr = childPtr->nextPtr) {
@@ -3836,7 +3810,7 @@ Tk_TopCoordsToWindow(
 	    }
 
 	    /*
-	     * NOTE: Here we should handle out of process embedding.
+	     * TODO: Here we should handle out of process embedding.
 	     */
 	} else {
 	    for (childPtr = winPtr->childList; childPtr != NULL;
@@ -4100,7 +4074,7 @@ TkWmRestackToplevel(
 
 	TkWmMapWindow(winPtr);
     }
-    macWindow = GetWindowFromPort(TkMacOSXGetDrawablePort(winPtr->window));
+    macWindow = TkMacOSXDrawableWindow(winPtr->window);
 
     /*
      * Get the window in which a raise or lower is in relation to.
@@ -4112,8 +4086,7 @@ TkWmRestackToplevel(
 	if (otherPtr->wmInfoPtr->flags & WM_NEVER_MAPPED) {
 	    TkWmMapWindow(otherPtr);
 	}
-	otherMacWindow = GetWindowFromPort(TkMacOSXGetDrawablePort(
-		otherPtr->window));
+	otherMacWindow = TkMacOSXDrawableWindow(otherPtr->window);
     } else {
 	otherMacWindow = NULL;
     }
@@ -4511,6 +4484,7 @@ TkMacOSXGrowToplevel(
 	if (wmPtr->gridWin != NULL) {
 	    int base = winPtr->reqWidth - (wmPtr->reqGridWidth
 		    * wmPtr->widthInc);
+
 	    if (base < 0) {
 		base = 0;
 	    }
@@ -4597,8 +4571,7 @@ TkSetWMName(
     title = CFStringCreateWithBytes(NULL, (const unsigned char*) titleUid,
 	    strlen(titleUid), kCFStringEncodingUTF8, false);
     if (title) {
-	WindowRef macWin = GetWindowFromPort(
-		TkMacOSXGetDrawablePort(winPtr->window));
+	WindowRef macWin = TkMacOSXDrawableWindow(winPtr->window);
 
 	SetWindowTitleWithCFString(macWin, title);
 	CFRelease(title);
@@ -4696,6 +4669,19 @@ TkMacOSXIsWindowZoomed(
 	return false;
     }
     GetMaxSize(winPtr, &maxWidth, &maxHeight);
+    if (wmPtr->gridWin != NULL) {
+	int base = winPtr->reqWidth - (wmPtr->reqGridWidth * wmPtr->widthInc);
+
+	if (base < 0) {
+	    base = 0;
+	}
+	maxWidth = base + (maxWidth * wmPtr->widthInc);
+	base = winPtr->reqHeight - (wmPtr->reqGridHeight * wmPtr->heightInc);
+	if (base < 0) {
+	    base = 0;
+	}
+	maxHeight = base + (maxHeight * wmPtr->heightInc);
+    }
     if (wmPtr->flags & WM_WIDTH_NOT_RESIZABLE) {
 	idealSize.h = winPtr->changes.width;
     } else {
@@ -4707,8 +4693,7 @@ TkMacOSXIsWindowZoomed(
 	idealSize.v = maxHeight;
     }
 
-    return IsWindowInStandardState(
-	    GetWindowFromPort(TkMacOSXGetDrawablePort(winPtr->window)),
+    return IsWindowInStandardState(TkMacOSXDrawableWindow(winPtr->window),
 	    &idealSize, NULL);
 }
 
@@ -4743,9 +4728,7 @@ TkMacOSXZoomToplevel(
     WmInfo *wmPtr;
     Point idealSize;
     int maxWidth, maxHeight;
-    Rect portRect;
     OSStatus err;
-    CGrafPtr destPort = GetWindowPort(whichWindow);
 
     window = TkMacOSXGetXWindow(whichWindow);
     dispPtr = TkGetDisplayList();
@@ -4757,6 +4740,19 @@ TkMacOSXZoomToplevel(
 	return false;
     }
     GetMaxSize(winPtr, &maxWidth, &maxHeight);
+    if (wmPtr->gridWin != NULL) {
+	int base = winPtr->reqWidth - (wmPtr->reqGridWidth * wmPtr->widthInc);
+
+	if (base < 0) {
+	    base = 0;
+	}
+	maxWidth = base + (maxWidth * wmPtr->widthInc);
+	base = winPtr->reqHeight - (wmPtr->reqGridHeight * wmPtr->heightInc);
+	if (base < 0) {
+	    base = 0;
+	}
+	maxHeight = base + (maxHeight * wmPtr->heightInc);
+    }
     if (wmPtr->flags & WM_WIDTH_NOT_RESIZABLE) {
 	idealSize.h = winPtr->changes.width;
     } else {
@@ -4774,12 +4770,10 @@ TkMacOSXZoomToplevel(
 	return false;
     }
 
-    GetPortBounds(destPort, &portRect);
     err = ChkErr(ZoomWindowIdeal, whichWindow, zoomPart, &idealSize);
     if (err == noErr) {
 	wmPtr->hints.initial_state =
 		(zoomPart == inZoomIn ? NormalState : ZoomState);
-	InvalWindowRect(whichWindow, &portRect);
 	return true;
     } else {
 	return false;
@@ -5158,7 +5152,7 @@ TkMacOSXMakeRealWindowExist(
 	return;
 
 	/*
-	 * NOTE: Here we should handle out of process embedding.
+	 * TODO: Here we should handle out of process embedding.
 	 */
     }
 
@@ -5190,7 +5184,7 @@ TkMacOSXMakeRealWindowExist(
 	/*
 	 * Workaround GetWindowStructureWidths() Carbon bug:
 	 */
-
+	
 	strWidths.top = 16;
     }
     wmPtr->xInParent = strWidths.left;
@@ -5211,7 +5205,7 @@ TkMacOSXMakeRealWindowExist(
     if (wmPtr->attributes & kWindowResizableAttribute) {
 	HIViewRef growBoxView;
 
-	err = ChkErr(HIViewFindByID, HIViewGetRoot(newWindow),
+	err = HIViewFindByID(HIViewGetRoot(newWindow),
 		kHIViewWindowGrowBoxID, &growBoxView);
 	if (err == noErr && !HIGrowBoxViewIsTransparent(growBoxView)) {
 	    ChkErr(HIGrowBoxViewSetTransparent, growBoxView, true);
@@ -5445,7 +5439,7 @@ TkpWmSetState(winPtr, state)
 	return;
     }
 
-    macWin = GetWindowFromPort(TkMacOSXGetDrawablePort (winPtr->window));
+    macWin = TkMacOSXDrawableWindow(winPtr->window);
 
     if (state == WithdrawnState) {
 	Tk_UnmapWindow((Tk_Window) winPtr);
@@ -5697,7 +5691,7 @@ WmStackorderToplevelWrapperMap(
 
     if (Tk_IsMapped(winPtr) && Tk_IsTopLevel(winPtr)
 	    && (winPtr->display == display)) {
-	macWindow = GetWindowFromPort(TkMacOSXGetDrawablePort(winPtr->window));
+	macWindow = TkMacOSXDrawableWindow(winPtr->window);
 
 	hPtr = Tcl_CreateHashEntry(table,
 	    (const char *) macWindow, &newEntry);
@@ -5763,8 +5757,7 @@ TkWmStackorderToplevel(parentPtr)
 	goto done;
     }
 
-    frontWindow = (WindowRef) FrontWindow();
-
+    frontWindow = GetFrontWindowOfClass(kAllWindowClasses, false);
     if (frontWindow == NULL) {
 	ckfree((char *) windows);
 	windows = NULL;
@@ -5773,11 +5766,11 @@ TkWmStackorderToplevel(parentPtr)
 	*window_ptr-- = NULL;
 	    while (frontWindow != NULL) {
 		    hPtr = Tcl_FindHashEntry(&table, (char *) frontWindow);
-	    if (hPtr != NULL) {
-		childWinPtr = (TkWindow *) Tcl_GetHashValue(hPtr);
-		*window_ptr-- = childWinPtr;
-	    }
-	    frontWindow = GetNextWindow(frontWindow);
+		if (hPtr != NULL) {
+		    childWinPtr = (TkWindow *) Tcl_GetHashValue(hPtr);
+		    *window_ptr-- = childWinPtr;
+		}
+		frontWindow = GetNextWindow(frontWindow);
 	    }
 	if (window_ptr != (windows-1))
 	    Tcl_Panic("num matched toplevel windows does not equal num "
@@ -5835,19 +5828,14 @@ ApplyWindowClassAttributeChanges(
 		    return;
 		}
 	    }
-	    macWindow = GetWindowFromPort(TkMacOSXGetDrawablePort(
-		    winPtr->window));
+	    macWindow = TkMacOSXDrawableWindow(winPtr->window);
 	}
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
-	if (wmPtr->macClass != oldClass
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1030
-		     && HIWindowChangeClass != NULL
-#endif
-	) {
-	    ChkErr(HIWindowChangeClass, macWindow, wmPtr->macClass);
+	if (wmPtr->macClass != oldClass) {
+	    TK_IF_MAC_OS_X_API (4, HIWindowChangeClass,
+		ChkErr(HIWindowChangeClass, macWindow, wmPtr->macClass);
+	    ) TK_ENDIF
 	    ChkErr(GetWindowClass, macWindow, &(wmPtr->macClass));
 	}
-#endif
 	if (newAttributes != oldAttributes) {
 	    newAttributes &= GetAvailableWindowAttributes(wmPtr->macClass);
 	    ChkErr(ChangeWindowAttributes, macWindow,
@@ -5855,15 +5843,18 @@ ApplyWindowClassAttributeChanges(
 		    oldAttributes & (newAttributes ^ oldAttributes));
 	}
 	ChkErr(GetWindowAttributes, macWindow, &(wmPtr->attributes));
-	if (wmPtr->attributes & kWindowResizableAttribute) {
-	    OSStatus err;
-	    HIViewRef growBoxView;
+	if ((wmPtr->attributes ^ oldAttributes) & kWindowResizableAttribute) {
+	    if (wmPtr->attributes & kWindowResizableAttribute) {
+		HIViewRef growBoxView;
+		OSStatus err = HIViewFindByID(HIViewGetRoot(macWindow),
+			kHIViewWindowGrowBoxID, &growBoxView);
 
-	    err = ChkErr(HIViewFindByID, HIViewGetRoot(macWindow),
-		    kHIViewWindowGrowBoxID, &growBoxView);
-	    if (err == noErr && !HIGrowBoxViewIsTransparent(growBoxView)) {
-		ChkErr(HIGrowBoxViewSetTransparent, growBoxView, true);
+		if (err == noErr && !HIGrowBoxViewIsTransparent(growBoxView)) {
+		    ChkErr(HIGrowBoxViewSetTransparent, growBoxView, true);
+		}
 	    }
+	    TkMacOSXInvalidateWindow((MacDrawable *)(winPtr->window),
+		    TK_PARENT_WINDOW);
 	}
 
 	/*
@@ -5939,7 +5930,7 @@ ApplyMasterOverrideChanges(
 	if (!TkMacOSXHostToplevelExists(winPtr)) {
 	    return;
 	}
-	macWindow = GetWindowFromPort(TkMacOSXGetDrawablePort(winPtr->window));
+	macWindow = TkMacOSXDrawableWindow(winPtr->window);
     }
     if (macWindow) {
 	Tcl_Obj *val;
@@ -6011,8 +6002,6 @@ TkMacOSXMakeFullscreen(
 		ChkErr(SetWindowBounds, window, kWindowContentRgn,
 			&screenBounds);
 		wmPtr->flags &= ~WM_SYNC_PENDING;
-		TkMacOSXInvalidateWindow((MacDrawable*)winPtr->window,
-		    TK_WINDOW_ONLY);
 	    }
 	    wmPtr->flags |= WM_FULLSCREEN;
 	}
@@ -6032,8 +6021,6 @@ TkMacOSXMakeFullscreen(
 	wmPtr->flags |= WM_SYNC_PENDING;
 	ChkErr(SetWindowBounds, window, kWindowStructureRgn, &bounds);
 	wmPtr->flags &= ~WM_SYNC_PENDING;
-	TkMacOSXInvalidateWindow((MacDrawable*)winPtr->window,
-	    TK_WINDOW_ONLY);
     }
     TkMacOSXEnterExitFullscreen(winPtr, IsWindowActive(window));
     return result;
@@ -6070,20 +6057,12 @@ TkMacOSXEnterExitFullscreen(
 	static SystemUIOptions fullscreenOptions = 0;
 
 	if (!fullscreenMode) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
-	    if (1
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1030
-		    && &kHIToolboxVersionNumber != NULL
-		    && kHIToolboxVersionNumber >= kHIToolboxVersionNumber10_3
-#endif
-	    ) {
+	    TK_IF_HI_TOOLBOX (3,
 		fullscreenMode = kUIModeAllSuppressed;
-	    } else
-#endif
-	    {
+	    ) TK_ELSE_HI_TOOLBOX (3,
 		fullscreenMode = kUIModeAllHidden;
 		fullscreenOptions = kUIOptionAutoShowMenuBar;
-	    }
+	    ) TK_ENDIF
 	}
 	if (mode != fullscreenMode) {
 	    ChkErr(SetSystemUIMode, fullscreenMode, fullscreenOptions);

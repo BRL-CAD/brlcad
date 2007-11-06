@@ -4,11 +4,11 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
-.TH Tk_CreateImageType 3 8.3 Tk "Tk Library Procedures"
+.TH Tk_CreateImageType 3 8.5 Tk "Tk Library Procedures"
 .BS
 .SH NAME
 Tk_CreateImageType, Tk_GetImageMasterData, Tk_InitImageArgs \- define new kind of image
@@ -104,16 +104,6 @@ type.
 If there already existed an image type by this name then
 the new image type replaces the old one.
 
-.SS PORTABILITY
-.PP
-In Tk 8.2 and earlier, the createProc below had a different
-signature. If you want to compile an image type using the
-old interface which should still run on all Tcl/Tk versions,
-compile it with the flag -DUSE_OLD_IMAGE. Further on, if
-you are using Stubs, you need to call the function
-Tk_InitImageArgs(interp, argc, &argv) first in your
-createProc. See below for a description of this function.
-
 .SS CREATEPROC
 \fItypePtr->createProc\fR provides the address of a procedure for
 Tk to call whenever \fBimage create\fR is invoked to create
@@ -148,7 +138,7 @@ Typically the value is a pointer to the master data
 structure for the image.
 .PP
 If \fIcreateProc\fR encounters an error, it should leave an error
-message in \fIinterp->result\fR and return \fBTCL_ERROR\fR;  otherwise
+message in the interpreter result and return \fBTCL_ERROR\fR;  otherwise
 it should return \fBTCL_OK\fR.
 .PP
 \fIcreateProc\fR should call \fBTk_ImageChanged\fR in order to set the
@@ -260,16 +250,42 @@ and the return value is the ClientData value returned by the
 pointer to the image master data structure).  If no such image exists
 then NULL is returned and NULL is stored at \fI*typePtrPtr\fR.
 
-.SH TK_INITIMAGEARGS
+.SH LEGACY INTERFACE SUPPORT
 .PP
-The function \fBTk_InitImageArgs\fR converts the arguments of the
-\fBcreateProc\fR from objects to strings when necessary. When
-not using stubs, not using the old interface, or running
-under an older (pre-8.3) Tk version, this function has no
-effect. This function makes porting older image handlers to
-the new interface a lot easier: After running this function,
-the arguments are guaranteed to be in string format, no
-matter how Tk deliverd them.
+In Tk 8.2 and earlier, the definition of \fBTk_ImageCreateProc\fR
+was incompatibly different, with the following prototype:
+.CS
+typedef int Tk_ImageCreateProc(
+    Tcl_Interp *\fIinterp\fR,
+    char *\fIname\fR,
+    int \fIargc\fR,
+    char **\fIargv\fR,
+    Tk_ImageType *\fItypePtr\fR,
+    Tk_ImageMaster \fImaster\fR,
+    ClientData *\fImasterDataPtr\fR);
+.CE
+Legacy programs and libraries dating from those days may still
+contain code that defines extended Tk image types using the old
+interface.  The Tk header file will still support this legacy
+interface if the code is compiled with the macro \fBUSE_OLD_IMAGE\fR
+defined.
+.PP
+When the \fBUSE_OLD_IMAGE\fR legacy support is enabled, you may
+see the routine \fBTk_InitImageArgs\fR in use.  This was a migration
+tool used to create stub-enabled extensions that could be loaded
+into interps containing all versions of Tk 8.1 and later.  Tk 8.5 no longer
+provides this routine, but uses a macro to convert any attempted
+calls of this routine into an empty comment.  Any stub-enabled
+extension providing an extended image type via the legacy interface
+that is compiled against Tk 8.5 headers and linked against the
+Tk 8.5 stub library will produce a file that can be loaded only
+into interps with Tk 8.5 or later; that is, the normal stub-compatibility
+rules.  If a developer needs to generate from such code a file
+that is loadable into interps with Tk 8.4 or earlier, they must
+use Tk 8.4 headers and stub libraries to do so.
+.PP
+Any new code written today should not make use of the legacy
+interfaces.  Expect their support to go away in Tk 9.
 
 .SH "SEE ALSO"
 Tk_ImageChanged, Tk_GetImage, Tk_FreeImage, Tk_RedrawImage, Tk_SizeOfImage

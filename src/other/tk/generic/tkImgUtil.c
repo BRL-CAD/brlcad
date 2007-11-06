@@ -12,7 +12,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 #include "xbytes.h"
 
 

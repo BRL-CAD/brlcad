@@ -36,6 +36,7 @@ exec_prefix		= @exec_prefix@
 bindir			= @bindir@
 libdir			= @libdir@
 includedir		= @includedir@
+datarootdir		= @datarootdir@
 mandir			= @mandir@
 
 # The following definition can be set to non-null for special systems
@@ -320,22 +321,24 @@ MAN_FLAGS               = @MAN_FLAGS@
 CC			= @CC@
 
 CC_SWITCHES_NO_STUBS = ${CFLAGS} ${CFLAGS_WARNING} ${SHLIB_CFLAGS} \
--I${UNIX_DIR} -I${GENERIC_DIR} \
--I${BMAP_DIR} -I${TCL_GENERIC_DIR} -I${TCL_PLATFORM_DIR} ${@TK_WINDOWINGSYSTEM@_INCLUDES} \
-${AC_FLAGS} ${PROTO_FLAGS} \
-${SECURITY_FLAGS} ${MEM_DEBUG_FLAGS} ${KEYSYM_FLAGS} ${NO_DEPRECATED_FLAGS} @EXTRA_CC_SWITCHES@
+-I${UNIX_DIR} -I${GENERIC_DIR} -I${BMAP_DIR} -I${TCL_GENERIC_DIR} \
+-I${TCL_PLATFORM_DIR} ${@TK_WINDOWINGSYSTEM@_INCLUDES} ${AC_FLAGS} \
+${PROTO_FLAGS} ${SECURITY_FLAGS} ${MEM_DEBUG_FLAGS} ${KEYSYM_FLAGS} \
+${NO_DEPRECATED_FLAGS} @EXTRA_CC_SWITCHES@
 
-CC_SWITCHES = ${CC_SWITCHES_NO_STUBS} ${TCL_STUB_FLAGS}
+CC_SWITCHES = $(CC_SWITCHES_NO_STUBS) ${TCL_STUB_FLAGS} 
 
-DEPEND_SWITCHES = ${CFLAGS} -I${UNIX_DIR} -I${GENERIC_DIR} \
--I${BMAP_DIR} \
+APP_CC_SWITCHES = $(CC_SWITCHES_NO_STUBS) @EXTRA_APP_CC_SWITCHES@
+
+DEPEND_SWITCHES = ${CFLAGS} -I${UNIX_DIR} -I${GENERIC_DIR} -I${BMAP_DIR} \
 -I${TCL_GENERIC_DIR} -I${TCL_PLATFORM_DIR} ${@TK_WINDOWINGSYSTEM@_INCLUDES} \
 ${AC_FLAGS} ${PROTO_FLAGS} ${SECURITY_FLAGS} ${MEM_DEBUG_FLAGS} \
 ${KEYSYM_FLAGS} @EXTRA_CC_SWITCHES@
 
 WISH_OBJS = tkAppInit.o
 
-TKTEST_OBJS = tkTestInit.o tkTest.o tkSquare.o $(@TK_WINDOWINGSYSTEM@_TKTEST_OBJS)
+TKTEST_OBJS = tkTestInit.o tkTest.o tkSquare.o tkOldTest.o \
+	$(@TK_WINDOWINGSYSTEM@_TKTEST_OBJS)
 
 WIDG_OBJS = tkButton.o tkEntry.o tkFrame.o tkListbox.o \
 	tkMenu.o tkMenubutton.o tkMenuDraw.o tkMessage.o \
@@ -351,7 +354,7 @@ TEXT_OBJS = tkText.o tkTextBTree.o tkTextDisp.o tkTextImage.o tkTextIndex.o \
 	tkTextMark.o tkTextTag.o tkTextWind.o
 
 # either tkUnixFont.o (default) or tkUnixRFont.o (if --enable-xft)
-#
+# 
 FONT_OBJS = @UNIX_FONT_OBJS@
 
 GENERIC_OBJS = tk3d.o tkArgv.o tkAtom.o tkBind.o tkBitmap.o tkClipboard.o \
@@ -373,7 +376,7 @@ TTK_STUB_OBJS =  ttkStubInit.o ttkStubLib.o
 
 STUB_OBJS = tkStubInit.o tkStubLib.o
 
-STUB_LIB_OBJS = tkStubLib.o tkStubImg.o
+STUB_LIB_OBJS = tkStubLib.o
 
 X11_OBJS = tkUnix.o tkUnix3d.o tkUnixButton.o tkUnixColor.o tkUnixConfig.o \
 	tkUnixCursor.o tkUnixDraw.o tkUnixEmbed.o tkUnixEvent.o \
@@ -443,7 +446,7 @@ GENERIC_SRCS = \
 	$(GENERIC_DIR)/tkTextImage.c \
 	$(GENERIC_DIR)/tkTextIndex.c $(GENERIC_DIR)/tkTextMark.c \
 	$(GENERIC_DIR)/tkTextTag.c $(GENERIC_DIR)/tkTextWind.c \
-	$(GENERIC_DIR)/tkOldConfig.c \
+	$(GENERIC_DIR)/tkOldConfig.c $(GENERIC_DIR)/tkOldTest.c \
 	$(GENERIC_DIR)/tkSquare.c $(GENERIC_DIR)/tkTest.c \
 	$(GENERIC_DIR)/tkStubInit.c $(GENERIC_DIR)/tkStubLib.c
 
@@ -538,9 +541,16 @@ AQUA_PRIVATE_HDRS = $(MAC_OSX_DIR)/tkMacOSXPort.h $(MAC_OSX_DIR)/tkMacOSXInt.h
 
 X11_PRIVATE_HDRS = $(UNIX_DIR)/tkUnixPort.h $(UNIX_DIR)/tkUnixInt.h
 
-HDRS = bltList.h \
-	default.h ks_names.h tkPatch.h tk.h tkButton.h tkCanvas.h tkInt.h  \
-	tkPort.h tkScrollbar.h tkText.h
+# Currently private, eventually public
+TTK_HDRS = $(TTK_DIR)/ttkTheme.h $(TTK_DIR)/ttkDecls.h
+
+PUBLIC_HDRS = $(GENERIC_DIR)/tk.h $(GENERIC_DIR)/tkDecls.h \
+	$(GENERIC_DIR)/tkPlatDecls.h $(@TK_WINDOWINGSYSTEM@_HDRS)
+
+# The private headers we want installed for install-private-headers
+PRIVATE_HDRS = $(GENERIC_DIR)/tkInt.h $(GENERIC_DIR)/tkIntDecls.h \
+	$(GENERIC_DIR)/tkIntPlatDecls.h $(GENERIC_DIR)/tkPort.h \
+	$(TTK_HDRS) $(@TK_WINDOWINGSYSTEM@_PRIVATE_HDRS)
 
 DEMOPROGS = browse hello ixset rmt rolodex square tcolor timer widget
 
@@ -567,20 +577,10 @@ doc: $(TOP_DIR)/doc/man.macros
 ${LIB_FILE}: ${OBJS} ${STUB_LIB_FILE} @LIB_RSRC_FILE@
 	rm -f $@
 	@MAKE_LIB@
-	@if test -f $(LIB_FILE) ; then \
-	    if test ! -f libtk$(SHLIB_SUFFIX) ; then \
-		ln -s $(LIB_FILE) libtk$(SHLIB_SUFFIX) ; \
-	    fi ; \
-	fi
 
 ${STUB_LIB_FILE}: ${STUB_LIB_OBJS}
 	rm -f $@
 	@MAKE_STUB_LIB@
-	@if test -f $(STUB_LIB_FILE) ; then \
-	    if test ! -f libtkstub.a ; then \
-		ln -s $(STUB_LIB_FILE) libtkstub.a ; \
-	    fi ; \
-	fi
 
 # Build Aqua resource files
 ${TK_RSRC_FILE}: $(AQUA_RESOURCES)
@@ -706,17 +706,15 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	    echo "Creating package index $(PKG_INDEX)"; \
 	    rm -f $(PKG_INDEX); \
 	    (\
-	    echo "if {![package vsatisfies [package provide Tcl] $(TCLVERSION)]} { return }";\
-	    echo "if {[package vcompare [package provide Tcl]\
-		$(TCLVERSION)$(TCLPATCHL)] != 0} { return }";\
+	    echo "if {[catch {package present Tcl\
+		$(TCLVERSION)$(TCLPATCHL)}]} { return }";\
 	    relative=`echo | awk '{ORS=" "; split("$(TK_PKG_DIR)",a,"/"); for (f in a) {print ".."}}'`;\
-	    echo "package ifneeded Tk $(MAJOR_VERSION).$(MINOR_VERSION)$(TCLPATCHL)\
+	    echo "package ifneeded Tk $(MAJOR_VERSION).$(MINOR_VERSION)$(PATCH_LEVEL)\
 		[list load [file join \$$dir $${relative}$(TK_LIB_FILE)] Tk]";\
 	    ) > $(PKG_INDEX); \
 	    fi
 	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
 	@@INSTALL_LIB@
-	@$(INSTALL_LIBRARY) libtk$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX)
 	@chmod 555 $(LIB_INSTALL_DIR)/$(LIB_FILE)
 	@if test "$(TK_BUILD_EXP_FILE)" != ""; then \
 	    echo "Installing $(TK_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
@@ -730,7 +728,6 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
-	    $(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
 	fi
 	@EXTRA_INSTALL_BINARIES@
 
@@ -752,8 +749,7 @@ install-libraries: libraries
 	    chmod +x $(SRC_DIR)/install-sh; \
 	    fi
 	@echo "Installing header files";
-	@for i in $(GENERIC_DIR)/tk.h $(GENERIC_DIR)/tkDecls.h \
-		$(GENERIC_DIR)/tkPlatDecls.h $(@TK_WINDOWINGSYSTEM@_HDRS) ; \
+	@for i in $(PUBLIC_HDRS); \
 	    do \
 	    $(INSTALL_DATA) $$i $(INCLUDE_INSTALL_DIR); \
 	    done;
@@ -846,7 +842,6 @@ install-doc:
 
 	@echo "Installing and cross-linking command (.n) docs";
 	@for i in $(TOP_DIR)/doc/*.n; do \
-	    if [ "ttk_dialog.n" = `basename $$i` ] ; then continue ; fi ; \
 	    $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i $(MANN_INSTALL_DIR); \
 	done
 
@@ -865,9 +860,7 @@ install-private-headers: libraries
 	    chmod +x $(SRC_DIR)/install-sh; \
 	    fi
 	@echo "Installing private header files";
-	@for i in $(GENERIC_DIR)/tkInt.h $(GENERIC_DIR)/tkIntDecls.h \
-		$(GENERIC_DIR)/tkIntPlatDecls.h $(GENERIC_DIR)/tkPort.h \
-		$(@TK_WINDOWINGSYSTEM@_PRIVATE_HDRS); \
+	@for i in $(PRIVATE_HDRS); \
 	    do \
 	    $(INSTALL_DATA) $$i $(PRIVATE_INCLUDE_INSTALL_DIR); \
 	    done;
@@ -904,7 +897,7 @@ tkTestInit.o: $(UNIX_DIR)/tkAppInit.c wish
 	    rm -f tkAppInit.sav; \
 	    mv tkAppInit.o tkAppInit.sav; \
 	fi;
-	$(CC) -c $(CC_SWITCHES_NO_STUBS) -DTK_TEST $(UNIX_DIR)/tkAppInit.c
+	$(CC) -c $(APP_CC_SWITCHES) -DTK_TEST $(UNIX_DIR)/tkAppInit.c
 	rm -f tkTestInit.o
 	mv tkAppInit.o tkTestInit.o
 	@if test -f tkAppInit.sav ; then \
@@ -912,7 +905,7 @@ tkTestInit.o: $(UNIX_DIR)/tkAppInit.c wish
 	fi;
 
 tkAppInit.o: $(UNIX_DIR)/tkAppInit.c
-	$(CC) -c $(CC_SWITCHES_NO_STUBS) $(UNIX_DIR)/tkAppInit.c
+	$(CC) -c $(APP_CC_SWITCHES) $(UNIX_DIR)/tkAppInit.c
 
 tk3d.o: $(GENERIC_DIR)/tk3d.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tk3d.c
@@ -1041,7 +1034,7 @@ tkScrollbar.o: $(GENERIC_DIR)/tkScrollbar.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkScrollbar.c
 
 tkSquare.o: $(GENERIC_DIR)/tkSquare.c
-	$(CC) -c $(CC_SWITCHES_NO_STUBS) $(GENERIC_DIR)/tkSquare.c
+	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tkSquare.c
 
 tkCanvas.o: $(GENERIC_DIR)/tkCanvas.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkCanvas.c
@@ -1094,8 +1087,11 @@ tkImgPPM.o: $(GENERIC_DIR)/tkImgPPM.c
 tkImgPhoto.o: $(GENERIC_DIR)/tkImgPhoto.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkImgPhoto.c
 
+tkOldTest.o: $(GENERIC_DIR)/tkOldTest.c
+	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tkOldTest.c
+
 tkTest.o: $(GENERIC_DIR)/tkTest.c
-	$(CC) -c $(CC_SWITCHES_NO_STUBS) $(GENERIC_DIR)/tkTest.c
+	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tkTest.c
 
 tkText.o: $(GENERIC_DIR)/tkText.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkText.c
@@ -1129,9 +1125,6 @@ tkStubInit.o: $(GENERIC_DIR)/tkStubInit.c
 
 tkStubLib.o: $(GENERIC_DIR)/tkStubLib.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkStubLib.c
-
-tkStubImg.o: $(GENERIC_DIR)/tkStubImg.c
-	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkStubImg.c
 
 tkUndo.o: $(GENERIC_DIR)/tkUndo.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkUndo.c
@@ -1173,7 +1166,7 @@ tkUnixFont.o: $(UNIX_DIR)/tkUnixFont.c
 tkUnixRFont.o: $(UNIX_DIR)/tkUnixRFont.c
 	$(CC) -c $(CC_SWITCHES) $(XFT_CFLAGS) $(UNIX_DIR)/tkUnixRFont.c
 
-tkUnixInit.o: $(UNIX_DIR)/tkUnixInit.c $(GENERIC_DIR)/tkInitScript.h tkConfig.sh
+tkUnixInit.o: $(UNIX_DIR)/tkUnixInit.c tkConfig.sh
 	$(CC) -c $(CC_SWITCHES) -DTK_LIBRARY=\"${TK_LIBRARY}\" \
 	    $(UNIX_DIR)/tkUnixInit.c
 
@@ -1249,7 +1242,7 @@ tkMacOSXFont.o: $(MAC_OSX_DIR)/tkMacOSXFont.c
 tkMacOSXHLEvents.o: $(MAC_OSX_DIR)/tkMacOSXHLEvents.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXHLEvents.c
 
-tkMacOSXInit.o: $(MAC_OSX_DIR)/tkMacOSXInit.c $(GENERIC_DIR)/tkInitScript.h tkConfig.sh
+tkMacOSXInit.o: $(MAC_OSX_DIR)/tkMacOSXInit.c tkConfig.sh
 	$(CC) -c $(CC_SWITCHES) -DTK_LIBRARY=\"${TK_LIBRARY}\" \
 	    $(MAC_OSX_DIR)/tkMacOSXInit.c
 
@@ -1290,7 +1283,7 @@ tkMacOSXSubwindows.o: $(MAC_OSX_DIR)/tkMacOSXSubwindows.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXSubwindows.c
 
 tkMacOSXTest.o: $(MAC_OSX_DIR)/tkMacOSXTest.c
-	$(CC) -c $(CC_SWITCHES_NO_STUBS) $(MAC_OSX_DIR)/tkMacOSXTest.c
+	$(CC) -c $(APP_CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXTest.c
 
 tkMacOSXWindowEvent.o: $(MAC_OSX_DIR)/tkMacOSXWindowEvent.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXWindowEvent.c
@@ -1508,11 +1501,12 @@ TCLDIR   = @TCL_SRC_DIR@
 $(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in $(UNIX_DIR)/tcl.m4 \
 		$(UNIX_DIR)/aclocal.m4
 	cd $(UNIX_DIR); autoconf
-$(UNIX_DIR)/tkConfig.h.in: $(UNIX_DIR)/configure.in $(UNIX_DIR)/tcl.m4 \
-		$(UNIX_DIR)/aclocal.m4 $(MAC_OSX_DIR)/configure.ac
-	cd $(MAC_OSX_DIR); autoconf; autoheader; touch $@
+$(MAC_OSX_DIR)/configure: $(MAC_OSX_DIR)/configure.ac $(UNIX_DIR)/configure
+	cd $(MAC_OSX_DIR); autoconf
+$(UNIX_DIR)/tkConfig.h.in: $(MAC_OSX_DIR)/configure
+	cd $(MAC_OSX_DIR); autoheader; touch $@
 
-dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in
+dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure genstubs
 	rm -rf $(DISTDIR)
 	mkdir -p $(DISTDIR)/unix
 	cp -p $(UNIX_DIR)/*.c $(UNIX_DIR)/*.h $(DISTDIR)/unix
@@ -1689,7 +1683,7 @@ BUILD_HTML = \
 #
 # Targets to build Solaris package of the distribution for the current
 # architecture.  To build stream packages for both sun4 and i86pc
-# architectures:
+# architectures: 
 #
 #   On the sun4 machine, execute the following:
 #     make distclean; ./configure
@@ -1745,7 +1739,7 @@ package-common:
 # Build and install the architecture specific files in the dist directory.
 #
 
-package-binaries:
+package-binaries: 
 	cd $(DISTDIR)/unix/`arch`; \
 	$(MAKE); \
 	$(MAKE) install-binaries prefix=$(DISTDIR)/SUNWtcl/$(TCLVERSION) \

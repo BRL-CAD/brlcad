@@ -14,7 +14,6 @@
 
 #include "tkInt.h"
 #include "tkCanvas.h"
-#include "tkPort.h"
 #include <assert.h>
 
 /*

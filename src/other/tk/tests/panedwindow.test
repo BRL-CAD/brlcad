@@ -161,7 +161,7 @@ test panedwindow-4.5 {forget subcommand, panes are unmapped} {
 
     lappend result [winfo ismapped .b] [winfo ismapped .c]
     destroy .p .b .c
-
+    
     set result
 } [list 1 1 0 1]
 test panedwindow-4.6 {forget subcommand, changes reqsize of panedwindow} {
@@ -359,7 +359,7 @@ test panedwindow-9.5 {sash dragto subcommand, errors} {
     destroy .p .b .c
     set result
 } [list 1 "expected integer but got \"bar\""]
-
+    
 test panedwindow-10.1 {sash mark/sash dragto interaction} {
     panedwindow .p -borderwidth 0 -sashpad 0 -sashwidth 4 -showhandle false
     .p add [frame .f -width 20 -height 20] [button .c -text foobar]
@@ -607,7 +607,7 @@ test panedwindow-12.17 {moving sash into "virtual" space on \
     destroy .p .f .f2 .f3
     set result
 } {68 100}
-
+    
 test panedwindow-13.1 {horizontal panedwindow lays out widgets properly} {
     panedwindow .p -showhandle false -borderwidth 2 -sashpad 2 -sashwidth 2
     foreach win {.p.f .p.f2 .p.f3} {.p add [frame $win -width 20 -height 10]}
@@ -796,7 +796,7 @@ test panedwindow-14.1 {PanestructureProc, widget yields managements} {
 test panedwindow-14.2 {PanedWindowLostSlaveProc, widget yields management} {
     # Check that the paned window correctly yields geometry management of
     # a slave when some other geometry manager steals the slave from us.
-
+    
     # This test should not cause a core dump, and it should not cause a
     # memory leak.
     destroy .p .b
@@ -863,15 +863,15 @@ test panedwindow-18.1 {MoveSash, move right} {
 
     # Get the requested width of the paned window
     lappend result [winfo reqwidth .p]
-
+    
     .p sash place 0 30 0
-
+    
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqwidth .p]
 
     # Check that the sash moved
     lappend result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -884,11 +884,11 @@ test panedwindow-18.2 {MoveSash, move right (unmapped) clipped by reqwidth} {
     }
 
     .p sash place 0 100 0
-
+    
     # Get the new sash coord; it should be clipped by the reqwidth of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -899,17 +899,17 @@ test panedwindow-18.3 {MoveSash, move right (mapped, width < reqwidth) clipped b
     foreach w {.f1 .f2} c {red blue} {
 	.p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-
+    
     # Put the panedwindow up on the display and give it a width < reqwidth
     place .p -x 0 -y 0 -width 32
     update
 
     .p sash place 0 100 0
-
+    
     # Get the new sash coord; it should be clipped by the visible width of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -920,17 +920,17 @@ test panedwindow-18.4 {MoveSash, move right (mapped, width > reqwidth) clipped b
     foreach w {.f1 .f2} c {red blue} {
 	.p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-
+    
     # Put the panedwindow up on the display and give it a width > reqwidth
     place .p -x 0 -y 0 -width 102
     update
 
     .p sash place 0 200 0
-
+    
     # Get the new sash coord; it should be clipped by the visible width of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -943,11 +943,11 @@ test panedwindow-18.5 {MoveSash, move right respects minsize} {
     }
 
     .p sash place 0 100 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -960,10 +960,10 @@ test panedwindow-18.6 {MoveSash, move right respects minsize} {
     }
 
     .p sash place 0 100 0
-
+    
     # Get the new sash coord; it should have moved as far as possible.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -976,11 +976,11 @@ test panedwindow-18.7 {MoveSash, move right pushes other sashes} {
     }
 
     .p sash place 0 100 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -993,11 +993,11 @@ test panedwindow-18.8 {MoveSash, move right pushes other sashes, respects minsiz
     }
 
     .p sash place 0 100 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1011,11 +1011,11 @@ test panedwindow-18.9 {MoveSash, move right respects minsize, exludes pad} {
     }
 
     .p sash place 0 100 0
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1029,11 +1029,11 @@ test panedwindow-18.10 {MoveSash, move right, negative minsize becomes 0} {
     }
 
     .p sash place 0 50 0
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [list [.p sash coord 0] [.p sash coord 1]]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1048,15 +1048,15 @@ test panedwindow-18.11 {MoveSash, move left} {
 
     # Get the requested width of the paned window
     lappend result [winfo reqwidth .p]
-
+    
     .p sash place 0 10 0
-
+    
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqwidth .p]
 
     # Check that the sash moved
     lappend result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1069,11 +1069,11 @@ test panedwindow-18.12 {MoveSash, move left, can't move outside of window} {
     }
 
     .p sash place 0 -100 0
-
+    
     # Get the new sash coord; it should be clipped by the reqwidth of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1086,11 +1086,11 @@ test panedwindow-18.13 {MoveSash, move left respects minsize} {
     }
 
     .p sash place 0 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1103,10 +1103,10 @@ test panedwindow-18.14 {MoveSash, move left respects minsize} {
     }
 
     .p sash place 1 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1119,11 +1119,11 @@ test panedwindow-18.15 {MoveSash, move left pushes other sashes} {
     }
 
     .p sash place 1 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1136,11 +1136,11 @@ test panedwindow-18.16 {MoveSash, move left pushes other sashes, respects minsiz
     }
 
     .p sash place 1 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1154,11 +1154,11 @@ test panedwindow-18.17 {MoveSash, move left respects minsize, exludes pad} {
     }
 
     .p sash place 1 0 0
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1172,11 +1172,11 @@ test panedwindow-18.18 {MoveSash, move left, negative minsize becomes 0} {
     }
 
     .p sash place 1 10 0
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [list [.p sash coord 0] [.p sash coord 1]]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1193,15 +1193,15 @@ test panedwindow-19.1 {MoveSash, move down} {
 
     # Get the requested width of the paned window
     lappend result [winfo reqheight .p]
-
+    
     .p sash place 0 0 30
-
+    
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqheight .p]
 
     # Check that the sash moved
     lappend result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1215,11 +1215,11 @@ test panedwindow-19.2 {MoveSash, move down (unmapped) clipped by reqheight} {
     }
 
     .p sash place 0 0 100
-
+    
     # Get the new sash coord; it should be clipped by the reqheight of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1231,17 +1231,17 @@ test panedwindow-19.3 {MoveSash, move down (mapped, height < reqheight) clipped 
     foreach w {.f1 .f2} c {red blue} {
 	.p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-
+    
     # Put the panedwindow up on the display and give it a height < reqheight
     place .p -x 0 -y 0 -height 32
     update
 
     .p sash place 0 0 100
-
+    
     # Get the new sash coord; it should be clipped by the visible height of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1253,17 +1253,17 @@ test panedwindow-19.4 {MoveSash, move down (mapped, height > reqheight) clipped 
     foreach w {.f1 .f2} c {red blue} {
 	.p add [frame $w -height 20 -width 20 -bg $c] -sticky nsew
     }
-
+    
     # Put the panedwindow up on the display and give it a width > reqwidth
     place .p -x 0 -y 0 -height 102
     update
 
     .p sash place 0 0 200
-
+    
     # Get the new sash coord; it should be clipped by the visible width of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1277,11 +1277,11 @@ test panedwindow-19.5 {MoveSash, move down respects minsize} {
     }
 
     .p sash place 0 0 100
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1295,11 +1295,11 @@ test panedwindow-19.6 {MoveSash, move down respects minsize} {
     }
 
     .p sash place 0 0 100
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1313,11 +1313,11 @@ test panedwindow-19.7 {MoveSash, move down pushes other sashes} {
     }
 
     .p sash place 0 0 100
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1331,11 +1331,11 @@ test panedwindow-19.8 {MoveSash, move down pushes other sashes, respects minsize
     }
 
     .p sash place 0 0 100
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1350,11 +1350,11 @@ test panedwindow-19.9 {MoveSash, move down respects minsize, exludes pad} {
     }
 
     .p sash place 0 0 100
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1369,11 +1369,11 @@ test panedwindow-19.10 {MoveSash, move right, negative minsize becomes 0} {
     }
 
     .p sash place 0 0 50
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [list [.p sash coord 0] [.p sash coord 1]]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1389,15 +1389,15 @@ test panedwindow-19.11 {MoveSash, move up} {
 
     # Get the requested width of the paned window
     lappend result [winfo reqheight .p]
-
+    
     .p sash place 0 0 10
-
+    
     # Get the reqwidth again, to make sure it hasn't changed
     lappend result [winfo reqheight .p]
 
     # Check that the sash moved
     lappend result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1411,11 +1411,11 @@ test panedwindow-19.12 {MoveSash, move up, can't move outside of window} {
     }
 
     .p sash place 0 0 -100
-
+    
     # Get the new sash coord; it should be clipped by the reqwidth of
     # the panedwindow.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1429,11 +1429,11 @@ test panedwindow-19.13 {MoveSash, move up respects minsize} {
     }
 
     .p sash place 0 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2
 
@@ -1447,10 +1447,10 @@ test panedwindow-19.14 {MoveSash, move up respects minsize} {
     }
 
     .p sash place 1 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1464,11 +1464,11 @@ test panedwindow-19.15 {MoveSash, move up pushes other sashes} {
     }
 
     .p sash place 1 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1482,11 +1482,11 @@ test panedwindow-19.16 {MoveSash, move up pushes other sashes, respects minsize}
     }
 
     .p sash place 1 0 0
-
+    
     # Get the new sash coord; it should have moved as far as possible while
     # respecting minsizes.
     set result [.p sash coord 0]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1501,11 +1501,11 @@ test panedwindow-19.17 {MoveSash, move up respects minsize, exludes pad} {
     }
 
     .p sash place 1 0 0
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [.p sash coord 1]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1520,11 +1520,11 @@ test panedwindow-19.18 {MoveSash, move up, negative minsize becomes 0} {
     }
 
     .p sash place 1 0 10
-
-    # Get the new sash coord; it should have moved as far as possible,
+    
+    # Get the new sash coord; it should have moved as far as possible, 
     # respecting minsizes.
     set result [list [.p sash coord 0] [.p sash coord 1]]
-
+    
     # Cleanup
     destroy .p .f1 .f2 .f3
 
@@ -1624,7 +1624,7 @@ foreach bd {0 2} {
 		    set result
 		} [list [expr {(2 * $bd) + 20 + (2 * $h)}] \
 			[expr {(2 * $bd) + 20}]]
-
+		
 		test panedwindow-20.[incr i]-$bd-$sp-$sw-$h \
 			{ComputeGeometry, three panes, reqsize set properly} {
 		    panedwindow .p -borderwidth $bd -sashpad $sp \
@@ -1638,7 +1638,7 @@ foreach bd {0 2} {
 		    set result
 		} [list [expr {(2 * $bd) + ($h?12:(2*$sw)) + (4*$sp) + 60}] \
 			[expr {(2 * $bd) + 20}]]
-
+		
 		test panedwindow-20.[incr i]-$bd-$sp-$sw-$h \
 			{ComputeGeometry, sash coords} {
 		    panedwindow .p -borderwidth $bd -sashpad $sp \
@@ -1676,7 +1676,7 @@ foreach bd {0 2} {
 			    [expr {$bd+3}] 20 20] \
 			[list [expr {$bd+95+($h?12:2*$sw)+(4*$sp)}] \
 			    [expr {$bd+3}] 20 20]]
-
+		
 		test panedwindow-20.[incr i]-$bd-$sp-$sw-$h \
 			{ComputeGeometry, one slave, vertical} {
 		    # With just one slave, sashpad and sashwidth should not
@@ -1692,7 +1692,7 @@ foreach bd {0 2} {
 		    set result
 		} [list [expr {(2 * $bd) + 20}] \
 			[expr {(2 * $bd) + 20 + (2 * $h)}]]
-
+		
 		test panedwindow-20.[incr i]-$bd-$sp-$sw-$h \
 			{ComputeGeometry, three panes, vertical} {
 		    panedwindow .p -borderwidth $bd -sashpad $sp \
@@ -1707,7 +1707,7 @@ foreach bd {0 2} {
 		    set result
 		} [list [expr {(2 * $bd) + 20}] \
 			[expr {(2 * $bd) + ($h?12:(2*$sw)) + (4*$sp) + 60}]]
-
+		
 		test panedwindow-20.[incr i]-$bd-$sp-$sw-$h \
 			{ComputeGeometry, sash coords, vertical} {
 		    panedwindow .p -borderwidth $bd -sashpad $sp \
@@ -1769,7 +1769,7 @@ test panedwindow-21.2 {destroyed slave causes geometry recomputation} {
     destroy .p .f2
     set result
 } 20
-
+    
 test panedwindow-22.1 {ArrangePanes, extra space is given to the last pane} {
     panedwindow .p -showhandle false -borderwidth 0 -sashpad 0 -sashwidth 2
     .p add [frame .f1 -width 20 -height 20 -bg blue] \

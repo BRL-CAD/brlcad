@@ -14,7 +14,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMenu.h"
 #include "tkMenubutton.h"
 #include "tkMacOSXFont.h"
@@ -603,8 +603,7 @@ MenuButtonInitControl(
     ControlRef rootControl =
 	    TkMacOSXGetRootControl(Tk_WindowId(butPtr->tkwin));
 
-    mbPtr->windowRef = GetWindowFromPort(
-	    TkMacOSXGetDrawablePort(Tk_WindowId(butPtr->tkwin)));
+    mbPtr->windowRef = TkMacOSXDrawableWindow(Tk_WindowId(butPtr->tkwin));
 
     /*
      * Set up the user pane
@@ -792,9 +791,11 @@ UserPaneDraw(
     Rect contrlRect;
     MacMenuButton * mbPtr =
 	    (MacMenuButton *)(intptr_t)GetControlReference(control);
+    CGrafPtr port;
 
+    GetPort(&port);
     GetControlBounds(control,&contrlRect);
-    TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL);
+    TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL, port);
     EraseRect (&contrlRect);
 }
 
@@ -824,7 +825,10 @@ UserPaneBackgroundProc(
 	    (MacMenuButton *)(intptr_t)GetControlReference(control);
 
     if (info->colorDevice) {
-	TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL);
+	CGrafPtr port;
+
+	GetPort(&port);
+	TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL, port);
     }
 }
 

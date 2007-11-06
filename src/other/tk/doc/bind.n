@@ -5,9 +5,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH bind n 8.0 Tk "Tk Built-In Commands"
 .BS
@@ -94,7 +94,7 @@ Modifiers, such as \fBShift\fR or \fBControl\fR, may not be combined with a
 virtual event to modify it.  Bindings on a virtual event may be created
 before the virtual event is defined, and if the definition of a virtual
 event changes dynamically, all windows bound to that virtual event will
-respond immediately to the new definition.
+respond immediately to the new definition.  
 .PP
 Some widgets (e.g. \fBmenu\fR and \fBtext\fR) issue virtual events
 when their internal state is updated in some ways.  Please see the
@@ -105,9 +105,9 @@ Modifiers consist of any of the following values:
 .DS
 .ta 6c
 \fBControl\fR	\fBMod2, M2\fR
-\fBShift\fR	\fBMod3, M3\fR
+\fBShift\fR	\fBMod3, M3\fR	
 \fBLock\fR	\fBMod4, M4\fR
-\fBButton1, B1\fR	\fBMod5, M5\fR
+\fBButton1, B1\fR	\fBMod5, M5\fR	
 \fBButton2, B2\fR	\fBMeta, M\fR
 \fBButton3, B3\fR	\fBAlt\fR
 \fBButton4, B4\fR	\fBDouble\fR
@@ -170,7 +170,7 @@ types; where two names appear together, they are synonyms.
 \fBActivate	Destroy	Map
 ButtonPress, Button	Enter	MapRequest
 ButtonRelease	Expose	Motion
-Circulate	FocusIn	MouseWheel
+Circulate	FocusIn	MouseWheel	
 CirculateRequest	FocusOut	Property
 Colormap	Gravity	Reparent
 Configure	KeyPress, Key	ResizeRequest
@@ -217,13 +217,13 @@ events are sent to the window which currently has the keyboard focus.
 The \fBButtonPress\fR and \fBButtonRelease\fR events
 are generated when the user presses or releases a mouse button.
 \fBMotion\fR events are generated whenever the pointer is moved.
-\fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR events are
+\fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR events are 
 normally sent to the window containing the pointer.
 .RS
 .PP
 When a mouse button is pressed, the window containing the pointer
 automatically obtains a temporary pointer grab.
-Subsequent \fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR
+Subsequent \fBButtonPress\fR, \fBButtonRelease\fR, and \fBMotion\fR 
 events will be sent to that window,
 regardless of which window contains the pointer,
 until all buttons have been released.
@@ -245,7 +245,7 @@ Other windows become mapped when they are placed under control
 of a geometry manager (for example \fBpack\fR or \fBgrid\fR).
 .PP
 A window is \fIviewable\fR only if it and all of its ancestors are mapped.
-Note that geometry managers typically do not map their children until
+Note that geometry managers typically do not map their children until 
 they have been mapped themselves, and unmap all children
 when they become unmapped; hence in Tk \fBMap\fR and \fBUnmap\fR
 events indicate whether or not a window is viewable.
@@ -260,10 +260,10 @@ specifies the new state.
 An \fBExpose\fR event is generated whenever all or part of a
 window should be redrawn (for example, when a window is
 first mapped or if it becomes unobscured).
-It is normally not necessary for client applications to
+It is normally not necessary for client applications to 
 handle \fBExpose\fR events, since Tk handles them internally.
 .IP \fBDestroy\fR 5
-A \fBDestroy\fR event is delivered to a window when
+A \fBDestroy\fR event is delivered to a window when 
 it is destroyed.
 .RS
 .PP
@@ -284,16 +284,16 @@ if the old and new focus windows do not share a common parent,
 windows in the hierarchy.
 Thus a \fBFocusIn\fR event indicates
 that the target window or one of its descendants has acquired the focus,
-and a \fBFocusOut\fR event indicates that the focus
+and a \fBFocusOut\fR event indicates that the focus 
 has been changed to a window outside the target window's hierarchy.
 .PP
 The keyboard focus may be changed explicitly by a call to \fBfocus\fR,
-or implicitly by the window manager.
+or implicitly by the window manager.  
 .RE
 .IP "\fBEnter\fR, \fBLeave\fR" 5
 An \fBEnter\fR event is sent to a window when the pointer
 enters that window, and a \fBLeave\fR event is sent when
-the pointer leaves it.
+the pointer leaves it.  
 .RS
 .PP
 If there is a pointer grab in effect, \fBEnter\fR and \fBLeave\fR
@@ -453,8 +453,8 @@ For events other than these, the substituted string is undefined.
 .RE
 .IP \fB%f\fR 5
 The \fIfocus\fR field from the event (\fB0\fR or \fB1\fR).  Valid only
-for \fBEnter\fR and \fBLeave\fR events.  \fB1\fR if the receiving
-window is the focus window or a descendant of the focus window,
+for \fBEnter\fR and \fBLeave\fR events.  \fB1\fR if the receiving 
+window is the focus window or a descendant of the focus window, 
 \fB0\fR otherwise.
 .IP \fB%h\fR 5
 The \fIheight\fR field from the event.  Valid for the \fBConfigure\fR,
@@ -494,7 +494,7 @@ the property has been removed).
 The \fItime\fR field from the event.
 This is the X server timestamp (typically the time since
 the last server reset) in milliseconds, when the event occurred.
-Valid for most events.
+Valid for most events.  
 .IP \fB%w\fR 5
 The \fIwidth\fR field from the event.
 Indicates the new or requested width of the window.
@@ -503,11 +503,11 @@ Valid only for
 \fBResizeRequest\fR, and \fBExpose\fR events.
 .IP "\fB%x\fR, \fB%y\fR" 5
 The \fIx\fR and \fIy\fR fields from the event.
-For \fBButtonPress\fR, \fBButtonRelease\fR, \fBMotion\fR,
+For \fBButtonPress\fR, \fBButtonRelease\fR, \fBMotion\fR, 
 \fBKeyPress\fR, \fBKeyRelease\fR, and \fBMouseWheel\fR events,
 \fB%x\fR and \fB%y\fR indicate the position of the mouse pointer
 relative to the receiving window.
-For \fBEnter\fR and \fBLeave\fR events, the position where the
+For \fBEnter\fR and \fBLeave\fR events, the position where the 
 mouse pointer crossed the window, relative to the receiving window.
 For \fBConfigure\fR and \fBCreate\fR requests, the \fIx\fR and \fIy\fR
 coordinates of the window relative to its parent window.
@@ -629,9 +629,9 @@ of events matched) is more specific than a shorter sequence;
 modifiers in another pattern, then the pattern with more modifiers
 is more specific.
 (d) a virtual event whose physical pattern matches the sequence is less
-specific than the same physical pattern that is not associated with a
+specific than the same physical pattern that is not associated with a 
 virtual event.
-(e) given a sequence that matches two or more virtual events, one
+(e) given a sequence that matches two or more virtual events, one 
 of the virtual events will be chosen, but the order is undefined.
 .PP
 If the matching sequences contain more than one event, then tests
@@ -642,7 +642,7 @@ most recently registered sequence is the winner.
 If there are two (or more) virtual events that are both triggered by the
 same sequence, and both of those virtual events are bound to the same window
 tag, then only one of the virtual events will be triggered, and it will
-be picked at random:
+be picked at random:  
 .CS
 event add <<Paste>> <Control-y>
 event add <<Paste>> <Button-2>

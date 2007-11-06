@@ -50,6 +50,7 @@ CFG_ENCODING	= \"cp1252\"
 
 !if "$(OS)" == "Windows_NT"
 RMDIR	= rmdir /S /Q
+ERRNULL  = 2>NUL
 !if ![ver | find "4.0" > nul]
 CPY	= echo y | xcopy /i >NUL
 COPY	= copy >NUL
@@ -61,9 +62,10 @@ COPY	= copy /y >NUL
 CPY	= xcopy /i >_JUNK.OUT # On Win98 NUL does not work here.
 COPY	= copy >_JUNK.OUT # On Win98 NUL does not work here.
 RMDIR	= deltree /Y
+NULL    = \NUL # Used in testing directory existence
+ERRNULL = >NUL # Win9x shell cannot redirect stderr
 !endif
 MKDIR   = mkdir
-COPY    = copy /y >NUL
 
 !message ===============================================================================
 
@@ -187,16 +189,19 @@ LINKERFLAGS     =-ltcg
 
 _VC_MANIFEST_EMBED_EXE=
 _VC_MANIFEST_EMBED_DLL=
-!if ![cl /Zs /Tc NUL 2>&1 | find "Version 12" > NUL]
-VCVER=6
-!elseif ![cl /Zs /Tc NUL 2>&1 | find "Version 13" > NUL]
-VCVER=7
-!elseif ![cl /Zs /Tc NUL 2>&1 | find "Version 14" > NUL]
+VCVER=0
+!if ![echo VCVERSION=_MSC_VER > vercl.x] \
+    && ![cl -nologo -TC -P vercl.x $(ERRNULL)]
+!include vercl.i
+!if $(VCVERSION) >= 1400
 VCVER=8
 _VC_MANIFEST_EMBED_EXE=if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;1
 _VC_MANIFEST_EMBED_DLL=if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;2
-!else
-VCVER=0
+!elseif $(VCVERSION) >= 1300
+VCVER=7
+!elseif $(VCVERSION) >= 1200
+VCVER=6
+!endif
 !endif
 
 #----------------------------------------------------------

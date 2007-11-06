@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH radiobutton n 4.4 Tk "Tk Built-In Commands"
 .BS
@@ -57,10 +57,10 @@ displaying when the widget is selected.
 Specifies the relief for the checkbutton when the indicator is not drawn and
 the checkbutton is off.  The default value is "raised".  By setting this option
 to "flat" and setting -indicatoron to false and -overrelief to raised,
-the effect is achieved
+the effect is achieved 
 of having a flat button that raises on mouse-over and which is
 depressed when activated.  This is the behavior typically exhibited by
-the Align-Left, Align-Right, and Center radiobuttons on the toolbar of a
+the Align-Left, Align-Right, and Center radiobuttons on the toolbar of a 
 word-processor, for example.
 .OP \-overrelief overRelief OverRelief
 Specifies an alternative relief for the radiobutton, to be used when the
@@ -94,7 +94,7 @@ specified.
 .VE 8.5
 .OP \-tristatevalue tristateValue Value
 .VS 8.5
-Specifies the value that causes the radiobutton to display the multi-value
+Specifies the value that causes the radiobutton to display the multi-value 
 selection, also known as the tri-state mode.  Defaults to ``""''
 .VE 8.5
 .OP \-value value Value
@@ -159,9 +159,9 @@ indicate that fact;  each radiobutton also monitors the value of
 the variable and automatically selects and deselects itself when the
 variable's value changes.
 .VS 8.5
-If the variable's value matches the \fBtristateValue\fR, then the radiobutton is
-drawn using the tri-state mode.  This mode is used to indicate mixed or
-multiple values.  (This is used when the radiobutton represents the state
+If the variable's value matches the \fBtristateValue\fR, then the radiobutton is 
+drawn using the tri-state mode.  This mode is used to indicate mixed or 
+multiple values.  (This is used when the radiobutton represents the state 
 of multiple items.)
 .VE 8.5
 By default the variable \fBselectedButton\fR

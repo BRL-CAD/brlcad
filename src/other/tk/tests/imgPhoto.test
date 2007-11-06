@@ -558,7 +558,7 @@ test imgPhoto-12.1 {Tk_PhotoPutZoomedBlock} hasTeapotPhoto {
 } {{19 92 192} {169 117 90} 512 512 {19 92 192}}
 
 test imgPhoto-13.1 {check separation of images in different interpreters} {
-    image delete {expand}[image names]
+    image delete {*}[image names]
     set data {
 	R0lGODlhQgBkAPUAANbWxs7Wxs7OxsbOxsbGxsbGvb3Gvca9vcDAwL21vbW1vbW1tbWtta2t
 	ta2ltaWltaWlraWctaWcrZycrZyUrZSUrZSMrZSMpYyMrYyMpYyEpYSEpYR7pYR7nHp7pYRz
@@ -652,6 +652,18 @@ test imgPhoto-14.2 {GIF -index handler buffer sizing} -setup {
 } -cleanup {
     image delete $i
 } -returnCodes error -result {no image data for this index}
+
+test imgPhoto-14.3 {GIF -index interleaving and small frames} -setup {
+    set i [image create photo]
+} -body {
+    # Interleaved GIFs used to crash us when a smaller subsequent frame
+    # was accessed.
+    $i configure -format {GIF -index 1} -data {
+	R0lGODdhAQAFAPAAAP8AAAAAACwAAAAAAQAFAEACAoRdACwAAAAAAQAEAEACAoRRADs=
+    }
+} -cleanup {
+    image delete $i
+}
 
 test imgPhoto-15.1 {photo images can fail to allocate memory gracefully} \
 	{nonPortable} {

@@ -93,7 +93,7 @@ static Tcl_DString menuFontDString;
 
 static void		DrawMenuEntryAccelerator(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Drawable d, GC gc,
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr,
+			    Tk_Font tkfont, const Tk_FontMetrics *fmPtr,
 			    Tk_3DBorder activeBorder, int x, int y,
 			    int width, int height);
 static void		DrawMenuEntryArrow(TkMenu *menuPtr, TkMenuEntry *mePtr,
@@ -106,52 +106,52 @@ static void		DrawMenuEntryBackground(TkMenu *menuPtr,
 static void		DrawMenuEntryIndicator(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Drawable d, GC gc,
 			    GC indicatorGC, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int x, int y,
+			    const Tk_FontMetrics *fmPtr, int x, int y,
 			    int width, int height);
 static void		DrawMenuEntryLabel(TkMenu *menuPtr, TkMenuEntry *mePtr,
 			    Drawable d, GC gc, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int x, int y,
+			    const Tk_FontMetrics *fmPtr, int x, int y,
 			    int width, int height);
 static void		DrawMenuSeparator(TkMenu *menuPtr, TkMenuEntry *mePtr,
 			    Drawable d, GC gc, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr,
+			    const Tk_FontMetrics *fmPtr,
 			    int x, int y, int width, int height);
-static void		DrawTearoffEntry(TkMenu *menuPtr,
-			    TkMenuEntry *mePtr, Drawable d, GC gc,
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr,
-			    int x, int y, int width, int height);
-static void		DrawMenuUnderline(TkMenu *menuPtr,
-			    TkMenuEntry *mePtr, Drawable d, GC gc,
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr, int x,
-			    int y, int width, int height);
+static void		DrawTearoffEntry(TkMenu *menuPtr, TkMenuEntry *mePtr,
+			    Drawable d, GC gc, Tk_Font tkfont,
+			    const Tk_FontMetrics *fmPtr, int x, int y,
+			    int width, int height);
+static void		DrawMenuUnderline(TkMenu *menuPtr, TkMenuEntry *mePtr,
+			    Drawable d, GC gc, Tk_Font tkfont,
+			    const Tk_FontMetrics *fmPtr, int x, int y,
+			    int width, int height);
 static void		DrawWindowsSystemBitmap(Display *display,
-			    Drawable drawable, GC gc, CONST RECT *rectPtr,
+			    Drawable drawable, GC gc, const RECT *rectPtr,
 			    int bitmapID, int alignFlags);
 static void		FreeID(WORD commandID);
 static TCHAR *		GetEntryText(TkMenuEntry *mePtr);
 static void		GetMenuAccelGeometry(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int *widthPtr,
+			    const Tk_FontMetrics *fmPtr, int *widthPtr,
 			    int *heightPtr);
 static void		GetMenuLabelGeometry(TkMenuEntry *mePtr,
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr,
+			    Tk_Font tkfont, const Tk_FontMetrics *fmPtr,
 			    int *widthPtr, int *heightPtr);
 static void		GetMenuIndicatorGeometry(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr,
+			    const Tk_FontMetrics *fmPtr,
 			    int *widthPtr, int *heightPtr);
 static void		GetMenuSeparatorGeometry(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr,
+			    const Tk_FontMetrics *fmPtr,
 			    int *widthPtr, int *heightPtr);
 static void		GetTearoffEntryGeometry(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int *widthPtr,
+			    const Tk_FontMetrics *fmPtr, int *widthPtr,
 			    int *heightPtr);
 static int		GetNewID(TkMenuEntry *mePtr, WORD *menuIDPtr);
 static int		TkWinMenuKeyObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static void		MenuSelectEvent(TkMenu *menuPtr);
 static void		ReconfigureWindowsMenu(ClientData clientData);
 static void		RecursivelyClearActiveMenu(TkMenu *menuPtr);
@@ -456,7 +456,7 @@ GetEntryText(
 		: Tcl_GetString(mePtr->labelPtr);
 	char *accel = (mePtr->accelPtr == NULL) ? ""
 		: Tcl_GetString(mePtr->accelPtr);
-	CONST char *p, *next;
+	const char *p, *next;
 	Tcl_DString itemString;
 
 	/*
@@ -1100,34 +1100,34 @@ TkWinHandleMenuEvent(
 	break;
 
     case WM_MENUCHAR: {
-	unsigned char menuChar = (unsigned char) LOWORD(*pwParam);
-
 	hashEntryPtr = Tcl_FindHashEntry(&tsdPtr->winMenuTable,
 		(char *) *plParam);
 	if (hashEntryPtr != NULL) {
 	    int i, len, underline;
 	    Tcl_Obj *labelPtr;
+	    Tcl_UniChar *wlabel, menuChar;
 
 	    *plResult = 0;
 	    menuPtr = (TkMenu *) Tcl_GetHashValue(hashEntryPtr);
+	    /*
+	     * Assume we have something directly convertable to Tcl_UniChar.
+	     * True at least for wide systems.
+	     */
+	    menuChar = Tcl_UniCharToUpper((Tcl_UniChar) LOWORD(*pwParam));
+
 	    for (i = 0; i < menuPtr->numEntries; i++) {
 		underline = menuPtr->entries[i]->underline;
 		labelPtr = menuPtr->entries[i]->labelPtr;
 		if ((underline >= 0) && (labelPtr != NULL)) {
 		    /*
-		     * Do the unicode call just to prevent overruns.
+		     * Ensure we don't exceed the label length, then check
 		     */
-
-		    Tcl_GetUnicodeFromObj(labelPtr, &len);
-		    if (underline < len) {
-			char *label = Tcl_GetString(labelPtr);
-
-			if (CharUpper((LPTSTR) menuChar) == CharUpper((LPTSTR)
-				*Tcl_UtfAtIndex(label, underline))) {
-			    *plResult = (2 << 16) | i;
-			    returnResult = 1;
-			    break;
-			}
+		    wlabel = Tcl_GetUnicodeFromObj(labelPtr, &len);
+		    if ((underline < len) && (menuChar ==
+				Tcl_UniCharToUpper(wlabel[underline]))) {
+			*plResult = (2 << 16) | i;
+			returnResult = 1;
+			break;
 		    }
 		}
 	    }
@@ -1418,7 +1418,7 @@ GetMenuIndicatorGeometry(
     TkMenu *menuPtr,		/* The menu we are measuring */
     TkMenuEntry *mePtr,		/* The entry we are measuring */
     Tk_Font tkfont,		/* Precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* Precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* Precalculated font metrics */
     int *widthPtr,		/* The resulting width */
     int *heightPtr)		/* The resulting height */
 {
@@ -1455,7 +1455,7 @@ GetMenuAccelGeometry(
     TkMenu *menuPtr,		/* The menu we are measuring */
     TkMenuEntry *mePtr,		/* The entry we are measuring */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
     int *widthPtr,		/* The resulting width */
     int *heightPtr)		/* The resulting height */
 {
@@ -1492,7 +1492,7 @@ GetTearoffEntryGeometry(
     TkMenu *menuPtr,		/* The menu we are measuring */
     TkMenuEntry *mePtr,		/* The entry we are measuring */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
     int *widthPtr,		/* The resulting width */
     int *heightPtr)		/* The resulting height */
 {
@@ -1525,7 +1525,7 @@ GetMenuSeparatorGeometry(
     TkMenu *menuPtr,		/* The menu we are measuring */
     TkMenuEntry *mePtr,		/* The entry we are measuring */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalcualted font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalcualted font metrics */
     int *widthPtr,		/* The resulting width */
     int *heightPtr)		/* The resulting height */
 {
@@ -1557,7 +1557,7 @@ DrawWindowsSystemBitmap(
     Display *display,		/* The display we are drawing into */
     Drawable drawable,		/* The drawable we are working with */
     GC gc,			/* The GC to draw with */
-    CONST RECT *rectPtr,	/* The rectangle to draw into */
+    const RECT *rectPtr,	/* The rectangle to draw into */
     int bitmapID,		/* The windows id of the system bitmap to
 				 * draw. */
     int alignFlags)		/* How to align the bitmap inside the
@@ -1636,7 +1636,7 @@ DrawMenuEntryIndicator(
     GC gc,			/* The gc we are drawing with */
     GC indicatorGC,		/* The gc for indicator objects */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
     int x,			/* Left edge */
     int y,			/* Top edge */
     int width,
@@ -1712,7 +1712,7 @@ DrawMenuEntryAccelerator(
     Drawable d,			/* What we are drawing into */
     GC gc,			/* The gc we are drawing with */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
     Tk_3DBorder activeBorder,	/* The border when an item is active */
     int x,			/* left edge */
     int y,			/* top edge */
@@ -1849,7 +1849,7 @@ DrawMenuSeparator(
     Drawable d,			/* What we are drawing into */
     GC gc,			/* The gc we are drawing with */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
     int x,			/* left edge */
     int y,			/* top edge */
     int width,			/* width of item */
@@ -1890,7 +1890,7 @@ DrawMenuUnderline(
     Drawable d,			/* What we are drawing into */
     GC gc,			/* The gc to draw into */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
     int x,			/* Left Edge */
     int y,			/* Top Edge */
     int width,			/* Width of entry */
@@ -1902,7 +1902,7 @@ DrawMenuUnderline(
 	/* do the unicode call just to prevent overruns */
 	Tcl_GetUnicodeFromObj(mePtr->labelPtr, &len);
 	if (mePtr->underline < len) {
-	    CONST char *label, *start, *end;
+	    const char *label, *start, *end;
 
 	    label = Tcl_GetStringFromObj(mePtr->labelPtr, NULL);
 	    start = Tcl_UtfAtIndex(label, mePtr->underline);
@@ -1939,7 +1939,7 @@ TkWinMenuKeyObjCmd(
     ClientData clientData,	/* Unused. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     UINT scanCode;
     UINT virtualKey;
@@ -2131,7 +2131,7 @@ DrawMenuEntryLabel(
     Drawable d,			/* What we are drawing into */
     GC gc,			/* The gc we are drawing into */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated font metrics */
     int x,			/* left edge */
     int y,			/* right edge */
     int width,			/* width of entry */
@@ -2347,7 +2347,7 @@ DrawTearoffEntry(
     Drawable d,			/* The drawable we are drawing into */
     GC gc,			/* The gc we are drawing with */
     Tk_Font tkfont,		/* The font we are drawing with */
-    CONST Tk_FontMetrics *fmPtr,/* The metrics we are drawing with */
+    const Tk_FontMetrics *fmPtr,/* The metrics we are drawing with */
     int x, int y,
     int width, int height)
 {
@@ -2473,7 +2473,7 @@ TkpDrawMenuEntry(
     TkMenuEntry *mePtr,		/* The entry to draw */
     Drawable d,			/* What to draw into */
     Tk_Font tkfont,		/* Precalculated font for menu */
-    CONST Tk_FontMetrics *menuMetricsPtr,
+    const Tk_FontMetrics *menuMetricsPtr,
 				/* Precalculated metrics for menu */
     int x,			/* X-coordinate of topleft of entry */
     int y,			/* Y-coordinate of topleft of entry */
@@ -2487,7 +2487,7 @@ TkpDrawMenuEntry(
     GC gc, indicatorGC;
     TkMenu *menuPtr = mePtr->menuPtr;
     Tk_3DBorder bgBorder, activeBorder;
-    CONST Tk_FontMetrics *fmPtr;
+    const Tk_FontMetrics *fmPtr;
     Tk_FontMetrics entryMetrics;
     int padY = (menuPtr->menuType == MENUBAR) ? 3 : 0;
     int adjustedY = y + padY;
@@ -2606,7 +2606,7 @@ static void
 GetMenuLabelGeometry(
     TkMenuEntry *mePtr,		/* The entry we are computing */
     Tk_Font tkfont,		/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,/* The precalculated metrics */
+    const Tk_FontMetrics *fmPtr,/* The precalculated metrics */
     int *widthPtr,		/* The resulting width of the label portion */
     int *heightPtr)		/* The resulting height of the label
 				 * portion */
@@ -3098,8 +3098,8 @@ MenuThreadExitHandler(
 Tcl_Obj *
 TkWinGetMenuSystemDefault(
     Tk_Window tkwin,		/* A window to use. */
-    CONST char *dbName,		/* The option database name. */
-    CONST char *className)	/* The name of the option class. */
+    const char *dbName,		/* The option database name. */
+    const char *className)	/* The name of the option class. */
 {
     Tcl_Obj *valuePtr = NULL;
 

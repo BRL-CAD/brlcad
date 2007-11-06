@@ -50,7 +50,7 @@ foreach test {
     {-buttoncursor arrow arrow badValue {bad cursor spec "badValue"}}
     {-command {a command} {a command} {} {}}
     {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-disabledbackground green green non-existent
+    {-disabledbackground green green non-existent 
 	{unknown color name "non-existent"}}
     {-disabledforeground #110022 #110022 bogus {unknown color name "bogus"}}
     {-exportselection yes 1 xyzzy {expected boolean value but got "xyzzy"}}
@@ -73,7 +73,7 @@ foreach test {
     {-invalidcommand "a command" "a command" {} {}}
     {-invcmd "a command" "a command" {} {}}
     {-justify right right bogus {bad justification "bogus": must be left, right, or center}}
-    {-readonlybackground green green non-existent
+    {-readonlybackground green green non-existent 
 	{unknown color name "non-existent"}}
     {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
     {-repeatdelay 500 500 3p {expected integer but got "3p"}}
@@ -486,13 +486,13 @@ test spinbox-3.74 {SpinboxWidgetCmd procedure, "xview" widget command} {
 test spinbox-3.75 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview 30
     update
-    .e xview scroll 2 units
+    .e xview scroll 2 units 
     .e index @0
 } {32}
 test spinbox-3.76 {SpinboxWidgetCmd procedure, "xview" widget command} {
     .e xview 30
     update
-    .e xview scroll -1 units
+    .e xview scroll -1 units 
     .e index @0
 } {29}
 test spinbox-3.77 {SpinboxWidgetCmd procedure, "xview" widget command} {
@@ -638,7 +638,7 @@ test spinbox-5.11 {ConfigureSpinbox procedure} {
     pack [spinbox .e -font {{open look glyph}}]
     .e scan dragto 30
     update
-} {}
+} {}    
 
 # No tests for DisplaySpinbox.
 
@@ -1134,14 +1134,14 @@ test spinbox-13.9 {GetSpinboxIndex procedure} {
 } {1 6}
 selection clear .e
 test spinbox-13.10 {GetSpinboxIndex procedure} unix {
-    # On unix, when selection is cleared, spinbox widget's internal
+    # On unix, when selection is cleared, spinbox widget's internal 
     # selection range is reset.
 
     list [catch {.e index sel.first} msg] $msg
 } {1 {selection isn't in widget .e}}
 test spinbox-13.11 {GetSpinboxIndex procedure} win {
     # On mac and pc, when selection is cleared, spinbox widget remembers
-    # last selected range.  When selection ownership is restored to
+    # last selected range.  When selection ownership is restored to 
     # spinbox, the old range will be rehighlighted.
 
     list [catch {selection get}] [.e index sel.first]
@@ -1293,7 +1293,7 @@ test spinbox-18.1 {Spinbox widget vs hiding} {
     interp hide {} .e
     destroy .e
     list [winfo children .] [interp hidden]
-} [list {} $l]
+} [list {} $l]    
 
 ##
 ## Spinbox widget VALIDATION tests

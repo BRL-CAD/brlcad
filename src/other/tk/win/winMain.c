@@ -12,13 +12,12 @@
  * RCS: @(#) $Id$
  */
 
-#include <tk.h>
+#include "tkInt.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 #include <locale.h>
 
-#include "tkInt.h"
 
 /*
  * The following declarations refer to internal Tk routines. These interfaces

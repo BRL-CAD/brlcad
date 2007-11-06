@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH "Safe Tk" n 8.0 Tk "Tk Built-In Commands"
 .BS
@@ -13,14 +13,14 @@
 .SH NAME
 loadTk \- Load Tk into a safe interpreter.
 .SH SYNOPSIS
-\fB::safe::loadTk \fIslave\fR ?\fB\-use\fR \fIwindowId\fR? ?\fB\-display\fR \fIdisplayName\fR?
+\fB::safe::loadTk \fIslave\fR ?\fB\-use\fR \fIwindowId\fR? ?\fB\-display\fR \fIdisplayName\fR? 
 .BE
 
-Safe Tk is based on Safe Tcl, which provides a mechanism
+Safe Tk is based on Safe Tcl, which provides a mechanism 
 that allows restricted and mediated
 access to auto-loading and packages for safe interpreters.
 Safe Tk adds the ability to configure the interpreter
-for safe Tk operations and load Tk into safe
+for safe Tk operations and load Tk into safe 
 interpreters.
 
 .SH DESCRIPTION
@@ -32,10 +32,10 @@ or have been initialized with \fB::safe::interpInit\fR.
 The command returns the name of the safe interpreter.
 If \fB\-use\fR is specified, the window identified by the specified system
 dependent identifier \fIwindowId\fR is used to contain the ``.''
-window of the safe interpreter; it can be any valid id, eventually
+window of the safe interpreter; it can be any valid id, eventually 
 referencing a window belonging to another application. As a convenience,
 if the window you plan to use is a Tk Window of the application you
-can use the window name (e.g. \fB.x.y\fR) instead of its window Id
+can use the window name (e.g. \fB.x.y\fR) instead of its window Id 
 (\fB[winfo id .x.y]\fR).
 When \fB\-use\fR is not specified,
 a new toplevel window is created for the ``.'' window of
@@ -59,7 +59,7 @@ the slave's state for startup. \fB::safe::loadTk\fR
 registers the slave's name so
 when the Tk initialization (\fBTk_SafeInit\fR) is called
 and in turn calls the master's \fB::safe::InitTk\fR it will
-return the desired \fBargv\fR equivalent (\fB\-use\fR
+return the desired \fBargv\fR equivalent (\fB\-use\fR 
 \fIwindowId\fR, correct \fB\-display\fR, etc.)
 .PP
 When \fB\-use\fR is not used, the new toplevel created is specially
@@ -72,7 +72,7 @@ to generate a fatal X error.
 
 .SH "SEE ALSO"
 safe(n), interp(n), library(n), load(n), package(n), source(n), unknown(n)
-
+ 
 .SH KEYWORDS
 alias, auto\-loading, auto_mkindex, load, master interpreter, safe
 interpreter, slave interpreter, source

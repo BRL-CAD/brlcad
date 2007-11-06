@@ -12,9 +12,8 @@
  * RCS: @(#) $Id$
  */
 
-#include "tk.h"
-#include "tkText.h"
 #include "tkPort.h"
+#include "tkText.h"
 
 /*
  * Macro that determines the size of an embedded image segment:

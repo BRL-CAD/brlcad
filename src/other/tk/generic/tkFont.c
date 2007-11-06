@@ -13,7 +13,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 #include "tkFont.h"
 
@@ -326,8 +325,6 @@ static char *globalFontClass[] = {
 static int		ConfigAttributesObj(Tcl_Interp *interp,
 			    Tk_Window tkwin, int objc, Tcl_Obj *const objv[],
 			    TkFontAttributes *faPtr);
-static int		CreateNamedFont(Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *name, TkFontAttributes *faPtr);
 static void		DupFontObjProc(Tcl_Obj *srcObjPtr, Tcl_Obj *dupObjPtr);
 static int		FieldSpecified(const char *field);
 static void		FreeFontObjProc(Tcl_Obj *objPtr);
@@ -427,8 +424,10 @@ TkFontPkgFree(
 	    searchPtr != NULL;
 	    searchPtr = Tcl_NextHashEntry(&search)) {
 	fontsLeft++;
+#ifdef DEBUG_FONTS
 	fprintf(stderr, "Font %s still in cache.\n",
 		Tcl_GetHashKey(&fiPtr->fontCache, searchPtr));
+#endif
     }
 
 #ifdef PURIFY
@@ -677,17 +676,15 @@ Tk_FontObjCmd(
 		&fa) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if (CreateNamedFont(interp, tkwin, name, &fa) != TCL_OK) {
+	if (TkCreateNamedFont(interp, tkwin, name, &fa) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	Tcl_AppendResult(interp, name, NULL);
 	break;
     }
     case FONT_DELETE: {
-	int i;
+	int i, result = TCL_OK;
 	char *string;
-	NamedFont *nfPtr;
-	Tcl_HashEntry *namedHashPtr;
 
 	/*
 	 * Delete the named font. If there are still widgets using this font,
@@ -698,23 +695,11 @@ Tk_FontObjCmd(
 	    Tcl_WrongNumArgs(interp, 2, objv, "fontname ?fontname ...?");
 	    return TCL_ERROR;
 	}
-	for (i = 2; i < objc; i++) {
+	for (i = 2; i < objc && result == TCL_OK; i++) {
 	    string = Tcl_GetString(objv[i]);
-	    namedHashPtr = Tcl_FindHashEntry(&fiPtr->namedTable, string);
-	    if (namedHashPtr == NULL) {
-		Tcl_AppendResult(interp, "named font \"", string,
-			"\" doesn't exist", NULL);
-		return TCL_ERROR;
-	    }
-	    nfPtr = (NamedFont *) Tcl_GetHashValue(namedHashPtr);
-	    if (nfPtr->refCount != 0) {
-		nfPtr->deletePending = 1;
-	    } else {
-		Tcl_DeleteHashEntry(namedHashPtr);
-		ckfree((char *) nfPtr);
-	    }
+	    result = TkDeleteNamedFont(interp, tkwin, string);
 	}
-	break;
+	return result;
     }
     case FONT_FAMILIES: {
 	int skip;
@@ -936,7 +921,7 @@ RecomputeWidgets(
 /*
  *---------------------------------------------------------------------------
  *
- * CreateNamedFont --
+ * TkCreateNamedFont --
  *
  *	Create the specified named font with the given attributes in the named
  *	font table associated with the interp.
@@ -957,8 +942,8 @@ RecomputeWidgets(
  *---------------------------------------------------------------------------
  */
 
-static int
-CreateNamedFont(
+int
+TkCreateNamedFont(
     Tcl_Interp *interp,		/* Interp for error return. */
     Tk_Window tkwin,		/* A window associated with interp. */
     const char *name,		/* Name for the new named font. */
@@ -1000,6 +985,45 @@ CreateNamedFont(
     nfPtr->fa = *faPtr;
     nfPtr->refCount = 0;
     nfPtr->deletePending = 0;
+    return TCL_OK;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TkDeleteNamedFont --
+ *
+ *	Delete the named font. If there are still widgets using this font,
+ *	then it isn't deleted right away.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+int
+TkDeleteNamedFont(
+    Tcl_Interp *interp,		/* Interp for error return. */
+    Tk_Window tkwin,		/* A window associated with interp. */
+    CONST char *name)		/* Name for the new named font. */
+{
+    TkFontInfo *fiPtr;
+    NamedFont *nfPtr;
+    Tcl_HashEntry *namedHashPtr;
+
+    fiPtr = ((TkWindow *) tkwin)->mainPtr->fontInfoPtr;
+
+    namedHashPtr = Tcl_FindHashEntry(&fiPtr->namedTable, name);
+    if (namedHashPtr == NULL) {
+	Tcl_AppendResult(interp, "named font \"", name,
+		"\" doesn't exist", NULL);
+	return TCL_ERROR;
+    }
+    nfPtr = (NamedFont *) Tcl_GetHashValue(namedHashPtr);
+    if (nfPtr->refCount != 0) {
+	nfPtr->deletePending = 1;
+    } else {
+	Tcl_DeleteHashEntry(namedHashPtr);
+	ckfree((char *) nfPtr);
+    }
     return TCL_OK;
 }
 
@@ -1724,14 +1748,12 @@ Tk_PostscriptFontName(
     slantString = NULL;
     if (fontPtr->fa.slant == TK_FS_ROMAN) {
 	;
+    } else if ((strcmp(family, "Helvetica") == 0)
+	    || (strcmp(family, "Courier") == 0)
+	    || (strcmp(family, "AvantGarde") == 0)) {
+	slantString = "Oblique";
     } else {
-	if ((strcmp(family, "Helvetica") == 0)
-		|| (strcmp(family, "Courier") == 0)
-		|| (strcmp(family, "AvantGarde") == 0)) {
-	    slantString = "Oblique";
-	} else {
-	    slantString = "Italic";
-	}
+	slantString = "Italic";
     }
 
     /*
@@ -1831,10 +1853,6 @@ Tk_UnderlineChars(
     int lastByte)		/* Index of first byte after the last
 				 * character. */
 {
-    TkFont *fontPtr;
-
-    fontPtr = (TkFont *) tkfont;
-
     TkUnderlineCharsInContext(display, drawable, gc, tkfont, string,
 	    lastByte, x, y, firstByte, lastByte);
 }
@@ -2752,10 +2770,10 @@ Tk_IntersectTextLayout(
     chunkPtr = layoutPtr->chunks;
     fontPtr = (TkFont *) layoutPtr->tkfont;
 
-    left    = x;
-    top	    = y;
-    right   = x + width;
-    bottom  = y + height;
+    left = x;
+    top = y;
+    right = x + width;
+    bottom = y + height;
 
     result = 0;
     for (i = 0; i < layoutPtr->numChunks; i++) {
@@ -2802,7 +2820,7 @@ Tk_IntersectTextLayout(
  *	lines in the text layout will be rendered by the user supplied
  *	Postscript function. The function should be of the form:
  *
- *	    justify x y string  function  --
+ *	    justify x y string function --
  *
  *	Justify is -1, 0, or 1, depending on whether the following string
  *	should be left, center, or right justified, x and y is the location

@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH menu n 4.1 Tk "Tk Built-In Commands"
 .BS
@@ -258,7 +258,7 @@ whenever the user's menubar is in front. The first items in the menu
 are provided by Apple. Similar to the Apple Menu, customization in this
 menu is limited to what the system provides.
 .PP
-When Tk sees a System menu on Windows, its items are appended to the
+When Tk sees a System menu on Windows, its items are appended to the 
 system menu that the menubar is attached to. This menu has an icon
 representing a spacebar, and can be invoked with the mouse or by typing
 Alt+Spacebar.  Due to limitations in the Windows API, any font changes,
@@ -276,7 +276,7 @@ configuration of the original are reflected in the
 clone. Additionally, any cascades that are pointed to are also cloned
 so that menu traversal will work right. Clones are destroyed when
 either the tearoff or menubar goes away, or when the original menu is
-destroyed.
+destroyed. 
 .SH "WIDGET COMMAND"
 .PP
 The \fBmenu\fR command creates a new Tcl command whose
@@ -490,7 +490,7 @@ option for the menu along with the \fBactivebackground\fR option from
 the entry.  Disabled state means that the entry
 should be insensitive:  the default bindings will refuse to activate
 or invoke the entry.
-In this state the entry is displayed according to the
+In this state the entry is displayed according to the 
 \fBdisabledForeground\fR option for the menu and the
 \fBbackground\fR option from the entry.
 This option is not available for separator entries.
@@ -529,7 +529,7 @@ command.
 \fIpathName\fR \fBclone\fR \fInewPathname ?cloneType?\fR
 Makes a clone of the current menu named \fInewPathName\fR. This clone
 is a menu in its own right, but any changes to the clone are
-propogated to the original menu and vice versa. \fIcloneType\fR can be
+propagated to the original menu and vice versa. \fIcloneType\fR can be
 \fBnormal\fR, \fBmenubar\fR, or \fBtearoff\fR. Should not normally be
 called outside of the Tk library. See the \fBCLONES\fR section for
 more information.
@@ -650,7 +650,7 @@ of the pulldowns. Once you have done this, specify the menu using the
 \fBtoplevel\fR manual entry for details.
 .TP
 \fBPulldown Menus in Menu Buttons\fR
-This is the compatable way to do menu bars.  You create one menubutton
+This is the compatible way to do menu bars.  You create one menubutton
 widget for each top-level menu, and typically you arrange a series of
 menubuttons in a row in a menubar window.  You also create the top-level menus
 and any cascaded submenus, and tie them together with \fB\-menu\fR

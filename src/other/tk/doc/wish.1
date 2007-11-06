@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH wish 1 8.0 Tk "Tk Applications"
 .BS
@@ -80,7 +80,7 @@ If there exists a file \fB.wishrc\fR in the home directory of
 the user, \fBwish\fR evaluates the file as a Tcl script
 just before reading the first command from standard input.
 .PP
-If arguments to \fBwish\fR do specify a \fIfileName\fR, then
+If arguments to \fBwish\fR do specify a \fIfileName\fR, then 
 \fIfileName\fR is treated as the name of a script file.
 \fBWish\fR will evaluate the script in \fIfileName\fR (which
 presumably creates a user interface), then it will respond to events
@@ -189,7 +189,7 @@ the medium, or by the character, '\\032' ('\\u001a', control-Z).
 If this character is present in the file, the \fBwish\fR application
 will read text up to but not including the character.  An application
 that requires this character in the file may encode it as
-``\\032'', ``\\x1a'', or ``\\u001a''; or may generate it by use of commands
+``\\032'', ``\\x1a'', or ``\\u001a''; or may generate it by use of commands 
 such as \fBformat\fR or \fBbinary\fR.
 .SH PROMPTS
 .PP

@@ -15,7 +15,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 
 /*
  * The table below maps from symbolic names for visual classes to the

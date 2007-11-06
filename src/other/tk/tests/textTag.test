@@ -23,7 +23,7 @@ update
 .t debug on
 wm geometry . {}
 set bigFont {Helvetica 24}
-
+  
 # The statements below reset the main window;  it's needed if the window
 # manager is mwm, to make mwm forget about a previous minimum size setting.
 
@@ -777,7 +777,7 @@ test textTag-18.1 {TkTextPickCurrent tag bindings} {
     text .t -width 30 -height 4 -relief sunken -borderwidth 10 \
       -highlightthickness 10 -pady 2
     pack .t
-
+    
     .t insert end " Tag here " TAG " no tag here"
     .t tag configure TAG -borderwidth 4 -relief raised
     .t tag bind TAG <Enter>  {lappend res "%x %y tag-Enter"}

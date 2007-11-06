@@ -141,7 +141,7 @@ static void Ttk_ClearCache(Ttk_ResourceCache cache)
 
 void Ttk_FreeResourceCache(Ttk_ResourceCache cache)
 {
-    Tcl_HashEntry *entryPtr;
+    Tcl_HashEntry *entryPtr; 
     Tcl_HashSearch search;
 
     Ttk_ClearCache(cache);
@@ -200,10 +200,10 @@ static void InitCacheWindow(Ttk_ResourceCache cache, Tk_Window tkwin)
  * Ttk_RegisterNamedColor --
  *	Specify an RGB triplet as a named color.
  *	Overrides any previous named color specification.
- *
+ *	
  */
 void Ttk_RegisterNamedColor(
-    Ttk_ResourceCache cache,
+    Ttk_ResourceCache cache, 
     const char *colorName,
     XColor *colorPtr)
 {
@@ -212,7 +212,7 @@ void Ttk_RegisterNamedColor(
     char nameBuf[14];
     Tcl_Obj *colorNameObj;
 
-    sprintf(nameBuf, "#%04X%04X%04X",
+    sprintf(nameBuf, "#%04X%04X%04X", 
     	colorPtr->red, colorPtr->green, colorPtr->blue);
     colorNameObj = Tcl_NewStringObj(nameBuf, -1);
     Tcl_IncrRefCount(colorNameObj);
@@ -234,7 +234,7 @@ void Ttk_RegisterNamedColor(
  */
 static Tcl_Obj *CheckNamedColor(Ttk_ResourceCache cache, Tcl_Obj *objPtr)
 {
-    Tcl_HashEntry *entryPtr =
+    Tcl_HashEntry *entryPtr = 
     	Tcl_FindHashEntry(&cache->namedColors, Tcl_GetString(objPtr));
     if (entryPtr) {	/* Use named color instead */
     	objPtr = (Tcl_Obj *)Tcl_GetHashValue(entryPtr);
@@ -249,7 +249,7 @@ typedef void *(*Allocator)(Tcl_Interp *, Tk_Window, Tcl_Obj *);
 
 static Tcl_Obj *Ttk_Use(
     Tcl_Interp *interp,
-    Tcl_HashTable *table,
+    Tcl_HashTable *table, 
     Allocator allocate,
     Tk_Window tkwin,
     Tcl_Obj *objPtr)

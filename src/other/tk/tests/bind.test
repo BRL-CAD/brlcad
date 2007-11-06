@@ -12,6 +12,7 @@
 package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
+tk useinputmethods 0
 
 catch {destroy .b}
 toplevel .b -width 100 -height 50
@@ -23,7 +24,7 @@ proc setup {} {
     frame .b.f -class Test -width 150 -height 100
     pack .b.f
     focus -force .b.f
-    foreach p [event info] {event delete $p}
+    foreach p [event info] {event delete $p}    
     update
 }
 setup
@@ -168,7 +169,7 @@ test bind-4.2 {TkBindEventProc procedure} {
     bind .b.f <Enter> {lappend x "%W enter .b.f"}
     bindtags .b.f {.b.f {a b} xyz}
     set x {}
-    event gen .b.f <Enter>
+    event gen .b.f <Enter> 
     set x
 } {{.b.f enter .b.f} {.b.f enter {a b}} {.b.f enter xyz}}
 test bind-4.3 {TkBindEventProc procedure} {
@@ -227,6 +228,7 @@ test bind-6.2 {Tk_DeleteBindTable procedure: pending bindings deleted later} tes
     interp create foo
     foo eval {
 	load {} Tk
+	tk useinputmethods 0
 	load {} Tktest
 	wm geometry . +0+0
 	frame .t -width 50 -height 50
@@ -537,10 +539,10 @@ test bind-13.10 {Tk_BindEvent procedure: collapse Motions} {
     setup
     bind .b.f <Motion> "lappend x Motion%#(%x,%y)"
     set x {}
-    event gen .b.f <Motion> -serial 100 -x 100 -y 200 -when tail
+    event gen .b.f <Motion> -serial 100 -x 100 -y 200 -when tail 
     update
     event gen .b.f <Motion> -serial 101 -x 200 -y 300 -when tail
-    event gen .b.f <Motion> -serial 102 -x 300 -y 400 -when tail
+    event gen .b.f <Motion> -serial 102 -x 300 -y 400 -when tail 
     update
     set x
 } {Motion100(100,200) Motion102(300,400)}
@@ -548,10 +550,10 @@ test bind-13.11 {Tk_BindEvent procedure: collapse repeating modifiers} {
     setup
     bind .b.f <Key> "lappend x %K%#"
     bind .b.f <KeyRelease> "lappend x %K%#"
-    event gen .b.f <Key-Shift_L> -serial 100 -when tail
-    event gen .b.f <KeyRelease-Shift_L> -serial 101 -when tail
-    event gen .b.f <Key-Shift_L> -serial 102 -when tail
-    event gen .b.f <KeyRelease-Shift_L> -serial 103 -when tail
+    event gen .b.f <Key-Shift_L> -serial 100 -when tail 
+    event gen .b.f <KeyRelease-Shift_L> -serial 101 -when tail 
+    event gen .b.f <Key-Shift_L> -serial 102 -when tail 
+    event gen .b.f <KeyRelease-Shift_L> -serial 103 -when tail 
     update
 } {}
 test bind-13.12 {Tk_BindEvent procedure: valid key detail} {
@@ -686,7 +688,7 @@ test bind-13.26 {Tk_BindEvent procedure: no detail virtual pattern list} {
     setup
     bind .b.f <Button-2> {set x Button-2}
     set x {}
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     set x
 } {Button-2}
 test bind-13.27 {Tk_BindEvent procedure: detail virtual pattern list} {
@@ -841,7 +843,7 @@ test bind-13.43 {Tk_BindEvent procedure: break in script} testcbind {
 } {b1}
 
 proc bgerror msg {
-    global x
+    global x 
     lappend x $msg
 }
 test bind-13.44 {Tk_BindEvent procedure: error in script} {
@@ -902,7 +904,7 @@ test bind-14.3 {TkBindDeadWindow: pending C bindings} testcbind {
     }
     set y
 } {a1 b1 d2}
-
+    
 test bind-15.1 {MatchPatterns procedure, ignoring type mismatches} {
     setup
     bind .b.f ab {set x 1}
@@ -1029,7 +1031,7 @@ test bind-15.14 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -x 30 -y 40
     event gen .b.f <Button-1> -x 31 -y 39
@@ -1040,7 +1042,7 @@ test bind-15.15 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -x 30 -y 40
     event gen .b.f <Button-1> -x 29 -y 41
@@ -1051,7 +1053,7 @@ test bind-15.16 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -x 30 -y 40
     event gen .b.f <Button-1> -x 40 -y 40
@@ -1062,7 +1064,7 @@ test bind-15.17 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -x 30 -y 40
     event gen .b.f <Button-1> -x 20 -y 40
@@ -1073,7 +1075,7 @@ test bind-15.18 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -x 30 -y 40
     event gen .b.f <Button-1> -x 30 -y 30
@@ -1084,7 +1086,7 @@ test bind-15.19 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -x 30 -y 40
     event gen .b.f <Button-1> -x 30 -y 50
@@ -1095,7 +1097,7 @@ test bind-15.20 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -time 300
     event gen .b.f <Button-1> -time 700
@@ -1106,7 +1108,7 @@ test bind-15.21 {MatchPatterns procedure, checking "nearby"} {
     setup
     bind .b.f <Double-1> {set x 1}
     set x 0
-    event gen .b.f <Button-2>
+    event gen .b.f <Button-2> 
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Button-1> -time 300
     event gen .b.f <Button-1> -time 900
@@ -1656,7 +1658,7 @@ test bind-18.3 {CreateVirtualEvent procedure: new physical} {
 } {<Control-Key-v>}
 test bind-18.4 {CreateVirtualEvent procedure: duplicate physical} {
     setup
-    event add <<xyz>> <Control-v>
+    event add <<xyz>> <Control-v> 
     event add <<xyz>> <Control-v>
     event info <<xyz>>
 } {<Control-Key-v>}
@@ -1713,13 +1715,13 @@ test bind-19.7 {DeleteVirtualEvent procedure: owns 1, delete all} {
     setup
     event add <<xyz>> <Control-v>
     event delete <<xyz>>
-    event info
+    event info 
 } {}
 test bind-19.8 {DeleteVirtualEvent procedure: owns 1, delete 1} {
     setup
     event add <<xyz>> <Control-v>
     event delete <<xyz>> <Control-v>
-    event info
+    event info 
 } {}
 test bind-19.9 {DeleteVirtualEvent procedure: owns many, delete all} {
     setup
@@ -1756,7 +1758,7 @@ test bind-19.12 {DeleteVirtualEvent procedure: owned by 1, first in chain} {
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Control-Button-2>
     event gen .b.f <Control-ButtonRelease-2>
-    event delete <<xyz>>
+    event delete <<xyz>> 
     event gen .b.f <Button-2>
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Control-Button-2>
@@ -1802,7 +1804,7 @@ test bind-19.14 {DeleteVirtualEvent procedure: owned by 1, last in chain} {
     event gen .b.f <Control-ButtonRelease-2>
     event gen .b.f <Shift-Button-2>
     event gen .b.f <Shift-ButtonRelease-2>
-    event delete <<xyz>>
+    event delete <<xyz>> 
     event gen .b.f <Button-2>
     event gen .b.f <ButtonRelease-2>
     event gen .b.f <Control-Button-2>
@@ -1829,7 +1831,7 @@ test bind-19.15 {DeleteVirtualEvent procedure: owned by many, first} {
     event gen .b.g <ButtonRelease-2>
     event gen .b.h <Button-2>
     event gen .b.h <ButtonRelease-2>
-    event delete <<xyz>>
+    event delete <<xyz>> 
     event gen .b.f <Button-2>
     event gen .b.f <ButtonRelease-2>
     event gen .b.g <Button-2>
@@ -1887,7 +1889,7 @@ test bind-19.17 {DeleteVirtualEvent procedure: owned by many, last} {
     event gen .b.g <ButtonRelease-2>
     event gen .b.h <Button-2>
     event gen .b.h <ButtonRelease-2>
-    event delete <<def>>
+    event delete <<def>> 
     event gen .b.f <Button-2>
     event gen .b.f <ButtonRelease-2>
     event gen .b.g <Button-2>
@@ -2056,7 +2058,7 @@ foreach check {
     {bind-22.22 <Configure> %a {-above [winfo id .b]} {[winfo id .b]}}
     {bind-22.23 <Key> %b       {-above .} {{1 {<Key> event doesn't accept "-above" option}}}}
 
-    {bind-22.24 <Configure> %B {-borderwidth xyz} {{1 {bad screen distance "xyz"}}}}
+    {bind-22.24 <Configure> %B {-borderwidth xyz} {{1 {bad screen distance "xyz"}}}}    
     {bind-22.25 <Configure> %B {-borderwidth 2i} {[winfo pixels .b.f 2i]}}
     {bind-22.26 <Key> %k       {-borderwidth 2i} {{1 {<Key> event doesn't accept "-borderwidth" option}}}}
 
@@ -2492,7 +2494,7 @@ test bind-26.3 {event names} {
     destroy .b.f
     set x
 } {<Destroy> destroyed}
-foreach check {
+foreach check { 
     {bind-26.4  Motion     Motion}
     {bind-26.5  Button     Button}
     {bind-26.6  ButtonPress   Button}
@@ -2519,7 +2521,7 @@ foreach check {
     } [list "event $event" <$canonicalEvent>]
 }
 # These events require an extra argument to [event generate]
-foreach check {
+foreach check { 
     {bind-26.19 Circulate Circulate}
     {bind-26.20 Configure Configure}
     {bind-26.21 Gravity   Gravity}

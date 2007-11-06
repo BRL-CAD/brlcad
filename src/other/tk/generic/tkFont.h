@@ -203,6 +203,10 @@ MODULE_SCOPE int	TkFontGetPixels(Tk_Window tkwin, int size);
 MODULE_SCOPE int	TkFontGetPoints(Tk_Window tkwin, int size);
 MODULE_SCOPE char **	TkFontGetGlobalClass(void);
 MODULE_SCOPE char **	TkFontGetSymbolClass(void);
+MODULE_SCOPE int	TkCreateNamedFont(Tcl_Interp *interp, Tk_Window tkwin,
+			    CONST char *name, TkFontAttributes *faPtr);
+MODULE_SCOPE int	TkDeleteNamedFont(Tcl_Interp *interp,
+			    Tk_Window tkwin, CONST char *name);
 MODULE_SCOPE int	TkFontGetFirstTextLayout(Tk_TextLayout layout,
 			    Tk_Font *font, char *dst);
 

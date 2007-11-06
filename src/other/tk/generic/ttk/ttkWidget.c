@@ -20,13 +20,13 @@
 
 /* UpdateLayout --
  * 	Call the widget's get-layout hook to recompute corePtr->layout.
- * 	Returns TCL_OK if successful, returns TCL_ERROR and leaves
+ * 	Returns TCL_OK if successful, returns TCL_ERROR and leaves 
  * 	the layout unchanged otherwise.
  */
 static int UpdateLayout(Tcl_Interp *interp, WidgetCore *corePtr)
 {
     Ttk_Theme themePtr = Ttk_GetCurrentTheme(interp);
-    Ttk_Layout newLayout =
+    Ttk_Layout newLayout = 
     	corePtr->widgetSpec->getLayoutProc(interp, themePtr,corePtr);
 
     if (newLayout) {
@@ -112,10 +112,10 @@ static void RedisplayWidget(ClientData recordPtr)
 #endif /* TK_NO_DOUBLE_BUFFERING */
 }
 
-/* TtkRedisplayWidget --
+/* TtkRedisplayWidget -- 
  * 	Schedule redisplay as an idle handler.
  */
-void TtkRedisplayWidget(WidgetCore *corePtr)
+void TtkRedisplayWidget(WidgetCore *corePtr) 
 {
     if (corePtr->flags & WIDGET_DESTROYED) {
 	return;
@@ -128,7 +128,7 @@ void TtkRedisplayWidget(WidgetCore *corePtr)
 }
 
 /* TtkResizeWidget --
- * 	Recompute widget size, schedule geometry propagation and redisplay.
+ * 	Recompute widget size, schedule geometry propagation and redisplay. 
  */
 void TtkResizeWidget(WidgetCore *corePtr)
 {
@@ -240,7 +240,7 @@ WidgetCleanup(char *memPtr)
  *
  *	For Deactivate/Activate pseudo-events, clear/set the background state flag.
  *
- *	<<NOTE-REALIZED>> On the first ConfigureNotify event
+ *	<<NOTE-REALIZED>> On the first ConfigureNotify event 
  *	(which indicates that the window has just been created),
  *	update the layout.  This is to work around two problems:
  *	(1) Virtual events aren't delivered to unrealized widgets
@@ -484,7 +484,7 @@ Ttk_Layout TtkWidgetGetLayout(
     WidgetCore *corePtr = recordPtr;
     const char *styleName = 0;
 
-    if (corePtr->styleObj)
+    if (corePtr->styleObj) 
     	styleName = Tcl_GetString(corePtr->styleObj);
 
     if (!styleName || *styleName == '\0')
@@ -496,8 +496,8 @@ Ttk_Layout TtkWidgetGetLayout(
 
 /*
  * TtkWidgetGetOrientedLayout --
- * 	Helper routine.  Same as TtkWidgetGetLayout, but prefixes
- * 	"Horizontal." or "Vertical." to the style name, depending
+ * 	Helper routine.  Same as TtkWidgetGetLayout, but prefixes 
+ * 	"Horizontal." or "Vertical." to the style name, depending 
  * 	on the value of the 'orient' option.
  */
 Ttk_Layout TtkWidgetGetOrientedLayout(
@@ -511,18 +511,18 @@ Ttk_Layout TtkWidgetGetOrientedLayout(
 
     Tcl_DStringInit(&styleName);
 
-    /* Prefix:
+    /* Prefix: 
      */
     Ttk_GetOrientFromObj(NULL, orientObj, &orient);
     if (orient == TTK_ORIENT_HORIZONTAL)
 	Tcl_DStringAppend(&styleName, "Horizontal.", -1);
-    else
+    else 
 	Tcl_DStringAppend(&styleName, "Vertical.", -1);
 
 
     /* Add base style name:
      */
-    if (corePtr->styleObj)
+    if (corePtr->styleObj) 
     	baseStyleName = Tcl_GetString(corePtr->styleObj);
     if (!baseStyleName || *baseStyleName == '\0')
     	baseStyleName = corePtr->widgetSpec->className;
@@ -531,7 +531,7 @@ Ttk_Layout TtkWidgetGetOrientedLayout(
 
     /* Create layout:
      */
-    layout= Ttk_CreateLayout(interp, themePtr, Tcl_DStringValue(&styleName),
+    layout= Ttk_CreateLayout(interp, themePtr, Tcl_DStringValue(&styleName), 
 	recordPtr, corePtr->optionTable, corePtr->tkwin);
 
     Tcl_DStringFree(&styleName);
@@ -784,7 +784,7 @@ int TtkWidgetIdentifyCommand(
 	|| Tcl_GetIntFromObj(interp, objv[3], &y) != TCL_OK)
 	return TCL_ERROR;
 
-    node = Ttk_LayoutIdentify(corePtr->layout, x, y);
+    node = Ttk_LayoutIdentify(corePtr->layout, x, y); 
     if (node) {
 	const char *elementName = Ttk_LayoutNodeName(node);
 	Tcl_SetObjResult(interp,Tcl_NewStringObj(elementName,-1));

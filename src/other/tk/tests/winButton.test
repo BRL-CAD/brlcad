@@ -37,8 +37,8 @@ test winbutton-1.1 {TkpComputeButtonGeometry procedure} {testImageType win} {
     image1 changed 0 0 0 0 60 40
     label .b1 -image image1 -bd 4 -padx 0 -pady 2
     button .b2 -image image1 -bd 4 -padx 0 -pady 2
-    checkbutton .b3 -image image1 -bd 4 -padx 1 -pady 1
-    radiobutton .b4 -image image1 -bd 4 -padx 2 -pady 0
+    checkbutton .b3 -image image1 -bd 4 -padx 1 -pady 1 -font {{MS Sans Serif} 8}
+    radiobutton .b4 -image image1 -bd 4 -padx 2 -pady 0 -font {{MS Sans Serif} 8}
     pack .b1 .b2 .b3 .b4
     update
     # with patch 463234 with native L&F enabled, this returns:
@@ -52,8 +52,8 @@ test winbutton-1.2 {TkpComputeButtonGeometry procedure} win {
     deleteWindows
     label .b1 -bitmap question -bd 3 -padx 0 -pady 2
     button .b2 -bitmap question -bd 3 -padx 0 -pady 2
-    checkbutton .b3 -bitmap question -bd 3 -padx 1 -pady 1
-    radiobutton .b4 -bitmap question -bd 3 -padx 2 -pady 0
+    checkbutton .b3 -bitmap question -bd 3 -padx 1 -pady 1 -font {{MS Sans Serif} 8}
+    radiobutton .b4 -bitmap question -bd 3 -padx 2 -pady 0 -font {{MS Sans Serif} 8}
     pack .b1 .b2 .b3 .b4
     update
     # with patch 463234 with native L&F enabled, this returns:
@@ -91,7 +91,7 @@ test winbutton-1.4 {TkpComputeButtonGeometry procedure} {win nonPortable} {
 	    [winfo reqwidth .b2] [winfo reqheight .b2] \
 	    [winfo reqwidth .b3] [winfo reqheight .b3] \
 	    [winfo reqwidth .b4] [winfo reqheight .b4]
-} {58 24 67 33 88 30 90 28}
+} {58 24 67 33 88 30 90 28} 
 test winbutton-1.5 {TkpComputeButtonGeometry procedure} {win nonPortable} {
     deleteWindows
     label .l1 -text "This is a long string that will wrap around on several lines.\n\nIt also has a blank line (above)." -wraplength 1.5i -padx 0 -pady 0

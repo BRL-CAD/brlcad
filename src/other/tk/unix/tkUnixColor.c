@@ -12,7 +12,8 @@
  * RCS: @(#) $Id$
  */
 
-#include <tkColor.h>
+#include "tkInt.h"
+#include "tkColor.h"
 
 /*
  * If a colormap fills up, attempts to allocate new colors from that colormap

@@ -14,7 +14,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 
 /*
  * The structure below defines the implementation of the "statekey" Tcl
@@ -136,15 +135,16 @@ TkStatePrintProc(
 {
     register Tk_State *statePtr = (Tk_State *) (widgRec + offset);
 
-    if (*statePtr==TK_STATE_NORMAL) {
+    switch (*statePtr) {
+    case TK_STATE_NORMAL:
 	return "normal";
-    } else if (*statePtr==TK_STATE_DISABLED) {
+    case TK_STATE_DISABLED:
 	return "disabled";
-    } else if (*statePtr==TK_STATE_HIDDEN) {
+    case TK_STATE_HIDDEN:
 	return "hidden";
-    } else if (*statePtr==TK_STATE_ACTIVE) {
+    case TK_STATE_ACTIVE:
 	return "active";
-    } else {
+    default:
 	return "";
     }
 }
@@ -263,7 +263,7 @@ TkOffsetParseProc(
     char *widgRec,		/* Widget structure record */
     int offset)			/* Offset of tile in record */
 {
-    Tk_TSOffset *offsetPtr = (Tk_TSOffset *)(widgRec + offset);
+    Tk_TSOffset *offsetPtr = (Tk_TSOffset *) (widgRec + offset);
     Tk_TSOffset tsoffset;
     const char *q, *p;
     int result;
@@ -404,48 +404,48 @@ TkOffsetPrintProc(
     int offset,			/* Offset of tile in record */
     Tcl_FreeProc **freeProcPtr)	/* not used */
 {
-    Tk_TSOffset *offsetPtr = (Tk_TSOffset *)(widgRec + offset);
+    Tk_TSOffset *offsetPtr = (Tk_TSOffset *) (widgRec + offset);
     char *p, *q;
 
-    if ((offsetPtr->flags) & TK_OFFSET_INDEX) {
-	if ((offsetPtr->flags) >= INT_MAX) {
+    if (offsetPtr->flags & TK_OFFSET_INDEX) {
+	if (offsetPtr->flags >= INT_MAX) {
 	    return "end";
 	}
 	p = (char *) ckalloc(32);
-	sprintf(p, "%d",(offsetPtr->flags & (~TK_OFFSET_INDEX)));
+	sprintf(p, "%d", offsetPtr->flags & ~TK_OFFSET_INDEX);
 	*freeProcPtr = TCL_DYNAMIC;
 	return p;
     }
-    if ((offsetPtr->flags) & TK_OFFSET_TOP) {
-	if ((offsetPtr->flags) & TK_OFFSET_LEFT) {
+    if (offsetPtr->flags & TK_OFFSET_TOP) {
+	if (offsetPtr->flags & TK_OFFSET_LEFT) {
 	    return "nw";
-	} else if ((offsetPtr->flags) & TK_OFFSET_CENTER) {
+	} else if (offsetPtr->flags & TK_OFFSET_CENTER) {
 	    return "n";
-	} else if ((offsetPtr->flags) & TK_OFFSET_RIGHT) {
+	} else if (offsetPtr->flags & TK_OFFSET_RIGHT) {
 	    return "ne";
 	}
-    } else if ((offsetPtr->flags) & TK_OFFSET_MIDDLE) {
-	if ((offsetPtr->flags) & TK_OFFSET_LEFT) {
+    } else if (offsetPtr->flags & TK_OFFSET_MIDDLE) {
+	if (offsetPtr->flags & TK_OFFSET_LEFT) {
 	    return "w";
-	} else if ((offsetPtr->flags) & TK_OFFSET_CENTER) {
+	} else if (offsetPtr->flags & TK_OFFSET_CENTER) {
 	    return "center";
-	} else if ((offsetPtr->flags) & TK_OFFSET_RIGHT) {
+	} else if (offsetPtr->flags & TK_OFFSET_RIGHT) {
 	    return "e";
 	}
-    } else if ((offsetPtr->flags) & TK_OFFSET_BOTTOM) {
-	if ((offsetPtr->flags) & TK_OFFSET_LEFT) {
+    } else if (offsetPtr->flags & TK_OFFSET_BOTTOM) {
+	if (offsetPtr->flags & TK_OFFSET_LEFT) {
 	    return "sw";
-	} else if ((offsetPtr->flags) & TK_OFFSET_CENTER) {
+	} else if (offsetPtr->flags & TK_OFFSET_CENTER) {
 	    return "s";
-	} else if ((offsetPtr->flags) & TK_OFFSET_RIGHT) {
+	} else if (offsetPtr->flags & TK_OFFSET_RIGHT) {
 	    return "se";
 	}
     }
     q = p = (char *) ckalloc(32);
-    if ((offsetPtr->flags) & TK_OFFSET_RELATIVE) {
+    if (offsetPtr->flags & TK_OFFSET_RELATIVE) {
 	*q++ = '#';
     }
-    sprintf(q, "%d,%d",offsetPtr->xoffset, offsetPtr->yoffset);
+    sprintf(q, "%d,%d", offsetPtr->xoffset, offsetPtr->yoffset);
     *freeProcPtr = TCL_DYNAMIC;
     return p;
 }
@@ -470,7 +470,7 @@ TkPixelParseProc(
     char *widgRec,		/* Widget structure record */
     int offset)			/* Offset of tile in record */
 {
-    double *doublePtr = (double *)(widgRec + offset);
+    double *doublePtr = (double *) (widgRec + offset);
     int result;
 
     result = TkGetDoublePixels(interp, tkwin, value, doublePtr);
@@ -503,10 +503,9 @@ TkPixelPrintProc(
     int offset,			/* Offset of tile in record */
     Tcl_FreeProc **freeProcPtr)	/* not used */
 {
-    double *doublePtr = (double *)(widgRec + offset);
-    char *p;
+    double *doublePtr = (double *) (widgRec + offset);
+    char *p = (char *) ckalloc(24);
 
-    p = (char *) ckalloc(24);
     Tcl_PrintDouble(NULL, *doublePtr, p);
     *freeProcPtr = TCL_DYNAMIC;
     return p;
@@ -572,11 +571,11 @@ TkDrawInsetFocusHighlight(
  *	This function draws a rectangular ring around the outside of a widget
  *	to indicate that it has received the input focus.
  *
- *      This function is now deprecated. Use TkpDrawHighlightBorder instead,
- *      since this function does not handle drawing the Focus ring properly on
- *      the Macintosh - you need to know the background GC as well as the
- *      foreground since the Mac focus ring separated from the widget by a 1
- *      pixel border.
+ *	This function is now deprecated. Use TkpDrawHighlightBorder instead,
+ *	since this function does not handle drawing the Focus ring properly on
+ *	the Macintosh - you need to know the background GC as well as the
+ *	foreground since the Mac focus ring separated from the widget by a 1
+ *	pixel border.
  *
  * Results:
  *	None.
@@ -635,11 +634,9 @@ Tk_GetScrollInfo(
     int *intPtr)		/* Filled in with number of pages or lines to
 				 * scroll, if any. */
 {
-    int c;
-    size_t length;
+    int c = argv[2][0];
+    size_t length = strlen(argv[2]);
 
-    length = strlen(argv[2]);
-    c = argv[2][0];
     if ((c == 'm') && (strncmp(argv[2], "moveto", length) == 0)) {
 	if (argc != 4) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
@@ -666,11 +663,11 @@ Tk_GetScrollInfo(
 	    return TK_SCROLL_PAGES;
 	} else if ((c == 'u') && (strncmp(argv[4], "units", length) == 0)) {
 	    return TK_SCROLL_UNITS;
-	} else {
-	    Tcl_AppendResult(interp, "bad argument \"", argv[4],
-		    "\": must be units or pages", NULL);
-	    return TK_SCROLL_ERROR;
 	}
+
+	Tcl_AppendResult(interp, "bad argument \"", argv[4],
+		"\": must be units or pages", NULL);
+	return TK_SCROLL_ERROR;
     }
     Tcl_AppendResult(interp, "unknown option \"", argv[2],
 	    "\": must be moveto or scroll", NULL);
@@ -711,14 +708,14 @@ Tk_GetScrollInfoObj(
     int *intPtr)		/* Filled in with number of pages or lines to
 				 * scroll, if any. */
 {
-    int c;
-    size_t length;
-    char *arg2, *arg4;
+    int length;
+    const char *arg;
 
-    arg2 = Tcl_GetString(objv[2]);
-    length = strlen(arg2);
-    c = arg2[0];
-    if ((c == 'm') && (strncmp(arg2, "moveto", length) == 0)) {
+    arg = Tcl_GetStringFromObj(objv[2], &length);
+
+#define ArgPfxEq(str) ((arg[0]==str[0])&&!strncmp(arg,str,(unsigned)length))
+
+    if (ArgPfxEq("moveto")) {
 	if (objc != 4) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "moveto fraction");
 	    return TK_SCROLL_ERROR;
@@ -727,8 +724,7 @@ Tk_GetScrollInfoObj(
 	    return TK_SCROLL_ERROR;
 	}
 	return TK_SCROLL_MOVETO;
-    } else if ((c == 's')
-	    && (strncmp(arg2, "scroll", length) == 0)) {
+    } else if (ArgPfxEq("scroll")) {
 	if (objc != 5) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "scroll number units|pages");
 	    return TK_SCROLL_ERROR;
@@ -736,20 +732,19 @@ Tk_GetScrollInfoObj(
 	if (Tcl_GetIntFromObj(interp, objv[3], intPtr) != TCL_OK) {
 	    return TK_SCROLL_ERROR;
 	}
-	arg4 = Tcl_GetString(objv[4]);
-	length = (strlen(arg4));
-	c = arg4[0];
-	if ((c == 'p') && (strncmp(arg4, "pages", length) == 0)) {
+
+	arg = Tcl_GetStringFromObj(objv[4], &length);
+	if (ArgPfxEq("pages")) {
 	    return TK_SCROLL_PAGES;
-	} else if ((c == 'u') && (strncmp(arg4, "units", length) == 0)) {
+	} else if (ArgPfxEq("units")) {
 	    return TK_SCROLL_UNITS;
-	} else {
-	    Tcl_AppendResult(interp, "bad argument \"", arg4,
-		    "\": must be units or pages", NULL);
-	    return TK_SCROLL_ERROR;
 	}
+
+	Tcl_AppendResult(interp, "bad argument \"", arg,
+		"\": must be units or pages", NULL);
+	return TK_SCROLL_ERROR;
     }
-    Tcl_AppendResult(interp, "unknown option \"", arg2,
+    Tcl_AppendResult(interp, "unknown option \"", arg,
 	    "\": must be moveto or scroll", NULL);
     return TK_SCROLL_ERROR;
 }
@@ -786,6 +781,10 @@ TkComputeAnchor(
     int *xPtr, int *yPtr)	/* Returns upper-left corner of anchored
 				 * rectangle. */
 {
+    /*
+     * Handle the horizontal parts.
+     */
+
     switch (anchor) {
     case TK_ANCHOR_NW:
     case TK_ANCHOR_W:
@@ -802,10 +801,14 @@ TkComputeAnchor(
 	break;
 
     default:
-	*xPtr = Tk_Width(tkwin) - (Tk_InternalBorderRight(tkwin) + padX)
+	*xPtr = Tk_Width(tkwin) - Tk_InternalBorderRight(tkwin) - padX
 		- innerWidth;
 	break;
     }
+
+    /*
+     * Handle the vertical parts.
+     */
 
     switch (anchor) {
     case TK_ANCHOR_NW:
@@ -852,9 +855,9 @@ TkFindStateString(
     const TkStateMap *mapPtr,	/* The state table. */
     int numKey)			/* The key to try to find in the table. */
 {
-    for ( ; mapPtr->strKey != NULL; mapPtr++) {
+    for (; mapPtr->strKey!=NULL ; mapPtr++) {
 	if (numKey == mapPtr->numKey) {
-	    return (char*)(mapPtr->strKey);
+	    return (char *) mapPtr->strKey;
 	}
     }
     return NULL;
@@ -863,7 +866,7 @@ TkFindStateString(
 /*
  *---------------------------------------------------------------------------
  *
- * TkFindStateNum --
+ * TkFindStateNum, TkFindStateNumObj --
  *
  *	Given a lookup table, map a string to a number in the table.
  *
@@ -890,11 +893,21 @@ TkFindStateNum(
 {
     const TkStateMap *mPtr;
 
+    /*
+     * See if the value is in the state map.
+     */
+
     for (mPtr = mapPtr; mPtr->strKey != NULL; mPtr++) {
 	if (strcmp(strKey, mPtr->strKey) == 0) {
 	    return mPtr->numKey;
 	}
     }
+
+    /*
+     * Not there. Generate an error message (if we can) and return the
+     * default.
+     */
+
     if (interp != NULL) {
 	mPtr = mapPtr;
 	Tcl_AppendResult(interp, "bad ", option, " value \"", strKey,
@@ -919,10 +932,18 @@ TkFindStateNumObj(
     const char *key;
     const Tcl_ObjType *typePtr;
 
+    /*
+     * See if the value is in the object cache.
+     */
+
     if ((keyPtr->typePtr == &tkStateKeyObjType)
-	    && (keyPtr->internalRep.twoPtrValue.ptr1 == (VOID *) mapPtr)) {
+	    && (keyPtr->internalRep.twoPtrValue.ptr1 == mapPtr)) {
 	return (int) keyPtr->internalRep.twoPtrValue.ptr2;
     }
+
+    /*
+     * Not there. Look in the state map.
+     */
 
     key = Tcl_GetStringFromObj(keyPtr, NULL);
     for (mPtr = mapPtr; mPtr->strKey != NULL; mPtr++) {
@@ -931,12 +952,18 @@ TkFindStateNumObj(
 	    if ((typePtr != NULL) && (typePtr->freeIntRepProc != NULL)) {
 		(*typePtr->freeIntRepProc)(keyPtr);
 	    }
-	    keyPtr->internalRep.twoPtrValue.ptr1 = (VOID *) mapPtr;
-	    keyPtr->internalRep.twoPtrValue.ptr2 = (VOID *) mPtr->numKey;
+	    keyPtr->internalRep.twoPtrValue.ptr1 = (void *) mapPtr;
+	    keyPtr->internalRep.twoPtrValue.ptr2 = (void *) mPtr->numKey;
 	    keyPtr->typePtr = &tkStateKeyObjType;
 	    return mPtr->numKey;
 	}
     }
+
+    /*
+     * Not there either. Generate an error message (if we can) and return the
+     * default.
+     */
+
     if (interp != NULL) {
 	mPtr = mapPtr;
 	Tcl_AppendResult(interp, "bad ", Tcl_GetString(optionPtr),

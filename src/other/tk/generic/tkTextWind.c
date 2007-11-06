@@ -14,9 +14,8 @@
  * RCS: @(#) $Id$
  */
 
-#include "tk.h"
-#include "tkText.h"
 #include "tkPort.h"
+#include "tkText.h"
 
 /*
  * The following structure is the official type record for the embedded window

@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_label n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -18,7 +18,7 @@ ttk_label \- Display a text string and/or image
 
 .SH DESCRIPTION
 A \fBttk::label\fR widget displays a textual label and/or image.
-The label may be linked to a Tcl variable
+The label may be linked to a Tcl variable 
 to automatically change the displayed text.
 .SO
 \-class	\-compound	\-cursor	\-image
@@ -34,7 +34,7 @@ relative to the inner margins.  Legal values are
 \fBs\fR, \fBsw\fR, \fBw\fR, \fBnw\fR, and \fBcenter\fR.
 See also \fB-justify\fR.
 .OP \-background frameColor FrameColor
-The widget's background color.
+The widget's background color.  
 If unspecified, the theme default is used.
 .OP \-font font Font
 Font to use for label text.
@@ -48,17 +48,17 @@ One of \fBleft\fR, \fBcenter\fR, or \fBright\fR.
 See also \fB-anchor\fR.
 .OP \-padding padding Padding
 Specifies the amount of extra space to allocate for the widget.
-The padding is a list of up to four length specifications
+The padding is a list of up to four length specifications 
 \fIleft top right bottom\fR.
-If fewer than four elements are specified,
+If fewer than four elements are specified, 
 \fIbottom\fR defaults to \fItop\fR,
-\fIright\fR defaults to \fIleft\fR, and
+\fIright\fR defaults to \fIleft\fR, and 
 \fItop\fR defaults to \fIleft\fR.
 .OP \-relief relief Relief
 .\" Rewrite this:
 Specifies the 3-D effect desired for the widget border.
 Valid values are
-\fBflat\fR, \fBgroove\fR, \fBraised\fR, \fBridge\fR, \fBsolid\fR,
+\fBflat\fR, \fBgroove\fR, \fBraised\fR, \fBridge\fR, \fBsolid\fR, 
 and \fBsunken\fR.
 .OP \-text text Text
 Specifies a text string to be displayed inside the widget

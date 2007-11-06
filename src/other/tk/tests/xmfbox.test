@@ -1,4 +1,4 @@
-# xmfbox.test --
+# xmfbox.test -- 
 #
 #	This file is a Tcl script to test the file dialog that's used
 #	when the tk_strictMotif flag is set. Because the file dialog
@@ -53,7 +53,7 @@ proc cleanup {} {
     } msg4]
 
     if {$err0 || $err1 || $err2 || $err3 || $err4} {
-	error [list $msg0 $msg1 $msg2 $msg3 $msg4]
+	error [list $msg0 $msg1 $msg2 $msg3 $msg4] 
     }
     catch {unset foo}
     catch {destroy .foo}

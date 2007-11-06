@@ -67,7 +67,7 @@ proc ttk::notebook::CycleTab {w dir} {
 }
 
 # MnemonicTab $nb $key --
-#	Scan all tabs in the specified notebook for one with the
+#	Scan all tabs in the specified notebook for one with the 
 #	specified mnemonic. If found, returns path name of tab;
 #	otherwise returns ""
 #
@@ -91,8 +91,8 @@ proc ttk::notebook::MnemonicTab {nb key} {
 #	Enable keyboard traversal for a notebook widget
 #	by adding bindings to the containing toplevel window.
 #
-#	TLNotebooks($top) keeps track of the list of all traversal-enabled
-#	notebooks contained in the toplevel
+#	TLNotebooks($top) keeps track of the list of all traversal-enabled 
+#	notebooks contained in the toplevel 
 #
 proc ttk::notebook::enableTraversal {nb} {
     variable TLNotebooks
@@ -140,7 +140,7 @@ proc ttk::notebook::Cleanup {nb} {
     }
 }
 
-# EnclosingNotebook $w --
+# EnclosingNotebook $w -- 
 #	Return the nearest traversal-enabled notebook widget
 #	that contains $w.
 #
@@ -166,7 +166,7 @@ proc ttk::notebook::EnclosingNotebook {w} {
 
 # TLCycleTab --
 #	toplevel binding procedure for Control-Tab / Shift-Control-Tab
-#	Select the next/previous tab in the nearest ancestor notebook.
+#	Select the next/previous tab in the nearest ancestor notebook. 
 #
 proc ttk::notebook::TLCycleTab {w dir} {
     set nb [EnclosingNotebook $w]

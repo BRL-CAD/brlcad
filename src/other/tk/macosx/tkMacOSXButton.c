@@ -14,7 +14,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkButton.h"
 #include "tkMacOSXFont.h"
 #include "tkMacOSXDebug.h"
@@ -225,15 +225,6 @@ TkpDisplayButton(
     }
 
     /*
-     * Set up clipping region. Make sure the we are using the port
-     * for this button, or we will set the wrong window's clip.
-     */
-
-    destPort = TkMacOSXGetDrawablePort(pixmap);
-    portChanged = QDSwapPort(destPort, &savePort);
-    TkMacOSXSetUpClippingRgn(pixmap);
-
-    /*
      * See the comment in UpdateControlColors as to why we use the
      * highlightbackground for the border of Macintosh buttons.
      */
@@ -247,6 +238,15 @@ TkpDisplayButton(
 		    Tk_Width(tkwin), Tk_Height(tkwin), 0, TK_RELIEF_FLAT);
 	}
     }
+
+    /*
+     * Set up clipping region. Make sure the we are using the port
+     * for this button, or we will set the wrong window's clip.
+     */
+
+    destPort = TkMacOSXGetDrawablePort(pixmap);
+    portChanged = QDSwapPort(destPort, &savePort);
+    TkMacOSXSetUpClippingRgn(pixmap);
 
     /*
      * Draw the native portion of the buttons. Start by creating the control
@@ -797,8 +797,7 @@ TkMacOSXInitControl(
     SInt32 controlReference;
 
     rootControl = TkMacOSXGetRootControl(Tk_WindowId(butPtr->tkwin));
-    mbPtr->windowRef = GetWindowFromPort(
-	    TkMacOSXGetDrawablePort(Tk_WindowId(butPtr->tkwin)));
+    mbPtr->windowRef = TkMacOSXDrawableWindow(Tk_WindowId(butPtr->tkwin));
 
     /*
      * Set up the user pane.
@@ -833,7 +832,7 @@ TkMacOSXInitControl(
 	    mbPtr->params.procID, controlReference);
 
     if (!mbPtr->control) {
-	TkMacOSXDbgMsg("failed to create control of type %d\n", procID);
+	TkMacOSXDbgMsg("Failed to create control of type %d\n", procID);
 	return 1;
     }
     if (ChkErr(EmbedControl, mbPtr->control,mbPtr->userPane) != noErr ) {
@@ -1251,9 +1250,11 @@ UserPaneDraw(
 {
     MacButton *mbPtr = (MacButton *)(intptr_t)GetControlReference(control);
     Rect contrlRect;
-
+    CGrafPtr port;
+    
+    GetPort(&port);
     GetControlBounds(control,&contrlRect);
-    TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL);
+    TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL, port);
     EraseRect(&contrlRect);
 }
 
@@ -1282,7 +1283,10 @@ UserPaneBackgroundProc(
     MacButton * mbPtr = (MacButton *)(intptr_t)GetControlReference(control);
 
     if (info->colorDevice) {
-	TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL);
+	CGrafPtr port;
+	
+	GetPort(&port);
+	TkMacOSXSetColorInPort(mbPtr->userPaneBackground, 0, NULL, port);
     }
 }
 

@@ -14,12 +14,6 @@
 
 #include "tkWinInt.h"
 
-/*
- * The Init script (common to Windows and Unix platforms) is defined in
- * tkInitScript.h
- */
-
-#include "tkInitScript.h"
 
 /*
  *----------------------------------------------------------------------
@@ -49,7 +43,7 @@ TkpInit(
      */
 
     TkWinXInit(Tk_GetHINSTANCE());
-    return Tcl_Eval(interp, initScript);
+    return TCL_OK;
 }
 
 /*

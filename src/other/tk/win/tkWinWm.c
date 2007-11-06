@@ -1095,23 +1095,25 @@ WinSetIcon(
 	    }
 	} else {
 	    ThreadSpecificData *tsdPtr;
+
 	    /*
 	     * Don't check return result of SetClassLong() or
-	     * SetClassLongPtr() since they return the previously
-	     * set value which is zero on the initial call or in
-	     * an error case. The MSDN documentation does not
-	     * indicate that the result needs to be checked.
+	     * SetClassLongPtr() since they return the previously set value
+	     * which is zero on the initial call or in an error case. The MSDN
+	     * documentation does not indicate that the result needs to be
+	     * checked.
 	     */
+
 #ifdef _WIN64
 	    SetClassLongPtr(hwnd, GCLP_HICONSM,
-	        (LPARAM)GetIcon(titlebaricon, ICON_SMALL));
+		    (LPARAM) GetIcon(titlebaricon, ICON_SMALL));
 	    SetClassLongPtr(hwnd, GCLP_HICON,
-	        (LPARAM)GetIcon(titlebaricon, ICON_BIG));
+		    (LPARAM) GetIcon(titlebaricon, ICON_BIG));
 #else
 	    SetClassLong(hwnd, GCL_HICONSM,
-	        (LPARAM)GetIcon(titlebaricon, ICON_SMALL));
+		    (LPARAM) GetIcon(titlebaricon, ICON_SMALL));
 	    SetClassLong(hwnd, GCL_HICON,
-	        (LPARAM)GetIcon(titlebaricon, ICON_BIG));
+		    (LPARAM) GetIcon(titlebaricon, ICON_BIG));
 #endif
 	    tsdPtr = (ThreadSpecificData *)
 		    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
@@ -2580,8 +2582,8 @@ TkWmUnmapWindow(
 
 void
 TkpWmSetState(
-     TkWindow *winPtr,		/* Toplevel window to operate on. */
-     int state)			/* One of IconicState, ZoomState, NormalState,
+    TkWindow *winPtr,		/* Toplevel window to operate on. */
+    int state)			/* One of IconicState, ZoomState, NormalState,
 				 * or WithdrawnState. */
 {
     WmInfo *wmPtr = winPtr->wmInfoPtr;
@@ -2627,8 +2629,8 @@ TkpWmSetState(
 
 static void
 TkpWmSetFullScreen(
-     TkWindow *winPtr,		/* Toplevel window to operate on. */
-     int full_screen_state)	/* True if window should be full screen */
+    TkWindow *winPtr,		/* Toplevel window to operate on. */
+    int full_screen_state)	/* True if window should be full screen */
 {
     int changed = 0;
     int full_screen = False;
@@ -2737,7 +2739,7 @@ TkWmDeadWindow(
     } else {
 	register WmInfo *prevPtr;
 	for (prevPtr = winPtr->dispPtr->firstWmPtr; ;
-	     prevPtr = prevPtr->nextPtr) {
+		prevPtr = prevPtr->nextPtr) {
 	    if (prevPtr == NULL) {
 		Tcl_Panic("couldn't unlink window in TkWmDeadWindow");
 	    }
@@ -3207,7 +3209,7 @@ WmAttributesCmd(
 	    styleBit = WS_DISABLED;
 	} else if ((strncmp(string, "-alpha", (unsigned) length) == 0)
 		|| ((length > 2) && (strncmp(string, "-transparentcolor",
-					     (unsigned) length) == 0))) {
+			(unsigned) length) == 0))) {
 	    stylePtr = &exStyle;
 	    styleBit = WS_EX_LAYERED;
 	} else if (strncmp(string, "-fullscreen", (unsigned) length) == 0) {
@@ -4327,7 +4329,8 @@ WmIconphotoCmd(
     TkWindow *useWinPtr = winPtr; /* window to apply to (NULL if -default) */
     Tk_PhotoHandle photo;
     Tk_PhotoImageBlock block;
-    int i, width, height, startObj = 3;
+    int i, width, height, idx, bufferSize, startObj = 3;
+    unsigned char *bgraPixelPtr;
     BlockOfIconImagesPtr lpIR;
     WinIconPtr titlebaricon = NULL;
     HICON hIcon;
@@ -4380,11 +4383,20 @@ WmIconphotoCmd(
 	Tk_PhotoGetImage(photo, &block);
 
 	/*
-	 * Encode the image data into an HICON.
+	 * Convert the image data into BGRA format (RGBQUAD) and then
+	 * encode the image data into an HICON.
 	 */
-
+	bufferSize = height * width * block.pixelSize;
+	bgraPixelPtr = ckalloc(bufferSize);
+	for (idx = 0 ; idx < bufferSize ; idx += 4) {
+	    bgraPixelPtr[idx] = block.pixelPtr[idx+2];
+	    bgraPixelPtr[idx+1] = block.pixelPtr[idx+1];
+	    bgraPixelPtr[idx+2] = block.pixelPtr[idx+0];
+	    bgraPixelPtr[idx+3] = block.pixelPtr[idx+3];
+	}
 	hIcon = CreateIcon(Tk_GetHINSTANCE(), width, height, 1, 32,
-		NULL, (BYTE *) block.pixelPtr);
+		NULL, (BYTE *) bgraPixelPtr);
+	ckfree(bgraPixelPtr);
 	if (hIcon == NULL) {
 	    /*
 	     * XXX should free up created icons.
@@ -4854,7 +4866,7 @@ WmProtocolCmd(
 	 */
 
 	for (protPtr = wmPtr->protPtr; protPtr != NULL;
-	     protPtr = protPtr->nextPtr) {
+		protPtr = protPtr->nextPtr) {
 	    Tcl_AppendElement(interp,
 		    Tk_GetAtomName((Tk_Window) winPtr, protPtr->protocol));
 	}
@@ -7819,6 +7831,15 @@ WmProc(
     case WM_QUERYNEWPALETTE:
 	result = InstallColormaps(hwnd, WM_QUERYNEWPALETTE, TRUE);
 	goto done;
+
+    case WM_SETTINGCHANGE:
+	if (wParam == SPI_SETNONCLIENTMETRICS) {
+	    winPtr = GetTopLevel(hwnd);
+	    TkWinSetupSystemFonts(winPtr->mainPtr);
+	    result = 0;
+	    goto done;
+	}
+	break;
 
     case WM_WINDOWPOSCHANGED:
 	ConfigureTopLevel((WINDOWPOS *) lParam);

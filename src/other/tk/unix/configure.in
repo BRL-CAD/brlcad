@@ -6,7 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tk],[8.5])
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -27,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL="a6"
+TK_PATCH_LEVEL="b1"
 VERSION=${TK_VERSION}
 LOCALES="cs de el en en_gb eo es es_ES fr it nl pl pt ru"
 
@@ -256,10 +256,10 @@ if test "`uname -s`" = "Darwin" ; then
 	fi
     fi
     AC_MSG_RESULT([$tk_aqua])
-    # remove 64-bit arch flags from CFLAGS for combined 32-bit and 64-bit fat
+    # remove 64-bit arch flags from CFLAGS et al. for combined 32 & 64 bit fat
     # builds, as neither TkAqua nor TkX11 can be built for 64-bit at present.
-    test "$fat_32_64" = yes && \
-	CFLAGS="`echo "$CFLAGS " | sed -e 's/-arch ppc64 / /g' -e 's/-arch x86_64 / /g'`"
+    test "$fat_32_64" = yes && for v in CFLAGS CPPFLAGS LDFLAGS; do
+	eval $v'="`echo "$'$v' "|sed -e "s/-arch ppc64 / /g" -e "s/-arch x86_64 / /g"`"'; done
     if test $tk_aqua = no; then
 	# check if weak linking whole libraries is possible.
 	AC_CACHE_CHECK([if ld accepts -weak-l flag], tcl_cv_ld_weak_l, [
@@ -278,7 +278,7 @@ if test $tk_aqua = yes; then
     LIBS="$LIBS -framework Carbon -framework IOKit"
     CFLAGS="$CFLAGS -fpascal-strings"
     TK_WINDOWINGSYSTEM=AQUA
-    if test "${enable_symbols}" != no; then
+    if test -n "${enable_symbols}" -a "${enable_symbols}" != no; then
         AC_DEFINE(TK_MAC_DEBUG, 1, [Are TkAqua debug messages enabled?])
     fi
 else
@@ -290,7 +290,7 @@ else
     #	autoconf macro will return an include directory that contains
     #	no include files, so double-check its result just to be safe.
     #--------------------------------------------------------------------
-
+    
     SC_PATH_X
     TK_WINDOWINGSYSTEM=X11
 fi
@@ -315,13 +315,6 @@ fi
 if test "${TCL_LD_SEARCH_FLAGS}" = '-L${LIB_RUNTIME_DIR}'; then
     LIB_RUNTIME_DIR=`echo ${LIB_RUNTIME_DIR} |sed -e 's/:/ -L/g'`
 fi
-
-# The statement below is very tricky!  It actually *evaluates* the
-# string in TCL_CC_SEARCH_FLAGS and TCL_LD_SEARCH_FLAGS which
-# causes a substitution of the variable LIB_RUNTIME_DIR.
-
-eval "CC_SEARCH_FLAGS=\"$TCL_CC_SEARCH_FLAGS\""
-eval "LD_SEARCH_FLAGS=\"$TCL_LD_SEARCH_FLAGS\""
 
 #--------------------------------------------------------------------
 #	Check for the existence of various libraries.  The order here
@@ -400,7 +393,7 @@ if test $tk_aqua = no; then
 		if test "$tcl_cv_ld_weak_l" = yes; then
 		    # On Darwin, weak link libXss if possible,
 		    # as it is only available on Tiger or later.
-		    XLIBSW="$XLIBSW -weak-lXss -lXext"
+		    XLIBSW="$XLIBSW -Wl,-weak-lXss -lXext"
 		else
 		    XLIBSW="$XLIBSW -lXss -lXext"
 		fi
@@ -505,7 +498,7 @@ eval eval "TK_SHARED_LIB_SUFFIX=${SHARED_LIB_SUFFIX}"
 eval "TK_LIB_FILE=libtk${LIB_SUFFIX}"
 
 # tkConfig.sh needs a version of the _LIB_SUFFIX that has been eval'ed
-# since on some platforms TK_LIB_FILE contains shell escapes.
+# since on some platforms TK_LIB_FILE contains shell escapes. 
 
 eval "TK_LIB_FILE=${TK_LIB_FILE}"
 
@@ -529,12 +522,16 @@ WISH_RSRC_FILE='wish$(VERSION).rsrc'
 if test "`uname -s`" = "Darwin" ; then
     SC_ENABLE_FRAMEWORK
     TK_SHLIB_LD_EXTRAS="-compatibility_version ${TK_VERSION} -current_version ${TK_VERSION}`echo ${TK_PATCH_LEVEL} | awk ['{match($0, "\\\.[0-9]+"); print substr($0,RSTART,RLENGTH)}']`"
-    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TK_LIB_FILE} -seg1addr 0xb000000 -unexported_symbols_list $$(f=$(TCL_STUB_LIB_FILE).E && nm -gjp $(TCL_BIN_DIR)/$(TCL_STUB_LIB_FILE) | grep ^_[[^_]] > $$f && echo $$f)'
+    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TK_LIB_FILE} -unexported_symbols_list $$(f=$(TCL_STUB_LIB_FILE).E && nm -gjp $(TCL_BIN_DIR)/$(TCL_STUB_LIB_FILE) | grep ^_[[^_]] > $$f && echo $$f)'
+    echo "$LDFLAGS " | grep -q -- '-prebind ' && TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -seg1addr 0xb000000'
+    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -sectcreate __TEXT __info_plist Tk-Info.plist'
+    EXTRA_WISH_LIBS='-sectcreate __TEXT __info_plist Wish-Info.plist'
+    AC_CONFIG_FILES([Tk-Info.plist:../macosx/Tk-Info.plist.in Wish-Info.plist:../macosx/Wish-Info.plist.in])
+    EXTRA_APP_CC_SWITCHES='-mdynamic-no-pic'
 fi
 
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TK_FRAMEWORK, 1, [Is Tk built as a framework?])
-    AC_CONFIG_FILES([Tk-Info.plist:../macosx/Tk-Info.plist.in])
     # Construct a fake local framework structure to make linking with
     # '-framework Tk' and running of tktest work
     AC_CONFIG_COMMANDS([Tk.framework], [n=Tk &&
@@ -563,7 +560,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     PRIVATE_INCLUDE_DIR="${libdir}/PrivateHeaders"
     HTML_DIR="${libdir}/Resources/Documentation/Reference/Tk"
     EXTRA_INSTALL="install-private-headers html-tk"
-    EXTRA_BUILD_HTML='@ln -fs contents.htm $(HTML_INSTALL_DIR)/TkTOC.html'
+    EXTRA_BUILD_HTML='@ln -fs contents.htm $(HTML_INSTALL_DIR)/TkTOC.html' 
     EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tk-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     if test $tk_aqua = yes; then
@@ -576,8 +573,8 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     fi
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Finalizing Tk.framework" && rm -f "$(LIB_INSTALL_DIR)/../Current" && ln -s "$(VERSION)" "$(LIB_INSTALL_DIR)/../Current" && for f in "$(LIB_FILE)" tkConfig.sh Resources Headers PrivateHeaders; do rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/Current/$$f" "$(LIB_INSTALL_DIR)/../.."; done && f="$(STUB_LIB_FILE)" && rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/$(VERSION)/$$f" "$(LIB_INSTALL_DIR)/../.."'
     TK_YEAR="`date +%Y`"
-    # Don't use AC_DEFINE for the following as the framework version define
-    # needs to go into the Makefile even when using autoheader, so that we
+    # Don't use AC_DEFINE for the following as the framework version define 
+    # needs to go into the Makefile even when using autoheader, so that we  
     # can pick up a potential make override of VERSION. Also, don't put this
     # into CFLAGS as it should not go into tkConfig.sh
     EXTRA_CC_SWITCHES='-DTK_FRAMEWORK_VERSION=\"$(VERSION)\"'
@@ -595,7 +592,7 @@ else
     else
         TK_BUILD_EXP_FILE="lib.exp"
         eval "TK_EXP_FILE=libtk${TCL_EXPORT_FILE_SUFFIX}"
-
+    
         if test "$GCC" = "yes" ; then
             TK_BUILD_LIB_SPEC="-Wl,-bI:`pwd`/${TK_BUILD_EXP_FILE} -L`pwd`"
             TK_LIB_SPEC="-Wl,-bI:${libdir}/${TK_EXP_FILE} -L`pwd`"
@@ -608,8 +605,6 @@ fi
 
 # Support for building the Aqua resource files
 if test $tk_aqua = yes; then
-    AC_CONFIG_FILES([Wish-Info.plist:../macosx/Wish-Info.plist.in])
-    EXTRA_WISH_LIBS='-sectcreate __TEXT __info_plist Wish-Info.plist'
     LIB_RSRC_FILE='${TK_RSRC_FILE}'
     APP_RSRC_FILE='${WISH_RSRC_FILE}'
     REZ=/Developer/Tools/Rez
@@ -617,8 +612,8 @@ if test $tk_aqua = yes; then
     if test "$SHARED_BUILD" = 0; then
         EXTRA_INSTALL_BINARIES='@echo "Installing $(TK_RSRC_FILE) to $(LIB_INSTALL_DIR)" && $(INSTALL_DATA) $(TK_RSRC_FILE) $(LIB_INSTALL_DIR)'
 	TK_BUILD_LIB_SPEC="$TK_BUILD_LIB_SPEC -sectcreate __TEXT __tk_rsrc `pwd`/\${TK_RSRC_FILE}"
-	TK_LIB_SPEC="$TK_LIB_SPEC -sectcreate __TEXT __tk_rsrc ${libdir}/\${TK_RSRC_FILE}"
-    elif test "$FRAMEWORK_BUILD" = "0"; then
+	TK_LIB_SPEC="$TK_LIB_SPEC -sectcreate __TEXT __tk_rsrc ${libdir}/\${TK_RSRC_FILE}"        
+    else
         TK_SHLIB_LD_EXTRAS="$TK_SHLIB_LD_EXTRAS -sectcreate __TEXT __tk_rsrc \${TK_RSRC_FILE}"
     fi
 fi
@@ -690,6 +685,7 @@ AC_SUBST(PRIVATE_INCLUDE_DIR)
 AC_SUBST(HTML_DIR)
 
 AC_SUBST(EXTRA_CC_SWITCHES)
+AC_SUBST(EXTRA_APP_CC_SWITCHES)
 AC_SUBST(EXTRA_INSTALL)
 AC_SUBST(EXTRA_INSTALL_BINARIES)
 AC_SUBST(EXTRA_BUILD_HTML)

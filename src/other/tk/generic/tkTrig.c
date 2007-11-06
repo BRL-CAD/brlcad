@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include "tkInt.h"
-#include "tkPort.h"
 #include "tkCanvas.h"
 
 #undef MIN

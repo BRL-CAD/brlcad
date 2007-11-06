@@ -13,7 +13,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMenubutton.h"
 #include "tkMenu.h"
 #include "tkColor.h"
@@ -1288,8 +1288,8 @@ ReconfigureIndividualMenu(
 			    ->menuPtr->platformData)->menuHdl;
 
 		    if (childMenuHdl != NULL) {
-			SetMenuItemHierarchicalID(macMenuHdl, base + index,
-				GetMenuID(childMenuHdl));
+			ChkErr(SetMenuItemHierarchicalID, macMenuHdl,
+				base + index, GetMenuID(childMenuHdl));
 		    }
 		    /*
 		     * If we changed the highligthing of this menu, its
@@ -1556,6 +1556,7 @@ TkpPostMenu(
 	    Tcl_CancelIdleCall(DrawMenuBarWhenIdle, NULL);
 	    DrawMenuBarWhenIdle(NULL);
 	}
+	RecursivelyInsertMenu(menuPtr);
 
 	TkMacOSXTrackingLoop(1);
 	popUpResult = PopUpMenuSelect(macMenuHdl, y, x, menuPtr->active);
@@ -1671,7 +1672,7 @@ DrawMenuBarWhenIdle(
     ClientData clientData)	/* ignored here */
 {
     TkMenuReferences *menuRefPtr;
-    TkMenu *appleMenuPtr, *helpMenuPtr, *menuBarPtr;
+    TkMenu *appleMenuPtr, *helpMenuPtr, *menuBarPtr = NULL;
     MenuHandle macMenuHdl;
     Tcl_HashEntry *hashEntryPtr;
 
@@ -2029,15 +2030,10 @@ TkpSetMainMenubar(
 				 */
 {
     TkWindow *winPtr = (TkWindow *) tkwin;
-    CGrafPtr winPort;
     WindowRef macWindowPtr;
     WindowRef frontNonFloating;
 
-    winPort = TkMacOSXGetDrawablePort(winPtr->window);
-    if (!winPort) {
-	return;
-    }
-    macWindowPtr = GetWindowFromPort(winPort);
+    macWindowPtr = TkMacOSXDrawableWindow(winPtr->window);
 
     frontNonFloating = ActiveNonFloatingWindow();
     if ((macWindowPtr == NULL) || (macWindowPtr != frontNonFloating)) {
@@ -2645,7 +2641,7 @@ DrawMenuEntryAccelerator(
 		    CFRelease(cfStr);
 		}
 	    } else {
-		Tk_DrawChars(menuPtr->display, d, gc, tkfont, accel +
+		Tk_DrawChars(menuPtr->display, d, gc, tkfont, accel + 
 			geometryPtr->accelTextStart, mePtr->accelLength -
 			geometryPtr->accelTextStart, leftEdge, baseline);
 	    }
@@ -2699,21 +2695,16 @@ DrawMenuSeparator(
     int width,			/* width of entry */
     int height)			/* height of entry */
 {
-    CGrafPtr destPort, savePort;
-    Boolean portChanged;
+    TkMacOSXDrawingContext dc;
     Rect r;
 
-    destPort = TkMacOSXGetDrawablePort(d);
-    portChanged = QDSwapPort(destPort, &savePort);
-    TkMacOSXSetUpClippingRgn(d);
     r.top = y;
     r.left = x;
     r.bottom = y + height;
     r.right = x + width;
-    DrawThemeMenuSeparator(&r);
-    if (portChanged) {
-	QDSwapPort(savePort, NULL);
-    }
+    TkMacOSXSetupDrawingContext(d, gc, 1, &dc);
+    ChkErr(DrawThemeMenuSeparator, &r);
+    TkMacOSXRestoreDrawingContext(&dc);
 }
 
 #ifdef USE_TK_MDEF
@@ -3989,7 +3980,17 @@ TkpMenuInit(void)
     tkThemeMenuItemDrawingUPP
 	    = NewMenuItemDrawingUPP(ThemeMenuItemDrawingProc);
     useMDEFVar = Tcl_NewStringObj("::tk::mac::useCustomMDEF", -1);
+    macMDEFDrawable.winPtr = NULL;
+    macMDEFDrawable.xOff = 0;
+    macMDEFDrawable.yOff = 0;
+    macMDEFDrawable.clipRgn = NULL;
+    macMDEFDrawable.aboveClipRgn = NULL;
     macMDEFDrawable.drawRgn = NewRgn();
+    macMDEFDrawable.referenceCount = 0;
+    macMDEFDrawable.toplevel = NULL;
+    macMDEFDrawable.flags = 0;
+    macMDEFDrawable.grafPtr = NULL;
+    macMDEFDrawable.context = NULL;
 #endif
 
     ChkErr(GetThemeMetric, kThemeMetricMenuMarkColumnWidth,
@@ -4208,7 +4209,7 @@ HandleMenuHiliteMsg(
 	    hidPtr->newItem);
 #endif
     GetPort(&macMDEFDrawable.grafPtr);
-    macMDEFDrawable.context = (CGContextRef)hidPtr->context;
+    macMDEFDrawable.context = (CGContextRef) hidPtr->context;
 
     err = ChkErr(GetMenuTrackingData, menu, mtdPtr);
     if (err != noErr) {
@@ -4262,7 +4263,7 @@ HandleMenuDrawMsg(
 
     GetPort(&macMDEFDrawable.grafPtr);
     GetPortBounds(macMDEFDrawable.grafPtr, &bounds);
-    macMDEFDrawable.context = (CGContextRef)ddPtr->context;
+    macMDEFDrawable.context = (CGContextRef) ddPtr->context;
 #ifdef TK_MAC_DEBUG_MENUS
     TkMacOSXDbgMsg("MDEF: DrawMsg %d - %d; %d - %d", menuRectPtr->top,
 	    menuRectPtr->bottom, bounds.top, bounds.bottom);
@@ -4406,7 +4407,7 @@ HandleMenuFindItemMsg(
 
     GetPort(&macMDEFDrawable.grafPtr);
     GetPortBounds(macMDEFDrawable.grafPtr, &bounds);
-    macMDEFDrawable.context = (CGContextRef)fiPtr->context;
+    macMDEFDrawable.context = (CGContextRef) fiPtr->context;
 
     /*
      * Now we need to take care of scrolling the menu.

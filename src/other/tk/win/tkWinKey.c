@@ -89,47 +89,46 @@ TkpGetString(
     Tcl_DString *dsPtr)		/* Uninitialized or empty string to hold
 				 * result. */
 {
-    KeySym keysym;
-    XKeyEvent* keyEv = &eventPtr->xkey;
+    XKeyEvent *keyEv = &eventPtr->xkey;
 
     Tcl_DStringInit(dsPtr);
-    if (eventPtr->xkey.send_event == -1) {
-	if (eventPtr->xkey.nbytes > 0) {
+    if (keyEv->send_event == -1) {
+	if (keyEv->nbytes > 0) {
 	    Tcl_ExternalToUtfDString(TkWinGetKeyInputEncoding(),
-		    eventPtr->xkey.trans_chars, eventPtr->xkey.nbytes, dsPtr);
+		    keyEv->trans_chars, keyEv->nbytes, dsPtr);
 	}
-    } else if (eventPtr->xkey.send_event == -2) {
+    } else if (keyEv->send_event == -2) {
 	/*
-	 * Special case for win2000 multi-lingal IME input.
-	 * xkey.trans_chars[] already contains a UNICODE char.
+	 * Special case for win2000 multi-lingal IME input. xkey.trans_chars[]
+	 * already contains a UNICODE char.
 	 */
 
 	int unichar;
 	char buf[TCL_UTF_MAX];
 	int len;
 
-	unichar = (eventPtr->xkey.trans_chars[1] & 0xff);
+	unichar = keyEv->trans_chars[1] & 0xff;
 	unichar <<= 8;
-	unichar |= (eventPtr->xkey.trans_chars[0] & 0xff);
+	unichar |= keyEv->trans_chars[0] & 0xff;
 
 	len = Tcl_UniCharToUtf((Tcl_UniChar) unichar, buf);
 
 	Tcl_DStringAppend(dsPtr, buf, len);
-    } else if (eventPtr->xkey.send_event == -3) {
+    } else if (keyEv->send_event == -3) {
 	/*
-	 * Special case for WM_UNICHAR.
-	 * xkey.trans_chars[] already contains a UTF-8 char.
+	 * Special case for WM_UNICHAR. xkey.trans_chars[] already contains a
+	 * UTF-8 char.
 	 */
-	Tcl_DStringAppend(dsPtr, eventPtr->xkey.trans_chars,
-		eventPtr->xkey.nbytes);
+
+	Tcl_DStringAppend(dsPtr, keyEv->trans_chars, keyEv->nbytes);
     } else {
 	/*
 	 * This is an event generated from generic code. It has no nchars or
 	 * trans_chars members.
 	 */
 
-	keysym = KeycodeToKeysym(eventPtr->xkey.keycode,
-		eventPtr->xkey.state, 0);
+	KeySym keysym = KeycodeToKeysym(keyEv->keycode, keyEv->state, 0);
+
 	if (((keysym != NoSymbol) && (keysym > 0) && (keysym < 256))
 		|| (keysym == XK_Return) || (keysym == XK_Tab)) {
 	    char buf[TCL_UTF_MAX];

@@ -17,7 +17,6 @@
  */
 
 #include "default.h"
-#include "tkPort.h"
 #include "tkInt.h"
 #include "tkUndo.h"
 

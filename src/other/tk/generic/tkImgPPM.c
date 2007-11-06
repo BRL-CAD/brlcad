@@ -10,14 +10,13 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * Author: Paul Mackerras (paulus@cs.anu.edu.au),
- *	   Department of Computer Science,
- *	   Australian National University.
+ *	Department of Computer Science,
+ *	Australian National University.
  *
  * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 
 /*
  * The maximum amount of memory to allocate for data read from the file. If we
@@ -179,13 +178,13 @@ FileReadPPM(
     }
 
     if (type == PGM) {
-        block.pixelSize = 1;
-        block.offset[0] = 0;
+	block.pixelSize = 1;
+	block.offset[0] = 0;
 	block.offset[1] = 0;
 	block.offset[2] = 0;
     } else {
-        block.pixelSize = 3;
-        block.offset[0] = 0;
+	block.pixelSize = 3;
+	block.offset[0] = 0;
 	block.offset[1] = 1;
 	block.offset[2] = 2;
     }
@@ -273,8 +272,7 @@ FileWritePPM(
     Tk_PhotoImageBlock *blockPtr)
 {
     Tcl_Channel chan;
-    int w, h;
-    int greenOffset, blueOffset, nBytes;
+    int w, h, greenOffset, blueOffset, nBytes;
     unsigned char *pixelPtr, *pixLinePtr;
     char header[16 + TCL_INTEGER_SPACE * 2];
 
@@ -516,13 +514,13 @@ StringReadPPM(
     }
 
     if (type == PGM) {
-        block.pixelSize = 1;
-        block.offset[0] = 0;
+	block.pixelSize = 1;
+	block.offset[0] = 0;
 	block.offset[1] = 0;
 	block.offset[2] = 0;
     } else {
-        block.pixelSize = 3;
-        block.offset[0] = 0;
+	block.pixelSize = 3;
+	block.offset[0] = 0;
 	block.offset[1] = 1;
 	block.offset[2] = 2;
     }
@@ -626,10 +624,8 @@ ReadPPMFileHeader(
 				 * is stored here. */
 {
 #define BUFFER_SIZE 1000
-    char buffer[BUFFER_SIZE];
-    int i, numFields;
-    int type = 0;
-    char c;
+    char buffer[BUFFER_SIZE], c;
+    int i, numFields, type = 0;
 
     /*
      * Read 4 space-separated fields from the file, ignoring comments (any
@@ -735,10 +731,8 @@ ReadPPMStringHeader(
     int *dataSizePtr)
 {
 #define BUFFER_SIZE 1000
-    char buffer[BUFFER_SIZE];
-    int i, numFields, dataSize;
-    int type = 0;
-    char c;
+    char buffer[BUFFER_SIZE], c;
+    int i, numFields, dataSize, type = 0;
     unsigned char *dataBuffer;
 
     dataBuffer = Tcl_GetByteArrayFromObj(dataPtr, &dataSize);

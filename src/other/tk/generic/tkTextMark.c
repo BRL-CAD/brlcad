@@ -15,7 +15,6 @@
 
 #include "tkInt.h"
 #include "tkText.h"
-#include "tkPort.h"
 
 /*
  * Macro that determines the size of a mark segment:

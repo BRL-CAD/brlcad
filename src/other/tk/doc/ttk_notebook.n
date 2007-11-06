@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_notebook n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -20,7 +20,7 @@ ttk_notebook \- Multi-paned container widget
 .BE
 
 .SH DESCRIPTION
-A \fBttk::notebook\fR widget manages a collection of subpanes
+A \fBttk::notebook\fR widget manages a collection of subpanes 
 and displays a single one at a time.
 Each pane is associated with a tab, which the user
 may select to change the currently-displayed pane.
@@ -30,35 +30,35 @@ may select to change the currently-displayed pane.
 
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-height height Height
-If present and greater than zero,
+If present and greater than zero, 
 specifies the desired height of the pane area
 (not including internal padding or tabs).
 Otherwise, the maximum height of all panes is used.
 .OP \-padding padding Padding
 Specifies the amount of extra space to add around the outside
 of the notebook.
-The padding is a list of up to four length specifications
+The padding is a list of up to four length specifications 
 \fIleft top right bottom\fR.
-If fewer than four elements are specified,
+If fewer than four elements are specified, 
 \fIbottom\fR defaults to \fItop\fR,
-\fIright\fR defaults to \fIleft\fR, and
+\fIright\fR defaults to \fIleft\fR, and 
 \fItop\fR defaults to \fIleft\fR.
 .OP \-width width Width
-If present and greater than zero,
+If present and greater than zero, 
 specifies the desired width of the pane area
 (not including internal padding).
 Otherwise, the maximum width of all panes is used.
 .SH "TAB OPTIONS"
 The following options may be specified for individual notebook panes:
 .OP \-state state State
-Either \fBnormal\fR, \fBdisabled\fR or \fBhidden\fR.
+Either \fBnormal\fR, \fBdisabled\fR or \fBhidden\fR.  
 If \fBdisabled\fR, then the tab is not selectable. If \fBhidden\fR,
 then the tab is not shown.
 .OP \-sticky sticky Sticky
 Specifies how the child pane is positioned within the pane area.
 Value is a string containing zero or more of the characters
 \fBn, s, e,\fR or \fBw\fR.
-Each letter refers to a side (north, south, east, or west)
+Each letter refers to a side (north, south, east, or west) 
 that the child window will "stick" to,
 as per the \fBgrid\fR geometry manager.
 .OP \-padding padding Padding
@@ -74,7 +74,7 @@ Specifies how to display the image relative to the text,
 in the case both \fB-text\fR and \fB-image\fR are present.
 See \fIlabel(n)\fR for legal values.
 .OP \-underline underline Underline
-Specifies the integer index (0-based) of a character to underline
+Specifies the integer index (0-based) of a character to underline 
 in the text string.
 The underlined character is used for mnemonic activation
 if \fBttk::notebook::enableTraversal\fR is called.
@@ -104,9 +104,9 @@ or the total number of tabs if \fItabid\fR is the string "\fBend\fR".
 .TP
 \fIpathname \fBinsert\fR \fIpos\fR \fIsubwindow\fR \fIoptions...\fR
 Inserts a pane at the specified position.
-\fIpos\fR is either the string \fBend\fR, an integer index,
+\fIpos\fR is either the string \fBend\fR, an integer index, 
 or the name of a managed subwindow.
-If \fIsubwindow\fR is already managed by the notebook,
+If \fIsubwindow\fR is already managed by the notebook, 
 moves it to the specified position.
 See \fBTAB OPTIONS\fR for the list of available options.
 .TP
@@ -151,7 +151,7 @@ containing the notebook as follows:
 of any tab, will select that tab.
 .PP
 Multiple notebooks in a single toplevel may be enabled for traversal,
-including nested notebooks.
+including nested notebooks.  
 However, notebook traversal only works properly if all panes
 are direct children of the notebook.
 
@@ -164,13 +164,13 @@ An integer between zero and the number of tabs;
 The name of a child pane window;
 .IP \(bu
 A positional specification of the form "@\fIx\fR,\fIy\fR",
-which identifies the tab
+which identifies the tab 
 .IP \(bu
 The literal string "\fBcurrent\fR",
 which identifies the currently-selected tab; or:
 .IP \(bu
 The literal string "\fBend\fR",
-which returns the number of tabs
+which returns the number of tabs 
 (only valid for "\fIpathname \fBindex\fR").
 
 .SH "VIRTUAL EVENTS"

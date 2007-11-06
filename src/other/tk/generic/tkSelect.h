@@ -37,7 +37,7 @@ typedef struct TkSelectionInfo {
     ClientData clearData;	/* Info to pass to clearProc. */
     struct TkSelectionInfo *nextPtr;
 				/* Next in list of current selections on this
-                                 * display. NULL means end of list */
+				 * display. NULL means end of list. */
 } TkSelectionInfo;
 
 /*
@@ -47,7 +47,7 @@ typedef struct TkSelectionInfo {
  */
 
 typedef struct TkSelHandler {
-    Atom selection;		/* Selection name, e.g. XA_PRIMARY */
+    Atom selection;		/* Selection name, e.g. XA_PRIMARY. */
     Atom target;		/* Target type for selection conversion, such
 				 * as TARGETS or STRING. */
     Atom format;		/* Format in which selection info will be

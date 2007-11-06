@@ -28,7 +28,7 @@
 #define BLACK		"Black"
 #define WHITE		"White"
 
-#define CTL_FONT	"{MS Sans Serif} 8"
+#define CTL_FONT	"TkDefaultFont" /*"{MS Sans Serif} 8"*/
 #define NORMAL_BG	"SystemButtonFace"
 #define NORMAL_FG	"SystemButtonText"
 #define ACTIVE_BG	NORMAL_BG
@@ -285,7 +285,7 @@
 #define DEF_MENU_CURSOR			"arrow"
 #define DEF_MENU_DISABLED_FG_COLOR	DISABLED
 #define DEF_MENU_DISABLED_FG_MONO	""
-#define DEF_MENU_FONT			CTL_FONT
+#define DEF_MENU_FONT			"TkMenuFont" /* CTL_FONT */
 #define DEF_MENU_FG			MENU_FG
 #define DEF_MENU_POST_COMMAND		""
 #define DEF_MENU_RELIEF			"flat"

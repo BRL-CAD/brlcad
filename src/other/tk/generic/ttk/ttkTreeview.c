@@ -185,13 +185,13 @@ static Tk_OptionSpec TagOptionSpecs[] =
     {TK_OPTION_ANCHOR, "-anchor", "anchor", "Anchor",
 	NULL, Tk_Offset(DisplayItem,anchorObj), -1,
 	TK_OPTION_NULL_OK, 0, GEOMETRY_CHANGED},
-    {TK_OPTION_COLOR, "-background", "windowColor", "WindowColor",
+    {TK_OPTION_STRING, "-background", "windowColor", "WindowColor", /*SB:COLOR*/
 	NULL, Tk_Offset(DisplayItem,backgroundObj), -1,
 	TK_OPTION_NULL_OK,0,0 },
-    {TK_OPTION_COLOR, "-foreground", "textColor", "TextColor",
+    {TK_OPTION_STRING, "-foreground", "textColor", "TextColor", /*SB:COLOR*/
 	NULL, Tk_Offset(DisplayItem,foregroundObj), -1,
 	TK_OPTION_NULL_OK,0,0 },
-    {TK_OPTION_FONT, "-font", "font", "Font",
+    {TK_OPTION_STRING, "-font", "font", "Font",	/* SB:FONT */
 	NULL, Tk_Offset(DisplayItem,fontObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
 
@@ -891,14 +891,14 @@ static int DistributeWidth(Treeview *tv, int n)
 
 /* + ResizeColumns --
  * 	Recompute column widths based on available width.
- * 	Pick up slack first;
+ * 	Pick up slack first; 
  * 	Distribute the remainder evenly across stretchable columns;
  * 	If any is still left over due to minwidth constraints, shove left.
  */
 static void ResizeColumns(Treeview *tv, int newWidth)
 {
     int delta = newWidth - (TreeWidth(tv) + tv->tree.slack);
-    DepositSlack(tv,
+    DepositSlack(tv, 
 	ShoveLeft(tv, tv->tree.nDisplayColumns - 1,
 	    DistributeWidth(tv, PickupSlack(tv, delta))));
 }
@@ -2655,7 +2655,7 @@ static int TreeviewMoveCommand(
 	    if (p != item) {
 		--index;
 	    } /* else -- moving node forward, count index+1 nodes  */
-	    sibling = p;
+	    sibling = p; 
 	}
     }
 
@@ -3198,7 +3198,7 @@ static Ttk_ElementSpec RowElementSpec =
  * +++ Initialisation.
  */
 
-MODULE_SCOPE
+MODULE_SCOPE 
 void TtkTreeview_Init(Tcl_Interp *interp)
 {
     Ttk_Theme theme = Ttk_GetDefaultTheme(interp);

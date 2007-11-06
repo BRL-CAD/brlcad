@@ -4,9 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH font n 8.0 Tk "Tk Built-In Commands"
 .BS
@@ -38,8 +38,9 @@ See FONT OPTIONS below for a list of the possible attributes.  If the
 attributes returned will be those of the specific font used to render
 that character, which will be different from the base font if the base
 font does not contain the given character.  If \fIchar\fR may be a hyphen, it
-should be preceded by \fB--\fR to distinguish it from a misspelt \fIoption\fR.
-.TP
+should be preceded by \fB--\fR to distinguish it from a misspelled
+\fIoption\fR.
+.TP 
 \fBfont configure \fIfontname\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
 .
 Query or modify the desired attributes for the named font called
@@ -224,7 +225,7 @@ The desired size of the font.  If the \fIsize\fR argument is a positive
 number, it is interpreted as a size in points.  If \fIsize\fR is a negative
 number, its absolute value is interpreted as a size in pixels.  If a
 font cannot be displayed at the specified size, a nearby size will be
-chosen.  If \fIsize\fR is unspecified or zero, a platform-dependent default
+chosen.  If \fIsize\fR is unspecified or zero, a platform-dependant default
 size will be chosen.
 .RS
 .PP

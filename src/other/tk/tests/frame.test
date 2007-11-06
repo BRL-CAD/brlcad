@@ -422,7 +422,7 @@ test frame-3.17 {TkCreateFrame procedure} {defaultPseudocolor8 nonPortable} {
 } {1}
 test frame-3.18 {TkCreateFrame procedure} {defaultPseudocolor8 haveGrayscale8 nonPortable} {
     catch {destroy .t}
-    toplevel .t -visual {grayscale 8} -width 300 -height 200 -bg #434343
+    toplevel .t -visual {grayscale 8} -width 300 -height 200 -bg #434343 
     wm geometry .t +0+0
     update
     colorsFree .t 131 131 131
@@ -451,7 +451,7 @@ test frame-3.20 {TkCreateFrame procedure} {defaultPseudocolor8 haveGrayscale8 no
 test frame-3.21 {TkCreateFrame procedure} {defaultPseudocolor8 haveGrayscale8 nonPortable} {
     catch {destroy .t}
     set x ok
-    toplevel .t -visual {grayscale 8} -width 300 -height 200 -bg #434343
+    toplevel .t -visual {grayscale 8} -width 300 -height 200 -bg #434343 
     wm geometry .t +0+0
     update
     colorsFree .t 131 131 131
@@ -694,7 +694,7 @@ test frame-12.2 {FrameWorldChanged procedure} {
     place .f -x 0 -y 0 -width 100 -height 100
     pack [frame .f.f] -fill both -expand 1
 
-    set result {}
+    set result {} 
     foreach lp {nw n ne en e es se s sw ws w wn} {
         .f configure -labelanchor $lp
         update
@@ -812,7 +812,7 @@ destroy .f
 test frame-14.1 {labelframe labelwidget option} {
     # Test that label is moved in stacking order
     destroy .f .l
-    label .l -text Mupp
+    label .l -text Mupp -font {helvetica 8}
     labelframe .f -labelwidget .l
     pack .f
     frame .f.f -width 50 -height 50

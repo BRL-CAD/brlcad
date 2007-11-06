@@ -1,18 +1,18 @@
 # ttkGenStubs.tcl --
 #
 #	This script generates a set of stub files for a given
-#	interface.
-#
+#	interface.  
+#	
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
+# 
 # $Id$
 #
 # SOURCE: tcl/tools/genStubs.tcl, revision 1.20
 #
-# CHANGES:
+# CHANGES: 
 #	+ Remove xxx_TCL_DECLARED #ifdeffery
 #	+ Use application-defined storage class specifier instead of "EXTERN"
 #	+ Add "epoch" and "revision" fields to stubs table record
@@ -20,7 +20,7 @@
 #	+ Second argument to "declare" is used as a status guard
 #	  instead of a platform guard.
 #	+ Use void (*reserved$i)(void) = 0 instead of void *reserved$i = NULL
-#	  for unused stub entries, in case pointer-to-function and
+#	  for unused stub entries, in case pointer-to-function and 
 #	  pointer-to-object are different sizes.
 #	+ Allow trailing semicolon in function declarations
 #	+ stubs table is const-qualified
@@ -270,7 +270,7 @@ proc genStubs::addPlatformGuard {plat text} {
 	}
 	unix {
 	    return "#if !defined(__WIN32__) /* UNIX */\n${text}#endif /* UNIX */\n"
-	}
+	}		    
 	macosx {
 	    return "#ifdef MAC_OSX_TCL\n${text}#endif /* MAC_OSX_TCL */\n"
 	}
@@ -463,7 +463,7 @@ proc genStubs::makeDecl {name decl index} {
 	}
     }
     append text $line
-
+    
     append text ";\n"
     return $text
 }
@@ -546,7 +546,7 @@ proc genStubs::makeSlot {name decl index} {
 	    append text ")"
 	}
     }
-
+    
     append text "; /* $index */\n"
     return $text
 }
@@ -593,7 +593,7 @@ proc genStubs::makeInit {name decl index} {
 # Results:
 #	None.
 
-proc genStubs::forAllStubs {name slotProc guardProc textVar
+proc genStubs::forAllStubs {name slotProc guardProc textVar 
     	{skipString {"/* Slot $i is reserved */\n"}}} {
     variable stubs
     upvar $textVar text
@@ -617,7 +617,7 @@ proc genStubs::addGuard {status text} {
     set upName [string toupper $libraryName]
 
     switch -- $status {
-	current	{
+	current	{ 
 	    # No change
 	}
 	deprecated {
@@ -630,7 +630,7 @@ proc genStubs::addGuard {status text} {
 	    puts stderr "Unrecognized status code $status"
 	}
     }
-    return $text
+    return $text 
 }
 
 proc genStubs::ifdeffed {macro text} {
@@ -679,7 +679,7 @@ proc genStubs::emitMacros {name textVar} {
     set upName [string toupper $libraryName]
     append text "\n#if defined(USE_${upName}_STUBS)\n"
     append text "\n/*\n * Inline function declarations:\n */\n\n"
-
+    
     forAllStubs $name makeMacro addGuard text
 
     append text "\n#endif /* defined(USE_${upName}_STUBS) */\n"
@@ -782,7 +782,7 @@ proc genStubs::emitInit {name textVar} {
     } else {
 	append text "    0,\n"
     }
-
+    
     forAllStubs $name makeInit noGuard text {"    0, /* $i */\n"}
 
     append text "\};\n"

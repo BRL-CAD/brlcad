@@ -13,8 +13,8 @@
  * Copyright (c) 1997 Australian National University
  * Copyright (c) 2005 Donal K. Fellows
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * This file also contains code from the giftoppm program, which is
  * copyrighted as follows:
@@ -34,6 +34,8 @@
  *
  * RCS: @(#) $Id$
  */
+
+#include "tkInt.h"
 
 /*
  * GIF's are represented as data in either binary or base64 format. base64
@@ -61,9 +63,6 @@ typedef struct mFile {
     int length;			/* Total amount of bytes in data */
 } MFile;
 
-#include "tkInt.h"
-#include "tkPort.h"
-
 /*
  * Non-ASCII encoding support:
  * Most data in a GIF image is binary and is treated as such. However, a few
@@ -74,15 +73,21 @@ typedef struct mFile {
  * independant.
  */
 
-static CONST char GIF87a[] = {			/* ASCII GIF87a */
+static const char GIF87a[] = {			/* ASCII GIF87a */
     0x47, 0x49, 0x46, 0x38, 0x37, 0x61, 0x00
 };
-static CONST char GIF89a[] = {			/* ASCII GIF89a */
+static const char GIF89a[] = {			/* ASCII GIF89a */
     0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x00
 };
 #define GIF_TERMINATOR	0x3b			/* ASCII ; */
 #define GIF_EXTENSION	0x21			/* ASCII ! */
 #define GIF_START	0x2c			/* ASCII , */
+
+/*
+ * Flags used to notify that we've got inline data instead of a file to read
+ * from. Note that we need to figure out which type of inline data we've got
+ * before handing off to the GIF reading code; this is done in StringReadGIF.
+ */
 
 #define INLINE_DATA_BINARY	((const char *) 0x01)
 #define INLINE_DATA_BASE64	((const char *) 0x02)
@@ -110,11 +115,11 @@ typedef struct {
  * The format record for the GIF file format:
  */
 
-static int		FileMatchGIF(Tcl_Channel chan, CONST char *fileName,
+static int		FileMatchGIF(Tcl_Channel chan, const char *fileName,
 			    Tcl_Obj *format, int *widthPtr, int *heightPtr,
 			    Tcl_Interp *interp);
 static int		FileReadGIF(Tcl_Interp *interp, Tcl_Channel chan,
-			    CONST char *fileName, Tcl_Obj *format,
+			    const char *fileName, Tcl_Obj *format,
 			    Tk_PhotoHandle imageHandle, int destX, int destY,
 			    int width, int height, int srcX, int srcY);
 static int		StringMatchGIF(Tcl_Obj *dataObj, Tcl_Obj *format,
@@ -123,7 +128,7 @@ static int		StringReadGIF(Tcl_Interp *interp, Tcl_Obj *dataObj,
 			    Tcl_Obj *format, Tk_PhotoHandle imageHandle,
 			    int destX, int destY, int width, int height,
 			    int srcX, int srcY);
-static int		FileWriteGIF(Tcl_Interp *interp, CONST char *filename,
+static int		FileWriteGIF(Tcl_Interp *interp, const char *filename,
 			    Tcl_Obj *format, Tk_PhotoImageBlock *blockPtr);
 static int		CommonWriteGIF(Tcl_Interp *interp, Tcl_Channel handle,
 			    Tcl_Obj *format, Tk_PhotoImageBlock *blockPtr);
@@ -166,11 +171,10 @@ static int		ReadColorMap(GIFImageConfig *gifConfPtr,
 static int		ReadGIFHeader(GIFImageConfig *gifConfPtr,
 			    Tcl_Channel chan, int *widthPtr, int *heightPtr);
 static int		ReadImage(GIFImageConfig *gifConfPtr,
-			    Tcl_Interp *interp, char *imagePtr,
+			    Tcl_Interp *interp, unsigned char *imagePtr,
 			    Tcl_Channel chan, int len, int rows,
-			    unsigned char cmap[MAXCOLORMAPSIZE][4],
-			    int width, int height, int srcX, int srcY,
-			    int interlace, int transparent);
+			    unsigned char cmap[MAXCOLORMAPSIZE][4], int srcX,
+			    int srcY, int interlace, int transparent);
 
 /*
  * these are for the BASE64 image reader code only
@@ -206,7 +210,7 @@ static void		mInit(unsigned char *string, MFile *handle,
 static int
 FileMatchGIF(
     Tcl_Channel chan,		/* The image file, open for reading. */
-    CONST char *fileName,	/* The name of the image file. */
+    const char *fileName,	/* The name of the image file. */
     Tcl_Obj *format,		/* User-specified format object, or NULL. */
     int *widthPtr, int *heightPtr,
 				/* The dimensions of the image are returned
@@ -242,7 +246,7 @@ static int
 FileReadGIF(
     Tcl_Interp *interp,		/* Interpreter to use for reporting errors. */
     Tcl_Channel chan,		/* The image file, open for reading. */
-    CONST char *fileName,	/* The name of the image file. */
+    const char *fileName,	/* The name of the image file. */
     Tcl_Obj *format,		/* User-specified format object, or NULL. */
     Tk_PhotoHandle imageHandle,	/* The photo image to write into. */
     int destX, int destY,	/* Coordinates of top-left pixel in photo
@@ -253,15 +257,14 @@ FileReadGIF(
 				 * image being read. */
 {
     int fileWidth, fileHeight, imageWidth, imageHeight;
-    int nBytes, index = 0, argc = 0, i;
+    int nBytes, index = 0, argc = 0, i, result = TCL_ERROR;
     Tcl_Obj **objv;
-    Tk_PhotoImageBlock block;
     unsigned char buf[100];
     unsigned char *trashBuffer = NULL;
     int bitPixel;
     unsigned char colorMap[MAXCOLORMAPSIZE][4];
     int transparent = -1;
-    static CONST char *optionStrings[] = {
+    static const char *optionStrings[] = {
 	"-index", NULL
     };
     GIFImageConfig gifConf, *gifConfPtr = &gifConf;
@@ -276,6 +279,10 @@ FileReadGIF(
 	gifConfPtr->fromData = fileName;
 	fileName = "inline data";
     }
+
+    /*
+     * Parse the format string to get options.
+     */
 
     if (format && Tcl_ListObjGetElements(interp, format,
 	    &argc, &objv) != TCL_OK) {
@@ -295,6 +302,11 @@ FileReadGIF(
 	    return TCL_ERROR;
 	}
     }
+
+    /*
+     * Read the GIF file header and check for some sanity.
+     */
+
     if (!ReadGIFHeader(gifConfPtr, chan, &fileWidth, &fileHeight)) {
 	Tcl_AppendResult(interp, "couldn't read GIF header from file \"",
 		fileName, "\"", NULL);
@@ -306,10 +318,14 @@ FileReadGIF(
 	return TCL_ERROR;
     }
 
+    /*
+     * Get the general colormap information.
+     */
+
     if (Fread(gifConfPtr, buf, 1, 3, chan) != 3) {
 	return TCL_OK;
     }
-    bitPixel = 2<<(buf[0]&0x07);
+    bitPixel = 2 << (buf[0] & 0x07);
 
     if (BitSet(buf[0], LOCALCOLORMAP)) {	/* Global Colormap */
 	if (!ReadColorMap(gifConfPtr, chan, bitPixel, colorMap)) {
@@ -329,20 +345,19 @@ FileReadGIF(
 	return TCL_OK;
     }
 
+    /*
+     * Make sure we have enough space in the photo image to hold the data from
+     * the GIF.
+     */
+
     if (Tk_PhotoExpand(interp, imageHandle,
 	    destX + width, destY + height) != TCL_OK) {
 	return TCL_ERROR;
     }
 
-    block.width = width;
-    block.height = height;
-    block.pixelSize = 4;
-    block.pitch = block.pixelSize * block.width;
-    block.offset[0] = 0;
-    block.offset[1] = 1;
-    block.offset[2] = 2;
-    block.offset[3] = 3;
-    block.pixelPtr = NULL;
+    /*
+     * Search for the frame from the GIF to display.
+     */
 
     while (1) {
 	if (Fread(gifConfPtr, buf, 1, 1, chan) != 1) {
@@ -355,16 +370,12 @@ FileReadGIF(
 	    goto error;
 	}
 
-	if (buf[0] == GIF_TERMINATOR) {
-	    /*
-	     * GIF terminator.
-	     */
-
+	switch (buf[0]) {
+	case GIF_TERMINATOR:
 	    Tcl_AppendResult(interp, "no image data for this index", NULL);
 	    goto error;
-	}
 
-	if (buf[0] == GIF_EXTENSION) {
+	case GIF_EXTENSION:
 	    /*
 	     * This is a GIF extension.
 	     */
@@ -382,9 +393,15 @@ FileReadGIF(
 		goto error;
 	    }
 	    continue;
-	}
-
-	if (buf[0] != GIF_START) {
+	case GIF_START:
+	    if (Fread(gifConfPtr, buf, 1, 9, chan) != 9) {
+		Tcl_SetResult(interp,
+			"couldn't read left/top/width/height in GIF image",
+			TCL_STATIC);
+		goto error;
+	    }
+	    break;
+	default:
 	    /*
 	     * Not a valid start character; ignore it.
 	     */
@@ -392,21 +409,18 @@ FileReadGIF(
 	    continue;
 	}
 
-	if (Fread(gifConfPtr, buf, 1, 9, chan) != 9) {
-	    Tcl_SetResult(interp,
-		    "couldn't read left/top/width/height in GIF image",
-		    TCL_STATIC);
-	    goto error;
-	}
+	/*
+	 * We've read the header for a GIF frame. Work out what we are going
+	 * to do about it.
+	 */
 
 	imageWidth = LM_to_uint(buf[4], buf[5]);
 	imageHeight = LM_to_uint(buf[6], buf[7]);
-
-	bitPixel = 1<<((buf[8]&0x07)+1);
+	bitPixel = 1 << ((buf[8] & 0x07) + 1);
 
 	if (index--) {
 	    /*
-	     * This is not the image we want to read: skip it.
+	     * This is not the GIF frame we want to read: skip it.
 	     */
 
 	    if (BitSet(buf[8], LOCALCOLORMAP)) {
@@ -422,7 +436,7 @@ FileReadGIF(
 
 	    if (trashBuffer == NULL) {
 		nBytes = fileWidth * fileHeight * 3;
-		trashBuffer = (unsigned char *) ckalloc((unsigned int) nBytes);
+		trashBuffer = (unsigned char *) ckalloc((unsigned) nBytes);
 	    }
 
 	    /*
@@ -442,81 +456,93 @@ FileReadGIF(
 	     * common case.
 	     */
 
-	    if (ReadImage(gifConfPtr, interp, (char *)trashBuffer, chan,
-		    imageWidth, imageHeight, colorMap, 0, 0, 0, 0, 0,
-		    -1) != TCL_OK) {
+	    if (ReadImage(gifConfPtr, interp, trashBuffer, chan, imageWidth,
+		    imageHeight, colorMap, 0, 0, 0, -1) != TCL_OK) {
 		goto error;
 	    }
 	    continue;
 	}
+	break;
+    }
 
-	if (BitSet(buf[8], LOCALCOLORMAP)) {
-	    if (!ReadColorMap(gifConfPtr, chan, bitPixel, colorMap)) {
-		Tcl_AppendResult(interp, "error reading color map", NULL);
-		goto error;
-	    }
-	}
+    /*
+     * Found the frame we want to read. Next, check for a local color map for
+     * this frame.
+     */
 
-	index = LM_to_uint(buf[0], buf[1]);
-	srcX -= index;
-	if (srcX<0) {
-	    destX -= srcX; width += srcX;
-	    srcX = 0;
+    if (BitSet(buf[8], LOCALCOLORMAP)) {
+	if (!ReadColorMap(gifConfPtr, chan, bitPixel, colorMap)) {
+	    Tcl_AppendResult(interp, "error reading color map", NULL);
+	    goto error;
 	}
+    }
 
-	if (width > imageWidth) {
-	    width = imageWidth;
-	}
+    /*
+     * Extract the location within the overall visible image to put the data
+     * in this frame, together with the size of this frame.
+     */
 
-	index = LM_to_uint(buf[2], buf[3]);
-	srcY -= index;
-	if (index > srcY) {
-	    destY -= srcY; height += srcY;
-	    srcY = 0;
-	}
-	if (height > imageHeight) {
-	    height = imageHeight;
-	}
+    index = LM_to_uint(buf[0], buf[1]);
+    srcX -= index;
+    if (srcX<0) {
+	destX -= srcX; width += srcX;
+	srcX = 0;
+    }
 
-	if ((width <= 0) || (height <= 0)) {
-	    block.pixelPtr = 0;
-	    goto noerror;
-	}
+    if (width > imageWidth) {
+	width = imageWidth;
+    }
+
+    index = LM_to_uint(buf[2], buf[3]);
+    srcY -= index;
+    if (index > srcY) {
+	destY -= srcY; height += srcY;
+	srcY = 0;
+    }
+    if (height > imageHeight) {
+	height = imageHeight;
+    }
+
+    if ((width > 0) && (height > 0)) {
+	Tk_PhotoImageBlock block;
+
+	/*
+	 * Read the data and put it into the photo buffer for display by the
+	 * general image machinery.
+	 */
 
 	block.width = width;
 	block.height = height;
 	block.pixelSize = (transparent>=0) ? 4 : 3;
+	block.offset[0] = 0;
+	block.offset[1] = 1;
+	block.offset[2] = 2;
 	block.offset[3] = (transparent>=0) ? 3 : 0;
 	block.pitch = block.pixelSize * imageWidth;
 	nBytes = block.pitch * imageHeight;
 	block.pixelPtr = (unsigned char *) ckalloc((unsigned) nBytes);
 
-	if (ReadImage(gifConfPtr, interp, (char *) block.pixelPtr, chan,
-		imageWidth,imageHeight, colorMap, fileWidth,fileHeight,
-		srcX,srcY, BitSet(buf[8],INTERLACE), transparent) != TCL_OK) {
+	if (ReadImage(gifConfPtr, interp, block.pixelPtr, chan, imageWidth,
+		imageHeight, colorMap, srcX, srcY, BitSet(buf[8],INTERLACE),
+		transparent) != TCL_OK) {
+	    ckfree((char *) block.pixelPtr);
 	    goto error;
 	}
-	break;
-    }
-
-    if (Tk_PhotoPutBlock(interp, imageHandle, &block, destX, destY,
-	    width, height, TK_PHOTO_COMPOSITE_SET) != TCL_OK) {
-	goto error;
-    }
-
-  noerror:
-    /*
-     * If a trash buffer has been allocated, free it now.
-     */
-
-    if (trashBuffer != NULL) {
-	ckfree((char *)trashBuffer);
-    }
-    if (block.pixelPtr) {
+	if (Tk_PhotoPutBlock(interp, imageHandle, &block, destX, destY,
+		width, height, TK_PHOTO_COMPOSITE_SET) != TCL_OK) {
+	    ckfree((char *) block.pixelPtr);
+	    goto error;
+	}
 	ckfree((char *) block.pixelPtr);
     }
+
+    /*
+     * We've successfully read the GIF frame (or there was nothing to read,
+     * which suits as well). We're done.
+     */
+
     Tcl_AppendResult(interp, tkImgFmtGIF.name, NULL);
-    return TCL_OK;
+    result = TCL_OK;
 
   error:
     /*
@@ -524,12 +550,9 @@ FileReadGIF(
      */
 
     if (trashBuffer != NULL) {
-	ckfree((char *)trashBuffer);
+	ckfree((char *) trashBuffer);
     }
-    if (block.pixelPtr) {
-	ckfree((char *) block.pixelPtr);
-    }
-    return TCL_ERROR;
+    return result;
 }
 
 /*
@@ -590,7 +613,7 @@ StringMatchGIF(
 	    return 0;
 	}
     } else {
-	memcpy((void *) header, (void *) data, 10);
+	memcpy(header, data, 10);
     }
     *widthPtr = LM_to_uint(header[6], header[7]);
     *heightPtr = LM_to_uint(header[8], header[9]);
@@ -629,24 +652,32 @@ StringReadGIF(
 {
     MFile handle, *hdlPtr = &handle;
     int length;
-    char *data = (char *) Tcl_GetByteArrayFromObj(dataObj, &length);
+    const char *xferFormat;
+    unsigned char *data = Tcl_GetByteArrayFromObj(dataObj, &length);
 
-    mInit((unsigned char *)data, hdlPtr, length);
+    mInit(data, hdlPtr, length);
 
-    if (strncmp(GIF87a, data, 6) && strncmp(GIF89a, data, 6)) {
-	/*
-	 * Check whether the data is Base64 encoded by doing a
-	 * character-by-charcter comparison with the binary-format headers;
-	 * BASE64-encoded never matches (matching the other way is harder
-	 * because of potential padding).
-	 */
+    /*
+     * Check whether the data is Base64 encoded by doing a character-by-
+     * charcter comparison with the binary-format headers; BASE64-encoded
+     * never matches (matching the other way is harder because of potential
+     * padding of the BASE64 data).
+     */
 
-	return FileReadGIF(interp, (Tcl_Channel) hdlPtr, INLINE_DATA_BASE64,
-		format, imageHandle, destX, destY, width, height, srcX, srcY);
+    if (strncmp(GIF87a, (char *) data, 6)
+	    && strncmp(GIF89a, (char *) data, 6)) {
+	xferFormat = INLINE_DATA_BASE64;
     } else {
-	return FileReadGIF(interp, (Tcl_Channel) hdlPtr, INLINE_DATA_BINARY,
-		format, imageHandle, destX, destY, width, height, srcX, srcY);
+	xferFormat = INLINE_DATA_BINARY;
     }
+
+    /*
+     * Fall through to the file reader now that we have a correctly-configured
+     * pseudo-channel to pull the data from.
+     */
+
+    return FileReadGIF(interp, (Tcl_Channel) hdlPtr, xferFormat, format,
+	    imageHandle, destX, destY, width, height, srcX, srcY);
 }
 
 /*
@@ -695,8 +726,8 @@ ReadGIFHeader(
 
 /*
  *-----------------------------------------------------------------
- * The code below is copied from the giftoppm program and modified
- * just slightly.
+ * The code below is copied from the giftoppm program and modified just
+ * slightly.
  *-----------------------------------------------------------------
  */
 
@@ -819,20 +850,19 @@ static int
 ReadImage(
     GIFImageConfig *gifConfPtr,
     Tcl_Interp *interp,
-    char *imagePtr,
+    unsigned char *imagePtr,
     Tcl_Channel chan,
     int len, int rows,
     unsigned char cmap[MAXCOLORMAPSIZE][4],
-    int width, int height,
     int srcX, int srcY,
     int interlace,
     int transparent)
 {
     unsigned char initialCodeSize;
     int xpos = 0, ypos = 0, pass = 0, i;
-    register char *pixelPtr;
-    static CONST int interlaceStep[] = { 8, 8, 4, 2 };
-    static CONST int interlaceStart[] = { 0, 4, 2, 1 };
+    register unsigned char *pixelPtr;
+    static const int interlaceStep[] = { 8, 8, 4, 2 };
+    static const int interlaceStart[] = { 0, 4, 2, 1 };
     unsigned short prefix[(1 << MAX_LWZ_BITS)];
     unsigned char append[(1 << MAX_LWZ_BITS)];
     unsigned char stack[(1 << MAX_LWZ_BITS)*2];
@@ -875,8 +905,8 @@ ReadImage(
     oldCode = -1;
     firstCode = -1;
 
-    memset((void *)prefix, 0, (1 << MAX_LWZ_BITS) * sizeof(short));
-    memset((void *)append, 0, (1 << MAX_LWZ_BITS) * sizeof(char));
+    memset(prefix, 0, (1 << MAX_LWZ_BITS) * sizeof(short));
+    memset(append, 0, (1 << MAX_LWZ_BITS) * sizeof(char));
     for (i = 0; i < clearCode; i++) {
 	append[i] = i;
     }
@@ -1032,7 +1062,7 @@ ReadImage(
 
 	if (interlace) {
 	    ypos += interlaceStep[pass];
-	    while (ypos >= height) {
+	    while (ypos >= rows) {
 		pass++;
 		if (pass > 3) {
 		    return TCL_OK;
@@ -1347,18 +1377,17 @@ Fread(
     size_t hunk, size_t count,	/* how many */
     Tcl_Channel chan)
 {
-    MFile *handle;
-
     if (gifConfPtr->fromData == INLINE_DATA_BASE64) {
 	return Mread(dst, hunk, count, (MFile *) chan);
     }
 
     if (gifConfPtr->fromData == INLINE_DATA_BINARY) {
-	handle = (MFile *) chan;
-	if (handle->length <= 0 || (size_t)handle->length < hunk*count) {
+	MFile *handle = (MFile *) chan;
+
+	if (handle->length <= 0 || (size_t) handle->length < hunk*count) {
 	    return -1;
 	}
-	memcpy((void *)dst, (void *) handle->data, (size_t) (hunk * count));
+	memcpy(dst, handle->data, (size_t) (hunk * count));
 	handle->data += hunk * count;
 	return (int)(hunk * count);
     }
@@ -1443,7 +1472,7 @@ static int		ReadValue(ClientData clientData);
 static int
 FileWriteGIF(
     Tcl_Interp *interp,		/* Interpreter to use for reporting errors. */
-    CONST char *filename,
+    const char *filename,
     Tcl_Obj *format,
     Tk_PhotoImageBlock *blockPtr)
 {
@@ -1613,8 +1642,9 @@ color(
     int red, int green, int blue,
     unsigned char mapa[MAXCOLORMAPSIZE][3])
 {
-    int x;
-    for (x=(statePtr->alphaOffset != 0) ; x<=MAXCOLORMAPSIZE ; x++) {
+    int x = (statePtr->alphaOffset != 0);
+
+    for (; x<=MAXCOLORMAPSIZE ; x++) {
 	if ((mapa[x][CM_RED] == red) && (mapa[x][CM_GREEN] == green) &&
 		(mapa[x][CM_BLUE] == blue)) {
 	    return x;
@@ -1630,6 +1660,7 @@ nuevo(
     unsigned char mapa[MAXCOLORMAPSIZE][3])
 {
     int x = (statePtr->alphaOffset != 0);
+
     for (; x<=statePtr->num ; x++) {
 	if ((mapa[x][CM_RED] == red) && (mapa[x][CM_GREEN] == green) &&
 		(mapa[x][CM_BLUE] == blue)) {
@@ -1658,9 +1689,9 @@ savemap(
 	statePtr->num = -1;
     }
 
-    for(y=0 ; y<blockPtr->height ; y++) {
+    for (y=0 ; y<blockPtr->height ; y++) {
 	colores = blockPtr->pixelPtr + blockPtr->offset[0] + y*blockPtr->pitch;
-	for(x=0 ; x<blockPtr->width ; x++) {
+	for (x=0 ; x<blockPtr->width ; x++) {
 	    if (!statePtr->alphaOffset || colores[statePtr->alphaOffset]!=0) {
 		red = colores[0];
 		green = colores[statePtr->greenOffset];
@@ -1678,7 +1709,6 @@ savemap(
 	    colores += statePtr->pixelSize;
 	}
     }
-    return;
 }
 
 static int
@@ -1973,8 +2003,8 @@ computeTriangleCount(
 	count -= perrep;
     }
     if (count > 0) {
-	unsigned int n;
-	n = isqrt(count);
+	unsigned int n = isqrt(count);
+
 	while (n*(n+1) >= 2*count) {
 	    n--;
 	}

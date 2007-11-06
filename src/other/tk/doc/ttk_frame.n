@@ -3,9 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\"
+'\" 
 '\" RCS: @(#) $Id$
-'\"
+'\" 
 .so man.macros
 .TH ttk_frame n 8.5 Tk "Tk Themed Widget"
 .BS
@@ -25,9 +25,9 @@ together.
 
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP -borderwidth borderWidth BorderWidth
-The desired width of the widget border.  Defaults to 0.
+The desired width of the widget border.  Defaults to 0. 
 .OP -relief relief Relief
-One of the standard Tk border styles:
+One of the standard Tk border styles: 
 \fBflat\fR, \fBgroove\fR, \fBraised\fR, \fBridge\fR,
 \fBsolid\fR, or \fBsunken\fR.
 Defaults to \fBflat\fR.

@@ -19,9 +19,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <tcl.h>
-#include <tclInt.h>
-#include <tk.h>
+#include "tclInt.h"
 #include "tkInt.h"
 #ifdef NO_STDLIB_H
 #   include "../compat/stdlib.h"
@@ -112,7 +110,7 @@ Tk_MainEx(
      * only an issue when Tk is loaded dynamically.
      */
 
-    if (Tcl_InitStubs(interp, TCL_PATCH_LEVEL, 1) == NULL) {
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
 	abort();
     }
 
@@ -243,7 +241,7 @@ Tk_MainEx(
      * of length 0, (e.g. /dev/null, which is what Finder sets when double
      * clicking Wish) then use the GUI console.
      */
-
+    
     if (!tsdPtr->tty) {
 	struct stat st;
 

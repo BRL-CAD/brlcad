@@ -15,12 +15,12 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkScrollbar.h"
 #include "tkMacOSXDebug.h"
 
 #define MIN_SCROLLBAR_VALUE		0
-#define SCROLLBAR_SCALING_VALUE		((float)LONG_MAX)
+#define SCROLLBAR_SCALING_VALUE		((double)(LONG_MAX>>1))
 
 /*
  * Declaration of Mac specific scrollbar structure.
@@ -230,7 +230,6 @@ TkpDisplayScrollbar(
     TkScrollbar *scrollPtr = (TkScrollbar *) clientData;
     MacScrollbar *macScrollPtr = (MacScrollbar *) clientData;
     Tk_Window tkwin = scrollPtr->tkwin;
-    MacDrawable *macDraw;
     CGrafPtr destPort, savePort;
     Boolean portChanged;
     WindowRef windowRef;
@@ -264,32 +263,15 @@ TkpDisplayScrollbar(
 	Tk_Height(tkwin) - 2*scrollPtr->highlightWidth,
 	scrollPtr->borderWidth, scrollPtr->relief);
 
-    /*
-     * Set up port for drawing Macintosh control.
-     */
-    macDraw = (MacDrawable *) Tk_WindowId(tkwin);
-    destPort = TkMacOSXGetDrawablePort(Tk_WindowId(tkwin));
-    portChanged = QDSwapPort(destPort, &savePort);
-    TkMacOSXSetUpClippingRgn(Tk_WindowId(tkwin));
-
     if (macScrollPtr->sbHandle == NULL) {
 	Rect r = {0, 0, 1, 1};
-	WindowRef frontNonFloating;
 
-	windowRef = GetWindowFromPort(destPort);
-	CreateScrollBarControl(windowRef, &r, MIN_SCROLLBAR_VALUE +
-		SCROLLBAR_SCALING_VALUE/2, MIN_SCROLLBAR_VALUE,
-		SCROLLBAR_SCALING_VALUE, SCROLLBAR_SCALING_VALUE -
-		MIN_SCROLLBAR_VALUE, true, NULL, &(macScrollPtr->sbHandle));
+	windowRef = TkMacOSXDrawableWindow(Tk_WindowId(tkwin));
+	CreateScrollBarControl(windowRef, &r, 0, 0, 0, 0, true, NULL,
+		&(macScrollPtr->sbHandle));
 	SetControlReference(macScrollPtr->sbHandle, (SInt32) scrollPtr);
 
-	/*
-	 * If we are foremost then make us active.
-	 */
-
-	frontNonFloating = ActiveNonFloatingWindow();
-
-	if ((windowRef == FrontWindow()) || TkpIsWindowFloating(windowRef)) {
+	if (IsWindowActive(windowRef)) {
 	    macScrollPtr->macFlags |= ACTIVE;
 	}
     }
@@ -299,6 +281,13 @@ TkpDisplayScrollbar(
      */
 
     UpdateControlValues(macScrollPtr);
+
+    /*
+     * Set up port for drawing Macintosh control.
+     */
+    destPort = TkMacOSXGetDrawablePort(Tk_WindowId(tkwin));
+    portChanged = QDSwapPort(destPort, &savePort);
+    TkMacOSXSetUpClippingRgn(Tk_WindowId(tkwin));
 
     /*
      * Scrollbars do not erase the complete control bounds if they are wider
@@ -777,7 +766,7 @@ ScrollbarBindProc(
     if (eventPtr->type == ButtonPress) {
 	Point where;
 	Rect bounds;
-	int part;
+	ControlPartCode part;
 	CGrafPtr destPort, savePort;
 	Boolean portChanged;
 	Window window;
@@ -846,7 +835,9 @@ ScrollbarBindProc(
 	     * Workaround for Carbon bug where the scrollbar down arrow
 	     * sometimes gets "stuck" after the mousebutton has been released.
 	     */
-	    TkMacOSXSetUpClippingRgn(Tk_WindowId(scrollPtr->tkwin));
+	    if (scrollPtr->tkwin) {
+		TkMacOSXSetUpClippingRgn(Tk_WindowId(scrollPtr->tkwin));
+	    }
 	    Draw1Control(macScrollPtr->sbHandle);
 	}
 	TkMacOSXTrackingLoop(0);
@@ -855,8 +846,11 @@ ScrollbarBindProc(
 	 * The HandleControlClick call will "eat" the ButtonUp event. We now
 	 * generate a ButtonUp event so Tk will unset implicit grabs etc.
 	 */
-	window = Tk_WindowId(scrollPtr->tkwin);
-	TkGenerateButtonEventForXPointer(window);
+
+	if (scrollPtr->tkwin) {
+	    window = Tk_WindowId(scrollPtr->tkwin);
+	    TkGenerateButtonEventForXPointer(window);
+	}
 
 	if (portChanged) {
 	    QDSwapPort(savePort, NULL);
@@ -956,7 +950,8 @@ UpdateControlValues(
     if (portRect.bottom == contrlRect.bottom &&
 	    portRect.right == contrlRect.right) {
 	TkMacOSXSetScrollbarGrow((TkWindow *) tkwin, true);
-	if (TkMacOSXResizable(macDraw->toplevel->winPtr)) {
+	if (macDraw->toplevel &&
+		TkMacOSXResizable(macDraw->toplevel->winPtr)) {
 	    int growSize;
 
 	    switch (TkMacOSXWindowClass(macDraw->toplevel->winPtr)) {
@@ -1026,10 +1021,10 @@ UpdateControlValues(
 
     dViewSize = (scrollPtr->lastFraction - scrollPtr->firstFraction)
 	    * SCROLLBAR_SCALING_VALUE;
-    SetControlViewSize(macScrollPtr->sbHandle, dViewSize);
     SetControl32BitMinimum(macScrollPtr->sbHandle, MIN_SCROLLBAR_VALUE);
     SetControl32BitMaximum(macScrollPtr->sbHandle, MIN_SCROLLBAR_VALUE +
 	    SCROLLBAR_SCALING_VALUE - dViewSize);
+    SetControlViewSize(macScrollPtr->sbHandle, dViewSize);
     SetControl32BitValue(macScrollPtr->sbHandle, MIN_SCROLLBAR_VALUE +
 	    SCROLLBAR_SCALING_VALUE * scrollPtr->firstFraction);
 

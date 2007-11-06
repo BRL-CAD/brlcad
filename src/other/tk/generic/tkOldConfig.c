@@ -15,7 +15,6 @@
  */
 
 #include "tkPort.h"
-#include "tk.h"
 
 /*
  * Values for "flags" field of Tk_ConfigSpec structures. Be sure to coordinate
