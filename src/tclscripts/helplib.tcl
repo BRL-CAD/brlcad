@@ -139,7 +139,7 @@ set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_bot_smooth)        {{[-t norm_tolerance_degrees] new_bot_name old_bot_name} {calculate vertex normals for BOT primitive}}
 set helplib_data(wdb_summary)		{{[p r g]}	{count/list primitives/regions/groups}}
 set helplib_data(wdb_title)		{{description} {set/get database title}}
-set helplib_data(wdb_tol)		{{[abs|rel|norm|dist|perp [#]} {Set/get tessellation and calculation tolerances}}
+set helplib_data(wdb_tol)		{{([abs|rel|norm|dist|perp] [tolerance]) ...} {Get/Set tessellation and calculation tolerances}}
 set helplib_data(wdb_tops)		{{[-n] [-u] [-g]}	{find all top level objects}}
 set helplib_data(wdb_track)		{{args} {create a track}}
 set helplib_data(wdb_tree)		{{[-c] [-o outfile] [-i indentSize] [object(s)]} {print out the object hierarchy for all object(s) specified or for all currently displayed}}
