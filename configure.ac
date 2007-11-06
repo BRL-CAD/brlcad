@@ -382,6 +382,9 @@ BC_ARG_ENABLE([use_debug], [debug], [Enable debug symbols], [auto])
 # profiling
 BC_ARG_ENABLE([use_profiling], [profiling], [Enable profiling], [no])
 
+# Sun dtrace
+BC_ARG_ENABLE([use_dtrace], [dtrace], [Enable dtrace support], [no])
+
 # verbosity
 BC_ARG_ENABLE([build_verbose], [verbose], [Enable verbose compilation], [auto])
 
@@ -1006,6 +1009,10 @@ AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(RM, rm)
 
+if test "$bc_with_dtrace" == "yes" ; then
+	AC_PATH_PROG(DTRACE, dtrace, bc_with_dtrace=no, [$PATH:/usr/sbin])
+fi
+
 dnl figure out which compiler is seems like we are using
 dnl detected values include: gcc, mipspro, sunpro
 dnl none of the tests should be compiler-specific, but it's good to
@@ -1375,11 +1382,15 @@ LIBS="$PRELIBS"
 dnl check if libitcl library links
 itcl_link_works=no
 LIBITCL=""
-AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
-    [AC_CHECK_LIB(itcl33, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl33",
-	[AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
-	    [AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
-		[AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
+    [AC_CHECK_LIB(itcl34, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl34",
+	[AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
+	    [AC_CHECK_LIB(itcl33, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl33",
+		[AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
+		    [AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
+			[AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1388,11 +1399,15 @@ AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
 dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
-AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
-    [AC_CHECK_LIB(itk33, Itk_Init, itk_link_works=yes ; LIBITK="-litk33",
-	[AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
-	    [AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
-		[AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+AC_CHECK_LIB(itk3.4, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.4",
+    [AC_CHECK_LIB(itk34, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk34",
+	[AC_CHECK_LIB(itk3.3, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.3",
+	    [AC_CHECK_LIB(itk33, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk33",
+		[AC_CHECK_LIB(itk3.2, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.2",
+		    [AC_CHECK_LIB(itk32, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk32",
+			[AC_CHECK_LIB(itk, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1574,6 +1589,9 @@ AC_CHECK_HEADERS( \
 # The headers wchar.h, wctype.h, iso646.h were added with C95.
 # The headers complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h, and tgmath.h were added with C99.
 
+if test "x$bc_with_dtrace" != "xno" ; then
+    AC_CHECK_HEADER(sys/sdt.h,, [bc_with_dtrace=no])
+fi
 
 GL_CPPFLAGS=""
 # optionally check for OpenGL headers
@@ -2790,7 +2808,7 @@ ITCL=""
 ITK=""
 ITCL_CPPFLAGS=""
 ITK_CPPFLAGS=""
-ITCL_VERSION=3.3
+ITCL_VERSION=3.4
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
@@ -3181,6 +3199,15 @@ AC_MSG_CHECKING(whether the Standard C++ library is available)
 AC_MSG_RESULT($stdcxx_link_works)
 AC_SUBST(LIBSTDCXX)
 
+if test "x$bc_with_dtrace" = "xyes" ; then
+    AC_DEFINE(USE_DTRACE, 1, [Are we building with DTrace support?])
+    DTRACE_SRC="\${DTRACE_SRC}"
+    DTRACE_HDR="\${DTRACE_HDR}"
+    DTRACE_OBJ="\${DTRACE_OBJ}"
+    AC_SUBST(DTRACE_SRC)
+    AC_SUBST(DTRACE_HDR)
+    AC_SUBST(DTRACE_OBJ)
+fi
 
 dnl *** 64-bit compilation ***
 dnl figure out whether we are building 64-bit
