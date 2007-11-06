@@ -224,7 +224,7 @@ Itcl_CreateEnsemble(interp, ensName)
         goto ensCreateFail;
     }
     if (nameArgc < 1) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "invalid ensemble name \"", ensName, "\"",
             (char*)NULL);
         goto ensCreateFail;
@@ -244,7 +244,7 @@ Itcl_CreateEnsemble(interp, ensName)
 
         if (parentEnsData == NULL) {
             char *pname = Tcl_Merge(nameArgc-1, nameArgv);
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "invalid ensemble name \"", pname, "\"",
                 (char*)NULL);
             ckfree(pname);
@@ -337,7 +337,7 @@ Itcl_AddEnsemblePart(interp, ensName, partName, usageInfo,
 
     if (ensData == NULL) {
         char *pname = Tcl_Merge(nameArgc, nameArgv);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "invalid ensemble name \"", pname, "\"",
             (char*)NULL);
         ckfree(pname);
@@ -984,7 +984,7 @@ FindEnsemble(interp, nameArgv, nameArgc, ensDataPtr)
         (Tcl_Namespace*)NULL, TCL_LEAVE_ERR_MSG);
 
     if (cmdPtr == NULL || cmdPtr->deleteProc != DeleteEnsemble) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "command \"", nameArgv[0], "\" is not an ensemble",
             (char*)NULL);
         return TCL_ERROR;
@@ -1001,7 +1001,7 @@ FindEnsemble(interp, nameArgv, nameArgc, ensDataPtr)
         }
         if (ensPart == NULL) {
             char *pname = Tcl_Merge(i, nameArgv);
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "invalid ensemble name \"", pname, "\"",
                 (char*)NULL);
             ckfree(pname);
@@ -1010,7 +1010,7 @@ FindEnsemble(interp, nameArgv, nameArgc, ensDataPtr)
 
         cmdPtr = ensPart->cmdPtr;
         if (cmdPtr == NULL || cmdPtr->deleteProc != DeleteEnsemble) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "part \"", nameArgv[i], "\" is not an ensemble",
                 (char*)NULL);
             return TCL_ERROR;
@@ -1056,7 +1056,7 @@ CreateEnsemblePart(interp, ensData, partName, ensPartPtr)
      *  If a matching entry was found, then return an error.
      */
     if (FindEnsemblePartIndex(ensData, partName, &pos)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "part \"", partName, "\" already exists in ensemble",
             (char*)NULL);
         return TCL_ERROR;
@@ -1591,7 +1591,7 @@ Itcl_EnsembleCmd(clientData, interp, objc, objv)
      *  Make sure that an ensemble name was specified.
      */
     if (objc < 2) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "wrong # args: should be \"",
             Tcl_GetStringFromObj(objv[0], (int*)NULL),
             " name ?command arg arg...?\"",
@@ -1636,7 +1636,7 @@ Itcl_EnsembleCmd(clientData, interp, objc, objv)
 
         cmdPtr = (Command*)ensPart->cmdPtr;
         if (cmdPtr->deleteProc != DeleteEnsemble) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "part \"", Tcl_GetStringFromObj(objv[1], (int*)NULL),
                 "\" is not an ensemble",
                 (char*)NULL);
@@ -1662,7 +1662,7 @@ Itcl_EnsembleCmd(clientData, interp, objc, objv)
         cmdPtr = (Command*)cmd;
 
         if (cmdPtr == NULL || cmdPtr->deleteProc != DeleteEnsemble) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "command \"", Tcl_GetStringFromObj(objv[1], (int*)NULL),
                 "\" is not an ensemble",
                 (char*)NULL);
@@ -1892,7 +1892,7 @@ Itcl_EnsPartCmd(clientData, interp, objc, objv)
     Tcl_DString buffer;
 
     if (objc != 4) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "wrong # args: should be \"",
             Tcl_GetStringFromObj(objv[0], (int*)NULL),
             " name args body\"",

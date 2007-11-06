@@ -93,7 +93,7 @@ Itcl_CreateClass(interp, path, info, rPtr)
 	    (Tcl_Namespace*)NULL, /* flags */ 0);
 
     if (classNs != NULL && Itcl_IsClassNamespace(classNs)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "class \"", path, "\" already exists",
             (char*)NULL);
         return TCL_ERROR;
@@ -109,12 +109,12 @@ Itcl_CreateClass(interp, path, info, rPtr)
 	    (Tcl_Namespace*)NULL, /* flags */ TCL_NAMESPACE_ONLY);
 
     if (cmd != NULL && !Itcl_IsStub(cmd)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "command \"", path, "\" already exists",
             (char*)NULL);
 
         if (strstr(path,"::") == NULL) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 " in namespace \"",
                 Tcl_GetCurrentNamespace(interp)->fullName, "\"",
                 (char*)NULL);
@@ -131,7 +131,7 @@ Itcl_CreateClass(interp, path, info, rPtr)
     Itcl_ParseNamespPath(path, &buffer, &head, &tail);
 
     if (strstr(tail,".")) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "bad class name \"", tail, "\"",
             (char*)NULL);
         Tcl_DStringFree(&buffer);
@@ -212,8 +212,10 @@ Itcl_CreateClass(interp, path, info, rPtr)
      *  so that members are accessed according to the rules for
      *  [incr Tcl].
      */
-    Tcl_SetNamespaceResolvers(classNs, Itcl_ClassCmdResolver,
-        Itcl_ClassVarResolver, Itcl_ClassCompiledVarResolver);
+    Tcl_SetNamespaceResolvers(classNs,
+	    (Tcl_ResolveCmdProc*)Itcl_ClassCmdResolver,
+	    (Tcl_ResolveVarProc*)Itcl_ClassVarResolver,
+	    (Tcl_ResolveCompiledVarProc*)Itcl_ClassCompiledVarResolver);
 
     /*
      *  Add the built-in "this" variable to the list of data members.
@@ -484,14 +486,12 @@ ItclFreeClass(cdata)
 {
     ItclClass *cdefnPtr = (ItclClass*)cdata;
 
-    int newEntry;
     Itcl_ListElem *elem;
     Tcl_HashSearch place;
-    Tcl_HashEntry *entry, *hPtr;
+    Tcl_HashEntry *entry;
     ItclVarDefn *vdefn;
     ItclVarLookup *vlookup;
-    Var *varPtr;
-    Tcl_HashTable varTable;
+    VarInHash *varPtr;
 
     /*
      *  Tear down the list of derived classes.  This list should
@@ -510,7 +510,6 @@ ItclFreeClass(cdata)
      *  appear multiple times in the table (for x, foo::x, etc.)
      *  so each one has a reference count.
      */
-    Tcl_InitHashTable(&varTable, TCL_STRING_KEYS);
 
     entry = Tcl_FirstHashEntry(&cdefnPtr->resolveVars, &place);
     while (entry) {
@@ -524,19 +523,20 @@ ItclFreeClass(cdata)
              */
             if ( (vlookup->vdefn->member->flags & ITCL_COMMON) != 0 &&
                  vlookup->vdefn->member->classDefn == cdefnPtr ) {
-                varPtr = (Var*)vlookup->var.common;
-                if (--varPtr->refCount == 0) {
-                    hPtr = Tcl_CreateHashEntry(&varTable,
-                        vlookup->vdefn->member->fullname, &newEntry);
-                    Tcl_SetHashValue(hPtr, (ClientData) varPtr);
+                varPtr = (VarInHash*)vlookup->var.common;
+                if (--ItclVarRefCount(varPtr) == 0) {
+		    /*
+		     * This is called after the namespace is already gone: the
+		     * variable is already unset and ready to be freed.
+		     */
+		    
+		    ckfree((char *)varPtr);
                 }
             }
             ckfree((char*)vlookup);
         }
         entry = Tcl_NextHashEntry(&place);
     }
-
-    TclDeleteVars((Interp*)cdefnPtr->interp, &varTable);
     Tcl_DeleteHashTable(&cdefnPtr->resolveVars);
 
     /*
@@ -657,8 +657,9 @@ Itcl_IsClass(cmd)
  */
 ItclClass*
 Itcl_FindClass(interp, path, autoload)
-    Tcl_Interp* interp;      /* interpreter containing class */
-    CONST char* path;              /* path name for class */
+    Tcl_Interp* interp;		/* interpreter containing class */
+    CONST char* path;		/* path name for class */
+    int autoload;		/* should class be loaded */
 {
     Tcl_Namespace* classNs;
 
@@ -738,7 +739,7 @@ Itcl_FindClassNamespace(interp, path)
 	    (Tcl_Namespace*)NULL, /* flags */ 0);
 
     if ( !classNs && contextNs->parentPtr != NULL &&
-         (*path != ':' || *(path+1) != ':') ) {
+         !(*path == ':' && *(path+1) == ':') ) {
 
         if (strcmp(contextNs->name, path) == 0) {
             classNs = contextNs;
@@ -789,12 +790,11 @@ Itcl_HandleClass(clientData, interp, objc, objv)
     ItclClass *cdefnPtr = (ItclClass*)clientData;
     int result = TCL_OK;
 
-    char unique[256];    /* buffer used for unique part of object names */
     Tcl_DString buffer;  /* buffer used to build object names */
-    char *token, *objName, tmp, *start, *pos, *match;
+    char *token, *objName, *match;
 
     ItclObject *newObj;
-    Tcl_CallFrame frame;
+    Itcl_CallFrame frame;
 
     /*
      *  If the command is invoked without an object name, then do nothing.
@@ -818,7 +818,7 @@ Itcl_HandleClass(clientData, interp, objc, objv)
     if ((*token == ':') && (strcmp(token,"::") == 0) && (objc > 2)) {
         if ((cdefnPtr->flags & ITCL_OLD_STYLE) != 0) {
 
-            result = Tcl_PushCallFrame(interp, &frame,
+            result = Tcl_PushCallFrame(interp, (Tcl_CallFrame *) &frame,
                  cdefnPtr->namesp, /* isProcCallFrame */ 0);
 
             if (result != TCL_OK) {
@@ -834,7 +834,7 @@ Itcl_HandleClass(clientData, interp, objc, objv)
          *  If this is not an old-style class, then return an error
          *  describing the syntax change.
          */
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "syntax \"class :: proc\" is an anachronism\n",
             "[incr Tcl] no longer supports this syntax.\n",
             "Instead, remove the spaces from your procedure invocations:\n",
@@ -851,60 +851,47 @@ Itcl_HandleClass(clientData, interp, objc, objv)
      *  a uniquely generated string based on the class name.
      */
     Tcl_DStringInit(&buffer);
-    objName = NULL;
+    objName = token;
+    match = strstr(token, "#auto");
+    if (match != NULL) {
+	int len;
+	char unique[TCL_INTEGER_SPACE]; /* for unique part of object names */
+	Tcl_CmdInfo dummy;
+	Tcl_UniChar ch;
 
-    match = "#auto";
-    start = token;
-    for (pos=start; *pos != '\0'; pos++) {
-        if (*pos == *match) {
-            if (*(++match) == '\0') {
-                tmp = *start;
-                *start = '\0';  /* null-terminate first part */
+	Tcl_DStringAppend(&buffer, token, (match - token));
 
-                /*
-                 *  Substitute a unique part in for "#auto", and keep
-                 *  incrementing a counter until a valid name is found.
-                 */
-                do {
-		    Tcl_CmdInfo dummy;
+	/*
+	 * Only lowercase the first char of $class, per itcl #auto semantics
+	 */
+	len = Tcl_UtfToUniChar(cdefnPtr->name, &ch);
+	ch = Tcl_UniCharToLower(ch);
+	Tcl_UniCharToUtfDString(&ch, 1, &buffer);
+	Tcl_DStringAppend(&buffer, cdefnPtr->name + len, -1);
 
-                    sprintf(unique,"%.200s%d", cdefnPtr->name,
-                        cdefnPtr->unique++);
-                    unique[0] = tolower(unique[0]);
+	/*
+	 *  Substitute a unique part in for "#auto", and keep
+	 *  incrementing a counter until a valid name is found.
+	 */
+	len = Tcl_DStringLength(&buffer);
+	do {
+	    sprintf(unique, "%d", cdefnPtr->unique++);
 
-                    Tcl_DStringTrunc(&buffer, 0);
-                    Tcl_DStringAppend(&buffer, token, -1);
-                    Tcl_DStringAppend(&buffer, unique, -1);
-                    Tcl_DStringAppend(&buffer, start+5, -1);
+	    Tcl_DStringTrunc(&buffer, len);
+	    Tcl_DStringAppend(&buffer, unique, -1);
+	    Tcl_DStringAppend(&buffer, match+5, -1);
 
-                    objName = Tcl_DStringValue(&buffer);
+	    objName = Tcl_DStringValue(&buffer);
 
-		    /*
-		     * [Fix 227811] Check for any command with the
-		     * given name, not only objects.
-		     */
+	    /*
+	     * [Fix 227811] Check for any command with the given name, not
+	     * only objects.
+	     */
 
-                    if (Tcl_GetCommandInfo (interp, objName, &dummy) == 0) {
-                        break;  /* if an error is found, bail out! */
-                    }
-                } while (1);
-
-                *start = tmp;       /* undo null-termination */
-                objName = Tcl_DStringValue(&buffer);
-                break;              /* object name is ready to go! */
-            }
-        }
-        else {
-            match = "#auto";
-            pos = start++;
-        }
-    }
-
-    /*
-     *  If "#auto" was not found, then just use object name as-is.
-     */
-    if (objName == NULL) {
-        objName = token;
+	    if (Tcl_GetCommandInfo (interp, objName, &dummy) == 0) {
+		break;  /* if an error is found, bail out! */
+	    }
+	} while (1);
     }
 
     /*
@@ -979,7 +966,7 @@ Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
         if (!Itcl_CanAccessFunc(mfunc, context)) {
 
             if ((flags & TCL_LEAVE_ERR_MSG) != 0) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     "can't access \"", name, "\": ",
                     Itcl_ProtectionStr(mfunc->member->protection),
                     " variable",
@@ -1025,7 +1012,7 @@ Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
 	mfunc->accessCmd = NULL;
 
 	if ((flags & TCL_LEAVE_ERR_MSG) != 0) {
-	    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+	    Tcl_AppendResult(interp,
 		"can't access \"", name, "\": deleted or redefined\n",
 		"(use the \"body\" command to redefine methods/procs)",
 		(char*)NULL);
@@ -1066,11 +1053,11 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
     Tcl_Var *rPtr;            /* returns: resolved variable */
 {
     Interp *iPtr = (Interp *) interp;
-    CallFrame *varFramePtr = iPtr->varFramePtr;
+    ItclCallFrame *varFramePtr = (ItclCallFrame *) iPtr->varFramePtr;
 
     ItclClass *cdefn = (ItclClass*)context->clientData;
     ItclObject *contextObj;
-    Tcl_CallFrame *framePtr;
+    Itcl_CallFrame *framePtr;
     Tcl_HashEntry *entry;
     ItclVarLookup *vlookup;
 
@@ -1108,7 +1095,7 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
 
             for (i=0; i < localCt; i++) {
                 if (!TclIsVarTemporary(localPtr)) {
-                    register char *localName = localVarPtr->name;
+                    register char *localName = localPtr->name;
                     if ((name[0] == localName[0])
                             && (nameLen == localPtr->nameLength)
                             && (strcmp(name, localName) == 0)) {
@@ -1116,7 +1103,7 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
                         return TCL_OK;
                     }
                 }
-                localVarPtr++;
+                ItclNextLocal(localVarPtr);
                 localPtr = localPtr->nextPtr;
             }
         }
@@ -1127,9 +1114,8 @@ Itcl_ClassVarResolver(interp, name, context, flags, rPtr)
          *  created on the fly.
          */
         if (varFramePtr->varTablePtr != NULL) {
-            entry = Tcl_FindHashEntry(varFramePtr->varTablePtr, name);
-            if (entry != NULL) {
-                *rPtr = (Tcl_Var)Tcl_GetHashValue(entry);
+	    *rPtr = (Tcl_Var) ItclVarHashFindVar(varFramePtr->varTablePtr, name);
+	    if (*rPtr) {
                 return TCL_OK;
             }
         }
@@ -1289,7 +1275,7 @@ ItclClassRuntimeVarResolver(interp, resVarInfo)
 {
     ItclVarLookup *vlookup = ((ItclResolvedVarInfo*)resVarInfo)->vlookup;
 
-    Tcl_CallFrame *framePtr;
+    Itcl_CallFrame *framePtr;
     ItclClass *cdefn;
     ItclObject *contextObj;
     Tcl_HashEntry *entry;
@@ -1359,7 +1345,7 @@ void
 Itcl_BuildVirtualTables(cdefnPtr)
     ItclClass* cdefnPtr;       /* class definition being updated */
 {
-    Tcl_HashEntry *entry, *hPtr;
+    Tcl_HashEntry *entry;
     Tcl_HashSearch place;
     ItclVarLookup *vlookup;
     ItclVarDefn *vdefn;
@@ -1427,10 +1413,8 @@ Itcl_BuildVirtualTables(cdefnPtr)
              */
             if ((vdefn->member->flags & ITCL_COMMON) != 0) {
                 nsPtr = (Namespace*)cdPtr->namesp;
-                hPtr = Tcl_FindHashEntry(&nsPtr->varTable, vdefn->member->name);
-                assert(hPtr != NULL);
-
-                vlookup->var.common = (Tcl_Var)Tcl_GetHashValue(hPtr);
+                vlookup->var.common = (Tcl_Var) ItclVarHashFindVar(&nsPtr->varTable, vdefn->member->name);
+                assert(vlookup->var.common  != NULL);
             }
             else {
                 /*
@@ -1594,7 +1578,7 @@ Itcl_CreateVarDefn(interp, cdefn, name, init, config, vdefnPtr)
      */
     entry = Tcl_CreateHashEntry(&cdefn->variables, name, &newEntry);
     if (!newEntry) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "variable name \"", name, "\" already defined in class \"",
             cdefn->fullname, "\"",
             (char*)NULL);
@@ -1613,12 +1597,11 @@ Itcl_CreateVarDefn(interp, cdefn, name, init, config, vdefnPtr)
             return TCL_ERROR;
         }
         Itcl_PreserveData((ClientData)mcode);
-        Itcl_EventuallyFree((ClientData)mcode, Itcl_DeleteMemberCode);
+        Itcl_EventuallyFree((ClientData)mcode, (Tcl_FreeProc*) Itcl_DeleteMemberCode);
     }
     else {
         mcode = NULL;
     }
-        
 
     /*
      *  If everything looks good, create the variable definition.
@@ -1689,14 +1672,14 @@ Itcl_GetCommonVar(interp, name, contextClass)
 {
     CONST char *val = NULL;
     int result;
-    Tcl_CallFrame frame;
+    Itcl_CallFrame frame;
 
     /*
      *  Activate the namespace for the given class.  That installs
      *  the appropriate name resolution rules and by-passes any
      *  security restrictions.
      */
-    result = Tcl_PushCallFrame(interp, &frame,
+    result = Tcl_PushCallFrame(interp, (Tcl_CallFrame *) &frame,
                  contextClass->namesp, /*isProcCallFrame*/ 0);
 
     if (result == TCL_OK) {

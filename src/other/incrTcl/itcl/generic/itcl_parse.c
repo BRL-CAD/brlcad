@@ -85,7 +85,7 @@ Itcl_ParseInit(interp, info)
         (ClientData)info, Itcl_ReleaseData);
 
     if (!parserNs) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             " (cannot initialize itcl parser)",
             (char*)NULL);
         return TCL_ERROR;
@@ -193,17 +193,21 @@ Itcl_ClassCmd(clientData, interp, objc, objv)
 {
     ItclObjectInfo* info = (ItclObjectInfo*)clientData;
 
-    int result;
+    int result, len;
     char *className;
     Tcl_Namespace *parserNs;
     ItclClass *cdefnPtr;
-    Tcl_CallFrame frame;
+    Itcl_CallFrame frame;
 
     if (objc != 3) {
         Tcl_WrongNumArgs(interp, 1, objv, "name { definition }");
         return TCL_ERROR;
     }
-    className = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+    className = Tcl_GetStringFromObj(objv[1], &len);
+    if (len == 0) {
+        Tcl_AppendResult(interp, "invalid class name \"\"", (char *) NULL);
+        return TCL_ERROR;
+    }
 
     /*
      *  Find the namespace to use as a parser for the class definition.
@@ -251,7 +255,7 @@ Itcl_ClassCmd(clientData, interp, objc, objv)
      */
     Itcl_PushStack((ClientData)cdefnPtr, &info->cdefnStack);
 
-    result = Tcl_PushCallFrame(interp, &frame, parserNs,
+    result = Tcl_PushCallFrame(interp, (Tcl_CallFrame *) &frame, parserNs,
         /* isProcCallFrame */ 0);
 
     if (result == TCL_OK) {
@@ -312,13 +316,13 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
 
-    int result, i, newEntry;
+    int result, i, newEntry = 1;
     char *token;
     Itcl_ListElem *elem, *elem2;
     ItclClass *cdPtr, *baseCdefnPtr, *badCdPtr;
     ItclHierIter hier;
     Itcl_Stack stack;
-    Tcl_CallFrame frame;
+    Itcl_CallFrame frame;
 
     if (objc < 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "class ?class...?");
@@ -335,13 +339,13 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
 
         while (elem) {
             cdPtr = (ItclClass*)Itcl_GetListValue(elem);
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 cdPtr->name, " ", (char*)NULL);
 
             elem = Itcl_NextListElem(elem);
         }
 
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\" already defined for class \"", cdefnPtr->fullname, "\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -350,8 +354,8 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
     /*
      *  Validate each base class and add it to the "bases" list.
      */
-    result = Tcl_PushCallFrame(interp, &frame, cdefnPtr->namesp->parentPtr,
-        /* isProcCallFrame */ 0);
+    result = Tcl_PushCallFrame(interp, (Tcl_CallFrame *) &frame,
+	    cdefnPtr->namesp->parentPtr, /* isProcCallFrame */ 0);
 
     if (result != TCL_OK) {
         return TCL_ERROR;
@@ -375,12 +379,12 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
             errmsg = Tcl_GetStringFromObj(resultPtr, &errlen);
 
             Tcl_ResetResult(interp);
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "cannot inherit from \"", token, "\"",
                 (char*)NULL);
 
             if (errlen > 0) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     " (", errmsg, ")", (char*)NULL);
             }
             Tcl_DecrRefCount(resultPtr);
@@ -392,7 +396,7 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
          *  class that is being built.
          */
         if (baseCdefnPtr == cdefnPtr) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "class \"", cdefnPtr->name, "\" cannot inherit from itself",
                 (char*)NULL);
             goto inheritError;
@@ -412,7 +416,7 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
         while (elem2) {
             if (Itcl_GetListValue(elem) == Itcl_GetListValue(elem2)) {
                 cdPtr = (ItclClass*)Itcl_GetListValue(elem);
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     "class \"", cdefnPtr->fullname,
                     "\" cannot inherit base class \"",
                     cdPtr->fullname, "\" more than once",
@@ -449,10 +453,8 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
      *  leading to the same base class.
      */
     if (!newEntry) {
-        Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
-
         badCdPtr = cdPtr;
-        Tcl_AppendStringsToObj(resultPtr,
+        Tcl_AppendResult(interp,
             "class \"", cdefnPtr->fullname, "\" inherits base class \"",
             badCdPtr->fullname, "\" more than once:",
             (char*)NULL);
@@ -468,16 +470,15 @@ Itcl_ClassInheritCmd(clientData, interp, objc, objv)
             cdPtr = (ItclClass*)Itcl_PopStack(&stack);
 
             if (cdPtr == badCdPtr) {
-                Tcl_AppendToObj(resultPtr, "\n  ", -1);
+                Tcl_AppendResult(interp, "\n  ", (char *) NULL);
                 for (i=0; i < Itcl_GetStackSize(&stack); i++) {
                     if (Itcl_GetStackValue(&stack, i) == NULL) {
                         cdPtr = (ItclClass*)Itcl_GetStackValue(&stack, i-1);
-                        Tcl_AppendStringsToObj(resultPtr,
-                            cdPtr->name, "->",
-                            (char*)NULL);
+                        Tcl_AppendResult(interp, cdPtr->name, "->",
+				(char*)NULL);
                     }
                 }
-                Tcl_AppendToObj(resultPtr, badCdPtr->name, -1);
+                Tcl_AppendResult(interp, badCdPtr->name, (char *) NULL);
             }
             else if (!cdPtr) {
                 (void)Itcl_PopStack(&stack);
@@ -632,7 +633,7 @@ Itcl_ClassConstructorCmd(clientData, interp, objc, objv)
 
     name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
     if (Tcl_FindHashEntry(&cdefnPtr->functions, name)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\"", name, "\" already defined in class \"",
             cdefnPtr->fullname, "\"",
             (char*)NULL);
@@ -692,7 +693,7 @@ Itcl_ClassDestructorCmd(clientData, interp, objc, objv)
     body = Tcl_GetStringFromObj(objv[1], (int*)NULL);
 
     if (Tcl_FindHashEntry(&cdefnPtr->functions, name)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\"", name, "\" already defined in class \"",
             cdefnPtr->fullname, "\"",
             (char*)NULL);
@@ -845,7 +846,7 @@ Itcl_ClassVariableCmd(clientData, interp, objc, objv)
      */
     name = Tcl_GetStringFromObj(objv[1], (int*)NULL);
     if (strstr(name, "::")) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "bad variable name \"", name, "\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -895,7 +896,6 @@ Itcl_ClassCommonCmd(clientData, interp, objc, objv)
     int newEntry;
     char *name, *init;
     ItclVarDefn *vdefn;
-    Tcl_HashEntry *entry;
     Namespace *nsPtr;
     Var *varPtr;
 
@@ -910,7 +910,7 @@ Itcl_ClassCommonCmd(clientData, interp, objc, objv)
      */
     name = Tcl_GetStringFromObj(objv[1], (int*)NULL);
     if (strstr(name, "::")) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "bad variable name \"", name, "\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -935,17 +935,17 @@ Itcl_ClassCommonCmd(clientData, interp, objc, objv)
      *  the virtual tables below.
      */
     nsPtr = (Namespace*)cdefnPtr->namesp;
-    entry = Tcl_CreateHashEntry(&nsPtr->varTable,
+    varPtr = ItclVarHashCreateVar(&nsPtr->varTable,
         vdefn->member->name, &newEntry);
 
-    varPtr = _TclNewVar();
-    varPtr->hPtr = entry;
-    varPtr->nsPtr = nsPtr;
-    varPtr->flags |= VAR_NAMESPACE_VAR;
-    varPtr->refCount++;    /* one use by namespace */
-    varPtr->refCount++;    /* another use by class */
+#if ITCL_TCL_PRE_8_5
+    if (newEntry && itclOldRuntime) {
+	varPtr->nsPtr = nsPtr;
+    }
+#endif
+    TclSetVarNamespaceVar(varPtr);
+    ItclVarRefCount(varPtr)++;    /* another use by class */
 
-    Tcl_SetHashValue(entry, varPtr);
 
     /*
      *  TRICKY NOTE:  Make sure to rebuild the virtual tables for this
@@ -964,7 +964,7 @@ Itcl_ClassCommonCmd(clientData, interp, objc, objv)
             TCL_NAMESPACE_ONLY);
 
         if (!val) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "cannot initialize common variable \"",
                 vdefn->member->name, "\"",
                 (char*)NULL);
@@ -1035,7 +1035,7 @@ Itcl_ParseVarResolver(interp, name, contextNs, flags, rPtr)
 
         if ((vlookup->vdefn->member->flags & ITCL_COMMON) != 0) {
             if (!vlookup->accessible) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     "can't access \"", name, "\": ",
                     Itcl_ProtectionStr(vlookup->vdefn->member->protection),
                     " variable",

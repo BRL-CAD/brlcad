@@ -256,14 +256,14 @@ Itcl_BiIsaCmd(clientData, interp, objc, objv)
     }
 
     if (!contextObj) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "improper usage: should be \"object isa className\"",
             (char*)NULL);
         return TCL_ERROR;
     }
     if (objc != 2) {
         token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "wrong # args: should be \"object ", token, " className\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -336,7 +336,7 @@ Itcl_BiConfigureCmd(clientData, interp, objc, objv)
     Tcl_Obj *resultPtr, *objPtr;
     Tcl_DString buffer;
     ItclContext context;
-    Tcl_CallFrame *oldFramePtr, *uplevelFramePtr;
+    Itcl_CallFrame *oldFramePtr, *uplevelFramePtr;
 
     /*
      *  Make sure that this command is being invoked in the proper
@@ -347,7 +347,7 @@ Itcl_BiConfigureCmd(clientData, interp, objc, objv)
     }
 
     if (!contextObj) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "improper usage: should be ",
             "\"object configure ?-option? ?value -option value...?\"",
             (char*)NULL);
@@ -391,7 +391,7 @@ Itcl_BiConfigureCmd(clientData, interp, objc, objv)
     else if (objc == 2) {
         token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
         if (*token != '-') {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "improper usage: should be ",
                 "\"object configure ?-option? ?value -option value...?\"",
                 (char*)NULL);
@@ -409,7 +409,7 @@ Itcl_BiConfigureCmd(clientData, interp, objc, objv)
         }
 
         if (!vlookup) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "unknown option \"", token, "\"",
                 (char*)NULL);
             return TCL_ERROR;
@@ -448,14 +448,14 @@ Itcl_BiConfigureCmd(clientData, interp, objc, objv)
         }
 
         if (!vlookup || vlookup->vdefn->member->protection != ITCL_PUBLIC) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "unknown option \"", token, "\"",
                 (char*)NULL);
             result = TCL_ERROR;
             goto configureDone;
         }
         if (i == objc-1) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "value for \"", token, "\" missing",
                 (char*)NULL);
             result = TCL_ERROR;
@@ -559,7 +559,7 @@ Itcl_BiCgetCmd(clientData, interp, objc, objv)
         return TCL_ERROR;
     }
     if (!contextObj || objc != 2) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "improper usage: should be \"object cget -option\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -579,7 +579,7 @@ Itcl_BiCgetCmd(clientData, interp, objc, objv)
     }
 
     if (!vlookup || vlookup->vdefn->member->protection != ITCL_PUBLIC) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "unknown option \"", name, "\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -703,7 +703,7 @@ Itcl_BiChainCmd(dummy, interp, objc, objv)
     Tcl_HashEntry *entry;
     ItclMemberFunc *mfunc;
     Tcl_DString buffer;
-    CallFrame *framePtr;
+    ItclCallFrame *framePtr;
     Tcl_Obj *cmdlinePtr, **newobjv;
 
     /*
@@ -712,7 +712,7 @@ Itcl_BiChainCmd(dummy, interp, objc, objv)
      */
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot chain functions outside of a class context",
             (char*)NULL);
         return TCL_ERROR;
@@ -723,7 +723,7 @@ Itcl_BiChainCmd(dummy, interp, objc, objv)
      *  If it cannot be determined, do nothing.  Otherwise, trim
      *  off any leading path names.
      */
-    framePtr = (CallFrame*) _Tcl_GetCallFrame(interp, 0);
+    framePtr = (ItclCallFrame*) _Tcl_GetCallFrame(interp, 0);
     if (!framePtr || !framePtr->objv) {
         return TCL_OK;
     }
@@ -896,7 +896,7 @@ Itcl_BiInfoInheritCmd(dummy, interp, objc, objv)
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
         char *name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\nget info like this instead: ",
             "\n  namespace eval className { info ", name, "... }",
             (char*)NULL);
@@ -965,7 +965,7 @@ Itcl_BiInfoHeritageCmd(dummy, interp, objc, objv)
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
         name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\nget info like this instead: ",
             "\n  namespace eval className { info ", name, "... }",
             (char*)NULL);
@@ -1055,7 +1055,7 @@ Itcl_BiInfoFunctionCmd(dummy, interp, objc, objv)
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
         name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\nget info like this instead: ",
             "\n  namespace eval className { info ", name, "... }",
             (char*)NULL);
@@ -1080,7 +1080,7 @@ Itcl_BiInfoFunctionCmd(dummy, interp, objc, objv)
     if (cmdName) {
         entry = Tcl_FindHashEntry(&contextClass->resolveCmds, cmdName);
         if (entry == NULL) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "\"", cmdName, "\" isn't a member function in class \"",
                 contextClass->namesp->fullName, "\"",
                 (char*)NULL);
@@ -1262,7 +1262,7 @@ Itcl_BiInfoVariableCmd(dummy, interp, objc, objv)
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
         name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\nget info like this instead: ",
             "\n  namespace eval className { info ", name, "... }",
             (char*)NULL);
@@ -1287,7 +1287,7 @@ Itcl_BiInfoVariableCmd(dummy, interp, objc, objv)
     if (varName) {
         entry = Tcl_FindHashEntry(&contextClass->resolveVars, varName);
         if (entry == NULL) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "\"", varName, "\" isn't a variable in class \"",
                 contextClass->namesp->fullName, "\"",
                 (char*)NULL);
@@ -1489,7 +1489,7 @@ Itcl_BiInfoBodyCmd(dummy, interp, objc, objv)
         name = Tcl_GetStringFromObj(objv[1], (int*)NULL);
         procPtr = TclFindProc((Interp*)interp, name);
         if (procPtr == NULL) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "\"", name, "\" isn't a procedure",
                 (char*)NULL);
             return TCL_ERROR;
@@ -1503,7 +1503,7 @@ Itcl_BiInfoBodyCmd(dummy, interp, objc, objv)
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
         name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\nget info like this instead: ",
             "\n  namespace eval className { info ", name, "... }",
             (char*)NULL);
@@ -1513,7 +1513,7 @@ Itcl_BiInfoBodyCmd(dummy, interp, objc, objv)
     name = Tcl_GetStringFromObj(objv[1], (int*)NULL);
     entry = Tcl_FindHashEntry(&contextClass->resolveCmds, name);
     if (entry == NULL) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\"", name, "\" isn't a procedure",
             (char*)NULL);
         return TCL_ERROR;
@@ -1578,7 +1578,7 @@ Itcl_BiInfoArgsCmd(dummy, interp, objc, objv)
 
         procPtr = TclFindProc((Interp*)interp, name);
         if (procPtr == NULL) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "\"", name, "\" isn't a procedure",
                 (char*)NULL);
             return TCL_ERROR;
@@ -1603,7 +1603,7 @@ Itcl_BiInfoArgsCmd(dummy, interp, objc, objv)
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK) {
         name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\nget info like this instead: ",
             "\n  namespace eval className { info ", name, "... }",
             (char*)NULL);
@@ -1612,7 +1612,7 @@ Itcl_BiInfoArgsCmd(dummy, interp, objc, objv)
 
     entry = Tcl_FindHashEntry(&contextClass->resolveCmds, name);
     if (entry == NULL) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "\"", name, "\" isn't a procedure",
             (char*)NULL);
         return TCL_ERROR;
@@ -1674,11 +1674,12 @@ Itcl_DefaultInfoCmd(dummy, interp, objc, objv)
         name = Tcl_GetStringFromObj(objv[0], (int*)NULL);
         Tcl_ResetResult(interp);
 
-        resultPtr = Tcl_GetObjResult(interp);
+        resultPtr = Tcl_NewObj();
         Tcl_AppendStringsToObj(resultPtr,
             "bad option \"", name, "\" should be one of...\n",
             (char*)NULL);
         Itcl_GetEnsembleUsageForObj(interp, objv[0], resultPtr);
+	Tcl_SetObjResult(interp, resultPtr);
 
         return TCL_ERROR;
     }
@@ -1692,9 +1693,10 @@ Itcl_DefaultInfoCmd(dummy, interp, objc, objv)
      *  for the current ensemble to the error message.
      */
     if (result != TCL_OK && strncmp(interp->result,"bad option",10) == 0) {
-        resultPtr = Tcl_GetObjResult(interp);
+        resultPtr = Tcl_NewObj();
         Tcl_AppendToObj(resultPtr, "\nor", -1);
         Itcl_GetEnsembleUsageForObj(interp, objv[0], resultPtr);
+	Tcl_SetObjResult(interp, resultPtr);
     }
     return result;
 }

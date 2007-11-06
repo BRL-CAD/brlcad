@@ -110,6 +110,14 @@ static char safeInitScript[] =
 
 int itclCompatFlags = -1;
 
+#if ITCL_TCL_PRE_8_5
+int itclVarFlagOffset; 
+int itclVarRefCountOffset;
+int itclVarInHashSize;
+int itclVarLocalSize;
+int itclVarValueOffset;
+#endif
+
 
 /*
  * ------------------------------------------------------------------------
@@ -135,11 +143,11 @@ Initialize(interp)
     ItclObjectInfo *info;
 
 #ifndef USE_TCL_STUBS
-    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 1) == NULL) {
+    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 0) == NULL) {
       return TCL_ERROR;
     }
 #else
-    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
+    if (Tcl_InitStubs(interp, TCL_VERSION, 0) == NULL) {
       return TCL_ERROR;
     }
 #endif
@@ -171,11 +179,35 @@ Initialize(interp)
 	     * function in the core. */
 	    itclCompatFlags |= ITCL_COMPAT_USECMDFLAGS;
 	}
-    }
+#if USE_TCL_STUBS
+	if ((maj == 8) && (min > 4) &&
+		((type > TCL_ALPHA_RELEASE) || (ptch > 2))) {
+	    itclCompatFlags |= ITCL_COMPAT_USE_ISTATE_API;
+	}
 #else
     itclCompatFlags = 0;
 #endif
 
+#if ITCL_TCL_PRE_8_5
+#if USE_TCL_STUBS
+	if ((maj == 8) && (min < 5)) {
+#endif
+	    itclVarFlagOffset     = ItclOffset(Var, flags);
+	    itclVarRefCountOffset = ItclOffset(Var, refCount);
+	    itclVarValueOffset    = ItclOffset(Var, value);
+	    itclVarInHashSize     = sizeof(Var);
+	    itclVarLocalSize	  = sizeof(Var);
+#if USE_TCL_STUBS
+	} else {
+	    itclVarFlagOffset     = ItclOffset(ItclShortVar, flags);
+	    itclVarRefCountOffset = ItclOffset(ItclVarInHash, refCount);
+	    itclVarValueOffset    = ItclOffset(ItclShortVar, value);
+	    itclVarInHashSize     = sizeof(ItclVarInHash);
+	    itclVarLocalSize	  = sizeof(ItclShortVar);  
+	}
+#endif
+#endif
+    }
 
     /*
      *  Initialize the ensemble package first, since we need this
@@ -184,7 +216,8 @@ Initialize(interp)
     if (Itcl_EnsembleInit(interp) != TCL_OK) {
         return TCL_ERROR;
     }
-
+#endif
+    
     /*
      *  Create the top-level data structure for tracking objects.
      *  Store this as "associated data" for easy access, but link
@@ -315,7 +348,8 @@ Initialize(interp)
      *  values everywhere within the interpreter.
      */
     Tcl_AddInterpResolvers(interp, "itcl", (Tcl_ResolveCmdProc*)NULL,
-        Itcl_ScopedVarResolver, (Tcl_ResolveCompiledVarProc*)NULL);
+	    (Tcl_ResolveVarProc*)Itcl_ScopedVarResolver,
+	    (Tcl_ResolveCompiledVarProc*)NULL);
 
     /*
      *  Install the "itcl::parser" namespace used to parse the
@@ -980,7 +1014,7 @@ Itcl_DelObjectCmd(clientData, interp, objc, objv)
         }
 
         if (contextObj == NULL) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "object \"", name, "\" not found",
                 (char*)NULL);
             return TCL_ERROR;
@@ -1040,7 +1074,7 @@ Itcl_ScopeCmd(dummy, interp, objc, objv)
     ItclClass *contextClass;
     ItclObject *contextObj;
     ItclObjectInfo *info;
-    Tcl_CallFrame *framePtr;
+    Itcl_CallFrame *framePtr;
     Tcl_HashEntry *entry;
     ItclVarLookup *vlookup;
     Tcl_Obj *objPtr;
@@ -1094,7 +1128,7 @@ Itcl_ScopeCmd(dummy, interp, objc, objv)
 
         entry = Tcl_FindHashEntry(&contextClass->resolveVars, token);
         if (!entry) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "variable \"", token, "\" not found in class \"",
                 contextClass->fullname, "\"",
                 (char*)NULL);
@@ -1124,7 +1158,7 @@ Itcl_ScopeCmd(dummy, interp, objc, objv)
 
         entry = Tcl_FindHashEntry(&info->contextFrames, (char*)framePtr);
         if (!entry) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "can't scope variable \"", token,
                 "\": missing object context\"",
                 (char*)NULL);
@@ -1170,7 +1204,7 @@ Itcl_ScopeCmd(dummy, interp, objc, objv)
             TCL_NAMESPACE_ONLY);
 
         if (!var) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "variable \"", token, "\" not found in namespace \"",
                 contextNs->fullName, "\"",
                 (char*)NULL);
@@ -1258,7 +1292,7 @@ Itcl_CodeCmd(dummy, interp, objc, objv)
             break;
         }
         else {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "bad option \"", token, "\": should be -namespace or --",
                 (char*)NULL);
             return TCL_ERROR;
@@ -1472,7 +1506,7 @@ ItclHandleStubCmd(clientData, interp, objc, objv)
     result = Tcl_GetIntFromObj(interp, objPtr, &loaded);
     if (result != TCL_OK || !loaded) {
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "can't autoload \"", cmdName, "\"", (char*)NULL);
         Tcl_DecrRefCount(cmdNamePtr);
         return TCL_ERROR;
@@ -1522,7 +1556,7 @@ ItclDeleteStub(cdata)
  *
  *    itcl::is object ?-class classname? commandname
  *
- *  Returns 1 if it is an object, 0 otherwise
+ *  Sets interp result to 1 if it is an object, 0 otherwise
  * ------------------------------------------------------------------------
  */
 int
@@ -1535,7 +1569,7 @@ Itcl_IsObjectCmd(clientData, interp, objc, objv)
 
     int             classFlag = 0;
     int             idx = 0;
-    char            *name;
+    char            *name = "";
     char            *cname;
     char            *cmdName;
     char            *token;
@@ -1578,7 +1612,6 @@ Itcl_IsObjectCmd(clientData, interp, objc, objv)
         }
 
     } /* end for objc loop */
-        
 
     /*
      *  The object name may be a scoped value of the form
@@ -1636,7 +1669,7 @@ Itcl_IsObjectCmd(clientData, interp, objc, objv)
  *
  *    itcl::is class commandname
  *
- *  Returns 1 if it is a class, 0 otherwise
+ *  Sets interp result to 1 if it is a class, 0 otherwise
  * ------------------------------------------------------------------------
  */
 int

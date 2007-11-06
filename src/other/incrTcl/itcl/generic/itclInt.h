@@ -60,6 +60,11 @@
 # define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
+#define ITCL_TCL_PRE_8_5 (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5)
+
+#if !ITCL_TCL_PRE_8_5
+#if defined(USE_TCL_STUBS)
+
 /*
  * Fix Tcl bug #803489 the right way.  We need to always use the old Stub
  * slot positions, not the new broken ones part of TIP 127.  I do like
@@ -67,8 +72,6 @@
  * the slot change is the killer and is the painful side affect.
  */
 
-#if defined(USE_TCL_STUBS) && \
-	(TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION >= 5)
 #   undef Tcl_CreateNamespace
 #   define Tcl_CreateNamespace \
 	(tclIntStubsPtr->tcl_CreateNamespace)
@@ -105,7 +108,172 @@
 #   undef Tcl_GetCommandFullName
 #   define Tcl_GetCommandFullName \
 	(tclIntStubsPtr->tcl_GetCommandFullName)
+#endif /* use stubs */
+
+/*
+ * Use 8.5+ CallFrame
+ */
+
+#define ItclCallFrame CallFrame
+#define Itcl_CallFrame Tcl_CallFrame
+
+#define ItclInitVarFlags(varPtr) \
+    (varPtr)->flags = 0
+
+#define ItclInitVarArgument(varPtr) \
+   (varPtr)->flags = VAR_ARGUMENT 
+
+#define ItclVarHashCreateVar(tablePtr, key, newPtr) \
+    TclVarHashCreateVar((tablePtr), (key), (newPtr))
+
+#define ItclVarRefCount(varPtr) VarHashRefCount(varPtr)
+
+#define ItclClearVarUndefined(varPtr)
+
+#define ItclNextLocal(varPtr) ((varPtr)++)
+
+#define ItclVarObjValue(varPtr) ((varPtr)->value.objPtr)
+
+#define itclVarInHashSize sizeof(VarInHash)
+#define itclVarLocalSize  sizeof(Var)
+
+#else /* Compiling on Tcl8.x, x<5 */ 
+
+/*
+ * Redefine CallFrame to account for extra ClientData in 8.5.
+ * Make sure that standard CallFrame comes first.
+ */
+
+typedef struct ItclCallFrame {
+    Namespace *nsPtr;
+    int isProcCallFrame;
+    int objc;
+    Tcl_Obj *CONST *objv;
+    struct CallFrame *callerPtr;
+    struct CallFrame *callerVarPtr;
+    int level;
+    Proc *procPtr;
+    Tcl_HashTable *varTablePtr;
+    int numCompiledLocals;
+    Var* compiledLocals;
+    ClientData clientData;
+    struct localCache *localCachePtr;
+} ItclCallFrame;
+
+typedef struct Itcl_CallFrame {
+    Tcl_Namespace *nsPtr;
+    int dummy1;
+    int dummy2;
+    char *dummy3;
+    char *dummy4;
+    char *dummy5;
+    int dummy6;
+    char *dummy7;
+    char *dummy8;
+    int dummy9;
+    char *dummy10;
+    char *dummy11;
+    char *dummy12;
+} Itcl_CallFrame;
+
+/*
+ * Definition of runtime behaviour to be able to run irrespective of the Tcl
+ * version.
+ */
+
+#define VarInHash Var
+
+#define TclVarHashTable Tcl_HashTable
+
+typedef struct ItclShortVar {
+    int flags;
+    union {
+	Tcl_Obj *objPtr;
+	TclVarHashTable *tablePtr;
+	struct Var *linkPtr;
+    } value;
+} ItclShortVar;
+
+typedef struct ItclVarInHash {
+    ItclShortVar var;
+    int refCount;
+    Tcl_HashEntry entry;
+} ItclVarInHash;
+
+#define ItclOffset(type, field) ((int) ((char *) &((type *) 0)->field))
+
+#define itclOldRuntime (itclVarFlagOffset!=0)
+
+extern int itclVarFlagOffset; 
+extern int itclVarRefCountOffset;
+extern int itclVarInHashSize;
+extern int itclVarLocalSize;
+extern int itclVarValueOffset;
+
+/*
+ * VarReform related macros: provide access to the Var fields with offsets
+ * determined at load time, so that the same code copes with the different
+ * structs in Tcl8.5 and previous Tcl.
+ */
+
+#define ItclNextLocal(varPtr) \
+    ((varPtr) = (Var *) (((char *)(varPtr))+itclVarLocalSize))
+
+#define ItclVarObjValue(varPtr) \
+    (*((Tcl_Obj **) (((char *)(varPtr))+itclVarValueOffset)))
+
+#define ItclVarRefCount(varPtr) \
+    (*((int *) (((char *)(varPtr))+itclVarRefCountOffset)))
+
+#define ItclVarFlags(varPtr) \
+    (*((int *)(((char *)(varPtr))+itclVarFlagOffset)))
+
+/* Note that itclVarFlagOffset==0 exactly when we are running in Tcl8.5 */
+#define ItclInitVarFlags(varPtr) \
+    if (itclOldRuntime) { \
+	(varPtr)->flags = (VAR_SCALAR | VAR_UNDEFINED | VAR_IN_HASHTABLE);\
+    } else { \
+        ((ItclShortVar *)(varPtr))->flags = 0;\
+    }
+
+/* This is used for CompiledLocal, not for Var & Co. That struct did not
+ * change, but the correct flag init did! The flags bits themselves are
+ * unchanged */
+
+#define ItclInitVarArgument(varPtr) \
+    if (itclOldRuntime) { \
+	(varPtr)->flags = (VAR_SCALAR | VAR_ARGUMENT);\
+    } else { \
+	(varPtr)->flags = VAR_ARGUMENT;\
+    }
+
+#define TclIsVarNamespaceVar(varPtr) \
+    (ItclVarFlags(varPtr) & VAR_NAMESPACE_VAR)
+
+#define TclSetVarNamespaceVar(varPtr) \
+    if (!TclIsVarNamespaceVar(varPtr)) {\
+        ItclVarFlags(varPtr) |= VAR_NAMESPACE_VAR;\
+        ItclVarRefCount(varPtr)++;\
+    }
+
+#define ItclClearVarUndefined(varPtr) \
+    if (itclOldRuntime) { \
+	ItclVarFlags(varPtr) &= ~VAR_UNDEFINED;\
+    }
+
+#ifndef MODULE_SCOPE
+#define MODULE_SCOPE
 #endif
+
+MODULE_SCOPE Var * ItclVarHashCreateVar (TclVarHashTable * tablePtr, 
+				const char * key, int * newPtr);
+
+#endif /* Version dependent defs and macros */
+
+
+#define ItclVarHashFindVar(tablePtr, key) \
+    ItclVarHashCreateVar((tablePtr), (key), NULL)
+
 
 /*
  * Some backward compatability adjustments.
@@ -302,7 +470,7 @@ typedef struct ItclVarLookup {
  */
 typedef struct ItclContext {
     ItclClass *classDefn;     /* class definition */
-    CallFrame frame;          /* call frame for object context */
+    ItclCallFrame frame;      /* call frame for object context */
     Var *compiledLocals;      /* points to storage for compiled locals */
     Var localStorage[20];     /* default storage for compiled locals */
 } ItclContext;
@@ -311,9 +479,13 @@ typedef struct ItclContext {
  *  Compatibility flags.  Used to support small "hacks".  These are stored
  *  in the global variable named itclCompatFlags.
  */
+
+extern int itclCompatFlags;
+
 #define ITCL_COMPAT_USECMDFLAGS 0x0001	/* Tcl8.4a1 introduced a different Command
 					 * structure, and we need to adapt
 					 * dynamically */
+#define ITCL_COMPAT_USE_ISTATE_API 0x2  /* Tcl 8.5a2 added interp state APIs */
 
 #include "itclIntDecls.h"
 

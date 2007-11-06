@@ -757,15 +757,15 @@ TCL_EXTERN(int)		Itcl_EnsembleErrorCmd _ANSI_ARGS_((
 #ifndef _Tcl_GetCallFrame_TCL_DECLARED
 #define _Tcl_GetCallFrame_TCL_DECLARED
 /* 112 */
-TCL_EXTERN(Tcl_CallFrame*) _Tcl_GetCallFrame _ANSI_ARGS_((
+TCL_EXTERN(Itcl_CallFrame*) _Tcl_GetCallFrame _ANSI_ARGS_((
 				Tcl_Interp * interp, int level));
 #endif
 #ifndef _Tcl_ActivateCallFrame_TCL_DECLARED
 #define _Tcl_ActivateCallFrame_TCL_DECLARED
 /* 113 */
-TCL_EXTERN(Tcl_CallFrame*) _Tcl_ActivateCallFrame _ANSI_ARGS_((
+TCL_EXTERN(Itcl_CallFrame*) _Tcl_ActivateCallFrame _ANSI_ARGS_((
 				Tcl_Interp * interp, 
-				Tcl_CallFrame * framePtr));
+				Itcl_CallFrame * framePtr));
 #endif
 #ifndef _TclNewVar_TCL_DECLARED
 #define _TclNewVar_TCL_DECLARED
@@ -909,8 +909,8 @@ typedef struct ItclIntStubs {
     int (*itcl_EnsembleErrorCmd) _ANSI_ARGS_((ClientData clientData, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 109 */
     void *reserved110;
     void *reserved111;
-    Tcl_CallFrame* (*_Tcl_GetCallFrame) _ANSI_ARGS_((Tcl_Interp * interp, int level)); /* 112 */
-    Tcl_CallFrame* (*_Tcl_ActivateCallFrame) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_CallFrame * framePtr)); /* 113 */
+    Itcl_CallFrame* (*_Tcl_GetCallFrame) _ANSI_ARGS_((Tcl_Interp * interp, int level)); /* 112 */
+    Itcl_CallFrame* (*_Tcl_ActivateCallFrame) _ANSI_ARGS_((Tcl_Interp * interp, Itcl_CallFrame * framePtr)); /* 113 */
     Var* (*_TclNewVar) _ANSI_ARGS_((void)); /* 114 */
     void (*itcl_Assert) _ANSI_ARGS_((CONST char * testExpr, CONST char * fileName, int lineNum)); /* 115 */
     int (*itcl_IsObjectCmd) _ANSI_ARGS_((ClientData clientData, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 116 */
