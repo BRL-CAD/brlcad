@@ -398,7 +398,8 @@ fbs_close(struct fbserv_obj *fbsp)
     Tcl_DeleteFileHandler(fbsp->fbs_listener.fbsl_fd);
 #endif
 
-    close(fbsp->fbs_listener.fbsl_fd);
+    if (0 <= fbsp->fbs_listener.fbsl_fd)
+	close(fbsp->fbs_listener.fbsl_fd);
     fbsp->fbs_listener.fbsl_fd = -1;
     fbsp->fbs_listener.fbsl_port = -1;
 
@@ -428,7 +429,11 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 #else
 	Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].fbsc_fd);
 #endif
+
+#if 0
+	/* This has already been closed in call to pkg_close above */
 	close(fbsp->fbs_clients[sub].fbsc_fd);
+#endif
 	fbsp->fbs_clients[sub].fbsc_fd = 0;
     }
 }
