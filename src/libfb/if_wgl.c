@@ -910,7 +910,6 @@ char **argv;
     if(argc != 11)
 	return -1;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     if(sscanf(argv[1], "%llu", (unsigned __int64 *)&dpy) != 1)
 	return -1;
 
@@ -928,25 +927,6 @@ char **argv;
 
     if(sscanf(argv[8], "%llu", (unsigned __int64 *)&glxc) != 1)
 	return -1;
-#else
-    if(sscanf(argv[1], "%llu", (unsigned long long *)&dpy) != 1)
-	return -1;
-
-    if(sscanf(argv[2], "%llu", (unsigned long long *)&win) != 1)
-	return -1;
-
-    if(sscanf(argv[3], "%llu", (unsigned long long *)&cmap) != 1)
-	return -1;
-
-    if(sscanf(argv[4], "%llu", (unsigned long long *)&vip) != 1)
-	return -1;
-
-    if(sscanf(argv[5], "%llu", (unsigned long long *)&hdc) != 1)
-	return -1;
-
-    if(sscanf(argv[8], "%llu", (unsigned long long *)&glxc) != 1)
-	return -1;
-#endif
 
     if(sscanf(argv[6], "%d", &width) != 1)
 	return -1;
