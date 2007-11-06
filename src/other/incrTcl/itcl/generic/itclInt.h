@@ -49,9 +49,8 @@
 #ifndef ITCLINT_H
 #define ITCLINT_H
 
-#ifdef HAVE_CONFIG_H
-# include "brlcad_config.h"
-#endif
+/* included so we avoid tcl's compat headers */
+#include "common.h"
 
 #include "tclInt.h"
 #include "itcl.h"
