@@ -725,9 +725,8 @@ if test "x$set_everything" != "x" ; then
 			bc_build_ug=no
 		fi
 	fi
-	# ADRT is known to not build right now on most platforms, so
-	# only allow it to be disabled and not enabled.
-	# User must specify --enable-adrt to get ADRT to build
+	# ADRT is known to not build on several platforms due to its
+        # external dependencies, so only allow it to be disabled.
 	if test "x$bc_build_adrt" = "x$bc_build_adrt_default" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_adrt="no"
