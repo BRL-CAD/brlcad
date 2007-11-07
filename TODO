@@ -36,6 +36,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* review librt polynomial root solver
+
 * eliminate vararg.h and non-ansi cray-specific support code
 
 * implement a lighting model for rt that visualizes how expensive each
