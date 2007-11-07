@@ -64,7 +64,7 @@ rt_prep_timer(void)
 double
 rt_get_timer(struct bu_vls	*vp, double *elapsed)
 {
-	long	now;
+	time_t	now;
 	double	user_cpu_secs;
 	double	sys_cpu_secs;
 	double	elapsed_secs;
