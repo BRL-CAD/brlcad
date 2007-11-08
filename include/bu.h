@@ -2868,6 +2868,12 @@ BU_EXPORT BU_EXTERN(int bu_image_save,
 
 /* end image utilities */
 
+/* fchmod.c */
+BU_EXPORT BU_EXTERN(int bu_fchmod,
+		    (const char *filename,
+		     FILE	     *fp,
+		     int	     pmode));
+
 __END_DECLS
 
 #endif  /* __BU_H__ */
