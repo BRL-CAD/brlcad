@@ -15,6 +15,7 @@ bin_PROGRAMS = \
 	fence \
 	globe \
 	kurt \
+	masonry \
 	molecule \
 	nmgmodel \
 	picket_fence \
@@ -33,7 +34,6 @@ bin_PROGRAMS = \
 	torii \
 	tube \
 	vegitation \
-	wall \
 	wdb_example
 
 bottest_SOURCES = bottest.c
@@ -66,6 +66,7 @@ contours_LDADD = ${WDB}
 fence_SOURCES = fence.c
 globe_SOURCES = globe.c
 kurt_SOURCES = kurt.c
+masonry_SOURCES = masonry.c
 molecule_SOURCES = molecule.c
 nmgmodel_SOURCES = nmgmodel.c
 picket_fence_SOURCES = picket_fence.c
@@ -84,7 +85,6 @@ terrain_SOURCES = terrain.c
 torii_SOURCES = torii.c
 tube_SOURCES = tube.c
 vegitation_SOURCES = vegitation.c
-wall_SOURCES = wall.c
 wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
@@ -102,12 +102,15 @@ include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(bottest_OBJECTS) \
+	$(brep_simple_OBJECTS) \
+	$(brep_cube_OBJECTS) \
 	$(brickwall_OBJECTS) \
 	$(clutter_OBJECTS) \
 	$(contours_OBJECTS) \
 	$(fence_OBJECTS) \
 	$(globe_OBJECTS) \
 	$(kurt_OBJECTS) \
+	$(masonry_OBJECTS) \
 	$(molecule_OBJECTS) \
 	$(nmgmodel_OBJECTS) \
 	$(picket_fence_OBJECTS) \
@@ -126,6 +129,5 @@ FAST_OBJECTS = \
 	$(torii_OBJECTS) \
 	$(tube_OBJECTS) \
 	$(vegitation_OBJECTS) \
-	$(wall_OBJECTS) \
 	$(wdb_example_OBJECTS) \
 	$(bin_PROGRAMS)

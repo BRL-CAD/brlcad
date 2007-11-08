@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* renamed procedural 'wall' generator to 'masonry' - Sean Morrison 
 * mged 'tol' command now accepts multiple tolerances - Sean Morrison
 * TCL and TK updated to 8.5b1. itcl/itk to dev 3.4. - Erik Greenwald
 * fixed non-normalized vector bugs with ARBN objects - John Anderson

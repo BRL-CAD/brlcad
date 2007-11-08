@@ -1,4 +1,4 @@
-/*                          W A L L . C
+/*                       M A S O N R Y . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2007 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wall.c
+/** @file masonry.c
  *
- *	build a wall.
+ *	build a wall out of various materials.
  *
  *	Currently builds "wood frame" walls for typical building constructs.
  *
@@ -44,7 +44,7 @@
 char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
 
 int debug = 0;
-char *progname = "(noname)";
+char *progname = "masonry";
 char *obj_name = "wall";
 char sol_name[64];
 int sol_num = 0;
@@ -1077,7 +1077,7 @@ int main(int ac, char **av)
 
 	if (ac < 2) usage((char *)NULL);
 
-	(void)sprintf(sol_name, "%s.g", obj_name);
+	(void)sprintf(sol_name, "%s.g", progname);
 	if ((db_fd = wdb_fopen(sol_name)) == (struct rt_wdb *)NULL) {
 		perror(sol_name);
 		return(-1);
