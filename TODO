@@ -85,9 +85,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * script that checks a dist source tarball for missing files
 
-* consider impact and/or rename 'wall' and 'hd' commands due to
-  conflict with other tools
-
 * Use NSIS instead of InstallShield/MSI for Windows binary releases
 
 * Generate plain .zip files for Windows binary releases
