@@ -121,12 +121,10 @@ struct trail {
 #endif
 
 struct client {
+    int			c_fd;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE		c_fd;
     Tcl_Channel         c_chan;
     Tcl_FileProc        *c_handler;
-#else
-    int			c_fd;
 #endif
     struct pkg_conn	*c_pkg;
 };
