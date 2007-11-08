@@ -66,7 +66,7 @@ static const char RCStimer[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 /* Standard System V stuff */
-static long time0;
+static time_t time0;
 static struct tms tms0;
 
 /*
@@ -91,7 +91,7 @@ rt_prep_timer(void)
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
-	long	now;
+	time_t	now;
 	double	user_cpu_secs;
 	double	sys_cpu_secs;
 	double	elapsed_secs;
