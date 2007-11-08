@@ -894,7 +894,7 @@ do_frame(int framenumber)
 	if( outfp != NULL )  {
 		/* Protect finished product */
 		if( outputfile != (char *)0 )
-			fchmod( fileno(outfp), 0444 );
+		    (void)bu_fchmod(framename, outfp, 0444);
 
 		(void)fclose(outfp);
 		outfp = NULL;
