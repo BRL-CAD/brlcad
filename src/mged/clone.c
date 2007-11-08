@@ -852,6 +852,7 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 		state->rpnt[Y] = atof(argv[bu_optind++]);
 		state->rpnt[Z] = atof(argv[bu_optind++]);
 		state->rpnt[W] = 1;
+		break;
 	    case 'r':
 		state->rot[X] = atof(bu_optarg);
 		state->rot[Y] = atof(argv[bu_optind++]);
