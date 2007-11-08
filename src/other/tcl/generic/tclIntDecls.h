@@ -702,8 +702,8 @@ EXTERN void		TclSetLibraryPath (Tcl_Obj * pathPtr);
 #ifndef TclGetLibraryPath_TCL_DECLARED
 #define TclGetLibraryPath_TCL_DECLARED
 /* 153 */
-EXTERN Tcl_Obj *	TclGetLibraryPath (void);
 #endif
+EXTERN Tcl_Obj *	TclGetLibraryPath (void);
 /* Slot 154 is reserved */
 /* Slot 155 is reserved */
 #ifndef TclRegError_TCL_DECLARED

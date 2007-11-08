@@ -19,9 +19,7 @@
 #ifndef _TCLINT
 #define _TCLINT
 
-#ifdef HAVE_CONFIG_H
-# include "brlcad_config.h"
-#endif
+#include "common.h"
 
 /*
  * Some numerics configuration options
@@ -95,6 +93,8 @@ typedef int ptrdiff_t;
 #	 endif
 #    endif
 #endif
+
+#define inline
 
 /*
  * Used to tag functions that are only to be visible within the module being
@@ -2419,7 +2419,12 @@ MODULE_SCOPE void	TclInitLimitSupport(Tcl_Interp *interp);
 MODULE_SCOPE void	TclInitNamespaceSubsystem(void);
 MODULE_SCOPE void	TclInitNotifier(void);
 MODULE_SCOPE void	TclInitObjSubsystem(void);
+#ifdef _WIN32
+/* This is a quick hack for BLT on Windows */
+EXTERN void	TclInitSubsystems(void);
+#else
 MODULE_SCOPE void	TclInitSubsystems(void);
+#endif
 MODULE_SCOPE int	TclInterpReady(Tcl_Interp *interp);
 MODULE_SCOPE int	TclIsLocalScalar(CONST char *src, int len);
 MODULE_SCOPE int	TclJoinThread(Tcl_ThreadId id, int *result);

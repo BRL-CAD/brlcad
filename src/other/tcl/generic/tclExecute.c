@@ -168,7 +168,7 @@ static BuiltinFunc tclBuiltinFuncTable[] = {
 #define VarHashGetValue(hPtr) \
     ((Var *) ((char *)hPtr - TclOffset(VarInHash, entry)))
 
-static inline Var *
+static inline Var * 
 VarHashCreateVar(
     TclVarHashTable *tablePtr,
     Tcl_Obj *key,
