@@ -932,7 +932,8 @@ Popup Menu    Right or Ctrl-Left
     if {!$mViewOnly} {
 	if {$Archer::inheritFromToplevel} {
 	    _build_toplevel_menubar
-	    $this component hull configure -menu $itk_component(menubar)
+#	    $this component hull configure -menu $itk_component(menubar)
+	    $this configure -menu $itk_component(menubar)
 	} else {
 	    _build_embedded_menubar
 	    pack $itk_component(menubar) -side top -fill x -padx 1

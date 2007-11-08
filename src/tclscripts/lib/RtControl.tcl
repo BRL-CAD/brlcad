@@ -147,9 +147,8 @@ option add *RtControl*tearoff 0 widgetDefault
     } {
 	usual
     }
-# Why doesn't this work???
-#    $itk_component(hull) configure -menu $itk_component(menubar)
-    $this component hull configure -menu $itk_component(menubar)
+#    $this component hull configure -menu $itk_component(menubar)
+    $this configure -menu $itk_component(menubar)
 
     itk_component add fbM {
 	::menu $itk_component(menubar).fb -title "Framebuffer"
