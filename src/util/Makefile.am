@@ -45,7 +45,7 @@ bin_PROGRAMS = \
 	dunnsnap \
 	files-tape \
 	gencolor \
-	hd \
+	hex \
 	imgdims \
 	loop \
 	lowp \
@@ -266,8 +266,8 @@ files_tape_LDADD = ${BU}
 gencolor_SOURCES = gencolor.c
 gencolor_LDADD = ${BU}
 
-hd_SOURCES = hd.c
-hd_LDADD = ${BU}
+hex_SOURCES = hex.c
+hex_LDADD = ${BU}
 
 imgdims_SOURCES = imgdims.c
 imgdims_LDADD = ${FB}
@@ -565,7 +565,7 @@ man_MANS = \
 	dunncolor.1 \
 	dunnsnap.1 \
 	gencolor.1 \
-	hd.1 \
+	hex.1 \
 	imgdims.1 \
 	loop.1 \
 	mac-pix.1 \
@@ -693,7 +693,7 @@ FAST_OBJECTS = \
 	$(dunnsnap_OBJECTS) \
 	$(files_tape_OBJECTS) \
 	$(gencolor_OBJECTS) \
-	$(hd_OBJECTS) \
+	$(hex_OBJECTS) \
 	$(imgdims_OBJECTS) \
 	$(loop_OBJECTS) \
 	$(mac_pix_OBJECTS) \

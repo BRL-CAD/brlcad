@@ -1,4 +1,4 @@
-/*                            H D . C
+/*                            H E X . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2007 United States Government as represented by
@@ -17,16 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hd.c
- *
- */
-
-/*				H D
+/** @file hex.c
  *
  *    Give a good ole' CPM style Hex dump of a file or standard input.
  *
  *    Author -
- *	Lee A. Butler	butler@BRL.MIL
+ *	Lee A. Butler
  *
  *    Options
  *    h    help
