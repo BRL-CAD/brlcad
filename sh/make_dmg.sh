@@ -70,7 +70,6 @@ if [ "x$PATCH_VERSION" = "x" ] ; then
 fi
 shift 4
 
-DMG_CAPACITY=250
 OPENUP=`dirname $0`/../misc/macosx/openUp
 
 PATH=/bin:/usr/bin:/usr/sbin
@@ -143,6 +142,24 @@ if [ -f "${DMG}.sparseimage" ] ; then
     fi
 fi
 
+PKG="${DMG_NAME}.pkg"
+if [ -d "$PKG" ] ; then
+    :
+elif [ -d "/tmp/$PKG" ] ; then
+    PKG="/tmp/${DMG_NAME}.pkg"
+fi
+
+# calculate capacity required
+DMG_CAPACITY=50
+while [ ! "x$*" = "x" ] ; do
+    ARG="$1"
+    shift
+    size="`du -ks $ARG | awk '{print $1}'`"
+    DMG_CAPACITY="`expr $DMG_CAPACITY + $size`"
+done
+pkg_size="`du -ks $PKG | awk '{print $1}'`"
+DMG_CAPACITY="`expr $DMG_CAPACITY + $pkg_size`"
+
 hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE -type SPARSE -volname $DMG_NAME
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: hdiutil failed to complete successfully"
@@ -163,7 +180,7 @@ if [ "x$hdidDisk" = "x" ] ; then
     exit 1
 fi
 
-/sbin/newfs_hfs -w -v ${DMG_NAME} -b 4096 $hdidDisk
+/sbin/newfs_hfs -v ${DMG_NAME} -b 4096 $hdidDisk
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully create a new hfs filesystem on $hdidDisk"
     exit 1
@@ -205,12 +222,6 @@ if [ ! -d "$VOL_DIR" ] ; then
     exit 1
 fi
 
-PKG="${DMG_NAME}.pkg"
-if [ -d "$PKG" ] ; then
-    :
-elif [ -d "/tmp/$PKG" ] ; then
-    PKG="/tmp/${DMG_NAME}.pkg"
-fi
 if [ -d "$PKG" ] ; then
     if [ ! -r "$PKG" ] ; then
 	echo "ERROR: unable to read the installer package"
@@ -308,7 +319,7 @@ while [ ! "x$*" = "x" ] ; do
 done
 
 if [ ! "x$found_background" = "xno" ] ; then
-    echo "You now have 30 seconds to set the background on the disk image."
+    echo "You now have 60 seconds to set the background on the disk image."
 fi
 osascript <<EOF
 set oldApp to (path to frontmost application as string)
@@ -340,8 +351,8 @@ tell application "Finder"
 	keystroke "j" using command down
     end tell
 
-    say "You now have half a minute to set a background on the disk image."
-    delay 30
+    say "You now have one minute to set a background on the disk image."
+    delay 60
 
     tell application "System Events"
 	keystroke "j" using command down
