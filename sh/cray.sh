@@ -93,7 +93,8 @@ set -- `getopt C:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIJ "$@"`
 # If no compute server specified in users environment, use default.
 if test x$COMPUTE_SERVER = x
 then
-	COMPUTE_SERVER=patton.brl.mil
+    echo "need to set the COMPUTE_SERVER environment variable"
+    exit 1
 fi
 
 # If no framebuffer is specified in the users environment,
