@@ -219,7 +219,7 @@ COMMA	[,]
     previous_linebuffer[YYLMAX] = '\0';
 
     strncpy(linebuffer, yytext+1, YYLMAX);
-    linebuffer[YYLMAX} = '\0';
+    linebuffer[YYLMAX] = '\0';
 
     while (i < yyleng && (yytext[i] == '\n' || yytext[i] == '\r')) {
 	if (yytext[i] == '\n') {
