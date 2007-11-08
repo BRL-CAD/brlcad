@@ -664,55 +664,55 @@ elif test "x$bc_everything" = "xno" ; then
 	set_everything=no
 fi
 if test "x$set_everything" != "x" ; then
-	if test "x$bc_build_runtime_debug" = "x$bc_build_runtime_debug_default" ; then
+	if test "x$bc_build_runtime_debug_set" = "xno" ; then
 		bc_build_runtime_debug="$set_everything"
 	fi
-	if test "x$bc_build_regex" = "x$bc_build_regex_default" ; then
+	if test "x$bc_build_regex_set" = "xno" ; then
 		bc_build_regex="$set_everything"
 	fi
-	if test "x$bc_build_png" = "x$bc_build_png_default" ; then
+	if test "x$bc_build_png_set" = "xno" ; then
 		bc_build_png="$set_everything"
 	fi
-	if test "x$bc_build_zlib" = "x$bc_build_zlib_default" ; then
+	if test "x$bc_build_zlib_set" = "xno" ; then
 		bc_build_zlib="$set_everything"
 	fi
-	if test "x$bc_build_urt" = "x$bc_build_urt_default" ; then
+	if test "x$bc_build_urt_set" = "xno" ; then
 		bc_build_urt="$set_everything"
 	fi
-	if test "x$bc_build_opennurbs" = "x$bc_build_opennurbs_default" ; then
+	if test "x$bc_build_opennurbs_set" = "xno" ; then
 		bc_build_opennurbs="$set_everything"
 	fi
-	if test "x$bc_build_termlib" = "x$bc_build_termlib_default" ; then
+	if test "x$bc_build_termlib_set" = "xno" ; then
 		bc_build_termlib="$set_everything"
 	fi
-	if test "x$bc_build_tcl" = "x$bc_build_tcl_default" ; then
+	if test "x$bc_build_tcl_set" = "xno" ; then
 		bc_build_tcl="$set_everything"
 	fi
-	if test "x$bc_build_tk" = "x$bc_build_tk_default" ; then
+	if test "x$bc_build_tk_set" = "xno" ; then
 		bc_build_tk="$set_everything"
 	fi
-	if test "x$bc_build_itcl" = "x$bc_build_itcl_default" ; then
+	if test "x$bc_build_itcl_set" = "xno" ; then
 		bc_build_itcl="$set_everything"
 	fi
-	if test "x$bc_build_iwidgets" = "x$bc_build_iwidgets_default" ; then
+	if test "x$bc_build_iwidgets_set" = "xno" ; then
 		bc_build_iwidgets="$set_everything"
 	fi
-	if test "x$bc_build_blt" = "x$bc_build_blt_default" ; then
+	if test "x$bc_build_blt_set" = "xno" ; then
 		bc_build_blt="$set_everything"
 	fi
-	if test "x$bc_build_tkimg" = "x$bc_build_tkimg_default" ; then
+	if test "x$bc_build_tkimg_set" = "xno" ; then
 		bc_build_tkimg="$set_everything"
 	fi
-	if test "x$bc_build_tnt" = "x$bc_build_tnt_default" ; then
+	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
 	fi
-	if test "x$bc_build_jove" = "x$bc_build_jove_default" ; then
+	if test "x$bc_build_jove_set" = "xno" ; then
 		bc_build_jove="$set_everything"
 	fi
 	# Singe the Endgame Framework "simulation module" will only
 	# compile if you have it installed, don't enable it even if
 	# requesting everything.  fine to disable, though.
-	if test "x$bc_build_ef" = "x$bc_build_ef_default" ; then
+	if test "x$bc_build_ef_set" = "xno" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_ef=no
 		fi
@@ -720,14 +720,14 @@ if test "x$set_everything" != "x" ; then
 	# Since the Unigraphics importer is primarily tested on only one
 	# platform and requires UGOPEN, don't enable it even if
 	# requesting everything.  fine to disable, though.
-	if test "x$bc_build_ug" = "x$bc_build_ug_default" ; then
+	if test "x$bc_build_ug_set" = "xno" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_ug=no
 		fi
 	fi
 	# ADRT is known to not build on several platforms due to its
         # external dependencies, so only allow it to be disabled.
-	if test "x$bc_build_adrt" = "x$bc_build_adrt_default" ; then
+	if test "x$bc_build_adrt_set" = "xno" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_adrt="no"
 		fi
