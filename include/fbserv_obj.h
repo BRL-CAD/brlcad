@@ -34,11 +34,9 @@
 #define FBS_CALLBACK_NULL	(void (*)())NULL
 
 struct fbserv_listener {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE		fbsl_fd;
-    Tcl_Channel		fbsl_chan;
-#else
     int			fbsl_fd;			/**< @brief socket to listen for connections */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel		fbsl_chan;
 #endif
     int			fbsl_port;			/**< @brief port number to listen on */
     int			fbsl_listen;			/**< @brief !0 means listen for connections */
@@ -46,12 +44,10 @@ struct fbserv_listener {
 };
 
 struct fbserv_client {
+    int			fbsc_fd;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE		fbsc_fd;
     Tcl_Channel         fbsc_chan;
     Tcl_FileProc        *fbsc_handler;
-#else
-    int			fbsc_fd;
 #endif
     struct pkg_conn	*fbsc_pkg;
     struct fbserv_obj	*fbsc_fbsp;			/**< @brief points to its fbserv object */
