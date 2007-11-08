@@ -130,6 +130,8 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	  return 0;
 
 	strncpy( word, argv[*argcp], sizeof(word)-1 );
+	word[64] = '\0'; /* just in case */
+
 	/* If * ? [ or \ are present, this is a regular expression */
 	pattern = word;
 	do {

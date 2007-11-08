@@ -187,7 +187,7 @@ main(int argc, char **argv)
 	else
 		name_len = ptr2 - ptr1;
 
-	base_name = (char *)bu_malloc( name_len + 1 , "base_name" );
+	base_name = (char *)bu_calloc( name_len + 1, sizeof(char), "base_name" );
 	strncpy( base_name , ptr1 , name_len );
 
 	/* make title record */
@@ -462,6 +462,9 @@ main(int argc, char **argv)
 	fprintf( stderr , "Making top level group (%s)\n" , base_name );
 	if( mk_lcomb( out_fp , base_name , &reg_head , 0, (char *)0, (char *)0, (unsigned char *)0, 0 ) )
 		bu_log( "viewpoint-g: Error in making top level group" );
+
+	bu_free(base_name, "base_name");
+	bu_free(verts, "verts");
 
 	return 0;
 }

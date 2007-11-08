@@ -566,6 +566,7 @@ main (int argc, char **argv)
     tmp_str = bu_units_string(local2base);
     if( tmp_str ) {
 	    strncpy(local_u_name, bu_units_string(local2base), 64);
+	    local_u_name[64] = '\0'; /* just in case, buf is 65 */
     } else {
 	    strcpy( local_u_name, "Unknown units" );
     }

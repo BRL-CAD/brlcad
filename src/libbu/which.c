@@ -81,7 +81,7 @@ bu_which(const char *cmd)
     memset(bu_which_result, 0, MAXPATHLEN);
 
     /* check for full/relative path match */
-    strncpy(bu_which_result, cmd, MAXPATHLEN);
+    strncpy(bu_which_result, cmd, MAXPATHLEN-1);
     if (strcmp(bu_which_result, cmd) != 0) {
 	if (bu_debug & BU_DEBUG_PATHS) {
 	    bu_log("command [%s] is too long\n", cmd);
@@ -96,7 +96,7 @@ bu_which(const char *cmd)
     /* load up the PATH from the caller's user environment */
     gotpath = getenv("PATH");
     if (gotpath) {
-	strncpy(PATH, gotpath, MAXPATHENV);
+	strncpy(PATH, gotpath, MAXPATHENV-1);
 
 	/* make sure it fit, we have a problem if it did not */
 	if (strcmp(PATH, gotpath) != 0) {

@@ -38,7 +38,7 @@ static const char RCSid[] = "$Header$";
 #include "./nirt.h"
 #include "./usrfmt.h"
 
-char		local_u_name[64];
+char		local_u_name[65];
 double		base2local;		/* from db_i struct, not fastf_t */
 double		local2base;		/* from db_i struct, not fastf_t */
 
@@ -476,6 +476,7 @@ com_table	*ctp;
 	base2local = rtip -> rti_dbip -> dbi_base2local;
 	local2base = rtip -> rti_dbip -> dbi_local2base;
 	strncpy(local_u_name, bu_units_string(base2local), 64);
+	local_u_name[64] = '\0';
     }
     else
     {
@@ -485,6 +486,7 @@ com_table	*ctp;
 	    return;
 	}
 	strncpy(local_u_name, buffer + i, 64);
+	local_u_name[64] = '\0';
 	local2base = tmp_dbl;
 	base2local = 1.0 / tmp_dbl;
     }

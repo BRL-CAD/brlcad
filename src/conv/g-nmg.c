@@ -294,8 +294,8 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	unsigned char *color;
 	char *endp;
 	int len;
-	char matname[33];
-	char matparm[61];
+	char matname[32];
+	char matparm[60];
 
 	if( dp->d_uses < 0 )
 		return;

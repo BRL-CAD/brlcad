@@ -80,8 +80,8 @@ extern int yyerror(char *msg);
 
 /* used to set the initial state */
 static int first_token = 1;
-char previous_linebuffer[YYLMAX] = {0};
-char linebuffer[YYLMAX] = {0};
+char previous_linebuffer[YYLMAX+1] = {0};
+char linebuffer[YYLMAX+1] = {0};
 
 %}
 
@@ -216,7 +216,10 @@ COMMA	[,]
 
     /* save the next line for error reporting */
     strncpy(previous_linebuffer, linebuffer, YYLMAX);
+    previous_linebuffer[YYLMAX] = '\0';
+
     strncpy(linebuffer, yytext+1, YYLMAX);
+    linebuffer[YYLMAX} = '\0';
 
     while (i < yyleng && (yytext[i] == '\n' || yytext[i] == '\r')) {
 	if (yytext[i] == '\n') {
