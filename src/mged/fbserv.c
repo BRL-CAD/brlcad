@@ -99,21 +99,16 @@ drop_client(int sub)
 {
     if (clients[sub].c_pkg != PKC_NULL) {
 	pkg_close(clients[sub].c_pkg);
-	clients[sub].c_pkg = PKC_NULL;
-    }
-
-    if (clients[sub].c_fd != 0) {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	Tcl_DeleteChannelHandler(clients[sub].c_chan,
 				 clients[sub].c_handler,
 				 clients[sub].c_fd);
-
 	Tcl_Close(dmp->dm_interp, clients[sub].c_chan);
 	clients[sub].c_chan = NULL;
 #else
 	Tcl_DeleteFileHandler(clients[sub].c_fd);
 #endif
-	close(clients[sub].c_fd);
+	clients[sub].c_pkg = PKC_NULL;
 	clients[sub].c_fd = 0;
     }
 }
@@ -175,7 +170,7 @@ set_port(void)
 	Tcl_Close(dmp->dm_interp, netchan);
 	netchan = NULL;
 
-	close(netfd);
+	closesocket(netfd);
 	netfd = -1;
     }
 
@@ -259,7 +254,6 @@ new_client_handler(ClientData	 clientData,
     struct dm_list *dlp = (struct dm_list *)clientData;
     struct dm_list *scdlp;  /* save current dm_list pointer */
     int fd;
-    int ret;
 
     if (dlp == NULL)
 	return;
