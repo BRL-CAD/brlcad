@@ -20,15 +20,7 @@
 /** @file vld_std.h
 	std.h -- Douglas A. Gwyn's standard C programming definitions
 
-	Prerequisites:	<math.h> (if you invoke Round())
-			<string.h> (if you invoke StrEq())
-
-	last edit:	90/10/26	D A Gwyn
-
-	SCCS ID:	@(#)std.h	1.36
-
-	The master source file is to be modified only by Douglas A. Gwyn
-	<Gwyn@BRL.MIL>.  When installing a VLD/VMB software distribution,
+	When installing a VLD/VMB software distribution,
 	this file may need to be tailored slightly to fit the target system.
 	Usually this just involves enabling some of the "kludges for deficient
 	C implementations" at the end of this file.
