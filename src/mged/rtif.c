@@ -1087,7 +1087,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     base = basename_without_suffix( argv[1], ".sh" );
-    (void)fchmod( fileno(fp), 0755 );	/* executable */
+    (void)bu_fchmod(argv[1], fp, 0755);	/* executable */
 
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
     (void)fprintf(fp, "#!/bin/sh\nrt -M ");
