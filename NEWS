@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed memory deallocation bug in the raytracers - Bob Parker
 * renamed 'hd' hexadecimal dump utility to 'hex' - Sean Morrison
 * renamed procedural 'wall' generator to 'masonry' - Sean Morrison 
 * mged 'tol' command now accepts multiple tolerances - Sean Morrison
