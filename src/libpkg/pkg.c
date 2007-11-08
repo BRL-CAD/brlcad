@@ -291,12 +291,12 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 #ifdef _WIN32
     if ((lpHostEntry = gethostbyname(host)) == NULL) {
 	pkg_perror(errlog, "pkg_open:  gethostbyname");
-	return(-1);
+	return(PKC_ERROR);
     }
 
     if ((netfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
 	pkg_perror(errlog, "pkg_open:  socket");
-	return(-1);
+	return(PKC_ERROR);
     }
 
 #if 0
@@ -323,7 +323,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if (connect(netfd, (LPSOCKADDR)&saServer, sizeof(struct sockaddr)) == SOCKET_ERROR) {
 	pkg_perror(errlog, "pkg_open:  client connect");
 	closesocket(netfd);
-	return(-1);
+	return(PKC_ERROR);
     }
 
     return(pkg_makeconn(netfd, switchp, errlog));
@@ -396,7 +396,11 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 
     if( connect(netfd, addr, addrlen) < 0 )  {
 	pkg_perror( errlog, "pkg_open: client connect" );
-	close(netfd);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	(void)closesocket(netfd);
+#else
+	(void)close(netfd);
+#endif
 	return(PKC_ERROR);
     }
     return( pkg_makeconn(netfd, switchp, errlog) );
@@ -573,14 +577,22 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
     if( bind(pkg_listenfd, addr, addrlen) < 0 )  {
 	pkg_perror( errlog, "pkg_permserver: bind" );
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	(void)closesocket(pkg_listenfd);
+#else
 	close(pkg_listenfd);
+#endif
 	return(-1);
     }
 
     if( backlog > 5 )  backlog = 5;
     if( listen(pkg_listenfd, backlog) < 0 )  {
 	pkg_perror( errlog, "pkg_permserver:  listen" );
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	(void)closesocket(pkg_listenfd);
+#else
 	close(pkg_listenfd);
+#endif
 	return(-1);
     }
     return(pkg_listenfd);
@@ -787,7 +799,11 @@ pkg_close(register struct pkg_conn *pc)
 	pc->pkc_inbuf = (char *)0;
 	pc->pkc_inlen = 0;
     }
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    (void)closesocket(pc->pkc_fd);
+#else
     (void)close(pc->pkc_fd);
+#endif
     pc->pkc_fd = -1;		/* safety */
     pc->pkc_buf = (char *)0;	/* safety */
     pc->pkc_magic = 0;		/* safety */
@@ -934,7 +950,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 	return(len);
     }
     /* Send them separately */
-    if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
+    if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
 	if( i < 0 )  {
 	    if( errno == EBADF )  return(-1);
 	    pkg_perror(pc->pkc_errlog, "pkg_send: header write");
@@ -946,7 +962,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 	return(-1);		/* amount of user data sent */
     }
     if( len <= 0 )  return(0);
-    if ((i = PKG_SEND(pc->pkc_fd, buf, len, 0)) != len) {
+    if ((i = PKG_SEND(pc->pkc_fd, buf, len)) != len) {
 	if( i < 0 )  {
 	    if( errno == EBADF )  return(-1);
 	    pkg_perror(pc->pkc_errlog, "pkg_send: write");
@@ -1045,7 +1061,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	    bcopy( buf1, tbuf+sizeof(hdr), len1 );
 	if( len2 > 0 )
 	    bcopy( buf2, tbuf+sizeof(hdr)+len1, len2 );
-	if ((i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr), 0)) != len1+len2+sizeof(hdr)) {
+	if ((i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr))) != len1+len2+sizeof(hdr)) {
 	    if( i < 0 )  {
 		if( errno == EBADF )  return(-1);
 		pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
@@ -1059,7 +1075,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	return(len1+len2);
     }
     /* Send it in three pieces */
-    if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
+    if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
 	if( i < 0 )  {
 	    if( errno == EBADF )  return(-1);
 	    pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
@@ -1073,7 +1089,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	(pc->pkc_errlog)(errbuf);
 	return(-1);		/* amount of user data sent */
     }
-    if ((i = PKG_SEND(pc->pkc_fd, buf1, len1, 0)) != len1) {
+    if ((i = PKG_SEND(pc->pkc_fd, buf1, len1)) != len1) {
 	if( i < 0 )  {
 	    if( errno == EBADF )  return(-1);
 	    pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
@@ -1088,7 +1104,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	return(i);		/* amount of user data sent */
     }
     if( len2 <= 0 )  return(i);
-    if ((i = PKG_SEND(pc->pkc_fd, buf2, len2, 0)) != len2) {
+    if ((i = PKG_SEND(pc->pkc_fd, buf2, len2)) != len2) {
 	if( i < 0 )  {
 	    if( errno == EBADF )  return(-1);
 	    pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
@@ -1889,6 +1905,10 @@ pkg_suckin(register struct pkg_conn *pc)
 
     /* Take as much as the system will give us, up to buffer size */
     if( (got = PKG_READ( pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail )) <= 0 )  {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	int ecode = WSAGetLastError();
+	
+#endif
 	if( got == 0 )  {
 	    if( pkg_debug )  {
 		pkg_timestamp();
