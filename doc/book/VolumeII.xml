@@ -11783,10 +11783,10 @@ Move End H
 
    Examples:
 
-   mged  vrmgr host1.arl.mil master
+   mged  vrmgr host1.brlcad.org master
 
    -- Set the current MGED display as the master for the vrmgr process
-   running on the host named host1.arl.army.mil.
+   running on the host named host1.brlcad.org
 
    vrot  xrot yrot zrot
 
