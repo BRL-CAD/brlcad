@@ -1500,7 +1500,6 @@ unprep_leaf( struct db_tree_state *tsp,
 int
 rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp )
 {
-	struct bu_ptbl paths;
 	struct bu_ptbl unprep_regions;
 	struct db_full_path *path;
 	int i,j,k;
@@ -1566,7 +1565,7 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 		path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, i );
 		if( db_follow_path( tree_state, &another_path, path, 1, 0 ) ) {
 			bu_log( "rt_unprep(): db_follow_path failed!!\n" );
-			for( k=0 ; k<BU_PTBL_END(&paths) ; k++ ) {
+			for (k=0; k<BU_PTBL_END(&objs->paths); k++) {
 				if( objs->tsp[k] ) {
 					db_free_db_tree_state( objs->tsp[k] );
 					bu_free( (char *)objs->tsp[k], "tree_state" );
@@ -1574,7 +1573,7 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 				path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, k );
 				db_free_full_path( path );
 			}
-			bu_ptbl_free( &paths );
+			bu_ptbl_free(&objs->paths);
 			bu_ptbl_free( &unprep_regions );
 			return( 1 );
 		}
@@ -1589,7 +1588,7 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 				  unprep_reg_start, unprep_reg_end, unprep_leaf,
 				  (genptr_t)objs ) ) {
 			bu_log( "rt_unprep(): db_walk_tree failed!!!\n" );
-			for( k=0 ; k<BU_PTBL_END(&paths) ; k++ ) {
+			for( k=0 ; k<BU_PTBL_END(&objs->paths) ; k++ ) {
 				if( objs->tsp[k] ) {
 					db_free_db_tree_state( objs->tsp[k] );
 					bu_free( (char *)objs->tsp[k], "tree_state" );
@@ -1597,7 +1596,7 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 				path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, k );
 				db_free_full_path( path );
 			}
-			bu_ptbl_free( &paths );
+			bu_ptbl_free(&objs->paths);
 			bu_ptbl_free( &unprep_regions );
 			return( 1 );
 		}
