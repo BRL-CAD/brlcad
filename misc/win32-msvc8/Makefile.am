@@ -1,0 +1,54 @@
+# $Id$
+
+EXTRA_DIST= \
+	asc2g/asc2g.vcproj \
+	brlcad/brlcad.sln \
+	dbupgrade/dbupgrade.vcproj \
+	dxf2g/dxf2g.vcproj \
+	fast42g/fast42g.vcproj \
+	fb2pix/fb2pix.vcproj \
+	fb2png/fb2png.vcproj \
+	fbclear/fbclear.vcproj \
+	fbserv/fbserv.vcproj \
+	g2asc/g2asc.vcproj \
+	g2dxf/g2dxf.vcproj \
+	g2iges/g2iges.vcproj \
+	g2stl/g2stl.vcproj \
+	iges2g/iges2g.vcproj \
+	itclstub/itclstub.vcproj \
+	itkstub/itkstub.vcproj \
+	libBLT/libBLT.vcproj \
+	libItcl/libItcl.vcproj \
+	libItk/libItk.vcproj \
+	libbn/libbn.vcproj \
+	libbu/libbu.vcproj \
+	libdm/libdm.vcproj \
+	libfb/libfb.vcproj \
+	liboptical/liboptical.vcproj \
+	libpkg/libpkg.vcproj \
+	libpng/libpng.vcproj \
+	librt/librt.vcproj \
+	libsysv/libsysv.vcproj \
+	libtcl/libtcl.vcproj \
+	libtclcad/libtclcad.vcproj \
+	libtk/libtk.vcproj \
+	libwdb/libwdb.vcproj \
+	libz/libz.vcproj \
+	mged/mged.vcproj \
+	nirt/nirt.vcproj \
+	pix2fb/pix2fb.vcproj \
+	png2fb/png2fb.vcproj \
+	rt/rt.vcproj \
+	rtcheck/rtcheck.vcproj \
+	rtedge/rtedge.vcproj \
+	rtg3/rtg3.vcproj \
+	stl2g/stl2g.vcproj \
+	tclpipe/tclpipe.vcproj \
+	tclsh/tclsh.vcproj \
+	tclstub/tclstub.vcproj \
+	tkimg/tkimg.vcproj \
+	tkimgpng/tkimgpng.vcproj \
+	tkstub/tkstub.vcproj \
+	wish/wish.vcproj
+
+include $(top_srcdir)/misc/Makefile.defs
