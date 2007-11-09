@@ -1,0 +1,182 @@
+/*                          C A D A P P I N I T . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1998-2007 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ *
+ */
+/** @file main.c
+ *
+ *  This file initializes Itcl/Itk and various BRL-CAD libraries.
+ *
+ *  Author -
+ *	  Robert G. Parker
+ *
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *
+ */
+
+#include "common.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <windows.h>
+#endif
+
+#ifdef BWISH
+#  include "itk.h"
+#else
+#  include "itcl.h"
+#endif
+
+#ifdef BWISH
+#  include "dm.h"
+#  include "fb.h"
+#  include "blt.h"
+#endif
+
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+#include "raytrace.h"
+#include "tclcad.h"
+
+/* XXX -- it's probably a bad idea to import itcl/itk/iwidgets into
+ * the global namespace..  allow for easy means to disable the import.
+ */
+#define IMPORT_ITCL	0
+#define IMPORT_ITK	0
+#define IMPORT_IWIDGETS	0
+
+
+Cad_AppInit(Tcl_Interp *interp)
+{
+    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+    tclcad_auto_path(interp);
+
+    /* Initialize [incr Tcl] */
+    if (Itcl_Init(interp) == TCL_ERROR) {
+	bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+#ifdef BWISH
+    /* Initialize [incr Tk] */
+    if (Itk_Init(interp) == TCL_ERROR) {
+	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize BLT */
+    if (Blt_Init(interp) == TCL_ERROR) {
+	bu_log("Blt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#endif
+
+#ifdef IMPORT_ITCL
+    /* Import [incr Tcl] commands into the global namespace. */
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		   "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
+	bu_log("Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#endif /* IMPORT_ITCL */
+
+#ifdef BWISH
+
+#  ifdef IMPORT_ITK
+    /* Import [incr Tk] commands into the global namespace */
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
+	bu_log("Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#  endif  /* IMPORT_ITK */
+
+    /* Initialize the Iwidgets package */
+    if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+#  ifdef IMPORT_IWIDGETS
+    /* Import iwidgets into the global namespace */
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		   "::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
+	bu_log("Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#  endif  /* IMPORT_IWIDGETS */
+
+#endif  /* BWISH */
+
+#  ifdef IMPORT_ITCL
+    if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#  endif
+
+#ifdef BWISH
+#  ifdef IMPORT_ITCL
+    if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#  endif
+#  ifdef IMPORT_ITK
+    if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#  endif
+
+    /* Initialize libdm */
+    if (Dm_Init(interp) == TCL_ERROR) {
+	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize libfb */
+    if (Fb_Init(interp) == TCL_ERROR) {
+	bu_log("Fb_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#endif
+
+    /* Initialize libbu */
+    if (Bu_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize libbn */
+    if (Bn_Init(interp) == TCL_ERROR) {
+	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize librt */
+    if (Rt_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
