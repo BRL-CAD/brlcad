@@ -22,6 +22,7 @@ libbu_nil_la_SOURCES = \
 	convert.c \
 	crashreport.c \
 	dirname.c \
+	fchmod.c \
 	fgets.c \
 	fopen_uniq.c \
 	getopt.c \
