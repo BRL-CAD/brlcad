@@ -34,6 +34,18 @@
 
 #include <tcl.h>
 
+#ifndef BLT_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef BLT_EXPORT_DLL
+#      define BLT_EXPORT __declspec(dllexport)
+#    else
+#      define BLT_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define BLT_EXPORT
+#  endif
+#endif
+
 #ifndef EXPORT
 #define EXPORT
 #endif
@@ -66,5 +78,7 @@ EXTERN Tcl_Obj *Blt_NewArrayObj _ANSI_ARGS_((int objc, Tcl_Obj *objv[]));
 EXTERN void Blt_RegisterArrayObj _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int Blt_IsArrayObj _ANSI_ARGS_((Tcl_Obj *obj));
 #endif /* TCL_MAJOR_VERSION >= 8 */
+
+BLT_EXPORT Blt_Init(Tcl_Interp *);
 
 #endif /*_BLT_H*/
