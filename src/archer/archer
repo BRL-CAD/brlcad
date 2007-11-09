@@ -34,9 +34,9 @@ ARCHER_HOME=`dirname $0`/..
 #\
 export ARCHER_HOME
 # restart using bwish \
-WISH="wish"
+WISH="bwish"
 #\
-for ish in bwish bwish_d wish wish_d ; do
+for ish in bwish bwish_d ; do
 # see if we're installed \
     if test -f ${ARCHER_HOME}/bin/$ish ; then
 #\
@@ -77,20 +77,6 @@ namespace eval Archer {
     }
 }
 
-# preload tk
-if { [ catch {package require Tk} _initialized ] } {
-    puts ""
-    puts "ERROR: Unable to initialize Archer"
-    exit 1
-}
-# preload blt
-if { [ catch {package require BLT} _initialized ] } {
-    puts "$_initialized"
-    puts ""
-    puts "ERROR: Unable to initialize Archer GUI"
-    exit 1
-}
-
 # stupid blt needs blt_library to be set (must be done AFTER loading BLT...)
 set blt_library [file normalize [file join [bu_brlcad_root "lib"] blt2.4]]
 if {![file exists $blt_library]} {
@@ -106,19 +92,6 @@ if { [catch {package require Archer 1.0} _initialized] } {
     puts "$_initialized"
     puts ""
     puts "ERROR: Unable to load Archer"
-    exit 1
-}
-
-if { [catch {package require Iwidgets} _initialized] } {
-    puts "$_initialized"
-    puts ""
-    puts "ERROR: Unable to load Archer GUI"
-    exit 1
-}
-if { [catch {package require Swidgets} _initialized] } {
-    puts "$_initialized"
-    puts ""
-    puts "ERROR: Unable to load Archer Scripting"
     exit 1
 }
 
