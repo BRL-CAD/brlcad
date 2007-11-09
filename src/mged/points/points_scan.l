@@ -77,6 +77,7 @@
 #include "./process.h"
 
 extern int yyerror(char *msg);
+extern YYSTYPE yylval;
 
 /* used to set the initial state */
 static int first_token = 1;
