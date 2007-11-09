@@ -1912,7 +1912,10 @@ static MathFunction mathFunctions[] =
     {"cos", (GenericMathProc *) ComponentFunc, (ClientData)cos},
     {"cosh", (GenericMathProc *) ComponentFunc, (ClientData)cosh},
     {"exp", (GenericMathProc *) ComponentFunc, (ClientData)exp},
+#if !defined(_WIN32) || defined(__CYGWIN__)
+    /*XXX Temporarily if'ed out until I figure out why it won't compile on Windows */
     {"floor", (GenericMathProc *) ComponentFunc, (ClientData)floor},
+#endif
     {"kurtosis", (GenericMathProc *) ScalarFunc, (ClientData)Kurtosis},
     {"length", (GenericMathProc *) ScalarFunc, (ClientData)Length},
     {"log", (GenericMathProc *) ComponentFunc, (ClientData)log},
