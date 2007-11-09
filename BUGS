@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* turning on Framebuffer->Rectangle Area in mged disables the
+  embedded framebuffer diplay on Mac OS X when you sweep a raytrace
+  rectangle.  sweeping still works if you leave it at All.
+
 * mged isn't updating the graphics window sometimes with new 8.5 tcl.
 
 * invalid shaders result in an "Unable to locate where BRL-CAD ... is
