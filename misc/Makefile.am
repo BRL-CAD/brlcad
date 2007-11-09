@@ -9,7 +9,8 @@ SUBDIRS = \
 	pkgconfig \
 	vfont \
 	win32-msvc \
-	win32-msvc7
+	win32-msvc7 \
+	win32-msvc8
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = fortran_example.f
