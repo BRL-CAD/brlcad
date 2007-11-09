@@ -3800,6 +3800,7 @@ AC_CONFIG_FILES([
 	misc/win32-msvc/Makefile
 	misc/win32-msvc/aPrep/Makefile
 	misc/win32-msvc7/Makefile
+	misc/win32-msvc8/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
