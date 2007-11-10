@@ -125,10 +125,9 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
      */
     if ((*appInitProc)(interp) != TCL_OK) {
 #ifdef BWISH
-	TkpDisplayWarning(Tcl_GetStringResult(interp),
-			  "Application initialization failed");
+	TkpDisplayWarning("Application initialization failed", "ERROR");
 #else
-	bu_log( "Application initialization failed: %s", Tcl_GetStringResult(interp));
+	bu_log("ERROR: Application initialization failed\n");
 #endif
     }
 
