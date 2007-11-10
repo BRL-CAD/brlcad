@@ -56,6 +56,10 @@ extern void init_qray(void);
 void
 mged_setup(void)
 {
+    int try_auto_path = 0;
+
+    int init_tcl = 1;
+    int init_itcl = 1;
     struct bu_vls str;
     const char *name = bu_getprogname();
 
@@ -69,21 +73,59 @@ mged_setup(void)
     /* Create the interpreter */
     interp = Tcl_CreateInterp();
 
-    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-    tclcad_auto_path(interp);
+    /* a two-pass init loop.  the first pass just tries default init
+     * routines while the second calls tclcad_auto_path() to help it
+     * find other, potentially uninstalled, resources.
+     */
+    while (1) {
 
-    /* This runs the init.tcl script */
-    if( Tcl_Init(interp) == TCL_ERROR )
-	bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
+	/* not called first time through, give Tcl_Init() a chance */
+	if (try_auto_path) {
+	    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+	    tclcad_auto_path(interp);
+	}
 
-    /* Initialize [incr Tcl] */
-    if (Itcl_Init(interp) == TCL_ERROR)
-	bu_log("Itcl_Init error %s\n", Tcl_GetStringResult(interp));
+	/* Initialize Tcl */
+	Tcl_ResetResult(interp);
+	if (init_tcl && Tcl_Init(interp) == TCL_ERROR) {
+	    if (!try_auto_path) {
+		try_auto_path=1;
+		continue;
+	    }
+	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    break;
+	}
+	init_tcl=0;
+
+	/* warn if tcl_library isn't set by now */
+	if (try_auto_path) {
+	    tclcad_tcl_library(interp);
+	}
+
+	/* Initialize [incr Tcl] */
+	Tcl_ResetResult(interp);
+	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
+	    if (!try_auto_path) {
+		try_auto_path=1;
+		continue;
+	    }
+	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    break;
+	}
+	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+	init_itcl=0;
+
+	/* don't actually want to loop forever */
+	break;
+
+    } /* end iteration over Init() routines that need auto_path */
+    Tcl_ResetResult(interp);
 
     /* Import [incr Tcl] commands into the global namespace. */
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		   "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
-	bu_log("Tcl_Import error %s\n", Tcl_GetStringResult(interp));
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
+	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
 
 #ifdef BRLCAD_DEBUG
     /* Initialize libbu */
@@ -94,7 +136,8 @@ mged_setup(void)
 
     /* Initialize librt (includes database, drawable geometry and view objects) */
     if (Rt_d_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_d_Init error %s\n", Tcl_GetStringResult(interp));
+	bu_log("Rt_d_Init ERROR: %s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
     }
 #else
     /* Initialize libbu */
@@ -105,7 +148,8 @@ mged_setup(void)
 
     /* Initialize librt (includes database, drawable geometry and view objects) */
     if (Rt_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_Init error %s\n", Tcl_GetStringResult(interp));
+	bu_log("Rt_Init ERROR: %s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
     }
 #endif
 
