@@ -62,19 +62,6 @@
 
 #define MAX_BUF 2048
 
-/* #ifdef _WIN32 */
-/*     { */
-/* 	/\* XXX - nasty little hack to convert paths *\/ */
-/* 	int i; */
-
-/* 	strcat(pathname,"/"); */
-/* 	for (i = 0; i < strlen(pathname); i++) { */
-/* 	    if (pathname[i]=='\\') */
-/* 		pathname[i]='/'; */
-/* 	} */
-/*     } */
-/* #endif */
-
 
 /* helper routine to determine whether the full 'path' includes a
  * directory named 'src'.  this is used to determine whether a
@@ -110,29 +97,56 @@ path_to_src(const char *path)
 }
 
 
-/** debug printing routine for printing out the tcl_library value(s)
+/**
+ * debug printing routine for printing out the tcl_library value(s)
  */
 void
-tclcad_tcl_library(void)
+tclcad_tcl_library(Tcl_Interp *interp)
 {
     int cnt = 0;
     int pathcount = 0;
     Tcl_Obj *dir = NULL;
     Tcl_Obj *tclpath = NULL;
+    char buffer[MAX_BUF] = {0};
 
     tclpath = TclGetLibraryPath();
+    if (!tclpath) {
+	bu_log("WARNING: Unable to get the library path\n");
+	return;
+    }
+
     Tcl_IncrRefCount(tclpath);
     Tcl_ListObjLength(NULL, tclpath, &pathcount);
     if (pathcount > 1) {
 	bu_log("WARNING: tcl_library is set to multiple paths?\n");
     } else if (pathcount <= 0) {
-	bu_log("WARNING: tcl_library is unset\n");
+	if (interp) {
+	    const char *setting;
+	    snprintf(buffer, MAX_BUF, "set tcl_library");
+	    Tcl_Eval(interp, buffer);
+	    setting = Tcl_GetStringResult(interp);
+	    if (setting && (strlen(setting) > 0)) {
+		Tcl_Obj *tcllib = Tcl_NewStringObj(setting, -1);
+		Tcl_Obj *listtl = Tcl_NewListObj(1, &tcllib);
+		TclSetLibraryPath(listtl);
+	    }
+	}
+	Tcl_DecrRefCount(tclpath);
+	tclpath = TclGetLibraryPath();
+	Tcl_IncrRefCount(tclpath);
+	Tcl_ListObjLength(NULL, tclpath, &pathcount);
+	if (pathcount <= 0) {
+	    bu_log("WARNING: tcl_library is unset (unexpected)\n");
+	}
     }
+
     for (cnt=0; cnt < pathcount; cnt++) {
 	Tcl_ListObjIndex(NULL, tclpath, cnt, &dir);
 	Tcl_IncrRefCount(dir);
 	if (dir) {
-	    bu_log("tcl_library is %s\n", Tcl_GetString(dir));
+#ifdef DEBUG
+	    bu_log("Using Tcl library at %s\n", Tcl_GetString(dir));
+#endif
 	}
 	Tcl_DecrRefCount(dir);
     }
@@ -187,7 +201,6 @@ tclcad_auto_path(Tcl_Interp *interp)
     const char *which_argv = NULL;
     const char *srcpath = NULL;
     int from_installed = 0;
-    char *stp = NULL;
 
     Tcl_Obj *tclpath = NULL;
 
@@ -203,6 +216,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     root = bu_brlcad_root("", 1);
     data = bu_brlcad_data("", 1);
+
 
 #ifdef _WIN32 */
     {
@@ -231,6 +245,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 	/* it is set, set auto_path. limit buf just because. */
 	bu_vls_strncat(&auto_path, library_path, MAX_BUF);
     }
+
+    /* make sure tcl_library path is in the auto_path */
+    snprintf(buffer, MAX_BUF, "set tcl_library");
+    Tcl_Eval(interp, buffer);
+    bu_vls_strncat(&auto_path, Tcl_GetStringResult(interp), MAX_BUF);
 
     /* get string of invocation binary */
     which_argv = bu_which(bu_argv0_full_path());
@@ -404,15 +423,9 @@ tclcad_auto_path(Tcl_Interp *interp)
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
 
     /* iterate over the auto_path list and modify the real Tcl auto_path */
-#if defined(_WIN32) && !defined(__CYGWIN__)
     for (srcpath = strtok(bu_vls_addr(&auto_path), pathsep);
 	 srcpath;
 	 srcpath = strtok(NULL, pathsep)) {
-#else
-    for (srcpath = strtok_r(bu_vls_addr(&auto_path), pathsep, &stp);
-	 srcpath;
-	 srcpath = strtok_r(NULL, pathsep, &stp)) {
-#endif
 
 	/* make sure it exists before appending */
 	if (bu_file_exists(srcpath)) {
