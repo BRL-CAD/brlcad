@@ -120,7 +120,6 @@ Cad_AppInit(Tcl_Interp *interp)
 		continue;
 	    }
 	    bu_log("Tk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    Tcl_ResetResult(interp);
 	    return TCL_ERROR;
 	}
 	Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
@@ -135,7 +134,6 @@ Cad_AppInit(Tcl_Interp *interp)
 		continue;
 	    }
 	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-		Tcl_ResetResult(interp);
 	    return TCL_ERROR;
 	}
 	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
