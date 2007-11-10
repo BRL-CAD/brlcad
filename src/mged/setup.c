@@ -85,52 +85,6 @@ mged_setup(void)
 		   "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
 	bu_log("Tcl_Import error %s\n", Tcl_GetStringResult(interp));
 
-#if 0 /* FIXME: disabled.  defined(HAVE_GETENV) */
-    /* append our own bin dir to (the end of) our search path.
-     * this must be performed before the Tcl interpreter is
-     * created, or we'll need to use Tcl_PutEnv() instead of
-     * setenv().
-     */
-    {
-	struct bu_vls newpath;
-	const char *path = getenv("PATH");
-	const char *binpath = bu_brlcad_root("bin", 1);
-	int set = 0;
-
-	if (binpath) {
-
-	    bu_vls_init(&newpath);
-
-	    if (path) {
-		if (path[strlen(path)-1] == ':') {
-		    bu_vls_printf(&newpath, "PATH=%s%s", path, binpath);
-		} else {
-		    bu_vls_printf(&newpath, "PATH=%s:%s", path, binpath);
-		}
-	    } else {
-		bu_vls_printf(&newpath, "PATH=%s", binpath);
-	    }
-
-#  ifdef HAVE_PUTENV
-	    set = putenv(bu_vls_addr(&newpath));
-#  else
-#    ifdef HAVE_SETENV
-	    /* skip the "PATH=" in the newpath */
-	    set = setenv("PATH", bu_vls_addr(&newpath)+5, 1);
-#    else
-#      error "No putenv or setenv available.. don't know how to set environment variables."
-#    endif
-#  endif
-	    Tcl_PutEnv(bu_vls_addr(&newpath));
-
-	    if (set != 0) {
-		perror("unable to modify PATH");
-	    }
-	    bu_vls_free(&newpath);
-	}
-    }
-#endif
-
 #ifdef BRLCAD_DEBUG
     /* Initialize libbu */
     Bu_d_Init(interp);
