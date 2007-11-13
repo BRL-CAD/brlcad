@@ -50,8 +50,8 @@
 #  define EXPAND_IN_STRING_INTERN(x) #x
 #endif
 
-#define BRLCAD_ROOT          ""
-#define BRLCAD_DATA          ""
+#define BRLCAD_ROOT          ".."
+#define BRLCAD_DATA          ".."
 
 #define INSTALL_DIRECTORY    "C:/brlcad" MAJOR_VERSION_STRING "_" MINOR_VERSION_STRING "_" PATCH_VERSION_STRING
 #define IWIDGETS_VERSION  "4.0.2"
