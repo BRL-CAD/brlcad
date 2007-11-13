@@ -249,6 +249,10 @@ SOURCE=.\dirname.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\fchmod.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\fgets.c
 # End Source File
 # Begin Source File
