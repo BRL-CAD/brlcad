@@ -125,6 +125,7 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_eof = mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (genptr_t)dbip;
+	dbip->dbi_fd = -1;
 
 #ifdef HAVE_UNIX_IO
 	/* Do this too, so we can seek around on the file */
@@ -142,6 +143,7 @@ db_open(const char *name, const char *mode)
 	/* Read-write mode */
 	BU_GETSTRUCT( dbip, db_i );
 	dbip->dbi_eof = -1L;
+	dbip->dbi_fd = -1;
 
 #ifdef HAVE_UNIX_IO
 	if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
