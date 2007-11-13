@@ -107,6 +107,12 @@ db_open(const char *name, const char *mode)
 	    RT_CK_DBI(dbip);
 	    dbip->dbi_uses++;
 
+	    /*
+	     * decrement the mapped file reference counter by 1,
+	     * references are already counted in dbip->dbi_uses
+	     */
+	    bu_close_mapped_file(mfp);
+
 	    if (RT_G_DEBUG & DEBUG_DB) {
 		bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
 	    }
