@@ -55,9 +55,6 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
-#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
-BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, const char *fmt, va_list ap));
-#endif
 
 const char bu_vls_message[] = "bu_vls_str";
 extern const char bu_strdup_message[];
