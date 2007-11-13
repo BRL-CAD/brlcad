@@ -37,12 +37,9 @@
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 #include "itk.h"
+#endif
 
-#define SEARCH_ARCHER 1
-#ifdef SEARCH_ARCHER
-#  include "blt.h"
-#endif
-#endif
+#include "blt.h"
 
 /* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
 #ifndef ITK_VERSION
@@ -275,10 +272,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-#ifdef SEARCH_ARCHER
 	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
@@ -291,10 +286,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef SEARCH_ARCHER
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
     }
 
     /* are we running uninstalled? */
@@ -318,10 +311,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ciwidgets",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef SEARCH_ARCHER
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cblt%clibrary",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%clib",
@@ -334,10 +325,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%crtwizard",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef SEARCH_ARCHER
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%carcher",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
     }
 
     /* add search paths for dist invocation */
@@ -361,10 +350,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ciwidgets",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef SEARCH_ARCHER
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cblt%clibrary",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%clib",
@@ -377,10 +364,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%crtwizard",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef SEARCH_ARCHER
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%carcher",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
 	}
     }
 
@@ -398,10 +383,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-#ifdef SEARCH_ARCHER
 	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
@@ -414,10 +397,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef SEARCH_ARCHER
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
     }
 
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
