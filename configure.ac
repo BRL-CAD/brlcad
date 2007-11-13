@@ -3597,14 +3597,14 @@ WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
 ORLE_LIBS=
-PKG_LIBS=
+PKG_LIBS="${LIBSOCKET} ${LIBNSL}"
 SYSV_LIBS=
 TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
-FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
+FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 TCLCAD_LIBS="${FB} ${FB_LIBS} ${TK} ${TCLSTUB}"
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
