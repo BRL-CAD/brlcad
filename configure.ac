@@ -3643,7 +3643,7 @@ WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
 ORLE_LIBS=
-PKG_LIBS=
+PKG_LIBS="${LIBSOCKET} ${LIBNSL}"
 SYSV_LIBS=
 TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
