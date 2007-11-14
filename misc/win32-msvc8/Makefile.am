@@ -2,6 +2,7 @@
 
 EXTRA_DIST= \
 	asc2g/asc2g.vcproj \
+	brcad/brlcad.sln \
 	dbupgrade/dbupgrade.vcproj \
 	dxf2g/dxf2g.vcproj \
 	fast42g/fast42g.vcproj \
