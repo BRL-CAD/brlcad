@@ -59,7 +59,7 @@ EXTRA_DIST = \
 	configure \
 	contrib \
 	example.c \
-	libpng-1.2.21.txt \
+	libpng-1.2.22.txt \
 	pngbar.jpg \
 	pngbar.png \
 	pngnow.png \
