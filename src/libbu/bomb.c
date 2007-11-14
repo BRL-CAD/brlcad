@@ -181,12 +181,21 @@ bu_bomb(const char *str)
     {
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
 
-	fputs("Saving stack trace to ", stderr);
-	fputs(tracefile, stderr);
-	fputc('\n', stderr);
-	fflush(stderr);
+	/* if the file already exists, there's probably another thread
+	 * writing out a report for the current process. acquire a
+	 * mapped file semaphore so we only have one thread writing to
+	 * the file at a time (can't use BU_SEM_SYSCALL).
+	 */
+	bu_semaphore_acquire( BU_SEM_MAPPEDFILE );
+	if (!bu_file_exists(tracefile)) {
+	    fputs("Saving stack trace to ", stderr);
+	    fputs(tracefile, stderr);
+	    fputc('\n', stderr);
+	    fflush(stderr);
 
-	bu_crashreport(tracefile);
+	    bu_crashreport(tracefile);
+	}
+	bu_semaphore_release( BU_SEM_MAPPEDFILE );
     }
 #endif
 
