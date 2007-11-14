@@ -13,7 +13,6 @@ EXTRA_DIST = \
 	aclocal.m4 \
 	itclConfig.sh.in \
 	license.terms \
-	mac \
 	tests \
 	win
 
