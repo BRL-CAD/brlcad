@@ -62,7 +62,6 @@ extern	FBIO	*fbp;
 extern	FILE	*outfp;
 extern	fastf_t	viewsize;
 extern	int	lightmodel;
-extern	double	AmbientIntensity;	/* XXX - temp hack for contrast! */
 extern	int	width, height;
 
 static	unsigned char *scanbuf;
