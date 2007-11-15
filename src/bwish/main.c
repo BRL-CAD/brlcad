@@ -173,6 +173,11 @@ Cad_AppInit(Tcl_Interp *interp)
     } /* end iteration over Init() routines that need auto_path */
     Tcl_ResetResult(interp);
 
+    /* if we haven't loaded by now, load auto_path so we find our tclscripts */
+    if (!try_auto_path) {
+	/* Locate the BRL-CAD-specific Tcl scripts */
+	tclcad_auto_path(interp);
+    }
 
 #ifdef IMPORT_ITCL
     /* Import [incr Tcl] commands into the global namespace. */
@@ -231,12 +236,6 @@ Cad_AppInit(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 #  endif
-
-    /* if we haven't loaded the path by now, do so */
-    if (!try_auto_path) {
-	/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-	tclcad_auto_path(interp);
-    }
 
     /* Initialize libdm */
     if (Dm_Init(interp) == TCL_ERROR) {
