@@ -1,7 +1,7 @@
 /*                        F C H M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2007 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,29 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup win_compat */
+/** @addtogroup libbu */
 /** @{ */
-/**
- * @file fchmod.c
+/** @file fchmod.c
  *
  * @brief
  *  Wrapper around fchmod.
  *
- * @par  Functions
+ * @par Functions
  *	bu_fchmod  	Change file permissions
  *
- *  @author     Bob Parker
+ * @author Bob Parker
  *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
 #include "machine.h"
 #include "bu.h"
 
-/*XXX 
+/* XXX 
  * For the moment we're passing filename. There should
  * be a way to get this from FILE * on Windows. A quick
  * look yielded nada.
@@ -49,9 +45,24 @@ bu_fchmod(const char *filename,
 	  FILE	     *fp,
 	  int	     pmode)
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    return chmod(filename, pmode);
-#else
-    return fchmod(fileno(fp), pmode);
+#ifdef HAVE_FCHMOD
+    if (fp) {
+	return fchmod(fileno(fp), pmode);
+    }
 #endif    
+    if (filename) {
+	return chmod(filename, pmode);
+    }
+    return 0;
 }
+
+/** @} */
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
