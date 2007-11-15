@@ -39,9 +39,21 @@ EXTRA_DIST= \
 	pix2fb/pix2fb.vcproj \
 	png2fb/png2fb.vcproj \
 	rt/rt.vcproj \
+	rt_bot_faces/rt_bot_faces.vcproj \
+	rtarea/rtarea.vcproj \
+	rtcell/rtcell.vcproj \
 	rtcheck/rtcheck.vcproj \
 	rtedge/rtedge.vcproj \
+	rtfrac/rtfrac.vcproj \
 	rtg3/rtg3.vcproj \
+	rthide/rthide.vcproj \
+	rtpp/rtpp.vcproj \
+	rtrad/rtrad.vcproj \
+	rtrange/rtrange.vcproj \
+	rtray/rtray.vcproj \
+	rtsil/rtsil.vcproj \
+	rtweight/rtweight.vcproj \
+	rtxray/rtxray.vcproj \
 	stl2g/stl2g.vcproj \
 	tclpipe/tclpipe.vcproj \
 	tclsh/tclsh.vcproj \
