@@ -92,7 +92,7 @@ static struct resource occlusion_resources[MAX_PSW];
 
 int   		nEdges = 0;
 int   		nPixels = 0;
-fastf_t		max_dist; /* min. distance for drawing pits/mountains */
+fastf_t		max_dist = -1; /* min. distance for drawing pits/mountains */
 fastf_t		maxangle; /* Value of the cosine of the angle between
 			   * surface normals that triggers shading
 			   */
@@ -226,6 +226,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode),
      BU_STRUCTPARSE_FUNC_NULL},
     {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL},
+    {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL},
 #endif
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -431,7 +432,8 @@ view_2init( struct application *ap )
      * Set the hit distance difference necessary to trigger an edge.
      * This algorythm was stolen from lgt, I may make it settable later.
      */
-    max_dist = (cell_width*ARCTAN_87)+2;
+    if (max_dist < .00001)
+	max_dist = (cell_width*ARCTAN_87)+2;
 
     /*
      * Determine if the framebuffer is readable.
