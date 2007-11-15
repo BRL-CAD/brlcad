@@ -181,15 +181,8 @@ static int occludes (struct application *, struct cell *);
 /*
  * Prototypes for the viewedge edge detection functions
  */
-static int is_edge(struct application *, struct cell *, struct cell *,
-		   struct cell *below);
 static int rayhit (struct application *, struct partition *, struct seg *);
-static int rayhit2 (struct application *, struct partition *, struct seg *);
 static int raymiss (struct application *);
-static int raymiss2 (struct application *);
-static int handle_main_ray(struct application *, struct partition *,
-			   struct seg *);
-static int diffpixel (RGBpixel a, RGBpixel b);
 static void choose_color (RGBpixel col, struct cell *me,
 			  struct cell *left, struct cell *below);
 
@@ -199,7 +192,7 @@ static void choose_color (RGBpixel col, struct cell *me,
 #define ARCTAN_87       19.08
 
 #ifndef Abs
-#define Abs( x )        ((x) < 0 ? -(x) : (x))                  /* UNSAFE */
+# define Abs( x )        ((x) < 0 ? -(x) : (x))                  /* UNSAFE */
 #endif
 
 
@@ -300,29 +293,24 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 	}
 
 
-	if( (dbip = db_open( file, "r" )) == DBI_NULL ) {
+	if( (dbip = db_open( file, "r" )) == DBI_NULL )
 	    bu_bomb ("rtedge: could not open database.\n");
-	}
 	RT_CK_DBI(dbip);
 
 	occlusion_rtip = rt_new_rti( dbip ); /* clones dbip */
 
-	for( i=0; i < MAX_PSW; i++ )
-	    {
+	for( i=0; i < MAX_PSW; i++ ) {
 		rt_init_resource( &occlusion_resources[i], i, occlusion_rtip );
 		bn_rand_init( occlusion_resources[i].re_randptr, i );
 	    }
 
 	db_close(dbip);			 /* releases original dbip */
 
-	for (i=0; i<nObjs; ++i) {
-	    if (rt_gettree (occlusion_rtip, objs[i]) < 0) {
+	for (i=0; i<nObjs; ++i)
+	    if (rt_gettree (occlusion_rtip, objs[i]) < 0)
 		bu_log ("rtedge: gettree failed for %s\n", objs[i]);
-	    }
-	    else {
+	    else
 		bu_log ("rtedge: got tree for object %d = %s\n", i, objs[i]);
-	    }
-	}
 
 	bu_log ("rtedge: occlusion rt_gettrees done.\n");
 
@@ -347,11 +335,10 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 	    occlusion_apps[i]->a_onehit = 1;
 	    occlusion_apps[i]->a_hit = occlusion_hit;
 	    occlusion_apps[i]->a_miss = occlusion_miss;
-	    if (rpt_overlap) {
+	    if (rpt_overlap)
 		occlusion_apps[i]->a_logoverlap = ((void (*)())0);
-	    } else {
+	    else
 		occlusion_apps[i]->a_logoverlap = rt_silent_logoverlap;
-	    }
 
 	}
 	bu_log ("rtedge: will perform occlusion testing.\n");
@@ -410,16 +397,12 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 	bu_log ("view_init: deactivating overlay and blending due to -o option.\n");
     }
 
-    if (overlay) {
+    if (overlay)
 	bu_log ("view_init: will perform simple overlay.\n");
-    } else if (blend) {
+    else if (blend)
 	bu_log ("view_init: will perform blending.\n");
-    }
 
-    if (minus_F || (!minus_o && !minus_F)) {
-	return 1;		/* we need a framebuffer */
-    }
-    return 0;
+    return minus_F || (!minus_o && !minus_F); /* we need a framebuffer */
 }
 
 /* beginning of a frame */
@@ -440,39 +423,9 @@ view_2init( struct application *ap )
     per_processor_chunk = width;
 
     /*
-     * Create a cell to store current data for next cells left side.
-     */
-    for (i = 0; i < npsw; ++i) {
-	if (saved[i] == NULL) {
-	    saved[i] = (struct cell *) bu_calloc( 1, sizeof(struct cell),
-						  "saved cell info" );
-	}
-    }
-
-    /*
-     * Create a edge flag buffer for each processor.
-     */
-    for ( i = 0; i < npsw; ++i ) {
-	if (writeable[i] == NULL) {
-	    writeable[i] = (unsigned char *) bu_calloc( 1, per_processor_chunk,
-							"writeable pixel flag buffer" );
-	}
-    }
-
-    /*
      * Use three bytes per pixel.
      */
     pixsize = 3;
-
-    /*
-     * Create a scanline buffer for each processor.
-     */
-    for ( i = 0; i < npsw; ++i ) {
-	if (scanline[i] == NULL) {
-	    scanline[i] = (unsigned char *) bu_calloc( per_processor_chunk,
-						       pixsize, "scanline buffer" );
-	}
-    }
 
     /*
      * Set the hit distance difference necessary to trigger an edge.
@@ -483,26 +436,28 @@ view_2init( struct application *ap )
     /*
      * Determine if the framebuffer is readable.
      */
-    if (overlay || blend) {
-
-	if (fb_read(fbp,0,0,fb_bg_color,1) < 0) {
+    if (overlay || blend)
+	if (fb_read(fbp,0,0,fb_bg_color,1) < 0)
 	    bu_bomb ("rt_edge: specified framebuffer is not readable, cannot merge.\n");
 
-	}
-    }
-
     /*
-     * If blending is desired, create scanline buffers to hold
-     * the read-in lines from the framebuffer.
+     * Create a cell to store current data for next cells left side.
+     * Create a edge flag buffer for each processor.
+     * Create a scanline buffer for each processor.
      */
-    if (blend) {
-	for (i = 0; i < npsw; ++i) {
-	    if (blendline[i] == NULL) {
-		blendline[i] = (unsigned char *) bu_calloc( per_processor_chunk,
-							    pixsize,
-							    "blend buffer" );
-	    }
-	}
+    for (i = 0; i < npsw; ++i) {
+	if (saved[i] == NULL)
+	    saved[i] = (struct cell *) bu_calloc( 1, sizeof(struct cell), "saved cell info" );
+	if (writeable[i] == NULL)
+	    writeable[i] = (unsigned char *) bu_calloc( 1, per_processor_chunk, "writeable pixel flag buffer" );
+	if (scanline[i] == NULL)
+	    scanline[i] = (unsigned char *) bu_calloc( per_processor_chunk, pixsize, "scanline buffer" );
+	/*
+	 * If blending is desired, create scanline buffers to hold
+	 * the read-in lines from the framebuffer.
+	 */
+	if (blend && blendline[i] == NULL)
+	    blendline[i] = (unsigned char *) bu_calloc( per_processor_chunk, pixsize, "blend buffer" );
     }
 
     /*
@@ -512,15 +467,10 @@ view_2init( struct application *ap )
      * the user can set it manually (so long as it isn't 0 0 1!).
      *
      */
-    if (overlay) {
-	if (bgcolor[RED] == 0 &&
-	    bgcolor[GRN] == 0 &&
-	    bgcolor[BLU] == 1) {
-
+    if (overlay && bgcolor[RED] == 0 && bgcolor[GRN] == 0 && bgcolor[BLU] == 1) {
 	    bgcolor[RED] = fb_bg_color[RED];
 	    bgcolor[GRN] = fb_bg_color[GRN];
 	    bgcolor[BLU] = fb_bg_color[BLU];
-	}
     }
     return;
 }
@@ -571,9 +521,8 @@ view_eol( struct application *ap )
 	fastf_t hsv[3];
 
 	bu_semaphore_acquire (BU_SEM_SYSCALL);
-	if (fb_read(fbp,0,ap->a_y,blendline[cpu],per_processor_chunk) < 0) {
+	if (fb_read(fbp,0,ap->a_y,blendline[cpu],per_processor_chunk) < 0)
 	    bu_bomb ("rtedge: error reading from framebuffer.\n");
-	}
 	bu_semaphore_release (BU_SEM_SYSCALL);
 
 	for (i=0; i<per_processor_chunk; ++i) {
@@ -663,8 +612,7 @@ view_eol( struct application *ap )
 		    bu_semaphore_release (BU_SEM_SYSCALL);
 
 		    replace_down = 0;
-		}
-		else {
+		} else {
 		    /*
 		     * Put this pixel back into the blendline array.
 		     * We'll push it to the buffer when the entire
@@ -702,15 +650,14 @@ view_eol( struct application *ap )
 	bu_image_save_writeline(bif,ap->a_y,scanline[cpu]);
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
-    if (fbp == FBIO_NULL && outputfile == NULL) {
+    if (fbp == FBIO_NULL && outputfile == NULL)
 	bu_log ("rtedge: strange, no end of line actions taken.\n");
-    }
 
     return;
 
 }
 
-void view_setup(void) {  }
+void view_setup(void) { }
 
 /*
  * end of a frame, called after rt_clean()
@@ -732,11 +679,10 @@ void view_end(void) {
 int rayhit (struct application *ap, register struct partition *pt,
 	    struct seg *segp )
 {
-    if ( handle_main_ray(ap, pt, segp)) {
+    if ( handle_main_ray(ap, pt, segp))
 	ap->a_user = 1;
-    } else {
+    else
 	ap->a_user = 0;
-    }
     return 1;
 }
 
@@ -745,11 +691,10 @@ int rayhit (struct application *ap, register struct partition *pt,
  */
 int raymiss( struct application *ap )
 {
-    if ( handle_main_ray(ap, NULL, NULL)) {
+    if ( handle_main_ray(ap, NULL, NULL))
 	ap->a_user = 1;
-    } else {
+    else
 	ap->a_user = 0;
-    }
     return 0;
 }
 
@@ -772,7 +717,7 @@ int rayhit2 (struct application *ap, register struct partition *pt,
 		  pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
     c->c_dist = hitp->hit_dist;
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -790,50 +735,37 @@ int raymiss2( register struct application *ap )
     VSETALL(c->c_normal, 0);
     VMOVE(c->c_rdir, ap->a_ray.r_dir);
 
-    return(0);
+    return 0;
 }
 
 int is_edge(struct application *ap, struct cell *here,
 	    struct cell *left, struct cell *below)
 {
     if (here->c_ishit) {
-
-	if (detect_ids) {
-	    if (here->c_id != left->c_id || here->c_id != below->c_id) {
+	if (detect_ids) 
+	    if (here->c_id != left->c_id || here->c_id != below->c_id) 
 		return 1;
-	    }
-	}
 
-	if (detect_regions) {
+	if (detect_regions) 
 	    if (here->c_region != left->c_region ||
-		here->c_region != below->c_region ) {
+		here->c_region != below->c_region ) 
 		return 1;
-	    }
-	}
 
-	if (detect_distance) {
+	if (detect_distance) 
 	    if (Abs(here->c_dist - left->c_dist) > max_dist ||
-		Abs(here->c_dist - below->c_dist) > max_dist) {
+		Abs(here->c_dist - below->c_dist) > max_dist) 
 		return 1;
-	    }
-	}
 
-	if (detect_normals) {
+	if (detect_normals) 
 	    if ((VDOT(here->c_normal, left->c_normal) < COSTOL) ||
-		(VDOT(here->c_normal, below->c_normal)< COSTOL)) {
+		(VDOT(here->c_normal, below->c_normal)< COSTOL)) 
 		return 1;
-	    }
-	}
     }
-    else {
-	if (left->c_ishit || below->c_ishit) {
+    else
+	if (left->c_ishit || below->c_ishit)
 	    return 1;
-	}
-    }
-
     return 0;
 }
-
 
 /*
  *			H A N D L E _ M A I N _ R A Y
@@ -917,8 +849,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
 	a2.a_uptr = (genptr_t)&left;
 	rt_shootray(&a2);
-    }
-    else {
+    } else {
 	left.c_ishit    = saved[cpu]->c_ishit;
 	left.c_id = saved[cpu]->c_id;
 	left.c_dist = saved[cpu]->c_dist;
@@ -938,38 +869,21 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
      * Note that we must check on edges as well since right side and
      * top edges are actually misses.
      */
-    if (occlusion_mode != OCCLUSION_MODE_NONE) {
-	if (me.c_ishit || edge) {
+    if (occlusion_mode != OCCLUSION_MODE_NONE) 
+	if (me.c_ishit || edge) 
 	    oc = occludes (ap, &me);
-	}
-    }
 
     /*
      * Perverse Pixel Painting Paradigm(tm)
      * If a pixel should be written to the fb, writeable is set.
      */
-    if (occlusion_mode == OCCLUSION_MODE_EDGES) {
-
-	if (edge && oc) {
-	    writeable[cpu][ap->a_x] = 1;
-	} else {
-	    writeable[cpu][ap->a_x] = 0;
-	}
-    }
-    else if (occlusion_mode == OCCLUSION_MODE_HITS) {
-
-	if ( (me.c_ishit || edge) && oc) {
-	    writeable[cpu][ap->a_x] = 1;
-	}
-	else {
-	    writeable[cpu][ap->a_x] = 0;
-	}
-    }
+    if (occlusion_mode == OCCLUSION_MODE_EDGES)
+	writeable[cpu][ap->a_x] = (edge && oc) ;
+    else if (occlusion_mode == OCCLUSION_MODE_HITS)
+	writeable[cpu][ap->a_x] = ( (me.c_ishit || edge) && oc);
     else if (occlusion_mode == OCCLUSION_MODE_DITHER) {
-
-	if (edge && oc) {
+	if (edge && oc)
 	    writeable[cpu][ap->a_x] = 1;
-	}
 	else if (me.c_ishit && oc) {
 	    /*
 	     * Dither mode.
@@ -977,38 +891,29 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	     * For occluding non-edges, only write every
 	     * other pixel.
 	     */
-	    if (oc == 1 && ((ap->a_x + ap->a_y) % 2) == 0) {
+	    if (oc == 1 && ((ap->a_x + ap->a_y) % 2) == 0)
 		writeable[cpu][ap->a_x] = 1;
-	    }
-	    else if (oc == 2) {
+	    else if (oc == 2)
 		writeable[cpu][ap->a_x] = 1;
-	    }
-	    else {
+	    else
 		writeable[cpu][ap->a_x] = 0;
-	    }
 	}
-	else {
+	else
 	    writeable[cpu][ap->a_x] = 0;
-	}
     }
-    else {
-	if (edge) {
+    else
+	if (edge)
 	    writeable[cpu][ap->a_x] = 1;
-	} else {
+	else
 	    writeable[cpu][ap->a_x] = 0;
-	}
-    }
 
     if (edge) {
-
 	choose_color (col, &me, &left, &below);
 
 	scanline[cpu][ap->a_x*3+RED] = col[RED];
 	scanline[cpu][ap->a_x*3+GRN] = col[GRN];
 	scanline[cpu][ap->a_x*3+BLU] = col[BLU];
-
     } else {
-
 	scanline[cpu][ap->a_x*3+RED] = bgcolor[RED];
 	scanline[cpu][ap->a_x*3+GRN] = bgcolor[GRN];
 	scanline[cpu][ap->a_x*3+BLU] = bgcolor[BLU];
@@ -1061,14 +966,12 @@ void choose_color (RGBpixel col, struct cell *me,
 	use_this = (me->c_dist < left->c_dist) ? me : left ;
 	use_this = (use_this->c_dist < below->c_dist) ? use_this : below ;
 
-	if (use_this == (struct cell *)NULL) {
+	if (use_this == (struct cell *)NULL)
 	    bu_bomb ("Error: use_this is NULL.\n");
-	}
 
 	col[RED] = 255 * use_this->c_region->reg_mater.ma_color[RED];
 	col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
 	col[BLU] = 255 * use_this->c_region->reg_mater.ma_color[BLU];
-
     }
     return;
 }
@@ -1104,7 +1007,7 @@ static int occludes (struct application *ap, struct cell *here)
 
     oc_hit = rt_shootray (occlusion_apps[cpu]);
 
-    if (!oc_hit) {
+    if (!oc_hit)
 	/*
 	 * The occlusion ray missed, therefore this
 	 * pixel occludes the second geometry.
@@ -1114,9 +1017,8 @@ static int occludes (struct application *ap, struct cell *here)
 	 * OCCLUSION_MODE_DITHER section.
 	 */
 	return 2;
-    }
 
-    if (occlusion_apps[cpu]->a_dist < here->c_dist) {
+    if (occlusion_apps[cpu]->a_dist < here->c_dist)
 	/*
 	 * The second geometry is close than the edge, therefore it
 	 * is 'foreground'. Do not draw the edge.
@@ -1124,7 +1026,6 @@ static int occludes (struct application *ap, struct cell *here)
 	 * - This pixel DOES NOT occlude the second geometry.
 	 */
 	return 0;
-    }
     return 1;
 }
 
