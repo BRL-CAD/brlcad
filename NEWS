@@ -11,7 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
-* added max_dist option to rtedge. - Erik Greenwald
+* added configurable max_dist depth option to rtedge - Erik Greenwald
 * added rest of BRL-CAD's ray-tracers to the Windows port - Bob Parker
 * enabled embedded framebuffer support in Windows port - Bob Parker
 * fixed garbled output during parallel crash reports - Sean Morrison
