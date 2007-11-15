@@ -6518,6 +6518,15 @@ RT_EXPORT BU_EXTERN(int	dgo_vnirt_cmd,
 		     int argc,
 		     char **argv));
 
+/* defined in qray.c */
+RT_EXPORT BU_EXTERN(int	dgo_qray_cmd,
+		    (struct dg_obj	*dgop,
+		     Tcl_Interp		*interp,
+		     int		argc,
+		     char 		**argv));
+RT_EXPORT BU_EXTERN(void dgo_init_qray,
+		    (struct dg_obj *dgop));
+
 
 /* defined in bigE.c */
 RT_EXPORT BU_EXTERN(int	dg_E_cmd,
