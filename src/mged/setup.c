@@ -121,6 +121,12 @@ mged_setup(void)
     } /* end iteration over Init() routines that need auto_path */
     Tcl_ResetResult(interp);
 
+    /* if we haven't loaded by now, load auto_path so we find our tclscripts */
+    if (!try_auto_path) {
+	/* Locate the BRL-CAD-specific Tcl scripts */
+	tclcad_auto_path(interp);
+    }
+
     /* Import [incr Tcl] commands into the global namespace. */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
 	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
@@ -129,28 +135,42 @@ mged_setup(void)
 
 #ifdef BRLCAD_DEBUG
     /* Initialize libbu */
-    Bu_d_Init(interp);
-
-    /* Initialize libbn */
-    Bn_d_Init(interp);
-
-    /* Initialize librt (includes database, drawable geometry and view objects) */
-    if (Rt_d_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_d_Init ERROR: %s\n", Tcl_GetStringResult(interp));
+    if (Bu_d_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	Tcl_ResetResult(interp);
     }
+
+    /* Initialize libbn */
+    if (Bn_d_Init(interp) == TCL_ERROR) {
+	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
+
+    /* Initialize librt */
+    if (Rt_d_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
+    Tcl_StaticPackage(interp, "Rt", Rt_d_Init, (Tcl_PackageInitProc *) NULL);
 #else
     /* Initialize libbu */
-    Bu_Init(interp);
-
-    /* Initialize libbn */
-    Bn_Init(interp);
-
-    /* Initialize librt (includes database, drawable geometry and view objects) */
-    if (Rt_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_Init ERROR: %s\n", Tcl_GetStringResult(interp));
+    if (Bu_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	Tcl_ResetResult(interp);
     }
+
+    /* Initialize libbn */
+    if (Bn_Init(interp) == TCL_ERROR) {
+	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
+
+    /* Initialize librt */
+    if (Rt_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
+    Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
 #endif
 
     /* initialize MGED's drawable geometry object */
