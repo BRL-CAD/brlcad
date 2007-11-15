@@ -43,6 +43,23 @@
 #include "./mged_dm.h"
 #include "./qray.h"
 
+#define USE_LIBRT_QRAY 1
+
+#if USE_LIBRT_QRAY
+int
+f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    return dgo_qray_cmd(dgop, interp, argc, argv);
+}
+
+void
+init_qray(void)
+{
+    dgo_init_qray(dgop);
+}
+
+#else
+
 static void qray_print_fmts(void);
 static void qray_print_vars(void);
 static int qray_get_fmt_index(char c);
@@ -527,6 +544,7 @@ qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t 
     ++i;
   }
 }
+#endif
 
 /*
  * Local Variables:
