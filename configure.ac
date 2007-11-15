@@ -2039,6 +2039,7 @@ AC_CHECK_FUNCS(\
 	endgrent \
 	endpwent \
 	fabs  \
+	fchmod \
 	finite \
 	floor \
 	fsync \
