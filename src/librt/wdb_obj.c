@@ -6720,6 +6720,11 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 	if ((old_dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
 		return TCL_ERROR;
 
+	if (old_dp->d_flags & DIR_SOLID) {
+	    bu_log("Attempt to xpush a primitive, aborting.\n");
+	    return TCL_ERROR;
+	}
+
 	/* Initialize use and reference counts of all directory entries */
 	for (i=0 ; i<RT_DBNHASH ; i++) {
 		struct directory *dp;
