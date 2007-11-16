@@ -33,6 +33,7 @@ aclocal.m4
 autom4te.cache
 config.*
 configure
+install.*.log
 libtool
 ltmain.sh
 so_locations
