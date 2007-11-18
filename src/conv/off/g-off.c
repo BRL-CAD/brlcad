@@ -377,6 +377,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 out:
 	BU_GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);
 }
