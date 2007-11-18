@@ -3989,7 +3989,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 			else if( class == NMG_CLASS_Unknown )
 			{
 				bu_log( "nmg_fix_normals: nmg_classify_s_vs_s() failed for shells x%x and x%x\n", s1, s2 );
-				bu_log( "   Continueing anyway (shell is likely to have incorrectly oriented normals)\n" );
+				bu_log( "   Continuing anyway (shell is likely to have incorrectly oriented normals)\n" );
 			}
 		}
 
