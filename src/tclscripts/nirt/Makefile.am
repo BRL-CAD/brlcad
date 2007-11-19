@@ -6,15 +6,15 @@ tcldir = $(BRLCAD_DATA)/$(this_dir)
 scripties = \
 	prototype.sh
 
-tcl_SCRIPTS = \
-	$(BUILT_SOURCES) \
-	$(scripties)
-
 BUILT_SOURCES = \
 	pkgIndex.tcl \
 	tclIndex
 
-EXTRA_DIST = $(scripties)
+tcl_SCRIPTS = \
+	$(BUILT_SOURCES) \
+	$(scripties)
+
+EXTRA_DIST = $(tcl_SCRIPTS)
 
 # CLEANFILES = $(BUILT_SOURCES)
 
