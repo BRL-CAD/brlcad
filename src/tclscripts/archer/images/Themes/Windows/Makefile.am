@@ -8,6 +8,7 @@ dist_tcl_DATA = \
 	bug.png \
 	closeall.png \
 	combination.png \
+	command.png \
 	configure.png \
 	edit_copy.png \
 	edit_cut.png \
