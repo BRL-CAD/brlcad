@@ -2749,8 +2749,7 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 			pt_class = NMG_CLASS_AonBshared;
 			break;
 		default:
-			bu_bomb("guess_class_from_hitlist_min() no-class hitpoint\n");
-			pt_class = 0; /* shuts up compiler warning */
+			pt_class = NMG_CLASS_Unknown;
 			break;
 		}
 	} else {
