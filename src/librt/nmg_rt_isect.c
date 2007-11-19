@@ -1276,6 +1276,10 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 	} while (eu_p != eu->e_p->eu_p);
 
+	if (!inb_fu || !outb_fu) {
+	    return;
+	}
+
 #ifndef FAST_NMG
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 #endif
@@ -2648,8 +2652,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 			pt_class = NMG_CLASS_AonBshared;
 			break;
 		default:
-			bu_bomb("guess_class_from_hitlist_max() no-class hitpoint\n");
-			pt_class = 0; /* shuts up compiler warning */
+		        pt_class = NMG_CLASS_Unknown;
 			break;
 		}
 	} else {
