@@ -274,7 +274,8 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	struct edgeuse *eu_p;
 	struct loopuse *lu_p;
 	struct faceuse *fu_p;
-	char *paint_meaning, *paint_table, paint_color;
+	char *paint_meaning, *paint_table;
+	unsigned int paint_color;
 	int found;
 
 	if (rt_g.NMG_debug & DEBUG_MANIF)
@@ -383,7 +384,6 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	if (rt_g.NMG_debug & DEBUG_MANIF)
 		bu_log("painting done, looking at colors\n");
 
-
 	/* all the faces painted with "interior" paint are 2manifolds
 	 * those faces still painted with "exterior" paint are
 	 * 3manifolds, ie. part of the enclosing surface
@@ -391,14 +391,16 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
 		BU_LIST_LINK_CHECK( &fu_p->l );
 
-		paint_color = NMG_INDEX_VALUE(paint_table,
-						fu_p->index);
+		paint_color = NMG_INDEX_VALUE(paint_table, fu_p->index);
 
-		if (NMG_INDEX_VALUE(paint_meaning, (int)paint_color) ==
-		    PAINT_INTERIOR) {
+		if (paint_color < 0 || paint_color > 255) {
+		    bu_log("ERROR: color index out of range (%d > %d)\n", paint_color, 255);
+		    break;
+		}
+
+		if (NMG_INDEX_VALUE(paint_meaning, paint_color) == PAINT_INTERIOR) {
 			set_face_sub_manifold(tbl, fu_p, NMG_2MANIFOLD);
-		} else if (NMG_INDEX_VALUE(paint_meaning, (int)paint_color)
-		    == PAINT_EXTERIOR) {
+		} else if (NMG_INDEX_VALUE(paint_meaning, paint_color) == PAINT_EXTERIOR) {
 			set_face_sub_manifold(tbl, fu_p, NMG_3MANIFOLD);
 		}
 	}
