@@ -715,7 +715,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 	try = 0;
 retry:
 	VMOVE( projection_dir, nmg_good_dirs[try] );
-	if( ++try > 10 )  bu_bomb("nmg_class_pt_s() retry count exhausted\n");
+	if( ++try > 10 ) goto out; /* only nmg_good_dirs to try (10) */
 	VUNITIZE(projection_dir);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY )
