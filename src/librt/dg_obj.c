@@ -204,9 +204,6 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"autoview",		dgo_autoview_tcl},
 	{"blast",		dgo_blast_tcl},
 	{"clear",		dgo_zap_tcl},
-#if 0
-	{"close",		dgo_close_tcl},
-#endif
 	{"draw",		dgo_draw_tcl},
 	{"E",			dgo_E_tcl},
 	{"erase",		dgo_erase_tcl},
@@ -231,9 +228,6 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"set_uplotOutputMode",	dgo_set_uplotOutputMode_tcl},
 	{"set_transparency",	dgo_set_transparency_tcl},
 	{"shaded_mode",		dgo_shaded_mode_tcl},
-#if 0
-	{"tol",			dgo_tol_tcl},
-#endif
 	{"tree",		dgo_tree_tcl},
 	{"vdraw",		dgo_vdraw_tcl},
 	{"vnirt",		dgo_vnirt_tcl},
@@ -293,37 +287,6 @@ dgo_deleteProc(ClientData clientData)
 	bu_free((genptr_t)dgop, "dgo_deleteProc: dgop");
 }
 
-#if 0
-/*
- * Close a drawable geometry object.
- *
- * USAGE:
- *	  procname close
- */
-static int
-dgo_close_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
-{
-	struct bu_vls vls;
-	struct dg_obj *dgop = (struct dg_obj *)clientData;
-
-	if (argc != 2) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_close");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	/* Among other things, this will call dgo_deleteProc. */
-	Tcl_DeleteCommand(interp, bu_vls_addr(&dgop->dgo_name));
-
-	return TCL_OK;
-}
-#endif
 
 /*
  * Create an command/object named "oname" in "interp".
@@ -415,32 +378,6 @@ dgo_open_tcl(ClientData	clientData,
 }
 
 /****************** Drawable Geometry Object Methods ********************/
-
-#if 0
-/* skeleton functions for dg_obj methods */
-int
-dgo__cmd(struct dg_obj	*dgop,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char 		**argv)
-{
-}
-
-/*
- * Usage:
- *        procname
- */
-static int
-dgo__tcl(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
-{
-	struct dg_obj *dgop = (struct dg_obj *)clientData;
-
-	return dgo__cmd(dgop, interp, argc-1, argv+1);
-}
-#endif
 
 /*
  *
@@ -1617,209 +1554,6 @@ dgo_blast_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return ret;
 }
 
-#if 0
-/*
- * Usage:
- *        procname tol [abs|rel|norm|dist|perp [#]]
- *
- *  abs #	sets absolute tolerance.  # > 0.0
- *  rel #	sets relative tolerance.  0.0 < # < 1.0
- *  norm #	sets normal tolerance, in degrees.
- *  dist #	sets calculational distance tolerance
- *  perp #	sets calculational normal tolerance.
- *
- */
-static int
-dgo_tol_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int	argc;
-     char	**argv;
-{
-	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	struct bu_vls vls;
-	double	f;
-
-	DGO_CHECK_WDBP_NULL(dgop,interp);
-
-	if (argc < 2 || 4 < argc){
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias dgo_tol %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	/* print all tolerance settings */
-	if (argc == 2) {
-		Tcl_AppendResult(interp, "Current tolerance settings are:\n", (char *)NULL);
-		Tcl_AppendResult(interp, "Tesselation tolerances:\n", (char *)NULL );
-
-		if (dgop->dgo_ttol.abs > 0.0) {
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "\tabs %g mm\n", dgop->dgo_ttol.abs);
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-			bu_vls_free(&vls);
-		} else {
-			Tcl_AppendResult(interp, "\tabs None\n", (char *)NULL);
-		}
-
-		if (dgop->dgo_ttol.rel > 0.0) {
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "\trel %g (%g%%)\n",
-				      dgop->dgo_ttol.rel, dgop->dgo_ttol.rel * 100.0 );
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-			bu_vls_free(&vls);
-		} else {
-			Tcl_AppendResult(interp, "\trel None\n", (char *)NULL);
-		}
-
-		if (dgop->dgo_ttol.norm > 0.0) {
-			int	deg, min;
-			double	sec;
-
-			bu_vls_init(&vls);
-			sec = dgop->dgo_ttol.norm * bn_radtodeg;
-			deg = (int)(sec);
-			sec = (sec - (double)deg) * 60;
-			min = (int)(sec);
-			sec = (sec - (double)min) * 60;
-
-			bu_vls_printf(&vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
-				      dgop->dgo_ttol.norm * bn_radtodeg, deg, min, sec);
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-			bu_vls_free(&vls);
-		} else {
-			Tcl_AppendResult(interp, "\tnorm None\n", (char *)NULL);
-		}
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls,"Calculational tolerances:\n");
-		bu_vls_printf(&vls,
-			      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)\n",
-			      dgop->dgo_tol.dist, dgop->dgo_tol.perp,
-			      acos(dgop->dgo_tol.perp)*bn_radtodeg);
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-
-		return TCL_OK;
-	}
-
-	/* get the specified tolerance */
-	if (argc == 3) {
-		int status = TCL_OK;
-
-		bu_vls_init(&vls);
-
-		switch (argv[2][0]) {
-		case 'a':
-			if (dgop->dgo_ttol.abs > 0.0)
-				bu_vls_printf(&vls, "%g", dgop->dgo_ttol.abs);
-			else
-				bu_vls_printf(&vls, "None");
-			break;
-		case 'r':
-			if (dgop->dgo_ttol.rel > 0.0)
-				bu_vls_printf(&vls, "%g", dgop->dgo_ttol.rel);
-			else
-				bu_vls_printf(&vls, "None");
-			break;
-		case 'n':
-			if (dgop->dgo_ttol.norm > 0.0)
-				bu_vls_printf(&vls, "%g", dgop->dgo_ttol.norm);
-			else
-				bu_vls_printf(&vls, "None");
-			break;
-		case 'd':
-			bu_vls_printf(&vls, "%g", dgop->dgo_tol.dist);
-			break;
-		case 'p':
-			bu_vls_printf(&vls, "%g", dgop->dgo_tol.perp);
-			break;
-		default:
-			bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
-			status = TCL_ERROR;
-			break;
-		}
-
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-		return status;
-	}
-
-	/* set the specified tolerance */
-	if (sscanf(argv[3], "%lf", &f) != 1) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "bad tolerance - %s\n", argv[3]);
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-
-		return TCL_ERROR;
-	}
-
-	switch (argv[2][0]) {
-	case 'a':
-		/* Absolute tol */
-		if (f <= 0.0)
-			dgop->dgo_ttol.abs = 0.0;
-		else
-			dgop->dgo_ttol.abs = f;
-		break;
-	case 'r':
-		if (f < 0.0 || f >= 1.0) {
-			   Tcl_AppendResult(interp,
-					    "relative tolerance must be between 0 and 1, not changed\n",
-					    (char *)NULL);
-			   return TCL_ERROR;
-		}
-		/* Note that a value of 0.0 will disable relative tolerance */
-		dgop->dgo_ttol.rel = f;
-		break;
-	case 'n':
-		/* Normal tolerance, in degrees */
-		if (f < 0.0 || f > 90.0) {
-			Tcl_AppendResult(interp,
-					 "Normal tolerance must be in positive degrees, < 90.0\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		/* Note that a value of 0.0 or 360.0 will disable this tol */
-		dgop->dgo_ttol.norm = f * bn_degtorad;
-		break;
-	case 'd':
-		/* Calculational distance tolerance */
-		if (f < 0.0) {
-			Tcl_AppendResult(interp,
-					 "Calculational distance tolerance must be positive\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		dgop->dgo_tol.dist = f;
-		dgop->dgo_tol.dist_sq = dgop->dgo_tol.dist * dgop->dgo_tol.dist;
-		break;
-	case 'p':
-		/* Calculational perpendicularity tolerance */
-		if (f < 0.0 || f > 1.0) {
-			Tcl_AppendResult(interp,
-					 "Calculational perpendicular tolerance must be from 0 to 1\n",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-		dgop->dgo_tol.perp = f;
-		dgop->dgo_tol.para = 1.0 - f;
-		break;
-	default:
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		bu_vls_free(&vls);
-
-		return TCL_ERROR;
-	}
-
-	return TCL_OK;
-}
-#endif
 
 struct rtcheck {
 #ifdef _WIN32

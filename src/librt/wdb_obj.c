@@ -314,9 +314,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"bot_decimate", wdb_bot_decimate_tcl},
 	{"c",		wdb_comb_std_tcl},
 	{"cat",		wdb_cat_tcl},
-#if 0
-	{"close",	wdb_close_tcl},
-#endif
 	{"color",	wdb_color_tcl},
 	{"comb",	wdb_comb_tcl},
 	{"concat",	wdb_concat_tcl},
@@ -700,50 +697,6 @@ wdb_prep_dbip(Tcl_Interp *interp, const char *filename)
 }
 
 /****************** Database Object Methods ********************/
-#if 0
-int
-wdb_close_cmd(struct rt_wdb	*wdbp,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		**argv)
-{
-	struct bu_vls vls;
-
-	if (argc != 1) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_close");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	/*
-	 * Among other things, this will call wdb_deleteProc.
-	 * Note - wdb_deleteProc is being passed clientdata.
-	 *        It ought to get interp as well.
-	 */
-	Tcl_DeleteCommand(interp, bu_vls_addr(&wdbp->wdb_name));
-
-	return TCL_OK;
-}
-
-/*
- * Close a BRL-CAD database object.
- *
- * USAGE:
- *	  procname close
- */
-static int
-wdb_close_tcl(ClientData	clientData,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		**argv)
-{
-	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-
-	return wdb_close_cmd(wdbp, interp, argc-1, argv+1);
-}
-#endif
 
 /**
  *
