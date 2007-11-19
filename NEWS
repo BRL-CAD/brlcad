@@ -14,6 +14,7 @@ entire history of the project is available through CVS.
 * graceful handling of mesh normal failures - Sean Morrison
 * fixed variety of g-iges and other exporter crashes - Sean Morrison
 * fixed crash-on-exit cleanup bug in g-off exporter - Sean Morrison
+* fixed crash when xpush was called on a primitive - Erik Greenwald
 * fixed Windows port 'opendb' command crash - Bob Parker
 * added configurable max_dist depth option to rtedge - Erik Greenwald
 * added rest of BRL-CAD's ray-tracers to the Windows port - Bob Parker
