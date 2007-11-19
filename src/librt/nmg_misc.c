@@ -3975,6 +3975,7 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 	{
 		struct shell *s2;
 		int inner_count=0;
+		int abort = 0;
 
 		for( BU_LIST_FOR( s2, shell, &tmp_r->s_hd ) )
 		{
@@ -3990,6 +3991,8 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 			{
 				bu_log( "nmg_fix_normals: nmg_classify_s_vs_s() failed for shells x%x and x%x\n", s1, s2 );
 				bu_log( "   Continuing anyway (shell is likely to have incorrectly oriented normals)\n" );
+				abort = 1;
+				break;
 			}
 		}
 
@@ -3997,6 +4000,9 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 		{
 			/* shell s1 is inside an odd number of shells, so it must be a void */
 			bu_ptbl_ins( &reverse, (long *)s1 );
+		}
+		if (abort) {
+		    break;
 		}
 	}
 
