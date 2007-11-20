@@ -73,9 +73,11 @@
  */
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <strings.h>
 #include <math.h>
+#include <stddef.h>
 
 #include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
@@ -102,9 +104,9 @@ struct shot {
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
-    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt)},
-    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir)},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL},
+    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /**
@@ -122,12 +124,12 @@ struct reg_hit {
 };
 
 static const struct bu_structparse reg_sp[] = {
-    {"%S", 1, "region", bu_offsetof(struct reg_hit, regname) },
-    {"%S", 1, "in", bu_offsetof(struct reg_hit, in_primitive)},
-    {"%S", 1, "out", bu_offsetof(struct reg_hit, out_primitive)},
-    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist)},
-    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist)},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%S", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL },
+    {"%S", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL},
+    {"%S", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL},
+    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL},
+    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -138,10 +140,7 @@ void
 usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
-
-    (void) fprintf(stderr, "Usage: %s geom.g obj [obj...] < rayfile \n",
-		   progname);
-    exit(1);
+    bu_exit(1, "Usage: %s geom.g obj [obj...] < rayfile \n", progname);
 }
 
 
@@ -324,7 +323,6 @@ main(int argc, char **argv)
 
     if( argc < 3 )  {
 	usage("insufficient args\n");
-	exit(1);
     }
 
 
@@ -335,8 +333,7 @@ main(int argc, char **argv)
      *  title string in the header (ID) record.
      */
     if( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
-	exit(2);
+	bu_exit(2, "rtexample: rt_dirbuild failure\n");
     }
 
     /* intialize the application structure to all zeros */
