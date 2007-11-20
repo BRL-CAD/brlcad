@@ -51,10 +51,15 @@ EXTRA_DIST = \
 	iges.sh \
 	lights.sh \
 	lights_ref.asc \
+	main.sh \
+	master_fetch.sh \
+	master_prep.sh \
 	moss.sh \
 	mosspix.asc \
+	nightly.sh \
 	shaders.sh \
 	shaderspix.asc \
+	slave_build.sh \
 	solids.sh \
 	solidspix.asc \
 	spdi.sh \
