@@ -54,7 +54,8 @@ MODELS = \
 
 EXTRA_DIST = \
 	${MODELS} \
-	db.php
+	db.php \
+	terra.dsp
 
 dbdir = $(BRLCAD_DATA)/db
 
