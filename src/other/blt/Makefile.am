@@ -103,7 +103,7 @@ EXTRA_DIST = \
 	MANIFEST \
 	Makefile.vc \
 	PROBLEMS \
-	blt.make
+	blt.mak
 
 libBLT@BLT_SUFFIX@_la_SOURCES = $(libBLT_la_SOURCES)
 libBLT@BLT_SUFFIX@_la_LDFLAGS = $(libBLT_la_LDFLAGS)
