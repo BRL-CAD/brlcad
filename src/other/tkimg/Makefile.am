@@ -42,6 +42,7 @@ tkimg_la_LIBADD = \
 # unresolved stub symbols.
 
 EXTRA_DIST = \
-	init.c
+	init.c \
+	license.terms
 
 include $(top_srcdir)/misc/Makefile.defs

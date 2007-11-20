@@ -22,6 +22,7 @@ tkimgp_la_SOURCES = \
 	png.c
 
 EXTRA_DIST = \
+	aclocal.m4 \
 	init.c \
 	pkgIndex.tcl.in \
 	tests

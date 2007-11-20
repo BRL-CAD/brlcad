@@ -21,8 +21,12 @@ tkimgb_la_SOURCES = \
 	tkimgUtils.c
 
 EXTRA_DIST = \
+	aclocal.m4 \
+	pkgIndex.tcl.in \
 	tclconfig \
+	tkimg.decls \
 	tkimg.h \
+	tkimgConfig.sh.in \
 	tkimgDecls.h \
 	tools
 
