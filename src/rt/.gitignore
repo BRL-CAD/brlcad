@@ -2,6 +2,7 @@
 .libs
 Makefile
 Makefile.in
+reshoot
 rt
 rt_bot_faces
 rt_bot_faces_vers.c
