@@ -19,6 +19,7 @@ EXTRA_DIST = \
 	copyright.sh \
 	enumerate.sh \
 	footer.sh \
+	gforge.sh \
 	header.sh \
 	linkroot.sh \
 	make_deb.sh \
