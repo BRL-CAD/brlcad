@@ -33,8 +33,9 @@ bin_PROGRAMS = \
 	rtweight \
 	rtxray
 
-EXTRA_PROGRAMS = hurt
-noinst_PROGRAMS = rtexample
+noinst_PROGRAMS = \
+	hurt \
+	rtexample
 
 endif
 # end of ONLY_BENCHMARK
