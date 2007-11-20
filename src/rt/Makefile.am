@@ -10,6 +10,7 @@ bin_PROGRAMS = \
 	rt
 else !ONLY_BENCHMARK
 bin_PROGRAMS = \
+	reshoot \
 	rt \
 	rt_bot_faces \
 	rt_simple \
@@ -48,6 +49,7 @@ ALLSRCS = \
 	$(COMMON) \
 	libfb-dummy.c \
 	read-rtlog.c \
+	reshoot.c \
 	rt_simple.c \
 	rtexample.c \
 	rtregis.c \
@@ -76,6 +78,7 @@ ALLSRCS = \
 
 rt_simple_SOURCES = rt_simple.c
 rtexample_SOURCES = rtexample.c
+reshoot_SOURCES = reshoot.c
 rtwalk_SOURCES = rtwalk.c
 rtshot_SOURCES = rtshot.c
 
@@ -165,6 +168,7 @@ noinst_HEADERS = \
 	scat.h
 
 man_MANS = \
+	reshoot.1 \
 	rt.1 \
 	rt_bot_faces.1 \
 	rtarea.1 \
@@ -215,6 +219,7 @@ FAST_OBJECTS = \
 
 else !ONLY_BENCHMARK
 FAST_OBJECTS = \
+	$(reshoot_OBJECTS) \
 	$(rt_OBJECTS) \
 	$(rt_bot_faces_OBJECTS) \
 	$(rt_simple_OBJECTS) \
