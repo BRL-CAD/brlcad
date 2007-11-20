@@ -19,19 +19,25 @@
  *
  */
 /** @file walk_example.c
- *	@brief An example of how to traverse a BRL-CAD database heirarchy.
  *
- *	This program uses the BRL-CAD librt function db_walk_tree() to traverse a
- *	user-specified portion of the Directed acyclic graph of the database.  This
- *	function allows for fast and easy database parsers to be developed
+ * @brief Example of how to traverse a BRL-CAD database heirarchy
  *
- *	@param -h print help
- *	@param database_file The name of the geometry file to be processed
- *	@param objects_within_database A list of object names to be processed (tree tops)
+ * This program uses the BRL-CAD librt function db_walk_tree() to
+ * traverse a user-specified portion of the Directed Acyclic Graph
+ * (DAG) of the database.  This function allows for fast and easy
+ * database parsers to be developed
+ *
+ * @param -h print help
+ * @param database_file The name of the geometry file to be processed
+ * @param objects_within_database A list of object names to be processed (tree tops)
  */
 
+#include "common.h"
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -39,13 +45,10 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"
+
 
 /** list of legal command line options for use with bu_getopt()  */
 char *options = "hd:";
-
-/** string that indicates what this program was invoked as */
-char *progname = "(noname)";
 
 /** flag for printing names of objects as encountered  */
 #define DEBUG_NAMES 1
@@ -62,13 +65,12 @@ int verbose = 0;
  *	@param s an pointer to a null-terminated character string
  *	@return never returns
  */
-void usage(char *s)
+void usage(const char *name, const char *str)
 {
-    if (s) (void)fputs(s, stderr);
-
-    (void) fprintf(stderr, "Usage: %s [ -%s ] [<] infile [> outfile]\n",
-		   progname, options);
-    exit(1);
+    if (str) {
+	(void)fputs(str, stderr);
+    }
+    bu_exit(1, "Usage: %s [ -%s ] input.g object(s) ...\n", name, options);
 }
 
 /** @if no
@@ -87,24 +89,24 @@ int parse_args(int ac, char *av[])
     int  c;
     char *strrchr();
 
-    if (  ! (progname=strrchr(*av, '/'))  )
-	progname = *av;
-    else
-	++progname;
-
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac,av,options)) != EOF)
+    while ((c=bu_getopt(ac,av,options)) != EOF) {
 	switch (c) {
-	case 'd'	: debug = strtol(but_optarg, NULL, 16); break;
-	case '?'	:
-	case 'h'	:
-	default		: usage("Bad or help flag specified\n"); break;
+	case 'd':
+	    debug = strtol(bu_optarg, NULL, 16);
+	    break;
+	case '?':
+	case 'h':
+	default:
+	    usage(bu_basename(av[0]), "Bad or help flag specified\n");
+	    break;
 	}
+    }
 
-    return(but_optind);
+    return(bu_optind);
 }
 
 
@@ -126,7 +128,6 @@ region_start (struct db_tree_state * tsp,
 	      const struct rt_comb_internal * combp,
 	      genptr_t client_data )
 {
-    int i;
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
 	bu_log("region_start %s\n", name);
@@ -159,7 +160,6 @@ region_end (struct db_tree_state * tsp,
 	    union tree * curtree,
 	    genptr_t client_data )
 {
-    int i;
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
 	bu_log("region_end   %s\n", name);
@@ -183,11 +183,15 @@ region_end (struct db_tree_state * tsp,
 union tree *
 leaf_func (struct db_tree_state * tsp,
 	   struct db_full_path * pathp,
-	   struct rt_db_internal * ip,
+	   struct rt_db_internal * internp,
 	   genptr_t client_data )
 {
-    int i;
-    union tree *tp;
+    /* the rt_db_internal structure is used to manage the payload of
+     * "internal" or "in memory" representation of geometry as opposed
+     * to different the "on-disk" serialized "external" version.
+     */
+    struct rt_db_internal *ip = internp; /* only set for commenting
+					    purposes */
 
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -195,11 +199,14 @@ leaf_func (struct db_tree_state * tsp,
 	bu_free(name, "region_end name");
     }
 
-
     /* here we do primitive type specific processing */
     switch (ip->idb_minor_type) {
     case ID_BOT:
 	{
+	    /* This is the data payload for a "Bag of Triangles" or
+	     * "BOT" primitive.  see rtgeom.h for more information
+	     * about primitive solid specific data structures.
+	     */
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	    RT_BOT_CK_MAGIC(bot); /* check for data corruption */
 
@@ -239,27 +246,8 @@ int main(int ac, char *av[])
      */
     struct rt_i *rtip;
 
-    /** @struct rt_db_internal
-     * this structure is used to manage the payload of an
-     * "internal" or "in memory" representation of geometry
-     * (as opposed to the "on-disk" version, which can be different)
-     */
-    struct rt_db_internal intern;
-
-    /* This is the data payload for a "Bag of Triangles" or "BOT" primitive.
-     * see rtgeom.h for more information about primitive solid specific data
-     * structures.
-     */
-    struct rt_bot_internal *bot;
-
-    /* This structure contains information about an object in the on-disk
-     * database file.  Content is things such as the name, what type of object, etc.
-     * see "raytrace.h" for more information
-     */
-    struct directory *dp;
-
     struct db_tree_state init_state; /* state table for the heirarchy walker */
-    char idbuf[132];		/* Database title */
+    char idbuf[1024] = {0};		/* Database title */
     int arg_count;
 
     /** @struct user_data
@@ -274,8 +262,7 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ( (ac - arg_count) < 1) {
-	fprintf(stderr, "usage: %s geom.g [file.dxf] [bot1 bot2 bot3...]\n", progname);
-	exit(-1);
+	usage(bu_basename(av[0]), "bad arugment count");
     }
 
     /*
@@ -286,8 +273,7 @@ int main(int ac, char *av[])
      */
     rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf));
     if ( rtip == RTI_NULL) {
-	fprintf(stderr,"%s: rt_dirbuild failure\n", av[0]);
-	exit(2);
+	bu_exit(2, "%s: rt_dirbuild failure\n", av[0]);
     }
 
     arg_count++;
