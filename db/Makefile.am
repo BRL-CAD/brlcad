@@ -59,7 +59,9 @@ EXTRA_DIST = \
 dbdir = $(BRLCAD_DATA)/db
 
 if INSTALL_MODELS
-db_DATA = ${MODELS:asc=g}
+db_DATA = \
+	${MODELS:asc=g} \
+	terra.dsp
 BUILT_SOURCES = ${MODELS:asc=g}
 
 else !INSTALL_MODELS
