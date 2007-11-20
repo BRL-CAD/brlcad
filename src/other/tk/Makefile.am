@@ -164,6 +164,7 @@ EXTRA_DIST = \
 	unix/tcl.m4 \
 	unix/tk.spec \
 	unix/tkAppInit.c \
+	unix/tkConfig.h.in \
 	unix/tkConfig.sh \
 	unix/tkConfig.sh.in \
 	unix/tkUnix.c \

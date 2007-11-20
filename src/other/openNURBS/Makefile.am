@@ -201,10 +201,43 @@ libopenNURBS_nil_la_LIBADD = ${LIBZ}
 libopenNURBS_la_SOURCES =
 libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 
+ON_EXTRA = \
+	opennurbs.sln \
+	opennurbs.vcproj \
+	opennurbs_bezier_volume.cpp \
+	opennurbs_bezier_volume.h \
+	opennurbs_curvetree.cpp \
+	opennurbs_exception.cpp \
+	opennurbs_exception.h \
+	opennurbs_ginfinity.cpp \
+	opennurbs_ginfinity.h \
+	opennurbs_layerset.cpp \
+	opennurbs_layerset.h \
+	opennurbs_linestyle.cpp \
+	opennurbs_meshtree.cpp \
+	opennurbs_meshtree.h \
+	opennurbs_meshx.cpp \
+	opennurbs_staticlib.vcproj \
+	opennurbs_surfacetree.cpp \
+	opennurbs_vc60.dsw \
+	opennurbs.rc \
+	opennurbs_array_defs.h.orig \
+	opennurbs_brep_io.cpp.orig \
+	opennurbs_dll.cpp \
+	opennurbs_dll_resource.h \
+	opennurbs_gl.cpp \
+	opennurbs_precompiledheader.cpp \
+	opennurbs_static_vc60.dsp \
+	opennurbs_temp.h \
+	opennurbs_vc60.dsp \
+	opennurbs_x.cpp
+
 EXTRA_DIST = \
+	${ON_EXTRA} \
 	example_brep \
 	example_dump \
 	example_gl \
+	example_read \
 	example_roundtrip \
 	example_userdata \
 	example_write \
