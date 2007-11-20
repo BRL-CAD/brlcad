@@ -2,6 +2,7 @@
 .libs
 Makefile
 Makefile.in
+hurt
 reshoot
 rt
 rt_bot_faces
