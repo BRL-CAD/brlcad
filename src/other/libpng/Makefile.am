@@ -57,6 +57,7 @@ EXTRA_DIST = \
 	TODO \
 	Y2KINFO \
 	aclocal.m4 \
+	autogen.sh \
 	config.h.in  \
 	config.h.in \
 	configure \

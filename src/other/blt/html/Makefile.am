@@ -1,6 +1,7 @@
 # $Id$
 
 EXTRA_DIST = \
+	BLT.html \
 	Makefile.vc \
 	barchart.html \
 	beep.html \

@@ -82,7 +82,13 @@ libblts_la_SOURCES = \
 	tkFrame.c
 
 EXTRA_DIST = \
+	Makefile-cyg.in \
+	Makefile.bc \
+	Makefile.vc \
+	blt.mak \
 	bltConfig.h \
+	bltTuple.c \
+	bltTupleCmd.c \
 	bltUnixMain.c \
 	bltVecCmd.c \
 	bltWinConfig.h \
@@ -96,6 +102,7 @@ EXTRA_DIST = \
 	bltWindow.c \
 	bltWinop.c \
 	pure_api.c \
+	tkMenuButton.c \
 	tkScrollbar.c
 
 include_HEADERS = \

@@ -179,7 +179,8 @@ librt_nil_la_SOURCES = \
 	wdb_obj.c
 
 EXTRA_librt_nil_la_SOURCES = \
-	g_brep.cpp
+	g_brep.cpp \
+	opennurbs_ext.cpp
 
 librt_nil_la_LIBADD = ${BREP_LIBADD}
 

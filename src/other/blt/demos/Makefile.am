@@ -4,6 +4,7 @@ SUBDIRS = \
 	bitmaps
 
 EXTRA_DIST = \
+	Makefile.vc \
 	barchart1.tcl \
 	barchart2.tcl \
 	barchart3.tcl \

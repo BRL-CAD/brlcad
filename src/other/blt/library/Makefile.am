@@ -21,6 +21,9 @@ brlcadscript_SCRIPTS = \
 	tclIndex
 
 EXTRA_DIST = \
-	$(brlcadscript_SCRIPTS)
+	$(brlcadscript_SCRIPTS) \
+	Makefile.vc \
+	bltCanvEps.pro \
+	bltGraph.pro
 
 include $(top_srcdir)/misc/Makefile.defs
