@@ -218,6 +218,7 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(BREP_SRCS) \
 	$(sample_applications_DATA) \
+	brep_test.cpp \
 	g_bot_include.c \
 	librt.dsp \
 	nmg_junk.c \
