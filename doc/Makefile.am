@@ -21,6 +21,7 @@ documentation_DATA = \
 	anim.txt \
 	archer_ack.txt \
 	benchmark.tr \
+	brep.txt \
 	cvs.txt \
 	description.txt \
 	deprecation.txt \
