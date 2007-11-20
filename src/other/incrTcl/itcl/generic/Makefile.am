@@ -34,7 +34,9 @@ include_HEADERS = \
 	itclInt.h \
 	itclIntDecls.h
 
-EXTRA_DIST = itcl.decls
+EXTRA_DIST = \
+	itcl.decls \
+	itclInt.decls
 
 include $(top_srcdir)/misc/Makefile.defs
 

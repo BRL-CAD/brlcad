@@ -45,11 +45,22 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	FAQ \
 	INDEX \
+	Makefile.in.orig \
+	Makefile.orig \
 	algorithm.txt \
 	amiga \
+	as400 \
 	contrib \
+	examples \
+	libz.dsp \
+	make_vms.com \
 	minigzip.c \
-	msdos
+	msdos \
+	old \
+	projects \
+	qnx \
+	win32 \
+	zconf.in.h
 
 include $(top_srcdir)/misc/Makefile.defs
 

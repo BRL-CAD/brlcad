@@ -57,6 +57,12 @@ btclsh_SOURCES = \
 btclsh_LDADD = \
 	${blib_LIBS}
 
+EXTRA_DIST = \
+	consoleMain.c \
+	unixMain.c \
+	cadAppInit.c \
+	winMain.c
+
 DEPS=src/libdm
 
 include $(top_srcdir)/misc/Makefile.defs

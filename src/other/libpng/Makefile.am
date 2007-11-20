@@ -56,6 +56,9 @@ EXTRA_DIST = \
 	README \
 	TODO \
 	Y2KINFO \
+	aclocal.m4 \
+	config.h.in  \
+	config.h.in \
 	configure \
 	contrib \
 	example.c \
@@ -65,7 +68,8 @@ EXTRA_DIST = \
 	pngnow.png \
 	pngtest.png \
 	projects \
-	scripts
+	scripts \
+	test-pngtest.sh
 
 .PHONY : test
 test:	pngtest
