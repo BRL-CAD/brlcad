@@ -2,6 +2,8 @@
 
 EXTRA_DIST= \
 	asc2g/asc2g.vcproj \
+	btclsh/btclsh.vcproj \
+	bwish/bwish.vcproj \
 	brlcad/brlcad.sln \
 	dbupgrade/dbupgrade.vcproj \
 	dxf2g/dxf2g.vcproj \
@@ -27,6 +29,7 @@ EXTRA_DIST= \
 	liboptical/liboptical.vcproj \
 	libpkg/libpkg.vcproj \
 	libpng/libpng.vcproj \
+	libregex/libregex.vcproj \
 	librt/librt.vcproj \
 	libsysv/libsysv.vcproj \
 	libtcl/libtcl.vcproj \

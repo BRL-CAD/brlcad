@@ -28,6 +28,7 @@ EXTRA_DIST= \
 	liboptical/liboptical.vcproj \
 	libpkg/libpkg.vcproj \
 	libpng/libpng.vcproj \
+	libregex/libregex.vcproj \
 	librt/librt.vcproj \
 	libsysv/libsysv.vcproj \
 	libtcl/libtcl.vcproj \
