@@ -1,4 +1,4 @@
-/*                     E X A M P L E _ G E O M . C
+/*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2007 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file example_geom.c
+/** @file walk_example.c
  *	@brief An example of how to traverse a BRL-CAD database heirarchy.
  *
  *	This program uses the BRL-CAD librt function db_walk_tree() to traverse a
@@ -286,7 +286,7 @@ int main(int ac, char *av[])
      */
     rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf));
     if ( rtip == RTI_NULL) {
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+	fprintf(stderr,"%s: rt_dirbuild failure\n", av[0]);
 	exit(2);
     }
 
