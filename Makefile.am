@@ -298,8 +298,19 @@ package:
 
 # delete files that should not be in the distribution
 dist-hook:
-	rm -f $(distdir)/include/brlcad_config.h
-	rm -rf `find $(distdir) -type d -name CVS`
+	files="`find . -name Entries -exec grep -v '^D' {} /dev/null \; | sed 's/:\(\/[^\/]*\)\/.*/\1/g' | sed 's/\/CVS\/Entries//g' | grep -v 'brlcad-' | grep -v .cvsignore`" ; \
+	missing=0 ; \
+	for file in $$files ; do \
+		if test ! -f $(distdir)/$$file ; then \
+			missing=1 ; \
+			echo "MISSING FROM DIST: $$file" ; \
+		fi ; \
+	done ; \
+	if test "x$$missing" = "x1" ; then \
+		exit 1 ; \
+	fi
+	find $(distdir) -type f \( -name '.cvsignore' -or -name 'brlcad_config.h' \) -exec rm -f {} \;
+	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 
 
 ##########################
