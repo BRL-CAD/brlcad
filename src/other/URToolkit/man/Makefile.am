@@ -31,6 +31,7 @@ man_MANS = \
 	mcut.1 \
 	mergechan.1 \
 	painttorle.1 \
+	pgmtorle.1 \
 	ppmtorle.1 \
 	pyrmask.1 \
 	rastorle.1 \
