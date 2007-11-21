@@ -77,8 +77,7 @@ int file_count;
 			bu_log( "%s\n" , card );
 			for( i=0 ; i<counter-1 ; i++ )
 				bu_log( "%c", ' ' );
-			bu_log( "^\n" );
-			bu_exit( 1, "" );
+			bu_exit( 1, "^\n" );
 		}
 		counter++;
 		eof = card[++counter];
@@ -94,10 +93,7 @@ int file_count;
 		counter--;
 		while( card[++counter] == ' ' );
 		if( card[counter] != '1' || card[counter+1] != 'H' )
-		{
-			bu_log( "Error in new record delimiter\n" );
-			bu_exit( 1, "" );
-		}
+			bu_exit( 1, "Error in new record delimiter\n" );
 		counter++;
 		eor = card[++counter];
 		while( card[++counter] != eof );

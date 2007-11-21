@@ -349,10 +349,7 @@ static long read_Cell_Data(void)
 	cell_val	value;
 
 	if (lbp[strlen(lbp) - 1] != '\n')
-	{
-	    bu_log("Overlong line\n");
-	    bu_exit (1, "");
-	}
+	    bu_exit (1, "Overlong line\n");
 
 	/* Have we run out of room for the cells?  If so reallocate memory */
 	if (gp - grid >= maxcells)

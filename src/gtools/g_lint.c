@@ -247,8 +247,7 @@ struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
     {
 	bu_log("%s:%d: Self-overlap of region '%s' (ox%x)\n",
 	    __FILE__, __LINE__, r1 -> reg_name, r1);
-	bu_log("This shouldn't happen\n");
-	bu_exit (1, "");
+	bu_exit (1, "This shouldn't happen\n");
     }
 
     return (op);
@@ -377,11 +376,8 @@ void insert_by_vol (void *v, int depth)
     struct g_lint_ovlp	*op = (struct g_lint_ovlp *) v;
 
     if( (rc = bu_rb_insert(ovlps_by_vol, (void *) op)))
-    {
-	bu_log("%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
+	bu_exit (1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
 	    __FILE__, __LINE__, rc);
-	bu_exit (1, "");
-    }
 }
 
 /*
@@ -416,11 +412,8 @@ void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, f
 	op = (struct g_lint_ovlp *) bu_rb_curr1(ovlp_log);
     }
     else if (rc > 0)
-    {
-	bu_log("%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
+	bu_exit (1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
 	    __FILE__, __LINE__, rc);
-	bu_exit (1, "");
-    }
 
     /*
      *	Fill in a new segment structure and add it to the overlap
@@ -902,10 +895,7 @@ main (int argc, char **argv)
 		    bu_exit (1, "");
 		}
 		if ((elevation < -90.0) || (elevation > 90.0))
-		{
-		    bu_log("Illegal elevation: '%g'\n", elevation);
-		    bu_exit (1, "");
-		}
+		    bu_exit (1, "Illegal elevation: '%g'\n", elevation);
 		break;
 	    case 'g':
 		if (sscanf(bu_optarg, "%lf", &celsiz) != 1)
@@ -915,10 +905,7 @@ main (int argc, char **argv)
 		    bu_exit (1, "");
 		}
 		if (celsiz < 0.0)
-		{
-		    bu_log("Illegal grid size: '%g'\n", celsiz);
-		    bu_exit (1, "");
-		}
+		    bu_exit (1, "Illegal grid size: '%g'\n", celsiz);
 		break;
 	    case 'o':
 		control.glc_how_to_report = G_LINT_ASCII_WITH_ORIGIN;
@@ -968,10 +955,7 @@ main (int argc, char **argv)
 		    bu_exit (1, "");
 		}
 		if (control.glc_tol < 0.0)
-		{
-		    bu_log("Illegal tolerance: '%g'\n", control.glc_tol);
-		    bu_exit (1, "");
-		}
+		    bu_exit (1, "Illegal tolerance: '%g'\n", control.glc_tol);
 		break;
 	    case 'u':
 		use_air = 1;
@@ -1002,10 +986,7 @@ main (int argc, char **argv)
     bu_log("Database file:  '%s'\n", argv[bu_optind]);
     bu_log("Building the directory... ");
     if ((rtip = rt_dirbuild(argv[bu_optind] , db_title, TITLE_LEN)) == RTI_NULL)
-    {
-	bu_log("Could not build directory for file '%s'\n", argv[bu_optind]);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "Could not build directory for file '%s'\n", argv[bu_optind]);
     rtip -> useair = use_air;
     bu_log("\nPreprocessing the geometry... ");
     while (++bu_optind < argc)

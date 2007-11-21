@@ -103,8 +103,7 @@ mat_t *matp;
 					ptr->tr_b.tb_op = OP_SUBTRACT;
 					break;
 				default:
-					bu_log( "Readtree(): illegal operator code (%d)\n", op );
-					bu_exit( 1, "" );
+					bu_exit( 1, "Readtree(): illegal operator code (%d)\n", op );
 			}
 			ptr->tr_b.tb_right = Pop();
 			ptr->tr_b.tb_left = Pop();

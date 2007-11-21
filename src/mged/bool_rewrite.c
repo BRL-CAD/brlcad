@@ -126,9 +126,7 @@ static int find_bool_tree_rewrite (struct bool_tree_node *rp)
 		}
 	    break;
 	default:
-	    bu_log("Reached %s:%d.  This shouldn't happen\n",
-		    __FILE__, __LINE__);
-	    bu_exit (1, "");
+	    bu_exit (1, "Reached %s:%d.  This shouldn't happen\n", __FILE__, __LINE__);
     }
 
     return (rule_nm);
@@ -220,9 +218,7 @@ static void do_bool_tree_rewrite (struct bool_tree_node *rp, int rule_nm)
 	    bt_opd(right, BT_LEFT) = dup_bool_tree(a);
 	    break;
 	default:
-	    bu_log("Reached %s:%d.  This shouldn't happen\n",
-		    __FILE__, __LINE__);
-	    bu_exit (1, "");
+	    bu_exit (1, "Reached %s:%d.  This shouldn't happen\n", __FILE__, __LINE__);
     }
 }
 

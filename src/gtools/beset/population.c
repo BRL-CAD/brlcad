@@ -532,8 +532,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 
 	default:
-	    bu_log("illegal genetic operator");
-	    bu_exit(EXIT_FAILURE, "failed to execute genetic op");
+	    bu_exit(EXIT_FAILURE, "illegal genetic operator\nfailed to execute genetic op");
     }
 
 

@@ -432,10 +432,8 @@ void
 ph_cd(register struct pkg_conn *pc, char *buf)
 {
 	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
-	if( chdir( buf ) < 0 )  {
-		bu_log("ph_cd: chdir(%s) failure\n", buf);
-		bu_exit(1, "");
-	}
+	if( chdir( buf ) < 0 )
+		bu_exit(1, "ph_cd: chdir(%s) failure\n", buf);
 	(void)free(buf);
 }
 
@@ -481,10 +479,8 @@ ph_dirbuild(register struct pkg_conn *pc, char *buf)
 	title_file = bu_strdup(argv[0]);
 
 	/* Build directory of GED database */
-	if( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )  {
-		bu_log("ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
-		bu_exit(2, "");
-	}
+	if( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )
+		bu_exit(2, "ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
 	ap.a_rt_i = rtip;
 	seen_dirbuild = 1;
 
@@ -593,10 +589,8 @@ process_cmd(char *buf)
 		*cp++ = '\0';
 		/* Process this command */
 		if( debug )  bu_log("process_cmd '%s'\n", sp);
-		if( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )  {
-			bu_log("process_cmd: error on '%s'\n", sp );
-			bu_exit(1, "");
-		}
+		if( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )
+			bu_exit(1, "process_cmd: error on '%s'\n", sp );
 		sp = cp;
 	}
 }
@@ -616,10 +610,8 @@ ph_options(register struct pkg_conn *pc, char *buf)
 	}
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 
-	if( width <= 0 || height <= 0 )  {
-		bu_log("ph_options:  width=%d, height=%d\n", width, height);
-		bu_exit(3, "");
-	}
+	if( width <= 0 || height <= 0 )
+		bu_exit(3, "ph_options:  width=%d, height=%d\n", width, height);
 	(void)free(buf);
 }
 
@@ -673,10 +665,8 @@ prepare(void)
 
 	do_prep( rtip );
 
-	if( rtip->nsolids <= 0 )  {
-		bu_log("ph_matrix: No solids remain after prep.\n");
-		bu_exit(3, "");
-	}
+	if( rtip->nsolids <= 0 )
+		bu_exit(3, "ph_matrix: No solids remain after prep.\n");
 
 	grid_setup();
 
@@ -725,10 +715,8 @@ ph_lines(struct pkg_conn *pc, char *buf)
 	a=0;
 	b=0;
 	fr=0;
-	if( sscanf( buf, "%d %d %d", &a, &b, &fr ) != 3 )  {
-		bu_log("ph_lines:  %s conversion error\n", buf );
-		bu_exit(2, "");
-	}
+	if( sscanf( buf, "%d %d %d", &a, &b, &fr ) != 3 )
+		bu_exit(2, "ph_lines:  %s conversion error\n", buf );
 
 	srv_startpix = a;		/* buffer un-offset for view_pixel */
 	if( b-a+1 > srv_scanlen )  b = a + srv_scanlen - 1;
@@ -744,10 +732,8 @@ ph_lines(struct pkg_conn *pc, char *buf)
 	info.li_cpusec = rt_read_timer( (char *)0, 0 );
 	info.li_percent = 42.0;	/* for now */
 
-	if (!bu_struct_export( &ext, (genptr_t)&info, desc_line_info ) ) {
-		bu_log("ph_lines: bu_struct_export failure\n");
-		bu_exit(98, "");
-	}
+	if (!bu_struct_export( &ext, (genptr_t)&info, desc_line_info ) )
+		bu_exit(98, "ph_lines: bu_struct_export failure\n");
 
 	if(debug)  {
 		fprintf(stderr,"PIXELS fr=%d pix=%d..%d, rays=%d, cpu=%g\n",

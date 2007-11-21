@@ -279,10 +279,7 @@ char *argv[];
 
 		reclen = Recsize() * sizeof( char ); /* Check length of records */
 		if( reclen == 0 )
-		{
-			bu_log( "File (%s) not in IGES ASCII format\n", iges_file );
-			bu_exit(1, "");
-		}
+			bu_exit(1, "File (%s) not in IGES ASCII format\n", iges_file );
 
 		Freestack();	/* Set node stack to empty */
 

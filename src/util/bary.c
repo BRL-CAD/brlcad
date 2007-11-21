@@ -120,11 +120,8 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 
 	    c_p[i] = strtod(cp, &endp);
 	    if (endp == cp)
-	    {
-		bu_log("Illegal input at line %d: '%s'\n",
+		bu_exit (1, "Illegal input at line %d: '%s'\n",
 		    line_nm, bu_vls_addr(bp));
-		bu_exit (1, "");
-	    }
 	    cp = endp;
 	}
 
@@ -199,10 +196,7 @@ main (int argc, char **argv)
 	case 1:
 	    inf_name = argv[bu_optind++];
 	    if ((infp = fopen(inf_name, "r")) == NULL)
-	    {
-		bu_log ("Cannot open file '%s'\n", inf_name);
-		bu_exit (1, "");
-	    }
+		bu_exit (1, "Cannot open file '%s'\n", inf_name);
 	    break;
 	default:
 	    print_usage();

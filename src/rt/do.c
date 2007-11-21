@@ -593,10 +593,8 @@ do_frame(int framenumber)
 		rt_g.debug = rdebug = 0;
 	}
 
-	if( rtip->nsolids <= 0 )  {
-		bu_log("rt ERROR: No solids\n");
-		bu_exit(3, "");
-	}
+	if( rtip->nsolids <= 0 )
+		bu_exit(3, "rt ERROR: No solids\n");
 
 	if (rt_verbosity & VERBOSE_VIEWDETAIL)
 		bu_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",

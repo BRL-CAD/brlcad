@@ -140,10 +140,7 @@ get_args(int argc, register char **argv)
 	case 1:
 	    file_name = argv[bu_optind++];
 	    if ((infd = open(file_name, O_RDONLY)) == -1)
-	    {
-		bu_log ("Cannot open file '%s'\n", file_name);
-		bu_exit (1, "");
-	    }
+		bu_exit (1, "Cannot open file '%s'\n", file_name);
 	    fileinput = 1;
 	    break;
 	default:

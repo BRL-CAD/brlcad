@@ -3754,10 +3754,7 @@ pars_Argv(int argc, register char **argv)
 		}
 	prnt_Timer( "LOAD" );
 	if( ! ok )
-		{
-		bu_log( "No valid objects specified!\n" );
-		bu_exit( 1, "" );
-		}
+		bu_exit( 1, "No valid objects specified!\n" );
 	}
 	prnt_Event( "Prepping solids..." );
 	rt_prep( rt_ip );

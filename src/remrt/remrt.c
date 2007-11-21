@@ -571,10 +571,8 @@ main(int argc, char **argv)
 				continue;
 			break;
 		}
-		if( i >= 10 )  {
-			bu_log("Unable to find a port to listen on\n");
-			bu_exit(1, "");
-		}
+		if( i >= 10 )
+			bu_exit(1, "Unable to find a port to listen on\n");
 	}
 	/* Now, pkg_permport has tcp port number */
 

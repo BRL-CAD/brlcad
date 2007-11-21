@@ -308,10 +308,8 @@ char *argv[];
   FILE *fp;
   struct plot_list *plp;
 
-  if(!get_args(argc, argv)){
-    bu_log("%s", usage);
-    bu_exit (1, "");
-  }
+  if(!get_args(argc, argv))
+    bu_exit (1, "%s", usage);
 
   bzero((void *)&HeadPlot, sizeof(struct plot_list));
   BU_LIST_INIT(&HeadPlot.l);
@@ -360,24 +358,18 @@ Tcl_Interp *_interp;
   }
 
   /* Evaluates init.tcl */
-  if(Tcl_Init(interp) == TCL_ERROR){
-    bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
-    bu_exit (1, "");
-  }
+  if(Tcl_Init(interp) == TCL_ERROR)
+    bu_exit (1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
 
   /*
    * Creates the main window and registers all of Tk's commands
    * into the interpreter.
    */
-  if (Tk_Init(interp) == TCL_ERROR){
-    bu_log("Tk_Init error %s\n", Tcl_GetStringResult(interp));
-    bu_exit (1, "");
-  }
+  if (Tk_Init(interp) == TCL_ERROR)
+    bu_exit (1, "Tk_Init error %s\n", Tcl_GetStringResult(interp));
 
-  if((tkwin = Tk_MainWindow(interp)) == NULL){
-    bu_log("appInit: Failed to get main window.\n");
-    bu_exit (1, "");
-  }
+  if((tkwin = Tk_MainWindow(interp)) == NULL)
+    bu_exit (1, "appInit: Failed to get main window.\n");
 
   /* Locate the BRL-CAD-specific Tcl scripts */
   filename = bu_brlcad_data( "tclscripts", 0 );

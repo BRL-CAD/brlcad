@@ -426,10 +426,7 @@ write_freeform(FILE *fp,	/* output file */
 	    paramlen = 72;
 	}
     else
-	{
-	    bu_log( "Bad section character passed to 'write_freeform' (%c)\n" , c );
-	    bu_exit( 1, "" );
-	}
+	    bu_exit( 1, "Bad section character passed to 'write_freeform' (%c)\n" , c );
 
     str_len = strlen( s );
     start_seq = (*seq_no);

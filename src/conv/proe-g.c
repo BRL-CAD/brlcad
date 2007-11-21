@@ -1192,10 +1192,7 @@ main(int argc, char **argv)
 		usage = proe_usage;
 
 	if( argc < 2 )
-	{
-		bu_log( usage, argv[0]);
-		bu_exit(1, "");
-	}
+		bu_exit(1, usage, argv[0]);
 
 	/* Get command line arguments. */
 	while ((c = bu_getopt(argc, argv, "St:i:I:m:rsdax:u:N:c:")) != EOF) {
@@ -1258,8 +1255,7 @@ main(int argc, char **argv)
 			if( regcomp( &reg_cmp, bu_optarg, 0 ) )
 			{
 				bu_log( "Bad regular expression (%s)\n", bu_optarg );
-				bu_log( usage, argv[0] );
-				bu_exit( 1, "" );
+				bu_exit( 1, usage, argv[0] );
 			}
 			break;
 		case 'a':
@@ -1274,8 +1270,7 @@ main(int argc, char **argv)
 			break;
 #endif
 		default:
-			bu_log( usage, argv[0]);
-			bu_exit(1, "");
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}

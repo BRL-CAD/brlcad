@@ -536,8 +536,7 @@ struct curr_id *lookup_curr_id(int region_id)
 	    cip = qcip;
 	    break;
 	default:
-	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
-	    bu_exit (1, "");
+	    bu_exit (1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
     return (cip);
@@ -685,10 +684,7 @@ int read_spec (BU_FILE *sfp, char *sf_name)
     struct curr_id	*cip;
 
     if ((sfp == NULL) && ((sfp = bu_fopen(sf_name, "r")) == NULL))
-    {
-	bu_log("Cannot open specification file '%s'\n", sf_name);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "Cannot open specification file '%s'\n", sf_name);
     BU_CK_FILE(sfp);
 
     BU_LIST_INIT(&cids);
@@ -787,10 +783,7 @@ void db_init(char *db_name)
     struct rt_db_internal	*ip;
 
     if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
-    {
-	bu_log("Cannot open database file '%s'\n", db_name);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "Cannot open database file '%s'\n", db_name);
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
@@ -800,8 +793,7 @@ void db_init(char *db_name)
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
 	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		   dp->d_namep);
-	    bu_log("This shouldn't happen\n");
-	    bu_exit (1, "");
+	    bu_exit (1, "This shouldn't happen\n");
 	}
 	comb = (struct rt_comb_internal *) (ip->idb_ptr);
 	RT_CK_COMB(comb);
@@ -837,8 +829,7 @@ void write_assignment (void *v, int depth)
 	    {
 		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
 		    rp->rr_dp->d_namep);
-		bu_log("This shouldn't happen\n");
-		bu_exit (1, "");
+		bu_exit (1, "This shouldn't happen\n");
 	    }
 	}
     }

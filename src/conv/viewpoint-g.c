@@ -451,13 +451,8 @@ main(int argc, char **argv)
 	/* make a top level group with all the objects as members */
 	BU_LIST_INIT( &reg_head.l );
 	for( i=0 ; i<BU_PTBL_END( &names ) ; i++ )
-	{
 		if( mk_addmember( (char *)BU_PTBL_GET( &names , i ) , &reg_head.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
-		{
-			bu_log( "Cannot make top level group\n" );
-			bu_exit( 1, "" );
-		}
-	}
+			bu_exit( 1, "Cannot make top level group\n" );
 
 	fprintf( stderr , "Making top level group (%s)\n" , base_name );
 	if( mk_lcomb( out_fp , base_name , &reg_head , 0, (char *)0, (char *)0, (unsigned char *)0, 0 ) )

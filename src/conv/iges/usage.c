@@ -59,8 +59,7 @@ options, it is ignored for all other options\n";
 void
 usage()
 {
-	bu_log( message );
-	bu_exit( 1, "" );
+	bu_exit( 1, message );
 }
 
 /*

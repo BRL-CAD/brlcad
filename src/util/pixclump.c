@@ -115,10 +115,7 @@ static void fill_table (char *f_name)
     struct bu_vls	v;
 
     if ((fp = fopen(f_name, "r")) == NULL)
-    {
-	bu_log ("Cannot open color file '%s'\n", bu_optarg);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "Cannot open color file '%s'\n", bu_optarg);
 
     bu_vls_init(&v);
     for (line_nm = 1; bu_vls_gets(&v, fp) != -1;
@@ -129,11 +126,7 @@ static void fill_table (char *f_name)
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
 	if (! bu_str_to_rgb(bp, rgb))
-	{
-	    bu_log("Illegal color: '%s' on line %d of file '%s'\n",
-		bp, line_nm, f_name);
-	    bu_exit (1, "");
-	}
+	    bu_exit (1, "Illegal color: '%s' on line %d of file '%s'\n", bp, line_nm, f_name);
 	add_to_table(rgb);
     }
 }
@@ -254,18 +247,12 @@ main (int argc, char **argv)
     {
 	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
-	{
-	    bu_log ("Cannot open input file '%s'\n", inf_name);
-	    bu_exit (1, "");
-	}
+	    bu_exit (1, "Cannot open input file '%s'\n", inf_name);
 	if (outfp == NULL)
 	{
 	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
-	    {
-		bu_log ("Cannot open output file '%s'\n", outf_name);
-		bu_exit (1, "");
-	    }
+		bu_exit (1, "Cannot open output file '%s'\n", outf_name);
 	}
     }
 
@@ -321,10 +308,7 @@ main (int argc, char **argv)
 	}
 	if (fwrite((genptr_t) color_tbl[best_color],
 		    3 * sizeof(unsigned char), 1, outfp) != 1)
-	{
-	    bu_log("pixclump:  Error writing pixel to file '%s'\n", outf_name);
-	    bu_exit (1, "");
-	}
+	    bu_exit (1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
     }
     return 0;
 }

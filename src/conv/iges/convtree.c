@@ -144,10 +144,7 @@ Convtree()
 
 		MEMCHECK
 		if( wdb_export( fdout, dir[i]->name, (genptr_t)comb, ID_COMBINATION, mk_conv2mm ) )
-		{
-			bu_log( "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name );
-			bu_exit( 1, "" );
-		}
+			bu_exit( 1, "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name );
 
 		conv++;
 

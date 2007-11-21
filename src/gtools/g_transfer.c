@@ -90,16 +90,14 @@ usage(const char *msg, const char *argv0)
 	bu_log("%s\n", msg);
     }
     bu_log("Usage: %s [-t] [-p#] host gfile [geometry ...]\n\t-p#\tport number to send to (default 2000)\n\thost\thostname or IP address of receiving server\n\tgfile\tBRL-CAD .g database file\n\tgeometry\tname(s) of geometry to send (OPTIONAL)\n", argv0 ? argv0 : "g_transfer");
-    bu_log("Usage: %s -r [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : "g_transfer");
-    bu_exit(1, "");
+    bu_exit(1, "Usage: %s -r [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : "g_transfer");
 }
 
 
 void
 validate_port(int port) {
-    if (port < 0) {
+    if (port < 0)
 	bu_exit(EXIT_FAILURE, "Invalid negative port range\n");
-    }
 }
 
 
@@ -261,9 +259,8 @@ run_server(int port) {
     /* start up the server on the given port */
     snprintf(portname, MAX_DIGITS - 1, "%d", port);
     netfd = pkg_permserver(portname, "tcp", 0, 0);
-    if (netfd < 0) {
+    if (netfd < 0)
 	bu_exit(EXIT_FAILURE, "Unable to start the server");
-    }
 
     /* listen for a good client indefinitely */
     do {

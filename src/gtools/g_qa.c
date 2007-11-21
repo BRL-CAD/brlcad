@@ -621,16 +621,12 @@ parse_args(int ac, char *av[])
 	    verbose = 1;
 	    break;
 	case 'V'	:
-	    if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1])) {
-		bu_log("error in volume tolerance \"%s\"\n", bu_optarg);
-		bu_exit(-1, "");
-	    }
+	    if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1]))
+		bu_exit(-1, "error in volume tolerance \"%s\"\n", bu_optarg);
 	    break;
 	case 'W'	:
-	    if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2])) {
-		bu_log("error in weight tolerance \"%s\"\n", bu_optarg);
-		bu_exit(-1, "");
-	    }
+	    if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2]))
+		bu_exit(-1, "error in weight tolerance \"%s\"\n", bu_optarg);
 	    break;
 
 	case 'U'	:

@@ -185,8 +185,7 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 	    pp = qpp;
 	    break;
 	default:
-	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
-	    bu_exit (1, "");
+	    bu_exit (1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
     return (pp);
@@ -249,18 +248,12 @@ main (int argc, char **argv)
     {
 	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
-	{
-	    bu_log ("Cannot open input file '%s'\n", inf_name);
-	    bu_exit (1, "");
-	}
+	    bu_exit (1, "Cannot open input file '%s'\n", inf_name);
 	if (outfp == NULL)
 	{
 	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
-	    {
-		bu_log ("Cannot open output file '%s'\n", outf_name);
-		bu_exit (1, "");
-	    }
+		bu_exit (1, "Cannot open output file '%s'\n", outf_name);
 	}
     }
 

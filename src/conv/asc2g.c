@@ -138,10 +138,8 @@ main(int argc, char *argv[])
 
     bu_debug = BU_DEBUG_COREDUMP;
 
-    if( argc != 3 ) {
-	bu_log( "%s", usage );
-	bu_exit( 1, "" );
-    }
+    if( argc != 3 )
+	bu_exit( 1, "%s", usage );
 
     Tcl_FindExecutable(argv[0]);
 
@@ -479,35 +477,23 @@ sktbld(void)
     verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
 
     if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-	{
-	    bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-	    bu_exit( -1, "" );
-	}
+	    bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
 
     verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
     cp = buf;
     ptr = strtok( buf, " " );
     if( !ptr )
-	{
-	    bu_log( "ERROR: no vertices for sketch (%s)\n", name );
-	    bu_exit( 1, "" );
-	}
+	    bu_exit( 1, "ERROR: no vertices for sketch (%s)\n", name );
     for( i=0 ; i<vert_count ; i++ )
 	{
 	    verts[i][0] = atof( ptr );
 	    ptr = strtok( (char *)NULL, " " );
 	    if( !ptr )
-		{
-		    bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
-		    bu_exit( 1, "" );
-		}
+		    bu_exit( 1, "ERROR: not enough vertices for sketch (%s)\n", name );
 	    verts[i][1] = atof( ptr );
 	    ptr = strtok( (char *)NULL, " " );
 	    if( !ptr && i < vert_count-1 )
-		{
-		    bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
-		    bu_exit( 1, "" );
-		}
+		    bu_exit( 1, "ERROR: not enough vertices for sketch (%s)\n", name );
 	}
 
     skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
@@ -528,10 +514,7 @@ sktbld(void)
 	    int k;
 
 	    if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-		{
-		    bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-		    bu_exit( -1, "" );
-		}
+		    bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
 
 	    cp = buf + 2;
 	    switch( *cp )
@@ -557,56 +540,36 @@ sktbld(void)
 			nsg->k.knots = (fastf_t *)bu_calloc( nsg->k.k_size, sizeof( fastf_t ), "knots" );
 			nsg->ctl_points = (int *)bu_calloc( nsg->c_size, sizeof( int ), "control points" );
 			if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-			    {
-				bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-				bu_exit( -1, "" );
-			    }
+				bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
 			cp = buf + 3;
 			ptr = strtok( cp, " " );
 			if( !ptr )
-			    {
-				bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
-				bu_exit( 1, "" );
-			    }
+				bu_exit( 1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
 			for( k=0 ; k<nsg->k.k_size ; k++ )
 			    {
 				nsg->k.knots[k] = atof( ptr );
 				ptr = strtok( (char *)NULL, " " );
 				if( !ptr && k<nsg->k.k_size-1 )
-				    {
-					bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
-					bu_exit( 1, "" );
-				    }
+					bu_exit( 1, "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
 			    }
 			if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-			    {
-				bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-				bu_exit( -1, "" );
-			    }
+				bu_exit( -1, "Unexpected EOF while reading sketch (%s) data\n", name );
 			cp = buf + 3;
 			ptr = strtok( cp, " " );
 			if( !ptr )
-			    {
-				bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
-				bu_exit( 1, "" );
-			    }
+				bu_exit( 1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
 			for( k=0 ; k<nsg->c_size ; k++ )
 			    {
 				nsg->ctl_points[k] = atoi( ptr );
 				ptr = strtok( (char *)NULL, " " );
 				if( !ptr && k<nsg->c_size-1 )
-				    {
-					bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
-					bu_exit( 1, "" );
-				    }
+					bu_exit( 1, "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
 			    }
 			nsg->magic = CURVE_NURB_MAGIC;
 			crv->segments[j] = nsg;
 			break;
 		    default:
-			bu_log( "Unrecognized segment type (%c) in sketch (%s)\n",
-				*cp, name );
-			bu_exit( 1, "" );
+			bu_exit( 1, "Unrecognized segment type (%c) in sketch (%s)\n", *cp, name );
 		}
 
 	}
@@ -686,10 +649,8 @@ nmgbld(void)
     BU_ASSERT_LONG( version, ==, 1 );	/* DISK_MODEL_VERSION */
 
     /* Get next line of input with the 26 counts on it */
-    if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )  {
-	bu_log( "Unexpected EOF while reading NMG %s data, line 2\n", name );
-	bu_exit(-1, "");
-    }
+    if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	bu_exit(-1, "Unexpected EOF while reading NMG %s data, line 2\n", name );
 
     /* Second, process counts for each kind of structure */
     cp = strtok( buf , " " );
@@ -709,10 +670,7 @@ nmgbld(void)
 	unsigned int cp_i;
 
 	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
-	    {
-		bu_log( "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
-		bu_exit( -1, "" );
-	    }
+		bu_exit( -1, "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
 
 	for( k=0 ; k<32 ; k++ )
 	    {
@@ -723,10 +681,8 @@ nmgbld(void)
 
     /* Next, import this disk record into memory */
     RT_INIT_DB_INTERNAL(&intern);
-    if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource, ID_NMG ) < 0 )  {
-	bu_log("ft_import5 failed on NMG %s\n", name );
-	bu_exit( -1, "" );
-    }
+    if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource, ID_NMG ) < 0 )
+	bu_exit( -1, "ft_import5 failed on NMG %s\n", name );
     bu_free_external(&ext);
 
     /* Now we should have a good NMG in memory */
@@ -1277,10 +1233,8 @@ identbld(void)
 	bu_exit(3, "");
     }
 
-    if( mk_id_editunits(ofp, title, local2mm) < 0 )  {
-	bu_log("asc2g: unable to write database ID\n");
-	bu_exit(2, "");
-    }
+    if( mk_id_editunits(ofp, title, local2mm) < 0 )
+	bu_exit(2, "asc2g: unable to write database ID\n");
 }
 
 

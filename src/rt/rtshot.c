@@ -275,8 +275,7 @@ main(int argc, char **argv)
 			bu_log( "\t'resolve' or '0'\n");
 			bu_log( "\t'rebuild_fastgen' or '1'\n");
 			bu_log( "\t'rebuild_all' or '2'\n");
-			bu_log( "\t'retain' or '3'\n");
-			bu_exit( 1, "" );
+			bu_exit( 1, "\t'retain' or '3'\n");
 		    }
 		argc -= 2;
 		argv += 2;

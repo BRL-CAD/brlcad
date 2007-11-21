@@ -44,10 +44,7 @@ Readstart()
 	while( !done )
 	{
 		if( Readrec( ++i ) )
-		{
-			bu_log( "End of file encountered\n" );
-			bu_exit( 1, "" );
-		}
+			bu_exit( 1, "End of file encountered\n" );
 
 		if( card[72] != 'S' )
 		{

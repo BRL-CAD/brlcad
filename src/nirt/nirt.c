@@ -308,9 +308,7 @@ static void run_scripts (struct bu_list *sl)
 		}
 		break;
 	    default:
-		bu_log("%s:%d: script of type %d.  This shouldn't happen\n",
-		    __FILE__, __LINE__, srp -> sr_type);
-		bu_exit (1, "");
+		bu_exit (1, "%s:%d: script of type %d.  This shouldn't happen\n", __FILE__, __LINE__, srp -> sr_type);
 	}
 	free_script(srp);
     }
@@ -614,10 +612,7 @@ do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
     if (object_name == NULL)
     {
 	if ((object_name = prev_names) == 0)
-	{
-	    bu_log("%s:%d: This shouldn't happen\n", __FILE__, __LINE__);
-	    bu_exit (1, "");
-	}
+	    bu_exit (1, "%s:%d: This shouldn't happen\n", __FILE__, __LINE__);
 	nm_objects = prev_nm;
     }
     if (prev_names == 0)

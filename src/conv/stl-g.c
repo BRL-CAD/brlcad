@@ -627,10 +627,7 @@ char	*argv[];
 	conv_factor = 1.0;	/* default */
 
 	if( argc < 2 )
-	{
-		bu_log( usage, argv[0]);
-		bu_exit(1, "");
-	}
+		bu_exit(1, usage, argv[0]);
 
 	/* Get command line arguments. */
 	while ((c = bu_getopt(argc, argv, "bt:i:I:m:dx:N:c:")) != EOF) {
@@ -687,8 +684,7 @@ char	*argv[];
 			bu_log("\n");
 			break;
 		default:
-			bu_log( usage, argv[0]);
-			bu_exit(1, "");
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}

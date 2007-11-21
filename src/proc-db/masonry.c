@@ -108,15 +108,13 @@ void usage(char *s)
 {
 	if (s) (void)bu_log("%s\n", s);
 
-	bu_log("Usage: %s %s\n%s\n%s\n%s\n",
+	bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n",
 progname,
 "[ -u units ] -w(all) width,height [-o(pening) lx,lz,hx,hz ...]",
 " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
 " [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
 " brick sub-options: [-r(and_color)] [-b width,height,depth ] [-m min_mortar]"
 );
-
-	bu_exit(1, "");
 }
 
 
@@ -1001,8 +999,7 @@ mortar_brick(struct rt_wdb *fd)
 #else
 	BU_LIST_INIT(&wm_hd.l);
 
-	bu_log("Not Yet Implemented\n");
-	bu_exit(0, "");
+	bu_exit(0, "Not Yet Implemented\n");
 
 #endif
 }
@@ -1052,8 +1049,7 @@ brick(struct rt_wdb *fd)
 #else
 	BU_LIST_INIT(&wm_hd.l);
 
-	bu_log("Not Yet Implemented\n");
-	bu_exit(0, "");
+	bu_exit(0, "Not Yet Implemented\n");
 
 #endif
 }

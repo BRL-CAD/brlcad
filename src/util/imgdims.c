@@ -73,11 +73,7 @@ static int grab_number (char *buf, int *np)
 	if (!isdigit(*bp))
 	    return (0);
     if (sscanf(buf, "%d", np) != 1)
-    {
-	bu_log("imgdims: grab_number(%s) failed.  This shouldn't happen\n",
-	    buf);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "imgdims: grab_number(%s) failed.  This shouldn't happen\n", buf);
     return (1);
 }
 
@@ -185,17 +181,13 @@ main (int argc, char **argv)
     if (nm_bytes % bytes_per_pixel == 0)
 	nm_pixels = nm_bytes / bytes_per_pixel;
     else
-    {
-	bu_log("Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
 
     if (!fb_common_image_size(&width, &height, nm_pixels))
 	bu_exit (0, "");
 
 done:
-    printf("%lu %lu\n", width, height);
-    bu_exit (0, "");
+    bu_exit (0, "%lu %lu\n", width, height);
 }
 
 /*

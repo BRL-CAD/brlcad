@@ -273,17 +273,9 @@ int compare_vertex_labels (void *v1, void *v2)
     BU_CKMAG(vert1, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
     if (vert1 -> v_label == '\0')
-    {
-	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
-	    vert1, vert1 -> v_index);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "compare_vertex_labels: null label in vertex <x%x> %d\n", vert1, vert1 -> v_index);
     if (vert2 -> v_label == '\0')
-    {
-	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
-	    vert2, vert2 -> v_index);
-	bu_exit (1, "");
-    }
+	bu_exit (1, "compare_vertex_labels: null label in vertex <x%x> %d\n", vert2, vert2 -> v_index);
 
     if (*(vert1 -> v_label) < *(vert2 -> v_label))
 	return -1;
@@ -402,8 +394,7 @@ struct vertex *lookup_vertex(bu_rb_tree *dict, long int index, char *label)
 	    vp = qvp;
 	    break;
 	default:
-	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
-	    bu_exit (1, "");
+	    bu_exit (1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
     return (vp);
@@ -438,8 +429,7 @@ void del_from_prioq (struct vertex *vp)
     if (bu_rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
     {
 	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
-	bu_log("  This should not happen\n");
-	bu_exit (1, "");
+	bu_exit (1, "  This should not happen\n");
     }
     bu_rb_delete(prioq, PRIOQ_INDEX);
 }
