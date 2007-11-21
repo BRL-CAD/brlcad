@@ -49,6 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
@@ -140,7 +141,7 @@ cmd_kill(ClientData	clientData,
 					/* Use tk_messageBox to question user */
 					Tcl_ResetResult( interp );
 					if( Tcl_Eval( interp, really_delete ) != TCL_OK ) {
-						bu_bomb( "Tcl_Eval() failed!!!\n" );
+						bu_exit(EXIT_FAILURE,  "Tcl_Eval() failed!!!\n" );
 					}
 					if( strcmp( Tcl_GetStringResult( interp ), "yes" ) ) {
 						Tcl_ResetResult( interp );
