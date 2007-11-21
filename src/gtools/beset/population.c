@@ -163,9 +163,9 @@ pop_spawn (struct population *p)
  */
     wdb_close(p->db_p->dbi_wdbp);
     if((p->db_p = db_open("gen000", "r")) == DBI_NULL)
-	bu_bomb("Failed to re-open initial population");
+	bu_exit(EXIT_FAILURE, "Failed to re-open initial population");
     if(db_dirbuild(p->db_p) < 0)
-	bu_bomb("Failed to load initial database");
+	bu_exit(EXIT_FAILURE, "Failed to load initial database");
 }
 
 /**
@@ -362,7 +362,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	     * the internetal object */
 
 	    if( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
-		bu_bomb("Failed to read parent");
+		bu_exit(EXIT_FAILURE, "Failed to read parent");
 
 	    /* rename leaf based on individual it belongs to */
 	    snprintf(shape, 256, "%s-%.3d", name, shape_number++);
@@ -377,9 +377,9 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 	    /* write child to new database */
 	    if((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
-		bu_bomb("Failed to add new object to the database");
+		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
 	    if(rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
-		bu_bomb("Failed to write new individual to databse");
+		bu_exit(EXIT_FAILURE, "Failed to write new individual to databse");
 	    rt_db_free_internal(&in, resp);
 
 	    break;
@@ -405,7 +405,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    break;
 
 	default:
-	    bu_bomb( "pop_functree: unrecognized operator\n" );
+	    bu_exit(EXIT_FAILURE,  "pop_functree: unrecognized operator\n" );
     }
 }
 
@@ -432,7 +432,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     node = (struct node*)NULL;
 
     if( !rt_db_lookup_internal(dbi_p, parent1_id, &dp, &in1, LOOKUP_NOISY, &rt_uniresource))
-	bu_bomb("Failed to read parent1");
+	bu_exit(EXIT_FAILURE, "Failed to read parent1");
     shape_number =num_nodes= 0;
     parent1 = (struct rt_comb_internal *)in1.idb_ptr;
     mutate = 0;
@@ -445,7 +445,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    crossover = 1;
 	    /*load other parent */
 	    if( !rt_db_lookup_internal(dbi_p, parent2_id, &dp, &in2, LOOKUP_NOISY, resp))
-		bu_bomb("Failed to read parent2");
+		bu_exit(EXIT_FAILURE, "Failed to read parent2");
 	    parent2 = (struct rt_comb_internal *)in2.idb_ptr;
 
 	    node = bu_malloc(sizeof(struct node), "node");
@@ -505,7 +505,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 
 	    if((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
-		bu_bomb("Failed to add new individual to child database");
+		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
 	    rt_db_put_internal(dp, dbi_c, &in2, resp);
 	    rt_db_free_internal(&in2, resp);
 
@@ -533,12 +533,12 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	default:
 	    bu_log("illegal genetic operator");
-	    bu_bomb("failed to execute genetic op");
+	    bu_exit(EXIT_FAILURE, "failed to execute genetic op");
     }
 
 
     if((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL){
-	bu_bomb("Failed to add new individual to child database");
+	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
     rt_db_put_internal(dp, dbi_c,  &in1, resp);
     rt_db_free_internal(&in1, resp);

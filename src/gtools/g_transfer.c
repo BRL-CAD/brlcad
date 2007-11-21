@@ -98,7 +98,7 @@ usage(const char *msg, const char *argv0)
 void
 validate_port(int port) {
     if (port < 0) {
-	bu_bomb("Invalid negative port range\n");
+	bu_exit(EXIT_FAILURE, "Invalid negative port range\n");
     }
 }
 
@@ -262,7 +262,7 @@ run_server(int port) {
     snprintf(portname, MAX_DIGITS - 1, "%d", port);
     netfd = pkg_permserver(portname, "tcp", 0, 0);
     if (netfd < 0) {
-	bu_bomb("Unable to start the server");
+	bu_exit(EXIT_FAILURE, "Unable to start the server");
     }
 
     /* listen for a good client indefinitely */
@@ -395,7 +395,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     if (stash.connection == PKC_ERROR) {
 	bu_log("Connection to %s, port %d, failed.\n", server, port);
-	bu_bomb("ERROR: Unable to open a connection to the server\n");
+	bu_exit(EXIT_FAILURE, "ERROR: Unable to open a connection to the server\n");
     }
     stash.server = server;
     stash.port = port;
@@ -407,7 +407,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     if (bytes_sent < 0) {
 	pkg_close(stash.connection);
 	bu_log("Connection to %s, port %d, seems faulty.\n", server, port);
-	bu_bomb("ERROR: Unable to communicate with the server\n");
+	bu_exit(EXIT_FAILURE, "ERROR: Unable to communicate with the server\n");
     }
 
     bu_log("Database title is:\n%s\n", dbip->dbi_title);
@@ -427,14 +427,14 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	    if (bytes_sent < 0) {
 		pkg_close(stash.connection);
 		bu_log("Unable to request server shot at %s\n", geomv[i]);
-		bu_bomb("ERROR: Unable to communicate request to server\n");
+		bu_exit(EXIT_FAILURE, "ERROR: Unable to communicate request to server\n");
 	    }
 
 	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
 	    if (dp == DIR_NULL) {
 		pkg_close(stash.connection);
 		bu_log("Unable to lookup %s\n", geomv[i]);
-		bu_bomb("ERROR: requested geometry could not be found\n");
+		bu_exit(EXIT_FAILURE, "ERROR: requested geometry could not be found\n");
 	    }
 	    db_functree(dbip, dp, send_to_server, send_to_server, &rt_uniresource, (genptr_t)&stash);
 	}
@@ -545,7 +545,7 @@ main(int argc, char *argv[]) {
     /* make sure the geometry file exists */
     if (!bu_file_exists(geometry_file)) {
 	bu_log("Geometry file does not exist: %s\n", geometry_file);
-	bu_bomb("Need a BRL-CAD .g geometry database file\n");
+	bu_exit(EXIT_FAILURE, "Need a BRL-CAD .g geometry database file\n");
     }
 
     /* XXX fixed in latest db_open(), but call for now just in case
@@ -559,14 +559,14 @@ main(int argc, char *argv[]) {
     if (dbip == DBI_NULL) {
 	bu_log("Cannot open %s\n", geometry_file);
 	perror(argv0);
-	bu_bomb("Need a geometry file");
+	bu_exit(EXIT_FAILURE, "Need a geometry file");
     }
 
     /* load the database directory into memory */
     if (db_dirbuild(dbip) < 0) {
 	db_close(dbip);
 	bu_log("Unable to load the database directory for file: %s\n", geometry_file);
-	bu_bomb("Can't read geometry file");
+	bu_exit(EXIT_FAILURE, "Can't read geometry file");
      }
 
     /* fire up the client */

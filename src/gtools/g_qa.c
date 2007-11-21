@@ -532,7 +532,7 @@ parse_args(int ac, char *av[])
 			break;
 		    default:
 			bu_log("Unknown analysis type \"%c\" requested.\n", *p);
-			bu_bomb("");
+			bu_exit(EXIT_FAILURE, "");
 			break;
 		    }
 		}
@@ -542,14 +542,14 @@ parse_args(int ac, char *av[])
 	    bu_log("azimuth not implemented\n");
 	    if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1) {
 		bu_log("error parsing azimuth \"%s\"\n", bu_optarg);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	    break;
 	case 'e'	:
 	    bu_log("elevation not implemented\n");
 	    if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1) {
 		bu_log("error parsing elevation \"%s\"\n", bu_optarg);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	    break;
 	case 'd'	: debug = 1; break;
@@ -571,13 +571,13 @@ parse_args(int ac, char *av[])
 
 		if (read_units_double(&value1, bu_optarg, units_tab[0])) {
 		    bu_log("error parsing grid spacing value \"%s\"\n", bu_optarg);
-		    bu_bomb("");
+		    bu_exit(EXIT_FAILURE, "");
 		}
 		if (p) {
 		    /* we've got 2 values, they are upper limit and lower limit */
 		    if (read_units_double(&value2, p, units_tab[0])) {
 			bu_log("error parsing grid spacing limit value \"%s\"\n", p);
-			bu_bomb("");
+			bu_exit(EXIT_FAILURE, "");
 		    }
 		    gridSpacing = value1;
 		    gridSpacingLimit = value2;
@@ -595,12 +595,12 @@ parse_args(int ac, char *av[])
 	case 'G'	:
 	    makeOverlapAssemblies = 1;
 	    bu_log("-G option unimplemented\n");
-	    bu_bomb("");
+	    bu_exit(EXIT_FAILURE, "");
 	    break;
 	case 'n'	:
 	    if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
 		bu_log("num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	    require_num_hits = c;
 	    break;
@@ -628,7 +628,7 @@ parse_args(int ac, char *av[])
 	case 't'	:
 	    if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0])) {
 		bu_log("error in overlap tolerance distance \"%s\"\n", bu_optarg);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	    break;
 	case 'v'	:
@@ -651,7 +651,7 @@ parse_args(int ac, char *av[])
 	    use_air = strtol(bu_optarg, (char **)NULL, 10);
 	    if (errno == ERANGE || errno == EINVAL) {
 		perror("-U argument");
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	    break;
 	case 'u'	:
@@ -672,7 +672,7 @@ parse_args(int ac, char *av[])
 			    }
 			}
 			bu_log("Units \"%s\" not found in coversion table\n", units_name[i]);
-			bu_bomb("");
+			bu_exit(EXIT_FAILURE, "");
 		    found_cv:
 			units[i] = cv;
 		    }
@@ -721,22 +721,22 @@ parse_densities_buffer(char *buf, unsigned long len)
     while (*p) {
 	idx = strtol(p, &q, 10);
 	if (q == (char *)NULL) {
-	    bu_bomb("could not convert idx\n");
+	    bu_exit(EXIT_FAILURE, "could not convert idx\n");
 	}
 
 	if (idx < 0) {
 	    bu_log("bad density index (< 0) %d\n", idx);
-	    bu_bomb("");
+	    bu_exit(EXIT_FAILURE, "");
 	}
 
 	density = strtod(q, &p);
 	if (q == p) {
-	    bu_bomb("could not convert density\n");
+	    bu_exit(EXIT_FAILURE, "could not convert density\n");
 	}
 
 	if (density < 0.0) {
 	    bu_log("bad density (< 0) %g\n", density);
-	    bu_bomb("");
+	    bu_exit(EXIT_FAILURE, "");
 	}
 
 	while ((*p == '\t') || (*p == ' ')) p++;
@@ -1120,7 +1120,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		       pp->pt_regionp->reg_name,
 		       num_densities);
 		bu_log("Set GIFTmater on region or add entry to density table\n");
-		bu_bomb(""); /* XXX this should do something else */
+		bu_exit(EXIT_FAILURE, ""); /* XXX this should do something else */
 	    } else {
 
 		/* make sure the density index has been set */
@@ -1155,7 +1155,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    bu_log("density index %d from region %s is not set.\n",
 			   pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
 		    bu_log("Add entry to density table\n");
-		    bu_bomb("");
+		    bu_exit(EXIT_FAILURE, "");
 		}
 	    }
 	}
@@ -1401,7 +1401,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 	}
     }
     bu_log("%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
-    bu_bomb("");
+    bu_exit(EXIT_FAILURE, "");
     /* NOTREACHED */
     return -1; /* stupid compiler */
 }
@@ -1553,7 +1553,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if ( plot_files ) {
 	    if ( (plot_volume=fopen(name, "w")) == (FILE *)NULL) {
 		bu_log("cannot open plot file %s\n", name);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	}
     }
@@ -1578,7 +1578,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if ( plot_files ) {
 	    if ( (plot_gaps=fopen(name, "w")) == (FILE *)NULL) {
 		bu_log("cannot open plot file %s\n", name);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	}
     }
@@ -1590,7 +1590,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    char *name = "overlaps.pl";
 	    if ((plot_overlaps=fopen(name, "w")) == (FILE *)NULL) {
 		bu_log("cannot open plot file %s\n", name);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	}
     }
@@ -1607,7 +1607,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    char *name = "adj_air.pl";
 	    if ( (plot_adjair=fopen(name, "w")) == (FILE *)NULL) {
 		bu_log("cannot open plot file %s\n", name);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	}
     }
@@ -1618,14 +1618,14 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    char *name = "exp_air.pl";
 	    if ( (plot_expair=fopen(name, "w")) == (FILE *)NULL) {
 		bu_log("cannot open plot file %s\n", name);
-		bu_bomb("");
+		bu_exit(EXIT_FAILURE, "");
 	    }
 	}
     }
 
     if ( (analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air ) {
 	bu_log("Error:  Air regions discarded but air analysis requested!\n");
-	bu_bomb("Set use_air non-zero or eliminate air analysis\n");
+	bu_exit(EXIT_FAILURE, "Set use_air non-zero or eliminate air analysis\n");
     }
 
     return 0;

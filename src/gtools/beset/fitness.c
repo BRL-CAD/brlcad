@@ -60,9 +60,9 @@ fit_store (char *obj, char *dbname, struct fitness_state *fstate)
     struct db_i *db;
 
     if( (db=db_open(dbname, "r")) == DBI_NULL)
-	bu_bomb("Failed to open model database");
+	bu_exit(EXIT_FAILURE, "Failed to open model database");
     if(db_dirbuild(db) < 0)
-	bu_bomb("Failed to build directory sturcutre");
+	bu_exit(EXIT_FAILURE, "Failed to build directory sturcutre");
 
     fstate->capture = 1;
     fit_rt(obj, db, fstate);
@@ -352,7 +352,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     struct rt_db_internal in;
     int n_leaves;
     if(!rt_db_lookup_internal(db, obj, &dp, &in, LOOKUP_NOISY, &rt_uniresource))
-	bu_bomb("Failed to read object to raytrace");
+	bu_exit(EXIT_FAILURE, "Failed to read object to raytrace");
     n_leaves = db_count_tree_nodes(((struct rt_comb_internal *)in.idb_ptr)->tree, 0);
     rt_db_free_internal(&in, &rt_uniresource);
     */
@@ -361,7 +361,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     fstate->row = 0;
 
     if(rt_gettree(fstate->rtip, obj) < 0)
-	bu_bomb("rt_gettree failed");
+	bu_exit(EXIT_FAILURE, "rt_gettree failed");
 
     /*
     for(i = 0; i < fstate->max_cpus; i++) {

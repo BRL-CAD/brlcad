@@ -112,7 +112,7 @@ get_args(int argc, register char **argv)
 		case '#':
 			pixbytes = atoi(bu_optarg);
 			if( pixbytes != 1 && pixbytes != 3 )
-				bu_bomb("fb-png: Only able to handle 1 and 3 byte pixels\n");
+				bu_exit(EXIT_FAILURE, "fb-png: Only able to handle 1 and 3 byte pixels\n");
 			break;
 
 		default:		/* '?' */
@@ -164,13 +164,13 @@ main(int argc, char **argv)
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if (!png_p) {
 		pkg_terminate();
-		bu_bomb( "Could not create PNG write structure\n" );
+		bu_exit(EXIT_FAILURE,  "Could not create PNG write structure\n" );
 	}
 
 	info_p = png_create_info_struct( png_p );
 	if (!info_p) {
 		pkg_terminate();
-		bu_bomb( "Could not create PNG info structure\n" );
+		bu_exit(EXIT_FAILURE,  "Could not create PNG info structure\n" );
 	}
 
 	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {

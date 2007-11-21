@@ -202,24 +202,24 @@ main(int argc, char **argv)
 
 	if (fread(header, 8, 1, fp_in) != 1) {
 		pkg_terminate();
-		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
+		bu_exit(EXIT_FAILURE,  "ERROR: Failed while reading file header!!!\n" );
 	}
 
 	if (!png_check_sig((png_bytep)header, 8)) {
 		pkg_terminate();
-		bu_bomb( "This is not a PNG file!!!\n" );
+		bu_exit(EXIT_FAILURE,  "This is not a PNG file!!!\n" );
 	}
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if (!png_p) {
 		pkg_terminate();
-		bu_bomb( "png_create_read_struct() failed!!\n" );
+		bu_exit(EXIT_FAILURE,  "png_create_read_struct() failed!!\n" );
 	}
 
 	info_p = png_create_info_struct( png_p );
 	if (!info_p) {
 		pkg_terminate();
-		bu_bomb( "png_create_info_struct() failed!!\n" );
+		bu_exit(EXIT_FAILURE,  "png_create_info_struct() failed!!\n" );
 	}
 
 	png_init_io( png_p, fp_in );
