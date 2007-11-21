@@ -34,6 +34,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "png.h"
 #include "machine.h"
@@ -71,29 +72,29 @@ main(int argc, char **argv)
 	if( argc != 2 )
 	{
 		bu_log( usage, argv[0] );
-		bu_bomb( "Incorrect numer of arguments!!\n" );
+		bu_exit( EXIT_FAILURE, "Incorrect numer of arguments!!\n" );
 	} else {
 		if( (fp_in = fopen(argv[1], "rb")) == NULL )  {
 			perror(argv[1]);
 			bu_log(	"png_onfo: cannot open \"%s\" for reading\n",
 				argv[1] );
-			bu_bomb( "Cannot open input file\n" );
+			bu_exit( EXIT_FAILURE, "Cannot open input file\n" );
 		}
 	}
 
 	if( fread( header, 8, 1, fp_in ) != 1 )
-		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
+		bu_exit( EXIT_FAILURE, "ERROR: Failed while reading file header!!!\n" );
 
 	if( !png_check_sig( (png_bytep)header, 8 ) )
-		bu_bomb( "This is not a PNG file!!!\n" );
+		bu_exit( EXIT_FAILURE, "This is not a PNG file!!!\n" );
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if( !png_p )
-		bu_bomb( "png_create_read_struct() failed!!\n" );
+		bu_exit( EXIT_FAILURE, "png_create_read_struct() failed!!\n" );
 
 	info_p = png_create_info_struct( png_p );
 	if( !info_p )
-		bu_bomb( "png_create_info_struct() failed!!\n" );
+		bu_exit( EXIT_FAILURE, "png_create_info_struct() failed!!\n" );
 
 	png_init_io( png_p, fp_in );
 
