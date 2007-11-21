@@ -573,7 +573,7 @@ main(int argc, char **argv)
 		}
 		if( i >= 10 )  {
 			bu_log("Unable to find a port to listen on\n");
-			exit(1);
+			bu_exit(1, "");
 		}
 	}
 	/* Now, pkg_permport has tcp port number */
@@ -614,14 +614,14 @@ main(int argc, char **argv)
 		finalframe = -1;
 		if( !get_args( argc, argv ) )  {
 			fprintf(stderr,"remrt:  bad arg list\n");
-			exit(1);
+			bu_exit(1, "");
 		}
 		if (interactive) work_allocate_method = OPT_FRAME;
 
 		/* take note of database name and treetops */
 		if( bu_optind+2 > argc )  {
 			fprintf(stderr,"remrt:  insufficient args\n");
-			exit(2);
+			bu_exit(2, "");
 		}
 		build_start_cmd( argc, argv, bu_optind );
 
@@ -660,7 +660,7 @@ main(int argc, char **argv)
 		do_work(1);		/* auto start servers */
 		bu_log("%s Task accomplished\n", stamp() );
 	}
-	return(0);			/* exit(0); */
+	return(0);			/* bu_exit(0, ""); */
 }
 
 /*
@@ -1786,7 +1786,7 @@ next_frame: ;
 	if( all_done() )  {
 		running = 0;
 		bu_log("%s All work done!\n", stamp() );
-		if( detached )  exit(0);
+		if( detached )  bu_exit(0, "");
 		goto out;
 	}
 
@@ -2933,9 +2933,9 @@ host_helper(FILE *fp)
 						"rsh", host,
 						"-n", cmd, 0 );
 					perror("rsh execl");
-					_exit(0);
+					bu_exit(0, "");
 				}
-				_exit(0);
+				bu_exit(0, "");
 			} else if( pid < 0 ) {
 				perror("fork");
 			} else {
@@ -2964,9 +2964,9 @@ host_helper(FILE *fp)
 					execl("/bin/sh", "remrt_sh",
 						"-c", cmd, 0);
 					perror("/bin/sh");
-					_exit(0);
+					bu_exit(0, "");
 				}
-				_exit(0);
+				bu_exit(0, "");
 			} else if( pid < 0 ) {
 				perror("fork");
 			} else {
@@ -2987,7 +2987,7 @@ start_helper(void)
 
 	if( pipe(fds) < 0 )  {
 		perror("pipe");
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	pid = fork();
@@ -2998,19 +2998,19 @@ start_helper(void)
 		(void)close(fds[1]);
 		if( (fp = fdopen( fds[0], "r" )) == (FILE *)NULL )  {
 			perror("fdopen");
-			exit(3);
+			bu_exit(3, "");
 		}
 		host_helper( fp );
 		/* No more commands from parent */
-		exit(0);
+		bu_exit(0, "");
 	} else if( pid < 0 )  {
 		perror("fork");
-		exit(2);
+		bu_exit(2, "");
 	}
 	/* Parent process */
 	if( (helper_fp = fdopen( fds[1], "w" )) == (FILE *)NULL )  {
 		perror("fdopen");
-		exit(4);
+		bu_exit(4, "");
 	}
 	(void)close(fds[0]);
 }
@@ -3822,7 +3822,7 @@ cd_host(int argc, char **argv)
 int
 cd_exit(int argc, char **argv)
 {
-	exit(0);
+	bu_exit(0, "");
 	/*NOTREACHED*/
 }
 

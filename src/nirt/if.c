@@ -327,10 +327,7 @@ int if_bhit(struct application *ap, struct partition *part_head, struct seg *fin
     int			i;
 
     if ((part = part_head -> pt_back) == part_head)
-    {
-	bu_log("if_bhit() got empty partition list.  Shouldn't happen\n");
-	exit (1);
-    }
+	bu_exit (1, "if_bhit() got empty partition list.  Shouldn't happen\n");
 
     /* calculate exit point */
     VJOIN1(part->pt_outhit->hit_point, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
@@ -384,7 +381,7 @@ fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
 	fflush(stdout);
 	fprintf (stderr, "Error:  cos(obliquity) > 1\n");
 	obliquity = 0;
-	exit(1);
+	bu_exit(1, "");
     }
 
     /* convert obliquity to degrees */

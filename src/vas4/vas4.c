@@ -124,7 +124,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		usage();
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	argc -= (bu_optind-1);
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 	if (strcmp(argv[1],"init") == 0) {
 		vas_open();
 		if( get_vas_status() < 0 )
-			exit(1);
+			bu_exit(1, "");
 		vas_putc(C_INIT);
 		vas_await(R_INIT, 5);
 		if( get_vtr_status(0) < 0 )
@@ -191,7 +191,7 @@ main(int argc, char **argv)
 	 */
 	vas_open();
 	if( get_vas_status() < 0 )
-		exit(1);
+		bu_exit(1, "");
 
 	if (strcmp(argv[1],"rewind") == 0) {
 		vas_putc(C_REWIND);
@@ -311,7 +311,7 @@ main(int argc, char **argv)
 done:
 	vas_close();
 	if(fbp) fb_close(fbp);
-	exit(exit_code);
+	bu_exit(exit_code, "");
 }
 
 void
@@ -334,7 +334,7 @@ usage(void)
 	fprintf(stderr,"  search [frame]\n");
 	fprintf(stderr,"  time0\n");
 	fprintf(stderr,"  reset_time\n");
-	exit(1);
+	bu_exit(1, "");
 }
 
 void
@@ -342,7 +342,7 @@ usage_new(void)
 {
 	fprintf(stderr,"Usage: vas4 new [sn]\n");
 	fprintf(stderr,"\t[sn]\tscene number must be >= 1\n");
-	exit(1);
+	bu_exit(1, "");
 }
 
 void
@@ -350,7 +350,7 @@ usage_record(void)
 {
 	fprintf(stderr,"Usage: vas4 record [nf]\n");
 	fprintf(stderr,"\t[nf]\tnumber of frames must be >= 1\n");
-	exit(1);
+	bu_exit(1, "");
 }
 
 void
@@ -361,7 +361,7 @@ usage_seq(void)
 	fprintf(stderr,"\t\tand the number of frames nf  must be > 1\n");
 	fprintf(stderr,"\t[start] is the starting sequence number\n");
 	fprintf(stderr,"\t\tIf start is specified, n and nf must also be specified\n");
-	exit(1);
+	bu_exit(1, "");
 }
 
 

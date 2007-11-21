@@ -128,7 +128,7 @@ static int find_bool_tree_rewrite (struct bool_tree_node *rp)
 	default:
 	    bu_log("Reached %s:%d.  This shouldn't happen\n",
 		    __FILE__, __LINE__);
-	    exit (1);
+	    bu_exit (1, "");
     }
 
     return (rule_nm);
@@ -222,7 +222,7 @@ static void do_bool_tree_rewrite (struct bool_tree_node *rp, int rule_nm)
 	default:
 	    bu_log("Reached %s:%d.  This shouldn't happen\n",
 		    __FILE__, __LINE__);
-	    exit (1);
+	    bu_exit (1, "");
     }
 }
 
@@ -345,7 +345,7 @@ show_gift_bool (struct bool_tree_node *rp, int new_line)
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 
-	exit(1);
+	bu_exit(1, "");
       }
     }
 

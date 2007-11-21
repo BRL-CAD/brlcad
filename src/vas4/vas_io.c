@@ -88,7 +88,7 @@ vas_open(void)
 	/* Open VAS Port */
 	if((vas_fd=open(VAS_PORT,O_RDWR)) < 0){
 		perror(VAS_PORT);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	/* Setup VAS line */
@@ -116,13 +116,13 @@ vas_open(void)
 
 	if( ioctl(vas_fd, TCSETA, &vtty) < 0 ) {
 		perror(VAS_PORT);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	/* Be certain the FNDELAY is off */
 	if( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
 		perror(VAS_PORT);
-		exit(2);
+		bu_exit(2, "");
 	}
 
 #else /* !HAVE_TERMIO_H */
@@ -159,13 +159,13 @@ vas_open(void)
 
 	if( tcsetattr( vas_fd, TCSAFLUSH, &vtty ) < 0 )  {
 		perror(VAS_PORT);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	/* Be certain the FNDELAY is off */
 	if( fcntl(vas_fd, F_SETFL, 0) < 0 )  {
 		perror(VAS_PORT);
-		exit(2);
+		bu_exit(2, "");
 	}
 #endif
 }

@@ -164,7 +164,7 @@ main( int argc, char **argv )
 		bu_free( buf, "cmd buf" );
 		if( ret < 0 )  {
 			if(verbose) bu_log("aborting\n");
-			exit(1);
+			bu_exit(1, "");
 		}
 	}
 
@@ -174,7 +174,7 @@ main( int argc, char **argv )
 	if(verbose) bu_log("writing output\n");
 	output();
 
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

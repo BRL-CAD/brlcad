@@ -184,7 +184,7 @@ Input(register point *coop)				/* input a coordinate record */
 		(void)printf( "cad_parea: bad input:\n%s\n", inbuf
 		    );
 		Output( 0.0 );
-		exit( 2 );		/* return false insufficient */
+		bu_exit( 2, "" );		/* return false insufficient */
 	}
 
 	return false;			/* EOF */

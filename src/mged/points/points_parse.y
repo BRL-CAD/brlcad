@@ -212,7 +212,7 @@ int yyerror(char *msg)
 	fprintf(stderr, "ERROR: Unexpected input on line %ld, column %ld  (file offset %ld)\n", get_lines()+1, get_column()-1, get_bytes());
     }
     /* printf("ERROR:\n%s\n%*s (line %ld, column %ld)\n%s\n", lastline, column, "^", line, column, msg); */
-    exit(1);
+    bu_exit(1, "");
 }
 
 int yywrap()

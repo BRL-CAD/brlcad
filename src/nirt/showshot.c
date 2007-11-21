@@ -96,19 +96,19 @@ main (int argc, char **argv)
 		if (sscanf(bu_optarg, "%F", &ray_radius) != 1)
 		{
 		    (void) fprintf(stderr, "Illegal radius: '%s'\n", bu_optarg);
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case '?':
 		print_usage();
-		exit (1);
+		bu_exit (1, "");
 	}
 
     /* Ensure proper command-line syntax */
     if (bu_optind != argc)
     {
 	print_usage();
-	exit (1);
+	bu_exit (1, "");
     }
 
     /* Construct the names of the objects to add to the database */
@@ -121,7 +121,7 @@ main (int argc, char **argv)
 	    rayname, NAMESIZE - 1);
 	(void) fputs("Use the '-n name' option to specify a different name\n",
 	    stderr);
-	exit (1);
+	bu_exit (1, "");
     }
     (void) printf("in %s.s sph 0 0 0 1\n", rayname);
     (void) printf("r %s.r u %s.s\n", rayname, rayname);
@@ -153,7 +153,7 @@ main (int argc, char **argv)
 	{
 	    (void) fprintf(stderr,
 		"Illegal data on line %d: '%s'\n", line_nm, bp);
-	    exit (1);
+	    bu_exit (1, "");
 	}
 
 	(void) printf(" %s", rname);
@@ -166,7 +166,7 @@ main (int argc, char **argv)
     if (! feof(stdin))
     {
 	(void) fputs("Error from bu_fgets().  This shouldn't happen", stderr);
-	exit (1);
+	bu_exit (1, "");
     }
 
     (void) printf("\nkill %s.s\nin %s.s rcc\n\t%f %f %f\n\t%f %f %f\n\t%f\n",

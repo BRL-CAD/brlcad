@@ -391,7 +391,7 @@ main(int argc, char **argv)
 	    /* exit instead of mged_finish as this is the
 	     * parent process.
 	     */
-	    exit( 0 );
+	    bu_exit( 0, "" );
 	}
     }
 #endif /* HAVE_PIPE */
@@ -2063,7 +2063,7 @@ log_event(char *event, char *arg)
 /*
  *			F I N I S H
  *
- * This routine should be called in place of exit() everywhere
+ * This routine should be called in place of bu_exit(, "") everywhere
  * in GED, to permit an accurate finish time to be recorded in
  * the (ugh) logfile, also to remove the device access lock.
  */

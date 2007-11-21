@@ -155,7 +155,7 @@ void interact(int input_source, void *sPtr)
 		if ((input_source == READING_FILE) && (sPtr == stdin))
 		{
 		    bu_log( "Unexpected EOF in input!!\n");
-		    exit(1);
+		    bu_exit(1, "");
 		}
 		else
 		    return;

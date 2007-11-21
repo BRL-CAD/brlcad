@@ -942,7 +942,7 @@ int			num;
 	default:
 		(void) fprintf( stderr, "addarb: Unknown arb cgtype=%d.\n",
 		    cgtype );
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 }
 
@@ -1035,7 +1035,7 @@ int			num;
 		    "Error in type of ellipse (%d).\n",
 		    cgtype
 		    );
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 }
 
@@ -1206,7 +1206,7 @@ int			num;
 		    "Error in tgc type (%d).\n",
 		    cgtype
 		    );
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 }
 
@@ -1289,7 +1289,7 @@ unsigned	bytes;
 	if( fwrite( buf, bytes, 1, fp ) != 1 )  {
 		perror("write");
 		(void)fprintf(stderr, "vdeck: write error\n");
-		exit(2);
+		bu_exit(2, "");
 	}
 }
 
@@ -1321,7 +1321,7 @@ register char *prefix;
 	st_file = bu_vls_addr( &st_vls );
 	if( (solfp = fopen( st_file, "w")) == NULL )  {
 		perror( st_file );
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 
 
@@ -1352,7 +1352,7 @@ register char *prefix;
 	rt_file = bu_vls_addr( &bu_vls );
 	if( (regfp = fopen( rt_file, "w" )) == NULL )  {
 		perror( rt_file );
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 
 	/* create file for region ident table
@@ -1367,7 +1367,7 @@ register char *prefix;
 	id_file = bu_vls_addr( &id_vls );
 	if( (ridfp = fopen( id_file, "w" )) == NULL )  {
 		perror( id_file );
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 	itoa( -1, buff, 5 );
 	ewrite( ridfp, buff, 5 );
@@ -1384,7 +1384,7 @@ register char *prefix;
 	    1, &rt_initial_tree_state,
 	    0, region_end, gettree_leaf, (genptr_t)NULL ) < 0 )  {
 		fprintf(stderr,"Unable to treewalk any trees!\n");
-		exit(11);
+		bu_exit(11, "");
 	}
 
 	/* Go back, and add number of solids and regions on second card. */
@@ -1434,7 +1434,7 @@ char  *args[];
 		from = args[i];
 		if( (to + strlen( args[i] )) - argv[2] > MAXLN - 1 ) {
 			(void) fprintf( stderr, "\ncommand line too long\n" );
-			exit( 10 );
+			bu_exit( 10, "" );
 		}
 		(void) printf( "%s ", args[i] );
 		while( *from )
@@ -1453,7 +1453,7 @@ char  *args[];
 		(void) signal( SIGINT, SIG_DFL );
 		(void) execv( "/bin/sh", argv );
 		perror( "/bin/sh -c" );
-		exit( 99 );
+		bu_exit( 99, "" );
 	} else	/*
 		 * PARENT process - waits for shell command
 		 * to finish.
@@ -1781,7 +1781,7 @@ vls_ftoa( struct bu_vls *v, double f, int w, int d )
 		(void) fprintf( stderr,
 		    "ftoascii: incorrect format  need w.df  stop"
 		    );
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 	for( i = 1; i <= d; i++ )
 		f = f * 10.0;
@@ -1951,7 +1951,7 @@ void
 quit( sig )
 {
 	(void) fprintf( stdout, "quitting...\n" );
-	exit( 0 );
+	bu_exit( 0, "" );
 }
 
 /*

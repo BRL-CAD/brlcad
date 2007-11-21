@@ -85,7 +85,7 @@ main(int argc, char **argv)
 
     if( argc < 2 || argc > 3 )  {
 	fprintf(stderr,"Usage:  tabsub prototype_file [table_file]\n");
-	exit(12);
+	bu_exit(12, "");
     }
     strncpy(proto_file, argv[1], 255);
 
@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	strncpy(table_file, argv[2], 255);
 	if( (table = fopen( table_file, "r" )) == NULL )  {
 	    perror( table_file );
-	    exit(3);
+	    bu_exit(3, "");
 	}
     }
     do_lines( table, prototype );
@@ -119,17 +119,17 @@ get_proto(char **buffer, char *file)
 
     if ( (fd = open( file, 0 )) < 0) {
 	perror(file);
-	exit(1);
+	bu_exit(1, "");
     }
 
     if (fstat( fd, &sb ) != 0 )  {
 	perror(file);
-	exit(1);
+	bu_exit(1, "");
     }
 
     if( sb.st_size == 0 )  {
 	fprintf(stderr,"tabsub:  %s is empty\n", file );
-	exit(1);
+	bu_exit(1, "");
     }
     *buffer = bu_malloc( (size_t)(sb.st_size+4), "prototype document");
     bytes_read = read( fd, *buffer, (size_t)sb.st_size );
@@ -138,7 +138,7 @@ get_proto(char **buffer, char *file)
 	    perror(file);
 	}
 	printf("only read %d bytes (expecting %ld)\n", bytes_read, (long)sb.st_size);
-	exit(2);
+	bu_exit(2, "");
     }
     (*buffer)[sb.st_size] = '\0';
     return;

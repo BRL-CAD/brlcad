@@ -236,7 +236,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
     if ((solids = bu_rb_create("Primitive list", 2, rpt_solids_orders)) == BU_RB_TREE_NULL)
     {
 	bu_log("%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
-	exit (1);
+	bu_exit (1, "");
     }
     solids -> rbt_print = print_solid;
     bu_rb_uniq_on(solids, ORDER_BY_NAME);

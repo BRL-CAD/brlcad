@@ -404,7 +404,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	return(0);		/* exit(0) */
+	return(0);		/* bu_exit(0, "") */
 }
 
 /*
@@ -434,7 +434,7 @@ ph_cd(register struct pkg_conn *pc, char *buf)
 	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
 	if( chdir( buf ) < 0 )  {
 		bu_log("ph_cd: chdir(%s) failure\n", buf);
-		exit(1);
+		bu_exit(1, "");
 	}
 	(void)free(buf);
 }
@@ -448,7 +448,7 @@ ph_restart(register struct pkg_conn *pc, char *buf)
 	pkg_close(pcsrv);
 	execlp( "rtsrv", "rtsrv", control_host, tcp_port, (char *)0);
 	perror("rtsrv");
-	exit(1);
+	bu_exit(1, "");
 }
 
 /*
@@ -483,7 +483,7 @@ ph_dirbuild(register struct pkg_conn *pc, char *buf)
 	/* Build directory of GED database */
 	if( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )  {
 		bu_log("ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
-		exit(2);
+		bu_exit(2, "");
 	}
 	ap.a_rt_i = rtip;
 	seen_dirbuild = 1;
@@ -595,7 +595,7 @@ process_cmd(char *buf)
 		if( debug )  bu_log("process_cmd '%s'\n", sp);
 		if( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )  {
 			bu_log("process_cmd: error on '%s'\n", sp );
-			exit(1);
+			bu_exit(1, "");
 		}
 		sp = cp;
 	}
@@ -618,7 +618,7 @@ ph_options(register struct pkg_conn *pc, char *buf)
 
 	if( width <= 0 || height <= 0 )  {
 		bu_log("ph_options:  width=%d, height=%d\n", width, height);
-		exit(3);
+		bu_exit(3, "");
 	}
 	(void)free(buf);
 }
@@ -675,7 +675,7 @@ prepare(void)
 
 	if( rtip->nsolids <= 0 )  {
 		bu_log("ph_matrix: No solids remain after prep.\n");
-		exit(3);
+		bu_exit(3, "");
 	}
 
 	grid_setup();
@@ -727,7 +727,7 @@ ph_lines(struct pkg_conn *pc, char *buf)
 	fr=0;
 	if( sscanf( buf, "%d %d %d", &a, &b, &fr ) != 3 )  {
 		bu_log("ph_lines:  %s conversion error\n", buf );
-		exit(2);
+		bu_exit(2, "");
 	}
 
 	srv_startpix = a;		/* buffer un-offset for view_pixel */
@@ -746,7 +746,7 @@ ph_lines(struct pkg_conn *pc, char *buf)
 
 	if (!bu_struct_export( &ext, (genptr_t)&info, desc_line_info ) ) {
 		bu_log("ph_lines: bu_struct_export failure\n");
-		exit(98);
+		bu_exit(98, "");
 	}
 
 	if(debug)  {
@@ -830,7 +830,7 @@ bu_log( char *fmt, ... )
 	if(debug) fprintf(stderr, "%s", buf);
 	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		exit(12);
+		bu_exit(12, "");
 	}
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
@@ -888,7 +888,7 @@ va_dcl
 	}
 	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		exit(12);
+		bu_exit(12, "");
 	}
 	cp = buf;
 out:
@@ -913,7 +913,7 @@ int	a, b, c, d, e, f, g, h;
 	if(debug) fprintf(stderr, "%s", buf);
 	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		exit(12);
+		bu_exit(12, "");
 	}
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
@@ -946,7 +946,7 @@ bu_bomb(const char *str)
 	fflush(stderr);
 	if( RT_G_DEBUG || rt_g.NMG_debug || bu_debug || debug )
 		abort();	/* should dump */
-	exit(12);
+	bu_exit(12, "");
 }
 
 void
@@ -973,7 +973,7 @@ ph_end(register struct pkg_conn *pc, char *buf)
 {
 	if( debug )  fprintf(stderr, "ph_end\n");
 	pkg_close(pcsrv);
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

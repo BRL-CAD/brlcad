@@ -67,7 +67,7 @@ void read_mat (void)
 	    {
 		(void) fputs("nirt: read_mat(): Failed to read eye_pt\n",
 		    stderr);
-		exit (1);
+		bu_exit (1, "");
 	    }
 	    target(X) = p[X];
 	    target(Y) = p[Y];
@@ -82,7 +82,7 @@ void read_mat (void)
 	    {
 		(void) fputs("nirt: read_mat(): Failed to read orientation\n",
 		    stderr);
-		exit (1);
+		bu_exit (1, "");
 	    }
 	    quat_quat2mat(m,q);
 	    if (nirt_debug & DEBUG_MAT)
@@ -102,7 +102,7 @@ void read_mat (void)
 	    {
 		(void) fputs("nirt: read_mat(): Failed to read viewrot\n",
 		    stderr);
-		exit (1);
+		bu_exit (1, "");
 	    }
 	    if (nirt_debug & DEBUG_MAT)
 		bn_mat_print("view matrix", m);
@@ -114,13 +114,13 @@ void read_mat (void)
     if ((status & RMAT_SAW_EYE) == 0)
     {
 	(void) fputs("nirt: read_mat(): Was given no eye_pt\n", stderr);
-	exit (1);
+	bu_exit (1, "");
     }
     if ((status & (RMAT_SAW_ORI | RMAT_SAW_VR)) == 0)
     {
 	(void) fputs("nirt: read_mat(): Was given no orientation or viewrot\n",
 		stderr);
-	exit (1);
+	bu_exit (1, "");
     }
     direct(X) = -m[8];
     direct(Y) = -m[9];
