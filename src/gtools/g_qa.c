@@ -531,8 +531,7 @@ parse_args(int ac, char *av[])
 			analysis_flags |= ANALYSIS_WEIGHT;
 			break;
 		    default:
-			bu_log("Unknown analysis type \"%c\" requested.\n", *p);
-			bu_exit(EXIT_FAILURE, "");
+			bu_exit(EXIT_FAILURE, "Unknown analysis type \"%c\" requested.\n", *p);
 			break;
 		    }
 		}
@@ -540,17 +539,13 @@ parse_args(int ac, char *av[])
 	    }
 	case 'a'	:
 	    bu_log("azimuth not implemented\n");
-	    if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1) {
-		bu_log("error parsing azimuth \"%s\"\n", bu_optarg);
-		bu_exit(EXIT_FAILURE, "");
-	    }
+	    if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1)
+		bu_exit(EXIT_FAILURE, "error parsing azimuth \"%s\"\n", bu_optarg);
 	    break;
 	case 'e'	:
 	    bu_log("elevation not implemented\n");
-	    if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1) {
-		bu_log("error parsing elevation \"%s\"\n", bu_optarg);
-		bu_exit(EXIT_FAILURE, "");
-	    }
+	    if (sscanf(bu_optarg, "%lg", &elevation_deg) != 1)
+		bu_exit(EXIT_FAILURE, "error parsing elevation \"%s\"\n", bu_optarg);
 	    break;
 	case 'd'	: debug = 1; break;
 
@@ -569,10 +564,8 @@ parse_args(int ac, char *av[])
 		else if (p = strchr(bu_optarg, '-')) *p++ = '\0';
 
 
-		if (read_units_double(&value1, bu_optarg, units_tab[0])) {
-		    bu_log("error parsing grid spacing value \"%s\"\n", bu_optarg);
-		    bu_exit(EXIT_FAILURE, "");
-		}
+		if (read_units_double(&value1, bu_optarg, units_tab[0]))
+		    bu_exit(EXIT_FAILURE, "error parsing grid spacing value \"%s\"\n", bu_optarg);
 		if (p) {
 		    /* we've got 2 values, they are upper limit and lower limit */
 		    if (read_units_double(&value2, p, units_tab[0])) {
@@ -594,14 +587,11 @@ parse_args(int ac, char *av[])
 	    }
 	case 'G'	:
 	    makeOverlapAssemblies = 1;
-	    bu_log("-G option unimplemented\n");
-	    bu_exit(EXIT_FAILURE, "");
+	    bu_exit(EXIT_FAILURE, "-G option unimplemented\n");
 	    break;
 	case 'n'	:
-	    if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0) {
-		bu_log("num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
-		bu_exit(EXIT_FAILURE, "");
-	    }
+	    if (sscanf(bu_optarg, "%d", &c) != 1 || c < 0)
+		bu_exit(EXIT_FAILURE, "num_hits must be integer value >= 0, not \"%s\"\n", bu_optarg);
 	    require_num_hits = c;
 	    break;
 
@@ -626,10 +616,8 @@ parse_args(int ac, char *av[])
 	    Samples_per_model_axis = a + 1;
 	    break;
 	case 't'	:
-	    if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0])) {
-		bu_log("error in overlap tolerance distance \"%s\"\n", bu_optarg);
-		bu_exit(EXIT_FAILURE, "");
-	    }
+	    if (read_units_double(&overlap_tolerance, bu_optarg, units_tab[0]))
+		bu_exit(EXIT_FAILURE, "error in overlap tolerance distance \"%s\"\n", bu_optarg);
 	    break;
 	case 'v'	:
 	    verbose = 1;
@@ -671,8 +659,7 @@ parse_args(int ac, char *av[])
 				goto found_cv;
 			    }
 			}
-			bu_log("Units \"%s\" not found in coversion table\n", units_name[i]);
-			bu_exit(EXIT_FAILURE, "");
+			bu_exit(EXIT_FAILURE, "Units \"%s\" not found in coversion table\n", units_name[i]);
 		    found_cv:
 			units[i] = cv;
 		    }
@@ -724,28 +711,22 @@ parse_densities_buffer(char *buf, unsigned long len)
 	    bu_exit(EXIT_FAILURE, "could not convert idx\n");
 	}
 
-	if (idx < 0) {
-	    bu_log("bad density index (< 0) %d\n", idx);
-	    bu_exit(EXIT_FAILURE, "");
-	}
+	if (idx < 0)
+	    bu_exit(EXIT_FAILURE, "bad density index (< 0) %d\n", idx);
 
 	density = strtod(q, &p);
-	if (q == p) {
+	if (q == p)
 	    bu_exit(EXIT_FAILURE, "could not convert density\n");
-	}
 
-	if (density < 0.0) {
-	    bu_log("bad density (< 0) %g\n", density);
-	    bu_exit(EXIT_FAILURE, "");
-	}
+	if (density < 0.0)
+	    bu_exit(EXIT_FAILURE, "bad density (< 0) %g\n", density);
 
 	while ((*p == '\t') || (*p == ' ')) p++;
 
-	if ((q = strchr(p, '\n'))) {
+	if ((q = strchr(p, '\n')))
 	    *q++ = '\0';
-	} else {
+	else
 	    q = last;
-	}
 
 	while (idx >= num_densities) {
 	    densities = bu_realloc(densities, sizeof(struct density_entry)*num_densities*2,
@@ -764,15 +745,13 @@ parse_densities_buffer(char *buf, unsigned long len)
     } while (p && p < last);
 
 #ifdef PRINT_DENSITIES
-    for (idx=0 ; idx < num_densities ; idx++) {
-	if (densities[idx].magic == DENSITY_MAGIC) {
+    for (idx=0 ; idx < num_densities ; idx++)
+	if (densities[idx].magic == DENSITY_MAGIC)
 	    bu_log("%4d %6g %s\n",
 		   idx,
 		   densities[idx].density,
 		   densities[idx].name
 		   );
-	}
-    }
 #endif
 }
 /*	g e t _ d e n s i t i e s _ f r o m _ f i l e
@@ -831,10 +810,8 @@ get_densities_from_database(struct rt_i *rtip)
 	return 1;
     }
 
-    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0) {
+    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
 	return 1;
-    }
-
 
     bu = (struct rt_binunif_internal *)intern.idb_ptr;
 
@@ -939,10 +916,9 @@ overlap(struct application *ap,
 
     depth = ohitp->hit_dist - ihitp->hit_dist;
 
-    if( depth < overlap_tolerance ) {
+    if( depth < overlap_tolerance )
 	/* too small to matter, pick one or none */
 	return(1);
-    }
 
     VJOIN1( ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir );
     VJOIN1( ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir );
@@ -970,9 +946,8 @@ overlap(struct application *ap,
 #endif
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
-    } else {
+    } else
 	bu_log("overlap %s %s\n", reg1->reg_name, reg2->reg_name);
-    }
 
     /* XXX We should somehow flag the volume/weight calculations as invalid */
 
@@ -1114,14 +1089,12 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	if (analysis_flags & ANALYSIS_WEIGHT) {
 	    DLOG("Hit %s doing weight\n", pp->pt_regionp->reg_name);
 	    /* make sure mater index is within range of densities */
-	    if (pp->pt_regionp->reg_gmater >= num_densities) {
-		bu_log("density index %d on region %s is outside of range of table [1..%d]\n",
+	    if (pp->pt_regionp->reg_gmater >= num_densities)
+		bu_exit(EXIT_FAILURE, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n"
 		       pp->pt_regionp->reg_gmater,
 		       pp->pt_regionp->reg_name,
-		       num_densities);
-		bu_log("Set GIFTmater on region or add entry to density table\n");
-		bu_exit(EXIT_FAILURE, ""); /* XXX this should do something else */
-	    } else {
+		       num_densities); /* XXX this should do something else */
+	    else {
 
 		/* make sure the density index has been set */
 		de = &densities[pp->pt_regionp->reg_gmater];
@@ -1151,12 +1124,9 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    prd->optr->o_lenDensity[state->i_axis] += val;
 		    bu_semaphore_release(SEM_STATS);
 
-		} else {
-		    bu_log("density index %d from region %s is not set.\n",
+		} else
+		    bu_exit(EXIT_FAILURE, "density index %d from region %s is not set.\nAdd entry to density table\n"
 			   pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
-		    bu_log("Add entry to density table\n");
-		    bu_exit(EXIT_FAILURE, "");
-		}
 	    }
 	}
 
@@ -1400,8 +1370,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 	    return i;
 	}
     }
-    bu_log("%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
-    bu_exit(EXIT_FAILURE, "");
+    bu_exit(EXIT_FAILURE, "%s Didn't find object named \"%s\" in %d entries\n", BU_FLSTR, name, num_objects);
     /* NOTREACHED */
     return -1; /* stupid compiler */
 }
@@ -1547,15 +1516,11 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
 	    bu_log("setting volume tolerance to %g %s\n",
 		   volume_tolerance / units[VOL]->val, units[VOL]->name);
-	} else {
+	} else
 	    bu_log("volume tolerance   %g\n", volume_tolerance);
-	}
-	if ( plot_files ) {
-	    if ( (plot_volume=fopen(name, "w")) == (FILE *)NULL) {
-		bu_log("cannot open plot file %s\n", name);
-		bu_exit(EXIT_FAILURE, "");
-	    }
-	}
+	if ( plot_files )
+	    if ( (plot_volume=fopen(name, "w")) == (FILE *)NULL)
+		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	if (weight_tolerance == -1.0) {
@@ -1575,58 +1540,40 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
     if (analysis_flags & ANALYSIS_GAP) {
 	char *name = "gaps.pl";
-	if ( plot_files ) {
-	    if ( (plot_gaps=fopen(name, "w")) == (FILE *)NULL) {
-		bu_log("cannot open plot file %s\n", name);
-		bu_exit(EXIT_FAILURE, "");
-	    }
-	}
+	if ( plot_files )
+	    if ( (plot_gaps=fopen(name, "w")) == (FILE *)NULL)
+		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
-	if (overlap_tolerance != 0.0) {
+	if (overlap_tolerance != 0.0)
 	    bu_log("overlap tolerance to %g\n", overlap_tolerance);
-	}
 	if ( plot_files ) {
 	    char *name = "overlaps.pl";
-	    if ((plot_overlaps=fopen(name, "w")) == (FILE *)NULL) {
-		bu_log("cannot open plot file %s\n", name);
-		bu_exit(EXIT_FAILURE, "");
-	    }
+	    if ((plot_overlaps=fopen(name, "w")) == (FILE *)NULL)
+		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
     }
 
-    if (print_per_region_stats) {
-	if ( (analysis_flags & (ANALYSIS_VOLUME|ANALYSIS_WEIGHT)) == 0) {
+    if (print_per_region_stats)
+	if ( (analysis_flags & (ANALYSIS_VOLUME|ANALYSIS_WEIGHT)) == 0)
 	    bu_log("Note: -r option ignored: neither volume or weight options requested\n");
-	}
-    }
 
-
-    if ( analysis_flags & ANALYSIS_ADJ_AIR) {
+    if ( analysis_flags & ANALYSIS_ADJ_AIR)
 	if (plot_files) {
 	    char *name = "adj_air.pl";
-	    if ( (plot_adjair=fopen(name, "w")) == (FILE *)NULL) {
-		bu_log("cannot open plot file %s\n", name);
-		bu_exit(EXIT_FAILURE, "");
-	    }
+	    if ( (plot_adjair=fopen(name, "w")) == (FILE *)NULL)
+		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
-    }
 
-
-    if ( analysis_flags & ANALYSIS_EXP_AIR) {
+    if ( analysis_flags & ANALYSIS_EXP_AIR)
 	if (plot_files) {
 	    char *name = "exp_air.pl";
-	    if ( (plot_expair=fopen(name, "w")) == (FILE *)NULL) {
-		bu_log("cannot open plot file %s\n", name);
-		bu_exit(EXIT_FAILURE, "");
-	    }
+	    if ( (plot_expair=fopen(name, "w")) == (FILE *)NULL)
+		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
-    }
 
-    if ( (analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air ) {
-	bu_log("Error:  Air regions discarded but air analysis requested!\n");
-	bu_exit(EXIT_FAILURE, "Set use_air non-zero or eliminate air analysis\n");
-    }
+    if ( (analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air )
+	bu_exit(EXIT_FAILURE, "Error:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
 
     return 0;
 }
