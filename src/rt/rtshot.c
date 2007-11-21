@@ -432,7 +432,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_regionp->reg_bit);
 
 	entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
-				   (char *)pp->pt_regionp->reg_bit );
+			       (const char *)(size_t)pp->pt_regionp->reg_bit );
 	if( !entry ) {
 	    inv_mat = (matp_t)NULL;
 	}
