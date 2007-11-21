@@ -3,16 +3,16 @@
 all: all-am
 
 all-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) all ; fi
 
 clean-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) clean
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) clean ; fi
 
 distclean-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) distclean
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) distclean ; fi
 
 install-am: all-am
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) install
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) install ; fi
 
 INSTALLED_BINARIES = \
 	tclsh8.5
