@@ -568,10 +568,8 @@ parse_args(int ac, char *av[])
 		    bu_exit(EXIT_FAILURE, "error parsing grid spacing value \"%s\"\n", bu_optarg);
 		if (p) {
 		    /* we've got 2 values, they are upper limit and lower limit */
-		    if (read_units_double(&value2, p, units_tab[0])) {
-			bu_log("error parsing grid spacing limit value \"%s\"\n", p);
-			bu_exit(EXIT_FAILURE, "");
-		    }
+		    if (read_units_double(&value2, p, units_tab[0]))
+			bu_exit(EXIT_FAILURE, "error parsing grid spacing limit value \"%s\"\n", p);
 		    gridSpacing = value1;
 		    gridSpacingLimit = value2;
 		} else {
@@ -639,7 +637,7 @@ parse_args(int ac, char *av[])
 	    use_air = strtol(bu_optarg, (char **)NULL, 10);
 	    if (errno == ERANGE || errno == EINVAL) {
 		perror("-U argument");
-		bu_exit(EXIT_FAILURE, "");
+		bu_exit(EXIT_FAILURE, "");	/* left blank due to use of perror() */
 	    }
 	    break;
 	case 'u'	:
@@ -1090,7 +1088,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	    DLOG("Hit %s doing weight\n", pp->pt_regionp->reg_name);
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= num_densities)
-		bu_exit(EXIT_FAILURE, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n"
+		bu_exit(EXIT_FAILURE, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
 		       pp->pt_regionp->reg_gmater,
 		       pp->pt_regionp->reg_name,
 		       num_densities); /* XXX this should do something else */
@@ -1125,7 +1123,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    bu_semaphore_release(SEM_STATS);
 
 		} else
-		    bu_exit(EXIT_FAILURE, "density index %d from region %s is not set.\nAdd entry to density table\n"
+		    bu_exit(EXIT_FAILURE, "density index %d from region %s is not set.\nAdd entry to density table\n",
 			   pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
 	    }
 	}
