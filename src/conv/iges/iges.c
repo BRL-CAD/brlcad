@@ -733,7 +733,7 @@ int
 write_dir_entry(FILE *fp , int entry[])
 {
     int i,j,type_index;
-    char *label;
+    const char *label;
 
     for( type_index=0; type_index<NO_OF_TYPES ; type_index++ )
 	if( type_count[type_index][0] == entry[1] )
