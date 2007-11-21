@@ -277,7 +277,7 @@ nmg_to_winged_edge( r )
 
 				    /* kill the new edge (I only wanted it for its vertices) */
 				    if( nmg_keu( eu_new ) )
-					bu_bomb( "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!\n" );
+					bu_exit(EXIT_FAILURE,  "nmg_to_winged_edge: Can't happen nmg_keu resulted in empty shell!\n" );
 
 				    /* move the other edgeuse to the same edge */
 				    if( eu2 == eu1 || eu2 == eu1->eumate_p )

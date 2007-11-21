@@ -160,7 +160,7 @@ char line[MAX_LINE_LEN];
 	{
 		bu_log( "Barrier check at start of Convet_part:\n" );
 		if( bu_mem_barriercheck() )
-			bu_bomb( "Barrier check failed!!!\n" );
+			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
 
@@ -284,7 +284,7 @@ char line[MAX_LINE_LEN];
 			while( !endloop )
 			{
 				if( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
-					bu_bomb( "Unexpected EOF while reading a loop in a part!!!\n" );
+					bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n" );
 
 				start = (-1);
 				while( isspace( line1[++start] ) );
@@ -402,7 +402,7 @@ char line[MAX_LINE_LEN];
 	{
 		bu_log( "Barrier check at end of Convert_part_ascii:\n" );
 		if( bu_mem_barriercheck() )
-			bu_bomb( "Barrier check failed!!!\n" );
+			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
 	bu_vls_free( &region_name );
@@ -560,7 +560,7 @@ Convert_part_binary()
 	{
 		bu_log( "Barrier check at end of Convert_part_ascii:\n" );
 		if( bu_mem_barriercheck() )
-			bu_bomb( "Barrier check failed!!!\n" );
+			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
 	return;
@@ -575,11 +575,11 @@ Convert_input()
 	if( binary ) {
 		if( fread( line, 80, 1, fd_in ) < 1 ) {
 			if( feof( fd_in ) ) {
-				bu_bomb( "Unexpected EOF in input file!!!\n" );
+				bu_exit(EXIT_FAILURE,  "Unexpected EOF in input file!!!\n" );
 			} else {
 				bu_log( "Error reading input file\n" );
 				perror( "stl-g" );
-				bu_bomb( "Error reading input file\n" );
+				bu_exit(EXIT_FAILURE,  "Error reading input file\n" );
 			}
 		}
 		line[80] = '\0';
@@ -655,7 +655,7 @@ char	*argv[];
 			if( conv_factor == 0.0 )
 			{
 				bu_log( "Illegal units: (%s)\n", bu_optarg );
-				bu_bomb( "Illegal units!!\n" );
+				bu_exit(EXIT_FAILURE,  "Illegal units!!\n" );
 			}
 			else
 				bu_log( "Converting units from %s to mm (conversion factor is %g)\n", bu_optarg, conv_factor );
@@ -672,7 +672,7 @@ char	*argv[];
 			{
 				bu_log( "Illegal value for '-I' option, must be zero or greater!!!\n" );
 				bu_log( usage, argv[0] );
-				bu_bomb( "Illegal value for option '-I'\n" );
+				bu_exit(EXIT_FAILURE,  "Illegal value for option '-I'\n" );
 			}
 			break;
 		case 'm':

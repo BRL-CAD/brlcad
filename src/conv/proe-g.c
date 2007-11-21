@@ -219,7 +219,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 	if( type != ASSEMBLY_TYPE && type != PART_TYPE && type != CUT_SOLID_TYPE )
 	{
 		bu_log( "Bad type for name (%s) in Add_new_name\n", name );
-		bu_bomb( "Add_new_name\n" );
+		bu_exit(EXIT_FAILURE,  "Add_new_name\n" );
 	}
 
 
@@ -365,7 +365,7 @@ Convert_assy(char *line)
 	{
 		bu_log( "Barrier check at start of Convert_assy:\n" );
 		if( bu_mem_barriercheck() )
-			bu_bomb( "Barrier check failed!!!\n" );
+			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
 	BU_LIST_INIT( &head.l );
@@ -511,7 +511,7 @@ Convert_assy(char *line)
 	{
 		bu_log( "Barrier check at end of Convet_assy:\n" );
 		if( bu_mem_barriercheck() )
-			bu_bomb( "Barrier check failed!!!\n" );
+			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
 	top_level = 0;
@@ -698,7 +698,7 @@ Convert_part(char *line)
 	{
 		bu_log( "Barrier check at start of Convet_part:\n" );
 		if( bu_mem_barriercheck() )
-			bu_bomb( "Barrier check failed!!!\n" );
+			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
 
@@ -837,7 +837,7 @@ Convert_part(char *line)
 			while( !endloop )
 			{
 				if( bu_fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
-					bu_bomb( "Unexpected EOF while reading a loop in a part!!!\n" );
+					bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n" );
 
 				start = (-1);
 				while( isspace( line1[++start] ) );
@@ -1001,7 +1001,7 @@ Convert_part(char *line)
 	{
 		bu_log( "Barrier check at end of Convert_part:\n" );
 		if( bu_mem_barriercheck() )
-			bu_bomb( "Barrier check failed!!!\n" );
+			bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n" );
 	}
 
 	top_level = 0;
@@ -1217,7 +1217,7 @@ main(int argc, char **argv)
 			if( conv_factor == 0.0 )
 			{
 				bu_log( "Illegal units: (%s)\n", bu_optarg );
-				bu_bomb( "Illegal units!!\n" );
+				bu_exit(EXIT_FAILURE,  "Illegal units!!\n" );
 			}
 			else
 				bu_log( "Converting units from %s to mm (conversion factor is %g)\n", bu_optarg, conv_factor );
@@ -1239,7 +1239,7 @@ main(int argc, char **argv)
 			{
 				bu_log( "Illegal value for '-I' option, must be zero or greater!!!\n" );
 				bu_log( usage, argv[0] );
-				bu_bomb( "Illegal value for option '-I'\n" );
+				bu_exit(EXIT_FAILURE,  "Illegal value for option '-I'\n" );
 			}
 			break;
 		case 'm':
