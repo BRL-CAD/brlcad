@@ -122,10 +122,11 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 		fputc( buffer[i], fp_out );
 }
 
+/* only used with SIGALRM */
 void
 handler(int code)
 {
-	bu_bomb( "ALARM boolean evaluation aborted\n" );
+	bu_exit( EXIT_FAILURE, "ALARM boolean evaluation aborted\n" );
 }
 
 static void
