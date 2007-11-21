@@ -295,7 +295,7 @@ new_client(struct pkg_conn *pcp)
 	setup_socket(pcp->pkc_fd);
 
 	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
-			      existing_client_handler, (ClientData)clients[i].c_fd);
+			      existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
 
 	return;
     }
@@ -363,7 +363,7 @@ set_port(void)
 	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
     } else
 	Tcl_CreateFileHandler(netfd, TCL_READABLE,
-			      new_client_handler, (ClientData)netfd);
+			      new_client_handler, (ClientData)(size_t)netfd);
 }
 
 
