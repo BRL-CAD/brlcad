@@ -174,7 +174,7 @@ main(int argc, char **argv)
 	sprintf( spectrum_name, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
-		bu_bomb("ssamp-bw: Unable to read spectrum\n");
+		bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");
 	}
 	BN_CK_TABLE(spectrum);
 	if(verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
@@ -182,14 +182,14 @@ main(int argc, char **argv)
 
 	/* Allocate and read 2-D spectral samples array */
 	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
-	if( !data )  bu_bomb("bn_tabdata_binary_read() of datafile_basename failed\n");
+	if( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
 
 	if( lower_wavelen <= 0 )  lower_wavelen = spectrum->x[0];
 	if( upper_wavelen <= 0 )  upper_wavelen = spectrum->x[spectrum->nx];
 
 	/* Build filter to obtain portion of spectrum user wants */
 	filt = bn_tabdata_mk_linear_filter( spectrum, lower_wavelen, upper_wavelen );
-	if( !filt )  bu_bomb("bn_tabdata_mk_linear_filter() failed\n");
+	if( !filt )  bu_exit(EXIT_FAILURE, "bn_tabdata_mk_linear_filter() failed\n");
 	if( verbose )  {
 		bn_pr_table( "spectrum", spectrum );
 		bn_pr_tabdata( "filter", filt );

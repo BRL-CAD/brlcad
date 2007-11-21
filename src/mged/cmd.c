@@ -2363,7 +2363,7 @@ f_bomb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	bu_vls_free(&vls);
     }
 
-    bu_bomb(buffer);
+    bu_exit(EXIT_FAILURE, buffer);
 
     /* This is never reached */
 

@@ -477,7 +477,7 @@ rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *s
 		list[i++] = db_path_to_string( &(pp->pt_inseg->seg_stp->st_path) );
 	}
 	list[i++] = NULL;
-	if( i > len )  bu_bomb("rpt_hits_mike: array overflow\n");
+	if( i > len )  bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
 
 	ap->a_uptr = (genptr_t)list;
 	return len;

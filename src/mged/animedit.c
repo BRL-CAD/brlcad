@@ -3079,7 +3079,7 @@ hold_point_to_string(struct hold_point *hp)
 		break;
 	}
 	if (strlen(text) > (unsigned)HOLD_POINT_TO_STRING_LEN) {
-		bu_bomb("hold_point_to_string: over wrote memory!\n");
+		bu_exit(EXIT_FAILURE, "hold_point_to_string: over wrote memory!\n");
 	}
 	return text;
 }

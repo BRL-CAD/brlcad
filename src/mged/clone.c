@@ -223,7 +223,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
 	snprintf(prefix, BUFSIZ, "%s%d%s", prefix, num2, suffix2);
     } else
-	bu_bomb("multiple -c options not supported yet.");
+	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
 
     do {
 	/* choke the name back to the prefix */
@@ -346,6 +346,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* mirror */
     if (state->miraxis != W) {
+	/* matrix[5*state->miraxis] *= -1; */
 	bu_log("WARNING: mirroring not implemented!");
     }
 

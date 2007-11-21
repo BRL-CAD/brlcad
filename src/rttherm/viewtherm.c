@@ -230,7 +230,7 @@ view_pixel(register struct application *ap)
 		background_radiation(ap);
 	} else {
 		if( !ap->a_spectrum )
-			bu_bomb("view_pixel called with no spectral curve associated\n");
+			bu_exit(EXIT_FAILURE, "view_pixel called with no spectral curve associated\n");
 		BN_CK_TABDATA(ap->a_spectrum);
 	}
 
@@ -254,7 +254,7 @@ view_pixel(register struct application *ap)
 			BN_SIZEOF_TABDATA(spectrum), width, outfp );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( count != width )
-			bu_bomb("view_pixel:  fwrite failure\n");
+			bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
 	}
 #ifdef MSWISS
 	if( fbp != FBIO_NULL ) {
@@ -683,7 +683,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	bu_struct_print( "rttherm variables", view_parse, NULL );
 
 	if( !minus_o )   {
-		bu_bomb("rttherm: No -o flag specified, can't write to framebuffer, aborting\n");
+		bu_exit(EXIT_FAILURE, "rttherm: No -o flag specified, can't write to framebuffer, aborting\n");
 		exit(2);
 	}
 
@@ -755,7 +755,7 @@ view_2init(register struct application *ap, char *framename)
 		}
 		break;
 	default:
-		bu_bomb("bad lighting model #");
+		bu_exit(EXIT_FAILURE, "bad lighting model #");
 	}
 	ap->a_rt_i->rti_nlights = light_init(ap);
 

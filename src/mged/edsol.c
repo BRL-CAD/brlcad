@@ -1493,7 +1493,7 @@ nmg_ed(int arg)
 			if( !lu || *lu->up.magic_p != NMG_SHELL_MAGIC )
 			{
 				/* This should never happen */
-				bu_bomb( "Cannot find wire loop!\n" );
+				bu_exit(EXIT_FAILURE,  "Cannot find wire loop!\n" );
 			}
 
 			/* Make sure loop is not a crack */
@@ -2615,7 +2615,7 @@ transform_editing_solid(
 	int			free)
 {
 	if( rt_matrix_transform( os, mat, is, free, dbip, &rt_uniresource ) < 0 )
-		bu_bomb("transform_editing_solid failed to apply a matrix transform, aborting");
+		bu_exit(EXIT_FAILURE, "transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
 /*
@@ -4650,7 +4650,7 @@ sedit(void)
 				if( nmg_keu( es_eu ) )
 				{
 					/* Should never happen! */
-					bu_bomb( "sedit(): killed edge and emptied loop!\n" );
+					bu_exit(EXIT_FAILURE,  "sedit(): killed edge and emptied loop!\n" );
 				}
 				es_eu = prev_eu;
 				nmg_rebound( m , &mged_tol );

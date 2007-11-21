@@ -647,7 +647,7 @@ main(int argc, char **argv)
 	first_command = "doit1 42";
 
 	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
-		bu_bomb("Unable to open fb\n");
+		bu_exit(EXIT_FAILURE, "Unable to open fb\n");
 	}
 	fb_view( fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 
@@ -655,7 +655,7 @@ main(int argc, char **argv)
 	sprintf( spectrum_name, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
-		bu_bomb("Unable to read spectrum\n");
+		bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
 	}
 	BN_CK_TABLE(spectrum);
 	bu_log("spectrum has %d samples\n", spectrum->nx);
@@ -668,7 +668,7 @@ main(int argc, char **argv)
 
 	/* Allocate and read 2-D spectrum array */
 	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
-	if( !data )  bu_bomb("bn_tabdata_binary_read() of datafile_basename failed\n");
+	if( !data )  bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
 
 	/* Allocate framebuffer image buffer */
 	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
