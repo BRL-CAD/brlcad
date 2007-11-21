@@ -173,7 +173,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Illegal site: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		enqueue_site(&site_list, x, y, z);
 		break;
@@ -200,7 +200,7 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
     }
 
     if (BU_LIST_IS_EMPTY(&site_list))

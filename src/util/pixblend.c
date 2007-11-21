@@ -168,7 +168,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	gvalue = 0.0;
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 	if( value < 0.0 || value > 1.0)
 	{
 		fprintf(stderr,"pixblend: Blend value must be between 0.0 and 1.0\n");
-		bu_exit (0, "");
+		bu_exit (0, NULL);
 
 	}
 
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 	    (b2 = (char *)malloc( CHUNK )) == (char *)0 ||
 	    (b3 = (char *)malloc( CHUNK )) == (char *)0 ) {
 		fprintf(stderr, "pixblend:  malloc failure\n");
-		bu_exit (3, "");
+		bu_exit (3, NULL);
 	}
 
 	while(1)  {
@@ -272,7 +272,7 @@ main(int argc, char **argv)
 		}
 		fwrite( b3, 1, len, stdout );
 	}
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 
 /*

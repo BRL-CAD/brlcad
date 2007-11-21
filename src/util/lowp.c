@@ -57,21 +57,21 @@ main(int argc, char **argv)
 
 	if( argc < 2 )  {
 		fprintf(stderr,"%s", usage);
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	nlines = 512;
 	if( (infd1 = open( argv[1], 0 )) < 0 )  {
 		perror( argv[1] );
-		bu_exit (3, "");
+		bu_exit (3, NULL);
 	}
 	if( (infd2 = open( argv[2], 0 )) < 0 )  {
 		perror( argv[2] );
-		bu_exit (3, "");
+		bu_exit (3, NULL);
 	}
 	if( (infd3 = open( argv[3], 0 )) < 0 )  {
 		perror( argv[3] );
-		bu_exit (3, "");
+		bu_exit (3, NULL);
 	}
 	if( argc == 5 ) {
 		nlines = atoi(argv[4] );
@@ -88,21 +88,21 @@ main(int argc, char **argv)
 	    if (readval < 0) {
 		perror("lowp READ ERROR");
 	    }
-	    bu_exit (0, "");
+	    bu_exit (0, NULL);
 	}
 	readval = read(infd3, in3, scanbytes);
 	if (readval != scanbytes ) {
 	    if (readval < 0) {
 		perror("lowp READ ERROR");
 	    }
-	    bu_exit (0, "");
+	    bu_exit (0, NULL);
 	}
 	readval = read(infd3, in3, scanbytes);
 	if (readval != scanbytes ) {
 	    if (readval < 0) {
 		perror("lowp READ ERROR");
 	    }
-	    bu_exit (0, "");
+	    bu_exit (0, NULL);
 	}
 
 	/* First and last are black */

@@ -195,7 +195,7 @@ setup(int argc, char **argv)
 			    (*argv[i] == '-' && isdigit(*(argv[i]+1)))) ; i++);
 			if ((c=i-bu_optind) % 2) {
 				fprintf(stderr,"Missing Y coordent for tone map.\n");
-				bu_exit(1, "");
+				bu_exit(1, NULL);
 			}
 			Xlist = (int *) bu_malloc((c+2)*sizeof(int), "Xlist");
 			Ylist = (int *) bu_malloc((c+2)*sizeof(int), "Ylist");
@@ -221,7 +221,7 @@ setup(int argc, char **argv)
 		break;
 		case '?':
 			fprintf(stderr,usage);
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		break;
 		}
 	}
@@ -233,19 +233,19 @@ setup(int argc, char **argv)
 	if (bu_optind >= argc) {
 		if ( isatty(fileno(stdin)) ) {
 			(void) fprintf(stderr,usage);
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		}
 		if (autosize) {
 			(void) fprintf(stderr, usage);
 			(void) fprintf(stderr, "Automatic sizing can not be used with pipes.\n");
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		}
 	} else {
 		if (freopen(argv[bu_optind],"r",stdin) == NULL ) {
 			(void) fprintf( stderr,
 			    "halftone: cannot open \"%s\" for reading.\n",
 			    argv[bu_optind]);
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		}
 		if (autosize) {
 			if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[bu_optind], 1)) {

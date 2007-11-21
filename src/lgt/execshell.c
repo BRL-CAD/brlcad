@@ -116,7 +116,7 @@ exec_Shell(char **args)
 		}
 		(void) execvp( args[0], args );
 		loc_Perror( args[0] );
-		bu_exit( errno, "" );
+		bu_exit( errno, NULL );
 	    }
 	default :
 	    {

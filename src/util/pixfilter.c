@@ -157,12 +157,12 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		dousage();
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	if( width > MAXLINE )  {
 		fprintf(stderr, "pixfilter:  limited to scanlines of %d\n", MAXLINE);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	/*
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 	if( verbose )
 		fprintf( stderr, "Max = %d,  Min = %d\n", max, min );
 
-	bu_exit ( 0, "" );
+	bu_exit ( 0, NULL );
 }
 
 /*
@@ -249,7 +249,7 @@ select_filter(char *str)
 		/* No match, output list and exit */
 		fprintf( stderr, "Unrecognized filter type \"%s\"\n", str );
 		dousage();
-		bu_exit ( 3, "" );
+		bu_exit ( 3, NULL );
 	}
 
 	/* Have a match, set up that kernel */

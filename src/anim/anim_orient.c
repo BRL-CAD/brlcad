@@ -93,7 +93,7 @@ main(int argc, char **argv)
 
     if(!parse_args(argc,argv)) {
 	fprintf(stderr,"Get_args error.\n");
-	bu_exit(0, "");
+	bu_exit(0, NULL);
     }
 
     /* read data */

@@ -404,7 +404,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	return(0);		/* bu_exit(0, "") */
+	return(0);		/* bu_exit(0, NULL) */
 }
 
 /*
@@ -446,7 +446,7 @@ ph_restart(register struct pkg_conn *pc, char *buf)
 	pkg_close(pcsrv);
 	execlp( "rtsrv", "rtsrv", control_host, tcp_port, (char *)0);
 	perror("rtsrv");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
 }
 
 /*
@@ -816,7 +816,7 @@ bu_log( char *fmt, ... )
 	if(debug) fprintf(stderr, "%s", buf);
 	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 	}
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
@@ -874,7 +874,7 @@ va_dcl
 	}
 	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 	}
 	cp = buf;
 out:
@@ -899,7 +899,7 @@ int	a, b, c, d, e, f, g, h;
 	if(debug) fprintf(stderr, "%s", buf);
 	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 	}
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
@@ -932,7 +932,7 @@ bu_bomb(const char *str)
 	fflush(stderr);
 	if( RT_G_DEBUG || rt_g.NMG_debug || bu_debug || debug )
 		abort();	/* should dump */
-	bu_exit(12, "");
+	bu_exit(12, NULL);
 }
 
 void
@@ -959,7 +959,7 @@ ph_end(register struct pkg_conn *pc, char *buf)
 {
 	if( debug )  fprintf(stderr, "ph_end\n");
 	pkg_close(pcsrv);
-	bu_exit(0, "");
+	bu_exit(0, NULL);
 }
 
 /*

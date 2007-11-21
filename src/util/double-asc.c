@@ -145,13 +145,13 @@ get_args(int argc, register char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
     }
 
     if (argc > ++bu_optind)
     {
 	print_usage();
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
 
     return(1);		/* OK */
@@ -173,7 +173,7 @@ main (int argc, char **argv)
     if (!get_args( argc, argv))
     {
 	print_usage();
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
 
     /* autosize input? */
@@ -224,7 +224,7 @@ main (int argc, char **argv)
     if (num < 0)
     {
 	perror("double-asc");
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
     return 0;
 }

@@ -105,15 +105,15 @@ main(int argc, char **argv)
 {
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	if (pkg_init() != 0)
-	    bu_exit(1, "");
+	    bu_exit(1, NULL);
 
 	if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL) {
 	    pkg_terminate();
-	    bu_exit(2, "");
+	    bu_exit(2, NULL);
 	}
 
 	/* Get the screen size we were given */
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 
 	if( clear_and_reset ) {
 		if( fb_wmap( fbp, COLORMAP_NULL ) < 0 )
-			bu_exit(3, "");
+			bu_exit(3, NULL);
 		(void)fb_view( fbp, scr_width/2, scr_height/2, 1, 1 );
 	} else {
 		ColorMap	cmap;

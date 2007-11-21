@@ -57,7 +57,7 @@ int recno;
 	{
 		bu_log( "Error in seek\n" );
 		perror( "Readrec" );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 	counter = 0;
 

@@ -201,7 +201,7 @@ Fatal( va_alist )
 	if ( fbp != FBIO_NULL && fb_close( fbp ) == -1 )
 		Message( "Error closing frame buffer" );
 
-	bu_exit( EXIT_FAILURE, "" );
+	bu_exit( EXIT_FAILURE, NULL );
 	/*NOTREACHED*/
 	}
 
@@ -850,7 +850,7 @@ main(int argc, char **argv)
 			if ( image > 0 )
 				Fatal( "Specified image not found" );
 
-			bu_exit( EXIT_SUCCESS, "" );
+			bu_exit( EXIT_SUCCESS, NULL );
 
 		case GIF_EXTENSION:	/* GIF extension block introducer */
 			{
@@ -988,7 +988,7 @@ main(int argc, char **argv)
 			}
 		}
 	/* [not reached] */
-	bu_exit(1, "");
+	bu_exit(1, NULL);
 	}
 
 /*

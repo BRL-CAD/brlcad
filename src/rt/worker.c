@@ -719,7 +719,7 @@ void do_run( int a, int b )
 		pid = fork();
 		if (pid < 0) {
 			perror("fork failed");
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		} else if (pid == 0) {
 #  endif
 
@@ -729,14 +729,14 @@ void do_run( int a, int b )
 			/* send raytrace instance data back to the parent */
 			if (write(p[1], resource, sizeof(resource[0]) * npsw) == -1) {
 				perror("Unable to write to the communication pipe");
-				bu_exit(1, "");
+				bu_exit(1, NULL);
 			}
 			/* flush the pipe */
 			if (close(p[1]) == -1) {
 				perror("Unable to close the communication pipe");
 				sleep(1); /* give the parent time to read */
 			}
-			bu_exit(0, "");
+			bu_exit(0, NULL);
 		} else {
 			if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
 				perror("Unable to read from the communication pipe");

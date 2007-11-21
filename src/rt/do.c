@@ -414,7 +414,7 @@ int cm_closedb(int argc, char **argv)
 	ap.a_rt_i = RTI_NULL;
 
 	bu_prmem( "After _closedb" );
-	bu_exit(0, "");
+	bu_exit(0, NULL);
 
 	return( 1 );	/* for compiler */
 }

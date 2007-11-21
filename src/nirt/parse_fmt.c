@@ -449,7 +449,7 @@ void report(int outcom_type)
 		fprintf(stderr, "Fatal: Invalid item type %d.  ",
 		    ValTab[oip -> code_nm].type);
 		fprintf(stderr, "This shouldn't happen\n");
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
     fflush(outf);
 }
@@ -508,7 +508,7 @@ void print_item (char *buffer, com_table *ctp)
 			fprintf(stderr, "Fatal: Invalid item type %d.  ",
 			    ValTab[vtp -> code_nm].type);
 			fprintf(stderr, "This shouldn't happen\n");
-			bu_exit (1, "");
+			bu_exit (1, NULL);
 		}
 		break;
 	    }

@@ -330,7 +330,7 @@ void quit()
 {
 	if (silent_flag != SILENT_YES)
 	    (void) fputs("Quitting...\n", stdout);
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 
 void show_menu(buffer)
@@ -432,7 +432,7 @@ com_table		*ctp;
 	{
 	    bu_log("Could not load file %s\n", db_name);
 	    printusage();
-	    bu_exit(1, "");
+	    bu_exit(1, NULL);
 	}
 	rti_tab[new_use] = rtip;
 	rtip -> useair = new_use;

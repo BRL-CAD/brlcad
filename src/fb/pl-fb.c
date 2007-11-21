@@ -498,7 +498,7 @@ get_strokes(void)
 	OutBuild();
 	if( (cp = malloc(bytes)) == (char *)0 ) {
 	    fprintf(stderr,"pl-fb: malloc failed!\n");
-	    bu_exit( 2, "" );
+	    bu_exit( 2, NULL );
 	}
     }
     /* link them all into the free list */
@@ -1375,13 +1375,13 @@ main(int argc, char **argv)
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);
-	bu_exit( 1, "" );
+	bu_exit( 1, NULL );
     }
 
     /* Open frame buffer, adapt to slightly smaller ones */
     if( (fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL ) {
 	fprintf(stderr,"pl-fb: fb_open failed\n");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
     }
     Npixels = fb_getwidth(fbp);
     Nscanlines = fb_getheight(fbp);
@@ -1411,13 +1411,13 @@ main(int argc, char **argv)
     buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
     if( (buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL)  {
 	fprintf(stderr,"pl-fb:  malloc error\n");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
     }
     /* Extra band protects against requeueing off the top */
     band = (struct band *)malloc((BANDSLOP)*sizeof(struct band));
     if( band == (struct band *)0 )  {
 	fprintf(stderr,"pl-fb: malloc error2\n");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
     }
     bzero( (char *)band, (BANDSLOP)*sizeof(struct band) );
     bandEnd = &band[BANDS];
@@ -1432,7 +1432,7 @@ main(int argc, char **argv)
     SetSigs();			/* set signal catchers */
 
     (void)DoFile( );	/* plot it */
-    bu_exit(0, "");
+    bu_exit(0, NULL);
 }
 
 

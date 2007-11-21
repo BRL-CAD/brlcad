@@ -684,7 +684,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 	if( !minus_o )   {
 		bu_exit(EXIT_FAILURE, "rttherm: No -o flag specified, can't write to framebuffer, aborting\n");
-		bu_exit(2, "");
+		bu_exit(2, NULL);
 	}
 
 	/* Build spectrum definition */

@@ -86,7 +86,7 @@ main(int argc, char **argv)
 
 	if( (fbp = fb_open( fb_file, width, width )) == NULL )  {
 		fprintf(stderr,"fb_open failed\n");
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 	}
 
 	/* Read color map, see if it's linear */
@@ -224,7 +224,7 @@ parsArgv(int argc, register char **argv)
 			"\"%s\" already exists.\n",
 			argv[bu_optind]
 			    );
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 		if( (fp = fopen( argv[bu_optind], "w" )) == NULL )
 		{

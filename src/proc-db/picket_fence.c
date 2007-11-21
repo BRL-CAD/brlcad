@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
   if (argc < 10)
     {
       fprintf(stderr, "Usage: pf <filename> <prefix> <height in mm> <spacing> <x0> <y0> <z0> ... <xn> <yn> <zn> [-r]\n");
-      bu_exit(1, "");
+      bu_exit(1, NULL);
     }
   strcpy(prefix, argv[2]);
   ps = atof(argv[4]);
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
   fp_db = wdb_fopen(argv[1]);
   if (fp_db == NULL) {
     perror(argv[1]);
-    bu_exit(2, "");
+    bu_exit(2, NULL);
   }
   mk_id(fp_db, "Picket Fence");
 

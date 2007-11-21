@@ -165,7 +165,7 @@ main(int argc, char **argv)
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit( 1, "");
+		bu_exit( 1, NULL);
 	}
 
 	if( bu_optind+1 == argc )  {
@@ -177,12 +177,12 @@ main(int argc, char **argv)
 
 	if( file_width < 1 ) {
 		fprintf(stderr,"pixflip-fb: width of %d out of range\n", file_width);
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 	}
 
 	if( (fbp = fb_open( NULL, screen_width, screen_height )) == FBIO_NULL )  {
 		fprintf(stderr,"pixflip-fb: fb_open failed\n");
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 	}
 	screen_width = fb_getwidth(fbp);
 	screen_height = fb_getheight(fbp);
@@ -270,7 +270,7 @@ done:
 	fb_close( fbp );
 
 	fprintf(stderr,"\n");
-	bu_exit(0, "");
+	bu_exit(0, NULL);
 }
 
 void

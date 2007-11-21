@@ -163,7 +163,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	ofp = stdout;
@@ -172,14 +172,14 @@ main(int argc, char **argv)
 	buflines = MAXBUFBYTES / scanbytes;
 	if( buflines <= 0 ) {
 		fprintf( stderr, "bwrot: I'm not compiled to do a scanline that long!\n" );
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 	if( buflines > nyin ) buflines = nyin;
 	buffer = (unsigned char *)malloc( buflines * scanbytes );
 	obuf = (unsigned char *)malloc( (nyin > nxin) ? nyin : nxin );
 	if( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
 		fprintf( stderr, "bwrot: malloc failed\n" );
-		bu_exit ( 3, "" );
+		bu_exit ( 3, NULL );
 	}
 
 	/*
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 	 */
 	if( angle ) {
 		arbrot( angle );
-		bu_exit ( 0, "" );
+		bu_exit ( 0, NULL );
 	}
 
 	/*
@@ -219,7 +219,7 @@ main(int argc, char **argv)
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-						bu_exit ( 3, "" );
+						bu_exit ( 3, NULL );
 					}
 					outplace = outbyte;
 				}
@@ -240,7 +240,7 @@ main(int argc, char **argv)
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-						bu_exit ( 3, "" );
+						bu_exit ( 3, NULL );
 					}
 					outplace = outbyte;
 				}
@@ -254,7 +254,7 @@ main(int argc, char **argv)
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-						bu_exit ( 3, "" );
+						bu_exit ( 3, NULL );
 					}
 					outplace = outbyte;
 				}
@@ -340,7 +340,7 @@ arbrot(double a)
 	if( buflines != nyin ) {
 		/* I won't all fit in the buffer */
 		fprintf(stderr,"bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 	if( buflines > nyin ) buflines = nyin;
 	fill_buffer();

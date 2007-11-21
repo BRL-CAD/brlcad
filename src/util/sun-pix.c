@@ -212,7 +212,7 @@ decoderead(unsigned char *buf, int size, int length, FILE *fp)
 	if (size != 1) {
 		fprintf(stderr,"decoderead: unable to process size = %d.\n",
 			size);
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	while (length) {
@@ -264,7 +264,7 @@ main(int argc, char **argv)
 	fp = stdin;
 	if ( !get_args( argc, argv ) || (isatty(fileno(stdout)) && (hflag == 0)) ) {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 	if( inverted ) {
 		off = 255;
@@ -289,7 +289,7 @@ main(int argc, char **argv)
 			fprintf(stderr,
 				"sun-pix: bad magic number, was x%x, s/b x%x\n",
 				header.ras_magic, RAS_MAGIC );
-			bu_exit (1, "");
+			bu_exit (1, NULL);
 		}
 
 		/* Width is rounded up to next multiple of 16 bits */
@@ -310,7 +310,7 @@ main(int argc, char **argv)
 		}
 		if( hflag ) {
 			printf( "-w%d -n%d\n", header.ras_width, header.ras_height );
-			bu_exit ( 0, "" );
+			bu_exit ( 0, NULL );
 		}
 	} else {
 		/* "pure" bitmap */
@@ -326,7 +326,7 @@ main(int argc, char **argv)
 	default:
 		fprintf(stderr,"sun-pix:  Unable to process type %d images\n",
 			header.ras_type );
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	width = header.ras_width;
@@ -367,7 +367,7 @@ main(int argc, char **argv)
 		if (header.ras_maptype != RMT_EQUAL_RGB) {
 			fprintf(stderr,"sun-pix:  unable to handle depth=8, maptype = %d.\n",
 				header.ras_maptype);
-			bu_exit (1, "");
+			bu_exit (1, NULL);
 		}
 		scanbytes = width;
 		for (x = 0; x < header.ras_maplength/3; x++) {
@@ -417,9 +417,9 @@ main(int argc, char **argv)
 	default:
 		fprintf(stderr,"sun-pix:  unable to handle depth=%d\n",
 			header.ras_depth );
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 
 /*

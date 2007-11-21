@@ -164,7 +164,7 @@ get_args(int argc, register char **argv)
 			(void)fprintf( stderr,
 				"png-fb: cannot open \"%s\" for reading\n",
 				file_name );
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		}
 		fileinput++;
 	}
@@ -194,11 +194,11 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	if (pkg_init() != 0)
-	    bu_exit(1, "");
+	    bu_exit(1, NULL);
 
 	if (fread(header, 8, 1, fp_in) != 1) {
 		pkg_terminate();
@@ -271,7 +271,7 @@ main(int argc, char **argv)
 	if( header_only )  {
 		fprintf(stdout, "WIDTH=%d HEIGHT=%d\n", file_width, file_height);
 		pkg_terminate();
-		bu_exit(0, "");
+		bu_exit(0, NULL);
 	}
 
 	if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 		scr_height = file_height;
 
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 
 	/* Get the screen size we were given */
 	scr_width = fb_getwidth(fbp);
@@ -356,7 +356,7 @@ main(int argc, char **argv)
 	}
 
 	if( xout < 0 )
-		bu_exit(0, "");			/* off screen */
+		bu_exit(0, NULL);			/* off screen */
 	if( xout > (file_width-file_xoff) )
 		xout = (file_width-file_xoff);
 	scanpix = xout;				/* # pixels on scanline */
@@ -366,7 +366,7 @@ main(int argc, char **argv)
 
 	yout = scr_height - scr_yoff;
 	if( yout < 0 )
-		bu_exit(0, "");			/* off screen */
+		bu_exit(0, NULL);			/* off screen */
 	if( yout > (file_height-file_yoff) )
 		yout = (file_height-file_yoff);
 
@@ -445,7 +445,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "png-fb: Warning: fb_close() error\n");
 	}
 	pkg_terminate();
-	bu_exit(0, "");
+	bu_exit(0, NULL);
 }
 
 /*

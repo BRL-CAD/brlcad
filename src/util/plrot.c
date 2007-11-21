@@ -255,7 +255,7 @@ get_args(int argc, register char **argv)
 
 			if( num != 16)  {
 				fprintf(stderr, "Num of arguments to -m only %d, should be 16\n", num);
-				bu_exit (1, "");
+				bu_exit (1, NULL);
 			}
 
 			/* Now copy the array of doubles into mat. */
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	if( verbose )  {

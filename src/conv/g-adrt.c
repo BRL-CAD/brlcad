@@ -514,7 +514,7 @@ int main(int argc, char *argv[]) {
 
   if(argc <= 3) {
     printf("Usage: g-adrt [-r region.map] file.g adrt_project_name [region list]\n");
-    bu_exit(1, "");
+    bu_exit(1, NULL);
   }
 
   /* Process command line arguments */
@@ -567,7 +567,7 @@ int main(int argc, char *argv[]) {
 
   if((rtip = rt_dirbuild(argv[0], idbuf, sizeof(idbuf))) == RTI_NULL) {
     fprintf(stderr,"rtexample: rt_dirbuild failure\n");
-    bu_exit(2, "");
+    bu_exit(2, NULL);
   }
 
   ts = rt_initial_tree_state;

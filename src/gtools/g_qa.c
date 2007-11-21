@@ -447,7 +447,7 @@ usage(s)
 
     (void) fprintf(stderr, usage_msg, progname);
 
-    bu_exit(1, "");
+    bu_exit(1, NULL);
 }
 
 
@@ -633,7 +633,7 @@ parse_args(int ac, char *av[])
 	    use_air = strtol(bu_optarg, (char **)NULL, 10);
 	    if (errno == ERANGE || errno == EINVAL) {
 		perror("-U argument");
-		bu_exit(EXIT_FAILURE, "");	/* left blank due to use of perror() */
+		bu_exit(EXIT_FAILURE, NULL);	/* left blank due to use of perror() */
 	    }
 	    break;
 	case 'u'	:
@@ -2067,7 +2067,7 @@ main(int ac, char *av[])
      */
     if( (rtip=rt_dirbuild(av[arg_count], idbuf, IDBUFSIZE)) == RTI_NULL ) {
 	fprintf(stderr,"g_qa: rt_dirbuild failure on %s\n", av[arg_count]);
-	bu_exit(2, "");
+	bu_exit(2, NULL);
     }
     rtip->useair = use_air;
 

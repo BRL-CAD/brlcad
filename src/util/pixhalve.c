@@ -144,7 +144,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	/* autosize input? */
@@ -183,7 +183,7 @@ main(int argc, char **argv)
 	if( fread( inbuf, 3, file_width, infp ) != file_width )  {
 		perror(file_name);
 		fprintf(stderr, "pixhalve:  fread error\n");
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 	separate( &rlines[0][2], &glines[0][2], &blines[0][2], inbuf, file_width );
 	separate( &rlines[1][2], &glines[1][2], &blines[1][2], inbuf, file_width );
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 		if( fread( inbuf, 3, file_width, infp ) != file_width )  {
 			perror(file_name);
 			fprintf(stderr, "pixhalve:  fread error\n");
-			bu_exit (1, "");
+			bu_exit (1, NULL);
 		}
 		separate( &rlines[i][2], &glines[i][2], &blines[i][2],
 			inbuf, file_width );
@@ -206,7 +206,7 @@ main(int argc, char **argv)
 		combine( outbuf, rout, gout, bout, out_width );
 		if( fwrite( (void*)outbuf, 3, out_width, stdout ) != out_width )  {
 			perror("stdout");
-			bu_exit (2, "");
+			bu_exit (2, NULL);
 		}
 
 		/* Ripple down two scanlines, and acquire two more */

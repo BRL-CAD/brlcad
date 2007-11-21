@@ -731,25 +731,25 @@ static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outpu
 
     if (mk_particle(fp, oc->name, structure->segment[i]->position, height, structure->segment[i]->startRadius, structure->segment[i]->endRadius) != 0) {
       fprintf(stderr, "Unable to write segment to database\n");
-      bu_exit(2, "");
+      bu_exit(2, NULL);
     }
     oc->primitives++;
     if (mk_addmember(oc->name, &(oc->combination.l), NULL, WMOP_UNION) == NULL) {
       fprintf(stderr, "Unable to add object to combination list\n");
-      bu_exit(3, "");
+      bu_exit(3, NULL);
     }
   }
   snprintf(oc->name, MAX_STRING_LENGTH, "branch%d.c", oc->combinations);
   if (mk_lcomb(fp, oc->name, &(oc->combination), 0, NULL, NULL, NULL, 0) != 0) {
     fprintf(stderr, "Unable to write region to database\n");
-    bu_exit(2, "");
+    bu_exit(2, NULL);
   }
   oc->combinations++;
 
   /* add combination to master region list */
   if (mk_addmember(oc->name, &(oc->region.l), NULL, WMOP_UNION) == NULL) {
     fprintf(stderr, "Unable to add combination to region list\n");
-    bu_exit(3, "");
+    bu_exit(3, NULL);
   }
 
   for (i=0; i < structure->subStructureCount; i++) {
@@ -775,7 +775,7 @@ static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
 
   if (mk_lcomb(fp, oc.plantName, &(oc.region), 1, NULL, NULL, NULL, 0) != 0) {
     fprintf(stderr, "Unable to write region to database\n");
-    bu_exit(2, "");
+    bu_exit(2, NULL);
   }
 
   return 0;
@@ -939,19 +939,19 @@ int main (int argc, char *argv[]) {
 
   if (invalidCharacteristics(&c)) {
     fprintf(stderr, "Invalid plant characteristics\n");
-    bu_exit(3, "");
+    bu_exit(3, NULL);
   }
 
   if ((plant = createPlant(age, position, trunkRadius, direction, &c)) == NULL) {
     fprintf(stderr, "Unable to create plant\n");
-    bu_exit(1, "");
+    bu_exit(1, NULL);
   }
 
   printf("There are %ld segments\n", plant->segmentCount);
 
   if (writePlantToDisk(fp, plant) != 0) {
     fprintf(stderr, "Unable to write plant to disk\n");
-    bu_exit(1, "");
+    bu_exit(1, NULL);
   }
 
   destroyPlant(plant);

@@ -142,7 +142,7 @@ Initastack()
 	{
 		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initastack" );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 	for( i=0 ; i<stklen ; i++ )
 		stk[i] = NULL;
@@ -165,7 +165,7 @@ char *ptr;
 		{
 			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Apush" );
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 		for( i=jtop ; i<stklen ; i++ )
 			stk[i] = NULL;
@@ -217,7 +217,7 @@ Initsstack() /* initialize the stack */
 	{
 		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initsstack" );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 }
 
@@ -237,7 +237,7 @@ struct node *ptr;
 		{
 			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Spush" );
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 	}
 	sstk_p[sjtop] = ptr;

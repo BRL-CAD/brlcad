@@ -341,7 +341,7 @@ show_gift_bool (struct bool_tree_node *rp, int new_line)
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
     }
 

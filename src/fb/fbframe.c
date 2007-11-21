@@ -49,7 +49,7 @@ char *Usage="[-h] [-F framebuffer]\n\
 	[-s squareframesize] [-w frame_width] [-n frame_height]\n";
 
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
-			bu_exit(-1, ""); }
+			bu_exit(-1, NULL); }
 
 int
 main(int argc, char **argv)
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 	}
 
 	if( (fbp = fb_open( framebuffer, xsize, ysize )) == FBIO_NULL )
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 
 	if (xsize <= 0)
 		xsize = fb_getwidth(fbp);

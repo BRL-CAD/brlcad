@@ -105,7 +105,7 @@ get_args(int argc, register char **argv)
 
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
-				bu_exit ( 2, "" );
+				bu_exit ( 2, NULL );
 			}
 			val[ numop++ ] = 1.0 / d;
 			break;
@@ -122,7 +122,7 @@ get_args(int argc, register char **argv)
 			d = atof(bu_optarg);
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: zero root!\n" );
-				bu_exit ( 2, "" );
+				bu_exit ( 2, NULL );
 			}
 			val[ numop++ ] = 1.0 / d;
 			break;
@@ -193,7 +193,7 @@ void mk_trans_tbl(void)
 			case XOR : tmp=d; tmp ^= (int)val[i]; d= tmp; break;
 			case TRUNC: tmp=((int)d/(int)val[i])*(int)val[i]; break;
 			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
-				   bu_exit (-1, "");
+				   bu_exit (-1, NULL);
 				   break;
 			}
 		}
@@ -225,7 +225,7 @@ void mk_char_trans_tbl(void)
 			case XOR : d ^= (int)val[i]; break;
 			case TRUNC: d /= (int)val[i];d *= (int)val[i]; break;
 			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
-				   bu_exit (-1, "");
+				   bu_exit (-1, NULL);
 				   break;
 			}
 		}
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 	if( !get_args( argc, argv ) || isatty((int)fileno(stdin))
 	    || isatty((int)fileno(stdout)) ) {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	if (char_arith)
@@ -265,7 +265,7 @@ int main(int argc, char **argv)
 		if (write(1, (void *)ibuf, (unsigned)n) != n) {
 			(void)fprintf(stderr, "%s: Error writing stdout\n",
 				progname);
-			bu_exit (-1, "");
+			bu_exit (-1, NULL);
 		}
 	}
 	if (n < 0) {

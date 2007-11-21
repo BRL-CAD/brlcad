@@ -992,7 +992,7 @@ editit(const char *file)
 #endif /* DM_WGL */
 		    /* should not reach */
 		    perror(editor);
-		    bu_exit(1, "");
+		    bu_exit(1, NULL);
 		}
 	}
 

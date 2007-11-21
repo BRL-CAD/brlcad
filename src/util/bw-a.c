@@ -120,7 +120,7 @@ main(int argc, char **argv)
 
 	if ( !get_args(argc, argv)) {
 		(void) fputs(usage, stderr);
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	/* autosize the input? */

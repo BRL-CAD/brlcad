@@ -201,7 +201,7 @@ main(int argc, char **argv)
 
     if ((!print_link)&&(!print_wheel)) {
 	fprintf(stderr,"anim_hardtrack: no ouput requested. Use -l or -w.\n");
-	bu_exit(0, "");
+	bu_exit(0, NULL);
     }
     /* main loop */
     distance = 0.0;

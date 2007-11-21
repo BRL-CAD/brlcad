@@ -152,7 +152,7 @@ int report(char *call, char *file, int line, int code)
 		progname, file, line, call, message);
     }
 #if 1
-    bu_exit( 1, "" );
+    bu_exit( 1, NULL );
 #else
     longjmp(my_env, 1);
 #endif

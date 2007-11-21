@@ -139,7 +139,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	horiz_buf = (unsigned char *)malloc( file_width * 3 );
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 			write( 1, horiz_buf, file_width*3 );
 		}
 	}
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 
 /* rgbhsv

@@ -200,7 +200,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Illegal color: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		add_to_table(rgb);
 		cf_name = 0;
@@ -215,7 +215,7 @@ main (int argc, char **argv)
 		    bu_log("Invalid debug-flag value: '%s'\n", bu_optarg);
 		    print_usage();
 		    print_debug_usage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		break;
 	    case '?':
@@ -237,7 +237,7 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
     }
 
     /*
@@ -265,7 +265,7 @@ main (int argc, char **argv)
 	{
 	    bu_log("FATAL: pixclump reads only from file or pipe\n");
 	    print_usage();
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
 	}
     }
 
@@ -278,7 +278,7 @@ main (int argc, char **argv)
     {
 	bu_log("pixclump: No colors specified\n");
 	print_usage();
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
     if (debug & PC_DEBUG_TABLE)
 	print_table();

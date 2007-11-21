@@ -1282,7 +1282,7 @@ main(int argc, char **argv)
 	{
 		bu_log( "Cannot open input file (%s)\n" , input_file );
 		perror( argv[0] );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 	bu_optind++;
 	brlcad_file = argv[bu_optind];
@@ -1290,7 +1290,7 @@ main(int argc, char **argv)
 	{
 		bu_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
 		perror( argv[0] );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	if( stl_format )

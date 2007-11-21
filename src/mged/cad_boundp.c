@@ -811,7 +811,7 @@ Input(register segment *inp)				/* input stroke record */
 			return true;	/* successfully converted */
 
 		(void)Mess( "bad input: %s", inbuf );
-		bu_exit( 5, "" );		/* return false insufficient */
+		bu_exit( 5, NULL );		/* return false insufficient */
 	}
 
 	return false;			/* EOF */

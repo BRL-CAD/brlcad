@@ -104,7 +104,7 @@ usage(char *s)
 \t-f func\t\tNoise function:\n\
 \t\t\t\tf:fbm t:turb T:1.0-turb m:multi r:ridged");
 
-	bu_exit (-1, "");
+	bu_exit (-1, NULL);
 }
 
 
@@ -636,7 +636,7 @@ parse_args(int ac, char **av)
 				fprintf(stderr,
 					"Unknown noise terrain_function: \"%s\"\n",
 					bu_optarg);
-				bu_exit (-1, "");
+				bu_exit (-1, NULL);
 				break;
 			}
 			break;

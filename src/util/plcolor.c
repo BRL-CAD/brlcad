@@ -52,7 +52,7 @@ main(int argc, char **argv)
 
 	if( argc != 4 || isatty(fileno(stdout)) ) {
 		fprintf( stderr, usage );
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	if( !isatty(fileno(stdin)) ) {

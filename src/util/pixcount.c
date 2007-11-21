@@ -216,7 +216,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel size: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		break;
 	    case '?':
@@ -238,7 +238,7 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
     }
 
     /*
@@ -266,7 +266,7 @@ main (int argc, char **argv)
 	{
 	    bu_log("FATAL: pixcount reads only from file or pipe\n");
 	    print_usage();
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
 	}
     }
 

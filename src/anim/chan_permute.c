@@ -112,7 +112,7 @@ main(int argc, char **argv)
 	    }
 	    else{
 		fprintf(stderr,"Illegal option %c\n",argv[i][1]);
-		bu_exit(-1, "");
+		bu_exit(-1, NULL);
 	    }
 	}
 	else{

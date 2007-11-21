@@ -93,7 +93,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  */
 	if (size != 1) {
 		fprintf(stderr, "sharpen: size != 1.\n");
-		bu_exit(2, "");
+		bu_exit(2, NULL);
 	}
 
 /*
@@ -121,7 +121,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 
 		if (linelen != num) {
 			fprintf(stderr,"sharpen: buffer size changed!\n");
-			bu_exit(2, "");
+			bu_exit(2, NULL);
 		}
 /*
  *		rotate the buffers.

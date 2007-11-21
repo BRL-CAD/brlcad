@@ -381,7 +381,7 @@ fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
 	fflush(stdout);
 	fprintf (stderr, "Error:  cos(obliquity) > 1\n");
 	obliquity = 0;
-	bu_exit(1, "");
+	bu_exit(1, NULL);
     }
 
     /* convert obliquity to degrees */

@@ -74,7 +74,7 @@ main(int argc, char **argv)
 
 	if( argc < 4 )  {
 		fputs( usage, stderr );
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	nbytes = atoi(argv[1]);

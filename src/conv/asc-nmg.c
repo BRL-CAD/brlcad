@@ -80,7 +80,7 @@ main(int argc, char **argv)
 			fprintf(stderr,
 				"%s: cannot open %s for reading\n",
 				argv[0], afile);
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		}
 	}
 
@@ -94,7 +94,7 @@ main(int argc, char **argv)
 	if ((fpout = wdb_fopen(bfile)) == NULL) {
 		fprintf(stderr, "%s: cannot open %s for writing\n",
 			argv[0], bfile);
-		bu_exit(1, "");
+		bu_exit(1, NULL);
 	}
 
 	ascii_to_brlcad(fpin, fpout, "nmg", NULL);

@@ -586,7 +586,7 @@ int
 main(void)
 {
 	fprintf(stderr,"ir-sgi: This program only works on an SGI workstation\n");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
 }
 #endif	/* !defined(IRIX) */
 

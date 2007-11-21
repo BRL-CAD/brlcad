@@ -530,7 +530,7 @@ check(double x, double y, double z)
 	VPRINT( "rgb2", rgb2 );
 
 	bn_tabdata_free( tabp );
-bu_exit(2, "");
+bu_exit(2, NULL);
 }
 
 void
@@ -599,7 +599,7 @@ get_args(int argc, register char **argv)
 			first_command = "do_testing";
 			Tk_Main( 1, argv, tcl_appinit );
 			/* NOTREACHED */
-			bu_exit(0, "");
+			bu_exit(0, NULL);
 			/* NOTREACHED */
 			break;
 		case 's':
@@ -636,7 +636,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	if( argc > 1 && strcmp(argv[1], "-t") == 0 )  {

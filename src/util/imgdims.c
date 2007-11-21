@@ -137,7 +137,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel-size value: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		break;
 	    case '?':
@@ -148,7 +148,7 @@ main (int argc, char **argv)
     if (argc - bu_optind != 1)
     {
 	print_usage();
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
 
     argument = argv[bu_optind];
@@ -157,7 +157,7 @@ main (int argc, char **argv)
     {
 	bu_log("Cannot find file '%s'\n", argument);
 	print_usage();
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
 
     /*
@@ -184,7 +184,7 @@ main (int argc, char **argv)
 	bu_exit (1, "Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
 
     if (!fb_common_image_size(&width, &height, nm_pixels))
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 
 done:
     bu_exit (0, "%lu %lu\n", width, height);

@@ -73,7 +73,7 @@ void usage(char *s)
 		mfilename,
 		"\tand plot file ",
 		plotfilename);
-	bu_exit(1, "");
+	bu_exit(1, NULL);
 }
 
 /*

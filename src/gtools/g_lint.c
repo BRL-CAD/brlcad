@@ -881,7 +881,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'c':
@@ -892,7 +892,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		if ((elevation < -90.0) || (elevation > 90.0))
 		    bu_exit (1, "Illegal elevation: '%g'\n", elevation);
@@ -902,7 +902,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid grid-size specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		if (celsiz < 0.0)
 		    bu_exit (1, "Illegal grid size: '%g'\n", celsiz);
@@ -931,7 +931,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid report specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		if (complement_bits)
 		{
@@ -952,7 +952,7 @@ main (int argc, char **argv)
 		    bu_log("Invalid tolerance specification: '%s'\n",
 			bu_optarg);
 		    printusage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		if (control.glc_tol < 0.0)
 		    bu_exit (1, "Illegal tolerance: '%g'\n", control.glc_tol);
@@ -966,18 +966,18 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid debug-flag specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, "");
+		    bu_exit (1, NULL);
 		}
 		break;
 	    default:
 		printusage();
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
     if (argc - bu_optind < 2)
     {
 	printusage();
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
     if (control.glc_what_to_report & ~G_LINT_ALL)
 	bu_log("WARNING: Ignoring undefined bits of report specification\n");
@@ -992,7 +992,7 @@ main (int argc, char **argv)
     while (++bu_optind < argc)
     {
 	if (rt_gettree(rtip, argv[bu_optind]) == -1)
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
 	bu_log("\nObject '%s' processed", argv[bu_optind]);
     }
     bu_log("\nPrepping the geometry... ");
@@ -1095,7 +1095,7 @@ main (int argc, char **argv)
 	    bu_rb_walk1(ovlps_by_vol, print_overlap, INORDER);
     }
 
-    bu_exit (0, "");
+    bu_exit (0, NULL);
 }
 
 /*

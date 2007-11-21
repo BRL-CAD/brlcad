@@ -437,7 +437,7 @@ main (int argc, char **argv)
 	    case '?':
 	    default:
 		printusage();
-		bu_exit (Ch != '?', "");
+		bu_exit (Ch != '?', NULL);
 	}
     if (argc - bu_optind < 2)
     {
@@ -630,7 +630,7 @@ do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
     {
 	fflush(stdout);
 	fprintf(stderr, "rt_gettrees() failed\n");
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
 
     if( need_prep ) {

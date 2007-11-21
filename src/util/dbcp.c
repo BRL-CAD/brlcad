@@ -101,13 +101,13 @@ main(int argc, char **argv)
 		break;
 	    default:
 		(void)fputs(usage, stderr);
-		bu_exit(1, "");
+		bu_exit(1, NULL);
 	}
     }
 
     if( bu_optind >= argc )  {
 	(void)fputs(usage, stderr);
-	bu_exit(2,"");
+	bu_exit(2,NULL);
     }
     size = 512 * atoi(argv[bu_optind]);
 
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	bu_exit(88, "dbcp: Insufficient buffer memory\n");
     if (pipe (par2chld) < 0 || pipe (chld2par) < 0) {
 	perror ("dbcp: Can't pipe");
-	bu_exit ( 89, "" );
+	bu_exit ( 89, NULL );
     }
 
     /*
@@ -128,7 +128,7 @@ main(int argc, char **argv)
     switch (pid = fork()) {
 	case -1:
 	    perror ("dbcp: Can't fork");
-	    bu_exit ( 99, "" );
+	    bu_exit ( 99, NULL );
 
 	case 0:
 	    /*  Child  */

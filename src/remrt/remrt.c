@@ -612,14 +612,14 @@ main(int argc, char **argv)
 		finalframe = -1;
 		if( !get_args( argc, argv ) )  {
 			fprintf(stderr,"remrt:  bad arg list\n");
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		}
 		if (interactive) work_allocate_method = OPT_FRAME;
 
 		/* take note of database name and treetops */
 		if( bu_optind+2 > argc )  {
 			fprintf(stderr,"remrt:  insufficient args\n");
-			bu_exit(2, "");
+			bu_exit(2, NULL);
 		}
 		build_start_cmd( argc, argv, bu_optind );
 
@@ -658,7 +658,7 @@ main(int argc, char **argv)
 		do_work(1);		/* auto start servers */
 		bu_log("%s Task accomplished\n", stamp() );
 	}
-	return(0);			/* bu_exit(0, ""); */
+	return(0);			/* bu_exit(0, NULL); */
 }
 
 /*
@@ -1784,7 +1784,7 @@ next_frame: ;
 	if( all_done() )  {
 		running = 0;
 		bu_log("%s All work done!\n", stamp() );
-		if( detached )  bu_exit(0, "");
+		if( detached )  bu_exit(0, NULL);
 		goto out;
 	}
 
@@ -2931,9 +2931,9 @@ host_helper(FILE *fp)
 						"rsh", host,
 						"-n", cmd, 0 );
 					perror("rsh execl");
-					bu_exit(0, "");
+					bu_exit(0, NULL);
 				}
-				bu_exit(0, "");
+				bu_exit(0, NULL);
 			} else if( pid < 0 ) {
 				perror("fork");
 			} else {
@@ -2962,9 +2962,9 @@ host_helper(FILE *fp)
 					execl("/bin/sh", "remrt_sh",
 						"-c", cmd, 0);
 					perror("/bin/sh");
-					bu_exit(0, "");
+					bu_exit(0, NULL);
 				}
-				bu_exit(0, "");
+				bu_exit(0, NULL);
 			} else if( pid < 0 ) {
 				perror("fork");
 			} else {
@@ -2985,7 +2985,7 @@ start_helper(void)
 
 	if( pipe(fds) < 0 )  {
 		perror("pipe");
-		bu_exit(1, "");
+		bu_exit(1, NULL);
 	}
 
 	pid = fork();
@@ -2996,19 +2996,19 @@ start_helper(void)
 		(void)close(fds[1]);
 		if( (fp = fdopen( fds[0], "r" )) == (FILE *)NULL )  {
 			perror("fdopen");
-			bu_exit(3, "");
+			bu_exit(3, NULL);
 		}
 		host_helper( fp );
 		/* No more commands from parent */
-		bu_exit(0, "");
+		bu_exit(0, NULL);
 	} else if( pid < 0 )  {
 		perror("fork");
-		bu_exit(2, "");
+		bu_exit(2, NULL);
 	}
 	/* Parent process */
 	if( (helper_fp = fdopen( fds[1], "w" )) == (FILE *)NULL )  {
 		perror("fdopen");
-		bu_exit(4, "");
+		bu_exit(4, NULL);
 	}
 	(void)close(fds[0]);
 }
@@ -3820,7 +3820,7 @@ cd_host(int argc, char **argv)
 int
 cd_exit(int argc, char **argv)
 {
-	bu_exit(0, "");
+	bu_exit(0, NULL);
 	/*NOTREACHED*/
 }
 

@@ -126,7 +126,7 @@ get_args(int argc, register char **argv)
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
 				argv[bu_optind] );
-			bu_exit ( 1, "" );
+			bu_exit ( 1, NULL );
 		}
 		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
 			perror(argv[bu_optind]);
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 	outfp = stdout;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 	scan_buf = (unsigned char *)malloc( sizeof(unsigned char) * file_width );
 
@@ -201,7 +201,7 @@ main(int argc, char **argv)
 			(void) fprintf(	stderr,
 				"pix-rle: read of %d pixels on line %d failed!\n",
 				file_width, y );
-			bu_exit (1, "");
+			bu_exit (1, NULL);
 		}
 
 		/* Grumble, convert to Utah layout */
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 
 	fclose( infp );
 	fclose( outfp );
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 
 /*

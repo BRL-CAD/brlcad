@@ -140,21 +140,21 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	if( xin <= 0 || yin <= 0 || xout <= 0 || yout <= 0 ) {
 		fprintf( stderr, "pixembed: sizes must be positive\n" );
-		bu_exit ( 2, "" );
+		bu_exit ( 2, NULL );
 	}
 	if( xout < xin || yout < yin )  {
 		fprintf( stderr, "pixembed: output size must exceed input size\n");
-		bu_exit (3, "");
+		bu_exit (3, NULL);
 	}
 
 	if( border_inset < 0 || border_inset >= xin )  {
 		fprintf(stderr, "pixembed: border inset out of range\n");
-		bu_exit (4, "");
+		bu_exit (4, NULL);
 	}
 
 	/* Allocate storage for one output line */
@@ -200,7 +200,7 @@ load_buffer(void)
 
 	if( fread( obuf + inbase*3, 3, xin, buffp ) != xin )  {
 		perror("pixembed fread");
-		bu_exit (7, "");
+		bu_exit (7, NULL);
 	}
 	r = obuf[(inbase+border_inset)*3+0];
 	g = obuf[(inbase+border_inset)*3+1];
@@ -235,7 +235,7 @@ write_buffer(void)
 {
 	if( fwrite( obuf, 3, xout, stdout ) != xout )  {
 		perror("pixembed stdout fwrite");
-		bu_exit (8, "");
+		bu_exit (8, NULL);
 	}
 }
 

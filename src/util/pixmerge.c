@@ -164,7 +164,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	if( !seen_formula )  {
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 	    (b2 = (char *)malloc( width*CHUNK )) == (char *)0 ||
 	    (b3 = (char *)malloc( width*CHUNK )) == (char *)0 ) {
 		fprintf(stderr, "pixmerge:  malloc failure\n");
-		bu_exit (3, "");
+		bu_exit (3, NULL);
 	}
 
 	while(1)  {
@@ -267,7 +267,7 @@ fail:
 	}
 	fprintf( stderr, "pixmerge: %ld foreground, %ld background\n",
 		fg_cnt, bg_cnt );
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 
 /*

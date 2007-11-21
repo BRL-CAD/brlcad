@@ -148,7 +148,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	/* autosize input? */
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 	if( bu_mread( infd, inbuf, 2*file_width*file_height ) < 2*file_width*file_height )  {
 	    perror("READ ERROR");
 	    fprintf(stderr, "yuv-pix: short input file, aborting\n");
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
 	}
 
 	for( y = 0; y < file_height; y++ )  {
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 	if( write( 1, (void *)outbuf, 3*file_width*file_height ) < 3*file_width*file_height )  {
 		perror("stdout");
 		fprintf(stderr, "yuv-pix: output write error, aborting\n");
-		bu_exit (2, "");
+		bu_exit (2, NULL);
 	}
 
 	bu_free(inbuf, "inbuf");

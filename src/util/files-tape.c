@@ -119,19 +119,19 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	/* Obtain output buffer */
 	if( (buf = (char *)malloc( bufsize )) == NULL )  {
 		perror("malloc");
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	if( bu_optind >= argc )  {
 		/* Perform operation once, from stdin */
 		fileout( 0, "-" );
-		bu_exit (0, "");
+		bu_exit (0, NULL);
 	}
 
 	/* Perform operation on each argument */
@@ -147,12 +147,12 @@ main(int argc, char **argv)
 			 *  to preserve the image numbering.
 			 *  For now, punt.
 			 */
-			bu_exit (1, "");
+			bu_exit (1, NULL);
 		}
 		fileout( fd, argv[bu_optind] );
 		(void)close(fd);
 	}
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 
 /*
@@ -171,7 +171,7 @@ fileout(register int fd, char *name)
 		if( (out = write( 1, buf, bufsize )) != bufsize )  {
 			perror("files-tape: write");
 			fprintf(stderr, "files-tape:  %s, write ret=%d\n", name, out);
-			bu_exit (1, "");
+			bu_exit (1, NULL);
 		}
 		if( byteswritten < TSIZE && byteswritten+bufsize > TSIZE )
 			fprintf(stderr, "files-tape: WARNING:  Tape capacity reached in file %s\n", name);
@@ -182,7 +182,7 @@ fileout(register int fd, char *name)
 
 	perror("READ ERROR");
 
-	bu_exit (1, "");
+	bu_exit (1, NULL);
 }
 
 /*

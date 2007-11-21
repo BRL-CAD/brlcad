@@ -121,7 +121,7 @@ main(int argc, char **argv)
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
 
 	if( bu_optind+1 == argc )  {
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 
 	if( in_width < 1 ) {
 		fprintf(stderr,"pixuntile: width of %d out of range\n", in_width);
-		bu_exit (12, "");
+		bu_exit (12, NULL);
 	}
 
 	numx = in_width / out_width;
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	}
 done:
 	fprintf( stderr,"\n" );
-	bu_exit ( 0, "" );
+	bu_exit ( 0, NULL );
 }
 
 /*

@@ -114,7 +114,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void) fprintf(stderr,usage,argv[0]);
-		bu_exit ( 1, "" );
+		bu_exit ( 1, NULL );
 	}
 
 	(void) signal(SIGALRM, handler);
@@ -167,7 +167,7 @@ main(int argc, char **argv)
 			break;
 		}
 	}
-	bu_exit (0, "");
+	bu_exit (0, NULL);
 }
 void
 handler(int sig)

@@ -118,7 +118,7 @@ void usage(void)
 	(void) fprintf(stderr,
 "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
 [-f shrink_factor] [pixfile] > pixfile\n", progname);
-	bu_exit (1, "");
+	bu_exit (1, NULL);
 }
 
 
@@ -163,7 +163,7 @@ void parse_args(int ac, char **av)
 	if (bu_optind < ac) {
 		if (freopen(av[bu_optind], "r", stdin) == (FILE *)NULL) {
 			perror(av[bu_optind]);
-			bu_exit (-1, "");
+			bu_exit (-1, NULL);
 		} else
 			filename = av[bu_optind];
 	}
@@ -196,7 +196,7 @@ int main(int ac, char **av)
 	if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
 		(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
 			progname);
-		bu_exit (-1, "");
+		bu_exit (-1, NULL);
 	}
 
 	/* read in entire image */

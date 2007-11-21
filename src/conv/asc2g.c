@@ -1230,7 +1230,7 @@ identbld(void)
     if( local2mm <= 0 )  {
 	fprintf(stderr, "asc2g: unable to convert v4 units string '%s', got local2mm=%g\n",
 		unit_str, local2mm);
-	bu_exit(3, "");
+	bu_exit(3, NULL);
     }
 
     if( mk_id_editunits(ofp, title, local2mm) < 0 )

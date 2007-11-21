@@ -250,7 +250,7 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	    default:
 		(void) fprintf(stderr, "%s:%d: This shouldn't happen\n",
 		    __FILE__, __LINE__);
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	}
     }
 
@@ -480,7 +480,7 @@ get_args (int argc, register char **argv)
 		break;
 	    case '?':
 		(void) fputs(usage, stderr);
-		bu_exit (0, "");
+		bu_exit (0, NULL);
 	    default:
 		return (0);
 	}
@@ -545,7 +545,7 @@ main (int argc, char **argv)
     if (!get_args( argc, argv ))
     {
 	(void) fputs(usage, stderr);
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
 
 #if 0
@@ -601,7 +601,7 @@ main (int argc, char **argv)
     {
 	perror(file_name);
 	(void) fprintf(stderr, "pixborder:  fread() error\n");
-	bu_exit (1, "");
+	bu_exit (1, NULL);
     }
 
     /*
@@ -617,7 +617,7 @@ main (int argc, char **argv)
 	    if (fwrite(inrow[this_row] + 3, 3, file_width, stdout) != file_width)
 	    {
 		perror("stdout");
-		bu_exit (2, "");
+		bu_exit (2, NULL);
 	    }
 	}
 	else
@@ -642,7 +642,7 @@ main (int argc, char **argv)
 	    if (fwrite(outbuf, 3, file_width, stdout) != file_width)
 	    {
 		perror("stdout");
-		bu_exit (2, "");
+		bu_exit (2, NULL);
 	    }
 	}
 
@@ -662,7 +662,7 @@ main (int argc, char **argv)
 	    {
 		perror(file_name);
 		(void) fprintf(stderr, "pixborder:  fread() error\n");
-		bu_exit (1, "");
+		bu_exit (1, NULL);
 	    }
 	}
 	else

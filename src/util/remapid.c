@@ -713,7 +713,7 @@ int read_spec (BU_FILE *sfp, char *sf_name)
 			    "Range out of order",
 			(int)(    (sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
 			    - 1) );
-			bu_exit (-1, "");
+			bu_exit (-1, NULL);
 		    }
 		    for (i = num1; i <= num2; ++i)
 		    {
@@ -741,7 +741,7 @@ int read_spec (BU_FILE *sfp, char *sf_name)
 			"Syntax error",
 			(int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
 			- 1) );
-		    bu_exit (-1, "");
+		    bu_exit (-1, NULL);
 	    }
 	    break;
 	}
@@ -950,7 +950,7 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, "");
+	    bu_exit (1, NULL);
     }
 
 	rt_init_resource( &rt_uniresource, 0, NULL );

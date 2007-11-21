@@ -114,7 +114,7 @@ get_args(int argc, register char **argv)
 		(void)fprintf(stderr,
 			      "pix-png: cannot open \"%s\" for reading\n",
 			      file_name);
-		bu_exit(1, "");
+		bu_exit(1, NULL);
 	    }
 	    fileinput++;
 	}
@@ -149,7 +149,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit(1, "" );
+		bu_exit(1, NULL );
 	}
 
 	/* autosize input? */

@@ -326,7 +326,7 @@ int parse_args(int ac, char **av)
 	if (log_cmds) {
 		if ((logfile=fopen("wall.log", "a+")) == (FILE *)NULL) {
 			perror("wall.log");
-			bu_exit(-1, "");
+			bu_exit(-1, NULL);
 		}
 		for (R=0 ; R < ac ; R++)
 			(void)fprintf(logfile, "%s ", av[R]);

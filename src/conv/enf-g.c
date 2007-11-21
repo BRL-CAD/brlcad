@@ -653,14 +653,14 @@ main( int argc, char *argv[] )
 			default:
 				bu_log( "Unrecognized option %c\n", c );
 				Usage();
-				bu_exit( 1, "" );
+				bu_exit( 1, NULL );
 		}
 	}
 
 	if( argc - bu_optind != 2 ) {
 		bu_log( "Not enough arguments!!\n" );
 		Usage();
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	input_file = bu_strdup( argv[bu_optind] );
@@ -669,20 +669,20 @@ main( int argc, char *argv[] )
 	if( (fd_in=fopen( input_file, "r" )) == NULL ) {
 		bu_log( "Cannot open %s for reading\n", input_file );
 		perror( argv[0] );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	if( (fd_out=wdb_fopen( output_file )) == NULL ) {
 		bu_log( "Cannot open %s for writing\n", output_file );
 		perror( argv[0] );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	if( use_part_name_hash ) {
 		if( (fd_parts=fopen( part_name_file, "r" )) == NULL ) {
 			bu_log( "Cannot open part name file (%s)\n", part_name_file );
 			perror( argv[0] );
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 		create_name_hash( fd_parts );
 	}

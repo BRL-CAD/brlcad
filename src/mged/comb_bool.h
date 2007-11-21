@@ -81,7 +81,7 @@ extern struct bool_tree_node	*comb_bool_tree;
 	{                                                               \
 	    fprintf(stderr, "%s:%d: Ran out of memory\n",		\
 		    __FILE__, __LINE__);                                \
-	    bu_exit(1, "");                                              \
+	    bu_exit(1, NULL);                                              \
 	}
 
 /*

@@ -619,7 +619,7 @@ run_rt(void)
 	(void)signal( SIGINT, SIG_DFL );
 	(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
 	perror( rt_cmd_vec[0] );
-	bu_exit(16, "");
+	bu_exit(16, NULL);
     }
 
     /* As parent, send view information down pipe */
@@ -2105,7 +2105,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)signal( SIGINT, SIG_DFL );
 	(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
 	perror( rt_cmd_vec[0] );
-	bu_exit(16, "");
+	bu_exit(16, NULL);
     }
 
     /* use fp_in to feed view info to nirt */

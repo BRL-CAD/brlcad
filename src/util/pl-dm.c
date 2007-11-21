@@ -321,12 +321,12 @@ char *argv[];
 
   if(cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
 		   argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
-    bu_exit (1, "");
+    bu_exit (1, NULL);
 
   argv[1] = (char *)NULL;
   Tk_Main(1, argv, appInit);
 
-  bu_exit (0, "");
+  bu_exit (0, NULL);
 }
 
 static int
@@ -1136,7 +1136,7 @@ char    **argv;
   if(dmp != DM_NULL)
     DM_CLOSE(dmp);
 
-  bu_exit (0, "");
+  bu_exit (0, NULL);
 
   /* not reached */
   return TCL_OK;

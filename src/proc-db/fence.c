@@ -337,11 +337,11 @@ int parseArguments(int argc, char **argv)
     case 'h' :
       if ((sscanf(bu_optarg, "%lf %lf %lf", &fenceHeight[0], &fenceHeight[1], &fenceHeight[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to height: need x, y, z values");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       if ((double)MAGNITUDE(fenceHeight) == 0.0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       poleHeight = (double) MAGNITUDE(fenceHeight);
       meshHeight = (double) poleHeight;
@@ -356,18 +356,18 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
 
     case 'l' :
       if ((sscanf(bu_optarg, "%lf %lf %lf", &fenceWidth[0], &fenceWidth[1], &fenceWidth[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to width: need x, y, z values");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       if ((double)MAGNITUDE(fenceWidth) == 0.0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       meshWidth = (double) MAGNITUDE(fenceWidth);
       break;
@@ -380,7 +380,7 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
 
@@ -390,7 +390,7 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire radius may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
     case 'R' :
@@ -399,7 +399,7 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole radius may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
 
@@ -409,7 +409,7 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire angle may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
     case 'A' :
@@ -418,7 +418,7 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire angle may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
 
@@ -428,7 +428,7 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole spacing may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
     case 'J' :
@@ -437,7 +437,7 @@ int parseArguments(int argc, char **argv)
       }
       else {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole spacing may not be set to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
 
@@ -474,11 +474,11 @@ int parseArguments(int argc, char **argv)
     case 'c' :
       if ((sscanf(bu_optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       if ((color[0]<0)|(color[0]>255)|(color[1]<0)|(color[1]>255)|(color[2]<0)|(color[2]>255)) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence material color values must be in the range of 0 to 255 inclusive");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       fenceMaterialColor[0] = (unsigned char)color[0];
       fenceMaterialColor[1] = (unsigned char)color[1];
@@ -487,11 +487,11 @@ int parseArguments(int argc, char **argv)
     case 'C' :
       if ((sscanf(bu_optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       if ((color[0]<0)|(color[0]>255)|(color[1]<0)|(color[1]>255)|(color[2]<0)|(color[2]>255)) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence material color values must be in the range of 0 to 255 inclusive");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       fenceMaterialColor[0] = (unsigned char)color[0];
       fenceMaterialColor[1] = (unsigned char)color[1];
@@ -590,7 +590,7 @@ int parseArguments(int argc, char **argv)
       if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = 1;
       if (generateFenceParam == generatePolesParam == generateMeshParam == 0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
     case 'G' :
@@ -602,40 +602,40 @@ int parseArguments(int argc, char **argv)
       if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
       if (generateFenceParam == generatePolesParam == generateMeshParam == 0) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified or all specified to zero");
-	bu_exit(1, "");
+	bu_exit(1, NULL);
       }
       break;
 
     case 'x' :
       (void)argumentExamples(DEFAULT_VERBOSE_OUTPUT, progname);
-      bu_exit(1, "");
+      bu_exit(1, NULL);
       break;
     case 'X' :
       (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Example assistance");
       (void)argumentExamples(DEFAULT_VERBOSE_OUTPUT, progname);
-      bu_exit(1, "");
+      bu_exit(1, NULL);
       break;
 
     case 'z' :
       (void)defaultSettings(DEFAULT_VERBOSE_OUTPUT);
-      bu_exit(1, "");
+      bu_exit(1, NULL);
       break;
     case 'Z' :
       (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Full parameter assistance");
       (void)defaultSettings(DEFAULT_VERBOSE_OUTPUT);
-      bu_exit(1, "");
+      bu_exit(1, NULL);
       break;
 
     case '?' :
   fflush(stdout);
       (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
-      bu_exit(1, "");
+      bu_exit(1, NULL);
       break;
 
     default  : /*shouldn't be reached since getopt throws a ? for args not found*/
   fflush(stdout);
       (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Illegal command-line argument");
-      bu_exit(1, "");
+      bu_exit(1, NULL);
       break;
     }
   }
@@ -1878,7 +1878,7 @@ int main(int argc, char **argv)
 
   if ((fp=wdb_fopen(outputFilename))==NULL) {
     perror(outputFilename);
-    bu_exit(2, "");
+    bu_exit(2, NULL);
   }
   else {
     if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nUsing [%s] for output file\n\n", outputFilename);

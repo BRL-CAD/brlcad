@@ -438,12 +438,12 @@ Add_vert( fastf_t *vertex )
 		prev = ptr;
 		if( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
 			if( prev->vnode.higher ) {
-				bu_exit(1, "");
+				bu_exit(1, NULL);
 			}
 			prev->vnode.higher = new_leaf;
 		} else {
 			if( prev->vnode.lower ) {
-				bu_exit(1, "");
+				bu_exit(1, NULL);
 			}
 			prev->vnode.lower = new_leaf;
 		}

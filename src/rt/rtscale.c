@@ -127,7 +127,7 @@ main(int argc, char **argv)
 
 	if(argc < 5)  {
 		fputs(usage, stderr);
-		bu_exit(-1, "");
+		bu_exit(-1, NULL);
 	}
 
 	/* Open an incoming file for reading */
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 	fp = fopen( argv[4], "r");
 	if( fp == NULL )  {
 		perror(argv[4]);
-		bu_exit(-1, "");
+		bu_exit(-1, NULL);
 	}
 
 	/* Now process the arguments from main */
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	if(m_len <= 0)  {
 		fprintf(stderr, "Invalid length =%.6f\n", m_len);
 		fputs(usage, stderr);
-		bu_exit(-1, "");
+		bu_exit(-1, NULL);
 	}
 
 	/* Send pointer read_rt_file() a pointer to local model2view matrix
@@ -171,7 +171,7 @@ main(int argc, char **argv)
 
 	ret = read_rt_file(fp, name,  model2view);
 	if(ret < 0)  {
-		bu_exit(-1, "");
+		bu_exit(-1, NULL);
 	}
 
 	bn_mat_inv(view2model, model2view);
@@ -186,7 +186,7 @@ main(int argc, char **argv)
 
 	ret = layout_n_plot(stdout, label, view2model, model2view, intervals, m_len, descript);
 	if(ret < 0)  {
-		bu_exit(-1, "");
+		bu_exit(-1, NULL);
 	}
 
 	if(border)  {
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 		make_border(stdout, view2model);
 	}
 
-	bu_exit(0, "");
+	bu_exit(0, NULL);
 
 }
 

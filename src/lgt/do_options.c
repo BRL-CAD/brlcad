@@ -3731,7 +3731,7 @@ pars_Argv(int argc, register char **argv)
 	if( (rt_ip = rt_dirbuild( ged_file, title, TITLE_LEN )) == RTI_NULL )
 		{
 		prnt_Event( "Exiting...\n" );
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 		}
 	prnt_Title( title );
 	prnt_Timer( "DIR" );

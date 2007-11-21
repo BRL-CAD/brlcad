@@ -81,7 +81,7 @@ register char *prefix;
 	if( (solfd = creat( st_file, 0644 )) < 0 )
 	{
 		perror( st_file );
-		bu_exit( 10, "" );
+		bu_exit( 10, NULL );
 	}
 
 
@@ -112,7 +112,7 @@ register char *prefix;
 	if( (regfd = creat( rt_file, 0644 )) < 0 )
 	{
 		perror( rt_file );
-		bu_exit( 10, "" );
+		bu_exit( 10, NULL );
 	}
 
 	/* create file for region ident table
@@ -127,7 +127,7 @@ register char *prefix;
 	if( (ridfd = creat( id_file, 0644 )) < 0 )
 	{
 		perror( id_file );
-		bu_exit( 10, "" );
+		bu_exit( 10, NULL );
 	}
 	itoa( -1, buff, 5 );
 	ewrite( ridfd, buff, 5 );
@@ -195,7 +195,7 @@ char  *args[];
 		from = args[i];
 		if( (to + strlen( args[i] )) - argv[2] > MAXLN - 1 ) {
 			(void) fprintf( stderr, "\ncommand line too long\n" );
-			bu_exit( 10, "" );
+			bu_exit( 10, NULL );
 		}
 		(void) printf( "%s ", args[i] );
 		while( *from )
@@ -214,7 +214,7 @@ char  *args[];
 		(void) signal( SIGINT, SIG_DFL );
 		(void) execv( "/bin/sh", argv );
 		perror( "/bin/sh -c" );
-		bu_exit( 99, "" );
+		bu_exit( 99, NULL );
 	} else	/*
 		 * PARENT process - waits for shell command
 		 * to finish.
@@ -536,7 +536,7 @@ register int	w, d;
 		(void) fprintf( stderr,
 		    "ftoascii: incorrect format  need w.df  stop"
 		    );
-		bu_exit( 10, "" );
+		bu_exit( 10, NULL );
 	}
 	for( i = 1; i <= d; i++ )
 		f = f * 10.0;
@@ -707,7 +707,7 @@ void
 quit( sig )
 {
 	(void) fprintf( stdout, "quitting...\n" );
-	bu_exit( 0, "" );
+	bu_exit( 0, NULL );
 }
 
 /*

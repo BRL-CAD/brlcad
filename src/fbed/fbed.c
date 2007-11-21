@@ -805,7 +805,7 @@ f_Stop(char *buf) /* Stop program. */
 	if( kill( pid, sig ) == -1 ) {
 	    extern int errno;
 	    perror( "(fbed.c) kill" );
-	    bu_exit( errno, "" );
+	    bu_exit( errno, NULL );
 	}
 #endif
 
@@ -1362,7 +1362,7 @@ f_Flip_Resolution(char *buf) /* Flip framebuffer resolution. */
 		return 0;
 	cur_width = is_hires ? 512 : 1024;
 	if( fb_Setup() == -1 )
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	reposition_cursor = true;
 	return 1;
 	}
@@ -1484,7 +1484,7 @@ f_Restore_RLE(char *buf) /* Restore Run-Length Encoded image. */
 		}
 	(void) exec_Shell( args );
 	if( fb_Setup() == -1 )
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	(void) fclose( rle_fp );
 	return 1;
 	}
@@ -1531,7 +1531,7 @@ f_Save_RLE(char *buf) /* Save framebuffer image with Run-Length Encoding. */
 	else
 		fb_log( "Image not saved.\n" );
 	if( fb_Setup() == -1 )
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	reposition_cursor = true;
 	return 1;
 	}
@@ -1785,7 +1785,7 @@ f_Quit(char *buf)
 {
 	prnt_Event( "Bye..." );
 	restore_Tty();
-	bu_exit( 0, "" );
+	bu_exit( 0, NULL );
 	/*NOTREACHED*/
 	}
 
@@ -2021,12 +2021,12 @@ general_Handler(int sig)
 	case SIGHUP :
 		prnt_Event( "Hangup." );
 		restore_Tty();
-		bu_exit( sig, "" );
+		bu_exit( sig, NULL );
 		/*NOTREACHED*/
 	case SIGINT :
 		prnt_Event( "Interrupt." );
 		restore_Tty();
-		bu_exit( sig, "" );
+		bu_exit( sig, NULL );
 		/*NOTREACHED*/
 	case SIGQUIT :
 		prnt_Event( "Quit (core dumped)." );

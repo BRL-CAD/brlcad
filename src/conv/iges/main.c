@@ -193,14 +193,14 @@ char *argv[];
 				break;
 			default:
 				usage();
-				bu_exit(1, "");
+				bu_exit(1, NULL);
 				break;
 		}
 	}
 
 	if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
 		usage();
-		bu_exit(1, "");
+		bu_exit(1, NULL);
 	}
 
 	if( bu_debug & BU_DEBUG_MEM_CHECK )
@@ -240,7 +240,7 @@ char *argv[];
 		bu_log( "Cannot open %s\n" , output_file );
 		perror( "iges-g" );
 		usage();
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 	strncpy( brlcad_file ,  output_file, 256 );
 
@@ -272,7 +272,7 @@ char *argv[];
 			bu_log( "Cannot open %s\n" , iges_file );
 			perror( "iges-g" );
 			usage();
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 
 		bu_log( "\n\n\nIGES FILE: %s\n", iges_file );

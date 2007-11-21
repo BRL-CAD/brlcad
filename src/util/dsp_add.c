@@ -61,7 +61,7 @@ void usage(char *s)
 
 	(void) fprintf(stderr, "Usage: %s [ -%s ] dsp_1 dsp_2 > dsp_3\n",
 			progname, options);
-	bu_exit (1, "");
+	bu_exit (1, NULL);
 }
 
 /*

@@ -909,7 +909,7 @@ add_triangle_and_normal( int v1, int v2, int v3, int n1, int n2, int n3 )
 						"Failed to allocate memory for part triangles" );
 			fprintf( stderr, "Failed to allocate memory for part triangles\n" );
 			(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 		part_norms = (int *)bu_realloc( part_norms, sizeof( int ) * max_tri * 3,
 						"part normals");
@@ -943,7 +943,7 @@ add_triangle( int v1, int v2, int v3 )
 						"Failed to allocate memory for part triangles" );
 			fprintf( stderr, "Failed to allocate memory for part triangles\n" );
 			(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 	}
 

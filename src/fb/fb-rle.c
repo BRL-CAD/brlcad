@@ -149,7 +149,7 @@ get_args(int argc, register char **argv)
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
 				argv[bu_optind] );
-			bu_exit( 1, "" );
+			bu_exit( 1, NULL );
 		}
 		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
 			perror(argv[bu_optind]);
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 	outfp = stdout;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		bu_exit( 1, "" );
+		bu_exit( 1, NULL );
 	}
 
 	/* If screen size = default & file size is given, track file size */
@@ -188,7 +188,7 @@ main(int argc, char **argv)
 		screen_height = file_height;
 
 	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == FBIO_NULL )
-		bu_exit(12, "");
+		bu_exit(12, NULL);
 
 	/* Honor original screen size desires, if set, unless they shrank */
 	if( screen_width == 0 || fb_getwidth(fbp) < screen_width )
@@ -221,7 +221,7 @@ main(int argc, char **argv)
 	if( file_width <= 0 || file_height <= 0 )  {
 		fprintf(stderr,
 			"fb-rle: Error: image rectangle entirely off screen\n");
-		bu_exit(1, "");
+		bu_exit(1, NULL);
 	}
 
 	/* Read color map, see if it is linear */
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 			(void) fprintf(	stderr,
 				"fb-rle: read of %d pixels on line %d failed!\n",
 				file_width, y+screen_yoff );
-			bu_exit(1, "");
+			bu_exit(1, NULL);
 		}
 
 		if( crunch )
@@ -319,7 +319,7 @@ main(int argc, char **argv)
 
 	fb_close( fbp );
 	fclose( outfp );
-	bu_exit(0, "");
+	bu_exit(0, NULL);
 }
 
 /*
