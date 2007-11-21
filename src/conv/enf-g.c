@@ -134,7 +134,7 @@ create_name_hash( FILE *fd )
 		if( !ptr ) {
 			bu_log( "*****Error processing part name file at line:\n" );
 			bu_log( "\t%s\n", line );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 		part_no = bu_strdup( ptr );
 		lower_case( part_no );
@@ -142,7 +142,7 @@ create_name_hash( FILE *fd )
 		if( !ptr ) {
 			bu_log( "*****Error processing part name file at line:\n" );
 			bu_log( "\t%s\n", line );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 		desc = bu_strdup( ptr );
 		lower_case( desc );
@@ -432,7 +432,7 @@ Part_import( int id_start )
 			if( id_end != id_start ) {
 				bu_log( "ERROR: found end of part id %d while processing part %d\n",
 					id_end, id_start );
-				exit( 1 );
+				bu_exit( 1, "" );
 			}
 			if( last_surf ) {
 				break;
@@ -490,7 +490,7 @@ Part_import( int id_start )
 			bu_log( "ERROR: unrecognized line encountered while processing part id %d:\n",
 				id_start );
 			bu_log( "%s\n", line );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 	}
 
@@ -505,7 +505,7 @@ Part_import( int id_start )
 			    tree_root->curr_vert, curr_tri, tree_root->the_array, part_tris, NULL, NULL ) ) {
 			bu_log( "Failed to write primitive %s (%s) to database\n",
 				part->brlcad_solid, part->obj_name );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 		if( verbose ) {
 			DO_INDENT;
@@ -517,13 +517,13 @@ Part_import( int id_start )
 		if( mk_addmember( part->brlcad_solid, &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL ) {
 			bu_log( "ERROR: Failed to add solid (%s), to region (%s)\n",
 				part->brlcad_solid, part->brlcad_comb );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 		if( mk_comb( fd_out, part->brlcad_comb, &reg_head.l, 1, NULL, NULL, rgb, ident++,
 			     0, 1, 100, 0, 0, 0 ) ) {
 			bu_log( "Failed to write region %s (%s) to database\n",
 				part->brlcad_comb, part->obj_name );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 		if( verbose ) {
 			DO_INDENT;
@@ -600,7 +600,7 @@ Assembly_import( int id_start )
 			if( id_end != id_start ) {
 				bu_log( "ERROR: found end of assembly id %d while processing id %d\n",
 					id_end, id_start );
-				exit( 1 );
+				bu_exit( 1, "" );
 			}
 			indent_level -= indent_delta;
 			DO_INDENT;
@@ -610,7 +610,7 @@ Assembly_import( int id_start )
 			bu_log( "Unrecognized line encountered while processing assembly id %d:\n",
 				id_start );
 			bu_log( "%s\n", line );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 	}
 
@@ -625,7 +625,7 @@ Assembly_import( int id_start )
 				bu_log( "ERROR: Failed to add region %s to assembly %s\n",
 					this_assem->members[i]->brlcad_comb,
 					this_assem->brlcad_comb );
-				exit( 1 );
+				bu_exit( 1, "" );
 		}
 	}
 
@@ -633,7 +633,7 @@ Assembly_import( int id_start )
 		     0, 0, 0, 0, 0, 0, 0 ) ) {
 		bu_log( "ERROR: Failed to write combination (%s) to database\n",
 			this_assem->brlcad_comb );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 	if( use_part_name_hash ) {
 		if( db5_update_attribute( this_assem->brlcad_comb, "Part_No",
@@ -675,7 +675,7 @@ main( int argc, char *argv[] )
 				if( tmp <= 0.0 ) {
 					bu_log( "Illegal tolerance (%g), musy be > 0.0\n",
 						tmp );
-					exit( 1 );
+					bu_exit( 1, "" );
 				}
 				break;
 			case 'n':	/* part name list */
@@ -686,20 +686,20 @@ main( int argc, char *argv[] )
 				max_name_len = atoi( bu_optarg );
 				if( max_name_len < 5 ) {
 					bu_log( "Unreasonable name length limitation\n" );
-					exit( 1 );
+					bu_exit( 1, "" );
 				}
 				break;
 			default:
 				bu_log( "Unrecognized option %c\n", c );
 				Usage();
-				exit( 1 );
+				bu_exit( 1, "" );
 		}
 	}
 
 	if( argc - bu_optind != 2 ) {
 		bu_log( "Not enough arguments!!\n" );
 		Usage();
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	input_file = bu_strdup( argv[bu_optind] );
@@ -708,20 +708,20 @@ main( int argc, char *argv[] )
 	if( (fd_in=fopen( input_file, "r" )) == NULL ) {
 		bu_log( "Cannot open %s for reading\n", input_file );
 		perror( argv[0] );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( (fd_out=wdb_fopen( output_file )) == NULL ) {
 		bu_log( "Cannot open %s for writing\n", output_file );
 		perror( argv[0] );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( use_part_name_hash ) {
 		if( (fd_parts=fopen( part_name_file, "r" )) == NULL ) {
 			bu_log( "Cannot open part name file (%s)\n", part_name_file );
 			perror( argv[0] );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 		create_name_hash( fd_parts );
 	}

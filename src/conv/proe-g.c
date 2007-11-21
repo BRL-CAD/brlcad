@@ -1194,7 +1194,7 @@ main(int argc, char **argv)
 	if( argc < 2 )
 	{
 		bu_log( usage, argv[0]);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	/* Get command line arguments. */
@@ -1259,7 +1259,7 @@ main(int argc, char **argv)
 			{
 				bu_log( "Bad regular expression (%s)\n", bu_optarg );
 				bu_log( usage, argv[0] );
-				exit( 1 );
+				bu_exit( 1, "" );
 			}
 			break;
 		case 'a':
@@ -1275,7 +1275,7 @@ main(int argc, char **argv)
 #endif
 		default:
 			bu_log( usage, argv[0]);
-			exit(1);
+			bu_exit(1, "");
 			break;
 		}
 	}
@@ -1287,7 +1287,7 @@ main(int argc, char **argv)
 	{
 		bu_log( "Cannot open input file (%s)\n" , input_file );
 		perror( argv[0] );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 	bu_optind++;
 	brlcad_file = argv[bu_optind];
@@ -1295,7 +1295,7 @@ main(int argc, char **argv)
 	{
 		bu_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
 		perror( argv[0] );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( stl_format )

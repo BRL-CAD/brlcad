@@ -193,14 +193,14 @@ char *argv[];
 				break;
 			default:
 				usage();
-				exit(1);
+				bu_exit(1, "");
 				break;
 		}
 	}
 
 	if (bu_optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
 		usage();
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	if( bu_debug & BU_DEBUG_MEM_CHECK )
@@ -240,7 +240,7 @@ char *argv[];
 		bu_log( "Cannot open %s\n" , output_file );
 		perror( "iges-g" );
 		usage();
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 	strncpy( brlcad_file ,  output_file, 256 );
 
@@ -272,7 +272,7 @@ char *argv[];
 			bu_log( "Cannot open %s\n" , iges_file );
 			perror( "iges-g" );
 			usage();
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 
 		bu_log( "\n\n\nIGES FILE: %s\n", iges_file );
@@ -281,7 +281,7 @@ char *argv[];
 		if( reclen == 0 )
 		{
 			bu_log( "File (%s) not in IGES ASCII format\n", iges_file );
-			exit(1);
+			bu_exit(1, "");
 		}
 
 		Freestack();	/* Set node stack to empty */

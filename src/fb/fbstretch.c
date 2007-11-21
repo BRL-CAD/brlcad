@@ -214,7 +214,7 @@ Fatal( va_alist )
 	   )
 		Message( "Error closing output frame buffer" );
 
-	exit( EXIT_FAILURE );
+	bu_exit( EXIT_FAILURE, "" );
 	/*NOTREACHED*/
 	}
 
@@ -918,7 +918,7 @@ main(int argc, char **argv)
 	if ( dst_fbp != src_fbp && fb_close( dst_fbp ) == -1 )
 		Message( "Error closing output frame buffer" );
 
-	exit( EXIT_SUCCESS );
+	bu_exit( EXIT_SUCCESS, "" );
 	}
 
 /*

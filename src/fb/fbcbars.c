@@ -223,11 +223,11 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		exit(12);
+		bu_exit(12, "");
 
 	/* Get the screen size we were actually given */
 	scr_width = fb_getwidth(fbp);

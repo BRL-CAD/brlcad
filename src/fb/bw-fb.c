@@ -199,7 +199,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* autosize input? */
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 	/* Open Display Device */
 	if ((fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL ) {
 		fprintf( stderr, "fb_open failed\n");
-		exit( 3 );
+		bu_exit( 3, "" );
 	}
 
 	/* Get the screen size we were given */
@@ -257,7 +257,7 @@ main(int argc, char **argv)
 	if( yout > (file_height-file_yoff) ) yout = (file_height-file_yoff);
 	if( xout > MAX_LINE ) {
 		fprintf( stderr, "bw-fb: can't output %d pixel lines.\n", xout );
-		exit( 2 );
+		bu_exit( 2, "" );
 	}
 
 	if( clear ) {
@@ -287,17 +287,17 @@ main(int argc, char **argv)
 		n = bu_mread( infd, (char *)buf, npix );
 		if( n != npix )  {
 			fprintf(stderr, "bw-fb: read got %d, s/b %d\n", n, npix );
-			if( n <= 0 )  exit(7);
+			if( n <= 0 )  bu_exit(7, "");
 			npix = n;	/* show what we got */
 		}
 		n = (npix+file_width-1)/file_width;	/* num lines got */
 		n = fb_bwwriterect(fbp, scr_xoff, scr_yoff, file_width, n, buf);
 		if( npix != n )  {
 			fprintf(stderr, "bw-fb: fb_bwwriterect() got %d, s/b %d\n", n, npix );
-			exit(8);
+			bu_exit(8, "");
 		}
 		fb_close( fbp );
-		exit(0);
+		bu_exit(0, "");
 	}
 
 	/* Begin general case */
@@ -346,7 +346,7 @@ general:
 	}
 
 	fb_close( fbp );
-	exit( 0 );
+	bu_exit( 0, "" );
 }
 
 /*

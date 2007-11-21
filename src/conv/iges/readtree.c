@@ -104,7 +104,7 @@ mat_t *matp;
 					break;
 				default:
 					bu_log( "Readtree(): illegal operator code (%d)\n", op );
-					exit( 1 );
+					bu_exit( 1, "" );
 			}
 			ptr->tr_b.tb_right = Pop();
 			ptr->tr_b.tb_left = Pop();

@@ -60,7 +60,7 @@ void usage(char *s)
 
     (void) fprintf(stderr, "Usage: %s [ -%s ] [<] infile [> outfile]\n",
 		   progname, options);
-    exit(1);
+    bu_exit(1, "");
 }
 
 /*

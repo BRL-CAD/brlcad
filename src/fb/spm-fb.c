@@ -120,17 +120,17 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
-		exit(12);
+		bu_exit(12, "");
 	scr_width = fb_getwidth(fbp);
 	scr_height = fb_getheight(fbp);
 
 	mp = spm_init( vsize, sizeof(RGBpixel) );
 	if( mp == SPM_NULL || fbp == FBIO_NULL )
-		exit( 1 );
+		bu_exit( 1, "" );
 
 	spm_load( mp, file_name );
 
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 
 	spm_free( mp );
 	fb_close( fbp );
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

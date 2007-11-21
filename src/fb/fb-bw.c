@@ -137,13 +137,13 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* Open Display Device */
 	if ((fbp = fb_open(framebuffer, width, height )) == NULL ) {
 		fprintf( stderr, "fb_open failed\n");
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* determine "reasonable" behavior */
@@ -168,7 +168,7 @@ main(int argc, char **argv)
 	}
 
 	fb_close( fbp );
-	exit( 0 );
+	bu_exit( 0, "" );
 }
 
 /*

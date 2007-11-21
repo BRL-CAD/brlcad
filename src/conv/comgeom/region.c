@@ -327,7 +327,7 @@ group_register(char *name, int lo, int hi)
 
 	if( ngroups >= NGROUPS )  {
 		printf("Too many groups, ABORTING\n");
-		exit(13);
+		bu_exit(13, "");
 	}
 	wp = &groups[ngroups].grp_wm;
 

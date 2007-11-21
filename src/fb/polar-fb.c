@@ -541,19 +541,19 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    PrintUsage(1);
-	    (void) exit(1);
+	    (void) bu_exit(1, "");
     }
 
     /* Fill npf_tbl from the input stream */
     if (LoadNPF (FileName, npf_tbl, Quantum, angle_cvt, arc_min, arc_max)
 	&& NoWarnings)
-	(void) exit(1);
+	(void) bu_exit(1, "");
     arc_min *= Deg2Rad;
     arc_max *= Deg2Rad;
 
     /* Prep the frame buffer */
     if ((fbPtr = fb_open(FB_Name, fb_width, fb_height)) == FBIO_NULL)
-	(void) exit (1);
+	(void) bu_exit (1, "");
     fb_width = fb_getwidth(fbPtr);
     fb_height = fb_getheight(fbPtr);
 
@@ -574,7 +574,7 @@ main (int argc, char **argv)
 	(ctr_y + unit_r > fb_height) || (ctr_y < unit_r))
     {
 	(void) fputs("Plot not entirely within frame buffer\n", stderr);
-	(void) exit (1);
+	(void) bu_exit (1, "");
     }
 
     if (clr_fb)
@@ -617,14 +617,14 @@ main (int argc, char **argv)
 	default:
 	    (void) fputs("Bad interior.  Shouldn't happen\n",
 			    stderr);
-	    (void) exit (1);
+	    (void) bu_exit (1, "");
 	    break;
     }
 
     if ((fbb = (unsigned char *) malloc(fb_width * sizeof(RGBpixel))) == NULL)
     {
 	(void) fputs("Ran out of memory\n", stderr);
-	(void) exit (1);
+	(void) bu_exit (1, "");
     }
 
     /* Fill fbb */
@@ -754,7 +754,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     {
 	(void) fprintf(stderr, "%s:  Cannot open input file '%s'\n",
 	    ProgName, FileName);
-	(void) exit (1);
+	(void) bu_exit (1, "");
     }
 
     /* Initialize the table */
@@ -783,7 +783,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
     }
 
     if (Warnings == 2)
-	(void) exit (1);
+	(void) bu_exit (1, "");
 
     /* Check the table for completeness */
     gap_min = gap_max = -1;
@@ -861,7 +861,7 @@ ArgCompat (int Interior)
     {
 	(void) fputs("Only one of -e, -i, -l, and -w may be specified\n",
 		     stderr);
-	(void) exit (1);
+	(void) bu_exit (1, "");
     }
 }
 

@@ -78,14 +78,14 @@ do_file(void)
 
 	if( (ifp = fopen( input_file, "r" )) == NULL )  {
 		perror(input_file);
-		exit(1);
+		bu_exit(1, "");
 	}
 	output_file = (char *)bu_malloc( strlen(input_file)+10, "output_file" );
 	snprintf(output_file, strlen(input_file)+9, "MOD_%s", input_file);
 
 	if( (ofp = fopen( output_file, "w" )) == NULL )  {
 		perror(output_file);
-		exit(2);
+		bu_exit(2, "");
 	}
 	bu_free(output_file, "output_file");
 

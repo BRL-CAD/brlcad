@@ -156,11 +156,11 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) ) {
 		fputs( usage, stderr);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
-		exit(12);
+		bu_exit(12, "");
 
 	if( clear ) {
 		fb_clear( fbp, PIXEL_NULL);
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 	BuildStr( &start, &end );	/* pixels */
 
 	fb_close( fbp );
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

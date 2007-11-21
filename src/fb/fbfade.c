@@ -158,7 +158,7 @@ Fatal( char *format, ... )
     if ( fbp != FBIO_NULL && fb_close( fbp ) == -1 )
 	Message( "Error closing frame buffer" );
 
-    exit( EXIT_FAILURE );
+    bu_exit( EXIT_FAILURE, "" );
     /*NOTREACHED*/
 }
 
@@ -416,7 +416,7 @@ main(int argc, char **argv)
 	Fatal( "Error closing output frame buffer" );
     }
 
-    exit( EXIT_SUCCESS );
+    bu_exit( EXIT_SUCCESS, "" );
 }
 
 /*

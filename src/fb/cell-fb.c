@@ -351,7 +351,7 @@ static long read_Cell_Data(void)
 	if (lbp[strlen(lbp) - 1] != '\n')
 	{
 	    bu_log("Overlong line\n");
-	    exit (1);
+	    bu_exit (1, "");
 	}
 
 	/* Have we run out of room for the cells?  If so reallocate memory */

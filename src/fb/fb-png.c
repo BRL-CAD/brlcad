@@ -155,11 +155,11 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if (pkg_init() != 0)
-	    exit(1);
+	    bu_exit(1, "");
 
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if (!png_p) {
@@ -175,7 +175,7 @@ main(int argc, char **argv)
 
 	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
 		pkg_terminate();
-		exit(12);
+		bu_exit(12, "");
 	}
 
 	/* If actual screen is smaller than requested size, trim down */
@@ -259,7 +259,7 @@ main(int argc, char **argv)
 	fb_close( fbp );
 	png_write_end( png_p, NULL );
 	pkg_terminate();
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

@@ -181,7 +181,7 @@ get_args(int argc, register char **argv)
 			(void)fprintf( stderr,
 				"pix-fb: cannot open \"%s\" for reading\n",
 				file_name );
-			exit(1);
+			bu_exit(1, "");
 		}
 #ifdef _WIN32
 		_setmode(infd, _O_BINARY);
@@ -204,11 +204,11 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if (pkg_init() != 0)
-	    exit(1);
+	    bu_exit(1, "");
 
 	/* autosize input? */
 	if( fileinput && autosize ) {
@@ -229,7 +229,7 @@ main(int argc, char **argv)
 
 	if ((fbp = fb_open( framebuffer, scr_width, scr_height)) == NULL) {
 	    pkg_terminate();
-	    exit(12);
+	    bu_exit(12, "");
 	}
 
 	/* Get the screen size we were given */
@@ -251,7 +251,7 @@ main(int argc, char **argv)
 	}
 
 	if( xout < 0 )
-		exit(0);			/* off screen */
+		bu_exit(0, "");			/* off screen */
 	if( xout > (file_width-file_xoff) )
 		xout = (file_width-file_xoff);
 	scanpix = xout;				/* # pixels on scanline */
@@ -261,7 +261,7 @@ main(int argc, char **argv)
 
 	yout = scr_height - scr_yoff;
 	if( yout < 0 )
-		exit(0);			/* off screen */
+		bu_exit(0, "");			/* off screen */
 	if( yout > (file_height-file_yoff) )
 		yout = (file_height-file_yoff);
 
@@ -278,7 +278,7 @@ main(int argc, char **argv)
 			"pix-fb:  malloc(%d) failure for scanline buffer\n",
 			scanbytes);
 		pkg_terminate();
-		exit(2);
+		bu_exit(2, "");
 	}
 
 	if( clear )  {
@@ -380,7 +380,7 @@ main(int argc, char **argv)
 	}
 
 	pkg_terminate();
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

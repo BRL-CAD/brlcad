@@ -170,13 +170,13 @@ main(int argc, char **argv)
 	infp = stdin;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	rle_dflt_hdr.rle_file = infp;
 	if( rle_get_setup( &rle_dflt_hdr ) < 0 )  {
 		fprintf(stderr, "rle-fb: Error reading setup information\n");
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	if (r_debug)  {
@@ -239,7 +239,7 @@ main(int argc, char **argv)
 	rle_dflt_hdr.xmin = 0;
 
 	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == FBIO_NULL )
-		exit(12);
+		bu_exit(12, "");
 
 	/* Honor original screen size desires, if set, unless they shrank */
 	if( screen_width > 0 && fb_getwidth(fbp) < screen_width )
@@ -355,7 +355,7 @@ main(int argc, char **argv)
 	}
 done:
 	fb_close( fbp );
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

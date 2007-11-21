@@ -412,7 +412,7 @@ top:
 		}
 	}  while( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
 	    !feof(ifp) );
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*
@@ -442,7 +442,7 @@ get_ext(struct bu_external *ep, int ngran)
 		fprintf(stderr,
 			"g2asc: get_ext:  wanted to read %d granules, got %d\n",
 			ngran-1, count);
-		exit(1);
+		bu_exit(1, "");
 	}
 }
 
@@ -458,7 +458,7 @@ nmg_dump(void)
 	if( sizeof( union record )%32 )
 	{
 		fprintf( stderr , "g2asc: nmg_dump cannot work with records not multiple of 32\n" );
-		exit( -1 );
+		bu_exit( -1, "" );
 	}
 
 	/* get number of granules needed for this NMG */
@@ -488,7 +488,7 @@ nmg_dump(void)
 		if( !fread( (char *)&rec, sizeof record, 1, ifp ) )
 		{
 			(void)fprintf(stderr , "Error reading nmg granules\n" );
-			exit( -1 );
+			bu_exit( -1, "" );
 		}
 		cp = (char *)&rec;
 
@@ -515,7 +515,7 @@ strsol_dump(void)	/* print out strsol solid info */
 	if( !fread( (char *)&rec[1], sizeof record, DB_SS_NGRAN-1, ifp ) )
 	{
 		(void)fprintf(stderr , "Error reading strsol granules\n" );
-		exit( -1 );
+		bu_exit( -1, "" );
 	}
 
 	/* make sure that at least the last byte is null */
@@ -611,7 +611,7 @@ cline_dump(void)
 	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_CLINE].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: cline import failure\n");
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	cli = (struct rt_cline_internal *)intern.idb_ptr;
@@ -646,7 +646,7 @@ bot_dump(void)
 	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_BOT].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: bot import failure\n");
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -704,7 +704,7 @@ pipe_dump(void)	/* Print out Pipe record information */
 	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_PIPE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: pipe import failure\n");
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	pipe = (struct rt_pipe_internal *)intern.idb_ptr;
@@ -754,7 +754,7 @@ particle_dump(void)
 	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_PARTICLE].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: particle import failure\n");
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	part = (struct rt_part_internal *)intern.idb_ptr;
@@ -773,7 +773,7 @@ particle_dump(void)
 		break;
 	default:
 		fprintf(stderr, "g2asc: no particle type %d\n", part->part_type);
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	fprintf(ofp, "%c %.16s %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
@@ -812,7 +812,7 @@ arbn_dump(void)
 	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_ARBN].ft_import( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: arbn import failure\n");
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	arbn = (struct rt_arbn_internal *)intern.idb_ptr;
@@ -1078,7 +1078,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 	count = fread( (char *)fp, 1, nbytes, ifp );
 	if( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: spline knot read failure\n");
-		exit(1);
+		bu_exit(1, "");
 	}
 	/* Print the knot vector information */
 	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
@@ -1095,7 +1095,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 	count = fread( (char *)fp, 1, nbytes, ifp );
 	if( count != nbytes )  {
 		(void)fprintf(stderr, "g2asc: control mesh read failure\n");
-		exit(1);
+		bu_exit(1, "");
 	}
 	/* Print the control mesh information */
 	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
@@ -1204,7 +1204,7 @@ extrdump(void)
 	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_EXTRUDE].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: extrusion import failure\n");
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	extr = (struct rt_extrude_internal *)intern.idb_ptr;
@@ -1239,7 +1239,7 @@ sketchdump(void)
 	RT_INIT_DB_INTERNAL(&intern);
 	if( (rt_functab[ID_SKETCH].ft_import( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 		fprintf(stderr, "g2asc: sketch import failure\n");
-		exit( -1 );
+		bu_exit( -1, "" );
 	}
 
 	skt = (struct rt_sketch_internal *)intern.idb_ptr;

@@ -86,7 +86,7 @@ Recsize()
 	{
 		bu_log( "Cannot rewind file\n" );
 		perror( "Recsize" );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( recl == 0 )	/* then LF's were found */

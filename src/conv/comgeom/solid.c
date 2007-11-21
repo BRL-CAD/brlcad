@@ -239,7 +239,7 @@ getsolid(void)
 		break;
 	default:
 		fprintf(stderr,"getsolid() version %d unimplemented\n", version);
-		exit(1);
+		bu_exit(1, "");
 		break;
 	}
 	/* Trim trailing spaces */

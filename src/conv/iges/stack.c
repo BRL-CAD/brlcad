@@ -48,7 +48,7 @@ Initstack()
 	{
 		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initstack" );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 }
 
@@ -69,7 +69,7 @@ union tree *ptr;
 		{
 			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Push" );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 	}
 	stk[jtop] = ptr;

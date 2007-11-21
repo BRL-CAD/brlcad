@@ -60,7 +60,7 @@ void
 usage()
 {
 	bu_log( message );
-	exit( 1 );
+	bu_exit( 1, "" );
 }
 
 /*

@@ -143,7 +143,7 @@ main(int argc, char **argv)
 		printf(" (Alternatively set environment variable FB_FILE)\n");
 		printf("  -W screen_width\n");
 		printf("  -N screen_height\n");
-		exit(10);
+		bu_exit(10, "");
 	}
 	for(i=1;i<argc;i++){
 		if(strcmp("-F",argv[i])==0){
@@ -164,12 +164,12 @@ main(int argc, char **argv)
 			scr_set=1;
 		} else if(strncmp("-",argv[i],1)==0){
 			printf("Unknown option: %s\n",argv[i]);
-			exit(10);
+			bu_exit(10, "");
 /* get plot file */
 		} else {
 			if((ifd=open(argv[i],2)) == -1){
 				perror(argv[i]);
-				exit(10);
+				bu_exit(10, "");
 			}
 		}
 	}
@@ -197,7 +197,7 @@ view:	printf("Title: ");
 	if((grid_w > 512 || grid_h > 512) && scr_set==0){
 		if(grid_w>1024 || grid_h>1024){
 			printf("Number of pixels gt 1024\n");
-			exit(10);
+			bu_exit(10, "");
 		}
 		scr_w=1024;
 		scr_h=1024;
@@ -206,7 +206,7 @@ view:	printf("Title: ");
 /*		open frame buffer */
 	if((fbp=fb_open(NULL,scr_w,scr_h))==NULL){
 		printf("No device opened\n");
-		exit(10);
+		bu_exit(10, "");
 	}
 	(void)fb_wmap(fbp,COLORMAP_NULL);	/* std map */
 
@@ -219,13 +219,13 @@ view:	printf("Title: ");
 /*	printf("min_w %d min_h %d\n",min_w,min_h); */
 
 /* find item - color table (default color = silver) */
-	while((c=gc())!='/') if(c==0) exit(1);
+	while((c=gc())!='/') if(c==0) bu_exit(1, "");
 	gc();
 	loci=loct;
 	for(ni=0;;ni++) {
 		if(ni>=500){
 			printf("Not enough room to store item colors\n");
-			exit(10);
+			bu_exit(10, "");
 		}
 		itm[ni]=ctoi();
 		if(itm[ni]<0) break;
@@ -359,7 +359,7 @@ view:	printf("Title: ");
 				}
 			ichg=0;
 			}
-			if(iquit!=0) exit(0);
+			if(iquit!=0) bu_exit(0, "");
 			loct=loce;
 			lseek(ifd,(off_t)loce,0);
 			ic=0;

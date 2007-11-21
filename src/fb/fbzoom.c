@@ -80,10 +80,10 @@ main(int argc, char **argv)
 {
 	if( ! pars_Argv( argc, argv ) ) {
 		(void)fputs(usage, stderr);
-		exit(1);
+		bu_exit(1, "");
 	}
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
-		exit(1);
+		bu_exit(1, "");
 
 	if( bu_optind+4 == argc ) {
 		xPan = atoi( argv[bu_optind+0] );

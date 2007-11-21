@@ -904,7 +904,7 @@ slop_lines(int nlines)
 	rlines = (&buffer[BUFFER_SIZE] - buf0p) / bytes_per_line;
 	if (rlines < nlines) {
 		if (writelines(rlines, (char *)buf0p) < 0)
-			exit(1);
+			bu_exit(1, "");
 		bzero( (char *)buf0p, rlines * bytes_per_line);
 		buf0p = buffer;
 		nlines -= rlines;
@@ -912,7 +912,7 @@ slop_lines(int nlines)
 		row -= RECONVERT(rlines);
 	}
 	if (writelines(nlines, (char *)buf0p) < 0)
-		exit(1);
+		bu_exit(1, "");
 	bzero( (char *)buf0p, bytes_per_line * nlines);
 	buf0p += bytes_per_line * nlines;
 	if (buf0p >= &buffer[BUFFER_SIZE])
@@ -941,7 +941,7 @@ writelines(int nlines, register char *buf)
 			/* Ran off bottom of screen */
 			if( fbp )
 				fb_close(fbp);
-			exit(0);
+			bu_exit(0, "");
 		}
 		if( clear ) {
 			bzero( (char *)scanline, scr_width*3 );

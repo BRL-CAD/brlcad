@@ -40,7 +40,7 @@ f2a(float f, char *s, int w, int d)
 		printf( "w must be at least 2 bigger then d.\n" );
 		printf( "w= %f\t d= %f\n", w, d );
 		printf( "STOP\n");
-		exit( 10 );
+		bu_exit( 10, "" );
 	}
 	for( i = 1; i <= d; i++ ) f = f * 10.0;	/* shift left.*/
 	if( f < 0.0 )	f -= 0.5;		/* round up */

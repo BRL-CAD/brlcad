@@ -120,14 +120,14 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( flavor == OLD )
 		oldflavor();	/* exits */
 
 	if( (fbp = fb_open( framebuffer, fbwidth, fbheight )) == NULL )
-		exit( 2 );
+		bu_exit( 2, "" );
 
 	fbwidth = fb_getwidth( fbp );
 	fbheight = fb_getheight( fbp );
@@ -188,7 +188,7 @@ oldflavor(void)
 	static RGBpixel	black, white, red;
 
 	if( (fbp = fb_open( NULL, fbwidth, fbheight )) == NULL ) {
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	fb_sz = fb_getwidth(fbp);
@@ -218,7 +218,7 @@ oldflavor(void)
 		}
 	}
 	fb_close( fbp );
-	exit( 0 );
+	bu_exit( 0, "" );
 }
 
 /*

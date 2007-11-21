@@ -455,7 +455,7 @@ main(int argc, char **argv)
 		if( mk_addmember( (char *)BU_PTBL_GET( &names , i ) , &reg_head.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
 			bu_log( "Cannot make top level group\n" );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 	}
 

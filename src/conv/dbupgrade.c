@@ -143,7 +143,7 @@ main(int argc, char **argv)
     RT_CK_DBI(dbip);
     if( db_dirbuild( dbip ) ) {
 	bu_log( "db_dirbuild failed\n" );
-	exit(1);
+	bu_exit(1, "");
     }
 
     if( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {

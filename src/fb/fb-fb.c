@@ -104,7 +104,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	if( verbose )
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	if( (in_fbp = fb_open( in_fb_name, 0, 0 )) == NULL )  {
 		if( in_fb_name )
 			fprintf(stderr,"fb-fb: unable to open input '%s'\n", in_fb_name );
-		exit(12);
+		bu_exit(12, "");
 	}
 
 	/* Get the screen size we were given */
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 	if( (out_fbp = fb_open( out_fb_name, scr_width, scr_height )) == FBIO_NULL )  {
 		if( out_fb_name )
 			fprintf(stderr,"fb-fb: unable to open output '%s'\n", out_fb_name );
-		exit(12);
+		bu_exit(12, "");
 	}
 
 	scanpix = scr_width;			/* # pixels on scanline */
@@ -136,7 +136,7 @@ main(int argc, char **argv)
 		fprintf(stderr,
 			"fb-fb:  malloc(%d) failure for scanline buffer\n",
 			scanbytes);
-		exit(2);
+		bu_exit(2, "");
 	}
 
 	/* Bottom to top with multi-line reads & writes */
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	}
 	fb_close( in_fbp );
 	fb_close( out_fbp );
-	exit(0);
+	bu_exit(0, "");
 }
 
 /*

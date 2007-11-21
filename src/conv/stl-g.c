@@ -629,7 +629,7 @@ char	*argv[];
 	if( argc < 2 )
 	{
 		bu_log( usage, argv[0]);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	/* Get command line arguments. */
@@ -688,7 +688,7 @@ char	*argv[];
 			break;
 		default:
 			bu_log( usage, argv[0]);
-			exit(1);
+			bu_exit(1, "");
 			break;
 		}
 	}
@@ -700,7 +700,7 @@ char	*argv[];
 	{
 		bu_log( "Cannot open input file (%s)\n" , input_file );
 		perror( argv[0] );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 	bu_optind++;
 	brlcad_file = argv[bu_optind];
@@ -708,7 +708,7 @@ char	*argv[];
 	{
 		bu_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
 		perror( argv[0] );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	mk_id_units( fd_out , "Conversion from Stereolithography format" , "mm" );

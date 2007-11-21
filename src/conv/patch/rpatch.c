@@ -66,7 +66,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 		fprintf( stderr , "Get_ftn_float( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
 		fprintf( stderr , "\tformat must be F, E, or D type\n" );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* if start column is beyond end of input string, return zero */
@@ -84,7 +84,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 				str, start_col, ptr );
 		fprintf( stderr , "\tfield width (%d) in format is too large. Max allowed is %d\n",
 				width , MAXLINELEN-2 );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* copy the input string to tmp_str, converting
@@ -151,7 +151,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 		fprintf( stderr , "Get_ftn_int( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
 		fprintf( stderr , "\tformat must be I type\n" );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* if start column is beyond end of input string, return zero */
@@ -169,7 +169,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 				str, start_col, ptr );
 		fprintf( stderr , "\tfield width (%d) in format is too large. Max allowed is %d\n",
 				width , MAXLINELEN-1 );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* copy the input string to tmp_str, converting

@@ -115,7 +115,7 @@ main(int argc, char **argv)
 	rle_wlen( xlen, ylen, 0 );
 
 	if( (fbp = fb_open( fb_file, width, height )) == NULL )  {
-		exit(12);
+		bu_exit(12, "");
 	}
 
 	if( topdown )

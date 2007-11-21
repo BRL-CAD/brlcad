@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 
     if( argc != 3 ) {
 	bu_log( "%s", usage );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     Tcl_FindExecutable(argv[0]);
@@ -481,7 +481,7 @@ sktbld(void)
     if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 	{
 	    bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-	    exit( -1 );
+	    bu_exit( -1, "" );
 	}
 
     verts = (point2d_t *)bu_calloc( vert_count, sizeof( point2d_t ), "verts" );
@@ -490,7 +490,7 @@ sktbld(void)
     if( !ptr )
 	{
 	    bu_log( "ERROR: no vertices for sketch (%s)\n", name );
-	    exit( 1 );
+	    bu_exit( 1, "" );
 	}
     for( i=0 ; i<vert_count ; i++ )
 	{
@@ -499,14 +499,14 @@ sktbld(void)
 	    if( !ptr )
 		{
 		    bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
-		    exit( 1 );
+		    bu_exit( 1, "" );
 		}
 	    verts[i][1] = atof( ptr );
 	    ptr = strtok( (char *)NULL, " " );
 	    if( !ptr && i < vert_count-1 )
 		{
 		    bu_log( "ERROR: not enough vertices for sketch (%s)\n", name );
-		    exit( 1 );
+		    bu_exit( 1, "" );
 		}
 	}
 
@@ -530,7 +530,7 @@ sktbld(void)
 	    if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		{
 		    bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-		    exit( -1 );
+		    bu_exit( -1, "" );
 		}
 
 	    cp = buf + 2;
@@ -559,14 +559,14 @@ sktbld(void)
 			if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 			    {
 				bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-				exit( -1 );
+				bu_exit( -1, "" );
 			    }
 			cp = buf + 3;
 			ptr = strtok( cp, " " );
 			if( !ptr )
 			    {
 				bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
-				exit( 1 );
+				bu_exit( 1, "" );
 			    }
 			for( k=0 ; k<nsg->k.k_size ; k++ )
 			    {
@@ -575,20 +575,20 @@ sktbld(void)
 				if( !ptr && k<nsg->k.k_size-1 )
 				    {
 					bu_log( "ERROR: not enough knots for nurb segment in sketch (%s)\n", name );
-					exit( 1 );
+					bu_exit( 1, "" );
 				    }
 			    }
 			if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 			    {
 				bu_log( "Unexpected EOF while reading sketch (%s) data\n", name );
-				exit( -1 );
+				bu_exit( -1, "" );
 			    }
 			cp = buf + 3;
 			ptr = strtok( cp, " " );
 			if( !ptr )
 			    {
 				bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
-				exit( 1 );
+				bu_exit( 1, "" );
 			    }
 			for( k=0 ; k<nsg->c_size ; k++ )
 			    {
@@ -597,7 +597,7 @@ sktbld(void)
 				if( !ptr && k<nsg->c_size-1 )
 				    {
 					bu_log( "ERROR: not enough control points for nurb segment in sketch (%s)\n", name );
-					exit( 1 );
+					bu_exit( 1, "" );
 				    }
 			    }
 			nsg->magic = CURVE_NURB_MAGIC;
@@ -606,7 +606,7 @@ sktbld(void)
 		    default:
 			bu_log( "Unrecognized segment type (%c) in sketch (%s)\n",
 				*cp, name );
-			exit( 1 );
+			bu_exit( 1, "" );
 		}
 
 	}
@@ -688,7 +688,7 @@ nmgbld(void)
     /* Get next line of input with the 26 counts on it */
     if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )  {
 	bu_log( "Unexpected EOF while reading NMG %s data, line 2\n", name );
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     /* Second, process counts for each kind of structure */
@@ -711,7 +711,7 @@ nmgbld(void)
 	if( bu_fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 	    {
 		bu_log( "Unexpected EOF while reading NMG %s data, hex line %d\n", name, j );
-		exit( -1 );
+		bu_exit( -1, "" );
 	    }
 
 	for( k=0 ; k<32 ; k++ )
@@ -725,7 +725,7 @@ nmgbld(void)
     RT_INIT_DB_INTERNAL(&intern);
     if( rt_functab[ID_NMG].ft_import5( &intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource, ID_NMG ) < 0 )  {
 	bu_log("ft_import5 failed on NMG %s\n", name );
-	exit( -1 );
+	bu_exit( -1, "" );
     }
     bu_free_external(&ext);
 
@@ -1274,12 +1274,12 @@ identbld(void)
     if( local2mm <= 0 )  {
 	fprintf(stderr, "asc2g: unable to convert v4 units string '%s', got local2mm=%g\n",
 		unit_str, local2mm);
-	exit(3);
+	bu_exit(3, "");
     }
 
     if( mk_id_editunits(ofp, title, local2mm) < 0 )  {
 	bu_log("asc2g: unable to write database ID\n");
-	exit(2);
+	bu_exit(2, "");
     }
 }
 

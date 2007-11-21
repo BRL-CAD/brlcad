@@ -56,7 +56,7 @@ Findp()
 	{
 		bu_log( "Cannot seek to end of file\n" );
 		perror( "Findp" );
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 	offset = ftell( fd );	/* get file length */
 	rec2 = offset/reclen;	/* calculate record number for last record */

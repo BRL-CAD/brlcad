@@ -175,12 +175,12 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) ) {
 		fputs( usage, stderr);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )  {
 		fprintf(stderr, "fblabel:  Unable to open framebuffer %s\n", framebuffer);
-		exit(12);
+		bu_exit(12, "");
 	}
 
 	if( clear ) {
@@ -190,13 +190,13 @@ main(int argc, char **argv)
 	if( (vfp = vfont_get(font1)) == VFONT_NULL )  {
 		fprintf(stderr, "fblabel:  Can't get font \"%s\"\n",
 			font1 == NULL ? "(null)" : font1);
-		exit(1);
+		bu_exit(1, "");
 	}
 
 	do_line( vfp, textstring );
 
 	fb_close( fbp );
-	exit(0);
+	bu_exit(0, "");
 }
 
 void
@@ -313,7 +313,7 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 		}
 		if( fb_write( fbp, x, y-vdp->vd_down+i, (unsigned char *)fbline, totwid+3 ) < totwid+3 )  {
 			fprintf(stderr, "fblabel: pixel write error\n");
-			exit(1);
+			bu_exit(1, "");
 		}
 	 }
 }
