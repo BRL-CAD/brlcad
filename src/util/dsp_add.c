@@ -213,7 +213,7 @@ main(int ac, char *av[])
 	}
 
 	if (sb.st_size != count)
-		bu_bomb("**** ERROR **** file size mis-match\n");
+		bu_exit( EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
 
 	buf2 = bu_malloc((size_t)sb.st_size, "buf2");
 

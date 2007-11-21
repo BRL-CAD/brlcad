@@ -126,7 +126,7 @@ main(int argc, char **argv)
 			default:
 				bu_log( "Illegal option (%s)\n", argv[1] );
 				bu_log( usage, "png-bw" );
-				bu_bomb( "Illegal option\n" );
+				bu_exit( EXIT_FAILURE, "Illegal option\n" );
 		}
 		argc--;
 		argv++;
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 		if( isatty(fileno(stdin)) )
 		{
 			bu_log( usage, "png-bw" );
-			bu_bomb( "Are you intending to type in a PNG format file??\n" );
+			bu_exit( EXIT_FAILURE, "Are you intending to type in a PNG format file??\n" );
 		}
 		fp_in = stdin;
 	}
@@ -147,23 +147,23 @@ main(int argc, char **argv)
 		{
 			perror(argv[1]);
 			bu_log ( "png-bw: cannot open \"%s\" for reading\n",argv[1] );
-			bu_bomb( "Cannot open input file\n" );
+			bu_exit( EXIT_FAILURE, "Cannot open input file\n" );
 		}
 	}
 
 	if( fread( header, 8, 1, fp_in ) != 1 )
-		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
+		bu_exit( EXIT_FAILURE, "ERROR: Failed while reading file header!!!\n" );
 
 	if( !png_check_sig( (png_bytep)header, 8 ) )
-		bu_bomb( "This is not a PNG file!!!\n" );
+		bu_exit( EXIT_FAILURE, "This is not a PNG file!!!\n" );
 
 	png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if( !png_p )
-		bu_bomb( "png_create_read_struct() failed!!\n" );
+		bu_exit( EXIT_FAILURE, "png_create_read_struct() failed!!\n" );
 
 	info_p = png_create_info_struct( png_p );
 	if( !info_p )
-		bu_bomb( "png_create_info_struct() failed!!\n" );
+		bu_exit( EXIT_FAILURE, "png_create_info_struct() failed!!\n" );
 
 	png_init_io( png_p, fp_in );
 

@@ -142,11 +142,11 @@ main(int argc, char **argv)
 
 	png_p = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
 	if( !png_p )
-		bu_bomb( "Could not create PNG write structure\n" );
+		bu_exit( EXIT_FAILURE, "Could not create PNG write structure\n" );
 
 	info_p = png_create_info_struct( png_p );
 	if( !info_p )
-		bu_bomb( "Could not create PNG info structure\n" );
+		bu_exit( EXIT_FAILURE, "Could not create PNG info structure\n" );
 
 	/* allocate space for the image */
 	scanbuf = (unsigned char *)bu_calloc( SIZE, sizeof( unsigned char ), "scanbuf" );
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 
 	/* read the bw file */
 	if( fread( scanbuf, SIZE, 1, infp ) != 1 )
-		bu_bomb( "bw-png: Short read\n");
+		bu_exit( EXIT_FAILURE, "bw-png: Short read\n");
 
 	png_init_io( png_p, stdout );
 	png_set_filter( png_p, 0, PNG_FILTER_NONE );

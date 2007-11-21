@@ -856,7 +856,7 @@ tankill_reassign(char *db_name)
 	{
 		bu_log( "Cannot open TANKILL database (%s)\n", db_name );
 		perror( "remapid" );
-		bu_bomb( "Cannot open TANKILL database\n" );
+		bu_exit( EXIT_FAILURE, "Cannot open TANKILL database\n" );
 	}
 
 	/* make a 'curr_id' structure to feed to bu_rb_search */
@@ -883,7 +883,7 @@ tankill_reassign(char *db_name)
 			if( ch == EOF && coord_no < 3*vertex_count )
 			{
 				bu_log( "Unexpected EOF while processing ident %d\n", id );
-				bu_bomb( "Unexpected EOF\n" );
+				bu_exit( EXIT_FAILURE, "Unexpected EOF\n" );
 			}
 
 			if( isspace( ch ) )
