@@ -58,7 +58,7 @@ typedef struct torusLevels {
 void usage(char *progname)
 {
 	fprintf(stderr, "Usage: %s db_file.g\n", progname);
-	exit(-1);
+	bu_exit(-1, "");
 }
 
 
@@ -112,7 +112,7 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
       if ((ta->torus = realloc(ta->torus, (ta->count+6)*sizeof(torus_t))) == NULL) {
 	bu_log("Unable to allocate memory for torii during runtime\n");
 	perror("torus_t allocation during runtime failed");
-	exit(3);
+	bu_exit(3, "");
       }
       ta->max+=6;
     }
@@ -185,7 +185,7 @@ main(int ac, char *av[])
 
   if ((db_fp = wdb_fopen(fileName)) == NULL) {
     perror(fileName);
-    exit(-1);
+    bu_exit(-1, "");
   }
 
   /* create the database header record */

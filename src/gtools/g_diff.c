@@ -207,11 +207,11 @@ compare_external(struct directory *dp1, struct directory *dp2)
 
     if( db_get_external( &ext1, dp1, dbip1 ) ) {
 	fprintf( stderr, "ERROR: db_get_external failed on solid %s in %s\n", dp1->d_namep, dbip1->dbi_filename );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
     if( db_get_external( &ext2, dp2, dbip2 ) ) {
 	fprintf( stderr, "ERROR: db_get_external failed on solid %s in %s\n", dp2->d_namep, dbip2->dbi_filename );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( ext1.ext_nbytes != ext2.ext_nbytes ) {
@@ -267,13 +267,13 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
     if( Tcl_ListObjLength( interp, val1, &len1 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	exit ( 1 );
+	bu_exit ( 1, "" );
     }
 
     if( Tcl_ListObjLength( interp, val2, &len2 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	exit ( 1 );
+	bu_exit ( 1, "" );
     }
 
     if( len1 != len2 ) {
@@ -287,12 +287,12 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 	if( Tcl_ListObjIndex( interp, val1, i, &obj1 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( val1, NULL ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit ( 1 );
+	    bu_exit ( 1, "" );
 	}
 	if( Tcl_ListObjIndex( interp, val2, i, &obj2 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( val2, NULL ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit ( 1 );
+	    bu_exit ( 1, "" );
 	}
 	str1 = Tcl_GetString( obj1 );
 	str2 = Tcl_GetString( obj2 );
@@ -326,12 +326,12 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
     if( Tcl_ListObjLength( interp, obj1, &len1 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	exit ( 1 );
+	bu_exit ( 1, "" );
     }
     if( Tcl_ListObjLength( interp, obj2, &len2 ) == TCL_ERROR ) {
 	fprintf( stderr, "Error getting length of TCL object!!!\n" );
 	fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	exit ( 1 );
+	bu_exit ( 1, "" );
     }
 
     if( !len1 && !len2 )
@@ -348,13 +348,13 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	if( Tcl_ListObjIndex( interp, obj1, i, &key1 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj1, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit ( 1 );
+	    bu_exit ( 1, "" );
 	}
 
 	if( Tcl_ListObjIndex( interp, obj1, i+1, &val1 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i+1, Tcl_GetStringFromObj( obj1, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit ( 1 );
+	    bu_exit ( 1, "" );
 	}
 
 	found = 0;
@@ -362,14 +362,14 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	    if( Tcl_ListObjIndex( interp, obj2, j, &key2 ) == TCL_ERROR ) {
 		fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", j, Tcl_GetStringFromObj( obj2, &junk ) );
 		fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-		exit ( 1 );
+		bu_exit ( 1, "" );
 	    }
 	    if( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) ) {
 		found = 1;
 		if( Tcl_ListObjIndex( interp, obj2, j+1, &val2 ) == TCL_ERROR ) {
 		    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", j+1, Tcl_GetStringFromObj( obj2, &junk ) );
 		    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-		    exit ( 1 );
+		    bu_exit ( 1, "" );
 		}
 
 		/* check if this value has changed */
@@ -405,7 +405,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 			if( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR ) {
 			    fprintf( stderr, "Error getting length of TCL object!!\n" );
 			    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-			    exit( 1 );
+			    bu_exit( 1, "" );
 			}
 			if( val_len > 1 )
 			    bu_vls_putc( vls, '{' );
@@ -454,13 +454,13 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	if( Tcl_ListObjIndex( interp, obj2, i, &key2 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj2, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit ( 1 );
+	    bu_exit ( 1, "" );
 	}
 
 	if( Tcl_ListObjIndex( interp, obj2, i+1, &val2 ) == TCL_ERROR ) {
 	    fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i+1, Tcl_GetStringFromObj( obj2, &junk ) );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit ( 1 );
+	    bu_exit ( 1, "" );
 	}
 
 	found = 0;
@@ -469,7 +469,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	    if( Tcl_ListObjIndex( interp, obj1, j, &key1 ) == TCL_ERROR ) {
 		fprintf( stderr, "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj1, &junk ) );
 		fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-		exit ( 1 );
+		bu_exit ( 1, "" );
 	    }
 	    if( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) ) {
 		found = 1;
@@ -510,7 +510,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 	    if( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR ) {
 		fprintf( stderr, "Error getting length of TCL object!!\n" );
 		fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-		exit( 1 );
+		bu_exit( 1, "" );
 	    }
 	    if( val_len > 1 )
 		bu_vls_putc( vls, '{' );
@@ -603,7 +603,7 @@ verify_region_attrs( struct directory *dp, struct db_i *dbip, Tcl_Obj *obj )
 
     if( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 ) {
 	fprintf( stderr, "Cannot import %s\n", dp->d_namep );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -611,7 +611,7 @@ verify_region_attrs( struct directory *dp, struct db_i *dbip, Tcl_Obj *obj )
 
     if( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
 	fprintf( stderr, "Cannot get length of attributes for %s\n", dp->d_namep );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     for( i=1 ; i<len ; i += 2 ) {
@@ -684,7 +684,7 @@ remove_region_attrs( Tcl_Obj *obj )
     if( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {
 	fprintf( stderr, "Cannot get length of attributes for %s\n",
 		 Tcl_GetStringFromObj( obj, NULL ) );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( len == 0 )
@@ -725,7 +725,7 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 	if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 	    fprintf( stderr, "Cannot get attributes for %s\n", dp1->d_namep );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit( 1 );
+	    bu_exit( 1, "" );
 	}
 
 	obj1 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
@@ -743,7 +743,7 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 	if( Tcl_Eval( interp, bu_vls_addr( &vls ) ) != TCL_OK ) {
 	    fprintf( stderr, "Cannot get attributes for %s\n", dp1->d_namep );
 	    fprintf( stderr, "%s\n", Tcl_GetStringResult( interp ) );
-	    exit( 1 );
+	    bu_exit( 1, "" );
 	}
 
 	obj2 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
@@ -944,7 +944,7 @@ main(int argc, char **argv)
 
     if( argc != 2 ) {
 	Usage( invoked_as );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     file1 = *argv++;
@@ -953,24 +953,24 @@ main(int argc, char **argv)
     if (!bu_file_exists(file1)) {
 	fprintf( stderr, "Cannot stat file %s\n", file1 );
 	perror( file1 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if (!bu_file_exists(file2)) {
 	fprintf( stderr, "Cannot stat file %s\n", file2 );
 	perror( file2 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if (bu_same_file(file1, file2)) {
 	fprintf( stderr, "%s and %s are the same file\n", file1, file2 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     interp = Tcl_CreateInterp();
     if( Tcl_Init(interp) == TCL_ERROR ) {
 	fprintf( stderr, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     Rt_Init( interp );
@@ -978,32 +978,32 @@ main(int argc, char **argv)
     if( (dbip1 = db_open( file1, "r" )) == DBI_NULL ) {
 	fprintf( stderr, "Cannot open %s\n", file1 );
 	perror( argv[0] );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     RT_CK_DBI(dbip1);
 
     if( (wdb1 = wdb_dbopen( dbip1, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 	fprintf( stderr, "wdb_dbopen failed for %s\n", file1 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( db_dirbuild( dbip1 ) < 0 ) {
 	db_close( dbip1 );
 	fprintf( stderr, "db_dirbuild failed on %s\n", file1 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( wdb_init_obj( interp, wdb1, "_db1") != TCL_OK ) {
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_init_obj failed on %s\n", file1 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( wdb_create_cmd( interp, wdb1, "_db1" ) != TCL_OK ) {
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_create_cmd failed on %s\n", file1 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     /* save regionid colortable */
@@ -1017,7 +1017,7 @@ main(int argc, char **argv)
     if( (dbip2 = db_open( file2, "r" )) == DBI_NULL ) {
 	fprintf( stderr, "Cannot open %s\n", file2 );
 	perror( argv[0] );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     RT_CK_DBI(dbip2);
@@ -1026,27 +1026,27 @@ main(int argc, char **argv)
 	db_close( dbip1 );
 	db_close( dbip2 );
 	fprintf( stderr, "db_dirbuild failed on %s\n", file2 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( (wdb2 = wdb_dbopen( dbip2, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 	db_close( dbip2 );
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_dbopen failed for %s\n", file2 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( wdb_init_obj( interp, wdb2, "_db2") != TCL_OK ) {
 	wdb_close( wdb1 );
 	wdb_close( wdb2 );
 	fprintf( stderr, "wdb_init_obj failed on %s\n", file2 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     if( wdb_create_cmd( interp, wdb2, "_db2" ) != TCL_OK ) {
 	wdb_close( wdb1 );
 	fprintf( stderr, "wdb_create_cmd failed on %s\n", file2 );
-	exit( 1 );
+	bu_exit( 1, "" );
     }
 
     /* save regionid colortable */

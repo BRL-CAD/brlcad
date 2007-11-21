@@ -527,7 +527,7 @@ main (int argc, char **argv)
 		error:
 		default:
 		    PrintUsage(1);
-		    (void) exit (*Opt != '?');
+		    (void) bu_exit (*Opt != '?', "");
 	    }
 
     /* Determine source of input */

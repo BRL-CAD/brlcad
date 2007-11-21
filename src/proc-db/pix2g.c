@@ -70,7 +70,7 @@ struct bu_mapped_file *image;
 void usage(void)
 {
 	fprintf(stderr, "Usage: %s image_file.pix db_file.g [pixelWidth [pixelHeight [cellSize [objectSize]]]\n", progname);
-	exit(-1);
+	bu_exit(-1, "");
 }
 
 void computeScanline( int pid, genptr_t arg ) {
@@ -192,13 +192,13 @@ main(int ac, char *av[])
 	if ((db_fp = wdb_fopen(databaseFileName)) == NULL) {
 	  bu_log("unable to open database [%s]\n", databaseFileName);
 		perror("Unable to open database file");
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	if ((image = bu_open_mapped_file(imageFileName, NULL)) == NULL) {
 	  bu_log("unable to open image [%s]\n", imageFileName);
 		perror("Unable to open file");
-		exit(-2);
+		bu_exit(-2, "");
 	}
 
 	bu_log("Loading image %s from file...", imageFileName);

@@ -447,7 +447,7 @@ usage(s)
 
     (void) fprintf(stderr, usage_msg, progname);
 
-    exit(1);
+    bu_exit(1, "");
 }
 
 
@@ -623,13 +623,13 @@ parse_args(int ac, char *av[])
 	case 'V'	:
 	    if (read_units_double(&volume_tolerance, bu_optarg, units_tab[1])) {
 		bu_log("error in volume tolerance \"%s\"\n", bu_optarg);
-		exit(-1);
+		bu_exit(-1, "");
 	    }
 	    break;
 	case 'W'	:
 	    if (read_units_double(&weight_tolerance, bu_optarg, units_tab[2])) {
 		bu_log("error in weight tolerance \"%s\"\n", bu_optarg);
-		exit(-1);
+		bu_exit(-1, "");
 	    }
 	    break;
 
@@ -2071,7 +2071,7 @@ main(int ac, char *av[])
      */
     if( (rtip=rt_dirbuild(av[arg_count], idbuf, IDBUFSIZE)) == RTI_NULL ) {
 	fprintf(stderr,"g_qa: rt_dirbuild failure on %s\n", av[arg_count]);
-	exit(2);
+	bu_exit(2, "");
     }
     rtip->useair = use_air;
 

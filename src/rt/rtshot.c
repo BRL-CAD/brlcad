@@ -120,7 +120,7 @@ main(int argc, char **argv)
 
     if( argc < 3 )  {
 	(void)fputs(usage, stderr);
-	exit(1);
+	bu_exit(1, "");
     }
 
     RT_APPLICATION_INIT(&ap);
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	    if( attr_count == 0 ) {
 		bu_log( "missing list of attribute names!!!\n" );
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	    }
 
 	    /* allocate enough for a null terminated list */
@@ -276,7 +276,7 @@ main(int argc, char **argv)
 			bu_log( "\t'rebuild_fastgen' or '1'\n");
 			bu_log( "\t'rebuild_all' or '2'\n");
 			bu_log( "\t'retain' or '3'\n");
-			exit( 1 );
+			bu_exit( 1, "" );
 		    }
 		argc -= 2;
 		argv += 2;
@@ -286,12 +286,12 @@ main(int argc, char **argv)
 	default:
     err:
 	    (void)fputs(usage, stderr);
-	    exit(1);
+	    bu_exit(1, "");
     }
     if( argc < 2 )  {
 	fprintf(stderr,"rtshot: MGED database not specified\n");
 	(void)fputs(usage, stderr);
-	exit(1);
+	bu_exit(1, "");
     }
 
     if( set_dir + set_pt + set_at != 2 )  goto err;
@@ -309,7 +309,7 @@ main(int argc, char **argv)
     argc--;
     if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	fprintf(stderr,"rtshot:  rt_dirbuild failure\n");
-	exit(2);
+	bu_exit(2, "");
     }
 
     if( overlap_claimant_handling )
@@ -322,7 +322,7 @@ main(int argc, char **argv)
     /* Walk trees */
     if( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
 	fprintf(stderr,"rt_gettrees FAILED\n");
-	exit( 1 );
+	bu_exit( 1, "" );
     }
     ap.attrs = attrs;
 
@@ -331,7 +331,7 @@ main(int argc, char **argv)
     if( R_DEBUG&RDEBUG_RAYPLOT )  {
 	if( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
 	    perror("rtshot.plot");
-	    exit(1);
+	    bu_exit(1, "");
 	}
 	pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
     }

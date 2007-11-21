@@ -80,7 +80,7 @@ brst_log( char *fmt, ... )
 				"please dump it somewhere and get",
 				"a real terminal"
 		    );
-		exit( 1 );
+		bu_exit( 1, "" );
 	    }
 	}
 	(void) fflush( stdout );

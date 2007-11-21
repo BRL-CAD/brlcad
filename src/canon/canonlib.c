@@ -117,7 +117,7 @@ ipu_acquire(struct dsreq *dsp,
     while (testunitready00(dsp) && i < timeout)
 	if (RET(dsp)==DSRT_NOSEL) {
 	    fprintf(stderr, "IPU not responding\n");
-	    exit(-1);
+	    bu_exit(-1, "");
 	} else {
 	    /* IPU busy */
 	    if (ipu_debug)
@@ -133,7 +133,7 @@ ipu_acquire(struct dsreq *dsp,
 
     if (i >= timeout) {
 	fprintf(stderr, "IPU timeout after %d seconds\n", i);
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     /* now let's make sure we're talking to a "CANON IPU-" somthing */
@@ -150,7 +150,7 @@ ipu_acquire(struct dsreq *dsp,
 	fprintf(stderr,
 		"ipu_inquire() device is not IPU-10/CLC500!\n%s\n",
 		&buf[8]);
-	exit(-1);
+	bu_exit(-1, "");
     }
 }
 
@@ -200,7 +200,7 @@ ipu_inquire(struct dsreq *dsp)
 	    fprintf(stderr,
 		    "ipu_inquire() device is not IPU-10/CLC500!\n%s\n",
 		    response);
-	    exit(-1);
+	    bu_exit(-1, "");
 	}
     }
 
@@ -289,7 +289,7 @@ ipu_create_file(struct dsreq *dsp,
 	fprintf(stderr, "create_file(%d, %d by %d) failed\n",
 		(int)id, width, height);
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
 }
 
@@ -322,7 +322,7 @@ ipu_delete_file(struct dsreq *dsp,
 	fprintf(stderr, "delete_file(%d) failed\n",
 		id);
 	scsi_perror(i, dsp);
-	exit(-1);;
+	bu_exit(-1, "");;
     }
 }
 
@@ -358,7 +358,7 @@ ipu_get_image(struct dsreq *dsp,
 
     if ((img = malloc( size )) == NULL) {
 	fprintf(stderr, "malloc error\n");
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     filldsreq(dsp, img, size, DSRQ_READ|DSRQ_SENSE);
@@ -366,7 +366,7 @@ ipu_get_image(struct dsreq *dsp,
 	fprintf(stderr, "get_image(%d, %d,%d, %d,%d) failed\n",
 		(int)id, sx, sy, w, h);
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     return img;
@@ -415,7 +415,7 @@ ipu_put_image_frag(struct dsreq *dsp,
 		"\nipu_put_image_frag(%d, %d,%d, %d,%d) failed\n",
 		(int)id, sx, sy, w, h);
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     } else if ( ipu_debug )  {
 	fprintf(stderr, "buffer y=%d  \r", sy);
     }
@@ -466,7 +466,7 @@ ipu_put_image(struct dsreq *dsp,
 
     if ((ipubuf = malloc(bytes_per_buf)) == NULL) {
 	fprintf(stderr, "malloc error in ipu_put_image()\n");
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     fullbuffers = h / lines_per_buf;
@@ -663,7 +663,7 @@ ipu_print_config(struct dsreq *dsp,
     if ( i=doscsireq(getfd(dsp), dsp) )  {
 	fprintf(stderr, "error doing print config.\n");
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
     dsdebug = save;
 
@@ -703,10 +703,10 @@ ipu_print_file(struct dsreq *dsp,
     buf[0] = id;
     if (copies < 0) {
 	fprintf(stderr, "Cannot print %d copies\n", copies);
-	exit(-1);
+	bu_exit(-1, "");
     } else if (copies > 99) {
 	fprintf(stderr, "Cannot print more than 99 copies at once\n");
-	exit(-1);
+	bu_exit(-1, "");
     }
     toshort(&buf[1], copies);
     if (!wait) buf[3] = 0x080;	/* quick return */
@@ -720,7 +720,7 @@ ipu_print_file(struct dsreq *dsp,
     if ( i=doscsireq(getfd(dsp), dsp) )  {
 	fprintf(stderr, "error printing file %d\n", id);
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
 }
 static unsigned char sc_mode[6] = {
@@ -767,7 +767,7 @@ ipu_scan_config(struct dsreq *dsp,
 	rotation != 270) {
 	fprintf(stderr,
 		"image rotation in 90 degree increments only\n");
-	exit(-1);
+	bu_exit(-1, "");
     }
     toshort(&sc_mode[4], rotation);
 
@@ -793,7 +793,7 @@ ipu_scan_config(struct dsreq *dsp,
     if ( i=doscsireq(getfd(dsp), dsp) )  {
 	fprintf(stderr, "error doing scan config.\n");
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
 }
 
@@ -836,7 +836,7 @@ ipu_scan_file(struct dsreq *dsp,
     if ( i=doscsireq(getfd(dsp), dsp) )  {
 	fprintf(stderr, "error scanning file %d.\n", id);
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
 }
 
@@ -868,7 +868,7 @@ ipu_list_files(struct dsreq *dsp)
     if (i=doscsireq(getfd(dsp), dsp)) {
 	fprintf(stderr, "error in ipu_list_files().\n");
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     len = ((int)buf[0]<<8) + buf[1] + 2;
@@ -876,7 +876,7 @@ ipu_list_files(struct dsreq *dsp)
 
     if ((p=malloc(file_count*19+1)) == NULL) {
 	fprintf(stderr, "malloc error in ipu_list_files()\n");
-	exit(-1);
+	bu_exit(-1, "");
     } else {
 	bzero(p, file_count*19+1);
     }
@@ -928,7 +928,7 @@ ipu_stop(struct dsreq *dsp,
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
 	fprintf(stderr, "Error doing ipu_stop().\n");
 	scsi_perror(i, dsp);
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     return ((int)buf[1] << 8) + (int)buf[2];
@@ -956,7 +956,7 @@ ipu_get_conf(struct dsreq *dsp)
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
 	fprintf(stderr, "Error reading IPU configuration.\n");
 	scsi_perror(i, dsp);
-	exit(-1);;
+	bu_exit(-1, "");;
     }
 
     if (params[0] == 11 && params[4] == 0x23) {
@@ -987,7 +987,7 @@ ipu_get_conf(struct dsreq *dsp)
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
 	fprintf(stderr, "Error reading IPU configuration.\n");
 	scsi_perror(i, dsp);
-	exit(-1);;
+	bu_exit(-1, "");;
     }
 
     if (params[0] == 15 && params[4] == 0x25) {
@@ -1084,7 +1084,7 @@ ipu_get_conf_long(struct dsreq *dsp)
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
 	fprintf(stderr, "Error reading IPU configuration.\n");
 	scsi_perror(i, dsp);
-	exit(-1);;
+	bu_exit(-1, "");;
     }
 
     (void)fprintf(stderr, "Sense Data Length %u\n",
@@ -1151,7 +1151,7 @@ ipu_set_palette( dsp, cmap )
 	if ( ret=doscsireq(getfd(dsp), dsp) )  {
 	    fprintf(stderr, "ipu_set_palette(%d) failed\n", i);
 	    scsi_perror(ret, dsp);
-	    exit(-1);
+	    bu_exit(-1, "");
 	}
     }
 }
@@ -1210,7 +1210,7 @@ void usage(s)
 	[-c(lear)] [-d SCSI_device] [-v(erbose)] [-V(erboser)]\n\
 	[-q queue] [-p printer]\n");
 
-    exit(1);
+    bu_exit(1, "");
 }
 
 /*
@@ -1337,7 +1337,7 @@ int parse_args(ac, av)
 	} else {
 	    fprintf(stderr,
 		    "Resolution error (%d)\n",c);
-	    exit(-1);
+	    bu_exit(-1, "");
 	}
 	    if (ipu_debug)
 		fprintf(stderr,

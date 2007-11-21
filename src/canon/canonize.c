@@ -62,7 +62,7 @@ queue(fd)
     if ((pfd = popen(cmdbuf, "w")) == (FILE *)NULL) {
 	fprintf(stderr, "%s: ", progname);
 	perror(cmdbuf);
-	exit(-1);
+	bu_exit(-1, "");
     }
 
     if (ipu_debug)

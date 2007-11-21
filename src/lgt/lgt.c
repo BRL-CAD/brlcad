@@ -210,7 +210,7 @@ void
 exit_Neatly(int status)
 {
     prnt_Event( "Quitting...\n" );
-    exit( status );
+    bu_exit( status, "" );
 }
 
 /*	r e a d y _ O u t p u t _ D e v i c e ( )			*/

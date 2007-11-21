@@ -248,7 +248,7 @@ struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
 	bu_log("%s:%d: Self-overlap of region '%s' (ox%x)\n",
 	    __FILE__, __LINE__, r1 -> reg_name, r1);
 	bu_log("This shouldn't happen\n");
-	exit (1);
+	bu_exit (1, "");
     }
 
     return (op);
@@ -380,7 +380,7 @@ void insert_by_vol (void *v, int depth)
     {
 	bu_log("%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
 	    __FILE__, __LINE__, rc);
-	exit (1);
+	bu_exit (1, "");
     }
 }
 
@@ -419,7 +419,7 @@ void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, f
     {
 	bu_log("%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
 	    __FILE__, __LINE__, rc);
-	exit (1);
+	bu_exit (1, "");
     }
 
     /*
@@ -888,7 +888,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
 		    printusage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case 'c':
@@ -899,12 +899,12 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
 		    printusage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		if ((elevation < -90.0) || (elevation > 90.0))
 		{
 		    bu_log("Illegal elevation: '%g'\n", elevation);
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case 'g':
@@ -912,12 +912,12 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid grid-size specification: '%s'\n", bu_optarg);
 		    printusage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		if (celsiz < 0.0)
 		{
 		    bu_log("Illegal grid size: '%g'\n", celsiz);
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case 'o':
@@ -944,7 +944,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid report specification: '%s'\n", bu_optarg);
 		    printusage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		if (complement_bits)
 		{
@@ -965,12 +965,12 @@ main (int argc, char **argv)
 		    bu_log("Invalid tolerance specification: '%s'\n",
 			bu_optarg);
 		    printusage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		if (control.glc_tol < 0.0)
 		{
 		    bu_log("Illegal tolerance: '%g'\n", control.glc_tol);
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case 'u':
@@ -982,18 +982,18 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid debug-flag specification: '%s'\n", bu_optarg);
 		    printusage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    default:
 		printusage();
-		exit (1);
+		bu_exit (1, "");
 	}
 
     if (argc - bu_optind < 2)
     {
 	printusage();
-	exit (1);
+	bu_exit (1, "");
     }
     if (control.glc_what_to_report & ~G_LINT_ALL)
 	bu_log("WARNING: Ignoring undefined bits of report specification\n");
@@ -1004,14 +1004,14 @@ main (int argc, char **argv)
     if ((rtip = rt_dirbuild(argv[bu_optind] , db_title, TITLE_LEN)) == RTI_NULL)
     {
 	bu_log("Could not build directory for file '%s'\n", argv[bu_optind]);
-	exit (1);
+	bu_exit (1, "");
     }
     rtip -> useair = use_air;
     bu_log("\nPreprocessing the geometry... ");
     while (++bu_optind < argc)
     {
 	if (rt_gettree(rtip, argv[bu_optind]) == -1)
-	    exit (1);
+	    bu_exit (1, "");
 	bu_log("\nObject '%s' processed", argv[bu_optind]);
     }
     bu_log("\nPrepping the geometry... ");
@@ -1114,7 +1114,7 @@ main (int argc, char **argv)
 	    bu_rb_walk1(ovlps_by_vol, print_overlap, INORDER);
     }
 
-    exit (0);
+    bu_exit (0, "");
 }
 
 /*

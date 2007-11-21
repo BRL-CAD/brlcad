@@ -103,7 +103,7 @@ void step1(aa)
 	/* Pass this chore off to next process */
 	PUT( await2, chorep );
     }
-    exit(0);	/* exit this thread */
+    bu_exit(0, "");	/* exit this thread */
 }
 
 void step2(aa)
@@ -158,7 +158,7 @@ void step2(aa)
 	}
 	PUT( await3, chorep );
     }
-    exit(0);
+    bu_exit(0, "");
 }
 
 /*
@@ -180,13 +180,13 @@ void step3(aa)
 	if( write( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
 	    perror("ipuscan write");
 	    fprintf(stderr, "buffer write error, line %d\n", chorep->pix_y);
-	    exit(2);
+	    bu_exit(2, "");
 	}
 	(void)free(chorep->cbuf);
 	chorep->cbuf = NULL;
 	PUT( await1, chorep );
     }
-    exit(0);
+    bu_exit(0, "");
 }
 
 
@@ -262,12 +262,12 @@ int main(int ac, char *av[])
 	    perror("wait");
 	    fprintf(stderr, "wait returned %d\n", this_pid);
 	    for( j=0; j<3; j++) kill(pid[j], 9);
-	    exit(3);
+	    bu_exit(3, "");
 	}
 	if( (pstat & 0xFF) != 0 )  {
 	    fprintf(stderr, "*** child pid %d blew out with error x%x\n", this_pid, pstat);
 	    for( j=0; j<3; j++) kill(pid[j], 9);
-	    exit(4);
+	    bu_exit(4, "");
 	}
     }
     /* All children are finished */

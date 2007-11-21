@@ -154,11 +154,11 @@ main(int argc, char **argv)
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);
-	exit(1);
+	bu_exit(1, "");
     }
     if( bu_optind+7 >= argc )  {
 	(void)fputs(usage, stderr);
-	exit(1);
+	bu_exit(1, "");
     }
 
     RT_APPLICATION_INIT(&ap);
@@ -187,7 +187,7 @@ main(int argc, char **argv)
     title_file = argv[bu_optind++];
     if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	fprintf(stderr,"rtwalk:  rt_dirbuild failure\n");
-	exit(2);
+	bu_exit(2, "");
     }
     ap.a_rt_i = rtip;
     fprintf(stderr, "db title:  %s\n", idbuf);
@@ -208,7 +208,7 @@ main(int argc, char **argv)
      */
     if( (outfp=fopen("rtwalk.mats", "w")) == NULL )  {
 	perror("rtwalk.mats");
-	exit(1);
+	bu_exit(1, "");
     }
     plotfp = stdout;
 
@@ -251,7 +251,7 @@ main(int argc, char **argv)
 	VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
 	if( (max_dist_togo=MAGNITUDE(first_dir)) < 1.0 )  {
 	    fprintf(stderr,"Complete in %d steps\n", curstep);
-	    exit(0);
+	    bu_exit(0, "");
 	}
 
 	/*  See if there is significant clear space ahead
@@ -335,7 +335,7 @@ main(int argc, char **argv)
 		bn_mat_ae( mat, 0.0, i*45.0 );
 	    } else {
 		fprintf(stderr,"trapped, giving up on escape\n");
-		exit(1);
+		bu_exit(1, "");
 	    }
 	    MAT4X3VEC( ap.a_ray.r_dir, mat, first_dir );
 
@@ -380,7 +380,7 @@ main(int argc, char **argv)
 	VMOVE( norm_prev_step, norm_cur_try );
     }
     fprintf(stderr,"%d steps used without reaching goal by %gmm\n", curstep, max_dist_togo);
-    exit(1);
+    bu_exit(1, "");
 }
 
 int hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)

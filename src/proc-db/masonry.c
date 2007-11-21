@@ -116,7 +116,7 @@ progname,
 " brick sub-options: [-r(and_color)] [-b width,height,depth ] [-m min_mortar]"
 );
 
-	exit(1);
+	bu_exit(1, "");
 }
 
 
@@ -328,7 +328,7 @@ int parse_args(int ac, char **av)
 	if (log_cmds) {
 		if ((logfile=fopen("wall.log", "a+")) == (FILE *)NULL) {
 			perror("wall.log");
-			exit(-1);
+			bu_exit(-1, "");
 		}
 		for (R=0 ; R < ac ; R++)
 			(void)fprintf(logfile, "%s ", av[R]);
@@ -1002,7 +1002,7 @@ mortar_brick(struct rt_wdb *fd)
 	BU_LIST_INIT(&wm_hd.l);
 
 	bu_log("Not Yet Implemented\n");
-	exit(0);
+	bu_exit(0, "");
 
 #endif
 }
@@ -1053,7 +1053,7 @@ brick(struct rt_wdb *fd)
 	BU_LIST_INIT(&wm_hd.l);
 
 	bu_log("Not Yet Implemented\n");
-	exit(0);
+	bu_exit(0, "");
 
 #endif
 }

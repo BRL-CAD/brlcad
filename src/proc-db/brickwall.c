@@ -71,7 +71,7 @@ void usage(char *s)
 	"  -w brick_width -h brick_height -d brick_depth -n brick_name",
 	"  -W wall_width -H wall_height\n  > mged_commands \n");
 
-	exit(1);
+	bu_exit(1, "");
 }
 
 /*

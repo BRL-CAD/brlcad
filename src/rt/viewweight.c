@@ -142,7 +142,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	sprintf(densityfile, "%s/%s", homedir, DENSITY_FILE);
 	if( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
 	    perror( densityfile );
-	    exit( -1 );
+	    bu_exit( -1, "" );
 	}
     }
 

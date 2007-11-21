@@ -1212,7 +1212,7 @@ do_frame(int framenumber)
 
     if( rtip->nsolids <= 0 )  {
 	bu_log("rt ERROR: No solids\n");
-	exit(3);
+	bu_exit(3, "");
     }
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)

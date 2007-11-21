@@ -176,7 +176,7 @@ int main(int argc, char **argv)
     case 'H':
     case '?':
       usage(argv[0]);
-      exit(0);
+      bu_exit(0, "");
     default:
       break;
     }

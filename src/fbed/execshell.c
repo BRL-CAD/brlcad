@@ -86,7 +86,7 @@ exec_Shell(char **args)
 			sleep( 2 );
 			(void) execvp( args[0], args );
 			fb_log( "%s : could not execute.\n", args[0] );
-			exit( 1 );
+			bu_exit( 1, "" );
 		default :
 			{	register int pid;
 				int stat_loc;

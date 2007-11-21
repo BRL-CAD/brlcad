@@ -3731,7 +3731,7 @@ pars_Argv(int argc, register char **argv)
 	if( (rt_ip = rt_dirbuild( ged_file, title, TITLE_LEN )) == RTI_NULL )
 		{
 		prnt_Event( "Exiting...\n" );
-		exit( 1 );
+		bu_exit( 1, "" );
 		}
 	prnt_Title( title );
 	prnt_Timer( "DIR" );
@@ -3756,7 +3756,7 @@ pars_Argv(int argc, register char **argv)
 	if( ! ok )
 		{
 		bu_log( "No valid objects specified!\n" );
-		exit( 1 );
+		bu_exit( 1, "" );
 		}
 	}
 	prnt_Event( "Prepping solids..." );

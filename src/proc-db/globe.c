@@ -41,7 +41,7 @@ char *progname ="globe";
 void usage(void)
 {
 	fprintf(stderr, "Usage: %s db_file.g [stepSize [finalSize [initialSize]]]\n", progname);
-	exit(-1);
+	bu_exit(-1, "");
 }
 
 int
@@ -73,7 +73,7 @@ main(int ac, char *av[])
 
 	if ((db_fp = wdb_fopen(av[1])) == NULL) {
 		perror(av[1]);
-		exit(-1);
+		bu_exit(-1, "");
 	}
 
 	mk_id(db_fp, "Globe Database"); /* create the database header record */

@@ -165,7 +165,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     if ((solids = bu_rb_create("Solid list", 2, orders)) == BU_RB_TREE_NULL)
     {
 	bu_log("%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
-	exit (1);
+	bu_exit (1, "");
     }
     solids -> rbt_print = print_solid;
     bu_rb_uniq_on(solids, ORDER_BY_NAME);

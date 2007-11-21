@@ -320,26 +320,26 @@ main(int argc, char **argv)
 		max_fd = 8;
 		once_only = 1;
 		main_loop();
-		exit(0);
+		bu_exit(0, "");
 	}
 #endif
 
 	/* for now, make them set a port_num, for usage message */
 	if ( !get_args( argc, argv ) || !port_set ) {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "" );
 	}
 
 	/* Single-Frame-Buffer Server */
 	if( framebuffer != NULL ) {
 	    if (pkg_init() != 0) {
-		exit(1);
+		bu_exit(1, "");
 	    }
 		fb_server_retain_on_close = 1;	/* don't ever close the frame buffer */
 
 		/* open a frame buffer */
 		if( (fb_server_fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
-			exit(1);
+			bu_exit(1, "");
 		if( fb_server_fbp->if_selfd > 0 )  {
 			FD_SET(fb_server_fbp->if_selfd, &select_list);
 			max_fd = fb_server_fbp->if_selfd;
@@ -356,13 +356,13 @@ main(int argc, char **argv)
 		 * Hang an unending listen for PKG connections
 		 */
 		if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 )
-			exit(-1);
+			bu_exit(-1, "");
 		FD_SET(netfd, &select_list);
 		if (netfd > max_fd)
 			max_fd = netfd;
 
 		main_loop();
-		exit(0);
+		bu_exit(0, "");
 	}
 
 #ifndef _WIN32
@@ -386,7 +386,7 @@ main(int argc, char **argv)
 		continue;
 	    }
 	    comm_error("Unable to start the stand-alone framebuffer daemon after 60 seconds, giving up.");
-	    exit(1);
+	    bu_exit(1, "");
 	}
 
 	while(1) {
@@ -407,10 +407,10 @@ main(int argc, char **argv)
 				new_client( pcp );
 				once_only = 1;
 				main_loop();
-				exit(0);
+				bu_exit(0, "");
 			} else {
 				/* 1st level child -- vanish */
-				exit(1);
+				bu_exit(1, "");
 			}
 		} else {
 			/* Parent: lingering server daemon */
@@ -421,7 +421,7 @@ main(int argc, char **argv)
 	}
 #endif  /* _WIN32 */
 
-	exit(2);	/* ERROR exit */
+	bu_exit(2, "");	/* ERROR exit */
 }
 
 /*

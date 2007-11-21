@@ -62,7 +62,7 @@ struct rt_wdb *outfp;
 void usage(const char *progname)
 {
 	fprintf(stderr, "Usage: %s raw_vertex_file\n", progname);
-	exit(-1);
+	bu_exit(-1, "");
 }
 
 int main( int argc, char *argv[] )

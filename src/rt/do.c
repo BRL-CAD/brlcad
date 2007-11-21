@@ -414,7 +414,7 @@ int cm_closedb(int argc, char **argv)
 	ap.a_rt_i = RTI_NULL;
 
 	bu_prmem( "After _closedb" );
-	exit(0);
+	bu_exit(0, "");
 
 	return( 1 );	/* for compiler */
 }
@@ -595,7 +595,7 @@ do_frame(int framenumber)
 
 	if( rtip->nsolids <= 0 )  {
 		bu_log("rt ERROR: No solids\n");
-		exit(3);
+		bu_exit(3, "");
 	}
 
 	if (rt_verbosity & VERBOSE_VIEWDETAIL)
