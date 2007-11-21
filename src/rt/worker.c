@@ -38,6 +38,7 @@ static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -457,7 +458,7 @@ worker(int cpu, genptr_t arg)
 
 	if( cpu >= MAX_PSW )  {
 		bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
-		bu_bomb("rt/worker() cpu > MAX_PSW, array overrun\n");
+		bu_exit(EXIT_FAILURE, "rt/worker() cpu > MAX_PSW, array overrun\n");
 	}
 	RT_CK_RESOURCE( &resource[cpu] );
 
@@ -539,7 +540,7 @@ grid_setup(void)
 	mat_t toEye;
 
 	if( viewsize <= 0.0 )
-		bu_bomb("viewsize <= 0");
+		bu_exit(EXIT_FAILURE, "viewsize <= 0");
 	/* model2view takes us to eye_model location & orientation */
 	MAT_IDN( toEye );
 	MAT_DELTAS_VEC_NEG( toEye, eye_model );
@@ -634,7 +635,7 @@ grid_setup(void)
 		ap.a_diverge = 0;
 	}
 	if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
-		bu_bomb("zero-radius beam");
+		bu_exit(EXIT_FAILURE, "zero-radius beam");
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
 	if( jitter & JITTER_FRAME )  {
@@ -654,12 +655,12 @@ grid_setup(void)
 	    cell_height <= 0 || cell_height >= INFINITY )  {
 		bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 			cell_width, cell_height );
-		bu_bomb("cell size");
+		bu_exit(EXIT_FAILURE, "cell size");
 	}
 	if( width <= 0 || height <= 0 )  {
 		bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
 			width, height );
-		bu_bomb("bad size");
+		bu_exit(EXIT_FAILURE, "bad size");
 	}
 }
 

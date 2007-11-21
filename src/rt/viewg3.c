@@ -53,6 +53,7 @@ static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
@@ -146,7 +147,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 		if( (shot_fp=fopen( bu_vls_addr( &ray_data_file ), "w" )) == NULL ) {
 			perror( "RTG3" );
 			bu_log( "Cannot open ray data output file %s\n", bu_vls_addr( &ray_data_file ) );
-			bu_bomb( "Cannot open ray data output file\n" );
+			bu_exit( EXIT_FAILURE, "Cannot open ray data output file\n" );
 		}
 	}
 
@@ -192,7 +193,7 @@ void
 view_2init(struct application *ap)
 {
 	if( outfp == NULL )
-		bu_bomb("outfp is NULL\n");
+		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
 	 *  Overall header, to be read by COVART format:

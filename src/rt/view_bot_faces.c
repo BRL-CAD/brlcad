@@ -143,7 +143,7 @@ view_2init( struct application *ap, char *framename )
 #endif
 
 	if( outfp == NULL )
-		bu_bomb("outfp is NULL\n");
+		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 #ifdef HAVE_UNIX_IO
 	/* read in any existing data */
@@ -164,7 +164,7 @@ view_2init( struct application *ap, char *framename )
 				while( line[i] != '\0' && isspace( line[i] ) ) i++;
 				if( line[i] == '\0' ) {
 					bu_log( "Unexpected EOF found in partial results (%s)\n", outputfile );
-					bu_bomb("Unexpected EOF");
+					bu_exit(EXIT_FAILURE, "Unexpected EOF");
 				}
 				j = i;
 				while( line[j] != '\0' && !isspace( line[j] ) ) j++;
@@ -187,7 +187,7 @@ view_2init( struct application *ap, char *framename )
 				long int face_num;
 
 				if( !faces ) {
-					bu_bomb( "No faces structure while reading partial data!!!\n" );
+					bu_exit( EXIT_FAILURE, "No faces structure while reading partial data!!!\n" );
 				}
 				face_num = atoi( line );
 				bu_ptbl_ins_unique( faces, (long *)face_num );

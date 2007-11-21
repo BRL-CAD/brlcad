@@ -502,12 +502,12 @@ int get_args( int argc, register char **argv )
 		i = atoi(bu_optarg);
 		if (i <= 0) {
 		    bu_log("-q %d is < 0\n", i);
-		    bu_bomb("");
+		    bu_exit(EXIT_FAILURE, "");
 		}
 		if ( i > BN_RANDHALFTABSIZE) {
 		    bu_log("-q %d is > maximum (%d)\n",
 			   i, BN_RANDHALFTABSIZE);
-		    bu_bomb("");
+		    bu_exit(EXIT_FAILURE, "");
 		}
 		bn_randhalftabsize = i;
 		break;
@@ -1100,7 +1100,7 @@ grid_setup(void)
     mat_t toEye;
 
     if( viewsize <= 0.0 )
-	bu_bomb("viewsize <= 0");
+	bu_exit(EXIT_FAILURE, "viewsize <= 0");
     /* model2view takes us to eye_model location & orientation */
     MAT_IDN( toEye );
     MAT_DELTAS_VEC_NEG( toEye, eye_model );
@@ -1154,7 +1154,7 @@ grid_setup(void)
 	ap.a_diverge = 0;
     }
     if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
-	bu_bomb("zero-radius beam");
+	bu_exit(EXIT_FAILURE, "zero-radius beam");
     MAT4X3PNT( viewbase_model, view2model, temp );
 
     if( jitter & JITTER_FRAME )  {
@@ -1174,12 +1174,12 @@ grid_setup(void)
 	cell_height <= 0 || cell_height >= INFINITY )  {
 	bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 	       cell_width, cell_height );
-	bu_bomb("cell size");
+	bu_exit(EXIT_FAILURE, "cell size");
     }
     if( width <= 0 || height <= 0 )  {
 	bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
 	       width, height );
-	bu_bomb("bad size");
+	bu_exit(EXIT_FAILURE, "bad size");
     }
 }
 
@@ -1389,9 +1389,9 @@ do_ae(double azim, double elev)
     struct rt_i *rtip = ap.a_rt_i;
 
     if( rtip->nsolids <= 0 )
-	bu_bomb("do_ae: no solids active\n");
+	bu_exit(EXIT_FAILURE, "do_ae: no solids active\n");
     if ( rtip->nregions <= 0 )
-	bu_bomb("do_ae: no regions active\n");
+	bu_exit(EXIT_FAILURE, "do_ae: no regions active\n");
 
     if( rtip->mdl_max[X] >= INFINITY ) {
 	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
@@ -1681,7 +1681,7 @@ worker(int cpu, genptr_t arg)
 
     if( cpu >= MAX_PSW )  {
 	bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
-	bu_bomb("rt/worker() cpu > MAX_PSW, array overrun\n");
+	bu_exit(EXIT_FAILURE, "rt/worker() cpu > MAX_PSW, array overrun\n");
     }
     RT_CK_RESOURCE( &resource[cpu] );
 
@@ -1815,7 +1815,7 @@ view_pixel(register struct application *ap)
 	    if( fseek( outfp, (ap->a_y*width*3) + (ap->a_x*3), 0 ) != 0 )
 		fprintf(stderr, "fseek error\n");
 	    if( fwrite( p, 3, 1, outfp ) != 1 )
-		bu_bomb("pixel fwrite error");
+		bu_exit(EXIT_FAILURE, "pixel fwrite error");
 	    bu_semaphore_release( BU_SEM_SYSCALL);
 	}
 
@@ -1824,7 +1824,7 @@ view_pixel(register struct application *ap)
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    npix = fb_write( fbp, ap->a_x, ap->a_y, (unsigned char *)p, 1 );
 	    bu_semaphore_release( BU_SEM_SYSCALL);
-	    if( npix < 1 )  bu_bomb("pixel fb_write error");
+	    if( npix < 1 )  bu_exit(EXIT_FAILURE, "pixel fb_write error");
 	}
     }
     return;

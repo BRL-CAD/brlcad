@@ -52,6 +52,7 @@ static const char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "machine.h"
@@ -162,7 +163,7 @@ view_2init(struct application *ap)
 {
 
 	if( outfp == NULL )
-		bu_bomb("outfp is NULL\n");
+		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
 	 *  For now, RTHIDE does not operate in parallel, while ray-tracing.
@@ -253,7 +254,7 @@ raymiss(register struct application *ap)
 
 	/* Getting defensive.... just in case. */
 	if(ap->a_x > width)  {
-		bu_bomb("raymiss: pixels exceed width\n");
+		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
 	}
 
 	posp = &(topp[ap->a_x + 1]);
@@ -315,7 +316,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 	/* Getting defensive.... just in case. */
 	if(ap->a_x > width)  {
-		bu_bomb("rayhit: pixels exceed width\n");
+		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
 	}
 
 	posp = &(topp[ap->a_x + 1]);

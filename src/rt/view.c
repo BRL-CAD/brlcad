@@ -296,10 +296,10 @@ view_pixel(register struct application *ap)
 				if( fseek( outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0 ) != 0 )
 					fprintf(stderr, "fseek error\n");
 				if( fwrite( p, 3, 1, outfp ) != 1 )
-					bu_bomb("pixel fwrite error");
+					bu_exit(EXIT_FAILURE, "pixel fwrite error");
 				if( rpt_dist &&
 				    ( fwrite( dist, 8, 1, outfp ) != 1 ))
-					bu_bomb("pixel fwrite error");
+					bu_exit(EXIT_FAILURE, "pixel fwrite error");
 				bu_semaphore_release( BU_SEM_SYSCALL);
 			}
 
@@ -309,7 +309,7 @@ view_pixel(register struct application *ap)
 				npix = fb_write( fbp, ap->a_x, ap->a_y,
 					(unsigned char *)p, 1 );
 				bu_semaphore_release( BU_SEM_SYSCALL);
-				if( npix < 1 )  bu_bomb("pixel fb_write error");
+				if( npix < 1 )  bu_exit(EXIT_FAILURE, "pixel fb_write error");
 			}
 		}
 		return;
@@ -441,7 +441,7 @@ view_pixel(register struct application *ap)
 		break;
 
 	default:
-		bu_bomb("bad buf_mode");
+		bu_exit(EXIT_FAILURE, "bad buf_mode");
 	}
 
 
@@ -449,7 +449,7 @@ view_pixel(register struct application *ap)
 
 	switch( buf_mode )  {
 	case BUFMODE_INCR:
-		if( fbp == FBIO_NULL )  bu_bomb("Incremental rendering with no framebuffer?");
+		if( fbp == FBIO_NULL )  bu_exit(EXIT_FAILURE, "Incremental rendering with no framebuffer?");
 		{
 			register int dy, yy;
 			register int spread;
@@ -474,7 +474,7 @@ view_pixel(register struct application *ap)
 				}
 			}
 			bu_semaphore_release( BU_SEM_SYSCALL);
-			if( npix != width )  bu_bomb("fb_write error (incremental res)");
+			if( npix != width )  bu_exit(EXIT_FAILURE, "fb_write error (incremental res)");
 		}
 		break;
 
@@ -493,9 +493,9 @@ view_pixel(register struct application *ap)
 			}
 			bu_semaphore_release( BU_SEM_SYSCALL);
 			if( sub_grid_mode )  {
-				if( npix < sub_xmax-sub_xmin-1 )  bu_bomb("scanline fb_write error");
+				if( npix < sub_xmax-sub_xmin-1 )  bu_exit(EXIT_FAILURE, "scanline fb_write error");
 			} else {
-				if( npix < width )  bu_bomb("scanline fb_write error");
+				if( npix < width )  bu_exit(EXIT_FAILURE, "scanline fb_write error");
 			}
 		}
 		if( outfp != NULL )  {
@@ -508,7 +508,7 @@ view_pixel(register struct application *ap)
 				sizeof(char), width*pwidth, outfp );
 			bu_semaphore_release( BU_SEM_SYSCALL);
 			if( count != width*pwidth )
-				bu_bomb("view_pixel:  fwrite failure\n");
+				bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
 		}
 		bu_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
 		scanline[ap->a_y].sl_buf = (char *)0;
@@ -1389,7 +1389,7 @@ bu_log("mallocing curr_float_frame\n");
 	    
 	    break;
 	default:
-		bu_bomb("bad buf_mode");
+		bu_exit(EXIT_FAILURE, "bad buf_mode");
 	}
 
 	/* This is where we do Preperations for each Lighting Model if it needs it.
@@ -1442,7 +1442,7 @@ bu_log("mallocing curr_float_frame\n");
 		}
 		break;
 	default:
-		bu_bomb("bad lighting model #");
+		bu_exit(EXIT_FAILURE, "bad lighting model #");
 	}
 	ap->a_rt_i->rti_nlights = light_init(ap);
 

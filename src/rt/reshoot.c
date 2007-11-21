@@ -376,7 +376,7 @@ main(int argc, char **argv)
 		}
 
 		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
-		    bu_bomb("error parsing pt");
+		    bu_exit(EXIT_FAILURE, "error parsing pt");
 		}
 
 		break;
@@ -384,7 +384,7 @@ main(int argc, char **argv)
 	case 'D' :
 	    {
 		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
-		    bu_bomb("error parsing dir");
+		    bu_exit(EXIT_FAILURE, "error parsing dir");
 		}
 		break;
 	    }

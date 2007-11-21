@@ -41,6 +41,7 @@ static const char RCSrayrange[] = "@(#)$Header$";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "machine.h"
@@ -133,7 +134,7 @@ void
 view_2init(struct application *ap)
 {
 	if( outfp == NULL )
-		bu_bomb("outfp is NULL\n");
+		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
 	 *  For now, RTRANGE does not operate in parallel, while ray-tracing.
@@ -192,7 +193,7 @@ raymiss(register struct application *ap)
 
 	/* Getting defensive.... just in case. */
 	if(ap->a_x > width)  {
-		bu_bomb("raymiss: pixels exceed width\n");
+		bu_exit(EXIT_FAILURE, "raymiss: pixels exceed width\n");
 	}
 
 	posp = &(cellp[ap->a_x]);
@@ -243,7 +244,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 	/* Getting defensive.... just in case. */
 	if(ap->a_x > width)  {
-		bu_bomb("rayhit: pixels exceed width\n");
+		bu_exit(EXIT_FAILURE, "rayhit: pixels exceed width\n");
 	}
 
 	posp = &(cellp[ap->a_x]);

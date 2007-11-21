@@ -172,13 +172,11 @@ int get_args( int argc, register char **argv )
 		case 'q':
 			i = atoi(bu_optarg);
 			if (i <= 0) {
-				bu_log("-q %d is < 0\n", i);
-				bu_bomb("");
+				bu_exit(EXIT_FAILURE, "-q %d is < 0\n", i);
 			}
 			if ( i > BN_RANDHALFTABSIZE) {
-				bu_log("-q %d is > maximum (%d)\n",
+				bu_exit(EXIT_FAILURE, "-q %d is > maximum (%d)\n",
 				       i, BN_RANDHALFTABSIZE);
-				bu_bomb("");
 			}
 			bn_randhalftabsize = i;
 			break;

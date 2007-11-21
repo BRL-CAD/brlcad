@@ -40,6 +40,7 @@ static const char RCSreadfile[] = "@(#)$Header$";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -93,7 +94,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	fp = fopen(name, "r");
 	if( fp == NULL )  {
 		perror(name);
-		bu_bomb("unable to open file for reading");
+		bu_exit(EXIT_FAILURE, "unable to open file for reading");
 	}
 
 	/* Set all flags to ready state.  */

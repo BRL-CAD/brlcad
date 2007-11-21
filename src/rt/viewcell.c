@@ -36,6 +36,7 @@ static const char RCScell[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
@@ -130,7 +131,7 @@ view_2init(struct application *ap)
 {
 
 	if( outfp == NULL )
-		bu_bomb("outfp is NULL\n");
+		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 	/*
 	 *  Not dropping out of parallel mode until here permits

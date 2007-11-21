@@ -46,6 +46,7 @@ static const char RCSrayview[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "machine.h"
 #include "vmath.h"
@@ -226,7 +227,7 @@ view_2init(struct application *ap)
 {
 
 	if( outfp == NULL )
-		bu_bomb("outfp is NULL\n");
+		bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 }
 
 void application_init (void) {}

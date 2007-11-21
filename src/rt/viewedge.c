@@ -45,6 +45,7 @@ static const char RCSviewedge[] = "@(#)$Header$ (BRL)";
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "machine.h"
@@ -286,7 +287,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 			   &objs) == TCL_ERROR) {
 	    bu_log  ("rtedge: occlusion list = %s\n",
 		     bu_vls_addr(&occlusion_objects));
-	    bu_bomb ("rtedge: could not parse occlusion objects list.\n");
+	    bu_exit (EXIT_FAILURE, "rtedge: could not parse occlusion objects list.\n");
 	}
 
 	for (i=0; i<nObjs; ++i) {
@@ -295,7 +296,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 
 
 	if( (dbip = db_open( file, "r" )) == DBI_NULL )
-	    bu_bomb ("rtedge: could not open database.\n");
+	    bu_exit (EXIT_FAILURE, "rtedge: could not open database.\n");
 	RT_CK_DBI(dbip);
 
 	occlusion_rtip = rt_new_rti( dbip ); /* clones dbip */
@@ -362,7 +363,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o, int minus
 
     if (occlusion_mode != OCCLUSION_MODE_NONE &&
 	bu_vls_strlen(&occlusion_objects) == 0) {
-	bu_bomb ("rtedge: occlusion mode set, but no objects were specified.\n");
+	bu_exit (EXIT_FAILURE, "rtedge: occlusion mode set, but no objects were specified.\n");
     }
 
     /* if non-default/inverted background was requested, swap the
@@ -440,7 +441,7 @@ view_2init( struct application *ap )
      */
     if (overlay || blend)
 	if (fb_read(fbp,0,0,fb_bg_color,1) < 0)
-	    bu_bomb ("rt_edge: specified framebuffer is not readable, cannot merge.\n");
+	    bu_exit (EXIT_FAILURE, "rt_edge: specified framebuffer is not readable, cannot merge.\n");
 
     /*
      * Create a cell to store current data for next cells left side.
@@ -524,7 +525,7 @@ view_eol( struct application *ap )
 
 	bu_semaphore_acquire (BU_SEM_SYSCALL);
 	if (fb_read(fbp,0,ap->a_y,blendline[cpu],per_processor_chunk) < 0)
-	    bu_bomb ("rtedge: error reading from framebuffer.\n");
+	    bu_exit (EXIT_FAILURE, "rtedge: error reading from framebuffer.\n");
 	bu_semaphore_release (BU_SEM_SYSCALL);
 
 	for (i=0; i<per_processor_chunk; ++i) {
@@ -969,7 +970,7 @@ void choose_color (RGBpixel col, struct cell *me,
 	use_this = (use_this->c_dist < below->c_dist) ? use_this : below ;
 
 	if (use_this == (struct cell *)NULL)
-	    bu_bomb ("Error: use_this is NULL.\n");
+	    bu_exit (EXIT_FAILURE, "Error: use_this is NULL.\n");
 
 	col[RED] = 255 * use_this->c_region->reg_mater.ma_color[RED];
 	col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
