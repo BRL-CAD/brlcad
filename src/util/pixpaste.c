@@ -182,7 +182,7 @@ main(int argc, char **argv)
 
 	if (!get_args(argc,argv)) {
 		(void)fprintf(stderr,"%s",usage);
-		exit(1);
+		bu_exit (1, "");
 	}
 	/* Should we autosize the original? */
 	if (orig_isfile && orig_autosize) {
@@ -255,7 +255,7 @@ pixpaste: new image == original image.\n");
 			}
 			if (E) break;
 		}
-		exit(0);
+		bu_exit (0, "");
 	}
 
 	if (base_x < 0) {
@@ -293,12 +293,12 @@ pixpaste: new image == original image.\n");
 		if (result != org_width) {
 			(void)fprintf(stderr,"pixpaste: original image is short.\n");
 			(void)fwrite(origbuf, num_bytes, result, stdout);
-			exit(0);
+			bu_exit (0, "");
 		}
 		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
 			perror("pixpaste: fwrite2");
-			exit(3);
+			bu_exit (3, "");
 		}
 		row++;
 	}
@@ -323,7 +323,7 @@ pixpaste: new image == original image.\n");
 		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
 			perror("pixpaste: fwrite3");
-			exit(3);
+			bu_exit (3, "");
 		}
 		row++;
 	}
@@ -342,7 +342,7 @@ pixpaste: new image == original image.\n");
 		result = fwrite(origbuf, num_bytes, org_width, stdout);
 		if (result != org_width) {
 			perror("pixpaste: fwrite4");
-			exit(3);
+			bu_exit (3, "");
 		}
 		row++;
 	}

@@ -94,7 +94,7 @@ void doit(FILE *fd)
 void usage(void)
 {
 	(void) fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
-	exit(1);
+	bu_exit (1, "");
 }
 
 /*
@@ -128,7 +128,7 @@ int main(int ac, char **av)
 		FILE *fd;
 		if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
 			perror(av[bu_optind]);
-			exit(-1);
+			bu_exit (1, "");
 		} else doit(fd);
 	} else if (bu_optind >= ac) {
 		if (isatty(fileno(stdin))) usage();

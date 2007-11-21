@@ -153,7 +153,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	if( encapsulated ) {
@@ -199,7 +199,7 @@ main(int argc, char **argv)
 	}
 
 	postlog( ofp );
-	exit( 0 );
+	bu_exit ( 0, "" );
 }
 
 void

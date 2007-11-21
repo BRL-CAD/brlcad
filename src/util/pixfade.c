@@ -82,21 +82,21 @@ get_args(int argc, register char **argv)
 			max = atoi(bu_optarg);
 			if ((max < 0) || (max > 255)) {
 				fprintf(stderr,"pixfade: max out of range");
-				exit(1);
+				bu_exit (1, "");
 			}
 			break;
 		case 'p':
 			multiplier = atof(bu_optarg) / 100.0;
 			if (multiplier < 0.0) {
 				fprintf(stderr,"pixfade: percent is negitive");
-				exit(1);
+				bu_exit (1, "");
 			}
 			break;
 		case 'f':
 			multiplier = atof(bu_optarg);
 			if (multiplier < 0.0) {
 				fprintf(stderr,"pixfade: fraction is negitive");
-				exit(1);
+				bu_exit (1, "");
 			}
 			break;
 
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 /* fprintf(stderr,"pixfade: max = %d, multiplier = %f\n",max,multiplier); */

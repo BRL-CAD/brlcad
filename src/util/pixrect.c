@@ -132,12 +132,12 @@ get_args(register int argc, register char **argv)
 		if ((ifp = fopen(argv[argc-2], "r")) == NULL) {
 			fprintf(stderr,"pixrect: can't open %s\n", argv[argc-1]);
 			fprintf(stderr,usage);
-			exit(2);
+			bu_exit (2, "");
 		}
 		if ((ofp = fopen(argv[argc-1], "w")) == NULL) {
 			fprintf(stderr,"pixrect: can't open %s\n", argv[argc]);
 			fprintf(stderr, usage);
-			exit(3);
+			bu_exit (3, "");
 		}
 
 		/* Get info */
@@ -153,7 +153,7 @@ get_args(register int argc, register char **argv)
 	if (linelen <= 0 || xnum <= 0 || ynum <= 0) {
 		fprintf(stderr, "pixrect: args for -w -W -N [-S] must be > 0\n");
 		fprintf(stderr, usage);
-		exit(1);
+		bu_exit (1, "");
 	}
 
 	if (inputmode == COMMAND_LINE) {
@@ -203,14 +203,14 @@ main(register int argc, register char **argv)
 
 	if (!get_args(argc,argv)) {
 		fprintf(stderr, usage);
-		exit(1);
+		bu_exit (1, "");
 	}
 
 	outbytes = xnum * bytes_per_pixel;
 
 	if ((buf = (char *)malloc(outbytes)) == NULL) {
 		fprintf(stderr, "pixrect: malloc failed!\n");
-		exit(1);
+		bu_exit (1, "");
 	}
 
 	/* Move all points */
@@ -221,7 +221,7 @@ main(register int argc, register char **argv)
 		fwrite(buf, sizeof(*buf), outbytes, ofp);
 	}
 
-	exit(0);
+	bu_exit (0, "");
 }
 
 /*

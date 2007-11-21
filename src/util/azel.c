@@ -124,7 +124,7 @@ main (int argc, char **argv)
 		    (void) fprintf(stderr,
 			"Bad azimuth specification: '%s'\n", bu_optarg);
 		    PrintUsage();
-		    exit(1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case 'c':
@@ -133,7 +133,7 @@ main (int argc, char **argv)
 		    (void) fprintf(stderr,
 			"Bad cell-size specification: '%s'\n", bu_optarg);
 		    PrintUsage();
-		    exit(1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case 'e':
@@ -142,7 +142,7 @@ main (int argc, char **argv)
 		    (void) fprintf(stderr,
 			"Bad elevation specification: '%s'\n", bu_optarg);
 		    PrintUsage();
-		    exit(1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case 'i':
@@ -165,7 +165,7 @@ main (int argc, char **argv)
     {
 	fputs("Incompatible options: -i and -p\n", stderr);
 	PrintUsage();
-	exit (1);
+	bu_exit (1, "");
     }
 
     /* Determine source and destination */
@@ -175,7 +175,7 @@ main (int argc, char **argv)
 	if ((inPtr = fopen(inFname, "r")) == NULL)
 	{
 	    fprintf(stderr, "azel:  Cannot open file '%s'\n", inFname);
-	    exit(1);
+	    bu_exit (1, "");
 	}
 	if (argc - bu_optind > 1)
 	{
@@ -183,13 +183,13 @@ main (int argc, char **argv)
 	    if ((outPtr = fopen(outFname, "w")) == NULL)
 	    {
 		fprintf(stderr, "azel:  Cannot create file '%s'\n", outFname);
-		exit(1);
+		bu_exit (1, "");
 	    }
 	}
 	if (argc - bu_optind > 2)
 	{
 	    PrintUsage();
-	    exit (1);
+	    bu_exit (1, "");
 	}
     }
 
@@ -262,7 +262,7 @@ main (int argc, char **argv)
 	fprintf(outPtr, "%g\t%g\t%s\n", V2, W2, Tail);
 	LineNm++;
     }
-    exit (0);
+    bu_exit (0, "");
 }
 /* ======================================================================== */
 void
@@ -291,20 +291,20 @@ GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
     {
 	fprintf(stderr, "azel:  Premature end-of-file, file %s\n",
 		FileName);
-	exit(1);
+	bu_exit (1, "");
     }
     if (Ch == '\n')
     {
 	fprintf(stderr, "azel:  Premature end-of-line on line %d, file %s\n",
 		LineNm, FileName);
-	exit(1);
+	bu_exit (1, "");
     }
 
     if (fscanf(Whence, "%lf", Coord) != 1)
     {
 	fprintf(stderr, "azel:  Bad %c-coordinate at line %d, file %s\n",
 		Label, LineNm, FileName);
-	exit(1);
+	bu_exit (1, "");
     }
 }
 

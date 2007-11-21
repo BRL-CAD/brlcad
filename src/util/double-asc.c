@@ -142,19 +142,19 @@ get_args(int argc, register char **argv)
 	    if ((infd = open(file_name, O_RDONLY)) == -1)
 	    {
 		bu_log ("Cannot open file '%s'\n", file_name);
-		exit (1);
+		bu_exit (1, "");
 	    }
 	    fileinput = 1;
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
+	    bu_exit (1, "");
     }
 
     if (argc > ++bu_optind)
     {
 	print_usage();
-	exit (1);
+	bu_exit (1, "");
     }
 
     return(1);		/* OK */
@@ -176,7 +176,7 @@ main (int argc, char **argv)
     if (!get_args( argc, argv))
     {
 	print_usage();
-	exit (1);
+	bu_exit (1, "");
     }
 
     /* autosize input? */
@@ -227,7 +227,7 @@ main (int argc, char **argv)
     if (num < 0)
     {
 	perror("double-asc");
-	exit (1);
+	bu_exit (1, "");
     }
     return 0;
 }

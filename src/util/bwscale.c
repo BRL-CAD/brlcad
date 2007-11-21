@@ -176,7 +176,7 @@ fill_buffer(int y)
 
     if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
 	fprintf( stderr, "bwscale: Can't seek to input pixel!\n" );
-	/*		exit( 3 ); */
+	/*		bu_exit ( 3, "" ); */
     }
     fread( buffer, scanlen, buflines, buffp );
 }
@@ -393,12 +393,12 @@ main(int argc, char **argv)
 
     if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 	(void)fputs(usage, stderr);
-	exit( 1 );
+	bu_exit ( 1, "" );
     }
 
     if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
 	fprintf( stderr, "bwscale: bad size\n" );
-	exit( 2 );
+	bu_exit ( 2, "" );
     }
 
     /* See how many lines we can buffer */

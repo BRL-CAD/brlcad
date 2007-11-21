@@ -124,7 +124,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	line1 = (char *) malloc(width*3+1);
@@ -136,22 +136,22 @@ main(int argc, char **argv)
 			break;
 		if( fread( line2, 3*sizeof(char), width, fldtwofp ) != width )  {
 			fprintf(stderr,"pixfields: premature EOF on 2nd file?\n");
-			exit(2);
+			bu_exit (2, "");
 		}
 		if ( (line_number & 1) == 0 )  {
 			if( fwrite( line1, 3*sizeof(char), width, stdout ) != width )  {
 				perror("fwrite line1");
-				exit(1);
+				bu_exit (1, "");
 			}
 		} else {
 			if( fwrite( line2, 3*sizeof(char), width, stdout ) != width )  {
 				perror("fwrite line2");
-				exit(1);
+				bu_exit (1, "");
 			}
 		}
 		line_number++;
 	}
-	exit( 0 );
+	bu_exit ( 0, "" );
 }
 
 /*

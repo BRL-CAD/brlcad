@@ -186,7 +186,7 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 	    break;
 	default:
 	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
-	    exit (1);
+	    bu_exit (1, "");
     }
 
     return (pp);
@@ -217,7 +217,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel size: '%s'\n", bu_optarg);
 		    print_usage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case '?':
@@ -239,7 +239,7 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
+	    bu_exit (1, "");
     }
 
     /*
@@ -251,7 +251,7 @@ main (int argc, char **argv)
 	if ((infp = fopen(inf_name, "r")) == NULL)
 	{
 	    bu_log ("Cannot open input file '%s'\n", inf_name);
-	    exit (1);
+	    bu_exit (1, "");
 	}
 	if (outfp == NULL)
 	{
@@ -259,7 +259,7 @@ main (int argc, char **argv)
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
 	    {
 		bu_log ("Cannot open output file '%s'\n", outf_name);
-		exit (1);
+		bu_exit (1, "");
 	    }
 	}
     }
@@ -273,7 +273,7 @@ main (int argc, char **argv)
 	{
 	    bu_log("FATAL: pixcount reads only from file or pipe\n");
 	    print_usage();
-	    exit (1);
+	    bu_exit (1, "");
 	}
     }
 

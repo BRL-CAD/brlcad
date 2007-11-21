@@ -166,13 +166,13 @@ main(int argc, char **argv)
 	if( argc == 2 ) {
 		if( (fp = fopen(argv[1],"r")) == NULL ) {
 			perror( "plstat" );
-			exit( 1 );
+			bu_exit ( 1, "" );
 		}
 	} else {
 		fp = stdin;
 		if( argc > 1 || isatty(fileno(stdin)) ) {
 			fprintf( stderr, usage );
-			exit( 1 );
+			bu_exit ( 1, "" );
 		}
 	}
 

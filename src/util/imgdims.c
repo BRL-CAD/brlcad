@@ -76,7 +76,7 @@ static int grab_number (char *buf, int *np)
     {
 	bu_log("imgdims: grab_number(%s) failed.  This shouldn't happen\n",
 	    buf);
-	exit (1);
+	bu_exit (1, "");
     }
     return (1);
 }
@@ -141,7 +141,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel-size value: '%s'\n", bu_optarg);
 		    print_usage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		break;
 	    case '?':
@@ -152,7 +152,7 @@ main (int argc, char **argv)
     if (argc - bu_optind != 1)
     {
 	print_usage();
-	exit (1);
+	bu_exit (1, "");
     }
 
     argument = argv[bu_optind];
@@ -161,7 +161,7 @@ main (int argc, char **argv)
     {
 	bu_log("Cannot find file '%s'\n", argument);
 	print_usage();
-	exit (1);
+	bu_exit (1, "");
     }
 
     /*
@@ -187,15 +187,15 @@ main (int argc, char **argv)
     else
     {
 	bu_log("Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
-	exit (1);
+	bu_exit (1, "");
     }
 
     if (!fb_common_image_size(&width, &height, nm_pixels))
-	exit (0);
+	bu_exit (0, "");
 
 done:
     printf("%lu %lu\n", width, height);
-    exit (0);
+    bu_exit (0, "");
 }
 
 /*

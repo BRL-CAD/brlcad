@@ -276,13 +276,13 @@ int compare_vertex_labels (void *v1, void *v2)
     {
 	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
 	    vert1, vert1 -> v_index);
-	exit (1);
+	bu_exit (1, "");
     }
     if (vert2 -> v_label == '\0')
     {
 	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
 	    vert2, vert2 -> v_index);
-	exit (1);
+	bu_exit (1, "");
     }
 
     if (*(vert1 -> v_label) < *(vert2 -> v_label))
@@ -403,7 +403,7 @@ struct vertex *lookup_vertex(bu_rb_tree *dict, long int index, char *label)
 	    break;
 	default:
 	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
-	    exit (1);
+	    bu_exit (1, "");
     }
 
     return (vp);
@@ -439,7 +439,7 @@ void del_from_prioq (struct vertex *vp)
     {
 	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
 	bu_log("  This should not happen\n");
-	exit (1);
+	bu_exit (1, "");
     }
     bu_rb_delete(prioq, PRIOQ_INDEX);
 }

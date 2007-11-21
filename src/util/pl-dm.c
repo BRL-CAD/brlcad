@@ -310,7 +310,7 @@ char *argv[];
 
   if(!get_args(argc, argv)){
     bu_log("%s", usage);
-    exit(1);
+    bu_exit (1, "");
   }
 
   bzero((void *)&HeadPlot, sizeof(struct plot_list));
@@ -323,12 +323,12 @@ char *argv[];
 
   if(cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
 		   argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
-    exit(1);
+    bu_exit (1, "");
 
   argv[1] = (char *)NULL;
   Tk_Main(1, argv, appInit);
 
-  exit(0);
+  bu_exit (0, "");
 }
 
 static int
@@ -362,7 +362,7 @@ Tcl_Interp *_interp;
   /* Evaluates init.tcl */
   if(Tcl_Init(interp) == TCL_ERROR){
     bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
-    exit(1);
+    bu_exit (1, "");
   }
 
   /*
@@ -371,12 +371,12 @@ Tcl_Interp *_interp;
    */
   if (Tk_Init(interp) == TCL_ERROR){
     bu_log("Tk_Init error %s\n", Tcl_GetStringResult(interp));
-    exit(1);
+    bu_exit (1, "");
   }
 
   if((tkwin = Tk_MainWindow(interp)) == NULL){
     bu_log("appInit: Failed to get main window.\n");
-    exit(1);
+    bu_exit (1, "");
   }
 
   /* Locate the BRL-CAD-specific Tcl scripts */
@@ -1144,7 +1144,7 @@ char    **argv;
   if(dmp != DM_NULL)
     DM_CLOSE(dmp);
 
-  exit(0);
+  bu_exit (0, "");
 
   /* not reached */
   return TCL_OK;

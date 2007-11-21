@@ -537,7 +537,7 @@ struct curr_id *lookup_curr_id(int region_id)
 	    break;
 	default:
 	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
-	    exit (1);
+	    bu_exit (1, "");
     }
 
     return (cip);
@@ -687,7 +687,7 @@ int read_spec (BU_FILE *sfp, char *sf_name)
     if ((sfp == NULL) && ((sfp = bu_fopen(sf_name, "r")) == NULL))
     {
 	bu_log("Cannot open specification file '%s'\n", sf_name);
-	exit (1);
+	bu_exit (1, "");
     }
     BU_CK_FILE(sfp);
 
@@ -717,7 +717,7 @@ int read_spec (BU_FILE *sfp, char *sf_name)
 			    "Range out of order",
 			(int)(    (sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
 			    - 1) );
-			exit (-1);
+			bu_exit (-1, "");
 		    }
 		    for (i = num1; i <= num2; ++i)
 		    {
@@ -745,7 +745,7 @@ int read_spec (BU_FILE *sfp, char *sf_name)
 			"Syntax error",
 			(int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
 			- 1) );
-		    exit (-1);
+		    bu_exit (-1, "");
 	    }
 	    break;
 	}
@@ -789,7 +789,7 @@ void db_init(char *db_name)
     if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
     {
 	bu_log("Cannot open database file '%s'\n", db_name);
-	exit (1);
+	bu_exit (1, "");
     }
     db_dirbuild(dbip);
 
@@ -801,7 +801,7 @@ void db_init(char *db_name)
 	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		   dp->d_namep);
 	    bu_log("This shouldn't happen\n");
-	    exit (1);
+	    bu_exit (1, "");
 	}
 	comb = (struct rt_comb_internal *) (ip->idb_ptr);
 	RT_CK_COMB(comb);
@@ -838,7 +838,7 @@ void write_assignment (void *v, int depth)
 		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
 		    rp->rr_dp->d_namep);
 		bu_log("This shouldn't happen\n");
-		exit (1);
+		bu_exit (1, "");
 	    }
 	}
     }
@@ -959,7 +959,7 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
+	    bu_exit (1, "");
     }
 
 	rt_init_resource( &rt_uniresource, 0, NULL );

@@ -142,7 +142,7 @@ open_file(int i, char *name)
 	/* Obtain buffer */
 	if( (buf[i] = (char *)malloc( width*CHUNK )) == (char *)0 )  {
 		fprintf(stderr, "pixmatte:  input buffer malloc failure\n");
-		exit(3);
+		bu_exit (3, "");
 	}
 
 	return(0);			/* OK */
@@ -247,7 +247,7 @@ main(int argc, char **argv)
 
 	if( (obuf = (char *)malloc( width*CHUNK )) == (char *)0 ) {
 		fprintf(stderr, "pixmatte:  obuf malloc failure\n");
-		exit(3);
+		bu_exit (3, "");
 	}
 
 	while(1)  {
@@ -357,7 +357,7 @@ fail:
 		if( fwrite( obuf, width, len, stdout ) != len )  {
 			perror("fwrite");
 			fprintf( stderr, "pixmatte:  write error\n");
-			exit(1);
+			bu_exit (1, "");
 		}
 	}
 	fprintf( stderr, "pixmatte: %ld element comparisons true, %ld false (width=%d)\n",

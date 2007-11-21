@@ -132,7 +132,7 @@ main(int argc, char **argv)
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1);
+		bu_exit (1, "");
 	}
 
 	if( bu_optind+1 == argc )  {
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 
 	if( file_width < 1 ) {
 		fprintf(stderr,"pixtile: width of %d out of range\n", file_width);
-		exit(12);
+		bu_exit (12, "");
 	}
 
 	scanbytes = file_width * 3;
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 
 	if( (obuf = (char *)malloc( swathbytes )) == (char *)0 )  {
 		(void)fprintf(stderr,"pixtile:  malloc %d failure\n", swathbytes );
-		exit(10);
+		bu_exit (10, "");
 	}
 
 	image = 0;
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 			if(image >= maximage )  {
 				fprintf(stderr,"\npixtile: frame full\n");
 				/* All swaths already written out */
-				exit(0);
+				bu_exit (0, "");
 			}
 			fprintf(stderr,"%d ", framenumber);  fflush(stdout);
 			if( is_stream )  {
@@ -223,7 +223,7 @@ done:
 	if( rel != 0 )
 		(void)write( 1, obuf, swathbytes );
 	fprintf(stderr,"\n");
-	exit(0);
+	bu_exit (0, "");
 }
 
 

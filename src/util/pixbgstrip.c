@@ -115,7 +115,7 @@ get_args(int argc, register char **argv)
 			(void)fprintf( stderr,
 				"pixbgstrip: cannot open \"%s\" for reading\n",
 				file_name );
-			exit(1);
+			bu_exit (1, "");
 		}
 		fileinput++;
 	}
@@ -134,13 +134,13 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	if( isatty(fileno(stdout)) )  {
 		(void)fputs("Binary output must be redirected away from the terminal\n", stderr);
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	/* autosize input? */
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 		}
 		if( fwrite( scanline, 1, scanbytes, stdout) != scanbytes )  {
 			perror("pixbgstrip: fwrite()");
-			exit(1);
+			bu_exit (1, "");
 		}
 	}
 	bu_free(scanline, "scanline");

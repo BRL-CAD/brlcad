@@ -175,7 +175,7 @@ main(int argc, char **argv)
 
 	if (!get_args(argc,argv)) {
 		(void)fprintf(stderr,"%s",usage);
-		exit(1);
+		bu_exit (1, "");
 	}
 	/* Should we autosize the input? */
 	if (isfile && autosize) {
@@ -307,7 +307,7 @@ main(int argc, char **argv)
 		result = fwrite(outbuf, num_bytes, new_width, stdout);
 		if (result != new_width) {
 			perror("pixcut: fwrite");
-			exit(3);
+			bu_exit (3, "");
 		}
 		row++;
 	}
@@ -333,7 +333,7 @@ main(int argc, char **argv)
 		result = fwrite(outbuf, num_bytes, new_width, stdout);
 		if (result != new_width) {
 			perror("pixcut: fwrite");
-			exit(3);
+			bu_exit (3, "");
 		}
 		row++;
 	}
@@ -357,7 +357,7 @@ main(int argc, char **argv)
 		result = fwrite(outbuf,num_bytes, new_width, stdout);
 		if (result != new_width) {
 			perror("pixcut: fwrite");
-			exit(3);
+			bu_exit (3, "");
 		}
 		row++;
 	}

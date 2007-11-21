@@ -85,19 +85,19 @@ main(int argc, char **argv)
 			break;
 		case '?':
 			fprintf(stderr,"msrandom [-ugv] [ -s seed] [-c center ] low high \n");
-			exit(1);
+			bu_exit (1, "");
 		}
 	}
 	if (! gauss && !uniform) uniform = 1;
 	if (gauss && uniform) {
 		fprintf(stderr,"msrandom [-ugv] [ -s seed] [-c center ] low high \n");
 		fprintf(stderr, "\tOnly one of gaussian or uniform may be used.\n");
-		exit(1);
+		bu_exit (1, "");
 	}
 	if (argc - bu_optind != 2) {
 		fprintf(stderr,"msrandom [-ugv] [ -s seed] [-c center ] low high \n");
 		fprintf(stderr,"\tLow High must be given.\n");
-		exit(1);
+		bu_exit (1, "");
 	}
 	low = atoi(argv[bu_optind]);
 	high = atoi(argv[bu_optind+1]);

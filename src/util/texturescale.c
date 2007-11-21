@@ -150,7 +150,7 @@ get_args (int argc, register char **argv)
 		break;
 	    case '?':
 		(void) fputs(usage, stderr);
-		exit (0);
+		bu_exit (0, "");
 	    default:
 		return (0);
 	}
@@ -206,18 +206,18 @@ main (int argc, char **argv)
     if (!get_args( argc, argv ))
     {
 	(void) fputs(usage, stderr);
-	exit (1);
+	bu_exit (1, "");
     }
 
     if (solid_type == SPHERE)
     {
 	(void) fprintf(stderr, "Sphere scaling not yet implemented\n");
-	exit (1);
+	bu_exit (1, "");
     }
     else if (solid_type != TORUS)
     {
 	(void) fprintf(stderr, "Illegal solid type %d\n", solid_type);
-	exit (0);
+	bu_exit (0, "");
     }
 
     /*
@@ -261,7 +261,7 @@ main (int argc, char **argv)
 	{
 	    perror(file_name);
 	    (void) fprintf(stderr, "texturescale:  fread() error\n");
-	    exit(1);
+	    bu_exit (1, "");
 	}
 
 	/*
@@ -295,11 +295,11 @@ main (int argc, char **argv)
 	if (fwrite(outbuf, 3, file_width, stdout) != file_width)
 	{
 	    perror("stdout");
-	    exit(2);
+	    bu_exit (2, "");
 	}
     }
 
-    exit (1);
+    bu_exit (1, "");
 }
 
 /*

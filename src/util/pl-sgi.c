@@ -1101,7 +1101,7 @@ view_loop()
 				swapbuffers();
 			if( shellcmd != NULL && shellexit ) {
 				system(shellcmd);
-				exit(0);
+				bu_exit (0, "");
 			}
 			curson();
 			if( info )
@@ -1140,7 +1140,7 @@ main(int argc, char *argv[])
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	/* In case if there is no space command */
@@ -1158,7 +1158,7 @@ main(int argc, char *argv[])
 		file = argv[bu_optind];
 		if( (fp = fopen(file,"r")) == NULL ) {
 			fprintf(stderr,"pl-sgi: can't open \"%s\"\n", file);
-			exit( 3 );
+			bu_exit ( 3, "" );
 		}
 		file_input = 1;
 
@@ -1230,7 +1230,7 @@ main(int argc, char *argv[])
 	deflinestyle( 4, 0x4F4F );	/* dotdashed */
 
 	view_loop();
-	exit( 0 );
+	bu_exit ( 0, "" );
 }
 
 #else
@@ -1239,7 +1239,7 @@ int
 main(int argc, char *argv[])
 {
 	printf( "pl-sgi: this is an SGI Iris specific program\n" );
-	exit( 1 );
+	bu_exit ( 1, "" );
 }
 
 #endif  /* !HAS_SGIGL */

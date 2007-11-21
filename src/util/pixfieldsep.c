@@ -106,16 +106,16 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	if( (out1 = fopen(even_file, "w")) == NULL )  {
 		perror(even_file);
-		exit(1);
+		bu_exit (1, "");
 	}
 	if( (out2 = fopen(odd_file, "w")) == NULL )  {
 		perror(odd_file);
-		exit(2);
+		bu_exit (2, "");
 	}
 
 	buf = (char *)malloc( (file_width+1)*bytes_per_sample );
@@ -127,7 +127,7 @@ main(int argc, char **argv)
 		for( i=0; i <= doubleit; i++ )  {
 			if( fwrite( buf, bytes_per_sample, file_width, out1 ) != file_width )  {
 				perror("fwrite even");
-				exit(1);
+				bu_exit (1, "");
 			}
 		}
 		/* Odd line */
@@ -136,11 +136,11 @@ main(int argc, char **argv)
 		for( i=0; i <= doubleit; i++ )  {
 			if( fwrite( buf, bytes_per_sample, file_width, out2 ) != file_width )  {
 				perror("fwrite odd");
-				exit(1);
+				bu_exit (1, "");
 			}
 		}
 	}
-	exit(0);
+	bu_exit (0, "");
 }
 
 /*

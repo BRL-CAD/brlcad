@@ -104,7 +104,7 @@ usage(char *s)
 	[-w width] [-n scanlines] [-s number_of_samples]\n\
 	< datastream > wavelets\n",
 			progname);
-	exit(1);
+	bu_exit (1, "");
 }
 
 /*
@@ -203,7 +203,7 @@ wlt_decompose_1d(void)
 			fprintf(stderr,
 				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
-			exit(-1);
+			bu_exit (-1, "");
 		}
 
 		switch (value_type) {
@@ -258,12 +258,12 @@ wlt_decompose_2d(void)
 	if (width != height) {
 		fprintf(stderr, "Two dimensional decomposition requires square image\n");
 		fprintf(stderr, "%lu x %lu image specified\n", width, height);
-		exit(-1);
+		bu_exit (-1, "");
 	}
 
 	if (fread(buf, scanline_size, height, stdin) != height) {
 		fprintf(stderr, "read error getting %lux%lu bytes\n", scanline_size, height);
-		exit(-1);
+		bu_exit (-1, "");
 	}
 
 	switch (value_type) {
@@ -323,7 +323,7 @@ wlt_reconstruct_1d(void)
 			fprintf(stderr,
 				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
-			exit(-1);
+			bu_exit (-1, "");
 		}
 
 		switch (value_type) {
@@ -378,12 +378,12 @@ wlt_reconstruct_2d(void)
 	if (width != height) {
 		fprintf(stderr, "Two dimensional decomposition requires square image\n");
 		fprintf(stderr, "%lu x %lu image specified\n", width, height);
-		exit(-1);
+		bu_exit (-1, "");
 	}
 
 	if (fread(buf, scanline_size, height, stdin) != height) {
 		fprintf(stderr, "read error getting %lux%lu bytes\n", scanline_size, height);
-		exit(-1);
+		bu_exit (-1, "");
 	}
 
 	switch (value_type) {

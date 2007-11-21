@@ -267,7 +267,7 @@ main(int argc, char **argv)
 	if( !convert_to_bw )
 	{
 		fwrite( image, file_width*file_height, 1,stdout );
-		exit( 0 );
+		bu_exit ( 0, "" );
 	}
 
 	obuf = (unsigned char *)bu_calloc( file_width*file_height, sizeof( unsigned char ), "obuf" );

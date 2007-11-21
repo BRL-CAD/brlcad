@@ -115,14 +115,14 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	dunnopen();
 
 	if( framebuffer != (char *)0 )  {
 		if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
-			exit(12);
+			bu_exit (12, "");
 	}
 
 	/* check argument */
@@ -166,12 +166,12 @@ main(int argc, char **argv)
 	}
 	if( fbp != FBIO_NULL )
 		fb_close(fbp);
-	exit(0);
+	bu_exit (0, "");
 
 bad:
 	if( fbp != FBIO_NULL )
 		fb_close(fbp);
-	exit(1);
+	bu_exit (1, "");
 }
 
 /*

@@ -234,7 +234,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	/* If screen size was not set, track the file size */
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 		for( y = 0; y < y3; y++ )
 			fwrite( black, scr_width, 3, stdout );
 	}
-	exit(0);
+	bu_exit (0, "");
 }
 
 

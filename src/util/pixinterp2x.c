@@ -115,7 +115,7 @@ main(int argc, char **argv)
 	infp = stdin;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	inbytes = file_width * 3;	/* bytes/ input line */
@@ -125,7 +125,7 @@ main(int argc, char **argv)
 	outsize = file_width * file_height * 4 * 3;
 	if( (outbuf = (unsigned char *)malloc( outsize )) == (unsigned char *)0 )  {
 		fprintf(stderr,"pixinterp2x:  unable to malloc buffer\n");
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	outy = -2;
@@ -145,9 +145,9 @@ main(int argc, char **argv)
 	}
 	if( write( 1, (char *)outbuf, outsize ) != outsize )  {
 		perror("pixinterp2x write");
-		exit(1);
+		bu_exit (1, "");
 	}
-	exit(0);
+	bu_exit (0, "");
 }
 
 void

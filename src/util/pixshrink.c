@@ -69,7 +69,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 	    (buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
 		(void)fprintf(stderr, "%s: cannot allocate input buffer\n",
 			progname);
-		exit(-1);
+		bu_exit (-1, "");
 	}
 
 	total_bytes = Width * Height * 3;
@@ -80,7 +80,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 
 	if (count < 0) {
 		perror(filename);
-		exit(-1);
+		bu_exit (-1, "");
 	}
 
 	return(buffer);
@@ -102,7 +102,7 @@ void write_image(int Width, int Height, unsigned char *buffer)
 
 	if (count < 0) {
 		perror("stdout");
-		exit(-1);
+		bu_exit (-1, "");
 	}
 }
 
@@ -184,7 +184,7 @@ void usage(void)
 	(void) fprintf(stderr,
 "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
 [-f shrink_factor] [pixfile] > pixfile\n", progname);
-	exit(1);
+	bu_exit (1, "");
 }
 
 
@@ -229,7 +229,7 @@ void parse_args(int ac, char **av)
 	if (bu_optind < ac) {
 		if (freopen(av[bu_optind], "r", stdin) == (FILE *)NULL) {
 			perror(av[bu_optind]);
-			exit(-1);
+			bu_exit (-1, "");
 		} else
 			filename = av[bu_optind];
 	}

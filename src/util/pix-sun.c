@@ -207,7 +207,7 @@ void doit(void)
 
     if ( ((ras.ras_width/2)*2) != ras.ras_width ) {
 	(void)fprintf(stderr, "%s: Cannot handle odd x dimension\n",progname);
-	exit(1);
+	bu_exit (1, "");
     }
 
     i = ras.ras_width * ras.ras_height;
@@ -215,13 +215,13 @@ void doit(void)
     if ((pix=(unsigned char *)malloc(i*3)) == (unsigned char *)NULL) {
 	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pix file\n",
 		progname, ras.ras_width, ras.ras_height );
-	exit(1);
+	bu_exit (1, "");
     }
 
     if ((rast=(unsigned char *)malloc(i)) == (unsigned char *)NULL) {
 	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pixrect\n",
 		progname, ras.ras_width, ras.ras_height );
-	exit(1);
+	bu_exit (1, "");
     }
 
     /* load the pix file into memory (What's Virtual Memory for anyway?)
@@ -232,7 +232,7 @@ void doit(void)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
 	 (void)fprintf(stderr, "%s: error reading %d x %d pix file scanline %d\n",
 		progname, ras.ras_width, ras.ras_height, i);
-	 exit(1);
+	 bu_exit (1, "");
 	}
 
     /* convert 24 bit pixels to 8 bits,
@@ -269,29 +269,29 @@ void doit(void)
     /* write the rasterfile header */
     if (fwrite(&ras, sizeof(ras), 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing rasterfile header to stdout\n", progname);
-	exit(1);
+	bu_exit (1, "");
     }
 
     /* write the colormap */
     if (fwrite(redmap, MAPSIZE, 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	exit(1);
+	bu_exit (1, "");
     }
 
     if (fwrite(grnmap, MAPSIZE, 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	exit(1);
+	bu_exit (1, "");
     }
 
     if (fwrite(blumap, MAPSIZE, 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	exit(1);
+	bu_exit (1, "");
     }
 
     /* write out the actual pixels */
     if (fwrite(rast, ras.ras_width, ras.ras_height, stdout) != ras.ras_height){
 	(void)fprintf(stderr, "%s: error writing image\n", progname);
-	exit(1);
+	bu_exit (1, "");
     }
     free(rast);
 }
@@ -301,7 +301,7 @@ void usage(void)
 
     (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
     (void)fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
-    exit(1);
+    bu_exit (1, "");
 }
 
 /*

@@ -289,7 +289,7 @@ lines_read(FILE *fp, long int numlines,
 	if (fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf ",
 		   &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4) < 4) {
 	    fprintf(stderr, "pixmorph: lines_read: failure\n");
-	    exit(1);
+	    bu_exit (1, "");
 	}
 
 	if ((fabs(x1-x2) < EPSILON && fabs(y1-y2) < EPSILON) ||
@@ -344,7 +344,7 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 {
     if (fscanf(fp, "%lf %lf %lf %ld ", ap, bp, pp, np) < 4) {
 	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
-	exit(1);
+	bu_exit (1, "");
     }
 }
 

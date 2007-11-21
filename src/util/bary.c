@@ -123,7 +123,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	    {
 		bu_log("Illegal input at line %d: '%s'\n",
 		    line_nm, bu_vls_addr(bp));
-		exit (1);
+		bu_exit (1, "");
 	    }
 	    cp = endp;
 	}
@@ -176,7 +176,7 @@ main (int argc, char **argv)
 		{
 		    bu_log("Illegal site: '%s'\n", bu_optarg);
 		    print_usage();
-		    exit (1);
+		    bu_exit (1, "");
 		}
 		enqueue_site(&site_list, x, y, z);
 		break;
@@ -201,12 +201,12 @@ main (int argc, char **argv)
 	    if ((infp = fopen(inf_name, "r")) == NULL)
 	    {
 		bu_log ("Cannot open file '%s'\n", inf_name);
-		exit (1);
+		bu_exit (1, "");
 	    }
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
+	    bu_exit (1, "");
     }
 
     if (BU_LIST_IS_EMPTY(&site_list))

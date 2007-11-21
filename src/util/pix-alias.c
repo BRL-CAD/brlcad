@@ -88,13 +88,13 @@ void doit(void)
 	/* allocate a buffer for the image */
 	if ((image = (char *)malloc(bufsize)) == (char *)NULL) {
 		(void) fprintf(stderr, "Error: Insufficient memory for image buffer\n");
-		exit(-2);
+		bu_exit (-2, "");
 	}
 	/* read in the image (reverse the order of the scanlines) */
 	for (n=y-1 ; n >= 0 ; --n)
 		if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
 			(void) fprintf(stderr, "Error reading image at scanline %u\n", n);
-			exit(-2);
+			bu_exit (-2, "");
 		}
 
 	/* create & write the alias pix file header */
@@ -140,7 +140,7 @@ void usage(void)
 {
 	(void)fprintf(stderr,"Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
 	(void)fprintf(stderr,"\t< BRLpixfile > ALIASpixfile\n");
-	exit(1);
+	bu_exit (1, "");
 }
 
 

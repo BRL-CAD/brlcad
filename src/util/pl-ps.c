@@ -221,7 +221,7 @@ main(int argc, char **argv)
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	/* Default space */
@@ -346,7 +346,7 @@ main(int argc, char **argv)
 	}
 
 	postlog( stdout );
-	exit(0);
+	bu_exit (0, "");
 }
 
 int

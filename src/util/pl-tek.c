@@ -179,7 +179,7 @@ main(int argc, char **argv)
 	/* Stdout may be a genuine Tektronix! */
 	if( isatty(fileno(stdin)) ) {
 		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 
 	/* Assume default space, in case one is not provided */

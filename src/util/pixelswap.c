@@ -61,7 +61,7 @@ void usage(char *s)
 
 	(void) fprintf(stderr, "Usage: %s [ -%s ] r g b R G B [ < infile > outfile]\n",
 			progname, options);
-	exit(1);
+	bu_exit (1, "");
 }
 
 /*

@@ -77,7 +77,7 @@ void dump(FILE *fd)
 		while (addr < offset) {
 			if ((i=fread(buf, 1, sizeof(buf), fd)) == 0) {
 				fprintf(stderr,"%s: offset exceeds end of input!\n", progname);
-				exit(-1);
+				bu_exit (-1, "");
 			}
 			else addr += i;
 		}
@@ -119,7 +119,7 @@ void dump(FILE *fd)
 void usage(void)
 {
 	(void) fprintf(stderr,"Usage: %s [-o offset] [file...]\n", progname);
-	exit(1);
+	bu_exit (1, "");
 }
 
 /*    M A I N
@@ -169,7 +169,7 @@ main(int ac, char **av)
 		for (files = ac-bu_optind; bu_optind < ac; bu_optind++) {
 			if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
 				perror(av[bu_optind]);
-				exit (-1);
+				bu_exit (-1, "");
 			}
 			if (files > 1) printf("/**** %s ****/\n", av[bu_optind]);
 			dump(fd);

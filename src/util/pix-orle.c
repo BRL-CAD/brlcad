@@ -123,7 +123,7 @@ get_args(int argc, register char **argv)
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
 				argv[bu_optind] );
-			exit( 1 );
+			bu_exit ( 1, "" );
 		}
 		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
 			perror(argv[bu_optind]);
@@ -151,7 +151,7 @@ main(int argc, char **argv)
 	outfp = stdout;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit ( 1, "" );
 	}
 	scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * file_width );
 
