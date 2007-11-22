@@ -119,8 +119,7 @@ main(int argc, char **argv)
     char **attrs = (char **)NULL;
 
     if( argc < 3 )  {
-	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+	bu_exit(1, usage);
     }
 
     RT_APPLICATION_INIT(&ap);
@@ -156,9 +155,8 @@ main(int argc, char **argv)
 	    }
 
 	    if( attr_count == 0 ) {
-		bu_log( "missing list of attribute names!!!\n" );
-		(void)fputs(usage, stderr);
-		bu_exit( 1, NULL );
+		bu_log( "missing list of attribute names!\n" );
+		bu_exit( 1, usage );
 	    }
 
 	    /* allocate enough for a null terminated list */
@@ -275,7 +273,8 @@ main(int argc, char **argv)
 			bu_log( "\t'resolve' or '0'\n");
 			bu_log( "\t'rebuild_fastgen' or '1'\n");
 			bu_log( "\t'rebuild_all' or '2'\n");
-			bu_exit( 1, "\t'retain' or '3'\n");
+			bu_log( "\t'retain' or '3'\n");
+			bu_exit(1, NULL);
 		    }
 		argc -= 2;
 		argv += 2;
@@ -284,13 +283,11 @@ main(int argc, char **argv)
 
 	default:
     err:
-	    (void)fputs(usage, stderr);
-	    bu_exit(1, NULL);
+	    bu_exit(1, usage);
     }
     if( argc < 2 )  {
-	fprintf(stderr,"rtshot: MGED database not specified\n");
 	(void)fputs(usage, stderr);
-	bu_exit(1, NULL);
+	bu_exit(1,"rtshot: MGED database not specified\n");
     }
 
     if( set_dir + set_pt + set_at != 2 )  goto err;
@@ -307,8 +304,7 @@ main(int argc, char **argv)
     argv++;
     argc--;
     if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	fprintf(stderr,"rtshot:  rt_dirbuild failure\n");
-	bu_exit(2, NULL);
+	bu_exit(2,"rtshot:  rt_dirbuild failure\n");
     }
 
     if( overlap_claimant_handling )
@@ -320,8 +316,7 @@ main(int argc, char **argv)
 
     /* Walk trees */
     if( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
-	fprintf(stderr,"rt_gettrees FAILED\n");
-	bu_exit( 1, NULL );
+	bu_exit(1, "rt_gettrees FAILED\n");
     }
     ap.attrs = attrs;
 
