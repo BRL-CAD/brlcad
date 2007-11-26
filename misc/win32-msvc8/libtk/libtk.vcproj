@@ -180,15 +180,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tclstub84.lib"
-				OutputFile="Release/tk84.dll"
+				AdditionalDependencies="imm32.lib comctl32.lib tclstub85.lib"
+				OutputFile="Release/tk85.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../lib"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\Release/tk84.pdb"
-				ImportLibrary=".\Release/tk84.lib"
+				ProgramDatabaseFile=".\Release/tk85.pdb"
+				ImportLibrary=".\Release/tk85.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -214,7 +214,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tk85.lib ..\..\..\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

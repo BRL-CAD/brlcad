@@ -140,7 +140,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tcl84.lib tk84.lib itcl33.lib itk33.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libtclcad.lib BLT24.lib"
+				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib libtclcad.lib BLT24.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../lib"
 				GenerateDebugInformation="false"

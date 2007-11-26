@@ -78,7 +78,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib tk84.lib tclstub84.lib libpng.lib libz.lib"
+				AdditionalDependencies="tcl85.lib tk85.lib tclstub85.lib libpng.lib libz.lib"
 				OutputFile=".\Release/tkimg.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

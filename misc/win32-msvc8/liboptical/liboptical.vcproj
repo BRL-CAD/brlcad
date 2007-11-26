@@ -176,7 +176,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib libbu.lib libbn.lib libsysv.lib librt.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib librt.lib"
 				OutputFile=".\Release/liboptical.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

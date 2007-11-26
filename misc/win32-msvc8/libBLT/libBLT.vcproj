@@ -175,7 +175,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib oldnames.lib tcl84.lib tk84.lib"
+				AdditionalDependencies="imm32.lib comctl32.lib oldnames.lib tcl85.lib tk85.lib"
 				OutputFile="Release/BLT24.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

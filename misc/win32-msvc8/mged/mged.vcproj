@@ -74,7 +74,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib opengl32.lib tcl84.lib tk84.lib itcl33.lib itk33.lib libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib libdm.lib libtclcad.lib libpkg.lib libpng.lib libz.lib libfb.lib"
+				AdditionalDependencies="ws2_32.lib opengl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib libdm.lib libtclcad.lib libpkg.lib libpng.lib libz.lib libfb.lib"
 				OutputFile=".\Release/mged.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

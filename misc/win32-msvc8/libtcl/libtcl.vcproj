@@ -123,6 +123,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="&quot;$(TargetDir)&quot;\..\library\tclsh.exe &quot;$(TargetDir)&quot;\..\library\init.sh"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -178,16 +179,16 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="Release/tcl84.dll"
+				OutputFile="Release/tcl85.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\Release/tcl84.pdb"
+				ProgramDatabaseFile=".\Release/tcl85.pdb"
 				OptimizeReferences="0"
 				EnableCOMDATFolding="0"
 				OptimizeForWindows98="0"
-				ImportLibrary=".\Release/tcl84.lib"
+				ImportLibrary=".\Release/tcl85.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -213,7 +214,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tcl84.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tcl85.lib ..\..\..\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

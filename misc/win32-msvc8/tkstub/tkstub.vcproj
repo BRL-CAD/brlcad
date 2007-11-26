@@ -73,7 +73,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="Release\tkstub84.lib"
+				OutputFile="Release\tkstub85.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool

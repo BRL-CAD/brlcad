@@ -78,7 +78,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib libbu.lib libbn.lib librt.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib librt.lib"
 				OutputFile=".\Release/libwdb.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

@@ -75,7 +75,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib"
+				AdditionalDependencies="tcl85.lib"
 				OutputFile=".\Release/tclsh.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

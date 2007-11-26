@@ -148,7 +148,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="Release\tclstub84.lib"
+				OutputFile="Release\tclstub85.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool

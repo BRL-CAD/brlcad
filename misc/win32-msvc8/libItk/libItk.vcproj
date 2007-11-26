@@ -177,15 +177,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tclstub84.lib tk84.lib itclstub33.lib"
-				OutputFile="Release/itk33.dll"
+				AdditionalDependencies="imm32.lib comctl32.lib tclstub85.lib tk85.lib itclstub34.lib"
+				OutputFile="Release/itk34.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../lib"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\Release/itk33.pdb"
-				ImportLibrary=".\Release/itk33.lib"
+				ProgramDatabaseFile=".\Release/itk34.pdb"
+				ImportLibrary=".\Release/itk34.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -211,7 +211,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;itk33.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;itk34.lib ..\..\..\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

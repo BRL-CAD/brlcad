@@ -138,7 +138,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib itcl33.lib libbu.lib libbn.lib librt.lib libtclcad.lib"
+				AdditionalDependencies="tcl85.lib itcl34.lib libbu.lib libbn.lib librt.lib libtclcad.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../lib"
 				GenerateDebugInformation="false"

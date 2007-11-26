@@ -176,7 +176,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib libbu.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib"
 				OutputFile=".\Release/libsysv.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

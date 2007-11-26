@@ -72,7 +72,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="Release\itclstub33.lib"
+				OutputFile="Release\itclstub34.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool

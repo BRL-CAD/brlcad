@@ -167,7 +167,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib liboptical.lib libpkg.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib liboptical.lib libpkg.lib"
 				OutputFile=".\Release/rt_bot_faces.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

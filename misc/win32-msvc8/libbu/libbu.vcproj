@@ -78,7 +78,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib libz.lib libpng.lib"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib"
 				OutputFile=".\Release/libbu.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

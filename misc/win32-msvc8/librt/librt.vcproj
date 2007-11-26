@@ -78,7 +78,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84.lib libbu.lib libbn.lib libsysv.lib libregex.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib"
 				OutputFile=".\Release/librt.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

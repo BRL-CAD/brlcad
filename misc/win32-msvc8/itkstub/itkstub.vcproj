@@ -147,7 +147,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="Release\itkstub33.lib"
+				OutputFile="Release\itkstub34.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool

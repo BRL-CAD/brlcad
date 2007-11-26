@@ -179,7 +179,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tcl84.lib tk84.lib"
+				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib"
 				OutputFile=".\Release/wish.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
