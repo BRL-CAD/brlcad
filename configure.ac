@@ -285,6 +285,9 @@ AM_MAINTAINER_MODE
 # write out all of our definitions to this header
 AM_CONFIG_HEADER([include/brlcad_config.h])
 
+# load the tcl SC_* macros
+builtin(include,src/other/tcl/unix/tcl.m4)
+
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 
@@ -645,6 +648,12 @@ BC_ARG_WITH_ALIAS([with_python], [libpython])
 
 dnl automatically scan /usr/local (e.g. BSD uses /usr/local for ports)
 BC_SEARCH_DIRECTORY([/usr/local])
+
+dnl find tclConfig.sh, add --with-tcl option
+SC_PATH_TCLCONFIG
+
+dnl find tkConfig.sh, add --with-tk option
+SC_PATH_TKCONFIG
 
 
 ###
@@ -1767,6 +1776,7 @@ if test "x$bc_with_proe" != "xno" ; then
    CFLAGS="$PRE_CFLAGS"
 fi
 
+
 dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
@@ -2591,20 +2601,13 @@ else
 	fi
     fi
 fi
-AC_MSG_CHECKING(whether to build Tcl)
 
-bc_abs_top_builddir="`pwd`"
+AC_MSG_CHECKING(whether to build Tcl)
 TCL=""
 TCLSTUB=""
 TCL_CPPFLAGS=""
-TCL_VERSION="8.5"
-case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
-	 # some OS's don't like dots in the lib name
-	 TCL_VERSION="`echo ${TCL_VERSION} | tr -d .`"
-	 ;;
-esac
 if test "x$build_brlcad_tcl" = "xyes" ; then
+    TCL_VERSION="8.5"
     AC_MSG_RESULT(yes)
     case $host_os in
 	 darwin*)
@@ -2618,6 +2621,11 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 else
     AC_MSG_RESULT(no)
+
+    dnl If we're using the system Tcl, then we need to load
+    dnl tclConfig.sh to get the TCL_VERSION and other vars.
+    SC_LOAD_TCLCONFIG
+
     if test "x$tcl_link_works" = "xyes" ; then
 	TCL="$LIBTCL"
     else
@@ -2711,14 +2719,8 @@ AC_MSG_CHECKING(whether to build Tk)
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
-TK_VERSION="8.5"
-case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
-	 # some OS's don't like dots in the lib name
-	 TK_VERSION="`echo ${TK_VERSION} | tr -d .`"
-	 ;;
-esac
 if test "x$build_brlcad_tk" = "xyes" ; then
+    TK_VERSION="8.5"
     build_against_tk="yes"
     AC_MSG_RESULT(yes)
     TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
@@ -2729,6 +2731,11 @@ if test "x$build_brlcad_tk" = "xyes" ; then
     fi
 else
     AC_MSG_RESULT(no)
+
+    dnl If we're using the system Tk, then we need to load
+    dnl tkConfig.sh to get the TK_VERSION and other vars.
+    SC_LOAD_TKCONFIG
+
     if test "x$tk_link_works" = "xyes" ; then
 	TK="$LIBTK"
     else
@@ -2821,12 +2828,16 @@ if test "x$build_brlcad_itcl" = "xyes" ; then
     ITK='${top_builddir}/src/other/incrTcl/libitk.la'
     ITCL_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itcl/generic'
     ITK_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itk/generic'
+# XXX need itcl's configure
+#    ITCL_LIB_FILE="libitcl${ITCL_VERSION}.so"
     AC_MSG_RESULT(yes)
 else
     if test "x$itcl_link_works" = "xyes" ; then
 	ITCL="$LIBITCL"
 	ITK="$LIBITK"
     fi
+# XXX need itcl's configure
+#    ITCL_LIB_FILE="libitcl${ITCL_VERSION}.so"
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(ITCL)
@@ -2835,7 +2846,7 @@ AC_SUBST(ITCL_CPPFLAGS)
 AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
-
+AC_SUBST(ITCL_LIB_FILE)
 
 dnl *** iwidgets ***
 dnl See if the iwidgets are available
