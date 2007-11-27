@@ -2828,16 +2828,12 @@ if test "x$build_brlcad_itcl" = "xyes" ; then
     ITK='${top_builddir}/src/other/incrTcl/libitk.la'
     ITCL_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itcl/generic'
     ITK_CPPFLAGS='-I${top_srcdir}/src/other/incrTcl/itk/generic'
-# XXX need itcl's configure
-#    ITCL_LIB_FILE="libitcl${ITCL_VERSION}.so"
     AC_MSG_RESULT(yes)
 else
     if test "x$itcl_link_works" = "xyes" ; then
 	ITCL="$LIBITCL"
 	ITK="$LIBITK"
     fi
-# XXX need itcl's configure
-#    ITCL_LIB_FILE="libitcl${ITCL_VERSION}.so"
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(ITCL)
@@ -2846,7 +2842,12 @@ AC_SUBST(ITCL_CPPFLAGS)
 AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
+
+# XXX need incrTcl's configure for the proper .so/.dylib value
+ITCL_LIB_FILE="libitcl${ITCL_VERSION}.a"
+ITK_LIB_FILE="libitk${ITCL_VERSION}.a"
 AC_SUBST(ITCL_LIB_FILE)
+AC_SUBST(ITK_LIB_FILE)
 
 dnl *** iwidgets ***
 dnl See if the iwidgets are available
