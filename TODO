@@ -40,6 +40,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* review and integrate David Loman's bot-processing and object label
+  scripts, add libdm interface for textual overlay support
+
 * review librt polynomial root solver
 
 * eliminate vararg.h and non-ansi cray-specific support code
