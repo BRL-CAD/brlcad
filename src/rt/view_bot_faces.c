@@ -258,7 +258,7 @@ rayhit( struct application *ap, struct partition *PartHeadp )
 		faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
 	}
 
-	bu_ptbl_ins_unique( faces, (long *)pp->pt_inhit->hit_surfno );
+	bu_ptbl_ins_unique( faces, (long *)(size_t)pp->pt_inhit->hit_surfno );
 	bu_semaphore_release( BU_SEM_LISTS );
 
 	return(0);
