@@ -29,6 +29,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
+* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
+
 * modify the new tree traversal code to be generic
 
 * fix potential buffer overflows and security issues detected by
