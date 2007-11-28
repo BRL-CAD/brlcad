@@ -43,7 +43,7 @@
 				OutputFile="Release/g-dxf.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				ProgramDatabaseFile=".\Release/g-dxf.pdb"
 				SubSystem="1"
 				TargetMachine="1"/>
@@ -53,7 +53,7 @@
 				HeaderFileName=""/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin"/>
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -105,7 +105,7 @@
 				OutputFile="Debug/g-dxf_d.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/g-dxf_d.pdb"
 				SubSystem="1"
@@ -116,7 +116,7 @@
 				HeaderFileName=""/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin"/>
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\installdir\brlcad\bin"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

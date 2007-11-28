@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="tclstub"
 	ProjectGUID="{97D16904-207B-4602-ADC5-4D4D34AA421D}"
+	RootNamespace="tclstub"
 	>
 	<Platforms>
 		<Platform
@@ -86,7 +87,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\lib"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\lib"
 			/>
 		</Configuration>
 		<Configuration
@@ -101,6 +102,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -165,7 +167,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\lib"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\lib"
 			/>
 		</Configuration>
 	</Configurations>

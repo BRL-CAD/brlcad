@@ -64,7 +64,7 @@
 				AdditionalDependencies="libbu_d.lib libbn_d.lib libsysv_d.lib librt_d.lib libwdb_d.lib tcl84_d.lib"
 				OutputFile="$(OutDir)/dbupgrade_d.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/dbupgrade.pdb"
 				SubSystem="1"
@@ -93,7 +93,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin"
 			/>
 		</Configuration>
 		<Configuration
@@ -153,7 +153,7 @@
 				OutputFile="Release/dbupgrade.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Release/dbupgrade.pdb"
 				SubSystem="1"
@@ -184,7 +184,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin"
 			/>
 		</Configuration>
 	</Configurations>

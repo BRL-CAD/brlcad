@@ -82,7 +82,7 @@
 				OutputFile=".\Release/libwdb.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Release/libwdb.pdb"
 				ImportLibrary=".\Release/libwdb.lib"
@@ -111,7 +111,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libwdb.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libwdb.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -180,7 +180,7 @@
 				OutputFile="Debug/libwdb_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/libwdb_d.pdb"
 				ImportLibrary=".\Debug/libwdb_d.lib"
@@ -209,7 +209,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libwdb_d.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libwdb_d.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

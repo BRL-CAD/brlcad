@@ -82,7 +82,7 @@
 				OutputFile=".\Release/tkimg.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Release/tkimg.pdb"
@@ -112,7 +112,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkimg.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkimg.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -180,7 +180,7 @@
 				OutputFile="Debug/tkimg_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/tkimg_d.pdb"
 				ImportLibrary=".\Debug/tkimg_d.lib"
@@ -209,7 +209,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkimg_d.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="libtcl"
 	ProjectGUID="{5118991D-8BCF-4FE4-981C-F33C9D500E95}"
+	RootNamespace="libtcl"
 	>
 	<Platforms>
 		<Platform
@@ -79,7 +80,7 @@
 				OutputFile="Debug/tcl84_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/tcl84_d.pdb"
 				ImportLibrary=".\Debug/tcl84_d.lib"
@@ -108,7 +109,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tcl84_d.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tcl84_d.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -123,7 +124,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="&quot;$(TargetDir)&quot;\..\library\tclsh.exe &quot;$(TargetDir)&quot;\..\library\init.sh"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -182,7 +183,7 @@
 				OutputFile="Release/tcl85.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Release/tcl85.pdb"
 				OptimizeReferences="0"
@@ -214,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tcl85.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 		</Configuration>
 	</Configurations>

@@ -80,7 +80,7 @@
 				OutputFile="Debug/tk84_d.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/tk84_d.pdb"
@@ -110,7 +110,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tk84_d.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tk84_d.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -184,7 +184,7 @@
 				OutputFile="Release/tk85.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../lib"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Release/tk85.pdb"
@@ -214,7 +214,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tk85.lib ..\..\..\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tk85.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

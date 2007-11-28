@@ -85,7 +85,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\lib"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\lib"
 			/>
 		</Configuration>
 		<Configuration
@@ -164,7 +164,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\lib"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\lib"
 			/>
 		</Configuration>
 	</Configurations>
