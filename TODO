@@ -40,6 +40,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* make byteoffset and run-time byteorder detections necessary in order
+  for Mac OS X universal binaries to actually work.
+
 * review and integrate David Loman's bot-processing and object label
   scripts, add libdm interface for textual overlay support
 
