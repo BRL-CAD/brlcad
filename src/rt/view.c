@@ -959,10 +959,10 @@ int viewit(register struct application *ap,
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	LOCAL fastf_t	diffuse0 = 0;
-	LOCAL fastf_t	cosI0 = 0;
-	LOCAL vect_t work0, work1;
-	LOCAL struct light_specific *lp;
+	static fastf_t	diffuse0 = 0;
+	static fastf_t	cosI0 = 0;
+	static vect_t work0, work1;
+	static struct light_specific *lp;
 	vect_t		normal;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -999,7 +999,7 @@ int viewit(register struct application *ap,
 		break;
 	case 4:
 		{
-			LOCAL struct curvature cv;
+			static struct curvature cv;
 			FAST fastf_t f;
 
 			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
@@ -1020,7 +1020,7 @@ int viewit(register struct application *ap,
 		break;
 	case 5:
 		{
-			LOCAL struct curvature cv;
+			static struct curvature cv;
 
 			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 
@@ -1031,7 +1031,7 @@ int viewit(register struct application *ap,
 		break;
 	case 6:
 		{
-			LOCAL struct uvcoord uv;
+			static struct uvcoord uv;
 
 			/* Exactly like 'testmap' shader: UV debug */
 			RT_HIT_UVCOORD( ap, pp->pt_inseg->seg_stp, hitp, &uv );

@@ -330,7 +330,7 @@ rt_nmg_class(void)
 int
 rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct model	*m;
+	static struct model	*m;
 
 	RT_CK_DB_INTERNAL(ip);
 	m = (struct model *)ip->idb_ptr;
@@ -356,7 +356,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct model	*lm;
+	static struct model	*lm;
 
 	NMG_CK_MODEL(m);
 

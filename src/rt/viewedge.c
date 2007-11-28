@@ -782,13 +782,13 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     register struct partition *pp;
     register struct hit	*hitp;		/* which hit */
 
-    LOCAL struct application	a2;
-    LOCAL struct cell		me;
-    LOCAL struct cell		below;
-    LOCAL struct cell		left;
-    LOCAL int			edge = 0;
-    LOCAL int			cpu;
-    LOCAL int                     oc = 1;
+    static struct application	a2;
+    static struct cell		me;
+    static struct cell		below;
+    static struct cell		left;
+    static int			edge = 0;
+    static int			cpu;
+    static int                     oc = 1;
 
     RGBpixel                      col;
 

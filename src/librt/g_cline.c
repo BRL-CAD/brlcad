@@ -451,9 +451,9 @@ rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max,
 int
 rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct rt_cline_internal	*cline_ip;
-	LOCAL fastf_t           top[16*3];
-	LOCAL fastf_t           bottom[16*3];
+	static struct rt_cline_internal	*cline_ip;
+	static fastf_t           top[16*3];
+	static fastf_t           bottom[16*3];
 	point_t top_pt;
 	vect_t unit_a, unit_b;
 	vect_t a, b;
@@ -834,7 +834,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 int
 rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_cline_internal	*cline_ip;
+	static struct rt_cline_internal	*cline_ip;
 	union record			*rp;
 	point_t 			work;
 

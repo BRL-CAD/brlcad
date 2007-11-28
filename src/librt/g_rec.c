@@ -188,14 +188,14 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_tgc_internal	*tip;
 	register struct rec_specific *rec;
-	LOCAL double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
-	LOCAL double	mag_h, mag_a, mag_b;
-	LOCAL mat_t	R;
-	LOCAL mat_t	Rinv;
-	LOCAL mat_t	S;
-	LOCAL vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
-	LOCAL vect_t	work;
-	LOCAL fastf_t	f;
+	static double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+	static double	mag_h, mag_a, mag_b;
+	static mat_t	R;
+	static mat_t	Rinv;
+	static mat_t	S;
+	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
+	static vect_t	work;
+	static fastf_t	f;
 
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
@@ -281,9 +281,9 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Compute bounding sphere and RPP */
 	{
-		LOCAL fastf_t	dx, dy, dz;	/* For bounding sphere */
-		LOCAL vect_t	P, w1;
-		LOCAL fastf_t	f, tmp, z;
+		static fastf_t	dx, dy, dz;	/* For bounding sphere */
+		static vect_t	P, w1;
+		static fastf_t	f, tmp, z;
 
 		/* X */
 		VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
@@ -408,11 +408,11 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL struct hit hits[4];	/* 4 potential hit points */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static fastf_t	k1, k2;		/* distance constants of solution */
+	static vect_t	xlated;		/* translated vector */
+	static struct hit hits[4];	/* 4 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 	int		nhits = 0;	/* Number of hit points */
 
@@ -581,11 +581,11 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    i;
 	register struct rec_specific *rec;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL struct hit hits[3];	/* 4 potential hit points */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static fastf_t	k1, k2;		/* distance constants of solution */
+	static vect_t	xlated;		/* translated vector */
+	static struct hit hits[3];	/* 4 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 	FAST fastf_t	b;		/* coeff of polynomial */
 	FAST fastf_t	root;		/* root of radical */
@@ -774,8 +774,8 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
-	LOCAL vect_t work;
-	LOCAL vect_t pprime;
+	static vect_t work;
+	static vect_t pprime;
 	FAST fastf_t len;
 	FAST fastf_t ratio;
 

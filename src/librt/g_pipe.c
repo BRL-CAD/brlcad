@@ -139,14 +139,14 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
         fastf_t prev_od, fastf_t next_od)
 {
 	register struct bend_pipe *pipe;
-	LOCAL vect_t	to_start,to_end;
-	LOCAL mat_t	R;
-	LOCAL point_t	work;
-	LOCAL vect_t	tmp_vec;
-	LOCAL fastf_t	f;
-        LOCAL fastf_t   max_od;
-        LOCAL fastf_t   max_or;
-        LOCAL fastf_t   max_r;
+	static vect_t	to_start,to_end;
+	static mat_t	R;
+	static point_t	work;
+	static vect_t	tmp_vec;
+	static fastf_t	f;
+        static fastf_t   max_od;
+        static fastf_t   max_or;
+        static fastf_t   max_r;
 
 	pipe = (struct bend_pipe *)bu_malloc( sizeof( struct bend_pipe ), "rt_bend_pipe_prep:pipe" )	 ;
 
@@ -234,12 +234,12 @@ HIDDEN void
 rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1, fastf_t *pt2, fastf_t id2, fastf_t od2)
 {
 	register struct lin_pipe *pipe;
-	LOCAL mat_t	R;
-	LOCAL mat_t	Rinv;
-	LOCAL mat_t	S;
-	LOCAL point_t work;
-	LOCAL vect_t seg_ht;
-	LOCAL vect_t v1,v2;
+	static mat_t	R;
+	static mat_t	Rinv;
+	static mat_t	S;
+	static point_t work;
+	static vect_t seg_ht;
+	static vect_t v1,v2;
 
 	pipe = (struct lin_pipe *)bu_malloc( sizeof( struct lin_pipe ), "rt_bend_pipe_prep:pipe" );
 	BU_LIST_INSERT( head, &pipe->l );
@@ -607,24 +607,24 @@ rt_in_sph( struct xray *rp, point_t center, fastf_t radius_sq )
 HIDDEN void
 bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct bend_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL bn_poly_t	C;		/* The final equation */
-	LOCAL bn_complex_t	val[4];	/* The complex roots */
-	LOCAL int	j;
-	LOCAL int	root_count=0;
-	LOCAL bn_poly_t	A, Asqr;
-	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-	LOCAL vect_t	cor_pprime;	/* new ray origin */
-	LOCAL fastf_t	cor_proj;
-        LOCAL fastf_t   or_sq;          /* outside radius squared */
-        LOCAL fastf_t   ir_sq;          /* inside radius squared */
-        LOCAL fastf_t   or2_sq;         /* outside radius squared (from adjacent seg) */
-        LOCAL fastf_t   ir2_sq;         /* inside radius squared (from adjacent seg) */
-        LOCAL int       parallel;       /* set to one when ray is parallel to plane of bend */
-        LOCAL fastf_t   dist;           /* distance between ray and plane of bend */
-        LOCAL fastf_t   tmp;
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static vect_t	work;		/* temporary vector */
+	static bn_poly_t	C;		/* The final equation */
+	static bn_complex_t	val[4];	/* The complex roots */
+	static int	j;
+	static int	root_count=0;
+	static bn_poly_t	A, Asqr;
+	static bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
+	static vect_t	cor_pprime;	/* new ray origin */
+	static fastf_t	cor_proj;
+        static fastf_t   or_sq;          /* outside radius squared */
+        static fastf_t   ir_sq;          /* inside radius squared */
+        static fastf_t   or2_sq;         /* outside radius squared (from adjacent seg) */
+        static fastf_t   ir2_sq;         /* inside radius squared (from adjacent seg) */
+        static int       parallel;       /* set to one when ray is parallel to plane of bend */
+        static fastf_t   dist;           /* distance between ray and plane of bend */
+        static fastf_t   tmp;
         struct id_pipe  *prev;
         struct id_pipe  *next;
 
@@ -920,14 +920,14 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 HIDDEN void
 linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct lin_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
-	LOCAL struct hit_list	*hitp;
-	LOCAL point_t	work_pt;
-	LOCAL point_t	ray_start;
-	LOCAL vect_t	ray_dir;
-	LOCAL double	t_tmp;
-	LOCAL double	a,b,c;
-	LOCAL double	descrim;
-        LOCAL vect_t    inv_dir;
+	static struct hit_list	*hitp;
+	static point_t	work_pt;
+	static point_t	ray_start;
+	static vect_t	ray_dir;
+	static double	t_tmp;
+	static double	a,b,c;
+	static double	descrim;
+        static vect_t    inv_dir;
 
 	if( pipe->pipe_is_bend )
 	{
@@ -962,8 +962,8 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 	if( descrim > 0.0 )
 	{
-		LOCAL fastf_t	sqrt_descrim;
-		LOCAL point_t	hit_pt;
+		static fastf_t	sqrt_descrim;
+		static point_t	hit_pt;
 
 		sqrt_descrim = sqrt( descrim );
 
@@ -1021,8 +1021,8 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 		if( descrim > 0.0 )
 		{
-			LOCAL fastf_t	sqrt_descrim;
-			LOCAL point_t	hit_pt;
+			static fastf_t	sqrt_descrim;
+			static point_t	hit_pt;
 
 			sqrt_descrim = sqrt( descrim );
 
@@ -1369,11 +1369,11 @@ rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 	register struct id_pipe		*pipe_id;
 	register struct lin_pipe	*pipe_lin;
 	register struct bend_pipe	*pipe_bend;
-	LOCAL fastf_t	w;
-	LOCAL vect_t	work;
-	LOCAL vect_t	work1;
-	LOCAL int	segno;
-	LOCAL int	i;
+	static fastf_t	w;
+	static vect_t	work;
+	static vect_t	work1;
+	static int	segno;
+	static int	i;
 
 	segno = hitp->hit_surfno/10;
 
@@ -1461,12 +1461,12 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		(struct bu_list *)stp->st_specific;
 	register struct id_pipe		*pipe_id;
 	register struct seg		*segp;
-	LOCAL struct hit_list		hit_head;
-	LOCAL struct hit_list		*hitp;
-	LOCAL int			hit_count;
-	LOCAL int			total_hits;
-	LOCAL int			seg_no;
-	LOCAL int			i;
+	static struct hit_list		hit_head;
+	static struct hit_list		*hitp;
+	static int			hit_count;
+	static int			total_hits;
+	static int			seg_no;
+	static int			i;
 
 	BU_LIST_INIT( &hit_head.l );
 
@@ -1841,9 +1841,9 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	register struct wdb_pipept		*prevp;
 	register struct wdb_pipept		*curp;
 	register struct wdb_pipept		*nextp;
-	LOCAL struct rt_pipe_internal		*pip;
-	LOCAL point_t				current_point;
-	LOCAL vect_t				f1,f2,f3;
+	static struct rt_pipe_internal		*pip;
+	static point_t				current_point;
+	static vect_t				f1,f2,f3;
 
 	RT_CK_DB_INTERNAL(ip);
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
@@ -1873,10 +1873,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	while( 1 )
 	{
-		LOCAL vect_t n1,n2;
-		LOCAL vect_t norm;
-		LOCAL fastf_t angle;
-		LOCAL fastf_t dist_to_bend;
+		static vect_t n1,n2;
+		static vect_t norm;
+		static fastf_t angle;
+		static fastf_t dist_to_bend;
 
 		if( BU_LIST_IS_HEAD( &nextp->l, &pip->pipe_segs_head ) )
 		{
@@ -1907,10 +1907,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		}
 		else
 		{
-			LOCAL point_t bend_center;
-			LOCAL point_t bend_start;
-			LOCAL point_t bend_end;
-			LOCAL vect_t v1,v2;
+			static point_t bend_center;
+			static point_t bend_start;
+			static point_t bend_end;
+			static vect_t v1,v2;
 
 			VUNITIZE( norm );
 

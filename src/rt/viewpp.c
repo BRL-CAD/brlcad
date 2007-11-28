@@ -87,7 +87,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	LOCAL double cosI0;
+	static double cosI0;
 	register int i,j;
 	vect_t		normal;
 

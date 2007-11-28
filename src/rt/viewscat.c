@@ -208,7 +208,7 @@ view_end()
 {
     fastf_t rcs;
     fastf_t iret, qret;
-    LOCAL int cpu_num, cpus;
+    static int cpu_num, cpus;
 
     iret = 0.0;
     qret = 0.0;
@@ -228,12 +228,12 @@ radhit( struct application *ap, struct partition *PartHeadp )
 {
     register struct partition *pp;
     register struct hit *hitp;
-    LOCAL struct application sub_ap;
-    LOCAL struct rayinfo *rayp;
-    LOCAL fastf_t	f;
-    LOCAL vect_t	to_eye, work;
-    LOCAL int	depth;
-    LOCAL int	cpu_num;
+    static struct application sub_ap;
+    static struct rayinfo *rayp;
+    static fastf_t	f;
+    static vect_t	to_eye, work;
+    static int	depth;
+    static int	cpu_num;
 
 
     for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -348,8 +348,8 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 {
     register struct partition *pp;
     register struct hit *hitp;
-    LOCAL vect_t work;
-    LOCAL int cpu_num;
+    static vect_t work;
+    static int cpu_num;
 
     for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 	if( pp->pt_outhit->hit_dist > 0 )  break;
@@ -405,9 +405,9 @@ hittrue( struct application *ap, struct partition *PartHeadp )
 static int
 isvisible( struct application *ap, struct hit *hitp, const vect_t norm )
 {
-    LOCAL int cpu_num;
-    LOCAL struct application sub_ap;
-    LOCAL vect_t	rdir;
+    static int cpu_num;
+    static struct application sub_ap;
+    static vect_t	rdir;
 
     if ( ap->a_resource == RESOURCE_NULL)
 	cpu_num = 0;

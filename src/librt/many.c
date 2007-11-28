@@ -75,7 +75,7 @@ struct rt_many_internal  {
 void
 rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 {
-	LOCAL struct application app;
+	static struct application app;
 	struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
 
 	if( cpu >= MAX_PSW )  {

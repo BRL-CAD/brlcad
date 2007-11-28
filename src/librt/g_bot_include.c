@@ -61,7 +61,7 @@ XGLUE(rt_botface_w_normals_,TRI_TYPE)(struct soltab	*stp,
 {
 	register XGLUE(tri_specific_,TRI_TYPE) *trip;
 	vect_t work;
-	LOCAL fastf_t m1, m2, m3, m4;
+	static fastf_t m1, m2, m3, m4;
 	int i;
 
 	BU_GETTYPE( trip, XGLUE(tri_specific_,TRI_TYPE) );
@@ -246,8 +246,8 @@ struct rt_i		*rtip;
 	register struct bot_specific	*bot;
 	const struct bn_tol		*tol = &rtip->rti_tol;
 	int				tri_index, i;
-	LOCAL fastf_t			dx, dy, dz;
-	LOCAL fastf_t			f;
+	static fastf_t			dx, dy, dz;
+	static fastf_t			f;
 	int				ntri = 0;
 
 	RT_BOT_CK_MAGIC(bot_ip);
@@ -948,9 +948,9 @@ XGLUE(rt_bot_shot_,TRI_TYPE)( struct soltab *stp, struct xray *rp, struct applic
 {
 	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 	register XGLUE(tri_specific_,TRI_TYPE) *trip = bot->bot_facelist;
-	LOCAL struct hit hits[MAXHITS];
+	static struct hit hits[MAXHITS];
 	register struct hit *hp;
-	LOCAL int	nhits;
+	static int	nhits;
 	fastf_t		toldist, dn_plus_tol;
 
 	nhits = 0;
@@ -964,11 +964,11 @@ XGLUE(rt_bot_shot_,TRI_TYPE)( struct soltab *stp, struct xray *rp, struct applic
 	/* consider each face */
 	for( ; trip; trip = trip->tri_forw )  {
 		FAST fastf_t	dn;		/* Direction dot Normal */
-		LOCAL fastf_t	abs_dn;
+		static fastf_t	abs_dn;
 		FAST fastf_t	k;
-		LOCAL fastf_t	alpha, beta;
-		LOCAL vect_t	wxb;		/* vertex - ray_start */
-		LOCAL vect_t	xp;		/* wxb cross ray_dir */
+		static fastf_t	alpha, beta;
+		static vect_t	wxb;		/* vertex - ray_start */
+		static vect_t	xp;		/* wxb cross ray_dir */
 
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
@@ -1085,13 +1085,13 @@ XGLUE(rt_bot_piece_shot_,TRI_TYPE)( struct rt_piecestate *psp, struct rt_pieceli
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
 		FAST fastf_t	dn;		/* Direction dot Normal */
-		LOCAL fastf_t	abs_dn;
+		static fastf_t	abs_dn;
 		FAST fastf_t	k;
-		LOCAL fastf_t	alpha, beta;
-		LOCAL vect_t	wxb;		/* vertex - ray_start */
-		LOCAL vect_t	xp;		/* wxb cross ray_dir */
-		LOCAL int	face_array_index;
-		LOCAL int	tris_in_piece;
+		static fastf_t	alpha, beta;
+		static vect_t	wxb;		/* vertex - ray_start */
+		static vect_t	xp;		/* wxb cross ray_dir */
+		static int	face_array_index;
+		static int	tris_in_piece;
 
 		piecenum = *sol_piece_subscr_p;
 

@@ -210,12 +210,12 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 #ifndef NO_MAGIC_CHECKING
 	const struct bn_tol		*tol = &rtip->rti_tol;
 #endif
-	LOCAL fastf_t	magsq_h;
-	LOCAL fastf_t	mag_a, mag_h;
-	LOCAL fastf_t	f, r1, r2;
-	LOCAL mat_t	R;
-	LOCAL mat_t	Rinv;
-	LOCAL mat_t	S;
+	static fastf_t	magsq_h;
+	static fastf_t	mag_a, mag_h;
+	static fastf_t	f, r1, r2;
+	static mat_t	R;
+	static mat_t	Rinv;
+	static mat_t	S;
 
 #ifndef NO_MAGIC_CHECKING
 	RT_CK_DB_INTERNAL(ip);
@@ -336,11 +336,11 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL struct hit hits[3];	/* 2 potential hit points */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static fastf_t	k1, k2;		/* distance constants of solution */
+	static vect_t	xlated;		/* translated vector */
+	static struct hit hits[3];	/* 2 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 
 	hitp = &hits[0];
@@ -565,8 +565,8 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
-	LOCAL vect_t work;
-	LOCAL vect_t pprime;
+	static vect_t work;
+	static vect_t pprime;
 	FAST fastf_t len;
 
 	/*
@@ -634,9 +634,9 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	fastf_t		**ellipses, theta_new, theta_prev, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
 	int		*pts_dbl, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
-	LOCAL mat_t	R;
-	LOCAL mat_t	invR;
-	LOCAL struct rt_epa_internal	*xip;
+	static mat_t	R;
+	static mat_t	invR;
+	static struct rt_epa_internal	*xip;
 	point_t		p1;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
 	vect_t		A, Au, B, Bu, Hu, V, Work;
@@ -997,9 +997,9 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	int		*pts_dbl, face, i, j, nseg;
 	int		*segs_per_ell;
 	int		jj, na, nb, nell, recalc_b;
-	LOCAL mat_t	R;
-	LOCAL mat_t	invR;
-	LOCAL struct rt_epa_internal	*xip;
+	static mat_t	R;
+	static mat_t	invR;
+	static struct rt_epa_internal	*xip;
 	point_t		p1;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
 	struct shell	*s;
@@ -1451,7 +1451,7 @@ fail:
 int
 rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_epa_internal	*xip;
+	static struct rt_epa_internal	*xip;
 	union record			*rp;
 
 	BU_CK_EXTERNAL( ep );
@@ -1556,7 +1556,7 @@ rt_epa_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_epa_internal	*xip;
+	static struct rt_epa_internal	*xip;
 	fastf_t				vec[11];
 
 	BU_CK_EXTERNAL( ep );

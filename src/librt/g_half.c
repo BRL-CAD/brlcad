@@ -156,7 +156,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
-	LOCAL fastf_t	in, out;	/* ray in/out distances */
+	static fastf_t	in, out;	/* ray in/out distances */
 
 	in = -INFINITY;
 	out = INFINITY;
@@ -215,7 +215,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    i;
 	register struct half_specific *halfp;
-	LOCAL fastf_t	in, out;	/* ray in/out distances */
+	static fastf_t	in, out;	/* ray in/out distances */
 	FAST fastf_t	slant_factor;	/* Direction dot Normal */
 	FAST fastf_t	norm_dist;
 
@@ -320,7 +320,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
-	LOCAL vect_t P_A;
+	static vect_t P_A;
 	FAST fastf_t f;
 	auto double ival;
 

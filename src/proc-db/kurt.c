@@ -132,8 +132,8 @@ do_cell(struct val *vp, double xc, double yc)
 
 			/* center coordinates, z=0+ */
 {
-	LOCAL bn_poly_t	polynom;
-	LOCAL bn_complex_t	roots[4];	/* roots of final equation */
+	static bn_poly_t	polynom;
+	static bn_complex_t	roots[4];	/* roots of final equation */
 	int		l;
 	int		nroots;
 	int		lim;

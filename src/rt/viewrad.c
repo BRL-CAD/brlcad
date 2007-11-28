@@ -276,9 +276,9 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	register struct partition *pp;
 	register struct hit *hitp;
 	struct application sub_ap;
-	LOCAL fastf_t	f;
-	LOCAL vect_t	to_eye, work;
-	LOCAL int	depth;
+	static fastf_t	f;
+	static vect_t	to_eye, work;
+	static int	depth;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -380,7 +380,7 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	LOCAL vect_t work;
+	static vect_t work;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0 )  break;

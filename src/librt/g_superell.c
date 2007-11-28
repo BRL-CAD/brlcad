@@ -203,11 +203,11 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
   register struct superell_specific *superell;
   struct rt_superell_internal	*eip;
-  LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-  LOCAL mat_t	R, TEMP;
-  LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-  LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
-  LOCAL fastf_t	f;
+  static fastf_t	magsq_a, magsq_b, magsq_c;
+  static mat_t	R, TEMP;
+  static vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+  static vect_t	w1, w2, P;	/* used for bounding RPP */
+  static fastf_t	f;
 
   eip = (struct rt_superell_internal *)ip->idb_ptr;
   RT_SUPERELL_CK_MAGIC(eip);
@@ -376,13 +376,13 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   static int counter=10;
 
   register struct superell_specific *superell = (struct superell_specific *)stp->st_specific;
-  LOCAL bn_poly_t equation; /* equation of superell to be solved */
-  LOCAL vect_t translated;  /* translated shot vector */
-  LOCAL vect_t newShotPoint; /* P' */
-  LOCAL vect_t newShotDir; /* D' */
-  LOCAL vect_t normalizedShotPoint; /* P' with normalized dist from superell */
-  LOCAL bn_complex_t complexRoot[4]; /* roots returned from poly solver */
-  LOCAL double realRoot[4];  /* real ray distance values */
+  static bn_poly_t equation; /* equation of superell to be solved */
+  static vect_t translated;  /* translated shot vector */
+  static vect_t newShotPoint; /* P' */
+  static vect_t newShotDir; /* D' */
+  static vect_t normalizedShotPoint; /* P' with normalized dist from superell */
+  static bn_complex_t complexRoot[4]; /* roots returned from poly solver */
+  static double realRoot[4];  /* real ray distance values */
   register int i,j;
   register struct seg *segp;
 
@@ -573,8 +573,8 @@ rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct 
   register struct superell_specific *superell =
     (struct superell_specific *)stp->st_specific;
 
-  LOCAL vect_t xlated;
-  LOCAL fastf_t scale;
+  static vect_t xlated;
+  static fastf_t scale;
 
   VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
   VSUB2( xlated, hitp->hit_point, superell->superell_V );
@@ -819,7 +819,7 @@ rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
 {
 	struct rt_superell_internal	*eip;
 	union record		*rp;
-	LOCAL fastf_t	vec[3*4 + 2];
+	static fastf_t	vec[3*4 + 2];
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;

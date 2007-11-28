@@ -445,17 +445,17 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	register struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
 	register struct seg *segp;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL point_t	pprime;		/* P' */
-	LOCAL point_t	xlated;		/* translated ray start point */
-	LOCAL fastf_t	t1, t2;		/* distance constants of solution */
-	LOCAL fastf_t	f;
-	LOCAL struct hit hits[4];	/* 4 potential hit points */
+	static vect_t	dprime;		/* D' */
+	static point_t	pprime;		/* P' */
+	static point_t	xlated;		/* translated ray start point */
+	static fastf_t	t1, t2;		/* distance constants of solution */
+	static fastf_t	f;
+	static struct hit hits[4];	/* 4 potential hit points */
 	register struct hit *hitp = &hits[0];
 	int		check_v, check_h;
 
 	if( part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE )  {
-		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+		static vect_t	ov;		/* ray orgin to center (V - P) */
 		FAST fastf_t	vrad_sq;
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
 		FAST fastf_t	b;		/* second term of quadratic eqn */
@@ -592,7 +592,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	 */
 check_hemispheres:
 	if( check_v )  {
-		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+		static vect_t	ov;		/* ray orgin to center (V - P) */
 		FAST fastf_t	rad_sq;
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
 		FAST fastf_t	b;
@@ -639,7 +639,7 @@ check_hemispheres:
 
 do_check_h:
 	if( check_h )  {
-		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+		static vect_t	ov;		/* ray orgin to center (V - P) */
 		FAST fastf_t	rad_sq;
 		FAST fastf_t	magsq_ov;	/* length squared of ov */
 		FAST fastf_t	b;		/* second term of quadratic eqn */
@@ -1086,12 +1086,12 @@ int
 rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct rt_part_internal	*pip;
-	LOCAL mat_t	R;
-	LOCAL mat_t	S;
-	LOCAL mat_t	invR;
-	LOCAL mat_t	invS;
-	LOCAL vect_t	zz;
-	LOCAL vect_t	hcenter;
+	static mat_t	R;
+	static mat_t	S;
+	static mat_t	invR;
+	static mat_t	invS;
+	static vect_t	zz;
+	static vect_t	hcenter;
 	struct part_state	state;
 	register int		i;
 	fastf_t		radius;

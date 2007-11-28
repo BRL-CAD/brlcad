@@ -222,13 +222,13 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_rhc_internal		*xip;
 	register struct rhc_specific	*rhc;
-	LOCAL fastf_t	magsq_b, magsq_h, magsq_r;
-	LOCAL fastf_t	mag_b, mag_h, mag_r;
-	LOCAL fastf_t	f;
-	LOCAL mat_t	R;
-	LOCAL mat_t	Rinv;
-	LOCAL mat_t	S;
-	LOCAL vect_t	invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
+	static fastf_t	magsq_b, magsq_h, magsq_r;
+	static fastf_t	mag_b, mag_h, mag_r;
+	static fastf_t	f;
+	static mat_t	R;
+	static mat_t	Rinv;
+	static mat_t	S;
+	static vect_t	invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
 
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_RTI(rtip);
@@ -353,12 +353,12 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
-	LOCAL fastf_t	x;
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL struct hit hits[3];	/* 2 potential hit points */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static fastf_t	k1, k2;		/* distance constants of solution */
+	static fastf_t	x;
+	static vect_t	xlated;		/* translated vector */
+	static struct hit hits[3];	/* 2 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 
 	hitp = &hits[0];
@@ -619,8 +619,8 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
-	LOCAL vect_t work;
-	LOCAL vect_t pprime;
+	static vect_t work;
+	static vect_t pprime;
 	FAST fastf_t len;
 
 	/*
@@ -686,9 +686,9 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	fastf_t		b, c, *back, f, *front, h, rh;
 	fastf_t		dtol, ntol;
 	vect_t		Bu, Hu, Ru;
-	LOCAL mat_t	R;
-	LOCAL mat_t	invR;
-	LOCAL struct rt_rhc_internal	*xip;
+	static mat_t	R;
+	static mat_t	invR;
+	static struct rt_rhc_internal	*xip;
 	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc(void);
 
 	RT_CK_DB_INTERNAL(ip);
@@ -904,9 +904,9 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fastf_t		b, c, *back, f, *front, h, rh;
 	fastf_t		dtol, ntol;
 	vect_t		Bu, Hu, Ru;
-	LOCAL mat_t	R;
-	LOCAL mat_t	invR;
-	LOCAL struct rt_rhc_internal	*xip;
+	static mat_t	R;
+	static mat_t	invR;
+	static struct rt_rhc_internal	*xip;
 	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc(void);
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
@@ -1176,7 +1176,7 @@ fail:
 int
 rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_rhc_internal	*xip;
+	static struct rt_rhc_internal	*xip;
 	union record			*rp;
 
 	BU_CK_EXTERNAL( ep );
@@ -1276,7 +1276,7 @@ rt_rhc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_rhc_internal	*xip;
+	static struct rt_rhc_internal	*xip;
 	fastf_t			vec[11];
 
 	BU_CK_EXTERNAL( ep );

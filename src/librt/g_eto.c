@@ -177,8 +177,8 @@ int
 rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct eto_specific *eto;
-	LOCAL vect_t	P, w1;	/* for RPP calculation */
-	LOCAL vect_t	Au, Bu, Cu, Nu;
+	static vect_t	P, w1;	/* for RPP calculation */
+	static vect_t	Au, Bu, Cu, Nu;
 	FAST fastf_t	ch, cv, dh, f, phi;
 	struct rt_eto_internal	*tip;
 
@@ -333,17 +333,17 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
 	register struct seg *segp;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL bn_poly_t	C;		/* The final equation */
-	LOCAL bn_complex_t	val[4];	/* The complex roots */
-	LOCAL double	k[4];		/* The real roots */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static vect_t	work;		/* temporary vector */
+	static bn_poly_t	C;		/* The final equation */
+	static bn_complex_t	val[4];	/* The complex roots */
+	static double	k[4];		/* The real roots */
 	register int	i;
-	LOCAL int	j;
-	LOCAL vect_t	cor_pprime;	/* new ray origin */
-	LOCAL fastf_t	cor_proj;
-	LOCAL fastf_t	A1,A2,A3,A4,A5,A6,A7,A8,B1,B2,B3,C1,C2,C3,D1,term;
+	static int	j;
+	static vect_t	cor_pprime;	/* new ray origin */
+	static fastf_t	cor_proj;
+	static fastf_t	A1,A2,A3,A4,A5,A6,A7,A8,B1,B2,B3,C1,C2,C3,D1,term;
 
 	/* Convert vector into the space of the unit eto */
 	MAT4X3VEC( dprime, eto->eto_R, rp->r_dir );
@@ -587,7 +587,7 @@ rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
 	FAST fastf_t sqrt_x2y2, efact, ffact, xcomp, ycomp, zcomp;
-	LOCAL vect_t normp;
+	static vect_t normp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 

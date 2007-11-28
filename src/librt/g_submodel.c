@@ -712,7 +712,7 @@ HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct 
 int
 rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct rt_submodel_internal	*sip;
+	static struct rt_submodel_internal	*sip;
 	struct db_tree_state	state;
 	int			ret;
 	char			*argv[2];
@@ -780,7 +780,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 int
 rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct rt_submodel_internal	*sip;
+	static struct rt_submodel_internal	*sip;
 
 	RT_CK_DB_INTERNAL(ip);
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
@@ -798,7 +798,7 @@ rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 int
 rt_submodel_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_submodel_internal	*sip;
+	static struct rt_submodel_internal	*sip;
 	union record			*rp;
 	struct bu_vls		str;
 
@@ -904,7 +904,7 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
 int
 rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_submodel_internal	*sip;
+	static struct rt_submodel_internal	*sip;
 	struct bu_vls		str;
 
 	BU_CK_EXTERNAL( ep );

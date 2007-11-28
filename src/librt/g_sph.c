@@ -99,9 +99,9 @@ int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct sph_specific *sph;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL fastf_t	f;
+	static fastf_t	magsq_a, magsq_b, magsq_c;
+	static vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	static fastf_t	f;
 	struct rt_ell_internal	*eip;
 
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -237,7 +237,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 	register struct seg *segp;
-	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+	static vect_t	ov;		/* ray orgin to center (V - P) */
 	FAST fastf_t	magsq_ov;	/* length squared of ov */
 	FAST fastf_t	b;		/* second term of quadratic eqn */
 	FAST fastf_t	root;		/* root of radical */
@@ -287,7 +287,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 {
 	register struct sph_specific *sph;
-	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+	static vect_t	ov;		/* ray orgin to center (V - P) */
 	FAST fastf_t	magsq_ov;	/* length squared of ov */
 	FAST fastf_t	b;		/* second term of quadratic eqn */
 	FAST fastf_t	root;		/* root of radical */
@@ -374,9 +374,9 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
-	LOCAL fastf_t r;
-	LOCAL vect_t work;
-	LOCAL vect_t pprime;
+	static fastf_t r;
+	static vect_t work;
+	static vect_t pprime;
 
 	/* hit_point is on surface;  project back to unit sphere,
 	 * creating a vector from vertex to hit point which always
@@ -441,7 +441,7 @@ register const mat_t		mat;
 const struct db_i		*dbip;
 {
 	struct rt_sph_internal	*sip;
-	LOCAL fastf_t		vec[3+1];
+	static fastf_t		vec[3+1];
 
 	BU_CK_EXTERNAL( ep );
 

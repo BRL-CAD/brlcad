@@ -216,7 +216,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		register struct partition	*newpp = PT_NULL;
 		register struct seg		*lastseg = RT_SEG_NULL;
 		register struct hit		*lasthit = HIT_NULL;
-		LOCAL int			lastflip = 0;
+		static int			lastflip = 0;
 
 		segp = BU_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
@@ -923,7 +923,7 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 void
 rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_ptbl *regiontable, struct partition *InputHdp)
 {
-	LOCAL struct region *lastregion = (struct region *)NULL;
+	static struct region *lastregion = (struct region *)NULL;
 	int	n_regions;
 	int	n_fastgen = 0;
 	int	code;
@@ -1322,8 +1322,8 @@ b_ok:		;
 int
 rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t startdist, fastf_t enddist, struct bu_ptbl *regiontable, struct application *ap, const struct bu_bitv *solidbits)
 {
-	LOCAL struct region *lastregion = (struct region *)NULL;
-	LOCAL struct region *TrueRg[2];
+	static struct region *lastregion = (struct region *)NULL;
+	static struct region *TrueRg[2];
 	register struct partition *pp;
 	register int	claiming_regions;
 	int		hits_avail = 0;

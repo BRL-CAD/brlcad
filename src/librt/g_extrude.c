@@ -113,7 +113,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	struct rt_extrude_internal *eip;
 	register struct extrude_specific *extr;
 	struct rt_sketch_internal *skt;
-	LOCAL vect_t tmp, xyz[3];
+	static vect_t tmp, xyz[3];
 	fastf_t tmp_f, ldir[3];
 	int i, j;
 	int vert_count;
@@ -1135,7 +1135,7 @@ rt_extrude_class(void)
 int
 rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct rt_extrude_internal	*extrude_ip;
+	static struct rt_extrude_internal	*extrude_ip;
 	struct curve			*crv=(struct curve *)NULL;
 	struct rt_sketch_internal	*sketch_ip;
 	point_t				end_of_h;
@@ -2078,7 +2078,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 int
 rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
 {
-	LOCAL struct rt_extrude_internal	*extrude_ip;
+	static struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
 	struct directory			*dp;
 	char					*sketch_name;
@@ -2240,7 +2240,7 @@ rt_extrude_import5(
 	struct resource			*resp,
 	const int			minor_type )
 {
-	LOCAL struct rt_extrude_internal	*extrude_ip;
+	static struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
 	struct directory			*dp;
 	char					*sketch_name;

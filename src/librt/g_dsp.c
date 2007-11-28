@@ -3373,7 +3373,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    LOCAL struct rt_dsp_internal	*dsp_ip;
+    static struct rt_dsp_internal	*dsp_ip;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");
@@ -3586,7 +3586,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 int
 rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_dsp_internal	*dsp_ip;
+	static struct rt_dsp_internal	*dsp_ip;
 	union record			*rp;
 	struct bu_vls			str;
 

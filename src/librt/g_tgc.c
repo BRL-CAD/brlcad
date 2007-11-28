@@ -122,14 +122,14 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	struct rt_tgc_internal	*tip;
 	register struct tgc_specific *tgc;
 	register fastf_t	f;
-	LOCAL fastf_t	prod_ab, prod_cd;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c, magsq_d;
-	LOCAL fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
-	LOCAL mat_t	Rot, Shr, Scl;
-	LOCAL mat_t	iRot, tShr, iShr, iScl;
-	LOCAL mat_t	tmp;
-	LOCAL vect_t	nH;
-	LOCAL vect_t	work;
+	static fastf_t	prod_ab, prod_cd;
+	static fastf_t	magsq_a, magsq_b, magsq_c, magsq_d;
+	static fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
+	static mat_t	Rot, Shr, Scl;
+	static mat_t	iRot, tShr, iShr, iScl;
+	static mat_t	tmp;
+	static vect_t	nH;
+	static vect_t	work;
 
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
@@ -299,8 +299,8 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Compute bounding sphere and RPP */
 	{
-		LOCAL fastf_t dx, dy, dz;	/* For bounding sphere */
-		LOCAL vect_t temp;
+		static fastf_t dx, dy, dz;	/* For bounding sphere */
+		static vect_t temp;
 
 		/* There are 8 corners to the bounding RPP */
 		/* This may not be minimal, but does fully contain the TGC */
@@ -371,8 +371,8 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 static void
 rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, struct tgc_specific *tgc)
 {
-	LOCAL vect_t	uA, uB, uC;	/*  unit vectors		*/
-	LOCAL fastf_t	mag_ha,		/*  magnitude of H in the	*/
+	static vect_t	uA, uB, uC;	/*  unit vectors		*/
+	static fastf_t	mag_ha,		/*  magnitude of H in the	*/
 	mag_hb;		/*    A and B directions	*/
 
 	/* copy A and B, then 'unitize' the results			*/
@@ -527,22 +527,22 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register const struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
 	register struct seg	*segp;
-	LOCAL vect_t		pprime;
-	LOCAL vect_t		dprime;
-	LOCAL vect_t		work;
-	LOCAL fastf_t		k[6];
-	LOCAL int		hit_type[6];
-	LOCAL fastf_t		t, b, zval, dir;
-	LOCAL fastf_t		t_scale;
-	LOCAL fastf_t		alf1, alf2;
-	LOCAL int		npts;
-	LOCAL int		intersect;
-	LOCAL vect_t		cor_pprime;	/* corrected P prime */
-	LOCAL fastf_t		cor_proj = 0;	/* corrected projected dist */
-	LOCAL int		i;
-	LOCAL bn_poly_t		C;	/*  final equation	*/
-	LOCAL bn_poly_t		Xsqr, Ysqr;
-	LOCAL bn_poly_t		R, Rsqr;
+	static vect_t		pprime;
+	static vect_t		dprime;
+	static vect_t		work;
+	static fastf_t		k[6];
+	static int		hit_type[6];
+	static fastf_t		t, b, zval, dir;
+	static fastf_t		t_scale;
+	static fastf_t		alf1, alf2;
+	static int		npts;
+	static int		intersect;
+	static vect_t		cor_pprime;	/* corrected P prime */
+	static fastf_t		cor_proj = 0;	/* corrected projected dist */
+	static int		i;
+	static bn_poly_t		C;	/*  final equation	*/
+	static bn_poly_t		Xsqr, Ysqr;
+	static bn_poly_t		R, Rsqr;
 
 	/* find rotated point and direction */
 	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp->r_dir );
@@ -670,8 +670,8 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			npts = 2;
 		}
 	} else {
-		LOCAL bn_poly_t	Q, Qsqr;
-		LOCAL bn_complex_t	val[4];	/* roots of final equation */
+		static bn_poly_t	Q, Qsqr;
+		static bn_complex_t	val[4];	/* roots of final equation */
 		register int	l;
 		register int nroots;
 
@@ -925,21 +925,21 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 {
 	register struct tgc_specific	*tgc;
 	register int		ix;
-	LOCAL vect_t		pprime;
-	LOCAL vect_t		dprime;
-	LOCAL vect_t		work;
-	LOCAL fastf_t		k[4], pt[2];
-	LOCAL fastf_t		t, b, zval, dir;
-	LOCAL fastf_t		t_scale = 0;
-	LOCAL fastf_t		alf1, alf2;
-	LOCAL int		npts;
-	LOCAL int		intersect;
-	LOCAL vect_t		cor_pprime;	/* corrected P prime */
-	LOCAL fastf_t		cor_proj = 0;	/* corrected projected dist */
-	LOCAL int		i;
-	LOCAL bn_poly_t		*C;	/*  final equation	*/
-	LOCAL bn_poly_t		Xsqr, Ysqr;
-	LOCAL bn_poly_t		R, Rsqr;
+	static vect_t		pprime;
+	static vect_t		dprime;
+	static vect_t		work;
+	static fastf_t		k[4], pt[2];
+	static fastf_t		t, b, zval, dir;
+	static fastf_t		t_scale = 0;
+	static fastf_t		alf1, alf2;
+	static int		npts;
+	static int		intersect;
+	static vect_t		cor_pprime;	/* corrected P prime */
+	static fastf_t		cor_proj = 0;	/* corrected projected dist */
+	static int		i;
+	static bn_poly_t		*C;	/*  final equation	*/
+	static bn_poly_t		Xsqr, Ysqr;
+	static bn_poly_t		R, Rsqr;
 
 	/* Allocate space for polys and roots */
 	C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
@@ -1040,7 +1040,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
 			C[ix].cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
 		} else {
-			LOCAL bn_poly_t	Q, Qsqr;
+			static bn_poly_t	Q, Qsqr;
 
 			Q.dgr = 1;
 			Q.cf[0] = dprime[Z] * tgc->tgc_DdBm1;
@@ -1111,7 +1111,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 				npts = 2;
 			}
 		} else {
-			LOCAL bn_complex_t	val[4];	/* roots of final equation */
+			static bn_complex_t	val[4];	/* roots of final equation */
 			register int	l;
 			register int nroots;
 
@@ -1429,7 +1429,7 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	(struct tgc_specific *)stp->st_specific;
 	FAST fastf_t	Q;
 	FAST fastf_t	R;
-	LOCAL vect_t	stdnorm;
+	static vect_t	stdnorm;
 
 	/* Hit point */
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
@@ -1470,8 +1470,8 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
-	LOCAL vect_t work;
-	LOCAL vect_t pprime;
+	static vect_t work;
+	static vect_t pprime;
 	FAST fastf_t len;
 
 	/* hit_point is on surface;  project back to unit cylinder,
@@ -1549,7 +1549,7 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rp;
-	LOCAL fastf_t	vec[3*6];
+	static fastf_t	vec[3*6];
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -1790,11 +1790,11 @@ rt_tgc_ifree(struct rt_db_internal *ip)
 int
 rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct rt_tgc_internal	*tip;
+	static struct rt_tgc_internal	*tip;
 	register int		i;
-	LOCAL fastf_t		top[16*3];
-	LOCAL fastf_t		bottom[16*3];
-	LOCAL vect_t		work;		/* Vec addition work area */
+	static fastf_t		top[16*3];
+	static fastf_t		bottom[16*3];
+	static vect_t		work;		/* Vec addition work area */
 
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -2664,7 +2664,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 int
 rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-	LOCAL struct rt_tgc_internal	*tip;
+	static struct rt_tgc_internal	*tip;
 
 	struct shell			*s;
 	struct vertex			*verts[2];

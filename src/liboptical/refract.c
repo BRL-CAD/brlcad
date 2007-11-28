@@ -885,7 +885,7 @@ out:
 HIDDEN int
 rr_refract( vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2 )
 {
-	LOCAL vect_t	w, u;
+	static vect_t	w, u;
 	FAST fastf_t	beta;
 
 	if( NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO( ri_2, 0.0001 ) )  {

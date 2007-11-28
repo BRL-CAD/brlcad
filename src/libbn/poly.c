@@ -154,7 +154,7 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 struct bn_poly *
 bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
-    LOCAL struct bn_poly	tmp;
+    static struct bn_poly	tmp;
     register int		i, offset;
 
     offset = Abs(poly1->dgr - poly2->dgr);
@@ -188,7 +188,7 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
 struct bn_poly *
 bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
-    LOCAL struct bn_poly	tmp;
+    static struct bn_poly	tmp;
     register int		i, offset;
 
     offset = Abs(poly1->dgr - poly2->dgr);
@@ -261,7 +261,7 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
 int
 bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct bn_poly *quadrat)
 {
-    LOCAL fastf_t discrim, denom, rad;
+    static fastf_t discrim, denom, rad;
     const fastf_t small = SMALL_FASTF;
 
     if( NEAR_ZERO( quadrat->cf[0], small ) )  {
@@ -353,7 +353,7 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 int
 bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
-    LOCAL fastf_t	a, b, c1, c1_3rd, delta;
+    static fastf_t	a, b, c1, c1_3rd, delta;
     register int	i;
     static int	first_time = 1;
 
@@ -384,7 +384,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
 
     if ( delta > 0.0 ){
-	LOCAL fastf_t		r_delta, A, B;
+	static fastf_t		r_delta, A, B;
 
 	r_delta = sqrt( delta );
 	A = B = -0.5 * b;
@@ -399,15 +399,15 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 	roots[0].im = 0.0;
 	roots[2].im = -( roots[1].im = (A - B)*SQRT3*0.5 );
     } else if ( delta == 0.0 ){
-	LOCAL fastf_t	b_2;
+	static fastf_t	b_2;
 	b_2 = -0.5 * b;
 
 	roots[0].re = 2.0* CUBEROOT( b_2 );
 	roots[2].re = roots[1].re = -0.5 * roots[0].re;
 	roots[2].im = roots[1].im = roots[0].im = 0.0;
     } else {
-	LOCAL fastf_t		phi, fact;
-	LOCAL fastf_t		cs_phi, sn_phi_s3;
+	static fastf_t		phi, fact;
+	static fastf_t		cs_phi, sn_phi_s3;
 
 	if( a >= 0.0 )  {
 	    fact = 0.0;
@@ -460,9 +460,9 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 int
 bn_poly_quartic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
-    LOCAL struct bn_poly	cube, quad1, quad2;
-    LOCAL bn_complex_t	u[3];
-    LOCAL fastf_t		U, p, q, q1, q2;
+    static struct bn_poly	cube, quad1, quad2;
+    static bn_complex_t	u[3];
+    static fastf_t		U, p, q, q1, q2;
 
     /* something considerably larger than squared floating point fuss */
     const fastf_t small = 1.0e-8;

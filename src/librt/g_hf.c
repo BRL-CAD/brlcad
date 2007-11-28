@@ -341,8 +341,8 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VMINMAX(stp->st_min, stp->st_max, work);
 	/* Now find the center and radius for a bounding sphere. */
 	{
-		LOCAL fastf_t	dx,dy,dz;
-		LOCAL fastf_t	f;
+		static fastf_t	dx,dy,dz;
+		static fastf_t	f;
 
 		VADD2SCALE( stp->st_center, stp->st_max, stp->st_min, 0.5);
 
@@ -777,9 +777,9 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
 
-	LOCAL	struct hit	hits[MAXHITS];
+	static	struct hit	hits[MAXHITS];
 	struct hit *hp;
-	LOCAL	int		nhits;
+	static	int		nhits;
 	double	xWidth, yWidth;
 
 	vect_t  peqn;
@@ -787,8 +787,8 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	fastf_t allDist[6];	/* The hit point for all rays. */
 	fastf_t cosine;
 
-	LOCAL int	iplane, oplane, j;
-	LOCAL fastf_t	in, out;
+	static int	iplane, oplane, j;
+	static fastf_t	in, out;
 	vect_t aray, curloc;
 
 bzero(hits,sizeof(hits));
@@ -1502,7 +1502,7 @@ skip_2nd:
 	/* Sort hits, near to Far */
 	{
 		register int i,j;
-		LOCAL struct hit tmp;
+		static struct hit tmp;
 		for ( i=0; i< nhits-1; i++) {
 			for (j=i+1; j<nhits; j++) {
 				if (hits[i].hit_dist <= hits[j].hit_dist) continue;
@@ -1669,7 +1669,7 @@ rt_hf_class(void)
 int
 rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct rt_hf_internal	*xip;
+	static struct rt_hf_internal	*xip;
 	register unsigned short		*sp = (unsigned short *)NULL;
 	register double *dp;
 	vect_t		xbasis;
@@ -1920,7 +1920,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 int
 rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL struct rt_hf_internal	*xip;
+	static struct rt_hf_internal	*xip;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
@@ -1938,7 +1938,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 int
 rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	LOCAL struct rt_hf_internal	*xip;
+	static struct rt_hf_internal	*xip;
 	union record			*rp;
 	struct bu_vls			str;
 	struct bu_mapped_file		*mp;

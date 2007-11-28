@@ -194,14 +194,14 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct ell_specific *ell;
 	struct rt_ell_internal	*eip;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL mat_t	R;
-	LOCAL mat_t	Rinv;
-	LOCAL mat_t	SS;
-	LOCAL mat_t	mtemp;
-	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
-	LOCAL fastf_t	f;
+	static fastf_t	magsq_a, magsq_b, magsq_c;
+	static mat_t	R;
+	static mat_t	Rinv;
+	static mat_t	SS;
+	static mat_t	mtemp;
+	static vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	static vect_t	w1, w2, P;	/* used for bounding RPP */
+	static fastf_t	f;
 
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
@@ -359,11 +359,11 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
 	register struct seg *segp;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static vect_t	xlated;		/* translated vector */
+	static fastf_t	dp, dd;		/* D' dot P', D' dot D' */
+	static fastf_t	k1, k2;		/* distance constants of solution */
 	FAST fastf_t	root;		/* root of radical */
 
 	/* out, Mat, vect */
@@ -410,11 +410,11 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    i;
 	register struct ell_specific *ell;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL fastf_t	dp, dd;		/* D' dot P', D' dot D' */
-	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static vect_t	xlated;		/* translated vector */
+	static fastf_t	dp, dd;		/* D' dot P', D' dot D' */
+	static fastf_t	k1, k2;		/* distance constants of solution */
 	FAST fastf_t	root;		/* root of radical */
 
 	/* for each ray/ellipse pair */
@@ -461,8 +461,8 @@ rt_ell_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
-	LOCAL vect_t xlated;
-	LOCAL fastf_t scale;
+	static vect_t xlated;
+	static fastf_t scale;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	VSUB2( xlated, hitp->hit_point, ell->ell_V );
@@ -524,9 +524,9 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
-	LOCAL vect_t work;
-	LOCAL vect_t pprime;
-	LOCAL fastf_t r;
+	static vect_t work;
+	static vect_t pprime;
+	static fastf_t r;
 
 	/* hit_point is on surface;  project back to unit sphere,
 	 * creating a vector from vertex to hit point which always
@@ -741,15 +741,15 @@ struct ell_vert_strip {
 int
 rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	LOCAL mat_t	R;
-	LOCAL mat_t	S;
-	LOCAL mat_t	invR;
-	LOCAL mat_t	invS;
-	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL fastf_t	Alen, Blen, Clen;
-	LOCAL fastf_t	invAlen, invBlen, invClen;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL fastf_t	f;
+	static mat_t	R;
+	static mat_t	S;
+	static mat_t	invR;
+	static mat_t	invS;
+	static vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	static fastf_t	Alen, Blen, Clen;
+	static fastf_t	invAlen, invBlen, invClen;
+	static fastf_t	magsq_a, magsq_b, magsq_c;
+	static fastf_t	f;
 	struct ell_state	state;
 	register int		i;
 	fastf_t		radius;
@@ -1114,7 +1114,7 @@ rt_ell_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 {
 	struct rt_ell_internal	*eip;
 	union record		*rp;
-	LOCAL fastf_t	vec[3*4];
+	static fastf_t	vec[3*4];
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -1350,19 +1350,19 @@ static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 int
 rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-	LOCAL mat_t	R;
-	LOCAL mat_t	S;
-	LOCAL mat_t	invR;
-	LOCAL mat_t	invS;
+	static mat_t	R;
+	static mat_t	S;
+	static mat_t	invR;
+	static mat_t	invS;
 	mat_t		invRinvS;
 	mat_t		invRoS;
-	LOCAL mat_t	unit2model;
-	LOCAL mat_t	xlate;
-	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL fastf_t	Alen, Blen, Clen;
-	LOCAL fastf_t	invAlen, invBlen, invClen;
-	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL fastf_t	f;
+	static mat_t	unit2model;
+	static mat_t	xlate;
+	static vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	static fastf_t	Alen, Blen, Clen;
+	static fastf_t	invAlen, invBlen, invClen;
+	static fastf_t	magsq_a, magsq_b, magsq_c;
+	static fastf_t	f;
 	register int		i;
 	fastf_t		radius;
 	struct rt_ell_internal	*eip;

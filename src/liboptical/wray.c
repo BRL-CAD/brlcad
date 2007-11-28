@@ -132,7 +132,7 @@ struct vldray
 void
 wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inormal )
 {
-	LOCAL struct vldray vldray;
+	static struct vldray vldray;
 	register struct hit *hitp= pp->pt_inhit;
 
 	VMOVE( &(vldray.ox), hitp->hit_point );
@@ -170,7 +170,7 @@ wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inorm
 void
 wraypts( vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FILE *fp )
 {
-	LOCAL struct vldray vldray;
+	static struct vldray vldray;
 	vect_t	norm;
 
 	VMOVE( &(vldray.ox), in );
@@ -196,7 +196,7 @@ wraypts( vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FI
 void
 wraypaint( vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp )
 {
-	LOCAL struct vldray vldray;
+	static struct vldray vldray;
 
 	VMOVE( &(vldray.ox), start );
 	VSETALL( &(vldray.rx), 0 );

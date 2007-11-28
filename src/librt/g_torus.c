@@ -190,8 +190,8 @@ int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct tor_specific *tor;
-	LOCAL mat_t	R;
-	LOCAL vect_t	P, w1;	/* for RPP calculation */
+	static mat_t	R;
+	static vect_t	P, w1;	/* for RPP calculation */
 	FAST fastf_t	f;
 	struct rt_tor_internal	*tip;
 
@@ -353,18 +353,18 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 	register struct seg *segp;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL bn_poly_t	C;		/* The final equation */
-	LOCAL bn_complex_t val[4];		/* The complex roots */
-	LOCAL double	k[4];		/* The real roots */
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static vect_t	work;		/* temporary vector */
+	static bn_poly_t	C;		/* The final equation */
+	static bn_complex_t val[4];		/* The complex roots */
+	static double	k[4];		/* The real roots */
 	register int	i;
-	LOCAL int	j;
-	LOCAL bn_poly_t	A, Asqr;
-	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-	LOCAL vect_t	cor_pprime;	/* new ray origin */
-	LOCAL fastf_t	cor_proj;
+	static int	j;
+	static bn_poly_t	A, Asqr;
+	static bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
+	static vect_t	cor_pprime;	/* new ray origin */
+	static fastf_t	cor_proj;
 
 	/* Convert vector into the space of the unit torus */
 	MAT4X3VEC( dprime, tor->tor_SoR, rp->r_dir );
@@ -553,17 +553,17 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    i;
 	register struct tor_specific *tor;
-	LOCAL vect_t	dprime;		/* D' */
-	LOCAL vect_t	pprime;		/* P' */
-	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL bn_poly_t	*C;		/* The final equation */
-	LOCAL bn_complex_t (*val)[4];	/* The complex roots */
-	LOCAL int	num_roots;
-	LOCAL int	num_zero;
-	LOCAL bn_poly_t	A, Asqr;
-	LOCAL bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-	LOCAL vect_t	cor_pprime;	/* new ray origin */
-	LOCAL fastf_t	*cor_proj;
+	static vect_t	dprime;		/* D' */
+	static vect_t	pprime;		/* P' */
+	static vect_t	work;		/* temporary vector */
+	static bn_poly_t	*C;		/* The final equation */
+	static bn_complex_t (*val)[4];	/* The complex roots */
+	static int	num_roots;
+	static int	num_zero;
+	static bn_poly_t	A, Asqr;
+	static bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
+	static vect_t	cor_pprime;	/* new ray origin */
+	static fastf_t	*cor_proj;
 
 	/* Allocate space for polys and roots */
 	C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
@@ -836,7 +836,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 	FAST fastf_t w;
-	LOCAL vect_t work;
+	static vect_t work;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	w = hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
@@ -907,10 +907,10 @@ rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct tor_specific	*tor =
 			(struct tor_specific *) stp -> st_specific;
-	LOCAL vect_t			work;
-	LOCAL vect_t			pprime;
-	LOCAL vect_t			pprime2;
-	LOCAL fastf_t			costheta;
+	static vect_t			work;
+	static vect_t			pprime;
+	static vect_t			pprime2;
+	static fastf_t			costheta;
 
 	VSUB2(work, hitp -> hit_point, tor -> tor_V);
 	MAT4X3VEC(pprime, tor -> tor_SoR, work);
@@ -1310,7 +1310,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 {
 	struct rt_tor_internal	*tip;
 	union record		*rp;
-	LOCAL fastf_t		vec[3*4];
+	static fastf_t		vec[3*4];
 	vect_t			axb;
 	register fastf_t	f;
 
@@ -1494,7 +1494,7 @@ int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_tor_internal	*tip;
-	LOCAL struct rec {
+	static struct rec {
 		double	v[3];
 		double	h[3];
 		double	ra;	/* r1 */
