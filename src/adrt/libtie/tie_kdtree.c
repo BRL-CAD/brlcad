@@ -278,7 +278,7 @@ fflush (stdout);
     return;
   }
 
-#if 1
+if (tie->kdmethod == TIE_KDTREE_FAST)
 {
   /**********************
   * MID-SPLIT ALGORITHM *
@@ -317,8 +317,7 @@ fflush (stdout);
     split = 2;
   }
 }
-#else
-{
+else if(tie->kdmethod == TIE_KDTREE_OPTIMAL) {
   /****************************************
   * Justin's Aggressive KD-Tree Algorithm *
   *****************************************/
@@ -608,7 +607,6 @@ fflush (stdout);
   cmin[1].v[split] = cmax[0].v[split];
   node->axis = cmax[0].v[split];
 }
-#endif
 
 
   /* Allocate 2 children nodes for the parent node */

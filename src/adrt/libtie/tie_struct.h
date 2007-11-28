@@ -60,6 +60,7 @@ typedef struct tie_s {
   unsigned int tri_num_alloc;
   tie_tri_t *tri_list;
   int stat;		/* used for testing various statistics */
+  int kdmethod;		/* Optimal or Fast */
 } tie_t;
 
 #endif

@@ -105,9 +105,10 @@ tie_tri_prep (tie_t *tie)
  * @return void
  */
 void
-tie_init (tie_t *tie, unsigned int tri_num)
+tie_init (tie_t *tie, unsigned int tri_num, int kdmethod)
 {
   tie->kdtree = NULL;
+  tie->kdmethod = kdmethod;
   tie->tri_num = 0;
   tie->tri_num_alloc = tri_num;
   tie->tri_list = (tie_tri_t *)malloc(sizeof(tie_tri_t) * tri_num);

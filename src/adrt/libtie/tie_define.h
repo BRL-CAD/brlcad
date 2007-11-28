@@ -22,6 +22,8 @@
 #define MIN_SPAN	0.15
 #define SCALE_COEF	1.80
 
+#define TIE_KDTREE_FAST		0x0
+#define TIE_KDTREE_OPTIMAL	0x1
 
 /* Type to use for floating precision */
 #if TIE_SINGLE_PREC
