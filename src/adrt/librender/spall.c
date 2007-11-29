@@ -67,7 +67,7 @@ void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat an
   d->ray_pos = ray_pos;
   d->ray_dir = ray_dir;
 
-  tie_init(&d->tie, TESSELATION);
+  tie_init(&d->tie, TESSELATION, TIE_KDTREE_FAST);
 
   /* Calculate the normal to be used for the plane */
   up.v[0] = 0;

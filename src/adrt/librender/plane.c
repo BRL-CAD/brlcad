@@ -63,7 +63,7 @@ void render_plane_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   d->ray_pos = ray_pos;
   d->ray_dir = ray_dir;
 
-  tie_init(&d->tie, 2);
+  tie_init(&d->tie, 2, TIE_KDTREE_FAST);
 
   /* Calculate the normal to be used for the plane */
   up.v[0] = 0;

@@ -503,7 +503,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 
   /* initialize tie with triangle number */
   tienet_recv(socknum, &num, sizeof(unsigned int), tienet_endian);
-  tie_init(tie, num);
+  tie_init(tie, num, TIE_KDTREE_FAST);
   ind += sizeof(unsigned int);
 
   while(ind < size) {
