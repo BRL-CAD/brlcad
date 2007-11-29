@@ -10,6 +10,7 @@ CD %PATH%
 CD ..
 SET BRLCAD_DATA=%CD%
 CD %SAVE_CD%
+SET WEB_BROWSER=C:\Program Files\Internet Explorer\IEXPLORE.EXE
 
 IF "%1"=="-g" (
     START /B mged.exe %2
