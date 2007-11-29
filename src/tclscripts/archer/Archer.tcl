@@ -323,8 +323,8 @@ namespace eval Archer {
 
 	common MEASURING_STICK "archer_measuring_stick"
 
+	set brlcadDataPath [bu_brlcad_data ""]
 	if {$tcl_platform(platform) != "windows"} {
-	    set brlcadDataPath [bu_brlcad_data ""]
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
 	    set SystemWindow \#d9d9d9
@@ -332,11 +332,6 @@ namespace eval Archer {
 	    set SystemHighlightText \#ececec
 	    set SystemButtonFace \#d9d9d9
 	} else {
-	  if {[info exists env(ARCHER_HOME)]} {
-	    set brlcadDataPath $env(ARCHER_HOME)
-	  } else {
-	    set brlcadDataPath [bu_brlcad_data ""]
-	  }
 	    set SystemWindowFont SystemWindowText
 	    set SystemWindowText SystemWindowText
 	    set SystemWindow SystemWindow
