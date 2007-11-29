@@ -15,7 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* OpenGL framebuffer crashes
+
+* OpenGL display manager doesn't refresh automatically when the
+  context is invalidated (on Mac OS X) any more
+
 * Open dialog in MGED seems rather busted for scrolling and selection
+  (seems to be Mac OS X specific)
 
 * turning on Framebuffer->Rectangle Area in mged disables the
   embedded framebuffer diplay on Mac OS X when you sweep a raytrace
