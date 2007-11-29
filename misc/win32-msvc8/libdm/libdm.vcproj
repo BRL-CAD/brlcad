@@ -148,7 +148,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../src/other/libtcl/generic,../../../src/other/libtcl/win,../../../src/other/libtk/generic,../../../src/other/libtk/win,../../../src/other/libtk/xlib,../../../include"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/libz;../../../src/other/libpng;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/xlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;DM_EXPORT_DLL;DM_WGL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"

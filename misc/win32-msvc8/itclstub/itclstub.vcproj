@@ -120,7 +120,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/libtcl/generic,../../../src/other/libtcl/win"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;TCL_THREADS=1;IGNORE_CONFIG_H"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
