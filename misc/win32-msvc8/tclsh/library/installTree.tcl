@@ -115,8 +115,13 @@ set cadVersion "$major.$minor.$patch"
 # End Set BRL-CAD's version
 
 
+# More initialization for tclsh
 # Show tclsh where to find required tcl files
 lappend auto_path [file join $rootDir src other tcl library]
+
+#XXX Not sure why this needs to be done. The path above should negate the need for this.
+file copy -force [file join $rootDir src other tcl library clock.tcl] [file join $rootDir misc win32-msvc8 tclsh library]
+# End More initialization for tclsh
 
 
 # Create missing include/conf files
@@ -202,6 +207,12 @@ puts "Creating [file join $installDir share brlcad $cadVersion plugins archer Ut
 file mkdir [file join $installDir share brlcad $cadVersion plugins archer Utilities]
 puts "Creating [file join $installDir share brlcad $cadVersion plugins archer Wizards]"
 file mkdir [file join $installDir share brlcad $cadVersion plugins archer Wizards]
+puts "Creating [file join $installDir share brlcad $cadVersion db]"
+file mkdir [file join $installDir share brlcad $cadVersion db]
+#puts "Creating [file join $installDir share brlcad $cadVersion pix]"
+#file mkdir [file join $installDir share brlcad $cadVersion pix]
+puts "Creating [file join $installDir share brlcad $cadVersion sample_applications]"
+file mkdir [file join $installDir share brlcad $cadVersion sample_applications]
 # End Create install directories
 
 
@@ -232,24 +243,54 @@ file copy [file join $rootDir src other iwidgets generic] [file join $installDir
 
 
 # Copy files to the share directories
-puts "copy [file join $rootDir doc html] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir doc html] [file join $installDir share brlcad $cadVersion]
-
-puts "copy [file join $rootDir doc] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir doc] [file join $installDir share brlcad $cadVersion]
-
+puts "copy [file join $rootDir AUTHORS] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir AUTHORS] [file join $installDir share brlcad $cadVersion]
 puts "copy [file join $rootDir COPYING] [file join $installDir share brlcad $cadVersion]"
 file copy [file join $rootDir COPYING] [file join $installDir share brlcad $cadVersion]
-
+puts "copy [file join $rootDir doc] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir doc] [file join $installDir share brlcad $cadVersion]
+puts "copy [file join $rootDir doc html] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir doc html] [file join $installDir share brlcad $cadVersion]
+puts "copy [file join $rootDir HACKING] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir HACKING] [file join $installDir share brlcad $cadVersion]
+puts "copy [file join $rootDir INSTALL] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir INSTALL] [file join $installDir share brlcad $cadVersion]
+puts "copy [file join $rootDir NEWS] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir NEWS] [file join $installDir share brlcad $cadVersion]
+puts "copy [file join $rootDir README] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir README] [file join $installDir share brlcad $cadVersion]
+puts "copy [file join $rootDir misc fortran_example.f] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir misc fortran_example.f] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir misc vfont] [file join $installDir share brlcad $cadVersion]"
+file copy [file join $rootDir misc vfont] [file join $installDir share brlcad $cadVersion]
 puts "copy [file join $rootDir src tclscripts] [file join $installDir share brlcad $cadVersion]"
 file copy [file join $rootDir src tclscripts] [file join $installDir share brlcad $cadVersion]
-
 puts "copy [file join $rootDir src archer plugins utility.tcl] [file join $installDir share brlcad $cadVersion plugins archer]"
 file copy [file join $rootDir src archer plugins utility.tcl] \
     [file join $installDir share brlcad $cadVersion plugins archer]
 puts "copy [file join $rootDir src archer plugins wizards.tcl] [file join $installDir share brlcad $cadVersion plugins archer]"
 file copy [file join $rootDir src archer plugins wizards.tcl] \
     [file join $installDir share brlcad $cadVersion plugins archer]
+puts "copy [file join $rootDir src conv g-xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src conv g-xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src conv g-xxx_facets.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src conv g-xxx_facets.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src gtools g_transfer.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src gtools g_transfer.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src libpkg tpkg.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src libpkg tpkg.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src librt g_xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src librt g_xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src librt raydebug.tcl] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src librt raydebug.tcl] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src librt nurb_example.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src librt nurb_example.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src rt rtexample.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src rt rtexample.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src util pl-dm.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src util pl-dm.c] [file join $installDir share brlcad $cadVersion sample_applications]
+puts "copy [file join $rootDir src util roots_example.c] [file join $installDir share brlcad $cadVersion sample_applications]"
+file copy [file join $rootDir src util roots_example.c] [file join $installDir share brlcad $cadVersion sample_applications]
 # End Copy files to the share directories
 
 
@@ -407,6 +448,8 @@ file delete -force [file join $installDir share brlcad $cadVersion tclscripts sw
 file delete -force [file join $installDir share brlcad $cadVersion tclscripts util CVS]
 file delete -force [file join $installDir share brlcad $cadVersion tclscripts util Makefile.am]
 file delete -force [file join $installDir share brlcad $cadVersion tclscripts Makefile.am]
+file delete -force [file join $installDir share brlcad $cadVersion vfont CVS]
+file delete -force [file join $installDir share brlcad $cadVersion vfont Makefile.am]
 # End Remove undesired directories/files as a result of wholesale copies
 
 
