@@ -32,7 +32,7 @@ CD ..
 SET BRLCAD_DATA=%CD%
 CD %SAVE_CD%
 
-START /B wish "%ARCHER%" %1
+START /B bwish "%ARCHER%" %1
 
 CLS
 EXIT
