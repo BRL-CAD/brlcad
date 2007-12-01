@@ -27,14 +27,6 @@
 #
 
 
-set usage "Usage: init.sh root_src_dir"
-
-
-if {$argc != 0} {
-    puts $usage
-    return
-}
-
 set rootDir [file normalize ../../..]
 if {![file exists $rootDir]} {
     puts "$rootDir must exist and must be the root of the BRL-CAD source tree. "
@@ -114,74 +106,18 @@ if {![string is int $major] ||
 set cadVersion "$major.$minor.$patch"
 # End Set BRL-CAD's version
 
+set shareDir [file join $installDir share brlcad $cadVersion]
 
 # More initialization for tclsh
 # Show tclsh where to find required tcl files
 lappend auto_path [file join $rootDir src other tcl library]
+lappend auto_path [file join $rootDir misc win32-msvc8 tclsh library]
 
-#XXX Not sure why this needs to be done. The path above should negate the need for this.
-file copy -force [file join $rootDir src other tcl library clock.tcl] [file join $rootDir misc win32-msvc8 tclsh library]
+file copy -force [file join $rootDir src other incrTcl itcl library itcl.tcl] [file join $rootDir misc win32-msvc8 tclsh library]
+file copy -force [file join $rootDir src other incrTcl itcl library pkgIndex.tcl] [file join $rootDir misc win32-msvc8 tclsh library]
+source [file join $rootDir src tclscripts ami.tcl]
+package require Itcl
 # End More initialization for tclsh
-
-
-# Create missing include/conf files
-if {![catch {open [file join $rootDir include conf COUNT] w} fd]} {
-    puts "Creating [file join $rootDir include conf COUNT]"
-    puts $fd "0"
-    close $fd
-} else {
-    puts "Unable to create [file join $rootDir include conf COUNT]\n$fd"
-    return
-}
-
-if {![catch {open [file join $rootDir include conf HOST] w} fd]} {
-    if {[info exists env(HOSTNAME)] && $env(HOSTNAME) != ""} {
-	set host $env(HOSTNAME)
-    } else {
-	set host unknown
-    }
-
-    puts "Creating [file join $rootDir include conf HOST]"
-    puts $fd \"$host\"
-    close $fd
-} else {
-    puts "Unable to create [file join $rootDir include conf DATE]\n$fd"
-    return
-}
-
-if {![catch {open [file join $rootDir include conf PATH] w} fd]} {
-    puts "Creating [file join $rootDir include conf PATH]"
-    puts $fd \"brlcad\"
-    close $fd
-} else {
-    puts "Unable to create [file join $rootDir include conf PATH]\n$fd"
-    return
-}
-
-if {![catch {open [file join $rootDir include conf USER] w} fd]} {
-    if {[info exists env(USER)] && $env(USER) != ""} {
-	set user $env(USER)
-    } else {
-	set user unknown
-    }
-
-    puts "Creating [file join $rootDir include conf USER]"
-    puts $fd \"$user\"
-    close $fd
-} else {
-    puts "Unable to create [file join $rootDir include conf USER]\n$fd"
-    return
-}
-
-if {![catch {open [file join $rootDir include conf DATE] w} fd]} {
-    puts "Creating [file join $rootDir include conf DATE]"
-    puts $fd \"[clock format [clock seconds] -format "%B %d, %Y"]\"
-    close $fd
-} else {
-    puts "Unable to create [file join $rootDir include conf DATE]\n$fd"
-    return
-}
-# End Create missing include/conf files
 
 
 # Create install directories
@@ -197,22 +133,22 @@ puts "Creating [file join $installDir share]"
 file mkdir [file join $installDir share]
 puts "Creating [file join $installDir share brlcad]"
 file mkdir [file join $installDir share brlcad]
-puts "Creating [file join $installDir share brlcad $cadVersion]"
-file mkdir [file join $installDir share brlcad $cadVersion]
-puts "Creating [file join $installDir share brlcad $cadVersion plugins]"
-file mkdir [file join $installDir share brlcad $cadVersion plugins]
-puts "Creating [file join $installDir share brlcad $cadVersion plugins archer]"
-file mkdir [file join $installDir share brlcad $cadVersion plugins archer]
-puts "Creating [file join $installDir share brlcad $cadVersion plugins archer Utilities]"
-file mkdir [file join $installDir share brlcad $cadVersion plugins archer Utilities]
-puts "Creating [file join $installDir share brlcad $cadVersion plugins archer Wizards]"
-file mkdir [file join $installDir share brlcad $cadVersion plugins archer Wizards]
-puts "Creating [file join $installDir share brlcad $cadVersion db]"
-file mkdir [file join $installDir share brlcad $cadVersion db]
-#puts "Creating [file join $installDir share brlcad $cadVersion pix]"
-#file mkdir [file join $installDir share brlcad $cadVersion pix]
-puts "Creating [file join $installDir share brlcad $cadVersion sample_applications]"
-file mkdir [file join $installDir share brlcad $cadVersion sample_applications]
+puts "Creating [file join $shareDir]"
+file mkdir [file join $shareDir]
+puts "Creating [file join $shareDir plugins]"
+file mkdir [file join $shareDir plugins]
+puts "Creating [file join $shareDir plugins archer]"
+file mkdir [file join $shareDir plugins archer]
+puts "Creating [file join $shareDir plugins archer Utilities]"
+file mkdir [file join $shareDir plugins archer Utilities]
+puts "Creating [file join $shareDir plugins archer Wizards]"
+file mkdir [file join $shareDir plugins archer Wizards]
+puts "Creating [file join $shareDir db]"
+file mkdir [file join $shareDir db]
+#puts "Creating [file join $shareDir pix]"
+#file mkdir [file join $shareDir pix]
+puts "Creating [file join $shareDir sample_applications]"
+file mkdir [file join $shareDir sample_applications]
 # End Create install directories
 
 
@@ -243,54 +179,54 @@ file copy [file join $rootDir src other iwidgets generic] [file join $installDir
 
 
 # Copy files to the share directories
-puts "copy [file join $rootDir AUTHORS] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir AUTHORS] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir COPYING] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir COPYING] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir doc] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir doc] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir doc html] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir doc html] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir HACKING] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir HACKING] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir INSTALL] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir INSTALL] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir NEWS] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir NEWS] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir README] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir README] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir misc fortran_example.f] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir misc fortran_example.f] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir misc vfont] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir misc vfont] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir src tclscripts] [file join $installDir share brlcad $cadVersion]"
-file copy [file join $rootDir src tclscripts] [file join $installDir share brlcad $cadVersion]
-puts "copy [file join $rootDir src archer plugins utility.tcl] [file join $installDir share brlcad $cadVersion plugins archer]"
+puts "copy [file join $rootDir AUTHORS] [file join $shareDir]"
+file copy [file join $rootDir AUTHORS] [file join $shareDir]
+puts "copy [file join $rootDir COPYING] [file join $shareDir]"
+file copy [file join $rootDir COPYING] [file join $shareDir]
+puts "copy [file join $rootDir doc] [file join $shareDir]"
+file copy [file join $rootDir doc] [file join $shareDir]
+puts "copy [file join $rootDir doc html] [file join $shareDir]"
+file copy [file join $rootDir doc html] [file join $shareDir]
+puts "copy [file join $rootDir HACKING] [file join $shareDir]"
+file copy [file join $rootDir HACKING] [file join $shareDir]
+puts "copy [file join $rootDir INSTALL] [file join $shareDir]"
+file copy [file join $rootDir INSTALL] [file join $shareDir]
+puts "copy [file join $rootDir NEWS] [file join $shareDir]"
+file copy [file join $rootDir NEWS] [file join $shareDir]
+puts "copy [file join $rootDir README] [file join $shareDir]"
+file copy [file join $rootDir README] [file join $shareDir]
+puts "copy [file join $rootDir misc fortran_example.f] [file join $shareDir sample_applications]"
+file copy [file join $rootDir misc fortran_example.f] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir misc vfont] [file join $shareDir]"
+file copy [file join $rootDir misc vfont] [file join $shareDir]
+puts "copy [file join $rootDir src tclscripts] [file join $shareDir]"
+file copy [file join $rootDir src tclscripts] [file join $shareDir]
+puts "copy [file join $rootDir src archer plugins utility.tcl] [file join $shareDir plugins archer]"
 file copy [file join $rootDir src archer plugins utility.tcl] \
-    [file join $installDir share brlcad $cadVersion plugins archer]
-puts "copy [file join $rootDir src archer plugins wizards.tcl] [file join $installDir share brlcad $cadVersion plugins archer]"
+    [file join $shareDir plugins archer]
+puts "copy [file join $rootDir src archer plugins wizards.tcl] [file join $shareDir plugins archer]"
 file copy [file join $rootDir src archer plugins wizards.tcl] \
-    [file join $installDir share brlcad $cadVersion plugins archer]
-puts "copy [file join $rootDir src conv g-xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src conv g-xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src conv g-xxx_facets.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src conv g-xxx_facets.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src gtools g_transfer.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src gtools g_transfer.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src libpkg tpkg.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src libpkg tpkg.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src librt g_xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src librt g_xxx.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src librt raydebug.tcl] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src librt raydebug.tcl] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src librt nurb_example.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src librt nurb_example.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src rt rtexample.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src rt rtexample.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src util pl-dm.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src util pl-dm.c] [file join $installDir share brlcad $cadVersion sample_applications]
-puts "copy [file join $rootDir src util roots_example.c] [file join $installDir share brlcad $cadVersion sample_applications]"
-file copy [file join $rootDir src util roots_example.c] [file join $installDir share brlcad $cadVersion sample_applications]
+    [file join $shareDir plugins archer]
+puts "copy [file join $rootDir src conv g-xxx.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src conv g-xxx.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src conv g-xxx_facets.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src conv g-xxx_facets.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src gtools g_transfer.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src gtools g_transfer.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src libpkg tpkg.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src libpkg tpkg.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src librt g_xxx.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src librt g_xxx.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src librt raydebug.tcl] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src librt raydebug.tcl] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src librt nurb_example.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src librt nurb_example.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src rt rtexample.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src rt rtexample.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src util pl-dm.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src util pl-dm.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src util roots_example.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src util roots_example.c] [file join $shareDir sample_applications]
 # End Copy files to the share directories
 
 
@@ -353,103 +289,103 @@ file delete -force [file join $installDir lib tk8.5 msgs CVS]
 file delete -force [file join $installDir lib tk8.5 ttk CVS]
 #file delete -force [file join $installDir lib tk8.5 ttk Makefile.am]
 
-file delete -force [file join $installDir share brlcad $cadVersion doc .cvsignore]
-file delete -force [file join $installDir share brlcad $cadVersion doc book Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion doc book CVS]
-file delete -force [file join $installDir share brlcad $cadVersion doc CVS]
-file delete -force [file join $installDir share brlcad $cadVersion doc html]
-file delete -force [file join $installDir share brlcad $cadVersion doc legal Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion doc legal CVS]
-file delete -force [file join $installDir share brlcad $cadVersion doc Makefile.am]
+file delete -force [file join $shareDir doc .cvsignore]
+file delete -force [file join $shareDir doc book Makefile.am]
+file delete -force [file join $shareDir doc book CVS]
+file delete -force [file join $shareDir doc CVS]
+file delete -force [file join $shareDir doc html]
+file delete -force [file join $shareDir doc legal Makefile.am]
+file delete -force [file join $shareDir doc legal CVS]
+file delete -force [file join $shareDir doc Makefile.am]
 
-file delete -force [file join $installDir share brlcad $cadVersion html CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals Anim_Tutorial CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals Anim_Tutorial Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals archer CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals archer Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals cadwidgets CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals cadwidgets Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals libbu CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals libbu Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals libdm CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals libdm Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals librt CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals librt Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals mged .cvsignore]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals mged CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals mged Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals mged animmate CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals mged animmate Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals shaders CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html manuals shaders Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes Rel5.0 CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes Rel5.0 Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes Rel5.0 Summary CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes Rel5.0 Summary Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes Rel6.0 CVS]
-file delete -force [file join $installDir share brlcad $cadVersion html ReleaseNotes Rel6.0 Makefile.am]
+file delete -force [file join $shareDir html CVS]
+file delete -force [file join $shareDir html Makefile.am]
+file delete -force [file join $shareDir html manuals Anim_Tutorial CVS]
+file delete -force [file join $shareDir html manuals Anim_Tutorial Makefile.am]
+file delete -force [file join $shareDir html manuals archer CVS]
+file delete -force [file join $shareDir html manuals archer Makefile.am]
+file delete -force [file join $shareDir html manuals cadwidgets CVS]
+file delete -force [file join $shareDir html manuals cadwidgets Makefile.am]
+file delete -force [file join $shareDir html manuals CVS]
+file delete -force [file join $shareDir html manuals libbu CVS]
+file delete -force [file join $shareDir html manuals libbu Makefile.am]
+file delete -force [file join $shareDir html manuals libdm CVS]
+file delete -force [file join $shareDir html manuals libdm Makefile.am]
+file delete -force [file join $shareDir html manuals librt CVS]
+file delete -force [file join $shareDir html manuals librt Makefile.am]
+file delete -force [file join $shareDir html manuals Makefile.am]
+file delete -force [file join $shareDir html manuals mged .cvsignore]
+file delete -force [file join $shareDir html manuals mged CVS]
+file delete -force [file join $shareDir html manuals mged Makefile.am]
+file delete -force [file join $shareDir html manuals mged animmate CVS]
+file delete -force [file join $shareDir html manuals mged animmate Makefile.am]
+file delete -force [file join $shareDir html manuals shaders CVS]
+file delete -force [file join $shareDir html manuals shaders Makefile.am]
+file delete -force [file join $shareDir html ReleaseNotes CVS]
+file delete -force [file join $shareDir html ReleaseNotes Makefile.am]
+file delete -force [file join $shareDir html ReleaseNotes Rel5.0 CVS]
+file delete -force [file join $shareDir html ReleaseNotes Rel5.0 Makefile.am]
+file delete -force [file join $shareDir html ReleaseNotes Rel5.0 Summary CVS]
+file delete -force [file join $shareDir html ReleaseNotes Rel5.0 Summary Makefile.am]
+file delete -force [file join $shareDir html ReleaseNotes Rel6.0 CVS]
+file delete -force [file join $shareDir html ReleaseNotes Rel6.0 Makefile.am]
 
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes Crystal CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes Crystal Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes Crystal_Large CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes Crystal_Large Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes Windows CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer images Themes Windows Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts archer Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts geometree CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts geometree Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts lib CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts lib Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts mged CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts mged Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts nirt CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts nirt Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts pl-dm CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts pl-dm Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeA CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeA Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeB CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeB Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeC CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeC Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeD CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeD Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeE CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeE Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeF CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard examples PictureTypeF Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard lib CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts rtwizard lib Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts sdialogs CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts sdialogs Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts sdialogs scripts CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts sdialogs scripts Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts swidgets CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts swidgets Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts swidgets images CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts swidgets images Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts swidgets scripts CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts swidgets scripts Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts util CVS]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts util Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion tclscripts Makefile.am]
-file delete -force [file join $installDir share brlcad $cadVersion vfont CVS]
-file delete -force [file join $installDir share brlcad $cadVersion vfont Makefile.am]
+file delete -force [file join $shareDir tclscripts CVS]
+file delete -force [file join $shareDir tclscripts archer CVS]
+file delete -force [file join $shareDir tclscripts archer images CVS]
+file delete -force [file join $shareDir tclscripts archer images Makefile.am]
+file delete -force [file join $shareDir tclscripts archer images Themes CVS]
+file delete -force [file join $shareDir tclscripts archer images Themes Makefile.am]
+file delete -force [file join $shareDir tclscripts archer images Themes Crystal CVS]
+file delete -force [file join $shareDir tclscripts archer images Themes Crystal Makefile.am]
+file delete -force [file join $shareDir tclscripts archer images Themes Crystal_Large CVS]
+file delete -force [file join $shareDir tclscripts archer images Themes Crystal_Large Makefile.am]
+file delete -force [file join $shareDir tclscripts archer images Themes Windows CVS]
+file delete -force [file join $shareDir tclscripts archer images Themes Windows Makefile.am]
+file delete -force [file join $shareDir tclscripts archer Makefile.am]
+file delete -force [file join $shareDir tclscripts geometree CVS]
+file delete -force [file join $shareDir tclscripts geometree Makefile.am]
+file delete -force [file join $shareDir tclscripts lib CVS]
+file delete -force [file join $shareDir tclscripts lib Makefile.am]
+file delete -force [file join $shareDir tclscripts mged CVS]
+file delete -force [file join $shareDir tclscripts mged Makefile.am]
+file delete -force [file join $shareDir tclscripts nirt CVS]
+file delete -force [file join $shareDir tclscripts nirt Makefile.am]
+file delete -force [file join $shareDir tclscripts pl-dm CVS]
+file delete -force [file join $shareDir tclscripts pl-dm Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard CVS]
+file delete -force [file join $shareDir tclscripts rtwizard Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard examples CVS]
+file delete -force [file join $shareDir tclscripts rtwizard examples Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeA CVS]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeA Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeB CVS]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeB Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeC CVS]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeC Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeD CVS]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeD Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeE CVS]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeE Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeF CVS]
+file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeF Makefile.am]
+file delete -force [file join $shareDir tclscripts rtwizard lib CVS]
+file delete -force [file join $shareDir tclscripts rtwizard lib Makefile.am]
+file delete -force [file join $shareDir tclscripts sdialogs CVS]
+file delete -force [file join $shareDir tclscripts sdialogs Makefile.am]
+file delete -force [file join $shareDir tclscripts sdialogs scripts CVS]
+file delete -force [file join $shareDir tclscripts sdialogs scripts Makefile.am]
+file delete -force [file join $shareDir tclscripts swidgets CVS]
+file delete -force [file join $shareDir tclscripts swidgets Makefile.am]
+file delete -force [file join $shareDir tclscripts swidgets images CVS]
+file delete -force [file join $shareDir tclscripts swidgets images Makefile.am]
+file delete -force [file join $shareDir tclscripts swidgets scripts CVS]
+file delete -force [file join $shareDir tclscripts swidgets scripts Makefile.am]
+file delete -force [file join $shareDir tclscripts util CVS]
+file delete -force [file join $shareDir tclscripts util Makefile.am]
+file delete -force [file join $shareDir tclscripts Makefile.am]
+file delete -force [file join $shareDir vfont CVS]
+file delete -force [file join $shareDir vfont Makefile.am]
 # End Remove undesired directories/files as a result of wholesale copies
 
 
@@ -489,3 +425,17 @@ set lines [regsub -all {@MACHINE@} $lines "x86"]
 puts $fd2 $lines
 close $fd2
 # End Create wish.exe.manifest
+
+
+# Create the tclIndex files
+#lappend auto_path 
+make_tclIndex [list [file join $shareDir tclscripts]]
+make_tclIndex [list [file join $shareDir tclscripts lib]]
+make_tclIndex [list [file join $shareDir tclscripts archer]]
+make_tclIndex [list [file join $shareDir tclscripts mged]]
+make_tclIndex [list [file join $shareDir tclscripts rtwizard]]
+make_tclIndex [list [file join $shareDir tclscripts util]]
+
+#XXX More needed
+
+# End Create the tclIndex files
