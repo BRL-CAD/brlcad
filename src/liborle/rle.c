@@ -208,17 +208,7 @@ rle_wpos(int xpos, int ypos, int mode)
 int
 rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 {
-	static short	x_magic;
-	static char	*verbage[] =
-		{
-		"Frame buffer image saved in Old Run Length Encoded form\n",
-		"Frame buffer image saved in Old B&W RLE form\n",
-		"File not in RLE format, can't display (magic=0x%x)\n",
-		"Saved with background color %d %d %d\n",
-		"Saved in overlay mode\n",
-		"Saved as a straight box image\n",
-		NULL
-		};
+	static short x_magic;
 
 	if( fp != stdin && fseek( fp, 0L, 0 ) == -1 )
 		{
@@ -251,16 +241,16 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 		switch( x_magic & ~0xff) {
 		case RMAGIC :
 			if( rle_verbose )
-				(void) fprintf( stderr,	verbage[0] );
+				(void) fprintf( stderr,	"Frame buffer image saved in Old Run Length Encoded form\n");
 			r_setup.h_ncolors = 3;
 			break;
 		case WMAGIC :
 			if( rle_verbose )
-				(void) fprintf( stderr, verbage[1] );
+			    (void) fprintf( stderr, "Frame buffer image saved in Old B&W RLE form\n");
 			r_setup.h_ncolors = 1;
 			break;
 		default:
-			(void) fprintf(	stderr, verbage[2], x_magic & ~0xff);
+			(void) fprintf(	stderr, "File not in RLE format, can't display (magic=0x%x)\n", x_magic & ~0xff);
 			return	-1;
 		} /* End switch */
 		switch( x_magic & 0xFF ) {
@@ -276,7 +266,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 			r_setup.h_background[1] = 0;
 			r_setup.h_background[2] = 0;
 			if( rle_verbose )
-				(void) fprintf( stderr, verbage[5] );
+				(void) fprintf( stderr, "Saved as a straight box image\n");
 			break;
 		} /* End switch */
 		r_setup.h_pixelbits = 8;
@@ -312,8 +302,7 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 	if( r_setup.h_flags == H_CLEARFIRST )
 		{
 		if( rle_verbose )
-			(void) fprintf( stderr,
-					verbage[3],
+			(void) fprintf( stderr,	"Saved with background color %d %d %d\n",
 					r_setup.h_background[0],
 					r_setup.h_background[1],
 					r_setup.h_background[2]

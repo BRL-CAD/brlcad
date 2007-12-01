@@ -119,6 +119,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	SECURITY_ATTRIBUTES sa;
 	char name[1024];
 	char line1[2048];
+	int rem = 2048;
 #endif
 	int use_input_orig = 0;
 	vect_t	center_model;
@@ -413,14 +414,21 @@ done:
 	si.hStdError   = pipe_err[1];
 	si.wShowWindow = SW_HIDE;
 
-	sprintf(line1,"%s ", dgop->dgo_rt_cmd[0]);
+	snprintf(line1, rem, "%s ", dgop->dgo_rt_cmd[0]);
+	rem -= strlen(line1) - 1;
+
 	for (i=1; i<dgop->dgo_rt_cmd_len; i++) {
 	    /* skip commands */
 	    if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
 		++i;
 	    else { /* append other arguments (i.e. options, file and obj(s)) */
-		sprintf(name,"\"%s\" ", dgop->dgo_rt_cmd[i]);
-		strcat(line1, name);
+		snprintf(name, 1024, "\"%s\" ", dgop->dgo_rt_cmd[i]);
+		if (rem - strlen(name) < 1) {
+		    bu_log("Ran out of buffer space!");
+		    return TCL_ERROR;
+		}
+		strncat(line1, name, rem-1);
+		rem -= strlen(name);
 	    }
 	}
 

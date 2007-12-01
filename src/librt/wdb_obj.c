@@ -6318,8 +6318,8 @@ Make_new_name(struct db_i	*dbip,
 		return;
 
 	digits = log10((double)dp->d_uses) + 2.0;
-	sprintf(format_v5, "%%s_%%0%dd", digits);
-	sprintf(format_v4, "_%%0%dd", digits);
+	snprintf(format_v5, 25, "%%s_%%0%dd", digits);
+	snprintf(format_v4, 25, "_%%0%dd", digits);
 
 	name_length = strlen(dp->d_namep);
 	if (name_length + digits + 1 > NAMESIZE - 1)
@@ -6350,7 +6350,7 @@ Make_new_name(struct db_i	*dbip,
 			use->dp = dp;
 		else {
 			if (dbip->dbi_version < 5) {
-				sprintf(&name_v4[suffix_start], format_v4, j);
+				snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
 				name = name_v4;
 			} else {
 				bu_vls_trunc(&name_v5, 0);
@@ -6362,7 +6362,7 @@ Make_new_name(struct db_i	*dbip,
 			while (db_lookup( dbip, name, 0 ) != DIR_NULL) {
 				j++;
 				if (dbip->dbi_version < 5) {
-					sprintf(&name_v4[suffix_start], format_v4, j);
+					snprintf(&name_v4[suffix_start], NAMESIZE-suffix_start, format_v4, j);
 					name = name_v4;
 				} else {
 					bu_vls_trunc(&name_v5, 0);

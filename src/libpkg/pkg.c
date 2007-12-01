@@ -156,14 +156,14 @@ static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 
 
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
-			sprintf(errbuf,"%s: bad pointer x%lx line %d\n",__FILE__, (long)(p), __LINE__);\
+			snprintf(errbuf, MAX_ERRBUF_SIZE, "%s: bad pointer x%lx line %d\n",__FILE__, (long)(p), __LINE__);\
 			pkg_errlog(errbuf);abort();}}
 
 #define	MAXQLEN	512	/* largest packet we will queue on stream */
 
 /* A macro for logging a string message when the debug file is open */
 #ifndef NO_DEBUG_CHECKING
-#  define DMSG(s) if(pkg_debug) {pkg_timestamp(); fprintf(pkg_debug,s); fflush(pkg_debug);}
+#  define DMSG(s) if(pkg_debug) {pkg_timestamp(); fprintf(pkg_debug,"%s",s); fflush(pkg_debug);}
 #else
 #  define DMSG(s) /**/
 #endif
@@ -310,7 +310,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     } else {
 	register struct servent *sp;
 	if ((sp = getservbyname(service, "tcp")) == NULL) {
-	    sprintf(errbuf,"pkg_open(%s,%s): unknown service\n",
+	    snprintf(errbuf, MAX_ERRBUF_SIZE, "pkg_open(%s,%s): unknown service\n",
 		    host, service );
 	    errlog(errbuf);
 	    return(PKC_ERROR);
@@ -348,7 +348,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     } else {
 	register struct servent *sp;
 	if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-	    sprintf(errbuf,"pkg_open(%s,%s): unknown service\n",
+	    snprintf(errbuf, MAX_ERRBUF_SIZE, "pkg_open(%s,%s): unknown service\n",
 		    host, service );
 	    errlog(errbuf);
 	    return(PKC_ERROR);
@@ -363,7 +363,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	sinhim.sin_addr.s_addr = inet_addr(host);
     } else {
 	if( (hp = gethostbyname(host)) == NULL )  {
-	    sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
+	    snprintf(errbuf, MAX_ERRBUF_SIZE, "pkg_open(%s,%s): unknown host\n",
 		    host, service );
 	    errlog(errbuf);
 	    return(PKC_ERROR);
@@ -480,7 +480,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	saServer.sin_port = htons((unsigned short)atoi(service));
     } else {
 	if ((sp = getservbyname(service, "tcp")) == NULL) {
-	    sprintf(errbuf,
+	    snprintf(errbuf, MAX_ERRBUF_SIZE,
 		    "pkg_permserver(%s,%d): unknown service\n",
 		    service, backlog );
 	    errlog(errbuf);
@@ -538,7 +538,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	sinme.sin_port = htons((unsigned short)atoi(service));
     } else {
 	if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-	    sprintf(errbuf,
+	    snprintf(errbuf, MAX_ERRBUF_SIZE,
 		    "pkg_permserver(%s,%d): unknown service\n",
 		    service, backlog );
 	    errlog(errbuf);
@@ -1719,23 +1719,23 @@ pkg_block(register struct pkg_conn *pc)
 static void
 pkg_perror(void (*errlog) (char *msg), char *s)
 {
-    sprintf( errbuf, "%s: ", s);
+    snprintf( errbuf, MAX_ERRBUF_SIZE, "%s: ", s);
 
     if ( errno >= 0 || strlen(errbuf) >= MAX_ERRBUF_SIZE) {
-	sprintf( errbuf, "%s: errno=%d\n", s, errno );
+	snprintf( errbuf, MAX_ERRBUF_SIZE, "%s: errno=%d\n", s, errno );
 	errlog( errbuf );
 	return;
     }
 
 #if HAVE_STRERROR_R
     if (strerror_r(errno, errbuf+strlen(errbuf), MAX_ERRBUF_SIZE-strlen(errbuf)) != 0) {
-	sprintf(errbuf, "%s: errno=%d\n", s, errno);
+	snprintf(errbuf, MAX_ERRBUF_SIZE, "%s: errno=%d\n", s, errno);
     }
 #else
 #  if HAVE_STRERROR
-    sprintf( errbuf, "%s: %s\n", s, strerror(errno) );
+    snprintf( errbuf, MAX_ERRBUF_SIZE, "%s: %s\n", s, strerror(errno) );
 #  else
-    sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
+    snprintf( errbuf, MAX_ERRBUF_SIZE, "%s: %s\n", s, sys_errlist[errno] );
 #  endif
 #endif
     errlog( errbuf );

@@ -933,6 +933,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	struct bu_vls			vls;
 	register unsigned char		*cp;
 	int				i;
+	int rem;
 
 	RT_CK_DB_INTERNAL( ip );
 
@@ -967,14 +968,20 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "BOT external" );
 
 	cp = ep->ext_buf;
+	rem = ep->ext_nbytes;
 
 	(void)bu_plong( cp, bip->num_vertices );
 	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
+
 	(void)bu_plong( cp, bip->num_faces );
 	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
+
 	*cp++ = bip->orientation;
 	*cp++ = bip->mode;
 	*cp++ = bip->bot_flags;
+	rem -= 3;
 
 	for( i=0 ; i<bip->num_vertices ; i++ )
 	{
@@ -983,16 +990,22 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		VSCALE( tmp, &bip->vertices[i*3], local2mm );
 		htond( cp, (unsigned char *)tmp, 3 );
 		cp += SIZEOF_NETWORK_DOUBLE * 3;
+		rem -= SIZEOF_NETWORK_DOUBLE * 3;
 	}
 
 	for( i=0 ; i<bip->num_faces ; i++ )
 	{
 		(void)bu_plong( cp, bip->faces[i*3] );
 		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
 		(void)bu_plong( cp, bip->faces[i*3 + 1] );
 		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
 		(void)bu_plong( cp, bip->faces[i*3 + 2] );
 		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
 	}
 
 	if( bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS )
@@ -1004,31 +1017,44 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 			tmp = bip->thickness[i] * local2mm;
 			htond( cp, (const unsigned char *)&tmp, 1 );
 			cp += SIZEOF_NETWORK_DOUBLE;
+			rem -= SIZEOF_NETWORK_DOUBLE;
 		}
-		strcpy( (char *)cp, bu_vls_addr( &vls ) );
+		strncpy( (char *)cp, bu_vls_addr( &vls ), rem-1 );
 		cp += bu_vls_strlen( &vls );
+		rem -= bu_vls_strlen( &vls );
 		*cp = '\0';
 		cp++;
+		rem--;
 		bu_vls_free( &vls );
 	}
 
 	if( bip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
 		(void)bu_plong( cp, bip->num_normals );
 		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
 		(void)bu_plong( cp, bip->num_face_normals );
 		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
 		if( bip->num_normals > 0 ) {
 			htond( cp, (unsigned char*)bip->normals, bip->num_normals*3 );
 			cp += SIZEOF_NETWORK_DOUBLE * 3 * bip->num_normals;
+			rem -= SIZEOF_NETWORK_DOUBLE * 3 * bip->num_normals;
 		}
 		if( bip->num_face_normals > 0 ) {
 			for( i=0 ; i<bip->num_face_normals ; i++ ) {
 				(void)bu_plong( cp, bip->face_normals[i*3] );
 				cp += SIZEOF_NETWORK_LONG;
+				rem -= SIZEOF_NETWORK_LONG;
+
 				(void)bu_plong( cp, bip->face_normals[i*3 + 1] );
 				cp += SIZEOF_NETWORK_LONG;
+				rem -= SIZEOF_NETWORK_LONG;
+
 				(void)bu_plong( cp, bip->face_normals[i*3 + 2] );
 				cp += SIZEOF_NETWORK_LONG;
+				rem -= SIZEOF_NETWORK_LONG;
 			}
 		}
 	}
@@ -1097,7 +1123,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 			mode = unknown_mode;
 			break;
 	}
-	sprintf(buf, "\t%d vertices, %d faces (%s)\n",
+	snprintf(buf, 256, "\t%d vertices, %d faces (%s)\n",
 		bot_ip->num_vertices,
 		bot_ip->num_faces,
 		orientation );
@@ -1122,7 +1148,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 			for( j=0 ; j<3 ; j++ )
 				VSCALE( pt[j], &bot_ip->vertices[bot_ip->faces[i*3+j]*3], mm2local );
 			if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0 ) {
-				sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g) normals: ", i,
+				snprintf( buf, 256, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g) normals: ", i,
 					 V3INTCLAMPARGS( pt[0] ),
 					 V3INTCLAMPARGS( pt[1] ),
 					 V3INTCLAMPARGS( pt[2] ) );
@@ -1134,13 +1160,13 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 					if( bot_ip->face_normals[index] < 0 ||  bot_ip->face_normals[index] >= bot_ip->num_normals ) {
 						bu_vls_strcat( str, "none " );
 					} else {
-						sprintf( buf, "(%g %g %g) ", V3INTCLAMPARGS( &bot_ip->normals[bot_ip->face_normals[index]*3]));
+						snprintf( buf, 256, "(%g %g %g) ", V3INTCLAMPARGS( &bot_ip->normals[bot_ip->face_normals[index]*3]));
 						bu_vls_strcat( str, buf );
 					}
 				}
 				bu_vls_strcat( str, "\n" );
 			} else {
-				sprintf( buf, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g)\n", i,
+				snprintf( buf, 256, "\tface %d: (%g %g %g), (%g %g %g), (%g %g %g)\n", i,
 					 V3INTCLAMPARGS( pt[0] ),
 					 V3INTCLAMPARGS( pt[1] ),
 					 V3INTCLAMPARGS( pt[2] ) );
@@ -1154,7 +1180,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 					face_mode = "appended to hit point";
 				else
 					face_mode = "centered about hit point";
-				sprintf( buf, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode );
+				snprintf( buf, 256, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode );
 				bu_vls_strcat( str, buf );
 			}
 		}

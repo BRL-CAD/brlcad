@@ -375,7 +375,7 @@ main(int argc, char **argv)
 			port += 5559;
 		sprintf(portname,"%d",port);
 	} else {
-		sprintf(portname,"%s","remotefb");
+		snprintf(portname, PORTSZ, "%s","remotefb");
 	}
 
 	init_syslog();

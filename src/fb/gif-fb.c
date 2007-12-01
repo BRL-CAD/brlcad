@@ -137,14 +137,7 @@ static void
 VMessage(char *format, va_list ap)
 {
 	(void)fprintf( stderr, "%s: ", arg0 );
-#if !defined(HAVE_VPRINTF)
-	(void)fprintf( stderr, format,	/* kludge city */
-		       ((int *)ap)[0], ((int *)ap)[1],
-		       ((int *)ap)[2], ((int *)ap)[3]
-		     );
-#else
 	(void)vfprintf( stderr, format, ap );
-#endif
 	(void)putc( '\n', stderr );
 	(void)fflush( stderr );
 	}

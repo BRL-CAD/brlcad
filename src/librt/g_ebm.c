@@ -807,7 +807,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	ep->ext_nbytes = bu_vls_strlen( &str ) + 1;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ebm external");
 
-	strcpy( ep->ext_buf , bu_vls_addr(&str) );
+	strncpy( ep->ext_buf , bu_vls_addr(&str), ep->ext_nbytes-1 );
 	bu_vls_free( &str );
 
 	return(0);
@@ -1996,7 +1996,7 @@ rt_ebm_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 					       TCL_STATIC );
 				return( TCL_ERROR );
 			}
-			strcpy( ebm->file, argv[1] );
+			strncpy( ebm->file, argv[1], RT_EBM_NAME_LEN-1 );
 		}
 		else if( !strcmp( argv[0], "W" ) ) {
 			ebm->xdim = atoi( argv[1] );

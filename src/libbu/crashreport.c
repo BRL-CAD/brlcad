@@ -95,7 +95,7 @@ bu_crashreport(const char *filename)
 	     ctime(&now));
 
     /* print the report header */
-    if (fprintf(fp, buffer) <= 0) {
+    if (fprintf(fp, (const char *)buffer) <= 0) {
 	/* cannot bomb */
 	bu_log("ERROR: Unable to write to crash report file [%s]\n", filename);
 	(void)fclose(fp);

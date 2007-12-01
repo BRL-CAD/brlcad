@@ -2182,7 +2182,7 @@ rt_extrude_export(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	ptr = (unsigned char *)rec;
 	ptr += sizeof( struct extr_rec );
 
-	strcpy( (char *)ptr, extrude_ip->sketch_name );
+	strncpy( (char *)ptr, extrude_ip->sketch_name, ep->ext_nbytes-sizeof(struct extr_rec)-1 );
 
 	return(0);
 }
@@ -2199,6 +2199,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 	struct rt_extrude_internal	*extrude_ip;
 	vect_t				tmp_vec[4];
 	unsigned char			*ptr;
+	int rem;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_EXTRUDE )  return(-1);
@@ -2209,17 +2210,25 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = 4 * ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG + strlen( extrude_ip->sketch_name ) + 1;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "extrusion external");
+
 	ptr = (unsigned char *)ep->ext_buf;
+	rem = ep->ext_nbytes;
 
 	VSCALE( tmp_vec[0], extrude_ip->V, local2mm );
 	VSCALE( tmp_vec[1], extrude_ip->h, local2mm );
 	VSCALE( tmp_vec[2], extrude_ip->u_vec, local2mm );
 	VSCALE( tmp_vec[3], extrude_ip->v_vec, local2mm );
 	htond( ptr, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT*4 );
+
 	ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
+	rem -= ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
+
 	bu_plong( ptr, extrude_ip->keypoint );
+
 	ptr += SIZEOF_NETWORK_LONG;
-	strcpy( (char *)ptr, extrude_ip->sketch_name );
+	rem -= SIZEOF_NETWORK_LONG;
+
+	strncpy( (char *)ptr, extrude_ip->sketch_name, rem-1 );
 
 	return(0);
 }
@@ -2322,10 +2331,8 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 		V3INTCLAMPARGS( u ),
 		V3INTCLAMPARGS( v ) );
 	bu_vls_strcat( str, buf );
-	sprintf( buf, "\tsketch name: %s\n",
-		extrude_ip->sketch_name );
+	snprintf( buf, 256, "\tsketch name: %s\n", extrude_ip->sketch_name );
 	bu_vls_strcat( str, buf );
-
 
 	return(0);
 }

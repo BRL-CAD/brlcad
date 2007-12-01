@@ -3833,6 +3833,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	struct rt_dsp_internal	*dsp_ip;
 	unsigned long		name_len;
 	unsigned char		*cp;
+	int rem;
 
 	RT_CK_DB_INTERNAL(ip);
 	if (ip->idb_type != ID_DSP )  return(-1);
@@ -3854,6 +3855,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	ep->ext_buf = bu_malloc( ep->ext_nbytes, "dsp external");
 	cp = (unsigned char *)ep->ext_buf;
+	rem = ep->ext_nbytes;
 
 	memset(ep->ext_buf, 0, ep->ext_nbytes);
 
@@ -3863,9 +3865,11 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	bu_plong( cp, (unsigned long)dsp_ip->dsp_xcnt );
 	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
 
 	bu_plong( cp, (unsigned long)dsp_ip->dsp_ycnt );
 	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
 
 	/* Since libwdb users may want to operate in units other
 	 * than mm, we offer the opportunity to scale the solid
@@ -3875,9 +3879,11 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	htond(cp, (unsigned char *)dsp_ip->dsp_stom, 16);
 	cp += SIZEOF_NETWORK_DOUBLE * 16;
+	rem -= SIZEOF_NETWORK_DOUBLE * 16;
 
 	bu_pshort( cp, (int)dsp_ip->dsp_smooth );
 	cp += SIZEOF_NETWORK_SHORT;
+	rem -= SIZEOF_NETWORK_SHORT;
 
 	switch(dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
@@ -3890,6 +3896,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		break;
 	}
 	cp++;
+	rem--;
 
 	switch(dsp_ip->dsp_cuttype) {
 	case DSP_CUT_DIR_ADAPT:
@@ -3902,8 +3909,9 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		break;
 	}
 	cp++;
+	rem--;
 
-	strcpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name));
+	strncpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name), rem);
 
 	return 0; /* OK */
 }

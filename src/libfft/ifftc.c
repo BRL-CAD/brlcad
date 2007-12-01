@@ -53,15 +53,14 @@ main(int argc, char **argv)
 	int	n, m;
 
 	if( argc != 2 ) {
-		fprintf( stderr, usage );
-		return 1;
+		bu_exit( 1, usage );
 	}
 
 	n = atoi(argv[1]);
 	m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
 	ditsplit( x, n, m );
-fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
+	fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
 	return(0);
 }
 

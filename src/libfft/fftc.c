@@ -44,7 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern int rfft_adds, rfft_mults;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: fftc length > fftlength.c\n";
 
 int
@@ -54,15 +54,14 @@ main(int argc, char **argv)
 	int	n, m;
 
 	if( argc != 2 ) {
-		fprintf( stderr, usage );
-		return 1;
+		bu_exit( 1, usage );
 	}
 
 	n = atoi(argv[1]);
 	m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
 	splitdit( x, n, m );
-(void)fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
+	(void)fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
 	return(0);
 }
 

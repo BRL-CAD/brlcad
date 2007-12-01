@@ -87,7 +87,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 	exit(-1);
     }
     if ( (fp=fdopen(fd, "w")) == (FILE *)NULL) {
-	fprintf(stderr, strerror(errno));
+	fprintf(stderr, "%s", strerror(errno));
 	exit(-1);
     }
 

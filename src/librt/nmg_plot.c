@@ -1515,7 +1515,7 @@ nmg_pl_2fu(const char *str, int unused, const struct faceuse *fu1, const struct 
 		nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 3);
 
 	if( rt_g.NMG_debug & DEBUG_PLOTEM )  {
-		(void)sprintf(name, str, num++);
+		snprintf(name, 32, str, num++);
 		bu_log("overlay %s\n", name);
 		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
 			perror(name);
@@ -2195,7 +2195,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
 	if ( ! (rt_g.NMG_debug & DEBUG_NMGRT) )
 		return;
 
-	sprintf(name, "%s%0d.pl", fname, i++);
+	snprintf(name, 1024, "%s%0d.pl", fname, i++);
 	if ((fd = fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
 		bu_log("plot_ray_face cannot open %s", name);
@@ -2236,7 +2236,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct
 	NMG_CK_EDGEUSE(eu);
 	BN_CK_TOL(tol);
 
-	sprintf(file, "%s%0d.pl", prefix, num++);
+	snprintf(file, 256, "%s%0d.pl", prefix, num++);
 	bu_log("overlay %s\n", file);
 	if ((fp = fopen(file, "w")) == (FILE *)NULL) {
 		bu_log("plot_lu_around_eu() cannot open %s", file);

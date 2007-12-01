@@ -187,8 +187,9 @@ db_path_to_string( const struct db_full_path *pp )
 {
 	register char	*cp;
 	char	*buf;
-	int	len;
-	int	i;
+	int len;
+	int rem;
+	int i;
 
 	RT_CK_FULL_PATH( pp );
 
@@ -202,13 +203,18 @@ db_path_to_string( const struct db_full_path *pp )
 
 	buf = bu_malloc( len, "pathname string" );
 	cp = buf;
+	rem = len;
 
 	for( i=0; i < pp->fp_len; i++ )  {
 		*cp++ = '/';
-		if( pp->fp_names[i] )
-			strcpy( cp, pp->fp_names[i]->d_namep );
-		else
-			strcpy( cp, "**NULL**" );
+		rem--;
+		if( pp->fp_names[i] ) {
+			strncpy( cp, pp->fp_names[i]->d_namep, rem-1 );
+			rem -= strlen(pp->fp_names[i]->d_namep);
+		} else {
+			strncpy( cp, "**NULL**", rem-1 );
+			rem -= 8;
+		}
 		cp += strlen( cp );
 	}
 	*cp++ = '\0';

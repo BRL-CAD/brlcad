@@ -94,14 +94,95 @@ static struct track_solid {
 } sol;
 
 static int wrobj();
-static void crname(), slope(), crdummy(), trcurve();
-static void bottom(), top(), crregion(), itoa();
+static void slope(), crdummy(), trcurve();
+static void bottom(), top();
 
 static void track_mk_tree_pure();
 static int track_mk_tree_gift();
 static struct wmember *track_mk_addmember();
 static void track_mk_freemembers();
 static int track_mk_comb();
+
+
+/*	==== I T O A ( )
+ *	convert integer to ascii  wd format
+ */
+static void
+itoa(Tcl_Interp *interp,
+     int n,
+     char s[],
+     int w) {
+  int	 c, i, j, sign;
+
+	if( (sign = n) < 0 )	n = -n;
+	i = 0;
+	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
+	if( sign < 0 )	s[i++] = '-';
+
+	/* blank fill array
+	 */
+	for( j = i; j < w; j++ )	s[j] = ' ';
+	if( i > w )
+	  Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
+	s[w] = '\0';
+	/* reverse the array
+	 */
+	for( i = 0, j = w - 1; i < j; i++, j-- ) {
+		c    = s[i];
+		s[i] = s[j];
+		s[j] =    c;
+	}
+}
+
+
+static void
+crname(Tcl_Interp	*interp,
+       char		name[],
+       int		pos,
+       int		maxlen)
+{
+  char temp[4];
+
+  itoa(interp, pos, temp, 1);
+  strncat(name, temp, maxlen-1);
+
+  return;
+}
+
+static void
+crregion(struct rt_wdb	*wdbp,
+	 Tcl_Interp	*interp,
+	 char region[],
+	 char op[],
+	 int members[],
+	 int number,
+	 char solidname[],
+	 int maxlen)
+{
+  int i;
+  struct bu_list head;
+
+  if(wdbp->dbip == DBI_NULL)
+    return;
+
+  BU_LIST_INIT(&head);
+
+  for(i=0; i<number; i++) {
+    solidname[grpname_len + extraTypeChars] = '\0';
+    crname(interp, solidname, members[i], maxlen);
+    if( db_lookup( wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
+      Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
+		       solidname, "\n", (char *)NULL);
+      continue;
+    }
+    track_mk_addmember( solidname, &head, NULL, op[i] );
+  }
+  (void)track_mk_comb( wdbp, region, &head,
+	    1, NULL, NULL, NULL,
+	    500+Trackpos+i, 0, mat_default, los_default,
+	    0, 1, 1 );
+}
+
 
 /*
  *
@@ -124,6 +205,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   int arg;
   int edit_result = TCL_OK;
   struct bu_list head;
+  int len;
 
   WDB_TCL_CHECK_READ_ONLY;
 
@@ -146,9 +228,10 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   arg = 1;
   grpname = bu_strdup(argv[arg]);
   grpname_len = strlen(grpname);
-  solname = bu_malloc(grpname_len + 1 + extraChars, "solid name");
-  regname = bu_malloc(grpname_len + 1 + extraChars, "region name");
-  sol.s_name = bu_malloc(grpname_len + 1 + extraChars, "sol.s_name");
+  len = grpname_len + 1 + extraChars;
+  solname = bu_malloc(len, "solid name");
+  regname = bu_malloc(len, "region name");
+  sol.s_name = bu_malloc(len, "sol.s_name");
 
   /* first road wheel X */
   ++arg;
@@ -289,8 +372,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
  */
 
   for (i=0; i<10; i++) {
-    crname(interp, solname, i);
-    crname(interp, regname, i);
+    crname(interp, solname, i, len);
+    crname(interp, regname, i, len);
     if ((db_lookup( wdbp->dbip, solname, LOOKUP_QUIET) != DIR_NULL) ||
        (db_lookup( wdbp->dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
       /* name already exists */
@@ -312,8 +395,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   /* solid 0 */
   slope(interp, fw, iw, tr);
   VMOVE(temp2, &sol.s_values[0]);
-  crname(interp, solname, 0);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 0, len);
+  strncpy(sol.s_name, solname, len-1);
   sol.s_type = ID_ARB8;
   if (wrobj(wdbp, interp, solname, DIR_SOLID))
     return TCL_ERROR;
@@ -326,8 +409,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     sol.s_values[i] = 0.0;
   sol.s_type = ID_TGC;
   trcurve(iw, tr);
-  crname(interp, solname, 1);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 1, len);
+  strncpy(sol.s_name, solname, len-1);
   if (wrobj(wdbp, interp, solname , DIR_SOLID ) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -337,8 +420,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   VMOVE(&sol.s_values[12], &sol.s_values[6]);
   VMOVE(&sol.s_values[15], &sol.s_values[9]);
   /* solid 2 */
-  crname(interp, solname, 2);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 2, len);
+  strncpy(sol.s_name, solname, len-1);
   if (wrobj(wdbp, interp, solname , DIR_SOLID ) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -347,8 +430,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   /* find idler track dummy arb8 */
   for(i=0; i<24; i++)
     sol.s_values[i] = 0.0;
-  crname(interp, solname, 3);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 3, len);
+  strncpy(sol.s_name, solname, len-1);
   sol.s_type = ID_ARB8;
   crdummy(iw, tr, 1);
   if (wrobj(wdbp, interp,solname,DIR_SOLID) )
@@ -361,8 +444,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     sol.s_values[i] = 0.0;
   slope(interp, lw, dw, tr);
   VMOVE(temp1, &sol.s_values[0]);
-  crname(interp, solname, 4);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 4, len);
+  strncpy(sol.s_name, solname, len-1);
   if (wrobj(wdbp, interp,solname,DIR_SOLID))
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -373,8 +456,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     sol.s_values[i] = 0.0;
   sol.s_type = ID_TGC;
   trcurve(dw, tr);
-  crname(interp, solname, 5);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 5, len);
+  strncpy(sol.s_name, solname, len-1);
   if (wrobj(wdbp, interp,solname,DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -385,8 +468,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   sol.s_values[11] = dw[2];
   VMOVE(&sol.s_values[12], &sol.s_values[6]);
   VMOVE(&sol.s_values[15], &sol.s_values[9]);
-  crname(interp, solname, 6);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 6, len);
+  strncpy(sol.s_name, solname, len-1);
   if (wrobj(wdbp, interp,solname,DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -395,8 +478,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   /* drive dummy arb8 */
   for(i=0; i<24; i++)
     sol.s_values[i] = 0.0;
-  crname(interp, solname, 7);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 7, len);
+  strncpy(sol.s_name, solname, len-1);
   sol.s_type = ID_ARB8;
   crdummy(dw, tr, 2);
   if (wrobj(wdbp, interp,solname,DIR_SOLID) )
@@ -407,8 +490,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   /* track bottom */
   temp1[1] = temp2[1] = tr[0];
   bottom(temp1, temp2, tr);
-  crname(interp, solname, 8);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 8, len);
+  strncpy(sol.s_name, solname, len-1);
   if (wrobj(wdbp, interp,solname,DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -421,8 +504,8 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   temp2[0] = iw[0];
   temp2[2] = iw[1] + iw[2];
   top(temp1, temp2, tr);
-  crname(interp, solname, 9);
-  (void)strcpy(sol.s_name, solname);
+  crname(interp, solname, 9, len);
+  strncpy(sol.s_name, solname, len-1);
   if (wrobj(wdbp, interp,solname,DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
@@ -438,53 +521,53 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   /* region 1 */
   memb[0] = 0;
   memb[1] = 3;
-  crname(interp, regname, 0);
-  crregion(wdbp, interp, regname, oper, memb, 2, solname);
+  crname(interp, regname, 0, len);
+  crregion(wdbp, interp, regname, oper, memb, 2, solname, len);
   solname[grpname_len + extraTypeChars] = '\0';
   regname[grpname_len + extraTypeChars] = '\0';
 
   /* region 1 */
-  crname(interp, regname, 1);
+  crname(interp, regname, 1, len);
   memb[0] = 1;
   memb[1] = 2;
   memb[2] = 3;
-  crregion(wdbp, interp, regname, oper, memb, 3, solname);
+  crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
   solname[grpname_len + extraTypeChars] = '\0';
   regname[grpname_len + extraTypeChars] = '\0';
 
   /* region 4 */
-  crname(interp, regname, 4);
+  crname(interp, regname, 4, len);
   memb[0] = 4;
   memb[1] = 7;
-  crregion(wdbp, interp, regname, oper, memb, 2, solname);
+  crregion(wdbp, interp, regname, oper, memb, 2, solname, len);
   solname[grpname_len + extraTypeChars] = '\0';
   regname[grpname_len + extraTypeChars] = '\0';
 
   /* region 5 */
-  crname(interp, regname, 5);
+  crname(interp, regname, 5, len);
   memb[0] = 5;
   memb[1] = 6;
   memb[2] = 7;
-  crregion(wdbp, interp, regname, oper, memb, 3, solname);
+  crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
   solname[grpname_len + extraTypeChars] = '\0';
   regname[grpname_len + extraTypeChars] = '\0';
 
   /* region 8 */
-  crname(interp, regname, 8);
+  crname(interp, regname, 8, len);
   memb[0] = 8;
   memb[1] = 0;
   memb[2] = 4;
   oper[2] = WMOP_SUBTRACT;
-  crregion(wdbp, interp, regname, oper, memb, 3, solname);
+  crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
   solname[grpname_len + extraTypeChars] = '\0';
   regname[grpname_len + extraTypeChars] = '\0';
 
   /* region 9 */
-  crname(interp, regname, 9);
+  crname(interp, regname, 9, len);
   memb[0] = 9;
   memb[1] = 3;
   memb[2] = 7;
-  crregion(wdbp, interp, regname, oper, memb, 3, solname);
+  crregion(wdbp, interp, regname, oper, memb, 3, solname, len);
   solname[grpname_len + extraTypeChars] = '\0';
   regname[grpname_len + extraTypeChars] = '\0';
 
@@ -493,7 +576,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     if (i == 2 || i == 3 || i == 6 || i == 7)
       continue;
     regname[grpname_len + extraTypeChars] = '\0';
-    crname(interp, regname, i);
+    crname(interp, regname, i, len);
     if (db_lookup( wdbp->dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
       Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 		       regname, "\n", (char *)NULL);
@@ -533,17 +616,6 @@ end:
   return edit_result;
 }
 
-static void
-crname(Tcl_Interp	*interp,
-       char		name[],
-       int		pos) {
-  char temp[4];
-
-  itoa(interp, pos, temp, 1);
-  (void)strcat(name, temp);
-
-  return;
-}
 
 static int
 wrobj(struct rt_wdb	*wdbp,
@@ -858,68 +930,6 @@ fastf_t	t[];
 	}
 }
 
-static void
-crregion(struct rt_wdb	*wdbp,
-	 Tcl_Interp	*interp,
-	 char region[],
-	 char op[],
-	 int members[],
-	 int number,
-	 char solidname[]) {
-  int i;
-  struct bu_list head;
-
-  if(wdbp->dbip == DBI_NULL)
-    return;
-
-  BU_LIST_INIT(&head);
-
-  for(i=0; i<number; i++) {
-    solidname[grpname_len + extraTypeChars] = '\0';
-    crname(interp, solidname, members[i]);
-    if( db_lookup( wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
-      Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
-		       solidname, "\n", (char *)NULL);
-      continue;
-    }
-    track_mk_addmember( solidname, &head, NULL, op[i] );
-  }
-  (void)track_mk_comb( wdbp, region, &head,
-	    1, NULL, NULL, NULL,
-	    500+Trackpos+i, 0, mat_default, los_default,
-	    0, 1, 1 );
-}
-
-
-/*	==== I T O A ( )
- *	convert integer to ascii  wd format
- */
-static void
-itoa(Tcl_Interp *interp,
-     int n,
-     char s[],
-     int w) {
-  int	 c, i, j, sign;
-
-	if( (sign = n) < 0 )	n = -n;
-	i = 0;
-	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
-	if( sign < 0 )	s[i++] = '-';
-
-	/* blank fill array
-	 */
-	for( j = i; j < w; j++ )	s[j] = ' ';
-	if( i > w )
-	  Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
-	s[w] = '\0';
-	/* reverse the array
-	 */
-	for( i = 0, j = w - 1; i < j; i++, j-- ) {
-		c    = s[i];
-		s[i] = s[j];
-		s[j] =    c;
-	}
-}
 
 /*
  * The following functions were pulled in from libwdb

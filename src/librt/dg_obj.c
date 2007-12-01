@@ -1359,7 +1359,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	{
 	    char buf[512];
 
-	    sprintf(buf, "\"%s\"", dgop->dgo_wdbp->dbip->dbi_filename);
+	    snprintf(buf, 512, "\"%s\"", dgop->dgo_wdbp->dbip->dbi_filename);
 	    *vp++ = buf;
 	}
 #else
@@ -1928,7 +1928,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	{
 	    char buf[512];
 
-	    sprintf(buf, "\"%s\"", dgop->dgo_wdbp->dbip->dbi_filename);
+	    snprintf(buf, 512, "\"%s\"", dgop->dgo_wdbp->dbip->dbi_filename);
 	    *vp++ = buf;
 	}
 
@@ -2005,10 +2005,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	si.hStdError   = e_pipe[1];
 	si.wShowWindow = SW_HIDE;
 
-	sprintf(line,"%s ",dgop->dgo_rt_cmd[0]);
+	snprintf(line, 2048, "%s ",dgop->dgo_rt_cmd[0]);
 	for (i=1; i < dgop->dgo_rt_cmd_len; i++) {
-	    sprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
-	    strcat(line,name);
+	    snprintf(name, 256, "%s ",dgop->dgo_rt_cmd[i]);
+	    strncat(line,name, 2048-strlen(line)-1);
 	}
 
 	CreateProcess(NULL, line, NULL, NULL, TRUE,
@@ -3250,8 +3250,7 @@ dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlb
 		if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 			continue;
 
-		sprintf(namebuf, "%s%lx",
-			shortname, vbp->rgb[i]);
+		snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
 		dgo_invent_solid(dgop, interp, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0);
 	}
 }
@@ -4261,10 +4260,11 @@ dgo_run_rt(struct dg_obj *dgop,
 	si.hStdOutput  = pipe_err[1];
 	si.hStdError   = pipe_err[1];
 
-	sprintf(line,"%s ",dgop->dgo_rt_cmd[0]);
+	snprintf(line, 2048, "%s ",dgop->dgo_rt_cmd[0]);
 	for(i=1;i<dgop->dgo_rt_cmd_len;i++) {
-	    sprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
-	    strcat(line,name); }
+	    snprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
+	    strncat(line,name,2048-strlen(line)-1);
+	}
 
 
 	CreateProcess(NULL, line, NULL, NULL, TRUE,

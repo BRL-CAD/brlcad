@@ -709,11 +709,12 @@ bu_vls_print_double(struct bu_vls *vls, const char *name, register long int coun
 {
 	register int tmpi;
 	register char *cp;
+	int len = strlen(name) + 3 + 32 * count;
 
-	bu_vls_extend(vls, strlen(name) + 3 + 32 * count);
+	bu_vls_extend(vls, len);
 
 	cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-	sprintf(cp, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
+	snprintf(cp, len, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
 	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
 
@@ -740,6 +741,7 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 	register char			*loc;
 	register int			lastoff = -1;
 	register char			*cp;
+	int len;
 
 	BU_CK_VLS(vls);
 
@@ -782,14 +784,15 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 			if (sdp->sp_count < 1)
 				break;
 			if (sdp->sp_count == 1) {
-				bu_vls_extend(vls, strlen(sdp->sp_name)+6);
-				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
+			    len = strlen(sdp->sp_name)+6;
+			    bu_vls_extend(vls, len);
+			    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				if (*loc == '"')
-					sprintf(cp, "%s%s=\"%s\"",
+					snprintf(cp, len, "%s%s=\"%s\"",
 						(vls->vls_len?" ":""),
 						sdp->sp_name, "\\\"");
 				else
-					sprintf(cp, "%s%s=\"%c\"",
+					snprintf(cp, len, "%s%s=\"%c\"",
 						(vls->vls_len?" ":""),
 						sdp->sp_name,
 						*loc);
@@ -803,13 +806,12 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 					++p;
 					++count;
 				}
-				bu_vls_extend(vls, strlen(sdp->sp_name)+
-					strlen(loc)+5+count);
+				len = strlen(sdp->sp_name)+strlen(loc)+5+count;
+				bu_vls_extend(vls, len);
+
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				if (vls->vls_len) (void)strcat(cp, " ");
-				(void)strcat(cp, sdp->sp_name);
-				(void)strcat(cp, "=\"");
+				snprintf(cp, len, "%s%s=\"", (vls->vls_len?" ":""), sdp->sp_name);
 
 				/* copy the string, escaping all the internal
 				 * double quote (") characters
@@ -827,64 +829,66 @@ bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp
 			vls->vls_len += strlen(cp);
 			break;
 		case 'S':
-			{	register struct bu_vls *vls_p =
-					(struct bu_vls *)loc;
-
-				bu_vls_extend(vls, bu_vls_strlen(vls_p) + 5 +
-					strlen(sdp->sp_name) );
-
-				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=\"%s\"",
-					(vls->vls_len?" ":""),
-					sdp->sp_name,
-					bu_vls_addr(vls_p) );
-				vls->vls_len += strlen(cp);
+			{
+			    register struct bu_vls *vls_p = (struct bu_vls *)loc;
+			    
+			    len =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
+			    bu_vls_extend(vls, len);
+			    
+			    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
+			    snprintf(cp, len, "%s%s=\"%s\"",
+				     (vls->vls_len?" ":""),
+				     sdp->sp_name,
+				     bu_vls_addr(vls_p) );
+			    vls->vls_len += strlen(cp);
 			}
 			break;
 		case 'i':
-			{	register int i = sdp->sp_count;
-				register short *sp = (short *)loc;
-				register int tmpi;
+			{
+			    register int i = sdp->sp_count;
+			    register short *sp = (short *)loc;
+			    register int tmpi;
+			    
+			    len = 64 * i + strlen(sdp->sp_name) + 3;
+			    bu_vls_extend(vls, len);
 
-				bu_vls_extend(vls,
-					64 * i + strlen(sdp->sp_name) + 3 );
-
-				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=%d",
-						(vls->vls_len?" ":""),
-						 sdp->sp_name, *sp++);
+			    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
+			    snprintf(cp, len, "%s%s=%d",
+				     (vls->vls_len?" ":""),
+				     sdp->sp_name, *sp++);
+			    tmpi = strlen(cp);
+			    vls->vls_len += tmpi;
+			    
+			    while (--i > 0) {
+				cp += tmpi;
+				sprintf(cp, ",%d", *sp++);
 				tmpi = strlen(cp);
 				vls->vls_len += tmpi;
-
-				while (--i > 0) {
-					cp += tmpi;
-					sprintf(cp, ",%d", *sp++);
-					tmpi = strlen(cp);
-					vls->vls_len += tmpi;
-				}
+			    }
 			}
 			break;
 		case 'd':
-			{	register int i = sdp->sp_count;
-				register int *dp = (int *)loc;
-				register int tmpi;
-
-				bu_vls_extend(vls,
-					64 * i + strlen(sdp->sp_name) + 3 );
-
-				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=%d",
-					(vls->vls_len?" ":""),
-					sdp->sp_name, *dp++);
+			{
+			    register int i = sdp->sp_count;
+			    register int *dp = (int *)loc;
+			    register int tmpi;
+			    
+			    len = 64 * i + strlen(sdp->sp_name) + 3;
+			    bu_vls_extend(vls, len);
+					
+			    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
+			    snprintf(cp, len, "%s%s=%d",
+				     (vls->vls_len?" ":""),
+				     sdp->sp_name, *dp++);
+			    tmpi = strlen(cp);
+			    vls->vls_len += tmpi;
+			    
+			    while (--i > 0) {
+				cp += tmpi;
+				sprintf(cp, ",%d", *dp++);
 				tmpi = strlen(cp);
 				vls->vls_len += tmpi;
-
-				while (--i > 0) {
-					cp += tmpi;
-					sprintf(cp, ",%d", *dp++);
-					tmpi = strlen(cp);
-					vls->vls_len += tmpi;
-				}
+			    }
 			}
 			break;
 		case 'f':

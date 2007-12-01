@@ -106,7 +106,7 @@ int tone_folly(int pix, int x, int y, int nx, int ny, int new);
 int tone_simple(int pix, int x, int y, int nx, int ny, int new);
 int tone_classic(int pix, int x, int y, int nx, int ny, int new);
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
@@ -220,8 +220,7 @@ setup(int argc, char **argv)
 			Debug = atoi(bu_optarg);
 		break;
 		case '?':
-			fprintf(stderr,usage);
-			bu_exit(1, NULL);
+			bu_exit(1, usage);
 		break;
 		}
 	}
@@ -232,20 +231,15 @@ setup(int argc, char **argv)
  */
 	if (bu_optind >= argc) {
 		if ( isatty(fileno(stdin)) ) {
-			(void) fprintf(stderr,usage);
-			bu_exit(1, NULL);
+			bu_exit(1, usage);
 		}
 		if (autosize) {
 			(void) fprintf(stderr, usage);
-			(void) fprintf(stderr, "Automatic sizing can not be used with pipes.\n");
-			bu_exit(1, NULL);
+			bu_exit(1, "Automatic sizing can not be used with pipes.\n");
 		}
 	} else {
 		if (freopen(argv[bu_optind],"r",stdin) == NULL ) {
-			(void) fprintf( stderr,
-			    "halftone: cannot open \"%s\" for reading.\n",
-			    argv[bu_optind]);
-			bu_exit(1, NULL);
+			bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
 		}
 		if (autosize) {
 			if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[bu_optind], 1)) {

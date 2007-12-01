@@ -60,7 +60,7 @@ char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
 
 /* variables set by command line flags */
 char *progname = "(noname)";
-char *usage_msg = "Usage: %s [options] model object [object...]\n\
+const char *usage_msg = "Usage: %s [options] model object [object...]\n\
 ";
 
 

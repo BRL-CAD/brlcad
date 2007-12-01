@@ -68,9 +68,7 @@ static const char *bannerp = "BURST (2.2)";
 			var = 0; \
 		else \
 			{ \
-			(void) snprintf( scrbuf, LNBUFSZ, \
-					"Illegal input \"%s\".", \
-					ptr->buffer ); \
+			(void) snprintf( scrbuf, LNBUFSZ, "Illegal input \"%s\".", ptr->buffer ); \
 			warning( scrbuf ); \
 			return; \
 			} \

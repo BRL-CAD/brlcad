@@ -146,12 +146,12 @@ nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, co
 			/* Display only OT_SAME, and OT_UNSPEC et.al.  */
 			if( lu->orientation == OT_OPPOSITE )  continue;
 
-			sprintf(buf, "%s=x%lx", str, (unsigned long)lu);
+			snprintf(buf, 128, "%s=x%lx", str, (unsigned long)lu);
 			nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
 		}
 	}
 	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
-		sprintf(buf, "%s=x%lx (wire)", str, (unsigned long)lu);
+		snprintf(buf, 128, "%s=x%lx (wire)", str, (unsigned long)lu);
 		nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
 	}
 	rt_g.NMG_debug = save;		/* restore it */
@@ -179,7 +179,7 @@ stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *
 	}
 
 	nmg_rebound( m, tol );
-	sprintf( counted_name, "%s%d.g", file_name, debug_file_count );
+	snprintf( counted_name, 258, "%s%d.g", file_name, debug_file_count );
 	nmg_stash_model_to_file( counted_name, m, title );
 	nmg_km( m );
 }
@@ -1282,6 +1282,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	int			op;
 	const char		*op_str;
 	char			*name;
+	int rem;
 
 	RT_CK_TREE(tp);
 	BN_CK_TOL(tol);
@@ -1380,13 +1381,9 @@ nmg_r_radial_check( tl->tr_d.td_r, tol );
 	}
 
 	/* Build string of result name */
-	name = (char *)bu_malloc( strlen(tl->tr_d.td_name)+3+strlen(tr->tr_d.td_name)+2+1,
-		"nmg_booltree_evaluate name");
-	name[0] = '(';
-	strcpy( name+1, tl->tr_d.td_name );
-	strcat( name+1, op_str );
-	strcat( name+1, tr->tr_d.td_name );
-	strcat( name+1, ")" );
+	rem = strlen(tl->tr_d.td_name)+3+strlen(tr->tr_d.td_name)+2+1;
+	name = (char *)bu_malloc( rem, "nmg_booltree_evaluate name");
+	snprintf(name, rem, "(%s%s%s)", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
 
 	/* Clean up child tree nodes (and their names) */
 	db_free_tree(tl, resp);
@@ -1396,6 +1393,7 @@ nmg_r_radial_check( tl->tr_d.td_r, tol );
 	tp->tr_op = OP_NMG_TESS;
 	tp->tr_d.td_r = reg;
 	tp->tr_d.td_name = name;
+
 	return tp;
 }
 

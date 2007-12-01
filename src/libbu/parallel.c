@@ -508,6 +508,7 @@ bu_get_load_average(void)
 #ifndef _WIN32
     FILE	*fp;
 
+    /* XXX - wow. eek. */
     fp = popen("PATH=/bin:/usr/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
     if( !fp )
 	return -1.0;

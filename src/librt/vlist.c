@@ -664,6 +664,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg )
 	}
 }
 
+
 static void
 rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg )
 {
@@ -680,7 +681,7 @@ rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *ar
 		fscanf(fp, "%lf", &arg[i]);
 		break;
 	    case TSTRING:
-		fscanf(fp, "%s\n", &carg[0]);
+		fscanf(fp, "%256s\n", &carg[0]);
 		break;
 	    case TCHAR:
 		fscanf(fp, "%u", &carg[i]);

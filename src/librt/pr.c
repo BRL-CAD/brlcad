@@ -532,13 +532,13 @@ rt_pr_tree_str(const union tree *tree)
 		blankl = strchr( left , ' ' );
 		blankr = strchr( right , ' ' );
 		if( blankl && blankr )
-			sprintf( return_str , "(%s) %c (%s)" , left , op , right );
+			snprintf( return_str, return_length, "(%s) %c (%s)" , left , op , right );
 		else if( blankl && !blankr )
-			sprintf( return_str , "(%s) %c %s" , left , op , right );
+			snprintf( return_str, return_length, "(%s) %c %s" , left , op , right );
 		else if( !blankl && blankr )
-			sprintf( return_str , "%s %c (%s)" , left , op , right );
+			snprintf( return_str, return_length, "%s %c (%s)" , left , op , right );
 		else
-			sprintf( return_str , "%s %c %s" , left , op , right );
+			snprintf( return_str, return_length, "%s %c %s" , left , op , right );
 
 		if( tree->tr_b.tb_left->tr_op != OP_DB_LEAF )
 			bu_free( (genptr_t)left , "rt_pr_tree_str: left string" );

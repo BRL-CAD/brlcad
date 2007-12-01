@@ -649,7 +649,7 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (!dgop->dgo_currVHead) { /* create new entry */
 		BU_GETSTRUCT(rcp, vd_curve);
 		BU_LIST_APPEND(&dgop->dgo_headVDraw, &(rcp->l));
-		strcpy(rcp->vdc_name, temp_name);
+		strncpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME-1);
 		rcp->vdc_name[RT_VDRW_MAXNAME] = '\0';
 		rcp->vdc_rgb = RT_VDRW_DEF_COLOR;
 		BU_LIST_INIT(&(rcp->vdc_vhd));

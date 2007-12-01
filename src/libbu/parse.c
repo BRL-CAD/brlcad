@@ -1166,10 +1166,11 @@ bu_vls_print_double(struct bu_vls *vls, const char *name, register long int coun
 	register int tmpi;
 	register char *cp;
 
-	bu_vls_extend(vls, strlen(name) + 3 + 32 * count);
+	int increase = strlen(name) + 3 + 32 * count;
+	bu_vls_extend(vls, increase);
 
 	cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-	sprintf(cp, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
+	snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
 	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
 
@@ -1196,6 +1197,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	register char			*loc;
 	register int			lastoff = -1;
 	register char			*cp;
+	int increase;
 
 	BU_CK_VLS(vls);
 
@@ -1238,14 +1240,15 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			if (sdp->sp_count < 1)
 				break;
 			if (sdp->sp_count == 1) {
-				bu_vls_extend(vls, strlen(sdp->sp_name)+6);
+			        increase = strlen(sdp->sp_name)+6;
+				bu_vls_extend(vls, increase);
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				if (*loc == '"')
-					sprintf(cp, "%s%s=\"%s\"",
+					snprintf(cp, increase, "%s%s=\"%s\"",
 						(vls->vls_len?" ":""),
 						sdp->sp_name, "\\\"");
 				else
-					sprintf(cp, "%s%s=\"%c\"",
+					snprintf(cp, increase, "%s%s=\"%c\"",
 						(vls->vls_len?" ":""),
 						sdp->sp_name,
 						*loc);
@@ -1259,13 +1262,13 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 					++p;
 					++count;
 				}
-				bu_vls_extend(vls, strlen(sdp->sp_name)+
-					strlen(loc)+5+count);
+				increase = strlen(sdp->sp_name)+strlen(loc)+5+count;
+				bu_vls_extend(vls, increase);
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				if (vls->vls_len) (void)strcat(cp, " ");
-				(void)strcat(cp, sdp->sp_name);
-				(void)strcat(cp, "=\"");
+				(void)strncat(cp, sdp->sp_name, increase-1);
+				(void)strncat(cp, "=\"", increase-strlen(sdp->sp_name)-1);
 
 				/* copy the string, escaping all the internal
 				 * double quote (") characters
@@ -1283,18 +1286,18 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			vls->vls_len += strlen(cp);
 			break;
 		case 'S':
-			{	register struct bu_vls *vls_p =
-					(struct bu_vls *)loc;
+			{	
+			    register struct bu_vls *vls_p = (struct bu_vls *)loc;
+			    
+			    increase =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
+			    bu_vls_extend(vls, increase);
 
-				bu_vls_extend(vls, bu_vls_strlen(vls_p) + 5 +
-					strlen(sdp->sp_name) );
-
-				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=\"%s\"",
+			    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
+			    snprintf(cp, increase, "%s%s=\"%s\"",
 					(vls->vls_len?" ":""),
 					sdp->sp_name,
 					bu_vls_addr(vls_p) );
-				vls->vls_len += strlen(cp);
+			    vls->vls_len += strlen(cp);
 			}
 			break;
 		case 'i':
@@ -1302,11 +1305,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				register short *sp = (short *)loc;
 				register int tmpi;
 
-				bu_vls_extend(vls,
-					64 * i + strlen(sdp->sp_name) + 3 );
+				increase = 64 * i + strlen(sdp->sp_name) + 3;
+				bu_vls_extend(vls, increase);
+					
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=%d",
+				snprintf(cp, increase, "%s%s=%d",
 						(vls->vls_len?" ":""),
 						 sdp->sp_name, *sp++);
 				tmpi = strlen(cp);
@@ -1325,11 +1329,11 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				register int *dp = (int *)loc;
 				register int tmpi;
 
-				bu_vls_extend(vls,
-					64 * i + strlen(sdp->sp_name) + 3 );
-
+				increase = 64 * i + strlen(sdp->sp_name) + 3;
+				bu_vls_extend(vls, increase);
+					
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-				sprintf(cp, "%s%s=%d",
+				snprintf(cp, increase, "%s%s=%d",
 					(vls->vls_len?" ":""),
 					sdp->sp_name, *dp++);
 				tmpi = strlen(cp);

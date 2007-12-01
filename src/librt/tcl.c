@@ -913,23 +913,23 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 			Tcl_DStringAppendElement( &ds, "yes" );
 
 			Tcl_DStringAppendElement( &ds, "id" );
-			sprintf( buf, "%d", comb->region_id );
+			snprintf( buf, 128, "%d", comb->region_id );
 			Tcl_DStringAppendElement( &ds, buf );
 
 			if( comb->aircode )  {
 				Tcl_DStringAppendElement( &ds, "air" );
-				sprintf( buf, "%d", comb->aircode );
+				snprintf( buf, 128, "%d", comb->aircode );
 				Tcl_DStringAppendElement( &ds, buf );
 			}
 			if( comb->los )  {
 				Tcl_DStringAppendElement( &ds, "los" );
-				sprintf( buf, "%d", comb->los );
+				snprintf( buf, 128, "%d", comb->los );
 				Tcl_DStringAppendElement( &ds, buf );
 			}
 
 			if( comb->GIFTmater )  {
 				Tcl_DStringAppendElement( &ds, "GIFTmater" );
-				sprintf( buf, "%d", comb->GIFTmater );
+				snprintf( buf, 128, "%d", comb->GIFTmater );
 				Tcl_DStringAppendElement( &ds, buf );
 			}
 		} else {
@@ -938,7 +938,7 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 
 		if( comb->rgb_valid ) {
 			Tcl_DStringAppendElement( &ds, "rgb" );
-			sprintf( buf, "%d %d %d", V3ARGS(comb->rgb) );
+			snprintf( buf, 128, "%d %d %d", V3ARGS(comb->rgb) );
 			Tcl_DStringAppendElement( &ds, buf );
 		}
 
@@ -978,24 +978,24 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 		itemlwr[i] = 0;
 
 		if( strcmp(itemlwr, "region")==0 ) {
-			strcpy( buf, comb->region_flag ? "yes" : "no" );
+			snprintf( buf, 128, "%s", comb->region_flag ? "yes" : "no");
 		} else if( strcmp(itemlwr, "id")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			sprintf( buf, "%d", comb->region_id );
+			snprintf( buf, 128, "%d", comb->region_id );
 		} else if( strcmp(itemlwr, "air")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			sprintf( buf, "%d", comb->aircode );
+			snprintf( buf, 128, "%d", comb->aircode );
 		} else if( strcmp(itemlwr, "los")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			sprintf( buf, "%d", comb->los );
+			snprintf( buf, 128, "%d", comb->los );
 		} else if( strcmp(itemlwr, "giftmater")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			sprintf( buf, "%d", comb->GIFTmater );
+			snprintf( buf, 128, "%d", comb->GIFTmater );
 		} else if( strcmp(itemlwr, "rgb")==0 ) {
 			if( comb->rgb_valid )
-				sprintf( buf, "%d %d %d", V3ARGS(comb->rgb) );
+				snprintf( buf, 128, "%d %d %d", V3ARGS(comb->rgb) );
 			else
-				strcpy( buf, "invalid" );
+				snprintf( buf, 128, "invalid" );
 		} else if( strcmp(itemlwr, "shader")==0 ) {
 			Tcl_AppendResult( interp, bu_vls_addr(&comb->shader),
 					  (char *)NULL );
@@ -1005,7 +1005,7 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 					  (char *)NULL );
 			return TCL_OK;
 		} else if( strcmp(itemlwr, "inherit")==0 ) {
-			strcpy( buf, comb->inherit ? "yes" : "no" );
+			snprintf( buf, 128, "%s", comb->inherit ? "yes" : "no" );
 		} else if( strcmp(itemlwr, "tree")==0 ) {
 			Tcl_DStringInit( &ds );
 			db_tcl_tree_describe( &ds, comb->tree );

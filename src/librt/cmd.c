@@ -198,8 +198,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 	char 		*lp;
 	int		retval;
 
-	lp = bu_malloc(strlen(ilp)+1, "rt_do_cmd lp");
-	strcpy(lp, ilp);
+	lp = bu_strdup(ilp);
 
 	nwords = rt_split_cmd( cmd_args, MAXWORDS, lp );
 	if( nwords <= 0 )

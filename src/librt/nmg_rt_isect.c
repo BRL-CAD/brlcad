@@ -2543,7 +2543,7 @@ nmg_pl_hitmiss_list(const char *str, int num, const struct bu_list *hd, const st
 	struct hitmiss	*hmp;
 	int		count = 0;
 
-	sprintf( buf, "%s%d.pl", str, num );
+	snprintf( buf, 128, "%s%d.pl", str, num );
 
 	if( bu_list_len(hd) <= 0 )  {
 		bu_log("nmg_pl_hitmiss_list(): empty list, no %s written\n", buf);
