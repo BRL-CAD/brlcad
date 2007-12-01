@@ -54,7 +54,8 @@ main(int argc, char **argv)
 	int	n, m;
 
 	if( argc != 2 ) {
-		bu_exit( 1, usage );
+		fprintf( stderr, usage );
+		exit(1);
 	}
 
 	n = atoi(argv[1]);
