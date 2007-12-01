@@ -124,7 +124,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine=""
+				CommandLine="cscript ..\..\..\include\conf\make.vbs&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
