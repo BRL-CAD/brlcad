@@ -46,7 +46,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "fb.h"
 
-#if defined(HAVE_STDARG_H)
 
 /*
  *  			F B _ L O G
@@ -62,37 +61,6 @@ fb_log( char *fmt, ... )
     (void)vfprintf( stderr, fmt, ap );
     va_end(ap);
 }
-
-#else  /* defined(HAVE_STDARG_H) */
-#  if defined(HAVE_VARARGS_H)
-
-/* VARARGS */
-void
-fb_log( char *fmt, va_dcl va_alist )
-{
-    va_list		ap;
-    va_start( ap );
-#    ifdef HAVE_VPRINTF
-    (void) vfprintf( stderr, fmt, ap);
-#     else
-    (void) _doprnt( fmt, ap, stderr );
-#     endif
-    va_end( ap );
-    return;
-}
-
-#  else /* defined(HAVE_VARARGS_H) */
-
-void
-fb_log( fmt, a,b,c,d,e,f,g,h,i )
-     char	*fmt;
-{
-    fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
-}
-
-
-#  endif	/* defined(HAVE_VARARGS_H) */
-#endif  /* defined(HAVE_STDARG_H) */
 
 /*
  * Local Variables:

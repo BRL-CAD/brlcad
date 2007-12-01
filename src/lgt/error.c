@@ -76,162 +76,47 @@ bu_bomb(const char *str)
 	bu_exit(12, NULL);
 }
 
-#if defined(HAVE_STDARG_H)
 void
 fb_log( char *fmt, ... )
-	{
+{
 	va_list ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	va_start( ap, fmt );
-	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
-		{ /* Only move cursor and scroll if newline is output.	*/
-			static int	newline = 1;
-		if( CS != NULL )
-			{
-			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			if( newline )
-				{
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) vfprintf( stdout, fmt, ap );
-			(void) ResetScrlReg();
-			}
-		else
-		if( DL != NULL )
-			{
-			if( newline )
-				{
-				SCROLL_DL_MOVE();
-				(void) DeleteLn();
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) vfprintf( stdout, fmt, ap );
-			}
-		else
-			(void) vfprintf( stdout, fmt, ap );
-		(void) fflush( stdout );
-		/* End of line detected by existance of a newline.	*/
-		newline = fmt[strlen( fmt )-1] == '\n';
-		hmredraw();
+	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) ) {
+	    /* Only move cursor and scroll if newline is output.	*/
+	    static int	newline = 1;
+	    if( CS != NULL ) {
+		(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+		if( newline ) {
+		    SCROLL_PR_MOVE();
+		    (void) ClrEOL();
 		}
-	else
-		{
-		(void) vfprintf( stderr, fmt, ap );
-		(void) fflush( stderr );
-		}
+		(void) vfprintf( stdout, fmt, ap );
+		(void) ResetScrlReg();
+	    } else
+		if( DL != NULL ) {
+		    if( newline ) {
+			SCROLL_DL_MOVE();
+			(void) DeleteLn();
+			SCROLL_PR_MOVE();
+			(void) ClrEOL();
+		    }
+		    (void) vfprintf( stdout, fmt, ap );
+		} else
+		    (void) vfprintf( stdout, fmt, ap );
+	    (void) fflush( stdout );
+	    /* End of line detected by existance of a newline.	*/
+	    newline = fmt[strlen( fmt )-1] == '\n';
+	    hmredraw();
+	} else {
+	    (void) vfprintf( stderr, fmt, ap );
+	    (void) fflush( stderr );
+	}
 	va_end( ap );
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	return;
-	}
-#else
-
-#if !defined( HAVE_VARARGS_H )
-/* VARARGS */
-void
-fb_log(fmt, a,b,c,d,e,f,g,h,i)
-char *fmt;
-	{
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
-		{ /* Only move cursor and scroll if newline is output.	*/
-			static int	newline = 1;
-		if( CS != NULL )
-			{
-			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			if( newline )
-				{
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-			(void) ResetScrlReg();
-			}
-		else
-		if( DL != NULL )
-			{
-			if( newline )
-				{
-				SCROLL_DL_MOVE();
-				(void) DeleteLn();
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-			}
-		else
-			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-		(void) fflush( stdout );
-		/* End of line detected by existance of a newline.	*/
-		newline = fmt[strlen( fmt )-1] == '\n';
-		hmredraw();
-		}
-	else
-		(void) fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
-	}
-#else
-
-/*
- *  		R T _  L O G
- *
- *  Log an RT library event
- */
-/* VARARGS */
-void
-fb_log( fmt, va_alist )
-char	*fmt;
-va_dcl
-	{	va_list		ap;
-	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	va_start( ap );
-	if( tty && (err_file[0] == '\0' || ! strcmp( err_file, "/dev/tty" )) )
-		{ /* Only move cursor and scroll if newline is output.	*/
-			static int	newline = 1;
-		if( CS != NULL )
-			{
-			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			if( newline )
-				{
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) _doprnt( fmt, ap, stdout );
-			(void) ResetScrlReg();
-			}
-		else
-		if( DL != NULL )
-			{
-			if( newline )
-				{
-				SCROLL_DL_MOVE();
-				(void) DeleteLn();
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) _doprnt( fmt, ap, stdout );
-			}
-		else
-			(void) _doprnt( fmt, ap, stdout );
-		(void) fflush( stdout );
-		/* End of line detected by existance of a newline.	*/
-		newline = fmt[strlen( fmt )-1] == '\n';
-		hmredraw();
-		}
-	else
-		{
-		(void) _doprnt( fmt, ap, stderr );
-		(void) fflush( stderr );
-		}
-	va_end( ap );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
-	return;
-	}
-#endif
-#endif /* HAVE_STDARG_H */
+}
 
 /*
  * Local Variables:

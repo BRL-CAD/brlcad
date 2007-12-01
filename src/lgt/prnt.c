@@ -395,147 +395,51 @@ prnt_Usage(void)
 	return;
 	}
 
-#if defined(HAVE_STDARG_H)
 /*	p r n t _ S c r o l l ( )					*/
-/* VARARGS */
 void
-prnt_Scroll( char *fmt, ... )
-	{	va_list		ap;
-	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	va_start( ap, fmt );
-	if( tty )
-		{ /* Only move cursor and scroll if newline is output.	*/
-			static int	newline = 1;
-		if( CS != NULL )
+prnt_Scroll( char *fmt, ... ) {
+    va_list		ap;
+    /* We use the same lock as malloc.  Sys-call or mem lock, really */
+    bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+    va_start( ap, fmt );
+    if( tty )
+	{ /* Only move cursor and scroll if newline is output.	*/
+	    static int	newline = 1;
+	    if( CS != NULL )
+		{
+		    (void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+		    if( newline )
 			{
-			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			if( newline )
-				{
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void)vfprintf( stdout, fmt, ap );
-			(void) ResetScrlReg();
+			    SCROLL_PR_MOVE();
+			    (void) ClrEOL();
 			}
-		else
+		    (void)vfprintf( stdout, fmt, ap );
+		    (void) ResetScrlReg();
+		}
+	    else
 		if( DL != NULL )
-			{
+		    {
 			if( newline )
-				{
+			    {
 				SCROLL_DL_MOVE();
 				(void) DeleteLn();
 				SCROLL_PR_MOVE();
 				(void) ClrEOL();
-				}
+			    }
 			(void)vfprintf( stdout, fmt, ap );
-			}
+		    }
 		else
-			(void)vfprintf( stdout, fmt, ap );
-		/* End of line detected by existance of a newline.	*/
-		newline = fmt[strlen( fmt )-1] == '\n';
-		hmredraw();
-		}
-	else
-		(void)vfprintf( stderr, fmt, ap );
-	va_end( ap );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
-	return;
+		    (void)vfprintf( stdout, fmt, ap );
+	    /* End of line detected by existance of a newline.	*/
+	    newline = fmt[strlen( fmt )-1] == '\n';
+	    hmredraw();
 	}
-
-#elif !defined(HAVE_VARARGS_H)
-
-void
-prnt_Scroll(fmt, a,b,c,d,e,f,g,h,i)
-char *fmt;
-{
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	if( tty )
-		{ /* Only move cursor and scroll if newline is output.	*/
-			static int	newline = 1;
-		if( CS != NULL )
-			{
-			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			if( newline )
-				{
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-			(void) ResetScrlReg();
-			}
-		else
-		if( DL != NULL )
-			{
-			if( newline )
-				{
-				SCROLL_DL_MOVE();
-				(void) DeleteLn();
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-			}
-		else
-			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-		/* End of line detected by existance of a newline.	*/
-		newline = fmt[strlen( fmt )-1] == '\n';
-		hmredraw();
-		}
-	else
-		(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+    else
+	(void)vfprintf( stderr, fmt, ap );
+    va_end( ap );
+    bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+    return;
 }
-#else
-/*	p r n t _ S c r o l l ( )					*/
-/* VARARGS */
-void
-prnt_Scroll( fmt, va_alist )
-char	*fmt;
-va_dcl
-	{	va_list		ap;
-	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	va_start( ap );
-	if( tty )
-		{ /* Only move cursor and scroll if newline is output.	*/
-			static int	newline = 1;
-		if( CS != NULL )
-			{
-			(void) SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			if( newline )
-				{
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) _doprnt( fmt, ap, stdout );
-			(void) ResetScrlReg();
-			}
-		else
-		if( DL != NULL )
-			{
-			if( newline )
-				{
-				SCROLL_DL_MOVE();
-				(void) DeleteLn();
-				SCROLL_PR_MOVE();
-				(void) ClrEOL();
-				}
-			(void) _doprnt( fmt, ap, stdout );
-			}
-		else
-			(void) _doprnt( fmt, ap, stdout );
-		/* End of line detected by existance of a newline.	*/
-		newline = fmt[strlen( fmt )-1] == '\n';
-		hmredraw();
-		}
-	else
-		(void) _doprnt( fmt, ap, stderr );
-	va_end( ap );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
-	return;
-	}
-#endif /* HAVE_STDARG_H */
 
 /*
  * Local Variables:
