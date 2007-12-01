@@ -124,8 +124,7 @@ main( int argc, char *argv[] )
 			bu_ptbl_ins( &objs, (long *)bu_optarg );
 			break;
 		default:	/* ERROR */
-			fprintf( stderr, usage, argv[0] );
-			exit( 1 );
+			bu_exit(1, usage, argv[0] );
 		}
 	}
 
@@ -141,15 +140,13 @@ main( int argc, char *argv[] )
 	} else {
 		if( bu_optind >= argc ) {
 			fprintf( stderr, "No BRL-CAD model specified\n" );
-			fprintf( stderr, usage, argv[0] );
-			exit( 1 );
+			bu_exit(1, usage, argv[0] );
 		}
 		my_session_id = rts_load_geometry( argv[bu_optind], 0, 0, (char **)NULL, thread_count );
 	}
 
 	if( my_session_id < 0 ) {
-		fprintf( stderr, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
-		exit( 2 );
+		bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
 	}
 
 	/* exercise the open session capability */
@@ -157,8 +154,7 @@ main( int argc, char *argv[] )
 	rts_close_session( my_session_id );
 	my_session_id = rts_open_session();
 	if( my_session_id < 0 ) {
-		fprintf( stderr, "Failed to open session\n" );
-		exit( 2 );
+		bu_exit(2, "Failed to open session\n" );
 	} else {
 		fprintf( stderr, "Using session id %d\n", my_session_id );
 	}
