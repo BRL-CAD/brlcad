@@ -109,7 +109,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetDir)&quot;..\..\libtcl\Release\tcl85.dll &quot;$(TargetDir)&quot;tcl85.dll&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\..\..\src\other\tcl\library\init.tcl &quot;$(TargetDir)&quot;..\library\init.tcl&#x0D;&#x0A;&quot;$(TargetPath)&quot; &quot;$(TargetDir)&quot;\..\library\installTree.tcl&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\libtcl\Release\tcl85.dll ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\libtcl\Release\tcl85.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetDir)&quot;..\..\libtcl\Release\tcl85.dll &quot;$(TargetDir)&quot;tcl85.dll&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\libitcl\Release\itcl34.dll &quot;$(TargetDir)&quot;..\library\itcl34.dll&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\..\..\src\other\tcl\library\init.tcl &quot;$(TargetDir)&quot;..\library\init.tcl&#x0D;&#x0A;&quot;$(TargetPath)&quot; &quot;$(TargetDir)&quot;\..\library\installTree.tcl&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\libitcl\Release\itcl34.dll ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\libitcl\Release\itcl34.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\libtcl\Release\tcl85.dll ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\libtcl\Release\tcl85.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;..\..\tclstub\Release\tclstub85.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

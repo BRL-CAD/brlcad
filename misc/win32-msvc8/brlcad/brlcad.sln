@@ -334,8 +334,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libz", "..\libz\libz.vcproj
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
-		{97D16904-207B-4602-ADC5-4D4D34AA421D} = {97D16904-207B-4602-ADC5-4D4D34AA421D}
-		{5118991D-8BCF-4FE4-981C-F33C9D500E95} = {5118991D-8BCF-4FE4-981C-F33C9D500E95}
+		{B6EF1001-264C-43BB-8FF9-8F663813E1FC} = {B6EF1001-264C-43BB-8FF9-8F663813E1FC}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mged", "..\mged\mged.vcproj", "{577A7D54-8739-45D6-8A49-89C1E84D7E51}"
@@ -484,7 +483,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tclsh", "..\tclsh\tclsh.vcp
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
-		{5118991D-8BCF-4FE4-981C-F33C9D500E95} = {5118991D-8BCF-4FE4-981C-F33C9D500E95}
+		{39785814-94C1-4245-AA56-60ED2C0E1F41} = {39785814-94C1-4245-AA56-60ED2C0E1F41}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tclstub", "..\tclstub\tclstub.vcproj", "{97D16904-207B-4602-ADC5-4D4D34AA421D}"
@@ -493,7 +492,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tclstub", "..\tclstub\tclst
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 	ProjectSection(ProjectDependencies) = postProject
-		{B6EF1001-264C-43BB-8FF9-8F663813E1FC} = {B6EF1001-264C-43BB-8FF9-8F663813E1FC}
 		{5118991D-8BCF-4FE4-981C-F33C9D500E95} = {5118991D-8BCF-4FE4-981C-F33C9D500E95}
 	EndProjectSection
 EndProject
