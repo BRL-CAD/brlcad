@@ -142,7 +142,7 @@ main(int argc, char **argv)
 
 	strncpy(label, argv[1], BUFF_LEN-1);
 	strncpy(units, argv[2], BUFF_LEN-1);
-	strncat(label, units, BUFF_LEN-1);
+	strncat(label, units, BUFF_LEN-strlen(label)-1);
 	strncpy(name, argv[4], BUFF_LEN-1);
 
 	if( argc == 6 )  {
