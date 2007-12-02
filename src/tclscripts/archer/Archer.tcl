@@ -7689,7 +7689,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {$tcl_platform(platform) == "windows"} {
 #	exec hh [file join $env(ARCHER_HOME) $brlcadDataPath doc html manuals archer Archer_Documentation.chm] &
-	exec hh [file join $brlcadDataPath doc html manuals archer Archer_Documentation.chm] &
+	exec hh [file join $brlcadDataPath html manuals archer Archer_Documentation.chm] &
     }
 }
 
