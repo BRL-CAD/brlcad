@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <math.h>
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
 
 int	rflag = 0;
@@ -44,8 +44,7 @@ int main(int argc, char **argv)
 	int	i, num, onum;
 
 	if( argc <= 1 || isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	while( argc > 1 && argv[1][0] == '-' )  {

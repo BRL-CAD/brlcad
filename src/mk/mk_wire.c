@@ -145,7 +145,7 @@ main(int argc, char **argv)
    /*  Find name of mged file to be created.  */
    (void)printf("Enter mged file name (25 char max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%s",filemged);
+   (void)scanf("%26s",filemged);
 
    /*  Find the number of segments.  */
    (void)printf("Enter the number of segments (maximum of %d).\n\t",

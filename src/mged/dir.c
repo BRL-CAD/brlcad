@@ -205,6 +205,7 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 {
 	char *prefix,*obj;
 	char tempstring_v4[NAMESIZE+2];
+	int len = NAMESIZE+2;
 
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
@@ -217,14 +218,15 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
 	if( dbip->dbi_version < 5 ) {
-		(void)strcpy( tempstring_v4, prefix);
-		(void)strcat( tempstring_v4, obj);
+		(void)strncpy( tempstring_v4, prefix, len-1);
+		(void)strncat( tempstring_v4, obj, len-strlen(prefix)-1);
 		comb_leaf->tr_l.tl_name = bu_strdup( tempstring_v4 );
 	} else {
-		comb_leaf->tr_l.tl_name = (char *)bu_malloc( strlen( prefix ) + strlen( obj ) + 1,
-							     "Adding prefix" );
-		(void)strcpy( comb_leaf->tr_l.tl_name , prefix);
-		(void)strcat( comb_leaf->tr_l.tl_name , obj );
+	    len = strlen(prefix)+strlen(obj)+1;
+	    comb_leaf->tr_l.tl_name = (char *)bu_malloc( strlen( prefix ) + strlen( obj ) + 1,
+							 "Adding prefix" );
+		(void)strncpy( comb_leaf->tr_l.tl_name , prefix, len-1);
+		(void)strncat( comb_leaf->tr_l.tl_name , obj, len-strlen(prefix)-1 );
 	}
 }
 
@@ -244,6 +246,7 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	char tempstring_v4[NAMESIZE+2];
 	struct bu_vls tempstring_v5;
 	char *tempstring;
+	int len = NAMESIZE+2;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -281,8 +284,8 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 
 		if( dbip->dbi_version < 5 ) {
-			(void) strcpy( tempstring_v4, argv[1]);
-			(void) strcat( tempstring_v4, argv[i]);
+			strncpy( tempstring_v4, argv[1], len-1);
+			strncat( tempstring_v4, argv[i], len-strlen(argv[1])-1);
 			tempstring = tempstring_v4;
 		} else {
 			bu_vls_trunc( &tempstring_v5, 0 );

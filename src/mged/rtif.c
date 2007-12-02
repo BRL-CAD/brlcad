@@ -719,10 +719,11 @@ run_rt(void)
     si.hStdError   = pipe_err[1];
 
 
-    sprintf(line,"%s ",rt_cmd_vec[0]);
+    snprintf(line, RT_MAXLINE+1, "%s ",rt_cmd_vec[0]);
     for(i=1;i<rt_cmd_vec_len;i++) {
-	sprintf(name,"%s ",rt_cmd_vec[i]);
-	strcat(line,name); }
+	snprintf(name, 2048, "%s ",rt_cmd_vec[i]);
+	strncat(line,name, RT_MAXLINE-strlen(line));
+    }
 
 
     if(CreateProcess( NULL,
@@ -791,9 +792,9 @@ cmd_rt(ClientData	clientData,
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
 #else
-	sprintf(buf, "%s/%s", ptr, argv[0]);
+	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
 #endif
 	argv[0] = buf;
     }
@@ -923,9 +924,9 @@ cmd_rtcheck(ClientData	clientData,
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
 #else
-	sprintf(buf, "%s/%s", ptr, argv[0]);
+	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
 #endif
 	argv[0] = buf;
     }
@@ -951,9 +952,9 @@ cmd_rtarea(ClientData	clientData,
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
 #else
-	sprintf(buf, "%s/%s", ptr, argv[0]);
+	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
 #endif
 	argv[0] = buf;
     }
@@ -979,9 +980,9 @@ cmd_rtedge(ClientData	clientData,
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
 #else
-	sprintf(buf, "%s/%s", ptr, argv[0]);
+	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
 #endif
 	argv[0] = buf;
     }
@@ -1007,9 +1008,9 @@ cmd_rtweight(ClientData	clientData,
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
 #else
-	sprintf(buf, "%s/%s", ptr, argv[0]);
+	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
 #endif
 	argv[0] = buf;
     }
@@ -1211,7 +1212,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     /* iterate over the contents of the raytrace script */
     while (!feof(fp)) {
 	memset(buffer, 0, 512);
-	fscanf(fp, "%s", buffer);
+	fscanf(fp, "%512s", buffer);
 
 	if (strncmp(buffer, "-p", 2)==0) {
 	    /* we found perspective */
@@ -1230,7 +1231,8 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	     */
 
 	    memset(dbName, 0, MAX_DBNAME);
-	    fscanf(fp, "%s", dbName);
+	    fscanf(fp, "%2048s", dbName); /* MAX_DBNAME */
+
 	    /* if the last character is a line termination,
 	     * remove it (it should always be unless the user
 	     * modifies the file)
@@ -1298,7 +1300,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	    (void)cmd_zap( (ClientData)NULL, interp, 1, NULL );
 
 	    /* now get the objects listed */
-	    fscanf(fp, "%s", objects);
+	    fscanf(fp, "%10000s", objects);
 	    /*		  bu_log("OBJECTS=%s\n", objects);*/
 	    while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
 
@@ -1306,7 +1308,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		if (strncmp(objects, "'", 1)==0) {
 		    objects[0]=' ';
 		    memset(objects+strlen(objects)-1, ' ', 1);
-		    sscanf(objects, "%s", objects);
+		    sscanf(objects, "%10000s", objects);
 		}
 
 		editArgv[0] = "e";
@@ -1317,7 +1319,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		}
 
 		/* bu_log("objects=%s\n", objects);*/
-		fscanf(fp, "%s", objects);
+		fscanf(fp, "%10000s", objects);
 	    }
 
 	    /* end iteration over reading in listed objects */
@@ -1822,9 +1824,9 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #  ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
 #  else
-	sprintf(buf, "%s/%s", ptr, argv[0]);
+	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
 #  endif
 	argv[0] = buf;
     }
@@ -1887,9 +1889,9 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	 * specifically.
 	 */
 #  ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, "nirt");
+	snprintf(buf, 256, "\"%s/%s\"", ptr, "nirt");
 #  else
-	sprintf(buf, "%s/%s", ptr, "nirt");
+	snprintf(buf, 256, "%s/%s", ptr, "nirt");
 #  endif
 	argv[0] = buf;
     }
@@ -2057,7 +2059,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     {
 	char buf[512];
 
-	sprintf("\"%s\"", dbip->dbi_filename);
+	snprintf(buf, 512, "\"%s\"", dbip->dbi_filename);
 	*vp++ = buf;
     }
 #else
@@ -2196,14 +2198,15 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     si.hStdError   = pipe_err[1];
 
 
-    sprintf(line1,"%s ",rt_cmd_vec[0]);
+    snprintf(line1, 2048, "%s ",rt_cmd_vec[0]);
     for(i=1;i<rt_cmd_vec_len;i++) {
-	sprintf(name,"%s ",rt_cmd_vec[i]);
-	strcat(line1,name);
+	snprintf(name, 1024, "%s ",rt_cmd_vec[i]);
+	strncat(line1, name, 2048-strlen(line1)-1);
 	if(strstr(name,"-e") != NULL) {
 	    i++;
-	    sprintf(name,"\"%s\" ",rt_cmd_vec[i]);
-	    strcat(line1,name);}
+	    snprintf(name, 2048, "\"%s\" ",rt_cmd_vec[i]);
+	    strncat(line1, name, 2048-strlen(line1)-1);
+	}
     }
 
     if(CreateProcess( NULL, line1, NULL, NULL,TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi )) {
@@ -2333,9 +2336,9 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     ptr = bu_brlcad_root("bin", 1);
     if (ptr) {
 #  ifdef _WIN32
-	sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+	snprintf(buf, 256, "\"%s/%s\"", ptr, argv[0]);
 #  else
-	sprintf(buf, "%s/%s", ptr, argv[0]);
+	snprintf(buf, 256, "%s/%s", ptr, argv[0]);
 #  endif
 	argv[0] = buf;
     }
@@ -2641,7 +2644,7 @@ cm_tree(int argc, char **argv)
     char *cp = rt_cmd_storage;
 
     for( i = 1;  i < argc && i < MAXARGS; i++ )  {
-	strcpy(cp, argv[i]);
+	strncpy(cp, argv[i], (MAXARGS*9)-1);
 	rt_cmd_vec[i] = cp;
 	cp += strlen(cp) + 1;
     }

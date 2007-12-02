@@ -41,7 +41,7 @@ struct	peaks {
 	double	value;
 } peaks[BSIZE];
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: dpeak [window_size (512)] < doubles\n";
 
 void	dumpmax(void);
@@ -52,8 +52,7 @@ int main(int argc, char **argv)
 	double	last1, last2;
 
 	if( isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	L = (argc > 1) ? atoi(argv[1]) : 512;

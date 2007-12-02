@@ -128,7 +128,7 @@ main(int argc, char **argv)
    /*  Get file name of mged file to be created.  */
    (void)printf("Enter name of mged file to be created (25 char max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%s",filemged);
+   (void)scanf("%26s",filemged);
 
    /*  Find the number of bolts to be created (<=26).  */
    (void)printf("Enter the number of bolts to be created (26 max).\n\t");

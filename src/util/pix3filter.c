@@ -190,7 +190,7 @@ get_args(int argc, register char **argv)
 			return(0);
 		}
 
-		sprintf(working_name,"%s.%d", file_name, frameNumber-1);
+		snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber-1);
 		if ( (oldfp = fopen(working_name, "r")) == NULL) {
 			if (frameNumber-1 != 0) {
 				(void)fprintf(stderr,
@@ -206,7 +206,7 @@ get_args(int argc, register char **argv)
 			}
 		}
 
-		sprintf(working_name,"%s.%d", file_name, frameNumber+1);
+		snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber+1);
 		if ((newfp = fopen(working_name, "r")) == NULL) {
 			(void)fprintf(stderr,
 			    "pix3filter: cannot open \"%s\" for reading.\n",

@@ -290,7 +290,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	fastf_t			dfirst, dlast;	/* ray distances */
 	static fastf_t		dcorrection = 0; /* RT to GIFT dist corr */
 	int			card_count;	/* # comp. on this card */
-	char			*fmt;		/* printf() format string */
+	const char		*fmt;		/* printf() format string */
 	struct bu_vls		str;
 	char			buf[128];	/* temp. sprintf() buffer */
 	point_t			hv;		/* GIFT h,v coords, in inches */
@@ -629,7 +629,7 @@ out:
 #ifdef SPRINTF_NOT_PARALLEL
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 #endif
-		sprintf(buf, fmt,
+		snprintf(buf, 128, fmt,
 			region_id,
 			comp_thickness,
 			in_obliq, out_obliq,

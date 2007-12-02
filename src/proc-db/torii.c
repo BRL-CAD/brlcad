@@ -179,7 +179,7 @@ main(int ac, char *av[])
 
   if (ac < 2) usage(progname);
 
-  if (ac > 1) sprintf(fileName, "%s", av[1]);
+  if (ac > 1) snprintf(fileName, 512, "%s", av[1]);
 
   bu_log("Output file name is \"%s\"\n", fileName);
 
@@ -189,7 +189,7 @@ main(int ac, char *av[])
   }
 
   /* create the database header record */
-  sprintf(scratch, "%s Torii", fileName);
+  snprintf(scratch, 512, "%s Torii", fileName);
   mk_id(db_fp, scratch);
 
   /* init the levels array */

@@ -127,7 +127,7 @@ static long bufpos;
 
 
 #ifdef MELDUNG
-#define melde(x) fprintf(stderr,x)
+#define melde(x) fprintf(stderr, "%s", x)
 #else
 #define melde(x)
 #endif

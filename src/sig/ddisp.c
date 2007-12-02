@@ -48,7 +48,7 @@ void	lineout(double *dat, int n);
 void	disp_inten(double *buf, int size);
 void	disp_bars(double *buf, int size);
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: ddisp [-v -b -p -c -h] [width (512)]\n";
 
 int main(int argc, char **argv)
@@ -75,8 +75,7 @@ int main(int argc, char **argv)
 	}
 
 	if( isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 	if( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL ) {
 		exit( 2 );

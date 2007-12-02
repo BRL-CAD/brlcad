@@ -128,7 +128,7 @@ void	outstring(int n);
 void	outshort(int n);
 void	outfloat(int n);
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: pl-asc [-v] [unix_plot]\n";
 
 int
@@ -155,8 +155,7 @@ main(int argc, char **argv)
 	} else {
 		fp = stdin;
 		if( argc > 1 || isatty(fileno(stdin)) ) {
-			fprintf( stderr, usage );
-			return 1;
+			bu_exit(1, "%s", usage );
 		}
 	}
 

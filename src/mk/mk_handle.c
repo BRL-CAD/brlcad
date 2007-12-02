@@ -117,7 +117,7 @@ main(int argc, char **argv)
    (void)printf("Enter the name of the mged file to be created ");
    (void)printf("(25 char max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%s",filemged);
+   (void)scanf("%26s",filemged);
 
    /*  Find number of handles to create (<=26).  */
    (void)printf("Enter number of handles to create (26 max).\n\t");

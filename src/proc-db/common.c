@@ -106,7 +106,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 		VMOVE( dir, dir_at );
 	}
 
-	sprintf( nbuf, "%s.s", name );
+	snprintf( nbuf, 64, "%s.s", name );
 	VSETALL( center, 0 );
 	mk_sph( outfp, nbuf, center, r );
 

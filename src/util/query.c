@@ -69,7 +69,7 @@ int	Timeout=0;
 int	Loop=0;
 int	Done = 0;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
 
 int
@@ -113,8 +113,7 @@ main(int argc, char **argv)
 	char *flag;
 
 	if ( !get_args( argc, argv ) )  {
-		(void) fprintf(stderr,usage,argv[0]);
-		bu_exit ( 1, NULL );
+		bu_exit(1, usage, argv[0]);
 	}
 
 	(void) signal(SIGALRM, handler);

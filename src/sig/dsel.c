@@ -27,7 +27,7 @@
 
 double	buf[4096] = {0};
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: dsel num\n\
        dsel skip keep ...\n";
 
@@ -42,8 +42,7 @@ int main(int argc, char **argv)
 	int	nkeep;	/* number to keep */
 
 	if( argc < 1 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	if( argc == 2 ) {

@@ -675,8 +675,8 @@ char *getName(char *base, int id, char *paramstring)
 
   memset(name, 0, DEFAULT_MAXNAMELENGTH);
 
-  if (id>=0) sprintf(name, paramstring, base, id);
-  else sprintf(name, paramstring, base);
+  if (id>=0) snprintf(name, DEFAULT_MAXNAMELENGTH, paramstring, base, id);
+  else snprintf(name, DEFAULT_MAXNAMELENGTH, paramstring, base);
 
   if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "getName(): base[%s], id[%d]\n", base, id);
   if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Using name[%s]\n", name);
@@ -697,9 +697,9 @@ char *getPrePostName(char *prefix, char *base, char *suffix)
 
   memset(newname, 0, DEFAULT_MAXNAMELENGTH);
 
-  if (prefix) sprintf(newname, "%s", prefix);
-  if (base) sprintf(newname, "%s%s", newname, base);
-  if (suffix) sprintf(newname, "%s%s", newname, suffix);
+  if (prefix) snprintf(newname, DEFAULT_MAXNAMELENGTH, "%s", prefix);
+  if (base) snprintf(newname, DEFAULT_MAXNAMELENGTH, "%s%s", newname, base);
+  if (suffix) snprintf(newname, DEFAULT_MAXNAMELENGTH, "%s%s", newname, suffix);
 
   return newname;
 }

@@ -255,7 +255,7 @@ cm_file( int argc, char **argv )
 			continue;
 		}
 
-		sprintf( lbuf, "File '%s', Column %d", file, i );
+		snprintf( lbuf, 512, "File '%s', Column %d", file, i );
 		if( (cnum[i] = create_chan( argv[i+1], nlines, lbuf )) < 0 )  {
 			errors = 1;
 			goto out;

@@ -199,7 +199,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 		 */
 
 		if(strcmp(string, "View") == 0)  {
-			num = sscanf(arg_ptr, "%lf %s %lf", &azimuth, forget_it, &elevation);
+			num = sscanf(arg_ptr, "%lf %9s %lf", &azimuth, forget_it, &elevation);
 			if( num != 3)  {
 				fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
 				return(-1);

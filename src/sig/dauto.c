@@ -43,7 +43,7 @@ double	*data;			/* Input buffer */
 double	*r;			/* autocor output */
 double	*weight;		/* weights to unbias estimation */
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: dauto [window_size (512)] < doubles\n";
 
 int main(int argc, char **argv)
@@ -52,8 +52,7 @@ int main(int argc, char **argv)
 	register double *dp1, *dp2;
 
 	if( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	L = (argc > 1) ? atoi(argv[1]) : 512;

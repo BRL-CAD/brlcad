@@ -412,7 +412,7 @@ main (int argc, char **argv)
 		mat_flag = 1;
 		break;
 	    case 'O':
-		sscanf(bu_optarg, "%s", ocastring);
+		sscanf(bu_optarg, "%1024s", ocastring);
 		break;
 	    case 's':
 		silent_flag = SILENT_YES;	/* Positively yes */

@@ -33,7 +33,7 @@
 #define TABSIZE	512
 double	sintab[TABSIZE];
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: syn samples_per_set [ratio] > doubles\n";
 
 void makesintab(void);
@@ -46,8 +46,7 @@ int main(int argc, char **argv)
 	int	setsize;
 
 	if( isatty(fileno(stdout)) || argc < 2 ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	makesintab();

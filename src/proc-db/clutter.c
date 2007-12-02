@@ -210,7 +210,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
 	VUNITIZE( min );
 
 	for( i=0; i<3; i++ )  {
-		sprintf( name, "%sL%c", cname, 'a'+i);
+		snprintf( name, 64, "%sL%c", cname, 'a'+i);
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 		VSET( center, xc, yc, size/2*i );
 		nsolids = 3 + (rand() & 7);
@@ -224,14 +224,14 @@ crystal_stack(char *cname, double xc, double yc, double size)
 	}
 
 	/* Build the crystal union */
-	sprintf( crystalname, "%scrystal", cname );
+	snprintf( crystalname, 64, "%scrystal", cname );
 	mk_lfcomb( outfp, crystalname, &head, 0 );
 
 	/* Make the trimming RPP */
 	esz = size*0.5;	/* dist from ctr to edge of base */
 	VSET( minpt, xc-esz, yc-esz, 10 );
 	VSET( maxpt, xc+esz, yc+esz, height );
-	sprintf( rppname, "%srpp", cname );
+	snprintf( rppname, 64, "%srpp", cname );
 	mk_rpp( outfp, rppname, minpt, maxpt );
 
 	/* Build the final combination */
@@ -317,7 +317,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 
 		/* Consider fusing points here, for visual complexity */
 
-		sprintf( name, "%s%d", crname, index++ );
+		snprintf( name, 64, "%s%d", crname, index++ );
 		mk_arb8( outfp, name, &pt[0][X] );
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 
@@ -343,7 +343,7 @@ do_plate(char *name, double xc, double yc, double size)
 	unsigned char	rgb[4];		/* needs all 4 */
 	int	i;
 
-	sprintf(sname, "%s.s", name);
+	snprintf(sname, 64, "%s.s", name);
 	/* Make the base */
 	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
 	VSET( minpt, xc-esz, yc-esz, -9 );
@@ -377,7 +377,7 @@ ball_stack(char *bname, double xc, double yc, double size)
 	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
 	n = rand()&7;
 	for( i=0; i<n; i++ )  {
-		sprintf( name, "%s%c", bname, 'A'+i );
+		snprintf( name, 64, "%s%c", bname, 'A'+i );
 		VSET( center, xc, yc, size/2+i*size );
 		mk_sph( outfp, name, center, esz/2 );
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
@@ -419,7 +419,7 @@ prim_stack(char *pname, double xc, double yc, double size)
 	/* Make some objects */
 	n = (rand()&7)+1;
 	for( nobj=0; nobj<n; nobj++ )  {
-		sprintf( name, "%s%c", pname, 'A'+nobj );
+		snprintf( name, 64, "%s%c", pname, 'A'+nobj );
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 		height = ((rand()&7)+1)*size/3;
 		i = rand()%5;
@@ -484,8 +484,8 @@ do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int
 
 	VSET( normal, 0, 0, 1 );
 	for( i=0; i<n; i++ )  {
-		sprintf( sname, "%s%ds", ringname, i );
-		sprintf( rname, "%s%dr", ringname, i );
+		snprintf( sname, 32, "%s%ds", ringname, i );
+		snprintf( rname, 32, "%s%dr", ringname, i );
 
 		mk_tor( outfp, sname, center, normal, r1, r2 );
 		r1 += incr;

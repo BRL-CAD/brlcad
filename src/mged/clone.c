@@ -56,7 +56,7 @@
 
 
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
-
+#define CLONE_BUFSIZE 512
 
 /*
  * NOTE: in order to not shadow the global "dbip" pointer used
@@ -209,19 +209,19 @@ static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
     struct bu_vls *newname;
-    char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0}, suffix2[BUFSIZ] = {0};
+    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFSIZE] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
     if( state->updpos == 0 ) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%s", &prefix, &num, &suffix, &suffix2);
-	snprintf(suffix, BUFSIZ, "%s", suffix2);
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", &prefix, &num, &suffix, &suffix2); /* CLONE_BUFSIZE */
+	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
     } else if ( state->updpos == 1 ) {
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
-	snprintf(prefix, BUFSIZ, "%s%d%s", prefix, num2, suffix2);
+	snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
 
@@ -235,7 +235,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     	    if (suffix[0] != 0)
     		if ((i == 1) && is_in_list(obj_list, buf)) {
     		    j = index_in_list(obj_list, buf);
-    		    snprintf(buf, BUFSIZ, "%s%d", prefix, num);	/* save the name for the next pass */
+    		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
@@ -288,7 +288,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	if (rp->u_id == ID_SOLID) {
-	    strncpy(rp->s.s_name, dp->d_namep, BUFSIZ);
+	    strncpy(rp->s.s_name, dp->d_namep, CLONE_BUFSIZE-1);
 
 	    /* mirror */
 	    if (state->miraxis != W) {
@@ -470,7 +470,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 	    bu_vls_free(name);
 	}
-	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), BUFSIZ);
+	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), CLONE_BUFSIZE-1);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -484,7 +484,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_log("ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
-	    snprintf(rp[j].M.m_instname, BUFSIZ, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    snprintf(rp[j].M.m_instname, CLONE_BUFSIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
 	}
 
 	/* write the object to disk */
@@ -1060,37 +1060,36 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_fgets(line, 81, points);
     while (strcmp(strtok(line, ","), "112") != 0);
 
-    strcpy(tok, strtok(NULL, ","));
-    strcpy(tok, strtok(NULL, ","));
-    strcpy(tok, strtok(NULL, ","));
-    strcpy(tok, strtok(NULL, ","));
+    strncpy(tok, strtok(NULL, ","), 81-1);
+    strncpy(tok, strtok(NULL, ","), 81-1);
+    strncpy(tok, strtok(NULL, ","), 81-1);
+    strncpy(tok, strtok(NULL, ","), 81-1);
     s.n_segs = atoi(tok);
     s.t = (fastf_t *)bu_malloc(sizeof(fastf_t) * (s.n_segs+1), "t");
     s.k = (struct knot *)bu_malloc(sizeof(struct knot) * (s.n_segs+1), "k");
     for (i = 0; i <= s.n_segs; i++) {
-	strcpy(tok, strtok(NULL, ","));
+	strncpy(tok, strtok(NULL, ","), 81-1);
 	if (strstr(tok, "P") != NULL) {
 	    bu_fgets(line, 81, points);
 	    bu_fgets(line, 81, points);
-	    strcpy(tok, strtok(line, ","));
+	    strncpy(tok, strtok(line, ","), 81-1);
 	}
 	s.t[i] = atof(tok);
     }
     for (i = 0; i <= s.n_segs; i++)
 	for (j = 0; j < 3; j++) {
 	    for (k = 0; k < 4; k++) {
-		strcpy(tok, strtok(NULL, ","));
+		strncpy(tok, strtok(NULL, ","), 81-1);
 		if (strstr(tok, "P") != NULL) {
 		    bu_fgets(line, 81, points);
 		    bu_fgets(line, 81, points);
-		    strcpy(tok, strtok(line, ","));
+		    strncpy(tok, strtok(line, ","), 81-1);
 		}
 		s.k[i].c[j][k] = atof(tok);
 	    }
 	    s.k[i].pt[j] = s.k[i].c[j][0];
 	}
     fclose(points);
-
 
     /* Interpolate link vertices *********************/
     for (i = 0; i < s.n_segs; i++) /* determine initial track length */
@@ -1155,10 +1154,10 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t *rots;
 
 	for (i = 0; i < 2; i++)
-	    vargs[i] = (char *)bu_malloc(sizeof(char)*BUFSIZ, "alloc vargs1");
+	    vargs[i] = (char *)bu_malloc(sizeof(char)*CLONE_BUFSIZE, "alloc vargs1");
 
 	strcpy(vargs[0], "e");
-	strcpy(vargs[1], bu_vls_addr(&links[j].name));
+	strncpy(vargs[1], bu_vls_addr(&links[j].name), CLONE_BUFSIZE-1);
 	vargs[2] = NULL;
 
 	state.interp = interp;
@@ -1195,7 +1194,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		state.src = dps[j];
 		/* global dbip */
 		dps[j] = copy_object(dbip, &rt_uniresource, &state);
-		strcpy(vargs[1], dps[j]->d_namep);
+		strncpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE-1);
 		/* strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
 
 		if (!no_draw || !is_dm_null()) {

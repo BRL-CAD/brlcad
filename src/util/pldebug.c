@@ -126,7 +126,7 @@ FILE	*fp;
 
 /* void	outchar(), outstring(), outshort(), outfloat(); */
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: pldebug [-v] [unix_plot]\n";
 
 
@@ -231,8 +231,7 @@ main(int argc, char **argv)
 	} else {
 		fp = stdin;
 		if( argc > 1 || isatty(fileno(stdin)) ) {
-			fprintf( stderr, usage );
-			bu_exit ( 1, NULL );
+			bu_exit(1, "%s", usage );
 		}
 	}
 

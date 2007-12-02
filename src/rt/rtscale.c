@@ -140,13 +140,13 @@ main(int argc, char **argv)
 
 	/* Now process the arguments from main */
 
-	strcpy(label, argv[1]);
-	strcpy(units, argv[2]);
-	strcat(label, units);
-	strcpy(name, argv[4]);
+	strncpy(label, argv[1], BUFF_LEN-1);
+	strncpy(units, argv[2], BUFF_LEN-1);
+	strncat(label, units, BUFF_LEN-1);
+	strncpy(name, argv[4], BUFF_LEN-1);
 
 	if( argc == 6 )  {
-		strcpy( descript, argv[5] );
+		strncpy( descript, argv[5], BUFF_LEN-1 );
 		SEEN_DESCRIPT = 1;
 	}
 

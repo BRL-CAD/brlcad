@@ -232,7 +232,7 @@ void parse_fmt(char *uoutspec, int outcom_type)
     /* N.B. bu_malloc() only returns upon successful allocation */
 
     mycopy = uos = bu_malloc(strlen(uoutspec) + 1, "uos");
-    strcpy(uos, uoutspec);
+    strncpy(uos, uoutspec, strlen(uoutspec));
     /* Break up the format specification into pieces,
      * one per conversion specification (and, hopefully)
      * one per argument.
@@ -526,14 +526,15 @@ FILE *fopenrc(void)
     char	*rc_file_name;
     char	*home;
     FILE	*fPtr;
+    int len;
 
     if ((fPtr = fopen(DEF_RCF_NAME, "r")) == NULL)
     {
 	if ((home = getenv("HOME")) != NULL)
 	{
-	    rc_file_name = bu_malloc(strlen(home) + strlen(DEF_RCF_NAME) + 2,
-				"rc_file_name");
-	    sprintf(rc_file_name, "%s/%s", home, DEF_RCF_NAME);
+	    len = strlen(home) + strlen(DEF_RCF_NAME) + 2;
+	    rc_file_name = bu_malloc(len, "rc_file_name");
+	    snprintf(rc_file_name, len, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "r");
 	}
     }
@@ -672,7 +673,7 @@ void direct_output(char *buffer, com_table *ctp)
 
 	new_dest = bu_malloc(strlen(buffer + i)+1,"new_dest");
 
-	sprintf(new_dest, "%s", buffer + i);
+	snprintf(new_dest, strlen(buffer+i), "%s", buffer + i);
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
 	    fprintf(stderr, "Cannot open %s '%s'\n",
 		(openfunc == popen) ? "pipe" : "file", new_dest);
@@ -721,7 +722,7 @@ void state_file(char *buffer, com_table *ctp)
     else
     {
 	new_name = bu_malloc(strlen(buffer + i)+1, "new_state_filename");
-	sprintf(new_name, "%s", buffer + i);
+	snprintf(new_name, strlen(buffer+i), "%s", buffer + i);
     }
 
     /* Clean up from previous output destination */

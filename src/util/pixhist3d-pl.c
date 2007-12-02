@@ -55,7 +55,7 @@ struct	pix_element {
 	unsigned char red, green, blue;
 };
 
-static char *Usage = "usage: pixhist3d-pl [file.pix] | plot\n";
+static const char *Usage = "usage: pixhist3d-pl [file.pix] | plot\n";
 
 int
 main(int argc, char **argv)
@@ -66,9 +66,8 @@ main(int argc, char **argv)
 
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1], "r")) == NULL ) {
-			fprintf( stderr, "pixhist3d-pl: can't open \"%s\"\n", argv[1] );
-			fprintf( stderr, Usage );
-			return 1;
+			fprintf( stderr, "%s", Usage );
+			bu_exit(1, "pixhist3d-pl: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		fp = stdin;

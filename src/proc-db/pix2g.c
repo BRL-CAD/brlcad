@@ -179,8 +179,8 @@ main(int ac, char *av[])
 
 	if (ac < 3) usage();
 
-	sprintf(imageFileName, "%s", av[1]);
-	sprintf(databaseFileName, "%s", av[2]);
+	snprintf(imageFileName, 256, "%s", av[1]);
+	snprintf(databaseFileName, 256, "%s", av[2]);
 
 	if (ac > 3) width=(int)atoi(av[3]);
 	if (ac > 4) height=(int)atoi(av[4]);
@@ -213,7 +213,7 @@ main(int ac, char *av[])
 	bu_log("Objects are %f with %f spacing\n", objectSize, cellSize);
 
 
-	sprintf(scratch, "%s Geometry Image", imageFileName);
+	snprintf(scratch, 256, "%s Geometry Image", imageFileName);
 	mk_id(db_fp, scratch); /* create the database header record */
 
 	/* make a region that is the union of these two objects

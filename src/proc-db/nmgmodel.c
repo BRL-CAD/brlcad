@@ -88,11 +88,11 @@ int parse_args(int ac, char **av)
 	else
 		++progname;
 
-	strcpy(plotfilename, progname);
-	strcat(plotfilename, ".pl");
+	strncpy(plotfilename, progname, 1024-1);
+	strncat(plotfilename, ".pl", 1024-strlen(plotfilename)-1);
 
-	strcpy(mfilename, progname);
-	strcat(mfilename, ".g");
+	strncpy(mfilename, progname, 1024-1);
+	strncat(mfilename, ".g", 1024-strlen(mfilename)-1);
 
 	/* Turn off bu_getopt's error messages */
 	bu_opterr = 0;

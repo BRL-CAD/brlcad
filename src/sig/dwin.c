@@ -67,7 +67,7 @@ void	bartwin(double *data, int L);
 void	hamwin(double *data, int length);
 void	coswin(double *data, int length, double percent);
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
   -w  apply window (80%% split Cosine)\n\
   -h  apply Hamming window\n\
@@ -82,8 +82,7 @@ int main(int argc, char **argv)
 	int	L, step;
 
 	if( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	while( argc > 1 ) {

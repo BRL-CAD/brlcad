@@ -2359,7 +2359,7 @@ f_bomb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 	bu_vls_init(&vls);
 	bu_vls_from_argv(&vls, argc, argv);
-	snprintf(buffer, 1024, bu_vls_addr(&vls));
+	snprintf(buffer, 1024, "%s", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
 

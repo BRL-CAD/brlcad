@@ -46,7 +46,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 
 
-static char usage[] = "Usage: plline2 x1 y1 x2 y2 [r g b]\n";
+static const char usage[] = "Usage: plline2 x1 y1 x2 y2 [r g b]\n";
 
 int
 main(int argc, char **argv)
@@ -58,8 +58,7 @@ main(int argc, char **argv)
 	int	b = 0;
 
 	if( argc < 5 || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		bu_exit ( 1, NULL );
+		bu_exit(1, "%s", usage );
 	}
 
 	if( !isatty(fileno(stdin)) ) {

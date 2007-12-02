@@ -362,7 +362,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  strcpy(tmpfil, tmpfil_init);
+  strncpy(tmpfil, tmpfil_init, 17-1);
 #ifdef _WIN32
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
@@ -2074,7 +2074,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				}
 /*	nmg_end_dup(); */
 
-				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+				snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
 				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
@@ -2097,7 +2097,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				nmg_dup_face(fu, new_s);
 /*	nmg_end_dup(); */
 
-				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+				snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
 			}
@@ -2111,7 +2111,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				nmg_dup_loop(lu, new_s);
 				nmg_klu(lu);
 
-				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+				snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
 			}
@@ -2124,7 +2124,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				nmg_dup_edge(eu, new_s);
 				nmg_keu(eu);
 
-				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
+				snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
 				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return TCL_ERROR;

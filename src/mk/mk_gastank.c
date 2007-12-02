@@ -116,7 +116,7 @@ main(int argc, char **argv)
    /*  Find name of mged file to be created.  */
    (void)printf("Enter the mged file to be created (25 char max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%s",filemged);
+   (void)scanf("%26s",filemged);
 
    /*  Find the number of gas tanks to create.  */
    (void)printf("Enter the number of gas tanks to create (26 max).\n\t");

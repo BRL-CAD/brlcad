@@ -36,7 +36,7 @@ short	ibuf[1024] = {0};
 
 int	verbose = 0;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: ihist [-v] < shorts\n";
 
 int main(int argc, char **argv)
@@ -55,8 +55,7 @@ int main(int argc, char **argv)
 		argv++;
 	}
 	if( argc > 1 || isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	num = 0;

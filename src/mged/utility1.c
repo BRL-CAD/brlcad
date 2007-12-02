@@ -185,7 +185,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   argc -= (bu_optind - 1);
   argv += (bu_optind - 1);
 
-  strcpy(tmpfil, tmpfil_init);
+  strncpy(tmpfil, tmpfil_init, 17-1);
 #ifdef _WIN32
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
@@ -334,7 +334,7 @@ int
 f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   int item, air, mat, los;
-  char name[MAX_LEVELS * NAMESIZE];
+  char name[256];
   char line[LINELEN];
   char *cp;
   FILE *fp;
@@ -363,7 +363,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   while(bu_fgets( line , LINELEN, fp ) != NULL){
 	  int changed;
 
-    if(sscanf(line, "%d%d%d%d%s", &item, &air, &mat, &los, name) != 5)
+    if(sscanf(line, "%d%d%d%d%256s", &item, &air, &mat, &los, name) != 5)
       continue; /* not useful */
 
     /* skip over the path */
@@ -991,7 +991,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int
 					Tcl_AppendResult(interp, tree_list[i].tl_tree->tr_l.tl_name,
 						"describe error\n" , (char *)NULL );
 				}
-				(void)fprintf( tabptr, bu_vls_addr(&tmp_vls));
+				fprintf( tabptr, "%s", bu_vls_addr(&tmp_vls));
 				bu_vls_free( &tmp_vls );
 			}
 			if( nsoltemp && (sol_dp->d_flags & DIR_SOLID) )

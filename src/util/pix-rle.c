@@ -176,23 +176,23 @@ main(int argc, char **argv)
 	outrle.comments = (const char **)0;
 
 	/* Add comments to the header file, since we have one */
-	sprintf( comment, "converted_from=%s", infile );
+	snprintf( comment, 128, "converted_from=%s", infile );
 	rle_putcom( strdup(comment), &outrle );
 	now = time(0);
 	sprintf( comment, "converted_date=%24.24s", ctime(&now) );
 	rle_putcom( strdup(comment), &outrle );
 	if( (who = getenv("USER")) != (char *)0 ) {
-		sprintf( comment, "converted_by=%s", who);
+		snprintf( comment, 128, "converted_by=%s", who);
 		rle_putcom( strdup(comment), &outrle );
 	} else {
 		if( (who = getenv("LOGNAME")) != (char *)0 ) {
-			sprintf( comment, "converted_by=%s", who);
+			snprintf( comment, 128, "converted_by=%s", who);
 			rle_putcom( strdup(comment), &outrle );
 		}
 	}
 #ifdef HAVE_GETHOSTNAME
 	gethostname( host, sizeof(host) );
-	sprintf( comment, "converted_host=%s", host);
+	snprintf( comment, 128, "converted_host=%s", host);
 	rle_putcom( strdup(comment), &outrle );
 #endif
 

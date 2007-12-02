@@ -154,7 +154,7 @@ char	strarg[512];		/* string buffer */
 int	seenscale = 0;
 int	expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek screen */
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
 
 int
@@ -178,8 +178,7 @@ main(int argc, char **argv)
 	}
 	/* Stdout may be a genuine Tektronix! */
 	if( isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		bu_exit ( 1, NULL );
+		bu_exit(1, "%s", usage );
 	}
 
 	/* Assume default space, in case one is not provided */

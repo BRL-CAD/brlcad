@@ -52,7 +52,7 @@ double	ibuf[2*MAXM];		/* impulse response */
 
 void	mult(double *o, double *b, int n);
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: dconv filter < doubles > doubles\n\
  XXX Warning: kernal size must be 2^i - 1\n";
 
@@ -67,8 +67,7 @@ int main(int argc, char **argv)
 	L = N - M + 1;	/* number of "good" points per section */
 
 	if( argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 #ifdef never

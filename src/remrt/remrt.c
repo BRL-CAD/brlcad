@@ -731,7 +731,7 @@ read_rc_file(void)
 	}
 
 	if( (home = getenv("HOME")) != NULL )  {
-		sprintf( path, "%s/.remrtrc", home );
+		snprintf( path, 128, "%s/.remrtrc", home );
 		if( (fp = fopen( path, "r" )) != NULL )  {
 			source(fp);
 			fclose(fp);
@@ -1474,7 +1474,7 @@ create_outputfilename( struct frame *fr )
 
 	/* Always create a file name to write into */
 	if( outputfile )  {
-		sprintf( name, "%s.%ld", outputfile, fr->fr_number );
+		snprintf( name, 512, "%s.%ld", outputfile, fr->fr_number );
 		fr->fr_tempfile = 0;
 	} else {
 		sprintf( name, "remrt.pix.%ld", fr->fr_number );
@@ -1551,9 +1551,9 @@ frame_is_done(register struct frame *fr)
 	/* Run global end-of-frame script from 'EOFrame' in .remrtrc file */
 	if (frame_script) {
 		char *cmd;
-		cmd = malloc(strlen(frame_script) + strlen(fr->fr_filename) +
-		    20); /* spaces and frame number */
-		(void) sprintf(cmd,"%s %s %ld",frame_script,fr->fr_filename,
+		int len = strlen(frame_script) + strlen(fr->fr_filename) + 20;
+		cmd = malloc(len); /* spaces and frame number */
+		snprintf(cmd, len, "%s %s %ld",frame_script,fr->fr_filename,
 		    fr->fr_number);
 		if(rem_debug) bu_log("%s %s\n", stamp(), cmd);
 		(void) system(cmd);
@@ -2085,13 +2085,13 @@ read_matrix(register FILE *fp, register struct frame *fr)
 	CHECK_FRAME(fr);
 
 	/* Visible part is from -1 to +1 in view space */
-	if( fscanf( fp, "%s", number ) != 1 )  goto eof;
-	sprintf( cmd, "viewsize %s; eye_pt ", number );
+	if( fscanf( fp, "%128s", number ) != 1 )  goto eof;
+	snprintf( cmd, 128, "viewsize %s; eye_pt ", number );
 	bu_vls_strcat( &(fr->fr_cmd), cmd );
 
 	for( i=0; i<3; i++ )  {
-		if( fscanf( fp, "%s", number ) != 1 )  goto out;
-		sprintf( cmd, "%s ", number );
+		if( fscanf( fp, "%128s", number ) != 1 )  goto out;
+		snprintf( cmd, 128, "%s ", number );
 		bu_vls_strcat( &fr->fr_cmd, cmd );
 	}
 
@@ -2099,8 +2099,8 @@ read_matrix(register FILE *fp, register struct frame *fr)
 	bu_vls_strcat( &fr->fr_cmd, cmd );
 
 	for( i=0; i < 16; i++ )  {
-		if( fscanf( fp, "%s", number ) != 1 )  goto out;
-		sprintf( cmd, "%s ", number );
+		if( fscanf( fp, "%128s", number ) != 1 )  goto out;
+		snprintf( cmd, 128, "%s ", number );
 		bu_vls_strcat( &fr->fr_cmd, cmd );
 	}
 	bu_vls_strcat( &fr->fr_cmd, "; ");
@@ -2895,7 +2895,7 @@ host_helper(FILE *fp)
 		loc_db[0] = '\0';
 		rem_db[0] = '\0';
 		rem_dir[0] = '\0';
-		cnt = sscanf( line, "%s %d %s %s %s",
+		cnt = sscanf( line, "%128s %d %128s %128s %128s",
 			host, &port, rem_dir, loc_db, rem_db );
 		if( cnt != 3 && cnt != 5 )  {
 			bu_log("host_helper: cnt=%d, aborting\n", cnt);
@@ -2903,7 +2903,7 @@ host_helper(FILE *fp)
 		}
 
 		if( cnt == 3 )  {
-			sprintf(cmd,
+		    snprintf(cmd, 128, 
 				"cd %s; rtsrv %s %d",
 				rem_dir, our_hostname, port );
 			if(rem_debug)  {
@@ -2940,7 +2940,7 @@ host_helper(FILE *fp)
 				(void)wait(0);
 			}
 		} else {
-			sprintf(cmd,
+		    snprintf(cmd, 128, 
 			 "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
 				loc_db,
 				RSH, host,

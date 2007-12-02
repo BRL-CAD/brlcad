@@ -63,7 +63,7 @@ void	init_buffer(int scanlen), fill_buffer(int y);
 
 FILE	*ifp, *ofp;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: bwcrop in.bw out.bw (I prompt!)\n\
    or  bwcrop in.bw out.bw inwidth outwidth outheight\n\
 	ulx uly urx ury lrx lry llx lly\n";
@@ -76,8 +76,7 @@ main(int argc, char **argv)
 	char	value;
 
 	if (argc < 3) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 	if ((ifp = fopen(argv[1], "r")) == NULL) {
 		fprintf( stderr, "bwcrop: can't open %s\n", argv[1] );

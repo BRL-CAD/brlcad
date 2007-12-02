@@ -37,7 +37,7 @@
 
 #define	COMMENT_CHAR	'#'
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: a-d [values] < ascii > doubles\n";
 
 int main(int argc, char **argv)
@@ -46,8 +46,7 @@ int main(int argc, char **argv)
 	int	i;
 
 	if( isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	if( argc > 1 ) {

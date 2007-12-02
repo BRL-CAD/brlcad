@@ -48,7 +48,7 @@ main(void)
 
   pl_3space( stdout, -32768,  -32768,  -32768, 32767, 32767, 32767 );
   while( !feof(stdin) )  {
-    if( scanf( "%d %d %s", &npts, &z, name ) != 3 )  break;
+    if( scanf( "%d %d %128s", &npts, &z, name ) != 3 )  break;
     for( i=0; i<npts; i++ )  {
       if( scanf( "%d %d", &x, &y ) != 2 )
 	fprintf(stderr,"bad xy\n");

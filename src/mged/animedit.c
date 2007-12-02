@@ -3074,12 +3074,9 @@ hold_point_to_string(struct hold_point *hp)
 	case ID_JOINT:
 		(void)hold_point_location(loc,hp);
 		path = db_path_to_string(&hp->path);
-		sprintf(text,"%s (%g %g %g)", path, loc[X], loc[Y], loc[Z]);
+		snprintf(text, HOLD_POINT_TO_STRING_LEN, "%s (%g %g %g)", path, loc[X], loc[Y], loc[Z]);
 		bu_free(path, "full path");
 		break;
-	}
-	if (strlen(text) > (unsigned)HOLD_POINT_TO_STRING_LEN) {
-		bu_exit(EXIT_FAILURE, "hold_point_to_string: over wrote memory!\n");
 	}
 	return text;
 }

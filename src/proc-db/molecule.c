@@ -126,7 +126,7 @@ read_data(void)
 		switch (data_type) {
 		case (0):
 			scanf("%d", &i);
-			scanf("%s", atom_list[i].a_name);
+			scanf("%128s", atom_list[i].a_name);
 			scanf("%d", &red);
 			scanf("%d", &green);
 			scanf("%d", &blue);

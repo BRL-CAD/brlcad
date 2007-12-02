@@ -108,7 +108,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	strcpy(tmpfil, tmpfil_init);
+	strncpy(tmpfil, tmpfil_init, 17-1);
 #ifdef _WIN32
 	(void)mktemp(tmpfil);
 	if ((fp = fopen(tmpfil, "w")) == NULL) {
@@ -127,7 +127,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 #endif
 
-	(void)fprintf( fp, hdr );
+	fprintf( fp, "%s", hdr );
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
 			mp->mt_low, mp->mt_high,

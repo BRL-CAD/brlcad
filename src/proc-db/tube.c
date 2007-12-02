@@ -477,7 +477,7 @@ build_cyl(char *cname, int npts, double radius)
 		VSET( a, 0, radius, 0 );
 		VSET( b, 0, 0, radius );
 
-		sprintf( name, "%s%d", cname, i );
+		snprintf( name, 32, "%s%d", cname, i );
 		mk_tgc( outfp, name, v, h, a, b, a, b );
 		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}

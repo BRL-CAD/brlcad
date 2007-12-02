@@ -60,7 +60,7 @@ static char	*red_tmpfil_init = "/tmp/GED.aXXXXXX";
 #else
 static char	*red_tmpfil_init = "C:\\GED.aXXXXXX";
 #endif
-static char	red_tmpcomb[16];
+static char	red_tmpcomb[17];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
 
@@ -807,7 +807,7 @@ checkcomb(void)
 	}
 
 	line[++i] = '\0';
-	strcpy( lineCopy, line );
+	strncpy( lineCopy, line, RT_MAXLINE-1 );
 
 	/* skip leading white space */
 	i = (-1);
@@ -952,7 +952,7 @@ checkcomb(void)
 
 		    len = strlen( ptr );
 		    name_v5 = (char *)bu_malloc( len + 1, "name_v5" );
-		    strcpy( name_v5, ptr );
+		    strncpy( name_v5, ptr, len );
 		    while( isspace( name_v5[len-1] ) ) {
 			len--;
 			name_v5[len] = '\0';
@@ -1450,8 +1450,8 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    strcpy(red_tmpfil, red_tmpfil_init);
-    strcpy(red_tmpcomb, red_tmpcomb_init);
+    strncpy(red_tmpfil, red_tmpfil_init, 17-1);
+    strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
     dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
     if(dp != DIR_NULL){
 	if( !(dp->d_flags & DIR_COMB) ){
@@ -1587,8 +1587,8 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    strcpy(red_tmpfil, red_tmpfil_init);
-    strcpy(red_tmpcomb, red_tmpcomb_init);
+    strncpy(red_tmpfil, red_tmpfil_init, 17-1);
+    strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
 
     dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
 

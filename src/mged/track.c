@@ -446,7 +446,7 @@ tryagain:	/* sent here to try next set of names */
 	temp2[2] = iw[1] + iw[2];
 	top(temp1, temp2, tr);
 	crname(solname, 10, 12);
-	strcpy(sol.s_name, solname, NAMESIZE-1);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -571,7 +571,7 @@ crname(char *name, int pos, int maxlen)
 	if( i > 99 )
 		j = 3;
 	itoa(i, temp, j);
-	strcat(name, temp, maxlen-strlen(name)-1);
+	strncat(name, temp, maxlen-strlen(name)-1);
 	return;
 }
 

@@ -90,7 +90,7 @@ main (int argc, char **argv)
 	switch (opt)
 	{
 	    case 'n':
-		(void) strcpy(rayname, bu_optarg);
+		strncpy(rayname, bu_optarg, BUF_LEN-1);
 		break;
 	    case 'r':
 		if (sscanf(bu_optarg, "%F", &ray_radius) != 1)

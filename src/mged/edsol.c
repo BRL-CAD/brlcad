@@ -2988,7 +2988,7 @@ sedit(void)
 					mged_print_result( TCL_ERROR );
 					return;
 				}
-				strcpy( ebm->file, fname );
+				strncpy( ebm->file, fname, RT_EBM_NAME_LEN-1 );
 			}
 
 			break;
@@ -3172,7 +3172,7 @@ sedit(void)
 					mged_print_result( TCL_ERROR );
 					return;
 				}
-				strcpy( vol->file, fname );
+				strncpy( vol->file, fname, RT_VOL_NAME_LEN-1 );
 			}
 
 			break;

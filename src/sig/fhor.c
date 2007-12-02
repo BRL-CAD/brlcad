@@ -370,7 +370,7 @@ int main()
 }
 #endif
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
 int main(int argc, char **argv)
@@ -385,8 +385,7 @@ int main(int argc, char **argv)
 	}
 
 	if( isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	fhinit();

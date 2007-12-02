@@ -652,7 +652,7 @@ main(int argc, char **argv)
 	fb_view( fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 
 	/* Read spectrum definition */
-	sprintf( spectrum_name, "%s.spect", datafile_basename );
+	snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
 		bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");

@@ -126,7 +126,7 @@ mk_solid(char *name, fastf_t dist)
     sp -> magic = SOL_NAME_DIST_MAGIC;
     sp -> name = (char *)
 	    bu_malloc(strlen(name) + 1, "solid name");
-    (void) strcpy(sp -> name, name);
+    strncpy(sp -> name, name, strlen(name));
     sp -> dist = dist;
     return (sp);
 }

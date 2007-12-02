@@ -47,7 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	MAX_BYTES	(128*1024)
 
-char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\n";
+static const char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\n";
 
 int	bytes_in_buf, copies_per_buf;
 
@@ -61,8 +61,7 @@ main(int argc, char **argv)
 	register unsigned char *bp;
 
 	if( argc < 1 || isatty(fileno(stdout)) ) {
-		fprintf( stderr, Usage );
-		exit( 1 );
+		bu_exit(1, "%s", Usage );
 	}
 
 	count = -1;
@@ -85,8 +84,7 @@ main(int argc, char **argv)
 		/* get values from stdin */
 		len = fread( (char *)buf, 1, MAX_BYTES, stdin );
 		if( len <= 0 ) {
-			fprintf( stderr, Usage );
-			exit( 2 );
+			bu_exit(2, "%s", Usage );
 		}
 	} else {
 		/* assume black */

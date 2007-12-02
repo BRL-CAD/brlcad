@@ -141,8 +141,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 	if( argc < 2 || isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 	desired_frame = atoi(argv[1]);
 	current_frame = 0;

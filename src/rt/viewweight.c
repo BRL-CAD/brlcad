@@ -136,10 +136,10 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
     densityfile = bu_calloc( i, 1, "densityfile");
 
-    sprintf(densityfile, "%s/%s", curdir, DENSITY_FILE);
+    snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 
     if( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
-	sprintf(densityfile, "%s/%s", homedir, DENSITY_FILE);
+	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
 	if( (densityfp=fopen( densityfile, "r" )) == (FILE *) 0 ) {
 	    perror( densityfile );
 	    bu_exit( -1, NULL );

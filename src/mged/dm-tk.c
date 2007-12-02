@@ -122,7 +122,7 @@ tk_fb_open(void)
 
 	*fbp = tk_interface; /* struct copy */
 	fbp->if_name = malloc((unsigned)strlen(Tk_name) + 1);
-	(void)strcpy(fbp->if_name, Tk_name);
+	strncpy(fbp->if_name, Tk_name, strlen(Tk_name));
 
 	/* Mark OK by filling in magic number */
 	fbp->if_magic = FB_MAGIC;

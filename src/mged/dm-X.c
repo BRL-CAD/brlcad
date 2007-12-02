@@ -123,7 +123,7 @@ X_fb_open(void)
 
 	*fbp = X24_interface; /* struct copy */
 	fbp->if_name = bu_malloc((unsigned)strlen(X_name) + 1, "if_name");
-	(void)strcpy(fbp->if_name, X_name);
+	strncpy(fbp->if_name, X_name, strlen(X_name));
 
 	/* Mark OK by filling in magic number */
 	fbp->if_magic = FB_MAGIC;

@@ -58,7 +58,7 @@ struct cmap {
 } cmap[4096];
 
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: sgi-pix [x1 x2 y1 y2] [outfile]\n";
 
 
@@ -207,8 +207,7 @@ main(int argc, char *argv[])
 #  endif
 
     if(!(argc==1 || argc==2 || argc==5 || argc==6)) {
-	fprintf(stderr,usage);
-	exit(1);
+	bu_exit(1, "%s", usage);
     }
     if( argc > 4 ) {
 	x1 = atoi(argv[1]);
@@ -236,9 +235,8 @@ main(int argc, char *argv[])
 	exit(2);
     }
     if( isatty(fileno(ofp)) ) {
-	fprintf(stderr,"sgi-pix: refuse to send binary output to terminal\n");
-	fprintf(stderr,usage);
-	exit(1);
+	fprintf(stderr, "%s", usage);
+	bu_exit(1, "sgi-pix: refuse to send binary output to terminal\n");
     }
 
     /* Convert rectangle edges to origin and size */

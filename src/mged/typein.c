@@ -987,7 +987,7 @@ ebm_in(char **cmd_argvs, struct rt_db_internal *intern)
 	intern->idb_ptr = (genptr_t)ebm;
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
-	strcpy( ebm->file, cmd_argvs[3] );
+	strncpy( ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN-1 );
 	ebm->xdim = atoi( cmd_argvs[4] );
 	ebm->ydim = atoi( cmd_argvs[5] );
 	ebm->tallness = atof( cmd_argvs[6] ) * local2base;
@@ -1138,8 +1138,8 @@ hf_in(char **cmd_argvs, struct rt_db_internal *intern)
 	intern->idb_ptr = (genptr_t)hf;
 	hf->magic = RT_HF_INTERNAL_MAGIC;
 
-	strcpy( hf->cfile, cmd_argvs[3] );
-	strcpy( hf->dfile, cmd_argvs[4] );
+	strncpy( hf->cfile, cmd_argvs[3], 128-1 );
+	strncpy( hf->dfile, cmd_argvs[4], 128-1 );
 	strncpy( hf->fmt, cmd_argvs[5], 7 );
 	hf->fmt[7] = '\0';
 	hf->w = atoi( cmd_argvs[6] );
@@ -1202,7 +1202,7 @@ vol_in(char **cmd_argvs, struct rt_db_internal *intern)
 	intern->idb_ptr = (genptr_t)vol;
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
 
-	strcpy( vol->file, cmd_argvs[3] );
+	strncpy( vol->file, cmd_argvs[3], RT_VOL_NAME_LEN-1 );
 	vol->xdim = atoi( cmd_argvs[4] );
 	vol->ydim = atoi( cmd_argvs[5] );
 	vol->zdim = atoi( cmd_argvs[6] );

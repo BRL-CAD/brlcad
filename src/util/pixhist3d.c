@@ -65,7 +65,7 @@ unsigned char ibuf[8*1024*3];
 
 void	disp_array(long int (*v)[256], int xoff, int yoff);
 
-static char *Usage = "usage: pixhist3d [file.pix]\n";
+static const char *Usage = "usage: pixhist3d [file.pix]\n";
 
 int
 main(int argc, char **argv)
@@ -74,16 +74,14 @@ main(int argc, char **argv)
 
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1], "r")) == NULL ) {
-			fprintf( stderr, "pixhist3d: can't open \"%s\"\n", argv[1] );
-			fprintf( stderr, Usage );
-			exit( 1 );
+			fprintf( stderr, "%s", Usage );
+			bu_exit(1, "pixhist3d: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		fp = stdin;
 
 	if( isatty(fileno(fp)) ) {
-		fprintf( stderr, Usage );
-		exit( 2 );
+		bu_exit(2, "%s", Usage );
 	}
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {

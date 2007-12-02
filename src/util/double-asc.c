@@ -113,7 +113,7 @@ get_args(int argc, register char **argv)
 		    bu_free(format, "format_string");
 		format = (char *)
 			    bu_malloc(strlen(bu_optarg) + 1, "format string");
-		strcpy(format, bu_optarg);
+		strncpy(format, bu_optarg, strlen(bu_optarg));
 		break;
 	    case '#':
 		d_per_l = atoi(bu_optarg);

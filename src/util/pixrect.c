@@ -60,7 +60,7 @@ static int 	xnum  = 0;
 static int 	ynum  = 0;
 static int 	bytes_per_pixel = 3;	/* Default for RGB */
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: pixrect -w in_width -n in_height -W out_width -N out_height\n\
 	       [-x xoffset] [-y yoffset] [-# bytes] [infile.pix]\n\
   or   pixrect [-# bytes] infile outfile (I prompt!)\n";
@@ -130,14 +130,12 @@ get_args(register int argc, register char **argv)
 
 		/* Obtain file pointers */
 		if ((ifp = fopen(argv[argc-2], "r")) == NULL) {
-			fprintf(stderr,"pixrect: can't open %s\n", argv[argc-1]);
-			fprintf(stderr,usage);
-			bu_exit (2, NULL);
+			fprintf(stderr, "%s", usage);
+			bu_exit(2,"pixrect: can't open %s\n", argv[argc-1]);
 		}
 		if ((ofp = fopen(argv[argc-1], "w")) == NULL) {
-			fprintf(stderr,"pixrect: can't open %s\n", argv[argc]);
-			fprintf(stderr, usage);
-			bu_exit (3, NULL);
+			fprintf(stderr, "%s", usage);
+			bu_exit(3, "pixrect: can't open %s\n", argv[argc]);
 		}
 
 		/* Get info */
@@ -151,9 +149,8 @@ get_args(register int argc, register char **argv)
 
 	/* Make sure nessecary variables set */
 	if (linelen <= 0 || xnum <= 0 || ynum <= 0) {
-		fprintf(stderr, "pixrect: args for -w -W -N [-S] must be > 0\n");
-		fprintf(stderr, usage);
-		bu_exit (1, NULL);
+		fprintf(stderr, "%s", usage);
+		bu_exit(1, "pixrect: args for -w -W -N [-S] must be > 0\n");
 	}
 
 	if (inputmode == COMMAND_LINE) {
@@ -202,8 +199,7 @@ main(register int argc, register char **argv)
 	long	offset;
 
 	if (!get_args(argc,argv)) {
-		fprintf(stderr, usage);
-		bu_exit (1, NULL);
+		bu_exit(1, "%s", usage);
 	}
 
 	outbytes = xnum * bytes_per_pixel;

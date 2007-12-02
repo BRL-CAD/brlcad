@@ -127,16 +127,16 @@ old_frame(FILE *fp)
 	char number[128];
 
 	/* Visible part is from -1 to +1 in view space */
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	viewsize = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	eye_model[X] = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	eye_model[Y] = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	if( fscanf( fp, "%128s", number ) != 1 )  return(-1);
 	eye_model[Z] = atof(number);
 	for( i=0; i < 16; i++ )  {
-		if( fscanf( fp, "%s", number ) != 1 )
+		if( fscanf( fp, "%128s", number ) != 1 )
 			return(-1);
 		Viewrotscale[i] = atof(number);
 	}
@@ -718,9 +718,9 @@ do_frame(int framenumber)
 	 */
 	if( outputfile != (char *)0 )  {
 		if( framenumber <= 0 )  {
-			sprintf( framename, outputfile );
+			snprintf( framename, 128, "%s", outputfile );
 		}  else  {
-			sprintf( framename, "%s.%d", outputfile, framenumber );
+			snprintf( framename, 128, "%s.%d", outputfile, framenumber );
 		}
 #ifdef HAVE_UNIX_IO
 		/*

@@ -88,12 +88,12 @@ void addtext(struct frame *fp, char *tp)
 		*p = '\0';
 
 		if (fp->text) {
-			strcpy(p,fp->text);
+			strncpy(p,fp->text, fp->tl-1);
 			bu_free(fp->text,"text area");
 		}
 		fp->text = p;
 	}
-	strcat(&fp->text[fp->tp], tp);
+	strncat(&fp->text[fp->tp], tp, fp->tl-strlen(p)-1);
 	if (*tp == ';') {
 		strcat(&fp->text[fp->tp], "\n");
 	} else {

@@ -408,7 +408,7 @@ int get_args( int argc, register char **argv )
 					item= strtok(NULL,",");
 					pmargs[8]= item ? atof(item) : 1.0;		/* Scale Lumens */
 					item= strtok(NULL,",");
-					if (item) { strcpy(pmfile,item); } else { pmfile[0]= 0; }
+					if (item) { strncpy(pmfile,item, 255-1); } else { pmfile[0]= 0; }
 /*					item ? strcpy(pmfile,item) : pmfile[0]= 0;*/	/* Scale Lumens */
 				}
 			}

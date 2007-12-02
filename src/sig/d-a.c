@@ -32,7 +32,7 @@
 
 int	nflag = 0;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: d-a [-n] < doubles > ascii\n";
 
 int main(int argc, char **argv)
@@ -48,8 +48,7 @@ int main(int argc, char **argv)
 		argv++;
 	}
 	if( argc > 1 || isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	if( nflag ) {

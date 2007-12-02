@@ -174,11 +174,11 @@ make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct 
 	VSUB2( omin, imin, thickness );
 	VADD2( omax, imax, thickness );
 
-	sprintf( name, "o%s", rname );
+	snprintf( name, 32, "o%s", rname );
 	mk_rpp( outfp, name, omin, omax );
 	(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 
-	sprintf( name, "i%s", rname );
+	snprintf( name, 32, "i%s", rname );
 	mk_rpp( outfp, name, imin, imax );
 	mk_addmember( name, &head.l, NULL, WMOP_SUBTRACT );
 
@@ -229,22 +229,22 @@ make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bi
 		switch( mask )  {
 		case SOUTH:
 			/* South (-Y) wall */
-			sprintf( name, "S%s", rname );
+			snprintf( name, 32, "S%s", rname );
 			wmax[Y] = imin[Y];
 			break;
 		case WEST:
 			/* West (-X) wall */
-			sprintf( name, "W%s", rname );
+			snprintf( name, 32, "W%s", rname );
 			wmax[X] = imin[X];
 			break;
 		case NORTH:
 			/* North (+Y) wall */
-			sprintf( name, "N%s", rname );
+			snprintf( name, 32, "N%s", rname );
 			wmin[Y] = imax[Y];
 			break;
 		case EAST:
 			/* East (+X) wall */
-			sprintf( name, "E%s", rname );
+			snprintf( name, 32, "E%s", rname );
 			wmin[X] = imax[X];
 			break;
 		}
@@ -273,10 +273,10 @@ make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct 
 
 	BU_LIST_INIT( &head.l );
 
-	sprintf( pilname, "%s%d,%d", prefix, ix, iy );
-	sprintf( rname, "%s.r", pilname );
-	sprintf( sname, "%s.s", pilname );
-	sprintf( oname, "Obj%d,%d", ix, iy );
+	snprintf( pilname, 32, "%s%d,%d", prefix, ix, iy );
+	snprintf( rname, 32, "%s.r", pilname );
+	snprintf( sname, 32, "%s.s", pilname );
+	snprintf( oname, 32, "Obj%d,%d", ix, iy );
 
 	VMOVE( min, center );
 	min[X] -= lwh[X];
@@ -310,8 +310,8 @@ make_carpet(char *rname, fastf_t *min, fastf_t *max, char *file, struct wmember 
 	cmax[Z] = cmin[Z] + 10;		/* not very plush carpet */
 	min[Z] = cmax[Z];		/* raise the caller's floor */
 
-	sprintf( sname, "%s.s", rname );
-	sprintf( args, "texture file=%s;plastic", file );
+	snprintf( sname, 32, "%s.s", rname );
+	snprintf( args, 128, "texture file=%s;plastic", file );
 	mk_rpp( outfp, sname, cmin, cmax );
 	mk_region1( outfp, rname, sname,
 		"stack", args,

@@ -43,6 +43,8 @@ a_d_SOURCES = a-d.c
 a_d_LDADD = ${BU}
 
 d_a_SOURCES = d-a.c
+d_a_LDADD = ${BU}
+
 i_d_SOURCES = i-d.c
 d_i_SOURCES = d-i.c
 d_u_SOURCES = d-u.c
@@ -54,7 +56,7 @@ f_i_SOURCES = f-i.c
 i_f_SOURCES = i-f.c
 
 c_d_SOURCES = c-d.c
-c_d_LDADD = ${LIBM}
+c_d_LDADD = ${BU} ${LIBM}
 
 i_a_SOURCES = i-a.c
 u_a_SOURCES = u-a.c
@@ -77,7 +79,7 @@ dfft_SOURCES = dfft.c interp.c butter.c
 dfft_LDADD = ${FFT} ${BU}
 
 dconv_SOURCES = dconv.c
-dconv_LDADD = ${FFT}
+dconv_LDADD = ${BU} ${FFT}
 
 ddisp_SOURCES = ddisp.c
 ddisp_LDADD = ${FB}
@@ -98,6 +100,7 @@ dstat_SOURCES = dstat.c
 dstat_LDADD = ${LIBM}
 
 dsel_SOURCES = dsel.c
+dsel_LDADD = ${BU}
 
 istat_SOURCES = istat.c
 istat_LDADD = ${BU}
@@ -109,13 +112,19 @@ ustat_LDADD = ${BU}
 #  Experimental
 
 dpeak_SOURCES = dpeak.c
+dpeak_LDADD = ${BU}
 
 syn_SOURCES = syn.c
-syn_LDADD = ${LIBM}
+syn_LDADD = ${BU} ${LIBM}
 
 damdf_SOURCES = damdf.c
+damdf_LDADD = ${BU}
+
 dauto2_SOURCES = dauto2.c
+dauto2_LDADD = ${BU}
+
 ihist_SOURCES = ihist.c
+ihist_LDADD = ${BU}
 
 # XXX need to review why these are not built
 EXTRA_DIST = \

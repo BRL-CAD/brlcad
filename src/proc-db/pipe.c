@@ -128,12 +128,12 @@ Make_name(char *ptr, char *form, char *base, int number)
 	char scrat[NAMESIZE];
 	int len;
 
-	strcpy( ptr , base );
-	sprintf( scrat , form , number );
+	strncpy( ptr , base, NAMESIZE-1 );
+	snprintf( scrat, NAMESIZE, form , number );
 	len = strlen( ptr ) + strlen( scrat );
 	if( len > (NAMESIZE-1) )
 		ptr[ (NAMESIZE-1) - strlen( scrat ) ] = '\0';
-	strcat( ptr , scrat );
+	strncat( ptr , scrat, NAMESIZE-strlen(ptr)-1 );
 }
 
 void
@@ -718,7 +718,7 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	strcpy( name , argv[bu_optind++] ); /* Base name for objects */
+	strncpy( name , argv[bu_optind++], NAMESIZE-1 ); /* Base name for objects */
 
 	fdout = wdb_fopen( argv[bu_optind] );
 	if( fdout == NULL )
@@ -808,7 +808,7 @@ main(int argc, char **argv)
 
 /*	Generate Title */
 
-	strcpy(fname,name);
+	strncpy(fname,name, 80-1);
 	if( !cable )
 		strcat(fname," pipe and fluid");
 	else

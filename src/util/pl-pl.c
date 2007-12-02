@@ -141,7 +141,7 @@ int	noflush = 1;
 int	nocolor = 1;
 int	no3d = 1;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
 
 int
@@ -162,8 +162,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 	if( isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		return 1;
+		bu_exit(1, "%s", usage );
 	}
 
 	/* Assume default space, in case one is not provided */

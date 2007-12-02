@@ -253,6 +253,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 	    /* insert a new assembly? */
 	    if (!cellp->name) {
 		char *name;
+		int len;
 
 		/* sanity check */
 		if (cellp->assembly) {
@@ -260,8 +261,9 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 		    break;
 		}
 
-		name = (char *)bu_malloc(strlen(&buffer[l])+1, "increment_assembly_counter assembly name allocation");
-		strcpy(name, &buffer[l]);
+		len = strlen(&buffer[l])+1;
+		name = (char *)bu_malloc(len, "increment_assembly_counter assembly name allocation");
+		strncpy(name, &buffer[l], len-1);
 		cellp->name = name;
 		if (type == EXPOSED_AREA) {
 		    cellp->exposures++;

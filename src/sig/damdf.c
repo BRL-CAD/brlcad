@@ -36,7 +36,7 @@
 double	data[BSIZE];		/* Input buffer */
 double	r[BSIZE];
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: damdf [window_size (512)] < doubles\n";
 
 int main(int argc, char **argv)
@@ -46,8 +46,7 @@ int main(int argc, char **argv)
 	register double	d;
 
 	if( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	L = (argc > 1) ? atoi(argv[1]) : 512;

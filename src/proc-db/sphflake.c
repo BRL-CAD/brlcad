@@ -284,7 +284,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
       len = strlen(input);
       if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
       if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-	sscanf(input, "%s", p->fileName);
+	  sscanf(input, "%48s", p->fileName); /* MAX_INPUT_LENGTH */
       }
     }
     fflush(stdin);
@@ -356,7 +356,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	len = strlen(input);
 	if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-	  sscanf(input, "%s", p->matArray[i].name);
+	    sscanf(input, "%48s", p->matArray[i].name); /* MAX_INPUT_LENGTH */
 	}
       }
       fflush(stdin);
@@ -370,7 +370,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	len = strlen(input);
 	if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-	  sscanf(input, "%s", p->matArray[i].params);
+	    sscanf(input, "%48s", p->matArray[i].params); /* MAX_INPUT_LENGTH */
 	}
       }
       fflush(stdin);

@@ -478,7 +478,7 @@ void
 mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
 {
 	struct wmember *wm;
-	(void)sprintf(sol_name, "s.%s.%d", obj_name, sol_num++);
+	snprintf(sol_name, 64, "s.%s.%d", obj_name, sol_num++);
 
 	mk_arb8(fd, sol_name, &pts[0][X]);
 	wm = mk_addmember(sol_name, &(wm_hd->l), NULL, WMOP_UNION);
@@ -852,7 +852,7 @@ frame(struct rt_wdb *fd)
 
 
 	/* put all the studding in a region */
-	(void)sprintf(sol_name, "r.%s.studs", obj_name);
+	snprintf(sol_name, 64, "r.%s.studs", obj_name);
 	mk_lcomb(fd, sol_name, &wm_hd, 1,
 		stud_properties[0], stud_properties[1], color, 0);
 
@@ -880,7 +880,7 @@ sheetrock(struct rt_wdb *fd)
 	VSET(pts[6], WALL_WIDTH, sr_thick, WALL_HEIGHT);
 	VSET(pts[7], WALL_WIDTH, 0.0, WALL_HEIGHT);
 
-	(void)sprintf(sol_name, "s.%s.sr1", obj_name);
+	snprintf(sol_name, 64, "s.%s.sr1", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
 
@@ -894,12 +894,12 @@ sheetrock(struct rt_wdb *fd)
 		VSET(pts[6], op->ex, sr_thick+0.01,	op->ez);
 		VSET(pts[7], op->ex, -0.01,		op->ez);
 
-		(void)sprintf(sol_name, "s.%s.o.%d", obj_name, i++);
+		snprintf(sol_name, 64, "s.%s.o.%d", obj_name, i++);
 		mk_arb8(fd, sol_name, &pts[0][X]);
 		(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_SUBTRACT);
 	}
 
-	(void)sprintf(sol_name, "r.%s.sr1", obj_name);
+	snprintf(sol_name, 64, "r.%s.sr1", obj_name);
 	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 		color, 0);
 
@@ -942,7 +942,7 @@ mortar_brick(struct rt_wdb *fd)
 	VSET(pts[6], brick_width, brick_depth,	mortar_height+brick_height);
 	VSET(pts[7], brick_width, 0.0,		mortar_height+brick_height);
 
-	(void)sprintf(sol_name, "s.%s.b", obj_name);
+	snprintf(sol_name, 64, "s.%s.b", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 
 	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
@@ -967,7 +967,7 @@ mortar_brick(struct rt_wdb *fd)
 	VSET(pts[6], brick_width, brick_depth,	mortar_height);
 	VSET(pts[7], brick_width, 0.0,		mortar_height);
 
-	(void)sprintf(sol_name, "s.%s.vm", obj_name);
+	snprintf(sol_name, 64, "s.%s.vm", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 
 	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
@@ -989,7 +989,7 @@ mortar_brick(struct rt_wdb *fd)
 	VSET(pts[6], -mortar_width, brick_depth, mortar_height+brick_height);
 	VSET(pts[7], -mortar_width, 0.0,	 mortar_height+brick_height);
 
-	(void)sprintf(sol_name, "s.%s.vm", obj_name);
+	snprintf(sol_name, 64, "s.%s.vm", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 
 	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
@@ -1039,7 +1039,7 @@ brick(struct rt_wdb *fd)
 	VSET(pts[6], brick_width, brick_depth,	mortar_height+brick_height);
 	VSET(pts[7], brick_width, 0.0,		mortar_height+brick_height);
 
-	(void)sprintf(proto_brick, "s.%s.b", obj_name);
+	snprintf(proto_brick, 64, "s.%s.b", obj_name);
 	mk_arb8(fd, proto_brick, &pts[0][X]);
 	(void)mk_addmember(proto_brick, &wm_hd.l, NULL, WMOP_UNION);
 	*proto_brick = 'r';
@@ -1073,7 +1073,7 @@ int main(int ac, char **av)
 
 	if (ac < 2) usage((char *)NULL);
 
-	(void)sprintf(sol_name, "%s.g", progname);
+	snprintf(sol_name, 64, "%s.g", progname);
 	if ((db_fd = wdb_fopen(sol_name)) == (struct rt_wdb *)NULL) {
 		perror(sol_name);
 		return(-1);

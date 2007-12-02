@@ -277,7 +277,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 						BU_LIST_INIT( &new_comp->l );
 						length = strlen( ptr );
 						new_comp->muves_name = (char *)bu_malloc( length + 1, "muves_comp.name" );
-						strcpy( new_comp->muves_name, ptr );
+						strncpy( new_comp->muves_name, ptr, length );
 						BU_LIST_INIT( &new_comp->comp_head.l );
 					}
 
@@ -416,7 +416,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				new_sys = (struct muves_sys *)bu_malloc( sizeof( struct muves_sys ), "new_sys" );
 				length = strlen( &line[i] );
 				new_sys->muves_name = (char *)bu_malloc( length + 1, "new_sys->muves_name" );
-				strcpy( new_sys->muves_name, &line[i] );
+				strncpy( new_sys->muves_name, &line[i], length );
 				BU_LIST_INIT( &new_sys->member_head.l );
 				BU_LIST_APPEND( &muves_sys_head.l, &new_sys->l );
 			}

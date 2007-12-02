@@ -100,11 +100,11 @@ main (int argc, char *argv[])
 	{
 	    case 'd':
 		df_name = (char *) bu_malloc(strlen(bu_optarg) + 1, "df_name");
-		(void) strcpy(df_name, bu_optarg);
+		strncpy(df_name, bu_optarg, strlen(bu_optarg));
 		break;
 	    case 'c':
 		cf_name = (char *) bu_malloc(strlen(bu_optarg) + 1, "cf_name");
-		(void) strcpy(cf_name, bu_optarg);
+		strncpy(cf_name, bu_optarg, strlen(bu_optarg));
 		break;
 	    case '#':
 		if ((sscanf(bu_optarg, "%d.%d", &c_per_p, &d_per_p) != 2)

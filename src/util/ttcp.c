@@ -645,7 +645,7 @@ main(int argc, char **argv)
 	exit(0);
 
 usage:
-	fprintf(stderr,Usage);
+	fprintf(stderr, "%s", Usage);
 	exit(1);
 }
 

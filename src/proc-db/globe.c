@@ -136,7 +136,7 @@ main(int ac, char *av[])
 	  mk_addmember(name, &bigList.l, NULL, WMOP_UNION);
 
 		/* keep track of the last combination we made for the next iteration */
-	  sprintf(prevSolid, "%s", solidName);
+	  snprintf(prevSolid, 256, "%s", solidName);
 	}
 
 	/* make one final air region that comprises all the air regions */

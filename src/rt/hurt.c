@@ -684,36 +684,6 @@ int get_args( int argc, register char **argv )
 
 
 /*
- *			O L D _ F R A M E
- *
- *  Acquire particulars about a frame, in the old format.
- *  Returns -1 if unable to acquire info, 0 if successful.
- */
-int
-old_frame(FILE *fp)
-{
-    register int i;
-    char number[128];
-
-    /* Visible part is from -1 to +1 in view space */
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    viewsize = atof(number);
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    eye_model[X] = atof(number);
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    eye_model[Y] = atof(number);
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    eye_model[Z] = atof(number);
-    for( i=0; i < 16; i++ )  {
-	if( fscanf( fp, "%s", number ) != 1 )
-	    return(-1);
-	Viewrotscale[i] = atof(number);
-    }
-    return(0);		/* OK */
-}
-
-
-/*
  *			C M _ S T A R T
  *
  *  Process "start" command in new format input stream
@@ -1262,9 +1232,9 @@ do_frame(int framenumber)
      */
     if( outputfile != (char *)0 )  {
 	if( framenumber <= 0 )  {
-	    sprintf( framename, outputfile );
+	    snprintf( framename, 128, "%s", outputfile );
 	}  else  {
-	    sprintf( framename, "%s.%d", outputfile, framenumber );
+	    snprintf( framename, 128, "%s.%d", outputfile, framenumber );
 	}
 
 	/* Ordinary case for creating output file */

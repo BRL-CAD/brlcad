@@ -171,7 +171,7 @@ main(int argc, char **argv)
 	datafile_basename = argv[bu_optind];
 
 	/* Read spectrum definition */
-	sprintf( spectrum_name, "%s.spect", datafile_basename );
+	snprintf( spectrum_name, 100, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
 		bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");

@@ -116,7 +116,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if( not_state( ST_S_EDIT, "Primitive Text Edit" ) )
 	  return TCL_ERROR;
 
-	strcpy(tmpfil, tmpfil_init);
+	strncpy(tmpfil, tmpfil_init, 17-1);
 #ifdef _WIN32
 	(void)mktemp(tmpfil);
 	i=creat(tmpfil, 0600);
@@ -922,13 +922,13 @@ editit(const char *file)
 	    const char *binpath = bu_brlcad_root("bin", 1);
 	    editor = "jove";
 	    if (!binpath) {
-		sprintf(buffer, "%s/%s", binpath, editor);
+		snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
 		if (bu_file_exists(buffer)) {
 		    editor = buffer;
 		} else {
 		    const char *dirn = bu_dirname(bu_argv0());
 		    if (dirn) {
-			sprintf(buffer, "%s/%s", dirn, editor);
+			snprintf(buffer, RT_MAXLINE, "%s/%s", dirn, editor);
 			if (bu_file_exists(buffer)) {
 			    editor = buffer;
 			}
@@ -972,7 +972,7 @@ editit(const char *file)
 		    si.lpDesktop = NULL;
 		    si.dwFlags = 0;
 
-		    sprintf(buffer, "%s %s", editor, file);
+		    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
 
 		    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 		    WaitForSingleObject( pi.hProcess, INFINITE );

@@ -39,7 +39,7 @@ int	clip[BSIZE];		/* clipped buffer */
 int	out[BSIZE];
 double	r[BSIZE];
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: dauto2 [window_size (512)] < doubles\n";
 
 int main(int argc, char **argv)
@@ -49,8 +49,7 @@ int main(int argc, char **argv)
 	double	max1, max2, m, m2;
 
 	if( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	L = (argc > 1) ? atoi(argv[1]) : 512;

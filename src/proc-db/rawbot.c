@@ -107,17 +107,17 @@ int main( int argc, char *argv[] )
 		/* read a set of input values -- input data should be a 3-tuple
 		 * of floating points.
 		 */
-	  if (fscanf(inputFile, "%s", inputString) != 1) {
+	  if (fscanf(inputFile, "%512s", inputString) != 1) {
 			triangleAvailable = 0;
 			continue;
 		}
 		inputX = atof(inputString);
-		if (fscanf(inputFile, "%s", inputString) != 1) {
+		if (fscanf(inputFile, "%512s", inputString) != 1) {
 			triangleAvailable = 0;
 			continue;
 		}
 		inputY = atof(inputString);
-		if (fscanf(inputFile, "%s", inputString) != 1) {
+		if (fscanf(inputFile, "%512s", inputString) != 1) {
 			triangleAvailable = 0;
 			continue;
 		}

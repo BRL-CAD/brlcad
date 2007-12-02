@@ -53,7 +53,7 @@ static FILE	*fp_in;			/* input file pointer */
 static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
 
-static char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
+static const char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
 	options:\n\
 		v - verbose\n\
 		x - librt debug flag\n\
@@ -100,8 +100,7 @@ char	*argv[];
 			sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
-			exit(1);
+			bu_exit(1, usage, argv[0]);
 			break;
 		}
 	}

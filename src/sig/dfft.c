@@ -56,7 +56,7 @@ void	fftphase(double *dat, int N);
 void	rfft();
 void	LintoLog(double *in, double *out, int num);
 
-char usage[] = "\
+static const char usage[] = "\
 Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
   -d dB  minimum dB (default 120)\n\
   -l     log frequency scale\n\
@@ -72,8 +72,7 @@ int main(int argc, char **argv)
 	int	L = 1024;
 
 	if( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+		bu_exit(1, "%s", usage );
 	}
 
 	while( (c = bu_getopt(argc, argv, "d:clpLANh")) != EOF)
@@ -85,7 +84,7 @@ int main(int argc, char **argv)
 	    case 'L': linear_output++; break;
 	    case 'A': ascii_output++; break;
 	    case 'N': normalize_output++; break;
-	    case 'h': printf(usage); return EXIT_SUCCESS;
+	    case 'h': printf("%s", usage); return EXIT_SUCCESS;
 	    case ':': printf("Missing argument to %c\n%s\n", c, usage); return EXIT_FAILURE;
 	    case '?':
 	    default:  printf("Unknown argument: %c\n%s\n", c, usage); return EXIT_FAILURE;
