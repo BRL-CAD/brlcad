@@ -63,8 +63,14 @@ static struct track_solid
 	fastf_t s_values[24];
 } sol;
 
-void		crname(char *name, int pos), slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t), crdummy(fastf_t *w, fastf_t *t, int flag), trcurve(fastf_t *wh, fastf_t *t);
-void		bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t), top(fastf_t *vec1, fastf_t *vec2, fastf_t *t), crregion(char *region, char *op, int *members, int number, char *solidname), itoa(int n, char *s, int w);
+void crname(char *name, int pos, int maxlen);
+void slope(fastf_t *wh1, fastf_t *wh2, fastf_t *t);
+void crdummy(fastf_t *w, fastf_t *t, int flag);
+void trcurve(fastf_t *wh, fastf_t *t);
+void bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
+void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
+void crregion(char *region, char *op, int *members, int number, char *solidname, int maxlen);
+void itoa(int n, char *s, int w);
 
 /*
  *
@@ -313,8 +319,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 tryagain:	/* sent here to try next set of names */
 
 	for(i=0; i<11; i++) {
-		crname(solname, i);
-		crname(regname, i);
+		crname(solname, i, 12);
+		crname(regname, i, 12);
 		if(	(db_lookup( dbip, solname, LOOKUP_QUIET) != DIR_NULL)	||
 			(db_lookup( dbip, regname, LOOKUP_QUIET) != DIR_NULL)	) {
 			/* name already exists */
@@ -339,8 +345,8 @@ tryagain:	/* sent here to try next set of names */
 
 	slope(fw, iw, tr);
 	VMOVE(temp2, &sol.s_values[0]);
-	crname(solname, 1);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 1, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
 	if( wrobj(solname, DIR_SOLID) )
 	  return TCL_ERROR;
@@ -352,8 +358,8 @@ tryagain:	/* sent here to try next set of names */
 		sol.s_values[i] = 0.0;
 	sol.s_type = ID_TGC;
 	trcurve(iw, tr);
-	crname(solname, 2);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 2, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	if( wrobj( solname , DIR_SOLID ) )
 	  return TCL_ERROR;
 	solname[8] = '\0';
@@ -362,8 +368,8 @@ tryagain:	/* sent here to try next set of names */
 	sol.s_values[11] = iw[2];
 	VMOVE(&sol.s_values[12], &sol.s_values[6]);
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
-	crname(solname, 3);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 3, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	if( wrobj( solname , DIR_SOLID ) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -371,8 +377,8 @@ tryagain:	/* sent here to try next set of names */
 	/* find idler track dummy arb8 */
 	for(i=0; i<24; i++)
 		sol.s_values[i] = 0.0;
-	crname(solname, 4);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 4, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
 	crdummy(iw, tr, 1);
 	if( wrobj(solname,DIR_SOLID) )
@@ -384,8 +390,8 @@ tryagain:	/* sent here to try next set of names */
 		sol.s_values[i] = 0.0;
 	slope(lw, dw, tr);
 	VMOVE(temp1, &sol.s_values[0]);
-	crname(solname, 5);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 5, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	if(wrobj(solname,DIR_SOLID))
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -395,8 +401,8 @@ tryagain:	/* sent here to try next set of names */
 		sol.s_values[i] = 0.0;
 	sol.s_type = ID_TGC;
 	trcurve(dw, tr);
-	crname(solname, 6);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 6, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -406,8 +412,8 @@ tryagain:	/* sent here to try next set of names */
 	sol.s_values[11] = dw[2];
 	VMOVE(&sol.s_values[12], &sol.s_values[6]);
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
-	crname(solname, 7);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 7, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -415,8 +421,8 @@ tryagain:	/* sent here to try next set of names */
 	/* drive dummy arb8 */
 	for(i=0; i<24; i++)
 		sol.s_name[i] = 0.0;
-	crname(solname, 8);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 8, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
 	crdummy(dw, tr, 2);
 	if( wrobj(solname,DIR_SOLID) )
@@ -426,8 +432,8 @@ tryagain:	/* sent here to try next set of names */
 	/* track bottom */
 	temp1[1] = temp2[1] = tr[0];
 	bottom(temp1, temp2, tr);
-	crname(solname, 9);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 9, 12);
+	strncpy(sol.s_name, solname, NAMESIZE-1);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -439,8 +445,8 @@ tryagain:	/* sent here to try next set of names */
 	temp2[0] = iw[0];
 	temp2[2] = iw[1] + iw[2];
 	top(temp1, temp2, tr);
-	crname(solname, 10);
-	(void)strcpy(sol.s_name, solname);
+	crname(solname, 10, 12);
+	strcpy(sol.s_name, solname, NAMESIZE-1);
 	if( wrobj(solname,DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
@@ -455,48 +461,48 @@ tryagain:	/* sent here to try next set of names */
 	/* region 1 */
 	memb[0] = 1;
 	memb[1] = 4;
-	crname(regname, 1);
-	crregion(regname, oper, memb, 2, solname);
+	crname(regname, 1, 12);
+	crregion(regname, oper, memb, 2, solname, 12);
 	solname[8] = regname[8] = '\0';
 
 	/* region 2 */
-	crname(regname, 2);
+	crname(regname, 2, 12);
 	memb[0] = 2;
 	memb[1] = 3;
 	memb[2] = 4;
-	crregion(regname, oper, memb, 3, solname);
+	crregion(regname, oper, memb, 3, solname, 12);
 	solname[8] = regname[8] = '\0';
 
 	/* region 5 */
-	crname(regname, 5);
+	crname(regname, 5, 12);
 	memb[0] = 5;
 	memb[1] = 8;
-	crregion(regname, oper, memb, 2, solname);
+	crregion(regname, oper, memb, 2, solname, 12);
 	solname[8] = regname[8] = '\0';
 
 	/* region 6 */
-	crname(regname, 6);
+	crname(regname, 6, 12);
 	memb[0] = 6;
 	memb[1] = 7;
 	memb[2] = 8;
-	crregion(regname, oper, memb, 3, solname);
+	crregion(regname, oper, memb, 3, solname, 12);
 	solname[8] = regname[8] = '\0';
 
 	/* region 9 */
-	crname(regname, 9);
+	crname(regname, 9, 12);
 	memb[0] = 9;
 	memb[1] = 1;
 	memb[2] = 5;
 	oper[2] = WMOP_SUBTRACT;
-	crregion(regname, oper, memb, 3, solname);
+	crregion(regname, oper, memb, 3, solname, 12);
 	solname[8] = regname[8] = '\0';
 
 	/* region 10 */
-	crname(regname, 10);
+	crname(regname, 10, 12);
 	memb[0] = 10;
 	memb[1] = 4;
 	memb[2] = 8;
-	crregion(regname, oper, memb, 3, solname);
+	crregion(regname, oper, memb, 3, solname, 12);
 	solname[8] = regname[8] = '\0';
 
 	/* group all the track regions */
@@ -504,13 +510,13 @@ tryagain:	/* sent here to try next set of names */
 	if( (i = Trackpos / 10 + 1) > 9 )
 		j = 2;
 	itoa(i, temp, j);
-	(void)strcat(grpname, temp);
+	strncat(grpname, temp, 9-strlen(grpname)-1);
 	grpname[8] = '\0';
 	for(i=1; i<11; i++) {
 		if( i == 3 || i ==4 || i == 7 || i == 8 )
 			continue;
 		regname[8] = '\0';
-		crname(regname, i);
+		crname(regname, i, 12);
 		if( db_lookup( dbip, regname, LOOKUP_QUIET) == DIR_NULL ) {
 		  Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 				   regname, "\n", (char *)NULL);
@@ -554,7 +560,7 @@ end:
 }
 
 void
-crname(char *name, int pos)
+crname(char *name, int pos, int maxlen)
 {
 	int i, j;
 	char temp[4];
@@ -565,7 +571,7 @@ crname(char *name, int pos)
 	if( i > 99 )
 		j = 3;
 	itoa(i, temp, j);
-	(void)strcat(name,temp);
+	strcat(name, temp, maxlen-strlen(name)-1);
 	return;
 }
 
@@ -871,7 +877,7 @@ top(fastf_t *vec1, fastf_t *vec2, fastf_t *t)
 }
 
 void
-crregion(char *region, char *op, int *members, int number, char *solidname)
+crregion(char *region, char *op, int *members, int number, char *solidname, int maxlen)
 {
   int i;
   struct bu_list head;
@@ -883,7 +889,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname)
 
   for(i=0; i<number; i++) {
     solidname[8] = '\0';
-    crname(solidname, members[i]);
+    crname(solidname, members[i], maxlen);
     if( db_lookup( dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
       Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
 		       solidname, "\n", (char *)NULL);
