@@ -2127,7 +2127,6 @@ AC_CHECK_FUNCS(\
 	uname \
 	utime\
 	vfork \
-	vprintf \
 	writev \
 )
 
