@@ -4,7 +4,7 @@
 ;BRL-CAD Version Variables
 
   !ifndef VERSION
-    !define VERSION '7.8.0'
+    !define VERSION '7.11.0'
   !endif
 
 ;--------------------------------
@@ -111,22 +111,28 @@ Section "BRL-CAD (required)" BRL-CAD
   SectionIn RO
 
   ; Set output path to the installation directory.
-  SetOutPath $INSTDIR
+  ;SetOutPath $INSTDIR
 
   ; Put file there
-  File "..\*"
+  ;File "..\..\brlcadInstall\*"
 
   SetOutPath $INSTDIR\bin
-  File ..\bin\*
+  File ..\..\brlcadInstall\bin\*
+
+  SetOutPath $INSTDIR\include
+  File /r ..\..\brlcadInstall\include\*
 
   SetOutPath $INSTDIR\lib
-  File /r ..\lib\*
+  File /r "..\..\brlcadInstall\lib\*"
 
-  SetOutPath $INSTDIR\plugins
-  File /r ..\plugins\*
+  SetOutPath $INSTDIR\share
+  File /r "..\..\brlcadInstall\share\*"
 
-  SetOutPath $INSTDIR\tclscripts
-  File /r ..\tclscripts\*
+  ;SetOutPath $INSTDIR\plugins
+  ;File /r ..\..\brlcadInstall\plugins\*
+
+  ;SetOutPath $INSTDIR\tclscripts
+  ;File /r ..\..\brlcadInstall\tclscripts\*
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BRL-CAD "Install_Dir" "$INSTDIR"
@@ -152,25 +158,25 @@ SectionEnd
 
 Section "Documentation (required)" Documentation
   ; SectionIn RO means temporarily required
-  SectionIn RO
-  SetOutPath $INSTDIR\doc
-  File /r ..\doc\*
+  ;SectionIn RO
+  ;SetOutPath $INSTDIR\doc
+  ;File /r ..\..\brlcadInstall\doc\*
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manual.lnk" "$INSTDIR\doc\html\manuals\index.html" "" "" 0
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manual.lnk" "$INSTDIR\share\brlcad\${VERSION}\html\manuals\index.html" "" "" 0
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
-Section "Samples" Samples
-  SetOutPath $INSTDIR\Samples
-  File ..\Samples\*
-SectionEnd
+;Section "Samples" Samples
+;  SetOutPath $INSTDIR\Samples
+;  File ..\..\brlcadInstall\Samples\*
+;SectionEnd
 
-Section "Developement headers" Developer
-  SetOutPath $INSTDIR\include
-  File ..\include\*
-SectionEnd
+;Section "Developement headers" Developer
+;  SetOutPath $INSTDIR\include
+;  File ..\..\brlcadInstall\include\*
+;SectionEnd
 
 ;--------------------------------
 ;Descriptions
@@ -179,16 +185,16 @@ SectionEnd
   ;Language strings
   LangString DESC_BRL-CAD ${LANG_ENGLISH} "Installs the main application and the associated data files."
   LangString DESC_Documentation ${LANG_ENGLISH} "Installs documentation for BRL-CAD."
-  LangString DESC_Samples ${LANG_ENGLISH} "Installs optional learning samples."
-  LangString DESC_Developer ${LANG_ENGLISH} "Installs programming headers for developers."
+  ;LangString DESC_Samples ${LANG_ENGLISH} "Installs optional learning samples."
+  ;LangString DESC_Developer ${LANG_ENGLISH} "Installs programming headers for developers."
 
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${BRL-CAD} $(DESC_BRL-CAD)
     !insertmacro MUI_DESCRIPTION_TEXT ${Documentation} $(DESC_Documentation)
-    !insertmacro MUI_DESCRIPTION_TEXT ${Samples} $(DESC_Samples)
-    !insertmacro MUI_DESCRIPTION_TEXT ${Developer} $(DESC_Developer)
+    ;!insertmacro MUI_DESCRIPTION_TEXT ${Samples} $(DESC_Samples)
+    ;!insertmacro MUI_DESCRIPTION_TEXT ${Developer} $(DESC_Developer)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 
@@ -203,14 +209,14 @@ Section "Uninstall"
   DeleteRegKey HKLM SOFTWARE\BRL-CAD
 
   ; Remove files and uninstaller
-  Delete $INSTDIR\bin\*
-  RMDir /r "$INSTDIR\doc"
-  Delete $INSTDIR\include\*.h
-  RMDir /r "$INSTDIR\lib"
-  RMDir /r "$INSTDIR\plugins"
-  Delete $INSTDIR\Samples\*.*
-  RMDir /r "$INSTDIR\tclscripts"
-  Delete $INSTDIR\*
+  ;Delete $INSTDIR\bin\*
+  ;RMDir /r "$INSTDIR\doc"
+  ;Delete $INSTDIR\include\*.h
+  ;RMDir /r "$INSTDIR\lib"
+  ;RMDir /r "$INSTDIR\plugins"
+  ;Delete $INSTDIR\Samples\*.*
+  ;RMDir /r "$INSTDIR\tclscripts"
+  ;Delete $INSTDIR\*
 
   !insertmacro MUI_STARTMENU_GETFOLDER Application $MUI_TEMP
 
@@ -219,7 +225,12 @@ Section "Uninstall"
 
   ; Remove directories used
   RMDir "$SMPROGRAMS\$MUI_TEMP"
-  RMDir "$INSTDIR\bin"
+  ;RMDir "$INSTDIR\bin"
+  RMDir /r "$INSTDIR\bin"
+  RMDir /r "$INSTDIR\include"
+  RMDir /r "$INSTDIR\lib"
+  RMDir /r "$INSTDIR\share"
+  Delete $INSTDIR\uninstall.exe
   RMDir "$INSTDIR"
 
   ;Delete empty start menu parent diretories
