@@ -48,11 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <string.h>
 
-#ifdef HAVE_STDARG_H
-#  include <stdarg.h>
-#else
-#  include <varargs.h>
-#endif
+#include <stdarg.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -89,11 +85,7 @@ typedef struct queue
 	point		*endpoint;	/* -> endpt of ray from point */
 }	queue;			/* entry in list of endpoints */
 
-#ifdef HAVE_STDARG_H
-static bool_t	Mess(char *fmt, ...);
-#else
-static bool_t	Mess();
-#endif
+static bool_t	Mess(const char *fmt, ...);
 static bool_t	Build(void), Chop(void), EndPoint(register coords *p, register segment *segp), GetArgs(int argc, char **argv), Input(register segment *inp),
 Near(register coords *ap, register coords *bp), Search(void), Split(coords *p, register segment *oldp, register segment *listh), Usage(void);
 static coords	*Intersect(register segment *a, register segment *b);
@@ -755,29 +747,17 @@ Toss(register pointer ptr)				/* return storage to heap */
 
 /*VARARGS*/
 static bool_t
-#ifdef HAVE_STDARG_H
-Mess( char *fmt, ... )			/* print error message */
-#else
-Mess( va_alist )			/* print error message */
-va_dcl					/* format, optional arguments */
-#endif
+Mess( const char *fmt, ... )			/* print error message */
 {
 	va_list		ap;		/* for accessing arguments */
-#ifndef HAVE_STDARG_H
-	register char	*fmt;		/* format */
 
 	va_start( ap );
 	fmt = va_arg( ap, char * );
-#else
-	va_start( ap, fmt );
-#endif
+
 	(void)fflush( stdout );
 	(void)fputs( "cad_boundp: ", stderr );
-#ifdef HAVE_VPRINTF
+
 	(void)vprintf( fmt, ap );
-#else
-	(void) _doprnt( fmt, ap, stderr );
-#endif
 	(void)fputc( '\n', stderr );
 
 	va_end( ap );

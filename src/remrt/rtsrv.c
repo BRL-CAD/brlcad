@@ -42,11 +42,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#ifdef HAVE_STDARG_H
 #  include <stdarg.h>
-#else
-#  include <varargs.h>
-#endif
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 #  include <sys/resource.h>
@@ -183,7 +179,7 @@ main(int argc, char **argv)
 	register int	n;
 
 	if( argc < 2 )  {
-		fprintf(stderr, srv_usage);
+		fprintf(stderr, "%s", srv_usage);
 		return 1;
 	}
 	while( argv[1][0] == '-' )  {
@@ -196,13 +192,13 @@ main(int argc, char **argv)
 			sscanf( argv[2], "%x", (unsigned int *)&rdebug );
 			argc--; argv++;
 		} else {
-			fprintf(stderr, srv_usage);
+			fprintf(stderr, "%s", srv_usage);
 			return 3;
 		}
 		argc--; argv++;
 	}
 	if( argc != 3 && argc != 4 )  {
-		fprintf(stderr, srv_usage);
+		fprintf(stderr, "%s", srv_usage);
 		return 2;
 	}
 
@@ -796,7 +792,6 @@ bu_log_indent_vls(struct bu_vls *v)
  *  Log an error.
  *  This version buffers a full line, to save network traffic.
  */
-#ifdef HAVE_STDARG_H
 void
 bu_log( char *fmt, ... )
 {
@@ -821,91 +816,6 @@ bu_log( char *fmt, ... )
 out:
 	bu_semaphore_release( BU_SEM_SYSCALL );
 }
-#else /* !HAVE_STDARG_H */
-
-#  ifdef HAVE_VARARGS_H
-/*
- *  			B U _ L O G
- *
- *  Log a library event using the Berkeley _doprnt() routine.
- *
- *  Replacement for the LIBBU routine of the same name for
- *  across-network logging.
- */
-/* VARARGS */
-void
-bu_log(va_alist)
-va_dcl
-{
-	va_list		ap;
-	char		*fmt;
-	char		buf[512];
-	FILE		strbuf;
-	static char	*cp;			/* NON-PARALLEL */
-
-	if( print_on == 0 )  return;
-	if( cp == (char *)0 )  cp = buf;
-
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	va_start(ap);
-	fmt = va_arg(ap,char *);
-#if defined(mips) || (defined(alliant) && defined(i860))
-	(void) vsprintf( cp, fmt, ap );
-#else
-	strbuf._flag = _IOWRT|_IOSTRG;
-#if defined(sun)
-	strbuf._ptr = (unsigned char *)cp;
-#else
-	strbuf._ptr = cp;
-#endif
-	strbuf._cnt = sizeof(buf)-(cp-buf);
-	(void) _doprnt( fmt, ap, &strbuf );
-	putc( '\0', &strbuf );
-#endif
-	va_end(ap);
-
-	if(debug) fprintf(stderr, "%s", buf);
-	while( *cp++ )  ;		/* leaves one beyond null */
-	if( cp[-2] != '\n' )
-		goto out;
-	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf);
-		goto out;
-	}
-	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		bu_exit(12, NULL);
-	}
-	cp = buf;
-out:
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
-}
-#  else  /* !HAVE_VARARGS_H */
-void
-bu_log( str, a, b, c, d, e, f, g, h )
-char	*str;
-int	a, b, c, d, e, f, g, h;
-{
-	char	buf[512];		/* a generous output line */
-
-	if( print_on == 0 )  return;
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	(void)sprintf( buf, str, a, b, c, d, e, f, g, h );
-
-	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf);
-		goto out;
-	}
-	if(debug) fprintf(stderr, "%s", buf);
-	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
-		bu_exit(12, NULL);
-	}
-out:
-	bu_semaphore_release( BU_SEM_SYSCALL );
-}
-#  endif /* end !HAVE_VARARGS_H */
-#endif /* end !HAVE_STDARG_H */
 
 
 /*
