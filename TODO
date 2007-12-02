@@ -35,9 +35,6 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * modify the new tree traversal code to be generic
 
-* fix potential buffer overflows and security issues detected by
-  Pedro's run of FlawFinder
-
 * implement graphical crash reporter tool (bombardier)
 
 
