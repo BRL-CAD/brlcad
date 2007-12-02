@@ -162,6 +162,11 @@ file copy [file join $rootDir src mged mged.bat] [file join $installDir bin]
 # End Copy files to the bin directory
 
 
+# Copy files to the include directory
+file copy [file join $rootDir include] $installDir
+# End Copy files to the include directory
+
+
 # Copy files to the lib directory
 puts "copy [file join $rootDir src other blt library] [file join $installDir lib blt2.4]"
 file copy [file join $rootDir src other blt library] [file join $installDir lib blt2.4]
@@ -231,6 +236,10 @@ file copy [file join $rootDir src util roots_example.c] [file join $shareDir sam
 
 
 # Remove undesired directories/files as a result of wholesale copies
+file delete -force [file join $installDir include .cvsignore]
+file delete -force [file join $installDir include CVS]
+file delete -force [file join $installDir include conf .cvsignore]
+file delete -force [file join $installDir include conf CVS]
 file delete -force [file join $installDir lib blt2.4 CVS]
 file delete -force [file join $installDir lib blt2.4 Makefile.am]
 file delete -force [file join $installDir lib blt2.4 dd_protocols CVS]
