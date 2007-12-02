@@ -47,7 +47,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
 #include <stdarg.h>
 
 #include "machine.h"
@@ -745,14 +744,11 @@ Toss(register pointer ptr)				/* return storage to heap */
 }
 
 
-/*VARARGS*/
 static bool_t
 Mess( const char *fmt, ... )			/* print error message */
 {
 	va_list		ap;		/* for accessing arguments */
-
-	va_start( ap );
-	fmt = va_arg( ap, char * );
+	va_start( ap, fmt );
 
 	(void)fflush( stdout );
 	(void)fputs( "cad_boundp: ", stderr );
