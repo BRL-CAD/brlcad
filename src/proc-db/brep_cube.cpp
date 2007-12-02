@@ -452,7 +452,7 @@ main(int argc, char** argv)
     struct db_i* dbip = db_open("brep_cube1.g", "r");
     db_dirbuild(dbip);
     struct directory* dirp;
-    if (dirp = db_lookup(dbip, "cube.s", 0)) {
+    if ((dirp = db_lookup(dbip, "cube.s", 0)) != DIR_NULL) {
 	printf("\tfound cube.s\n");
 	struct rt_db_internal ip;
 	mat_t mat;

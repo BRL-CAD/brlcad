@@ -110,6 +110,10 @@ main(int argc, char *argv[])
 		printf( "%s\n" , argv[i] );
 
 		dp = db_lookup( dbip , argv[i] , 1 );
+		if (!dp) {
+		    bu_log("WARNING: Unable to locate %s in %s, skipping\n", argv[i], argv[1]);
+		    continue;
+		}
 
 		if( rt_db_get_internal( &ip, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
 			bu_log("import of %s failed\n", dp->d_namep);

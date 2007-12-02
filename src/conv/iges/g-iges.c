@@ -378,6 +378,10 @@ main(int argc, char *argv[])
 					ptr = argv[i];
 				}
 				dp = db_lookup( dbip , ptr , 1 );
+				if (!dp) {
+				    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", ptr, db_name);
+				    continue;
+				}
 				db_functree( dbip , dp , csg_comb_func , 0 , &rt_uniresource , NULL );
 			}
 		}
@@ -391,8 +395,11 @@ main(int argc, char *argv[])
 		for( i=1 ; i<argc ; i++ )
 		{
 			dp = db_lookup( dbip , argv[i] , 1 );
-			if (dp)
-			    db_functree( dbip , dp , csg_comb_func , csg_leaf_func , &rt_uniresource , NULL );
+			if (!dp) {
+			    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", ptr, db_name);
+			    continue;
+			}
+			db_functree( dbip , dp , csg_comb_func , csg_leaf_func , &rt_uniresource , NULL );
 		}
 	}
 	else if( mode == TRIMMED_SURF_MODE )
