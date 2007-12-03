@@ -1180,8 +1180,7 @@ cvt_vlblock_to_solids(
 #endif
 		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 
-		snprintf( namebuf, 32, "%32s%lx",
-			shortname, vbp->rgb[i] );
+		snprintf( namebuf, 32, "%s%lx",	shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
 	}
 }
