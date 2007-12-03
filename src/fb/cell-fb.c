@@ -326,15 +326,14 @@ static long read_Cell_Data(void)
     {
 	lbp = linebuf;
 	bu_fgets(lbp, MAX_LINE, filep);
-	(void) strcpy(format, "%lf %lf");
-	(void) strcpy(format, "%lf %lf");
+	(void) strncpy(format, "%lf %lf", MAX_LINE-1);
 	if (color_flag)
-	    (void) strcat(format, " %d %d %d");
+	    (void) strncat(format, " %d %d %d", MAX_LINE-strlen(format)-1);
 	else
 	{   /* Skip to field of interest */
 	    for (i = 1; i < field; i++)
-		(void) strcat(format, " %*lf");
-	    (void) strcat(format, " %lf");
+		(void) strcat(format, " %*lf", MAX_LINE-strlen(format)-1);
+	    (void) strcat(format, " %lf", MAX_LINE-strlen(format)-1);
 	}
     }
     /* EOF encountered before we found the desired view? */
