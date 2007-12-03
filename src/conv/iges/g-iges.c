@@ -396,7 +396,7 @@ main(int argc, char *argv[])
 		{
 			dp = db_lookup( dbip , argv[i] , 1 );
 			if (!dp) {
-			    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", ptr, db_name);
+			    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", argv[i], db_name);
 			    continue;
 			}
 			db_functree( dbip , dp , csg_comb_func , csg_leaf_func , &rt_uniresource , NULL );
