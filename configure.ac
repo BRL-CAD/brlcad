@@ -3745,7 +3745,7 @@ AC_SUBST(TK_PATH)
 dnl configure Tk
 if test "x$build_brlcad_tk" = "xyes" ; then
     if test "x$bc_build_aquatk" = "xyes" ; then
-	ac_configure_args="$ac_configure_args --enable-aqua"
+	ac_configure_args="$ac_configure_args --enable-aqua --disable-xft"
     fi
     AC_CONFIG_SUBDIRS([src/other/tk/unix])
 fi
