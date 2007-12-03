@@ -4262,7 +4262,7 @@ dgo_run_rt(struct dg_obj *dgop,
 
 	snprintf(line, 2048, "%s ",dgop->dgo_rt_cmd[0]);
 	for(i=1;i<dgop->dgo_rt_cmd_len;i++) {
-	    snprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
+	    snprintf(name, 256, "%s ",dgop->dgo_rt_cmd[i]);
 	    strncat(line,name,2048-strlen(line)-1);
 	}
 
