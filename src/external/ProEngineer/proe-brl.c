@@ -59,13 +59,6 @@
 
 static wchar_t  MSGFIL[] = {'u','s','e','r','m','s','g','.','t','x','t','\0'};
 
-static char *err_mess_form="During the conversion %d features of part %s\n\
-were suppressed. After the conversion was complete, an\n\
-attempt was made to unsuppress these same features.\n\
-The unsuppression failed, so these features are still\n\
-suppressed. Please exit Pro/E without saving any\n\
-changes so that this problem will not persist.";
-
 static double proe_to_brl_conv=25.4;	/* inches to mm */
 
 static ProBool do_facets_only;	/* flag to indicate no CSG should be done */
@@ -2231,7 +2224,14 @@ output_part( ProMdl model )
 				fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 				return( 0 );
 			}
-			snprintf( err_mess, 512, err_mess_form, feat_id_count, curr_part_name );
+			snprintf( err_mess, 512, 
+				  "During the conversion %d features of part %s\n"
+				  "were suppressed. After the conversion was complete, an\n"
+				  "attempt was made to unsuppress these same features.\n"
+				  "The unsuppression failed, so these features are still\n"
+				  "suppressed. Please exit Pro/E without saving any\n"
+				  "changes so that this problem will not persist.", feat_id_count, curr_part_name );
+
 			(void)ProStringToWstring( werr_mess, err_mess );
 			status = ProUITextareaValueSet( "proe_brl_error", "the_message", werr_mess );
 			if( status != PRO_TK_NO_ERROR ) {
