@@ -66,7 +66,7 @@ static const char *
 brlcad_data()
 {
 #ifndef BRLCAD_DATA
-    char path[512] = {0};
+    static char path[512] = {0};
     snprintf(path, 512, "%s/share/brlcad/%s", BRLCAD_ROOT, brlcad_version());
     return path;
 #else
