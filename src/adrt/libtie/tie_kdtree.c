@@ -34,7 +34,7 @@ tfloat TIE_PREC;
  *************************************************************/
 
 
-void tie_kdtree_free_node(tie_kdtree_t *node)
+static void tie_kdtree_free_node(tie_kdtree_t *node)
 {
 /*  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L); */
   tie_kdtree_t *node_aligned = node;
@@ -54,8 +54,7 @@ void tie_kdtree_free_node(tie_kdtree_t *node)
   }
 }
 
-
-void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **cache, uint32_t *size, uint32_t *mem)
+static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **cache, uint32_t *size, uint32_t *mem)
 {
   tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L);
   uint32_t tri_num, i, tri_ind;
@@ -119,8 +118,7 @@ void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **cache, ui
   }
 }
 
-
-void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
+static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
 {
   tie_geom_t *g;
   TIE_3 min, max;
@@ -158,8 +156,8 @@ void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
   }
 }
 
-
-int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3]) {
+static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3]) 
+{
   /*
    * use separating axis theorem to test overlap between triangle and box
    * need to test for overlap in these directions:
@@ -247,8 +245,8 @@ int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 triverts[3
   return t >= d ? 1 : 0;
 }
 
-
-void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int node_a, int node_b) {
+static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int node_a, int node_b) 
+{
   tie_geom_t *child[2], *node_gd = (tie_geom_t *)(node->data);
   TIE_3 cmin[2], cmax[2], center[2], half_size[2];
   uint32_t i, j, n, split, cnt[2];
@@ -684,12 +682,11 @@ else if(tie->kdmethod == TIE_KDTREE_OPTIMAL) {
   node->data = (void *)((intptr_t)(node->data) + split + 4);
 }
 
-
 /*************************************************************
  **************** EXPORTED FUNCTIONS *************************
  *************************************************************/
 
-void tie_kdtree_free(tie_t *tie)
+TIE_FUNC(void tie_kdtree_free, tie_t *tie)
 {
   /* Free KDTREE Nodes */
   /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
@@ -698,8 +695,7 @@ void tie_kdtree_free(tie_t *tie)
   free(tie->kdtree);
 }
 
-
-uint32_t tie_kdtree_cache_free(tie_t *tie, void **cache)
+TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
 {
   uint32_t size, mem;
 
@@ -726,8 +722,7 @@ uint32_t tie_kdtree_cache_free(tie_t *tie, void **cache)
   return(size);
 }
 
-
-void tie_kdtree_cache_load(tie_t *tie, void *cache, uint32_t size)
+TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
 {
   tie_kdtree_t *node, *temp_node, *stack[64];
   tie_geom_t *geom;
@@ -813,8 +808,7 @@ void tie_kdtree_cache_load(tie_t *tie, void *cache, uint32_t size)
   }
 }
 
-
-void tie_kdtree_prep(tie_t *tie)
+TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 {
   TIE_3 delta;
   int already_built;
@@ -839,8 +833,8 @@ void tie_kdtree_prep(tie_t *tie)
   */
   MATH_VEC_SUB(delta, tie->max, tie->min);
   MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
-#if TIE_SINGLE_PREC
-  TIE_PREC *= 0.000000000001;
+#if TIE_PRECISION == TIE_PRECISION_SINGLE
+  TIE_PREC *= 0.000000001;
 #else
   TIE_PREC *= 0.000000000001;
 #endif

@@ -24,19 +24,19 @@
 # include <stdint.h>
 #endif
 
-/**************************************************
-**************** PRIVATE FUNCTIONS ****************
-***************************************************/
+int tie_check_degenerate = 1;
 
-static void
-tie_tri_prep (tie_t *tie)
+/*************************************************************
+ **************** PRIVATE FUNCTIONS **************************
+ *************************************************************/
+
+static void tie_tri_prep(tie_t *tie)
 {
   TIE_3 v1, v2, u, v;
   int i, i1, i2;
   tie_tri_t *tri;
 
-  for (i = 0; i < tie->tri_num; i++)
-  {
+  for (i = 0; i < tie->tri_num; i++) {
     tri = &tie->tri_list[i];
 
     v1 = tri->data[1];
@@ -54,18 +54,13 @@ tie_tri_prep (tie_t *tie)
     u.v[1] = fabs(tri->data[1].v[1]);
     u.v[2] = fabs(tri->data[1].v[2]);
 
-    if (u.v[2] > u.v[1] && u.v[2] > u.v[0])
-    {
+    if (u.v[2] > u.v[1] && u.v[2] > u.v[0]) {
       i1 = 0;
       i2 = 1;
-    }
-    else if (u.v[1] > u.v[2] && u.v[1] > u.v[0])
-    {
+    } else if (u.v[1] > u.v[2] && u.v[1] > u.v[0]) {
       i1 = 0;
       i2 = 2;
-    }
-    else
-    {
+    } else {
       i1 = 1;
       i2 = 2;
     }
@@ -77,13 +72,9 @@ tie_tri_prep (tie_t *tie)
     tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
 
     if (i1 == 0 && i2 == 1)
-    {
       tri->v = (tfloat *)((intptr_t)(tri->v) + 2);
-    }
-    else if (i1 == 0)
-    {
+     else if (i1 == 0)
       tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
-    }
 
     /* Compute DotVN */
     MATH_VEC_MUL_SCALAR(v1, tri->data[0], -1.0);
@@ -104,8 +95,7 @@ tie_tri_prep (tie_t *tie)
  * @param tie pointer to a struct tie_t
  * @return void
  */
-void
-tie_init (tie_t *tie, unsigned int tri_num, int kdmethod)
+TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod)
 {
   tie->kdtree = NULL;
   tie->kdmethod = kdmethod;
@@ -125,8 +115,7 @@ tie_init (tie_t *tie, unsigned int tri_num, int kdmethod)
  * @param tie pointer to a struct tie_t
  * @return void
  */
-void
-tie_free (tie_t *tie)
+TIE_FUNC(void tie_free, tie_t *tie)
 {
   int i;
 
@@ -148,8 +137,7 @@ tie_free (tie_t *tie)
  * @param tie pointer to a struct tie_t which now has all the triangles in it
  * @return void
  */
-void
-tie_prep(tie_t *tie)
+TIE_FUNC(void tie_prep, tie_t *tie)
 {
   /* Build the kd-tree */
   tie_kdtree_prep (tie);
@@ -180,8 +168,7 @@ tie_prep(tie_t *tie)
  * @retval 0 ray did not hit anything, or ray was propagated through the geometry completely.
  * @retval !0 the value returned from the last invokation of hitfunc()
  */
-void*
-tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr)
+TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr)
 {
   tie_stack_t stack[40];
   tie_id_t t, id_list[256];
@@ -197,14 +184,14 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
 
   if (!tie->kdtree)
     return (NULL);
+
   ray->kdtree_depth = 0;
 
   /*
   * Precompute direction inverse since it's used in a bunch of divides,
   * this allows those divides to become fast multiplies.
   */
-  for (i = 0; i < 3; i++)
-  {
+  for (i = 0; i < 3; i++) {
     if (ray->dir.v[i] == 0.0)
       ray->dir.v[i] = TIE_PREC;
     dirinv[i] = 1.0 / ray->dir.v[i];
@@ -215,8 +202,7 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
   split = ((intptr_t)(((tie_kdtree_t *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
 
   /* Initialize ray segment */
-  if (ray->dir.v[split] < 0.0)
-  {
+  if (ray->dir.v[split] < 0.0) {
     far = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
   } else {
     far = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
@@ -228,9 +214,7 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
   stack[0].far = far;
 
   /* Process items on the stack */
-/*  while (stack_ind >= 0) */
-  do
-  {
+  do {
     near = stack[stack_ind].near;
     far = stack[stack_ind].far;
 
@@ -251,8 +235,7 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
     *
     * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
     */
-    while (((intptr_t)(node_aligned->data)) & 0x4)
-    {
+    while (((intptr_t)(node_aligned->data)) & 0x4) {
       ray->kdtree_depth++;
 
       /* Retreive the splitting plane */
@@ -288,8 +271,7 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
       continue;
 
     hit_count = 0;
-    for (i = 0; i < data->tri_num; i++)
-    {
+    for (i = 0; i < data->tri_num; i++) {
       /*
       * Triangle Intersection Code
       */
@@ -328,46 +310,36 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
       * Compute the barycentric coordinates, and make sure the coordinates
       * fall within the boundaries of the triangle plane.
       */
-      if (fabs(tri->data[2].v[1]) <= TIE_PREC)
-      {
+      if (fabs(tri->data[2].v[1]) <= TIE_PREC) {
         t.beta = u0 / tri->data[2].v[2];
-        if(t.beta < 0 || t.beta > 1)
+        if (t.beta < 0 || t.beta > 1)
           continue;
         t.alpha = (v0 - t.beta*v[1]) / v[0];
-      }
-      else
-      {
+      } else {
         t.beta = (v0*tri->data[2].v[1] - u0*v[0]) / (v[1]*tri->data[2].v[1] - tri->data[2].v[2]*v[0]);
-        if(t.beta < 0 || t.beta > 1)
+        if (t.beta < 0 || t.beta > 1)
           continue;
         t.alpha = (u0 - t.beta*tri->data[2].v[2]) / tri->data[2].v[1];
       }
 
-      if(t.alpha < 0 || (t.alpha + t.beta) > 1.0)
+      if (t.alpha < 0 || (t.alpha + t.beta) > 1.0)
         continue;
 
       /* Triangle Intersected, append it in the list */
-      if (hit_count < 0xff)
-      {
+      if (hit_count < 0xff) {
         hit_list[hit_count] = tri;
         id_list[hit_count] = t;
         hit_count++;
-      }
-      else
-      {
+      } else
         printf ("TIE: WARNING over 255!!!!!\n");
-      }
     }
 
 
     /* If we hit something, then sort the hit triangles on demand */
-    for (i = 0; i < hit_count; i++)
-    {
+    for (i = 0; i < hit_count; i++) {
       /* Sort the list so that HitList and IDList [n] is in order wrt [i] */
-      for (n = i; n < hit_count; n++)
-      {
-        if (id_list[n].dist < id_list[i].dist)
-        {
+      for (n = i; n < hit_count; n++) {
+        if (id_list[n].dist < id_list[i].dist) {
           /* Swap */
           tri = hit_list[i];
           t = id_list[i];
@@ -381,15 +353,14 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
       id_list[i].norm = hit_list[i]->data[1];
       result = hitfunc(ray, &id_list[i], hit_list[i], ptr);
 
-      if (result)
-      {
+      if (result) {
         *id = id_list[i];
-        return(result);
+        return (result);
       }
     }
   } while (stack_ind >= 0);
 
-  return(NULL);
+  return (NULL);
 }
 
 
@@ -411,20 +382,17 @@ tie_work (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*,
  * address of plist.
  * @return void
  */
-void
-tie_push(tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int pstride)
+TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int pstride)
 {
   int i;
 
-  if(tnum + tie->tri_num > tie->tri_num_alloc)
-  {
+  if (tnum + tie->tri_num > tie->tri_num_alloc) {
     /* Allocate the next 256K triangle increment greater than tnum + tie->tri_num. */
     tie->tri_num_alloc = (1 + (tnum + tie->tri_num) / (1<<18)) * (1<<18);
     tie->tri_list = (tie_tri_t *) realloc (tie->tri_list, sizeof(tie_tri_t) * tie->tri_num_alloc);
   }
 
-  for (i = 0; i < tnum; i++)
-  {
+  for (i = 0; i < tnum; i++) {
 #if TIE_CHECK_DEGENERATE
     TIE_3 u, v, w;
 
@@ -438,15 +406,11 @@ tie_push(tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int pstride)
     tie->tri_list[tie->tri_num].data[0] = *tlist[i*3+0];
     tie->tri_list[tie->tri_num].data[1] = *tlist[i*3+1];
     tie->tri_list[tie->tri_num].data[2] = *tlist[i*3+2];
-    if (plist)
-    {
+    if (plist) {
       tie->tri_list[tie->tri_num].ptr = plist;
       plist = (void *)((intptr_t)plist + pstride);
-    }
-    else
-    {
+    } else
       tie->tri_list[tie->tri_num].ptr = NULL;
-    }
     tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
     tie->tri_num++;
   }
