@@ -15,6 +15,9 @@
 extern "C" {
 #endif
 
+TIE_VAL(extern int tie_check_degenerate);
+#define tie_check_degenerate TIE_VAL(tie_check_degenerate)
+
 TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod);
 TIE_FUNC(void tie_free, tie_t *tie);
 TIE_FUNC(void tie_prep, tie_t *tie);

@@ -24,7 +24,7 @@
 # include <stdint.h>
 #endif
 
-int tie_check_degenerate = 1;
+TIE_VAL(int tie_check_degenerate) = 1;
 
 /*************************************************************
  **************** PRIVATE FUNCTIONS **************************
@@ -393,16 +393,16 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int ps
   }
 
   for (i = 0; i < tnum; i++) {
-#if TIE_CHECK_DEGENERATE
-    TIE_3 u, v, w;
+    if(tie_check_degenerate) {
+      TIE_3 u, v, w;
 
-    MATH_VEC_SUB(u, (*tlist[i*3+1]), (*tlist[i*3+0]));
-    MATH_VEC_SUB(v, (*tlist[i*3+2]), (*tlist[i*3+0]));
-    MATH_VEC_CROSS(w, u, v);
+      MATH_VEC_SUB(u, (*tlist[i*3+1]), (*tlist[i*3+0]));
+      MATH_VEC_SUB(v, (*tlist[i*3+2]), (*tlist[i*3+0]));
+      MATH_VEC_CROSS(w, u, v);
 
-    if (fabs(w.v[0]) < 0.0001 && fabs(w.v[1]) < 0.0001 && fabs(w.v[2]) < 0.0001)
-      continue;
-#endif
+      if (fabs(w.v[0]) < 0.0001 && fabs(w.v[1]) < 0.0001 && fabs(w.v[2]) < 0.0001)
+        continue;
+    }
     tie->tri_list[tie->tri_num].data[0] = *tlist[i*3+0];
     tie->tri_list[tie->tri_num].data[1] = *tlist[i*3+1];
     tie->tri_list[tie->tri_num].data[2] = *tlist[i*3+2];
