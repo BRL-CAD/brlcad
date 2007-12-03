@@ -218,8 +218,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 	if( type != ASSEMBLY_TYPE && type != PART_TYPE && type != CUT_SOLID_TYPE )
 	{
-		bu_log( "Bad type for name (%s) in Add_new_name\n", name );
-		bu_exit(EXIT_FAILURE,  "Add_new_name\n" );
+		bu_exit(EXIT_FAILURE, "Bad type for name (%s) in Add_new_name\n", name );
 	}
 
 
@@ -235,8 +234,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 		if( regexec( &reg_cmp, ptr->brlcad_name, 1, &pmatch, 0  ) == 0 )
 		{
 			/* got a match */
-			/* FIXME: this is fishy.. reg_cmp is user-provided */
-			strcpy( &ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo] );
+			strncpy( &ptr->brlcad_name[pmatch.rm_so], &ptr->brlcad_name[pmatch.rm_eo], MAX_LINE_LEN-1 );
 		}
 		if( debug )
 			bu_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
@@ -351,9 +349,9 @@ Convert_assy(char *line)
 	struct wmember head;
 	struct wmember *wmem = NULL;
 	char line1[MAX_LINE_LEN];
-	char name[80];
+	char name[MAX_LINE_LEN];
 	unsigned int obj;
-	char memb_name[80];
+	char memb_name[MAX_LINE_LEN];
 	unsigned int memb_obj;
 	char *brlcad_name = NULL;
 	float mat_col[4];
@@ -529,7 +527,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 		if( !strncmp( &line1[*start], "plane", 5 ) || !strncmp( &line1[*start], "PLANE", 5 ) )
 		{
 			struct name_conv_list *ptr;
-			char haf_name[80];
+			char haf_name[MAX_LINE_LEN];
 			fastf_t dist;
 			fastf_t tmp_dist;
 			point_t origin;
@@ -622,7 +620,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 
 			cut_count++;
 
-			sprintf( haf_name, "cut.%d", cut_count );
+			snprintf( haf_name, MAX_LINE_LEN, "cut.%d", cut_count );
 			ptr = Add_new_name( haf_name, 0, CUT_SOLID_TYPE );
 			if( mk_arb8( fd_out, ptr->solid_name, (fastf_t *)arb_pt ) )
 				bu_log( "Failed to create ARB8 solid for Assembly cut in part %s\n", name );
@@ -674,7 +672,7 @@ static void
 Convert_part(char *line)
 {
 	char line1[MAX_LINE_LEN];
-	char name[MAX_LINE_LEN + 1];
+	char name[MAX_LINE_LEN];
 	unsigned int obj=0;
 	char *solid_name;
 	int start;
@@ -733,7 +731,7 @@ Convert_part(char *line)
 		/* get object id */
 		sscanf( &line[start] , "%x" , &obj );
 	} else if( stl_format && forced_name ) {
-		strncpy( name, forced_name, MAX_LINE_LEN );
+		strncpy( name, forced_name, MAX_LINE_LEN-1 );
 	} else if( stl_format ) {
 		/* build a name from the file name */
 		char tmp_str[512];
@@ -763,17 +761,17 @@ Convert_part(char *line)
 			ptr++;
 
 		/* now copy what is left to the name */
-		strncpy( name, ptr, MAX_LINE_LEN );
-		name[MAX_LINE_LEN] = '\0';
+		strncpy( name, ptr, MAX_LINE_LEN-1 );
+		name[MAX_LINE_LEN-1] = '\0';
 		sprintf( tmp_str, "_%d", obj_count );
 		len = strlen( name );
 		suff_len = strlen( tmp_str );
-		if( len + suff_len < MAX_LINE_LEN )
+		if( len + suff_len < MAX_LINE_LEN-1 )
 			strncat( name, tmp_str, MAX_LINE_LEN - len - 1 );
 		else
 			snprintf( &name[MAX_LINE_LEN-suff_len-1], MAX_LINE_LEN, "%s", tmp_str );
 	} else {
-		strcpy( name, "noname" );
+		strncpy( name, "noname", MAX_LINE_LEN-1 );
 	}
 
 	bu_log( "Converting Part: %s\n" , name );
