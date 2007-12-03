@@ -1748,6 +1748,11 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 	}
 }
 
+#else
+
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 #endif /* II_X */
 
 /*

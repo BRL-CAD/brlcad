@@ -77,6 +77,12 @@ const char	*string_arg;
 		return -1;
 	return 0;
 }
+
+#else
+
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 #endif
 
 /*

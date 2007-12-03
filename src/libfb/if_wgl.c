@@ -2445,6 +2445,11 @@ wgl_refresh(FBIO *ifp,
   return 0;
 }
 
+#else
+
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 #endif /* IF_WGL */
 
 /*
