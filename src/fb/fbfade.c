@@ -126,7 +126,7 @@ Simple(char *path)
 
 
 static void
-VMessage(char *format, va_list ap)
+VMessage(const char *format, va_list ap)
 {
     (void)fprintf( stderr, "%s: ", arg0 );
     (void)vfprintf( stderr, format, ap );
@@ -136,7 +136,7 @@ VMessage(char *format, va_list ap)
 
 
 static void
-Message( char *format, ... )
+Message( const char *format, ... )
 {
     va_list		ap;
 
@@ -147,7 +147,7 @@ Message( char *format, ... )
 
 
 static void
-Fatal( char *format, ... )
+Fatal( const char *format, ... )
 {
     va_list		ap;
 
