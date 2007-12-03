@@ -54,21 +54,12 @@ static const char RCSlog[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
-#if defined(HAVE_STDARG_H)
-# include <stdarg.h>
-#else
-#  if defined(HAVE_VARARGS_H)
-#    include <varargs.h>
-#  endif
-#endif
+#include <stdarg.h>
 
 #include "machine.h"
 #include "bu.h"
 
-#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
 BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, const char *fmt, va_list ap));
-#endif
 
 static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
 /**

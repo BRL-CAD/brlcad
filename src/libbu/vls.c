@@ -41,10 +41,8 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdarg.h>
 
-#if defined(HAVE_STDARG_H)
-#  include <stdarg.h>
-#endif
 #if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
 #  include <varargs.h>
 #endif

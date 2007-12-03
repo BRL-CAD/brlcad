@@ -30,11 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
-#if defined(HAVE_STDARG_H)
 #include <stdarg.h>
-#elif defined(HAVE_VARARGS_H)
-#include <varargs.h>
-#endif
 
 #include "machine.h"
 #include "vmath.h"

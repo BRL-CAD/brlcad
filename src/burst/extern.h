@@ -27,21 +27,13 @@
 
 #include "common.h"
 
-#if defined(HAVE_STDARG_H)
-#  include <stdarg.h>
-#else
-#  ifdef HAVE_VARARGS_H
-#    include <varargs.h>
-#  endif
-#endif
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 
 #if HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#include <string.h>
-
-/* External functions from C library. */
-#include <stdlib.h>
 
 #include "machine.h"
 #include "fb.h"
@@ -101,13 +93,8 @@ extern void prntRayIntersect();
 extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
-#if defined(HAVE_STDARG_H)
 extern void prntScr( char *, ...);
 extern void brst_log( char *, ... );
-#else
-extern void brst_log();
-extern void prntScr();
-#endif
 extern void warning();
 extern void prntUsage();
 extern void clr_Tabs();

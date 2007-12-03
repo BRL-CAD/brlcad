@@ -103,10 +103,7 @@ extern BU_FILE			bu_iob[1];
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
-#if defined(HAVE_STDARG_H)
-#  include <stdarg.h>
-#endif
+#include <stdarg.h>
 
 #include "machine.h"
 #include "bu.h"

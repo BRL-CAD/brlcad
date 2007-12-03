@@ -865,23 +865,14 @@ fastf_t	los;		/* LOS of space */
 		}
 	return;
 	}
-#if defined(HAVE_STDARG_H)
-/* STDARG */
 void
 prntScr( char *format, ... )
 	{
 		va_list	ap;
+
 	va_start( ap, format );
-#else
-/* VARARGS */
-void
-prntScr( va_alist )
-va_dcl
-	{	register char *format; /* picked up by va_arg() */
-		va_list	ap;
-	va_start( ap );
-#endif
 	format  = va_arg( ap, char * );
+
 	if( tty )
 		{
 		clr_Tabs( HmTtyFd );

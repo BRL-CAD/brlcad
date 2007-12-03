@@ -24,12 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
-
-#ifdef HAVE_STDARG_H
-#  include <stdarg.h>
-#else
-#  include <varargs.h>
-#endif
+#include <stdarg.h>
 
 #include "machine.h"
 #include "fb.h"
@@ -156,24 +151,11 @@ prnt_Pixel(char *msg, RGBpixel (*pixelp))
 	return;
 	}
 
-#if defined(HAVE_STDARG_H)
 #define Va_Decl( _func )	_func(char *fmt, ...)
 #define Va_Start()		va_list	ap; va_start( ap, fmt )
 #define Va_End()		va_end( ap )
 #define Va_Print( _p )		(void) vfprintf( _p, fmt, ap )
-#else
-#if !defined(HAVE_VARARGS_H)
-#define Va_Decl( _func )	_func(fmt, a,b,c,d,e,f,g,h,i) char *fmt;
-#define Va_Start()
-#define Va_End()
-#define Va_Print( _p )		(void) fprintf( _p, fmt, a,b,c,d,e,f,g,h,i )
-#else
-#define Va_Decl( _func )	_func(fmt, va_alist) char *fmt; va_dcl
-#define Va_Start()		va_list	ap; va_start( ap )
-#define Va_End()		va_end( ap )
-#define Va_Print( _p )		(void) _doprnt( fmt, ap, _p )
-#endif
-#endif
+
 /* VARARGS */
 void
 Va_Decl( fb_log )

@@ -69,18 +69,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-#include	<signal.h>
-#include	<stdlib.h>
-#include	<stdio.h>
-#include	<string.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
-#endif
-#ifdef HAVE_STDARG_H
-#  include	<stdarg.h>
-#else
-#  include	<varargs.h>
 #endif
 
 #include "machine.h"

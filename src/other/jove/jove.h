@@ -47,31 +47,17 @@
  *		return status;
  *	}
  */
-#ifdef HAVE_STDARG_H
-#  include <stdarg.h>
-#  define	VA_T(t)		t,
-#  define	VA_DOTS		...
-#  define	VA_ALIST	...
-#  define	VA_D(d)         /* nothing */
-#  define	VA_DCL		/* nothing */
-#  define	VA_LIST(ap)	va_list ap;
-#  define	VA_START(ap,A0)	va_start(ap,A0);
-#  define	VA_I(ap,T,Ai)	/* nothing */
-#  define	VA_ARG(ap,T)	va_arg(ap,T)
-#  define	VA_END(ap)	va_end(ap);
-#else
-#  include <varargs.h>
-#  define	VA_T(t)		/* nothing */
-#  define	VA_DOTS		/* nothing */
-#  define	VA_ALIST	va_alist
-#  define	VA_D(d)		d;
-#  define	VA_DCL		va_dcl
-#  define	VA_LIST(ap)	va_list ap;
-#  define	VA_START(ap,A0)	va_start(ap);
-#  define	VA_I(ap,T,Ai)	Ai = va_arg(ap,T);
-#  define	VA_ARG(ap,T)	va_arg(ap,T)
-#  define	VA_END(ap)	va_end(ap);
-#endif
+#include <stdarg.h>
+#define	VA_T(t)		t,
+#define	VA_DOTS		...
+#define	VA_ALIST	...
+#define	VA_D(d)         /* nothing */
+#define	VA_DCL		/* nothing */
+#define	VA_LIST(ap)	va_list ap;
+#define	VA_START(ap,A0)	va_start(ap,A0);
+#define	VA_I(ap,T,Ai)	/* nothing */
+#define	VA_ARG(ap,T)	va_arg(ap,T)
+#define	VA_END(ap)	va_end(ap);
 
 #ifdef __convex__
 #  define	HAS_TEMPNAM	0	/* No tempnam()! */
