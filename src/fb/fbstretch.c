@@ -149,51 +149,25 @@ VMessage(char *format, va_list ap)
 	}
 
 
-#if defined(HAVE_STDARG_H)
 static void
 Message( char *format, ... )
-#else
-static void
-Message( va_alist )
-	va_dcl
-#endif
 	{
-#if !defined(HAVE_STDARG_H)
-	register char	*format;	/* must be picked up by va_arg() */
-#endif
 	va_list		ap;
 
-#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
-#else
-	va_start( ap );
-	format = va_arg( ap, char * );
-#endif
 	VMessage( format, ap );
 	va_end( ap );
 	}
 
 
-#if defined(HAVE_STDARG_H)
 static void
 Fatal( char *format, ... )
-#else
-static void
-Fatal( va_alist )
-	va_dcl
-#endif
 	{
-#if !defined(HAVE_STDARG_H)
-	register char	*format;	/* must be picked up by va_arg() */
-#endif
 	va_list		ap;
 
-#if defined(HAVE_STDARG_H)
 	va_start( ap, format );
-#else
 	va_start( ap );
 	format = va_arg( ap, char * );
-#endif
 	VMessage( format, ap );
 	va_end( ap );
 
