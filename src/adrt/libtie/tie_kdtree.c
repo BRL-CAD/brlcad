@@ -36,8 +36,7 @@ tfloat TIE_PREC;
 
 static void tie_kdtree_free_node(tie_kdtree_t *node)
 {
-/*  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L); */
-  tie_kdtree_t *node_aligned = node;
+  tie_kdtree_t *node_aligned = (tie_kdtree_t *)((intptr_t)node & ~0x7L);
 
   if(((intptr_t)(node_aligned->data)) & 0x4)
   {
@@ -49,8 +48,8 @@ static void tie_kdtree_free_node(tie_kdtree_t *node)
   else
   {
     /* This node points to a geometry node, free it */
-    free(((tie_geom_t *)node_aligned->data)->tri_list);
-    free(node_aligned->data);
+    free(((tie_geom_t *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list);
+    free((void *)((intptr_t)(node_aligned->data) & ~0x7L));
   }
 }
 

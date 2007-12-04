@@ -73,7 +73,7 @@ static void tie_tri_prep(tie_t *tie)
 
     if (i1 == 0 && i2 == 1)
       tri->v = (tfloat *)((intptr_t)(tri->v) + 2);
-     else if (i1 == 0)
+    else if (i1 == 0)
       tri->v = (tfloat *)((intptr_t)(tri->v) + 1);
 
     /* Compute DotVN */
@@ -87,7 +87,7 @@ static void tie_tri_prep(tie_t *tie)
  **************** EXPORTED FUNCTIONS *************************
  *************************************************************/
 
-/*
+/**
  * Initialize a tie_t data structure
  *
  * This needs to be called before any other libtie data structures are called.
@@ -106,7 +106,7 @@ TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod)
   tie->rays_fired = 0;
 }
 
-/*
+/**
  * Free up all the stuff associated with libtie
  *
  * All of the KDTREE nodes and triangles that we have allocated need to
@@ -129,7 +129,7 @@ TIE_FUNC(void tie_free, tie_t *tie)
 }
 
 
-/*
+/**
  * Get ready to shoot rays at triangles
  *
  * Build the KDTREE tree for the triangles we have
@@ -147,7 +147,7 @@ TIE_FUNC(void tie_prep, tie_t *tie)
 }
 
 
-/*
+/**
  * Shoot a ray at some triangles
  *
  * The user-provided hitfunc is called at each ray/triangle intersection.
@@ -202,11 +202,10 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
   split = ((intptr_t)(((tie_kdtree_t *)((intptr_t)tie->kdtree & ~0x7L))->data)) & 0x3;
 
   /* Initialize ray segment */
-  if (ray->dir.v[split] < 0.0) {
+  if (ray->dir.v[split] < 0.0)
     far = (tie->min.v[split] - ray->pos.v[split]) * dirinv[split];
-  } else {
+  else
     far = (tie->max.v[split] - ray->pos.v[split]) * dirinv[split];
-  }
 
   stack_ind = 0;
   stack[0].node = tie->kdtree;
@@ -222,7 +221,7 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
     * Take the pointer from stack[stack_ind] and remove lower pts bits used to store data to
     * give a valid ptr address.
     */
-    node_aligned = stack[stack_ind].node;
+    node_aligned = (tie_kdtree_t *)((intptr_t)stack[stack_ind].node & ~0x7L);
     stack_ind--;
 
     /*
@@ -244,11 +243,11 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
       /* Calculate the projected 1d distance to splitting axis */
       dist = (node_aligned->axis - ray->pos.v[split]) * dirinv[split];
 
-      temp[0] = &((tie_kdtree_t *) (((intptr_t)(node_aligned->data)) & ~0x7L))[ab[split]];
-      temp[1] = &((tie_kdtree_t *) (((intptr_t)(node_aligned->data)) & ~0x7L))[1-ab[split]];
+      temp[0] = &((tie_kdtree_t *)(node_aligned->data))[ab[split]];
+      temp[1] = &((tie_kdtree_t *)(node_aligned->data))[1-ab[split]];
 
       i = near >= dist; /* Node B Only? */
-      node_aligned = temp[i];
+      node_aligned = (tie_kdtree_t *)((intptr_t)(temp[i]) & ~0x7L);
 
       if (far < dist || i)
         continue;
@@ -330,8 +329,7 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
         hit_list[hit_count] = tri;
         id_list[hit_count] = t;
         hit_count++;
-      } else
-        printf ("TIE: WARNING over 255!!!!!\n");
+      }
     }
 
 
@@ -364,7 +362,7 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
 }
 
 
-/*
+/**
  * Add a triangle
  *
  * Add a new triangle to the universe to be raytraced.
@@ -387,9 +385,8 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int ps
   int i;
 
   if (tnum + tie->tri_num > tie->tri_num_alloc) {
-    /* Allocate the next 256K triangle increment greater than tnum + tie->tri_num. */
-    tie->tri_num_alloc = (1 + (tnum + tie->tri_num) / (1<<18)) * (1<<18);
-    tie->tri_list = (tie_tri_t *) realloc (tie->tri_list, sizeof(tie_tri_t) * tie->tri_num_alloc);
+    tie->tri_list = (tie_tri_t *)realloc(tie->tri_list, sizeof(tie_tri_t) * (tie->tri_num + tnum));
+    tie->tri_num_alloc += tnum;
   }
 
   for (i = 0; i < tnum; i++) {
