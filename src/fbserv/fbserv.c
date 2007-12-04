@@ -66,6 +66,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
@@ -75,12 +76,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-#if defined(HAVE_STDARG_H)
-#  include <stdarg.h>
-#endif
-#if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
-#  include <varargs.h>
-#endif
+
 #if HAVE_SYSLOG_H
 #  include <syslog.h>
 #endif
@@ -585,7 +581,6 @@ comm_error(char *str)
  *  it serves to highlight the the grossness of the varargs package
  *  requiring the size of a parameter to be known at compile time.
  */
-#if defined(HAVE_STDARG_H)
 void
 fb_log( char *fmt, ... )
 {
@@ -616,131 +611,7 @@ fb_log( char *fmt, ... )
 	}
 }
 
-/* VARARGS */
-#elif !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
-
-void
-fb_log( va_alist )
-va_dcl
-{
-	va_list ap;
-	register char	*sp;			/* start pointer */
-	register char	*ep;			/* end pointer */
-	int	longify;
-	char	fbuf[64];			/* % format buffer */
-	char	nfmt[256];
-	char	outbuf[OUTBUFSZ];			/* final output string */
-	char	*op;				/* output buf pointer */
-	int	want, got;
-	int	i;
-	int	nsent = 0;
-
-	/* prefix all messages with "hostname: " */
-	gethostname( outbuf, sizeof(outbuf) );
-	op = &outbuf[strlen(outbuf)];
-	*op++ = ':';
-	*op++ = ' ';
-
-	va_start(ap);
-	sp = va_arg(ap,char *);
-	while( *sp )  {
-		/* Initial state:  just printing chars */
-		if( *sp != '%' )  {
-			*op++ = *sp;
-			if( *sp == '\n' && *(sp+1) ) {
-				/* newline plus text, output hostname */
-				gethostname( op, sizeof(outbuf) );
-				op += strlen(op);
-				*op++ = ':';
-				*op++ = ' ';
-			}
-			sp++;
-			continue;
-		}
-
-		/* Saw a percent sign, find end of fmt specifier */
-		longify = 0;
-		ep = sp+1;
-		while( *ep )  {
-			if( isalpha(*ep) )
-				break;
-			ep++;
-		}
-
-		/* Check for digraphs, eg "%ld" */
-		if( *ep == 'l' )  {
-			ep++;
-			longify = 1;
-		}
-
-		/* Copy off the format string */
-		{
-			register int len;
-			len = ep-sp+1;
-			strncpy( fbuf, sp, len );
-			fbuf[len] = '\0';
-		}
-
-		/* Grab parameter from arg list, and print it */
-		switch( *ep )  {
-		case 'e':
-		case 'E':
-		case 'f':
-		case 'g':
-		case 'G':
-			/* All floating point ==> "double" */
-			{
-				register double d;
-				d = va_arg(ap, double);
-				snprintf( op, OUTBUFSZ-strlen(outbuf)-1, fbuf, d );
-				op = &outbuf[strlen(outbuf)];
-			}
-			break;
-
-		default:
-			if( longify )  {
-				register long ll;
-				/* Long int */
-				ll = va_arg(ap, long);
-				snprintf( op, OUTBUFSZ-strlen(outbuf)-1, fbuf, ll );
-				op = &outbuf[strlen(outbuf)];
-			} else {
-				register int i;
-				/* Regular int */
-				i = va_arg(ap, int);
-				snprintf( op, OUTBUFSZ-strlen(outbuf)-1, fbuf, i );
-				op = &outbuf[strlen(outbuf)];
-			}
-			break;
-		}
-		sp = ep+1;
-	}
-	va_end(ap);
-	*op = NULL;
-
-
-	want = strlen(outbuf)+1;
-	for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-		if( clients[i] == NULL )  continue;
-		if( pkg_send( MSG_ERROR, outbuf, want, clients[i] ) != want )  {
-			comm_error("pkg_send error in fb_log, message was:\n");
-			comm_error(outbuf);
-		} else {
-			nsent++;
-		}
-	}
-	if( nsent == 0 || verbose )  {
-		/* No PKG connection open yet! */
-		fputs( outbuf, stderr );
-		fflush(stderr);
-	}
-}
-#else
-
-#error /* no stdarg and no vararg */
-
-#endif /* !have_stdarg_h */
-#endif /* !_WIN32 */
+#endif /* _WIN32 */
 
 /*
  * Local Variables:

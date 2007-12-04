@@ -74,7 +74,6 @@
 #define HAVE_REGEX_H	1
 #define HAVE_SETVBUF	1
 #define HAVE_STAT       1
-#define HAVE_STDARG_H	1
 #define HAVE_STRCHR	1
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1
@@ -82,7 +81,6 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME	1
-#define HAVE_VARARGS_H	1
 #define HAVE_VFORK	1
 #define HAVE_WINSOCK_H	1
 #define REVERSE_IEEE	yes

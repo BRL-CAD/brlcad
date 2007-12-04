@@ -1549,7 +1549,6 @@ AC_CHECK_HEADERS( \
 	sched.h \
 	sgtty.h \
 	socket.h \
-	stdarg.h \
 	stdint.h \
 	strings.h \
 	sys/file.h \
@@ -1588,7 +1587,6 @@ AC_CHECK_HEADERS( \
 	unistd.h \
 	utime.h \
 	values.h \
-	varargs.h \
 	waitflags.h \
 	wchar.h \
 	winsock.h

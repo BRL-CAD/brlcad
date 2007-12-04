@@ -43,9 +43,6 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #include <stdarg.h>
 
-#if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
-#  include <varargs.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -712,7 +709,6 @@ bu_vls_trimspace( struct bu_vls *vp )
 	bu_vls_nibble( vp, 1 );
 }
 
-#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
 /**
  *  			B U _ V L S _ V P R I N T F
  *
@@ -951,12 +947,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
     va_end(ap);
 }
-#else
-#  error "No implementation provided for bu_vls_vprintf()"
-#endif  /* !defined(HAVE_VARARGS_H) && !defined(HAVE_STDARG_H) */
 
 
-#if defined(HAVE_STDARG_H)
 /**
  *                 B U _ V L S _ P R I N T F
  *
@@ -972,48 +964,6 @@ bu_vls_printf(struct bu_vls *vls, char *fmt, ...)  /* ANSI C */
     va_end(ap);
 }
 
-#else  /* !HAVE_STDARG_H */
-#  if defined(HAVE_VARARGS_H)
-
-void
-bu_vls_printf(va_dcl va_alist)                            /* VARARGS */
-{
-    va_list ap;
-    struct bu_vls *vls;
-    char *fmt;
-
-    va_start(ap);
-    vls = va_arg(ap, struct bu_vls *);
-    fmt = va_arg(ap, char *);
-    BU_CK_VLS(vls);
-    bu_vls_vprintf(vls, fmt, ap);
-    va_end(ap);
-}
-
-#  else  /* !HAVE_VARARGS_H */
-
-void
-bu_vls_printf(struct bu_vls *vls, char *fmt, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j)       /* Cray XMP */
-{
-    char append_buf[65536] = {0};   /* yuck -- fixed length buffer. */
-
-    BU_CK_VLS(vls);
-    snprintf(append_buf, 65536, fmt, a,b,c,d,e,f,g,h,i,j);
-    if (append_buf[sizeof(append_buf)-1] != '\0') {
-	/* Attempting to bu_log() the WHOLE append_buf would just overflow again */
-	append_buf[120] = '\0';
-	bu_log("bu_vls_printf buffer overflow\nWhile building string '%s'...\n",
-	       append_buf);
-	bu_bomb("bu_vls_printf buffer overflow\n");
-    }
-
-    bu_vls_strcat(vls, append_buf);
-}
-#  endif  /* HAVE_VARARGS_H */
-#endif  /* HAVE_STDARG_H */
-
-
-#if defined(HAVE_STDARG_H)
 
 /**
  *  			B U _ V L S _ S P R I N T F
@@ -1037,36 +987,6 @@ bu_vls_sprintf(struct bu_vls *vls, char *fmt, ...)  /* ANSI C */
     va_end(ap);
 }
 
-#else  /* !HAVE_STDARG_H */
-#  if defined(HAVE_VARARGS_H)
-
-void
-bu_vls_sprintf(va_dcl va_alist)                            /* VARARGS */
-{
-    va_list ap;
-    struct bu_vls *vls;
-    char *fmt;
-
-    va_start(ap);
-    vls = va_arg(ap, struct bu_vls *);
-    fmt = va_arg(ap, char *);
-    BU_CK_VLS(vls);
-    bu_vls_trunc(vls, 0); /* poof */
-    bu_vls_vprintf(vls, fmt, ap);
-    va_end(ap);
-}
-
-#  else  /* !HAVE_VARARGS_H */
-
-void
-bu_vls_sprintf(struct bu_vls *vls, char *fmt, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j)       /* Cray XMP */
-{
-    BU_CK_VLS(vls);
-    bu_vls_trunc(vls, 0); /* poof */
-    bu_vls_printf(vls, fmt, a, b, c, d, e, f, g, h, i, j);
-}
-#  endif  /* HAVE_VARARGS_H */
-#endif  /* HAVE_STDARG_H */
 
 /**
  *			B U _ V L S _ S P A C E S

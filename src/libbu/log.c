@@ -250,33 +250,13 @@ bu_putchar(int c)
  *  Log a library event in the Standard way.
  */
 void
-#if defined(HAVE_STDARG_H)
-/* ANSI C */
 bu_log(char *fmt, ...)
 {
     va_list ap;
-#else
-#  if defined(HAVE_VARARGS_H)
-/* VARARGS */
-bu_log(va_alist)
-va_dcl
-{
-    va_list ap;
-    char *fmt;
-#  else
-/* Cray XMP */
-bu_log(fmt, a,b,c,d,e,f,g,h,i,j)
-char *fmt;
-{
-#  endif
-#endif
 
     struct bu_vls output;
 
     bu_vls_init(&output);
-
-#if defined(HAVE_STDARG_H)
-/* ANSI C */
 
     if (!fmt || strlen(fmt) == 0) {
 	return;
@@ -294,44 +274,6 @@ char *fmt;
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-#else
-#  if defined(HAVE_VARARGS_H)
-/* VARARGS */
-    va_start(ap);
-    fmt = va_arg(ap, char *);
-
-    if (!fmt || strlen(fmt) == 0) {
-	return;
-    }
-
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
-
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_vprintf(&output, fmt, ap);
-    }
-#  else
-/* Cray XMP */
-    if (!fmt || strlen(fmt) == 0) {
-	return;
-    }
-
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
-
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_printf(&output, bu_vls_addr(&newfmt), a,b,c,d,e,f,g,h,i,j);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_printf(&output, fmt, a,b,c,d,e,f,g,h,i,j);
-    }
-#  endif
-#endif
 
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
 	int ret;
@@ -359,9 +301,7 @@ char *fmt;
 #endif
     }
 
-#if defined(HAVE_STDARG_H) || defined(HAVE_VARARGS_H)
     va_end(ap);
-#endif
 
     bu_vls_free(&output);
 }
@@ -372,35 +312,14 @@ char *fmt;
  *  Log a library event in the Standard way, to a specified file.
  */
 void
-#if defined(HAVE_STDARG_H)
-/* ANSI C */
 bu_flog(FILE *fp, char *fmt, ...)
 {
     va_list ap;
-#else
-#  if defined(HAVE_VARARGS_H)
-/* VARARGS */
-bu_flog(va_alist)
-va_dcl
-{
-    va_list ap;
-    FILE *fp;
-    char *fmt;
-#  else
-/* Cray XMP */
-bu_flog(fp, fmt, a,b,c,d,e,f,g,h,i,j)
-FILE *fp;
-char *fmt;
-{
-#  endif
-#endif
 
     struct bu_vls output;
 
     bu_vls_init(&output);
 
-#if defined(HAVE_STDARG_H)
-/* ANSI C */
     va_start(ap, fmt);
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
@@ -412,36 +331,6 @@ char *fmt;
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-#else
-#  if defined(HAVE_VARARGS_H)
-/* VARARGS */
-    va_start(ap);
-    fp = va_arg(ap, FILE *);
-    fmt = va_arg(ap, char *);
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
-
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_vprintf(&output, fmt, ap);
-    }
-#  else
-/* Cray XMP */
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
-
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_printf(&output, bu_vls_addr(&newfmt), a,b,c,d,e,f,g,h,i,j);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_printf(&output, fmt, a,b,c,d,e,f,g,h,i,j);
-    }
-#  endif
-#endif
 
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
 	int ret;
@@ -463,9 +352,7 @@ char *fmt;
 #endif
     }
 
-#if defined(HAVE_STDARG_H) || defined(HAVE_VARARGS_H)
     va_end(ap);
-#endif
 
     bu_vls_free(&output);
 }
