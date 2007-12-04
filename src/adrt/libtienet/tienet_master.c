@@ -43,7 +43,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include "tie.h"
 #include "tienet_define.h"
 #include "tienet_util.h"
 
@@ -809,7 +808,7 @@ void tienet_master_shutdown() {
     }
   }
 
-  printf("Total data transfered: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
+  printf("Total data transfered: %.1f MiB\n", (double)tienet_master_transfer/(double)(1024*1024));
 }
 
 
