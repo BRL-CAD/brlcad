@@ -31,6 +31,7 @@
 #define __FB_H__
 
 #include "fbio.h"
+#include "bu.h"
 
 /*
  * Needed for fd_set, avoid including sys/select.h outright since it
@@ -84,7 +85,6 @@
 		(*_ifp->if_bwwriterect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 
 /* Library entry points which are true functions. */
-#if __STDC__ || USE_PROTOTYPES
 FB_EXPORT extern void 	fb_configureWindow(FBIO *, int, int);
 FB_EXPORT extern FBIO	*fb_open(char *file, int width, int height);
 FB_EXPORT extern int	fb_close(FBIO *ifp);
@@ -95,7 +95,7 @@ FB_EXPORT extern int	fb_tell(FBIO *ifp, int *xp, int *yp);
 FB_EXPORT extern int	fb_rpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int	fb_wpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int	fb_flush(FBIO *ifp);
-FB_EXPORT extern void	fb_log(char *fmt, ...);
+FB_EXPORT extern void	fb_log(char *fmt, ...) __BU_ATTR_FORMAT12;
 FB_EXPORT extern int	fb_null(FBIO *ifp);
 FB_EXPORT extern int	fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
 
@@ -131,66 +131,20 @@ FB_EXPORT extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom,
 FB_EXPORT extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 FB_EXPORT extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
 FB_EXPORT extern int	fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y);
-#else
-FB_EXPORT extern FBIO	*fb_open();
-FB_EXPORT extern int	fb_close();
-FB_EXPORT extern int	fb_genhelp();
-FB_EXPORT extern int	fb_ioinit();
-FB_EXPORT extern int	fb_seek();
-FB_EXPORT extern int	fb_tell();
-FB_EXPORT extern int	fb_rpixel();
-FB_EXPORT extern int	fb_wpixel();
-FB_EXPORT extern int	fb_flush();
-FB_EXPORT extern void	fb_log();
-FB_EXPORT extern int	fb_null();
-FB_EXPORT extern int	fb_null_setcursor();
-/* utility functions */
-FB_EXPORT extern int	fb_common_file_size();
-FB_EXPORT extern int	fb_common_image_size();
-FB_EXPORT extern int	fb_common_name_size();
-
-/* colormap functions */
-FB_EXPORT extern int	fb_is_linear_cmap();
-FB_EXPORT extern void	fb_make_linear_cmap();
-
-/* backward compatibility hacks */
-FB_EXPORT extern int	fb_reset();
-FB_EXPORT extern int	fb_viewport();
-FB_EXPORT extern int	fb_window();
-FB_EXPORT extern int	fb_zoom();
-FB_EXPORT extern int	fb_scursor();
-
-/*
- * Some functions and variables we couldn't hide.
- * Not for general consumption.
- */
-FB_EXPORT extern int	_fb_pgin();
-FB_EXPORT extern int	_fb_pgout();
-FB_EXPORT extern int	_fb_pgflush();
-FB_EXPORT extern int	_fb_disk_enable;
-FB_EXPORT extern int	fb_sim_readrect();
-FB_EXPORT extern int	fb_sim_writerect();
-FB_EXPORT extern int	fb_sim_bwreadrect();
-FB_EXPORT extern int	fb_sim_bwwriterect();
-FB_EXPORT extern int	fb_sim_view();
-FB_EXPORT extern int	fb_sim_getview();
-FB_EXPORT extern int	fb_sim_cursor();
-FB_EXPORT extern int	fb_sim_getcursor();
-#endif
 
 #ifdef IF_X
-  FB_EXPORT extern int _X24_open_existing();
-  FB_EXPORT extern int X24_close_existing();
+FB_EXPORT extern int _X24_open_existing();
+FB_EXPORT extern int X24_close_existing();
 #endif
 
 #ifdef IF_OGL
-  FB_EXPORT extern int _ogl_open_existing();
-  FB_EXPORT extern int ogl_close_existing();
+FB_EXPORT extern int _ogl_open_existing();
+FB_EXPORT extern int ogl_close_existing();
 #endif
 
 #ifdef IF_WGL
-  FB_EXPORT extern int _wgl_open_existing();
-  FB_EXPORT extern int wgl_close_existing();
+FB_EXPORT extern int _wgl_open_existing();
+FB_EXPORT extern int wgl_close_existing();
 #endif
 
 /*
