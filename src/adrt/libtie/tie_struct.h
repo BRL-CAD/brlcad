@@ -55,12 +55,16 @@ typedef struct tie_s {
   uint64_t rays_fired;
   tie_kdtree_t *kdtree;
   int max_depth;	/* Maximum depth allowed for given geometry */
-  TIE_3 min, max;
   unsigned int tri_num;
   unsigned int tri_num_alloc;
   tie_tri_t *tri_list;
   int stat;		/* used for testing various statistics */
   int kdmethod;		/* Optimal or Fast */
+  /* all tfloat altered stuff should be at the end. */
+  TIE_3 min, max;
+#if TIE_PRECISION == 0
+  tfloat _pad[6];	/* so both float and double variants are the same size. */
+#endif
 } tie_t;
 
 #endif
