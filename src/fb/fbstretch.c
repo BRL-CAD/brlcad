@@ -162,8 +162,6 @@ Fatal( const char *format, ... )
 	va_list		ap;
 
 	va_start( ap, format );
-	va_start( ap );
-	format = va_arg( ap, char * );
 	VMessage( format, ap );
 	va_end( ap );
 
