@@ -45,30 +45,18 @@
 ######################################################################
 
 NAME="$1"
-MAJOR_VERSION="$2"
-MINOR_VERSION="$3"
-PATCH_VERSION="$4"
+VERSION="$2"
 if [ "x$NAME" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
+    echo "Usage: $0 title version [background] [contents ...]"
     echo "ERROR: must specify a title for the package name"
     exit 1
 fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
-    echo "ERROR: must specify a major package version"
+if [ "x$VERSION" = "x" ] ; then
+    echo "Usage: $0 title version [background] [contents ...]"
+    echo "ERROR: must specify a version"
     exit 1
 fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "ERROR: must specify a minor package version"
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
-    exit 1
-fi
-if [ "x$PATCH_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
-    echo "ERROR: must specify a patch package version"
-    exit 1
-fi
-shift 4
+shift 2
 
 OPENUP=`dirname $0`/../misc/macosx/openUp
 
@@ -89,7 +77,6 @@ if [ "x$TMPDIR" = "x" ] || [ ! -w $TMPDIR ] ; then
     fi
 fi
 
-VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 DMG_NAME="${NAME}-${VERSION}"
 DMG="${DMG_NAME}.dmg"
 if [ -d "$DMG" ] ; then
