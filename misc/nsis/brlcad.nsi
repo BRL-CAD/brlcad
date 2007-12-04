@@ -117,7 +117,7 @@ Section "BRL-CAD (required)" BRL-CAD
   ;File "..\..\brlcadInstall\*"
 
   SetOutPath $INSTDIR\bin
-  File ..\..\brlcadInstall\bin\*
+  File /r ..\..\brlcadInstall\bin\*
 
   SetOutPath $INSTDIR\include
   File /r ..\..\brlcadInstall\include\*
