@@ -215,7 +215,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     data = bu_brlcad_data("", 1);
 
 
-#ifdef _WIN32 */
+#ifdef _WIN32
     {
 	char *cp;
 
