@@ -448,3 +448,11 @@ make_tclIndex [list [file join $shareDir tclscripts util]]
 #XXX More needed
 
 # End Create the tclIndex files
+
+
+# Copy redist files
+catch {
+    file copy "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.CRT" [file join $installDir bin]
+    file copy "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.MFC" [file join $installDir bin]
+}
+#
