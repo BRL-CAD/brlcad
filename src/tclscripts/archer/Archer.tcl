@@ -2031,7 +2031,11 @@ Popup Menu    Right or Ctrl-Left
     after idle "$win configure -relief flat"
 
     set parent [$dialog childsite]
-    set utility [$class $parent.\#auto $this]
+    #set utility [$class $parent.\#auto $this]
+    if {[catch {$class $parent.\#auto $this} utility]} {
+	rename $dialog ""
+	return
+    }
 
     set row 0
     grid $utility -row $row -stick nsew
