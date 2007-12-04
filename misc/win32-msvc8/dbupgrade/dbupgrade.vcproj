@@ -129,6 +129,7 @@
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"

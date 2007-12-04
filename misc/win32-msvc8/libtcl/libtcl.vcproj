@@ -155,6 +155,7 @@
 				RuntimeLibrary="2"
 				BufferSecurityCheck="true"
 				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\Release/libtcl.pch"
 				AssemblerListingLocation=".\Release/"
