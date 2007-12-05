@@ -1,4 +1,4 @@
-/*                         D E P T H . C
+/*                        R E N D E R . H
  * BRL-CAD / ADRT
  *
  * Copyright (c) 2007 United States Government as represented by
@@ -17,37 +17,36 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file depth.c
+/** @file render.h
  *
  *  Author -
  *      Justin L. Shumaker
  *
  */
 
-#include "depth.h"
-#include "hit.h"
-#include "adrt_struct.h"
-#include <stdio.h>
+#ifndef _RENDER_SURFEL_H
+#define _RENDER_SURFEL_H
+
+#include "render_internal.h"
+
+typedef struct render_surfel_pt_s {
+  TIE_3 pos;
+  tfloat radius;
+  TIE_3 color;
+} render_surfel_pt_t;
 
 
-void render_depth_init(render_t *render) {
-  render->work = render_depth_work;
-  render->free = render_depth_free;
-}
+typedef struct render_surfel_s {
+  uint32_t num;
+  render_surfel_pt_t *list;
+} render_surfel_t;
 
 
-void render_depth_free(render_t *render) {
-}
+void render_surfel_init(render_t *render, uint32_t num, render_surfel_pt_t *list);
+void render_surfel_free(render_t *render);
+void render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 
-
-void render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  tie_id_t id;
-  adrt_mesh_t *mesh;
-
-  /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
-  if((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL)))
-    pixel->v[0] = 0.0075 * ray->kdtree_depth;
-}
+#endif
 
 /*
  * Local Variables:

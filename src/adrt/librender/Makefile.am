@@ -2,12 +2,52 @@
 
 lib_LTLIBRARIES = librender.la
 
-librender_la_SOURCES = component.c depth.c flat.c grid.c hit.c normal.c path.c plane.c phong.c spall.c render_util.c
+librender_la_SOURCES = \
+	camera.c \
+	component.c \
+	cut.c \
+	depth.c \
+	flat.c \
+	flos.c \
+	grid.c \
+	hit.c \
+	normal.c \
+	path.c \
+	phong.c \
+	plane.c \
+	render_util.c \
+	spall.c \
+	surfel.c
+
 librender_la_LDFLAGS = -static
 librender_la_LIBADD = ${LIBM}
 
-AM_CFLAGS = -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/libtexture -I${top_srcdir}/src/adrt/libutil
+AM_CFLAGS = \
+	-I${top_srcdir}/src/adrt \
+	-I${top_srcdir}/src/adrt/libtie \
+	-I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/libtexture \
+	-I${top_srcdir}/src/adrt/libutil
 
-noinst_HEADERS = component.h depth.h flat.h grid.h hit.h normal.h path.h plane.h phong.h render.h render_internal.h spall.h render_util.h
+tieincludedir = $(includedir)/tie
+tieinclude_HEADERS = \
+	camera.h \
+	component.h \
+	cut.h \
+	depth.h \
+	flat.h \
+	flos.h \
+	grid.h \
+	hit.h \
+	normal.h \
+	path.h \
+	phong.h \
+	plane.h \
+	render.h \
+	render_internal.h \
+	render_util.h \
+	spall.h \
+	surfel.h
 
 include $(top_srcdir)/misc/Makefile.defs

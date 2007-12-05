@@ -1,4 +1,4 @@
-/*                         D E P T H . C
+/*                        C U T . H
  * BRL-CAD / ADRT
  *
  * Copyright (c) 2007 United States Government as represented by
@@ -17,37 +17,30 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file depth.c
+/** @file cut.h
  *
  *  Author -
  *      Justin L. Shumaker
  *
  */
 
-#include "depth.h"
-#include "hit.h"
-#include "adrt_struct.h"
-#include <stdio.h>
+#ifndef _RENDER_CUT_H
+#define _RENDER_CUT_H
 
+#include "render_internal.h"
 
-void render_depth_init(render_t *render) {
-  render->work = render_depth_work;
-  render->free = render_depth_free;
-}
+typedef struct render_cut_s {
+  TIE_3 ray_pos;
+  TIE_3 ray_dir;
+  tfloat plane[4];
+  tie_t tie;
+} render_cut_t;
 
+void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir);
+void render_cut_free(render_t *render);
+void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 
-void render_depth_free(render_t *render) {
-}
-
-
-void render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  tie_id_t id;
-  adrt_mesh_t *mesh;
-
-  /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
-  if((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL)))
-    pixel->v[0] = 0.0075 * ray->kdtree_depth;
-}
+#endif
 
 /*
  * Local Variables:
