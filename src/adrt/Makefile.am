@@ -1,7 +1,6 @@
 # $Id$
 
-adrtd = libtienet \
-	libcommon \
+adrtd = libcommon \
 	librender \
 	libtexture \
 	libutil \
@@ -9,16 +8,15 @@ adrtd = libtienet \
 	rise \
 	isst
 
-# always compile libite
-if BUILD_ADRT
-SUBDIRS = \
+always_compile = \
 	libtie \
-	${adrtd}
-else !BUILD_ADRT
-SUBDIRS = \
-	libtie
+	libtienet
+
+# always compile libite
+SUBDIRS = ${always_compile}
+if BUILD_ADRT
+SUBDIRS += ${adrtd}
 endif
-# end !BUILD_ADRT
 
 DIST_SUBDIRS = \
 	${adrtd} \
