@@ -37,7 +37,6 @@
 
 #include <math.h>
 #include "tie.h"
-#include "common.h"
 #include "rand.h"
 
 
