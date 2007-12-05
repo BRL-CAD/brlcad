@@ -1,7 +1,6 @@
 # $Id$
 
 adrtd = libcommon \
-	librender \
 	bench \
 	rise \
 	isst
@@ -10,6 +9,7 @@ always_compile = \
 	libtie \
 	libtienet \
 	libtexture \
+	librender \
 	libutil
 
 if BUILD_ADRT
