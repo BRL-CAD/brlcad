@@ -44,11 +44,9 @@ typedef struct texture_gradient_s {
   int		axis;
 } texture_gradient_t;
 
-
-extern	void	texture_gradient_init(texture_t *texture, int axis);
-extern	void	texture_gradient_free(texture_t *texture);
-extern	void	texture_gradient_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
-
+void texture_gradient_init(texture_t *texture, int axis);
+void texture_gradient_free(texture_t *texture);
+void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__);
 
 #endif
 

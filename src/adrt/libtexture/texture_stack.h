@@ -47,7 +47,7 @@ typedef struct texture_stack_s {
 
 extern	void	texture_stack_init(texture_t *texture);
 extern	void	texture_stack_free(texture_t *texture);
-extern	void	texture_stack_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+extern	void	texture_stack_work(__TEXTURE_WORK_PROTOTYPE__);
 extern	void	texture_stack_push(texture_t *texture, texture_t *texture_new);
 
 

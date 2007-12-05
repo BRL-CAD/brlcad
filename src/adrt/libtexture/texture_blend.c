@@ -35,12 +35,6 @@
 #include "texture_blend.h"
 #include <stdlib.h>
 
-
-void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2);
-void texture_blend_free(texture_t *texture);
-void texture_blend_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
-
-
 void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2) {
   texture_blend_t *sd;
 
@@ -63,7 +57,7 @@ void texture_blend_free(texture_t *texture) {
 }
 
 
-void texture_blend_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
+void texture_blend_work(__TEXTURE_WORK_PROTOTYPE__) {
   texture_blend_t *sd;
   tfloat coef;
 

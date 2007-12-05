@@ -48,7 +48,7 @@ typedef struct texture_mix_s {
 
 extern	void	texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, tfloat coef);
 extern	void	texture_mix_free(texture_t *texture);
-extern	void	texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+extern	void	texture_mix_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 #endif

@@ -34,12 +34,8 @@
 
 #include "texture_checker.h"
 #include <stdlib.h>
-#include "umath.h"
-
-
-void texture_checker_init(texture_t *texture, int tile);
-void texture_checker_free(texture_t *texture);
-void texture_checker_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+#include "util_math.h"
+#include "adrt_struct.h"
 
 
 void texture_checker_init(texture_t *texture, int tile) {
@@ -63,7 +59,7 @@ void texture_checker_free(texture_t *texture) {
 }
 
 
-void texture_checker_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
+void texture_checker_work(__TEXTURE_WORK_PROTOTYPE__) {
   texture_checker_t	*td;
   TIE_3			pt;
   int			u, v;
@@ -72,12 +68,12 @@ void texture_checker_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ra
   td = (texture_checker_t *)texture->data;
 
   /* Transform the Point */
-  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
-
-  if(pt.v[0]+TIE_PREC > mesh->max.v[0]) pt.v[0] = mesh->max.v[0];
-  if(pt.v[1]+TIE_PREC > mesh->max.v[1]) pt.v[1] = mesh->max.v[1];
-  u = mesh->max.v[0] - mesh->min.v[0] > 0 ? (int)((pt.v[0] - mesh->min.v[0]) / ((mesh->max.v[0] - mesh->min.v[0])/td->tile))%2 : 0;
-  v = mesh->max.v[1] - mesh->min.v[1] > 0 ? (int)((pt.v[1] - mesh->min.v[1]) / ((mesh->max.v[1] - mesh->min.v[1])/td->tile))%2 : 0;
+  MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
+  
+  if(pt.v[0]+TIE_PREC > ADRT_MESH(mesh)->max.v[0]) pt.v[0] = ADRT_MESH(mesh)->max.v[0];
+  if(pt.v[1]+TIE_PREC > ADRT_MESH(mesh)->max.v[1]) pt.v[1] = ADRT_MESH(mesh)->max.v[1];
+  u = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > 0 ? (int)((pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / ((ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0])/td->tile))%2 : 0;
+  v = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > 0 ? (int)((pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / ((ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1])/td->tile))%2 : 0;
 
   pixel->v[0] = pixel->v[1] = pixel->v[2] = u ^ v ? 1.0 : 0.0;
 }

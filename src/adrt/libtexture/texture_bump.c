@@ -34,12 +34,7 @@
 
 #include "texture_bump.h"
 #include <stdlib.h>
-#include "umath.h"
-
-
-void texture_bump_init(texture_t *texture, TIE_3 coef);
-void texture_bump_free(texture_t *texture);
-void texture_bump_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+#include "util_math.h"
 
 
 void texture_bump_init(texture_t *texture, TIE_3 coef) {
@@ -63,7 +58,7 @@ void texture_bump_free(texture_t *texture) {
 }
 
 
-void texture_bump_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
+void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__) {
   texture_bump_t *sd;
   TIE_3 n;
   tfloat d;

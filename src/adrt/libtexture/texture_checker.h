@@ -44,9 +44,9 @@ typedef struct texture_checker_s {
 } texture_checker_t;
 
 
-extern  void    texture_checker_init(texture_t *texture, int checker);
-extern  void    texture_checker_free(texture_t *texture);
-extern  void    texture_checker_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+extern	void	texture_checker_init(texture_t *texture, int checker);
+extern	void	texture_checker_free(texture_t *texture);
+extern	void	texture_checker_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 #endif

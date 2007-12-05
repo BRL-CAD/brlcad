@@ -45,9 +45,9 @@ typedef struct texture_blend_s {
 } texture_blend_t;
 
 
-extern  void    texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2);
-extern  void    texture_blend_free(texture_t *texture);
-extern  void    texture_blend_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+extern void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2);
+extern void texture_blend_free(texture_t *texture);
+extern void texture_blend_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 #endif

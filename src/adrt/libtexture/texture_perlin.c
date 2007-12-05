@@ -34,7 +34,7 @@
 
 #include "texture_perlin.h"
 #include <stdlib.h>
-#include "umath.h"
+#include "util_math.h"
 
 
 #define	B	0x100

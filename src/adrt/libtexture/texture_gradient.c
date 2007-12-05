@@ -34,12 +34,8 @@
 
 #include "texture_gradient.h"
 #include <stdlib.h>
-#include "umath.h"
-
-
-void texture_gradient_init(texture_t *texture, int axis);
-void texture_gradient_free(texture_t *texture);
-void texture_gradient_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+#include "util_math.h"
+#include "adrt_struct.h"
 
 
 void texture_gradient_init(texture_t *texture, int axis) {
@@ -63,7 +59,7 @@ void texture_gradient_free(texture_t *texture) {
 }
 
 
-void texture_gradient_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
+void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__) {
   texture_gradient_t *td;
   TIE_3 pt;
 
@@ -71,14 +67,14 @@ void texture_gradient_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *r
   td = (texture_gradient_t *)texture->data;
 
   /* Transform the Point */
-  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
+  MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
 
   if(td->axis == 1) {
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = mesh->max.v[1] - mesh->min.v[1] > TIE_PREC ? (pt.v[1] - mesh->min.v[1]) / (mesh->max.v[1] - mesh->min.v[1]) : 0.0;
+    pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
   } else if(td->axis == 2) {
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = mesh->max.v[2] - mesh->min.v[2] > TIE_PREC ? (pt.v[2] - mesh->min.v[2]) / (mesh->max.v[2] - mesh->min.v[1]) : 0.0;
+    pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2] > TIE_PREC ? (pt.v[2] - ADRT_MESH(mesh)->min.v[2]) / (ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
   } else {
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = mesh->max.v[0] - mesh->min.v[0] > TIE_PREC ? (pt.v[0] - mesh->min.v[0]) / (mesh->max.v[0] - mesh->min.v[1]) : 0.0;
+    pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
   }
 }
 

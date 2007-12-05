@@ -34,13 +34,8 @@
 
 #include "texture_camo.h"
 #include <stdlib.h>
-#include "umath.h"
-
-
-void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3);
-void texture_camo_free(texture_t *texture);
-void texture_camo_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
-
+#include "util_math.h"
+#include "adrt_struct.h"
 
 void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {
   texture_camo_t   *sd;
@@ -74,7 +69,7 @@ void texture_camo_free(texture_t *texture) {
 }
 
 
-void texture_camo_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
+void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__) {
   texture_camo_t *td;
   TIE_3 p, pt;
   tfloat sum1, sum2;
@@ -83,13 +78,13 @@ void texture_camo_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, 
   td = (texture_camo_t *)texture->data;
 
   /* Transform the Point */
-  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
+  MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
   if(td->absolute) {
     p = id->pos;
   } else {
-    p.v[0] = mesh->max.v[0] - mesh->min.v[0] > TIE_PREC ? (pt.v[0] - mesh->min.v[0]) / (mesh->max.v[0] - mesh->min.v[0]) : 0.0;
-    p.v[1] = mesh->max.v[1] - mesh->min.v[1] > TIE_PREC ? (pt.v[1] - mesh->min.v[1]) / (mesh->max.v[1] - mesh->min.v[1]) : 0.0;
-    p.v[2] = mesh->max.v[2] - mesh->min.v[2] > TIE_PREC ? (pt.v[2] - mesh->min.v[2]) / (mesh->max.v[2] - mesh->min.v[2]) : 0.0;
+    p.v[0] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0]) : 0.0;
+    p.v[1] = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+    p.v[2] = ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2] > TIE_PREC ? (pt.v[2] - ADRT_MESH(mesh)->min.v[2]) / (ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2]) : 0.0;
   }
 
   sum1 = fabs(texture_perlin_noise3(&td->perlin, p, td->size*1.0, td->octaves));

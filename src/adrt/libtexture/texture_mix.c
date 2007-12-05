@@ -34,12 +34,8 @@
 
 #include "texture_mix.h"
 #include <stdlib.h>
-#include "umath.h"
-
-
-void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, tfloat coef);
-void texture_mix_free(texture_t *texture);
-void texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+#include "util_math.h"
+#include "adrt_struct.h"
 
 
 void texture_mix_init(texture_t *texture, texture_t *texture1, texture_t *texture2, tfloat coef) {
@@ -65,7 +61,7 @@ void texture_mix_free(texture_t *texture) {
 }
 
 
-void texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
+void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__) {
   texture_mix_t *td;
   TIE_3 t;
   int i;
@@ -73,8 +69,8 @@ void texture_mix_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, t
 
   td = (texture_mix_t *)texture->data;
 
-  td->texture1->work(td->texture1, (struct mesh_s *)mesh, ray, id, pixel);
-  td->texture2->work(td->texture2, (struct mesh_s *)mesh, ray, id, &t);
+  td->texture1->work(td->texture1, ADRT_MESH(mesh), ray, id, pixel);
+  td->texture2->work(td->texture2, ADRT_MESH(mesh), ray, id, &t);
   MATH_VEC_MUL_SCALAR((*pixel), (*pixel), td->coef);
   MATH_VEC_MUL_SCALAR(t, t, (1.0 - td->coef));
   MATH_VEC_ADD((*pixel), (*pixel), t);
