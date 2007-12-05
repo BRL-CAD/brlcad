@@ -1,8 +1,9 @@
 # $Id$
 
-lib_LIBRARIES = libtieutil.a
-libtieutil_a_SOURCES = camera.c display.c image.c rand.c umath.c
+lib_LTLIBRARIES = libtieutil.la
+libtieutil_la_SOURCES = camera.c display.c image.c rand.c umath.c
 AM_CFLAGS = @SDL_CFLAGS@ -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libtexture
+libtieutil_la_LIBADD= @SDL_LIBS@
 
 noinst_HEADERS = camera.h display.h font.h
 
