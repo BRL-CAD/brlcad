@@ -31,19 +31,16 @@
  *
  * $Id$
  */
-
 #ifndef _TIENET_SLAVE_H
 #define _TIENET_SLAVE_H
 
 
-#include "tie.h"
+#include "tienet_util.h"
 
 
-extern	void	tienet_slave_init(int port, char *host, void fcb_init(tie_t *tie, int socknum),
-							void fcb_work(tie_t *tie, void *data, unsigned int size, void **res_data, unsigned int *res_size),
-							void fcb_free(void),
-							void fcb_mesg(void *mesg, unsigned int mesg_len),
-							int ver_key);
+extern	void	tienet_slave_init(int port, char *host, void fcb_work(tienet_buffer_t *buffer, tienet_buffer_t *result),
+                                                        void fcb_free(void),
+                                                        int ver_key);
 extern	void	tienet_slave_free();
 extern	short	tienet_endian;
 

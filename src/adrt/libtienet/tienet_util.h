@@ -40,6 +40,25 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#define TIENET_BUFFER_INIT(_b) { \
+	_b.data = NULL; \
+	_b.size = 0; \
+	_b.ind = 0; }
+
+#define TIENET_BUFFER_FREE(_b) free(_b.data);
+
+#define TIENET_BUFFER_SIZE(_b, _s) { \
+	if(_s > _b.size) { \
+	  _b.data = realloc(_b.data, _s); \
+	  _b.size = _s; \
+        } }
+
+typedef struct tienet_buffer_s {
+  uint8_t *data;
+  uint32_t size;
+  uint32_t ind;
+} tienet_buffer_t;
+
 
 typedef struct tienet_sem_s {
   int val;

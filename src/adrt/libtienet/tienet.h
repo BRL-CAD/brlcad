@@ -40,6 +40,7 @@
 #include "tienet_master.h"
 #include "tienet_slave.h"
 #include "tienet_util.h"
+#include "tie.h"
 
 
 #endif

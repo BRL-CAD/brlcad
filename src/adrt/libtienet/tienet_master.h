@@ -36,10 +36,10 @@
 #define _TIENET_MASTER_H
 
 #include <inttypes.h>
+#include "tienet_util.h"
 
-extern void   	tienet_master_init(int port, void RDC(void *res_buf, int res_len), char *list, char *exec, int buffer_size, int ver_key);
+extern void   	tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char *list, char *exec, int buffer_size, int ver_key, int verbose);
 extern void	tienet_master_free();
-extern void	tienet_master_prep(void *app_data, int app_size);
 extern void	tienet_master_push(void *data, int size);
 extern void	tienet_master_begin();
 extern void	tienet_master_end();
