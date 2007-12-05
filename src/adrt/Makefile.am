@@ -2,7 +2,6 @@
 
 adrtd = libcommon \
 	librender \
-	libtexture \
 	bench \
 	rise \
 	isst
@@ -10,6 +9,7 @@ adrtd = libcommon \
 always_compile = \
 	libtie \
 	libtienet \
+	libtexture \
 	libutil
 
 if BUILD_ADRT
@@ -24,6 +24,9 @@ DIST_SUBDIRS = \
 	libtie \
 	misc \
 	scripts
+
+tieincludedir = $(includedir)/tie
+tieinclude_HEADERS = adrt.h adrt_struct.h
 
 if HAVE_DOXYGEN
 doxygen:
