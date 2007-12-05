@@ -1,0 +1,38 @@
+#ifndef _ADRT_H
+#define _ADRT_H
+
+#define	ADRT_PORT		1982
+#define	ADRT_USE_COMPRESSION	1
+#define ADRT_MAX_WORKSPACE_NUM	64
+
+/* Pixel Format: 0 = unsigned char, 1 =  tfloat */
+#define	ADRT_PIXEL_FMT		0
+
+enum
+{
+  ADRT_WORK_INIT,
+  ADRT_WORK_STATUS,
+  ADRT_WORK_FRAME_ATTR,
+  ADRT_WORK_FRAME,
+  ADRT_WORK_SHOTLINE,
+  ADRT_WORK_SPALL,
+  ADRT_WORK_SELECT,
+  ADRT_WORK_MINMAX
+};
+
+enum
+{
+  ADRT_NETOP_NOP,
+  ADRT_NETOP_INIT,
+  ADRT_NETOP_REQWID,
+  ADRT_NETOP_LOAD,
+  ADRT_NETOP_WORK,
+  ADRT_NETOP_MESG,
+  ADRT_NETOP_QUIT,
+  ADRT_NETOP_SHUTDOWN
+};
+
+#define ADRT_VER_KEY		0
+#define ADRT_VER_DETAIL		"ADRT - U.S. Army Research Lab (2003 - 2006)"
+
+#endif
