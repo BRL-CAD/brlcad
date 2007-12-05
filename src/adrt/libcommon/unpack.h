@@ -35,7 +35,7 @@
 #define _COMMON_UNPACK_H
 
 
-#include "camera.h"
+#include "libutil/camera.h"
 #include "cdb.h"
 #include "env.h"
 #include "texture.h"

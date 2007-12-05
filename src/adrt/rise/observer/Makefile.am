@@ -12,6 +12,7 @@ rise_observer_CFLAGS = \
 	-D__STRICT_ANSI__ \
 	@SDL_CFLAGS@ \
 	-I.. \
+	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libtexture \

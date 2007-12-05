@@ -5,6 +5,7 @@ bin_PROGRAMS = adrt_bench
 adrt_bench_CFLAGS = \
 	-D__STRICT_ANSI__ \
 	-I.. \
+	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libtexture \

@@ -26,7 +26,7 @@
 
 #include "hit.h"
 #include "adrt_struct.h"
-#include "umath.h"
+#include "libutil/umath.h"
 
 
 void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {

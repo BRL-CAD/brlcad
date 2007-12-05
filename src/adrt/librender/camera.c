@@ -34,7 +34,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#include "umath.h"
+#include "libutil/umath.h"
 
 pthread_t *render_tlist;
 

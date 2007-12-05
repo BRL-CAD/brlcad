@@ -27,7 +27,7 @@
 #ifndef _RENDER_CAMERA_H
 #define _RENDER_CAMERA_H
 
-#include "tie.h"
+#include "libtie/tie.h"
 #include "libtienet/tienet.h"
 #include "render.h"
 
