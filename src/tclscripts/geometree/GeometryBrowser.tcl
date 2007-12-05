@@ -770,8 +770,8 @@ body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
 		return $retval
 	}
 
-	puts "e $nodeName"
-	if { [ catch { e $nodeName } retval ] } {
+	puts "draw $nodeName"
+	if { [ catch { draw $nodeName } retval ] } {
 		puts $retval
 		return
 	}
