@@ -1086,10 +1086,13 @@ fi
 
 # test for python interpreter, auto for with-python is 'no'
 PYTHON=""
+python_works=no
 if test "x$bc_with_python" = "xyes" ; then
 	AM_PATH_PYTHON(2.0,
 		       PYTHON_CFLAGS=-I`$PYTHON -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('INCLUDEPY')"`
 		       PYTHON_LIBS=`$PYTHON -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LIBPL')+'/'+distutils.sysconfig.get_config_var('LIBRARY')+' '+distutils.sysconfig.get_config_var('LIBS')"`
+		       AC_DEFINE(HAVE_PYTHON,1,[Python is available])
+		       python_works=yes
 		       )
 fi
 
@@ -3436,6 +3439,7 @@ if test "x$bc_with_sdl" != "xno" ; then
 	AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
 	AC_SUBST(SDL_CFLAGS)
 	AC_SUBST(SDL_LIBS)
+	AC_DEFINE(HAVE_SDL, 1, [SDL 1.2.0+ is available])
 	sdl_works="yes"
     fi
 fi
