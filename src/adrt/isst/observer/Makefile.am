@@ -28,7 +28,7 @@ isst_observer_LDADD = \
 	${top_builddir}/src/adrt/libtexture/libtexture.la \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
-	${top_builddir}/src/adrt/libutil/libtieutil.a \
+	${top_builddir}/src/adrt/libutil/libtieutil.la \
 	${SDL_LIBS} \
 	${LIBTHREAD} \
 	${LIBZ} \
