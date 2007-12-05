@@ -3,19 +3,19 @@
 adrtd = libcommon \
 	librender \
 	libtexture \
-	libutil \
 	bench \
 	rise \
 	isst
 
 always_compile = \
 	libtie \
-	libtienet
+	libtienet \
+	libutil
 
-# always compile libite
-SUBDIRS = ${always_compile}
 if BUILD_ADRT
-SUBDIRS += ${adrtd}
+SUBDIRS = ${adrtd} ${always_compile}
+else
+SUBDIRS = ${always_compile}
 endif
 
 DIST_SUBDIRS = \
