@@ -34,7 +34,7 @@
 
 #include "texture_camo.h"
 #include <stdlib.h>
-#include "util_math.h"
+#include "umath.h"
 #include "adrt_struct.h"
 
 void texture_camo_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 color1, TIE_3 color2, TIE_3 color3) {

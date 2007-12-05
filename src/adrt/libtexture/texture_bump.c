@@ -34,7 +34,7 @@
 
 #include "texture_bump.h"
 #include <stdlib.h>
-#include "util_math.h"
+#include "umath.h"
 
 
 void texture_bump_init(texture_t *texture, TIE_3 coef) {

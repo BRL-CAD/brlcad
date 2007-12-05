@@ -34,7 +34,7 @@
 
 #include "texture_mix.h"
 #include <stdlib.h>
-#include "util_math.h"
+#include "umath.h"
 #include "adrt_struct.h"
 
 
