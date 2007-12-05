@@ -649,11 +649,13 @@ BC_ARG_WITH_ALIAS([with_python], [libpython])
 dnl automatically scan /usr/local (e.g. BSD uses /usr/local for ports)
 BC_SEARCH_DIRECTORY([/usr/local])
 
-dnl find tclConfig.sh, add --with-tcl option
+dnl find tclConfig.sh, add --with-tcl option, don't cache result for AC_CONFIG_SUBDIRS
 SC_PATH_TCLCONFIG
+unset ac_cv_c_tclconfig
 
-dnl find tkConfig.sh, add --with-tk option
+dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
 SC_PATH_TKCONFIG
+unset ac_cv_c_tkconfig
 
 
 ###
@@ -1407,6 +1409,8 @@ AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
 dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBITCL"
 AC_CHECK_LIB(itk3.4, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.4",
     [AC_CHECK_LIB(itk34, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk34",
 	[AC_CHECK_LIB(itk3.3, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.3",
@@ -1420,6 +1424,7 @@ AC_CHECK_LIB(itk3.4, Itcl_Init, itk_link_works=yes ; LIBITCL="-litk3.4",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if a socket library links
 socket_link_works=no
@@ -3731,22 +3736,24 @@ fi
 
 dnl configure Tcl
 if test "x$build_brlcad_tcl" = "xyes" ; then
-    AC_CONFIG_SUBDIRS([src/other/tcl/unix])
     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
-    TCL_PATH="`echo $TCL_PATH | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
-    TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
-    TK_PATH="`echo ${TK_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
+    ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
+    AC_CONFIG_SUBDIRS([src/other/tcl/unix])
+    TCL_PATH="`echo ${TCL_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
 AC_SUBST(TCL_PATH)
-AC_SUBST(TK_PATH)
 
 dnl configure Tk
 if test "x$build_brlcad_tk" = "xyes" ; then
     if test "x$bc_build_aquatk" = "xyes" ; then
 	ac_configure_args="$ac_configure_args --enable-aqua --disable-xft"
     fi
+    TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
+    ac_configure_args="$ac_configure_args --with-tk=\"$TK_PATH\""
     AC_CONFIG_SUBDIRS([src/other/tk/unix])
+    TK_PATH="`echo ${TK_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
+AC_SUBST(TK_PATH)
 
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
