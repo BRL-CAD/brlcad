@@ -158,8 +158,9 @@ prnt_Pixel(char *msg, RGBpixel (*pixelp))
 
 /* VARARGS */
 void
-Va_Decl( fb_log )
-	{	extern char *DL, *CS;
+fb_log (const char *fmt, ...)	/* de-macro'd due to fmt now being const */
+{
+	extern char *DL, *CS;
 	Va_Start();
 	if( tty )
 		{

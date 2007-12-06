@@ -582,7 +582,7 @@ comm_error(char *str)
  *  requiring the size of a parameter to be known at compile time.
  */
 void
-fb_log( char *fmt, ... )
+fb_log( const char *fmt, ... )
 {
 	va_list ap;
 	char	outbuf[OUTBUFSZ];			/* final output string */
