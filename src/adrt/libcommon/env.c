@@ -133,7 +133,7 @@ void common_env_read(common_env_t *env, const char *fpath) {
 	env->rm = RENDER_METHOD_PATH;
 	token = strtok(NULL, ",");
 	render_path_init(&env->render, atoi(token));
-      } else if(!strcmp(token, "plane")) {
+      } else if(!strcmp(token, "cut")) {
 	TIE_3 pos, dir;
 	int i;
 
@@ -151,7 +151,7 @@ void common_env_read(common_env_t *env, const char *fpath) {
 	  dir.v[i] = atof(token);
 	}
 
-	render_plane_init(&env->render, pos, dir);
+	render_cut_init(&env->render, pos, dir);
       } else {
 	env->rm = RENDER_METHOD_FLAT;
 	render_flat_init(&env->render);

@@ -175,7 +175,7 @@ void common_unpack_env(common_db_t *db, int socknum) {
 		tienet_recv(socknum, &ray_dir.v[2], sizeof(tfloat), tienet_endian);
 
 		ind += 6 * sizeof(tfloat);
-		render_plane_init(&db->env.render, ray_pos, ray_dir);
+		render_cut_init(&db->env.render, ray_pos, ray_dir);
 	      }
 	      break;
 
