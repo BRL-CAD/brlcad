@@ -24,6 +24,10 @@
  *
  */
 
+#ifndef TIE_PRECISION
+# define TIE_PRECISION 0
+#endif
+
 #include "component.h"
 #include "cut.h"
 #include "depth.h"

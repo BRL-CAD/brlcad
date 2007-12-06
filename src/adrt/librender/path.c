@@ -24,6 +24,10 @@
  *
  */
 
+#ifndef TIE_PRECISION
+# define TIE_PRECISION 0
+#endif
+
 #include "path.h"
 #include <stdio.h>
 #include <stdlib.h>
