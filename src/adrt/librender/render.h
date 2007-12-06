@@ -36,7 +36,6 @@
 #include "normal.h"
 #include "path.h"
 #include "phong.h"
-#include "plane.h"
 #include "spall.h"
 #include "surfel.h"
 #include "render_internal.h"

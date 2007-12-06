@@ -14,7 +14,6 @@ librender_la_SOURCES = \
 	normal.c \
 	path.c \
 	phong.c \
-	plane.c \
 	render_util.c \
 	spall.c \
 	surfel.c
@@ -44,7 +43,6 @@ tieinclude_HEADERS = \
 	normal.h \
 	path.h \
 	phong.h \
-	plane.h \
 	render.h \
 	render_internal.h \
 	render_util.h \
