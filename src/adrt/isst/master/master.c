@@ -177,7 +177,7 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
 
   /* Initialize tienet master */
   isst_master_tile_num = (db.env.img_w * db.env.img_h) / (db.env.tile_w * db.env.tile_h);
-  tienet_master_init(port, isst_master_result, list, exec, 5, ISST_VER_KEY);
+  tienet_master_init(port, isst_master_result, list, exec, 5, ISST_VER_KEY, 0);
 
   /* Launch a thread to handle networking */
   pthread_create(&isst_master_networking_thread, NULL, isst_master_networking,&obs_port);
@@ -191,7 +191,9 @@ void isst_master(int port, int obs_port, char *proj, char *list, char *exec, cha
   app_size = common_pack(&db, &app_data, proj);
   printf("done.\n");
 
+  /* XXX FIX ME, I think this should be a "prep" message?
   tienet_master_prep(app_data, app_size);
+  */
 
   /* Initialize the work dispatcher */
   isst_dispatcher_init();
