@@ -24,9 +24,6 @@
  *
  */
 
-#include "component.h"
-#include "cut.h"
-#include "camera.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +31,12 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "bu.h"
+
+#include "component.h"
+#include "cut.h"
+#include "camera.h"
 #include "libutil/umath.h"
 
 pthread_t *render_tlist;
@@ -54,7 +57,7 @@ void render_camera_init(render_camera_t *camera, int threads)
   camera->tilt = 0;
 
   /* The camera will use a thread for every cpu the machine has. */
-  camera->thread_num = threads ? threads : get_nprocs();
+  camera->thread_num = threads ? threads : bu_avail_cpus();
 /* printf("threads: %d\n", camera->thread_num); */
 
   /* Initialize camera to rendering surface normals */

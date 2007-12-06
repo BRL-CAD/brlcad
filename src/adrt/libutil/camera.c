@@ -40,9 +40,12 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "common.h"
 #include "image.h"
 #include "umath.h"
+
+#include "bu.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>
@@ -50,42 +53,16 @@
 #  include <sys/sysctl.h>
 #endif
 
-
 pthread_t *util_tlist;
 
-
-int get_nprocs(void);
-
-
-#ifndef HAVE_SYS_SYSINFO_H
-#ifdef HAVE_SYS_SYSCTL_H
-int get_nprocs() {
-  int mib[2], maxproc;
-  size_t len;
-
-  mib[0] = CTL_HW;
-  mib[1] = HW_NCPU;
-  len = sizeof(maxproc);
-  sysctl(mib, 2, &maxproc, &len, NULL, 0);
-  return maxproc;
-}
-#else
-int get_nprocs() {
-  return 1;
-}
-#endif
-#endif
-
-
 void* util_camera_render_thread(void *ptr);
-
 
 void util_camera_init(util_camera_t *camera, int threads) {
   camera->view_num = 0;
   camera->view_list = NULL;
 
   /* The camera will use a thread for every cpu the machine has. */
-  camera->thread_num = threads ? threads : get_nprocs();
+  camera->thread_num = threads ? threads : bu_avail_cpus();
 
   if(camera->thread_num > 1) {
     util_tlist = (pthread_t *)malloc(sizeof(pthread_t) * camera->thread_num);

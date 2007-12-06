@@ -19,7 +19,9 @@ librender_la_SOURCES = \
 	spall.c \
 	surfel.c
 
-librender_la_LIBADD = ${LIBM}
+librender_la_LIBADD = \
+	${LIBM} \
+	$(top_builddir)/src/libbu/libbu.la
 
 AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
