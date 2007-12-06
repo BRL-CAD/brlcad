@@ -52,7 +52,7 @@
  * Forward declarations for procedures defined later in this file:
  */
 
-static void BwishPanic(CONST char *format, ...);
+static void BwishPanic(const char *format, ...);
 
 static BOOL consoleRequired = TRUE;
 
@@ -222,13 +222,13 @@ error:
  */
 
 void
-BwishPanic(CONST char *format, ...)
+BwishPanic(const char *format, ...)
 {
     va_list argList;
     char buf[1024];
 
     va_start(argList, format);
-    vsprintf(buf, format, argList);
+    vsnprintf(buf, 1024, format, argList);
 
     MessageBeep(MB_ICONEXCLAMATION);
     MessageBox(NULL, buf, "Fatal Error in bwish",

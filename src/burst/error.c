@@ -43,7 +43,7 @@
  *  Log an RT library event
  */
 void
-brst_log( char *fmt, ... )
+brst_log( const char *fmt, ... )
 {
     va_list	ap;
     va_start( ap, fmt );

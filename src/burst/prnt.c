@@ -866,7 +866,7 @@ fastf_t	los;		/* LOS of space */
 	return;
 	}
 void
-prntScr( char *format, ... )
+prntScr( const char *format, ... )
 	{
 		va_list	ap;
 
