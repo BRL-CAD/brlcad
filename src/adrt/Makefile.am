@@ -35,10 +35,7 @@ doxygen:
 endif
 
 EXTRA_DIST = \
-	acinclude.m4 \
 	AUTHORS \
-	ChangeLog \
-	configure.ac \
 	COPYING \
 	Doxyfile \
 	NEWS \
