@@ -27,7 +27,7 @@
 #ifndef _RENDER_INTERNAL_H
 #define _RENDER_INTERNAL_H
 
-#include "libtie/tie.h"
+#include "tie.h"
 
 #define RENDER_METHOD_COMPONENT	0x01
 #define RENDER_METHOD_CUT	0x02
