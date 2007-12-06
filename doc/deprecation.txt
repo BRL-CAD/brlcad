@@ -47,7 +47,6 @@ new names should be listed for reference.
 **************
 * DEPRECATED *
 **************
-
 7.10
 ----
 src/librt/bomb.c
@@ -77,12 +76,15 @@ include/bn.h
 
 7.12.0
 ------
+include/fb.h
+	fb_log(char *fmt) -> fb_log(const char *fmt)
 include/noalias-prag.h
 	removed, non-stdc
 include/noalias.h
 	removed, non-stdc
 src/librt/wdb_obj.c
 	removed wdb_tree_cmd(), added to dg_obj.c as dgo_tree_cmd()
+
 
 7.10.4
 ------
