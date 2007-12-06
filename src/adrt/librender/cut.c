@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "adrt.h"
 #include "adrt_struct.h"
 #include "hit.h"
 
@@ -48,13 +49,17 @@ typedef struct render_cut_hit_s {
 
 void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   render_cut_t *d;
-  TIE_3 list[6], **tlist, normal, up;
+  TIE_3 list[6], normal, up;
   tfloat plane[4];
 
   render->work = render_cut_work;
   render->free = render_cut_free;
 
   render->data = (render_cut_t *)malloc(sizeof(render_cut_t));
+  if (!render->data) {
+      perror("render->data");
+      exit(1);
+  }
   d = (render_cut_t *)render->data;
 
   d->ray_pos = ray_pos;
@@ -78,7 +83,6 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   d->plane[3] = -plane[3];
 
   /* Triangle 1 */
-  tlist = (TIE_3 **)malloc(6 * sizeof(TIE_3 *));
   list[0].v[0] = ray_pos.v[0];
   list[0].v[1] = ray_pos.v[1];
   list[0].v[2] = ray_pos.v[2] - THICKNESS;
@@ -105,17 +109,8 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   list[5].v[2] = ray_pos.v[2] + THICKNESS;
 
 
-  tlist[0] = &list[0];
-  tlist[1] = &list[1];
-  tlist[2] = &list[2];
-  tlist[3] = &list[3];
-  tlist[4] = &list[4];
-  tlist[5] = &list[5];
-
-  tie_push(&d->tie, tlist, 2, NULL, 0);
+  tie_push(&d->tie, list, 2, NULL, 0);
   tie_prep(&d->tie);
-
-  free(tlist);
 }
 
 
@@ -170,11 +165,10 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 
   /*
   * Optimization:
-  * First intersect this ray with the plane and fire the ray from there 
+  * First intersect this ray with the plane and fire the ray from there
   * Plane: Ax + By + Cz + D = 0
   * Ray = O + td
   * t = -(Pn · R0 + D) / (Pn · Rd)
-  * 
   */
 
   t = (rd->plane[0]*ray->pos.v[0] + rd->plane[1]*ray->pos.v[1] + rd->plane[2]*ray->pos.v[2] + rd->plane[3]) /
@@ -197,7 +191,6 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
   if(!tie_work(tie, ray, &id, render_cut_hit, &hit))
     return;
 
-
   /*
   * If the point after the splitting plane is an outhit, fill it in as if it were solid.
   * If the point after the splitting plane is an inhit, then just shade as usual.
@@ -206,12 +199,12 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
   MATH_VEC_DOT(dot, ray->dir, hit.id.norm);
   /* flip normal */
   dot = fabs(dot);
-  
 
-  if(hit.mesh->flags & 0x3) {
-    color.v[0] = hit.mesh->flags & 0x1 ? 0.9 : 0.2;
+
+  if(hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
+    color.v[0] = hit.mesh->flags & ADRT_MESH_HIT ? 0.9 : 0.2;
     color.v[1] = 0.2;
-    color.v[2] = hit.mesh->flags & 0x2 ? 0.9 : 0.2;
+    color.v[2] = hit.mesh->flags & ADRT_MESH_SELECT ? 0.9 : 0.2;
   } else {
     /* Mix actual color with white 4:1, shade 50% darker */
 #if 0
