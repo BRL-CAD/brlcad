@@ -71,7 +71,7 @@ bu_bomb(const char *str)
 }
 
 void
-fb_log( char *fmt, ... )
+fb_log( const char *fmt, ... )
 {
 	va_list ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
