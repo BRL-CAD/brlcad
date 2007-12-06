@@ -505,6 +505,9 @@ fastf_t
 bu_get_load_average(void)
 {
     double	load = -1.0;
+
+    bu_log("DEPRECATED: bu_get_load_average is deprecated and will be removed in a future release.\n");
+
 #ifndef _WIN32
     FILE	*fp;
 
