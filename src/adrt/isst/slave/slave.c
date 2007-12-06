@@ -24,241 +24,382 @@
  *
  */
 
+#ifndef TIE_PRECISION
+# define TIE_PRECISION 0
+#endif
+
 #include "slave.h"
+#include "load.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include "camera.h"
+
 #include "isst.h"
-#include "cdb.h"
+#include "adrt.h"
+#include "camera.h"
+#include "adrt.h"
+#include "tie.h"
 #include "tienet.h"
-#include "unpack.h"
 #include "render_util.h"
 
-
 void isst_slave(int port, char *host, int threads);
-void isst_slave_init(tie_t *tie, int socknum);
-void isst_slave_free(void);
-void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len);
-void isst_slave_mesg(void *mesg, unsigned int mesg_len);
+static void isst_slave_init(tie_t *tie, int socknum);
+static void isst_slave_free(void);
+static void isst_slave_work (tienet_buffer_t *work, tienet_buffer_t *result);
+static void isst_slave_mesg(void *mesg, unsigned int mesg_len);
 
+typedef struct isst_slave_project_s
+{
+  tie_t tie;
+  render_camera_t camera;
+  uint16_t last_frame;
+  uint8_t active;
+} isst_slave_project_t;
 
-int isst_slave_threads;
-int isst_slave_completed;
-common_db_t db;
-util_camera_t camera;
+uint32_t isst_slave_threads;
+isst_slave_project_t isst_workspace_list[ADRT_MAX_WORKSPACE_NUM];
 
-
-void isst_slave(int port, char *host, int threads) {
+void isst_slave(int port, char *host, int threads) 
+{
+  int i;
   isst_slave_threads = threads;
-  tienet_slave_init(port, host, isst_slave_init, isst_slave_work, isst_slave_free, isst_slave_mesg, ISST_VER_KEY);
+  tienet_slave_init(port, host, isst_slave_work, isst_slave_free, ADRT_VER_KEY);
+
+  /* Initialize all workspaces as inactive */
+  for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
+    isst_workspace_list[i].active = 0;
+
+/*  slave_last_frame = 0; */
 }
 
+void isst_slave_free() 
+{
+  uint16_t i;
 
-void isst_slave_init(tie_t *tie, int socknum) {
-  printf("scene data received\n");
-
-  isst_slave_completed = 0;
-  util_camera_init(&camera, isst_slave_threads);
-
-  printf("prepping geometry... ");
-  fflush(stdout);
-  common_unpack(&db, tie, &camera, socknum);
-  common_env_prep(&db.env);
-  util_camera_prep(&camera, &db);
-
-  printf("done.\n");
+  for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
+    if (isst_workspace_list[i].active)
+    {
+//      render_camera_free (&camera);
+    }
 }
 
-
-void isst_slave_free() {
-  util_camera_free(&camera);
-  common_unpack_free(&db);
-}
-
-
-void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, unsigned int *res_len) {
-  common_work_t work;
-  int ind;
+void
+isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
+{
   TIE_3 pos, foc;
-  unsigned char rm;
-  char op;
+  unsigned char rm, op;
+  uint32_t ind, wlen;
+  uint16_t wid;
 
-
+  /* Length of work data */
+  wlen = work->ind;
   ind = 0;
-  memcpy(&work, &((char *)data)[ind], sizeof(common_work_t));
-  ind += sizeof(common_work_t);
 
-  memcpy(&op, &((char *)data)[ind], 1);
+  /* Get work type */
+  TCOPY(uint8_t, work->data, ind, &op, 0);
   ind += 1;
 
+  /* Workspace ID */
+  TCOPY(uint16_t, work->data, ind, &wid, 0);
+  ind += 2;
+
+  /* This will get improved later with caching */
+  TIENET_BUFFER_SIZE((*result), 3); /* Copy op and wid, 3 bytes */
+  bcopy (&work->data[0], result->data, 3);
+  result->ind = ind;
+
   switch(op) {
-    case ISST_OP_SHOT:
+    case ADRT_WORK_INIT:
       {
-	tie_ray_t ray;
-	void *mesg;
-	int dlen;
+        render_camera_init (&isst_workspace_list[wid].camera, isst_slave_threads);
+        slave_load_sql (&isst_workspace_list[wid].tie, &work->data[ind], wlen-ind);
+        render_camera_prep (&isst_workspace_list[wid].camera);
+        printf ("ready.\n");
+        result->ind = 0;
 
-	mesg = NULL;
-
-	/* position */
-	memcpy(&ray.pos, &((char *)data)[ind], sizeof(TIE_3));
-	ind += sizeof(TIE_3);
-
-	/* direction */
-	memcpy(&ray.dir, &((char *)data)[ind], sizeof(TIE_3));
-	ind += sizeof(TIE_3);
-
-	/* Fire the shot */
-	ray.depth = 0;
-	render_util_shotline_list(tie, &ray, &mesg, &dlen);
-
-	/* Make room for shot data */
-	*res_len = sizeof(common_work_t) + dlen;
-	*res_buf = (void *)realloc(*res_buf, *res_len);
-
-	ind = 0;
-
-	/* Pack work unit data and shot data */
-	memcpy(&((char *)*res_buf)[ind], &work, sizeof(common_work_t));
-	ind += sizeof(common_work_t);
-
-	memcpy(&((char *)*res_buf)[ind], mesg, dlen);
-
-	free(mesg);
+        /* Mark the workspace as active so it can be cleaned up when the time comes. */
+        isst_workspace_list[wid].active = 1;
       }
       break;
 
-    case ISST_OP_SPALL:
+    case ADRT_WORK_STATUS:
       {
-	tie_ray_t ray;
-	tfloat angle;
-	void *mesg;
-	int dlen;
+        double loadavg;
 
-	mesg = NULL;
-
-	/* position */
-	memcpy(&ray.pos, &((char *)data)[ind], sizeof(TIE_3));
-	ind += sizeof(TIE_3);
-
-	/* direction */
-	memcpy(&ray.dir, &((char *)data)[ind], sizeof(TIE_3));
-	ind += sizeof(TIE_3);
-
-	/* angle */
-	memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
-	ind += sizeof(tfloat);
-
-	/* Fire the shot */
-	ray.depth = 0;
-	render_util_spall_list(tie, &ray, angle, &mesg, &dlen);
-
-	/* Make room for shot data */
-	*res_len = sizeof(common_work_t) + dlen;
-	*res_buf = (void *)realloc(*res_buf, *res_len);
-
-	ind = 0;
-
-	/* Pack work unit data and shot data */
-	memcpy(&((char *)*res_buf)[ind], &work, sizeof(common_work_t));
-	ind += sizeof(common_work_t);
-
-	memcpy(&((char *)*res_buf)[ind], mesg, dlen);
-
-	free(mesg);
+        getloadavg (&loadavg, 1);
+        printf ("load average: %f\n", loadavg);
       }
       break;
+ 
+    case ADRT_WORK_SELECT:
+    {
+      uint8_t c;
+      char string[255];
+      uint32_t n, i, num;
 
-    case ISST_OP_RENDER:
-      /* Camera position */
-      memcpy(&pos.v, &((char *)data)[ind], sizeof(TIE_3));
-      ind += sizeof(TIE_3);
-
-      /* Camera Focus */
-      memcpy(&foc.v, &((char *)data)[ind], sizeof(TIE_3));
-      ind += sizeof(TIE_3);
-
-      /* Update Rendering Method if it has Changed */
-      memcpy(&rm, &((char *)data)[ind], 1);
+      /* reset */
+      TCOPY(uint8_t, work->data, ind, &c, 0);
       ind += 1;
+      if (c)
+        for (i = 0; i < slave_load_mesh_num; i++)
+          slave_load_mesh_list[i].flags = 0;
 
-      if(rm != db.env.rm) {
-	db.env.render.free(&db.env.render);
+      /* number of strings to match */
+      TCOPY(uint32_t, work->data, ind, &num, 0);
+      ind += 4;
 
-	switch(rm) {
-	  case RENDER_METHOD_DEPTH:
-	    render_depth_init(&db.env.render);
-	    break;
+      for (i = 0; i < num; i++)
+      {
+        /* string length */
+        TCOPY(uint8_t, work->data, ind, &c, 0);
+        ind += 1;
 
-	  case RENDER_METHOD_COMPONENT:
-	    render_component_init(&db.env.render);
-	    break;
+        /* string */
+        bcopy (&work->data[ind], string, c);
+        ind += c;
 
-	  case RENDER_METHOD_GRID:
-	    render_grid_init(&db.env.render);
-	    break;
-
-	  case RENDER_METHOD_NORMAL:
-	    render_normal_init(&db.env.render);
-	    break;
-
-	  case RENDER_METHOD_PATH:
-	    render_path_init(&db.env.render, 12);
-	    break;
-
-	  case RENDER_METHOD_PHONG:
-	    render_phong_init(&db.env.render);
-	    break;
-
-	  case RENDER_METHOD_PLANE:
-	    {
-	      TIE_3 shot_pos, shot_dir;
-
-	      /* Extract shot position and direction */
-	      memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
-	      ind += sizeof(TIE_3);
-
-	      memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
-	      ind += sizeof(TIE_3);
-
-	      render_plane_init(&db.env.render, shot_pos, shot_dir);
-	    }
-	    break;
-
-	  case RENDER_METHOD_SPALL:
-	    {
-	      TIE_3 shot_pos, shot_dir;
-	      tfloat angle;
-
-	      /* Extract shot position and direction */
-	      memcpy(&shot_pos, &((char *)data)[ind], sizeof(TIE_3));
-	      ind += sizeof(TIE_3);
-
-	      memcpy(&shot_dir, &((char *)data)[ind], sizeof(TIE_3));
-	      ind += sizeof(TIE_3);
-
-	      memcpy(&angle, &((char *)data)[ind], sizeof(tfloat));
-	      ind += sizeof(tfloat);
-
-	      render_spall_init(&db.env.render, shot_pos, shot_dir, angle); /* 10 degrees for now */
-	    }
-	    break;
-
-	  default:
-	    break;
-	}
-	db.env.rm = rm;
+        /* set select flag */
+        for (n = 0; n < slave_load_mesh_num; n++)
+          if (strstr(slave_load_mesh_list[n].name, string) || c == 1)
+            slave_load_mesh_list[n].flags = (slave_load_mesh_list[n].flags & 0x1) | ((slave_load_mesh_list[n].flags & 0x2) ^ 0x2);
       }
 
-      /* Update camera */
-      camera.pos = pos;
-      camera.focus = foc;
-      util_camera_prep(&camera, &db);
+      /* zero length result */
+      result->ind = 0;
+    }  
+    break;
 
-      util_camera_render(&camera, &db, tie, data, size, res_buf, res_len);
-      *res_buf = (void *)realloc(*res_buf, *res_len + sizeof(short));
+    case ADRT_WORK_SHOTLINE:
+      {
+        tie_ray_t ray;
+        void *mesg;
+        int dlen;
+
+        mesg = NULL;
+
+        /* coordinates */
+        TCOPY(TIE_3, work->data, ind, ray.pos.v, 0);
+        ind += sizeof (TIE_3);
+        TCOPY(TIE_3, work->data, ind, ray.dir.v, 0);
+        ind += sizeof (TIE_3);
+#if 0
+printf ("pos: %.3f %.3f %.3f ... dir %.3f %.3f %.3f\n", ray.pos.v[0], ray.pos.v[1], ray.pos.v[2], ray.dir.v[0], ray.dir.v[1], ray.dir.v[2]);
+#endif
+        /* Fire the shot */
+        ray.depth = 0;
+        render_util_shotline_list (&isst_workspace_list[wid].tie, &ray, &mesg, &dlen);
+
+        /* Make room for shot data */
+        TIENET_BUFFER_SIZE((*result), result->ind + dlen + 2*sizeof (TIE_3));
+        bcopy (mesg, &result->data[result->ind], dlen);
+        result->ind += dlen;
+
+        TCOPY(TIE_3, &ray.pos, 0, result->data, result->ind);
+        result->ind += sizeof (TIE_3);
+
+        TCOPY(TIE_3, &ray.dir, 0, result->data, result->ind);
+        result->ind += sizeof (TIE_3);
+
+        free (mesg);
+      }
+      break;
+
+    case ADRT_WORK_SPALL:
+      {
+#if 0
+        tie_ray_t ray;
+        tfloat angle;
+        void *mesg;
+        int dlen;
+
+        mesg = NULL;
+
+        /* position */
+        TCOPY(TIE_3, data, ind, &ray.pos, 0);
+        ind += sizeof (TIE_3);
+
+        /* direction */
+        TCOPY(TIE_3, data, ind, &ray.dir, 0);
+        ind += sizeof (TIE_3);
+
+        /* angle */
+        TCOPY(tfloat, data, ind, &angle, 0);
+        ind += sizeof (tfloat);
+
+        /* Fire the shot */
+        ray.depth = 0;
+        render_util_spall_list(tie, &ray, angle, &mesg, &dlen);
+
+        /* Make room for shot data */
+        *res_len = sizeof (common_work_t) + dlen;
+        *res_buf = (void *)realloc(*res_buf, *res_len);
+
+        ind = 0;
+
+        bcopy(mesg, &((char *)*res_buf)[ind], dlen);
+
+        free (mesg);
+#endif
+      }
+      break;
+
+    case ADRT_WORK_FRAME_ATTR:
+      {
+        uint16_t image_w, image_h, image_format;
+
+        /* Image Size */
+        TCOPY(uint16_t, work->data, ind, &image_w, 0);
+        ind += 2;
+        TCOPY(uint16_t, work->data, ind, &image_h, 0);
+        ind += 2;
+        TCOPY(uint16_t, work->data, ind, &image_format, 0);
+        ind += 2;
+
+        isst_workspace_list[wid].camera.w = image_w;
+        isst_workspace_list[wid].camera.h = image_h;
+        render_camera_prep (&isst_workspace_list[wid].camera);
+        result->ind = 0;
+      }
+      break;
+
+    case ADRT_WORK_FRAME:
+      {
+        camera_tile_t tile;
+        uint8_t type;
+        tfloat fov;
+
+        /* Camera type */
+        TCOPY(uint8_t, work->data, ind, &type, 0);
+        ind += 1;
+
+        /* Camera fov */
+        TCOPY(tfloat, work->data, ind, &fov, 0);
+        ind += sizeof (tfloat);
+
+        /* Camera position */
+        TCOPY(TIE_3, work->data, ind, &pos, 0);
+        ind += sizeof (TIE_3);
+
+        /* Camera Focus */
+        TCOPY(TIE_3, work->data, ind, &foc, 0);
+        ind += sizeof (TIE_3);
+
+        /* Update Rendering Method if it has Changed */
+        rm = work->data[ind];
+        ind += 1;
+
+        if (rm != isst_workspace_list[wid].camera.rm || rm & 1<<7)
+        {
+          rm = rm & ((1<<7)-1);
+
+          isst_workspace_list[wid].camera.render.free (&isst_workspace_list[wid].camera.render);
+
+          switch(rm) {
+            case RENDER_METHOD_DEPTH:
+              render_depth_init(&isst_workspace_list[wid].camera.render);
+              break;
+
+            case RENDER_METHOD_COMPONENT:
+              render_component_init(&isst_workspace_list[wid].camera.render);
+              break;
+
+            case RENDER_METHOD_FLOS:
+              {
+                TIE_3 frag_pos;
+
+                /* Extract shot position and direction */
+                TCOPY(TIE_3, work->data, ind, &frag_pos, 0);
+                ind += sizeof (TIE_3);
+                render_flos_init(&isst_workspace_list[wid].camera.render, frag_pos);
+              }
+              break;
+
+            case RENDER_METHOD_GRID:
+              render_grid_init(&isst_workspace_list[wid].camera.render);
+              break;
+
+            case RENDER_METHOD_NORMAL:
+              render_normal_init(&isst_workspace_list[wid].camera.render);
+              break;
+
+            case RENDER_METHOD_PATH:
+              render_path_init(&isst_workspace_list[wid].camera.render, 12);
+              break;
+
+            case RENDER_METHOD_PHONG:
+              render_phong_init(&isst_workspace_list[wid].camera.render);
+              break;
+
+            case RENDER_METHOD_CUT:
+              {
+                TIE_3 shot_pos, shot_dir;
+
+                /* Extract shot position and direction */
+                TCOPY(TIE_3, work->data, ind, &shot_pos, 0);
+                ind += sizeof (TIE_3);
+
+                TCOPY(TIE_3, work->data, ind, &shot_dir, 0);
+                ind += sizeof (TIE_3);
+
+                render_cut_init(&isst_workspace_list[wid].camera.render, shot_pos, shot_dir);
+              }
+              break;
+
+            case RENDER_METHOD_SPALL:
+              {
+                TIE_3 shot_pos, shot_dir;
+                tfloat angle;
+
+                /* Extract shot position and direction */
+                TCOPY(TIE_3, work->data, ind, &shot_pos, 0);
+                ind += sizeof (TIE_3);
+
+                TCOPY(TIE_3, work->data, ind, &shot_dir, 0);
+                ind += sizeof (TIE_3);
+
+                TCOPY(tfloat, work->data, ind, &angle, 0);
+                ind += sizeof (tfloat);
+
+                render_spall_init (&isst_workspace_list[wid].camera.render, shot_pos, shot_dir, angle);
+              }
+              break;
+
+            default:
+              break;
+          }
+
+          isst_workspace_list[wid].camera.rm = rm;
+        }
+
+        /* The portion of the image to be rendered */
+        ind = work->ind - sizeof (camera_tile_t);
+        TCOPY(camera_tile_t, work->data, ind, &tile, 0);
+        ind += sizeof (camera_tile_t);
+
+        /* Update camera if different frame */
+        if (tile.frame != isst_workspace_list[wid].last_frame)
+        {
+          isst_workspace_list[wid].camera.type = type;
+          isst_workspace_list[wid].camera.fov = fov;
+          isst_workspace_list[wid].camera.pos = pos;
+          isst_workspace_list[wid].camera.focus = foc;
+          render_camera_prep (&isst_workspace_list[wid].camera);
+        }
+        isst_workspace_list[wid].last_frame = tile.frame;
+
+        render_camera_render (&isst_workspace_list[wid].camera, &isst_workspace_list[wid].tie, &tile, result);
+      }
+      break;
+
+    case ADRT_WORK_MINMAX:
+      {
+        TCOPY(TIE_3, &isst_workspace_list[wid].tie.min, 0, result->data, result->ind);
+        result->ind += sizeof (TIE_3);
+
+        TCOPY(TIE_3, &isst_workspace_list[wid].tie.max, 0, result->data, result->ind);
+        result->ind += sizeof (TIE_3);
+      }
       break;
 
     default:
@@ -272,8 +413,9 @@ void isst_slave_work(tie_t *tie, void *data, unsigned int size, void **res_buf, 
 #endif
 }
 
-
-void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
+#if 0
+void isst_slave_mesg(void *mesg, unsigned int mesg_len) 
+{
   short		op;
   TIE_3		foo;
 
@@ -296,9 +438,11 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
 
       ind += sizeof(int);
 
-      for(i = 0; i < num; i++) {
+      for(i = 0; i < num; i++) 
+      {
 	memcpy(&c, &((unsigned char *)mesg)[ind], 1);
 	ind += 1;
+
 	memcpy(name, &((unsigned char *)mesg)[ind], c);
 	ind += c;
 
@@ -313,6 +457,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
     }
     break;
 
+#if 0 /* this isn't in the new version */
     case ISST_OP_SELECT:
     {
       uint8_t c, t;
@@ -331,11 +476,12 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len) {
 	  db.mesh_list[n]->flags = (db.mesh_list[n]->flags & MESH_SELECT) | t<<1;
     }
     break;
-
+#endif ISST_OP_SELECT
     default:
       break;
   }
 }
+#endif
 
 /*
  * Local Variables:
