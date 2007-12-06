@@ -393,7 +393,7 @@ prnt_Usage(void)
 
 /*	p r n t _ S c r o l l ( )					*/
 void
-prnt_Scroll( char *fmt, ... ) {
+prnt_Scroll(const char *fmt, ... ) {
     va_list		ap;
     /* We use the same lock as malloc.  Sys-call or mem lock, really */
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
