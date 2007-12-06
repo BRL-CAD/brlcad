@@ -3,6 +3,7 @@
 bin_PROGRAMS = isst_slave
 
 isst_slave_SOURCES = \
+	load.c \
 	main.c \
 	slave.c
 
@@ -33,6 +34,6 @@ isst_slave_LDADD = \
 	${top_builddir}/src/adrt/libtie/libtie.la \
 	${LIBZ}
 
-noinst_HEADERS = slave.h
+noinst_HEADERS = load.h slave.h
 
 include $(top_srcdir)/misc/Makefile.defs
