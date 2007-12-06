@@ -19,7 +19,6 @@ librender_la_SOURCES = \
 	spall.c \
 	surfel.c
 
-librender_la_LDFLAGS = -static
 librender_la_LIBADD = ${LIBM}
 
 AM_CFLAGS = \
