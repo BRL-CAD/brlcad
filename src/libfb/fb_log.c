@@ -47,7 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Log a framebuffer library event in the Standard way.
  */
 void
-fb_log( char *fmt, ... )
+fb_log( const char *fmt, ... )
 {
     va_list ap;
 
