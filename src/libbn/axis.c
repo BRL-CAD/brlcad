@@ -144,6 +144,10 @@ tp_3axis(FILE *fp,
 		 */
 		pdv_3cont( fp, tick_bottom );
 
+		if (ndigits > 64) {
+		    bu_bomb("ERROR: Number of digits exceeds available buffer space");
+		}
+
 		if( ndigits > 0 )  {
 			double f;
 			snprintf( fmt, 32, "%%%dg", ndigits);
