@@ -105,7 +105,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 typedef int bool_t;
 
-static char	*arg0;			/* argv[0] for error message */
 static bool_t	hires = 0;		/* set for 1Kx1K; clear for 512x512 */
 static bool_t	sample = 0;		/* set: sampling; clear: averaging */
 static bool_t	verbose = 0;	/* set for size info printout */
@@ -124,58 +123,32 @@ static int	dst_width = 0,
 static unsigned char	*src_buf;		/* calloc()ed input scan line buffer */
 static unsigned char	*dst_buf;		/* calloc()ed output scan line buffer */
 
+/* in ioutil.c */
+void Message( const char *format, ... );
 
-static char *
-Simple(char *path)
+
+static void
+Stretch_Fatal( const char *format, ... )
 {
-	register char	*s;		/* -> past last '/' in path */
+    va_list		ap;
+    
+    va_start( ap, format );
+    VMessage( format, ap );
+    va_end( ap );
+    
+    if ( src_fbp != FBIO_NULL && fb_close( src_fbp ) == -1 ) {
+	Message( "Error closing input frame buffer" );
+	src_fbp = FBIO_NULL;
+    }
+    
+    if ( dst_fbp != FBIO_NULL && fb_close( dst_fbp ) == -1 ) {
+	Message( "Error closing output frame buffer" );
+	src_fbp = FBIO_NULL;
+    }
 
-	s = strrchr( path, '/' );
-	return s == NULL || *++s == '\0' ? path : s;
-	}
-
-
-static void
-VMessage(const char *format, va_list ap)
-{
-	(void)fprintf( stderr, "%s: ", arg0 );
-	(void)vfprintf( stderr, format, ap );
-	(void)putc( '\n', stderr );
-	(void)fflush( stderr );
-	}
-
-
-static void
-Message( const char *format, ... )
-	{
-	va_list		ap;
-
-	va_start( ap, format );
-	VMessage( format, ap );
-	va_end( ap );
-	}
-
-
-static void
-Fatal( const char *format, ... )
-	{
-	va_list		ap;
-
-	va_start( ap, format );
-	VMessage( format, ap );
-	va_end( ap );
-
-	if ( src_fbp != FBIO_NULL && fb_close( src_fbp ) == -1 )
-		Message( "Error closing input frame buffer" );
-
-	if ( dst_fbp != FBIO_NULL && dst_fbp != src_fbp
-	  && fb_close( dst_fbp ) == -1
-	   )
-		Message( "Error closing output frame buffer" );
-
-	bu_exit( EXIT_FAILURE, NULL );
-	/*NOTREACHED*/
-	}
+    bu_exit( EXIT_FAILURE, NULL );
+    /* NOT REACHED */
+}
 
 
 static void
@@ -184,8 +157,8 @@ Sig_Catcher(int sig)
 	(void)signal( sig, SIG_DFL );
 
 	/* The following is not guaranteed to work, but it's worth a try. */
-	Fatal( "Interrupted by signal %d", sig );
-	}
+	Stretch_Fatal( "Interrupted by signal %d", sig );
+}
 
 
 int
@@ -210,9 +183,6 @@ main(int argc, char **argv)
 	}
 
 	/* Process arguments. */
-
-	arg0 = Simple( argv[0] );	/* save for possible error message */
-
 	{
 		register int	c;
 		register bool_t	errors = 0;
@@ -304,7 +274,7 @@ main(int argc, char **argv)
 				}
 
 		if ( errors )
-			Fatal( "Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3 );
+			Stretch_Fatal( "Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3 );
 	}
 
 	if ( bu_optind < argc )		/* dst_file */
@@ -312,7 +282,7 @@ main(int argc, char **argv)
 		if ( bu_optind < argc - 1 || dst_file != NULL )
 			{
 			Message( "Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3 );
-			Fatal( "Can't handle multiple output frame buffers!" );
+			Stretch_Fatal( "Can't handle multiple output frame buffers!" );
 			}
 
 		dst_file = argv[bu_optind];
@@ -353,7 +323,7 @@ main(int argc, char **argv)
 			       )
 	     ) == FBIO_NULL
 	   )
-		Fatal( "Couldn't open input image" );
+		Stretch_Fatal( "Couldn't open input image" );
 	else	{
 		register int	wt, ht;	/* actual frame buffer size */
 
@@ -386,7 +356,7 @@ main(int argc, char **argv)
 		else if ( (dst_fbp = fb_open( dst_file, dst_width, dst_height ))
 		       == FBIO_NULL
 			)
-			Fatal( "Couldn't open output frame buffer" );
+			Stretch_Fatal( "Couldn't open output frame buffer" );
 
 		/* Use smaller output size in preference to requested size. */
 
@@ -426,7 +396,7 @@ main(int argc, char **argv)
 					  )
 	     ) == NULL
 	   )
-		Fatal( "Insufficient memory for scan line buffers." );
+		Stretch_Fatal( "Insufficient memory for scan line buffers." );
 
 #define	Src( x, y )	(&src_buf[(x) + src_width * (y) * sizeof(RGBpixel)])
 #define	Dst( x, y )	(&dst_buf[(x) + dst_width * (y) * sizeof(RGBpixel)])
@@ -480,7 +450,7 @@ main(int argc, char **argv)
 					       dst_width
 					     ) == -1
 				   )
-					Fatal( "Error writing top margin" );
+					Stretch_Fatal( "Error writing top margin" );
 
 			goto done;	/* that's all folks */
 			}
@@ -497,7 +467,7 @@ main(int argc, char **argv)
 				      src_width
 				    ) == -1
 			   )
-				Fatal( "Error reading scan line" );
+				Stretch_Fatal( "Error reading scan line" );
 
 		dst_x = 0;
     ccxloop:
@@ -518,7 +488,7 @@ main(int argc, char **argv)
 				       dst_width
 				     ) == -1
 			   )
-				Fatal( "Error writing scan line" );
+				Stretch_Fatal( "Error writing scan line" );
 
 			++dst_y;
 			goto ccyloop;
@@ -591,7 +561,7 @@ main(int argc, char **argv)
 			      src_width
 			    ) == -1
 		   )
-			Fatal( "Error reading scan line" );
+			Stretch_Fatal( "Error reading scan line" );
 
 		dst_x = 0;
     cexloop:
@@ -614,7 +584,7 @@ main(int argc, char **argv)
 					       dst_width
 					     ) == -1
 				   )
-					Fatal( "Error writing scan line" );
+					Stretch_Fatal( "Error writing scan line" );
 
 			--src_y;
 			goto ceyloop;
@@ -707,7 +677,7 @@ main(int argc, char **argv)
 					       dst_width
 					     ) == -1
 				   )
-					Fatal( "Error writing top margin" );
+					Stretch_Fatal( "Error writing top margin" );
 
 			goto done;	/* that's all folks */
 			}
@@ -724,7 +694,7 @@ main(int argc, char **argv)
 				      src_width
 				    ) == -1
 			   )
-				Fatal( "Error reading scan line" );
+				Stretch_Fatal( "Error reading scan line" );
 
 		src_x = (dst_width - 1) / x_scale + EPSILON;
     ecxloop:
@@ -736,7 +706,7 @@ main(int argc, char **argv)
 				       dst_width
 				     ) == -1
 			   )
-				Fatal( "Error writing scan line" );
+				Stretch_Fatal( "Error writing scan line" );
 
 			++dst_y;
 			goto ecyloop;
@@ -822,7 +792,7 @@ main(int argc, char **argv)
 			      src_width
 			    ) == -1
 		   )
-			Fatal( "Error reading scan line" );
+			Stretch_Fatal( "Error reading scan line" );
 
 		src_x = (dst_width - 1) / x_scale + EPSILON;
     eexloop:
@@ -837,7 +807,7 @@ main(int argc, char **argv)
 					       dst_width
 					     ) == -1
 				   )
-					Fatal( "Error writing scan line" );
+					Stretch_Fatal( "Error writing scan line" );
 
 			--src_y;
 			goto eeyloop;

@@ -87,7 +87,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define SIZE_T size_t
 typedef int bool_t;
 
-static char	*arg0;			/* argv[0] for error message */
 static bool_t	hires = 0;		/* set for 1Kx1K; clear for 512x512 */
 static char	*in_fb_file = NULL;	/* input image name */
 static char	*out_fb_file = NULL;	/* output frame buffer name */
@@ -98,6 +97,10 @@ static int	dst_width = 0,
     dst_height = 0;		/* output frame buffer size */
 static RGBpixel	*pix;			/* input image */
 static RGBpixel	bg = { 0, 0, 0 };	/* background */
+
+/* in ioutil.c */
+void Message( const char *format, ... );
+void Fatal( FBIO *fbp, const char *format, ... );
 
 
 #ifndef HAVE_DRAND48
@@ -112,52 +115,6 @@ drand48()
 }
 #endif
 
-static char *
-Simple(char *path)
-{
-    register char	*s;		/* -> past last '/' in path */
-
-    return (s = strrchr( path, '/' )) == NULL || *++s == '\0' ? path : s;
-}
-
-
-static void
-VMessage(const char *format, va_list ap)
-{
-    (void)fprintf( stderr, "%s: ", arg0 );
-    (void)vfprintf( stderr, format, ap );
-    (void)putc( '\n', stderr );
-    (void)fflush( stderr );
-}
-
-
-static void
-Message( const char *format, ... )
-{
-    va_list		ap;
-
-    va_start( ap, format );
-    VMessage( format, ap );
-    va_end( ap );
-}
-
-
-static void
-Fatal( const char *format, ... )
-{
-    va_list		ap;
-
-    va_start( ap, format );
-    VMessage( format, ap );
-    va_end( ap );
-
-    if ( fbp != FBIO_NULL && fb_close( fbp ) == -1 )
-	Message( "Error closing frame buffer" );
-
-    bu_exit( EXIT_FAILURE, NULL );
-    /*NOTREACHED*/
-}
-
 
 static void
 Sig_Catcher(int sig)
@@ -165,7 +122,7 @@ Sig_Catcher(int sig)
     (void)signal( sig, SIG_DFL );
 
     /* The following is not guaranteed to work, but it's worth a try. */
-    Fatal( "Interrupted by signal %d", sig );
+    Fatal(fbp, "Interrupted by signal %d", sig );
 }
 
 
@@ -191,9 +148,6 @@ main(int argc, char **argv)
     }
 
     /* Process arguments. */
-
-    arg0 = Simple( argv[0] );	/* save for possible error message */
-
     {
 	register int	c;
 	register bool_t	errors = 0;
@@ -259,7 +213,7 @@ main(int argc, char **argv)
 	    }
 
 	if ( errors )
-	    Fatal( "Usage: %s\n%s", USAGE1, USAGE2 );
+	    Fatal(fbp, "Usage: %s\n%s", USAGE1, USAGE2 );
     }
 
     if ( bu_optind < argc )		/* out_fb_file */
@@ -267,7 +221,7 @@ main(int argc, char **argv)
 	if ( bu_optind < argc - 1 || out_fb_file != NULL )
 	{
 	    Message( "Usage: %s\n%s", USAGE1, USAGE2 );
-	    Fatal( "Can't handle multiple output frame buffers!" );
+	    Fatal(fbp, "Can't handle multiple output frame buffers!" );
 	}
 
 	out_fb_file = argv[bu_optind];
@@ -285,7 +239,7 @@ main(int argc, char **argv)
 	if ( (fbp = fb_open( in_fb_file, src_width, src_height ))
 	     == FBIO_NULL
 	    )
-	    Fatal( "Couldn't open input frame buffer" );
+	    Fatal(fbp, "Couldn't open input frame buffer" );
 	else	{
 	    register int	y;
 	    register int	wt = fb_getwidth( fbp );
@@ -305,7 +259,7 @@ main(int argc, char **argv)
 		 != (long)src_width * (long)src_height
 		 * (long)sizeof(RGBpixel)
 		)
-		Fatal( "Integer overflow, malloc unusable" );
+		Fatal(fbp, "Integer overflow, malloc unusable" );
 
 	    if ( (pix = (RGBpixel *)malloc( (SIZE_T)src_width
 					    * (SIZE_T)src_height
@@ -313,19 +267,19 @@ main(int argc, char **argv)
 		      )
 		     ) == NULL
 		)
-		Fatal( "Not enough memory for pixel array" );
+		Fatal(fbp, "Not enough memory for pixel array" );
 
 	    for ( y = 0; y < src_height; ++y )
 		if ( fb_read( fbp, 0, y, pix[y * src_width],
 			      src_width
 			 ) == -1
 		    )
-		    Fatal( "Error reading raster" );
+		    Fatal(fbp, "Error reading raster" );
 
 	    if ( fb_close( fbp ) == -1 )
 	    {
 		fbp = FBIO_NULL;	/* avoid second try */
-		Fatal( "Error closing input frame buffer" );
+		Fatal(fbp, "Error closing input frame buffer" );
 	    }
 	}
     }
@@ -340,7 +294,7 @@ main(int argc, char **argv)
 
     if ( (fbp = fb_open( out_fb_file, dst_width, dst_height )) == FBIO_NULL
 	)
-	Fatal( "Couldn't open output frame buffer" );
+	Fatal(fbp, "Couldn't open output frame buffer" );
     else	{
 	register int	wt = fb_getwidth( fbp );
 	register int	ht = fb_getheight( fbp );
@@ -375,10 +329,10 @@ main(int argc, char **argv)
 	if ( (long)(SIZE_T)(wxh * (long)sizeof(long))
 	     != wxh * (long)sizeof(long)
 	    )
-	    Fatal( "Integer overflow, malloc unusable" );
+	    Fatal(fbp, "Integer overflow, malloc unusable" );
 
 	if ( (loc = (long *)malloc( (SIZE_T)wxh * sizeof(long) )) == NULL )
-	    Fatal( "Not enough memory for location array" );
+	    Fatal(fbp, "Not enough memory for location array" );
 
 	/* Initialize pixel location array to sequential order. */
 
@@ -399,7 +353,7 @@ main(int argc, char **argv)
 			   1
 		     ) == -1
 		)
-		Fatal( "Error writing pixel" );
+		Fatal(fbp, "Error writing pixel" );
 
 	    loc[r] = loc[wxh];	/* track the shuffle */
 	}
@@ -409,7 +363,7 @@ main(int argc, char **argv)
 
     if ( fb_close( fbp ) == -1 ) {
 	fbp = FBIO_NULL;	/* avoid second try */
-	Fatal( "Error closing output frame buffer" );
+	Fatal(fbp, "Error closing output frame buffer" );
     }
 
     bu_exit( EXIT_SUCCESS, NULL );

@@ -89,7 +89,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 typedef int	bool_t;
 
-static char	*arg0;			/* argv[0] for error message */
 static bool_t	clear = 1;		/* set iff clear to background wanted */
 static bool_t	ign_cr = 0;		/* set iff 8-bit color resoln. forced */
 static bool_t	verbose = 0;	/* set for GIF-file info printout */
@@ -119,52 +118,9 @@ static RGBpixel	*cmap;			/* malloc()ed local color map */
 #define	GIF_IMAGE	','
 #define	GIF_TERMINATOR	';'
 
-
-static char *
-Simple(char *path)
-{
-	register char	*s;		/* -> past last '/' in path */
-
-	return (s = strrchr( path, '/' )) == NULL || *++s == '\0' ? path : s;
-	}
-
-
-static void
-VMessage(char *format, va_list ap)
-{
-	(void)fprintf( stderr, "%s: ", arg0 );
-	(void)vfprintf( stderr, format, ap );
-	(void)putc( '\n', stderr );
-	(void)fflush( stderr );
-	}
-
-
-static void
-Message( char *format, ... )
-	{
-	va_list		ap;
-
-	va_start( ap, format );
-	VMessage( format, ap );
-	va_end( ap );
-	}
-
-
-static void
-Fatal( char *format, ... )
-	{
-	va_list		ap;
-
-	va_start( ap, format );
-	VMessage( format, ap );
-	va_end( ap );
-
-	if ( fbp != FBIO_NULL && fb_close( fbp ) == -1 )
-		Message( "Error closing frame buffer" );
-
-	bu_exit( EXIT_FAILURE, NULL );
-	/*NOTREACHED*/
-	}
+/* in ioutil.c */
+void Message( const char *format, ... );
+void Fatal( FBIO *fbp, const char *format, ... );
 
 
 static void
@@ -173,7 +129,7 @@ Sig_Catcher(int sig)
 	(void)signal( sig, SIG_DFL );
 
 	/* The following is not guaranteed to work, but it's worth a try. */
-	Fatal( "Interrupted by signal %d", sig );
+	Fatal(fbp, "Interrupted by signal %d", sig );
 	}
 
 
@@ -183,15 +139,15 @@ Skip(void)					/* skip over raster data */
 	register int	c;
 
 	if ( (c = getc( gfp )) == EOF )
-		Fatal( "Error reading code size" );
+		Fatal(fbp, "Error reading code size" );
 
 	while ( (c = getc( gfp )) != 0 )
 		if ( c == EOF )
-			Fatal( "Error reading block byte count" );
+			Fatal(fbp, "Error reading block byte count" );
 		else
 			do
 				if ( getc( gfp ) == EOF )
-					Fatal( "Error reading data byte" );
+					Fatal(fbp, "Error reading data byte" );
 			while ( --c > 0 );
 	}
 
@@ -213,10 +169,10 @@ static void
 PutPixel(register int value)
 {
 	if ( pass == stop )
-		Fatal( "Too much raster data for image size" );
+		Fatal(fbp, "Too much raster data for image size" );
 
 	if ( value > entries )
-		Fatal( "Decoded color index %d exceeds color map size", value );
+		Fatal(fbp, "Decoded color index %d exceeds color map size", value );
 
 	pixbuf[col*3+RED] = cmap[value][RED];	/* stuff pixel */
 	pixbuf[col*3+GRN] = cmap[value][GRN];
@@ -293,7 +249,7 @@ GetCode(void)
 			/* Start new data block. */
 
 			if ( (bytecnt = getc( gfp )) == EOF )
-				Fatal( "%s at start of new LZW data block",
+				Fatal(fbp, "%s at start of new LZW data block",
 				       feof( gfp ) ? "EOF" : "Error"
 				     );
 
@@ -303,7 +259,7 @@ GetCode(void)
 			}
 
 		if ( (next_val = getc( gfp )) == EOF )
-			Fatal( "%s while reading LZW data block",
+			Fatal(fbp, "%s while reading LZW data block",
 			       feof( gfp ) ? "EOF" : "Error"
 			     );
 
@@ -380,7 +336,7 @@ LZW(void)
 	int		clear_code;	/* table reset code */
 
 	if ( (code_size = getc( gfp )) == EOF )
-		Fatal( "Error reading code size" );
+		Fatal(fbp, "Error reading code size" );
 
 	if ( code_size < pixel )
 		Message( "Warning: initial code size smaller than colormap" );
@@ -401,7 +357,7 @@ LZW(void)
 	compress_code = clear_code + 2;
 
 	if ( (chunk_size = code_size + 1) > 12 )	/* LZW chunk size */
-		Fatal( "GIF spec's LZW code size limit (12) violated" );
+		Fatal(fbp, "GIF spec's LZW code size limit (12) violated" );
 
 	max_code = 1 << chunk_size;	/* LZW chunk will grow at this point */
 	chunk_mask = max_code - 1;
@@ -421,13 +377,13 @@ LZW(void)
 			}
 		else	{
 			if ( c > next_code )
-				Fatal("LZW code impossibly large  (%x > %x, diff: %d)",
+				Fatal(fbp, "LZW code impossibly large  (%x > %x, diff: %d)",
 					c, next_code, c-next_code);
 
 			if ( c == next_code )
 				{	/* KwKwK special case */
 				if ( w < 0 )	/* w supposedly previous code */
-					Fatal( "initial LZW KwKwK code??" );
+					Fatal(fbp, "initial LZW KwKwK code??" );
 
 				Expand( w );	/* sets `k' */
 				PutPixel( k );
@@ -460,14 +416,14 @@ LZW(void)
 
 		do
 			if ( (c == getc( gfp )) == EOF )
-				Fatal( "Error reading extra raster data" );
+				Fatal(fbp, "Error reading extra raster data" );
 		while ( --bytecnt > 0 );
 		}
 
 	/* Strange data format in the GIF spec! */
 
 	if ( (c = getc( gfp )) != 0 )
-		Fatal( "Zero byte count missing" );
+		Fatal(fbp, "Zero byte count missing" );
 	}
 
 
@@ -511,8 +467,6 @@ main(int argc, char **argv)
 
 	/* Process arguments. */
 
-	arg0 = Simple( argv[0] );	/* save for possible error message */
-
 	{
 		register int	c;
 		register bool_t	errors = 0;
@@ -549,7 +503,7 @@ main(int argc, char **argv)
 				}
 
 		if ( errors )
-			Fatal( "Usage: %s", USAGE );
+			Fatal(fbp, "Usage: %s", USAGE );
 	}
 
 	if ( bu_optind < argc )		/* gif_file */
@@ -557,11 +511,11 @@ main(int argc, char **argv)
 		if ( bu_optind < argc - 1 )
 			{
 			Message( "Usage: %s", USAGE );
-			Fatal( "Can't handle multiple GIF files" );
+			Fatal(fbp, "Can't handle multiple GIF files" );
 			}
 
 		if ( (gfp = fopen( gif_file = argv[bu_optind], "rb" )) == NULL )
-			Fatal( "Couldn't open GIF file \"%s\"", gif_file );
+			Fatal(fbp, "Couldn't open GIF file \"%s\"", gif_file );
 		}
 	else
 		gfp = stdin;
@@ -587,7 +541,7 @@ main(int argc, char **argv)
 			switch ( getc( gfp ) )
 				{
 			case EOF:
-				Fatal( "File does not contain \"GIF\" header" );
+				Fatal(fbp, "File does not contain \"GIF\" header" );
 
 			case 'G':
 				state = ST_G_SEEN;
@@ -610,7 +564,7 @@ main(int argc, char **argv)
 					state = ST_F_SEEN;	/* ends loop */
 
 					if ( fread( ver, 1, 3, gfp ) != 3 )
-						Fatal(
+					    Fatal(fbp,
 						   "Error reading GIF signature"
 						     );
 
@@ -630,7 +584,7 @@ main(int argc, char **argv)
 		unsigned char	desc[7];	/* packed screen descriptor */
 
 		if ( fread( desc, 1, 7, gfp ) != 7 )
-			Fatal( "Error reading screen descriptor" );
+			Fatal(fbp, "Error reading screen descriptor" );
 
 		width = desc[1] << 8 | desc[0];
 		height = desc[3] << 8 | desc[2];
@@ -668,7 +622,7 @@ main(int argc, char **argv)
 	if ( (g_cmap = (RGBpixel *)malloc( 256 * sizeof(RGBpixel) )) == NULL
 	  || (cmap = (RGBpixel *)malloc( 256 * sizeof(RGBpixel) )) == NULL
 	   )
-		Fatal( "Insufficient memory for color maps" );
+		Fatal(fbp, "Insufficient memory for color maps" );
 
 	entries = 1 << g_pixel;
 
@@ -683,7 +637,7 @@ main(int argc, char **argv)
 			Message( "global color map has %d entries", entries );
 
 		if ( fread( g_cmap, 3, entries, gfp ) != entries )
-			Fatal( "Error reading global color map" );
+			Fatal(fbp, "Error reading global color map" );
 
 		/* Mask off low-order "noise" bits found in some GIF files,
 		   and expand dynamic range to support pure white and black. */
@@ -725,10 +679,10 @@ main(int argc, char **argv)
 	/* Open frame buffer for unbuffered output. */
 
 	if ( (pixbuf = (unsigned char *)malloc( width * sizeof(RGBpixel) )) == NULL )
-		Fatal( "Insufficient memory for scan line buffer" );
+		Fatal(fbp, "Insufficient memory for scan line buffer" );
 
 	if ( (fbp = fb_open( fb_file, width, height )) == FBIO_NULL )
-		Fatal( "Couldn't open frame buffer" );
+		Fatal(fbp, "Couldn't open frame buffer" );
 
 	{
 		register int	wt = fb_getwidth( fbp );
@@ -768,7 +722,7 @@ main(int argc, char **argv)
 	/* Fill frame buffer with background color. */
 
 	if ( clear && fb_clear( fbp, g_cmap[background] ) == -1 )
-		Fatal( "Error clearing frame buffer to background" );
+		Fatal(fbp, "Error clearing frame buffer to background" );
 
 	/* Fill scanline buffer with background color too */
 	{
@@ -785,7 +739,7 @@ main(int argc, char **argv)
 		register int	c;
 
 		if ( (c = getc( gfp )) == EOF )  {
-			Fatal( "Missing GIF terminator" );
+			Fatal(fbp, "Missing GIF terminator" );
 			break;
 		}
 
@@ -803,13 +757,13 @@ main(int argc, char **argv)
 			if ( fb_close( fbp ) == -1 )
 				{
 				fbp = FBIO_NULL;	/* avoid second try */
-				Fatal( "Error closing frame buffer" );
+				Fatal(fbp, "Error closing frame buffer" );
 				}
 
 			fbp = FBIO_NULL;
 
 			if ( image > 0 )
-				Fatal( "Specified image not found" );
+				Fatal(fbp, "Specified image not found" );
 
 			bu_exit( EXIT_SUCCESS, NULL );
 
@@ -818,7 +772,7 @@ main(int argc, char **argv)
 			register int	i;
 
 			if ( (i = getc( gfp )) == EOF )
-				Fatal( "Error reading extension function code"
+				Fatal(fbp, "Error reading extension function code"
 				     );
 
 			Message( "Extension function code %d unknown", i );
@@ -826,13 +780,13 @@ main(int argc, char **argv)
 			while ( (i = getc( gfp )) != 0 )
 				{
 				if ( i == EOF )
-					Fatal(
+					Fatal(fbp,
 				      "Error reading extension block byte count"
 					     );
 
 				do
 					if ( getc( gfp ) == EOF )
-						Fatal(
+						Fatal(fbp,
 						 "Error reading extension block"
 						     );
 				while ( --i > 0 );
@@ -845,7 +799,7 @@ main(int argc, char **argv)
 				unsigned char	desc[9];  /* image descriptor */
 
 				if ( fread( desc, 1, 9, gfp ) != 9 )
-					Fatal( "Error reading image descriptor"
+					Fatal(fbp, "Error reading image descriptor"
 					     );
 
 				left = desc[1] << 8 | desc[0];
@@ -881,7 +835,7 @@ main(int argc, char **argv)
 				if ( left < 0 || right > width || left >= right
 				  || top < 0 || bottom > height || top >= bottom
 				   )
-					Fatal( "Absurd image (%d,%d,%d,%d)",
+					Fatal(fbp, "Absurd image (%d,%d,%d,%d)",
 					       left, top, right, bottom
 					     );
 			}
@@ -904,7 +858,7 @@ main(int argc, char **argv)
 					       );
 
 				if ( fread( cmap, 3, entries, gfp ) != entries )
-					Fatal( "Error reading local color map"
+					Fatal(fbp, "Error reading local color map"
 					     );
 
 				/* Mask off low-order "noise" bits,

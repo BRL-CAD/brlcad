@@ -102,7 +102,7 @@ fbcolor_LDADD = ${FB} ${TERMIO}
 fbcolor_SOURCES = fbcolor.c
 
 fbfade_LDADD = ${FB}
-fbfade_SOURCES = fbfade.c
+fbfade_SOURCES = fbfade.c ioutil.c
 
 fbframe_LDADD = ${FB}
 fbframe_SOURCES = fbframe.c
@@ -135,7 +135,7 @@ fbscanplot_LDADD = ${FB}
 fbscanplot_SOURCES = fbscanplot.c
 
 fbstretch_LDADD = ${FB}
-fbstretch_SOURCES = fbstretch.c
+fbstretch_SOURCES = fbstretch.c ioutil.c
 
 fbzoom_LDADD = ${FB} ${TERMIO}
 fbzoom_SOURCES = fbzoom.c
@@ -144,7 +144,7 @@ gif2fb_LDADD = ${FB}
 gif2fb_SOURCES = gif2fb.c
 
 gif_fb_LDADD = ${FB}
-gif_fb_SOURCES = gif-fb.c
+gif_fb_SOURCES = gif-fb.c ioutil.c
 
 orle_fb_LDADD = ${FB} ${ORLE}
 orle_fb_SOURCES = orle-fb.c
