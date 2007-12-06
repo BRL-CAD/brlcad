@@ -751,31 +751,6 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     return NULL;
 }
 
-/**
- *	B U _ B R L C A D _ P A T H
- *
- *  @deprecated
- *  Do not use.  Locate where the BRL-CAD programs and
- *  libraries are located, contatenate on the rest of the string
- *  provided by the caller, and return a pointer to a STATIC buffer
- *  with the full path.  It is the caller's responsibility to call
- *  bu_strdup() or make other provisions to save the returned string,
- *  before calling again.  bu_bomb() if unable to find the base path.
- *
- */
-char *
-bu_brlcad_path(const char *rhs, int fail_quietly)
-{
-	bu_log("\
-WARNING: bu_brlcad_path is deprecated and will likely disappear in\n\
-a future release of BRL-CAD.  Programs and scripts should utilize\n\
-bu_brlcad_root and bu_brlcad_data instead.\n\
-\n\
-Use bu_brlcad_root for the path of applications and libraries.\n\
-Use bu_brlcad_data for the path to the data resources.\n\n");
-
-	return bu_brlcad_root(rhs, fail_quietly);
-}
 /** @} */
 /*
  * Local Variables:

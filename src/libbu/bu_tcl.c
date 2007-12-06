@@ -62,7 +62,6 @@ extern int Cho_Init(Tcl_Interp *interp);
 static struct bu_cmdtab bu_cmds[] = {
 	{"bu_units_conversion",		bu_tcl_units_conversion},
 	{"bu_brlcad_data",		bu_tcl_brlcad_data},
-	{"bu_brlcad_path",		bu_tcl_brlcad_path},
 	{"bu_brlcad_root",		bu_tcl_brlcad_root},
 	{"bu_mem_barriercheck",		bu_tcl_mem_barriercheck},
 	{"bu_ck_malloc_ptr",		bu_tcl_ck_malloc_ptr},
@@ -1308,34 +1307,6 @@ bu_tcl_brlcad_data(ClientData	clientData,
 		return TCL_ERROR;
 	}
 	Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 1), NULL);
-	return TCL_OK;
-}
-
-
-/**
- *	bu_tcl_brlcad_path
- *
- *	A tcl wrapper for bu_brlcad_path.
- *
- *	@param clientData	- associated data/state
- *	@param interp		- tcl interpreter in which this command was registered.
- *	@param argc		- number of elements in argv
- *	@param argv		- command name and arguments
- *
- *	@return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-int
-bu_tcl_brlcad_path(ClientData	clientData,
-		   Tcl_Interp	*interp,
-		   int		 argc,
-		   char		**argv)
-{
-	if (argc != 2) {
-		Tcl_AppendResult(interp, "Usage: bu_brlcad_path subdir\n",
-				 (char *)NULL);
-		return TCL_ERROR;
-	}
-	Tcl_AppendResult(interp, bu_brlcad_path(argv[1], 0), NULL);
 	return TCL_OK;
 }
 

@@ -47,15 +47,15 @@ new names should be listed for reference.
 **************
 * DEPRECATED *
 **************
+7.12
+----
+src/libbu/parallel.c
+	bu_get_load_average(), remove [deprecated 7.12]
+
 7.10
 ----
 src/librt/bomb.c
-	rt_bomb() -> bu_bomb()
-
-7.4
----
-src/libbu/brlcad_path.c
-	bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data()
+	rt_bomb() -> bu_bomb() [deprecated 7.10]
 
 pre 7.0
 -------
@@ -76,31 +76,33 @@ include/bn.h
 
 7.12.0
 ------
+src/libbu/brlcad_path.c
+	bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data() [deprecated 7.4]
+	bu_tcl_brlcad_path() -> bu_tcl_brlcad_root() || bu_tcl_brlcad_data() [deprecated 7.4]
 include/fb.h
-	fb_log(char *fmt) -> fb_log(const char *fmt)
+	fb_log(char *fmt) -> fb_log(const char *fmt) [const]
 include/noalias-prag.h
-	removed, non-stdc
+	removed [non-stdc]
 include/noalias.h
-	removed, non-stdc
-src/librt/wdb_obj.c
-	removed wdb_tree_cmd(), added to dg_obj.c as dgo_tree_cmd()
+	removed [non-stdc]
+src/librt/wdb_obj.c -> src/librt/db_obj.c
+	removed wdb_tree_cmd(), added dgo_tree_cmd() [rename]
 
 
 7.10.4
 ------
-
-include/msr.h (pre 7.0)
+include/msr.h [pre 7.0]
 	msr.h -> bu.h
-include/rtlist.h (pre 7.0)
+include/rtlist.h [pre 7.0]
 	rtlist.h -> bu.h
-include/rtstring.h (pre 7.0)
+include/rtstring.h [pre 7.0]
 	rtstring.h -> bu.h
-include/shortvect.h (pre 7.0)
-include/shortvect-pr.h (pre 7.0)
+include/shortvect.h [pre 7.0]
+include/shortvect-pr.h [pre 7.0]
 
 7.10.2
 ------
 include/raytrace.h
-	rt_version -> rt_version()
+	rt_version -> rt_version() [private]
 include/[library].h (several)
-	[library]_version -> [library]_version()
+	[library]_version -> [library]_version() [private]
