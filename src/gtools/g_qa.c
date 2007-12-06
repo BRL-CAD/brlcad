@@ -58,12 +58,6 @@
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:pP:rS:s:t:U:u:vV:W:";
 
-/* variables set by command line flags */
-char *progname = "(noname)";
-const char *usage_msg = "Usage: %s [options] model object [object...]\n\
-";
-
-
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
 #define ANALYSIS_OVERLAPS 4
@@ -440,12 +434,13 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
  *	U S A G E --- tell user how to invoke this program, then exit
  */
 void
-usage(s)
-     char *s;
+usage(const char *s)
 {
-    if (s) (void)fputs(s, stderr);
+    if (s) {
+	fputs(s, stderr);
+    }
 
-    (void) fprintf(stderr, usage_msg, progname);
+    fprintf(stderr, "Usage: %s [options] model object [object...]\n", bu_getprogname());
 
     bu_exit(1, NULL);
 }
@@ -461,11 +456,6 @@ parse_args(int ac, char *av[])
     int i;
     double a;
     char *p;
-
-    if (  ! (progname=strrchr(*av, '/'))  )
-	progname = *av;
-    else
-	++progname;
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -2044,6 +2034,8 @@ main(int ac, char *av[])
     int i;
     struct cstate state;
     int start_objs; /* index in command line args where geom object list starts */
+
+    bu_setprogname(av[0]);
 
     max_cpus = ncpu = bu_avail_cpus();
 
