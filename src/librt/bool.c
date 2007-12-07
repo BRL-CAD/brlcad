@@ -71,6 +71,7 @@ int rt_booleval(register union tree*,
 		struct partition *,
 		struct region **,
 		struct resource *);
+
 /*
  *			R T _ W E A V E 0 S E G
  *
@@ -162,6 +163,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 	}
 	bu_bomb("rt_weave0seg() fell out of partition loop?\n");
 }
+
 
 /*
  *			R T _ B O O L W E A V E
@@ -641,16 +643,16 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 
 
 /*
- *			_ R T _ D E F O V E R L A P
+ *			R T _ D E F O V E R L A P
  *
- *  The guts of the default overlap callback.
+ *  Default handler for overlaps in rt_boolfinal().
  *  Returns -
  *	 0	to eliminate partition with overlap entirely
  *	 1	to retain partition in output list, claimed by reg1
  *	 2	to retain partition in output list, claimed by reg2
  */
-HIDDEN int
-_rt_defoverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp, register int verbose)
+int
+rt_defoverlap (register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
 	RT_CK_AP(ap);
 	RT_CK_PT(pp);
@@ -677,39 +679,7 @@ _rt_defoverlap(register struct application *ap, register struct partition *pp, s
 		return 1;
 	return 2;
 }
-/*
- *			R T _ D E F O V E R L A P
- *
- *  Default handler for overlaps in rt_boolfinal().
- *  Returns -
- *	 0	to eliminate partition with overlap entirely
- *	 1	to retain partition in output list, claimed by reg1
- *	 2	to retain partition in output list, claimed by reg2
- *
- *  This is now simply a one-line wrapper that calls _rt_defoverlap(),
- *  requesting verbosity.
- */
-int
-rt_defoverlap (register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
-{
-    return (_rt_defoverlap(ap, pp, reg1, reg2, pheadp, 1));
-}
 
-/*
- *			R T _ O V E R L A P _ Q U I E T L Y
- *
- *  Silent version of rt_defoverlap().
- *  Returns -
- *	 0	to eliminate partition with overlap entirely
- *	 1	to retain partition in output list, claimed by reg1
- *	 2	to retain partition in output list, claimed by reg2
- *
- */
-int
-rt_overlap_quietly (register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
-{
-    return (_rt_defoverlap(ap, pp, reg1, reg2, pheadp, 0));
-}
 
 /*
  *	R T _ G E T _ R E G I O N _ S E G L I S T _ F O R _ P A R T I T I O N

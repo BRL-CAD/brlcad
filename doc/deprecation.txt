@@ -59,9 +59,6 @@ src/librt/bomb.c
 
 pre 7.0
 -------
-include/raytrace.h
-	struct application.a_overlap -> a_multioverlap()
-	rt_overlap_quietly() -> struct application.a_logoverlap
 include/compat4.h
 	compat4.h -> bu.h && bn.h
 include/bn.h
@@ -76,6 +73,8 @@ include/bn.h
 
 7.12.0
 ------
+include/raytrace.h
+	rt_overlap_quietly() -> struct application.a_logoverlap = rt_silent_logoverlap
 src/libbu/brlcad_path.c
 	bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data() [deprecated 7.4]
 	bu_tcl_brlcad_path() -> bu_tcl_brlcad_root() || bu_tcl_brlcad_data() [deprecated 7.4]

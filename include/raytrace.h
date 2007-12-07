@@ -2421,13 +2421,6 @@ RT_EXPORT BU_EXTERN(void rt_prep,
 RT_EXPORT BU_EXTERN(void rt_prep_parallel,
 		    (struct rt_i *rtip,
 		     int ncpu));
-/* DEPRECATED, set a_logoverlap */
-RT_EXPORT BU_EXTERN(int rt_overlap_quietly,
-		    (struct application *ap,
-		     struct partition *pp,
-		     struct region *reg1,
-		     struct region *reg2,
-		     struct partition *pheadp));
 RT_EXPORT BU_EXTERN(void rt_default_multioverlap,
 		    (struct application *ap,
 		     struct partition *pp,
