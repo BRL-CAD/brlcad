@@ -43,9 +43,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern int irfft_adds, irfft_mults;
 
-static char usage[] = "\
-Usage: ifftc length > fftlength.c\n";
-
 int
 main(int argc, char **argv)
 {
@@ -53,7 +50,7 @@ main(int argc, char **argv)
 	int	n, m;
 
 	if( argc != 2 ) {
-		fprintf( stderr, usage );
+		fprintf( stderr, "Usage: ifftc length > fftlength.c\n" );
 		exit(1);
 	}
 
