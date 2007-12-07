@@ -79,6 +79,6 @@ EXTERN void Blt_RegisterArrayObj _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int Blt_IsArrayObj _ANSI_ARGS_((Tcl_Obj *obj));
 #endif /* TCL_MAJOR_VERSION >= 8 */
 
-BLT_EXPORT Blt_Init(Tcl_Interp *);
+BLT_EXPORT int Blt_Init(Tcl_Interp *interp);
 
 #endif /*_BLT_H*/
