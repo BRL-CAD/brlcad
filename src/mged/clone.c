@@ -36,6 +36,27 @@
  * TODO:
  *   use bu_vls strings
  *   use bu_list lists
+ *
+ * ISSUES/TODO (for DK, ^D means done)
+ *  1. No -c option.  This allows the increment given in the '-i' to
+ *  act on the second number
+ * D2. Remove 15 char name limit.  I ran into this today.
+ *  3. No -p option.  I couldn't get this to work.  I re-centered the
+ *     geometry, then it tried to work but I ran into the 15 char limit
+ *     and had to kill the process (^C).
+ *  4. Names - This tool is built around a naming convention.  Currently,
+ *     the second number does not list properly (it just truncated the
+ *     second number of the 'cut' prims so they ended up 'mess.s1.c' instead
+ *     of 'mess.s1.c1').  And the '+' and '-' didn't work, I had to switch
+ *     from 'mess.s1-1' to 'mess.s1.c1'.  Also, prims need to increment
+ *     by the 'i' number but combs, regions, and assemblies (.c#, .r#, or
+ *     just name with a # at the end) should increment by 1.  So you end
+ *     up with widget_1, widget_2, widget_3   and not widget_1, widget_4,
+ *     widget_7...
+ *  5. Tree structure - please retain tree structure to the extent that
+ *     you can and try not to re-create prims or combs used more than once.
+ *     No warning needed for redundant copies.  Warnings can come later...
+ * D6. Display - do display clones but do not resize or re-center view. 
  */
 
 #include "common.h"
