@@ -709,14 +709,16 @@ view_2init(register struct application *ap, char *framename)
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
 	ap->a_miss = hit_nothing;
+
 	if (rpt_overlap)
-		ap->a_overlap = RT_AFN_NULL;
+	    ap->a_logoverlap = RT_AFN_NULL;
 	else
-		ap->a_overlap = rt_overlap_quietly;
+	    ap->a_logoverlap = rt_silent_logoverlap;
+
 	if (use_air)
-		ap->a_onehit = 3;
+	    ap->a_onehit = 3;
 	else
-		ap->a_onehit = 1;
+	    ap->a_onehit = 1;
 
 	/* Always allocate the scanline[] array
 	 * (unless we already have one in incremental mode)
