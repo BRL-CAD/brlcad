@@ -115,11 +115,10 @@ For example,
 will print the values of all settable variables.
 .TP
 .B \-d#
-turns on the reporting of pixel distances,
-so that each pixel is represented by 3 bytes of color information
-followed by 8 bytes for a double (in IEEE format)
-giving the distance to the ray's first hit.
-The default is 0,
+turns on the reporting of pixel distances, so that each pixel is
+represented by 3 bytes of color information followed by 8 bytes for a
+double (in IEEE format) giving the distance to the ray's first hit.
+If the ray doesn't hit, a zero distance is reported by default
 which causes
 .I rt (1)
 to write only the color information.
