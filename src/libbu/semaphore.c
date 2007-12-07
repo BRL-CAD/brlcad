@@ -32,16 +32,6 @@
  *
  *  Note that these routines can't use bu_log() for error logging,
  *  because bu_log() accquires semaphore #0 (BU_SEM_SYSCALL).
- *
- *  For code conversion hints, see "h/compat4.h"
- *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 
