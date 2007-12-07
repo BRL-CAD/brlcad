@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed bugs in several Utah Raster Toolkit tools - Pedro Giffuni
 * fixed mged start-up initialization bug on Windows - Daniel Roßberg
 * graceful handling of mesh normal failures - Sean Morrison
 * fixed variety of g-iges and other exporter crashes - Sean Morrison
