@@ -409,7 +409,8 @@ reswitch:				/* after finding '*' or ',' */
 				 * Copy the string so we remain nondestructive
 				 */
 				s = NEW( char, strlen(argp)+1 );
-				strcpy( s, argp );
+				strncpy( s, argp, strlen(argp)+1-1 );
+				s[strlen(argp)+1-1] = '\0';
 				argp = s;
 
 				/*

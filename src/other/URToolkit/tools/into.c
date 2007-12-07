@@ -83,7 +83,7 @@ char **argv;
     }
     else
 	strcpy( buf, temp );
-    mktemp( buf );
+    mkstemp( buf );
 
     if ( (outf = fopen( buf, "w" )) == NULL )
     {

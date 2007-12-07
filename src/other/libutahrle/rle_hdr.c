@@ -269,6 +269,8 @@ rle_hdr *the_hdr;
 {
     rle_hdr *ret_hdr;
 
+    if ( rle_dflt_hdr.rle_file == NULL)
+    	rle_dflt_hdr.rle_file = stdout;
     if ( the_hdr == &rle_dflt_hdr )
 	return the_hdr;
 

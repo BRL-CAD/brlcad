@@ -112,7 +112,7 @@ char **argv;
 	    nflag = 0;		/* Not really repeating! */
 	else
 	{
-	    mktemp( temp );	/* Make a temporary file name */
+	    mkstemp( temp );	/* Make a temporary file name */
 	    tmpfile = rle_open_f( cmd_name( argv ), temp, "w+" );
 	}
     }
