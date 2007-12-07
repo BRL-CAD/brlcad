@@ -23,7 +23,6 @@ brlcadinclude_wanted = \
 	brlcad.h \
 	cmd.h \
 	conf.h \
-	compat4.h \
 	db.h \
 	db5.h \
 	dm-Null.h \
