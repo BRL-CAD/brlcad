@@ -61,17 +61,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define TRUE	1
 
 
-BU_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
-int rt_tree_max_raynum(register const union tree *,
-		       register const struct partition *);
-int rt_bool_partition_eligible(register const struct bu_ptbl *,
-			       register const struct bu_bitv *,
-			       register const struct partition *);
-int rt_booleval(register union tree*,
-		struct partition *,
-		struct region **,
-		struct resource *);
-
 /*
  *			R T _ W E A V E 0 S E G
  *
@@ -100,7 +89,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 
 	if(RT_G_DEBUG&DEBUG_PARTITION)  {
 		bu_log(
-		"rt_boolweave:  Zero thickness seg: %s (%.18e,%.18e) %d,%d\n",
+		"rt_weave0seg:  Zero thickness seg: %s (%.18e,%.18e) %d,%d\n",
 		segp->seg_stp->st_name,
 		segp->seg_in.hit_dist,
 		segp->seg_out.hit_dist,
@@ -718,6 +707,59 @@ rt_get_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *
 	if( BU_PTBL_LEN(sl) <= 0 )  bu_bomb("rt_get_region_seglist_for_partition() didn't find any segments\n");
 }
 
+
+/*
+ *			R T _ T R E E _ M A X _ R A Y N U M
+ *
+ *  Find the maximum value of the raynum (seg_rayp->index)
+ *  encountered in the segments contributing to this region.
+ *
+ *  Returns -
+ *	#	Maximum ray index
+ *	-1	If no rays are contributing segs for this region.
+ */
+int
+rt_tree_max_raynum(register const union tree *tp, register const struct partition *pp)
+{
+	RT_CK_TREE(tp);
+	RT_CK_PARTITION(pp);
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		return -1;
+
+	case OP_SOLID:
+		{
+			register struct soltab *seek_stp = tp->tr_a.tu_stp;
+			register struct seg **segpp;
+			for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
+				if( (*segpp)->seg_stp != seek_stp )  continue;
+				return (*segpp)->seg_in.hit_rayp->index;
+			}
+		}
+		/* Maybe it hasn't been shot yet, or ray missed */
+		return -1;
+
+	case OP_NOT:
+		return rt_tree_max_raynum( tp->tr_b.tb_left, pp );
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		{
+			int a = rt_tree_max_raynum( tp->tr_b.tb_left, pp );
+			int b = rt_tree_max_raynum( tp->tr_b.tb_right, pp );
+			if( a > b )  return a;
+			return b;
+		}
+	default:
+		bu_bomb("rt_tree_max_raynum: bad op\n");
+	}
+	return 0;
+}
+
+
 /*
  *			R T _ F A S T G E N _ V O L _ V O L _ O V E R L A P
  *
@@ -795,6 +837,74 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
 	bu_ptbl_free( &sl1 );
 	bu_ptbl_free( &sl2 );
 }
+
+
+/*
+ *			R T _ F D I F F
+ *
+ *  Compares two floating point numbers.  If they are within "epsilon"
+ *  of each other, they are considered the same.
+ *  NOTE:  This is a "fuzzy" difference.  It is important NOT to
+ *  use the results of this function in compound comparisons,
+ *  because a return of 0 makes no statement about the PRECISE
+ *  relationships between the two numbers.  Eg,
+ *	if( rt_fdiff( a, b ) <= 0 )
+ *  is poison!
+ *
+ *  Returns -
+ *  	-1	if a < b
+ *  	 0	if a ~= b
+ *  	+1	if a > b
+ */
+int
+rt_fdiff(double a, double b)
+{
+	FAST double diff;
+	FAST double d;
+	register int ret;
+
+	/* d = Max(Abs(a),Abs(b)) */
+	d = (a >= 0.0) ? a : -a;
+	if( b >= 0.0 )  {
+		if( b > d )  d = b;
+	} else {
+		if( (-b) > d )  d = (-b);
+	}
+	if( d <= 1.0e-6 )  {
+		ret = 0;	/* both nearly zero */
+		goto out;
+	}
+	if( d >= INFINITY )  {
+		if( a == b )  {
+			ret = 0;
+			goto out;
+		}
+		if( a < b )  {
+			ret = -1;
+			goto out;
+		}
+		ret = 1;
+		goto out;
+	}
+	if( (diff = a - b) < 0.0 )  diff = -diff;
+	if( diff < 0.001 )  {
+		ret = 0;	/* absolute difference is small, < 1/1000mm */
+		goto out;
+	}
+	if( diff < 0.000001 * d )  {
+		ret = 0;	/* relative difference is small, < 1ppm */
+		goto out;
+	}
+	if( a < b )  {
+		ret = -1;
+		goto out;
+	}
+	ret = 1;
+out:
+	if(RT_G_DEBUG&DEBUG_FDIFF) bu_log("rt_fdiff(%.18e,%.18e)=%d\n", a, b, ret);
+	return(ret);
+}
+
 
 /*
  *			R T _ F A S T G E N _ P L A T E _ V O L _ O V E R L A P
@@ -1222,6 +1332,281 @@ b_ok:		;
 	return 1;
 }
 
+
+/*
+ *			R T _ T R E E _ T E S T _ R E A D Y
+ *
+ *  Test to see if a region is ready to be evaluated over a given
+ *  partition, i.e. if all the prerequisites have been satisfied.
+ *
+ *  Returns -
+ *	!0	Region is ready for (correct) evaluation.
+ *	0	Region is not ready
+ */
+int
+rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
+{
+	RT_CK_TREE(tp);
+	BU_CK_BITV(solidbits);
+	RT_CK_REGION(regionp);
+	RT_CK_PT(pp);
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		return 1;
+
+	case OP_SOLID:
+		if( BU_BITTEST( solidbits, tp->tr_a.tu_stp->st_bit ) )
+			return 1;	/* This solid's been shot, segs are valid. */
+		/*
+		 *  This solid has not been shot yet.
+		 */
+		return 0;
+
+	case OP_NOT:
+		return !rt_tree_test_ready( tp->tr_b.tb_left, solidbits, regionp, pp );
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		if( !rt_tree_test_ready( tp->tr_b.tb_left, solidbits, regionp, pp ) )
+			return 0;
+		return rt_tree_test_ready( tp->tr_b.tb_right, solidbits, regionp, pp );
+
+	default:
+		bu_bomb("rt_tree_test_ready: bad op\n");
+	}
+	return 0;
+}
+
+
+/*
+ *			R T _ B O O L _ P A R T I T I O N _ E L I G I B L E
+ *
+ *  If every solid in every region participating in this
+ *  ray-partition has already been intersected with the ray,
+ *  then this partition can be safely evaluated.
+ *
+ *  Returns -
+ *	!0	Partition is ready for (correct) evaluation.
+ *	0	Partition is not ready
+ */
+int
+rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register const struct bu_bitv *solidbits, register const struct partition *pp)
+{
+	struct region **regpp;
+
+	BU_CK_PTBL(regiontable);
+	BU_CK_BITV(solidbits);
+	RT_CK_PT(pp);
+
+	for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
+		register struct region *regp;
+
+		regp = *regpp;
+		RT_CK_REGION(regp);
+
+		/* Check region prerequisites */
+		if( !rt_tree_test_ready( regp->reg_treetop, solidbits, regp, pp) )  {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+
+/*
+ *			R T _ G R O W _ B O O L S T A C K
+ *
+ *  Increase the size of re_boolstack to double the previous size.
+ *  Depend on bu_realloc() to copy the previous data to the new area
+ *  when the size is increased.
+ *  Return the new pointer for what was previously the last element.
+ */
+void
+rt_grow_boolstack(register struct resource *resp)
+{
+	if( resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0 )  {
+		resp->re_boolslen = 128;	/* default len */
+		resp->re_boolstack = (union tree **)bu_malloc(sizeof(union tree *) * resp->re_boolslen,	"initial boolstack");
+	} else {
+		resp->re_boolslen <<= 1;
+		resp->re_boolstack = (union tree **)bu_realloc((char *)resp->re_boolstack, sizeof(union tree *) * resp->re_boolslen, "extend boolstack" );
+	}
+}
+
+
+/*
+ *  			R T _ B O O L E V A L
+ *
+ *  Using a stack to recall state, evaluate a boolean expression
+ *  without recursion.
+ *
+ *  For use with XOR, a pointer to the "first valid subtree" would
+ *  be a useful addition, for rt_boolregions().
+ *
+ *  Returns -
+ *	!0	tree is TRUE
+ *	 0	tree is FALSE
+ *	-1	tree is in error (GUARD)
+ */
+int
+rt_booleval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
+				/* Tree to evaluate */
+				/* Partition to evaluate */
+				/* XOR true (and overlap) return */
+				/* resource pointer for this CPU */
+{
+	static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
+	static union tree tree_guard[MAX_PSW];	/* for OP_GUARD nodes */
+	static union tree tree_xnop[MAX_PSW];	/* for OP_XNOP nodes */
+	register union tree **sp;
+	register int ret;
+	register union tree **stackend;
+
+	RT_CK_TREE(treep);
+	RT_CK_PT(partp);
+	RT_CK_RESOURCE(resp);
+	if( treep->tr_op != OP_XOR )
+		trueregp[0] = treep->tr_regionp;
+	else
+		trueregp[0] = trueregp[1] = REGION_NULL;
+	while( (sp = resp->re_boolstack) == (union tree **)0 )
+		rt_grow_boolstack( resp );
+	stackend = &(resp->re_boolstack[resp->re_boolslen]);
+	*sp++ = TREE_NULL;
+stack:
+	switch( treep->tr_op )  {
+	case OP_NOP:
+		ret = 0;
+		goto pop;
+	case OP_SOLID:
+		{
+			register struct soltab *seek_stp = treep->tr_a.tu_stp;
+			register struct seg **segpp;
+			for( BU_PTBL_FOR( segpp, (struct seg **), &partp->pt_seglist ) )  {
+				if( (*segpp)->seg_stp == seek_stp )  {
+					ret = 1;
+					goto pop;
+				}
+			}
+			ret = 0;
+		}
+		goto pop;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		*sp++ = treep;
+		if( sp >= stackend )  {
+			register int off = sp - resp->re_boolstack;
+			rt_grow_boolstack( resp );
+			sp = &(resp->re_boolstack[off]);
+			stackend = &(resp->re_boolstack[resp->re_boolslen]);
+		}
+		treep = treep->tr_b.tb_left;
+		goto stack;
+	default:
+		bu_log("rt_booleval:  bad stack op x%x\n",treep->tr_op);
+		return(TRUE);	/* screw up output */
+	}
+pop:
+	if( (treep = *--sp) == TREE_NULL )
+		return(ret);		/* top of tree again */
+	/*
+	 *  Here, each operation will look at the operation just
+	 *  completed (the left branch of the tree generally),
+	 *  and rewrite the top of the stack and/or branch
+	 *  accordingly.
+	 */
+	switch( treep->tr_op )  {
+	case OP_SOLID:
+		bu_log("rt_booleval:  pop SOLID?\n");
+		return(TRUE);	/* screw up output */
+	case OP_UNION:
+		if( ret )  goto pop;	/* TRUE, we are done */
+		/* lhs was false, rewrite as rhs tree */
+		treep = treep->tr_b.tb_right;
+		goto stack;
+	case OP_INTERSECT:
+		if( !ret )  {
+			ret = FALSE;
+			goto pop;
+		}
+		/* lhs was true, rewrite as rhs tree */
+		treep = treep->tr_b.tb_right;
+		goto stack;
+	case OP_SUBTRACT:
+		if( !ret )  goto pop;	/* FALSE, we are done */
+		/* lhs was true, rewrite as NOT of rhs tree */
+		/* We introduce the special NOT operator here */
+		tree_not[resp->re_cpu].tr_op = OP_NOT;
+		*sp++ = &tree_not[resp->re_cpu];
+		treep = treep->tr_b.tb_right;
+		goto stack;
+	case OP_NOT:
+		/* Special operation for subtraction */
+		ret = !ret;
+		goto pop;
+	case OP_XOR:
+		if( ret )  {
+			/* lhs was true, rhs better not be, or we have
+			 * an overlap condition.  Rewrite as guard node
+			 * followed by rhs.
+			 */
+			if( treep->tr_b.tb_left->tr_regionp )
+				trueregp[0] = treep->tr_b.tb_left->tr_regionp;
+			tree_guard[resp->re_cpu].tr_op = OP_GUARD;
+			treep = treep->tr_b.tb_right;
+			*sp++ = treep;		/* temp val for guard node */
+			*sp++ = &tree_guard[resp->re_cpu];
+		} else {
+			/* lhs was false, rewrite as xnop node and
+			 * result of rhs.
+			 */
+			tree_xnop[resp->re_cpu].tr_op = OP_XNOP;
+			treep = treep->tr_b.tb_right;
+			*sp++ = treep;		/* temp val for xnop */
+			*sp++ = &tree_xnop[resp->re_cpu];
+		}
+		goto stack;
+	case OP_GUARD:
+		/*
+		 *  Special operation for XOR.  lhs was true.
+		 *  If rhs subtree was true, an
+		 *  overlap condition exists (both sides of the XOR are
+		 *  TRUE).  Return error condition.
+		 *  If subtree is false, then return TRUE (from lhs).
+		 */
+		if( ret )  {
+			/* stacked temp val: rhs */
+			if( sp[-1]->tr_regionp )
+				trueregp[1] = sp[-1]->tr_regionp;
+			return(-1);	/* GUARD error */
+		}
+		ret = TRUE;
+		sp--;			/* pop temp val */
+		goto pop;
+	case OP_XNOP:
+		/*
+		 *  Special NOP for XOR.  lhs was false.
+		 *  If rhs is true, take note of it's regionp.
+		 */
+		sp--;			/* pop temp val */
+		if( ret )  {
+			if( (*sp)->tr_regionp )
+				trueregp[0] = (*sp)->tr_regionp;
+		}
+		goto pop;
+	default:
+		bu_log("rt_booleval:  bad pop op x%x\n",treep->tr_op);
+		return(TRUE);	/* screw up output */
+	}
+	/* NOTREACHED */
+}
+
+
 /*
  *			R T _ B O O L F I N A L
  *
@@ -1580,7 +1965,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 			 *  invoke multi-overlap handler.
 			 */
 			if(RT_G_DEBUG&DEBUG_PARTITION)
-bu_log("rt_boolfinal:  invoking a_multioverlap() pp=x%x\n", pp);
+			    bu_log("rt_boolfinal:  invoking a_multioverlap() pp=x%x\n", pp);
 			bu_ptbl_rm( regiontable, (long *)NULL );
 			ap->a_logoverlap( ap, pp, regiontable, InputHdp );
 			ap->a_multioverlap( ap, pp, regiontable, InputHdp );
@@ -1719,240 +2104,6 @@ out:
 	return ret;
 }
 
-/*
- *  			R T _ B O O L E V A L
- *
- *  Using a stack to recall state, evaluate a boolean expression
- *  without recursion.
- *
- *  For use with XOR, a pointer to the "first valid subtree" would
- *  be a useful addition, for rt_boolregions().
- *
- *  Returns -
- *	!0	tree is TRUE
- *	 0	tree is FALSE
- *	-1	tree is in error (GUARD)
- */
-int
-rt_booleval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
-				/* Tree to evaluate */
-				/* Partition to evaluate */
-				/* XOR true (and overlap) return */
-				/* resource pointer for this CPU */
-{
-	static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
-	static union tree tree_guard[MAX_PSW];	/* for OP_GUARD nodes */
-	static union tree tree_xnop[MAX_PSW];	/* for OP_XNOP nodes */
-	register union tree **sp;
-	register int ret;
-	register union tree **stackend;
-
-	RT_CK_TREE(treep);
-	RT_CK_PT(partp);
-	RT_CK_RESOURCE(resp);
-	if( treep->tr_op != OP_XOR )
-		trueregp[0] = treep->tr_regionp;
-	else
-		trueregp[0] = trueregp[1] = REGION_NULL;
-	while( (sp = resp->re_boolstack) == (union tree **)0 )
-		rt_grow_boolstack( resp );
-	stackend = &(resp->re_boolstack[resp->re_boolslen]);
-	*sp++ = TREE_NULL;
-stack:
-	switch( treep->tr_op )  {
-	case OP_NOP:
-		ret = 0;
-		goto pop;
-	case OP_SOLID:
-		{
-			register struct soltab *seek_stp = treep->tr_a.tu_stp;
-			register struct seg **segpp;
-			for( BU_PTBL_FOR( segpp, (struct seg **), &partp->pt_seglist ) )  {
-				if( (*segpp)->seg_stp == seek_stp )  {
-					ret = 1;
-					goto pop;
-				}
-			}
-			ret = 0;
-		}
-		goto pop;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-		*sp++ = treep;
-		if( sp >= stackend )  {
-			register int off = sp - resp->re_boolstack;
-			rt_grow_boolstack( resp );
-			sp = &(resp->re_boolstack[off]);
-			stackend = &(resp->re_boolstack[resp->re_boolslen]);
-		}
-		treep = treep->tr_b.tb_left;
-		goto stack;
-	default:
-		bu_log("rt_booleval:  bad stack op x%x\n",treep->tr_op);
-		return(TRUE);	/* screw up output */
-	}
-pop:
-	if( (treep = *--sp) == TREE_NULL )
-		return(ret);		/* top of tree again */
-	/*
-	 *  Here, each operation will look at the operation just
-	 *  completed (the left branch of the tree generally),
-	 *  and rewrite the top of the stack and/or branch
-	 *  accordingly.
-	 */
-	switch( treep->tr_op )  {
-	case OP_SOLID:
-		bu_log("rt_booleval:  pop SOLID?\n");
-		return(TRUE);	/* screw up output */
-	case OP_UNION:
-		if( ret )  goto pop;	/* TRUE, we are done */
-		/* lhs was false, rewrite as rhs tree */
-		treep = treep->tr_b.tb_right;
-		goto stack;
-	case OP_INTERSECT:
-		if( !ret )  {
-			ret = FALSE;
-			goto pop;
-		}
-		/* lhs was true, rewrite as rhs tree */
-		treep = treep->tr_b.tb_right;
-		goto stack;
-	case OP_SUBTRACT:
-		if( !ret )  goto pop;	/* FALSE, we are done */
-		/* lhs was true, rewrite as NOT of rhs tree */
-		/* We introduce the special NOT operator here */
-		tree_not[resp->re_cpu].tr_op = OP_NOT;
-		*sp++ = &tree_not[resp->re_cpu];
-		treep = treep->tr_b.tb_right;
-		goto stack;
-	case OP_NOT:
-		/* Special operation for subtraction */
-		ret = !ret;
-		goto pop;
-	case OP_XOR:
-		if( ret )  {
-			/* lhs was true, rhs better not be, or we have
-			 * an overlap condition.  Rewrite as guard node
-			 * followed by rhs.
-			 */
-			if( treep->tr_b.tb_left->tr_regionp )
-				trueregp[0] = treep->tr_b.tb_left->tr_regionp;
-			tree_guard[resp->re_cpu].tr_op = OP_GUARD;
-			treep = treep->tr_b.tb_right;
-			*sp++ = treep;		/* temp val for guard node */
-			*sp++ = &tree_guard[resp->re_cpu];
-		} else {
-			/* lhs was false, rewrite as xnop node and
-			 * result of rhs.
-			 */
-			tree_xnop[resp->re_cpu].tr_op = OP_XNOP;
-			treep = treep->tr_b.tb_right;
-			*sp++ = treep;		/* temp val for xnop */
-			*sp++ = &tree_xnop[resp->re_cpu];
-		}
-		goto stack;
-	case OP_GUARD:
-		/*
-		 *  Special operation for XOR.  lhs was true.
-		 *  If rhs subtree was true, an
-		 *  overlap condition exists (both sides of the XOR are
-		 *  TRUE).  Return error condition.
-		 *  If subtree is false, then return TRUE (from lhs).
-		 */
-		if( ret )  {
-			/* stacked temp val: rhs */
-			if( sp[-1]->tr_regionp )
-				trueregp[1] = sp[-1]->tr_regionp;
-			return(-1);	/* GUARD error */
-		}
-		ret = TRUE;
-		sp--;			/* pop temp val */
-		goto pop;
-	case OP_XNOP:
-		/*
-		 *  Special NOP for XOR.  lhs was false.
-		 *  If rhs is true, take note of it's regionp.
-		 */
-		sp--;			/* pop temp val */
-		if( ret )  {
-			if( (*sp)->tr_regionp )
-				trueregp[0] = (*sp)->tr_regionp;
-		}
-		goto pop;
-	default:
-		bu_log("rt_booleval:  bad pop op x%x\n",treep->tr_op);
-		return(TRUE);	/* screw up output */
-	}
-	/* NOTREACHED */
-}
-
-/*
- *			R T _ F D I F F
- *
- *  Compares two floating point numbers.  If they are within "epsilon"
- *  of each other, they are considered the same.
- *  NOTE:  This is a "fuzzy" difference.  It is important NOT to
- *  use the results of this function in compound comparisons,
- *  because a return of 0 makes no statement about the PRECISE
- *  relationships between the two numbers.  Eg,
- *	if( rt_fdiff( a, b ) <= 0 )
- *  is poison!
- *
- *  Returns -
- *  	-1	if a < b
- *  	 0	if a ~= b
- *  	+1	if a > b
- */
-int
-rt_fdiff(double a, double b)
-{
-	FAST double diff;
-	FAST double d;
-	register int ret;
-
-	/* d = Max(Abs(a),Abs(b)) */
-	d = (a >= 0.0) ? a : -a;
-	if( b >= 0.0 )  {
-		if( b > d )  d = b;
-	} else {
-		if( (-b) > d )  d = (-b);
-	}
-	if( d <= 1.0e-6 )  {
-		ret = 0;	/* both nearly zero */
-		goto out;
-	}
-	if( d >= INFINITY )  {
-		if( a == b )  {
-			ret = 0;
-			goto out;
-		}
-		if( a < b )  {
-			ret = -1;
-			goto out;
-		}
-		ret = 1;
-		goto out;
-	}
-	if( (diff = a - b) < 0.0 )  diff = -diff;
-	if( diff < 0.001 )  {
-		ret = 0;	/* absolute difference is small, < 1/1000mm */
-		goto out;
-	}
-	if( diff < 0.000001 * d )  {
-		ret = 0;	/* relative difference is small, < 1ppm */
-		goto out;
-	}
-	if( a < b )  {
-		ret = -1;
-		goto out;
-	}
-	ret = 1;
-out:
-	if(RT_G_DEBUG&DEBUG_FDIFF) bu_log("rt_fdiff(%.18e,%.18e)=%d\n", a, b, ret);
-	return(ret);
-}
 
 /*
  *			R T _ R E L D I F F
@@ -1982,30 +2133,6 @@ rt_reldiff(double a, double b)
 	return( diff / d );
 }
 
-/*
- *			R T _ G R O W _ B O O L S T A C K
- *
- *  Increase the size of re_boolstack to double the previous size.
- *  Depend on bu_realloc() to copy the previous data to the new area
- *  when the size is increased.
- *  Return the new pointer for what was previously the last element.
- */
-void
-rt_grow_boolstack(register struct resource *resp)
-{
-	if( resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0 )  {
-		resp->re_boolslen = 128;	/* default len */
-		resp->re_boolstack = (union tree **)bu_malloc(
-			sizeof(union tree *) * resp->re_boolslen,
-			"initial boolstack");
-	} else {
-		resp->re_boolslen <<= 1;
-		resp->re_boolstack = (union tree **)bu_realloc(
-			(char *)resp->re_boolstack,
-			sizeof(union tree *) * resp->re_boolslen,
-			"extend boolstack" );
-	}
-}
 
 /*
  *			R T _ P A R T I T I O N _ L E N
@@ -2031,139 +2158,6 @@ rt_partition_len( const struct partition *partheadp )
 	return( (int)count );
 }
 
-
-/*
- *			R T _ T R E E _ T E S T _ R E A D Y
- *
- *  Test to see if a region is ready to be evaluated over a given
- *  partition, i.e. if all the prerequisites have been satisfied.
- *
- *  Returns -
- *	!0	Region is ready for (correct) evaluation.
- *	0	Region is not ready
- */
-int
-rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
-{
-	RT_CK_TREE(tp);
-	BU_CK_BITV(solidbits);
-	RT_CK_REGION(regionp);
-	RT_CK_PT(pp);
-
-	switch( tp->tr_op )  {
-	case OP_NOP:
-		return 1;
-
-	case OP_SOLID:
-		if( BU_BITTEST( solidbits, tp->tr_a.tu_stp->st_bit ) )
-			return 1;	/* This solid's been shot, segs are valid. */
-		/*
-		 *  This solid has not been shot yet.
-		 */
-		return 0;
-
-	case OP_NOT:
-		return !rt_tree_test_ready( tp->tr_b.tb_left, solidbits, regionp, pp );
-
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-		if( !rt_tree_test_ready( tp->tr_b.tb_left, solidbits, regionp, pp ) )
-			return 0;
-		return rt_tree_test_ready( tp->tr_b.tb_right, solidbits, regionp, pp );
-
-	default:
-		bu_bomb("rt_tree_test_ready: bad op\n");
-	}
-	return 0;
-}
-
-/*
- *			R T _ B O O L _ P A R T I T I O N _ E L I G I B L E
- *
- *  If every solid in every region participating in this
- *  ray-partition has already been intersected with the ray,
- *  then this partition can be safely evaluated.
- *
- *  Returns -
- *	!0	Partition is ready for (correct) evaluation.
- *	0	Partition is not ready
- */
-int
-rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register const struct bu_bitv *solidbits, register const struct partition *pp)
-{
-	struct region **regpp;
-
-	BU_CK_PTBL(regiontable);
-	BU_CK_BITV(solidbits);
-	RT_CK_PT(pp);
-
-	for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
-		register struct region *regp;
-
-		regp = *regpp;
-		RT_CK_REGION(regp);
-
-		/* Check region prerequisites */
-		if( !rt_tree_test_ready( regp->reg_treetop, solidbits, regp, pp) )  {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-
-/*
- *			R T _ T R E E _ M A X _ R A Y N U M
- *
- *  Find the maximum value of the raynum (seg_rayp->index)
- *  encountered in the segments contributing to this region.
- *
- *  Returns -
- *	#	Maximum ray index
- *	-1	If no rays are contributing segs for this region.
- */
-int
-rt_tree_max_raynum(register const union tree *tp, register const struct partition *pp)
-{
-	RT_CK_TREE(tp);
-	RT_CK_PARTITION(pp);
-
-	switch( tp->tr_op )  {
-	case OP_NOP:
-		return -1;
-
-	case OP_SOLID:
-		{
-			register struct soltab *seek_stp = tp->tr_a.tu_stp;
-			register struct seg **segpp;
-			for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
-				if( (*segpp)->seg_stp != seek_stp )  continue;
-				return (*segpp)->seg_in.hit_rayp->index;
-			}
-		}
-		/* Maybe it hasn't been shot yet, or ray missed */
-		return -1;
-
-	case OP_NOT:
-		return rt_tree_max_raynum( tp->tr_b.tb_left, pp );
-
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-		{
-			int a = rt_tree_max_raynum( tp->tr_b.tb_left, pp );
-			int b = rt_tree_max_raynum( tp->tr_b.tb_right, pp );
-			if( a > b )  return a;
-			return b;
-		}
-	default:
-		bu_bomb("rt_tree_max_raynum: bad op\n");
-	}
-	return 0;
-}
 
 /*
  * XXX This routine seems to free things more than once.
