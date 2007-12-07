@@ -1828,8 +1828,6 @@ BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
 BU_EXPORT BU_EXTERN(const char *bu_argv0_full_path, (void));
 BU_EXPORT BU_EXTERN(const char *bu_getprogname, (void));
 BU_EXPORT BU_EXTERN(void bu_setprogname, (const char *path));
-BU_EXPORT BU_EXTERN(char *bu_brlcad_path, /* deprecated call */
-		    (const char *rhs, int fail_quietly));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_root,
 		    (const char *rhs, int fail_quietly));
 BU_EXPORT BU_EXTERN(char *bu_brlcad_data,
@@ -2623,13 +2621,6 @@ BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_root,
 		     char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_data,
-		    (ClientData	clientData,
-		     Tcl_Interp	*interp,
-		     int	 argc,
-		     char	**argv));
-
-/* bu_tcl_brlcad_path is deprecated */
-BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_path,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	 argc,
