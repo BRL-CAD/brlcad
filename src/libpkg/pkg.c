@@ -69,6 +69,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 
 #ifdef HAVE_WINSOCK_H
 #  include <process.h>
@@ -1765,6 +1771,7 @@ pkg_ck_debug(void)
 {
     char	*place;
     char	buf[128] = {0};
+    struct stat sbuf;
 
     if( pkg_debug )  return;
     if( (place = (char *)getenv("LIBPKG_DEBUG")) == (char *)0 )  {
@@ -1772,7 +1779,7 @@ pkg_ck_debug(void)
 	place = buf;
     }
     /* Named file must exist and be writeable */
-    if( access( place, 2 ) < 0 )  return;
+    if( stat( place, &sbuf ) != 0 ) return;
     if( (pkg_debug = fopen( place, "a" )) == NULL )  return;
 
     /* Log version number of this code */
