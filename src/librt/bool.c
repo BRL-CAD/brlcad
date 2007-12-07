@@ -61,7 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define TRUE	1
 
 
-/*
+/**
  *			R T _ W E A V E 0 S E G
  *
  *  If a zero thickness segment abutts another partition,
@@ -154,7 +154,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 }
 
 
-/*
+/**
  *			R T _ B O O L W E A V E
  *
  *  Weave a chain of segments into an existing set of partitions.
@@ -631,7 +631,7 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 }
 
 
-/*
+/**
  *			R T _ D E F O V E R L A P
  *
  *  Default handler for overlaps in rt_boolfinal().
@@ -670,7 +670,7 @@ rt_defoverlap (register struct application *ap, register struct partition *pp, s
 }
 
 
-/*
+/**
  *	R T _ G E T _ R E G I O N _ S E G L I S T _ F O R _ P A R T I T I O N
  *
  *  Given one of the regions that is involved in a given partition
@@ -708,7 +708,7 @@ rt_get_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *
 }
 
 
-/*
+/**
  *			R T _ T R E E _ M A X _ R A Y N U M
  *
  *  Find the maximum value of the raynum (seg_rayp->index)
@@ -760,7 +760,7 @@ rt_tree_max_raynum(register const union tree *tp, register const struct partitio
 }
 
 
-/*
+/**
  *			R T _ F A S T G E N _ V O L _ V O L _ O V E R L A P
  *
  *  Handle FASTGEN volume/volume overlap.
@@ -839,7 +839,7 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
 }
 
 
-/*
+/**
  *			R T _ F D I F F
  *
  *  Compares two floating point numbers.  If they are within "epsilon"
@@ -906,7 +906,7 @@ out:
 }
 
 
-/*
+/**
  *			R T _ F A S T G E N _ P L A T E _ V O L _ O V E R L A P
  *
  *  Handle FASTGEN plate/volume overlap.
@@ -975,7 +975,7 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	}
 }
 
-/*
+/**
  *			R T _ D E F A U L T _ M U L T I O V E R L A P
  *
  *  Default version of a_multioverlap().
@@ -1206,7 +1206,7 @@ code2:
 	}
 }
 
-/*
+/**
  *			R T _ S I L E N T _ L O G O V E R L A P
  *
  *  If an application doesn't want any logging from LIBRT, it should
@@ -1222,7 +1222,7 @@ rt_silent_logoverlap(struct application *ap, const struct partition *pp, const s
 }
 
 
-/*
+/**
  *			R T _ D E F A U L T _ L O G O V E R L A P
  *
  *  Log a multiplicity of overlaps within a single partition.
@@ -1290,7 +1290,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
 
 }
 
-/*
+/**
  *			R T _ O V E R L A P _ T A B L E S _ E Q U A L
  *
  *  Overlap tables are NULL terminated arrays of region pointers.
@@ -1333,7 +1333,7 @@ b_ok:		;
 }
 
 
-/*
+/**
  *			R T _ T R E E _ T E S T _ R E A D Y
  *
  *  Test to see if a region is ready to be evaluated over a given
@@ -1381,7 +1381,7 @@ rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv 
 }
 
 
-/*
+/**
  *			R T _ B O O L _ P A R T I T I O N _ E L I G I B L E
  *
  *  If every solid in every region participating in this
@@ -1416,7 +1416,7 @@ rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register 
 }
 
 
-/*
+/**
  *			R T _ G R O W _ B O O L S T A C K
  *
  *  Increase the size of re_boolstack to double the previous size.
@@ -1437,7 +1437,7 @@ rt_grow_boolstack(register struct resource *resp)
 }
 
 
-/*
+/**
  *  			R T _ B O O L E V A L
  *
  *  Using a stack to recall state, evaluate a boolean expression
@@ -1607,7 +1607,7 @@ pop:
 }
 
 
-/*
+/**
  *			R T _ B O O L F I N A L
  *
  *
@@ -2105,7 +2105,7 @@ out:
 }
 
 
-/*
+/**
  *			R T _ R E L D I F F
  *
  * Compute the relative difference of two floating point numbers.
@@ -2134,7 +2134,7 @@ rt_reldiff(double a, double b)
 }
 
 
-/*
+/**
  *			R T _ P A R T I T I O N _ L E N
  *
  *  Return the length of a partition linked list.
@@ -2159,7 +2159,7 @@ rt_partition_len( const struct partition *partheadp )
 }
 
 
-/*
+/**
  * XXX This routine seems to free things more than once.
  * For a temporary measure, don't free things.
  */
