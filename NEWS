@@ -1195,27 +1195,18 @@ Miscellaneous
 
 DEPRECATED FEATURES
 
-Some features of release 5.0, while brought forward from older
-releases for the sake of compatibility, represent outdated user
-interface, outgrown software technology, or similar unfortunate
-baggage. The list below enumerates some of the features that, while
-still available in release 5.0, are not guaranteed to be carried
-further, and thus may not be present in subsequent releases.
+As BRL-CAD continues to be developed and evolves, various application
+programming interfaces (APIs), headers, and data types necessarily
+change to fulfill development requirements and to not allow the APIs
+to become overly complicated with unnecessary or undesired complexity.
+As these changes are forseen, features will be sometimes marked as
+deprecated and will usually be made obsolete at some point in the
+future.  For those situations, developers using the BRL-CAD libraries
+may need to update to new API features in order to link with newer
+versions of BRL-CAD.
 
-* compat4.h
-
-  A C header file to provide compatibility in names and calling
-  sequences of library routines.  For instance, functions like
-  rt_malloc and rb_create have been moved from librt(3) and
-  libredblack(3), respectively, to libbu(3), and are renamed bu_malloc
-  and bu_rb_create, accordingly.
-
-* mged command names
-
-  Many of them are unfortunate and some have already been changed
-  Where command names have been changed, Tcl procs with the former
-  names are provided in 5.0 for compatibility.  For instance, the
-  enigmatic 'e' has been replaced with the much clearer 'draw'.
+See the doc/deprecation.txt file for a transcript of features that are
+deprecated or have already become obsolete.
 
 ---
 See doc/history.txt for more historic information on BRL-CAD.  There
