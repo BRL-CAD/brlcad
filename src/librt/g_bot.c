@@ -802,7 +802,7 @@ rt_bot_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 			htond( (unsigned char *)&rec->bot.bot_data[chars_used], (const unsigned char *)&tmp, 1 );
 			chars_used += 8;
 		}
-		strcpy( (char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ) );
+		strncpy( (char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ), ep->ext_nbytes - (sizeof(struct bot_rec)-1) - chars_used - 1);
 		bu_vls_free( &face_mode );
 	}
 
