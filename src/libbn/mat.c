@@ -25,9 +25,6 @@
  * 4 x 4 Matrix manipulation functions...
  *
  * @li bn_atan2()			Wrapper for library atan2()
- * @li (deprecated) bn_mat_zero( &m )		Fill matrix m with zeros
- * @li (deprecated) bn_mat_idn( &m )		Fill matrix m with identity matrix
- * @li (deprecated) bn_mat_copy( &o, &i )		Copy matrix i to matrix o
  * @li bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
  * @li bn_mat_mul2( &i, &o )
  * @li bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
@@ -152,58 +149,6 @@ bn_atan2(double y, double x)
 	return( atan2( y, x ) );
 }
 
-#if 0  /********* Deprecated for macros that call memcpy() *********/
-
-/**
- *			B N _ M A T _ Z E R O
- *
- * Fill in the matrix "m" with zeros.
- */
-void
-bn_mat_zero( m )
-mat_t	m;
-{
-	register int i = 0;
-	register matp_t mp = m;
-
-	bu_log("libbn/mat.c:  bn_mat_zero() is deprecated, use MAT_ZERO()\n");
-	/* Clear everything */
-	for(; i<16; i++)
-		*mp++ = 0.0;
-}
-
-
-/*
- *			B N _ M A T _ I D N
- *
- * Fill in the matrix "m" with an identity matrix.
- */
-void
-bn_mat_idn( m )
-register mat_t	m;
-{
-	bu_log("libbn/mat.c:  bn_mat_idn() is deprecated, use MAT_IDN()\n");
-	memcpy(m, bn_mat_identity, sizeof(m));
-}
-
-/*
- *			B N _ M A T _ C O P Y
- * Copy the matrix
- */
-void
-bn_mat_copy( dest, src )
-register mat_t		dest;
-register const mat_t	src;
-{
-	register int i;
-
-	/* Copy all elements */
-	bu_log("libbn/mat.c:  bn_mat_copy() is deprecated, use MAT_COPY()\n");
-	for( i=15; i>=0; i--)
-		dest[i] = src[i];
-}
-
-#endif	/******************* deprecated *******************/
 
 /**
  *			B N _ M A T _ M U L
