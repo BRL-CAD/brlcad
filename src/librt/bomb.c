@@ -49,8 +49,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 #include "raytrace.h"
 
-#undef rt_bomb		/* in case compat4.h defines one */
-
 
 /**
  * R T _ B O M B
