@@ -2396,8 +2396,12 @@ f_opendb(
 	/*
 	 * Check to see if we can access the database
 	 */
-	if ((access(argv[1], R_OK) != 0 || access(argv[1], W_OK) != 0)  && errno != ENOENT) {
-	    perror(argv[1]);
+	if (bu_file_exists(argv[1])) {
+	    if (!bu_file_readable(argv[1])) {
+		bu_log("ERROR: Unable to read from %s\n", argv[1]);
+		return TCL_ERROR;
+	    }
+	    bu_log("ERROR: Unable to open %s as geometry database file \n", argv[1]);
 	    return TCL_ERROR;
 	}
 
