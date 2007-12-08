@@ -2043,9 +2043,14 @@ BC_CONFIGURE_STAGE([functions], [7 of 9])
 
 AC_TYPE_SIGNAL
 
+# specifically not checked for and not used:
+#   access - security concerns
+
+# specifically not checked for but used:
+#   any well-behaved c89 function
+
 AC_CHECK_FUNCS(\
 	XQueryExtension \
-	access \
 	alarm \
 	atexit \
 	bzero \
