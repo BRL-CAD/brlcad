@@ -68,6 +68,8 @@ static const char RCS_stat[] = "@(#)$Header$";
 int
 bu_file_exists(const char *path)
 {
+    struct stat sbuf;
+
     if (bu_debug & BU_DEBUG_PATHS) {
 	bu_log("Does [%s] exist? ", path);
     }
@@ -81,36 +83,13 @@ bu_file_exists(const char *path)
     }
 
     /* does it exist as a filesystem entity? */
-#if defined(HAVE_STAT)
-#  define bu_file_exists_method 1
-    {
-	struct stat sbuf;
-	/* stat() is posix */
-	if( stat( path, &sbuf ) == 0 ) {
-	    if (bu_debug & BU_DEBUG_PATHS) {
-		bu_log("YES\n");
-	    }
-	    /* OK */
-	    return 1;
-	}
-    }
-#endif
-
-#if defined(HAVE_ACCESS) && defined(F_OK)
-#  define bu_file_exists_method 1
-    /* access() is posix */
-    if( access( path, F_OK )  == 0 ) {
+    if( stat( path, &sbuf ) == 0 ) {
 	if (bu_debug & BU_DEBUG_PATHS) {
 	    bu_log("YES\n");
 	}
 	/* OK */
 	return 1;
     }
-#endif
-
-#ifndef bu_file_exists_method
-#  error "Do not know how to check whether a file exists on this system"
-#endif
 
     if (bu_debug & BU_DEBUG_PATHS) {
 	bu_log("NO\n");
