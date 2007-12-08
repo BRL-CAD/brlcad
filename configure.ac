@@ -1539,6 +1539,7 @@ AC_CHECK_HEADERS( \
 	fcntl.h \
 	getopt.h \
 	gl/device.h \
+	grp.h \
 	ieeefp.h \
 	inttypes.h \
 	io.h \
@@ -2062,6 +2063,8 @@ AC_CHECK_FUNCS(\
 	ftime \
 	ftruncate \
 	getcwd \
+	geteuid \
+	getegid \
 	getenv \
 	gethostbyaddr \
 	gethostbyname \
