@@ -55,7 +55,6 @@
 #define IWIDGETS_VERSION  "4.0.2"
 
 #define HAS_OPENGL	1
-#define HAVE_ACCESS     1
 #define HAVE_CALLOC	1
 #define HAVE_FCNTL_H	1
 #define HAVE_GETENV     1
@@ -71,7 +70,6 @@
 #define HAVE_PROCESS_H  1
 #define HAVE_REGEX_H	1
 #define HAVE_SETVBUF	1
-#define HAVE_STAT       1
 #define HAVE_STRCHR	1
 #define HAVE_STRDUP	1
 #define HAVE_STRDUP_DECL	1
