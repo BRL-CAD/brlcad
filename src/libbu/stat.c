@@ -39,11 +39,20 @@ static const char RCS_stat[] = "@(#)$Header$";
 
 #include <stdio.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_PWD_H
+#  include <pwd.h>
+#endif
+#ifdef HAVE_GRP_H
+#  include <grp.h>
 #endif
 
 #include "machine.h"
@@ -185,6 +194,119 @@ bu_same_fd(int fd1, int fd2)
 #endif
 
     return 0;
+}
+
+
+/**
+ * _ b u _ f i l e _ a c c e s s
+ *
+ * common guts to the file access functions that returns truthfully if
+ * the current user has the ability permission-wise to access the
+ * specified file.
+ */
+static int
+_bu_file_access(const char *path, int access)
+{
+    struct stat sb;
+    int mask;
+
+    /* 0 is root or Windows user */
+    uid_t uid = 0;
+
+    /* 0 is wheel or Windows group */
+    gid_t gid = 0;
+
+    int usr_mask = S_IRUSR | S_IWUSR | S_IXUSR;
+    int grp_mask = S_IRGRP | S_IWGRP | S_IXGRP;
+    int oth_mask = S_IROTH | S_IWOTH | S_IXOTH;
+
+    if (stat(path, &sb) == 0) {
+	return 0;
+    }
+
+    if (access & R_OK) {
+	mask = S_IRUSR | S_IRGRP | S_IROTH;
+    }
+    if (access & W_OK) {
+	mask = S_IWUSR | S_IWGRP | S_IWOTH;
+    }
+    if (access & X_OK) {
+	mask = S_IXUSR | S_IXGRP | S_IXOTH;
+    }
+
+#ifdef HAVE_GETEUID
+    uid = geteuid();
+#endif
+#ifdef HAVE_GETEGID
+    gid = getegid();
+#endif
+
+    if (sb.st_uid == uid) {
+	/* we own it */
+	return sb.st_mode & (mask & usr_mask);
+    } else if (sb.st_gid == gid) {
+	/* our primary group */
+	return sb.st_mode & (mask & grp_mask);
+    }
+
+    /* search group database to see if we're in the file's group */
+#if defined(HAVE_PWD_H) && defined (HAVE_GRP_H)
+    {
+	struct passwd *pwdb = getpwuid(uid);
+	if (pwdb && pwdb->pw_name) {
+	    int i;
+	    struct group *grdb = getgrgid(sb.st_gid);
+	    for (i = 0; grdb && grdb->gr_mem[i]; i++) {
+		if (strcmp(grdb->gr_mem[i], pwdb->pw_name) == 0) {
+		    /* one of our other groups */
+		    return sb.st_mode & (mask & grp_mask);
+		}
+	    }
+	}
+    }
+#endif
+
+    /* check other */
+    return sb.st_mode & (mask & oth_mask);;
+}
+
+
+/**
+ * b u _ f i l e _ r e a d a b l e
+ *
+ * returns truthfully if current user can read the specified file or
+ * directory.
+ */
+int
+bu_file_readable(const char *path)
+{
+    return _bu_file_access(path, R_OK);
+}
+
+
+/**
+ * b u _ f i l e _ w r i t a b l e
+ *
+ * returns truthfully if current user can write to the specified file
+ * or directory.
+ */
+int
+bu_file_writable(const char *path)
+{
+    return _bu_file_access(path, W_OK);
+}
+
+
+/**
+ * b u _ f i l e _ e x e c u t a b l e
+ *
+ * returns truthfully if current user can run the specified file or
+ * directory.
+ */
+int
+bu_file_executable(const char *path)
+{
+    return _bu_file_access(path, X_OK);
 }
 
 
