@@ -26,7 +26,6 @@
 
 #include "isst_python.h"
 #include "Python.h"
-#undef HAVE_STAT
 #undef HAVE_TM_ZONE
 #include "isst.h"
 #include "master.h"
