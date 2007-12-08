@@ -2046,8 +2046,10 @@ AC_TYPE_SIGNAL
 # specifically not checked for and not used:
 #   access - security concerns
 
-# specifically not checked for but used:
-#   any well-behaved c89 function
+# specifically not checked for but used including any well-behaved c89
+# function.  this includes:
+#   stat
+
 
 AC_CHECK_FUNCS(\
 	XQueryExtension \
@@ -2116,7 +2118,6 @@ AC_CHECK_FUNCS(\
 	socket \
 	sqrt \
 	srand48 \
-	stat \
 	strcasecmp \
 	strchr \
 	strcpy \
