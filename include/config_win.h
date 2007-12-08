@@ -1,3 +1,4 @@
+
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
@@ -68,9 +69,6 @@
 #define HAVE_MEMSET	1
 #define HAVE_OFF_T	1
 #define HAVE_PROCESS_H  1
-#if 0
-#define HAVE_PWD_H	1
-#endif
 #define HAVE_REGEX_H	1
 #define HAVE_SETVBUF	1
 #define HAVE_STAT       1
@@ -95,10 +93,63 @@
 #define bzero(str,n)		memset( str, 0, n )
 #define bcopy(from,to,count)	memcpy( to, from, count )
 
+#ifndef S_IFMT
+#  define S_IFMT _S_IFMT
+#endif
+#ifndef S_IFDIR
+#  define S_IFDIR _S_IFDIR
+#endif
+#ifndef S_IFCHR
+#  define S_IFCHR _S_IFCHR
+#endif
+#ifndef S_IFREG
+#  define S_IFREG _S_IFREG
+#endif
+
+#ifndef S_IREAD
+#  define S_IREAD _S_IREAD
+#endif
+#ifndef S_IWRITE
+#  define S_IWRITE _S_IWRITE
+#endif
+#ifndef S_IEXEC
+#  define S_IEXEC _S_IEXEC
+#endif
+
+#ifndef S_IRUSR
+#  define S_IRUSR      S_IREAD
+#endif
+#ifndef S_IWUSR
+#  define S_IWUSR      S_IWRITE
+#endif
+#ifndef S_IXUSR
+#  define S_IXUSR      S_IEXEC
+#endif
+
+#ifndef S_IRGRP
+#  define S_IRGRP      ((S_IRUSR)>>3)
+#endif
+#ifndef S_IWGRP
+#  define S_IWGRP      ((S_IWUSR)>>3)
+#endif
+#ifndef S_IXGRP
+#  define S_IXGRP      ((S_IXUSR)>>3)
+#endif
+#ifndef S_IROTH
+#  define S_IROTH      ((S_IRUSR)>>6)
+#endif
+#ifndef S_IWOTH
+#  define S_IWOTH      ((S_IWUSR)>>6)
+#endif
+#ifndef S_IXOTH
+#  define S_IXOTH      ((S_IXUSR)>>6)
+#endif
+
 #define	isnan _isnan
-#define F_OK 0
 #define R_OK 4
 #define W_OK 2
+#define X_OK 1
+#define F_OK 0
 #define MAXPATHLEN _MAX_PATH
 #define O_APPEND _O_APPEND
 #define O_CREAT _O_CREAT
@@ -107,16 +158,7 @@
 #define O_RDWR _O_RDWR
 #define O_TRUNC _O_TRUNC
 #define O_WRONLY _O_WRONLY
-#define S_IFMT _S_IFMT
-#define S_IFDIR _S_IFDIR
-#define S_IFCHR _S_IFCHR
-#define S_IFREG _S_IFREG
-#define S_IREAD _S_IREAD
-#define S_IRGRP _S_IREAD
-#define S_IROTH _S_IREAD
-#define S_IRUSR _S_IREAD
-#define S_IWRITE _S_IWRITE
-#define S_IEXEC _S_IEXEC
+
 #define access _access
 #define chmod _chmod
 #define close _close
@@ -124,9 +166,6 @@
 #define creat _creat
 #define dup _dup
 #define dup2 _dup2
-#if 0
-#define eof _eof
-#endif
 #define execvp _execvp
 #define fdopen _fdopen
 #define fileno _fileno
