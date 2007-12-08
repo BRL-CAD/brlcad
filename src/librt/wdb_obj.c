@@ -666,28 +666,25 @@ wdb_prep_dbip(Tcl_Interp *interp, const char *filename)
 	if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
 	    ((dbip = db_open(filename, "r"  )) == DBI_NULL)) {
 
-#if defined(HAVE_ACCESS)
-		/*
-		 * Check to see if we can access the database
-		 */
-		if (access(filename, R_OK|W_OK) != 0 && errno != ENOENT) {
-			perror(filename);
-			return DBI_NULL;
-		}
-#endif
+	    /*
+	     * Check to see if we can access the database
+	     */
+	    if (!bu_file_readable(filename)) {
+		return DBI_NULL;
+	    }
 
-		/* db_create does a db_dirbuild */
-		if ((dbip = db_create(filename, 5)) == DBI_NULL) {
-			Tcl_AppendResult(interp,
-					 "wdb_open: failed to create ", filename,
-					 (char *)NULL);
-			if (dbip == DBI_NULL)
-				Tcl_AppendResult(interp,
-						 "opendb: no database is currently opened!", \
-						 (char *)NULL);
-
-			return DBI_NULL;
-		}
+	    /* db_create does a db_dirbuild */
+	    if ((dbip = db_create(filename, 5)) == DBI_NULL) {
+		Tcl_AppendResult(interp,
+				 "wdb_open: failed to create ", filename,
+				 (char *)NULL);
+		if (dbip == DBI_NULL)
+		    Tcl_AppendResult(interp,
+				     "opendb: no database is currently opened!", \
+				     (char *)NULL);
+		
+		return DBI_NULL;
+	    }
 	} else
 		/* --- Scan geometry database and build in-memory directory --- */
 		db_dirbuild(dbip);
