@@ -122,11 +122,11 @@ get_args(int argc, register char **argv)
 		infile = "-";
 	}
 	if( argv[bu_optind] != NULL )  {
-		if( access( argv[bu_optind], 0 ) == 0 )  {
+		if (bu_file_exists(argv[bu_optind]))  {
 			(void) fprintf( stderr,
 				"\"%s\" already exists.\n",
 				argv[bu_optind] );
-			bu_exit ( 1, NULL );
+			bu_exit( 1, NULL );
 		}
 		if( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
 			perror(argv[bu_optind]);
