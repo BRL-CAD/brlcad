@@ -58,6 +58,16 @@ static const char RCS_stat[] = "@(#)$Header$";
 #include "machine.h"
 #include "bu.h"
 
+#ifndef R_OK
+#  define R_OK 4
+#endif
+#ifndef W_OK
+#  define W_OK 2
+#endif
+#ifndef X_OK
+#  define X_OK 1
+#endif
+
 
 /**
  *			B U _ F I L E _ E X I S T S
