@@ -1489,7 +1489,7 @@ create_outputfilename( struct frame *fr )
 	 *	file exists, is writable -- eliminate all non-black pixels
 	 *		from work-to-do queue
 	 */
-	if( access( fr->fr_filename, 0 ) < 0 )  {
+	if (!bu_file_exists(fr->fr_filename))  {
 		/* File does not yet exist */
 		if( (fd = creat( fr->fr_filename, 0644 )) < 0 )  {
 			/* Unable to create new file */
@@ -1500,15 +1500,15 @@ create_outputfilename( struct frame *fr )
 		return(0);			/* OK */
 	}
 	/* The file exists */
-	if( access( fr->fr_filename, 2 ) < 0 )  {
-		/* File exists, and is not writable, skip this frame */
+	if (!bu_file_writable(fr->fr_filename)) {
+		/* File exists, and is not read/writable.  skip this frame */
 		perror( fr->fr_filename );
 		return( -1 );			/* skip this frame */
 	}
 	/* The file exists and is writable */
 	if( stat( fr->fr_filename, &sb ) >= 0 && sb.st_size > 0 )  {
-		/* The file has existing contents, dequeue all non-black
-		 * pixels.
+		/* The file has existing contents, dequeue all
+		 * non-black pixels.
 		 */
 		if( scan_frame_for_finished_pixels( fr ) < 0 )
 			return -1;
