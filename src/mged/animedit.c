@@ -682,7 +682,7 @@ gobble_token(int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
 	char error[160];
 
 	if (get_token(&token, fip, str, keys, syms) == EOF) {
-		sprintf(error,"parse: Unexpected EOF while getting %s",
+		snprintf(error, 160, "parse: Unexpected EOF while getting %s",
 		    types[type_wanted]);
 		parse_error(str, error);
 		return 0;
@@ -2882,7 +2882,7 @@ f_jsolve(int argc, char **argv)
 
 	for (count=0; count<myargc; count++) {
 		myargv[count] = (char *)bu_malloc(strlen(argv[count])+1,"param");
-		strcpy(myargv[count], argv[count]);
+		strncpy(myargv[count], argv[count], strlen(argv[count])+1-1);
 	}
 
 	argv=myargv;
