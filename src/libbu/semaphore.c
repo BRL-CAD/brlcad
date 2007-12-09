@@ -193,7 +193,7 @@ bu_semaphore_sgi_init()
     }
 
 	/* Now, set up the lock arena */
-	(void)mktemp(bu_lockfile);
+	mkstemp(bu_lockfile);
 	if( bu_debug & BU_DEBUG_PARALLEL )  {
 		if( usconfig( CONF_LOCKTYPE, _USDEBUGPLUS ) == -1 )
 			perror("usconfig CONF_LOCKTYPE");
