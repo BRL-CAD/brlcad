@@ -77,6 +77,7 @@
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_TIME	1
+#define HAVE_TMPFILE_S	1
 #define HAVE_VFORK	1
 #define HAVE_WINSOCK_H	1
 #define REVERSE_IEEE	yes
@@ -156,6 +157,7 @@
 #define O_RDWR _O_RDWR
 #define O_TRUNC _O_TRUNC
 #define O_WRONLY _O_WRONLY
+#define TMP_MAX_S _TMP_MAX_S
 
 #define access _access
 #define chmod _chmod
