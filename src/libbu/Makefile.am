@@ -61,6 +61,7 @@ libbu_nil_la_SOURCES = \
 	rb_walk.c \
 	semaphore.c \
 	stat.c \
+	temp.c \
 	units.c \
 	vers.c \
 	vfont.c \
