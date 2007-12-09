@@ -557,10 +557,10 @@ BU_EXPORT BU_EXTERN(struct bu_list *bu_list_new, ());
 BU_EXPORT BU_EXTERN(struct bu_list *bu_list_pop, (struct bu_list *hp));
 
 #define BU_LIST_CLOSE( hp ) { \
-	assert( (hp) != NULL ); \
+	BU_ASSERT( (hp) != NULL ); \
 	if( (hp) == NULL ) \
 		return; \
-	assert( BU_LIST_IS_EMPTY( (hp) ) ); \
+	BU_ASSERT( BU_LIST_IS_EMPTY( (hp) ) ); \
 	bu_list_free( (hp) ); \
 	bu_free( (char *)(hp), "bu_list head" ); \
 }
@@ -1837,6 +1837,9 @@ BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq,
 		    (const char *outfmt,
 		     const char *namefmt,
 		     int n));
+
+/* temp.c */
+BU_EXPORT BU_EXTERN(FILE *bu_temp_file, ());
 
 /** @} */
 /** @addtogroup getopt */
