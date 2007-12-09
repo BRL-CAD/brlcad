@@ -234,7 +234,7 @@ setup(int argc, char **argv)
 			bu_exit(1, usage);
 		}
 		if (autosize) {
-			(void) fprintf(stderr, usage);
+			(void) fprintf(stderr, "%s", usage);
 			bu_exit(1, "Automatic sizing can not be used with pipes.\n");
 		}
 	} else {
