@@ -33,7 +33,6 @@
  * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *
  */
-static const char RCS_stat[] = "@(#)$Header$";
 
 #include "common.h"
 
@@ -188,7 +187,7 @@ _bu_file_access(const char *path, int access)
     int grp_mask = S_IRGRP | S_IWGRP | S_IXGRP;
     int oth_mask = S_IROTH | S_IWOTH | S_IXOTH;
 
-    if (!path || path[0] = '\0') {
+    if (!path || (path[0] == '\0')) {
 	return 0;
     }
 
