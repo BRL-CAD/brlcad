@@ -1808,16 +1808,6 @@ BU_EXPORT BU_EXTERN(int bu_color_to_hsv_floats,
 /** @addtogroup bu_log */
 /** @{ */
 
-/* file.c */
-BU_EXPORT BU_EXTERN(struct bu_file *bu_fopen,
-		    (char *fname, char *type));
-BU_EXPORT BU_EXTERN(int bu_fclose,
-		    (struct bu_file *bfp));
-BU_EXPORT BU_EXTERN(int bu_fgetc,
-		    (struct bu_file *bfp));
-BU_EXPORT BU_EXTERN(void bu_printfile,
-		    (struct bu_file *bfp));
-
 /* stat.c */
 BU_EXPORT BU_EXTERN(int	bu_file_exists, (const char *path));
 BU_EXPORT BU_EXTERN(int	bu_same_file, (const char *fn1, const char *fn2));
@@ -1847,16 +1837,6 @@ BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq,
 		    (const char *outfmt,
 		     const char *namefmt,
 		     int n));
-
-/* file.c */
-BU_EXPORT BU_EXTERN(struct bu_file *bu_fopen,
-		    (char *fname, char *type));
-BU_EXPORT BU_EXTERN(int bu_fclose,
-		    (struct bu_file *bfp));
-BU_EXPORT BU_EXTERN(int bu_fgetc,
-		    (struct bu_file *bfp));
-BU_EXPORT BU_EXTERN(void bu_printfile,
-		    (struct bu_file *bfp));
 
 /** @} */
 /** @addtogroup getopt */
