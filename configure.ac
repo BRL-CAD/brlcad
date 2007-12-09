@@ -2093,6 +2093,7 @@ AC_CHECK_FUNCS(\
 	memset \
 	mkdir \
 	mkfifo \
+	mkstemp \
 	modf \
 	munmap \
 	nl_langinfo \
@@ -2138,6 +2139,7 @@ AC_CHECK_FUNCS(\
 	sync \
 	sysctl \
 	sysmp \
+	tmpfile_s \
 	tzset \
 	uname \
 	utime\
