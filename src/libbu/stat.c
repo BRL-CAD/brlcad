@@ -188,6 +188,10 @@ _bu_file_access(const char *path, int access)
     int grp_mask = S_IRGRP | S_IWGRP | S_IXGRP;
     int oth_mask = S_IROTH | S_IWOTH | S_IXOTH;
 
+    if (!path || path[0] = '\0') {
+	return 0;
+    }
+
     if (stat(path, &sb) == 0) {
 	return 0;
     }
