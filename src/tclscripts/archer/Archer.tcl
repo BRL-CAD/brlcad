@@ -794,13 +794,10 @@ Popup Menu    Right or Ctrl-Left
 	method _toggle_model_axes  {pane}
 	method _toggle_model_axes_ticks {pane}
 	method _toggle_view_axes   {pane}
-	method _toggle_ground_plane   {}
 
 	# private mged commands
 	method _alter_obj          {operation obj}
 	method _delete_obj         {obj}
-	method _group_obj          {obj}
-	method _region_obj         {obj}
 	method _cp_mv              {top obj cmd}
 
 	method _build_view_toolbar {}
@@ -5690,16 +5687,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(tree) remove $element $parent
     _refresh_tree
     SetNormalCursor
-}
-
-::itcl::body Archer::_group_obj {comp} {
-    set mNeedSave 1
-    _update_save_mode
-}
-
-::itcl::body Archer::_region_obj {comp} {
-    set mNeedSave 1
-    _update_save_mode
 }
 
 ::itcl::body Archer::_cp_mv {top comp cmd} {
