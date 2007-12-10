@@ -7,7 +7,12 @@
 #ifndef	_TIE_DEFINE_H
 #define	_TIE_DEFINE_H
 
+#include "common.h"
+
 #include <math.h>
+#ifdef HAVE_STDINT_H
+#  include <stdint.h>
+#endif
 
 
 #define TIE_SINGLE_PRECISION 0

@@ -35,10 +35,15 @@
 #ifndef _TIENET_UTIL_H
 #define _TIENET_UTIL_H
 
+#include "common.h"
 
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_STDINT_H
+#  include <stdint.h>
+#endif
+
 
 #define TIENET_BUFFER_INIT(_b) { \
 	_b.data = NULL; \
