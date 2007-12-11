@@ -54,34 +54,34 @@
 #define INSTALL_DIRECTORY    "C:/brlcad" MAJOR_VERSION_STRING "_" MINOR_VERSION_STRING "_" PATCH_VERSION_STRING
 #define IWIDGETS_VERSION  "4.0.2"
 
-#define HAS_OPENGL	1
-#define HAVE_CALLOC	1
-#define HAVE_FCNTL_H	1
-#define HAVE_GETENV     1
-#define HAVE_PUTENV     1
+#define HAS_OPENGL		1
+#define HAVE_CALLOC		1
+#define HAVE_FCNTL_H		1
+#define HAVE_GETENV     	1
+#define HAVE_PUTENV     	1
 #define HAVE_GETHOSTNAME	1
 #define HAVE_GETPROGNAME        1
-#define HAVE_GL_GL_H	1
-#define HAVE_IO_H	1
-#define HAVE_MATHERR	1
-#define HAVE_MEMORY_H	1
-#define HAVE_MEMSET	1
-#define HAVE_OFF_T	1
-#define HAVE_PROCESS_H  1
-#define HAVE_REGEX_H	1
-#define HAVE_SETVBUF	1
-#define HAVE_STRCHR	1
-#define HAVE_STRDUP	1
+#define HAVE_GL_GL_H		1
+#define HAVE_IO_H		1
+#define HAVE_MATHERR		1
+#define HAVE_MEMORY_H		1
+#define HAVE_MEMSET		1
+#define HAVE_OFF_T		1
+#define HAVE_PROCESS_H  	1
+#define HAVE_REGEX_H		1
+#define HAVE_SETVBUF		1
+#define HAVE_STRCHR		1
+#define HAVE_STRDUP		1
 #define HAVE_STRDUP_DECL	1
-#define HAVE_STRTOK	1
-#define HAVE_SYS_STAT_H 1
-#define HAVE_SYS_TYPES_H 1
-#define HAVE_TIME	1
-#define HAVE_TMPFILE_S	1
-#define HAVE_VFORK	1
-#define HAVE_WINSOCK_H	1
-#define REVERSE_IEEE	yes
-#define USE_PROTOTYPES	1
+#define HAVE_STRTOK		1
+#define HAVE_SYS_STAT_H		1
+#define HAVE_SYS_TYPES_H	1
+#define HAVE_TIME		1
+#define HAVE_TMPFILE_S		1
+#define HAVE_VFORK		1
+#define HAVE_WINSOCK_H		1
+#define REVERSE_IEEE		yes
+#define USE_PROTOTYPES		1
 
 /* XXX - do not rely on config_win.h providing these headers.  they
  * will be removed at some point.
