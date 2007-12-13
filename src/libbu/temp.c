@@ -29,6 +29,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <string.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -114,33 +116,76 @@ _bu_add_to_list(FILE *fp, int fd)
 }
 
 
+#ifndef HAVE_MKSTEMP
+static int
+mkstemp(char *file_template)
+{
+    int fd = -1;
+    int counter = 0;
+    char *filepath = NULL;
+    int i;
+    int start, end;
+
+    static const char replace[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    static int replacelen = sizeof(replace) - 1;
+
+    /* _O_TEMPORARY on Windows removes file when last descriptor is closed */
+#ifndef O_TEMPORARY
+#  define O_TEMPORARY 0
+#endif
+
+    if (!file_template || file_template[0] == '\0')
+	return -1;
+
+    /* identify the replacement suffix */
+    start = end = strlen(file_template)-1;
+    for (i=strlen(file_template)-1; i>=0; i--) {
+	if (file_template[i] != 'X') {
+	    break;
+	}
+	end = i;
+    }
+
+    do {
+	/* replace the template with random chars */
+	srand((unsigned)time(NULL));
+	for (i=start; i>=end; i--) {
+	    file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
+	}
+	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
+    } while ((fd == -1) && (counter++ < 1000));
+
+    return fd;
+}
+#endif
+
+
 /**
  *  b u _ t e m p _ f i l e
  *
  * Create a temporary file.  The first readable/writable directory
- * will be used, searching TMPDIR/TMP/TEMP environment variable
+ * will be used, searching TMPDIR/TEMP/TMP environment variable
  * directories followed by default system and ultimately trying the
  * current directory.
  *
  * This routine is guaranteed to return a new unique file or return
  * NULL on failure.  The temporary file will be automatically unlinked
- * on application exit.  It is the caller's responsibility to set a
- * desired umask or to zero the file contents before closing the file.
- *
- * There is no (portable) means to get the name of the temporary file.
+ * on application exit.  It is the caller's responsibility to set file
+ * access settings, preserve file contents, or destroy file contents
+ * if the default behavior is non-optimal.
  *
  * Typical Use:
 @code
  *	FILE *fp;
- *
- *	fp = bu_temp_file();
+ *	char filename[MAXPATHLEN];
+ *	fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
  *	...
  *	fclose(fp); // optional, auto-closed on exit
  *
  *	...
  *
- *	fp = bu_temp_file();
- *      fchmod(fileno(fp), 777);
+ *	fp = bu_temp_file(NULL, 0); // don't need file name
+ *      fchmod(fileno(fp), 0777);
  *	...
  *	rewind(fp);
  *	while (fputc(0, fp) == 0);
@@ -148,21 +193,22 @@ _bu_add_to_list(FILE *fp, int fd)
 @endcode
  */
 FILE *
-bu_temp_file()
+bu_temp_file(char *file, int maxfilelen)
 {
     FILE *fp = NULL;
-
-#ifdef HAVE_MKSTEMP
-
     int i;
     int fd = -1;
     char *dir = NULL;
-    char file[MAXPATHLEN];
-    const char *tmpdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
+    char tempfile[MAXPATHLEN];
+    const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
 
-    /* check environment */
-    for (i=0; tmpdirs[i]; i++) {
-	dir = getenv(tmpdirs[i]);
+    if (maxfilelen > MAXPATHLEN) {
+	maxfilelen = MAXPATHLEN;
+    }
+
+    /* check environment variable directories */
+    for (i=0; envdirs[i]; i++) {
+	dir = getenv(envdirs[i]);
 	if (dir && dir[0] != '\0' && bu_file_writable(dir) && bu_file_executable(dir)) {
 	    break;
 	}
@@ -191,16 +237,21 @@ bu_temp_file()
 	}
     }
 
-    snprintf(file, MAXPATHLEN, "%s%cBRL-CAD_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
+    snprintf(tempfile, MAXPATHLEN, "%s%cBRL-CAD_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
 
-    fd = mkstemp(file);
+    fd = mkstemp(tempfile);
+
     if (fd == -1) {
 	perror("mkstemp");
 	bu_log(_TF_FAIL);
 	return NULL;
     }
 
-    fp = fdopen(fd, "w+");
+    if (file) {
+	snprintf(file, maxfilelen, "%s", tempfile);
+    }
+
+    fp = fdopen(fd, "wb+");
     if (fp == NULL) {
 	perror("fdopen");
 	bu_log(_TF_FAIL);
@@ -209,39 +260,14 @@ bu_temp_file()
     }
 
     /* make it go away on close */
-    unlink(file);
+    unlink(tempfile);
 
     /* add the file to the atexit auto-close list */
     _bu_add_to_list(fp, fd);
 
     return fp;
-
-#endif /* HAVE_MKSTEMP */
-
-#ifdef HAVE_TMPFILE_S
- 
-    if (_bu_temp_files+1 > TMP_MAX_S) {
-	bu_log("Exceeding temporary file creation limit (%lu > %lu)\n", _bu_temp_files+1, TMP_MAX_S);
-    }
-
-    tmpfile_s(&fp);
-    if (!fp) {
-	perror("tmpfile_s");
-	bu_log(_TF_FAIL);
-	return NULL;
-    }
-
-    /* add the file to the atexit auto-close list */
-    _bu_add_to_list(fp, -1);
-
-    return fp;
-
-#endif /* HAVE_TMPFILE_S */
-
-    /* shouldn't get here */
-    bu_log("WARNING: Unexpectedly unable to create a temporary file\n");
-    return NULL;
 }
+
 
 /** @} */
 
