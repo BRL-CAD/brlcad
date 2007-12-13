@@ -67,15 +67,15 @@ if {[info exists env(ARCHER_HOME)]} {
 set env(ARCHER_HOME) $dir
 
 # Decide on a parent class for Archer
-namespace eval Archer {
-    if {1} {
-	set parentClass itk::Toplevel
-	set inheritFromToplevel 1
-    } else {
-	set parentClass TabWindow
-	set inheritFromToplevel 0
-    }
-}
+#namespace eval Archer {
+#    if {1} {
+#	set parentClass itk::Toplevel
+#	set inheritFromToplevel 1
+#    } else {
+#	set parentClass TabWindow
+#	set inheritFromToplevel 0
+#    }
+#}
 
 # stupid blt needs blt_library to be set (must be done AFTER loading BLT...)
 set blt_library [file normalize [file join [bu_brlcad_root "lib"] blt2.4]]
@@ -116,7 +116,7 @@ initBgerror
 #       No return.
 #
 proc showMainWindow {} {
-    if {$::Archer::inheritFromToplevel} {
+    if {$::ArcherCore::inheritFromToplevel} {
 	wm deiconify $::Archer::archer
 	raise $::Archer::archer
 	focus -force $::Archer::archer
@@ -151,7 +151,7 @@ proc createSplashScreen {} {
     }
 
     update idletasks
-    $::Archer::splash configure -background $::Archer::SystemWindow
+    $::Archer::splash configure -background $::ArcherCore::SystemWindow
     $::Archer::splash center
     update idletasks
     $::Archer::splash activate
@@ -189,7 +189,7 @@ proc destroySplashScreen {} {
 proc exitArcher {archer} {
     $archer askToSave
 
-    if {$::Archer::inheritFromToplevel} {
+    if {$::ArcherCore::inheritFromToplevel} {
 	wm withdraw $archer
     } else {
 	wm withdraw .
@@ -219,7 +219,7 @@ proc main {} {
     global tcl_platform
     global argv
 
-    if {$::Archer::inheritFromToplevel} {
+    if {$::ArcherCore::inheritFromToplevel} {
 	set ::Archer::archer [Archer .\#auto]
 	wm title $::Archer::archer "Archer"
 	if {$tcl_platform(os) == "Windows NT"} {
