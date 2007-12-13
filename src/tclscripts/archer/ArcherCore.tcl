@@ -37,11 +37,8 @@ if {![info exists env(ARCHER_HOME)]} {
     }
 }
 
-if {[info exists env(ARCHER_HOME)]} {
-  LoadArcherCoreLibs $env(ARCHER_HOME)
-} else {
-  LoadArcherCoreLibs .
-}
+LoadArcherCoreLibs $env(ARCHER_HOME)
+package provide ArcherCore 1.0
 
 namespace eval ArcherCore {
     if {![info exists parentClass]} {
@@ -78,7 +75,7 @@ namespace eval ArcherCore {
 	method primaryToolbarRemoveItem  {_index}
 	method closeHierarchy {}
 	method openHierarchy {{_fraction 30}}
-	method refreshTree {{restore 1}}
+	method refreshTree {{_restore 1}}
 	method mouseRay {_dm _x _y}
 	method shootRay {_start _op _target _prep _no_bool _onehit}
 	method addMouseRayCallback {_callback}
@@ -90,7 +87,7 @@ namespace eval ArcherCore {
 	method png                 {_filename}
 
 	# general
-	method UpdateTheme         {_theme} {set mTheme $_theme; _update_theme}
+	method UpdateTheme         {_theme} {set mTheme $_theme; updateTheme}
 	method Load                {_filename}
 	method GetUserCmds         {}
 	method WhatsOpen           {}
@@ -128,10 +125,7 @@ namespace eval ArcherCore {
 	method g                   {args}
 	method get                 {args}
 	method group               {args}
-	method importFg4	   {}
-	method importStl	   {importDir}
 	method i                   {args}
-	method importFg4Sections   {slist wlist delta}
 	method kill                {args}
 	method killall             {args}
 	method killtree            {args}
@@ -142,9 +136,9 @@ namespace eval ArcherCore {
 	method mv                  {args}
 	method mvall               {args}
 	method ocenter		   {args}
-	method orotate		   {obj rx ry rz kx ky kz}
-	method oscale		   {obj sf kx ky kz}
-	method otranslate	   {obj dx dy dz}
+	method orotate		   {_obj _rx _ry _rz _kx _ky _kz}
+	method oscale		   {_obj _sf _kx _ky _kz}
+	method otranslate	   {_obj _dx _dy _dz}
 	method push                {args}
 	method put                 {args}
 	method pwd                 {}
@@ -208,9 +202,8 @@ namespace eval ArcherCore {
     }
 
     protected {
-	proc unpackTreeGuts      {tree}
+	proc unpackTreeGuts      {_tree}
 
-	variable mCadVersion "0.9.2"
 	variable mLastSelectedDir ""
 
 	variable mFontArrowsName "arrowFont"
@@ -358,7 +351,7 @@ namespace eval ArcherCore {
 	variable mMgedCommands { \
 	    bot2pipe \
 	    adjust attr blast c comb concat copyeval E erase_all \
-	    ev find hide importFg4Sections killall killtree \
+	    ev find hide killall killtree \
 	    make_bb make_name mvall push put r report track \
 	    unhide vdraw
 	}
@@ -393,20 +386,20 @@ Popup Menu    Right or Ctrl-Left
 
 	variable mMouseRayCallbacks ""
 
-	method cadWrapper {cmd eflag hflag sflag tflag args}
-	method mgedWrapper {cmd eflag hflag sflag tflag args}
+	method cadWrapper {_cmd _eflag _hflag _sflag _tflag args}
+	method mgedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 
 	method buildCanvasMenubar {}
 
-	method redrawObj {obj {wflag 1}}
+	method redrawObj {_obj {_wflag 1}}
 
-	method menuStatusCB {w}
+	method menuStatusCB {_w}
 	method updateTheme {}
 	method updateSaveMode {}
 	method createTargetCopy {}
 	method deleteTargetOldCopy {}
 
-	method getVDrawColor {color}
+	method getVDrawColor {_color}
 	method buildGroundPlane {}
 	method showGroundPlane {}
 	method showPrimitiveLabels {}
@@ -414,19 +407,19 @@ Popup Menu    Right or Ctrl-Left
 	method showScale {}
 
 	# pane commands
-	method toggleTreeView {state}
-	method toggleAttrView {state}
+	method toggleTreeView {_state}
+	method toggleAttrView {_state}
 	method updateToggleMode {}
 
 	method launchNirt {}
-	method launchRtApp {app size}
+	method launchRtApp {_app _size}
 	#method refreshDisplay {}
 	#method mouseRay {_dm _x _y}
 
 	method updateDisplaySettings {}
 
 
-	#XXX Everything that follows used to be private
+	#XXX Everything that follows use to be private
 	variable mImgDir ""
 	variable mCenterX ""
 	variable mCenterY ""
@@ -443,12 +436,12 @@ Popup Menu    Right or Ctrl-Left
 	method closeMged         {}
 
 	# interface operations
+	method closeDb           {}
 	method newDb             {}
 	method openDb            {}
 	method saveDb            {}
-	method closeDb           {}
-	method primaryToolbarAdd        {type name {args ""}}
-	method primaryToolbarRemove     {index}
+	method primaryToolbarAdd        {_type _name {args ""}}
+	method primaryToolbarRemove     {_index}
 
 	# private window commands
 	method doPrimaryToolbar {}
@@ -459,22 +452,22 @@ Popup Menu    Right or Ctrl-Left
 	method alterTreeNodeChildren {node option value}
 	method toggleTreePath   {_path}
 	method updateTree        {}
-	method fillTree          {{node ""}}
-	method selectNode        {tags {rflag 1}}
-	method dblClick          {tags}
-	method loadMenu          {menu snode}
+	method fillTree          {{_node ""}}
+	method selectNode        {_tags {_rflag 1}}
+	method dblClick          {_tags}
+	method loadMenu          {_menu _snode}
 
 	# db/display commands
-	method getNodeChildren  {node}
-	method renderComp        {node}
-	method render             {node state trans updateTree {wflag 1}}
-	method selectDisplayColor  {node}
-	method setDisplayColor	   {node rgb}
-	method setTransparency	   {node alpha}
+	method getNodeChildren  {_node}
+	method renderComp        {_node}
+	method render             {_node _state _trans _updateTree {_wflag 1}}
+	method selectDisplayColor  {_node}
+	method setDisplayColor	   {_node _rgb}
+	method setTransparency	   {_node _alpha}
 	method raytracePanel    {}
 	method doPng             {}
-	method setActivePane    {pane}
-	method updateActivePane {args}
+	method setActivePane    {_pane}
+	method updateActivePane {_args}
 	method doMultiPane      {}
 	method doLighting        {}
 
@@ -482,30 +475,30 @@ Popup Menu    Right or Ctrl-Left
 	method doViewReset {}
 	method doAutoview {}
 	method doViewCenter {}
-	method doAe {az el}
+	method doAe {_az _el}
 
 	method showViewAxes     {}
 	method showModelAxes    {}
 	method showModelAxesTicks {}
-	method toggleModelAxes  {pane}
-	method toggleModelAxesTicks {pane}
-	method toggleViewAxes   {pane}
+	method toggleModelAxes  {_pane}
+	method toggleModelAxesTicks {_pane}
+	method toggleViewAxes   {_pane}
 
 	# private mged commands
-	method alterObj          {operation obj}
-	method deleteObj         {obj}
-	method doCopyOrMove              {top obj cmd}
+	method alterObj          {_operation _obj}
+	method deleteObj         {_obj}
+	method doCopyOrMove      {_top _obj _cmd}
 
 	method buildViewToolbar {}
 
 	method beginViewRotate {}
-	method endViewRotate {dm}
+	method endViewRotate {_dm}
 
 	method beginViewScale {}
-	method endViewScale {dm}
+	method endViewScale {_dm}
 
 	method beginViewTranslate {}
-	method endViewTranslate {dm}
+	method endViewTranslate {_dm}
 
 	method initCenterMode {}
 
@@ -517,39 +510,47 @@ Popup Menu    Right or Ctrl-Left
 	method endMeasure {_dm}
 
 	method beginObjRotate {}
-	method endObjRotate {dm obj}
+	method endObjRotate {_dm _obj}
 
 	method beginObjScale {}
-	method endObjScale {dm obj}
+	method endObjScale {_dm _obj}
 
 	method beginObjTranslate {}
-	method endObjTranslate {dm obj}
+	method endObjTranslate {_dm _obj}
 
 	method beginObjCenter {}
-	method endObjCenter {dm obj}
+	method endObjCenter {_dm _obj}
 
-	method initDefaultBindings {}
+	method initDefaultBindings {{_comp ""}}
 	method initBrlcadBindings {}
-	method validateDigit {d}
-	method validateDouble {d}
-	method validateTickInterval {ti}
-	method validateColorComp {c}
+	method validateDigit {_d}
+	method validateDouble {_d}
+	method validateTickInterval {_ti}
+	method validateColorComp {_c}
 
-	method backgroundColor {r g b}
+	method backgroundColor {_r _g _b}
 
 	method updateHPaneFractions {}
 	method updateVPaneFractions {}
 
-	method setColorOption {cmd colorOption color {tripleColorOption ""}}
+	method setColorOption {_cmd _colorOption _color {_tripleColorOption ""}}
 
-	method addHistory {cmd}
+	method addHistory {_cmd}
+
+	# Dialogs Section
+	method buildInfoDialog {_name _title _info _size _wrapOption _modality}
+	method buildSaveDialog {}
+	method buildViewCenterDialog {}
+
+	# Helper Section
+	method buildComboBox {_parent _name1 _name2 _varName _text _listOfChoices}
     }
 }
 
 # ------------------------------------------------------------
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
-::itcl::body ArcherCore::constructor {{viewOnly 0} {noCopy 0} args} {
+::itcl::body ArcherCore::constructor {{_viewOnly 0} {_noCopy 0} args} {
     global env
     global tcl_platform
 
@@ -559,8 +560,8 @@ Popup Menu    Right or Ctrl-Left
     set mFontTextBold [list $SystemWindowFont 8 bold]
 
     set mProgressBarHeight [expr {[font metrics $mFontText -linespace] + 1}]
-    set mViewOnly $viewOnly
-    set mDbNoCopy $noCopy
+    set mViewOnly $_viewOnly
+    set mDbNoCopy $_noCopy
 
     if {$ArcherCore::inheritFromToplevel} {
 	wm withdraw [namespace tail $this]
@@ -599,53 +600,52 @@ Popup Menu    Right or Ctrl-Left
 	    -margin 0 \
 	    -minimum 90
 
-    set parent [$itk_component(hpane) childsite bottomView]
-    itk_component add advancedTabs {
-	blt::tabnotebook $parent.tabs \
-	    -relief flat \
-	    -tiers 99 \
-	    -tearoff 1 \
-	    -gap 3 \
-	    -width 0 \
-	    -height 0 \
-	    -outerpad 0 \
-	    -highlightthickness 1 \
-	    -selectforeground black
-    } {}
-    $itk_component(advancedTabs) configure \
-	-highlightcolor [$itk_component(advancedTabs) cget -background] \
-	-borderwidth 0 \
-	-font $mFontText
-    $itk_component(advancedTabs) insert end -text "Command" -stipple gray25
-    $itk_component(advancedTabs) insert end -text "History" -stipple gray25
+	set parent [$itk_component(hpane) childsite bottomView]
+	itk_component add advancedTabs {
+	    blt::tabnotebook $parent.tabs \
+		-relief flat \
+		-tiers 99 \
+		-tearoff 1 \
+		-gap 3 \
+		-width 0 \
+		-height 0 \
+		-outerpad 0 \
+		-highlightthickness 1 \
+		-selectforeground black
+	} {}
+	$itk_component(advancedTabs) configure \
+	    -highlightcolor [$itk_component(advancedTabs) cget -background] \
+	    -borderwidth 0 \
+	    -font $mFontText
+	$itk_component(advancedTabs) insert end -text "Command" -stipple gray25
+	$itk_component(advancedTabs) insert end -text "History" -stipple gray25
 
-    itk_component add cmd {
-	Command $itk_component(advancedTabs).cmd \
+	itk_component add cmd {
+	    Command $itk_component(advancedTabs).cmd \
 		-relief sunken -borderwidth 2 \
 		-hscrollmode none -vscrollmode dynamic \
 		-scrollmargin 2 -visibleitems 80x15 \
 		-textbackground $SystemWindow -prompt "ArcherCore> " \
 		-prompt2 "% " -result_color black -cmd_color red
-    } {
-    }
-    set i 0
-    $itk_component(advancedTabs) tab configure $i \
-	-window $itk_component(cmd) \
-	-fill both
-    incr i
+	} {}
 
-    itk_component add history {
-	::iwidgets::scrolledtext $itk_component(advancedTabs).history \
+	set i 0
+	$itk_component(advancedTabs) tab configure $i \
+	    -window $itk_component(cmd) \
+	    -fill both
+	incr i
+
+	itk_component add history {
+	    ::iwidgets::scrolledtext $itk_component(advancedTabs).history \
 		-relief sunken -borderwidth 2 \
 		-hscrollmode none -vscrollmode dynamic \
 		-scrollmargin 2 -visibleitems 80x15 \
 		-textbackground $SystemWindow
-    } {
-    }
-    $itk_component(advancedTabs) tab configure $i \
-	-window $itk_component(history) \
-	-fill both
-    [$itk_component(history) component text] configure -state disabled
+	} {}
+	$itk_component(advancedTabs) tab configure $i \
+	    -window $itk_component(history) \
+	    -fill both
+	[$itk_component(history) component text] configure -state disabled
     }
 
     # vertical panes
@@ -933,6 +933,7 @@ Popup Menu    Right or Ctrl-Left
     backgroundColor [lindex $mBackground 0] \
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
+
     updateTheme
 
 #    update idletasks
@@ -1433,6 +1434,15 @@ Popup Menu    Right or Ctrl-Left
 # ------------------------------------------------------------
 #                 INTERFACE OPERATIONS
 # ------------------------------------------------------------
+::itcl::body ArcherCore::closeDb {} {
+    pack forget $itk_component(mged)
+    closeMged
+
+    grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
+
+    refreshTree 0
+}
+
 ::itcl::body ArcherCore::newDb {} {
     set typelist {
 	{"BRL-CAD Database" {".g"}}
@@ -1502,15 +1512,6 @@ Popup Menu    Right or Ctrl-Left
     }
 
     file copy -force $mTargetCopy $mTarget
-}
-
-::itcl::body ArcherCore::closeDb {} {
-    pack forget $itk_component(mged)
-    closeMged
-
-    grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
-
-    refreshTree 0
 }
 
 ::itcl::body ArcherCore::primaryToolbarAdd {type name {args ""}} {
@@ -2023,8 +2024,8 @@ Popup Menu    Right or Ctrl-Left
     addHistory "ocenter $center"
 }
 
-::itcl::body ArcherCore::initDefaultBindings {} {
-    if {![info exists itk_component(mged)]} {
+::itcl::body ArcherCore::initDefaultBindings {{_comp ""}} {
+    if {$_comp == ""} {
 	return
     }
 
@@ -2087,10 +2088,10 @@ Popup Menu    Right or Ctrl-Left
 	bind $win <F10> {}
 
 	# overrides
-	bind $win <Shift-ButtonPress-1> "$itk_component(mged) rotate_mode %x %y; break"
-	bind $win <Shift-ButtonPress-2> "$itk_component(mged) scale_mode %x %y; break"
-	bind $win <Shift-ButtonPress-3> "$itk_component(mged) translate_mode %x %y; break"
-	bind $win <Control-Shift-ButtonPress-3> "$itk_component(mged) slew %x %y; break"
+	bind $win <Shift-ButtonPress-1> "$_comp rotate_mode %x %y; break"
+	bind $win <Shift-ButtonPress-2> "$_comp scale_mode %x %y; break"
+	bind $win <Shift-ButtonPress-3> "$_comp translate_mode %x %y; break"
+	bind $win <Control-Shift-ButtonPress-3> "$_comp slew %x %y; break"
 
 	bind $win <Shift-ButtonRelease-1> "[::itcl::code $this endViewRotate $dm]; break"
 	bind $win <Shift-ButtonRelease-2> "[::itcl::code $this endViewScale $dm]; break"
@@ -2101,12 +2102,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(viewToolbar) itemconfigure cpick \
 	-state normal
 
-    if {$mMode != 0} {
-	$itk_component(viewToolbar) itemconfigure edit_rotate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_translate -state normal
-	$itk_component(viewToolbar) itemconfigure edit_scale -state normal
-	$itk_component(viewToolbar) itemconfigure edit_center -state normal
-    }
     catch {eval [$itk_component(viewToolbar) itemcget $mDefaultBindingMode -command]}
 }
 
@@ -2178,6 +2173,7 @@ Popup Menu    Right or Ctrl-Left
 		[lindex $mBackground 1] \
 		[lindex $mBackground 2]]
 	$itk_component(canvas) configure -bg $color
+	tk_messageBox -message "ArcherCore::backgroundColor: called by [info level -1]"
     } else {
 	eval dbCmd bgAll $mBackground
     }
@@ -2383,14 +2379,16 @@ Popup Menu    Right or Ctrl-Left
     return $ntlist
 }
 
-::itcl::body ArcherCore::renderComp {node} {
-    set renderMode [dbCmd how $node]
+
+::itcl::body ArcherCore::renderComp {_node} {
+    set renderMode [dbCmd how $_node]
     if {$renderMode < 0} {
-	render $node 0 1 1
+	render $_node 0 1 1
     } else {
-	render $node -1 1 1
+	render $_node -1 1 1
     }
 }
+
 
 ::itcl::body ArcherCore::render {node state trans updateTree {wflag 1}} {
     if {$wflag} {
@@ -2888,8 +2886,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::dblClick {tags} {
-    global App
-
     #set element [lindex [split $tags ":"] 1]
     set element [split $tags ":"]
     if {[llength $element] > 1} {
@@ -3170,7 +3166,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$mBindingMode == 0} {
-	initDefaultBindings
+	initDefaultBindings $itk_component(mged)
 	set mDefaultBindingMode $ROTATE_MODE
 	beginViewRotate
     }
@@ -3187,6 +3183,8 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::Close {} {
     if {$itk_option(-quitcmd) != {}} {
 	catch {eval $itk_option(-quitcmd)}
+    } else {
+	::exit
     }
 }
 
@@ -3207,35 +3205,11 @@ Popup Menu    Right or Ctrl-Left
 	}
 
 	switch -- $op {
-	    "New..." {
-		set mStatusStr "Create a new target description"
-	    }
 	    "Open..." {
 		set mStatusStr "Open a target description"
 	    }
 	    "Save" {
 		set mStatusStr "Save the current target description"
-	    }
-	    "Basic" {
-		set mStatusStr "Basic user mode"
-	    }
-	    "Intermediate" {
-		set mStatusStr "Intermediate user mode"
-	    }
-	    "Advanced" {
-		set mStatusStr "Advanced user mode"
-	    }
-	    "Fastgen 4 Import..." {
-		set mStatusStr "Import from a Fastgen 4 file"
-	    }
-	    "Fastgen 4 Export..." {
-		set mStatusStr "Export to a Fastgen 4 file"
-	    }
-	    "Close" {
-		set mStatusStr "Close the current target description"
-	    }
-	    "Preferences..." {
-		set mStatusStr "Set application preferences"
 	    }
 	    "Quit" {
 		set mStatusStr "Exit ArcherCore"
@@ -3284,12 +3258,6 @@ Popup Menu    Right or Ctrl-Left
 	    }
 	    "Command Window" {
 		set mStatusStr "Toggle on/off command window"
-	    }
-	    "About..." {
-		set mStatusStr "Info about ArcherCore"
-	    }
-	    "Mouse Mode Overrides..." {
-		set mStatusStr "Mouse mode override definitions"
 	    }
 	    "Upper Left" {
 		set mStatusStr "Set the active pane to the upper left pane"
@@ -3346,20 +3314,23 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::updateTheme {} {
     set dir [file join $mImgDir Themes $mTheme]
 
-    # Tree Control
-    $itk_component(tree) configure \
+    if {!$mViewOnly} {
+	# Tree Control
+	$itk_component(tree) configure \
 	    -openimage [image create photo -file [file join $dir folder_open_small.png]] \
 	    -closeimage [image create photo -file [file join $dir folder_closed_small.png]] \
 	    -nodeimage [image create photo -file [file join $dir file_text_small.png]]
-    $itk_component(tree) redraw
+	$itk_component(tree) redraw
 
-    # Primary Toolbar
-    $itk_component(primaryToolbar) itemconfigure open \
-	-image [image create photo \
-		    -file [file join $dir open.png]]
-    $itk_component(primaryToolbar) itemconfigure save \
-	-image [image create photo \
-		    -file [file join $dir save.png]]
+	# Primary Toolbar
+	$itk_component(primaryToolbar) itemconfigure open \
+	    -image [image create photo \
+			-file [file join $dir open.png]]
+	$itk_component(primaryToolbar) itemconfigure save \
+	    -image [image create photo \
+			-file [file join $dir save.png]]
+    }
+
 
     # View Toolbar
     $itk_component(viewToolbar) itemconfigure rotate \
@@ -3380,21 +3351,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(viewToolbar) itemconfigure measure \
 	-image [image create photo \
 		    -file [file join $dir measure.png]]
-
-    catch {
-	$itk_component(viewToolbar) itemconfigure edit_rotate \
-	    -image [image create photo \
-			-file [file join $dir edit_rotate.png]]
-	$itk_component(viewToolbar) itemconfigure edit_translate \
-	    -image [image create photo \
-			-file [file join $dir edit_translate.png]]
-	$itk_component(viewToolbar) itemconfigure edit_scale \
-	    -image [image create photo \
-			-file [file join $dir edit_scale.png]]
-	$itk_component(viewToolbar) itemconfigure edit_center \
-	    -image [image create photo \
-			-file [file join $dir edit_select.png]]
-    }
 }
 
 
@@ -3765,6 +3721,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::launchRtApp {app size} {
+    global tcl_platform
+
     if {![info exists itk_component(mged)] || $mViewOnly} {
 	return
     }
@@ -3773,7 +3731,11 @@ Popup Menu    Right or Ctrl-Left
 	set size [winfo width $itk_component(mged)]
     }
 
-    $itk_component(mged) $app -s $size -F /dev/wgll
+    if {$tcl_platform(platform) == "windows"} {
+	$itk_component(mged) $app -s $size -F /dev/wgll
+    } {
+	$itk_component(mged) $app -s $size -F /dev/ogll
+    }
 }
 
 ::itcl::body ArcherCore::refreshDisplay {} {
@@ -4336,6 +4298,227 @@ Popup Menu    Right or Ctrl-Left
 	$ZCLIP_NONE { \
 	    $itk_component(mged) zclipAll 0; \
 	}
+}
+
+
+################################### Dialogs Section ###################################
+
+::itcl::body ArcherCore::buildInfoDialog {name title info size wrapOption modality} {
+    itk_component add $name {
+	::iwidgets::dialog $itk_interior.$name \
+	    -modality $modality \
+	    -title $title \
+	    -background $SystemButtonFace
+    } {}
+    $itk_component($name) hide 1
+    $itk_component($name) hide 2
+    $itk_component($name) hide 3
+    $itk_component($name) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component($name) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component($name) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set parent [$itk_component($name) childsite]
+
+    itk_component add $name\Info {
+	::iwidgets::scrolledtext $parent.info \
+	    -wrap $wrapOption \
+	    -hscrollmode dynamic \
+	    -vscrollmode dynamic \
+	    -textfont $mFontText \
+	    -background $SystemButtonFace \
+	    -textbackground $SystemButtonFace
+    } {}
+    $itk_component($name\Info) insert 0.0 $info
+    wm geometry $itk_component($name) $size
+#    wm overrideredirect $itk_component($name) 1
+
+    after idle "$itk_component($name\Info) configure -state disabled"
+    after idle "$itk_component($name) center"
+
+    pack $itk_component($name\Info) -expand yes -fill both
+}
+
+::itcl::body ArcherCore::buildSaveDialog {} {
+    buildInfoDialog saveDialog \
+	"Save Target?" \
+	"Do you wish to save the current target?" \
+	450x85 none application
+
+    $itk_component(saveDialog) show 2
+    $itk_component(saveDialog) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0 \
+	-text Yes
+    $itk_component(saveDialog) buttonconfigure 2 \
+	-borderwidth 1 \
+	-pady 0 \
+	-text No
+    $itk_component(saveDialogInfo) configure \
+	-vscrollmode none \
+	-hscrollmode none
+}
+
+::itcl::body ArcherCore::buildViewCenterDialog {} {
+    itk_component add centerDialog {
+	::iwidgets::dialog $itk_interior.centerDialog \
+	    -modality application \
+	    -title "View Center"
+    } {}
+    $itk_component(centerDialog) hide 1
+    $itk_component(centerDialog) hide 3
+    $itk_component(centerDialog) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component(centerDialog) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+    $itk_component(centerDialog) buttonconfigure 2 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component(centerDialog) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set parent [$itk_component(centerDialog) childsite]
+
+    itk_component add centerDialogXL {
+	::label $parent.xl \
+	    -text "X:"
+    } {}
+    set hbc [$itk_component(centerDialogXL) cget -background]
+    itk_component add centerDialogXE {
+	::entry $parent.xe \
+	    -width 12 \
+	    -background $SystemWindow \
+	    -highlightbackground $hbc \
+	    -textvariable [::itcl::scope mCenterX] \
+	    -validate key \
+	    -vcmd [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add centerDialogXUL {
+	::label $parent.xul \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+    itk_component add centerDialogYL {
+	::label $parent.yl \
+	    -text "Y:"
+    } {}
+    itk_component add centerDialogYE {
+	::entry $parent.ye \
+	    -width 12 \
+	    -background $SystemWindow \
+	    -highlightbackground $hbc \
+	    -textvariable [::itcl::scope mCenterY] \
+	    -validate key \
+	    -vcmd [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add centerDialogYUL {
+	::label $parent.yul \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+    itk_component add centerDialogZL {
+	::label $parent.zl \
+	    -text "Z:"
+    } {}
+    itk_component add centerDialogZE {
+	::entry $parent.ze \
+	    -width 12 \
+	    -background $SystemWindow \
+	    -highlightbackground $hbc \
+	    -textvariable [::itcl::scope mCenterZ] \
+	    -validate key \
+	    -vcmd [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add centerDialogZUL {
+	::label $parent.zul \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    after idle "$itk_component(centerDialog) center"
+
+    set col 0
+    set row 0
+    grid $itk_component(centerDialogXL) -row $row -column $col
+    incr col
+    grid $itk_component(centerDialogXE) -row $row -column $col -sticky ew
+    grid columnconfigure $parent $col -weight 1
+    incr col
+    grid $itk_component(centerDialogXUL) -row $row -column $col
+
+    set col 0
+    incr row
+    grid $itk_component(centerDialogYL) -row $row -column $col
+    incr col
+    grid $itk_component(centerDialogYE) -row $row -column $col -sticky ew
+    grid columnconfigure $parent $col -weight 1
+    incr col
+    grid $itk_component(centerDialogYUL) -row $row -column $col
+
+    set col 0
+    incr row
+    grid $itk_component(centerDialogZL) -row $row -column $col
+    incr col
+    grid $itk_component(centerDialogZE) -row $row -column $col -sticky ew
+    grid columnconfigure $parent $col -weight 1
+    incr col
+    grid $itk_component(centerDialogZUL) -row $row -column $col
+
+    wm geometry $itk_component(centerDialog) "275x125"
+}
+
+
+################################### Helper Section ###################################
+
+::itcl::body ArcherCore::buildComboBox {parent name1 name2 varName text listOfChoices} {
+    itk_component add $name1\L {
+	::label $parent.$name2\L \
+	    -text $text
+    } {}
+
+    set hbc [$itk_component($name1\L) cget -background]
+
+    itk_component add $name1\F {
+	::frame $parent.$name2\F \
+	    -relief sunken \
+	    -bd 2
+    } {}
+
+    set listHeight [expr [llength $listOfChoices] * 19]
+    itk_component add $name1\CB {
+	::iwidgets::combobox $itk_component($name1\F).$name2\CB \
+	    -editable false \
+	    -textvariable [::itcl::scope $varName] \
+	    -listheight $listHeight \
+	    -background $SystemWindow \
+	    -textbackground $SystemWindow \
+	    -relief flat
+    } {}
+    #XXX I wouldn't have to break encapsulation if they'd make better widgets!
+    #    Yeah, I could tweak the combobox. But, then I'd have to manage the mods
+    #    of their code. It's easier to do it this way.
+    $itk_component($name1\CB) component entry configure \
+	-disabledbackground $SystemWindow \
+	-disabledforeground $SystemWindowText
+    eval $itk_component($name1\CB) insert list end $listOfChoices
+
+    $itk_component($name1\CB) component arrowBtn configure \
+	-background $hbc \
+	-highlightbackground $hbc
+    pack $itk_component($name1\CB) -expand yes -fill both
 }
 
 
