@@ -2173,7 +2173,6 @@ Popup Menu    Right or Ctrl-Left
 		[lindex $mBackground 1] \
 		[lindex $mBackground 2]]
 	$itk_component(canvas) configure -bg $color
-	tk_messageBox -message "ArcherCore::backgroundColor: called by [info level -1]"
     } else {
 	eval dbCmd bgAll $mBackground
     }
