@@ -11,6 +11,7 @@ scripts = \
 	Arb7EditFrame.tcl \
 	Arb8EditFrame.tcl \
 	Archer.tcl \
+	ArcherCore.tcl \
 	bgerror.tcl \
 	BotEditFrame.tcl \
 	CombEditFrame.tcl \
