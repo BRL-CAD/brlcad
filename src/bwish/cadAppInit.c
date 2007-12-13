@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file main.c
+/** @file cadAppInit.c
  *
  *  This file initializes Itcl/Itk and various BRL-CAD libraries.
  *
