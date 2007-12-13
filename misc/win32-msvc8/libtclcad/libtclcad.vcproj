@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="libtclcad"
 	ProjectGUID="{2E7781DC-C6A0-445B-A32E-3F18C42EDBFF}"
+	RootNamespace="libtclcad"
 	>
 	<Platforms>
 		<Platform
@@ -176,7 +177,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib tcl85.lib tk85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib"
+				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib BLT24.lib"
 				OutputFile=".\Release/libtclcad.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -220,6 +221,10 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
+			<File
+				RelativePath="..\..\..\src\libtclcad\tclcad.c"
+				>
+			</File>
 			<File
 				RelativePath="..\..\..\src\libtclcad\tclcadAutoPath.c"
 				>
