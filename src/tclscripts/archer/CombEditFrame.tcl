@@ -85,7 +85,7 @@
     $itk_component(tabs) configure \
 	-highlightcolor [$itk_component(tabs) cget -background] \
 	-borderwidth 0 \
-	-font [list $Archer::SystemWindowFont 8]
+	-font [list $ArcherCore::SystemWindowFont 8]
     $itk_component(tabs) insert end -text "General" -stipple gray25
     $itk_component(tabs) insert end -text "Shader" -stipple gray25
     $itk_component(tabs) insert end -text "Tree" -stipple gray25
@@ -171,7 +171,7 @@
     }
 
     if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
-	set tree [Archer::unpackTree $_tree]
+	set tree [ArcherCore::unpackTree $_tree]
     } else {
 	set tree ""
     }
@@ -234,7 +234,7 @@
 	lappend _attrs inherit $mInherit
     }
 
-    lappend _attrs tree [Archer::packTree [$itk_component(combTreeT) get 1.0 end]]
+    lappend _attrs tree [ArcherCore::packTree [$itk_component(combTreeT) get 1.0 end]]
 
     if {[catch {eval $itk_option(-mged) adjust $itk_option(-geometryObject) $_attrs}]} {
 	return
@@ -490,7 +490,7 @@
     set parent $itk_component(combTreeF)
     itk_component add combTreeT {
 	::text $parent.treeT \
-	    -background $Archer::SystemWindow
+	    -background $ArcherCore::SystemWindow
     } {
 	#usual
     }
@@ -573,7 +573,7 @@
 
     set tree [string trim [$itk_component(combTreeT) get 1.0 end]]
     if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
-	set _tree [string trim [Archer::unpackTree $_tree]]
+	set _tree [string trim [ArcherCore::unpackTree $_tree]]
     } else {
 	set _tree ""
     }

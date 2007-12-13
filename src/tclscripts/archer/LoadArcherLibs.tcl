@@ -26,7 +26,7 @@
 #    Code to load Archer's shared libraries.
 ###
 
-proc LoadArcherLibs {dir} {
+proc LoadArcherCoreLibs {dir} {
     global tcl_platform
 
     # load tkimg
@@ -49,18 +49,20 @@ proc LoadArcherLibs {dir} {
 
     load [file join $tkimgdir tkimg.$ext]
 
-    # Try to load Sdb
-    if {[catch {package require Sdb 1.1}]} {
-	set Archer::haveSdb 0
-    } else {
-	set Archer::haveSdb 1
-    }
-
     if { [catch {package require Swidgets} _initialized] } {
 	puts "$_initialized"
 	puts ""
 	puts "ERROR: Unable to load Archer Scripting"
 	exit 1
+    }
+}
+
+proc LoadArcherLibs {dir} {
+    # Try to load Sdb
+    if {[catch {package require Sdb 1.1}]} {
+	set Archer::haveSdb 0
+    } else {
+	set Archer::haveSdb 1
     }
 }
 

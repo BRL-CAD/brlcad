@@ -34,9 +34,9 @@
     itk_option define -geometryObject geometryObject GeometryObject ""
     itk_option define -geometryChangedCallback geometryChangedCallback GeometryChangedCallback ""
 
-    itk_option define -labelFont labelFont Font [list $::Archer::SystemWindowFont 12]
-    itk_option define -boldLabelFont boldLabelFont Font [list $::Archer::SystemWindowFont 12 bold]
-    itk_option define -entryFont entryFont Font [list $::Archer::SystemWindowFont 12]
+    itk_option define -labelFont labelFont Font [list $::ArcherCore::SystemWindowFont 12]
+    itk_option define -boldLabelFont boldLabelFont Font [list $::ArcherCore::SystemWindowFont 12 bold]
+    itk_option define -entryFont entryFont Font [list $::ArcherCore::SystemWindowFont 12]
     itk_option define -units units Units ""
     itk_option define -valueUnits valueUnits ValueUnits ""
 
@@ -405,13 +405,13 @@
 	    -editable false \
 	    -textvariable $var \
 	    -listheight $listHeight \
-	    -background $::Archer::SystemWindow \
-	    -textbackground $::Archer::SystemWindow \
+	    -background $::ArcherCore::SystemWindow \
+	    -textbackground $::ArcherCore::SystemWindow \
 	    -relief flat
     } {}
     $itk_component($name1\CB) component entry configure \
-	-disabledbackground $::Archer::SystemWindow \
-	-disabledforeground $::Archer::SystemWindowText
+	-disabledbackground $::ArcherCore::SystemWindow \
+	-disabledforeground $::ArcherCore::SystemWindowText
     eval $itk_component($name1\CB) insert list end $listOfChoices
 
     $itk_component($name1\CB) component arrowBtn configure \
