@@ -28,35 +28,15 @@
  *  vector math, matrix math, quaternion math, complex math,
  *  synthetic division, root finding, etc.
  *
- * @li This header file depends on vmath.h
- * @li This header file depends on bu.h and LIBBU;  it is safe to use
- *      bu.h macros (e.g. BU_EXTERN) here.
- *
- *  @author	Michael John Muuss
- *  @author	Lee A Butler
- *  @author	Douglas A Gwyn
- *  @author	Jeff Hanes
- *
- *  @par Modifications & Additions
- *      Christopher Sean Morrison
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  *  Include Sequencing -
 @code
 	# include "common.h"
 	# include <stdio.h>
 	# include <math.h>
 	# include "machine.h"	/_* For fastf_t definition on this machine *_/
-	# include "bu.h"
-	# include "vmath.h"
 	# include "bn.h"
 @endcode
  *
- *  @par Libraries Used -
- *	-lm -lc
  */
 
 #ifndef __BN_H__
@@ -1062,7 +1042,7 @@ BN_EXPORT extern void bn_mathtab_constant();
 		bu_log("%s:%d value %d should be power of 2 (2^%d)\n", \
 			__FILE__, __LINE__, dimen, j); \
 		bu_bomb("CK_POW_2"); \
-		}\
+	}\
 }
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_double_decompose,
