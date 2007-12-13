@@ -209,6 +209,8 @@
 #undef rad2
 #define pid_t int
 #define socklen_t int
+#define uid_t unsigned int
+#define gid_t unsigned int
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
 #   define for if (0) {} else for           /* proper for-scope */
