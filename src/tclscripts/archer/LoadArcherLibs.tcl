@@ -26,7 +26,7 @@
 #    Code to load Archer's shared libraries.
 ###
 
-proc LoadArcherCoreLibs {dir} {
+proc LoadArcherCoreLibs {} {
     global tcl_platform
 
     # load tkimg
@@ -57,7 +57,7 @@ proc LoadArcherCoreLibs {dir} {
     }
 }
 
-proc LoadArcherLibs {dir} {
+proc LoadArcherLibs {} {
     # Try to load Sdb
     if {[catch {package require Sdb 1.1}]} {
 	set Archer::haveSdb 0
