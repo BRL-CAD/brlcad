@@ -93,11 +93,7 @@ struct bu_semaphores {
 #  include <sys/wait.h>
 #endif
 
-#ifdef _WIN32
-static char		bu_lockfile[] = "C:\\bu_lockXXXXXX";
-#else
-static char		bu_lockfile[] = "/usr/tmp/bu_lockXXXXXX";
-#endif
+static char bu_lockfile[MAXPATHLEN] = {0};
 
 static usptr_t		*bu_lockstuff = 0;
 extern int		_utrace;
@@ -183,46 +179,48 @@ struct bu_semaphores {
 static void
 bu_semaphore_sgi_init()
 {
-	/*
-	 *  First time through.
-	 *  Use this opportunity to tune malloc().  It needs it!
-	 *  Default for M_BLKSZ is 8k.
-	 */
+    FILE *fp;
+    /*
+     *  First time through.
+     *  Use this opportunity to tune malloc().  It needs it!
+     *  Default for M_BLKSZ is 8k.
+     */
     if (mallopt( M_BLKSZ, 128*1024) != 0) {
 	fprintf(stderr, "bu_semaphore_sgi_init: mallopt() failed\n");
     }
-
-	/* Now, set up the lock arena */
-	mkstemp(bu_lockfile);
-	if( bu_debug & BU_DEBUG_PARALLEL )  {
-		if( usconfig( CONF_LOCKTYPE, _USDEBUGPLUS ) == -1 )
-			perror("usconfig CONF_LOCKTYPE");
-	}
-	/*
-	 *  Note that libc mp debugging to stderr can be enabled by saying
-	 *	int _utrace=1;
-	 */
-
-	/* Cause lock file to vanish on exit */
-	usconfig(CONF_ARENATYPE, US_SHAREDONLY);
-
-	/* Set maximum number of procs that can share this arena */
-	usconfig(CONF_INITUSERS, bu_avail_cpus()+1);
-
-	if( bu_debug & BU_DEBUG_PARALLEL )  {
-		/* This is a big performance hit, but may find bugs */
-		usconfig(CONF_LOCKTYPE, US_DEBUG);
-	} else {
-		usconfig(CONF_LOCKTYPE, US_NODEBUG);
-	}
-
-	/* Initialize arena */
-	bu_lockstuff = usinit(bu_lockfile);
-	if (bu_lockstuff == 0) {
-		perror("usinit");
-		fprintf(stderr, "bu_semaphore_sgi_init: usinit(%s) failed, unable to allocate lock space\n", bu_lockfile);
-		bu_bomb("fatal semaphore initialization failure");
-	}
+    
+    /* Now, set up the lock arena */
+    fp = bu_temp_file(bu_lockfile, MAXPATHLEN);
+    
+    if( bu_debug & BU_DEBUG_PARALLEL )  {
+	if( usconfig( CONF_LOCKTYPE, _USDEBUGPLUS ) == -1 )
+	    perror("usconfig CONF_LOCKTYPE");
+    }
+    /*
+     *  Note that libc mp debugging to stderr can be enabled by saying
+     *	int _utrace=1;
+     */
+    
+    /* Cause lock file to vanish on exit */
+    usconfig(CONF_ARENATYPE, US_SHAREDONLY);
+    
+    /* Set maximum number of procs that can share this arena */
+    usconfig(CONF_INITUSERS, bu_avail_cpus()+1);
+    
+    if( bu_debug & BU_DEBUG_PARALLEL )  {
+	/* This is a big performance hit, but may find bugs */
+	usconfig(CONF_LOCKTYPE, US_DEBUG);
+    } else {
+	usconfig(CONF_LOCKTYPE, US_NODEBUG);
+    }
+    
+    /* Initialize arena */
+    bu_lockstuff = usinit(bu_lockfile);
+    if (bu_lockstuff == 0) {
+	perror("usinit");
+	fprintf(stderr, "bu_semaphore_sgi_init: usinit(%s) failed, unable to allocate lock space\n", bu_lockfile);
+	bu_bomb("fatal semaphore initialization failure");
+    }
 }
 #endif
 
