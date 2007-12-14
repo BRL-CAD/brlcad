@@ -117,9 +117,9 @@ initBgerror
 #
 proc showMainWindow {} {
     if {$::ArcherCore::inheritFromToplevel} {
-	wm deiconify $::Archer::archer
-	raise $::Archer::archer
-	focus -force $::Archer::archer
+	wm deiconify $::ArcherCore::application
+	raise $::ArcherCore::application
+	focus -force $::ArcherCore::application
     } else {
 	wm deiconify .
 	raise .
@@ -145,16 +145,16 @@ proc createSplashScreen {} {
 
     if {$useImage} {
 	set image [image create photo -file [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]]
-	set ::Archer::splash [Splash .splash -image $image]
+	set ::ArcherCore::splash [Splash .splash -image $image]
     } else {
-	set ::Archer::splash [Splash .splash -message "Loading Archer ... please wait ..."]
+	set ::ArcherCore::splash [Splash .splash -message "Loading Archer ... please wait ..."]
     }
 
     update idletasks
-    $::Archer::splash configure -background $::ArcherCore::SystemWindow
-    $::Archer::splash center
+    $::ArcherCore::splash configure -background $::ArcherCore::SystemWindow
+    $::ArcherCore::splash center
     update idletasks
-    $::Archer::splash activate
+    $::ArcherCore::splash activate
     after 3000 destroySplashScreen; # 3 more sec
     update
 }
@@ -172,17 +172,17 @@ proc createSplashScreen {} {
 #
 proc destroySplashScreen {} {
     # check to see if main gui is ready
-    if {$::Archer::showWindow == 0} {
+    if {$::ArcherCore::showWindow == 0} {
         after 1000 destroySplashScreen; # 1 more sec
         return
     }
 
-    if {$::Archer::splash == ""} {
+    if {$::ArcherCore::splash == ""} {
 	return
     }
-    $::Archer::splash deactivate
-    itcl::delete object $::Archer::splash
-    set ::Archer::splash ""
+    $::ArcherCore::splash deactivate
+    itcl::delete object $::ArcherCore::splash
+    set ::ArcherCore::splash ""
     showMainWindow
 }
 
@@ -220,43 +220,43 @@ proc main {} {
     global argv
 
     if {$::ArcherCore::inheritFromToplevel} {
-	set ::Archer::archer [Archer .\#auto]
-	wm title $::Archer::archer "Archer"
+	set ::ArcherCore::application [Archer .\#auto]
+	wm title $::ArcherCore::application "Archer"
 	if {$tcl_platform(os) == "Windows NT"} {
-	    wm iconbitmap $::Archer::archer -default \
+	    wm iconbitmap $::ArcherCore::application -default \
 		[file join [bu_brlcad_data "html"] manuals archer archer.ico]
 	}
-	set size [wm maxsize $::Archer::archer]
+	set size [wm maxsize $::ArcherCore::application]
         set width [expr {[lindex $size 0] - 8}]
         set height [expr {[lindex $size 1] - 40}]
-	wm geometry $::Archer::archer "$width\x$height+0+0"
-	wm protocol $::Archer::archer WM_DELETE_WINDOW {exitArcher $::Archer::archer}
+	wm geometry $::ArcherCore::application "$width\x$height+0+0"
+	wm protocol $::ArcherCore::application WM_DELETE_WINDOW {exitArcher $::ArcherCore::application}
     } else {
 	wm title . "Archer"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap . -default \
 		[file join [bu_brlcad_data "doc"] html manuals archer archer.ico]
 	}
-	set ::Archer::archer [Archer .\#auto]
+	set ::ArcherCore::application [Archer .\#auto]
 	set size [wm maxsize .]
         set width [expr {[lindex $size 0] - 8}]
         set height [expr {[lindex $size 1] - 40}]
-	pack $::Archer::archer -expand yes -fill both
+	pack $::ArcherCore::application -expand yes -fill both
 	wm geometry . "$width\x$height+0+0"
-	wm protocol . WM_DELETE_WINDOW [list exitArcher $::Archer::archer]
+	wm protocol . WM_DELETE_WINDOW [list exitArcher $::ArcherCore::application]
     }
 
     if {$argv != ""} {
 	set target [lindex $argv 0]
 	set ext [file extension $target]
 	if {$ext == ".g"} {
-	    $::Archer::archer Load "BRL-CAD" $target
+	    $::ArcherCore::application Load "BRL-CAD" $target
 	} elseif {$ext == ".xg" || $ext == ".sdb"} {
-	    $::Archer::archer Load "IVAVIEW" $target
+	    $::ArcherCore::application Load "IVAVIEW" $target
 	}
     }
 
-    $::Archer::archer configure -quitcmd [list exitArcher $::Archer::archer]
+    $::ArcherCore::application configure -quitcmd [list exitArcher $::ArcherCore::application]
 
     update
 }
@@ -275,7 +275,7 @@ if { [catch {main} _runnable] } {
 	puts "Aborting."
 	exit 1
 }
-set ::Archer::showWindow 1
+set ::ArcherCore::showWindow 1
 
 # Local Variables:
 # mode: sh
