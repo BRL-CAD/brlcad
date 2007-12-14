@@ -35,6 +35,9 @@
 #include "machine.h"
 #include "bu.h"
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <sys/stat.h>
+#endif
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
