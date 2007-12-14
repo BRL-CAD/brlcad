@@ -157,7 +157,6 @@
 #define O_RDWR _O_RDWR
 #define O_TRUNC _O_TRUNC
 #define O_WRONLY _O_WRONLY
-#define TMP_MAX_S _TMP_MAX_S
 
 #define access _access
 #define chmod _chmod
@@ -179,7 +178,6 @@
 #define isatty _isatty
 #define locking _locking
 #define lseek _lseek
-#define mktemp _mktemp
 #define off_t _off_t
 #define open _open
 #define pclose _pclose
