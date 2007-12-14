@@ -107,12 +107,7 @@ FILE	*tabptr;
 
 char ctemp[7];
 
-static char	tmpfil[17];
-#ifndef _WIN32
-static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
-#else
-static char	*tmpfil_init = "C:\\GED.aXXXXXX";
-#endif
+static char	tmpfil[MAXPATHLEN] = {0};
 
 static int
 id_compare( const void *p1, const void *p2 )
@@ -151,6 +146,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   int sort_by_region=0;
   int c;
   char **av;
+  FILE *fp = NULL;
 
   CHECK_DBI_NULL;
 
@@ -185,19 +181,10 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   argc -= (bu_optind - 1);
   argv += (bu_optind - 1);
 
-  strncpy(tmpfil, tmpfil_init, 17-1);
-#ifdef _WIN32
-  (void)mktemp(tmpfil);
-  i=creat(tmpfil, 0600);
-#else
-  i = mkstemp(tmpfil);
-#endif
-  if( i < 0 ){
-    perror(tmpfil);
+  fp = bu_temp_file(tmpfil, MAXPATHLEN);
+  if (!fp) {
     return TCL_ERROR;
   }
-
-  (void)close(i);
 
   av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edcodes: av");
   av[0] = "wcodes";
@@ -281,7 +268,11 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }else
 	  status = TCL_ERROR;
 
-  (void)unlink(tmpfil);
+  if (fp) {
+      fclose(fp);
+      fp = NULL;
+  }
+  unlink(tmpfil);
   bu_free((genptr_t)av, "f_edcodes: av");
   return status;
 }

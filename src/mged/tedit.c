@@ -84,12 +84,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 
-static char	tmpfil[17];
-#ifndef _WIN32
-static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
-#else
-static char	*tmpfil_init = "c:\\GED.aXXXXXX";
-#endif
+static char	tmpfil[MAXPATHLEN] = {0};
 
 int writesolid(void), readsolid(void);
 int editit(const char *file);
@@ -98,11 +93,12 @@ int
 f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
+	FILE *fp;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 1 || 1 < argc){
+	if (argc < 1 || 1 < argc) {
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -113,33 +109,21 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* Only do this if in solid edit state */
-	if( not_state( ST_S_EDIT, "Primitive Text Edit" ) )
+	if (not_state(ST_S_EDIT, "Primitive Text Edit"))
 	  return TCL_ERROR;
 
-	strncpy(tmpfil, tmpfil_init, 17-1);
-#ifdef _WIN32
-	(void)mktemp(tmpfil);
-	i=creat(tmpfil, 0600);
-#else
-	i = mkstemp(tmpfil);
-#endif
-	if( i < 0 )
-	{
-	  perror(tmpfil);
+	fp = bu_temp_file(tmpfil, MAXPATHLEN);
+	if (fp == NULL) {
 	  return TCL_ERROR;
 	}
-	(void)close(i);
 
-	if( writesolid() )
-	{
+	if (writesolid()) {
 	  (void)unlink(tmpfil);
 	  return TCL_ERROR;
 	}
 
-	if( editit( tmpfil ) )
-	{
-		if( readsolid() )
-		{
+	if (editit(tmpfil)) {
+		if (readsolid()) {
 		  (void)unlink(tmpfil);
 		  return TCL_ERROR;
 		}
@@ -149,7 +133,12 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		view_state->vs_flag = 1;
 		Tcl_AppendResult(interp, "done\n", (char *)NULL);
 	}
-	(void)unlink(tmpfil);
+
+	if (fp) {
+	    fclose(fp);
+	    fp = NULL;
+	}
+	unlink(tmpfil);
 
 	return TCL_OK;
 }
