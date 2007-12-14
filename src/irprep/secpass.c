@@ -74,7 +74,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User defined hit function.  */
 extern int miss(register struct application *ap_p);	/*  User defined miss function.  */
-extern int ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2);	/*  User defined overlap function.  */
+extern int ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp);	/*  User defined overlap function.  */
 extern void rotate(double *p, double *a, double *np);	/*  Subroutine to rotate a point.  */
 extern double radians(double a);/*  Subroutine to put an angle into radians.  */
 
@@ -1320,7 +1320,7 @@ miss(register struct application *ap_p)
 
 /*  User supplied overlap function that does nothing.  */
 int
-ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2)
+ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
   return(1);
 }

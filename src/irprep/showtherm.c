@@ -75,7 +75,7 @@ struct table *info;	/*  Dimension later with malloc.  */
 
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
 extern int miss(register struct application *ap_p);	/*  User supplied miss function.  */
-extern int overlap(register struct application *ap_p, register struct partition *PartHeadp);	/*  User supplied overlap function.  */
+extern int overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp);
 
 
 int main(int argc, char **argv)
@@ -607,7 +607,7 @@ miss(register struct application *ap_p)
 /****************************************************************************/
 /*  User supplied overlap function.  */
 int
-overlap(register struct application *ap_p, register struct partition *PartHeadp)
+overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {
   (void)printf("It is an overlap.\n");
   (void)fflush(stdout);

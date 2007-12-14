@@ -48,7 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);       /*  User supplied hit function.  */
 extern int miss(struct application *ap);      /*  User supplied miss function.  */
-extern int overlap(void);   /*  User supplied overlap function.  */
+extern int overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp);   /*  User supplied overlap function.  */
 
 struct table
 {
@@ -662,7 +662,7 @@ miss(struct application *ap)
 /***************************************************************************/
 /*  User supplied overlap function.  */
 int
-overlap(void)
+overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {							/*  START # 3000  */
    return(2);
 }							/*  END # 3000  */
