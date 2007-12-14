@@ -13,7 +13,9 @@ always_compile = \
 	libutil
 
 if BUILD_ADRT
-SUBDIRS = ${adrtd} ${always_compile}
+SUBDIRS = \
+	${always_compile} \
+	${adrtd}
 else
 SUBDIRS = ${always_compile}
 endif
