@@ -31,13 +31,16 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 
 #include "machine.h"
 #include "bu.h"
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#include <sys/stat.h>
-#endif
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
