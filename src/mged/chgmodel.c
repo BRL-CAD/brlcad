@@ -83,12 +83,7 @@ extern struct bn_tol mged_tol;
 void set_tran();
 void	aexists(char *name);
 
-static char	tmpfil[17];
-#ifndef _WIN32
-static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
-#else
-static char	*tmpfil_init = "C:\\GED.aXXXXXX";
-#endif
+static char	tmpfil[MAXPATHLEN];
 
 int		newedge;		/* new edge for arb editing */
 
@@ -344,8 +339,9 @@ fail:
 int
 f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  int i;
-  int status;
+    FILE *fp;
+    int i;
+    int status;
 
   char **av;
 
@@ -362,19 +358,10 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  strncpy(tmpfil, tmpfil_init, 17-1);
-#ifdef _WIN32
-  (void)mktemp(tmpfil);
-  i=creat(tmpfil, 0600);
-#else
-  i = mkstemp(tmpfil);
-#endif
-  if( i < 0 ){
-    perror(tmpfil);
+  fp = bu_temp_file(tmpfil, MAXPATHLEN);
+  if (!fp) {
     return TCL_ERROR;
   }
-
-  (void)close(i);
 
   av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
   av[0] = "wmater";
@@ -384,21 +371,24 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
   av[i] = NULL;
 
-  if( f_wmater(clientData, interp, argc + 1, av) == TCL_ERROR ){
+  if (f_wmater(clientData, interp, argc + 1, av) == TCL_ERROR) {
     (void)unlink(tmpfil);
     bu_free((genptr_t)av, "f_edmater: av");
     return TCL_ERROR;
   }
 
-  if( editit(tmpfil) ){
+  if (editit(tmpfil)) {
     av[0] = "rmater";
     av[2] = NULL;
     status = f_rmater(clientData, interp, 2, av);
-  }else
+  } else {
     status = TCL_ERROR;
+  }
 
+  (void)fclose(fp);
   (void)unlink(tmpfil);
   bu_free((genptr_t)av, "f_edmater: av");
+
   return status;
 }
 
