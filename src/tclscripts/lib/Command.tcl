@@ -52,6 +52,7 @@
     public method history {}
     public method edit_style {args}
     public method putstring {str}
+    public method reinitialize {} 
 
     private method invoke {}
     private method invokeMaster {hcmd}
@@ -261,6 +262,13 @@
     if {$nlines > $itk_option(-maxlines)} {
 	$w delete 1.0 [expr $nlines - $itk_option(-maxlines)].end
     }
+}
+
+::itcl::body Command::reinitialize {} {
+    $itk_component(text) delete 1.0 end
+    print_prompt
+    $itk_component(text) insert insert " "
+    beginning_of_line
 }
 
 ############################## Protected/Private Methods  ##############################
