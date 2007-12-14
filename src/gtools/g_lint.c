@@ -742,7 +742,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
  *	Null event handlers for use by rt_shootray().
  *
  */
-static int no_op_overlap (struct application *ap, struct partition *pp, struct region *r1, struct region *r2)
+static int no_op_overlap (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {
 	return( 0 );
 }
@@ -766,7 +766,7 @@ static int no_op_miss (struct application *ap)
  *	returns 1 if the overlap was large enough to report,
  *	otherwise 0.
  */
-static int rpt_ovlp (struct application *ap, struct partition *pp, struct region *r1, struct region *r2)
+static int rpt_ovlp (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {
     vect_t		delta;
     fastf_t		mag_del;

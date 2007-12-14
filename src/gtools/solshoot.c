@@ -221,17 +221,24 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     return (1);
 }
 
-/*			N O _ O P
- *
- *	Null event handler for use by rt_shootray().
- *
- *	Does nothing.  Returns 1.
- */
-static int no_op (struct application *ap)
+
+/* Null event handler for use by rt_shootray()'s miss callback. */
+static int
+no_miss_op (struct application *ap)
 {
     return (1);
 }
 
+
+/* Null event handler for use by rt_shootray()'s overlap callback. */
+static int
+no_ov_op (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
+{
+    return (1);
+}
+
+
+int
 main (int argc, char **argv)
 {
     struct application	ap;
@@ -269,9 +276,9 @@ main (int argc, char **argv)
     /* Initialize the application structure */
     RT_APPLICATION_INIT(&ap);
     ap.a_hit = rpt_hit;
-    ap.a_miss = no_op;
+    ap.a_miss = no_miss_op;
     ap.a_resource = RESOURCE_NULL;
-    ap.a_overlap = no_op;
+    ap.a_overlap = no_ov_op;
     ap.a_onehit = 0;		/* Don't stop at first partition */
     ap.a_rt_i = rtip;
     ap.a_zero1 = 0;		/* Sanity checks for LIBRT(3) */

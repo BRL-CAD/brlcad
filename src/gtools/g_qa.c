@@ -882,7 +882,8 @@ int
 overlap(struct application *ap,
 	struct partition *pp,
 	struct region *reg1,
-	struct region *reg2)
+	struct region *reg2,
+	struct partition *hp)
 {
 
     register struct xray	*rp = &ap->a_ray;
