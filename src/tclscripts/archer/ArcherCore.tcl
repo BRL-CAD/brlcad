@@ -37,7 +37,7 @@ if {![info exists env(ARCHER_HOME)]} {
     }
 }
 
-LoadArcherCoreLibs $env(ARCHER_HOME)
+LoadArcherCoreLibs
 package provide ArcherCore 1.0
 
 namespace eval ArcherCore {
@@ -65,6 +65,10 @@ namespace eval ArcherCore {
     destructor {}
 
     public {
+	common application ""
+	common splash ""
+	common showWindow 0
+
 	proc packTree              {_data}
 	proc unpackTree            {_tree}
 
@@ -739,7 +743,7 @@ Popup Menu    Right or Ctrl-Left
 	itk_component add canvas {
 	    ::frame $itk_component(canvasF).canvas \
 		-bd 0 \
-		-relief flat
+		-relief flat 
 	}
 	grid $itk_component(tree_expand) -row 0 -column 0 -sticky w
 	grid $itk_component(canvas_menu) -row 0 -column 1 -sticky w
@@ -2172,7 +2176,7 @@ Popup Menu    Right or Ctrl-Left
 		[lindex $mBackground 0] \
 		[lindex $mBackground 1] \
 		[lindex $mBackground 2]]
-	$itk_component(canvas) configure -bg $color
+	$itk_component(canvas) configure -background $color
     } else {
 	eval dbCmd bgAll $mBackground
     }
