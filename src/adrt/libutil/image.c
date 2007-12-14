@@ -58,7 +58,7 @@ void util_image_load_ppm(char *filename, void *image, int *w, int *h) {
 
 void util_image_load_raw(char *filename, void *image, int *w, int *h) {
   FILE	*fh;
-  long	dest_len;
+  unsigned long dest_len;
   void	*src;
 
 
@@ -106,8 +106,8 @@ void util_image_save_ppm(char *filename, void *image, int w, int h) {
 */
 void util_image_save_raw(char *filename, void *image, int w, int h) {
   FILE	*fh;
-  char	*dest;
-  long	dest_len;
+  unsigned char	*dest;
+  unsigned long	dest_len;
 
   dest = malloc(w * h * 4 + 1024);
   if (!dest) {
