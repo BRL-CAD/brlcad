@@ -1610,7 +1610,7 @@ struct application  {
 	int		a_zero1;	/**< @brief  must be zero (sanity check) */
 	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
 	struct resource	*a_resource;	/**< @brief  dynamic memory resources */
-	int		(*a_overlap)BU_ARGS( (struct application *, struct partition *, struct region *, struct region *) );	/**< @brief  DEPRECATED */
+	int		(*a_overlap)BU_ARGS( (struct application *, struct partition *, struct region *, struct region *, struct partition *) );	/**< @brief  DEPRECATED */
 	void		(*a_multioverlap)BU_ARGS( (struct application *, struct partition *, struct bu_ptbl *, struct partition *) );	/**< @brief  called to resolve overlaps */
 	void		(*a_logoverlap)BU_ARGS( (struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *) );	/**< @brief  called to log overlaps */
 	int		a_level;	/**< @brief  recursion level (for printing) */
