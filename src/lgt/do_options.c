@@ -678,40 +678,23 @@ f_Anti_Aliasing(HMitem *itemp, char **args)
 	else
 		anti_aliasing = FALSE;
 	return	1;
-	}
-/* Disgusting hack to avoid the compiler warnings about tmpnam(),
- * and yet not rewrite lgt.
- */
-char *
-lgt_tmp_name(void)
-{
-	char *template;
-	int tmp_fd;
-
-	template = bu_strdup( "/tmp/lgt_tmp.XXXXXX" );
-	if( (tmp_fd=mkstemp( template ) ) == -1 ) {
-		bu_bomb( "Unable to open tmp file!!!\n" );
-	}
-
-	close( tmp_fd );
-	return( template );
 }
 
-#ifndef L_tmpnam /* Alliant has bogus "tmpnam" implementation. */
-#define L_tmpnam	20
-#endif
+
 /*	f _ B a t c h ( ) */
 /*ARGSUSED*/
 static int
 f_Batch(HMitem *itemp, char **args)
 {
-		static char	*batch_com[8];
-		char		*script;
-#ifdef cray
-	bu_log( "Sorry, no batch queue on the Cray yet.\n" );
-	return	1;
-#else
-	script = lgt_tmp_name();
+	static char	*batch_com[8];
+	char		script[MAXPATHLEN];
+	FILE *fp = NULL;
+
+	fp = bu_temp_file(script, MAXPATHLEN);
+	if (!fp) {
+	    return -1;
+	}
+
 	batch_com[0] = "batch";
 	batch_com[1] = "-m";
 	batch_com[2] = "-t";
@@ -720,14 +703,19 @@ f_Batch(HMitem *itemp, char **args)
 	batch_com[5] = "/bin/sh";
 	batch_com[6] = script;
 	batch_com[7] = NULL;
+
 	if( make_Script( script ) == -1 )
 		return	-1;
+
 	(void) exec_Shell( batch_com );
-	(void) unlink( script );
-	bu_free( (char *)script, "lgt temporary file name" );
-	return	1;
-#endif
+	if (fp) {
+	    fclose(fp);
+	    fp = NULL;
 	}
+	(void) unlink( script );
+
+	return	1;
+}
 
 #ifdef UP
 #undef UP
