@@ -987,7 +987,7 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
  *  setting pointers in the bu_ptbl of non-claiming regions to NULL.
  *
  *  This default routine reproduces the behavior of BRL-CAD Release 5.0
- *  by considerign the regions pairwise and calling the old a_overlap().
+ *  by considering the regions pairwise and calling the old a_overlap().
  *
  *  An application which knew how to handle multiple overlapping air
  *  regions would provide its own very different version of this routine
