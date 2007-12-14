@@ -54,12 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-static char	red_tmpfil[17];
-#ifndef _WIN32
-static char	*red_tmpfil_init = "/tmp/GED.aXXXXXX";
-#else
-static char	*red_tmpfil_init = "C:\\GED.aXXXXXX";
-#endif
+static char	red_tmpfil[MAXPATHLEN] = {0};
 static char	red_tmpcomb[17];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
@@ -653,8 +648,8 @@ writecomb( const struct rt_comb_internal *comb, const char *name )
 
     /* open the file */
     if( (fp=fopen( red_tmpfil , "w" )) == NULL ) {
-	Tcl_AppendResult(interp, "Cannot open create file for editing\n", (char *)NULL);
 	perror( "MGED" );
+	Tcl_AppendResult(interp, "Cannot open temporary file for writing\n", (char *)NULL);
 	return(1);
     }
 
@@ -744,8 +739,7 @@ writecomb( const struct rt_comb_internal *comb, const char *name )
 		return( 1 );
 	}
 	if( fprintf( fp , " %c %s" , op , rt_tree_array[i].tl_tree->tr_l.tl_name ) <= 0 ) {
-	    Tcl_AppendResult(interp, "Cannot write to temp file (", red_tmpfil,
-			     "). Aborting edit\n", (char *)NULL );
+	    Tcl_AppendResult(interp, "Cannot write to temporary file (", red_tmpfil, "). Aborting edit\n", (char *)NULL );
 	    fclose( fp );
 	    return( 1 );
 	}
@@ -778,8 +772,8 @@ checkcomb(void)
     int rgb_valid;
 
     if( (fp=fopen( red_tmpfil , "r" )) == NULL ) {
-	Tcl_AppendResult(interp, "Cannot open create file for editing\n", (char *)NULL);
 	perror( "MGED" );
+	Tcl_AppendResult(interp, "Cannot open temporary file for reading\n", (char *)NULL);
 	return(-1);
     }
 
@@ -1061,8 +1055,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
     }
 
     if( (fp=fopen( red_tmpfil , "r" )) == NULL ) {
-	Tcl_AppendResult(interp, " Cannot open edited file: ",
-			 red_tmpfil, "\n", (char *)NULL);
+	Tcl_AppendResult(interp, " Cannot open edited file: ", red_tmpfil, "\n", (char *)NULL);
 	return( 1 );
     }
 
@@ -1450,7 +1443,6 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    strncpy(red_tmpfil, red_tmpfil_init, 17-1);
     strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
     dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
     if(dp != DIR_NULL){
@@ -1569,11 +1561,11 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    FILE *fp;
     struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
     int node_count;
-    int fd;
 
     CHECK_DBI_NULL;
 
@@ -1587,7 +1579,6 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    strncpy(red_tmpfil, red_tmpfil_init, 17-1);
     strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
 
     dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
@@ -1605,15 +1596,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* Make a file for the text editor */
-#ifdef _WIN32
-	(void)mktemp( red_tmpfil );
-#else
-	if ((fd = mkstemp(red_tmpfil)) < 0) {
-	    perror(red_tmpfil);
-	    return TCL_ERROR;;
-	}
-	(void)close(fd);
-#endif
+	fp = bu_temp_file(red_tmpfil, MAXPATHLEN);
 
 	/* Write the combination components to the file */
 	if( writecomb( comb, dp->d_namep ) ) {
@@ -1623,16 +1606,9 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     } else {
 	comb = (struct rt_comb_internal *)NULL;
+
 	/* Make a file for the text editor */
-#ifdef _WIN32
-	(void)mktemp( red_tmpfil );
-#else
-	if ((fd = mkstemp(red_tmpfil)) < 0) {
-	    perror(red_tmpfil);
-	    return TCL_ERROR;;
-	}
-	(void)close(fd);
-#endif
+	fp = bu_temp_file(red_tmpfil, MAXPATHLEN);
 
 	/* Write the combination components to the file */
 	if( writecomb( comb, argv[1] ) ) {
@@ -1692,7 +1668,11 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    (void)unlink( red_tmpfil );
+    if (fp) {
+	fclose(fp);
+	fp = NULL;
+    }
+    unlink(red_tmpfil);
     return TCL_OK;
 }
 
