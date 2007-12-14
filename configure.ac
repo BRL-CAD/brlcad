@@ -1864,6 +1864,10 @@ if test "xyes" = "xyes" ; then
     dnl library path search order, not biasing a preference for dylibs.
     BC_LINKER_RECOGNIZES([-Wl,-search_paths_first -Wnewline-eof])
 
+    dnl resolve all undefined symbols in a library on load/init
+    dnl instead of waiting until first use (Mac OS X specific)
+    BC_LINKER_RECOGNIZES([-Wl,-bind_at_load])
+
     dnl 64bit compilation flags
     if test "x$bc_build_64bit" = "xyes" ; then
 	found_64bit_flag=no
