@@ -33,9 +33,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -50,18 +47,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <fcntl.h>
 #endif
 
+#include "machine.h"
+#include "bu.h"
 
-char	template[] = "/usr/tmp/bufferXXXXXX";
 
 #define	SIZE	(1024*1024)
 
-char	buf[SIZE] = {0};
+
+char template[512] = {0};
+char buf[SIZE] = {0};
+
 
 int
-main(void)
+main(int argc, char *argv[])
 {
-	register int	count;
-	register int	tfd;
+    FILE *fp;
+    register int	count;
+    register int	tfd;
 
 	if( (count = bu_mread(0, buf, sizeof(buf))) < sizeof(buf) )  {
 		if( count < 0 )  {
@@ -77,13 +79,8 @@ main(void)
 	}
 
 	/* Create temporary file to hold data, get r/w file descriptor */
-	(void)mkstemp( template );
-	if( (tfd = creat( template, 0600 )) < 0 )  {
-		perror(template);
-		exit(1);
-	}
-	(void)close(tfd);
-	if( (tfd = open( template, 2 )) < 0 )  {
+	fp = bu_temp_file(template, 512);
+	if ((tfd = fileno(fp)) < 0 )  {
 		perror(template);
 		goto err;
 	}
@@ -122,11 +119,15 @@ main(void)
 		goto err;
 	}
 	(void)unlink(template);
-	exit(0);
+	return 0;
 
 err:
-	(void)unlink(template);
-	exit(1);
+	if (fp) {
+	    fclose(fp);
+	    fp = NULL;
+	}
+	unlink(template);
+	return 1;
 }
 
 /*
