@@ -81,7 +81,7 @@ Files:\n\
 
 int	hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	miss(register struct application *ap);
-int	overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2);
+int	overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp);
 
 int	noverlaps = 0;
 
@@ -436,7 +436,7 @@ miss(register struct application *ap)
 }
 
 int
-overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2)
+overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     noverlaps++;

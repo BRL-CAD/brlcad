@@ -141,7 +141,7 @@ miss(struct application *ap)
  *  from the boolean evaluation.
  */
 int
-overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2)
+overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
 	register struct xray	*rp = &ap->a_ray;
 	register struct hit	*ihitp = pp->pt_inhit;
