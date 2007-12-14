@@ -531,7 +531,7 @@
     $help add nmg_collapse    {{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
     $help add nmg_simplify    {{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
     $help add open	{{?dbfile?} {open a database}}
-    $help add ocenter 	{{obj(s)} {get center for obj(s)}}
+    $help add ocenter 	{{obj [x y z]} {get/set center for obj}}
     $help add ocrotate	{{obj x y z} {rotate object about its center by x, y, z degrees}}
     $help add orotate	{{x y z} {rotate object}}
     $help add oscale	{{sf} {scale object}}
