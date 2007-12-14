@@ -198,9 +198,20 @@ bu_temp_file(char *file, int maxfilelen)
     FILE *fp = NULL;
     int i;
     int fd = -1;
-    char *dir = NULL;
     char tempfile[MAXPATHLEN];
+    const char *dir = NULL;
     const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
+    const char *trydirs[] = {
+#ifdef _WIN32
+	"C:\\TEMP",
+	"C:\\WINDOWS\\TEMP",
+#endif
+	"/tmp",
+	"/usr/tmp",
+	"/var/tmp", 
+	".", /* last resort */
+	NULL
+    };
 
     if (maxfilelen > MAXPATHLEN) {
 	maxfilelen = MAXPATHLEN;
@@ -214,27 +225,21 @@ bu_temp_file(char *file, int maxfilelen)
 	}
     }
 
-    /* try common system default */
     if (!dir) {
-#ifdef _WIN32
-	dir = "C:\\TEMP";
-#else
-	dir = "/tmp";
-#endif
-	if (!bu_file_writable(dir) || !bu_file_executable(dir)) {
-	    dir = NULL;
+	/* try various directories */
+	for (i=0; trydirs[i]; i++) {
+	    dir = trydirs[i];
+	    if (dir && dir[0] != '\0' && bu_file_writable(dir) && bu_file_executable(dir)) {
+		break;
+	    }
 	}
     }
 
-    /* try current dir */
     if (!dir) {
-	dir = ".";
-	if (!bu_file_writable(dir) || !bu_file_executable(dir)) {
-	    /* give up */
-	    bu_log("Unable to find a suitable temp directory\n");
-	    bu_log(_TF_FAIL);
-	    return NULL;
-	}
+	/* give up */
+	bu_log("Unable to find a suitable temp directory\n");
+	bu_log(_TF_FAIL);
+	return NULL;
     }
 
     snprintf(tempfile, MAXPATHLEN, "%s%cBRL-CAD_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
