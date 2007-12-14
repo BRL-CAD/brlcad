@@ -109,7 +109,7 @@ void render_cut_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir) {
   list[5].v[2] = ray_pos.v[2] + THICKNESS;
 
 
-  tie_push(&d->tie, list, 2, NULL, 0);
+  tie_push(&d->tie, (TIE_3 **)&list, 2, NULL, 0);
   tie_prep(&d->tie);
 }
 
