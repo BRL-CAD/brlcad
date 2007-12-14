@@ -165,14 +165,18 @@ mkstemp(char *file_template)
  *
  * Create a temporary file.  The first readable/writable directory
  * will be used, searching TMPDIR/TEMP/TMP environment variable
- * directories followed by default system and ultimately trying the
- * current directory.
+ * directories followed by default system temp directories and
+ * ultimately trying the current directory.
  *
  * This routine is guaranteed to return a new unique file or return
  * NULL on failure.  The temporary file will be automatically unlinked
  * on application exit.  It is the caller's responsibility to set file
  * access settings, preserve file contents, or destroy file contents
  * if the default behavior is non-optimal.
+ *
+ * The name of the temporary file will be copied into a user-provided
+ * (filepath) buffer if it is a non-NULL pointer and of a sufficient
+ * (len) length to contain the filename.
  *
  * Typical Use:
 @code
@@ -193,7 +197,7 @@ mkstemp(char *file_template)
 @endcode
  */
 FILE *
-bu_temp_file(char *file, int maxfilelen)
+bu_temp_file(char *filepath, int len)
 {
     FILE *fp = NULL;
     int i;
@@ -213,8 +217,8 @@ bu_temp_file(char *file, int maxfilelen)
 	NULL
     };
 
-    if (maxfilelen > MAXPATHLEN) {
-	maxfilelen = MAXPATHLEN;
+    if (len > MAXPATHLEN) {
+	len = MAXPATHLEN;
     }
 
     /* check environment variable directories */
@@ -252,8 +256,14 @@ bu_temp_file(char *file, int maxfilelen)
 	return NULL;
     }
 
-    if (file) {
-	snprintf(file, maxfilelen, "%s", tempfile);
+    if (filepath) {
+	if (len < strlen(tempfile)) {
+#if 0
+	    bu_log("WARNING: bu_temp_file filepath buffer size is insufficient (%d < %d)\n", len, strlen(tempfile));
+#endif
+	} else {
+	    snprintf(filepath, len, "%s", tempfile);
+	}
     }
 
     fp = fdopen(fd, "wb+");
