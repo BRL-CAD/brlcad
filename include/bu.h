@@ -1839,7 +1839,7 @@ BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq,
 		     int n));
 
 /* temp.c */
-BU_EXPORT BU_EXTERN(FILE *bu_temp_file, ());
+BU_EXPORT BU_EXTERN(FILE *bu_temp_file, (char *filepath, int len));
 
 /** @} */
 /** @addtogroup getopt */
