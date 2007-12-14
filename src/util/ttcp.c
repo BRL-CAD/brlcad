@@ -75,7 +75,8 @@ struct sockaddr_in sinhim;
 struct sockaddr_in sindum;
 struct sockaddr_in frominet;
 
-int domain, fromlen;
+int domain;
+socklen_t fromlen;
 int fd;				/* fd of network socket */
 
 int buflen = 1024;		/* length of buffer */
@@ -413,7 +414,7 @@ int
 Nread(int fd, char *buf, int count )
 {
 	struct sockaddr_in from;
-	int len = (int)sizeof(from);
+	socklen_t len = (socklen_t)sizeof(from);
 	register int cnt;
 
 	if( udp )  {
@@ -578,7 +579,7 @@ main(int argc, char **argv)
 #endif
 				err("setsockopt");
 		}
-		fromlen = sizeof(frominet);
+		fromlen = (socklen_t)sizeof(frominet);
 		domain = AF_INET;
 		if((fd=accept(fd, (struct sockaddr *)&frominet, &fromlen) ) < 0)
 			err("accept");
