@@ -79,12 +79,8 @@ Files:\n\
  $HOME/.density\n\
 ";
 
-int	hit(struct application *ap, struct partition *PartHeadp, struct seg *segp);
-int	miss(register struct application *ap);
-int	overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp);
 
 int	noverlaps = 0;
-
 FILE	*densityfp;
 char	*densityfile;
 #define	DENSITY_FILE	".density"
@@ -105,6 +101,88 @@ extern fastf_t  cell_height;     	/* model space grid cell height */
 extern FILE     *outfp;          	/* optional output file */
 extern char	*outputfile;     	/* name of base of output file */
 extern int	output_is_binary;	/* !0 means output is binary */
+
+
+int
+hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
+{
+    struct partition *pp;
+    register struct xray *rp = &ap->a_ray;
+    genptr_t addp;
+    int part_count = 0;
+
+    for( pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw ) {
+	register struct region	*reg = pp->pt_regionp;
+	register struct hit	*ihitp = pp->pt_inhit;
+	register struct hit	*ohitp = pp->pt_outhit;
+	register fastf_t	depth;
+	register struct datapoint *dp;
+
+	if( reg->reg_aircode )
+	    continue;
+
+	/* fill in hit points and hit distances */
+	VJOIN1(ihitp->hit_point, rp->r_pt, ihitp->hit_dist, rp->r_dir );
+	VJOIN1(ohitp->hit_point, rp->r_pt, ohitp->hit_dist, rp->r_dir );
+	depth = ohitp->hit_dist - ihitp->hit_dist;
+
+	part_count++;
+	/* add the datapoint structure in and then calculate it
+	   in parallel, the region structures are a shared resource */
+#if 0
+	bu_log( "\nhit: partition %d\n", part_count );
+#endif
+	dp = (struct datapoint *) bu_malloc( sizeof(struct datapoint), "dp");
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	addp = reg->reg_udata;
+	reg->reg_udata = (genptr_t) dp;
+	dp->next = (struct datapoint *) addp;
+	bu_semaphore_release( BU_SEM_SYSCALL );
+
+	if( density[ reg->reg_gmater ] < 0 ) {
+	    bu_log( "Material type %d used, but has no density file entry.\n", reg->reg_gmater );
+	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    reg->reg_gmater = 0;
+	    bu_semaphore_release( BU_SEM_SYSCALL );
+	}
+	else if( density[ reg->reg_gmater ] >= 0 ) {
+	    VBLEND2( dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point );
+
+	    /* Compute mass in terms of grams */
+	    dp->weight = depth * density[reg->reg_gmater] *
+		(fastf_t) reg->reg_los *
+		cell_height * cell_height * 0.00001;
+	    dp->volume = depth * cell_height * cell_width;
+#if 0
+	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    bu_log( "hit: reg_name=\"%s\"\n",reg->reg_name );
+	    bu_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
+		    reg->reg_gmater, reg->reg_los, density[reg->reg_gmater],
+		    depth, dp->weight );
+	    bu_semaphore_release( BU_SEM_SYSCALL );
+#endif
+	}
+    }
+    return(1);	/* report hit to main routine */
+}
+
+
+int
+miss(register struct application *ap)
+{
+    return(0);
+}
+
+
+int
+overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
+{
+    bu_semaphore_acquire( BU_SEM_SYSCALL );
+    noverlaps++;
+    bu_semaphore_release( BU_SEM_SYSCALL );
+    return(0);
+}
+
 
 /*
  *  			V I E W _ I N I T
@@ -365,84 +443,6 @@ void	view_setup(void) {}
 
 /* Associated with "clean" command, before new tree is loaded  */
 void	view_cleanup(void) {}
-
-int
-hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
-{
-    struct partition *pp;
-    register struct xray *rp = &ap->a_ray;
-    genptr_t addp;
-    int part_count = 0;
-
-    for( pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw ) {
-	register struct region	*reg = pp->pt_regionp;
-	register struct hit	*ihitp = pp->pt_inhit;
-	register struct hit	*ohitp = pp->pt_outhit;
-	register fastf_t	depth;
-	register struct datapoint *dp;
-
-	if( reg->reg_aircode )
-	    continue;
-
-	/* fill in hit points and hit distances */
-	VJOIN1(ihitp->hit_point, rp->r_pt, ihitp->hit_dist, rp->r_dir );
-	VJOIN1(ohitp->hit_point, rp->r_pt, ohitp->hit_dist, rp->r_dir );
-	depth = ohitp->hit_dist - ihitp->hit_dist;
-
-	part_count++;
-	/* add the datapoint structure in and then calculate it
-	   in parallel, the region structures are a shared resource */
-#if 0
-	bu_log( "\nhit: partition %d\n", part_count );
-#endif
-	dp = (struct datapoint *) bu_malloc( sizeof(struct datapoint), "dp");
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	addp = reg->reg_udata;
-	reg->reg_udata = (genptr_t) dp;
-	dp->next = (struct datapoint *) addp;
-	bu_semaphore_release( BU_SEM_SYSCALL );
-
-	if( density[ reg->reg_gmater ] < 0 ) {
-	    bu_log( "Material type %d used, but has no density file entry.\n", reg->reg_gmater );
-	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    reg->reg_gmater = 0;
-	    bu_semaphore_release( BU_SEM_SYSCALL );
-	}
-	else if( density[ reg->reg_gmater ] >= 0 ) {
-	    VBLEND2( dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point );
-
-	    /* Compute mass in terms of grams */
-	    dp->weight = depth * density[reg->reg_gmater] *
-		(fastf_t) reg->reg_los *
-		cell_height * cell_height * 0.00001;
-	    dp->volume = depth * cell_height * cell_width;
-#if 0
-	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    bu_log( "hit: reg_name=\"%s\"\n",reg->reg_name );
-	    bu_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
-		    reg->reg_gmater, reg->reg_los, density[reg->reg_gmater],
-		    depth, dp->weight );
-	    bu_semaphore_release( BU_SEM_SYSCALL );
-#endif
-	}
-    }
-    return(1);	/* report hit to main routine */
-}
-
-int
-miss(register struct application *ap)
-{
-    return(0);
-}
-
-int
-overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
-{
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
-    noverlaps++;
-    bu_semaphore_release( BU_SEM_SYSCALL );
-    return(0);
-}
 
 void application_init (void) {}
 
