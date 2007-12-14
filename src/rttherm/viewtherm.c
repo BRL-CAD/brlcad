@@ -711,7 +711,7 @@ view_2init(register struct application *ap, char *framename)
 	ap->a_miss = hit_nothing;
 
 	if (rpt_overlap)
-	    ap->a_logoverlap = RT_AFN_NULL;
+	    ap->a_logoverlap = NULL;
 	else
 	    ap->a_logoverlap = rt_silent_logoverlap;
 
