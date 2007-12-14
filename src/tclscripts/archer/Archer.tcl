@@ -100,7 +100,7 @@ namespace eval Archer {
     }
 }
 
-LoadArcherLibs $env(ARCHER_HOME)
+LoadArcherLibs
 package require ArcherCore 1.0
 package provide Archer 1.0
 
@@ -114,9 +114,6 @@ package provide Archer 1.0
 
     public {
 	# Public Class Variables
-	common archer ""
-	common splash ""
-	common showWindow 0
 	common plugins ""
 
 	# Plugins Section
@@ -385,10 +382,6 @@ package provide Archer 1.0
 	    pack $itk_component(menubar) -side top -fill x -padx 1
 	}
     }
-
-    # Remove buttons added by ArcherCore
-#    $itk_component(primaryToolbar) delete open
-#    $itk_component(primaryToolbar) delete save
 
     # Populate the primary toolbar
     $itk_component(primaryToolbar) insert 0 button new \
@@ -740,6 +733,10 @@ package provide Archer 1.0
 
     set mInstanceInit 0
     updateTheme
+
+    # Change the command window's prompt
+    $itk_component(cmd) configure -prompt "Archer> "
+    $itk_component(cmd) reinitialize
 
     eval itk_initialize $args
 }
