@@ -69,12 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 void color_soltab(void);
 void color_putrec(register struct mater *mp), color_zaprec(register struct mater *mp);
 
-static char	tmpfil[17];
-#ifndef _WIN32
-static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
-#else
-static char	*tmpfil_init = "c:\\GED.aXXXXXX";
-#endif
+static char	tmpfil[MAXPATHLEN];
 
 /*
  *  			F _ E D C O L O R
@@ -108,24 +103,10 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	strncpy(tmpfil, tmpfil_init, 17-1);
-#ifdef _WIN32
-	(void)mktemp(tmpfil);
-	if ((fp = fopen(tmpfil, "w")) == NULL) {
-		perror(tmpfil);
-		return TCL_ERROR;;
+	fp = bu_temp_file(tmpfil, MAXPATHLEN);
+	if (fp == NULL) {
+	    return TCL_ERROR;;
 	}
-#else
-	if ((fd = mkstemp(tmpfil)) < 0) {
-		perror(tmpfil);
-		return TCL_ERROR;
-	}
-	if ((fp = fdopen(fd, "w+")) == NULL) {
-		close(fd);
-		perror(tmpfil);
-		return TCL_ERROR;;
-	}
-#endif
 
 	fprintf( fp, "%s", hdr );
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
