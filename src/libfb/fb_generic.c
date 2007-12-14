@@ -213,7 +213,7 @@ found_interface:
 	ifp->if_magic = FB_MAGIC;
 
 	if( (i=(*ifp->if_open)( ifp, file, width, height )) <= -1 )  {
-		fb_log(	"fb_open: can not open device \"%s\", ret=%d.\n",
+		fb_log(	"fb_open: can't open device \"%s\", ret=%d.\n",
 			file, i );
 		ifp->if_magic = 0;		/* sanity */
 		free( (void *) ifp->if_name );
