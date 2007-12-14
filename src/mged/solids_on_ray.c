@@ -176,7 +176,7 @@ print_solid(void *vp, int depth)
  *	Does nothing.  Returns 1.
  */
 static int
-no_op(struct application *ap, struct partition *ph)
+no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
 {
     return (1);
 }
