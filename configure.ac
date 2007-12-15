@@ -2075,17 +2075,14 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
 	XQueryExtension \
 	alarm \
-	atexit \
 	bzero \
 	dlopen \
 	drand48 \
 	dup2 \
 	endgrent \
 	endpwent \
-	fabs  \
 	fchmod \
 	finite \
-	floor \
 	fsync \
 	ftruncate \
 	getcwd \
@@ -2106,18 +2103,14 @@ AC_CHECK_FUNCS(\
 	localtime_r \
 	lrand48 \
 	lseek \
-	memchr \
-	memmove \
 	memset \
 	mkdir \
 	mkfifo \
 	mkstemp \
-	modf \
 	munmap \
 	nl_langinfo \
 	panic \
 	pipe \
-	pow \
 	prtcl \
 	putenv \
 	re_comp \
@@ -2128,28 +2121,17 @@ AC_CHECK_FUNCS(\
 	select \
 	setenv \
 	setlinebuf \
-	setlocale \
 	setpgid \
 	setpriority \
 	setprogname \
 	socket \
-	sqrt \
 	srand48 \
 	strcasecmp \
 	strchr \
-	strcpy \
-	strcspn \
 	strdup \
 	strncasecmp \
-	strpbrk \
-	strrchr \
 	strsep \
-	strspn \
-	strstr \
 	strtok \
-	strtol \
-	strtoul \
-	strtoull \
 	sync \
 	sysctl \
 	sysmp \
