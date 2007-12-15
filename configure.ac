@@ -2091,7 +2091,6 @@ AC_CHECK_FUNCS(\
 	getcwd \
 	geteuid \
 	getegid \
-	getenv \
 	gethostbyaddr \
 	gethostbyname \
 	gethostname \
