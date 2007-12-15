@@ -224,8 +224,6 @@ EXTRA_DIST = \
 	nmg_junk.c \
 	parse.c \
 	pmalloc.c \
-	sqrt.gould.s \
-	sqrt.vax.s \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
