@@ -54,13 +54,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 void
 loc_Perror(char *msg)
 {
-#ifdef HAVE_STRERROR
 	if( errno >= 0 )
 		bu_log( "%s: %s\n", msg, strerror(errno) );
-#else
-	if( errno >= 0 && errno < sys_nerr )
-		bu_log( "%s: %s\n", msg, sys_errlist[errno] );
-#endif
 	else
 		bu_log( "\"%s\" (%d), errno not set, shouldn't call perror.\n",
 			__FILE__, __LINE__

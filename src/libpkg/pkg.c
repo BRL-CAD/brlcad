@@ -1738,11 +1738,7 @@ pkg_perror(void (*errlog) (char *msg), char *s)
 	snprintf(errbuf, MAX_ERRBUF_SIZE, "%s: errno=%d\n", s, errno);
     }
 #else
-#  if HAVE_STRERROR
     snprintf( errbuf, MAX_ERRBUF_SIZE, "%s: %s\n", s, strerror(errno) );
-#  else
-    snprintf( errbuf, MAX_ERRBUF_SIZE, "%s: %s\n", s, sys_errlist[errno] );
-#  endif
 #endif
     errlog( errbuf );
 }

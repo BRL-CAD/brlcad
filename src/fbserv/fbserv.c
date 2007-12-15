@@ -513,14 +513,14 @@ setup_socket(int fd)
 {
 	int	on = 1;
 
-#if defined(SO_KEEPALIVE)
+#ifdef SO_KEEPALIVE
 	if( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0 ) {
-#  if defined(HAVE_SYSLOG_H) && defined(HAVE_STRERROR)
+#  ifdef HAVE_SYSLOG_H
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %s", strerror(errno) );
 #  endif
 	}
 #endif
-#if defined(SO_RCVBUF)
+#ifdef SO_RCVBUF
 	/* try to set our buffers up larger */
 	{
 		int	m = 0;

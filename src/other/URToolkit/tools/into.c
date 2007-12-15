@@ -103,11 +103,7 @@ char **argv;
     fflush(outf);
     if (ferror(outf))
     {
-#ifdef HAVE_STRERROR
 	fprintf(stderr, "into: %s, \"%s\" not modified\n", strerror(errno), argv[1]);
-#else
-	fprintf(stderr, "into: %s, \"%s\" not modified\n", sys_errlist[errno], argv[1]);
-#endif
 	unlink(buf);
 	exit(1);
     }

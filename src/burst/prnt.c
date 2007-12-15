@@ -131,11 +131,7 @@ locPerror( msg )
 char    *msg;
 	{
 	if( errno > 0 )
-#ifdef HAVE_STRERROR
 		brst_log( "%s: %s\n", msg, strerror(errno) );
-#else
-		brst_log( "%s: %s\n", msg, sys_errlist[errno] );
-#endif
 	else
 		brst_log( "BUG: errno not set, shouldn't call perror.\n" );
 	return;
