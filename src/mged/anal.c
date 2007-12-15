@@ -977,21 +977,6 @@ rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 
 /*
- *  		M A T H E R R
- *
- *  Sys-V math-library error catcher.
- *  Some callers of acos trip over DOMAIN errors all the time, so...
- */
-#ifdef HAVE_MATHERR
-int
-matherr(x)
-struct exception *x;
-{
-	return(1);	/* be quiet */
-}
-#endif
-
-/*
  * Local Variables:
  * mode: C
  * tab-width: 8
