@@ -2139,7 +2139,6 @@ AC_CHECK_FUNCS(\
 	sync \
 	sysctl \
 	sysmp \
-	tmpfile_s \
 	tzset \
 	uname \
 	utime\
