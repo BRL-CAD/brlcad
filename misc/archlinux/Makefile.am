@@ -3,7 +3,6 @@
 EXTRA_DIST = \
 	PKGBUILD \
 	PKGBUILD.in \
-	PKGBUILD.static \
         brlcad.install \
         brlcad.install.in \
         brlcad.sh \
