@@ -76,7 +76,6 @@
 #define HAVE_SYS_STAT_H		1
 #define HAVE_SYS_TYPES_H	1
 #define HAVE_TIME		1
-#define HAVE_TMPFILE_S		1
 #define HAVE_VFORK		1
 #define HAVE_WINSOCK_H		1
 #define REVERSE_IEEE		yes
