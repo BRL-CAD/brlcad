@@ -2051,7 +2051,7 @@ AC_TYPE_SIGNAL
 #   stat
 
 # specifically checked for even though c89 (provided by libsysv):
-#   memset, strchr, strdup, strsep, strtok
+#   memset, strchr, strtok
 
 # some c89 functions: assert, isalnum, isalpha, iscntrl, isdigit,
 # isgraph, islower, isprint, ispunct, isspace, isupper, isxdigit,
