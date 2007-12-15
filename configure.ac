@@ -2067,7 +2067,6 @@ AC_CHECK_FUNCS(\
 	finite \
 	floor \
 	fsync \
-	ftime \
 	ftruncate \
 	getcwd \
 	geteuid \
