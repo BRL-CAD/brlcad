@@ -1537,6 +1537,18 @@ BC_CONFIGURE_STAGE([headers], [4 of 9])
 # C99 headers: complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h,
 # tgmath.h
 
+# POSIX.1 headers includes C89, C95, and C99 plus the following:
+# aio.h, arpa/inet.h, cpio.h, dirent.h, dlfcn.h, fcntl.h, fmtmsg.h,
+# fnmatch.h, ftw.h, glob.h, grp.h, iconv.h, langinfo.h, libgen.h,
+# monetary.h, mqueue.h, ndbm.h, net/if.h, netdb.h, netinet/in.h,
+# netinet/tcp.h, nl_types.h, poll.h, pthread.h, pwd.h, regex.h,
+# sched.h, search.h, semaphore.h, spawn.h, strings.h, stropts.h,
+# sys/ipc.h, sys/mman.h, sys/msg.h, sys/resource.h, sys/select.h,
+# sys/stat.h, sys/statvfs.h, sys/time.h, sys/timeb.h, sys/times.h,
+# sys/types.h, sys/uio.h, sys/un.h, sys/utsname.h, sys/wait.h,
+# syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
+# utime.h, utmpx.h, wordexp.h
+
 AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
