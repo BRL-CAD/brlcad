@@ -2046,10 +2046,28 @@ AC_TYPE_SIGNAL
 # specifically not checked for and not used:
 #   access - security concerns
 
-# specifically not checked for but used including any well-behaved c89
-# function.  this includes:
+# specifically not checked for but used including any well-behaved
+# c89/posix functions.  this includes:
 #   stat
 
+# some c89 functions: assert, isalnum, isalpha, iscntrl, isdigit,
+# isgraph, islower, isprint, ispunct, isspace, isupper, isxdigit,
+# tolower, toupper, localeconv, setlocale, acos, asin, atan, atan2,
+# ceil, cos, cosh, exp, fabs, floor, fmod, frexp, ldexp, log, log10,
+# modf, pow, sin, sinh, sqrt, tan, longjmp, setjmp, raise, signal,
+# va_arg, va_end, va_start, offsetof, clearerr, fclose, feof, ferror,
+# fflush, fgetc, fgetpos, fgets, fopen, fprintf, fputc, fputs, fread,
+# freopen, fscanf, fseek, fsetpos, fwrite, getc, getchar, gets,
+# perror, printf, putc, putchar, puts, remove, rename, rewind, scanf,
+# setbuf, setvbuf, sprintf, sscanf, tmpfile, tmpnam, ungetc, vprintf,
+# vsprintf, abort, abs, atexit, atof, atoi, atol, bsearch, calloc,
+# div, exit, free, ftell, getenv, labs, ldiv, malloc, mblen, mbtowcs,
+# mbtowc, qsort, rand, realloc, sizeof, srand, strtod, strtol,
+# strtoul, system, wctomb, wcstombs, memchr, memcmp, memcpy, memmove,
+# memset, strcat, strchr, strcmp, strcoll, strcpy, strcspn, strerror,
+# strlen, strncat, strncmp, strncpy,strpbrk, strrchr, strspn, strstr,
+# strtok, strxfrm, asctime, clock, ctime, difftime, gmtime, localtime,
+# mktime, strftime, time
 
 AC_CHECK_FUNCS(\
 	XQueryExtension \
