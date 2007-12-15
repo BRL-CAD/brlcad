@@ -206,9 +206,7 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifdef HAVE_SETVBUF
 	(void) setvbuf(orig, stdiobuf, _IOFBF, sizeof(stdiobuf) );
-#endif
 
 /*
  * Spew some interesting info at the people...

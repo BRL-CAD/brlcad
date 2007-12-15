@@ -194,9 +194,7 @@ main(int argc, char **argv)
 	 * big input buffer to allow decent sized transfers from the
 	 * filesystem.
 	 */
-#ifdef HAVE_SETVBUF
 	(void)setvbuf( input, stdiobuf, _IOFBF, sizeof(stdiobuf) );
-#endif
 
 /*
  * Make a buffer will hold a single scan line of assuming a worst

@@ -67,7 +67,6 @@
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
 #define HAVE_REGEX_H		1
-#define HAVE_SETVBUF		1
 #define HAVE_STRCHR		1
 #define HAVE_STRDUP		1
 #define HAVE_STRDUP_DECL	1

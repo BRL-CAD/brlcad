@@ -67,17 +67,10 @@ future release of BRL-CAD.  Use bu_setlinebuf instead.\n");
 void
 bu_setlinebuf(FILE *fp)
 {
-#if defined(HAVE_SETVBUF)
     /* prefer this one */
     if (setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZE) != 0) {
 	perror("bu_setlinebuf");
     }
-#elif defined(HAVE_SETLINEBUF)
-    /* setlinebuf() returns int on bsd, void on linux */
-    (void)setlinebuf( fp );
-#else
-#  error "Do not know how to set line buffered mode for this platform"
-#endif
 }
 /** @} */
 /*
