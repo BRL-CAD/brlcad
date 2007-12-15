@@ -2120,7 +2120,6 @@ AC_CHECK_FUNCS(\
 	pow \
 	prtcl \
 	putenv \
-	raise \
 	re_comp \
 	realpath \
 	regcomp \
