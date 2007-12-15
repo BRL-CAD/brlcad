@@ -2134,7 +2134,6 @@ AC_CHECK_FUNCS(\
 	setpgid \
 	setpriority \
 	setprogname \
-	setvbuf \
 	socket \
 	sqrt \
 	srand48 \
@@ -2143,7 +2142,6 @@ AC_CHECK_FUNCS(\
 	strcpy \
 	strcspn \
 	strdup \
-	strerror \
 	strerror_r \
 	strncasecmp \
 	strpbrk \
