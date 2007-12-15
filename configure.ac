@@ -1528,6 +1528,15 @@ dnl *************************
 
 BC_CONFIGURE_STAGE([headers], [4 of 9])
 
+# C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
+# math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
+# string.h, time.h
+
+# C95 headers: wchar.h, wctype.h, iso646.h
+
+# C99 headers: complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h,
+# tgmath.h
+
 AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
@@ -1600,9 +1609,6 @@ AC_CHECK_HEADERS( \
 	wchar.h \
 	winsock.h
 )
-# The headers assert.h, ctype.h, errno.h, float.h, limits.h, locale.h, math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h, string.h, time.h are part of C89.
-# The headers wchar.h, wctype.h, iso646.h were added with C95.
-# The headers complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h, and tgmath.h were added with C99.
 
 if test "x$bc_with_dtrace" != "xno" ; then
     AC_CHECK_HEADER(sys/sdt.h,, [bc_with_dtrace=no])
@@ -2047,13 +2053,13 @@ AC_TYPE_SIGNAL
 #   access - security concerns
 
 # specifically not checked for but used including any well-behaved
-# c89/posix functions.  this includes:
+# C89/posix functions.  this includes:
 #   stat
 
-# specifically checked for even though c89 (provided by libsysv):
+# specifically checked for even though C89 (provided by libsysv):
 #   memset, strchr, strtok
 
-# some c89 functions: assert, isalnum, isalpha, iscntrl, isdigit,
+# some C89 functions: assert, isalnum, isalpha, iscntrl, isdigit,
 # isgraph, islower, isprint, ispunct, isspace, isupper, isxdigit,
 # tolower, toupper, localeconv, setlocale, acos, asin, atan, atan2,
 # ceil, cos, cosh, exp, fabs, floor, fmod, frexp, ldexp, log, log10,
