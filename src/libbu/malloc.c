@@ -266,27 +266,22 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 #endif
 
 	switch (type) {
-	  case MALLOC:
-	    ptr = malloc(size);
-	    break;
-	  case CALLOC:
-#if defined(HAVE_CALLOC)
-	      /* if we're debugging, we need a slightly larger
-	       * allocation size for debug tracking.
-	       */
-	      if( bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK) )  {
-		  ptr = malloc(size);
-		  bzero(ptr, size);
-	      } else {
-		  ptr = calloc(cnt, sz);
-	      }
-#else
-	    ptr = malloc(size);
-	    bzero(ptr, size);
-#endif
-	    break;
-	  default:
-	    bu_bomb("ERROR: bu_alloc with unknown type\n");
+	    case MALLOC:
+		ptr = malloc(size);
+		break;
+	    case CALLOC:
+		/* if we're debugging, we need a slightly larger
+		 * allocation size for debug tracking.
+		 */
+		if( bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK) )  {
+		    ptr = malloc(size);
+		    bzero(ptr, size);
+		} else {
+		    ptr = calloc(cnt, sz);
+		}
+		break;
+	    default:
+		bu_bomb("ERROR: bu_alloc with unknown type\n");
 	}
 
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {

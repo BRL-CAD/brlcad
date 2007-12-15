@@ -55,7 +55,6 @@
 #define IWIDGETS_VERSION  "4.0.2"
 
 #define HAS_OPENGL		1
-#define HAVE_CALLOC		1
 #define HAVE_FCNTL_H		1
 #define HAVE_GETENV     	1
 #define HAVE_PUTENV     	1
