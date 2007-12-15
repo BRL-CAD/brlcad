@@ -44,6 +44,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include <signal.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -1160,7 +1161,7 @@ bu_parallel( func, ncpu, arg )
 	    bu_log("bu_parallel(): thread_tbl[%d] = %d\n",
 		   i, thread_tbl[i]);
 	}
-#    if defined(HAVE_RAISE) && defined(SIGINFO)
+#    ifdef SIGINFO
 	/* may be BSD-only (calls _thread_dump_info()) */
 	raise(SIGINFO);
 #    endif
