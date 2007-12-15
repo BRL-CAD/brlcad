@@ -2140,7 +2140,6 @@ AC_CHECK_FUNCS(\
 	strcpy \
 	strcspn \
 	strdup \
-	strerror_r \
 	strncasecmp \
 	strpbrk \
 	strrchr \

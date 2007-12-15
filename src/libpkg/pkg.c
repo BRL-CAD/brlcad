@@ -1733,13 +1733,7 @@ pkg_perror(void (*errlog) (char *msg), char *s)
 	return;
     }
 
-#if HAVE_STRERROR_R
-    if (strerror_r(errno, errbuf+strlen(errbuf), MAX_ERRBUF_SIZE-strlen(errbuf)) != 0) {
-	snprintf(errbuf, MAX_ERRBUF_SIZE, "%s: errno=%d\n", s, errno);
-    }
-#else
     snprintf( errbuf, MAX_ERRBUF_SIZE, "%s: %s\n", s, strerror(errno) );
-#endif
     errlog( errbuf );
 }
 
