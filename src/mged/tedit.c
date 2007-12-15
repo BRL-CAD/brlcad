@@ -857,10 +857,8 @@ editit(const char *file)
 	if(!editor || editor[0] == '\0')
 	    editor = Tcl_GetVar(interp,"EDITOR", TCL_GLOBAL_ONLY);
 
-#ifdef HAVE_GETENV
 	if(!editor || editor[0] == '\0')
 	    editor = getenv("EDITOR");
-#endif
 
 	/* still unset? try windows */
 	if (!editor || editor[0] == '\0') {
