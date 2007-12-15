@@ -2050,6 +2050,9 @@ AC_TYPE_SIGNAL
 # c89/posix functions.  this includes:
 #   stat
 
+# specifically checked for even though c89 (provided by libsysv):
+#   memset, strchr, strdup, strsep, strtok
+
 # some c89 functions: assert, isalnum, isalpha, iscntrl, isdigit,
 # isgraph, islower, isprint, ispunct, isspace, isupper, isxdigit,
 # tolower, toupper, localeconv, setlocale, acos, asin, atan, atan2,
@@ -2065,7 +2068,7 @@ AC_TYPE_SIGNAL
 # mbtowc, qsort, rand, realloc, sizeof, srand, strtod, strtol,
 # strtoul, system, wctomb, wcstombs, memchr, memcmp, memcpy, memmove,
 # memset, strcat, strchr, strcmp, strcoll, strcpy, strcspn, strerror,
-# strlen, strncat, strncmp, strncpy,strpbrk, strrchr, strspn, strstr,
+# strlen, strncat, strncmp, strncpy, strpbrk, strrchr, strspn, strstr,
 # strtok, strxfrm, asctime, clock, ctime, difftime, gmtime, localtime,
 # mktime, strftime, time
 
@@ -2074,7 +2077,6 @@ AC_CHECK_FUNCS(\
 	alarm \
 	atexit \
 	bzero \
-	calloc \
 	dlopen \
 	drand48 \
 	dup2 \
