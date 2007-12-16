@@ -71,14 +71,14 @@ if [ "x$DEBUG" = "x" ] ; then
     echo "Set DEBUG environment variable to report where checks are found in the"
     echo "sources. (e.g. DEBUG=1 $SELF $ARGS)"
 fi
-if [ "x$SKIP_FUNCS" = "x" ] ; then
-    echo "Set SKIP_FUNCS environment variable to skip AC_CHECK_FUNCS checks"
+if [ "x$SKIP_FUNCTIONS" = "x" ] ; then
+    echo "Set SKIP_FUNCTIONS environment variable to skip AC_CHECK_FUNCS checks"
 fi
 if [ "x$SKIP_HEADERS" = "x" ] ; then
     echo "Set SKIP_HEADERS environment variable to skip AC_CHECK_HEADERS checks"
 fi
-if [ "x$SKIP_DEFS" = "x" ] ; then
-    echo "Set SKIP_DEFS environment variable to skip AC_DEFINE checks"
+if [ "x$SKIP_DEFINES" = "x" ] ; then
+    echo "Set SKIP_DEFINES environment variable to skip AC_DEFINE checks"
 fi
 
 echo
@@ -110,115 +110,124 @@ for cac in $ARGS ; do
     cacconf="`echo \"$cacconf\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
     cacconf="`echo $cacconf | perl -lape 's/[[:space:]]+/ /g'`"
 
-    cacfuncs="`echo \"$cacsrc\" | grep AC_CHECK_FUNCS | grep -v '#'`"
-    cacfuncs="`echo \"$cacfuncs\" | perl -lape 's/.*AC_CHECK_FUNCS\([[:space:]]*\[?[[:space:]]*(.*)/\1/g'`"
-    cacfuncs="`echo \"$cacfuncs\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
-    cacfuncs="`echo $cacfuncs | perl -lape 's/[[:space:]]+/ /g'`"
+    if [ "x$SKIP_FUNCTIONS" = "x" ] ; then
 
-    echo "Functions being checked"
-    echo "-----------------------"
-    echo "$cacfuncs"
-    echo
-
-    for func in $cacfuncs ; do
-	upfunc="`echo $func | tr \"a-z-\" \"A-Z_\"`"
-	upfunc="HAVE_$upfunc"
-	printf "Searching for $upfunc ... "
-	cmd="find $dir -type f \( `echo $srcfiles` \) -not \( `echo $excludes` \) -exec grep \"$upfunc\" {} /dev/null \; | grep -v \"$upfunc[A-Z_]\""
-	found="`eval $cmd`"
-
-	for conf in $cacconf ; do
-	    found="`echo \"$found\" | grep -v $conf`"
-	done
-	if [ "x$found" = "x" ] ; then
-	    echo "NOT FOUND"
-	else
-	    cnt="`echo \"$found\" | wc -l | awk '{print $1}'`"
-	    printf "FOUND (%d use" $cnt
-	    if [ $cnt -eq 1 ] ; then
-		printf ")\n"
+	cacfuncs="`echo \"$cacsrc\" | grep AC_CHECK_FUNCS | grep -v '#'`"
+	cacfuncs="`echo \"$cacfuncs\" | perl -lape 's/.*AC_CHECK_FUNCS\([[:space:]]*\[?[[:space:]]*(.*)/\1/g'`"
+	cacfuncs="`echo \"$cacfuncs\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
+	cacfuncs="`echo $cacfuncs | perl -lape 's/[[:space:]]+/ /g'`"
+	
+	echo "Functions being checked"
+	echo "-----------------------"
+	echo "$cacfuncs"
+	echo
+	
+	for func in $cacfuncs ; do
+	    upfunc="`echo $func | tr \"a-z-\" \"A-Z_\"`"
+	    upfunc="HAVE_$upfunc"
+	    printf "Searching for $upfunc ... "
+	    cmd="find $dir -type f \( `echo $srcfiles` \) -not \( `echo $excludes` \) -exec grep \"$upfunc\" {} /dev/null \; | grep -v \"$upfunc[A-Z_]\""
+	    found="`eval $cmd`"
+	    for conf in $cacconf ; do
+		found="`echo \"$found\" | grep -v $conf`"
+	    done
+	    if [ "x$found" = "x" ] ; then
+		echo "NOT FOUND"
 	    else
-		printf "s)\n"
+		cnt="`echo \"$found\" | wc -l | awk '{print $1}'`"
+		printf "found (%d use" $cnt
+		if [ $cnt -eq 1 ] ; then
+		    printf ")\n"
+		else
+		    printf "s)\n"
+		fi
 	    fi
-	fi
-	if [ ! "x$DEBUG" = "x" ] ; then
-	    echo "$found"
-	    echo
-	fi
-    done
-
-    cacheads="`echo \"$cacsrc\" | grep AC_CHECK_HEADERS | grep -v '#'`"
-    cacheads="`echo \"$cacheads\" | perl -lape 's/.*AC_CHECK_HEADERS\([[:space:]]*\[?[[:space:]]*(.*)/\1/g'`"
-    cacheads="`echo \"$cacheads\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
-    cacheads="`echo $cacheads | perl -lape 's/[[:space:]]+/ /g'`"
-
-    echo "Headers being checked"
-    echo "---------------------"
-    echo "$cacheads"
-    echo
-
-    for head in $cacheads ; do
-	uphead="`echo $head | tr \"a-z-/.\" \"A-Z___\"`"
-	uphead="HAVE_$uphead"
-	printf "Searching for $uphead ... "
-	cmd="find $dir -type f \( `echo $srcfiles` \) -not \( `echo $excludes` \) -exec grep \"$uphead\" {} /dev/null \; | grep -v \"$uphead[A-Z_]\""
-	found="`eval $cmd`"
-
-	for conf in $cacconf ; do
-	    found="`echo \"$found\" | grep -v $conf`"
+	    if [ ! "x$DEBUG" = "x" ] ; then
+		echo "$found"
+		echo
+	    fi
 	done
-	if [ "x$found" = "x" ] ; then
-	    echo "NOT FOUND"
-	else
-	    cnt="`echo \"$found\" | wc -l | awk '{print $1}'`"
-	    printf "FOUND (%d use" $cnt
-	    if [ $cnt -eq 1 ] ; then
-		printf ")\n"
+
+    fi # SKIP_FUNCTIONS
+
+
+    if [ "x$SKIP_HEADERS" = "x" ] ; then
+
+	cacheads="`echo \"$cacsrc\" | grep AC_CHECK_HEADERS | grep -v '#'`"
+	cacheads="`echo \"$cacheads\" | perl -lape 's/.*AC_CHECK_HEADERS\([[:space:]]*\[?[[:space:]]*(.*)/\1/g'`"
+	cacheads="`echo \"$cacheads\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
+	cacheads="`echo $cacheads | perl -lape 's/[[:space:]]+/ /g'`"
+	
+	echo "Headers being checked"
+	echo "---------------------"
+	echo "$cacheads"
+	echo
+	
+	for head in $cacheads ; do
+	    uphead="`echo $head | tr \"a-z-/.\" \"A-Z___\"`"
+	    uphead="HAVE_$uphead"
+	    printf "Searching for $uphead ... "
+	    cmd="find $dir -type f \( `echo $srcfiles` \) -not \( `echo $excludes` \) -exec grep \"$uphead\" {} /dev/null \; | grep -v \"$uphead[A-Z_]\""
+	    found="`eval $cmd`"
+	    for conf in $cacconf ; do
+		found="`echo \"$found\" | grep -v $conf`"
+	    done
+	    if [ "x$found" = "x" ] ; then
+		echo "NOT FOUND"
 	    else
-		printf "s)\n"
+		cnt="`echo \"$found\" | wc -l | awk '{print $1}'`"
+		printf "found (%d use" $cnt
+		if [ $cnt -eq 1 ] ; then
+		    printf ")\n"
+		else
+		    printf "s)\n"
+		fi
 	    fi
-	fi
-	if [ ! "x$DEBUG" = "x" ] ; then
-	    echo "$found"
-	    echo
-	fi
-    done
-
-    cacdefs="`echo \"$cacsrc\" | grep AC_DEFINE | grep -v '#'`"
-    cacdefs="`echo \"$cacdefs\" | perl -lape 's/.*(AC_DEFINE|AC_DEFINE_UNQUOTED)\([[:space:]]*\[?[[:space:]]*(.*)/\2/g'`"
-    cacdefs="`echo \"$cacdefs\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
-    cacdefs="`echo $cacdefs | perl -lape 's/[[:space:]]+/ /g'`"
-
-    echo "Defins being checked"
-    echo "--------------------"
-    echo "$cacdefs"
-    echo
-
-    for def in $cacdefs ; do
-	printf "Searching for $def ... "
-	cmd="find $dir -type f \( `echo $srcfiles` \) -not \( `echo $excludes` \) -exec grep \"$def\" {} /dev/null \; | grep -v \"$def[A-Z_]\""
-	found="`eval $cmd`"
-	for conf in $cacconf ; do
-	    found="`echo \"$found\" | grep -v $conf`"
+	    if [ ! "x$DEBUG" = "x" ] ; then
+		echo "$found"
+		echo
+	    fi
 	done
-	if [ "x$found" = "x" ] ; then
-	    echo "NOT FOUND"
-	else
-	    cnt="`echo \"$found\" | wc -l | awk '{print $1}'`"
-	    printf "FOUND (%d use" $cnt
-	    if [ $cnt -eq 1 ] ; then
-		printf ")\n"
+	
+    fi # SKIP_HEADERS
+
+    if [ "x$SKIP_DEFINES" = "x" ] ; then
+
+	cacdefs="`echo \"$cacsrc\" | grep AC_DEFINE | grep -v '#'`"
+	cacdefs="`echo \"$cacdefs\" | perl -lape 's/.*(AC_DEFINE|AC_DEFINE_UNQUOTED)\([[:space:]]*\[?[[:space:]]*(.*)/\2/g'`"
+	cacdefs="`echo \"$cacdefs\" | perl -lape 's/[[:space:]]*[,\]\)].*//g'`"
+	cacdefs="`echo $cacdefs | perl -lape 's/[[:space:]]+/ /g'`"
+	
+	echo "Defines being checked"
+	echo "---------------------"
+	echo "$cacdefs"
+	echo
+	
+	for def in $cacdefs ; do
+	    printf "Searching for $def ... "
+	    cmd="find $dir -type f \( `echo $srcfiles` \) -not \( `echo $excludes` \) -exec grep \"$def\" {} /dev/null \; | grep -v \"$def[A-Z_]\""
+	    found="`eval $cmd`"
+	    for conf in $cacconf ; do
+		found="`echo \"$found\" | grep -v $conf`"
+	    done
+	    if [ "x$found" = "x" ] ; then
+		echo "NOT FOUND"
 	    else
-		printf "s)\n"
+		cnt="`echo \"$found\" | wc -l | awk '{print $1}'`"
+		printf "found (%d use" $cnt
+		if [ $cnt -eq 1 ] ; then
+		    printf ")\n"
+		else
+		    printf "s)\n"
+		fi
 	    fi
-	fi
-	if [ ! "x$DEBUG" = "x" ] ; then
-	    echo "$found"
-	    echo
-	fi
-    done
+	    if [ ! "x$DEBUG" = "x" ] ; then
+		echo "$found"
+		echo
+	    fi
+	done
 
-
+    fi # SKIP_DEFINS
 
     echo "... done processing $cac"
 done
