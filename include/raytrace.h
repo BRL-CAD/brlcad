@@ -629,7 +629,7 @@ struct partition {
 /** Clear out the pointers, empty the hit list */
 #define GET_PT_INIT(ip,p,res)	{\
 	GET_PT(ip,p,res); \
-	memset( ((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p) ); }
+	memset(((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p)); }
 
 #define GET_PT(ip,p,res)   { \
 	if( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
@@ -1652,7 +1652,7 @@ struct application  {
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
 #define RT_CK_AP_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RT_AP_MAGIC,"struct application")
 #define RT_APPLICATION_INIT(_p)	{ \
-		memset( (char *)(_p), 0, sizeof(struct application) ); \
+		memset((char *)(_p), 0, sizeof(struct application)); \
 		(_p)->a_magic = RT_AP_MAGIC; \
 	}
 

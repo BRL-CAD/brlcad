@@ -901,7 +901,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #define BU_BITCLR(_bv,bit)	\
 	((_bv)->bits[(bit)>>BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BITV_MASK)))
 #define BU_BITV_ZEROALL(_bv)	\
-	{ memset( (char *)((_bv)->bits), 0, BU_BITS2BYTES( (_bv)->nbits ) ); }
+	{ memset((char *)((_bv)->bits), 0, BU_BITS2BYTES( (_bv)->nbits )); }
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
