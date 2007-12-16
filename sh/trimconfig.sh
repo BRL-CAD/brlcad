@@ -100,8 +100,7 @@ for cac in $ARGS ; do
 	exit 4
     fi
 
-    echo "Processing $cac ..."
-    echo
+    echo "Processing $cac ... please wait ..."
 
     cacsrc="`cat \"$cac\" | perl -0777 -lape 's/\\\\\\n//g'`"
 
@@ -117,6 +116,7 @@ for cac in $ARGS ; do
 	cacfuncs="`echo \"$cacfuncs\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
 	cacfuncs="`echo $cacfuncs | perl -lape 's/[[:space:]]+/ /g'`"
 	
+	echo
 	echo "Functions being checked"
 	echo "-----------------------"
 	echo "$cacfuncs"
@@ -158,6 +158,7 @@ for cac in $ARGS ; do
 	cacheads="`echo \"$cacheads\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
 	cacheads="`echo $cacheads | perl -lape 's/[[:space:]]+/ /g'`"
 	
+	echo
 	echo "Headers being checked"
 	echo "---------------------"
 	echo "$cacheads"
@@ -198,6 +199,7 @@ for cac in $ARGS ; do
 	cacdefs="`echo \"$cacdefs\" | perl -lape 's/[[:space:]]*[,\]\)].*//g'`"
 	cacdefs="`echo $cacdefs | perl -lape 's/[[:space:]]+/ /g'`"
 	
+	echo
 	echo "Defines being checked"
 	echo "---------------------"
 	echo "$cacdefs"
@@ -227,7 +229,7 @@ for cac in $ARGS ; do
 	    fi
 	done
 
-    fi # SKIP_DEFINS
+    fi # SKIP_DEFINES
 
     echo "... done processing $cac"
 done
