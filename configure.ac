@@ -2093,7 +2093,6 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
 	XQueryExtension \
 	alarm \
-	bzero \
 	dlopen \
 	drand48 \
 	dup2 \
