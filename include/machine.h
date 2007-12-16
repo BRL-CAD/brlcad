@@ -102,11 +102,6 @@
  *	produce a zero result.
  *      TODO: macro function syntax instead of constant (DEPRECATED)
  *
- *	bcopy(from,to,n) - Defined to be the fastest system-specific
- *	method for copying a block of 'n' bytes, where both the "from"
- *	and "to" pointers have arbitrary byte alignment.
- *      DEPRECATED: use memcpy, make sure they don't overlap(!)
- *
  *	bitv_t - The widest fast integer type available, used to
  *	implement bit vectors.  On most machines, this is "long", but
  *	on some machines a vendor-specific type such as "long long"
@@ -770,12 +765,6 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 
-/** provide bzero and bcopy */
-#if !defined(bzero) && !defined(HAVE_BZERO)
-#  include <string.h>
-#  define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
-
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
 /* To aid in using ADB, generally leave this as nil. */
 #if !defined(HIDDEN)
@@ -785,6 +774,7 @@ typedef long	bitv_t;		/* largest integer type */
 #	define HIDDEN	/***/
 # endif
 #endif
+
 
 /*
  *  ANSI and POSIX do not seem to have prototypes for the hypot() routine,
