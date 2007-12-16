@@ -2100,7 +2100,6 @@ AC_CHECK_FUNCS(\
 	geteuid \
 	getegid \
 	gethostname \
-	getopt \
 	getprogname \
 	kill \
 	lrand48 \
