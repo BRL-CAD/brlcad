@@ -736,7 +736,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 
 			/*
 			 * No conversion required.
-			 * Check the amount of space remaining before doing the bcopy.
+			 * Check the amount of space remaining before doing the memmove.
 			 */
 			if ((unsigned int)count * outsize > size) {
 		    number_done = size / outsize;
@@ -747,7 +747,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 			/*
 			 * This is the simplest case, binary copy and out.
 			 */
-			(void) bcopy((genptr_t) in, (genptr_t) out, (size_t)number_done * outsize);
+			memmove((genptr_t)out, (genptr_t)in, (size_t)number_done * outsize);
 			return(number_done);
 
 			/*
