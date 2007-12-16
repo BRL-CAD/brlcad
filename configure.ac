@@ -2095,66 +2095,33 @@ AC_CHECK_FUNCS(\
 	alarm \
 	dlopen \
 	drand48 \
-	dup2 \
-	endgrent \
-	endpwent \
 	fchmod \
-	finite \
 	fsync \
-	ftruncate \
-	getcwd \
 	geteuid \
 	getegid \
-	gethostbyaddr \
-	gethostbyname \
 	gethostname \
 	getopt \
-	getpagesize \
-	getpass \
 	getprogname \
-	gettimeofday \
-	inet_ntoa \
-	isascii \
-	isfinite \
 	kill \
-	localtime_r \
 	lrand48 \
 	lseek \
 	memset \
-	mkdir \
-	mkfifo \
 	mkstemp \
-	munmap \
-	nl_langinfo \
-	panic \
 	pipe \
-	prtcl \
-	putenv \
-	re_comp \
-	realpath \
 	regcomp \
-	rmdir \
 	sbrk \
-	select \
 	setenv \
-	setlinebuf \
 	setpgid \
 	setpriority \
 	setprogname \
-	socket \
 	srand48 \
-	strcasecmp \
 	strchr \
 	strdup \
-	strncasecmp \
 	strsep \
 	strtok \
 	sync \
 	sysctl \
 	sysmp \
-	tzset \
-	uname \
-	utime\
 	vfork \
 	writev \
 )
