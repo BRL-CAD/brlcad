@@ -102,11 +102,6 @@
  *	produce a zero result.
  *      TODO: macro function syntax instead of constant (DEPRECATED)
  *
- *	bzero(ptr,n) - Defined to be the fasted system-specific method
- *	for zeroing a block of 'n' bytes, where the pointer has
- *	arbitrary byte alignment.
- *      DEPRECATED: use memset
- *
  *	bcopy(from,to,n) - Defined to be the fastest system-specific
  *	method for copying a block of 'n' bytes, where both the "from"
  *	and "to" pointers have arbitrary byte alignment.
@@ -778,7 +773,6 @@ typedef long	bitv_t;		/* largest integer type */
 /** provide bzero and bcopy */
 #if !defined(bzero) && !defined(HAVE_BZERO)
 #  include <string.h>
-#  define bzero(str,n)		memset( str, 0, n )
 #  define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
