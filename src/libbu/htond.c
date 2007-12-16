@@ -108,11 +108,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-#	ifdef HAVE_MEMORY_H
-		memcpy( out, in, count*8 );
-#	else
-		bcopy( in, out, count*8 );
-#	endif
+        memcpy( out, in, count*8 );
 	return;
 #	define	HTOND	yes1
 #endif
@@ -432,11 +428,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	 */
 	if( sizeof(double) != SIZEOF_NETWORK_DOUBLE )
 		bu_bomb("ntohd:  sizeof(double) != SIZEOF_NETWORK_DOUBLE\n");
-#	ifdef HAVE_MEMORY_H
-		memcpy( out, in, count*SIZEOF_NETWORK_DOUBLE );
-#	else
-		bcopy( in, out, count*SIZEOF_NETWORK_DOUBLE );
-#	endif
+	memcpy( out, in, count*SIZEOF_NETWORK_DOUBLE );
 	return;
 #	define	NTOHD	yes1
 #endif
