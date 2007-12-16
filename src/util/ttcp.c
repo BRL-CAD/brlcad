@@ -525,7 +525,7 @@ main(int argc, char **argv)
 			if ((addr=(struct hostent *)gethostbyname(host)) == NULL)
 				err("bad hostname");
 			sinhim.sin_family = addr->h_addrtype;
-			bcopy(addr->h_addr,(char*)&addr_tmp, addr->h_length);
+			memcpy((char*)&addr_tmp, addr->h_addr, addr->h_length);
 #ifdef cray
 			sinhim.sin_addr = addr_tmp;
 #else

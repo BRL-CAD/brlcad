@@ -329,7 +329,7 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
 	phong_sp->extinction= 0.0;
 	/*
 	  BU_GETSTRUCT(phong_sp, phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific) );
+	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS+= 7;
 	bu_vls_init(&matparm);
@@ -365,7 +365,7 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
 
 	/*
 	  BU_GETSTRUCT(phong_sp, phong_specific);
-	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific) );
+	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS+= 5; /* move pointer past "pm " (3 characters) */
 	bu_vls_init(&matparm);
@@ -1221,9 +1221,9 @@ void Swap(struct PSN *a, struct PSN *b) {
       b->Dist= c.Dist;
     */
     /*  bu_log("  SWAP_IN: %.3f,%.3f\n",a->Dist, b->Dist);*/
-    memcpy(&c,a,sizeof(struct PSN));
-    memcpy(a,b,sizeof(struct PSN));
-    memcpy(b,&c,sizeof(struct PSN));
+    memcpy(&c, a, sizeof(struct PSN));
+    memcpy(a, b, sizeof(struct PSN));
+    memcpy(b, &c, sizeof(struct PSN));
     /*  bu_log("  SWAP_OT: %.3f,%.3f\n",a->Dist, b->Dist);*/
 }
 

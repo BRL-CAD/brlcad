@@ -240,7 +240,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
     }
 
     light_pt_allocate(lsp);
-    memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof( struct light_pt ) );
+    memcpy(&lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof( struct light_pt ));
 
     if (rdebug & RDEBUG_LIGHT ) {
 	bu_log("set light point %g %g %g   N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);

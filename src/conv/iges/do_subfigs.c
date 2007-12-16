@@ -147,7 +147,7 @@ Do_subfigs()
 			bn_mat_print( "After scaling:", *dir[i]->rot );
 
 		}
-		bcopy( *dir[i]->rot, wmem->wm_mat, sizeof( mat_t ) );
+		memcpy(wmem->wm_mat, *dir[i]->rot, sizeof( mat_t ));
 
 		Readint( &no_of_members, "" );	/* get number of members */
 		members = (int *)bu_calloc( no_of_members, sizeof( int ), "Do_subfigs: members" );
@@ -244,7 +244,7 @@ Do_subfigs()
 			if( no_of_members > 1 )
 			{
 				wmem = mk_addmember( name, &head2.l, NULL, WMOP_UNION );
-				bcopy( dir[index]->rot, wmem->wm_mat, sizeof( mat_t ) );
+				memcpy(wmem->wm_mat, dir[index]->rot, sizeof( mat_t ));
 			}
 		}
 

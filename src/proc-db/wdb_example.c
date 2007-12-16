@@ -108,7 +108,7 @@ main(int ac, char *av[])
      * have passed the matrix in to mk_addmember as an argument or we
      * could add the following code:
      *
-     memcpy( wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
+     memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
      *
      * Remember that values in the database are stored in millimeters.
      * so the values in the matrix must take this into account.

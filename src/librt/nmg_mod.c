@@ -2023,8 +2023,8 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 				NULL );
 			new = new_fu->f_p->g.snurb_p;
 			/* Copy knots */
-			memcpy( new->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t) );
-			memcpy( new->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t) );
+			memcpy(new->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
+			memcpy(new->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
 			/* Copy mesh */
 			memcpy( new->ctl_points, old->ctl_points,
 				old->s_size[0] * old->s_size[1] *

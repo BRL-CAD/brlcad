@@ -499,8 +499,7 @@ ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int co
 	else
 	    scan_count = count;
 
-	bcopy( &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3], cp,
-	       scan_count*3 );
+	memcpy(cp, &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3], scan_count*3);
 	cp += scan_count * 3;
 	ret += scan_count;
 	count -= scan_count;
@@ -556,8 +555,7 @@ ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int coun
 	else
 	    scan_count = count;
 
-	bcopy( (char *)cp, &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3],
-	       scan_count*sizeof(RGBpixel) );
+	memcpy(&ifp->if_rgb[((y+yoff)*720+(x+xoff))*3], (char *)cp, scan_count*sizeof(RGBpixel));
 	cp += scan_count * sizeof(RGBpixel);
 	ret += scan_count;
 	count -= scan_count;
@@ -729,7 +727,7 @@ ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
 	    return(-1);
 	}
 	sinhim.sin_family = hp->h_addrtype;
-	bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
+	memcpy((char *)&sinhim.sin_addr, hp->h_addr, hp->h_length);
     }
 
     if( (netfd = socket(sinhim.sin_family, SOCK_STREAM, 0)) < 0 )  {

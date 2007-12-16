@@ -245,7 +245,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
 				cp += 4;
 
-				bcopy( loc, cp, lenstr );
+				memcpy(cp, loc, lenstr);
 				cp += lenstr;
 				while (lenstr++ < len) *cp++ = '\0';
 			}
@@ -258,7 +258,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 				cp[1] = ip->sp_count >> 16;
 				cp[0] = ip->sp_count >> 24;
 				cp += 4;
-				bcopy( loc, cp, ip->sp_count);
+				memcpy(cp, loc, ip->sp_count);
 				cp += ip->sp_count;
 			}
 			continue;
@@ -367,9 +367,9 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 
 				/* don't read more than the buffer can hold */
 				if (ip->sp_count < lenstr)
-					bcopy( cp, loc, ip->sp_count);
+					memcpy(loc, cp, ip->sp_count);
 				else
-					bcopy( cp, loc, lenstr );
+					memcpy(loc, cp, lenstr);
 
 				/* ensure proper null termination */
 				loc[ip->sp_count-1] = '\0';
@@ -389,9 +389,9 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 				cp += 4;
 
 				if (ip->sp_count < lenarray) {
-					bcopy( cp, loc, ip->sp_count);
+					memcpy(loc, cp, ip->sp_count);
 				} else {
-					bcopy( cp, loc, lenarray );
+					memcpy(loc, cp, lenarray);
 				}
 				cp += lenarray;
 				bytes_used += lenarray;
@@ -2174,7 +2174,7 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 
 	op->ext_nbytes = ip->ext_nbytes;
 	op->ext_buf = bu_malloc( ip->ext_nbytes, "bu_copy_external" );
-	bcopy( ip->ext_buf, op->ext_buf, ip->ext_nbytes );
+	memcpy(op->ext_buf, ip->ext_buf, ip->ext_nbytes);
 }
 
 /**

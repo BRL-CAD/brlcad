@@ -156,7 +156,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 		bu_bomb("");
 	}
 
-	memcpy(scloud, &scloud_defaults, sizeof(struct scloud_specific) );
+	memcpy(scloud, &scloud_defaults, sizeof(struct scloud_specific));
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("scloud_setup\n");
 

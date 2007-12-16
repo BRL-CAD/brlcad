@@ -863,7 +863,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 
 		/* For this face, visit all remaining faces in the shell. */
 		/* Don't revisit any faces already considered. */
-		bcopy( flags1, flags2, len );
+		memcpy(flags2, flags1, len);
 		for( fu2 = BU_LIST_NEXT(faceuse, &fu1->l);
 		     BU_LIST_NOT_HEAD(fu2, &s->fu_hd);
 		     fu2 = BU_LIST_NEXT(faceuse,&fu2->l)

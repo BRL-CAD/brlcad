@@ -126,7 +126,7 @@ air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	BU_GETSTRUCT( air_sp, air_specific );
 	*dpp = (char *)air_sp;
 
-	memcpy(air_sp, &air_defaults, sizeof(struct air_specific) );
+	memcpy(air_sp, &air_defaults, sizeof(struct air_specific));
 
 	if (rp->reg_aircode == 0) {
 		bu_log("WARNING(%s): air shader '%s' applied to non-air region.\n%s\n",

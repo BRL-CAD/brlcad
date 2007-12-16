@@ -228,7 +228,7 @@ bbd_setup( struct region *rp,
     *dpp = (char *)bbd_sp;
 
     /* initialize the default values for the shader */
-    memcpy(bbd_sp, &bbd_defaults, sizeof(struct bbd_specific) );
+    memcpy(bbd_sp, &bbd_defaults, sizeof(struct bbd_specific));
     bu_vls_init(&bbd_sp->img_filename);
     BU_LIST_INIT(&bbd_sp->imgs);
     bbd_sp->rtip = rtip; /* because new_image() needs this */

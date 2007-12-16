@@ -269,8 +269,7 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
 			dest->blen * sizeof(long *),
 			"bu_ptbl.buffer[] (cat)");
 	}
-	bcopy( (char *)src->buffer, (char *)&dest->buffer[dest->end],
-		src->end*sizeof(long *));
+	memcpy((char *)&dest->buffer[dest->end], (char *)src->buffer, src->end*sizeof(long *));
 	dest->end += src->end;
 }
 

@@ -452,21 +452,12 @@ struct sgttyb	*to, *from;
 struct termio	*to, *from;
 #endif
 #ifdef HAVE_TERMIOS_H
-struct termios	*to;
-struct termios	*from;
+struct termios	*to, *from;
 #endif
-	{
-#ifdef BSD
-	(void)bcopy( (char *)from, (char*)to, sizeof(struct sgttyb) );
-#endif
-#ifdef SYSV
-	(void) memcpy( (char *) to, (char *) from, sizeof(struct termio) );
-#endif
-#ifdef HAVE_TERMIOS_H
-	(void) memcpy( (char *) to, (char *) from, sizeof(struct termios) );
-#endif
+{
+	(void)memcpy((char *) to, (char *) from, sizeof(*from));
 	return;
-	}
+}
 
 /*	p r n t _ T i o ( )						*/
 void

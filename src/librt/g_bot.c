@@ -1251,7 +1251,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 		if( botop->num_faces > 0 ) {
 			botop->faces = (int *)bu_malloc( botip->num_faces * 3 *
 							 sizeof( int ), "botop->faces" );
-			memcpy( botop->faces, botip->faces, botop->num_faces * 3 * sizeof( int ) );
+			memcpy(botop->faces, botip->faces, botop->num_faces * 3 * sizeof( int ));
 		}
 		if( botip->thickness )
 			botop->thickness = (fastf_t *)bu_malloc( botip->num_faces *
@@ -1268,7 +1268,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 			botop->num_normals = botip->num_normals;
 			botop->normals = (fastf_t *)bu_calloc( botop->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
 			botop->face_normals = (int *)bu_calloc( botop->num_faces * 3, sizeof( int ), "BOT face normals" );
-			memcpy( botop->face_normals, botip->face_normals, botop->num_faces * 3 * sizeof( int ) );
+			memcpy(botop->face_normals, botip->face_normals, botop->num_faces * 3 * sizeof( int ));
 		}
 		op->idb_ptr = (genptr_t)botop;
 		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;

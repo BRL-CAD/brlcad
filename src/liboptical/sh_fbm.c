@@ -105,7 +105,7 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp)
 	BU_GETSTRUCT( fbm, fbm_specific );
 	*dpp = (char *)fbm;
 
-	memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific) );
+	memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific));
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("fbm_setup\n");
 

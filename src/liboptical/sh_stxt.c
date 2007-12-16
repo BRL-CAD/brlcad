@@ -155,7 +155,7 @@ stxt_read(register struct stxt_specific *stp)
 				bu_free(linebuf,"file line, error");
 				return(0);
 			}
-			bcopy( linebuf, stp->stx_pixels + ln*stp->stx_w*3, stp->stx_w*3 );
+			memcpy(stp->stx_pixels + ln*stp->stx_w*3, linebuf, stp->stx_w*3);
 			ln++;
 			rdd += rd;
 		}

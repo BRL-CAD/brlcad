@@ -1246,7 +1246,7 @@ bn_mat_dup(const mat_t in)
 	matp_t	out;
 
 	out = (matp_t) bu_malloc( sizeof(mat_t), "bn_mat_dup" );
-	bcopy( (const char *)in, (char *)out, sizeof(mat_t) );
+	memcpy((char *)out, (const char *)in, sizeof(mat_t));
 	return out;
 }
 

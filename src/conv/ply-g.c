@@ -321,7 +321,7 @@ get_double( int type )
 			}
 		} else {
 			/* just copy to buf2 */
-			bcopy( buf1, buf2, length[type] );
+			memcpy(buf2, buf1, length[type]);
 		}
 		switch( type ) {
 		case TYPE_CHAR:
@@ -416,7 +416,7 @@ get_int( int type )
 			}
 		} else {
 			/* just copy to buf2 */
-			bcopy( buf1, buf2, length[type] );
+			memcpy(buf2, buf1, length[type]);
 		}
 		switch( type ) {
 		case TYPE_CHAR:

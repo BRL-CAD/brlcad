@@ -231,7 +231,7 @@ void tienet_master_push(void *data, int size)
   }
   TCOPY(short, &op, 0, tienet_master_buffer[tienet_master_pos_fill].data, 0);
   TCOPY(int, &size, 0, tienet_master_buffer[tienet_master_pos_fill].data, sizeof(short));
-  bcopy(data, &((char *)(tienet_master_buffer[tienet_master_pos_fill].data))[sizeof(short) + sizeof(int)], size);
+  memcpy(&((char *)(tienet_master_buffer[tienet_master_pos_fill].data))[sizeof(short) + sizeof(int)], data, size);
 
   /* Circular Increment */
   tienet_master_pos_fill = (tienet_master_pos_fill + 1) % tienet_master_buffer_size;
@@ -249,7 +249,7 @@ void tienet_master_push(void *data, int size)
       tienet_master_buffer[tienet_master_pos_fill].size = sizeof(short) + sizeof(int) + size;
       tienet_master_buffer[tienet_master_pos_fill].data = realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size);
     }
-    bcopy(socket->work.data, tienet_master_buffer[tienet_master_pos_fill].data, sizeof(short) + sizeof(int) + size);
+    memcpy(tienet_master_buffer[tienet_master_pos_fill].data, socket->work.data, sizeof(short) + sizeof(int) + size);
 
     /* Circular Increment */
     tienet_master_pos_fill = (tienet_master_pos_fill + 1) % tienet_master_buffer_size;
@@ -339,7 +339,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
           /* This is what we're connecting to */
           slave.sin_family = slave_ent.h_addrtype;
-          bcopy(slave_ent.h_addr_list[0], (char *)&slave.sin_addr.s_addr, slave_ent.h_length);
+          memcpy((char *)&slave.sin_addr.s_addr, slave_ent.h_addr_list[0], slave_ent.h_length);
           slave.sin_port = htons(port);
 
           /* Make a communications socket that will get stuffed into the list */
@@ -679,7 +679,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
     }
 
     /* Make a copy of this data in the slave list */
-    bcopy(tienet_master_buffer[tienet_master_pos_read].data, sock->work.data, sizeof(short) + sizeof(int) + size);
+    memcpy(sock->work.data, tienet_master_buffer[tienet_master_pos_read].data, sizeof(short) + sizeof(int) + size);
 
     /* Circular Increment */
     tienet_master_pos_read = (tienet_master_pos_read + 1) % tienet_master_buffer_size;
@@ -812,7 +812,7 @@ void tienet_master_broadcast(void *mesg, int mesg_len)
     {
       socket->mesg.size = mesg_len;
       socket->mesg.data = malloc(mesg_len);
-      bcopy(mesg, socket->mesg.data, mesg_len);
+      memcpy(socket->mesg.data, mesg, mesg_len);
     }
   }
   pthread_mutex_unlock(&tienet_master_broadcast_mut);

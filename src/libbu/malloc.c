@@ -608,7 +608,7 @@ bu_strdupm(register const char *cp, const char *label)
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
-	memcpy( base, cp, len );
+	memcpy(base, cp, len);
 	return(base);
 }
 

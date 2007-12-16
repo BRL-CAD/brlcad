@@ -190,8 +190,8 @@ rt_mk_bot_w_normals(
 		bot->num_face_normals = bot->num_faces;
 		bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
 		bot->face_normals = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "BOT face normals" );
-		memcpy( bot->normals, normals, bot->num_normals * 3 * sizeof( fastf_t ) );
-		memcpy( bot->face_normals, face_normals, bot->num_faces * 3 * sizeof( int ) );
+		memcpy(bot->normals, normals, bot->num_normals * 3 * sizeof( fastf_t ));
+		memcpy(bot->face_normals, face_normals, bot->num_faces * 3 * sizeof( int ));
 	} else {
 		bot->bot_flags = 0;
 		bot->num_normals = 0;

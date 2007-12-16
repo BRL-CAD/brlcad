@@ -433,7 +433,7 @@ get_ext(struct bu_external *ep, int ngran)
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "get_ext ext_buf" );
 
 	/* Copy the freebie (first) record into the array of records.  */
-	bcopy( (char *)&record, (char *)ep->ext_buf, sizeof(union record) );
+	memcpy((char *)ep->ext_buf, (char *)&record, sizeof(union record));
 	if( ngran <= 1 )  return;
 
 	count = fread( ((char *)ep->ext_buf)+sizeof(union record),
@@ -941,7 +941,7 @@ combdump(void)	/* Print out Combination record information */
 	}
 
 	if( ret_mp )  {
-		bcopy( (char *)&ret_mp->r, (char *)&record, sizeof(record) );
+		memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
 		bu_free( (char *)ret_mp, "mchain");
 		return 1;
 	}

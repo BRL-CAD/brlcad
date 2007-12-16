@@ -106,7 +106,7 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	BU_GETSTRUCT( rtrans_sp, rtrans_specific );
 	*dpp = (char *)rtrans_sp;
 
-	memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific) );
+	memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific));
 
 	if (bu_struct_parse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
 		return(-1);

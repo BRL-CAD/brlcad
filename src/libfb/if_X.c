@@ -492,8 +492,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
 	/* return 24bit store if available */
 	if( XI(ifp)->mem ) {
-		bcopy( &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]),
-		       pixelp, count*sizeof(RGBpixel) );
+		memcpy(pixelp, &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
 		return	count;
 	}
 
@@ -629,9 +628,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 
 	/* save it in 24bit store if available */
 	if( XI(ifp)->mem ) {
-		bcopy( pixelp,
-		       &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]),
-		       count*sizeof(RGBpixel) );
+		memcpy(&(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]), pixelp, count*sizeof(RGBpixel));
 	}
 
 	todo = count;

@@ -377,7 +377,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* convert from the local unit (as input) to the base unit */
 	dist = dist * es_mat[15] * local2base;
 
-	bcopy( (char *)es_int.idb_ptr , (char *)&larb , sizeof( struct rt_arb_internal ) );
+	memcpy((char *)&larb , (char *)es_int.idb_ptr , sizeof( struct rt_arb_internal ));
 
 	if( (es_type == ARB6 || es_type == ARB4) && face < 1000 ) {
 		/* 3 point face */
@@ -524,7 +524,7 @@ a4toa6:
 	}
 
 	/* copy local copy back to original */
-	bcopy( (char *)&larb , (char *)es_int.idb_ptr , sizeof( struct rt_arb_internal ) );
+	memcpy((char *)es_int.idb_ptr , (char *)&larb , sizeof( struct rt_arb_internal ));
 
 	/* draw the updated solid */
 	replot_editing_solid();
@@ -701,7 +701,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	work[k] = -1.0;
 
 	/* make local copy of arb */
-	bcopy( (char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ) );
+	memcpy((char *)&larb , (char *)arb , sizeof( struct rt_arb_internal ));
 
 	if(es_type == ARB6 && face < 1000) { 	/* 3 point face */
 		pt[0] = face / 100;
@@ -808,7 +808,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 
 	/* copy to original */
-	bcopy( (char *)&larb , (char *)arb , sizeof( struct rt_arb_internal ) );
+	memcpy((char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ));
 
 	/* draw the updated solid */
 	replot_editing_solid();
@@ -1066,7 +1066,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     RT_ARB_CK_MAGIC( arb );
 
     /* make a local copy of the solid */
-    bcopy( (char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ) );
+    memcpy((char *)&larb, (char *)arb, sizeof( struct rt_arb_internal ));
 
     /*
      *	Find the encoded form of the specified permutation,
@@ -1203,7 +1203,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* copy back to original arb */
-    bcopy( (char *)&larb , (char *)arb , sizeof( struct rt_arb_internal ) );
+    memcpy((char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ));
 
     /* draw the updated solid */
     replot_editing_solid();

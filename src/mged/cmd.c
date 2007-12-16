@@ -1823,8 +1823,7 @@ f_ps(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	scroll_top = dml->dml_scroll_top;
 	scroll_active = dml->dml_scroll_active;
 	scroll_y = dml->dml_scroll_y;
-	bcopy((void *)dml->dml_scroll_array, (void *)scroll_array,
-	      sizeof(struct scroll_item *) * 6);
+	memmove((void *)scroll_array, (void *)dml->dml_scroll_array, sizeof(struct scroll_item *) * 6);
 
 	dirty = 1;
 	refresh();
@@ -1875,8 +1874,7 @@ f_pl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	scroll_top = dml->dml_scroll_top;
 	scroll_active = dml->dml_scroll_active;
 	scroll_y = dml->dml_scroll_y;
-	bcopy( (void *)dml->dml_scroll_array, (void *)scroll_array,
-	       sizeof(struct scroll_item *) * 6);
+	memmove((void *)scroll_array, (void *)dml->dml_scroll_array, sizeof(struct scroll_item *) * 6);
 
 	dirty = 1;
 	refresh();
@@ -2137,7 +2135,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	for (i=1 ; i < idx ; i++ ) {
 	    /* copy the vertices */
-	    memcpy( &bots[0]->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
+	    memcpy(&bots[0]->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
 
 	    /* copy/convert the faces, potentially maintaining a common orientation */
 	    if (bots[0]->orientation != RT_BOT_UNORIENTED && bots[i]->magic != RT_BOT_INTERNAL_MAGIC) {

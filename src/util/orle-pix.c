@@ -135,7 +135,7 @@ main(int argc, char **argv)
 			static int	touched = 1;
 			register int	pix;
 			if( touched && (get_flags & NO_BOX_SAVE) )  {
-				bcopy( (char *)bg_scan, (char *)scanbuf, scan_bytes );
+				memcpy((char *)scanbuf, (char *)bg_scan, scan_bytes);
 			}
 			if( (touched = rle_decode_ln( fp, scanbuf )) == -1 )
 				return	1;

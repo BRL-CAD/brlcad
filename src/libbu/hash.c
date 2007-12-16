@@ -286,7 +286,7 @@ bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 
 	/* make a copy of the key */
 	hsh_entry->key = (unsigned char *)malloc( key_len );
-	memcpy( hsh_entry->key, key, key_len );
+	memcpy(hsh_entry->key, key, key_len);
 
 	/* set "new" flag, increment count of entries, and return new entry */
 	*new = 1;

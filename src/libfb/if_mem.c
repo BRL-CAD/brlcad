@@ -323,8 +323,7 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	if( pixels_to_end < count )
 		count = pixels_to_end;
 
-	bcopy( &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), (char *)pixelp,
-		count*3 );
+	memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
 
 	return(count);
 }
@@ -342,8 +341,7 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	if( pixels_to_end < count )
 		count = pixels_to_end;
 
-	bcopy( (char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]),
-		count*3 );
+	memcpy(&(MI(ifp)->mem[(y*ifp->if_width + x)*3]), (char *)pixelp, count*3);
 
 	if( MI(ifp)->write_thru ) {
 		return fb_write( MI(ifp)->fbp, x, y, pixelp, count );

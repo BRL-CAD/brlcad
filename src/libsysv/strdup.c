@@ -55,7 +55,7 @@ strdup(register const char *cp)
     if( (base = (char *)malloc( len )) == (char *)0 )
 	return( (char *)0 );
 
-    bcopy( cp, base, len );
+    memcpy(base, cp, len);
     return(base);
 }
 

@@ -121,7 +121,7 @@ void tienet_slave_worker(int port, char *host) {
   }
 
   master.sin_family = h.h_addrtype;
-  bcopy(h.h_addr_list[0], (char *)&master.sin_addr.s_addr, h.h_length);
+  memcpy((char *)&master.sin_addr.s_addr, h.h_addr_list[0], h.h_length);
   master.sin_port = htons(port);
 
   /* Create a socket */
@@ -212,11 +212,11 @@ void tienet_slave_worker(int port, char *host) {
       buffer.ind += sizeof(uint32_t);
 
       /* Pack Compressed Result Data */
-      bcopy(buffer_comp.data, &((char *)buffer.data)[buffer.ind], size);
+      memcpy(&((char *)buffer.data)[buffer.ind], buffer_comp.data, size);
       buffer.ind += size;
 #else
       /* Pack Result Data */
-      bcopy(result.data, &((char *)buffer.data)[buffer.ind], result.ind);
+      memcpy(&((char *)buffer.data)[buffer.ind], result.data, result.ind);
       buffer.ind += result.ind;
 #endif
       tienet_send(slave_socket, buffer.data, buffer.ind, 0);

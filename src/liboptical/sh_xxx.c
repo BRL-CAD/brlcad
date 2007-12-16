@@ -187,7 +187,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	*dpp = (char *)xxx_sp;
 
 	/* initialize the default values for the shader */
-	memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific) );
+	memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific));
 
 	/* parse the user's arguments for this use of the shader. */
 	if (bu_struct_parse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )

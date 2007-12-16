@@ -180,7 +180,7 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 		if( mark_count <= 0 )  {
 			buf[0] = '\0';
 		} else {
-			bcopy( marks, buf, mark_count );
+			memcpy(buf, marks, mark_count);
 			buf[mark_count] = '\0';
 		}
 		val = histp->hg_min + i*histp->hg_clumpsize;

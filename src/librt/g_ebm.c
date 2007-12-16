@@ -628,7 +628,7 @@ fail:
 		cp = (unsigned char *)mp->buf;
 		for( y=0; y < eip->ydim; y++ )  {
 			/* BIT() addresses into mp->apbuf */
-			memcpy( &BIT( eip, 0, y), cp, eip->xdim );
+			memcpy(&BIT( eip, 0, y), cp, eip->xdim);
 			cp += eip->xdim;
 		}
 	}
@@ -771,7 +771,7 @@ fail:
 		cp = (unsigned char *)mp->buf;
 		for( y=0; y < eip->ydim; y++ )  {
 			/* BIT() addresses into mp->apbuf */
-			memcpy( &BIT( eip, 0, y), cp, eip->xdim );
+			memcpy(&BIT( eip, 0, y), cp, eip->xdim);
 			cp += eip->xdim;
 		}
 	}

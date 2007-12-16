@@ -264,7 +264,7 @@ fill_Buffer(register char *dest, register char *src, register int scan_bytes, re
 {	register int	i;
 	for( i = 0; i < repeat; ++i )
 		{
-		bcopy( src, dest, scan_bytes );
+		memcpy(dest, src, scan_bytes);
 		dest += scan_bytes;
 		}
 	return;

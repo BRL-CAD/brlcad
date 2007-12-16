@@ -1219,7 +1219,7 @@ bn_tabdata_copy(struct bn_tabdata *out, const struct bn_tabdata *in)
 	if( in->ny != out->ny )
 		bu_bomb("bn_tabdata_copy(): different tabdata lengths?\n");
 
-	bcopy( (const char *)in->y, (char *)out->y, BN_SIZEOF_TABDATA_Y(in) );
+	memcpy((char *)out->y, (const char *)in->y, BN_SIZEOF_TABDATA_Y(in));
 }
 
 /*
@@ -1233,7 +1233,7 @@ bn_tabdata_dup(const struct bn_tabdata *in)
 	BN_CK_TABDATA( in );
 	BN_GET_TABDATA( data, in->table );
 
-	bcopy( (const char *)in->y, (char *)data->y, BN_SIZEOF_TABDATA_Y(in) );
+	memcpy((char *)data->y, (const char *)in->y, BN_SIZEOF_TABDATA_Y(in));
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_dup(x%x) = x%x\n", in, data);
 	return data;

@@ -329,7 +329,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	*dpp = (char *)gauss_sp;
 
 	/* initialize the default values for the shader */
-	memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific) );
+	memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific));
 
 	/* parse the user's arguments for this use of the shader. */
 	if (bu_struct_parse( matparm, gauss_parse_tab, (char *)gauss_sp ) < 0 )

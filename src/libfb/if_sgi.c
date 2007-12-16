@@ -923,7 +923,7 @@ int	count;
 		} else	{
 			scan_count = count;
 		}
-		memcpy( *pixelp, ip, scan_count*sizeof(RGBpixel) );
+		memcpy(*pixelp, ip, scan_count*sizeof(RGBpixel));
 
 		pixelp += scan_count;
 		count -= scan_count;

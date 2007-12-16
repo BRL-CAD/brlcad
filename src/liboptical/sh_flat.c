@@ -217,7 +217,7 @@ flat_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	 */
 
 	/* initialize the default values for the shader */
-	memcpy(flat_sp, &flat_defaults, sizeof(struct flat_specific) );
+	memcpy(flat_sp, &flat_defaults, sizeof(struct flat_specific));
 
 	/* load the material color if it was set */
 	if (rp->reg_mater.ma_color_valid) {

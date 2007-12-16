@@ -142,7 +142,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					ph.magic = POLYGON_HEADER_MAGIC;
 					ph.ident = pno++;
 					ph.interior = 0;
-					bcopy(sp->s_basecolor, ph.color, 3);
+					memcpy(ph.color, sp->s_basecolor, 3);
 					ph.npts = 0;
 					/* Set surface normal (vl_pnt points outward) */
 					VMOVE( ph.normal, *pt );

@@ -1422,7 +1422,7 @@ bu_log("mallocing curr_float_frame\n");
 		{
 		struct	application	bakapp;
 
-		memcpy(&bakapp,ap,sizeof(struct application));
+		memcpy(&bakapp, ap, sizeof(struct application));
 
 		/* If user did not specify any light sources then create one */
 		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || BU_LIST_UNINITIALIZED(&(LightHead.l))) {
@@ -1435,7 +1435,7 @@ bu_log("mallocing curr_float_frame\n");
 		PM_Activated= 1;
 		BuildPhotonMap(ap,eye_model,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5],(int)pmargs[6],(int)pmargs[7],pmargs[8],pmfile);
 
-		memcpy(ap,&bakapp,sizeof(struct application));
+		memcpy(ap, &bakapp, sizeof(struct application));
 		/* Set callback for ray hit */
 		ap->a_hit= colorview;
 

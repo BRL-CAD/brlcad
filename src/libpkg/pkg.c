@@ -375,7 +375,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	    return(PKC_ERROR);
 	}
 	sinhim.sin_family = hp->h_addrtype;
-	bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
+	memcpy((char *)&sinhim.sin_addr, hp->h_addr, hp->h_length);
     }
     addr = (struct sockaddr *) &sinhim;
     addrlen = sizeof(struct sockaddr_in);
@@ -841,7 +841,7 @@ pkg_inget(register struct pkg_conn *pc, char *buf, int count)
 	}
 	/* Input Buffer has some data in it, move to caller's buffer */
 	if( len > todo )  len = todo;
-	bcopy( &pc->pkc_inbuf[pc->pkc_incur], buf, len );
+	memcpy(buf, &pc->pkc_inbuf[pc->pkc_incur], len);
 	pc->pkc_incur += len;
 	buf += len;
 	todo -= len;
@@ -939,9 +939,9 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
     if( len + sizeof(hdr) <= 16*1024 )  {
 	char	tbuf[16*1024] = {0};
 
-	bcopy( (char *)&hdr, tbuf, sizeof(hdr) );
+	memcpy(tbuf, (char *)&hdr, sizeof(hdr));
 	if( len > 0 )
-	    bcopy( buf, tbuf+sizeof(hdr), len );
+	    memcpy(tbuf+sizeof(hdr), buf, len);
 	if( (i = PKG_SEND( pc->pkc_fd, tbuf, len+sizeof(hdr) )) != len+sizeof(hdr) )  {
 	    if( i < 0 )  {
 		if( errno == EBADF )  return(-1);
@@ -1062,11 +1062,11 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
     if( len1 + len2 + sizeof(hdr) <= 16*1024 )  {
 	char	tbuf[16*1024] = {0};
 
-	bcopy( (char *)&hdr, tbuf, sizeof(hdr) );
+	memcpy(tbuf, (char *)&hdr, sizeof(hdr));
 	if( len1 > 0 )
-	    bcopy( buf1, tbuf+sizeof(hdr), len1 );
+	    memcpy(tbuf+sizeof(hdr), buf1, len1);
 	if( len2 > 0 )
-	    bcopy( buf2, tbuf+sizeof(hdr)+len1, len2 );
+	    memcpy(tbuf+sizeof(hdr)+len1, buf2, len2);
 	if ((i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr))) != len1+len2+sizeof(hdr)) {
 	    if( i < 0 )  {
 		if( errno == EBADF )  return(-1);
@@ -1164,10 +1164,9 @@ pkg_stream(int type, const char *buf, int len, register struct pkg_conn *pc)
     pkg_pshort( (char *)hdr.pkh_type, type );	/* should see if valid type */
     pkg_plong( (char *)hdr.pkh_len, (unsigned long)len );
 
-    bcopy( (char *)&hdr, &(pc->pkc_stream[pc->pkc_strpos]),
-	   sizeof(struct pkg_header) );
+    memcpy(&(pc->pkc_stream[pc->pkc_strpos]), (char *)&hdr, sizeof(struct pkg_header));
     pc->pkc_strpos += sizeof(struct pkg_header);
-    bcopy( buf, &(pc->pkc_stream[pc->pkc_strpos]), len );
+    memcpy(&(pc->pkc_stream[pc->pkc_strpos]), buf, len);
     pc->pkc_strpos += len;
 
     return( len + sizeof(struct pkg_header) );
@@ -1209,7 +1208,7 @@ pkg_flush(register struct pkg_conn *pc)
 	(pc->pkc_errlog)(errbuf);
 	pc->pkc_strpos -= i;
 	/* copy leftovers to front of stream */
-	bcopy(pc->pkc_stream + i, pc->pkc_stream, pc->pkc_strpos);
+	memmove(pc->pkc_stream, pc->pkc_stream + i, pc->pkc_strpos);
 	return( i );	/* amount of user data sent */
     }
     pc->pkc_strpos = 0;
@@ -1640,7 +1639,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
 	}
 	(pc->pkc_errlog)(errbuf);
 	/* Slide over one byte and try again */
-	bcopy( ((char *)&pc->pkc_hdr)+1, (char *)&pc->pkc_hdr, sizeof(struct pkg_header)-1);
+	memmove((char *)&pc->pkc_hdr, ((char *)&pc->pkc_hdr)+1, sizeof(struct pkg_header)-1);
 	if( (i=pkg_inget( pc,
 			  ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
 			  1 )) != 1 )  {
@@ -1873,8 +1872,7 @@ pkg_suckin(register struct pkg_conn *pc)
 
 	ammount = pc->pkc_inend - pc->pkc_incur;
 	/* This copy can not overlap itself, because of 7/8 above */
-	bcopy( &pc->pkc_inbuf[pc->pkc_incur],
-	       pc->pkc_inbuf, ammount );
+	memcpy(pc->pkc_inbuf, &pc->pkc_inbuf[pc->pkc_incur], ammount);
 	pc->pkc_incur = 0;
 	pc->pkc_inend = ammount;
     }

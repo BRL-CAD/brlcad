@@ -65,13 +65,13 @@ slave_load_sql (tie_t *tie, void *data, uint32_t dlen)
   TIE_VAL(tie_check_degenerate) = 0;
 
   /* hostname */
-  bcopy (&((char *)data)[ind], &c, 1);
+  memcpy(&c, &((char *)data)[ind], 1);
   ind += 1;
-  bcopy (&((char *)data)[ind], hostname, c);
+  memcpy(hostname, &((char *)data)[ind], c);
   ind += c;
 
   /* project id */
-  bcopy (&((char *)data)[ind], &pid, sizeof(uint32_t));
+  memcpy(&pid, &((char *)data)[ind], sizeof(uint32_t));
   ind += sizeof(uint32_t);
 
   /* establish mysql connection */
@@ -174,18 +174,18 @@ slave_load_geom (uint32_t pid, tie_t *tie)
     slave_load_mesh_list[mind].attributes = (adrt_mesh_attributes_t *)malloc(sizeof(adrt_mesh_attributes_t));
 
     /* length of name string */
-    bcopy (&((char *)gdata)[gind], &c, 1);
+    memcpy(&c, &((char *)gdata)[gind], 1);
     gind += 1;
 
     /* name */
-    bcopy (&((char *)gdata)[gind], slave_load_mesh_list[mind].name, c);
+    memcpy(slave_load_mesh_list[mind].name, &((char *)gdata)[gind], c);
     gind += c;
 
     /* Assign default attributes */
     MATH_VEC_SET(slave_load_mesh_list[mind].attributes->color, 0.8, 0.8, 0.8);
 
     /* vertice num */
-    bcopy (&((char *)gdata)[gind], &vnum, sizeof(uint32_t));
+    memcpy(&vnum, &((char *)gdata)[gind], sizeof(uint32_t));
     gind += sizeof(uint32_t);
 
     /* vertice list */
@@ -193,13 +193,13 @@ slave_load_geom (uint32_t pid, tie_t *tie)
     gind += vnum * sizeof(TIE_3);
 
     /* face type */
-    bcopy (&((char *)gdata)[gind], &ftype, 1);
+    memcpy(&ftype, &((char *)gdata)[gind], 1);
     gind += 1;
 
     if (ftype)
     {
       /* face num 32-bit */
-      bcopy (&((char *)gdata)[gind], &f32num, sizeof(uint32_t));
+      memcpy(&f32num, &((char *)gdata)[gind], sizeof(uint32_t));
       gind += sizeof(uint32_t);
       f32list = (uint32_t *)&((char *)gdata)[gind];
       gind += 3 * f32num * sizeof(uint32_t);
@@ -214,7 +214,7 @@ slave_load_geom (uint32_t pid, tie_t *tie)
     else
     {
       /* face num 16-bit */
-      bcopy(&((char *)gdata)[gind], &f16num, sizeof(uint16_t));
+      memcpy(&f16num, &((char *)gdata)[gind], sizeof(uint16_t));
       gind += sizeof(uint16_t);
       f16list = (uint16_t *)&((char *)gdata)[gind];
       gind += 3 * f16num * sizeof(uint16_t);

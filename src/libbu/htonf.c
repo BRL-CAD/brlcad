@@ -59,7 +59,7 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-	memcpy( out, in, count*SIZEOF_NETWORK_FLOAT );
+	memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
 	return;
 #	define	HTONF	yes1
 #endif
@@ -102,7 +102,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 	 */
 	if( sizeof(float) != SIZEOF_NETWORK_FLOAT )
 		bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
-	memcpy( out, in, count*SIZEOF_NETWORK_FLOAT );
+	memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
 	return;
 #	define	NTOHF	yes1
 #endif

@@ -470,7 +470,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    }
 
 		    /* now copy back */
-		    memcpy( ars->curves[i], tmp_curve, ars->pts_per_curve*3*sizeof( fastf_t ) );
+		    memcpy(ars->curves[i], tmp_curve, ars->pts_per_curve*3*sizeof( fastf_t ));
 		}
 
 		bu_free( (char *)tmp_curve, "rt_mirror: tmp_curve" );

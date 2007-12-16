@@ -106,7 +106,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
   /* This will get improved later with caching */
   TIENET_BUFFER_SIZE((*result), 3); /* Copy op and wid, 3 bytes */
-  bcopy (&work->data[0], result->data, 3);
+  memcpy(result->data, &work->data[0], 3);
   result->ind = ind;
 
   switch(op) {
@@ -156,7 +156,7 @@ isst_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
         ind += 1;
 
         /* string */
-        bcopy (&work->data[ind], string, c);
+        memcpy(string, &work->data[ind], c);
         ind += c;
 
         /* set select flag */
@@ -192,7 +192,7 @@ printf ("pos: %.3f %.3f %.3f ... dir %.3f %.3f %.3f\n", ray.pos.v[0], ray.pos.v[
 
         /* Make room for shot data */
         TIENET_BUFFER_SIZE((*result), result->ind + dlen + 2*sizeof (TIE_3));
-        bcopy (mesg, &result->data[result->ind], dlen);
+        memcpy(&result->data[result->ind], mesg, dlen);
         result->ind += dlen;
 
         TCOPY(TIE_3, &ray.pos, 0, result->data, result->ind);
@@ -237,7 +237,7 @@ printf ("pos: %.3f %.3f %.3f ... dir %.3f %.3f %.3f\n", ray.pos.v[0], ray.pos.v[
 
         ind = 0;
 
-        bcopy(mesg, &((char *)*res_buf)[ind], dlen);
+        memcpy(&((char *)*res_buf)[ind], mesg, dlen);
 
         free (mesg);
 #endif

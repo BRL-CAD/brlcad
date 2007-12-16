@@ -246,7 +246,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 	*dpp = (char *)fire_sp;
 
 	/* initialize the default values for the shader */
-	memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific) );
+	memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific));
 
 	/* parse the user's arguments for this use of the shader. */
 	if (bu_struct_parse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )

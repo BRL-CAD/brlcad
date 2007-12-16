@@ -278,7 +278,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 
 	/* Request only those input bits needed by subordinate shaders */
 	BU_GETSTRUCT( mfp, mfuncs );
-	bcopy( (char *)rp->reg_mfuncs, (char *)mfp, sizeof(*mfp) );
+	memcpy((char *)mfp, (char *)rp->reg_mfuncs, sizeof(*mfp));
 	mfp->mf_inputs = inputs;
 	rp->reg_mfuncs = (genptr_t)mfp;
 	return( 1 );

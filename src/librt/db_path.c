@@ -100,7 +100,7 @@ db_dup_full_path(register struct db_full_path *newp, register const struct db_fu
 	newp->fp_names = (struct directory **)bu_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
 		"db_full_path array (duplicate)" );
-	memcpy((char *)newp->fp_names, (char *)oldp->fp_names,	newp->fp_len * sizeof(struct directory *) );
+	memcpy((char *)newp->fp_names, (char *)oldp->fp_names,	newp->fp_len * sizeof(struct directory *));
 }
 
 /**
@@ -173,7 +173,7 @@ db_dup_path_tail(register struct db_full_path *newp, register const struct db_fu
 	newp->fp_names = (struct directory **)bu_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
 		"db_full_path array (duplicate)" );
-	memcpy((char *)newp->fp_names, (char *)&oldp->fp_names[start], newp->fp_len * sizeof(struct directory *) );
+	memcpy((char *)newp->fp_names, (char *)&oldp->fp_names[start], newp->fp_len * sizeof(struct directory *));
 }
 
 /**

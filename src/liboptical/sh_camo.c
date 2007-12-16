@@ -235,7 +235,7 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 	if (rdebug&RDEBUG_SHADE) {
 		bu_log("camouflage parameters = '%s'\n", bu_vls_addr(matparm));
 	}
-	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific) );
+	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific));
 
 	if (bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
 		return(-1);
@@ -379,7 +379,7 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	if (rdebug&RDEBUG_SHADE) {
 		bu_log("marble parameters = '%s'\n", bu_vls_addr(matparm));
 	}
-	memcpy(camo_sp, &marble_defaults, sizeof(struct camo_specific) );
+	memcpy(camo_sp, &marble_defaults, sizeof(struct camo_specific));
 
 	if (bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
 		return(-1);

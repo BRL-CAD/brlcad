@@ -146,16 +146,16 @@ writephysrec(FILE *fp)
 {
 	union radrec	skiprec;
 	long	length;
-static int totbuf = 0;
-int buf = 0;
+	static int totbuf = 0;
+	int buf = 0;
 
 	/* Pad out the record if not full */
 	memset((char *)&skiprec, 0, sizeof(skiprec));
 	skiprec.p.pad[16] = -1;
 	while( precindex < 256 ) {
-		bcopy( &skiprec, &physrec[precindex*sizeof(union radrec)], sizeof(skiprec) );
+		memcpy(&physrec[precindex*sizeof(union radrec)], &skiprec, sizeof(skiprec));
 		precindex++;
-buf++;
+		buf++;
 	}
 
 	length = sizeof(physrec);
@@ -170,8 +170,8 @@ buf++;
 	precindex = 0;
 	precnum++;
 
-totbuf += buf;
-/*fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );*/
+	totbuf += buf;
+	/*fprintf( stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf );*/
 
 	return( 1 );
 }
@@ -188,7 +188,7 @@ writerec(union radrec *rp, FILE *fp)
 		if( writephysrec( fp ) == 0 )
 			return( 0 );
 	}
-	bcopy( rp, &physrec[precindex*sizeof(*rp)], sizeof(*rp) );
+	memcpy(&physrec[precindex*sizeof(*rp)], rp, sizeof(*rp));
 
 	precindex++;
 	recnum++;

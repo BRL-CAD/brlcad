@@ -112,8 +112,8 @@ M += 1;
 			/* pad the end with zero's */
 			memset((char *)&xbuf[M-1+i], 0, (L-i)*sizeof(*savebuffer));
 		}
-		bcopy( savebuffer, xbuf, (M-1)*sizeof(*savebuffer) );
-		bcopy( &xbuf[L], savebuffer, (M-1)*sizeof(*savebuffer) );
+		memcpy(xbuf, savebuffer, (M-1)*sizeof(*savebuffer));
+		memcpy(savebuffer, &xbuf[L], (M-1)*sizeof(*savebuffer));
 
 		/*xform( xbuf, N );*/
 		if( N == 256 )

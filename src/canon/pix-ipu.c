@@ -189,7 +189,7 @@ void step2(aa)
 		register unsigned char	*rp;
 		offset = buf_y * width;
 		rp = &chorep->cbuf[offset];
-		bcopy( cp, rp, width );
+		memcpy(rp, cp, width);
 		cp += width;
 	    }
 	}

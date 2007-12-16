@@ -295,7 +295,7 @@ unsigned long limit; \
 \
 		/* copy the original or "average" data to temporary buffer */ \
 		avg = tbuffer; \
-		memcpy(avg, buffer, sizeof(*buffer) * d ); \
+		memcpy(avg, buffer, sizeof(*buffer) * d); \
 \
 \
 		for (x=0 ; x < dbl_size ; x += 2 ) { \
@@ -530,7 +530,7 @@ unsigned long limit; \
 			avg = &buf[ row_start ]; \
 			detail = &buf[ row_start + d]; \
  \
-			memcpy(tbuf, avg, sizeof(*buf) * d ); \
+			memcpy(tbuf, avg, sizeof(*buf) * d); \
 			avg = tbuf; \
  \
 			/* reconstruct row */ \

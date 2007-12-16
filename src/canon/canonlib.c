@@ -195,7 +195,7 @@ ipu_inquire(struct dsreq *dsp)
 		      buf[2] & 0x07);
 
 	/* 20 characters of Vendor/Product ID */
-	bcopy(&buf[8], &response[strlen(response)], 20);
+	memcpy(&response[strlen(response)], &buf[8], 20);
 	if (bcmp(&buf[8], "CANON   IPU-", 12)) {
 	    fprintf(stderr,
 		    "ipu_inquire() device is not IPU-10/CLC500!\n%s\n",
@@ -510,7 +510,7 @@ ipu_put_image(struct dsreq *dsp,
 		scanline = &img[img_line*bytes_per_line];
 		r = & red[buf_line*w];
 
-		memcpy( r, scanline, bytes_per_line );
+		memcpy(r, scanline, bytes_per_line);
 	    }
 	}
 
@@ -549,7 +549,7 @@ ipu_put_image(struct dsreq *dsp,
 		scanline = &img[img_line*bytes_per_line];
 		r = & red[buf_line*w];
 
-		memcpy( r, scanline, bytes_per_line );
+		memcpy(r, scanline, bytes_per_line);
 	    }
 	}
 
@@ -649,10 +649,10 @@ ipu_print_config(struct dsreq *dsp,
     memset(params, 0, sizeof(params));
     bytes = 4;	/* leave room for the mode parameter header */
 
-    bcopy(ipu_units, &params[bytes], sizeof(ipu_units));
+    memcpy(&params[bytes], ipu_units, sizeof(ipu_units));
     bytes += sizeof(ipu_units);
 
-    bcopy(pr_mode, &params[bytes], sizeof(pr_mode));
+    memcpy(&params[bytes], pr_mode, sizeof(pr_mode));
     bytes += sizeof(pr_mode);
 
     p[4] = (u_char)bytes;
@@ -714,7 +714,7 @@ ipu_print_file(struct dsreq *dsp,
     toshort(&buf[8], sy);
     toshort(&buf[10], sw);
     toshort(&buf[12], sh);
-    bcopy(pr_param, &buf[14], 4);
+    memcpy(&buf[14], pr_param, 4);
 
     filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
     if ( i=doscsireq(getfd(dsp), dsp) )  {
@@ -779,10 +779,10 @@ ipu_scan_config(struct dsreq *dsp,
     memset(params, 0, sizeof(params));
     bytes = 4;	/* leave room for the mode parameter header */
 
-    bcopy(ipu_units, &params[bytes], sizeof(ipu_units));
+    memcpy(&params[bytes], ipu_units, sizeof(ipu_units));
     bytes += sizeof(ipu_units);
 
-    bcopy(sc_mode, &params[bytes], sizeof(sc_mode));
+    memcpy(&params[bytes], sc_mode, sizeof(sc_mode));
     bytes += sizeof(sc_mode);
 
     p[4] = (u_char)bytes;
@@ -830,7 +830,7 @@ ipu_scan_file(struct dsreq *dsp,
     toshort(&buf[8], sy);
     toshort(&buf[10], w);
     toshort(&buf[12], h);
-    bcopy(sc_param, &buf[14], 4);
+    memcpy(&buf[14], sc_param, 4);
 
     filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
     if ( i=doscsireq(getfd(dsp), dsp) )  {
@@ -1144,7 +1144,7 @@ ipu_set_palette( dsp, cmap )
 	/* buf[4]: MODE PARAMETERS, block(s) of page codes. */
 	buf[4] = 0x30 + i;	/* PAGE CODE "Color Palette Parameters" */
 	buf[5] = 0xC0;		/* 192 bytes follow */
-	bcopy( cmap+i*192, buf+4+2, 192 );
+	memcpy(buf+4+2, cmap+i*192, 192);
 
 	filldsreq(dsp, buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
 

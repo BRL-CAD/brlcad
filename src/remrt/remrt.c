@@ -3043,7 +3043,7 @@ build_start_cmd(int argc, char **argv, int startc)
 	for( i=startc+1; i < argc; i++ )  {
 		if( i > startc+1 )  *cp++ = ' ';
 		len = strlen( argv[i] );
-		bcopy( argv[i], cp, len );
+		memcpy(cp, argv[i], len);
 		cp += len;
 	}
 	*cp++ = '\0';

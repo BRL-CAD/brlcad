@@ -498,7 +498,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	*dpp = (char *)grass_sp;
 
 	/* initialize the default values for the shader */
-	memcpy(grass_sp, &grass_defaults, sizeof(struct grass_specific) );
+	memcpy(grass_sp, &grass_defaults, sizeof(struct grass_specific));
 
 	if (rp->reg_aircode == 0) {
 		bu_log("%s\n%s\n",

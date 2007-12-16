@@ -186,7 +186,7 @@ rt_comb_v5_serialize(
 		 *	the matrix subscript.  -1 == identity.
 		 */
 		n = strlen(tp->tr_l.tl_name) + 1;
-		memcpy( ssp->leafp, tp->tr_l.tl_name, n );
+		memcpy(ssp->leafp, tp->tr_l.tl_name, n);
 		ssp->leafp += n;
 
 		if( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )

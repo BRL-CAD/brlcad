@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 				fprintf(stderr,"\tend isn't in buffer.\n");
 #endif /* DEBUG */
 				/* Move start to origin */
-				bcopy( &buf[buf_index], &buf[0], (buf_num-buf_index)*sizeof(*buf) );
+				memmove(&buf[0], &buf[buf_index], (buf_num-buf_index)*sizeof(*buf));
 				buf_start = xform_start;
 				buf_num -= buf_index;
 				buf_index = 0;
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Did samples %d to %d (buf_index = %d)\n", xform_start, xform_end, buf_index );
 #endif /* DEBUG */
 		if( window ) {
-			bcopy( &buf[buf_index], temp, L*sizeof(*temp) );
+			memcpy(temp, &buf[buf_index], L*sizeof(*temp));
 			if( hamming )
 				hamwin( temp, L ); /* Hamming window */
 			else if( bartlett )

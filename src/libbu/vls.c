@@ -363,7 +363,7 @@ bu_vls_strcpy(register struct bu_vls *vp, const char *s)
     }
     vp->vls_offset = 0;		/* cancel offset before extending */
     if( len+1 >= vp->vls_max )  bu_vls_extend( vp, len+1 );
-    bcopy( s, vp->vls_str, len+1 );		/* include null */
+    memcpy(vp->vls_str, s, len+1);		/* include null */
     vp->vls_len = len;
 }
 
@@ -387,7 +387,7 @@ bu_vls_strncpy(register struct bu_vls *vp, const char *s, long int n)
     }
     vp->vls_offset = 0;		/* cancel offset before extending */
     if( len+1 >= vp->vls_max )  bu_vls_extend( vp, len+1 );
-    bcopy( s, vp->vls_str, len );
+    memcpy(vp->vls_str, s, len);
     vp->vls_str[len] = '\0';		/* force null termination */
     vp->vls_len = len;
 }
@@ -407,7 +407,7 @@ bu_vls_strcat(register struct bu_vls *vp, const char *s)
     if( (len = strlen(s)) <= 0 )  return;
     if( vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max )
 	bu_vls_extend( vp, len+1 );
-    bcopy( s, vp->vls_str +vp->vls_offset + vp->vls_len, len+1 );	/* include null */
+    memcpy(vp->vls_str +vp->vls_offset + vp->vls_len, s, len+1);	/* include null */
     vp->vls_len += len;
 }
 
@@ -428,7 +428,7 @@ bu_vls_strncat(register struct bu_vls *vp, const char *s, long int n)
     if( len <= 0 )  return;			/* do nothing */
     if( vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max )
 	bu_vls_extend( vp, len+1 );
-    bcopy( s, vp->vls_str + vp->vls_offset + vp->vls_len, len );
+    memcpy(vp->vls_str + vp->vls_offset + vp->vls_len, s, len);
     vp->vls_len += len;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0';	/* force null termination */
 }
@@ -448,9 +448,7 @@ bu_vls_vlscat(register struct bu_vls *dest, register const struct bu_vls *src)
     if( dest->vls_offset + dest->vls_len + src->vls_len+1 >= dest->vls_max )
 	bu_vls_extend( dest, src->vls_len+1 );
     /* copy source string, including null */
-    bcopy( src->vls_str+src->vls_offset,
-	   dest->vls_str +dest->vls_offset + dest->vls_len,
-	   src->vls_len+1 );
+    memcpy(dest->vls_str +dest->vls_offset + dest->vls_len, src->vls_str+src->vls_offset, src->vls_len+1);
     dest->vls_len += src->vls_len;
 }
 
@@ -1094,7 +1092,7 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     memmove( vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, vp->vls_len );
 
     /* insert the data at the head of the string */
-    memcpy( vp->vls_str+vp->vls_offset, str, len);
+    memcpy(vp->vls_str+vp->vls_offset, str, len);
 }
 /** @} */
 

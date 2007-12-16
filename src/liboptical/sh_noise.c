@@ -264,7 +264,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	*dpp = (char *)noise_sp;
 
 	/* initialize the default values for the shader */
-	memcpy(noise_sp, &noise_defaults, sizeof(struct noise_specific) );
+	memcpy(noise_sp, &noise_defaults, sizeof(struct noise_specific));
 
 	/* parse the user's arguments for this use of the shader. */
 	if (bu_struct_parse( matparm, noise_parse_tab, (char *)noise_sp ) < 0 )

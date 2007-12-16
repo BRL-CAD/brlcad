@@ -1422,8 +1422,7 @@ register int	count;
 		/* XXX--debug */
 	/* Store pixels in memory. */
 	/*sun_storepixel( ifp, x, y, p, count );*/
-	bcopy( p, &ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)],
-		count*sizeof(RGBpixel) );
+	memcpy(&ifp->if_mem[(y*ifp->if_width+x)*sizeof(RGBpixel)], p, count*sizeof(RGBpixel));
 
 	xwidth = ifp->if_width/ifp->if_xzoom;
 	xmax = count >= xwidth-x ? xwidth-1 : x+count-1;
