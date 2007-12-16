@@ -1554,33 +1554,24 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
 	Carbon/Carbon.h \
-	arpa/inet.h \
 	curses.h \
 	dslib.h \
 	fcntl.h \
 	getopt.h \
 	gl/device.h \
 	grp.h \
-	ieeefp.h \
 	inttypes.h \
 	io.h \
-	itcl.h \
-	itk.h \
-	langinfo.h \
 	libgen.h \
-	malloc.h \
 	memory.h \
 	ncurses.h \
-	netdb.h \
 	netinet/in.h \
 	pthread.h \
 	pwd.h \
 	rle.h \
 	sched.h \
 	sgtty.h \
-	socket.h \
 	stdint.h \
-	strings.h \
 	sys/file.h \
 	sys/_ioctl.h \
 	sys/ioctl.h \
@@ -1589,16 +1580,13 @@ AC_CHECK_HEADERS( \
 	sys/mman.h \
 	sys/param.h \
 	sys/prctl.h \
-	sys/resource.h \
 	sys/select.h \
 	sys/socket.h \
 	sys/stat.h \
-	sys/statfs.h \
 	sys/sysctl.h \
 	sys/sysinfo.h \
 	sys/sysmp.h \
 	sys/time.h \
-	sys/timeb.h \
 	sys/times.h \
 	sys/types.h \
 	sys/un.h \
@@ -1615,11 +1603,7 @@ AC_CHECK_HEADERS( \
 	tk.h \
 	ulocks.h \
 	unistd.h \
-	utime.h \
-	values.h \
-	waitflags.h \
-	wchar.h \
-	winsock.h
+	winsock.h \
 )
 
 if test "x$bc_with_dtrace" != "xno" ; then
