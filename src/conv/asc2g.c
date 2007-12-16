@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 
     after_read:
 	/* Clear the output record -- vital! */
-	(void)bzero( (char *)&record, sizeof(record) );
+	(void)memset((char *)&record, 0, sizeof(record));
 
 	/* Check record type */
 	switch( buf[0] )  {
@@ -971,13 +971,13 @@ combbld(void)
     if( temp_nflag )  {
 	bu_fgets( buf, BUFSIZE, ifp );
 	zap_nl();
-	bzero( matname, sizeof(matname) );
+	memset(matname, 0, sizeof(matname));
 	strncpy( matname, buf, sizeof(matname)-1 );
     }
     if( temp_pflag )  {
 	bu_fgets( buf, BUFSIZE, ifp );
 	zap_nl();
-	bzero( matparm, sizeof(matparm) );
+	memset(matparm, 0, sizeof(matparm));
 	strncpy( matparm, buf, sizeof(matparm)-1 );
     }
 
@@ -1477,7 +1477,7 @@ bsurfbld(void)
     nbytes = record.d.d_nknots * sizeof(union record);
     vp = (float *)bu_malloc(nbytes, "vp");
     fp = vp;
-    (void)bzero( (char *)vp, nbytes );
+    memset((char *)vp, 0, nbytes);
     /* Read the knot vector information */
     count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
     for( i = 0; i < count; i++ )  {
@@ -1494,7 +1494,7 @@ bsurfbld(void)
     nbytes = record.d.d_nctls * sizeof(union record);
     vp = (float *)bu_malloc(nbytes, "vp");
     fp = vp;
-    (void)bzero( (char *)vp, nbytes );
+    memset((char *)vp, 0, nbytes);
     /* Read the control mesh information */
     count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
 	record.d.d_geom_type;

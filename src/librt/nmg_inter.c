@@ -2936,7 +2936,7 @@ struct faceuse		*fu1, *fu2;
  */
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
-	bzero( (char *)tags, tagsize );
+	memset((char *)tags, 0, tagsize);
 f1_again:
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu1);
@@ -2975,7 +2975,7 @@ f1_again:
 	nmg_isect2d_cleanup(is);
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
-	bzero( (char *)tags, tagsize );
+	memset((char *)tags, 0, tagsize);
 f2_again:
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_fu_touchingloops(fu1);

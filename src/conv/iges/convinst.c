@@ -94,7 +94,7 @@ Convinst()
 			}
 		}
 
-		bzero( &brl_att, sizeof( struct brlcad_att ) );
+		memset(&brl_att, 0, sizeof( struct brlcad_att ));
 		Read_att( att_de , &brl_att );
 
 		if( att_de )

@@ -259,7 +259,7 @@ im_write(int y)
 
 		/* Obtain a single line of 8-bit pixels */
 		if( fread( line, 1, width, infp ) != width )  {
-			bzero( (void *)line, width );
+			memset((void *)line, 0, width);
 		}
 
 		/* construct im_mag scans of Imagen swath */

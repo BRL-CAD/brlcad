@@ -212,7 +212,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, int start)
 		return(-1);
 
 	rp = (union record *)bu_malloc( todo * sizeof(union record), "db_zapper buf");
-	bzero( (char *)rp, todo * sizeof(union record) );
+	memset((char *)rp, 0, todo * sizeof(union record));
 	for( i=0; i < todo; i++ )
 		rp[i].u_id = ID_FREE;
 	i = db_put( dbip, dp, rp, start, todo );

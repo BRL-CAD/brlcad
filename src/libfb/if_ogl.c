@@ -2513,7 +2513,7 @@ fb_ogl_choose_visual(FBIO *ifp)
     m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
     m_doub_buf =  !m_sing_buf;
 
-    bzero((void *)&template, sizeof(XVisualInfo));
+    memset((void *)&template, 0, sizeof(XVisualInfo));
 
     /* get a list of all visuals on this display */
     vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &template, &num);

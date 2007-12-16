@@ -66,7 +66,7 @@ mk_bsolid( FILE *fp, char *name, int nsurf, double res )
 	/* if caller has an rt_nurb_internal struct, should use mk_export_fwrite or mk_fwrite_internal */
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.d.d_id = ID_BSOLID;
 	NAMEMOVE( name, rec.B.B_name );
 	rec.B.B_nsurf = nsurf;
@@ -104,13 +104,13 @@ mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 		return(-1);
 	}
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.d.d_id = ID_BSURF;
 
 	n = srf->u.k_size + srf->v.k_size;
 	n = ((n * sizeof(dbfloat_t)) + sizeof(rec)-1) / sizeof(rec);
 	kp = (dbfloat_t *)malloc(n*sizeof(rec));
-	bzero( (char *)kp, n*sizeof(rec) );
+	memset((char *)kp, 0, n*sizeof(rec));
 	rec.d.d_nknots = n;
 	rec.d.d_order[RT_NURB_SPLIT_ROW] = srf->order[RT_NURB_SPLIT_ROW];	/* [0] */
 	rec.d.d_order[RT_NURB_SPLIT_COL] = srf->order[RT_NURB_SPLIT_COL];	/* [1] */
@@ -121,7 +121,7 @@ mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 	    RT_NURB_EXTRACT_COORDS(srf->pt_type);
 	n = ((n * sizeof(dbfloat_t)) + sizeof(rec)-1) / sizeof(rec);
 	mp = (dbfloat_t *)malloc(n*sizeof(rec));
-	bzero( (char *)mp, n*sizeof(rec) );
+	memset((char *)mp, 0, n*sizeof(rec));
 	rec.d.d_nctls = n;
 	rec.d.d_geom_type = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 	rec.d.d_ctl_size[RT_NURB_SPLIT_ROW] = srf->s_size[RT_NURB_SPLIT_ROW];

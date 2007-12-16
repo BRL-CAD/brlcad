@@ -1157,7 +1157,7 @@ struct dm *dmp;
 {
   char *filename;
 
-  bzero((void *)&head_pex_vars, sizeof(struct pex_vars));
+  memset((void *)&head_pex_vars, 0, sizeof(struct pex_vars));
   BU_LIST_INIT( &head_pex_vars.l );
 
   if((filename = getenv("DM_PEX_RCFILE")) != (char *)NULL )

@@ -150,7 +150,7 @@ static int totbuf = 0;
 int buf = 0;
 
 	/* Pad out the record if not full */
-	memset( (char *)&skiprec, 0, sizeof(skiprec) );
+	memset((char *)&skiprec, 0, sizeof(skiprec));
 	skiprec.p.pad[16] = -1;
 	while( precindex < 256 ) {
 		bcopy( &skiprec, &physrec[precindex*sizeof(union radrec)], sizeof(skiprec) );
@@ -166,7 +166,7 @@ buf++;
 	}
 	fwrite( &length, sizeof(length), 1, fp );
 
-	memset( (char *)physrec, 0, sizeof(physrec) );	/* paranoia */
+	memset((char *)physrec, 0, sizeof(physrec));	/* paranoia */
 	precindex = 0;
 	precnum++;
 
@@ -217,7 +217,7 @@ view_2init(struct application *ap)
 	bu_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
 
 	/* Header Record */
-	memset( (char *)&r, 0, sizeof(r) );
+	memset((char *)&r, 0, sizeof(r));
 
 	/*XXX*/
 	r.h.head[0] = 'h'; r.h.head[1] = 'e';
@@ -243,7 +243,7 @@ view_2init(struct application *ap)
 	writerec( &r, outfp );
 
 	/* XXX - write extra header records */
-	memset( (char *)&r, 0, sizeof(r) );
+	memset((char *)&r, 0, sizeof(r));
 	writerec( &r, outfp );
 	writerec( &r, outfp );
 }
@@ -479,7 +479,7 @@ dumpall(struct application *ap, int depth)
 	/* Firing record */
 	/*printf( "Ray [%d %d], depth = %d\n", ap->a_x, ap->a_y, depth );*/
 
-	memset( (char *)&r, 0, sizeof(r) );
+	memset((char *)&r, 0, sizeof(r));
 
 	/*XXX*/
 	r.f.head[0] = 'f'; r.f.head[1] = 'i';
@@ -513,7 +513,7 @@ dumpall(struct application *ap, int depth)
 		return;			/* no escape */
 
 	/* Escape record */
-	memset( (char *)&r, 0, sizeof(r) );
+	memset((char *)&r, 0, sizeof(r));
 
 	/*XXX*/
 	r.e.head[0] = 'e'; r.e.head[1] = 's';
@@ -539,7 +539,7 @@ dumpray(struct rayinfo *rp)
 #endif
 
 	/* Reflection record */
-	memset( (char *)&r, 0, sizeof(r) );
+	memset((char *)&r, 0, sizeof(r));
 
 	/*XXX*/
 	r.r.head[0] = 'r'; r.r.head[1] = 'e';

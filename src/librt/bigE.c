@@ -1220,7 +1220,7 @@ classify_seg( struct seg *seg, struct soltab *shoot, struct xray *rp, struct dg_
 	struct ray_data rd;
 	struct soltab *ret = IN_SOL;
 
-	bzero( &rd, sizeof( struct ray_data ) );
+	memset(&rd, 0, sizeof( struct ray_data ));
 
 	BU_GETSTRUCT( rd.seghead, seg );
 	BU_LIST_INIT( &rd.seghead->l );
@@ -1322,7 +1322,7 @@ shoot_and_plot(point_t			start_pt,
 
 	CK_ETREE( eptr );
 
-	bzero( &rd, sizeof( struct ray_data ) );
+	memset(&rd, 0, sizeof( struct ray_data ));
 
 	BU_GETSTRUCT( rd.seghead, seg );
 	BU_LIST_INIT( &rd.seghead->l );

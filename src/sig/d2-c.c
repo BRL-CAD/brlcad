@@ -67,9 +67,9 @@ int main(int argc, char **argv)
 		/* find max */
 		num = (nr > ni) ? nr : ni;
 		if( nr < num )
-			bzero( &real[nr], (num-nr)*sizeof(double) );
+			memset(&real[nr], 0, (num-nr)*sizeof(double));
 		if( ni < num )
-			bzero( &imag[ni], (num-ni)*sizeof(double) );
+			memset(&imag[ni], 0, (num-ni)*sizeof(double));
 
 		obufp = &obuf[0];
 		for( i = 0; i < num; i++ ) {

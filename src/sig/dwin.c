@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 	xform_end = xform_start + L-1;
 
 	/* initialize data buffer */
-	bzero( (char *)buf, BSIZE*sizeof(*buf) );
+	memset((char *)buf, 0, BSIZE*sizeof(*buf));
 	buf_start = -BSIZE;
 	buf_num = BSIZE;
 	buf_index = 0;

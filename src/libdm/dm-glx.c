@@ -215,7 +215,7 @@ char *argv[];
 
   /* Only need to do this once for this display manager */
   if(!count){
-    bzero((void *)&head_glx_vars, sizeof(struct glx_vars));
+    memset((void *)&head_glx_vars, 0, sizeof(struct glx_vars));
     BU_LIST_INIT( &head_glx_vars.l );
   }
 

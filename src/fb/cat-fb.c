@@ -905,7 +905,7 @@ slop_lines(int nlines)
 	if (rlines < nlines) {
 		if (writelines(rlines, (char *)buf0p) < 0)
 			bu_exit(1, NULL);
-		bzero( (char *)buf0p, rlines * bytes_per_line);
+		memset((char *)buf0p, 0, rlines * bytes_per_line);
 		buf0p = buffer;
 		nlines -= rlines;
 		xpos -= rlines;
@@ -913,7 +913,7 @@ slop_lines(int nlines)
 	}
 	if (writelines(nlines, (char *)buf0p) < 0)
 		bu_exit(1, NULL);
-	bzero( (char *)buf0p, bytes_per_line * nlines);
+	memset((char *)buf0p, 0, bytes_per_line * nlines);
 	buf0p += bytes_per_line * nlines;
 	if (buf0p >= &buffer[BUFFER_SIZE])
 		buf0p -= BUFFER_SIZE;
@@ -944,7 +944,7 @@ writelines(int nlines, register char *buf)
 			bu_exit(0, NULL);
 		}
 		if( clear ) {
-			bzero( (char *)scanline, scr_width*3 );
+			memset((char *)scanline, 0, scr_width*3);
 		} else if( overlay_from_stdin )  {
 			if( fread( (char *)scanline, scr_width*3, 1, stdin ) != 1 )  {
 				clear = 1;

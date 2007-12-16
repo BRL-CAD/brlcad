@@ -1440,7 +1440,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	bzero( (char *)&pa, sizeof(pa) );
+	memset((char *)&pa, 0, sizeof(pa));
 	pa.pa_doopt = 0;		/* no UV stuff */
 	pa.pa_tol_sq = tol->dist_sq;
 	if( rt_arb_mk_planes( &pa, aip, "(tess)" ) < 0 )  return(-2);
@@ -1551,7 +1551,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	bzero( (char *)&pa, sizeof(pa) );
+	memset((char *)&pa, 0, sizeof(pa));
 	pa.pa_doopt = 0;		/* no UV stuff */
 	pa.pa_tol_sq = tol->dist_sq;
 	if( rt_arb_mk_planes( &pa, aip, "(tnurb)" ) < 0 )  return(-2);

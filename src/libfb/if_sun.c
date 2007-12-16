@@ -528,10 +528,10 @@ register int		count;
 	if( (p == (RGBpixel *)0) ||
 	    ((*p)[RED] == 0 && (*p)[GRN] == 0 && (*p)[BLU] == 0) ) {
 		/* black */
-		bzero( memp, count*sizeof(RGBpixel) );
+		memset(memp, 0, count*sizeof(RGBpixel));
 	} else if( ((*p)[RED] == (*p)[GRN]) && ((*p)[GRN] == (*p)[BLU]) ) {
 		/* R, G, and B are equal */
-		memset( memp, (*p)[RED] );
+		memset(memp, (*p)[RED]);
 	} else {
 		while( count-- > 0 ) {
 			COPYRGB( *memp, *p );
@@ -656,7 +656,7 @@ RGBpixel	*pp;
 		int		yzoom = ifp->if_yzoom;
 
 		/* Clear buffer to black. */
-		(void) memset( scan_mpr_buf, 0xff, XMAXWINDOW );
+		(void) memset(scan_mpr_buf, 0xff, XMAXWINDOW);
 
 		for( x = xlft; x <= xrgt; x++, sx += xzoom, pp++ ) {
 			register int	value;

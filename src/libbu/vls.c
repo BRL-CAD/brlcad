@@ -1000,7 +1000,7 @@ bu_vls_spaces(register struct bu_vls *vp, int cnt)
     if( cnt <= 0 )  return;
     if( vp->vls_offset + vp->vls_len + cnt+1 >= vp->vls_max )
 	bu_vls_extend( vp, cnt );
-    memset( vp->vls_str + vp->vls_offset + vp->vls_len, ' ', cnt );
+    memset(vp->vls_str + vp->vls_offset + vp->vls_len, ' ', cnt);
     vp->vls_len += cnt;
 }
 

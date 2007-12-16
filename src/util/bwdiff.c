@@ -105,10 +105,10 @@ main(int argc, char **argv)
 		p2 = &ibuf2[0];
 		op = &obuf[0];
 		if( m < n ) {
-			 bzero( (char *)(&ibuf2[m]), (n - m));
+			 memset((char *)(&ibuf2[m]), 0, (n - m));
 		}
 		if( m > n ) {
-			 bzero( (char *)(&ibuf1[n]), (m - n));
+			 memset((char *)(&ibuf1[n]), 0, (m - n));
 			 n = m;
 		}
 		/* unrolled for speed */

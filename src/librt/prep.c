@@ -915,9 +915,9 @@ rt_clean(register struct rt_i *rtip)
 
 		/* Free space partitions */
 		rt_fr_cut( rtip, &(rtip->rti_CutHead) );
-		bzero( (char *)&(rtip->rti_CutHead), sizeof(union cutter) );
+		memset((char *)&(rtip->rti_CutHead), 0, sizeof(union cutter));
 		rt_fr_cut( rtip, &(rtip->rti_inf_box) );
-		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
+		memset((char *)&(rtip->rti_inf_box), 0, sizeof(union cutter));
 	}
 	rt_cut_clean(rtip);
 
@@ -1730,7 +1730,7 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 	if( rtip->nregions > objs->old_nregions ) {
 		rtip->Regions = (struct region **)bu_realloc( rtip->Regions,
 				     rtip->nregions * sizeof( struct region *), "rtip->Regions" );
-		memset( rtip->Regions, 0, rtip->nregions );
+		memset(rtip->Regions, 0, rtip->nregions);
 	}
 
 
@@ -1760,7 +1760,7 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 		rtip->rti_Solids = (struct soltab **)bu_realloc( rtip->rti_Solids,
 								 rtip->nsolids * sizeof( struct soltab *),
 								 "rtip->rti_Solids" );
-		memset( rtip->rti_Solids, 0, rtip->nsolids * sizeof(struct soltab *));
+		memset(rtip->rti_Solids, 0, rtip->nsolids * sizeof(struct soltab *));
 	}
 
 	bitno = 0;

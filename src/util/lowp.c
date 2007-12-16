@@ -106,7 +106,7 @@ main(int argc, char **argv)
 	}
 
 	/* First and last are black */
-	bzero( out1, pix_line*3 );
+	memset(out1, 0, pix_line*3);
 	write( 1, out1, pix_line*3 );
 
 	for( y=1; y < nlines-2; y++ )  {
@@ -142,7 +142,7 @@ c[ i-3]    + c[ i  ]*3  + c[ i+3]
 	}
 
 	/* First and last are black */
-	bzero( out1, pix_line*3 );
+	memset(out1, 0, pix_line*3);
 	write( 1, out1, pix_line*3 );
 
 	return 0;

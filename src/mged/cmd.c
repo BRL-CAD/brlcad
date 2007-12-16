@@ -784,7 +784,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		if(name_not_used){
 			clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
-			bzero((void *)clp, sizeof(struct cmd_list));
+			memset((void *)clp, 0, sizeof(struct cmd_list));
 			BU_LIST_APPEND(&head_cmd_list.l, &clp->l);
 			clp->cl_cur_hist = head_cmd_list.cl_cur_hist;
 			bu_vls_init(&clp->cl_more_default);

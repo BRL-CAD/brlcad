@@ -1871,7 +1871,7 @@ nmg_show_broken_classifier_stuff(long int *p, long int **classlist, int all_new,
 			broken_tab_len = m->maxindex+1;
 		}
 		if (all_new) {
-			bzero( (char *)broken_tab,  (m->maxindex+1) * sizeof(long));
+			memset((char *)broken_tab, 0,  (m->maxindex+1) * sizeof(long));
 		}
 	}
 

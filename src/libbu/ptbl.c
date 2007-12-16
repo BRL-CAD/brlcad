@@ -87,7 +87,7 @@ bu_ptbl_reset(struct bu_ptbl *b)
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_reset(%8x)\n", b);
 	b->end = 0;
-	memset( (char *)b->buffer, 0, b->blen*sizeof(long *) );	/* no peeking */
+	memset((char *)b->buffer, 0, b->blen*sizeof(long *));	/* no peeking */
 }
 
 

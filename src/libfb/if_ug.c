@@ -241,7 +241,7 @@ FBIO	*ifp;
 RGBpixel	*pp;
 {
 	if( pp == RGBPIXEL_NULL )  {
-		bzero( ugbuf, ifp->if_width * ifp->if_height * 4 );
+		memset(ugbuf, 0, ifp->if_width * ifp->if_height * 4);
 	} else {
 		register char *cp;
 		register int todo;
@@ -471,7 +471,7 @@ FBIO *ifp;
 	if( x_window < 0 ) x_window = 0;
 	if( y_window < 0 ) y_window = 0;
 
-	bzero( ugbuf2, ifp->if_width*ifp->if_height*4 );	/*XXX*/
+	memset(ugbuf2, 0, ifp->if_width*ifp->if_height*4);	/*XXX*/
 
 	numx = (ifp->if_width-x_window) / x_zoom;
 	numy = (ifp->if_height-y_window) / y_zoom;

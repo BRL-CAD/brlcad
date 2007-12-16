@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 		if( n <= 0 )
 			break;
 		if( n < L )
-			bzero( (char *)&data[n], (L-n)*sizeof(*data) );
+			memset((char *)&data[n], 0, (L-n)*sizeof(*data));
 
 		for( i = 0; i < L; i++ ) {
 			r[i] = 0;

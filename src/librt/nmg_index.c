@@ -592,7 +592,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 	}
 
 	NMG_CK_MODEL(m);
-	bzero( (char *)ctr, sizeof(*ctr) );
+	memset((char *)ctr, 0, sizeof(*ctr));
 
 	ptrs = (long **)bu_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
 

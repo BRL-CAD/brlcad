@@ -103,7 +103,7 @@ main(int argc, char **argv)
 		fb_write( fbp, 0, i, buf, 256 );
 
 	/* Green */
-	bzero( (char *)buf, sizeof(buf) );
+	memset((char *)buf, 0, sizeof(buf));
 	for( i=0; i<255; i++) {
 		buf[3*i+RED] = 1;
 		buf[3*i+GRN] = i;
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 		fb_write( fbp, 0, i, buf, 256 );
 
 	/* Blue */
-	bzero( (char *)buf, sizeof(buf) );
+	memset((char *)buf, 0, sizeof(buf));
 	for( i=0; i<255; i++)  {
 		buf[3*i+RED] = 1;
 		buf[3*i+GRN] = 1;
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 
 	do  {
 		/* Build color map for current value */
-		bzero( (char *)&cm, sizeof(cm) );
+		memset((char *)&cm, 0, sizeof(cm));
 		for( i=0; i<col[RED]; i++ )
 			cm.cm_red[i] = 0xFFFF;
 		for( ; i<255; i++ )

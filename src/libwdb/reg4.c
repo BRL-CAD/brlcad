@@ -86,7 +86,7 @@ int			inherit;
 
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.c.c_id = ID_COMB;
 	/* XXX What values to pass for FASTGEN plate and volume regions? */
 	if( region )
@@ -142,7 +142,7 @@ int		inherit;
 
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.c.c_id = ID_COMB;
 	if( region ){
 		switch( region )  {
@@ -203,7 +203,7 @@ int		region;
 
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.c.c_id = ID_COMB;
 	if( region )
 		rec.c.c_flags = DBV4_REGION;
@@ -235,7 +235,7 @@ int		bool_op;
 
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.M.m_id = ID_MEMB;
 	NAMEMOVE( name, rec.M.m_instname );
 	if( bool_op )

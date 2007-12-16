@@ -274,7 +274,7 @@ char	*argv[];
 	if( binary && output_file ) {
 		char buf[81];	/* need exactly 80 char for header */
 
-		bzero( buf, sizeof( buf ) );
+		memset(buf, 0, sizeof( buf ));
 		if (inches) {
 			strcpy( buf, "BRL-CAD generated STL FILE (Units=inches)");
 		} else {
@@ -283,7 +283,7 @@ char	*argv[];
 		write(bfd, &buf, 80);
 
 		/* write a place keeper for the number of triangles */
-		bzero( buf, 4 );
+		memset(buf, 0, 4);
 		write(bfd, &buf, 4);
 	}
 
@@ -413,7 +413,7 @@ int material_id;
 			write(bfd, &buf, 80);
 
 			/* write a place keeper for the number of triangles */
-			bzero( buf, 4 );
+			memset(buf, 0, 4);
 			write(bfd, &buf, 4);
 		}
 	}
@@ -461,7 +461,7 @@ int material_id;
 				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 					continue;
 
-				bzero( vert_buffer, sizeof( vert_buffer ) );
+				memset(vert_buffer, 0, sizeof( vert_buffer ));
 
 				if( !binary ) {
 					fprintf( fp, "  facet normal %f %f %f\n", V3ARGS( facet_normal ) );

@@ -465,7 +465,7 @@ OutBuild(void)				/* returns true if successful */
 		fprintf(stderr,"pl-fb:  band read error\n");
 	} else {
 	    /* clear pixels in the band */
-	    bzero( (char *)buffer, buffersize );
+	    memset((char *)buffer, 0, buffersize);
 	}
 
 	while ( (vp = Dequeue( hp, &hp->first )) != NULL )
@@ -1419,7 +1419,7 @@ main(int argc, char **argv)
 	fprintf(stderr,"pl-fb: malloc error2\n");
 	bu_exit(1, NULL);
     }
-    bzero( (char *)band, (BANDSLOP)*sizeof(struct band) );
+    memset((char *)band, 0, (BANDSLOP)*sizeof(struct band));
     bandEnd = &band[BANDS];
     if( single_banded && over ) {
 	/* Read in initial screen */

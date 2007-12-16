@@ -423,7 +423,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 	NMG_CK_SHELL( s );
 	m = nmg_find_model( &s->l.magic );
 
-	bzero( &rd, sizeof( struct ray_data ) );
+	memset(&rd, 0, sizeof( struct ray_data ));
 
 	rp = &ap->a_ray;
 	rd.tol = &tol;
@@ -432,7 +432,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 	rd.ap = ap;
 	rd.manifolds = manifolds;
 	rd.hitmiss = hitmiss;
-	bzero( hitmiss, m->maxindex*sizeof( struct hitmiss *) );
+	memset(hitmiss, 0, m->maxindex*sizeof( struct hitmiss *));
 	BU_LIST_INIT(&rd.rd_hit);
 	BU_LIST_INIT(&rd.rd_miss);
 	BU_LIST_INIT( &seghead.l );
@@ -509,7 +509,7 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	ra = r->ra_p;
 	m = r->m_p;
 	NMG_CK_MODEL( m );
-	bzero( &ap2, sizeof( struct application ) );
+	memset(&ap2, 0, sizeof( struct application ));
 	ap2.a_resource = ap->a_resource;
 	ap2.a_ray = ap->a_ray;
 
@@ -1059,7 +1059,7 @@ shrink_wrap(struct shell *s)
 	sd.manifolds = nmg_manifolds( m );
 	sd.hitmiss = (struct hitmiss **)bu_calloc( 2 * m->maxindex, sizeof( struct hitmiss *), "nmg geom hit list");
 
-	bzero( &ap, sizeof( struct application ) );
+	memset(&ap, 0, sizeof( struct application ));
 	ap.a_uptr = (genptr_t)&sd;
 	ap.a_rt_i = rtip;
 	ap.a_miss = miss;
@@ -1364,7 +1364,7 @@ refine_edges(struct shell *s)
 	bu_ptbl_init( &edges_2, 64, "edges_2" );
 	next = &edges_2;
 
-	bzero( &ap, sizeof( struct application ) );
+	memset(&ap, 0, sizeof( struct application ));
 	ap.a_rt_i = rtip;
 	ap.a_miss = miss;
 	ap.a_overlap = a_overlap;
@@ -1940,7 +1940,7 @@ main(int argc, char **argv)
 
 	rtip->rti_space_partition = RT_PART_NUBSPT;
 
-	bzero( &ap, sizeof( struct application ) );
+	memset(&ap, 0, sizeof( struct application ));
 	ap.a_rt_i = rtip;
 	ap.a_hit = hit;
 	ap.a_miss = miss;

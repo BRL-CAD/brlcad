@@ -2200,7 +2200,7 @@ rt_nmg_export_internal(struct bu_external *ep, const struct rt_db_internal *ip, 
 	NMG_CK_MODEL(m);
 
 	/* As a by-product, this fills in the ptrs[] array! */
-	bzero( (char *)&cntbuf, sizeof(cntbuf) );
+	memset((char *)&cntbuf, 0, sizeof(cntbuf));
 	ptrs = nmg_m_struct_count( &cntbuf, m );
 
 	/* Collect overall new subscripts, and structure-specific indices */
@@ -2541,7 +2541,7 @@ rt_nmg_export5(
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	bzero((char *)&cntbuf, sizeof(cntbuf));
+	memset((char *)&cntbuf, 0, sizeof(cntbuf));
 	ptrs = nmg_m_struct_count( &cntbuf, m);
 
 	ecnt = (struct nmg_exp_counts *)bu_calloc( m->maxindex+1,

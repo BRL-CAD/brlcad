@@ -259,7 +259,7 @@ main(int argc, char **argv)
 
 	/* Fill in background buffer */
 	if (!rle_dflt_hdr.bg_color) {
-		(void)bzero((char *)bg_buf, sizeof(RGBpixel) * screen_width);
+		(void)memset((char *)bg_buf, 0, sizeof(RGBpixel) * screen_width);
 	} else {
 		for( i=0; i<screen_xlen; i++ )  {
 			bg_buf[i][0] = rle_dflt_hdr.bg_color[0];

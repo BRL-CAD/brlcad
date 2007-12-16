@@ -440,7 +440,7 @@ db_fwrite_ident( FILE *fp, const char *title, double local2mm )
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_ident( x%x, '%s', %g ) code=%d\n",
 		fp, title, local2mm, code );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.i.i_id = ID_IDENT;
 	rec.i.i_units = code;
 	(void)strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );

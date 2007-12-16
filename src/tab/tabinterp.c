@@ -365,7 +365,7 @@ create_chan( char *num, int len, char *itag )
 			bu_log("create_chan: internal error\n");
 			return -1;
 		} else {
-			bzero( (char *)&chan[nchans++], sizeof(struct chan) );
+			memset((char *)&chan[nchans++], 0, sizeof(struct chan));
 		}
 	}
 

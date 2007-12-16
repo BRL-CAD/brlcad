@@ -68,7 +68,7 @@ spm_init(int N, int elsize)
 	mapp = (spm_map_t *)bu_malloc( sizeof(spm_map_t), "spm_map_t");
 	if( mapp == SPM_NULL )
 		return( SPM_NULL );
-	bzero( (char *)mapp, sizeof(spm_map_t) );
+	memset((char *)mapp, 0, sizeof(spm_map_t));
 
 	mapp->elsize = elsize;
 	mapp->ny = N/2;

@@ -311,7 +311,7 @@ char *argv[];
   if(!get_args(argc, argv))
     bu_exit (1, "%s", usage);
 
-  bzero((void *)&HeadPlot, sizeof(struct plot_list));
+  memset((void *)&HeadPlot, 0, sizeof(struct plot_list));
   BU_LIST_INIT(&HeadPlot.l);
 
   MAT_IDN(toViewcenter);

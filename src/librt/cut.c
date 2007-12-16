@@ -951,7 +951,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	bu_hist_init( &rtip->rti_hist_cell_pieces, 0.0, 400.0, 400 );
 	bu_hist_init( &rtip->rti_hist_cutdepth, 0.0,
 		      (fastf_t)rtip->rti_cutdepth+1, rtip->rti_cutdepth+1 );
-	bzero( rtip->rti_ncut_by_type, sizeof(rtip->rti_ncut_by_type) );
+	memset(rtip->rti_ncut_by_type, 0, sizeof(rtip->rti_ncut_by_type));
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 	if( RT_G_DEBUG&DEBUG_CUT )  {
 		rt_pr_cut_info( rtip, "Cut" );

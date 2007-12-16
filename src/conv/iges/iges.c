@@ -300,8 +300,8 @@ get_props( props , comb )
     RT_CK_COMB( comb );
 
     endp = strchr( bu_vls_addr(&comb->shader), ' ' );
-    bzero( props->material_name, 32 );
-    bzero( props->material_params, 60 );
+    memset(props->material_name, 0, 32);
+    memset(props->material_params, 0, 60);
     if( endp )  {
 	int	len;
 	len = endp - bu_vls_addr(&comb->shader);

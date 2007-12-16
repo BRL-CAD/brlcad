@@ -510,7 +510,7 @@ main(int argc, char **argv)
 	if(trans)  {
 		/* xmitr */
 		if (argc != 1) goto usage;
-		bzero((char *)&sinhim, sizeof(sinhim));
+		memset((char *)&sinhim, 0, sizeof(sinhim));
 		host = argv[0];
 		if (atoi(host) > 0 )  {
 			/* Numeric */

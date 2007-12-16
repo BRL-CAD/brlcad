@@ -137,8 +137,8 @@ void mk_trans_tbl()
 	register int i, j, k;
 	register double d;
 
-	(void)bzero((char *)clip_h, sizeof(clip_h));
-	(void)bzero((char *)clip_l, sizeof(clip_l));
+	(void)memset((char *)clip_h, 0, sizeof(clip_h));
+	(void)memset((char *)clip_l, 0, sizeof(clip_l));
 
 	/* create translation map */
 	for (j = 0; j < 65536 ; ++j) {

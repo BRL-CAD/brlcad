@@ -658,7 +658,7 @@ bu_kill_workers(tbl)
 	}
     }
 
-    bzero( (char *)tbl, sizeof(tbl) );
+    memset((char *)tbl, 0, sizeof(tbl));
 }
 #  endif   /* end check if sgi_4d defined */
 

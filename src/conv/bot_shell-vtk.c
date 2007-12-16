@@ -407,7 +407,7 @@ char *argv[];
 	tol.para = 1 - tol.perp;
 
 	/* Get command line arguments. */
-	bzero( &ap, sizeof( struct application ) );
+	memset(&ap, 0, sizeof( struct application ));
 	ap.a_onehit = 1;
 	while( (c=bu_getopt( argc, argv, "nmd:g:o:")) != EOF)
 	{

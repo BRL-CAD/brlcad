@@ -266,7 +266,7 @@ void free_overlap (struct g_lint_ovlp *op)
     if (op -> glo_segs != G_LINT_SEG_NULL)
 	bu_log("%s:%d: Memory Leak!\n", __FILE__, __LINE__);
 
-    bzero((void *) op, sizeof(struct g_lint_ovlp));
+    memset((void *) op, 0, sizeof(struct g_lint_ovlp));
     bu_free((genptr_t) op, "g_lint overlap structure");
 }
 

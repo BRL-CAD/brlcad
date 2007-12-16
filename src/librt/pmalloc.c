@@ -696,7 +696,7 @@ register struct rt_pm_res *pmem;
 
 	size *= num;
 	if ( (p = rt_pmalloc((long)size, pmem)) )  {
-	    memset( p, 0, size );
+	    memset(p, 0, size);
 	}
 	return (p);
 }

@@ -2913,7 +2913,7 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 			int max_verts_min;
 
 			/* count the number of times vertices from the current piece appear in the remaining faces */
-			(void)memset( vert_count, '\0', bot->num_faces );
+			(void)memset(vert_count, '\0', bot->num_faces);
 			max_verts = 0;
 			for( i=0 ; i<bot->num_faces ; i++) {
 				int vert_num;

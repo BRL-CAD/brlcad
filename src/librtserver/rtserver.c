@@ -184,7 +184,7 @@ fillItemTree( jobject parent_node,
 		_p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
 		bu_ptbl_trunc( &rts_resource.xrays, BU_PTBL_LEN( &rts_resource.xrays )-1 );\
 		pthread_mutex_unlock( &resource_mutex ); \
-		bzero( (_p), sizeof( struct xray ) ); \
+		memset((_p), 0, sizeof( struct xray )); \
 	} else { \
                 xrays_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
@@ -205,7 +205,7 @@ fillItemTree( jobject parent_node,
 	       _p = BU_LIST_FIRST( rtserver_job, &rts_resource.rtserver_jobs ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
-	       bzero( (_p), sizeof( struct rtserver_job ) ); \
+	       memset((_p), 0, sizeof( struct rtserver_job )); \
 	} else { \
                 rtserver_jobs_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
@@ -238,7 +238,7 @@ fillItemTree( jobject parent_node,
 	       _p = BU_LIST_FIRST( ray_hit, &rts_resource.ray_hits ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
-	       bzero( (_p), sizeof( struct ray_hit ) ); \
+	       memset((_p), 0, sizeof( struct ray_hit )); \
 	       BU_LIST_INIT( &(_p)->l ); \
 	} else { \
                 ray_hits_count++; \
@@ -277,7 +277,7 @@ fillItemTree( jobject parent_node,
 	       _p = BU_LIST_FIRST( ray_result, &rts_resource.ray_results ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
-	       bzero( (_p), sizeof( struct ray_result ) ); \
+	       memset((_p), 0, sizeof( struct ray_result )); \
 	} else { \
                 ray_results_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \
@@ -293,7 +293,7 @@ fillItemTree( jobject parent_node,
 	       _p = BU_LIST_FIRST( rtserver_result, &rts_resource.rtserver_results ); \
 	       BU_LIST_DEQUEUE( &(_p)->l ); \
 	       pthread_mutex_unlock( &resource_mutex ); \
-	       bzero( (_p), sizeof( struct rtserver_result ) ); \
+	       memset((_p), 0, sizeof( struct rtserver_result )); \
 	} else { \
                 rtserver_results_count++; \
 		pthread_mutex_unlock( &resource_mutex ); \

@@ -275,7 +275,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 		 */
 		if( bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK) )  {
 		    ptr = malloc(size);
-		    bzero(ptr, size);
+		    memset(ptr, 0, size);
 		} else {
 		    ptr = calloc(cnt, sz);
 		}

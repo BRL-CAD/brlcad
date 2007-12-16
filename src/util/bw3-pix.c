@@ -76,11 +76,11 @@ main(int argc, char **argv)
 		num = (nr > ng) ? nr : ng;
 		if( nb > num ) num = nb;
 		if( nr < num )
-			bzero( (char *)&red[nr], num-nr );
+			memset((char *)&red[nr], 0, num-nr);
 		if( ng < num )
-			bzero( (char *)&green[ng], num-ng );
+			memset((char *)&green[ng], 0, num-ng);
 		if( nb < num )
-			bzero( (char *)&blue[nb], num-nb );
+			memset((char *)&blue[nb], 0, num-nb);
 
 		obufp = &obuf[0];
 		for( i = 0; i < num; i++ ) {

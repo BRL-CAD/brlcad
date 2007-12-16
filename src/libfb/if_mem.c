@@ -292,9 +292,9 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 	if( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
 		int	bytes = ifp->if_width*ifp->if_height*3;
 		if( v[RED] == 0 )
-			bzero( (char *)cp, bytes );	/* all black */
+			memset((char *)cp, 0, bytes);	/* all black */
 		else
-			memset( cp, v[RED], bytes );	/* all grey */
+			memset(cp, v[RED], bytes);	/* all grey */
 	} else {
 		for( n = ifp->if_width*ifp->if_height; n; n-- ) {
 			*cp++ = v[RED];

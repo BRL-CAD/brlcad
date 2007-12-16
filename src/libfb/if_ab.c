@@ -437,7 +437,7 @@ ab_clear(FBIO *ifp, unsigned char *bgpp)
 
     if( bgpp == PIXEL_NULL )  {
 	/* Clear to black */
-	bzero( ifp->if_rgb, 720*486*3 );
+	memset(ifp->if_rgb, 0, 720*486*3);
     } else {
 	r = (bgpp)[RED];
 	g = (bgpp)[GRN];
@@ -710,8 +710,8 @@ ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
 	return got;		/* OK */
     }
 
-    bzero((char *)&sinhim, sizeof(sinhim));
-    bzero((char *)&sinme, sizeof(sinme));
+    memset((char *)&sinhim, 0, sizeof(sinhim));
+    memset((char *)&sinme, 0, sizeof(sinme));
 
     if( (rlogin_service = getservbyname("shell", "tcp")) == NULL )  {
 	fb_log("getservbyname(shell,tcp) fail\n");

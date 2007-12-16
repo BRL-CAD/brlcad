@@ -166,7 +166,7 @@ fileout(register int fd, char *name)
 	while( (count = bu_mread( fd, buf, bufsize )) > 0 )  {
 		if( count < bufsize )  {
 			/* Short read, zero rest of buffer */
-			bzero( buf+count, bufsize-count );
+			memset(buf+count, 0, bufsize-count);
 		}
 		if( (out = write( 1, buf, bufsize )) != bufsize )  {
 			perror("files-tape: write");

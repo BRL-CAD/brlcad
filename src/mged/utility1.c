@@ -798,7 +798,7 @@ sol_number(matp_t matrix, char *name, int *old)
 	struct identt idbuf1, idbuf2;
 	int readval;
 
-	bzero( &idbuf1, sizeof( struct identt ) );
+	memset(&idbuf1, 0, sizeof( struct identt ));
 	(void)strncpy(idbuf1.i_name, name, NAMESIZE);
 	MAT_COPY(idbuf1.i_mat, matrix);
 

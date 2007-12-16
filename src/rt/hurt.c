@@ -1935,7 +1935,7 @@ static int hit_nothing(register struct application *ap)
 	    struct shadework sw;
 	} u;
 
-	memset( (char *)&u, 0, sizeof(u) );
+	memset((char *)&u, 0, sizeof(u));
 	/* Make "miss" hit the environment map */
 	/* Build up the fakery */
 	u.part.pt_magic = PT_MAGIC;
@@ -2075,7 +2075,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	goto out;
     }
 
-    memset( (char *)&sw, 0, sizeof(sw) );
+    memset((char *)&sw, 0, sizeof(sw));
     sw.sw_transmit = sw.sw_reflect = 0.0;
     sw.sw_refrac_index = 1.0;
     sw.sw_extinction = 0;

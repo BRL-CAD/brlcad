@@ -67,7 +67,7 @@ const char	*string_arg;
 
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)rec, sizeof(rec) );
+	memset((char *)rec, 0, sizeof(rec));
 	rec[0].ss.ss_id = DBID_STRSOL;
 	NAMEMOVE( name, rec[0].ss.ss_name );
 	strncpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword)-1 );

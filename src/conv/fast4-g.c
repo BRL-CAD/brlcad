@@ -265,7 +265,7 @@ get_line(void)
 {
     int len;
 
-    bzero( (void *)line , LINELEN );
+    memset((void *)line, 0, LINELEN);
 
     if( bu_fgets( line , LINELEN , fdin ) == (char *)NULL )
 	return( 0 );

@@ -1596,7 +1596,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 
 	if( end-start >= 128 )  bu_bomb("nmg_special_wedge_processing: array overflow\n");
 	if( !exclude )  {
-		bzero( (char *)not_these, sizeof(not_these) );
+		memset((char *)not_these, 0, sizeof(not_these));
 		exclude = not_these;
 	}
 
@@ -1978,7 +1978,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 	NMG_CK_FACEUSE(fu2);
 	if(eg)  NMG_CK_EDGE_G_LSEG(eg);
 
-	bzero( (char *)rs, sizeof(*rs) );
+	memset((char *)rs, 0, sizeof(*rs));
 	rs->magic = NMG_RAYSTATE_MAGIC;
 	rs->tol = tol;
 	rs->vu = (struct vertexuse **)b->buffer;

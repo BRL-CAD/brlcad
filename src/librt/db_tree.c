@@ -124,7 +124,7 @@ db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct reso
 	RT_CK_DBI(dbip);
 	RT_CK_RESOURCE(resp);
 
-	bzero( (char *)tsp, sizeof(*tsp) );
+	memset((char *)tsp, 0, sizeof(*tsp));
 	tsp->magic = RT_DBTS_MAGIC;
 	tsp->ts_dbip = dbip;
 	tsp->ts_resp = resp;
@@ -178,7 +178,7 @@ db_free_combined_tree_state(register struct combined_tree_state *ctsp)
 	RT_CK_CTS(ctsp);
 	db_free_full_path( &(ctsp->cts_p) );
 	db_free_db_tree_state( &(ctsp->cts_s) );
-	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
+	memset((char *)ctsp, 0, sizeof(*ctsp));		/* sanity */
 	bu_free( (char *)ctsp, "combined_tree_state");
 }
 

@@ -231,7 +231,7 @@ fbserv_makeconn(int fd,
 	return(PKC_ERROR);
     }
 
-    bzero((char *)pc, sizeof(struct pkg_conn));
+    memset((char *)pc, 0, sizeof(struct pkg_conn));
     pc->pkc_magic = PKG_MAGIC;
     pc->pkc_fd = fd;
     pc->pkc_switch = switchp;

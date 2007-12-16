@@ -284,7 +284,7 @@ rt_comb_export5(
 	/* First pass -- count number of non-identity matricies,
 	 * number of leaf nodes, number of operator nodes.
 	 */
-	bzero( (char *)&tcs, sizeof(tcs) );
+	memset((char *)&tcs, 0, sizeof(tcs));
 	tcs.magic = DB_TREE_COUNTER_STATE_MAGIC;
 	if( comb->tree )
 		max_stack_depth = db_tree_counter( comb->tree, &tcs );

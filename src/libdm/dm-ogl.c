@@ -1354,7 +1354,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
   }
 #endif
 
-  bzero((void *)&vitemp, sizeof(XVisualInfo));
+  memset((void *)&vitemp, 0, sizeof(XVisualInfo));
   /* Try to satisfy the above desires with a color visual of the
    * greatest depth */
 

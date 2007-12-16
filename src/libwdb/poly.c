@@ -65,7 +65,7 @@ char	*name;
 	/* In v5, the caller should be using BoT solids */
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.p.p_id = ID_P_HEAD;
 	NAMEMOVE( name, rec.p.p_name );
 	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
@@ -96,7 +96,7 @@ fastf_t	norms[][3];
 	/* In v5, the caller should be using BoT solids */
 	BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)&rec, sizeof(rec) );
+	memset((char *)&rec, 0, sizeof(rec));
 	rec.q.q_id = ID_P_DATA;
 	rec.q.q_count = npts;
 	for( i=0; i<npts; i++ )  {

@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 	exit(1);
     }
 
-    bzero(&alist, sizeof(alist));
+    memset(&alist, 0, sizeof(alist));
     alist.bitmapcount = 5;
     alist.commonattr = ATTR_CMN_OBJID;
 

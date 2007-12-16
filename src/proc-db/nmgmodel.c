@@ -118,8 +118,8 @@ make_3manifold_bits(struct bn_tol *tol)
 	plane_t plane;
 	struct faceuse *fu_end;
 
-	bzero((char *)vertl, sizeof(vertl));
-	bzero((char *)f_vertl, sizeof(f_vertl));
+	memset((char *)vertl, 0, sizeof(vertl));
+	memset((char *)f_vertl, 0, sizeof(f_vertl));
 
 	/* front right */
 	f_vertl[0] = &vertl[0];

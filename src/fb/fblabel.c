@@ -265,14 +265,14 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 
 	 /* Read in the character bit map, with two blank lines on each end. */
 	 for (i = 0; i < 2; i++)
-		bzero( (char *)&filterbuf[i][0], (totwid+4)*sizeof(int) );
+		memset((char *)&filterbuf[i][0], 0, (totwid+4)*sizeof(int));
 
 	 for ( ln=0, i = height + 1; i >= 2; i--, ln++)
 		 fill_buf (width, &filterbuf[i][0],
 			&vfp->vf_bits[vdp->vd_addr + bytes_wide*ln] );
 
 	 for (i = height + 2; i < height + 4; i++)
-		bzero( (char *)&filterbuf[i][0], (totwid+4)*sizeof(int) );
+		memset((char *)&filterbuf[i][0], 0, (totwid+4)*sizeof(int));
 
 	 /* Initial base line for filtering depends on odd flag. */
 	if( vdp->vd_down % 2 )

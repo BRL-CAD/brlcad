@@ -101,7 +101,7 @@ char	*devname;
 			ret = 0;
 			goto	safe_exit;
 		}
-	(void) memset( (char *) pixgrid, NUL, sizeof(unsigned char)*devwid*3 );
+	(void) memset((char *) pixgrid, NUL, sizeof(unsigned char)*devwid*3);
 	if( fbiop != FBIO_NULL )
 		{
 #if SGI_WINCLOSE_BUG

@@ -169,7 +169,7 @@ main(int argc, char **argv)
 
 	image = 0;
 	while( image < maximage )  {
-		bzero( obuf, swathbytes );
+		memset(obuf, 0, swathbytes);
 		/*
 		 * Collect together one swath
 		 */

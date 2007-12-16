@@ -309,7 +309,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     _setmode(netfd, _O_BINARY);
 #endif
 
-    bzero((char *)&saServer, sizeof(saServer));
+    memset((char *)&saServer, 0, sizeof(saServer));
 
     if (atoi(service) > 0) {
 	saServer.sin_port = htons((unsigned short)atoi(service));
@@ -334,8 +334,8 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 
     return(pkg_makeconn(netfd, switchp, errlog));
 #else
-    bzero((char *)&sinhim, sizeof(sinhim));
-    bzero((char *)&sinme, sizeof(sinme));
+    memset((char *)&sinhim, 0, sizeof(sinhim));
+    memset((char *)&sinme, 0, sizeof(sinme));
 
 #ifdef HAVE_SYS_UN_H
     if( host == NULL || strlen(host) == 0 || strcmp(host,"unix") == 0 ) {
@@ -480,7 +480,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
     /* WIN32 STUFF ========================= */
 #ifdef _WIN32
-    bzero((char *)&saServer, sizeof(saServer));
+    memset((char *)&saServer, 0, sizeof(saServer));
 
     if (atoi(service) > 0) {
 	saServer.sin_port = htons((unsigned short)atoi(service));
@@ -527,7 +527,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     return(pkg_listenfd);
     /* END WIN32 STUFF ========================= */
 #else
-    bzero((char *)&sinme, sizeof(sinme));
+    memset((char *)&sinme, 0, sizeof(sinme));
 
 #ifdef HAVE_SYS_UN_H
     if( service != NULL && service[0] == '/' ) {
@@ -759,7 +759,7 @@ pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg
 	pkg_perror(errlog, "pkg_makeconn: malloc failure\n" );
 	return(PKC_ERROR);
     }
-    bzero( (char *)pc, sizeof(struct pkg_conn) );
+    memset((char *)pc, 0, sizeof(struct pkg_conn));
     pc->pkc_magic = PKG_MAGIC;
     pc->pkc_fd = fd;
     pc->pkc_switch = switchp;

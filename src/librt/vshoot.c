@@ -150,7 +150,7 @@ rt_shootray( struct application *ap )
 	HeadSeg = SEG_NULL;
 
 	GET_BITV( rtip, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
-	bzero( (char *)solidbits, rtip->rti_bv_bytes );
+	memset((char *)solidbits, 0, rtip->rti_bv_bytes);
 	regionbits = &solidbits->be_v[
 		2+RT_BITV_BITS2WORDS(ap->a_rt_i->nsolids)];
 

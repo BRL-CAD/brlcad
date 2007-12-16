@@ -138,8 +138,8 @@ ipu_acquire(struct dsreq *dsp,
 
     /* now let's make sure we're talking to a "CANON IPU-" somthing */
 
-    bzero(p=CMDBUF(dsp), 16);
-    bzero(buf, sizeof(buf));
+    memset(p=CMDBUF(dsp), 0, 16);
+    memset(buf, 0, sizeof(buf));
     p[0] = 0x12;
     p[4] = (u_char)sizeof(buf);
     CMDLEN(dsp) = 6;
@@ -179,13 +179,13 @@ ipu_inquire(struct dsreq *dsp)
 	return response;
     }
 
-    bzero(p=CMDBUF(dsp), 16);
+    memset(p=CMDBUF(dsp), 0, 16);
     p[0] = 0x12;
     p[4] = (u_char)sizeof(buf);
     CMDLEN(dsp) = 6;
     filldsreq(dsp, buf, sizeof(buf), DSRQ_READ|DSRQ_SENSE);
 
-    bzero(response, sizeof(response));
+    memset(response, 0, sizeof(response));
     if (!doscsireq(getfd(dsp), dsp)) {
 	/* 32 characters */
 	(void)sprintf(response,
@@ -222,7 +222,7 @@ ipu_remote(struct dsreq *dsp)
 
     if (ipu_debug) fprintf(stderr, "ipu_remote()\n");
 
-    bzero(p=CMDBUF(dsp), 16);
+    memset(p=CMDBUF(dsp), 0, 16);
     p[0] = 0xc7;
 
     CMDLEN(dsp) = 12;
@@ -270,12 +270,12 @@ ipu_create_file(struct dsreq *dsp,
 	fprintf(stderr, "ipu_create_file(%d, t=%d %dx%d, %d)\n",
 		id, type, width, height, clear);
 
-    bzero(p=CMDBUF(dsp), 16);
+    memset(p=CMDBUF(dsp), 0, 16);
     p[0] = 0xc4;
     p[9] = 8;
     CMDLEN(dsp) = 12;
 
-    bzero(file_params, sizeof(file_params));
+    memset(file_params, 0, sizeof(file_params));
     file_params[0] = (u_char)id;
     file_params[1] = type;
     if (!clear) file_params[2] = 0x80;
@@ -309,7 +309,7 @@ ipu_delete_file(struct dsreq *dsp,
 
     if (ipu_debug) fprintf(stderr, "ipu_delete_file(%d)\n", id);
 
-    bzero(p=CMDBUF(dsp), 16);
+    memset(p=CMDBUF(dsp), 0, 16);
     p[0] = 0xc5;
     p[9] = 2;
     CMDLEN(dsp) = 12;
@@ -344,7 +344,7 @@ ipu_get_image(struct dsreq *dsp,
 
     if (ipu_debug) fprintf(stderr, "ipu_get_image()\n");
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0xc3;
     p[2] = id;
     CMDLEN(dsp) = 12;
@@ -392,7 +392,7 @@ ipu_put_image_frag(struct dsreq *dsp,
     int	i;
     int	nbytes;
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0xc2;			/* put image */
     p[2] = id;			/* file id */
     toshort(&p[3], sx);
@@ -479,8 +479,8 @@ ipu_put_image(struct dsreq *dsp,
     if (ipu_debug) {
 	fprintf(stderr, "%d buffers of %d lines, 1 buffer of %d lines\n",
 		fullbuffers, lines_per_buf, orphan_lines);
-	bzero(&tp1, sizeof(struct timeval));
-	bzero(&tp2, sizeof(struct timeval));
+	memset(&tp1, 0, sizeof(struct timeval));
+	memset(&tp2, 0, sizeof(struct timeval));
 	if (gettimeofday(&tp1, &tz))
 	    perror("gettimeofday()");
     }
@@ -641,12 +641,12 @@ ipu_print_config(struct dsreq *dsp,
     ipu_units[2] = units;
     toshort(&ipu_units[4], divisor);
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0x15;		/* MODE SELECT */
     p[1] = 0x10;
     CMDLEN(dsp) = 6;
 
-    bzero(params, sizeof(params));
+    memset(params, 0, sizeof(params));
     bytes = 4;	/* leave room for the mode parameter header */
 
     bcopy(ipu_units, &params[bytes], sizeof(ipu_units));
@@ -694,12 +694,12 @@ ipu_print_file(struct dsreq *dsp,
 			   pr_param->c[0],pr_param->c[1],pr_param->c[2],pr_param->c[3]);
 
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0xc1;
     toint(&p[6], (int)sizeof(buf));
     CMDLEN(dsp) = 12;
 
-    bzero(buf, sizeof(buf));
+    memset(buf, 0, sizeof(buf));
     buf[0] = id;
     if (copies < 0) {
 	fprintf(stderr, "Cannot print %d copies\n", copies);
@@ -771,12 +771,12 @@ ipu_scan_config(struct dsreq *dsp,
     }
     toshort(&sc_mode[4], rotation);
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0x15;			/* MODE SELECT */
     p[1] = 0x10;
     CMDLEN(dsp) = 6;
 
-    bzero(params, sizeof(params));
+    memset(params, 0, sizeof(params));
     bytes = 4;	/* leave room for the mode parameter header */
 
     bcopy(ipu_units, &params[bytes], sizeof(ipu_units));
@@ -817,12 +817,12 @@ ipu_scan_file(struct dsreq *dsp,
 			   sc_param->c[0],sc_param->c[1],
 			   sc_param->c[2],sc_param->c[3]);
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0xc0;
     toint(&p[6], (int)sizeof(buf));
     CMDLEN(dsp) = 12;
 
-    bzero(buf, (int)sizeof(buf));
+    memset(buf, 0, (int)sizeof(buf));
     buf[0] = id;
 
     if (!wait) buf[3] = 0x080;	/* quick return */
@@ -858,7 +858,7 @@ ipu_list_files(struct dsreq *dsp)
     int i;
     int file_count;
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0xc6;
     toint(&p[6], (int)sizeof(buf));
     CMDLEN(dsp) = 12;
@@ -878,7 +878,7 @@ ipu_list_files(struct dsreq *dsp)
 	fprintf(stderr, "malloc error in ipu_list_files()\n");
 	bu_exit(-1, NULL);
     } else {
-	bzero(p, file_count*19+1);
+	memset(p, 0, file_count*19+1);
     }
 
     for (i = 8 ; i < len ; i += buf[2]) {
@@ -915,14 +915,14 @@ ipu_stop(struct dsreq *dsp,
 
     if (ipu_debug) fprintf(stderr, "ipu_stop(%d)\n", halt);
 
-    bzero(p=CMDBUF(dsp), 16);
+    memset(p=CMDBUF(dsp), 0, 16);
     p[0] = 0xcc;	/* scan file */
     if (halt)
 	p[2] = 0x80;
     p[9] = 18;	/* param list len */
     CMDLEN(dsp) = 12;
 
-    bzero(buf, sizeof(buf));
+    memset(buf, 0, sizeof(buf));
     filldsreq(dsp, (u_char *)buf, sizeof(buf), DSRQ_READ|DSRQ_SENSE);
 
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
@@ -944,13 +944,13 @@ ipu_get_conf(struct dsreq *dsp)
 
     if (ipu_debug) fprintf(stderr, "ipu_config_printer()\n");
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0x1a;			/* mode sense */
     p[2] = 0x23;
     p[4] = sizeof(params);
     CMDLEN(dsp) = 6;
 
-    bzero(params, sizeof(params));
+    memset(params, 0, sizeof(params));
     filldsreq(dsp, params, sizeof(params), DSRQ_READ|DSRQ_SENSE);
 
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
@@ -975,13 +975,13 @@ ipu_get_conf(struct dsreq *dsp)
 	fprintf(stderr, "Divisor=%d(0x%x)\n", i, i);
     }
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0x1a;			/* mode sense */
     p[2] = 0x25;
     p[4] = sizeof(params);
     CMDLEN(dsp) = 6;
 
-    bzero(params, sizeof(params));
+    memset(params, 0, sizeof(params));
     filldsreq(dsp, params, sizeof(params), DSRQ_READ|DSRQ_SENSE);
 
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
@@ -1072,13 +1072,13 @@ ipu_get_conf_long(struct dsreq *dsp)
 
     if (ipu_debug) fprintf(stderr, "ipu_config_printer()\n");
 
-    bzero(p=(u_char *)CMDBUF(dsp), 16);
+    memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0x5a;			/* mode sense */
     p[2] = 0x23;
     toint(&p[7], (int)sizeof(params));
     CMDLEN(dsp) = 10;
 
-    bzero(params, sizeof(params));
+    memset(params, 0, sizeof(params));
     filldsreq(dsp, params, sizeof(params), DSRQ_READ|DSRQ_SENSE);
 
     if ((i=doscsireq(getfd(dsp), dsp)) == -1) {
@@ -1131,7 +1131,7 @@ ipu_set_palette( dsp, cmap )
     for( i=0; i < 4; i++ )  {
 	unsigned char	buf[4+2+192];
 
-	bzero(p=CMDBUF(dsp), 16);
+	memset(p=CMDBUF(dsp), 0, 16);
 	p[0] = 0x15;		/* MODE SELECT, Group code 0 (6 byte) */
 	/* Lun 0=scanner, Lun 3=printer */
 	p[1] = (3<<5) | 0x10;	/* Lun, PF=1 (page format) */
@@ -1319,7 +1319,7 @@ int parse_args(ac, av)
 	    scr_width= scr_height= scr_xoff= scr_yoff= 0;
 	    break;
 	case 'A'	: conv = IPU_AUTOSCALE;
-	    bzero( (char *)&param, sizeof(union ipu_prsc_param));
+	    memset((char *)&param, 0, sizeof(union ipu_prsc_param));
 	    break;
 	case 'M'	: conv = IPU_MAG_FACTOR;
 	    if ((c=atoi(bu_optarg)) < 100 || c > 2000)

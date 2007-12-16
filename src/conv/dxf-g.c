@@ -3402,7 +3402,7 @@ nmg_wire_edges_to_sketch( struct model *m )
 	    skt->skt_curve.reverse = bu_realloc( skt->skt_curve.reverse,
 						 skt->skt_curve.seg_count * sizeof( int ),
 						 "curve segment reverse" );
-	    bzero( skt->skt_curve.reverse, skt->skt_curve.seg_count * sizeof( int ) );
+	    memset(skt->skt_curve.reverse, 0, skt->skt_curve.seg_count * sizeof( int ));
 	    skt->skt_curve.segments = bu_realloc( skt->skt_curve.segments,
 						 skt->skt_curve.seg_count * sizeof( genptr_t ),
 						 "curve segments" );

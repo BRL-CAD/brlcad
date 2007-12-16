@@ -361,7 +361,7 @@ main(int argc, char **argv)
     bu_vls_init(&buf);
 
 
-    bzero((void *)&sh, sizeof(sh));
+    memset((void *)&sh, 0, sizeof(sh));
     BU_LIST_INIT(&sh.regions);
 
     while (bu_vls_gets(&buf, stdin) >= 0) {

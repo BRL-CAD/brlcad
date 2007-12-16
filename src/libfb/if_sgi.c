@@ -841,7 +841,7 @@ register RGBpixel	*pp;
 			color(BLACK);
 			break;
 		}
-		bzero( ifp->if_mem, 1024*ifp->if_height*sizeof(RGBpixel) );
+		memset(ifp->if_mem, 0, 1024*ifp->if_height*sizeof(RGBpixel));
 	}
 	clear();
 	return(0);

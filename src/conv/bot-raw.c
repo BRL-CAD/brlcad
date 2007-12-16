@@ -53,7 +53,7 @@ void write_bot(struct rt_bot_internal *bot, FILE *fh, char *name)
     printf ("name: %s, verts: %d, faces: %d\n", name, num_vertices, num_faces);
 
     /* Name */
-    memset (string, 0, 64);
+    memset(string, 0, 64);
     memcpy (string, name, strlen(name));
     fwrite (string, 64, 1, fh);
 

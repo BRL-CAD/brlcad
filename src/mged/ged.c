@@ -412,14 +412,14 @@ main(int argc, char **argv)
     BU_LIST_INIT(&rt_g.rtg_headwdb.l);
     BU_LIST_INIT(&head_run_rt.l);
 
-    bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
+    memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);
     bu_vls_init(&head_cmd_list.cl_name);
     bu_vls_init(&head_cmd_list.cl_more_default);
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    bzero((void *)&head_dm_list, sizeof(struct dm_list));
+    memset((void *)&head_dm_list, 0, sizeof(struct dm_list));
     BU_LIST_INIT( &head_dm_list.l );
 
     BU_GETSTRUCT(curr_dm_list, dm_list);

@@ -4939,9 +4939,9 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
 	DO_INDENT;
 	bu_log( "child_tag type is %s (subtype = %d)\n", lookup_ug_type( type, NULL ), subtype );
 
-	bzero( refset_name, REFSET_NAME_LEN );
-	bzero( instance_name, INSTANCE_NAME_LEN );
-	bzero( subpart_name, PART_NAME_LEN );
+	memset(refset_name, 0, REFSET_NAME_LEN);
+	memset(instance_name, 0, INSTANCE_NAME_LEN);
+	memset(subpart_name, 0, PART_NAME_LEN);
 	error = UF_ASSEM_ask_component_data(comp_obj_tag,
 					    subpart_name, refset_name,
 					    instance_name, origin,
@@ -5164,7 +5164,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 	     UF_func(UF_OBJ_cycle_objs_in_part(node, UF_reference_set_type,
 					       &tmp_tag))) {
 
-		bzero( ref_set_name, REFSET_NAME_LEN );
+		memset(ref_set_name, 0, REFSET_NAME_LEN);
 
 		UF_func(UF_ASSEM_ask_ref_set_data(tmp_tag,
 						  ref_set_name,

@@ -459,9 +459,9 @@ X_clear(FBIO *ifp, unsigned char *pp)
 	if( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
 		int	bytes = ifp->if_width*ifp->if_height*3;
 		if( v[RED] == 0 )
-			bzero( cp, bytes );		/* all black */
+			memset(cp, 0, bytes);		/* all black */
 		else
-			memset( cp, v[RED], bytes );	/* all grey */
+			memset(cp, v[RED], bytes);	/* all grey */
 	} else {
 		for( n = ifp->if_width*ifp->if_height; n; n-- ) {
 			*cp++ = v[RED];
@@ -472,8 +472,8 @@ X_clear(FBIO *ifp, unsigned char *pp)
 #endif
 	if( pp == (unsigned char *)NULL
 	 || ((pp)[RED] == 0 && (pp)[GRN] == 0 && (pp)[BLU] == 0) ) {
-		bzero( (char *)bitbuf, (ifp->if_width * ifp->if_height)/8 );
-		bzero( (char *)bytebuf, (ifp->if_width * ifp->if_height) );
+		memset((char *)bitbuf, 0, (ifp->if_width * ifp->if_height)/8);
+		memset((char *)bytebuf, 0, (ifp->if_width * ifp->if_height));
 		XClearWindow( XI(ifp)->dpy, XI(ifp)->win );
 	}
 	/*XXX*/

@@ -339,7 +339,7 @@ int main(int argc, char **argv)
 	fbp = fb_open( NULL, 0, 0 );
 	/*fb_clear( fbp, PIXEL_NULL );*/
 
-	bzero( f, 512*sizeof(*f) );
+	memset(f, 0, 512*sizeof(*f));
 	fhnewz( f, 512 );
 
 	/*
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
 	z = 0;
 	while( fread( inbuf, sizeof(*inbuf), 512, stdin ) > 0 ) {
 		/* Left to Right */
-		/*bzero( f, 512*sizeof(*f) );*/
+		/*memset(f, 0, 512*sizeof(*f));*/
 		for( i = 0; i < 512; i++ ) {
 			f[i] = 4*z;	/* up 4 for every z back */
 		}

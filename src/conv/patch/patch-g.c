@@ -146,7 +146,7 @@ main(int argc, char **argv)
 	BU_LIST_INIT( &heade.l);
 	BU_LIST_INIT( &headf.l);
 
-	bzero( (char *)list,sizeof(list));
+	memset((char *)list, 0,sizeof(list));
 
 	/* initialize tolerance structure */
 	tol.magic = BN_TOL_MAGIC;
