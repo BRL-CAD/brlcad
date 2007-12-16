@@ -355,8 +355,7 @@ create_chan( char *num, int len, char *itag )
 			chan = (struct chan *)bu_realloc( (char *)chan,
 				max_chans * sizeof(struct chan),
 				"chan[]" );
-			bzero( (char *)(&chan[prev]),
-				(max_chans-prev)*sizeof(struct chan) );
+			memset((char *)(&chan[prev]), 0, (max_chans-prev)*sizeof(struct chan));
 		}
 	}
 	/* Allocate and clear channels */

@@ -171,8 +171,8 @@ again:
 			sizeof(struct memdebug) * bu_memdebug_len );
 		if( bu_memdebug == (struct memdebug *)0 )
 			bu_bomb("bu_memdebug_add() malloc failure\n");
-		bzero( (char *)&bu_memdebug[old_len],
-			(bu_memdebug_len-old_len) * sizeof(struct memdebug) );
+		memset((char *)&bu_memdebug[old_len], 0
+		       (bu_memdebug_len-old_len) * sizeof(struct memdebug) );
 	}
 	bu_semaphore_release( BU_SEM_SYSCALL );
 

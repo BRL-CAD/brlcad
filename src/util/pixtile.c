@@ -44,7 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <fcntl.h>
 #endif
 
-#include "machine.h"			/* For bzero */
+#include "machine.h"
 #include "bu.h"
 
 

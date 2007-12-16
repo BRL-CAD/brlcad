@@ -483,7 +483,7 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 	vect_t		delta_vec;	/* offset vector from vertex */
 	struct vertex_g	*this_vg, *mate_vg, *prev_vg;
 
-	bzero( (char *)delta_vec, sizeof(vect_t)),
+	memset((char *)delta_vec, 0, sizeof(vect_t));
 	prev_eu = BU_LIST_PPREV_CIRC( edgeuse, eu );
 	this_eu = eu;
 

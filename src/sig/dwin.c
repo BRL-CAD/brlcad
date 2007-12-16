@@ -226,16 +226,14 @@ buf_start, buf_num, num_to_read, buf_index );
 	n = fread( &buf[buf_num], sizeof(*buf), num_to_read, stdin );
 	if( n == 0 ) {
 		/*fprintf( stderr, "EOF\n" );*/
-		bzero( (char *)&buf[buf_num],
-			sizeof(*buf)*num_to_read );
-		return;
+	    memset((char *)&buf[buf_num], 0, sizeof(*buf)*num_to_read);
+	    return;
 	}
 	input_sample += n;
 	buf_num += n;
 	if( n < num_to_read ) {
-		bzero( (char *)&buf[buf_num],
-			sizeof(*buf)*(num_to_read-n) );
-		clearerr(stdin);	/* XXX HACK */
+	    memset((char *)&buf[buf_num], 0, sizeof(*buf)*(num_to_read-n));
+	    clearerr(stdin);	/* XXX HACK */
 	}
 
 #ifdef DEBUG
