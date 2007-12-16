@@ -12,7 +12,8 @@ bin_SCRIPTS = \
 	pixwrite.sh \
 	sgisnap.sh \
 	show.sh \
-	tracker.sh
+	tracker.sh \
+	trimconfig.sh
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS) \
