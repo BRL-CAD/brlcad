@@ -34,10 +34,6 @@
  *
  */
 
-#ifndef lint
-static const char XGLUE(RCSbot_inc_,TRI_TYPE)[] = "@(#)$Header$ (BRL)";
-#endif
-
 /**
  *			R T _ B O T F A C E
  *
@@ -61,7 +57,7 @@ XGLUE(rt_botface_w_normals_,TRI_TYPE)(struct soltab	*stp,
 {
 	register XGLUE(tri_specific_,TRI_TYPE) *trip;
 	vect_t work;
-	static fastf_t m1, m2, m3, m4;
+	fastf_t m1, m2, m3, m4;
 	int i;
 
 	BU_GETTYPE( trip, XGLUE(tri_specific_,TRI_TYPE) );
@@ -246,8 +242,8 @@ struct rt_i		*rtip;
 	register struct bot_specific	*bot;
 	const struct bn_tol		*tol = &rtip->rti_tol;
 	int				tri_index, i;
-	static fastf_t			dx, dy, dz;
-	static fastf_t			f;
+	fastf_t			dx, dy, dz;
+	fastf_t			f;
 	int				ntri = 0;
 
 	RT_BOT_CK_MAGIC(bot_ip);
@@ -948,9 +944,9 @@ XGLUE(rt_bot_shot_,TRI_TYPE)( struct soltab *stp, struct xray *rp, struct applic
 {
 	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 	register XGLUE(tri_specific_,TRI_TYPE) *trip = bot->bot_facelist;
-	static struct hit hits[MAXHITS];
+	struct hit hits[MAXHITS];
 	register struct hit *hp;
-	static int	nhits;
+	int	nhits;
 	fastf_t		toldist, dn_plus_tol;
 
 	nhits = 0;
@@ -964,11 +960,11 @@ XGLUE(rt_bot_shot_,TRI_TYPE)( struct soltab *stp, struct xray *rp, struct applic
 	/* consider each face */
 	for( ; trip; trip = trip->tri_forw )  {
 		fastf_t	dn;		/* Direction dot Normal */
-		static fastf_t	abs_dn;
+		fastf_t	abs_dn;
 		fastf_t	k;
-		static fastf_t	alpha, beta;
-		static vect_t	wxb;		/* vertex - ray_start */
-		static vect_t	xp;		/* wxb cross ray_dir */
+		fastf_t	alpha, beta;
+		vect_t	wxb;		/* vertex - ray_start */
+		vect_t	xp;		/* wxb cross ray_dir */
 
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
@@ -1085,13 +1081,13 @@ XGLUE(rt_bot_piece_shot_,TRI_TYPE)( struct rt_piecestate *psp, struct rt_pieceli
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
 		fastf_t	dn;		/* Direction dot Normal */
-		static fastf_t	abs_dn;
+		fastf_t	abs_dn;
 		fastf_t	k;
-		static fastf_t	alpha, beta;
-		static vect_t	wxb;		/* vertex - ray_start */
-		static vect_t	xp;		/* wxb cross ray_dir */
-		static int	face_array_index;
-		static int	tris_in_piece;
+		fastf_t	alpha, beta;
+		vect_t	wxb;		/* vertex - ray_start */
+		vect_t	xp;		/* wxb cross ray_dir */
+		int	face_array_index;
+		int	tris_in_piece;
 
 		piecenum = *sol_piece_subscr_p;
 

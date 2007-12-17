@@ -37,10 +37,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCStorus[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stddef.h>
@@ -190,10 +186,11 @@ int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct tor_specific *tor;
-	static mat_t	R;
-	static vect_t	P, w1;	/* for RPP calculation */
-	fastf_t	f;
 	struct rt_tor_internal	*tip;
+
+	mat_t	R;
+	vect_t	P, w1;	/* for RPP calculation */
+	fastf_t	f;
 
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
@@ -353,18 +350,18 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 	register struct seg *segp;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static vect_t	work;		/* temporary vector */
-	static bn_poly_t	C;		/* The final equation */
-	static bn_complex_t val[4];		/* The complex roots */
-	static double	k[4];		/* The real roots */
+	vect_t	dprime;		/* D' */
+	vect_t	pprime;		/* P' */
+	vect_t	work;		/* temporary vector */
+	bn_poly_t	C;		/* The final equation */
+	bn_complex_t val[4];		/* The complex roots */
+	double	k[4];		/* The real roots */
 	register int	i;
-	static int	j;
-	static bn_poly_t	A, Asqr;
-	static bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-	static vect_t	cor_pprime;	/* new ray origin */
-	static fastf_t	cor_proj;
+	int	j;
+	bn_poly_t	A, Asqr;
+	bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
+	vect_t	cor_pprime;	/* new ray origin */
+	fastf_t	cor_proj;
 
 	/* Convert vector into the space of the unit torus */
 	MAT4X3VEC( dprime, tor->tor_SoR, rp->r_dir );
@@ -553,17 +550,17 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    i;
 	register struct tor_specific *tor;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static vect_t	work;		/* temporary vector */
-	static bn_poly_t	*C;		/* The final equation */
-	static bn_complex_t (*val)[4];	/* The complex roots */
-	static int	num_roots;
-	static int	num_zero;
-	static bn_poly_t	A, Asqr;
-	static bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-	static vect_t	cor_pprime;	/* new ray origin */
-	static fastf_t	*cor_proj;
+	vect_t	dprime;		/* D' */
+	vect_t	pprime;		/* P' */
+	vect_t	work;		/* temporary vector */
+	bn_poly_t	*C;		/* The final equation */
+	bn_complex_t (*val)[4];	/* The complex roots */
+	int	num_roots;
+	int	num_zero;
+	bn_poly_t	A, Asqr;
+	bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
+	vect_t	cor_pprime;	/* new ray origin */
+	fastf_t	*cor_proj;
 
 	/* Allocate space for polys and roots */
 	C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
@@ -835,8 +832,9 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
+
 	fastf_t w;
-	static vect_t work;
+	vect_t work;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	w = hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
@@ -907,10 +905,10 @@ rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct tor_specific	*tor =
 			(struct tor_specific *) stp -> st_specific;
-	static vect_t			work;
-	static vect_t			pprime;
-	static vect_t			pprime2;
-	static fastf_t			costheta;
+	vect_t			work;
+	vect_t			pprime;
+	vect_t			pprime2;
+	fastf_t			costheta;
 
 	VSUB2(work, hitp -> hit_point, tor -> tor_V);
 	MAT4X3VEC(pprime, tor -> tor_SoR, work);
@@ -1310,7 +1308,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 {
 	struct rt_tor_internal	*tip;
 	union record		*rp;
-	static fastf_t		vec[3*4];
+	fastf_t		vec[3*4];
 	vect_t			axb;
 	register fastf_t	f;
 
@@ -1494,13 +1492,12 @@ int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_tor_internal	*tip;
-	static struct rec {
+	struct rec {
 		double	v[3];
 		double	h[3];
 		double	ra;	/* r1 */
 		double	rh;	/* r2 */
 	} rec;
-
 
 	BU_CK_EXTERNAL( ep );
 	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (2*3+2) );
@@ -1511,7 +1508,6 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	if (bn_mat_is_non_unif(mat)) {
 		bu_log("------------------ WARNING ----------------\nNon-uniform matrix transform on torus.  Ignored\n");
 	}
-
 
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_TOR;

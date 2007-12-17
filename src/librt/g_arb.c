@@ -51,9 +51,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-#ifndef lint
-static const char RCSarb[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -381,8 +378,8 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 			/* current point # on face */
 
 {
-	static vect_t	work;
-	static vect_t	P_A;		/* new point minus A */
+	vect_t	work;
+	vect_t	P_A;		/* new point minus A */
 	fastf_t	f;
 	register struct aface	*afp;
 	register struct oface	*ofp;
@@ -519,7 +516,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 HIDDEN int
 rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, const char *name)
 {
-	static vect_t	sum;		/* Sum of all endpoints */
+	vect_t	sum;		/* Sum of all endpoints */
 	register int	i;
 	register int	j;
 	register int	k;
@@ -549,7 +546,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	for( i=1; i<8; i++ )  {
 		for( j = i-1; j >= 0; j-- )  {
 			/* Compare vertices I and J */
-			static vect_t		work;
+			vect_t		work;
 
 			VSUB2( work, aip->pt[i], aip->pt[j] );
 			if( MAGSQ( work ) < pap->pa_tol_sq )  {
@@ -701,7 +698,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	 * to be contained within the solid!
 	 */
 	{
-		static vect_t		work;
+		vect_t		work;
 		register fastf_t	f;
 
 		for( i=0; i< 8; i++ ) {
@@ -790,8 +787,8 @@ int
 rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
-	static int		iplane, oplane;
-	static fastf_t		in, out;	/* ray in/out distances */
+	int		iplane, oplane;
+	fastf_t		in, out;	/* ray in/out distances */
 	register struct aface	*afp;
 	register int		j;
 
@@ -1003,13 +1000,13 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
 	struct oface	*ofp;
-	static vect_t	P_A;
-	static fastf_t	r;
-	static vect_t	rev_dir;
-	static fastf_t	dot_N;
-	static vect_t	UV_dir;
-	static fastf_t	*norm;
-	static fastf_t	min_r_U, min_r_V;
+	vect_t	P_A;
+	fastf_t	r;
+	vect_t	rev_dir;
+	fastf_t	dot_N;
+	vect_t	UV_dir;
+	fastf_t	*norm;
+	fastf_t	min_r_U, min_r_V;
 
 	if( arbp->arb_opt == (struct oface *)0 )  {
 		register int		ret = 0;
@@ -1168,8 +1165,8 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 	struct rt_arb_internal	*aip;
 	union record		*rp;
 	register int		i;
-	static vect_t		work;
-	static fastf_t		vec[3*8];
+	vect_t		work;
+	fastf_t		vec[3*8];
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -1428,7 +1425,7 @@ rt_arb_ifree(struct rt_db_internal *ip)
 int
 rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	static struct rt_arb_internal	*aip;
+	struct rt_arb_internal	*aip;
 	struct shell		*s;
 	struct prep_arb		pa;
 	register int		i;
@@ -1537,7 +1534,7 @@ static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
 int
 rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-	static struct rt_arb_internal	*aip;
+	struct rt_arb_internal	*aip;
 	struct shell		*s;
 	struct prep_arb		pa;
 	register int		i;

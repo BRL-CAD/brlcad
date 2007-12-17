@@ -34,10 +34,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSebm[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -1172,8 +1168,8 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 void
 rt_ebm_plate(int x1, int y1, int x2, int y2, double t, register fastf_t *mat, register struct bu_list *vhead)
 {
-	static point_t	s, p;
-	static point_t	srot, prot;
+	point_t	s, p;
+	point_t	srot, prot;
 
 	VSET( s, x1, y1, 0.0 );
 	MAT4X3PNT( srot, mat, s );

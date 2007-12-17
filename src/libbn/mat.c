@@ -64,10 +64,6 @@
 
 /** @} */
 
-#ifndef lint
-static const char bn_RCSmat[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
@@ -296,10 +292,10 @@ int
 bn_mat_inverse(register mat_t output, const mat_t input)
 {
 	register int i, j;			/* Indices */
-	static int k;				/* Indices */
-	static int	z[4];			/* Temporary */
-	static fastf_t	b[4];			/* Temporary */
-	static fastf_t	c[4];			/* Temporary */
+	int k;				/* Indices */
+	int	z[4];			/* Temporary */
+	fastf_t	b[4];			/* Temporary */
+	fastf_t	c[4];			/* Temporary */
 
 	MAT_COPY( output, input );	/* Duplicate */
 
@@ -356,7 +352,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	/*  Second Loop */
 	for( i = 0; i < 4; i++ )  {
 		while( (k = z[i]) != i )  {
-			static int p;			/* Local temp */
+			int p;			/* Local temp */
 
 			for( j = 0; j < 4; j++ )  {
 				register fastf_t w;		/* Local temp */
@@ -460,8 +456,8 @@ bn_mat_trn(mat_t om, register const mat_t im)
 void
 bn_mat_ae(register fastf_t *m, double azimuth, double elev)
 {
-	static double sin_az, sin_el;
-	static double cos_az, cos_el;
+	double sin_az, sin_el;
+	double cos_az, cos_el;
 
 	azimuth *= bn_degtorad;
 	elev *= bn_degtorad;
@@ -571,9 +567,9 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 void
 bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double ggamma_in)
 {
-	static double alpha, beta, ggamma;
-	static double calpha, cbeta, cgamma;
-	static double salpha, sbeta, sgamma;
+	double alpha, beta, ggamma;
+	double calpha, cbeta, cgamma;
+	double salpha, sbeta, sgamma;
 
 	if( alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0 )  {
 		MAT_IDN( mat );
@@ -642,8 +638,8 @@ bn_mat_angles_rad(register mat_t	mat,
 		  double		beta,
 		  double		ggamma)
 {
-	static double calpha, cbeta, cgamma;
-	static double salpha, sbeta, sgamma;
+	double calpha, cbeta, cgamma;
+	double salpha, sbeta, sgamma;
 
 	if (alpha == 0.0 && beta == 0.0 && ggamma == 0.0) {
 		MAT_IDN( mat );
@@ -740,7 +736,7 @@ void
 bn_vec_perp(vect_t new, const vect_t old)
 {
 	register int i;
-	static vect_t another;	/* Another vector, different */
+	vect_t another;	/* Another vector, different */
 
 	i = X;
 	if( fabs(old[Y])<fabs(old[i]) )  i=Y;

@@ -35,9 +35,6 @@
  *
  */
 /** @} */
-#ifndef lint
-static const char RCSsph[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -99,9 +96,9 @@ int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct sph_specific *sph;
-	static fastf_t	magsq_a, magsq_b, magsq_c;
-	static vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	static fastf_t	f;
+	fastf_t	magsq_a, magsq_b, magsq_c;
+	vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	fastf_t	f;
 	struct rt_ell_internal	*eip;
 
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -237,7 +234,8 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 	register struct seg *segp;
-	static vect_t	ov;		/* ray orgin to center (V - P) */
+
+	vect_t	ov;		/* ray orgin to center (V - P) */
 	fastf_t	magsq_ov;	/* length squared of ov */
 	fastf_t	b;		/* second term of quadratic eqn */
 	fastf_t	root;		/* root of radical */
@@ -287,11 +285,12 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 {
 	register struct sph_specific *sph;
-	static vect_t	ov;		/* ray orgin to center (V - P) */
+	register int    i;
+
+	vect_t	ov;		/* ray orgin to center (V - P) */
 	fastf_t	magsq_ov;	/* length squared of ov */
 	fastf_t	b;		/* second term of quadratic eqn */
 	fastf_t	root;		/* root of radical */
-	register int    i;
 
 	/* for each ray/sphere pair */
 	for(i = 0; i < n; i++){
@@ -374,9 +373,9 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
-	static fastf_t r;
-	static vect_t work;
-	static vect_t pprime;
+	fastf_t r;
+	vect_t work;
+	vect_t pprime;
 
 	/* hit_point is on surface;  project back to unit sphere,
 	 * creating a vector from vertex to hit point which always
@@ -441,7 +440,7 @@ register const mat_t		mat;
 const struct db_i		*dbip;
 {
 	struct rt_sph_internal	*sip;
-	static fastf_t		vec[3+1];
+	fastf_t		vec[3+1];
 
 	BU_CK_EXTERNAL( ep );
 

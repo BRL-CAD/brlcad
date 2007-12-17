@@ -44,6 +44,7 @@
  * The U.S. Army Research Laboratory
  * Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+
 #include "common.h"
 
 #include <stddef.h>
@@ -253,7 +254,7 @@ int
 flat_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp ) {
 
 	register struct flat_specific *flat_sp = (struct flat_specific *)dp;
-	static const point_t unit = {1.0, 1.0, 1.0};
+	const point_t unit = {1.0, 1.0, 1.0};
 	point_t intensity;
 
 	/* check the validity of the arguments we got */

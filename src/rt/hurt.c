@@ -1442,9 +1442,9 @@ void do_pixel(int cpu,
 	      int pat_num,
 	      int pixelnum)
 {
-    static	struct	application	a;
-    static	struct	pixel_ext	pe;
-    static	vect_t			point;		/* Ref point on eye or view plane */
+    struct	application	a;
+    struct	pixel_ext	pe;
+    vect_t			point;		/* Ref point on eye or view plane */
     vect_t			colorsum = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     int				samplenum = 0;
     static const double one_over_255 = 1.0 / 255.0;

@@ -33,14 +33,7 @@
  *  Author -
  *	Ronald A. Bowers
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSviewedge[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -782,13 +775,13 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
     register struct partition *pp;
     register struct hit	*hitp;		/* which hit */
 
-    static struct application	a2;
-    static struct cell		me;
-    static struct cell		below;
-    static struct cell		left;
-    static int			edge = 0;
-    static int			cpu;
-    static int                     oc = 1;
+    struct application	a2;
+    struct cell		me;
+    struct cell		below;
+    struct cell		left;
+    int			edge = 0;
+    int			cpu;
+    int                     oc = 1;
 
     RGBpixel                      col;
 

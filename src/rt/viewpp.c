@@ -37,16 +37,15 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-#ifndef lint
-static const char RCSppview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 
 int		use_air = 0;		/* Handling of air in librt */
 
@@ -87,7 +86,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	static double cosI0;
+	double cosI0;
 	register int i,j;
 	vect_t		normal;
 

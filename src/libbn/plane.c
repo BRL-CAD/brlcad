@@ -33,10 +33,6 @@
  *  @n	Aberdeen Proving Ground, Maryland  21005
  */
 
-#ifndef lint
-static const char RCSplane[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
@@ -488,8 +484,8 @@ bn_isect_2planes(fastf_t *pt,
 		 const fastf_t *rpp_min,
 		 const struct bn_tol *tol)
 {
-	static vect_t		abs_dir;
-	static plane_t		pl;
+	vect_t		abs_dir;
+	plane_t		pl;
 	int			i;
 
 	if( (i = bn_coplanar( a, b, tol )) != 0 )  {
@@ -1253,9 +1249,9 @@ bn_isect_line3_line3(fastf_t *t,
 		     const fastf_t *c,
 		     const struct bn_tol *tol)
 {
-	static vect_t		n;
-	static vect_t		abs_n;
-	static vect_t		h;
+	vect_t		n;
+	vect_t		abs_n;
+	vect_t		h;
 	register fastf_t	det;
 	register fastf_t	det1;
 	register short int	q,r,s;
@@ -1497,7 +1493,7 @@ bn_isect_line3_line3(fastf_t *t,
 int
 bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-	static vect_t	c;		/* Direction vector from A to B */
+	vect_t	c;		/* Direction vector from A to B */
 	auto fastf_t	u;		/* As in, A + u * C = X */
 	register fastf_t f;
 	register int	ret;
@@ -1585,7 +1581,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 double
 bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	static vect_t		f;
+	vect_t		f;
 	register fastf_t	FdotD;
 
 	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
@@ -1621,7 +1617,7 @@ out:
 double
 bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	static vect_t		f;
+	vect_t		f;
 	register fastf_t	FdotD;
 
 	VSUB2( f, pt, a );
@@ -1675,7 +1671,7 @@ bn_dist_line_origin(const fastf_t *pt, const fastf_t *dir)
 double
 bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	static vect_t		f;
+	vect_t		f;
 	register fastf_t	FdotD;
 
 	VSUB2_2D( f, pt, a );
@@ -1701,7 +1697,7 @@ bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 double
 bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
-	static vect_t		f;
+	vect_t		f;
 	register fastf_t	FdotD;
 
 	VSUB2_2D( f, pt, a );

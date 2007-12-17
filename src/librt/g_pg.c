@@ -36,10 +36,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSpg[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
@@ -83,7 +79,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	RT_PG_CK_MAGIC(pgp);
 
 	for( p = 0; p < pgp->npoly; p++ )  {
-		static vect_t	work[3];
+		vect_t	work[3];
 
 		VMOVE( work[0], &pgp->poly[p].verts[0*3] );
 		VMINMAX( stp->st_min, stp->st_max, work[0] );
@@ -108,8 +104,8 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	}
 
 	{
-		static fastf_t dx, dy, dz;
-		static fastf_t	f;
+		fastf_t dx, dy, dz;
+		fastf_t	f;
 
 		VADD2SCALE( stp->st_center, stp->st_max, stp->st_min, 0.5 );
 
@@ -142,7 +138,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 {
 	register struct tri_specific *trip;
 	vect_t work;
-	static fastf_t m1, m2, m3, m4;
+	fastf_t m1, m2, m3, m4;
 
 	BU_GETSTRUCT( trip, tri_specific );
 	VMOVE( trip->tri_A, ap );
@@ -216,9 +212,9 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
 #define MAXHITS 128		/* # surfaces hit, must be even */
-	static struct hit hits[MAXHITS];
+	struct hit hits[MAXHITS];
 	register struct hit *hp;
-	static int	nhits;
+	int	nhits;
 
 	nhits = 0;
 	hp = &hits[0];
@@ -226,11 +222,11 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	/* consider each face */
 	for( ; trip; trip = trip->tri_forw )  {
 		fastf_t	dn;		/* Direction dot Normal */
-		static fastf_t	abs_dn;
+		fastf_t	abs_dn;
 		fastf_t	k;
-		static fastf_t	alpha, beta;
-		static vect_t	wxb;		/* vertex - ray_start */
-		static vect_t	xp;		/* wxb cross ray_dir */
+		fastf_t	alpha, beta;
+		vect_t	wxb;		/* vertex - ray_start */
+		vect_t	xp;		/* wxb cross ray_dir */
 
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
@@ -927,10 +923,10 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 
 	for( p=0 ; p<ip_pg->npoly ; p++ )
 	{
-		static vect_t work[3], tmp;
-		static struct tri_specific trip;
-		static fastf_t m1, m2, m3, m4;
-		static int first, v0=0, v2=0;
+		vect_t work[3], tmp;
+		struct tri_specific trip;
+		fastf_t m1, m2, m3, m4;
+		int first, v0=0, v2=0;
 
 		first = 1;
 		VMOVE( work[0], &ip_pg->poly[p].verts[0*3] );

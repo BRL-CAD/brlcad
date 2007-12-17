@@ -29,10 +29,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSarbn[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -187,8 +183,8 @@ rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	register struct rt_arbn_internal	*aip =
 		(struct rt_arbn_internal *)stp->st_specific;
 	register int	i;
-	static int	iplane, oplane;
-	static fastf_t	in, out;	/* ray in/out distances */
+	int	iplane, oplane;
+	fastf_t	in, out;	/* ray in/out distances */
 
 	in = -INFINITY;
 	out = INFINITY;
@@ -518,7 +514,7 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 int
 rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	static struct rt_arbn_internal	*aip;
+	struct rt_arbn_internal	*aip;
 	struct shell		*s;
 	struct faceuse		**fu;		/* array of faceuses */
 	int			nverts;		/* maximum possible number of vertices = neqn!/(3!(neqn-3)! */

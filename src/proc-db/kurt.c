@@ -25,9 +25,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -132,8 +129,8 @@ do_cell(struct val *vp, double xc, double yc)
 
 			/* center coordinates, z=0+ */
 {
-	static bn_poly_t	polynom;
-	static bn_complex_t	roots[4];	/* roots of final equation */
+	bn_poly_t	polynom;
+	bn_complex_t	roots[4];	/* roots of final equation */
 	int		l;
 	int		nroots;
 	int		lim;

@@ -25,15 +25,7 @@
  *  Author -
  *	Michael John Muuss
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-#ifndef lint
-static const char RCSworker[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -168,10 +160,10 @@ void do_pixel(int cpu,
 	      int pixelnum)
 {
     int i;
-    static	struct	application	a;
-    static	struct	pixel_ext	pe;
-    static	vect_t			stereo_point;		/* Ref point on eye or view plane */
-    static	vect_t			point;		/* Ref point on eye or view plane */
+    struct	application	a;
+    struct	pixel_ext	pe;
+    vect_t			stereo_point;		/* Ref point on eye or view plane */
+    vect_t			point;		/* Ref point on eye or view plane */
     vect_t			colorsum = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     int				samplenum = 0;
     static const double one_over_255 = 1.0 / 255.0;

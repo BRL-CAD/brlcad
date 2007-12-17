@@ -30,15 +30,7 @@
  *	From viewpp.c and viewray.c by
  *	Michael John Muuss
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-#ifndef lint
-static const char RCSppview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -276,9 +268,9 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	register struct partition *pp;
 	register struct hit *hitp;
 	struct application sub_ap;
-	static fastf_t	f;
-	static vect_t	to_eye, work;
-	static int	depth;
+	fastf_t	f;
+	vect_t	to_eye, work;
+	int	depth;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -380,7 +372,7 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	static vect_t work;
+	vect_t work;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0 )  break;

@@ -26,10 +26,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSsketch[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -681,7 +677,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
 int
 rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    static struct rt_sketch_internal	*sketch_ip;
+    struct rt_sketch_internal	*sketch_ip;
     int				ret;
     int				myret=0;
 
@@ -723,7 +719,7 @@ rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
 int
 rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    static struct rt_sketch_internal	*sketch_ip;
+    struct rt_sketch_internal	*sketch_ip;
     union record			*rp;
     vect_t				v;
     int				seg_no;
@@ -1078,7 +1074,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 int
 rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    static struct rt_sketch_internal	*sketch_ip;
+    struct rt_sketch_internal	*sketch_ip;
     vect_t				v;
     int				seg_no;
     unsigned char			*ptr;

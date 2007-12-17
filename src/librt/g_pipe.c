@@ -28,10 +28,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSpipe[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -139,14 +135,14 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
         fastf_t prev_od, fastf_t next_od)
 {
 	register struct bend_pipe *pipe;
-	static vect_t	to_start,to_end;
-	static mat_t	R;
-	static point_t	work;
-	static vect_t	tmp_vec;
-	static fastf_t	f;
-        static fastf_t   max_od;
-        static fastf_t   max_or;
-        static fastf_t   max_r;
+	vect_t	to_start,to_end;
+	mat_t	R;
+	point_t	work;
+	vect_t	tmp_vec;
+	fastf_t	f;
+        fastf_t   max_od;
+        fastf_t   max_or;
+        fastf_t   max_r;
 
 	pipe = (struct bend_pipe *)bu_malloc( sizeof( struct bend_pipe ), "rt_bend_pipe_prep:pipe" )	 ;
 
@@ -234,12 +230,12 @@ HIDDEN void
 rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1, fastf_t *pt2, fastf_t id2, fastf_t od2)
 {
 	register struct lin_pipe *pipe;
-	static mat_t	R;
-	static mat_t	Rinv;
-	static mat_t	S;
-	static point_t work;
-	static vect_t seg_ht;
-	static vect_t v1,v2;
+	mat_t	R;
+	mat_t	Rinv;
+	mat_t	S;
+	point_t work;
+	vect_t seg_ht;
+	vect_t v1,v2;
 
 	pipe = (struct lin_pipe *)bu_malloc( sizeof( struct lin_pipe ), "rt_bend_pipe_prep:pipe" );
 	BU_LIST_INSERT( head, &pipe->l );
@@ -607,24 +603,24 @@ rt_in_sph( struct xray *rp, point_t center, fastf_t radius_sq )
 HIDDEN void
 bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct bend_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static vect_t	work;		/* temporary vector */
-	static bn_poly_t	C;		/* The final equation */
-	static bn_complex_t	val[4];	/* The complex roots */
-	static int	j;
-	static int	root_count=0;
-	static bn_poly_t	A, Asqr;
-	static bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-	static vect_t	cor_pprime;	/* new ray origin */
-	static fastf_t	cor_proj;
-        static fastf_t   or_sq;          /* outside radius squared */
-        static fastf_t   ir_sq;          /* inside radius squared */
-        static fastf_t   or2_sq;         /* outside radius squared (from adjacent seg) */
-        static fastf_t   ir2_sq;         /* inside radius squared (from adjacent seg) */
-        static int       parallel;       /* set to one when ray is parallel to plane of bend */
-        static fastf_t   dist;           /* distance between ray and plane of bend */
-        static fastf_t   tmp;
+	vect_t	dprime;		/* D' */
+	vect_t	pprime;		/* P' */
+	vect_t	work;		/* temporary vector */
+	bn_poly_t	C;		/* The final equation */
+	bn_complex_t	val[4];	/* The complex roots */
+	int	j;
+	int	root_count=0;
+	bn_poly_t	A, Asqr;
+	bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
+	vect_t	cor_pprime;	/* new ray origin */
+	fastf_t	cor_proj;
+        fastf_t   or_sq;          /* outside radius squared */
+        fastf_t   ir_sq;          /* inside radius squared */
+        fastf_t   or2_sq;         /* outside radius squared (from adjacent seg) */
+        fastf_t   ir2_sq;         /* inside radius squared (from adjacent seg) */
+        int       parallel;       /* set to one when ray is parallel to plane of bend */
+        fastf_t   dist;           /* distance between ray and plane of bend */
+        fastf_t   tmp;
         struct id_pipe  *prev;
         struct id_pipe  *next;
 
@@ -920,14 +916,14 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
 HIDDEN void
 linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct lin_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
-	static struct hit_list	*hitp;
-	static point_t	work_pt;
-	static point_t	ray_start;
-	static vect_t	ray_dir;
-	static double	t_tmp;
-	static double	a,b,c;
-	static double	descrim;
-        static vect_t    inv_dir;
+	struct hit_list	*hitp;
+	point_t	work_pt;
+	point_t	ray_start;
+	vect_t	ray_dir;
+	double	t_tmp;
+	double	a,b,c;
+	double	descrim;
+        vect_t    inv_dir;
 
 	if( pipe->pipe_is_bend )
 	{
@@ -962,8 +958,8 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 	if( descrim > 0.0 )
 	{
-		static fastf_t	sqrt_descrim;
-		static point_t	hit_pt;
+		fastf_t	sqrt_descrim;
+		point_t	hit_pt;
 
 		sqrt_descrim = sqrt( descrim );
 
@@ -1021,8 +1017,8 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 		if( descrim > 0.0 )
 		{
-			static fastf_t	sqrt_descrim;
-			static point_t	hit_pt;
+			fastf_t	sqrt_descrim;
+			point_t	hit_pt;
 
 			sqrt_descrim = sqrt( descrim );
 
@@ -1369,11 +1365,11 @@ rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 	register struct id_pipe		*pipe_id;
 	register struct lin_pipe	*pipe_lin;
 	register struct bend_pipe	*pipe_bend;
-	static fastf_t	w;
-	static vect_t	work;
-	static vect_t	work1;
-	static int	segno;
-	static int	i;
+	fastf_t	w;
+	vect_t	work;
+	vect_t	work1;
+	int	segno;
+	int	i;
 
 	segno = hitp->hit_surfno/10;
 
@@ -1461,12 +1457,12 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		(struct bu_list *)stp->st_specific;
 	register struct id_pipe		*pipe_id;
 	register struct seg		*segp;
-	static struct hit_list		hit_head;
-	static struct hit_list		*hitp;
-	static int			hit_count;
-	static int			total_hits;
-	static int			seg_no;
-	static int			i;
+	struct hit_list		hit_head;
+	struct hit_list		*hitp;
+	int			hit_count;
+	int			total_hits;
+	int			seg_no;
+	int			i;
 
 	BU_LIST_INIT( &hit_head.l );
 
@@ -1841,9 +1837,9 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	register struct wdb_pipept		*prevp;
 	register struct wdb_pipept		*curp;
 	register struct wdb_pipept		*nextp;
-	static struct rt_pipe_internal		*pip;
-	static point_t				current_point;
-	static vect_t				f1,f2,f3;
+	struct rt_pipe_internal		*pip;
+	point_t				current_point;
+	vect_t				f1,f2,f3;
 
 	RT_CK_DB_INTERNAL(ip);
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
@@ -1873,10 +1869,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	while( 1 )
 	{
-		static vect_t n1,n2;
-		static vect_t norm;
-		static fastf_t angle;
-		static fastf_t dist_to_bend;
+		vect_t n1,n2;
+		vect_t norm;
+		fastf_t angle;
+		fastf_t dist_to_bend;
 
 		if( BU_LIST_IS_HEAD( &nextp->l, &pip->pipe_segs_head ) )
 		{
@@ -1907,10 +1903,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		}
 		else
 		{
-			static point_t bend_center;
-			static point_t bend_start;
-			static point_t bend_end;
-			static vect_t v1,v2;
+			point_t bend_center;
+			point_t bend_start;
+			point_t bend_end;
+			vect_t v1,v2;
 
 			VUNITIZE( norm );
 

@@ -34,20 +34,17 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+
 
 /* For communication between interface routine and each of the threads */
 struct rt_many_internal  {
@@ -75,7 +72,7 @@ struct rt_many_internal  {
 void
 rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 {
-	static struct application app;
+	struct application app;
 	struct rt_many_internal *rmip = (struct rt_many_internal *)arg;
 
 	if( cpu >= MAX_PSW )  {

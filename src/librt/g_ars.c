@@ -33,10 +33,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSars[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -94,11 +90,11 @@ rt_ars_class(const struct soltab	*stp,
 fastf_t *
 rt_ars_rd_curve(union record *rp, int npts)
 {
-	static int lim;
-	static fastf_t *base;
+	int lim;
+	fastf_t *base;
 	register fastf_t *fp;		/* pointer to temp vector */
 	register int i;
-	static union record *rr;
+	union record *rr;
 	int	rec;
 
 	/* Leave room for first point to be repeated */
@@ -139,7 +135,7 @@ rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	struct rt_ars_internal *ari;
 	union record	*rp;
 	register int	i, j;
-	static vect_t	base_vect;
+	vect_t	base_vect;
 	int		currec;
 
 	BU_CK_EXTERNAL( ep );
@@ -182,7 +178,7 @@ rt_ars_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 		v = ari->curves[i];
 		for( j = 0; j < ari->pts_per_curve; j++ )  {
-			static vect_t	homog;
+			vect_t	homog;
 
 			if( i==0 && j == 0 )  {
 				/* base vector */
@@ -512,9 +508,9 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     return( ret );
 #else
-    static fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
+    fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
     int	i, j, ntri;
-    static fastf_t	f;
+    fastf_t	f;
     struct rt_ars_internal	*arip;
     struct bot_specific	*bot;
     const struct bn_tol		*tol = &rtip->rti_tol;
@@ -668,9 +664,9 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
 #define RT_ARS_MAXHITS 128		/* # surfaces hit, must be even */
-	static struct hit hits[RT_ARS_MAXHITS];
+	struct hit hits[RT_ARS_MAXHITS];
 	register struct hit *hp;
-	static int	nhits;
+	int	nhits;
 
 	nhits = 0;
 	hp = &hits[0];
@@ -678,12 +674,12 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/* consider each face */
 	for( ; trip; trip = trip->tri_forw )  {
 		fastf_t	dn;		/* Direction dot Normal */
-		static fastf_t	abs_dn;
+		fastf_t	abs_dn;
 		fastf_t	k;
-		static fastf_t	alpha, beta;
-		static fastf_t	ds;
-		static vect_t	wxb;		/* vertex - ray_start */
-		static vect_t	xp;		/* wxb cross ray_dir */
+		fastf_t	alpha, beta;
+		fastf_t	ds;
+		vect_t	wxb;		/* vertex - ray_start */
+		vect_t	xp;		/* wxb cross ray_dir */
 
 		/*
 		 *  Ray Direction dot N.  (wn is inward pointing normal)
@@ -862,7 +858,7 @@ void
 rt_hitsort(register struct hit *h, register int nh)
 {
 	register int i, j;
-	static struct hit temp;
+	struct hit temp;
 
 	for( i=0; i < nh-1; i++ )  {
 		for( j=i+1; j < nh; j++ )  {
@@ -920,9 +916,9 @@ rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)hitp->hit_private;
-	static vect_t P_A;
-	static fastf_t r;
-	static fastf_t xxlen, yylen;
+	vect_t P_A;
+	fastf_t r;
+	fastf_t xxlen, yylen;
 
 	xxlen = MAGNITUDE(trip->tri_BA);
 	yylen = MAGNITUDE(trip->tri_CA);

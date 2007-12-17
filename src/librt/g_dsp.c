@@ -50,12 +50,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSdsp[] = "@(#)$Header$ (BRL)";
-#endif
-
-#define FULL_DSP_DEBUGGING 1
-
 #include "common.h"
 
 #include <stddef.h>
@@ -72,6 +66,8 @@ static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 #include "plot3.h"
+
+#define FULL_DSP_DEBUGGING 1
 
 #define ORDERED_ISECT 1
 /* #define FULL_DSP_DEBUGGING 1 */
@@ -3373,7 +3369,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    static struct rt_dsp_internal	*dsp_ip;
+    struct rt_dsp_internal	*dsp_ip;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");
@@ -3577,6 +3573,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
     return 1;
 }
 
+
 /**
  *			R T _ D S P _ I M P O R T
  *
@@ -3586,7 +3583,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 int
 rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	static struct rt_dsp_internal	*dsp_ip;
+	struct rt_dsp_internal	*dsp_ip;
 	union record			*rp;
 	struct bu_vls			str;
 

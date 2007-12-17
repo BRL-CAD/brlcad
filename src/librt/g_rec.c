@@ -139,10 +139,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSrec[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
@@ -188,14 +184,14 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_tgc_internal	*tip;
 	register struct rec_specific *rec;
-	static double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
-	static double	mag_h, mag_a, mag_b;
-	static mat_t	R;
-	static mat_t	Rinv;
-	static mat_t	S;
-	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
-	static vect_t	work;
-	static fastf_t	f;
+	double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+	double	mag_h, mag_a, mag_b;
+	mat_t	R;
+	mat_t	Rinv;
+	mat_t	S;
+	vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
+	vect_t	work;
+	fastf_t	f;
 
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
@@ -281,9 +277,9 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	/* Compute bounding sphere and RPP */
 	{
-		static fastf_t	dx, dy, dz;	/* For bounding sphere */
-		static vect_t	P, w1;
-		static fastf_t	f, tmp, z;
+		fastf_t	dx, dy, dz;	/* For bounding sphere */
+		vect_t	P, w1;
+		fastf_t	f, tmp, z;
 
 		/* X */
 		VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
@@ -408,11 +404,11 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static fastf_t	k1, k2;		/* distance constants of solution */
-	static vect_t	xlated;		/* translated vector */
-	static struct hit hits[4];	/* 4 potential hit points */
+	vect_t	dprime;		/* D' */
+	vect_t	pprime;		/* P' */
+	fastf_t	k1, k2;		/* distance constants of solution */
+	vect_t	xlated;		/* translated vector */
+	struct hit hits[4];	/* 4 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 	int		nhits = 0;	/* Number of hit points */
 
@@ -581,11 +577,11 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    i;
 	register struct rec_specific *rec;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static fastf_t	k1, k2;		/* distance constants of solution */
-	static vect_t	xlated;		/* translated vector */
-	static struct hit hits[3];	/* 4 potential hit points */
+	vect_t	dprime;		/* D' */
+	vect_t	pprime;		/* P' */
+	fastf_t	k1, k2;		/* distance constants of solution */
+	vect_t	xlated;		/* translated vector */
+	struct hit hits[3];	/* 4 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 	fastf_t	b;		/* coeff of polynomial */
 	fastf_t	root;		/* root of radical */
@@ -774,8 +770,9 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
-	static vect_t work;
-	static vect_t pprime;
+
+	vect_t work;
+	vect_t pprime;
 	fastf_t len;
 	fastf_t ratio;
 

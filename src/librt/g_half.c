@@ -49,10 +49,6 @@
  *
  */
 
-#ifndef lint
-static const char RCShalf[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stddef.h>
@@ -156,7 +152,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
-	static fastf_t	in, out;	/* ray in/out distances */
+	fastf_t	in, out;	/* ray in/out distances */
 
 	in = -INFINITY;
 	out = INFINITY;
@@ -215,7 +211,8 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    i;
 	register struct half_specific *halfp;
-	static fastf_t	in, out;	/* ray in/out distances */
+
+	fastf_t	in, out;	/* ray in/out distances */
 	fastf_t	slant_factor;	/* Direction dot Normal */
 	fastf_t	norm_dist;
 
@@ -320,7 +317,8 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
-	static vect_t P_A;
+
+	vect_t P_A;
 	fastf_t f;
 	auto double ival;
 

@@ -176,9 +176,6 @@
  *  The calculation for theta come from a diagram drawn by PJT on 18-Nov-99.
  */
 /** @} */
-#ifndef lint
-static const char RCSpart[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -445,17 +442,17 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	register struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
 	register struct seg *segp;
-	static vect_t	dprime;		/* D' */
-	static point_t	pprime;		/* P' */
-	static point_t	xlated;		/* translated ray start point */
-	static fastf_t	t1, t2;		/* distance constants of solution */
-	static fastf_t	f;
-	static struct hit hits[4];	/* 4 potential hit points */
+	vect_t	dprime;		/* D' */
+	point_t	pprime;		/* P' */
+	point_t	xlated;		/* translated ray start point */
+	fastf_t	t1, t2;		/* distance constants of solution */
+	fastf_t	f;
+	struct hit hits[4];	/* 4 potential hit points */
 	register struct hit *hitp = &hits[0];
 	int		check_v, check_h;
 
 	if( part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE )  {
-		static vect_t	ov;		/* ray orgin to center (V - P) */
+		vect_t	ov;		/* ray orgin to center (V - P) */
 		fastf_t	vrad_sq;
 		fastf_t	magsq_ov;	/* length squared of ov */
 		fastf_t	b;		/* second term of quadratic eqn */
@@ -592,7 +589,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	 */
 check_hemispheres:
 	if( check_v )  {
-		static vect_t	ov;		/* ray orgin to center (V - P) */
+		vect_t	ov;		/* ray orgin to center (V - P) */
 		fastf_t	rad_sq;
 		fastf_t	magsq_ov;	/* length squared of ov */
 		fastf_t	b;
@@ -639,7 +636,7 @@ check_hemispheres:
 
 do_check_h:
 	if( check_h )  {
-		static vect_t	ov;		/* ray orgin to center (V - P) */
+		vect_t	ov;		/* ray orgin to center (V - P) */
 		fastf_t	rad_sq;
 		fastf_t	magsq_ov;	/* length squared of ov */
 		fastf_t	b;		/* second term of quadratic eqn */
@@ -1086,12 +1083,12 @@ int
 rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct rt_part_internal	*pip;
-	static mat_t	R;
-	static mat_t	S;
-	static mat_t	invR;
-	static mat_t	invS;
-	static vect_t	zz;
-	static vect_t	hcenter;
+	mat_t	R;
+	mat_t	S;
+	mat_t	invR;
+	mat_t	invS;
+	vect_t	zz;
+	vect_t	hcenter;
 	struct part_state	state;
 	register int		i;
 	fastf_t		radius;

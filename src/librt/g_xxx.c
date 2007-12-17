@@ -55,10 +55,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSxxx[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 /* system headers */
@@ -245,7 +241,7 @@ rt_xxx_class( const struct soltab *stp, const vect_t min, const vect_t max, cons
 int
 rt_xxx_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-	static struct rt_xxx_internal	*xxx_ip;
+	struct rt_xxx_internal	*xxx_ip;
 
 	RT_CK_DB_INTERNAL(ip);
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
@@ -264,7 +260,7 @@ rt_xxx_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 int
 rt_xxx_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-	static struct rt_xxx_internal	*xxx_ip;
+	struct rt_xxx_internal	*xxx_ip;
 
 	RT_CK_DB_INTERNAL(ip);
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
@@ -282,7 +278,7 @@ rt_xxx_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 int
 rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
-	static struct rt_xxx_internal	*xxx_ip;
+	struct rt_xxx_internal	*xxx_ip;
 	union record			*rp;
 
 	BU_CK_EXTERNAL( ep );
@@ -362,7 +358,7 @@ rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
-	static struct rt_xxx_internal	*xxx_ip;
+	struct rt_xxx_internal	*xxx_ip;
 	fastf_t				vv[ELEMENTS_PER_VECT*1];
 
 	RT_CK_DB_INTERNAL(ip)

@@ -28,10 +28,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSbot[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -452,7 +448,7 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 int
 rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	static struct rt_bot_internal	*bot_ip;
+	struct rt_bot_internal	*bot_ip;
 	int i;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -476,7 +472,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	static struct rt_bot_internal	*bot_ip;
+	struct rt_bot_internal	*bot_ip;
 	int i;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -535,7 +531,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 int
 rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	static struct rt_bot_internal	*bot_ip;
+	struct rt_bot_internal	*bot_ip;
 	struct shell *s;
 	struct vertex **verts;
 	point_t pt[3];
@@ -632,7 +628,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 int
 rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	static struct rt_bot_internal	*bot_ip;
+	struct rt_bot_internal	*bot_ip;
 	union record			*rp;
 	int				i;
 	int				chars_used;

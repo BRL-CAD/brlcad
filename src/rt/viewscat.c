@@ -31,28 +31,23 @@
  *	From viewpp.c and viewray.c by
  *	Michael John Muuss
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-#ifndef lint
-static const char RCSppview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
 #include "rad.h"
 
+
 #ifndef M_PI
-#define M_PI            3.14159265358979323846
+#  define M_PI            3.14159265358979323846
 #endif
 
 #define	MAXREFLECT	16
@@ -208,7 +203,7 @@ view_end()
 {
     fastf_t rcs;
     fastf_t iret, qret;
-    static int cpu_num, cpus;
+    int cpu_num, cpus;
 
     iret = 0.0;
     qret = 0.0;
@@ -228,12 +223,12 @@ radhit( struct application *ap, struct partition *PartHeadp )
 {
     register struct partition *pp;
     register struct hit *hitp;
-    static struct application sub_ap;
-    static struct rayinfo *rayp;
-    static fastf_t	f;
-    static vect_t	to_eye, work;
-    static int	depth;
-    static int	cpu_num;
+    struct application sub_ap;
+    struct rayinfo *rayp;
+    fastf_t	f;
+    vect_t	to_eye, work;
+    int	depth;
+    int	cpu_num;
 
 
     for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -348,8 +343,8 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 {
     register struct partition *pp;
     register struct hit *hitp;
-    static vect_t work;
-    static int cpu_num;
+    vect_t work;
+    int cpu_num;
 
     for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 	if( pp->pt_outhit->hit_dist > 0 )  break;
@@ -405,9 +400,9 @@ hittrue( struct application *ap, struct partition *PartHeadp )
 static int
 isvisible( struct application *ap, struct hit *hitp, const vect_t norm )
 {
-    static int cpu_num;
-    static struct application sub_ap;
-    static vect_t	rdir;
+    int cpu_num;
+    struct application sub_ap;
+    vect_t	rdir;
 
     if ( ap->a_resource == RESOURCE_NULL)
 	cpu_num = 0;

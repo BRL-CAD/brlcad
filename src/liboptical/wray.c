@@ -38,22 +38,18 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-#ifndef lint
-static const char RCSwray[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
 
 
-/* /vld/include/ray.h -- ray segment data format (D A Gwyn) */
 /* binary ray segment data record; see ray(4V) (SCCS vers 1.4) */
 struct vldray
 {
@@ -132,7 +128,7 @@ struct vldray
 void
 wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inormal )
 {
-	static struct vldray vldray;
+	struct vldray vldray;
 	register struct hit *hitp= pp->pt_inhit;
 
 	VMOVE( &(vldray.ox), hitp->hit_point );
@@ -170,7 +166,7 @@ wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inorm
 void
 wraypts( vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FILE *fp )
 {
-	static struct vldray vldray;
+	struct vldray vldray;
 	vect_t	norm;
 
 	VMOVE( &(vldray.ox), in );
@@ -196,7 +192,7 @@ wraypts( vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FI
 void
 wraypaint( vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp )
 {
-	static struct vldray vldray;
+	struct vldray vldray;
 
 	VMOVE( &(vldray.ox), start );
 	VSETALL( &(vldray.rx), 0 );

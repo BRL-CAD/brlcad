@@ -149,10 +149,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSehy[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stddef.h>
@@ -211,12 +207,12 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 #ifndef NO_MAGIC_CHECKING
 	const struct bn_tol		*tol = &rtip->rti_tol;
 #endif
-	static fastf_t	magsq_h;
-	static fastf_t	mag_a, mag_h;
-	static fastf_t	c, f, r1, r2;
-	static mat_t	R;
-	static mat_t	Rinv;
-	static mat_t	S;
+	fastf_t	magsq_h;
+	fastf_t	mag_a, mag_h;
+	fastf_t	c, f, r1, r2;
+	mat_t	R;
+	mat_t	Rinv;
+	mat_t	S;
 
 #ifndef NO_MAGIC_CHECKING
 	RT_CK_DB_INTERNAL(ip);
@@ -336,12 +332,12 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct ehy_specific *ehy =
 		(struct ehy_specific *)stp->st_specific;
-	static vect_t	dp;		/* D' */
-	static vect_t	pp;		/* P' */
-	static fastf_t	k1, k2;		/* distance constants of solution */
-	static fastf_t	cp;		/* c' */
-	static vect_t	xlated;		/* translated vector */
-	static struct hit hits[3];	/* 2 potential hit points */
+	vect_t	dp;		/* D' */
+	vect_t	pp;		/* P' */
+	fastf_t	k1, k2;		/* distance constants of solution */
+	fastf_t	cp;		/* c' */
+	vect_t	xlated;		/* translated vector */
+	struct hit hits[3];	/* 2 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 
 	hitp = &hits[0];
@@ -580,8 +576,8 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct ehy_specific *ehy =
 		(struct ehy_specific *)stp->st_specific;
-	static vect_t work;
-	static vect_t pprime;
+	vect_t work;
+	vect_t pprime;
 	fastf_t len;
 
 	/*
@@ -649,11 +645,11 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
 	int		*pts_dbl, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
-	static mat_t	R;
-	static mat_t	invR;
+	mat_t	R;
+	mat_t	invR;
 	point_t		p1;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
-	static struct rt_ehy_internal	*xip;
+	struct rt_ehy_internal	*xip;
 	vect_t		A, Au, B, Bu, Hu, V, Work;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -928,12 +924,12 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
 	int		*pts_dbl, face, i, j, nseg;
 	int		jj, na, nb, nell, recalc_b;
-	static mat_t	R;
-	static mat_t	invR;
-	static mat_t	invRoS;
-	static mat_t	S;
-	static mat_t	SoR;
-	static struct rt_ehy_internal	*xip;
+	mat_t	R;
+	mat_t	invR;
+	mat_t	invRoS;
+	mat_t	S;
+	mat_t	SoR;
+	struct rt_ehy_internal	*xip;
 	point_t		p1;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
 	struct shell	*s;
@@ -1411,7 +1407,7 @@ fail:
 int
 rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	static struct rt_ehy_internal	*xip;
+	struct rt_ehy_internal	*xip;
 	union record			*rp;
 
 	BU_CK_EXTERNAL( ep );
@@ -1517,7 +1513,7 @@ rt_ehy_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	static struct rt_ehy_internal	*xip;
+	struct rt_ehy_internal	*xip;
 	fastf_t				vec[3*4];
 
 	BU_CK_EXTERNAL( ep );

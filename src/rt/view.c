@@ -48,12 +48,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-#ifndef lint
-static const char RCSview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
-
 
 #include <stdio.h>
 #include <string.h>
@@ -959,10 +955,10 @@ int viewit(register struct application *ap,
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-	static fastf_t	diffuse0 = 0;
-	static fastf_t	cosI0 = 0;
-	static vect_t work0, work1;
-	static struct light_specific *lp;
+	fastf_t	diffuse0 = 0;
+	fastf_t	cosI0 = 0;
+	vect_t work0, work1;
+	struct light_specific *lp;
 	vect_t		normal;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -999,7 +995,7 @@ int viewit(register struct application *ap,
 		break;
 	case 4:
 		{
-			static struct curvature cv;
+			struct curvature cv;
 			fastf_t f;
 
 			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
@@ -1020,7 +1016,7 @@ int viewit(register struct application *ap,
 		break;
 	case 5:
 		{
-			static struct curvature cv;
+			struct curvature cv;
 
 			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 
@@ -1031,7 +1027,7 @@ int viewit(register struct application *ap,
 		break;
 	case 6:
 		{
-			static struct uvcoord uv;
+			struct uvcoord uv;
 
 			/* Exactly like 'testmap' shader: UV debug */
 			RT_HIT_UVCOORD( ap, pp->pt_inseg->seg_stp, hitp, &uv );

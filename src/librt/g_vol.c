@@ -37,10 +37,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSvol[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stddef.h>
@@ -1016,8 +1012,8 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 void
 rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
-	static point_t	s;		/* scaled original point */
-	static point_t	arot, prot;
+	point_t	s;		/* scaled original point */
+	point_t	arot, prot;
 
 	VELMUL( s, vip->cellsize, a );
 	MAT4X3PNT( arot, mat, s );

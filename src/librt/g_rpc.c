@@ -158,10 +158,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSrpc[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -221,13 +217,13 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 #ifndef NO_BOMBING_MACROS
 	const struct bn_tol		*tol = &rtip->rti_tol;  /* only used to check a if tolerance is valid */
 #endif
-	static fastf_t	magsq_b, magsq_h, magsq_r;
-	static fastf_t	mag_b, mag_h, mag_r;
-	static fastf_t	f;
-	static mat_t	R;
-	static mat_t	Rinv;
-	static mat_t	S;
-	static vect_t	invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
+	fastf_t	magsq_b, magsq_h, magsq_r;
+	fastf_t	mag_b, mag_h, mag_r;
+	fastf_t	f;
+	mat_t	R;
+	mat_t	Rinv;
+	mat_t	S;
+	vect_t	invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
 
 	RT_CK_DB_INTERNAL(ip);
 	BN_CK_TOL(tol);
@@ -350,11 +346,11 @@ rt_rpc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 	register struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
-	static vect_t	dprime;		/* D' */
-	static vect_t	pprime;		/* P' */
-	static fastf_t	k1, k2;		/* distance constants of solution */
-	static vect_t	xlated;		/* translated vector */
-	static struct hit hits[3];	/* 2 potential hit points */
+	vect_t	dprime;		/* D' */
+	vect_t	pprime;		/* P' */
+	fastf_t	k1, k2;		/* distance constants of solution */
+	vect_t	xlated;		/* translated vector */
+	struct hit hits[3];	/* 2 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
 /*?????	const struct bn_tol	*tol = &rtip->rti_tol; ?????*/
 
@@ -584,8 +580,9 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 {
 	register struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
-	static vect_t work;
-	static vect_t pprime;
+
+	vect_t work;
+	vect_t pprime;
 	fastf_t len;
 
 	/*
@@ -646,13 +643,13 @@ rt_rpc_class(void)
 int
 rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-	static struct rt_rpc_internal	*xip;
+	struct rt_rpc_internal	*xip;
 	fastf_t *front;
 	fastf_t *back;
 	fastf_t b, dtol, f, h, ntol, rh;
 	int	i, n;
-	static mat_t	R;
-	static mat_t	invR;
+	mat_t	R;
+	mat_t	invR;
 	struct rt_pt_node	*old, *pos, *pts;
 	vect_t	Bu, Hu, Ru;
 
@@ -912,9 +909,9 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fastf_t		b, *back, f, *front, h, rh;
 	fastf_t		dtol, ntol;
 	vect_t		Bu, Hu, Ru;
-	static mat_t	R;
-	static mat_t	invR;
-	static struct rt_rpc_internal	*xip;
+	mat_t	R;
+	mat_t	invR;
+	struct rt_rpc_internal	*xip;
 	struct rt_pt_node	*old, *pos, *pts;
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
@@ -1180,7 +1177,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 int
 rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-	static struct rt_rpc_internal	*xip;
+	struct rt_rpc_internal	*xip;
 	union record			*rp;
 
 	BU_CK_EXTERNAL( ep );
