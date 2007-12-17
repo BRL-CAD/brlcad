@@ -84,9 +84,6 @@
 #include <windows.h>
 #include <io.h>
 
-#define bzero(str,n)		memset( str, 0, n )
-#define bcopy(from,to,count)	memcpy( to, from, count )
-
 #ifndef S_IFMT
 #  define S_IFMT _S_IFMT
 #endif
