@@ -647,7 +647,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	 */
 	C.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
 	if( tgc->tgc_AD_CB && !NEAR_ZERO( C.cf[0], 1.0e-10 )  ) {
-		FAST fastf_t roots;
+		fastf_t roots;
 
 		/*
 		 *  (void) bn_poly_add( &sum, &Xsqr, &Ysqr );
@@ -1098,7 +1098,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 		/* Again, check for the equal eccentricities case. */
 		if ( C[ix].dgr == 2 ){
-			FAST fastf_t roots;
+			fastf_t roots;
 
 			/* Find the real roots the easy way. */
 			if( (roots = C[ix].cf[1]*C[ix].cf[1]-4*C[ix].cf[0]*C[ix].cf[2]
@@ -1356,7 +1356,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 void
 rt_pt_sort(register fastf_t t[], int npts)
 {
-	FAST fastf_t	u;
+	fastf_t	u;
 	register short	lim, n;
 
 	for( lim = npts-1; lim > 0; lim-- )  {
@@ -1427,8 +1427,8 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 {
 	register struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
-	FAST fastf_t	Q;
-	FAST fastf_t	R;
+	fastf_t	Q;
+	fastf_t	R;
 	static vect_t	stdnorm;
 
 	/* Hit point */
@@ -1472,7 +1472,7 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	(struct tgc_specific *)stp->st_specific;
 	static vect_t work;
 	static vect_t pprime;
-	FAST fastf_t len;
+	fastf_t len;
 
 	/* hit_point is on surface;  project back to unit cylinder,
 	 * creating a vector from vertex to hit point.

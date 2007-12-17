@@ -162,8 +162,8 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	out = INFINITY;
 
 	{
-		FAST fastf_t	slant_factor;	/* Direction dot Normal */
-		FAST fastf_t	norm_dist;
+		fastf_t	slant_factor;	/* Direction dot Normal */
+		fastf_t	norm_dist;
 
 		norm_dist = VDOT( halfp->half_eqn, rp->r_pt ) - halfp->half_eqn[3];
 		if( (slant_factor = -VDOT( halfp->half_eqn, rp->r_dir )) < -1.0e-10 )  {
@@ -216,8 +216,8 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	register int    i;
 	register struct half_specific *halfp;
 	static fastf_t	in, out;	/* ray in/out distances */
-	FAST fastf_t	slant_factor;	/* Direction dot Normal */
-	FAST fastf_t	norm_dist;
+	fastf_t	slant_factor;	/* Direction dot Normal */
+	fastf_t	norm_dist;
 
 	/* for each ray/halfspace pair */
 	for(i = 0; i < n; i++){
@@ -264,7 +264,7 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
-	FAST fastf_t f;
+	fastf_t f;
 
 	RT_CK_SOLTAB(stp);
 	RT_CK_RAY(rp);
@@ -321,7 +321,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 	static vect_t P_A;
-	FAST fastf_t f;
+	fastf_t f;
 	auto double ival;
 
 	f = hitp->hit_dist;

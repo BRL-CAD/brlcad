@@ -331,7 +331,7 @@ static const int farb4[6][4] = {
 void
 findang(register fastf_t *angles, register fastf_t *unitv)
 {
-	FAST fastf_t f;
+	fastf_t f;
 
 	/* convert direction cosines into axis angles */
 	if( unitv[X] <= -1.0 )  angles[X] = -90.0;

@@ -810,9 +810,9 @@ memset(hits, 0,sizeof(hits));
 	 * cell of the dda is the start cell.
 	 */
 	for (j=-1; j>-7; j--) {
-		FAST fastf_t	dn;	/* Direction dot Normal */
-		FAST fastf_t	dxbdn;	/* distence beteen d and b * dn */
-		FAST fastf_t	s;	/* actual distence in mm */
+		fastf_t	dn;	/* Direction dot Normal */
+		fastf_t	dxbdn;	/* distence beteen d and b * dn */
+		fastf_t	s;	/* actual distence in mm */
 		int allIndex;
 
 		switch (j) {

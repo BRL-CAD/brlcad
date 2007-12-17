@@ -2174,7 +2174,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 	struct loopuse	*lu;
 	struct model	*m;
 	long		magic1;
-	FAST fastf_t	thickening;
+	fastf_t	thickening;
 
 	NMG_CK_LOOP(l);
 	BN_CK_TOL(tol);

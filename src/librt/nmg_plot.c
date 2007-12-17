@@ -2321,7 +2321,7 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
 			i < c->s_size[0] * c->s_size[1];
 			i++)
 		{
-			FAST fastf_t	div;
+			fastf_t	div;
 			vp[0] *= (div = 1/vp[3]);
 			vp[1] *= div;
 			vp[2] *= div;

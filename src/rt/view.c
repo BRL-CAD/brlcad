@@ -807,7 +807,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
 	if( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
 		struct application sub_ap;
-		FAST fastf_t f;
+		fastf_t f;
 
 		if( pp->pt_outhit->hit_dist >= INFINITY ||
 		    ap->a_level > max_bounces )  {
@@ -1000,7 +1000,7 @@ int viewit(register struct application *ap,
 	case 4:
 		{
 			static struct curvature cv;
-			FAST fastf_t f;
+			fastf_t f;
 
 			RT_CURVATURE( &cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 

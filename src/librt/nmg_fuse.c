@@ -1392,7 +1392,7 @@ int
 nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 {
 	const struct face_g_plane	*fg2;
-	FAST fastf_t		dist;
+	fastf_t		dist;
 	fastf_t			worst = 0;
 	int			count = 0;
 	struct loopuse		*lu;

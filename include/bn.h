@@ -296,7 +296,7 @@ typedef struct bn_complex {
 #define bn_cx_sub( ap, bp )		{ (ap)->re -= (bp)->re; (ap)->im -= (bp)->im;}
 
 #define bn_cx_mul( ap, bp )	 	\
-	{ FAST fastf_t a__re, b__re; \
+	{ register fastf_t a__re, b__re; \
 	(ap)->re = ((a__re=(ap)->re)*(b__re=(bp)->re)) - (ap)->im*(bp)->im; \
 	(ap)->im = a__re*(bp)->im + (ap)->im*b__re; }
 

@@ -354,8 +354,8 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	cp = ehy->ehy_cprime;
 	/* Find roots of the equation, using formula for quadratic */
 	{
-		FAST fastf_t	a, b, c;	/* coeffs of polynomial */
-		FAST fastf_t	disc;		/* discriminant */
+		fastf_t	a, b, c;	/* coeffs of polynomial */
+		fastf_t	disc;		/* discriminant */
 
 		a = dp[Z] * dp[Z]
 			- (2 * cp + 1) * (dp[X] * dp[X] + dp[Y] * dp[Y]);
@@ -582,7 +582,7 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		(struct ehy_specific *)stp->st_specific;
 	static vect_t work;
 	static vect_t pprime;
-	FAST fastf_t len;
+	fastf_t len;
 
 	/*
 	 * hit_point is on surface;  project back to unit ehy,

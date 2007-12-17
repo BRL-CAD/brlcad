@@ -145,7 +145,7 @@ static struct jitter_pattern pt_pats[] = {
 static void
 jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
 {
-	FAST fastf_t dx, dy;
+	fastf_t dx, dy;
 
 	if (pat_num >= 0) {
 		dx = a->a_x + pt_pats[pat_num].coords[samplenum*2] +
@@ -309,7 +309,7 @@ void do_pixel(int cpu,
 	(void)rt_shootray( &a );
 
 	if( stereo )  {
-	    FAST fastf_t right,left;
+	    fastf_t right,left;
 
 	    right = CRT_BLEND(a.a_color);
 
@@ -389,7 +389,7 @@ void do_pixel(int cpu,
 	    (void)rt_shootray( &a );
 
 	    if( stereo )  {
-		FAST fastf_t right,left;
+		fastf_t right,left;
 
 		right = CRT_BLEND(a.a_color);
 
@@ -417,7 +417,7 @@ void do_pixel(int cpu,
 
 	{
 	    /* scale the hypersampled results */
-	    FAST fastf_t f;
+	    fastf_t f;
 	    f = 1.0 / (hypersample+1);
 	    VSCALE( a.a_color, colorsum, f );
 	}

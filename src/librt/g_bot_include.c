@@ -607,8 +607,8 @@ XGLUE(rt_bot_makesegs_,TRI_TYPE)( struct hit *hits, int nhits, struct soltab *st
 
 	for( i=0 ; i<nhits-1 ; i++ )
 	    {
-		FAST fastf_t dist;
-		FAST fastf_t dn;
+		fastf_t dist;
+		fastf_t dn;
 
 		dn = hits[i].hit_vpriv[X];
 
@@ -963,9 +963,9 @@ XGLUE(rt_bot_shot_,TRI_TYPE)( struct soltab *stp, struct xray *rp, struct applic
 
 	/* consider each face */
 	for( ; trip; trip = trip->tri_forw )  {
-		FAST fastf_t	dn;		/* Direction dot Normal */
+		fastf_t	dn;		/* Direction dot Normal */
 		static fastf_t	abs_dn;
-		FAST fastf_t	k;
+		fastf_t	k;
 		static fastf_t	alpha, beta;
 		static vect_t	wxb;		/* vertex - ray_start */
 		static vect_t	xp;		/* wxb cross ray_dir */
@@ -1084,9 +1084,9 @@ XGLUE(rt_bot_piece_shot_,TRI_TYPE)( struct rt_piecestate *psp, struct rt_pieceli
 	}
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
-		FAST fastf_t	dn;		/* Direction dot Normal */
+		fastf_t	dn;		/* Direction dot Normal */
 		static fastf_t	abs_dn;
-		FAST fastf_t	k;
+		fastf_t	k;
 		static fastf_t	alpha, beta;
 		static vect_t	wxb;		/* vertex - ray_start */
 		static vect_t	xp;		/* wxb cross ray_dir */

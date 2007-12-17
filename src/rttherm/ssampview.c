@@ -498,7 +498,7 @@ check(double x, double y, double z)
 	point_t	rgb;
 	point_t	xyz2, rgb2;
 	struct bn_tabdata	*tabp;
-	FAST fastf_t	tab_area;
+	fastf_t	tab_area;
 
 	BN_GET_TABDATA( tabp, spectrum );
 	xyz[X] = x;

@@ -238,9 +238,9 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		(struct sph_specific *)stp->st_specific;
 	register struct seg *segp;
 	static vect_t	ov;		/* ray orgin to center (V - P) */
-	FAST fastf_t	magsq_ov;	/* length squared of ov */
-	FAST fastf_t	b;		/* second term of quadratic eqn */
-	FAST fastf_t	root;		/* root of radical */
+	fastf_t	magsq_ov;	/* length squared of ov */
+	fastf_t	b;		/* second term of quadratic eqn */
+	fastf_t	root;		/* root of radical */
 
 	VSUB2( ov, sph->sph_V, rp->r_pt );
 	b = VDOT( rp->r_dir, ov );
@@ -288,9 +288,9 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register struct sph_specific *sph;
 	static vect_t	ov;		/* ray orgin to center (V - P) */
-	FAST fastf_t	magsq_ov;	/* length squared of ov */
-	FAST fastf_t	b;		/* second term of quadratic eqn */
-	FAST fastf_t	root;		/* root of radical */
+	fastf_t	magsq_ov;	/* length squared of ov */
+	fastf_t	b;		/* second term of quadratic eqn */
+	fastf_t	root;		/* root of radical */
 	register int    i;
 
 	/* for each ray/sphere pair */

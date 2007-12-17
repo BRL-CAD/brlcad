@@ -156,7 +156,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	int 	i,numobjs;
 	char 	*objname[MAXOBJECTS],title[1];
 	fastf_t 	len,u,step;
-	FAST float 	ratio;
+	float 	ratio;
 	vect_t	last_move;
 	struct rt_i	*rtip;
 	struct resource resource;

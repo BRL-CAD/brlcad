@@ -383,7 +383,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 {
 	static vect_t	work;
 	static vect_t	P_A;		/* new point minus A */
-	FAST fastf_t	f;
+	fastf_t	f;
 	register struct aface	*afp;
 	register struct oface	*ofp;
 
@@ -807,9 +807,9 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* consider each face */
 	for( afp = &arbp->arb_face[j=arbp->arb_nmfaces-1]; j >= 0; j--, afp-- )  {
-		FAST fastf_t	dn;		/* Direction dot Normal */
-		FAST fastf_t	dxbdn;
-		FAST fastf_t	s;
+		fastf_t	dn;		/* Direction dot Normal */
+		fastf_t	dxbdn;
+		fastf_t	s;
 
 		/* XXX some of this math should be prep work
 		 * (including computing dxbdn/dn ?) *$*/
@@ -885,9 +885,9 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 {
 	register int    j, i;
 	register struct arb_specific *arbp;
-	FAST fastf_t	dn;		/* Direction dot Normal */
-	FAST fastf_t	dxbdn;
-	FAST fastf_t	s;
+	fastf_t	dn;		/* Direction dot Normal */
+	fastf_t	dxbdn;
+	fastf_t	s;
 
 	/* Intialize return values */
 	for(i = 0; i < n; i++){

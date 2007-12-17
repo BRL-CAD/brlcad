@@ -330,7 +330,7 @@ void
 dozoom(int which_eye)
 {
 	register struct solid	*sp;
-	FAST fastf_t		ratio;
+	fastf_t		ratio;
 	fastf_t			inv_viewsize;
 	mat_t			new;
 	matp_t			mat = new;

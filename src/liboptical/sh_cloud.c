@@ -82,8 +82,8 @@ double
 cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t initFx, fastf_t initFy)
 {
 	register int	i;
-	FAST fastf_t	Px, Py, Fx, Fy, C;
-	FAST fastf_t	t1, t2, k;
+	fastf_t	Px, Py, Fx, Fy, C;
+	fastf_t	t1, t2, k;
 
 	t1 = t2 = 0;
 
@@ -175,7 +175,7 @@ cloud_render(struct application *ap, struct partition *pp, struct shadework *swp
 	register struct cloud_specific *cp =
 		(struct cloud_specific *)dp;
 	double intensity;
-	FAST fastf_t	TR;
+	fastf_t	TR;
 
 	intensity = cloud_texture( swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 		1.0, 2.0, 1.0 );

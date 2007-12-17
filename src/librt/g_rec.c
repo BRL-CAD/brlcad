@@ -428,9 +428,9 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* Find roots of the equation, using forumla for quadratic w/ a=1 */
 	{
-		FAST fastf_t	b;		/* coeff of polynomial */
-		FAST fastf_t	root;		/* root of radical */
-		FAST fastf_t	dx2dy2;
+		fastf_t	b;		/* coeff of polynomial */
+		fastf_t	root;		/* root of radical */
+		fastf_t	dx2dy2;
 
 		b = 2 * ( dprime[X]*pprime[X] + dprime[Y]*pprime[Y] ) *
 		   (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
@@ -587,9 +587,9 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	static vect_t	xlated;		/* translated vector */
 	static struct hit hits[3];	/* 4 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
-	FAST fastf_t	b;		/* coeff of polynomial */
-	FAST fastf_t	root;		/* root of radical */
-	FAST fastf_t	dx2dy2;
+	fastf_t	b;		/* coeff of polynomial */
+	fastf_t	root;		/* root of radical */
+	fastf_t	dx2dy2;
 
 	/* for each ray/right_eliptical_cylinder pair */
 	for(i = 0; i < n; i++){
@@ -776,8 +776,8 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		(struct rec_specific *)stp->st_specific;
 	static vect_t work;
 	static vect_t pprime;
-	FAST fastf_t len;
-	FAST fastf_t ratio;
+	fastf_t len;
+	fastf_t ratio;
 
 	/* hit_point is on surface;  project back to unit cylinder,
 	 * creating a vector from vertex to hit point.

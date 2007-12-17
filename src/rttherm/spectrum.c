@@ -355,7 +355,7 @@ rt_spect_curve_to_xyz(
 		      const struct bn_tabdata	*cie_y,
 		      const struct bn_tabdata	*cie_z)
 {
-	FAST fastf_t	tab_area;
+	fastf_t	tab_area;
 
 	BN_CK_TABDATA(tabp);
 

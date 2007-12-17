@@ -1304,7 +1304,7 @@ wgl_choose_visual(struct dm *dmp,
 {
     int iPixelFormat ;
     PIXELFORMATDESCRIPTOR *ppfd, pfd;
-    BOOL good;
+    int good;
 
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */

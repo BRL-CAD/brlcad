@@ -87,7 +87,7 @@ void
 quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 {
 	fastf_t		tr;
-	FAST fastf_t	s;
+	fastf_t	s;
 
 #define XX	0
 #define YY	5
@@ -362,8 +362,8 @@ quat_print(const char *title, const fastf_t *quat)
 void
 quat_exp(fastf_t *out, const fastf_t *in)
 {
-	FAST fastf_t	theta;
-	FAST fastf_t	scale;
+	fastf_t	theta;
+	fastf_t	scale;
 
 	if( (theta = MAGNITUDE( in )) > VDIVIDE_TOL )
 		scale = sin(theta)/theta;
@@ -383,8 +383,8 @@ quat_exp(fastf_t *out, const fastf_t *in)
 void
 quat_log(fastf_t *out, const fastf_t *in)
 {
-	FAST fastf_t	theta;
-	FAST fastf_t	scale;
+	fastf_t	theta;
+	fastf_t	scale;
 
 	if( (scale = MAGNITUDE(in)) > VDIVIDE_TOL )  {
 		theta = atan2( scale, in[W] );

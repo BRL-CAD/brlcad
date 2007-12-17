@@ -225,9 +225,9 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
 	/* consider each face */
 	for( ; trip; trip = trip->tri_forw )  {
-		FAST fastf_t	dn;		/* Direction dot Normal */
+		fastf_t	dn;		/* Direction dot Normal */
 		static fastf_t	abs_dn;
-		FAST fastf_t	k;
+		fastf_t	k;
 		static fastf_t	alpha, beta;
 		static vect_t	wxb;		/* vertex - ray_start */
 		static vect_t	xp;		/* wxb cross ray_dir */

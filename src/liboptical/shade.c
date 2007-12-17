@@ -158,7 +158,7 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 			/* Eye inside solid, orthoview */
 			VREVERSE( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
 		} else {
-			FAST fastf_t f;
+			register fastf_t f;
 			/* Get surface normal for hit point */
 			/* Stupid SysV CPP needs this on one line */
 			RT_HIT_NORMAL( swp->sw_hit.hit_normal, &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );

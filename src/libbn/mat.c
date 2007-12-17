@@ -309,12 +309,12 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 
 	/* Main Loop */
 	for( i = 0; i < 4; i++ )  {
-		FAST fastf_t y;				/* local temporary */
+		register fastf_t y;				/* local temporary */
 
 		k = i;
 		y = output[i*4+i];
 		for( j = i+1; j < 4; j++ )  {
-			FAST fastf_t w;			/* local temporary */
+			register fastf_t w;			/* local temporary */
 
 			w = output[i*4+j];
 			if( fabs(w) > fabs(y) )  {
@@ -330,7 +330,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 		y = 1.0 / y;
 
 		for( j = 0; j < 4; j++ )  {
-			FAST fastf_t temp;		/* Local */
+			register fastf_t temp;		/* Local */
 
 			c[j] = output[j*4+k];
 			output[j*4+k] = output[j*4+i];
@@ -359,7 +359,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 			static int p;			/* Local temp */
 
 			for( j = 0; j < 4; j++ )  {
-				FAST fastf_t w;		/* Local temp */
+				register fastf_t w;		/* Local temp */
 
 				w = output[i*4+j];
 				output[i*4+j] = output[k*4+j];
@@ -1006,7 +1006,7 @@ void
 bn_vec_ortho(register vect_t out, register const vect_t in)
 {
 	register int j, k;
-	FAST fastf_t	f;
+	register fastf_t f;
 	register int i;
 
 	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
@@ -1312,7 +1312,7 @@ bn_mat_ck(const char *title, const mat_t m)
 fastf_t
 bn_mat_det3(const mat_t m)
 {
-	FAST fastf_t sum;
+	register fastf_t sum;
 
 	sum = m[0] * ( m[5]*m[10] - m[6]*m[9] )
 	     -m[1] * ( m[4]*m[10] - m[6]*m[8] )

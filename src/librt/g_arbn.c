@@ -195,9 +195,9 @@ rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	iplane = oplane = -1;
 
 	for( i = aip->neqn-1; i >= 0; i-- )  {
-		FAST fastf_t	slant_factor;	/* Direction dot Normal */
-		FAST fastf_t	norm_dist;
-		FAST fastf_t	s;
+		fastf_t	slant_factor;	/* Direction dot Normal */
+		fastf_t	norm_dist;
+		fastf_t	s;
 
 		norm_dist = VDOT( aip->eqn[i], rp->r_pt ) - aip->eqn[i][3];
 		if( (slant_factor = -VDOT( aip->eqn[i], rp->r_dir )) < -1.0e-10 )  {

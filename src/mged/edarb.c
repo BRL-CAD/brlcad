@@ -827,7 +827,7 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	register int i;
 	vect_t slope;
-	FAST fastf_t rot, fb;
+	fastf_t rot, fb;
 
 	if(argc < 3 || 4 < argc){
 	  struct bu_vls vls;

@@ -471,7 +471,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   case 2:
     {
       /* Sort most distant to least distant. */
-      FAST fastf_t	u;
+      fastf_t	u;
       if( (u=realRoot[0]) < realRoot[1] )  {
 	/* bubble larger towards [0] */
 	realRoot[0] = realRoot[1];
@@ -487,7 +487,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
       /*  Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
       for( lim = i-1; lim > 0; lim-- )  {
 	for( n = 0; n < lim; n++ )  {
-	  FAST fastf_t	u;
+	  fastf_t	u;
 	  if( (u=realRoot[n]) < realRoot[n+1] )  {
 	    /* bubble larger towards [0] */
 	    realRoot[n] = realRoot[n+1];

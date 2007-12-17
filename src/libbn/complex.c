@@ -65,8 +65,8 @@ static const char RCScomplex[] = "@(#)$Header$ (BRL)";
 void
 bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 {
-	FAST fastf_t	r, s;
-	FAST fastf_t	ap__re;
+	register fastf_t r, s;
+	register fastf_t ap__re;
 
 	/* Note: classical formula may cause unnecessary overflow */
 	ap__re = ap->re;
@@ -109,7 +109,7 @@ err:
 void
 bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 {
-	FAST fastf_t	ampl, temp;
+	register fastf_t	ampl, temp;
 	/* record signs of original real & imaginary parts */
 	register int	re_sign;
 	register int	im_sign;

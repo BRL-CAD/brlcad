@@ -510,7 +510,7 @@ bn_tabdata_blend3(struct bn_tabdata *out, register double scale1, const struct b
 double
 bn_tabdata_area1(const struct bn_tabdata *in)
 {
-	FAST fastf_t		area;
+	register fastf_t		area;
 	register const fastf_t	*ip;
 	register int		j;
 
@@ -538,7 +538,7 @@ double
 bn_tabdata_area2(const struct bn_tabdata *in)
 {
 	const struct bn_table	*tabp;
-	FAST fastf_t		area;
+	register fastf_t		area;
 	fastf_t			width;
 	register int		j;
 
@@ -568,7 +568,7 @@ bn_tabdata_area2(const struct bn_tabdata *in)
 double
 bn_tabdata_mul_area1(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 {
-	FAST fastf_t		area;
+	register fastf_t		area;
 	register const fastf_t	*i1, *i2;
 	register int		j;
 
@@ -597,7 +597,7 @@ double
 bn_tabdata_mul_area2(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 {
 	const struct bn_table	*tabp;
-	FAST fastf_t		area;
+	register fastf_t		area;
 	fastf_t			width;
 	register int		j;
 
@@ -1296,7 +1296,7 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
 {
 	const struct bn_table	*tabp;
 	register int i;
-	FAST fastf_t	minval = MAX_FASTF, maxval = -MAX_FASTF;
+	register fastf_t	minval = MAX_FASTF, maxval = -MAX_FASTF;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_to_tcl(x%x, x%x)\n", vp, data);
 

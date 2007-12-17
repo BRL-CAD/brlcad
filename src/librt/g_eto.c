@@ -179,7 +179,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	register struct eto_specific *eto;
 	static vect_t	P, w1;	/* for RPP calculation */
 	static vect_t	Au, Bu, Cu, Nu;
-	FAST fastf_t	ch, cv, dh, f, phi;
+	fastf_t	ch, cv, dh, f, phi;
 	struct rt_eto_internal	*tip;
 
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -489,7 +489,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	case 2:
 		{
 			/* Sort most distant to least distant. */
-			FAST fastf_t	u;
+			fastf_t	u;
 			if( (u=k[0]) < k[1] )  {
 				/* bubble larger towards [0] */
 				k[0] = k[1];
@@ -505,7 +505,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			/*  Inline rt_pt_sort().  Sorts k[] into descending order. */
 			for( lim = i-1; lim > 0; lim-- )  {
 				for( n = 0; n < lim; n++ )  {
-					FAST fastf_t	u;
+					fastf_t	u;
 					if( (u=k[n]) < k[n+1] )  {
 						/* bubble larger towards [0] */
 						k[n] = k[n+1];
@@ -586,7 +586,7 @@ rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 {
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
-	FAST fastf_t sqrt_x2y2, efact, ffact, xcomp, ycomp, zcomp;
+	fastf_t sqrt_x2y2, efact, ffact, xcomp, ycomp, zcomp;
 	static vect_t normp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );

@@ -42,8 +42,8 @@
  *      that is wide enough to point to anything, which can be used on
  *      both *ANSI C and K&R C environments.  On some machines,
  *      pointers to *functions can be wider than pointers to data
- *      bytes, so a declaration *of "char *" isn't generic enough.
- *      DEPRECATED: use void/char *pointers
+ *      bytes, so a declaration of "char*" isn't generic enough.
+ *      DEPRECATED: use void* and char* pointers
  *
  *	fastf_t - Intended to be the fastest floating point data type
  *	on the current machine, with at least 64 bits of precision.
@@ -61,14 +61,6 @@
  *	but on serial machines there can sometimes be a performance
  *	advantage to using "static".
  *      DEPRECATED: use static
- *
- *	FAST - The fastest storage class for fastf_t variables.  On
- *	most machines with abundant registers, this is "register", but
- *	on machines like the VAX with only 3 "register double"s
- *	available to C programmers, it is set to LOCAL.  Thus,
- *	declaring a fast temporary fastf_t variable is done like: FAST
- *	fastf_t var;
- *      DEPRECATED: use register or leave it up to compiler
  *
  *	HIDDEN - Functions intended to be local to one module should
  *	be declared HIDDEN.  For production use, and lint, it will be
@@ -199,7 +191,6 @@
  ********************************/
 typedef double fastf_t;
 #define LOCAL auto
-#define FAST register
 typedef long bitv_t;
 #define BITV_SHIFT	5
 /* assume only one processor for now */
@@ -219,7 +210,6 @@ typedef long bitv_t;
 #define IBM_FLOAT 1		/* Uses IBM style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -242,7 +232,6 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -260,7 +249,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -281,7 +269,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -301,7 +288,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -318,7 +304,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 typedef double		fastf_t;/* double|float, "Fastest" float type */
 #define LOCAL		auto	/* static|auto, for serial|parallel cpu */
-#define FAST		register /* LOCAL|register, for fastest floats */
 #if 1
 typedef long long	bitv_t;	/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
@@ -341,7 +326,6 @@ typedef long		bitv_t;
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* for parallel cpus */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -361,7 +345,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* for parallel cpus */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -383,7 +366,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
@@ -412,7 +394,6 @@ typedef long	bitv_t;		/* largest integer type */
 
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	static		/* static|auto, for serial|parallel cpu */
-#define FAST	LOCAL		/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -433,7 +414,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -466,7 +446,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -487,7 +466,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
-#define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -510,7 +488,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */
-#define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
@@ -522,7 +499,6 @@ typedef long    bitv_t;         /* could use long long */
 #define IEEE_FLOAT      1      /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */
-#define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
@@ -541,7 +517,6 @@ typedef long    bitv_t;         /* could use long long */
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */
-#define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -566,7 +541,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */
-#define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -593,7 +567,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */
-#define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define DEFAULT_PSW	bu_avail_cpus()
@@ -613,7 +586,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define LOCAL   auto            /* static|auto, for serial|parallel cpu */
-#define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define DEFAULT_PSW	bu_avail_cpus()
@@ -642,7 +614,6 @@ typedef long bitv_t;          /* could use long long */
 # if 1 /* multi-cpu linux build */
 
 # define LOCAL auto             /* static|auto, for serial|parallel cpu */
-# define FAST register          /* LOCAL|register, for fastest floats */
 # define MAX_PSW         16
 # define DEFAULT_PSW     bu_avail_cpus()	/* use as many processors as are available */
 # define PARALLEL        1
@@ -651,7 +622,6 @@ typedef long bitv_t;          /* could use long long */
 # else  /* 1 CPU Linux build */
 
 # define LOCAL static		/* static|auto, for serial|parallel cpu */
-# define FAST LOCAL		/* LOCAL|register, for fastest floats */
 # define MAX_PSW        1	/* only one processor, max */
 # define DEFAULT_PSW	1
 
@@ -668,7 +638,6 @@ typedef long bitv_t;          /* could use long long */
 typedef double		fastf_t;	/* double|float, "Fastest" float type */
 typedef long		bitv_t;		/* largest integer type */
 # define IEEE_FLOAT	1		/* Uses IEEE style floating point */
-# define FAST		register	/* LOCAL|register, for fastest floats */
 # define DEFAULT_PSW	bu_avail_cpus()
 # define	PARALLEL	1
 # define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
@@ -694,7 +663,6 @@ typedef long		bitv_t;		/* largest integer type */
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	static		/* static|auto, for serial|parallel cpu */
-#define FAST	LOCAL		/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 

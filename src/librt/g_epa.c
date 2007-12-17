@@ -352,8 +352,8 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* Find roots of the equation, using formula for quadratic */
 	{
-		FAST fastf_t	a, b, c;	/* coeffs of polynomial */
-		FAST fastf_t	disc;		/* disc of radical */
+		fastf_t	a, b, c;	/* coeffs of polynomial */
+		fastf_t	disc;		/* disc of radical */
 
 		a = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
 		b = 2*(dprime[X] * pprime[X] + dprime[Y] * pprime[Y])
@@ -567,7 +567,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		(struct epa_specific *)stp->st_specific;
 	static vect_t work;
 	static vect_t pprime;
-	FAST fastf_t len;
+	fastf_t len;
 
 	/*
 	 * hit_point is on surface;  project back to unit epa,

@@ -1420,7 +1420,7 @@ do_ae(double azim, double elev)
 static void
 jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
 {
-    FAST fastf_t dx, dy;
+    fastf_t dx, dy;
 
     if (pat_num >= 0) {
 	dx = a->a_x + pt_pats[pat_num].coords[samplenum*2] +
@@ -1602,7 +1602,7 @@ void do_pixel(int cpu,
 
 	{
 	    /* scale the hypersampled results */
-	    FAST fastf_t f;
+	    fastf_t f;
 	    f = 1.0 / (hypersample+1);
 	    VSCALE( a.a_color, colorsum, f );
 	}
@@ -2046,7 +2046,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
     if( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
 	struct application sub_ap;
-	FAST fastf_t f;
+	fastf_t f;
 
 	if( pp->pt_outhit->hit_dist >= INFINITY ||
 	    ap->a_level > max_bounces )  {

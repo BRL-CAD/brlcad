@@ -192,7 +192,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	register struct tor_specific *tor;
 	static mat_t	R;
 	static vect_t	P, w1;	/* for RPP calculation */
-	FAST fastf_t	f;
+	fastf_t	f;
 	struct rt_tor_internal	*tip;
 
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -481,7 +481,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	case 2:
 		{
 			/* Sort most distant to least distant. */
-			FAST fastf_t	u;
+			fastf_t	u;
 			if( (u=k[0]) < k[1] )  {
 				/* bubble larger towards [0] */
 				k[0] = k[1];
@@ -497,7 +497,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			/*  Inline rt_pt_sort().  Sorts k[] into descending order. */
 			for( lim = i-1; lim > 0; lim-- )  {
 				for( n = 0; n < lim; n++ )  {
-					FAST fastf_t	u;
+					fastf_t	u;
 					if( (u=k[n]) < k[n+1] )  {
 						/* bubble larger towards [0] */
 						k[n] = k[n+1];
@@ -835,7 +835,7 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
-	FAST fastf_t w;
+	fastf_t w;
 	static vect_t work;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );

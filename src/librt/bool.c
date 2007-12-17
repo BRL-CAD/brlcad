@@ -78,7 +78,7 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
-	FAST fastf_t		tol_dist;
+	register fastf_t		tol_dist;
 
 	tol_dist = rtip->rti_tol.dist;
 
@@ -187,8 +187,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
 
-	FAST fastf_t		diff, diff_se;
-	FAST fastf_t		tol_dist;
+	register fastf_t		diff, diff_se;
+	register fastf_t		tol_dist;
 
 	RT_CK_PT_HD(PartHdp);
 
@@ -859,8 +859,8 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
 int
 rt_fdiff(double a, double b)
 {
-	FAST double diff;
-	FAST double d;
+	register double diff;
+	register double d;
 	register int ret;
 
 	/* d = Max(Abs(a),Abs(b)) */
@@ -2117,8 +2117,8 @@ out:
 double
 rt_reldiff(double a, double b)
 {
-	FAST fastf_t	d;
-	FAST fastf_t	diff;
+	register fastf_t	d;
+	register fastf_t	diff;
 
 	/* d = Max(Abs(a),Abs(b)) */
 	d = (a >= 0.0) ? a : -a;

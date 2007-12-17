@@ -711,7 +711,7 @@ tancir(Tcl_Interp	*interp,
        register fastf_t cir2[]) {
 	static fastf_t mag;
 	vect_t	work;
-	FAST fastf_t f;
+	fastf_t f;
 	static fastf_t	temp, tempp, ang, angc;
 
 	work[0] = cir2[0] - cir1[0];

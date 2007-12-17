@@ -920,7 +920,7 @@ rt_shootray(register struct application *ap)
 
 	/* Verify that direction vector has unit length */
 	if(RT_G_DEBUG) {
-		FAST fastf_t f, diff;
+		register fastf_t f, diff;
 		/* Fancy version of BN_VEC_NON_UNIT_LEN() */
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
@@ -1305,7 +1305,7 @@ start_cell:
 					/* Find the lowest pending mindist, that's as far as boolfinal can progress to */
 					struct rt_piecestate **psp;
 					for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
-						FAST fastf_t dist;
+						register fastf_t dist;
 
 						dist = (*psp)->mindist;
 						BU_ASSERT_DOUBLE( dist, <, INFINITY );
@@ -1549,7 +1549,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 
 	/* Verify that direction vector has unit length */
 	if(RT_G_DEBUG) {
-		FAST fastf_t f, diff;
+		fastf_t f, diff;
 		/* Fancy version of BN_VEC_NON_UNIT_LEN() */
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
@@ -1800,7 +1800,7 @@ rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register con
 
 {
 	register const fastf_t *pt = &rp->r_pt[0];
-	FAST fastf_t sv;
+	fastf_t sv;
 
 	/* Start with infinite ray, and trim it down */
 	rp->r_min = -INFINITY;

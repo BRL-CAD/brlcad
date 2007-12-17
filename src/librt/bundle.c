@@ -205,7 +205,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
 	/* Verify that direction vector has unit length */
 	if(RT_G_DEBUG) {
-		FAST fastf_t f, diff;
+		fastf_t f, diff;
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
 			bu_bomb("rt_shootray_bundle:  zero length dir vector\n");

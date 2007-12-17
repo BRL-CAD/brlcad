@@ -149,7 +149,7 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 	 * before advancing to next CIE table entry.
 	 */
 	for( i = 0; i < 81-1; i++ )  {
-		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
+		fastf_t	fract;		/* fraction from [i] to [i+1] */
 
 again:
 		if( j >= tabp->nx )  break;

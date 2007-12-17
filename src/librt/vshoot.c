@@ -409,7 +409,7 @@ rt_vstub(struct soltab *stp[],	/* An array of solid pointers */
 rt_in_rpp( struct xray *rp, fastf_t *invdir, fastf_t *min, fastf_t *max )
 {
 	register fastf_t *pt = &rp->r_pt[0];
-	FAST fastf_t sv;
+	register fastf_t sv;
 #define st sv			/* reuse the register */
 
 	/* Start with infinite ray, and trim it down */

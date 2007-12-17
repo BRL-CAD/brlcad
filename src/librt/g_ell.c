@@ -364,7 +364,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	static vect_t	xlated;		/* translated vector */
 	static fastf_t	dp, dd;		/* D' dot P', D' dot D' */
 	static fastf_t	k1, k2;		/* distance constants of solution */
-	FAST fastf_t	root;		/* root of radical */
+	fastf_t	root;		/* root of radical */
 
 	/* out, Mat, vect */
 	MAT4X3VEC( dprime, ell->ell_SoR, rp->r_dir );
@@ -415,7 +415,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	static vect_t	xlated;		/* translated vector */
 	static fastf_t	dp, dd;		/* D' dot P', D' dot D' */
 	static fastf_t	k1, k2;		/* distance constants of solution */
-	FAST fastf_t	root;		/* root of radical */
+	fastf_t	root;		/* root of radical */
 
 	/* for each ray/ellipse pair */
 	for(i = 0; i < n; i++){
@@ -1534,7 +1534,7 @@ static void
 nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 {
 	struct face_g_snurb	*fg;
-	FAST fastf_t root2_2;
+	fastf_t root2_2;
 	register fastf_t	*op;
 
 	NMG_CK_FACEUSE(fu);

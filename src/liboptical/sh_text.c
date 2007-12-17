@@ -891,7 +891,7 @@ star_render(register struct application *ap, register struct partition *pp, stru
 	/* Probably want to diddle parameters based on what part of sky */
 	if (bn_rand0to1(ap->a_resource->re_randptr) >= 0.98 )  {
 		register int i;
-		FAST fastf_t f;
+		register fastf_t f;
 		i = (sizeof(star_colors)-1) / sizeof(star_colors[0]);
 
 		/* "f" used for intermediate result to avoid an SGI compiler error */

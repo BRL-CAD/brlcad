@@ -456,10 +456,10 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 	if( part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		static vect_t	ov;		/* ray orgin to center (V - P) */
-		FAST fastf_t	vrad_sq;
-		FAST fastf_t	magsq_ov;	/* length squared of ov */
-		FAST fastf_t	b;		/* second term of quadratic eqn */
-		FAST fastf_t	root;		/* root of radical */
+		fastf_t	vrad_sq;
+		fastf_t	magsq_ov;	/* length squared of ov */
+		fastf_t	b;		/* second term of quadratic eqn */
+		fastf_t	root;		/* root of radical */
 
 		VSUB2( ov, part->part_int.part_V, rp->r_pt );
 		b = VDOT( rp->r_dir, ov );
@@ -511,8 +511,8 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	/* Note that vrad' = 1 and hrad' = hrad/vrad */
 	if( part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER )  {
 		/* Cylinder case, hrad == vrad, m = 0 */
-		FAST fastf_t	a, b, c;
-		FAST fastf_t	root;		/* root of radical */
+		fastf_t	a, b, c;
+		fastf_t	root;		/* root of radical */
 
 		a = dprime[X]*dprime[X] + dprime[Y]*dprime[Y];
 		b = dprime[X]*pprime[X] + dprime[Y]*pprime[Y];
@@ -524,9 +524,9 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		t2 = -(root+b) / a;
 	} else {
 		/* Cone case */
-		FAST fastf_t	a, b, c;
-		FAST fastf_t	root;		/* root of radical */
-		FAST fastf_t	m, msq;
+		fastf_t	a, b, c;
+		fastf_t	root;		/* root of radical */
+		fastf_t	m, msq;
 
 		m = part->part_hrad_prime - part->part_vrad_prime;
 
@@ -593,10 +593,10 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 check_hemispheres:
 	if( check_v )  {
 		static vect_t	ov;		/* ray orgin to center (V - P) */
-		FAST fastf_t	rad_sq;
-		FAST fastf_t	magsq_ov;	/* length squared of ov */
-		FAST fastf_t	b;
-		FAST fastf_t	root;		/* root of radical */
+		fastf_t	rad_sq;
+		fastf_t	magsq_ov;	/* length squared of ov */
+		fastf_t	b;
+		fastf_t	root;		/* root of radical */
 
 		/*
 		 *  First, consider a hit on V hemisphere.
@@ -640,10 +640,10 @@ check_hemispheres:
 do_check_h:
 	if( check_h )  {
 		static vect_t	ov;		/* ray orgin to center (V - P) */
-		FAST fastf_t	rad_sq;
-		FAST fastf_t	magsq_ov;	/* length squared of ov */
-		FAST fastf_t	b;		/* second term of quadratic eqn */
-		FAST fastf_t	root;		/* root of radical */
+		fastf_t	rad_sq;
+		fastf_t	magsq_ov;	/* length squared of ov */
+		fastf_t	b;		/* second term of quadratic eqn */
+		fastf_t	root;		/* root of radical */
 
 		/*
 		 *  Next, consider a hit on H hemisphere
@@ -780,7 +780,7 @@ rt_part_norm(register struct hit *hitp, struct soltab *stp, register struct xray
 			VUNITIZE( hitp->hit_normal );
 		} else {
 			/* The cone case */
-			FAST fastf_t	s, m;
+			fastf_t	s, m;
 			vect_t unorm;
 			/* vpriv[Z] ranges from 0 to 1 (roughly) */
 			/* Rescale X' and Y' into unit circle */

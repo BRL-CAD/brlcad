@@ -575,7 +575,7 @@ phg_ipow( d, cnt )
      double d;
      register int cnt;
 {
-    FAST fastf_t input, result;
+    fastf_t input, result;
 
     if ((input=d) < 1e-8 )  return(0.0);
     if (cnt < 0 || cnt > 200 )  {
