@@ -18,9 +18,19 @@
  * information.
  */
 /** @file usrfmt.h
-*/
-#ifndef SEEN_USRFMT_H
-#define SEEN_USRFMT_H
+ *
+ * Common defines and declarations used by nirt.
+ *
+ * Author:
+ *   Natalie L. Barker
+ *
+ * Date:
+ *   Jan 90
+ *
+ */
+
+#ifndef __USRFMT_H__
+#define __USRFMT_H__
 
 #define			OUTITEM_NULL		((outitem *) 0)
 #define			OVERLAP_NULL		((overlap *) 0)
@@ -29,15 +39,13 @@
 #define			CMT_CHAR		'#'
 #define			SEP_CHAR		';'
 
-typedef struct outitem_tag
-{
+typedef struct outitem_tag {
     char		*format;
     int			code_nm;
     struct outitem_tag	*next;
 } 					outitem;
 
-typedef struct outval_tag
-{
+typedef struct outval_tag {
     char		*name;
     int			code_nm;
     int			type;
@@ -48,8 +56,7 @@ typedef struct outval_tag
 	}		value;
 }					outval;
 
-typedef struct ovlp_tag
-{
+typedef struct ovlp_tag {
     struct application	*ap;
     struct partition	*pp;
     struct region	*reg1;
@@ -170,12 +177,12 @@ extern FILE	*fopenrc(void);
  */
 #define		D		3
 #ifdef H
-#	undef H
+#  undef H
 #endif
 #define		H		4
 #define		V		5
 
-#endif /* SEEN_USRFMT_H */
+#endif /* __USRFMT_H__ */
 
 /*
  * Local Variables:
