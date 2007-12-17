@@ -2685,6 +2685,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
 {
 	ProName name;
 	ProCharName top_level;
+	char buffer[1024] = {0};
 
 	/* get its name */
 	if( ProMdlNameGet( model, name ) != PRO_TK_NO_ERROR ) {
@@ -2721,20 +2722,35 @@ output_top_level_object( ProMdl model, ProMdlType type )
 		(void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	}
 
-	/* make a top level combination named "top", if there is not already one
-	 * this combination contains the xform to rotate the model into BRL-CAD standard orientation
-	 */
-	fprintf( outfp, "if { [catch {get top} ret] } {\n" );
 	if( type == PRO_MDL_ASSEMBLY ) {
-		fprintf( outfp,
-			 "\tput top comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}\n",
-			 get_brlcad_name( top_level ) );
+	    snprintf(buffer, 1024, "put $topname comb region no tree {l %s.c {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
 	} else {
-		fprintf( outfp,
-			 "\tput top comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}\n",
-			 get_brlcad_name( top_level ) );
+	    snprintf(buffer, 1024, "put $topname comb region no tree {l %s {0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 1}}", get_brlcad_name(top_level) );
 	}
-	fprintf( outfp, "}\n" );
+
+	/* make a top level combination named "top", if there is not
+	 * already one.  if one does already exist, try "top.#" where
+	 * "#" is the first available number.  this combination
+	 * contains the xform to rotate the model into BRL-CAD
+	 * standard orientation.
+	 */
+	fprintf(outfp,
+		"set topname \"top\"\n"
+		"if { ! [catch {get $topname} ret] } {\n"
+		"  set num 0\n"
+		"  while { $num < 1000 } {\n"
+		"    set topname \"top.$num\"\n"
+		"    if { [catch {get $name} ret ] } {\n"
+		"      break\n"
+		"    }\n"
+		"    incr num\n"
+		"  }\n"
+		"}\n"
+		"if { [catch {get $topname} ret] } {\n"
+		"  %s\n"
+		"}\n",
+		buffer
+		);
 }
 
 void
