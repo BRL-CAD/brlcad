@@ -167,11 +167,10 @@ main(int argc, char *argv[])
 
 	/* this is a Tcl script */
 
-#ifdef _WIN32
+
+	/* No longer need ifp */
 	fclose(ifp); ifp = NULL;
-#else
-	rewind( ifp );
-#endif
+
 	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
 	interp = Tcl_CreateInterp();
@@ -209,7 +208,6 @@ main(int argc, char *argv[])
 
 	/* free up our resources */
 	mk_write_color_table( ofp );
-	fclose(ifp); ifp = NULL;
 	wdb_close(ofp); ofp = NULL;
 
 	Tcl_Exit(0);
