@@ -234,6 +234,20 @@ package provide Archer 1.0
 	method updateObjHistory {_obj}
 	method updatePrevObjButton {_obj}
 
+	# Object Edit VIA Mouse Section
+	method beginObjRotate {}
+	method beginObjScale {}
+	method beginObjTranslate {}
+	method beginObjCenter {}
+	method endObjCenter {_dm _obj}
+	method endObjRotate {_dm _obj}
+	method endObjScale {_dm _obj}
+	method endObjTranslate {_dm _obj}
+	method handleObjCenter {_obj _x _y}
+	method handleObjRotate {_obj _rx _ry _rz _kx _ky _kz}
+	method handleObjScale {_obj _sf _kx _ky _kz}
+	method handleObjTranslate {_obj _dx _dy _dz}
+
 
 	# Object Views Section
 	method buildArb4EditView {}
@@ -5666,6 +5680,208 @@ package provide Archer 1.0
     }
 }
 
+
+
+################################### Object Edit via Mouse Section ###################################
+
+::itcl::body Archer::beginObjRotate {} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
+	return
+    }
+
+    # These values are insignificant (i.e. they will be ignored by the callback)
+    set x 0
+    set y 0
+    set z 0
+
+    foreach dname {ul ur ll lr} {
+	set dm [$itk_component(mged) component $dname]
+	set win [$dm component dm]
+	bind $win <1> "$dm orotate_mode %x %y [list [::itcl::code $this handleObjRotate]] $obj $x $y $z; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dm $obj]; break"
+    }
+}
+
+::itcl::body Archer::beginObjScale {} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
+	return
+    }
+
+    # These values are insignificant (i.e. they will be ignored by the callback)
+    set x 0
+    set y 0
+    set z 0
+
+    foreach dname {ul ur ll lr} {
+	set dm [$itk_component(mged) component $dname]
+	set win [$dm component dm]
+	bind $win <1> "$dm oscale_mode %x %y [list [::itcl::code $this handleObjScale]] $obj $x $y $z; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dm $obj]; break"
+    }
+}
+
+::itcl::body Archer::beginObjTranslate {} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
+	return
+    }
+
+    foreach dname {ul ur ll lr} {
+	set dm [$itk_component(mged) component $dname]
+	set win [$dm component dm]
+	bind $win <1> "$dm otranslate_mode %x %y [list [::itcl::code $this handleObjTranslate]] $obj; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dm $obj]; break"
+    }
+}
+
+::itcl::body Archer::beginObjCenter {} {
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    set obj $mSelectedObjPath
+
+    if {$obj == ""} {
+	set mDefaultBindingMode $ROTATE_MODE
+	beginViewRotate
+	return
+    }
+
+    foreach dname {ul ur ll lr} {
+	set dm [$itk_component(mged) component $dname]
+	set win [$dm component dm]
+	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dm $obj]; break"
+    }
+}
+
+::itcl::body Archer::endObjCenter {dsp obj} {
+    $dsp idle_mode
+
+    if {![info exists itk_component(mged)]} {
+	return
+    }
+
+    set center [$itk_component(mged) ocenter $obj]
+    addHistory "ocenter $center"
+}
+
+::itcl::body Archer::endObjRotate {dsp obj} {
+    $dsp idle_mode
+
+    #XXX Need code to track overall transformation
+    if {[info exists itk_component(mged)]} {
+	#addHistory "orotate obj rx ry rz"
+    }
+}
+
+::itcl::body Archer::endObjScale {dsp obj} {
+    $dsp idle_mode
+
+    #XXX Need code to track overall transformation
+    if {[info exists itk_component(mged)]} {
+	#addHistory "oscale obj sf"
+    }
+}
+
+::itcl::body Archer::endObjTranslate {dsp obj} {
+    $dsp idle_mode
+
+    #XXX Need code to track overall transformation
+    if {[info exists itk_component(mged)]} {
+	#addHistory "otranslate obj dx dy dz"
+    }
+}
+
+::itcl::body Archer::handleObjCenter {obj x y} {
+    if {[info exists itk_component(mged)]} {
+	set ocenter [dbCmd ocenter $obj]
+    } else {
+	set savePwd [pwd]
+	cd /
+	set ocenter [dbCmd ocenter $obj]
+    }
+
+    set ocenter [vscale $ocenter [dbCmd local2base]]
+    set ovcenter [eval dbCmd m2vPoint $ocenter]
+
+    # This is the updated view center (i.e. we keep the original view Z)
+    set vcenter [dbCmd screen2view $x $y]
+    set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
+
+    set ocenter [vscale [eval dbCmd v2mPoint $vcenter] [dbCmd base2local]]
+
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+    } else {
+	eval archerWrapper ocenter 0 0 1 0 $obj $ocenter
+	cd $savePwd
+    }
+
+    redrawObj $obj 0
+}
+
+::itcl::body Archer::handleObjRotate {obj rx ry rz kx ky kz} {
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz
+    } else {
+	set savePwd [pwd]
+	cd /
+	eval archerWrapper orotate 0 0 1 0 $obj $rx $ry $rz $kx $ky $kz
+	cd $savePwd
+    }
+
+    redrawObj $obj 0
+}
+
+::itcl::body Archer::handleObjScale {obj sf kx ky kz} {
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper oscale 0 0 1 0 $obj $sf
+    } else {
+	set savePwd [pwd]
+	cd /
+	eval archerWrapper oscale 0 0 1 0 $obj $sf $kx $ky $kz
+	cd $savePwd
+    }
+
+    redrawObj $obj 0
+}
+
+::itcl::body Archer::handleObjTranslate {obj dx dy dz} {
+    if {[info exists itk_component(mged)]} {
+	eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+    } else {
+	set savePwd [pwd]
+	cd /
+	eval archerWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
+	cd $savePwd
+    }
+
+    redrawObj $obj 0
+}
 
 
 ################################### Object Views Section ###################################
