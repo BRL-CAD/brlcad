@@ -225,10 +225,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	static int first_time=1;
 
 	if (first_time) {
-#ifndef lint
-		bu_log("%s\n",rt_hf_RcSid);
-#endif
-		first_time=0;
+	    first_time=0;
 	}
 	RT_CK_DB_INTERNAL(ip);
 	hip = (struct rt_hf_internal *)ip->idb_ptr;
