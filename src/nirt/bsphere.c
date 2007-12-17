@@ -19,16 +19,17 @@
  */
 /** @file bsphere.c
  *
+ * compute bounding sphere
+ *
+ * Author:
+ *   Natalie L. Barker
+ *
+ * Date:
+ *   Jan 90
+ *
  */
 
-/*	BSPHERE.C	*/
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
-
-/*	INCLUDES	*/
 #include "common.h"
-
 
 #include	<stdio.h>
 #include	<math.h>
@@ -36,12 +37,15 @@ static const char RCSid[] = "$Header$";
 #include	"machine.h"
 #include	"vmath.h"
 #include	"raytrace.h"
+
 #include	"./nirt.h"
 #include	"./usrfmt.h"
 
+
 fastf_t	bsphere_diameter;
 
-void set_diameter(struct rt_i *rtip)
+void
+set_diameter(struct rt_i *rtip)
 {
     vect_t	diag;
 
