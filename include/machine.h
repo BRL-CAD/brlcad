@@ -56,12 +56,6 @@
  *      TODO: If used pervasively, it should eventually be possible to
  *      make fastf_t a GMP C++ type for fixed-precision computations.
  *
- *	LOCAL - The fastest storage class for local variables within a
- *	subroutine.  On parallel machines, this needs to be "auto",
- *	but on serial machines there can sometimes be a performance
- *	advantage to using "static".
- *      DEPRECATED: use static
- *
  *	HIDDEN - Functions intended to be local to one module should
  *	be declared HIDDEN.  For production use, and lint, it will be
  *	defined as "static", but for debugging it can be defined as
@@ -190,7 +184,6 @@
  *				*
  ********************************/
 typedef double fastf_t;
-#define LOCAL auto
 typedef long bitv_t;
 #define BITV_SHIFT	5
 /* assume only one processor for now */
@@ -209,7 +202,6 @@ typedef long bitv_t;
  ********************************/
 #define IBM_FLOAT 1		/* Uses IBM style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -231,7 +223,6 @@ typedef long	bitv_t;		/* largest integer type */
 #	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 #endif
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -248,7 +239,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -268,7 +258,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -287,7 +276,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -303,7 +291,6 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double		fastf_t;/* double|float, "Fastest" float type */
-#define LOCAL		auto	/* static|auto, for serial|parallel cpu */
 #if 1
 typedef long long	bitv_t;	/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
@@ -325,7 +312,6 @@ typedef long		bitv_t;
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* for parallel cpus */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -344,7 +330,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define __unix	1		/* It really is unix */
 #define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* for parallel cpus */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -365,7 +350,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
@@ -393,7 +377,6 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	static		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -413,7 +396,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define IEEE_FLOAT	1	/* Uses IEEE style floating point */
 #define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -445,7 +427,6 @@ typedef long	bitv_t;		/* largest integer type */
 
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -465,7 +446,6 @@ typedef long	bitv_t;		/* largest integer type */
 
 #define IEEE_FLOAT 1		/* Uses IEEE style floating point */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -487,7 +467,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
@@ -498,7 +477,6 @@ typedef long    bitv_t;         /* could use long long */
 #if defined(__i686__) || defined(__i386__)
 #define IEEE_FLOAT      1      /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
 #define MAX_PSW         512       /* Unused, but useful for thread debugging */
@@ -516,7 +494,6 @@ typedef long    bitv_t;         /* could use long long */
  ********************************/
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
@@ -540,7 +517,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
@@ -566,7 +542,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define DEFAULT_PSW	bu_avail_cpus()
@@ -585,7 +560,6 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #define IEEE_FLOAT      1       /* Uses IEEE style floating point */
 typedef double  fastf_t;        /* double|float, "Fastest" float type */
-#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #define DEFAULT_PSW	bu_avail_cpus()
@@ -613,7 +587,6 @@ typedef long bitv_t;          /* could use long long */
  */
 # if 1 /* multi-cpu linux build */
 
-# define LOCAL auto             /* static|auto, for serial|parallel cpu */
 # define MAX_PSW         16
 # define DEFAULT_PSW     bu_avail_cpus()	/* use as many processors as are available */
 # define PARALLEL        1
@@ -621,7 +594,6 @@ typedef long bitv_t;          /* could use long long */
 
 # else  /* 1 CPU Linux build */
 
-# define LOCAL static		/* static|auto, for serial|parallel cpu */
 # define MAX_PSW        1	/* only one processor, max */
 # define DEFAULT_PSW	1
 
@@ -641,7 +613,6 @@ typedef long		bitv_t;		/* largest integer type */
 # define DEFAULT_PSW	bu_avail_cpus()
 # define	PARALLEL	1
 # define MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
-# define LOCAL		auto		/* static|auto, for serial|parallel cpu */
 
 /* amd64 */
 # if defined(__x86_64__) || defined(__sparc64__) || defined(__ia64__)
@@ -654,7 +625,7 @@ typedef long		bitv_t;		/* largest integer type */
 # endif
 #endif /* BSD */
 
-#ifndef LOCAL
+#ifndef BITV_SHIFT
 /********************************
  *				*
  * Default 32-bit uniprocessor	*
@@ -662,7 +633,6 @@ typedef long		bitv_t;		/* largest integer type */
  *				*
  ********************************/
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	static		/* static|auto, for serial|parallel cpu */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
