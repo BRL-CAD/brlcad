@@ -102,7 +102,7 @@ EXTRA_DIST = \
 	bltWindow.c \
 	bltWinop.c \
 	pure_api.c \
-	tkMenuButton.c \
+	tkMenubutton.c \
 	tkScrollbar.c
 
 include_HEADERS = \
