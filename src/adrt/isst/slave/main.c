@@ -65,7 +65,7 @@ static void finish(int sig) {
 
 
 static void help() {
-  printf("%s\n", ISST_VER_DETAIL);
+  printf("%s\n", ADRT_VER_DETAIL);
   printf("%s", "usage: isst_slave [options] [host]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 	      break;
 
 	   case 'v':
-	     printf("%s\n", ISST_VER_DETAIL);
+	     printf("%s\n", ADRT_VER_DETAIL);
 	     return EXIT_SUCCESS;
 
 	   default:
