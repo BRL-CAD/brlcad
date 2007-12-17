@@ -513,18 +513,6 @@ Popup Menu    Right or Ctrl-Left
 	method handleMeasure {_dm _x _y}
 	method endMeasure {_dm}
 
-	method beginObjRotate {}
-	method endObjRotate {_dm _obj}
-
-	method beginObjScale {}
-	method endObjScale {_dm _obj}
-
-	method beginObjTranslate {}
-	method endObjTranslate {_dm _obj}
-
-	method beginObjCenter {}
-	method endObjCenter {_dm _obj}
-
 	method initDefaultBindings {{_comp ""}}
 	method initBrlcadBindings {}
 	method validateDigit {_d}
@@ -917,7 +905,7 @@ Popup Menu    Right or Ctrl-Left
 
     buildViewToolbar
 
-#    eval itk_initialize $args
+    eval itk_initialize $args
 
     if {!$mViewOnly} {
 	# set initial toggle variables
@@ -940,8 +928,7 @@ Popup Menu    Right or Ctrl-Left
 
     updateTheme
 
-#    update idletasks
-    eval itk_initialize $args
+#    eval itk_initialize $args
 }
 
 # ------------------------------------------------------------
@@ -1896,137 +1883,6 @@ Popup Menu    Right or Ctrl-Left
 	-message "Measured distance:  $delta [dbCmd units]"
 }
 
-::itcl::body ArcherCore::beginObjRotate {} {
-    if {![info exists itk_component(mged)]} {
-	return
-    }
-
-    set obj $mSelectedObjPath
-
-    if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
-	beginViewRotate
-	return
-    }
-
-    # These values are insignificant (i.e. they will be ignored by the callback)
-    set x 0
-    set y 0
-    set z 0
-
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm orotate_mode %x %y [list [::itcl::code $this handleObjRotate]] $obj $x $y $z; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dm $obj]; break"
-    }
-}
-
-::itcl::body ArcherCore::endObjRotate {dsp obj} {
-    $dsp idle_mode
-
-    #XXX Need code to track overall transformation
-    if {[info exists itk_component(mged)]} {
-	#addHistory "orotate obj rx ry rz"
-    }
-}
-
-::itcl::body ArcherCore::beginObjScale {} {
-    if {![info exists itk_component(mged)]} {
-	return
-    }
-
-    set obj $mSelectedObjPath
-
-    if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
-	beginViewRotate
-	return
-    }
-
-    # These values are insignificant (i.e. they will be ignored by the callback)
-    set x 0
-    set y 0
-    set z 0
-
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm oscale_mode %x %y [list [::itcl::code $this handleObjScale]] $obj $x $y $z; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dm $obj]; break"
-    }
-}
-
-::itcl::body ArcherCore::endObjScale {dsp obj} {
-    $dsp idle_mode
-
-    #XXX Need code to track overall transformation
-    if {[info exists itk_component(mged)]} {
-	#addHistory "oscale obj sf"
-    }
-}
-
-::itcl::body ArcherCore::beginObjTranslate {} {
-    if {![info exists itk_component(mged)]} {
-	return
-    }
-
-    set obj $mSelectedObjPath
-
-    if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
-	beginViewRotate
-	return
-    }
-
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "$dm otranslate_mode %x %y [list [::itcl::code $this handleObjTranslate]] $obj; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dm $obj]; break"
-    }
-}
-
-::itcl::body ArcherCore::endObjTranslate {dsp obj} {
-    $dsp idle_mode
-
-    #XXX Need code to track overall transformation
-    if {[info exists itk_component(mged)]} {
-	#addHistory "otranslate obj dx dy dz"
-    }
-}
-
-::itcl::body ArcherCore::beginObjCenter {} {
-    if {![info exists itk_component(mged)]} {
-	return
-    }
-
-    set obj $mSelectedObjPath
-
-    if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
-	beginViewRotate
-	return
-    }
-
-    foreach dname {ul ur ll lr} {
-	set dm [$itk_component(mged) component $dname]
-	set win [$dm component dm]
-	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dm $obj]; break"
-    }
-}
-
-::itcl::body ArcherCore::endObjCenter {dsp obj} {
-    $dsp idle_mode
-
-    if {![info exists itk_component(mged)]} {
-	return
-    }
-
-    set center [$itk_component(mged) ocenter $obj]
-    addHistory "ocenter $center"
-}
 
 ::itcl::body ArcherCore::initDefaultBindings {{_comp ""}} {
     if {$_comp == ""} {
