@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#include <time.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
