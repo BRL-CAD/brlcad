@@ -759,12 +759,6 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 
-/* Even in C++ not all compilers know the "bool" keyword yet */
-#if !defined(BOOL_T)
-#  define BOOL_T int
-#endif
-
-
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
 /* To aid in using ADB, generally leave this as nil. */
 #if !defined(HIDDEN)
