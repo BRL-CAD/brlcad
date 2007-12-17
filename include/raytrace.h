@@ -622,7 +622,7 @@ struct partition {
 
 #define RT_DUP_PT(ip,new,old,res)	{ \
 	GET_PT(ip,new,res); \
-	memcpy((char *)(&(new)->RT_PT_MIDDLE_START), (char *)(&(old)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old) ); \
+	memcpy((char *)(&(new)->RT_PT_MIDDLE_START), (char *)(&(old)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old)); \
 	(new)->pt_overlap_reg = NULL; \
 	bu_ptbl_cat( &(new)->pt_seglist, &(old)->pt_seglist );  }
 
