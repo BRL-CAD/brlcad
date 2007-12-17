@@ -22,6 +22,7 @@
  * Author -
  *   Justin Shumaker
  *
+ * $Id$
  */
 
 #ifndef _SLAVE_LOAD_H

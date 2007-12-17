@@ -21,7 +21,8 @@ isst_slave_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libutil \
 	-I${top_srcdir}/src/adrt/isst \
 	${LIBZ_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	-DHAVE_MYSQL=1 -I/usr/local/include/mysql
 
 isst_slave_LDADD = \
 	${LIBTHREAD} \
@@ -32,7 +33,8 @@ isst_slave_LDADD = \
 	${top_builddir}/src/adrt/libtexture/libtexture.la \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \
-	${LIBZ}
+	${LIBZ} \
+	-L/usr/local/lib/mysql -lmysqlclient
 
 noinst_HEADERS = load.h slave.h
 

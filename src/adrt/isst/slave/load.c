@@ -22,6 +22,7 @@
  * Author -
  *   Justin Shumaker
  *
+ * $Id$
  */
 
 #ifndef TIE_PRECISION
@@ -34,65 +35,18 @@
 #include <string.h>
 
 #ifdef HAVE_MYSQL
-#include <mysql.h>
-#define ADRT_MYSQL_USER         "adrt"
-#define ADRT_MYSQL_PASS         "adrt"
-#define ADRT_MYSQL_DB           "adrt"
-MYSQL slave_load_mysql_db;
+# include <mysql.h>
+# define ADRT_MYSQL_USER         "adrt"
+# define ADRT_MYSQL_PASS         "adrt"
+# define ADRT_MYSQL_DB           "adrt"
+  MYSQL slave_load_mysql_db;
 #endif
 
 #include "tienet.h"
 #include "umath.h"
 
-
-void slave_load_free ();
-void slave_load_geom (uint32_t pid, tie_t *tie);
-
 uint32_t slave_load_mesh_num;
 adrt_mesh_t *slave_load_mesh_list;
-
-
-void
-slave_load_sql (tie_t *tie, void *data, uint32_t dlen)
-{
-#ifdef HAVE_MYSQL
-  uint32_t pid, ind;
-  uint8_t c;
-  char hostname[32];
-
-  ind = 0;
-
-  TIE_VAL(tie_check_degenerate) = 0;
-
-  /* hostname */
-  memcpy(&c, &((char *)data)[ind], 1);
-  ind += 1;
-  memcpy(hostname, &((char *)data)[ind], c);
-  ind += c;
-
-  /* project id */
-  memcpy(&pid, &((char *)data)[ind], sizeof(uint32_t));
-  ind += sizeof(uint32_t);
-
-  /* establish mysql connection */
-  mysql_init (&slave_load_mysql_db);
-
-  /* establish connection to database */
-  mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0);
-
-#if 0
-printf("hostname: %s\n", hostname);
-printf("pid: %d\n", pid);
-printf("CP:A:%s\n", mysql_error(&slave_load_mysql_db));
-#endif
-
-  /* Process the geometry data */
-  slave_load_geom (pid, tie);
-
-  mysql_close (&slave_load_mysql_db);
-#endif
-}
-
 
 void
 slave_load_free ()
@@ -116,7 +70,6 @@ slave_load_free ()
 #endif
 }
 
-
 void
 slave_load_geom (uint32_t pid, tie_t *tie)
 {
@@ -129,7 +82,6 @@ slave_load_geom (uint32_t pid, tie_t *tie)
   uint16_t f16num, *f16list;
   uint8_t c, ftype;
   void *gdata;
-
 
   /* Obtain the geometry id for this project id */
   sprintf (query, "select gid from project where pid = '%d'", pid);
@@ -263,8 +215,6 @@ slave_load_geom (uint32_t pid, tie_t *tie)
     }
   }
 
-printf("preping\n");
-
   /* Query to see if there is acceleration data for this geometry. */
   sprintf (query, "select asize,adata from geometry where gid='%d'", gid);
   mysql_query (&slave_load_mysql_db, query);
@@ -281,6 +231,47 @@ printf("preping\n");
   tie_prep (tie);
 
   mysql_free_result (res);
+#endif
+}
+
+void
+slave_load_sql (tie_t *tie, void *data, uint32_t dlen)
+{
+#ifdef HAVE_MYSQL
+  uint32_t pid, ind;
+  uint8_t c;
+  char hostname[32];
+
+  ind = 0;
+
+  TIE_VAL(tie_check_degenerate) = 0;
+
+  /* hostname */
+  memcpy(&c, &((char *)data)[ind], 1);
+  ind += 1;
+  memcpy(hostname, &((char *)data)[ind], c);
+  ind += c;
+
+  /* project id */
+  memcpy(&pid, &((char *)data)[ind], sizeof(uint32_t));
+  ind += sizeof(uint32_t);
+
+  /* establish mysql connection */
+  mysql_init (&slave_load_mysql_db);
+
+  /* establish connection to database */
+  mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0);
+
+#if 0
+printf("hostname: %s\n", hostname);
+printf("pid: %d\n", pid);
+printf("CP:A:%s\n", mysql_error(&slave_load_mysql_db));
+#endif
+
+  /* Process the geometry data */
+  slave_load_geom (pid, tie);
+
+  mysql_close (&slave_load_mysql_db);
 #endif
 }
 

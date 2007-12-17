@@ -22,6 +22,7 @@
  * Author -
  *   Justin Shumaker
  *
+ * $Id$
  */
 
 #ifndef TIE_PRECISION
@@ -43,12 +44,6 @@
 #include "tienet.h"
 #include "render_util.h"
 
-void isst_slave(int port, char *host, int threads);
-static void isst_slave_init(tie_t *tie, int socknum);
-static void isst_slave_free(void);
-static void isst_slave_work (tienet_buffer_t *work, tienet_buffer_t *result);
-static void isst_slave_mesg(void *mesg, unsigned int mesg_len);
-
 typedef struct isst_slave_project_s
 {
   tie_t tie;
@@ -60,20 +55,8 @@ typedef struct isst_slave_project_s
 uint32_t isst_slave_threads;
 isst_slave_project_t isst_workspace_list[ADRT_MAX_WORKSPACE_NUM];
 
-void isst_slave(int port, char *host, int threads) 
-{
-  int i;
-  isst_slave_threads = threads;
-  tienet_slave_init(port, host, isst_slave_work, isst_slave_free, ADRT_VER_KEY);
-
-  /* Initialize all workspaces as inactive */
-  for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
-    isst_workspace_list[i].active = 0;
-
-/*  slave_last_frame = 0; */
-}
-
-void isst_slave_free() 
+void 
+isst_slave_free() 
 {
   uint16_t i;
 
@@ -411,6 +394,20 @@ printf ("pos: %.3f %.3f %.3f ... dir %.3f %.3f %.3f\n", ray.pos.v[0], ray.pos.v[
   printf("[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\r", ++isst_slave_completed, (int)((tfloat)tie->rays_fired / (tfloat)(1000 * (tv.tv_sec - isst_slave_startsec + 1))), tie->rays_fired);
   fflush(stdout);
 #endif
+}
+
+void 
+isst_slave(int port, char *host, int threads) 
+{
+  int i;
+  isst_slave_threads = threads;
+  tienet_slave_init(port, host, isst_slave_work, isst_slave_free, ADRT_VER_KEY);
+
+  /* Initialize all workspaces as inactive */
+  for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
+    isst_workspace_list[i].active = 0;
+
+/*  slave_last_frame = 0; */
 }
 
 #if 0
