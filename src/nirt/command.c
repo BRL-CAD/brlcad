@@ -107,7 +107,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	if (abs(az) > 360)       /* check for valid az value */
+	if (fabs(az) > 360)       /* check for valid az value */
 	{
 		bu_log("Error:  |azimuth| <= 360\n");
 		return;
@@ -120,7 +120,7 @@ com_table		*ctp;
 		com_usage(ctp);
 		return;
 	}
-	if (abs(el) > 90)       /* check for valid el value */
+	if (fabs(el) > 90)       /* check for valid el value */
 	{
 		bu_log("Error:  |elevation| <= 90\n");
 		return;

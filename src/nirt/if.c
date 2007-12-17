@@ -369,7 +369,7 @@ fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
     double	cos_obl;
     fastf_t	obliquity;
 
-    cos_obl = abs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
+    cos_obl = fabs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
     if (cos_obl < 1.001)
     {
 	if (cos_obl > 1)
@@ -385,7 +385,7 @@ fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
     }
 
     /* convert obliquity to degrees */
-    obliquity = abs(obliquity * 180/PI);
+    obliquity = fabs(obliquity * 180/PI);
     if (obliquity > 90 && obliquity <= 180)
 	    obliquity = 180 - obliquity;
     else if (obliquity > 180 && obliquity <= 270)
