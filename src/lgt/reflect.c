@@ -221,8 +221,8 @@ static int f_HL_Miss(register struct application *ap);
 static int f_R_Miss(register struct application *ap);
 
 /* "Overlap" application routines to pass to "rt_shootray()". */
-static int f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2);
-static int f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2);
+static int f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp);
+static int f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp);
 
 static int refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri_2, register fastf_t *v_2);
 
@@ -2141,7 +2141,7 @@ gauss_Wgt_Func(fastf_t R)
 	}
 
 static int
-f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2)
+f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
 {	point_t	pt;
 		fastf_t	depth = pp->pt_outhit->hit_dist-pp->pt_inhit->hit_dist;
 	if( depth < OVERLAPTOL )
@@ -2164,8 +2164,7 @@ f_Overlap(register struct application *ap, register struct partition *pp, struct
 	}
 
 static int
-/*ARGSUSED*/
-f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2)
+f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
 	return	1;
 	}
