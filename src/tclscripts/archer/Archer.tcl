@@ -698,6 +698,8 @@ package provide Archer 1.0
 	-overrelief raised \
 	-command [::itcl::code $this createObj bot]
 
+    eval itk_initialize $args
+
     if {!$mViewOnly} {
 	buildInfoDialogs
 	buildSaveDialog
@@ -737,8 +739,6 @@ package provide Archer 1.0
     # Change the command window's prompt
     $itk_component(cmd) configure -prompt "Archer> "
     $itk_component(cmd) reinitialize
-
-    eval itk_initialize $args
 }
 
 
@@ -746,6 +746,7 @@ package provide Archer 1.0
 #                       DESTRUCTOR
 # ------------------------------------------------------------
 ::itcl::body Archer::destructor {} {
+    writePreferences
 }
 
 
