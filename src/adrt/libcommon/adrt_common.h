@@ -35,6 +35,7 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+#include "adrt.h"
 
 #include "tie.h"
 #include "texture_internal.h"
@@ -44,8 +45,8 @@
 #define	COMMON_BIT_DEPTH_128	1
 
 /* bit's used in common_mesh_t.flags */
-#define MESH_HIT	0x1
-#define MESH_SELECT	0x2
+#define MESH_HIT	ADRT_MESH_HIT
+#define MESH_SELECT	ADRT_MESH_SELECT
 
 /* Work */
 typedef struct common_work_s {
@@ -66,15 +67,12 @@ typedef struct common_prop_s {
   tfloat ior; /* index of refraction */
 } common_prop_t;
 
-
 /* Triangle */
 struct common_mesh_s;
 typedef struct common_triangle_s {
   struct common_mesh_s *mesh;
   tfloat *normals;
 } common_triangle_t;
-
-#define ADRT_NAME_SIZE 256
 
 /* Mesh */
 typedef struct common_mesh_s {
