@@ -2851,28 +2851,47 @@ create_name_hash( FILE *name_fd )
 
 		ptr = strtok( line, " \t\n" );
 		if( !ptr ) {
-			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );
+			bu_log( "Warning: unrecognizable line in part name file (bad part number):\n\t%s\n", line );
 			bu_log( "\tIgnoring\n" );
 			continue;
 		}
 		part_no = bu_strdup( ptr );
 		lower_case( part_no );
-		ptr = strtok( (char *)NULL, " \t\n" );
+		
+		/* match up to the EOL, everything up to it minus surrounding ws is the name */
+		ptr = strtok( (char *)NULL, "\n" );
 		if( !ptr ) {
-			bu_log( "Warning: unrecognizable line in part name file:\n\t%s\n", line );
+			bu_log( "Warning: unrecognizable line in part name file (bad part name):\n\t%s\n", line );
 			bu_log( "\tIgnoring\n" );
 			continue;
 		}
 		entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
 		if( !new_entry ) {
 			if( logger ) {
-				fprintf( logger, "\t\t\tHash table entry already exists for above part\n" );
+				fprintf( logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
 			}
 			bu_free( part_no, "part_no" );
 			continue;
 		}
-		lower_case( ptr );
-		part_name = create_unique_name( ptr );
+
+		/* trim any left whitespace */
+		while (isspace(*ptr) && (*ptr != '\n')) {
+		    ptr++;
+		}
+		part_name = ptr;
+
+		/* trim any right whitespace */
+		if (strlen(ptr) > 0) {
+		    ptr += strlen(ptr) - 1;
+		    while ((ptr != part_name) && (isspace(*ptr))) {
+			*ptr = '\0';
+			ptr--;
+		    }
+		}
+
+		/* generate the name sans spaces, lowercase */
+		lower_case( part_name );
+		part_name = create_unique_name( part_name );
 
 		if( logger ) {
 			fprintf( logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
