@@ -117,7 +117,7 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    Tcl_PkgProvide(interp,  "Tclcad", brlcad_version());
+    Tcl_PkgProvide(interp,  "Tclcad", (ClientData)brlcad_version());
 
     return TCL_OK;
 }
