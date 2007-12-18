@@ -52,25 +52,9 @@
 #define MATH_MAX2(_a, _b, _c) { \
 	_a = _b > _c ? _b : _c; }
 
-#define	MATH_MIN3(_a, _b, _c, _d) { \
-	_a = _b < _c ? _b < _d ? _b : _d : _c < _d ? _c : _d; }
-
-#define MATH_MAX3(_a, _b, _c, _d) { \
-	_a = _b > _c ? _b > _d ? _b : _d : _c > _d ? _c : _d; }
-
 #define MATH_MIN_MAX3(_a, _b, _c, _d, _e) { \
 	MATH_MIN3(_a, _c, _d, _e); \
 	MATH_MAX3(_b, _c, _d, _e); }
-
-#define MATH_VEC_MIN(_a, _b) { \
-	_a.v[0] = _a.v[0] < _b.v[0] ? _a.v[0] : _b.v[0]; \
-	_a.v[1] = _a.v[1] < _b.v[1] ? _a.v[1] : _b.v[1]; \
-	_a.v[2] = _a.v[2] < _b.v[2] ? _a.v[2] : _b.v[2]; }
-
-#define MATH_VEC_MAX(_a, _b) { \
-	_a.v[0] = _a.v[0] > _b.v[0] ? _a.v[0] : _b.v[0]; \
-	_a.v[1] = _a.v[1] > _b.v[1] ? _a.v[1] : _b.v[1]; \
-	_a.v[2] = _a.v[2] > _b.v[2] ? _a.v[2] : _b.v[2]; }
 
 #define MATH_VEC_MAG(_a, _b) { \
 	_a = sqrt(_b.v[0]*_b.v[0] + _b.v[1]*_b.v[1] + _b.v[2]*_b.v[2]); }
@@ -83,11 +67,6 @@
 
 
 /* Vector Functions */
-
-#define MATH_VEC_MUL_SCALAR(_a, _b, _c) { \
-	_a.v[0] = _b.v[0] * _c; \
-	_a.v[1] = _b.v[1] * _c; \
-	_a.v[2] = _b.v[2] * _c; }
 
 /* _a is transformed vertex, _b is input vertex, _c is 4x4 transformation matrix */
 #define MATH_VEC_TRANSFORM(_a, _b, _c) { \
