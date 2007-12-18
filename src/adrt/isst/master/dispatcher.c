@@ -25,16 +25,10 @@
  */
 
 #include "dispatcher.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
-#include "adrt_common.h"
-#include "common.h"
-#include "isst.h"
+#include "camera.h"
 #include "tienet.h"
-
-#include <unistd.h>
 
 #ifdef HAVE_SYS_SYSINFO_H
 #include <sys/sysinfo.h>
@@ -42,55 +36,59 @@
 #include <sys/sysctl.h>
 #endif
 
-
-int	isst_dispatcher_progress_delta;
-int	isst_dispatcher_progress;
-int	isst_dispatcher_interval;
-int	isst_dispatcher_lastsave;
+uint16_t dispatcher_frame;
+tienet_buffer_t dispatcher_mesg;
 
 
-void	isst_dispatcher_init(void);
-void	isst_dispatcher_free(void);
-void	isst_dispatcher_generate(common_db_t *db, void *data, int data_len);
-void	isst_dispatcher_result(void *res_buf, int res_len);
-
-
-void isst_dispatcher_init() {
+void
+isst_master_dispatcher_init ()
+{
+  TIENET_BUFFER_INIT(dispatcher_mesg);
+  dispatcher_frame = 1;
 }
 
 
-void isst_dispatcher_free() {
+void
+isst_master_dispatcher_free ()
+{
+  TIENET_BUFFER_FREE(dispatcher_mesg);
 }
 
 
-void isst_dispatcher_generate(common_db_t *db, void *data, int data_len) {
-  int i, n;
-  common_work_t work;
-  void *mesg;
+void
+isst_master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, int image_format)
+{
+  int i, n, size;
+  camera_tile_t tile;
 
-  mesg = malloc(sizeof(common_work_t) + data_len);
-  if (!mesg) {
-      perror("mesg");
-      exit(1);
-  }
-  tienet_master_begin();
+  size = data_len + sizeof (camera_tile_t);
 
-  work.size_x = db->env.tile_w;
-  work.size_y = db->env.tile_h;
-  work.format = COMMON_BIT_DEPTH_24;
+  TIENET_BUFFER_SIZE(dispatcher_mesg, size);
 
-  memcpy(&((char *)mesg)[sizeof(common_work_t)], data, data_len);
-  for(i = 0; i < db->env.img_vh; i += db->env.tile_w) {
-    for(n = 0; n < db->env.img_vw; n += db->env.tile_h) {
-      work.orig_x = n;
-      work.orig_y = i;
-      memcpy(&((char *)mesg)[0], &work, sizeof(common_work_t));
-      tienet_master_push(mesg, sizeof(common_work_t)+data_len);
+  tienet_master_begin ();
+
+  /* Copy data payload to front */
+  bcopy(data, dispatcher_mesg.data, data_len);
+
+  tile.size_x = image_w / DISPATCHER_TILE_NUM;
+  tile.size_y = image_h / DISPATCHER_TILE_NUM;
+  tile.format = image_format;
+  tile.frame = dispatcher_frame;
+
+  for(i = 0; i < image_h; i += tile.size_y)
+  {
+    tile.orig_y = i;
+    for(n = 0; n < image_w; n += tile.size_x)
+    {
+      tile.orig_x = n;
+      TCOPY(camera_tile_t, &tile, 0, dispatcher_mesg.data, data_len);
+      tienet_master_push(dispatcher_mesg.data, size);
     }
   }
 
-  tienet_master_end();
-  free(mesg);
+  tienet_master_end ();
+
+  dispatcher_frame = (dispatcher_frame + 1) % (1<<14);
 }
 
 /*

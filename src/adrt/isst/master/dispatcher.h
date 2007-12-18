@@ -27,12 +27,11 @@
 #ifndef _ISST_DISPATCHER_H
 #define _ISST_DISPATCHER_H
 
-#include "cdb.h"
+#define DISPATCHER_TILE_NUM	8
 
 extern	void	isst_dispatcher_init();
 extern	void	isst_dispatcher_free();
-extern	void	isst_dispatcher_generate(common_db_t *db, void *data, int data_len);
-
+extern	void	isst_dispatcher_generate(void *data, int data_len, int img_w, int img_h, int image_format);
 
 #endif
 

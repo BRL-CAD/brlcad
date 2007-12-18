@@ -39,6 +39,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#include "adrt.h"
 #include "adrt_common.h"
 #include "tienet.h"
 

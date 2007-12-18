@@ -5,15 +5,10 @@ bin_PROGRAMS = isst_master
 isst_master_SOURCES = \
 	compnet.c \
 	dispatcher.c \
-	isst_python.c \
 	master.c \
 	main.c
 
-isst_master_LDFLAGS = -static
-
 isst_master_CFLAGS = \
-	@SDL_CFLAGS@ \
-	@PYTHON_CFLAGS@ \
 	-D__STRICT_ANSI__ \
 	-I.. \
 	-I${top_srcdir}/src/adrt \
@@ -33,8 +28,6 @@ isst_master_LDADD = \
 	${top_builddir}/src/adrt/libutil/libtieutil.la \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
 	${top_builddir}/src/adrt/libtie/libtie.la \
-	${PYTHON_LIBS} \
-	${SDL_LIBS} \
 	${LIBTHREAD} \
 	${LIBM} \
 	${LIBZ}
@@ -42,7 +35,6 @@ isst_master_LDADD = \
 noinst_HEADERS = \
 	compnet.h \
 	dispatcher.h \
-	isst_python.h \
 	master.h
 
 include $(top_srcdir)/misc/Makefile.defs

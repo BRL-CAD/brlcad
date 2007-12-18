@@ -35,9 +35,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <bu.h>
-
-#include "isst.h"
+#include "adrt.h"
 #include "master.h"
 #include "tienet.h"
 
@@ -54,12 +52,13 @@ static struct option longopts[] =
 	{ "comp_host",	required_argument,	NULL, 'c' },
 	{ "obs_port",	required_argument,	NULL, 'o' },
 	{ "port",	required_argument,	NULL, 'p' },
-	{ "version",	no_argument,		NULL, 'v' },
-	{ "list",	required_argument,	NULL, 'l' },
+	{ "build",	no_argument,		NULL, 'b' },
+	{ "verbose",	no_argument,		NULL, 'v' },
+  	{ "list",	required_argument,	NULL, 'l' },
 };
 #endif
 
-static char shortopts[] = "c:e:i:ho:p:vl:";
+static char shortopts[] = "bc:e:i:ho:p:vl:";
 
 
 static void finish(int sig) {
@@ -69,41 +68,36 @@ static void finish(int sig) {
 
 
 static void help() {
-  printf("%s\n", ISST_VER_DETAIL);
-  printf("%s\n", "usage: isst_master [options] [proj_env_file]\n\
+  printf("%s\n", "usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\
   -e\t\tscript to execute that starts slaves.\n\
   -l\t\tfile containing list of slaves to use as compute nodes.\n\
   -o\t\tset observer port number.\n\
   -p\t\tset master port number.\n\
-  -v\t\tdisplay version info.\n");
+  -v\t\tverbose.\n\
+  -b\t\tdisplay build.\n");
 }
 
 
 int main(int argc, char **argv) {
-  int port = 0, obs_port = 0, c = 0;
-  char proj[64], exec[64], list[64], temp[64], comp_host[64];
+  int port = 0, obs_port = 0, c = 0, verbose = 0;
+  char exec[64], list[64], comp_host[64];
 
 
   signal(SIGINT, finish);
 
-  if(argc == 1) {
-    help();
-    return EXIT_FAILURE;
-  }
 
   /* Initialize strings */
   list[0] = 0;
   exec[0] = 0;
-  proj[0] = 0;
   comp_host[0] = 0;
   port = TN_MASTER_PORT;
-  obs_port = ISST_OBSERVER_PORT;
+  obs_port = ADRT_PORT;
 
   /* Parse command line options */
 
-  while((c =
+  while((c = 
 #ifdef HAVE_GETOPT_LONG
 	getopt_long(argc, argv, shortopts, longopts, NULL)
 #else
@@ -112,50 +106,48 @@ int main(int argc, char **argv) {
 	)!= -1)
   {
 	  switch(c) {
-	    case 'c':
-	      strncpy(comp_host, optarg, 64);
-	      break;
+            case 'c':
+              strncpy(comp_host, optarg, 64);
+              break;
 
-	    case 'h':
-	      help();
-	      return EXIT_SUCCESS;
+            case 'h':
+              help();
+              return EXIT_SUCCESS;
 
-	    case 'o':
-	      obs_port = atoi(optarg);
-	      break;
+            case 'o':
+              obs_port = atoi(optarg);
+              break;
 
-	    case 'p':
-	      port = atoi(optarg);
-	      break;
+            case 'p':
+              port = atoi(optarg);
+              break;
 
-	    case 'l':
-	      strncpy(list, optarg, 64);
-	      break;
+            case 'l':
+              strncpy(list, optarg, 64);
+              break;
 
-	    case 'e':
-	      strncpy(exec, optarg, 64);
-	      break;
+            case 'e':
+              strncpy(exec, optarg, 64);
+              break;
 
-	    case 'v':
-	      printf("%s\n", ISST_VER_DETAIL);
-	      return EXIT_SUCCESS;
+            case 'b':
+              printf("adrt_master build: %s %s\n", __DATE__, __TIME__);
+              return EXIT_SUCCESS;
+              break;
 
-	    default:
-	      help();
-	      return EXIT_FAILURE;
+            case 'v':
+              verbose = 1;
+              break;
+
+            default:
+              help();
+              return EXIT_FAILURE;
 	  }
   }
   argc -= optind;
   argv += optind;
 
-  strncpy(proj, argv[0], 64);
-
-  if(proj[0]) {
-    isst_master(port, obs_port, proj, list, exec, comp_host);
-  } else {
-    help();
-    return EXIT_FAILURE;
-  }
+  isst_master_init (port, obs_port, list, exec, comp_host, verbose);
 
   return EXIT_SUCCESS;
 }
