@@ -152,6 +152,7 @@ set helplib_data(wdb_whichid)		{{[-s] id(s)} {find regions with the specified id
 set helplib_data(wdb_xpush)		{{object} {push object path transformations to solids, creating solids if necessary}}
 
 set helplib_data(vo_aet)		{{[-i] ["az el tw"]} {set/get the azimuth, elevation and twist}}
+set helplib_data(vo_ae2dir)		{{[-i] az el} {return the view direction}}
 set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis specified by xyz}}
 set helplib_data(vo_base2local)		{{} {get base2local conversion factor}}
 set helplib_data(vo_center)		{{["x y z"]} {set/get the view center}}
