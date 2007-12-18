@@ -175,6 +175,7 @@ static struct cmdtab cmdtab[] = {
 	{"adc", f_adc},
 	{"adjust",	cmd_adjust},
 	{"ae", cmd_aetview},
+	{"ae2dir", cmd_ae2dir},
 	{"aip", f_aip},
 	{"analyze", f_analyze},
 	{"arb", f_arbdef},
@@ -457,6 +458,7 @@ static struct cmdtab cmdtab[] = {
 	{"view2model", f_view2model},
 	{"view2model_lu", f_view2model_lu},
 	{"view2model_vec", f_view2model_vec},
+	{"viewdir", cmd_viewdir},
 	{"viewsize", cmd_size},		/* alias "size" for saveview scripts */
 	{"vnirt", f_vnirt},
 	{"vquery_ray", f_vnirt},

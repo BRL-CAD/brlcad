@@ -5045,6 +5045,24 @@ cmd_pov(ClientData	clientData,
 	return TCL_OK;
 }
 
+int
+cmd_ae2dir( ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int     	argc,
+	    char    	**argv)
+{
+    return vo_ae2dir_cmd(view_state->vs_vop, interp, argc, argv);
+}
+
+int
+cmd_viewdir( ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int     	argc,
+	     char    	**argv)
+{
+    return vo_viewDir_cmd(view_state->vs_vop, interp, argc, argv);
+}
+
 /*
  * Local Variables:
  * mode: C
