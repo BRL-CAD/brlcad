@@ -74,7 +74,7 @@ void isst_python_init() {
   Py_Initialize();
 
 
-  isst_python_response = (char *)malloc(IPR_SIZE);
+  isst_python_response = (char *)malloc(IPR_SIZE+1);
   if (!isst_python_response) {
       perror("isst_python_response");
       exit(1);
@@ -111,7 +111,8 @@ void isst_python_code(char *code) {
   isst_python_response[0] = 0;
 
   PyRun_SimpleString(code);
-  strncpy(code, IPR_SIZE, isst_python_response);
+  strncpy(code, isst_python_response, IPR_SIZE);
+  code[IPR_SIZE] = '\0';
 }
 
 
@@ -119,8 +120,10 @@ void isst_python_code(char *code) {
 static PyObject* isst_python_stdout(PyObject *self, PyObject* args) {
   char *string;
 
-  if(PyArg_ParseTuple(args, "s", &string))
-    strncat(isst_python_response, IPR_SIZE, string);
+  if(PyArg_ParseTuple(args, "s", &string)) {
+      strncat(isst_python_response, string, IPR_SIZE);
+      isst_python_response[IPR_SIZE] = '\0';
+  }
 
   return PyInt_FromLong(0);
 }
@@ -177,6 +180,8 @@ static PyObject* isst_python_save(PyObject *self, PyObject* args) {
 
   if(PyArg_ParseTuple(args, "s", &string)) {
     strncat(isst_python_response, string, IPR_SIZE - strlen(isst_python_response) - 1);
+    isst_python_response[IPR_SIZE] = '\0';
+
     /* Append the data to the file shots.txt */
     fh = fopen("shots.txt", "a");
 
@@ -192,6 +197,7 @@ static PyObject* isst_python_save(PyObject *self, PyObject* args) {
     fclose(fh);
 
     strncpy(isst_python_response, "shot saved.\n", IPR_SIZE);
+    isst_python_response[IPR_SIZE] = '\0';
   }
 
   return PyInt_FromLong(0);
@@ -227,11 +233,13 @@ static PyObject* isst_python_load(PyObject *self, PyObject *args) {
        fscanf(fh, "camera_ae: %f %f\n", &isst_master_camera_azimuth, &isst_master_camera_elevation);
        snprintf(line, ADRT_NAME_SIZE, "succesfully loaded: %s\n", string);
        strncpy(isst_python_response, line, IPR_SIZE);
+       isst_python_response[IPR_SIZE] = '\0';
        return PyInt_FromLong(0);
     }
 
     snprintf(line, ADRT_NAME_SIZE, "cannot find: %s\n", string);
     strncpy(isst_python_response, line, IPR_SIZE);
+    isst_python_response[IPR_SIZE] = '\0';
   }
 
   return PyInt_FromLong(0);
@@ -256,6 +264,8 @@ static PyObject* isst_python_select(PyObject *self, PyObject *args) {
   }
 
   strncpy(isst_python_response, "done.\n", IPR_SIZE);
+  isst_python_response[IPR_SIZE] = '\0';
+
   return PyInt_FromLong(0);
 }
 
@@ -278,6 +288,8 @@ static PyObject* isst_python_deselect(PyObject *self, PyObject *args) {
   }
 
   strncpy(isst_python_response, "done.\n", IPR_SIZE);
+  isst_python_response[IPR_SIZE] = '\0';
+
   return PyInt_FromLong(0);
 }
 
