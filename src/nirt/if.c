@@ -19,12 +19,15 @@
  */
 /** @file if.c
  *
+ * This program is an Interactive Ray-Tracer
+ *
+ * Author:
+ *   Natalie L. Barker
+ *
+ * Date:
+ *   Jan 90
+ *
  */
-
-/*      IF.C            */
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 
@@ -54,7 +57,8 @@ void			del_ovlp(overlap *op);
 void			init_ovlp(void);
 
 
-int if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
+int
+if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
     struct partition	*part;
     fastf_t		ar = azimuth() * deg2rad;
@@ -78,11 +82,8 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	rt_rebuild_overlaps(part_head, ap, 1);
     else if (overlap_claims == OVLP_REBUILD_ALL)
 	rt_rebuild_overlaps(part_head, ap, 0);
-#if 0
-    rt_pr_partitions( ap->a_rt_i, part_head, " ...At top of for loop:" );
-#endif
-    for (part = part_head -> pt_forw; part != part_head; part = part -> pt_forw)
-    {
+
+    for (part = part_head -> pt_forw; part != part_head; part = part -> pt_forw) {
 	++part_nm;
 
 	RT_HIT_NORMAL( inormal, part->pt_inhit, part->pt_inseg->seg_stp,
@@ -97,15 +98,13 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	 *		  should be updated by the functions
 	 *		  in command.c as well
 	 */
-	for (i = 0; i < 3; ++i)
-	{
+	for (i = 0; i < 3; ++i) {
 	    r_entry(i) = part-> pt_inhit -> hit_point[i];
 	    r_exit(i) = part-> pt_outhit -> hit_point[i];
 	    n_entry(i) = inormal[i];
 	    n_exit(i) = onormal[i];
 	}
-	if (nirt_debug & DEBUG_HITS)
-	{
+	if (nirt_debug & DEBUG_HITS) {
 	    bu_log("Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
 		part_nm, r_entry(X), r_entry(Y), r_entry(Z),
 			 r_exit(X),  r_exit(Y),  r_exit(Z));
@@ -147,26 +146,19 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	    get_obliq(ap -> a_ray.r_dir, inormal);
 	ValTab[VTI_OBLIQ_OUT].value.fval =
 	    get_obliq(ap -> a_ray.r_dir, onormal);
-#if 0
-	if (*(part -> pt_overlap_reg) == REGION_NULL)
-#else
-	if (part -> pt_overlap_reg == 0)
-#endif
-	{
+
+	if (part -> pt_overlap_reg == 0) {
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 1;
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 	    ValTab[VTI_CLAIMANT_LISTN].value.sval =
 		ValTab[VTI_REG_NAME].value.sval;
-	}
-	else
-	{
+	} else {
 	    struct region	**rpp;
 	    char		*cp;
 
 	    bu_vls_init(&claimant_list);
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
-	    for (rpp = part -> pt_overlap_reg; *rpp != REGION_NULL; ++rpp)
-	    {
+	    for (rpp = part -> pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
 		char tmpcp[512];
 
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
@@ -207,15 +199,13 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 	/* Do the printing for this partition */
 	report(FMT_PART);
 
-	if (need_to_free)
-	{
+	if (need_to_free) {
 	    bu_vls_free(&claimant_list);
 	    bu_free((genptr_t)ValTab[VTI_CLAIMANT_LISTN].value.sval, "returned by bu_vls_strdup");
 	    need_to_free = 0;
 	}
 
-	while ((ovp = find_ovlp(part)) != OVERLAP_NULL)
-	{
+	while ((ovp = find_ovlp(part)) != OVERLAP_NULL) {
 #ifdef NIRT_OVLP_PATH
 	    ValTab[VTI_OV_REG1_NAME].value.sval = ovp->reg1->reg_name;
 	    ValTab[VTI_OV_REG2_NAME].value.sval = ovp->reg2->reg_name;
@@ -232,29 +222,31 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 		(char *)(part->pt_inseg->seg_stp->st_dp->d_namep);
 	    ValTab[VTI_OV_SOL_OUT].value.sval =
 		(char *)(part->pt_outseg->seg_stp->st_dp->d_namep);
-	    for (i = 0; i < 3; ++i)
-	    {
+
+	    for (i = 0; i < 3; ++i) {
 		ov_entry(i) = ovp -> in_point[i];
 		ov_exit(i) = ovp -> out_point[i];
 	    }
+
 	    ov_entry(D) = target(D) - ovp -> in_dist;
 	    ov_exit(D) = target(D) - ovp -> out_dist;
 	    ValTab[VTI_OV_LOS].value.fval = ov_entry(D) - ov_exit(D);
 	    report(FMT_OVLP);
+
 #ifndef NIRT_OVLP_PATH
 	    bu_free((genptr_t)copy_ovlp_reg1, "copy_ovlp_reg1");
 	    bu_free((genptr_t)copy_ovlp_reg2, "copy_ovlp_reg2");
 #endif
+
 	    del_ovlp(ovp);
 	}
     }
     report(FMT_FOOT);
-    if (ovlp_list.forw != &ovlp_list)
-    {
+
+    if (ovlp_list.forw != &ovlp_list) {
 	fprintf(stderr, "Previously unreported overlaps.  Shouldn't happen\n");
 	ovp = ovlp_list.forw;
-	while( ovp != &ovlp_list )
-	{
+	while( ovp != &ovlp_list ) {
 		bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n",ovp -> reg1 -> reg_name, ovp -> reg2 -> reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
 	    ovp = ovp->forw;
 	}
@@ -262,22 +254,24 @@ int if_hit(struct application *ap, struct partition *part_head, struct seg *fini
 
     bu_vls_free(&attr_vls);
 
-
     return( HIT );
 }
 
-int if_miss(void)
+
+int
+if_miss(void)
 {
     report(FMT_RAY);
     report(FMT_MISS);
     return ( MISS );
 }
 
-/*
- *			I F _ O V E R L A P
+
+/**
+ * I F _ O V E R L A P
  *
- *  Default handler for overlaps in rt_boolfinal().
- *  Returns -
+ * Default handler for overlaps in rt_boolfinal().
+ * Returns -
  *	 0	to eliminate partition with overlap entirely
  *	!0	to retain partition in output list
  *
@@ -314,10 +308,9 @@ if_overlap(register struct application *ap, register struct partition *pp, struc
     return( rt_defoverlap (ap, pp, reg1, reg2, InputHdp ) );
 }
 
-/*
- *
- *		The callbacks used by backup()
- *
+
+/**
+ * The callbacks used by backup()
  */
 int if_bhit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
@@ -332,8 +325,7 @@ int if_bhit(struct application *ap, struct partition *part_head, struct seg *fin
     /* calculate exit point */
     VJOIN1(part->pt_outhit->hit_point, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
-    if (nirt_debug & DEBUG_BACKOUT)
-    {
+    if (nirt_debug & DEBUG_BACKOUT) {
 	bu_log("Backmost region is '%s'\n", part->pt_regionp->reg_name);
 	bu_log("Backout ray exits at (%g %g %g)\n",
 	       part->pt_outhit->hit_point[0] * base2local,
@@ -359,25 +351,26 @@ int if_bhit(struct application *ap, struct partition *part_head, struct seg *fin
     return( HIT );
 }
 
-int if_bmiss(void)
+
+int
+if_bmiss(void)
 {
     return ( MISS );
 }
 
-fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
+
+fastf_t
+get_obliq(fastf_t *ray, fastf_t *normal)
 {
     double	cos_obl;
     fastf_t	obliquity;
 
     cos_obl = fabs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
-    if (cos_obl < 1.001)
-    {
+    if (cos_obl < 1.001) {
 	if (cos_obl > 1)
 		cos_obl = 1;
 	obliquity = acos(cos_obl);
-    }
-    else
-    {
+    } else {
 	fflush(stdout);
 	fprintf (stderr, "Error:  cos(obliquity) > 1\n");
 	obliquity = 0;
@@ -396,12 +389,13 @@ fastf_t get_obliq (fastf_t *ray, fastf_t *normal)
     return (obliquity);
 }
 
-overlap *find_ovlp (struct partition *pp)
+
+overlap *
+find_ovlp(struct partition *pp)
 {
     overlap	*op;
 
-    for (op = ovlp_list.forw; op != &ovlp_list; op = op -> forw)
-    {
+    for (op = ovlp_list.forw; op != &ovlp_list; op = op -> forw) {
 	if (((pp -> pt_inhit -> hit_dist <= op -> in_dist)
 	    && (op -> in_dist <= pp -> pt_outhit -> hit_dist)) ||
 	    ((pp -> pt_inhit -> hit_dist <= op -> out_dist)
@@ -411,22 +405,27 @@ overlap *find_ovlp (struct partition *pp)
     return ((op == &ovlp_list) ? OVERLAP_NULL : op);
 }
 
-void del_ovlp (overlap *op)
+
+void
+del_ovlp(overlap *op)
 {
     op -> forw -> backw = op -> backw;
     op -> backw -> forw = op -> forw;
     bu_free((char *)op, "free op in del_ovlp");
 }
 
-void init_ovlp(void)
+
+void
+init_ovlp(void)
 {
     ovlp_list.forw = ovlp_list.backw = &ovlp_list;
 }
 
+
 int
 if_boverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2)
 {
-	return 1;
+    return 1;
 }
 
 /*
