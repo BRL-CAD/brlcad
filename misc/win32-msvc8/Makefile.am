@@ -61,7 +61,6 @@ EXTRA_DIST= \
 	tclpipe/tclpipe.vcproj \
 	tclsh/tclsh.vcproj \
 	tclsh/library/installTree.tcl \
-	tclsh/library/treeInit.sh \
 	tclstub/tclstub.vcproj \
 	tkimg/tkimg.vcproj \
 	tkimgpng/tkimgpng.vcproj \
