@@ -92,6 +92,7 @@ static int vo_mrotPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc,
 static int vo_m2vPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_v2mPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_viewDir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_ae2dir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
@@ -104,11 +105,11 @@ struct view_obj HeadViewObj;		/* head of view object list */
 static struct bu_cmdtab vo_cmds[] =
 {
 	{"ae",			vo_aet_tcl},
+	{"ae2dir",		vo_ae2dir_tcl},
 	{"arot",		vo_arot_tcl},
 	{"base2local",		vo_base2local_tcl},
 	{"center",		vo_center_tcl},
 	{"coord",		vo_coord_tcl},
-	{"viewDir",		vo_viewDir_tcl},
 	{"eye",			vo_eye_tcl},
 	{"eye_pos",		vo_eye_pos_tcl},
 	{"invSize",		vo_invSize_tcl},
@@ -134,8 +135,9 @@ static struct bu_cmdtab vo_cmds[] =
 	{"slew",		vo_slew_tcl},
 	{"tra",			vo_tra_tcl},
 	{"units",		vo_units_tcl},
-	{"view2model",		vo_view2model_tcl},
 	{"v2mPoint",		vo_v2mPoint_tcl},
+	{"view2model",		vo_view2model_tcl},
+	{"viewDir",		vo_viewDir_tcl},
 	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
 #if 0
@@ -2624,7 +2626,7 @@ vo_viewDir_cmd(struct view_obj	*vop,
 
 /*
  * Usage:
- *        procname viewDir
+ *        procname viewDir[-i]
  */
 static int
 vo_viewDir_tcl(ClientData	clientData,
@@ -2636,6 +2638,93 @@ vo_viewDir_tcl(ClientData	clientData,
 
 	return vo_viewDir_cmd(vop, interp, argc-1, argv+1);
 }
+
+/* skeleton functions for view_obj methods */
+int
+vo_ae2dir_cmd(struct view_obj	*vop,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char 		**argv)
+{
+    fastf_t az, el;
+    vect_t dir;
+    int iflag;
+    struct bu_vls vls;
+
+
+    if (argc < 3 || 4 < argc) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    /* Look for -i option */
+    if (argc == 4) {
+	if (argv[1][0] != '-' ||
+	    argv[1][1] != 'i' ||
+	    argv[1][2] != '\0') {
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+	if (sscanf(argv[2], "%lf", &az) != 1 ||
+	    sscanf(argv[3], "%lf", &el) != 1) {
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+	iflag = 1;
+    } else {
+	if (sscanf(argv[1], "%lf", &az) != 1 ||
+	    sscanf(argv[2], "%lf", &el) != 1) {
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+	iflag = 0;
+    }
+
+    az *= bn_degtorad;
+    el *= bn_degtorad;
+    V3AE2DIR(az, el, dir);
+
+    if (iflag)
+	VSCALE(dir, dir, -1);
+
+    bu_vls_init(&vls);
+    bn_encode_vect(&vls, dir);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname ae2dir [-i] az el
+ */
+static int
+vo_ae2dir_tcl(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
+{
+    struct view_obj *vop = (struct view_obj *)clientData;
+
+    return vo_ae2dir_cmd(vop, interp, argc-1, argv+1);
+}
+
 
 #if 0
 /* skeleton functions for view_obj methods */
