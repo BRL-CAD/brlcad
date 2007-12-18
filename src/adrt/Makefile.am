@@ -22,8 +22,8 @@ endif
 
 DIST_SUBDIRS = \
 	${adrtd} \
+	${always_compile} \
 	doc \
-	libtie \
 	misc \
 	scripts
 
