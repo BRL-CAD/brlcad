@@ -27,7 +27,6 @@
 #define _ISST_H
 
 #include "tie.h"
-#include "adrt_common.h"
 #include "adrt.h"
 
 
