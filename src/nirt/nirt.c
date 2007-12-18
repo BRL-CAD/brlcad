@@ -19,7 +19,7 @@
  */
 /** @file nirt.c
  *
- * This program is an Interactive Ray-Tracer
+ * This program is Natalie's Interactive Ray-Tracer
  *
  * Author:
  *   Natalie L. Barker
