@@ -419,7 +419,7 @@ void isst_slave_mesg(void *mesg, unsigned int mesg_len)
   memcpy(&op, mesg, sizeof(short));
 
   switch(op) {
-    case ISST_OP_SHOT:
+    case ADRT_WORK_SHOTLINE:
     {
       int i, n, num, ind;
       char name[256];
