@@ -175,7 +175,7 @@ sh_esc (char *buffer)
 
 
 void
-grid_coor(char *uffer, com_table *ctp)
+grid_coor(char *buffer, com_table *ctp)
 {
     extern int 	str_dbl();  /* function to convert  string to  double */
     int 		i = 0;
