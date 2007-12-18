@@ -41,7 +41,7 @@ tienet_buffer_t dispatcher_mesg;
 
 
 void
-isst_master_dispatcher_init ()
+master_dispatcher_init ()
 {
   TIENET_BUFFER_INIT(dispatcher_mesg);
   dispatcher_frame = 1;
@@ -49,14 +49,14 @@ isst_master_dispatcher_init ()
 
 
 void
-isst_master_dispatcher_free ()
+master_dispatcher_free ()
 {
   TIENET_BUFFER_FREE(dispatcher_mesg);
 }
 
 
 void
-isst_master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, int image_format)
+master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, int image_format)
 {
   int i, n, size;
   camera_tile_t tile;

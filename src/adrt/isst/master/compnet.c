@@ -40,11 +40,10 @@
 #include <netdb.h>
 
 #include "adrt.h"
-#include "adrt_common.h"
 #include "tienet.h"
 
-int isst_master_compserv_socket;
-int isst_master_compserv_active;
+int master_compserv_socket;
+int master_compserv_active;
 
 
 #define LIST_BASE_ATTS		0
@@ -63,11 +62,11 @@ int isst_master_compserv_active;
 /*
 * Establish a connection to the component server.
 */
-void isst_compnet_connect(char *host, int port) {
+void compnet_connect(char *host, int port) {
   struct hostent hostent;
   struct sockaddr_in compserv, master;
 
-  isst_master_compserv_active = 0;
+  master_compserv_active = 0;
 
   /* If no host name is supplied then do nothing */
   if(!strlen(host))
@@ -82,7 +81,7 @@ void isst_compnet_connect(char *host, int port) {
   }
 
   /* create a socket */
-  if((isst_master_compserv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+  if((master_compserv_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     fprintf(stderr, "cannot create socket for component server connection, exiting.");
     exit(1);
   }
@@ -96,46 +95,46 @@ void isst_compnet_connect(char *host, int port) {
   memcpy((char*)&compserv.sin_addr.s_addr, hostent.h_addr_list[0], hostent.h_length);
   compserv.sin_port = htons(port);
 
-  if(bind(isst_master_compserv_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
+  if(bind(master_compserv_socket, (struct sockaddr *)&master, sizeof(master)) < 0) {
     fprintf(stderr, "unable to bind component server connection socket, exiting.\n");
     exit(1);
   }
 
   /* connect to master */
-  if(connect(isst_master_compserv_socket, (struct sockaddr *)&compserv, sizeof(compserv)) < 0) {
+  if(connect(master_compserv_socket, (struct sockaddr *)&compserv, sizeof(compserv)) < 0) {
     fprintf(stderr, "cannot connect to component server, exiting.\n");
     exit(1);
   }
 
   /* data may now be transmitted to the server */
-  isst_master_compserv_active = 1;
+  master_compserv_active = 1;
 }
 
 /*
 * Update the status of a component
 */
-void isst_compnet_update(char *string, char status) {
+void compnet_update(char *string, char status) {
   char message[ADRT_NAME_SIZE];
 
-  if(!isst_master_compserv_active)
+  if(!master_compserv_active)
     return;
 
   /* format message */
   snprintf(message, ADRT_NAME_SIZE, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
 
   /* Send string */
-  tienet_send(isst_master_compserv_socket, message, strlen(message), 0);
+  tienet_send(master_compserv_socket, message, strlen(message), 0);
 }
 
 
-void isst_compnet_reset() {
+void compnet_reset() {
   char message;
 
-  if(!isst_master_compserv_active)
+  if(!master_compserv_active)
     return;
 
   message = RESET_BASE_ATTS;
-  tienet_send(isst_master_compserv_socket, &message, 1, 0);
+  tienet_send(master_compserv_socket, &message, 1, 0);
 }
 
 /*

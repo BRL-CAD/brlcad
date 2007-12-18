@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
-  isst_master_init (port, obs_port, list, exec, comp_host, verbose);
+  master_init (port, obs_port, list, exec, comp_host, verbose);
 
   return EXIT_SUCCESS;
 }

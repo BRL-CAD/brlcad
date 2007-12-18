@@ -116,7 +116,7 @@ master_setup ()
 
 
 void
-isst_master_init (int port, int obs_port, char *list, char *exec, char *comp_host, int verbose)
+master_init (int port, int obs_port, char *list, char *exec, char *comp_host, int verbose)
 {
   /* Setup defaults */
   master_setup();
@@ -129,10 +129,10 @@ isst_master_init (int port, int obs_port, char *list, char *exec, char *comp_hos
   pthread_create(&master.networking_thread, NULL, master_networking, &obs_port);
 
   /* Connect to the component Server */
-  isst_compnet_connect(comp_host, ISST_COMPNET_PORT);
+  compnet_connect(comp_host, ISST_COMPNET_PORT);
 
   /* Initialize the work dispatcher */
-  isst_master_dispatcher_init();
+  master_dispatcher_init();
 
   tienet_sem_init(&master.wait_sem, 0);
 
@@ -149,7 +149,7 @@ isst_master_init (int port, int obs_port, char *list, char *exec, char *comp_hos
   tienet_master_free();
 
   /* Free the dispatcher data */
-  isst_master_dispatcher_free();
+  master_dispatcher_free();
 
   TIENET_BUFFER_FREE(master.buf);
 #if ADRT_USE_COMPRESSION
@@ -357,7 +357,6 @@ master_networking (void *ptr)
 
   /* listen for connections */
   listen (master.socklist->num, 3);
-printf("listening\n");
 
   addrlen = sizeof(observer_addr);
   master.active_connections = 0;
@@ -495,7 +494,7 @@ printf("listening\n");
               case ADRT_WORK_FRAME:
                 {
                   /* Fill the work buffer */
-                  isst_master_dispatcher_generate(master.slave_data, master.slave_data_len, master.image_w, master.image_h, master.image_format);
+                  master_dispatcher_generate(master.slave_data, master.slave_data_len, master.image_w, master.image_h, master.image_format);
                 }
                 break;
 
