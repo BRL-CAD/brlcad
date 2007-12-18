@@ -141,8 +141,9 @@ main(int argc, char **argv)
 			reserve -= strlen(line);
 			reserve -= 1;
 			if (reserve > 0){
-			    strncat(pbuffer,line,reserve);
-			    strcat(pbuffer,"\n");
+			    strncat(pbuffer, line, reserve);
+			    strncat(pbuffer, "\n");
+			    pbuffer[MAXLEN*MAXLINES-1] = '\0';
 			} else {
 			    printf("ERROR: ran out of buffer space (%d characters)\n", MAXLEN*MAXLINES);
 			}

@@ -215,6 +215,7 @@ main(int argc, char **argv)
 		/* add the tolerance only if it'll completely fit */
 		if( title_len + tol_len < BRLCAD_TITLE_LENGTH ) {
 		    strncat(title, tol_str, tol_len);
+		    title[BRLCAD_TITLE_LENGTH-1] = '\0';
 		}
 	}
 

@@ -106,6 +106,7 @@ struct node *root;
 			strncat( tmp , opb, size - strlen(tmp) - 1 );
 			if( ptr->parent )
 				strcat( tmp , ")" );
+			tmp[size-1] = '\0'; /* sanity */
 
 			/* push the character string representing the result */
 			Apush( tmp );

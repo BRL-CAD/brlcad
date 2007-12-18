@@ -763,13 +763,16 @@ Convert_part(char *line)
 		/* now copy what is left to the name */
 		strncpy( name, ptr, MAX_LINE_LEN-1 );
 		name[MAX_LINE_LEN-1] = '\0';
+
 		sprintf( tmp_str, "_%d", obj_count );
 		len = strlen( name );
 		suff_len = strlen( tmp_str );
 		if( len + suff_len < MAX_LINE_LEN-1 )
-			strncat( name, tmp_str, MAX_LINE_LEN - len - 1 );
+		    strncat( name, tmp_str, MAX_LINE_LEN - len - 1 );
 		else
-			snprintf( &name[MAX_LINE_LEN-suff_len-1], MAX_LINE_LEN, "%s", tmp_str );
+		    snprintf( &name[MAX_LINE_LEN-suff_len-1], MAX_LINE_LEN, "%s", tmp_str );
+		name[MAX_LINE_LEN-1] = '\0'; /* sanity */
+
 	} else {
 		strncpy( name, "noname", MAX_LINE_LEN-1 );
 	}

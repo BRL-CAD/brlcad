@@ -2008,7 +2008,8 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	snprintf(line, 2048, "%s ",dgop->dgo_rt_cmd[0]);
 	for (i=1; i < dgop->dgo_rt_cmd_len; i++) {
 	    snprintf(name, 256, "%s ",dgop->dgo_rt_cmd[i]);
-	    strncat(line,name, 2048-strlen(line)-1);
+	    strncat(line, name, 2048-strlen(line)-1);
+	    line[2048-1] = '\0'; /* sanity */
 	}
 
 	CreateProcess(NULL, line, NULL, NULL, TRUE,
@@ -4263,7 +4264,8 @@ dgo_run_rt(struct dg_obj *dgop,
 	snprintf(line, 2048, "%s ",dgop->dgo_rt_cmd[0]);
 	for(i=1;i<dgop->dgo_rt_cmd_len;i++) {
 	    snprintf(name, 256, "%s ",dgop->dgo_rt_cmd[i]);
-	    strncat(line,name,2048-strlen(line)-1);
+	    strncat(line, name, 2048-strlen(line)-1);
+	    line[2048-1] = '\0'; /* sanity */
 	}
 
 

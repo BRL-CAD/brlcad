@@ -1269,6 +1269,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				if (vls->vls_len) (void)strcat(cp, " ");
 				(void)strncat(cp, sdp->sp_name, increase-1);
 				(void)strncat(cp, "=\"", increase-strlen(sdp->sp_name)-1);
+				cp[vls->vls_offset + vls->vls_len - 1] = '\0';
 
 				/* copy the string, escaping all the internal
 				 * double quote (") characters

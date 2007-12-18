@@ -431,6 +431,7 @@ done:
 		rem -= strlen(name);
 	    }
 	}
+	line1[2048-1] = '\0'; /* sanity */
 
 	CreateProcess(NULL, line1, NULL, NULL, TRUE,
 		      DETACHED_PROCESS, NULL, NULL,

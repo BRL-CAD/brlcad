@@ -335,6 +335,7 @@ static long read_Cell_Data(void)
 		strncat(format, " %*lf", MAX_LINE-strlen(format)-1);
 	    strncat(format, " %lf", MAX_LINE-strlen(format)-1);
 	}
+	format[MAX_LINE-1] = '\0'; /* sanity */
     }
     /* EOF encountered before we found the desired view? */
     if (feof(filep))

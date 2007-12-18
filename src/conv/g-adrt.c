@@ -536,6 +536,8 @@ int main(int argc, char *argv[]) {
   /* Open the adrt file */
   strncpy(filename, argv[1], 256);
   strncat(filename, ".adrt", 256);
+  filename[256-1] = '\0';
+
   adrt_fh = fopen(filename, "w");
   printf("converting: %s\n", argv[0]);
 
@@ -593,6 +595,8 @@ int main(int argc, char *argv[]) {
   */
   strncpy(filename, argv[1], 256);
   strncat(filename, ".env", 256);
+  filename[256-1] = '\0';
+
   adrt_fh = fopen(filename, "w");
 
   fprintf(adrt_fh, "geometry_file,%s.adrt\n", argv[1]);
@@ -627,6 +631,8 @@ int main(int argc, char *argv[]) {
   */
   strncpy(filename, argv[1], 256);
   strncat(filename, ".textures", 256);
+  filename[256-1] = '\0';
+
   adrt_fh = fopen(filename, "w");
   fclose(adrt_fh);
 
@@ -635,6 +641,8 @@ int main(int argc, char *argv[]) {
   */
   strncpy(filename, argv[1], 256);
   strncat(filename, ".map", 256);
+  filename[256-1] = '\0';
+
   adrt_fh = fopen(filename, "wb");
   for(i = 0; i < mesh_map_ind; i++) {
     len = strlen(mesh_map[i].mesh) + 1;
@@ -652,6 +660,8 @@ int main(int argc, char *argv[]) {
   */
   strncpy(filename, argv[1], 256);
   strncat(filename, ".frames", 256);
+  filename[256-1] = '\0';
+
   adrt_fh = fopen(filename, "w");
   fprintf(adrt_fh, "frame,1\n");
   fprintf(adrt_fh, "camera,10.0,10.0,10.0,0.0,0.0,0.0,0.0,20.0,0.0\n");
