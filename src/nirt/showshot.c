@@ -19,23 +19,15 @@
  */
 /** @file showshot.c
  *
- *	Filter output from NIRT(1) to generate an MGED(1) object
- *	representing a shotline through some geometry.
+ * Filter output from NIRT(1) to generate an MGED(1) object
+ * representing a shotline through some geometry.
  *
- *		Written by:	Paul Tanenbaum
- *		Date:		4 December 1990
+ * Author:
+ *   Paul Tanenbaum
  *
- *		To compile:	cc -I/usr/include/brlcad source.c
+ * Date:
+ *   4 December 1990
  *
- *		R E V I S I O N   H I S T O R Y
- *
- *	    15 Jan 91	Eliminated the mandatory argument model.g
- *			from the command line.  The database name
- *			wasn't used anyway!
- *	    14 Feb 91	Added check to ensure that the names of
- *			the objects created won't exceed NAMESIZE,
- *			and added the '-n name' option.  Eliminated
- *			the '-d' debug option.
  */
 
 #include "common.h"
@@ -58,9 +50,9 @@
 #define		BUF_LEN		128
 #define		OPT_STRING	"n:r:?"
 #define		RAY_COLOR	"255 255 0"
-#define		print_usage()	(void) fputs("Usage: 'show-shot [-n name] [-r radius]'\n",\
-					stderr)
+#define		print_usage()	bu_exit(1, "Usage: 'show-shot [-n name] [-r radius]'\n")
 
+int
 main (int argc, char **argv)
 {
     char	buf[BUF_LEN];	/* Contents of current input line */
@@ -87,50 +79,42 @@ main (int argc, char **argv)
     *rayname = '\0';
     /* Handle command-line options */
     while ((opt = bu_getopt(argc, argv, OPT_STRING)) != -1)
-	switch (opt)
-	{
-	    case 'n':
-		strncpy(rayname, bu_optarg, BUF_LEN-1);
-		break;
-	    case 'r':
-		if (sscanf(bu_optarg, "%F", &ray_radius) != 1)
-		{
-		    (void) fprintf(stderr, "Illegal radius: '%s'\n", bu_optarg);
-		    bu_exit (1, NULL);
-		}
-		break;
-	    case '?':
-		print_usage();
-		bu_exit (1, NULL);
+	switch (opt) {
+	case 'n':
+	    strncpy(rayname, bu_optarg, BUF_LEN-1);
+	    break;
+	case 'r':
+	    if (sscanf(bu_optarg, "%F", &ray_radius) != 1) {
+		bu_exit(1, "Illegal radius: '%s'\n", bu_optarg);
+	    }
+	    break;
+	case '?':
+	    print_usage();
 	}
-
+    
     /* Ensure proper command-line syntax */
-    if (bu_optind != argc)
-    {
+    if (bu_optind != argc) {
 	print_usage();
-	bu_exit (1, NULL);
     }
 
     /* Construct the names of the objects to add to the database */
     if (*rayname == '\0')	/* Was one given on command line? */
-	(void) sprintf(rayname, "ray.%d", pid);
-    if (strlen(rayname) > NAMESIZE - 3)
-    {
-	(void) fprintf(stderr,
+	sprintf(rayname, "ray.%d", pid);
+
+    if (strlen(rayname) > NAMESIZE - 3) {
+	fprintf(stderr,
 	    "Name '%s.s' for ray solid may not exceed %d characters\n",
 	    rayname, NAMESIZE - 1);
-	(void) fputs("Use the '-n name' option to specify a different name\n",
-	    stderr);
-	bu_exit (1, NULL);
+	bu_exit(1, "Use the '-n name' option to specify a different name\n");
     }
-    (void) printf("in %s.s sph 0 0 0 1\n", rayname);
-    (void) printf("r %s.r u %s.s\n", rayname, rayname);
-    (void) printf("mater %s.r\n\n\n%s\n\n", rayname, RAY_COLOR);
-    (void) printf("g %s", rayname);
+
+    printf("in %s.s sph 0 0 0 1\n", rayname);
+    printf("r %s.r u %s.s\n", rayname, rayname);
+    printf("mater %s.r\n\n\n%s\n\n", rayname, RAY_COLOR);
+    printf("g %s", rayname);
 
     /* Read the input */
-    while (bu_fgets(buf, BUF_LEN, stdin) != NULL)
-    {
+    while (bu_fgets(buf, BUF_LEN, stdin) != NULL) {
 	++line_nm;
 	bp = buf;
 	if ((nlp = index(bp, '\n')) != 0)
@@ -147,37 +131,30 @@ main (int argc, char **argv)
 
 	/* Read entry and exit coordinates for this partition */
 	if (sscanf(bp, "%F%F%F%F%F%F",
-		&entryp[X], &entryp[Y], &entryp[Z],
-		&exitp[X], &exitp[Y], &exitp[Z])
-	    != 6)
-	{
-	    (void) fprintf(stderr,
-		"Illegal data on line %d: '%s'\n", line_nm, bp);
-	    bu_exit (1, NULL);
+		   &entryp[X], &entryp[Y], &entryp[Z],
+		   &exitp[X], &exitp[Y], &exitp[Z]) != 6) {
+	    bu_exit(1, "Illegal data on line %d: '%s'\n", line_nm, bp);
 	}
 
-	(void) printf(" %s", rname);
+	printf(" %s", rname);
 
-	if (line_nm == 1)
-	{
+	if (line_nm == 1) {
 	    VMOVE(first_entryp, entryp);
 	}
     }
-    if (! feof(stdin))
-    {
-	(void) fputs("Error from bu_fgets().  This shouldn't happen", stderr);
-	bu_exit (1, NULL);
+    if (! feof(stdin)) {
+	bu_exit(1, "Error from bu_fgets().  This shouldn't happen");
     }
 
-    (void) printf("\nkill %s.s\nin %s.s rcc\n\t%f %f %f\n\t%f %f %f\n\t%f\n",
-	rayname, rayname,
-	first_entryp[X], first_entryp[Y], first_entryp[Z],
-	exitp[X] - first_entryp[X],
-	exitp[Y] - first_entryp[Y],
-	exitp[Z] - first_entryp[Z],
-	ray_radius);
-    (void) printf("g %s %s.r\n", rayname, rayname);
-    (void) fprintf(stderr, "Group is '%s'\n", rayname);
+    printf("\nkill %s.s\nin %s.s rcc\n\t%f %f %f\n\t%f %f %f\n\t%f\n",
+	   rayname, rayname,
+	   first_entryp[X], first_entryp[Y], first_entryp[Z],
+	   exitp[X] - first_entryp[X],
+	   exitp[Y] - first_entryp[Y],
+	   exitp[Z] - first_entryp[Z],
+	   ray_radius);
+    printf("g %s %s.r\n", rayname, rayname);
+    fprintf(stderr, "Group is '%s'\n", rayname);
 }
 
 /*
