@@ -1,4 +1,4 @@
-/*                T C L C A D . C
+/*                        T C L C A D . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2007 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file init.c
+/** @file tclcad.c
  *
  * Initialize BRL-CAD's Tcl interface.
  *
@@ -26,27 +26,27 @@
  *   Bob Parker
  */
 
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define IGNORE_CONFIG_H
-#  define snprintf _snprintf
-#endif
+#include "common.h"
 
 #include "tclcad.h"
 
-#include "itk.h"
-#include "dm.h"
-#include "fb.h"
-#include "blt.h"
+#define RESOURCE_INCLUDED 1
+#include <tcl.h>
+#include <itcl.h>
+#include <itk.h>
+#include <blt.h>
 
 #include "machine.h"
 #include "bu.h"
-#include "vmath.h"
+#include "dm.h"
+#include "fb.h"
 #include "bn.h"
+#include "vmath.h"
 #include "raytrace.h"
 
 /* Private headers */
 #include "brlcad_version.h"
+
 
 Tclcad_Init(Tcl_Interp *interp)
 {
@@ -121,3 +121,13 @@ Tclcad_Init(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
