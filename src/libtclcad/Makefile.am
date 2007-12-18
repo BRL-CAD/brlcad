@@ -3,6 +3,7 @@
 lib_LTLIBRARIES = libtclcad.la
 
 libtclcad_la_SOURCES = \
+	tclcad.c \
 	tclcadAutoPath.c \
 	tclcadTkSetup.c \
 	tkImgFmtPIX.c
