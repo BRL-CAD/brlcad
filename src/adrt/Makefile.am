@@ -1,16 +1,17 @@
 # $Id$
 
-adrtd = libcommon \
+adrtd = \
 	bench \
-	rise \
-	isst
+	rise
 
 always_compile = \
 	libtie \
 	libtienet \
 	libtexture \
 	librender \
-	libutil
+	libcommon \
+	libutil \
+	isst
 
 if BUILD_ADRT
 SUBDIRS = \
