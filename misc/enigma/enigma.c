@@ -16,6 +16,8 @@
  *	Added backwards-compatibility for handling illegal salt chars.
  */
 
+#define _XOPEN_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
