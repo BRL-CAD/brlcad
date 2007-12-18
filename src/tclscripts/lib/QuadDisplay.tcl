@@ -59,6 +59,7 @@ option add *QuadDisplay.height 400 widgetDefault
 
     # methods for controlling the view object
     public method ae {args}
+    public method ae2dir {args}
     public method arot {args}
     public method base2local {}
     public method center {args}
@@ -446,6 +447,10 @@ option add *QuadDisplay.height 400 widgetDefault
 
 ::itcl::body QuadDisplay::ae {args} {
     eval $itk_component($itk_option(-pane)) ae $args
+}
+
+::itcl::body QuadDisplay::ae2dir {args} {
+    eval $itk_component($itk_option(-pane)) ae2dir $args
 }
 
 ::itcl::body QuadDisplay::arot {args} {
