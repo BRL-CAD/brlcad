@@ -253,6 +253,10 @@ Older Bugs
 * X11 framebuffer often fails to display on certain middle bit depth
   displays. (e.g. 15 or 16 bit depth)
 
+* mk_lcomb fails on large combinations due to mk_tree_pure() building
+  a left-heavy tree and wdb_put_internal() then recursively performing
+  lookup and put calls.
+
 
 Annoyances
 ----------
