@@ -1293,6 +1293,15 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
+#define V3AE2DIR(_az, _el, _dir) { \
+	fastf_t c_el = cos(_el); \
+\
+	(_dir)[X] = cos(_az) * c_el; \
+	(_dir)[Y] = sin(_az) * c_el; \
+	(_dir)[Z] = sin(_el); \
+}
+
+
 __END_DECLS
 
 #endif /* __VMATH_H__ */
