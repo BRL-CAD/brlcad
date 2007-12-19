@@ -290,8 +290,18 @@ bu_log(char *fmt, ...)
 	  ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
 	  (void)fflush(stderr);
 	  bu_semaphore_release(BU_SEM_SYSCALL);
-	  if ( ret != 1 )
-	      bu_bomb("bu_log: write error");
+	  if (ret != 1) {
+	      bu_semaphore_acquire(BU_SEM_SYSCALL);
+	      ret = fwrite(bu_vls_addr(&output), len, 1, stdout );
+	      (void)fflush(stderr);
+	      bu_semaphore_release(BU_SEM_SYSCALL);
+	      if (ret != 1) {
+		  bu_semaphore_acquire(BU_SEM_SYSCALL);
+		  perror("fwrite failed");
+		  bu_semaphore_release(BU_SEM_SYSCALL);
+		  bu_bomb("bu_log: write error");
+	      }
+	  }
 	}
 
     } else {
