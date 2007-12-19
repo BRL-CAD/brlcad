@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed empty name crash when using mged 'lt' command  - Sean Morrison
 * Pro/E plugin allows spaces in part name mapping file - Sean Morrison
 * Pro/E plugin creates 'top.#' if 'top' already exists - Sean Morrison
 * fixed asc2g bug on Windows that caused a crash on exit - Bob Parker
