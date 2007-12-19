@@ -283,78 +283,79 @@ rem_log(char *msg)
 HIDDEN int
 rem_open(register FBIO *ifp, register char *file, int width, int height)
 {
-	register int	i;
-	struct pkg_conn *pc;
-	char	buf[128];
-	char	hostname[MAX_HOSTNAME];
-	char	portname[MAX_HOSTNAME];
-	char	device[MAX_HOSTNAME];
-	int	port;
-
-	FB_CK_FBIO(ifp);
-
-	hostname[0] = '\0';
-	portname[0] = '\0';
-	port = 0;
-
-	if( file == NULL || parse_file(file, hostname, &port, device, MAX_HOSTNAME) < 0 ) {
-		/* too wild for our tastes */
-		fb_log( "rem_open: bad device name \"%s\"\n",
-			file == NULL ? "(null)" : file );
-		return	-2;
+    register int	i;
+    struct pkg_conn *pc;
+    char	buf[128] = {0};
+    char	hostname[MAX_HOSTNAME] = {0};
+    char	portname[MAX_HOSTNAME] = {0};
+    char	device[MAX_HOSTNAME] = {0};
+    int	port = 0;
+    
+    FB_CK_FBIO(ifp);
+    
+    if (file == NULL || parse_file(file, hostname, &port, device, MAX_HOSTNAME) < 0) {
+	/* too wild for our tastes */
+	fb_log("rem_open: bad device name \"%s\"\n", file == NULL ? "(null)" : file );
+	return -2;
+    }
+    /*printf("hostname = \"%s\", port = %d, device = \"%s\"\n", hostname, port, device);*/
+    
+    if (port != 5558) {
+	sprintf(portname, "%d", port);
+	if ((pc = pkg_open( hostname, portname, 0, 0, 0, pkgswitch, rem_log )) == PKC_ERROR) {
+	    fb_log("rem_open: can't connect to fb server on host \"%s\", port \"%s\".\n", hostname, portname );
+	    return -3;
 	}
-	/*printf("hostname = \"%s\", port = %d, device = \"%s\"\n", hostname, port, device );*/
-
-	if( port != 5558 ) {
-		sprintf(portname, "%d", port);
-		if( (pc = pkg_open( hostname, portname, 0, 0, 0, pkgswitch, rem_log )) == PKC_ERROR ) {
-			fb_log(	"rem_open: can't connect to fb server on host \"%s\", port \"%s\".\n",
-				hostname, portname );
-			return	-3;
-		}
-	} else
-	if( (pc = pkg_open( hostname, "remotefb", 0, 0, 0, pkgswitch, rem_log )) == PKC_ERROR &&
-	    (pc = pkg_open( hostname, "5558", 0, 0, 0, pkgswitch, rem_log )) == PKC_ERROR ) {
-		fb_log(	"rem_open: can't connect to remotefb server on host \"%s\".\n",
-			hostname );
-		return	-4;
+    } else {
+	pc = pkg_open(hostname, "remotefb", 0, 0, 0, pkgswitch, rem_log);
+	if (pc == PKC_ERROR) {
+	    pc = pkg_open( hostname, "5558", 0, 0, 0, pkgswitch, rem_log);
+	    if (pc == PKC_ERROR) {
+		fb_log("rem_open: can't connect to remotefb server on host \"%s\".\n", hostname);
+		return -4;
+	    }
 	}
-	PCPL(ifp) = (char *)pc;			/* stash in u1 */
-	ifp->if_fd = pc->pkc_fd;		/* unused */
-
+    }
+    PCPL(ifp) = (char *)pc;		/* stash in u1 */
+    ifp->if_fd = pc->pkc_fd;		/* unused */
+	
 #ifdef HAVE_SYS_SOCKET_H
-	{
-		int	n;
-		int	val;
-		val = 32767;
-		n = setsockopt( pc->pkc_fd, SOL_SOCKET,
-			SO_SNDBUF, (char *)&val, sizeof(val) );
-		if( n < 0 )  perror("setsockopt: SO_SNDBUF");
-
-		val = 32767;
-		n = setsockopt( pc->pkc_fd, SOL_SOCKET,
-			SO_RCVBUF, (char *)&val, sizeof(val) );
-		if( n < 0 )  perror("setsockopt: SO_RCVBUF");
-	}
+    {
+	int	n;
+	int	val;
+	val = 32767;
+	n = setsockopt(pc->pkc_fd, SOL_SOCKET, SO_SNDBUF, (char *)&val, sizeof(val));
+	if (n < 0) 
+	    perror("setsockopt: SO_SNDBUF");
+	
+	val = 32767;
+	n = setsockopt(pc->pkc_fd, SOL_SOCKET, SO_RCVBUF, (char *)&val, sizeof(val));
+	if (n < 0)
+	    perror("setsockopt: SO_RCVBUF");
+    }
 #endif
+    
+    (void)fbputlong( width, &buf[0*NET_LONG_LEN] );
+    (void)fbputlong( height, &buf[1*NET_LONG_LEN] );
+    (void) strncpy(&buf[2*NET_LONG_LEN], device, 128-2*NET_LONG_LEN);
 
-	(void)fbputlong( width, &buf[0*NET_LONG_LEN] );
-	(void)fbputlong( height, &buf[1*NET_LONG_LEN] );
-	(void) strncpy(&buf[2*NET_LONG_LEN], device, 128-2*NET_LONG_LEN);
-	i = strlen(device)+2*NET_LONG_LEN;
-	if( pkg_send( MSG_FBOPEN, buf, i, pc ) != i )
-		return	-5;
+    i = strlen(device)+2*NET_LONG_LEN;
+    if( pkg_send( MSG_FBOPEN, buf, i, pc ) != i )
+	return -5;
+    
+    /* return code, max_width, max_height, width, height as longs */
+    if( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), pc ) < 5*NET_LONG_LEN )
+	return -6;
 
-	/* return code, max_width, max_height, width, height as longs */
-	if( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), pc ) < 5*NET_LONG_LEN )
-		return	-6;
-	ifp->if_max_width = fbgetlong( &buf[1*NET_LONG_LEN] );
-	ifp->if_max_height = fbgetlong( &buf[2*NET_LONG_LEN] );
-	ifp->if_width = fbgetlong( &buf[3*NET_LONG_LEN] );
-	ifp->if_height = fbgetlong( &buf[4*NET_LONG_LEN] );
-	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
-		return	-7;		/* fail */
-	return( 0 );			/* OK */
+    ifp->if_max_width = fbgetlong( &buf[1*NET_LONG_LEN] );
+    ifp->if_max_height = fbgetlong( &buf[2*NET_LONG_LEN] );
+    ifp->if_width = fbgetlong( &buf[3*NET_LONG_LEN] );
+    ifp->if_height = fbgetlong( &buf[4*NET_LONG_LEN] );
+
+    if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
+	return -7;		/* fail */
+
+    return( 0 );		/* OK */
 }
 
 HIDDEN int
