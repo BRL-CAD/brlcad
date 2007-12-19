@@ -735,7 +735,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     int fieldlen=-1;
     char fbuf[64] = {0}, buf[BUFSIZ] = {0};			/* % format buffer */
 
-    if (!vls || !fmt || fmt[0] = '\0') {
+    if (!vls || !fmt || fmt[0] == '\0') {
 	/* nothing to print to or from */
 	return;
     }
