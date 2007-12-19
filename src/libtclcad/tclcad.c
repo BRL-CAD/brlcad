@@ -26,6 +26,11 @@
  *   Bob Parker
  */
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define IGNORE_CONFIG_H
+#  define snprintf _snprintf
+#endif
+
 #include "common.h"
 
 #include "tclcad.h"
