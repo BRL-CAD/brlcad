@@ -275,7 +275,7 @@ bu_log(char *fmt, ...)
 	bu_vls_vprintf(&output, fmt, ap);
     }
 
-    if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
+    if ( BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
 	int ret;
 	size_t len;
 
@@ -285,12 +285,13 @@ bu_log(char *fmt, ...)
 	}
 
 	len = bu_vls_strlen(&output);
-	if(len){
+	if (len) {
 	  bu_semaphore_acquire(BU_SEM_SYSCALL);
 	  ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
 	  (void)fflush(stderr);
 	  bu_semaphore_release(BU_SEM_SYSCALL);
-	  if( ret != 1 )  bu_bomb("bu_log: write error");
+	  if ( ret != 1 )
+	      bu_bomb("bu_log: write error");
 	}
 
     } else {
@@ -305,6 +306,7 @@ bu_log(char *fmt, ...)
 
     bu_vls_free(&output);
 }
+
 
 /**
  *  			B U _ F L O G
