@@ -16,7 +16,7 @@ isst_slave_CFLAGS = \
 	-I${top_srcdir}/src/adrt/libutil \
 	-I${top_srcdir}/src/adrt/isst \
 	${LIBZ_CPPFLAGS} \
-	-DHAVE_MYSQL=1 -I/usr/local/include/mysql
+	-DHAVE_MYSQL=0 -I/usr/local/include/mysql
 
 isst_slave_LDADD = \
 	${LIBTHREAD} \
