@@ -29,12 +29,12 @@ INSTALLED_ARCHIVES = \
 	libtcl8.5.* \
 	libtclstub.* \
 	libtclstub8.5.* \
-	tcl8/8.4/http-2.5.3.tm \
-	tcl8/8.4/platform/shell-1.1.3.tm \
+	tcl8/8.4/http-*.tm \
+	tcl8/8.4/platform/shell-*.tm \
 	tcl8/8.4/platform \
-	tcl8/8.4/platform-1.0.2.tm \
-	tcl8/8.5/msgcat-1.4.2.tm \
-	tcl8/8.5/tcltest-2.3a1.tm \
+	tcl8/8.4/platform-*.tm \
+	tcl8/8.5/msgcat-*.tm \
+	tcl8/8.5/tcltest-*.tm \
 	tcl8.5 \
 	tclConfig.sh
 
