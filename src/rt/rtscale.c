@@ -142,11 +142,17 @@ main(int argc, char **argv)
 
 	strncpy(label, argv[1], BUFF_LEN-1);
 	strncpy(units, argv[2], BUFF_LEN-1);
+	units[BUFF_LEN-1] = '\0'; /* sanity */
+
 	strncat(label, units, BUFF_LEN-strlen(label)-1);
+	label[BUFF_LEN-1] = '\0'; /* sanity */
+
 	strncpy(name, argv[4], BUFF_LEN-1);
+	name[BUFF_LEN-1] = '\0'; /* sanity */
 
 	if( argc == 6 )  {
 		strncpy( descript, argv[5], BUFF_LEN-1 );
+		descript[BUFF_LEN-1] = '\0'; /* sanity */
 		SEEN_DESCRIPT = 1;
 	}
 

@@ -132,9 +132,9 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 int output_torii(const char *fileName, int levels, const torusLevels_t torii, const char *name) {
   char scratch[256];
 
-  memset(scratch, 0, 256 * sizeof(char));
   strncpy(scratch, name, strlen(name));
   strncat(scratch, "_0", 2);
+  scratch[256-1] = '\0'; /* sanity */
 
   bu_log("output_torii to file \"%s\" for %d levels using \"%s.c\" as the combination name", fileName, levels, name);
 
@@ -142,7 +142,10 @@ int output_torii(const char *fileName, int levels, const torusLevels_t torii, co
   BU_LIST_INIT(&torii.l);
 
   memcpy(scratch, prototypeName, strlen(prototypeName));
-  mk_lcomb(db_fp, strncat(scratch, ".c", 2), &torii, 0, NULL, NULL, NULL, 0);
+  strncat(scratch, ".c", 2);
+  scratch[256-1] = '\0';
+
+  mk_lcomb(db_fp, scratch, &torii, 0, NULL, NULL, NULL, 0);
   */
 
   return 0;

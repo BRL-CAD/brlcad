@@ -134,6 +134,7 @@ Make_name(char *ptr, char *form, char *base, int number)
 	if( len > (NAMESIZE-1) )
 		ptr[ (NAMESIZE-1) - strlen( scrat ) ] = '\0';
 	strncat( ptr , scrat, NAMESIZE-strlen(ptr)-1 );
+	ptr[NAMESIZE-1] = '\0'; /* sanity */
 }
 
 void

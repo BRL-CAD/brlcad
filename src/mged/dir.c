@@ -218,15 +218,16 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 
 	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
 	if( dbip->dbi_version < 5 ) {
-		(void)strncpy( tempstring_v4, prefix, len-1);
-		(void)strncat( tempstring_v4, obj, len-strlen(prefix)-1);
+		strncpy( tempstring_v4, prefix, len-1);
+		strncat( tempstring_v4, obj, len-strlen(prefix)-1);
+		tempstring_v4[len-1] = '\0'; /* sanity */
 		comb_leaf->tr_l.tl_name = bu_strdup( tempstring_v4 );
 	} else {
 	    len = strlen(prefix)+strlen(obj)+1;
-	    comb_leaf->tr_l.tl_name = (char *)bu_malloc( strlen( prefix ) + strlen( obj ) + 1,
-							 "Adding prefix" );
-		(void)strncpy( comb_leaf->tr_l.tl_name , prefix, len-1);
-		(void)strncat( comb_leaf->tr_l.tl_name , obj, len-strlen(prefix)-1 );
+	    comb_leaf->tr_l.tl_name = (char *)bu_malloc( len, "Adding prefix" );
+	    strncpy( comb_leaf->tr_l.tl_name , prefix, len-1);
+	    strncat( comb_leaf->tr_l.tl_name , obj, len-strlen(prefix)-1 );
+	    comb_leaf->tr_l.tl_name[len-1] = '\0'; /* sanity */
 	}
 }
 
@@ -286,6 +287,7 @@ f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		if( dbip->dbi_version < 5 ) {
 			strncpy( tempstring_v4, argv[1], len-1);
 			strncat( tempstring_v4, argv[i], len-strlen(argv[1])-1);
+			tempstring_v4[len-1] = '\0'; /* sanity */
 			tempstring = tempstring_v4;
 		} else {
 			bu_vls_trunc( &tempstring_v5, 0 );

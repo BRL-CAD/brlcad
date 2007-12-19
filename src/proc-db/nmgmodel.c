@@ -90,9 +90,11 @@ int parse_args(int ac, char **av)
 
 	strncpy(plotfilename, progname, 1024-1);
 	strncat(plotfilename, ".pl", 1024-strlen(plotfilename)-1);
+	plotfilename[1024-1] = '\0'; /* sanity */
 
 	strncpy(mfilename, progname, 1024-1);
 	strncat(mfilename, ".g", 1024-strlen(mfilename)-1);
+	mfilename[1024-1] = '\0'; /* sanity */
 
 	/* Turn off bu_getopt's error messages */
 	bu_opterr = 0;

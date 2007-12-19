@@ -145,6 +145,7 @@ crname(Tcl_Interp	*interp,
 
   itoa(interp, pos, temp, 1);
   strncat(name, temp, maxlen-1);
+  name[4-1] = '\0'; /* sanity */
 
   return;
 }

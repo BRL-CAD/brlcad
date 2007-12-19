@@ -722,7 +722,8 @@ run_rt(void)
     snprintf(line, RT_MAXLINE+1, "%s ",rt_cmd_vec[0]);
     for(i=1;i<rt_cmd_vec_len;i++) {
 	snprintf(name, 2048, "%s ",rt_cmd_vec[i]);
-	strncat(line,name, RT_MAXLINE-strlen(line));
+	strncat(line, name, RT_MAXLINE-strlen(line));
+	line[2048-1] = '\0'; /* sanity */
     }
 
 
@@ -2202,10 +2203,13 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     for(i=1;i<rt_cmd_vec_len;i++) {
 	snprintf(name, 1024, "%s ",rt_cmd_vec[i]);
 	strncat(line1, name, 2048-strlen(line1)-1);
+	line1[1024-1] = '\0'; /* sanity */
 	if(strstr(name,"-e") != NULL) {
 	    i++;
-	    snprintf(name, 2048, "\"%s\" ",rt_cmd_vec[i]);
+	    snprintf(name, 1024, "\"%s\" ",rt_cmd_vec[i]);
+	    name[1024-1] = '\0'; /* sanity */
 	    strncat(line1, name, 2048-strlen(line1)-1);
+	    line1[2048-1] = '\0'; /* sanity */
 	}
     }
 

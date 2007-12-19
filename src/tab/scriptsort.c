@@ -82,7 +82,7 @@ void addtext(struct frame *fp, char *tp)
 	if (fp->text) {
 		length += fp->tp;
 	}
-	if (length > fp->tl) {
+	if (length > fp->tl || !fp->text) {
 		fp->tl = (length/1024)*1024 + 1024;
 		p = (char *) bu_malloc(fp->tl, "text area");
 		*p = '\0';
@@ -94,12 +94,16 @@ void addtext(struct frame *fp, char *tp)
 		fp->text = p;
 	}
 	strncat(&fp->text[fp->tp], tp, fp->tl-strlen(p)-1);
+
 	if (*tp == ';') {
 		strcat(&fp->text[fp->tp], "\n");
 	} else {
 		strcat(&fp->text[fp->tp], " ");
 	}
+
 	fp->tp += strlen(tp)+1;
+
+	fp->text[fp->tl-1] = '\0'; /* sanity */
 }
 int token = SHELL;
 

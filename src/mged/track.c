@@ -511,7 +511,7 @@ tryagain:	/* sent here to try next set of names */
 		j = 2;
 	itoa(i, temp, j);
 	strncat(grpname, temp, 9-strlen(grpname)-1);
-	grpname[8] = '\0';
+	grpname[9-1] = '\0'; /* sanity */
 	for(i=1; i<11; i++) {
 		if( i == 3 || i ==4 || i == 7 || i == 8 )
 			continue;
@@ -572,6 +572,7 @@ crname(char *name, int pos, int maxlen)
 		j = 3;
 	itoa(i, temp, j);
 	strncat(name, temp, maxlen-strlen(name)-1);
+	name[maxlen-1] = '\0'; /* sanity */
 	return;
 }
 
