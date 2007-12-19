@@ -221,8 +221,22 @@ bu_log_do_indent_level(struct bu_vls *new, register char *old)
 void
 bu_putchar(int c)
 {
+    int ret = EOF;
+
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) ) {
-	fputc(c, stderr);
+
+	if (stderr) {
+	    ret = fputc(c, stderr);
+	}
+
+	if (ret == EOF && stdout) {
+	    ret = fputc(c, stdout);
+	}
+
+	if (ret == EOF) {
+	    bu_bomb("bu_putchar: write error");
+	}
+	    
     } else {
 	char buf[2];
 	buf[0] = (char)c;
@@ -275,8 +289,10 @@ bu_log(char *fmt, ...)
 	bu_vls_vprintf(&output, fmt, ap);
     }
 
+    va_end(ap);
+
     if ( BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
-	int ret;
+	int ret = EOF;
 	size_t len;
 
 	if (bu_log_first_time) {
@@ -285,23 +301,30 @@ bu_log(char *fmt, ...)
 	}
 
 	len = bu_vls_strlen(&output);
-	if (len) {
-	  bu_semaphore_acquire(BU_SEM_SYSCALL);
-	  ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
-	  (void)fflush(stderr);
-	  bu_semaphore_release(BU_SEM_SYSCALL);
-	  if (ret != 1) {
-	      bu_semaphore_acquire(BU_SEM_SYSCALL);
-	      ret = fwrite(bu_vls_addr(&output), len, 1, stdout );
-	      (void)fflush(stderr);
-	      bu_semaphore_release(BU_SEM_SYSCALL);
-	      if (ret != 1) {
-		  bu_semaphore_acquire(BU_SEM_SYSCALL);
-		  perror("fwrite failed");
-		  bu_semaphore_release(BU_SEM_SYSCALL);
-		  bu_bomb("bu_log: write error");
-	      }
-	  }
+	if (len <= 0) {
+	    return;
+	}
+
+	if (stderr) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
+	    fflush(stderr);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+
+	if (!ret && stdout) {
+	    /* if stderr fails, try stdout instead */
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout );
+	    fflush(stdout);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+
+	if (ret != 1) {
+ 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    perror("fwrite failed");
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    bu_bomb("bu_log: write error");
 	}
 
     } else {
@@ -311,8 +334,6 @@ bu_log(char *fmt, ...)
 	    bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
 #endif
     }
-
-    va_end(ap);
 
     bu_vls_free(&output);
 }
