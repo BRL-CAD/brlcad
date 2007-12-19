@@ -229,8 +229,9 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
     register char	n0;
     register char	n1;
 
-    if (!name) {
-	bu_log("db_lookup received NULL name\n");
+    if (!name || name[0] == '\0') {
+	if (noisy || RT_G_DEBUG&DEBUG_DB)
+	    bu_log("db_lookup received NULL or empty name\n");
 	return (DIR_NULL);
     }
 
@@ -240,21 +241,23 @@ db_lookup(const struct db_i *dbip, register const char *name, int noisy)
     RT_CK_DBI(dbip);
 
     dp = dbip->dbi_Head[db_dirhash(name)];
-    for(; dp != DIR_NULL; dp=dp->d_forw )  {
+    for(; dp != DIR_NULL; dp=dp->d_forw) {
 	register char	*this;
-	if(
-	   n0 == *(this=dp->d_namep)  &&	/* speed */
-	   n1 == this[1]  &&	/* speed */
-	   strcmp( name, this ) == 0
-	   )  {
-	    if(RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) x%x\n", name, dp);
+
+	/* first two checks are for speed */
+	if ( (n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (strcmp( name, this ) == 0) ) {
+	    if (RT_G_DEBUG&DEBUG_DB)
+		bu_log("db_lookup(%s) x%x\n", name, dp);
 	    return(dp);
 	}
     }
 
-    if(noisy || RT_G_DEBUG&DEBUG_DB) bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+    if (noisy || RT_G_DEBUG&DEBUG_DB)
+	bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+
     return( DIR_NULL );
 }
+
 
 /**
  *			D B _ D I R A D D
