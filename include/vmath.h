@@ -117,6 +117,13 @@ __BEGIN_DECLS
 #ifndef PI
 #  define PI M_PI
 #endif
+#ifndef DEG2RAD
+#  define DEG2RAD       0.017453292519943295769236907684 /* pi/180 */
+#endif
+#ifndef RAD2DEG
+#  define RAD2DEG      57.295779513082320876798154814105 /* 180/pi */
+#endif
+
 
 /* minimum computation tolerances */
 #ifdef vax
@@ -1293,14 +1300,24 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
-#define V3AE2DIR(_az, _el, _dir) { \
-	fastf_t c_el = cos(_el); \
+/**
+ * Convert an azimuth/elevation to a direction vector.
+ */
+#define V3DIR_FROM_AZEL(_d, _a, _e) { \
+	register fastf_t _c_e = cos(_e); \
 \
-	(_dir)[X] = cos(_az) * c_el; \
-	(_dir)[Y] = sin(_az) * c_el; \
-	(_dir)[Z] = sin(_el); \
+	(_d)[X] = cos(_a) * _c_e; \
+	(_d)[Y] = sin(_a) * _c_e; \
+	(_d)[Z] = sin(_e); \
 }
 
+/**
+ * Convert a direction vector to azimuth/elevation (in radians)
+ */
+#define AZEL_FROM_V3DIR(_a, _e, _d) { \
+	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * RAD2DEG; \
+	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * RAD2DEG; \
+}
 
 __END_DECLS
 
