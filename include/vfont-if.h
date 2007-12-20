@@ -61,6 +61,8 @@
  *	Michael John Muuss
  */
 
+#include "bu.h"
+
 #define	SXT(c)		((c)|((c&0x80)?(~0xFF):0))
 
 struct vfont_dispatch  {
@@ -81,8 +83,12 @@ struct vfont {
 };
 #define	VFONT_NULL	((struct vfont *)NULL)
 
-extern struct vfont	*vfont_get();
-extern void		vfont_free();
+/* vfont.c */
+BU_EXPORT BU_EXTERN(struct vfont *vfont_get,
+		    (char *font));
+BU_EXPORT BU_EXTERN(void vfont_free,
+		    (struct vfont *font));
+
 /** @} */
 /*
  * Local Variables:
