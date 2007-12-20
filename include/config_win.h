@@ -65,6 +65,7 @@
 #define HAVE_MEMSET		1
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
+#define HAVE_RAND		1
 #define HAVE_REGEX_H		1
 #define HAVE_STRCHR		1
 #define HAVE_STRDUP		1
@@ -201,6 +202,7 @@
 #define socklen_t int
 #define uid_t unsigned int
 #define gid_t unsigned int
+#define fmax max
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
 #   define for if (0) {} else for           /* proper for-scope */
