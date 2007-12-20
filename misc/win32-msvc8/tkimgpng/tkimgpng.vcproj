@@ -79,75 +79,6 @@ copy &quot;$(TargetDir)&quot;tkimgpng.lib ..\..\..\brlcadInstall\lib
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
-			ConfigurationType="2"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/tcl/generic,../../../src/other/tcl/win,../../../src/other/tk/generic,../../../src/other/tk/win,../../../src/other/tk/xlib,../../../src/other/tkimg/libz,../../../src/other/tkimg/libz/tcl,../../../src/other/tkimg/libpng,../../../src/other/tkimg/libpng/tcl,../../../src/other/tkimg/png,../../../src/other/tkimg/base"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BUILD_tkimgpng;PACKAGE_NAME=\&quot;tkimgpng\&quot;;VERSION=\&quot;1.3\&quot;;TKIMGPNG_VERSION=\&quot;1.3\&quot;"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile=".\Debug/tkimgpng.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="4"
-				CompileAs="0"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84_d.lib tk84_d.lib libz_d.lib libpng_d.lib tkimg_d.lib"
-				OutputFile="Debug/tkimgpng_d.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile=".\Debug/tkimgpng_d.pdb"
-				ImportLibrary=".\Debug/tkimgpng_d.lib"
-				TargetMachine="1"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/tkimgpng.tlb"
-				HeaderFileName=""/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin
-copy &quot;$(TargetDir)&quot;tkimgpng_d.lib ..\..\..\brlcadInstall\lib
-"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -164,15 +95,6 @@ copy &quot;$(TargetDir)&quot;tkimgpng_d.lib ..\..\..\brlcadInstall\lib
 						Optimization="2"
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_MBCS;BUILD_tkimgpng;PACKAGE_NAME=\&quot;tkimgpng\&quot;;VERSION=\&quot;1.3\&quot;;TKIMGPNG_VERSION=\&quot;1.3\&quot;;IGNORE_CONFIG_H;$(NoInherit)"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;BUILD_tkimgpng;PACKAGE_NAME=\&quot;tkimgpng\&quot;;VERSION=\&quot;1.3\&quot;;TKIMGPNG_VERSION=\&quot;1.3\&quot;;$(NoInherit)"
-						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
 			</File>
 		</Filter>
