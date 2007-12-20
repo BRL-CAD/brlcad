@@ -17,6 +17,18 @@
 
 #include "machine.h"		/* for BIG_ENDIAN definition */
 
+#ifndef ORLE_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef ORLE_EXPORT_DLL
+#      define ORLE_EXPORT __declspec(dllexport)
+#    else
+#      define ORLE_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define ORLE_EXPORT
+#  endif
+#endif
+
 #ifdef BIG_ENDIAN
 #define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
 #else
@@ -107,13 +119,20 @@ extern int	_cm_flag;
 extern RGBpixel	_bg_pixel;
 
 /* Global flags for general use.					*/
-extern int	rle_debug;
-extern int	rle_verbose;
+ORLE_EXPORT extern int	rle_debug;
+ORLE_EXPORT extern int	rle_verbose;
 
 /* Entry points.							*/
-void	rle_rlen(), rle_wlen(), rle_rpos(), rle_wpos();
-int	rle_rhdr(), rle_whdr(), rle_rmap(), rle_wmap();
-int	rle_decode_ln(), rle_encode_ln();
+ORLE_EXPORT extern void rle_rlen();
+ORLE_EXPORT extern void rle_wlen();
+ORLE_EXPORT extern void rle_rpos();
+ORLE_EXPORT extern void rle_wpos();
+ORLE_EXPORT extern int rle_rhdr();
+ORLE_EXPORT extern int rle_whdr();
+ORLE_EXPORT extern int rle_rmap();
+ORLE_EXPORT extern int rle_wmap();
+ORLE_EXPORT extern int rle_decode_ln();
+ORLE_EXPORT extern int rle_encode_ln();
 
 /** @} */
 /*
