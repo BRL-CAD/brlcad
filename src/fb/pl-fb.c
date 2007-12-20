@@ -304,10 +304,19 @@ static short	line_thickness = 1;
 
 /* signals to be caught */
 static int sigs[] = {
+#ifdef SIGHUP
     SIGHUP,
+#endif
+#ifdef SIGINT
     SIGINT,
+#endif
+#ifdef SIGQUIT
     SIGQUIT,
-    SIGTERM
+#endif
+#ifdef SIGTERM
+    SIGTERM,
+#endif
+    0
 };
 
 static FILE	*pfin;		/* input file FIO block ptr */
@@ -1318,14 +1327,20 @@ static void
 Catch(register int sig)
      /* signal number */
 {
-    register int	pid;		/* this process's ID */
-    register int	*psig;		/* -> sigs[.] */
+    register int pid;		/* this process's ID */
+    register int *psig;		/* -> sigs[.] */
+    register int i;
 
+#if 1
+    for (i = 0; sigs[i] != 0; ++i)
+	(void)signal(sigs[i], SIG_IGN);
+#else
     for ( psig = &sigs[0];
 	  psig < &sigs[sizeof sigs / sizeof sigs[0]];
 	  ++psig
 	  )
 	(void)signal( *psig, SIG_IGN );
+#endif
 
     (void)Foo( -13 );		/* clean up */
 
@@ -1349,13 +1364,20 @@ static void
 SetSigs(void)
 {
     register int	*psig;		/* -> sigs[.] */
+    register int i;
 
+#if 1
+    for (i = 0; sigs[i] != 0; ++i)
+	if (signal(sigs[i], SIG_IGN) != SIG_IGN)
+	    (void)signal(sigs[i], Catch);
+#else
     for ( psig = &sigs[0];
 	  psig < &sigs[sizeof sigs / sizeof sigs[0]];
 	  ++psig
 	  )
 	if ( signal( *psig, SIG_IGN ) != SIG_IGN )
 	    (void)signal( *psig, Catch );
+#endif
 }
 
 

@@ -298,7 +298,15 @@ int on_off;
     /* Set line buffering on stderr.  Character buffering is the default, and
      * it is SLOOWWW for large amounts of output.
      */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    {
+	char buf[1024];
+
+	setvbuf(stderr, buf, _IOLBF, sizeof(buf));
+    }
+#else
     setlinebuf( stderr );
+#endif
 }
 
 

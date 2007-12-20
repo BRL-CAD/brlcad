@@ -32,7 +32,7 @@
 #include <string.h>
 
 #include "bu.h"
-#include "fbio.h"
+#include "fb.h"
 
 
 const char *

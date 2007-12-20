@@ -37,7 +37,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <sys/time.h>		/* For struct timeval */
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>		/* For struct timeval */
+#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -47,7 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 ColorMap cm1, cm2;
-ColorMap *inp, *outp;
+ColorMap *local_inp, *local_outp;
 
 int size = 512;
 double fps = 0.0;	/* frames per second */
@@ -116,9 +118,9 @@ main(int argc, char **argv)
 		return	1;
 	}
 
-	inp = &cm1;
-	outp = &cm2;
-	fb_rmap( fbp, inp );
+	local_inp = &cm1;
+	local_outp = &cm2;
+	fb_rmap( fbp, local_inp );
 
 	while(1)  {
 		register int from;
@@ -130,15 +132,15 @@ main(int argc, char **argv)
 				from += 256;
 			else if( from > 255 )
 				from -= 256;
-			outp->cm_red[i]   = inp->cm_red[from];
-			outp->cm_green[i] = inp->cm_green[from];
-			outp->cm_blue[i]  = inp->cm_blue[from];
+			local_outp->cm_red[i]   = local_inp->cm_red[from];
+			local_outp->cm_green[i] = local_inp->cm_green[from];
+			local_outp->cm_blue[i]  = local_inp->cm_blue[from];
 		}
 
-		fb_wmap( fbp, outp );
-		tp = outp;
-		outp = inp;
-		inp = tp;
+		fb_wmap( fbp, local_outp );
+		tp = local_outp;
+		local_outp = local_inp;
+		local_inp = tp;
 
 		if( fps > 0.0 )  {
 			fd_set readfds;

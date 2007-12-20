@@ -59,6 +59,9 @@ typedef int *ptr;
 
 #define YES 1
 #define NO 0
+#ifdef ERROR
+#  undef ERROR
+#endif
 #define ERROR(msg)  {fprintf(stderr, "%s\n", msg); goto error; }
 
 /*

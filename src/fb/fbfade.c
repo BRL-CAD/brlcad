@@ -109,9 +109,13 @@ void Fatal( FBIO *fbp, const char *format, ... );
 double
 drand48()
 {
+#ifdef HAVE_RAND
+    return (double)rand() / (double)RAND_MAX;	/* range [0,1) */
+#else
     extern long	random();
 
     return (double)random() / 2147483648.0;	/* range [0,1) */
+#endif
 }
 #endif
 
@@ -133,11 +137,21 @@ main(int argc, char **argv)
     {
 	static int	getsigs[] =	/* signals to catch */
 	    {
+#ifdef SIGHUP
 		SIGHUP,			/* hangup */
+#endif
+#ifdef SIGINT
 		SIGINT,			/* interrupt */
+#endif
+#ifdef SIGQUIT
 		SIGQUIT,		/* quit */
+#endif
+#ifdef SIGPIPE
 		SIGPIPE,		/* write on a broken pipe */
+#endif
+#ifdef SIGTERM
 		SIGTERM,		/* software termination signal */
+#endif
 		0
 	    };
 	register int	i;

@@ -451,11 +451,21 @@ main(int argc, char **argv)
 	{
 	static int	getsigs[] =	/* signals to catch */
 		{
+#ifdef SIGHUP
 		SIGHUP,			/* hangup */
+#endif
+#ifdef SIGINT
 		SIGINT,			/* interrupt */
+#endif
+#ifdef SIGQUIT
 		SIGQUIT,		/* quit */
+#endif
+#ifdef SIGPIPE
 		SIGPIPE,		/* write on a broken pipe */
+#endif
+#ifdef SIGTERM
 		SIGTERM,		/* software termination signal */
+#endif
 		0
 		};
 	register int	i;
