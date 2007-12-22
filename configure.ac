@@ -2092,6 +2092,7 @@ AC_CHECK_FUNCS(\
 	memset \
 	mkstemp \
 	pipe \
+	random \
 	regcomp \
 	sbrk \
 	setenv \

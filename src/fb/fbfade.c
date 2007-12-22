@@ -109,12 +109,10 @@ void Fatal( FBIO *fbp, const char *format, ... );
 double
 drand48()
 {
-#ifdef HAVE_RAND
-    return (double)rand() / (double)RAND_MAX;	/* range [0,1) */
-#else
-    extern long	random();
-
+#ifdef HAVE_RANDOM
     return (double)random() / 2147483648.0;	/* range [0,1) */
+#else
+    return (double)rand() / (double)RAND_MAX;	/* range [0,1) */
 #endif
 }
 #endif
