@@ -19,24 +19,12 @@
  */
 /** @file cmd.c
  *
- * Functions -
- *	f_press		hook for displays with no buttons
- *	f_summary	do directory summary
- *	mged_cmd		Check arg counts, run a command
+ *  The hooks to most of mged's commands when running in console mode.
  *
  *  Authors -
  *	Michael John Muuss
  *	Charles M. Kennedy
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
