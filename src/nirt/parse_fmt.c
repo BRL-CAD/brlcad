@@ -251,7 +251,7 @@ parse_fmt(char *uoutspec, int outcom_type)
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
 	oip = (outitem *) bu_malloc(sizeof(outitem), "output item");
-	oip -> next = OUTITEM_NULL;
+	oip->next = OUTITEM_NULL;
 
 	for (up = uos; *uos != '"'; ++uos) {
 	    if (*uos == '%') {
@@ -274,7 +274,7 @@ parse_fmt(char *uoutspec, int outcom_type)
 	 * contains 1 conversion spec vs. none)
 	 */
 	oip->format = bu_malloc(uos - up + 1, "format");
-	of = oip -> format;
+	of = oip->format;
 	while (up != uos) {
 	    if (*up == '\\') {
 		switch (*(up + 1)) {
@@ -297,12 +297,12 @@ parse_fmt(char *uoutspec, int outcom_type)
 	    }
 	}
 	*of = '\0';
-	oip -> code_nm = nm_cs;
+	oip->code_nm = nm_cs;
 
 	if (prev_oip == OUTITEM_NULL)
 	    oil = oip;
 	else
-	    prev_oip -> next = oip;
+	    prev_oip->next = oip;
 	prev_oip = oip;
     }
     
@@ -318,8 +318,8 @@ parse_fmt(char *uoutspec, int outcom_type)
     }
 
     /* Read in the list of objects to output */
-    for (oip = oil; oip != OUTITEM_NULL; oip = oip -> next) {
-	if (oip -> code_nm == 0)
+    for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
+	if (oip->code_nm == 0)
 	    continue;		/* outitem's format has no conversion spec */
 	
 	while (isspace(*uos))
@@ -336,15 +336,15 @@ parse_fmt(char *uoutspec, int outcom_type)
 	if (*uos != '\0')
 	    *uos++ = '\0';
 
-	oip -> code_nm = 0;
-	for (vtp = ValTab + 1; vtp -> name; ++vtp) {
-	    if (strcmp(vtp -> name, up) == 0) {
-		oip -> code_nm = vtp -> code_nm;
+	oip->code_nm = 0;
+	for (vtp = ValTab + 1; vtp->name; ++vtp) {
+	    if (strcmp(vtp->name, up) == 0) {
+		oip->code_nm = vtp->code_nm;
 		break;
 	    }
 	}
 
-	if (vtp -> name == '\0') {
+	if (vtp->name == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", up);
 	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
@@ -395,8 +395,8 @@ show_ospec (outitem *oil)
 
     /* Display the format specification */
     printf("Format: \"");
-    for (oip = oil; oip != OUTITEM_NULL; oip = oip -> next) {
-	for (c = oip -> format; *c != '\0'; ++c) {
+    for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
+	for (c = oip->format; *c != '\0'; ++c) {
 	    if (*c == '\n')
 		printf("\\n");
 	    else
@@ -407,9 +407,9 @@ show_ospec (outitem *oil)
 
     /* Display the list of item names */
     printf("Item(s):");
-    for (oip = oil; oip != OUTITEM_NULL; oip = oip -> next) {
-	if (ValTab[oip -> code_nm].name)
-	    printf(" %s", ValTab[oip -> code_nm].name);
+    for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
+	if (ValTab[oip->code_nm].name)
+	    printf(" %s", ValTab[oip->code_nm].name);
     }
     printf("\n");
 }
@@ -429,26 +429,26 @@ report(int outcom_type)
     if( outf == (FILE *)NULL )
 	outf = stdout;
 
-    for (oip = oi_list[outcom_type]; oip != OUTITEM_NULL; oip = oip -> next) {
-	switch (ValTab[oip -> code_nm].type) {
+    for (oip = oi_list[outcom_type]; oip != OUTITEM_NULL; oip = oip->next) {
+	switch (ValTab[oip->code_nm].type) {
 	case OIT_INT:
-	    fprintf(outf, oip -> format, ValTab[oip -> code_nm].value.ival);
+	    fprintf(outf, oip->format, ValTab[oip->code_nm].value.ival);
 	    break;
 	case OIT_FLOAT:
-	    fprintf(outf, oip -> format,
-		    ValTab[oip -> code_nm].value.fval * base2local);
+	    fprintf(outf, oip->format,
+		    ValTab[oip->code_nm].value.fval * base2local);
 	    break;
 	case OIT_FNOUNIT:
-	    fprintf(outf, oip -> format,
-		    ValTab[oip -> code_nm].value.fval);
+	    fprintf(outf, oip->format,
+		    ValTab[oip->code_nm].value.fval);
 	    break;
 	case OIT_STRING:
-	    fprintf(outf, oip -> format, ValTab[oip -> code_nm].value.sval);
+	    fprintf(outf, oip->format, ValTab[oip->code_nm].value.sval);
 	    break;
 	default:
 	    fflush(stdout);
 	    fprintf(stderr, "Fatal: Invalid item type %d.  ",
-		    ValTab[oip -> code_nm].type);
+		    ValTab[oip->code_nm].type);
 	    fprintf(stderr, "This shouldn't happen\n");
 	    bu_exit (1, NULL);
 	}
@@ -490,25 +490,25 @@ print_item (char *buffer, com_table *ctp)
 	if (*bp != '\0')
 	    *bp++ = '\0';
 
-	for (vtp = ValTab + 1; vtp -> name; ++vtp) {
-	    if (strcmp(vtp -> name, bp0) == 0) {
-		switch (vtp -> type) {
+	for (vtp = ValTab + 1; vtp->name; ++vtp) {
+	    if (strcmp(vtp->name, bp0) == 0) {
+		switch (vtp->type) {
 		case OIT_INT:
-		    printf("%d\n", vtp -> value.ival);
+		    printf("%d\n", vtp->value.ival);
 		    break;
 		case OIT_FLOAT:
-		    printf("%g\n", vtp -> value.fval * base2local);
+		    printf("%g\n", vtp->value.fval * base2local);
 		    break;
 		case OIT_FNOUNIT:
-		    printf("%g\n", vtp -> value.fval);
+		    printf("%g\n", vtp->value.fval);
 		    break;
 		case OIT_STRING:
-		    printf("'%s'\n", vtp -> value.sval);
+		    printf("'%s'\n", vtp->value.sval);
 		    break;
 		default:
 		    fflush(stdout);
 		    fprintf(stderr, "Fatal: Invalid item type %d.  ",
-			    ValTab[vtp -> code_nm].type);
+			    ValTab[vtp->code_nm].type);
 		    fprintf(stderr, "This shouldn't happen\n");
 		    bu_exit (1, NULL);
 		}
@@ -516,7 +516,7 @@ print_item (char *buffer, com_table *ctp)
 	    }
 	}
 
-	if (vtp -> name == '\0') {
+	if (vtp->name == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", bp0);
 	    return;
 	}
@@ -549,8 +549,8 @@ check_conv_spec (outitem *oip)
     int		oi_type;
     int		warnings = 0;
 
-    for ( ; oip != OUTITEM_NULL; oip = oip -> next) {
-	for (cp = oip -> format; *cp != '\0'; ++cp) {
+    for ( ; oip != OUTITEM_NULL; oip = oip->next) {
+	for (cp = oip->format; *cp != '\0'; ++cp) {
 	    if (*cp == '%') {
 		if (*(cp + 1) == '%') {
 		    ++cp;
@@ -574,7 +574,7 @@ check_conv_spec (outitem *oip)
 	while (isdigit(*cp))
 	    ++cp;
 
-	oi_type = ValTab[oip -> code_nm].type;
+	oi_type = ValTab[oip->code_nm].type;
 	switch (*cp) {
 	case 'd':
 	case 'o':
@@ -587,7 +587,7 @@ check_conv_spec (outitem *oip)
 			*cp);
 		fprintf(stderr,
 			" for item %s, which is %s\n",
-			ValTab[oip -> code_nm].name, oit_name(oi_type));
+			ValTab[oip->code_nm].name, oit_name(oi_type));
 	    }
 	    break;
 	case 'f':
@@ -602,7 +602,7 @@ check_conv_spec (outitem *oip)
 			*cp);
 		fprintf(stderr,
 			" for item %s, which is %s\n",
-			ValTab[oip -> code_nm].name, oit_name(oi_type));
+			ValTab[oip->code_nm].name, oit_name(oi_type));
 	    }
 	    break;
 	case 's':
@@ -613,7 +613,7 @@ check_conv_spec (outitem *oip)
 			*cp);
 		fprintf(stderr,
 			" for item %s, which is %s\n",
-			ValTab[oip -> code_nm].name, oit_name(oi_type));
+			ValTab[oip->code_nm].name, oit_name(oi_type));
 	    }
 	    break;
 	case 'c':
@@ -622,7 +622,7 @@ check_conv_spec (outitem *oip)
 		    "Warning: Conversion type '%%%c' specified", *cp);
 	    fprintf(stderr,
 		    " for item %s, which is a %s\n",
-		    ValTab[oip -> code_nm].name, oit_name(oi_type));
+		    ValTab[oip->code_nm].name, oit_name(oi_type));
 	    break;
 	default:
 	    ++warnings;
@@ -752,7 +752,7 @@ dump_state(char *buffer, com_table *ctp)
     fprintf(sfPtr, "%c file created by the dump command of nirt\n", CMT_CHAR);
     fprintf(sfPtr, "xyz %g %g %g\n", target(X), target(Y), target(Z));
     fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
-    fprintf(sfPtr, "useair %d\n", ap.a_rt_i -> useair);
+    fprintf(sfPtr, "useair %d\n", ap.a_rt_i->useair);
     fprintf(sfPtr, "units %s\n", local_u_name);
     if (strcmp(dest_string, "stdout") == 0)
 	fputs("dest default\n", sfPtr);
@@ -763,8 +763,8 @@ dump_state(char *buffer, com_table *ctp)
     for (f = 0; f < FMT_NONE; ++f) {
 	fprintf(sfPtr, "fmt %c \"", fmt_char[f]);
 	/* Display the conversion specifications */
-	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip -> next)
-	    for (c = oip -> format; *c != '\0'; ++c)
+	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip->next)
+	    for (c = oip->format; *c != '\0'; ++c)
 		if (*c == '\n')
 		    fprintf(sfPtr, "\\n");
 		else
@@ -772,9 +772,9 @@ dump_state(char *buffer, com_table *ctp)
 	fprintf(sfPtr, "\"");
 
 	/* Display the item name */
-	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip -> next)
-	    if (ValTab[oip -> code_nm].name)
-		fprintf(sfPtr, " %s", ValTab[oip -> code_nm].name);
+	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip->next)
+	    if (ValTab[oip->code_nm].name)
+		fprintf(sfPtr, " %s", ValTab[oip->code_nm].name);
 	fprintf(sfPtr, "\n");
     }
     printf("\n");
@@ -809,8 +809,8 @@ free_ospec (outitem *oil)
 
     while (next != OUTITEM_NULL) {
 	oip = next;
-	next = oip -> next;
-	bu_free(oip -> format, "outitem.format");
+	next = oip->next;
+	bu_free(oip->format, "outitem.format");
 	if (oip != oil)
 	    bu_free((char *) oip, "outitem");
     }
