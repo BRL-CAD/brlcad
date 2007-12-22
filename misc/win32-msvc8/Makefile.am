@@ -2,20 +2,48 @@
 
 EXTRA_DIST= \
 	asc2g/asc2g.vcproj \
-	btclsh/btclsh.vcproj \
-	bwish/bwish.vcproj \
 	brlcad/brlcad.sln \
+	btclsh/btclsh.vcproj \
+	bw2fb/bw2fb.vcproj \
+	bwish/bwish.vcproj \
+	cat2fb/cat2fb.vcproj \
+	cell2fb/cell2fb.vcproj \
+	cmap2fb/cmap2fb.vcproj \
 	dbupgrade/dbupgrade.vcproj \
 	dxf2g/dxf2g.vcproj \
 	fast42g/fast42g.vcproj \
+	fb2bw/fb2bw.vcproj \
+	fb2cmap/fb2cmap.vcproj \
+	fb2fb/fb2fb.vcproj \
+	fb2orle/fb2orle.vcproj \
 	fb2pix/fb2pix.vcproj \
 	fb2png/fb2png.vcproj \
+	fb2rle/fb2rle.vcproj \
+	fbanim/fbanim.vcproj \
+	fbcbars/fbcbars.vcproj \
 	fbclear/fbclear.vcproj \
+	fbcmap/fbcmap.vcproj \
+	fbcmrot/fbcmrot.vcproj \
+	fbcolor/fbcolor.vcproj \
+	fbfade/fbfade.vcproj \
+	fbframe/fbframe.vcproj \
+	fbfree/fbfree.vcproj \
+	fbgamma/fbgamma.vcproj \
+	fbgammamod/fbgammamod.vcproj \
+	fbgrid/fbgrid.vcproj \
+	fbhelp/fbhelp.vcproj \
+	fblabel/fblabel.vcproj \
+	fbline/fbline.vcproj \
+	fbpoint/fbpoint.vcproj \
+	fbscanplot/fbscanplot.vcproj \
 	fbserv/fbserv.vcproj \
+	fbstretch/fbstretch.vcproj \
+	fbzoom/fbzoom.vcproj \
 	g2asc/g2asc.vcproj \
 	g2dxf/g2dxf.vcproj \
 	g2iges/g2iges.vcproj \
 	g2stl/g2stl.vcproj \
+	gif2fb/gif2fb.vcproj \
 	iges2g/iges2g.vcproj \
 	itclstub/itclstub.vcproj \
 	itkstub/itkstub.vcproj \
@@ -27,6 +55,7 @@ EXTRA_DIST= \
 	libdm/libdm.vcproj \
 	libfb/libfb.vcproj \
 	liboptical/liboptical.vcproj \
+	liborle/liborle.vcproj \
 	libpkg/libpkg.vcproj \
 	libpng/libpng.vcproj \
 	libregex/libregex.vcproj \
@@ -35,12 +64,20 @@ EXTRA_DIST= \
 	libtcl/libtcl.vcproj \
 	libtclcad/libtclcad.vcproj \
 	libtk/libtk.vcproj \
+	libutahrle/libutahrle.vcproj \
 	libwdb/libwdb.vcproj \
 	libz/libz.vcproj \
 	mged/mged.vcproj \
 	nirt/nirt.vcproj \
+	orle2fb/orle2fb.vcproj \
 	pix2fb/pix2fb.vcproj \
+	pixautosize/pixautosize.vcproj \
+	pixflip2fb/pixflip2fb.vcproj \
+	pl2fb/pl2fb.vcproj \
 	png2fb/png2fb.vcproj \
+	polar2fb/polar2fb.vcproj \
+	pp2fb/pp2fb.vcproj \
+	rle2fb/rle2fb.vcproj \
 	rt/rt.vcproj \
 	rt_bot_faces/rt_bot_faces.vcproj \
 	rtarea/rtarea.vcproj \
@@ -57,10 +94,11 @@ EXTRA_DIST= \
 	rtsil/rtsil.vcproj \
 	rtweight/rtweight.vcproj \
 	rtxray/rtxray.vcproj \
+	spm2fb/spm2fb.vcproj \
 	stl2g/stl2g.vcproj \
 	tclpipe/tclpipe.vcproj \
-	tclsh/tclsh.vcproj \
 	tclsh/library/installTree.tcl \
+	tclsh/tclsh.vcproj \
 	tclstub/tclstub.vcproj \
 	tkimg/tkimg.vcproj \
 	tkimgpng/tkimgpng.vcproj \
