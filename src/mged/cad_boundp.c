@@ -37,9 +37,6 @@
  *	(2)  Sort the input endpoints into a double tree on X and Y.
  *	This should cut Chop() from order N ^ 2 to N * log( N ).
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -84,7 +81,6 @@ typedef struct queue
 	point		*endpoint;	/* -> endpt of ray from point */
 }	queue;			/* entry in list of endpoints */
 
-static bool_t	Mess(const char *fmt, ...);
 static bool_t	Build(void), Chop(void), EndPoint(register coords *p, register segment *segp), GetArgs(int argc, char **argv), Input(register segment *inp),
 Near(register coords *ap, register coords *bp), Search(void), Split(coords *p, register segment *oldp, register segment *listh), Usage(void);
 static coords	*Intersect(register segment *a, register segment *b);
@@ -106,7 +102,7 @@ static bool_t
 Usage(void) 				/* print usage message */
 {
 	return
-	    Mess( "usage: cad_boundp[ -i input][ -o output][ -t tolerance][ -v]" );
+	    fprintf(stderr, "usage: cad_boundp[ -i input][ -o output][ -t tolerance][ -v]" );
 }
 
 
@@ -142,7 +138,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 	int		c;		/* option letter */
 
 #ifdef	DEBUG
-	(void)Mess( "\n\t\tGetArgs\n" );
+	fprintf(stderr, "\n\t\tGetArgs\n" );
 #endif
 	while ( (c = bu_getopt( argc, argv, "i:o:t:v" )) != EOF )
 		switch ( c )
@@ -150,38 +146,38 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		case 'i':
 			if ( iflag )
 				return
-				    Mess( "too many -i options" );
+				    fprintf(stderr, "too many -i options" );
 			iflag = true;
 
 			if ( strcmp( bu_optarg, "-" ) != 0
 			    && freopen( bu_optarg, "r", stdin ) == NULL
 			    )
 				return
-				    Mess( "can't open \"%s\"", bu_optarg );
+				    fprintf(stderr, "can't open \"%s\"", bu_optarg );
 			break;
 
 		case 'o':
 			if ( oflag )
 				return
-				    Mess( "too many -o options" );
+				    fprintf(stderr, "too many -o options" );
 			oflag = true;
 
 			if ( strcmp( bu_optarg, "-" ) != 0
 			    && freopen( bu_optarg, "w", stdout ) == NULL
 			    )
 				return
-				    Mess( "can't create \"%s\"", bu_optarg );
+				    fprintf(stderr, "can't create \"%s\"", bu_optarg );
 			break;
 
 		case 't':
 			if ( tflag )
 				return
-				    Mess( "too many -t options" );
+				    fprintf(stderr, "too many -t options" );
 			tflag = true;
 
 			if ( sscanf( bu_optarg, "%le", &tolerance ) != 1 )
 				return
-				    Mess( "bad tolerance: %s", bu_optarg );
+				    fprintf(stderr, "bad tolerance: %s", bu_optarg );
 			tolsq = tolerance * tolerance;
 			break;
 
@@ -210,7 +206,7 @@ Chop(void)					/* chop vectors into segments */
 	segment *inp;			/* -> input whole segment */
 
 #ifdef	DEBUG
-	(void)Mess( "\n\t\tChop\n" );
+	fprintf(stderr, "\n\t\tChop\n" );
 #endif
 	/* Although we try to Alloc() when no input remains, it is more
 	   efficient than repeatedly copying the input into *inp.     */
@@ -230,7 +226,7 @@ Chop(void)					/* chop vectors into segments */
 			coords	temp;		/* store for swapping */
 
 #ifdef	DEBUG
-			(void)Mess( "endpoints swapped" );
+			fprintf(stderr, "endpoints swapped" );
 #endif
 			temp = inp->sxy;
 			inp->sxy = inp->exy;
@@ -271,21 +267,21 @@ Chop(void)					/* chop vectors into segments */
 				}
 			}
 #ifdef	DEBUG
-		(void)Mess( "new input pieces:" );
+		fprintf(stderr, "new input pieces:" );
 		for ( pp = piecehead.links; pp != &piecehead;
 		    pp = pp->links
 		    )
-			(void)Mess( "\t(%g,%g)->(%g,%g)",
+			fprintf(stderr, "\t(%g,%g)->(%g,%g)",
 			    (double)pp->sxy.x,
 			    (double)pp->sxy.y,
 			    (double)pp->exy.x,
 			    (double)pp->exy.y
 			    );
-		(void)Mess( "other segments:" );
+		fprintf(stderr, "other segments:" );
 		for ( segp = seghead.links; segp != &seghead;
 		    segp = segp->links
 		    )
-			(void)Mess( "\t(%g,%g)->(%g,%g)",
+			fprintf(stderr, "\t(%g,%g)->(%g,%g)",
 			    (double)segp->sxy.x,
 			    (double)segp->sxy.y,
 			    (double)segp->exy.x,
@@ -319,7 +315,7 @@ Split(coords *p, register segment *oldp, register segment *listh) 		/* split seg
 	register segment	*newp;	/* -> new list entry */
 
 #ifdef	DEBUG
-	(void)Mess( "split (%g,%g)->(%g,%g) at (%g,%g)",
+	fprintf(stderr, "split (%g,%g)->(%g,%g) at (%g,%g)",
 	    (double)oldp->sxy.x, (double)oldp->sxy.y,
 	    (double)oldp->exy.x, (double)oldp->exy.y,
 	    (double)p->x, (double)p->y
@@ -344,7 +340,7 @@ Build(void) 				/* build linked lists */
 	segment 		*deadp; /* -> list entry to be freed */
 
 #ifdef	DEBUG
-	(void)Mess( "\n\t\tBuild\n" );
+	fprintf(stderr, "\n\t\tBuild\n" );
 #endif
 	/* When we are finished, `seghead' will become invalid. */
 	for ( listp = seghead.links; listp != &seghead;
@@ -372,7 +368,7 @@ Search(void)				/* output bounding polygon */
 	point		*previousp;	/* -> previous vertex point */
 
 #ifdef	DEBUG
-	(void)Mess( "\n\t\tSearch\n" );
+	fprintf(stderr, "\n\t\tSearch\n" );
 #endif
 	if ( headp == NULL )
 		return true;		/* trivial case */
@@ -404,7 +400,7 @@ Search(void)				/* output bounding polygon */
 		queue		*endq;	/* -> endpoint queue entry */
 
 #ifdef	DEBUG
-		(void)Mess( "from %g", from );
+		fprintf(stderr, "from %g", from );
 #endif
 		endq = currentp->firstq;
 		if ( endq == NULL )
@@ -449,7 +445,7 @@ Search(void)				/* output bounding polygon */
 				    (endp->xy.x - currentp->xy.x)
 				    ) * DEGRAD;
 #ifdef	DEBUG
-			(void)Mess( "to %g", to );
+			fprintf(stderr, "to %g", to );
 #endif
 			diff = to - from;
 			/* Note: Exact 360 (0) case is not supposed to
@@ -460,7 +456,7 @@ Search(void)				/* output bounding polygon */
 			if ( diff < mindir )
 			{
 #ifdef	DEBUG
-				(void)Mess( "new min %g", diff );
+				fprintf(stderr, "new min %g", diff );
 #endif
 				mindir = diff;
 				nextp = endp;
@@ -468,7 +464,7 @@ Search(void)				/* output bounding polygon */
 		} while ( (endq = endq->nextq) != NULL );
 
 		if ( mindir > 361.0 )
-			return Mess( "degenerate input" );
+			fprintf(stderr, "degenerate input" );
 
 		currentp->firstq = NULL;	/* "visited" */
 		previousp = currentp;
@@ -492,7 +488,7 @@ PutList(register coords *coop) 			/* return -> point in list */
 	if ( p == NULL )		/* not yet in list */
 	{			/* start new point group */
 #ifdef	DEBUG
-		(void)Mess( "new point group (%g,%g)",
+		fprintf(stderr, "new point group (%g,%g)",
 		    (double)coop->x, (double)coop->y
 		    );
 #endif
@@ -517,9 +513,9 @@ LookUp(register coords *coop)				/* find point group in list */
 		if ( Near( coop, &p->xy ) )
 		{
 #ifdef	DEBUG
-			(void)Mess( "found (%g,%g) in list",
-			    (double)coop->x, (double)coop->y
-			    );
+			fprintf(stderr, "found (%g,%g) in list",
+				(double)coop->x, (double)coop->y
+				);
 #endif
 			return p;	/* found a match */
 		}
@@ -539,9 +535,9 @@ NewPoint(register coords *coop)			/* add point to list */
 		return NULL;
 
 #ifdef	DEBUG
-	(void)Mess( "add point (%g,%g)",
-	    (double)coop->x, (double)coop->y
-	    );
+	fprintf(stderr, "add point (%g,%g)",
+		(double)coop->x, (double)coop->y
+		);
 #endif
 	newp->linkp = headp;
 	newp->firstq = NULL;		/* empty endpoint queue */
@@ -562,10 +558,10 @@ Enqueue(register point *addp, register point *startp) 		/* add to endpoint queue
 		return NULL;
 
 #ifdef	DEBUG
-	(void)Mess( "enqueue (%g,%g) on (%g,%g)",
-	    (double)addp->xy.x, (double)addp->xy.y,
-	    (double)startp->xy.x, (double)startp->xy.y
-	    );
+	fprintf(stderr, "enqueue (%g,%g) on (%g,%g)",
+		(double)addp->xy.x, (double)addp->xy.y,
+		(double)startp->xy.x, (double)startp->xy.y
+		);
 #endif
 	newq->nextq = startp->firstq;
 	newq->endpoint = addp;
@@ -594,7 +590,7 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 	Min( b->sxy.y, b->exy.y ) - tolerance	/* b bottom */
 	)	{
 #ifdef	DEBUG
-		(void)Mess( "ranges don't intersect" );
+		fprintf(stderr, "ranges don't intersect");
 #endif
 		return NULL;		/* can't intersect */
 	}
@@ -626,7 +622,7 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 		if ( Abs( det ) <= EPSILON * norm * norm )
 		{
 #ifdef	DEBUG
-			(void)Mess( "parallel: det=%g, norm=%g", det, norm );
+			fprintf(stderr, "parallel: det=%g, norm=%g", det, norm );
 #endif
 			return NULL;		/* parallels don't intersect */
 		}
@@ -649,11 +645,11 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 		if ( (onemmu < 0.0 || mu < 0.0) && !EndPoint( &p, a ) )
 		{
 #ifdef	DEBUG
-			(void)Mess( "intersect off (%g,%g)->(%g,%g): mu=%g",
-			    (double)a->sxy.x, (double)a->sxy.y,
-			    (double)a->exy.x, (double)a->exy.y,
-			    mu
-			    );
+			fprintf(stderr, "intersect off (%g,%g)->(%g,%g): mu=%g",
+				(double)a->sxy.x, (double)a->sxy.y,
+				(double)a->exy.x, (double)a->exy.y,
+				mu
+				);
 #endif
 			return NULL;		/* not in segment *a */
 		}
@@ -662,19 +658,19 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 		if ( (lambda > 1.0 || lambda < 0.0) && !EndPoint( &p, b ) )
 		{
 #ifdef	DEBUG
-			(void)Mess( "intersect off (%g,%g)->(%g,%g): lambda=%g",
-			    (double)b->sxy.x, (double)b->sxy.y,
-			    (double)b->exy.x, (double)b->exy.y,
-			    lambda
-			    );
+			fprintf(stderr, "intersect off (%g,%g)->(%g,%g): lambda=%g",
+				(double)b->sxy.x, (double)b->sxy.y,
+				(double)b->exy.x, (double)b->exy.y,
+				lambda
+				);
 #endif
 			return NULL;		/* not in segment *b */
 		}
 
 #ifdef	DEBUG
-		(void)Mess( "intersection is (%g,%g): mu=%g lambda=%g",
-		    (double)p.x, (double)p.y, mu, lambda
-		    );
+		fprintf(stderr, "intersection is (%g,%g): mu=%g lambda=%g",
+			(double)p.x, (double)p.y, mu, lambda
+			);
 #endif
 		return &p;
 	}
@@ -688,11 +684,11 @@ EndPoint(register coords *p, register segment *segp)			/* check for segment endp
 {
 #ifdef	DEBUG
 	if ( Near( p, &segp->sxy ) || Near( p, &segp->exy ) )
-		(void)Mess( "(%g,%g) is endpt of (%g,%g)->(%g,%g)",
-		    (double)p->x, (double)p->y,
-		    (double)segp->sxy.x, (double)segp->sxy.y,
-		    (double)segp->exy.x, (double)segp->exy.y
-		    );
+		fprintf(stderr, "(%g,%g) is endpt of (%g,%g)->(%g,%g)",
+			(double)p->x, (double)p->y,
+			(double)segp->sxy.x, (double)segp->sxy.y,
+			(double)segp->exy.x, (double)segp->exy.y
+			);
 #endif
 	return Near( p, &segp->sxy ) || Near( p, &segp->exy );
 }
@@ -713,10 +709,10 @@ Near(register coords *ap, register coords *bp)				/* check if within tolerance *
 
 #ifdef	DEBUG
 	if ( xsq + ysq <= tolsq )
-		(void)Mess( "(%g,%g) is near (%g,%g)",
-		    (double)ap->x, (double)ap->y,
-		    (double)bp->x, (double)bp->y
-		    );
+		fprintf(stderr, "(%g,%g) is near (%g,%g)",
+			(double)ap->x, (double)ap->y,
+			(double)bp->x, (double)bp->y
+			);
 #endif
 	return xsq + ysq <= tolsq;
 }
@@ -729,7 +725,7 @@ Alloc(unsigned int size)				/* allocate storage from heap */
 	register pointer	ptr;	/* -> allocated storage */
 
 	if ( (ptr = malloc( size * sizeof(char) )) == NULL )
-		(void)Mess( "out of memory" );
+		fprintf(stderr, "out of memory");
 
 	return ptr;			/* (may be NULL) */
 }
@@ -745,24 +741,6 @@ Toss(register pointer ptr)				/* return storage to heap */
 
 
 static bool_t
-Mess( const char *fmt, ... )			/* print error message */
-{
-	va_list		ap;		/* for accessing arguments */
-	va_start( ap, fmt );
-
-	(void)fflush( stdout );
-	(void)fputs( "cad_boundp: ", stderr );
-
-	(void)vprintf( fmt, ap );
-	(void)fputc( '\n', stderr );
-
-	va_end( ap );
-
-	return false;
-}
-
-
-static bool_t
 Input(register segment *inp)				/* input stroke record */
 				/* -> input segment */
 {
@@ -773,7 +751,7 @@ Input(register segment *inp)				/* input stroke record */
 		register int	cvt;	/* # fields converted */
 
 #ifdef	DEBUG
-		(void)Mess( "input: %s", inbuf );
+		fprintf(stderr, "input: %s", inbuf);
 #endif
 		cvt = sscanf( inbuf, " %e %e %e %e",
 		    &inp->sxy.x, &inp->sxy.y,
@@ -786,7 +764,7 @@ Input(register segment *inp)				/* input stroke record */
 		if ( cvt == 4 )
 			return true;	/* successfully converted */
 
-		(void)Mess( "bad input: %s", inbuf );
+		fprintf(stderr, "bad input: %s", inbuf);
 		bu_exit( 5, NULL );		/* return false insufficient */
 	}
 
@@ -815,9 +793,7 @@ Output(register coords *coop)				/* dump polygon vertex coords */
 		    (double)coop->x, (double)coop->y
 		    );
 #ifdef	DEBUG
-	(void)Mess( "output: %g %g",
-	    (double)coop->x, (double)coop->y
-	    );
+	fprintf(stderr, "output: %g %g", (double)coop->x, (double)coop->y);
 #endif
 }
 
