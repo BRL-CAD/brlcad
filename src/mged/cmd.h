@@ -49,6 +49,7 @@ MGED_EXTERN(int cmd_copy, (ClientData clientData, Tcl_Interp *interp, int argc, 
 MGED_EXTERN(int cmd_copyeval, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dbip, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dbversion, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_dir2ae, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_draw, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dump, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dup, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

@@ -5045,6 +5045,10 @@ cmd_pov(ClientData	clientData,
 	return TCL_OK;
 }
 
+
+/**
+ * hook function for the ae2dir command
+ */
 int
 cmd_ae2dir( ClientData	clientData,
 	    Tcl_Interp	*interp,
@@ -5054,6 +5058,23 @@ cmd_ae2dir( ClientData	clientData,
     return vo_ae2dir_cmd(view_state->vs_vop, interp, argc, argv);
 }
 
+
+/**
+ * hook function for the dir2ae command
+ */
+int
+cmd_dir2ae( ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int     	argc,
+	    char    	**argv)
+{
+    return vo_dir2ae_cmd(view_state->vs_vop, interp, argc, argv);
+}
+
+
+/**
+ * hook function for the viewDir command
+ */
 int
 cmd_viewdir( ClientData	clientData,
 	     Tcl_Interp	*interp,
