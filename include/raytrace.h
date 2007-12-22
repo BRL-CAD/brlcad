@@ -6735,6 +6735,11 @@ RT_EXPORT BU_EXTERN(int	vo_ae2dir_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char **argv));
+RT_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
+		    (struct view_obj *vop,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
 
 /* defined in binary_obj.c */
 RT_EXPORT BU_EXTERN(int rt_mk_binunif,
