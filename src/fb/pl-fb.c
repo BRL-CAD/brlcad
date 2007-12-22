@@ -1331,16 +1331,8 @@ Catch(register int sig)
     register int *psig;		/* -> sigs[.] */
     register int i;
 
-#if 1
-    for (i = 0; sigs[i] != 0; ++i)
+    for (i = 0; sigs[i]; ++i)
 	(void)signal(sigs[i], SIG_IGN);
-#else
-    for ( psig = &sigs[0];
-	  psig < &sigs[sizeof sigs / sizeof sigs[0]];
-	  ++psig
-	  )
-	(void)signal( *psig, SIG_IGN );
-#endif
 
     (void)Foo( -13 );		/* clean up */
 
@@ -1366,18 +1358,10 @@ SetSigs(void)
     register int	*psig;		/* -> sigs[.] */
     register int i;
 
-#if 1
-    for (i = 0; sigs[i] != 0; ++i)
+    for (i = 0; sigs[i]; ++i) {
 	if (signal(sigs[i], SIG_IGN) != SIG_IGN)
 	    (void)signal(sigs[i], Catch);
-#else
-    for ( psig = &sigs[0];
-	  psig < &sigs[sizeof sigs / sizeof sigs[0]];
-	  ++psig
-	  )
-	if ( signal( *psig, SIG_IGN ) != SIG_IGN )
-	    (void)signal( *psig, Catch );
-#endif
+    }
 }
 
 
