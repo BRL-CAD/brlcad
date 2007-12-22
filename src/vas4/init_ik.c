@@ -26,8 +26,7 @@
 init_ik(void)
 {
 	char cmd[100];
-	FILE *popen(const char *, const char *), *pipe;
-
+	FILE *pipe;
 
 	sprintf(cmd,"fbi > /dev/null");
 	pipe = popen(cmd,"w");
