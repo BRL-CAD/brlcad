@@ -139,9 +139,10 @@ main(int argc, char **argv)
 
 		/* printf format string fmt_string */
 		if (zeros > 0)
-			sprintf(fmt_string,"%%0%dd\n",field_width);
+			snprintf(fmt_string, 50, "%%0%dd\n",field_width);
 		else
-			strcpy(fmt_string,"%d\n");
+			strncpy(fmt_string,"%d\n", 50-1);
+		fmt_string[50-1] = '\0'; /* sanity */
 
 		start  = atoi(argv[1]);
 		finish = atoi(argv[2]);
