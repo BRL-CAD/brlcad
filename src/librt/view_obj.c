@@ -93,6 +93,7 @@ static int vo_m2vPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, 
 static int vo_v2mPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_viewDir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_ae2dir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_dir2ae_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
@@ -110,6 +111,7 @@ static struct bu_cmdtab vo_cmds[] =
 	{"base2local",		vo_base2local_tcl},
 	{"center",		vo_center_tcl},
 	{"coord",		vo_coord_tcl},
+	{"dir2ae",		vo_dir2ae_tcl},
 	{"eye",			vo_eye_tcl},
 	{"eye_pos",		vo_eye_pos_tcl},
 	{"invSize",		vo_invSize_tcl},
@@ -2723,6 +2725,83 @@ vo_ae2dir_tcl(ClientData	clientData,
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_ae2dir_cmd(vop, interp, argc-1, argv+1);
+}
+
+
+/**
+ * guts to the dir2ae command
+ */
+int
+vo_dir2ae_cmd(struct view_obj	*vop,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char 		**argv)
+{
+    fastf_t az, el;
+    vect_t dir;
+    int iflag = 0;
+    struct bu_vls vls;
+
+    if (argc < 4 || 5 < argc) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias vo_dir2ae %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    /* Look for -i option */
+    if (argc == 5) {
+	if (argv[1][0] != '-' ||
+	    argv[1][1] != 'i' ||
+	    argv[1][2] != '\0') {
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "helplib_alias vo_dir2ae %s", argv[0]);
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+	iflag = 1;
+	argc--; argv++;
+    }
+
+    if (sscanf(argv[1], "%lf", &dir[X]) != 1 ||
+	sscanf(argv[2], "%lf", &dir[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &dir[Z]) != 1) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias vo_dir2ae %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    AZEL_FROM_V3DIR(az, el, dir);
+
+    if (iflag)
+	VSCALE(dir, dir, -1);
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%lf %lf", az, el);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+}
+
+
+/**
+ * Usage:
+ *        procname dir2ae [-i] x y z
+ */
+static int
+vo_dir2ae_tcl(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
+{
+    struct view_obj *vop = (struct view_obj *)clientData;
+
+    return vo_dir2ae_cmd(vop, interp, argc-1, argv+1);
 }
 
 
