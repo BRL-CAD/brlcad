@@ -95,7 +95,7 @@ slave_load_geom (uint32_t pid, tie_t *tie)
   * Now that a gid has been obtained, query for the size of the binary data,
   * allocate memory for it, extract it, and process it.
   */
-  sprintf (query, "select trinum,meshnum,gsize,gdata from geometry where gid = '%d'", gid);
+  snprintf (query, 256, "select trinum,meshnum,gsize,gdata from geometry where gid = '%d'", gid);
   mysql_query (&slave_load_mysql_db, query);
   res = mysql_use_result (&slave_load_mysql_db);
   row = mysql_fetch_row (res);
@@ -189,18 +189,20 @@ slave_load_geom (uint32_t pid, tie_t *tie)
   /* Query the mesh attributes map for the attribute id */
   for(i = 0; i < slave_load_mesh_num; i++)
   {
-    sprintf (query, "select attr from meshattrmap where mesh='%s' and gid=%d", slave_load_mesh_list[i].name, gid);
+    snprintf (query, 256, "select attr from meshattrmap where mesh='%s' and gid=%d", slave_load_mesh_list[i].name, gid);
     if (!mysql_query (&slave_load_mysql_db, query))
     {
       char attr[48];
 
       res = mysql_use_result (&slave_load_mysql_db);
       row = mysql_fetch_row (res);
-      strcpy (attr, row[0]);
+      strncpy (attr, row[0], 48-1);
+      attr[48-1] = '\0'; /* sanity */
+
 //printf("attr: %s\n", attr);
       mysql_free_result (res);
 
-      sprintf (query, "select data from attribute where gid='%d' and name='%s' and type='color'", gid, attr);
+      snprintf (query, 256, "select data from attribute where gid='%d' and name='%s' and type='color'", gid, attr);
 //printf("query[%d]: %s\n", i, query);
       if (!mysql_query (&slave_load_mysql_db, query))
       {
@@ -216,7 +218,7 @@ slave_load_geom (uint32_t pid, tie_t *tie)
   }
 
   /* Query to see if there is acceleration data for this geometry. */
-  sprintf (query, "select asize,adata from geometry where gid='%d'", gid);
+  snprintf (query, 256, "select asize,adata from geometry where gid='%d'", gid);
   mysql_query (&slave_load_mysql_db, query);
   res = mysql_use_result (&slave_load_mysql_db);
   row = mysql_fetch_row (res);
