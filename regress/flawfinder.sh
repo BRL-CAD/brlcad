@@ -13,7 +13,7 @@ rm -f flawfinder.log
 
 echo running flawfinder...
 
-${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
+${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
 
 NUMBER_WRONG=0
 if test "x`grep \"No hits found.\" flawfinder.log`" = "x" ; then
