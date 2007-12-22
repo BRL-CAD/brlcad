@@ -122,7 +122,7 @@ void Usage(void);
 struct rt_wdb *fdout;	/* file for libwdb writes */
 
 void
-Make_name(char *ptr, char *form, char *base, int number)
+Make_name(char *ptr, const char *form, const char *base, int number)
 {
 
 	char scrat[NAMESIZE];

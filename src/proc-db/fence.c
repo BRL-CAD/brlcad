@@ -669,7 +669,7 @@ void printMatrix(FILE *fp, char *n, fastf_t *m)
  * objects and groups.  (i.e. base="rcc", id="5"==> returns "rcc005.s" or
  * something like that)
  ***********************************/
-char *getName(char *base, int id, char *paramstring)
+char *getName(const char *base, int id, const char *paramstring)
 {
   static char name[DEFAULT_MAXNAMELENGTH];
 

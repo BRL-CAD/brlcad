@@ -247,7 +247,7 @@ BU_EXTERN(void argumentExamples, (FILE *fp, char *progname));
 BU_EXTERN(void defaultSettings, (FILE *fp));
 BU_EXTERN(int parseArguments, (int argc, char *argv[]));
 BU_EXTERN(void printMatrix, (FILE *fp, char *n, mat_t m));
-BU_EXTERN(char *getName, (char *base, int id, char *suffix));
+BU_EXTERN(char *getName, (const char *base, int id, const char *suffix));
 BU_EXTERN(char *getPrePostName, (char *prefix, char *base, char *suffix));
 
 BU_EXTERN(int generateFence_s, (struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition));
