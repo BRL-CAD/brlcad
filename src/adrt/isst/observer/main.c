@@ -120,8 +120,10 @@ int main(int argc, char **argv) {
   argc -= optind;
   argv += optind;
 
-  if(argc)
-    strncpy(host, argv[0], 64);
+  if(argc) {
+    strncpy(host, argv[0], 64-1);
+    host[64-1] = '\0'; /* sanity */
+  }
 
   if(host[0]) {
     printf("Observer mode: connecting to %s on port %d\n", host, port);

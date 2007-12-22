@@ -107,7 +107,8 @@ int main(int argc, char **argv) {
   {
 	  switch(c) {
             case 'c':
-              strncpy(comp_host, optarg, 64);
+              strncpy(comp_host, optarg, 64-1);
+	      comp_host[64-1] = '\0'; /* sanity */
               break;
 
             case 'h':
@@ -123,11 +124,13 @@ int main(int argc, char **argv) {
               break;
 
             case 'l':
-              strncpy(list, optarg, 64);
+              strncpy(list, optarg, 64-1);
+	      list[64-1] = '\0'; /* sanity */
               break;
 
             case 'e':
-              strncpy(exec, optarg, 64);
+              strncpy(exec, optarg, 64-1);
+	      exec[64-1] = '\0'; /* sanity */
               break;
 
             case 'b':
