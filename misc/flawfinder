@@ -603,8 +603,9 @@ def c_scanf(hit):
         hit.level = 0
         hit.note = "No risky scanf format detected."
     else:
-        # Format isn't a constant.
-        hit.note = "If the scanf format is influenceable by an attacker, it's exploitable."
+      # Format isn't a constant.
+      hit.warning = "If format strings to scanf's family of functions can be influenced by an attacker, they can be exploited"
+      hit.suggestion = "Use a constant for the format specification"
   add_warning(hit)
 
 
