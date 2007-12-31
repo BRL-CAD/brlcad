@@ -205,7 +205,7 @@ char	*argv[];
 	}
 
 	/* Open temporary ouitput file */
-	fp = tmpfile();
+	fp = bu_temp_file(NULL, 0);
 
 	/* Open error log file */
 	if( !error_file)
