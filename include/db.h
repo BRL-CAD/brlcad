@@ -84,8 +84,6 @@ typedef float dbfloat_t;
 
 #define DB_MINREC	128
 
-#if !defined(RECORD_DEFINED) || !defined(__STDC__)
-#define RECORD_DEFINED
 union record  {
 
 	char	u_id;		/* To differentiate record types */
@@ -440,8 +438,8 @@ union record  {
 	} bot;
 
 };
-#endif /* !RECORD_DEFINED || !__STDC__ */
 #define DB_RECORD_NULL	((union record *)0)
+
 
 /*
  *  Macros for providing function prototypes, regardless of whether
@@ -450,10 +448,11 @@ union record  {
  *  in parens.
  */
 #if __STDC__
-#	define	DB_ARGS(args)			args
+#  define DB_ARGS(args) args
 #else
-#	define	DB_ARGS(args)			()
+#  define DB_ARGS(args) ()
 #endif
+
 
 /* convert dbfloat->fastf_t */
 void rt_fastf_float DB_ARGS( (fastf_t *ff, const dbfloat_t *fp, int n) );

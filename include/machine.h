@@ -352,12 +352,10 @@ typedef long	bitv_t;		/* largest integer type */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
-#define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
+#  define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 #else
-#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+#  define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #endif
-#define const	const
-
 #define MAX_PSW		1024
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
@@ -371,11 +369,6 @@ typedef long	bitv_t;		/* largest integer type */
  *  with SR 10			*
  *				*
  ********************************/
-#if __STDC__
-#define const	/**/		/* Does not support const keyword */
-#define const	/**/		/* Does not support const keyword */
-#endif
-
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
@@ -405,17 +398,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define MALLOC_NOT_MP_SAFE 1
 #endif
 
-#ifdef ipsc860
-/********************************
- *				*
- *   Intel iPSC/860 Hypercube	*
- *				*
- ********************************/
-/* icc compiler gets confused on const typedefs */
-#define	const	/**/
-#define	const	/**/
-#define MALLOC_NOT_MP_SAFE 1
-#endif
 
 #if defined(SUNOS) && SUNOS >= 50
 /********************************
@@ -448,10 +430,6 @@ typedef long	bitv_t;		/* largest integer type */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
-#define const   /**/            /* Does not support const keyword */
-#define const   /**/            /* Does not support const keyword */
-
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
 #define MALLOC_NOT_MP_SAFE 1
@@ -688,11 +666,7 @@ typedef long	bitv_t;		/* largest integer type */
  *  so here is the clean way of handling it.
  */
 #if !defined(GENPTR_NULL)
-#  if __STDC__
-	typedef void	*genptr_t;
-#  else
-	typedef char	*genptr_t;
-#  endif
+typedef void *genptr_t;
 #  define GENPTR_NULL	((genptr_t)0)
 #endif
 
@@ -700,11 +674,11 @@ typedef long	bitv_t;		/* largest integer type */
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
 /* To aid in using ADB, generally leave this as nil. */
 #if !defined(HIDDEN)
-# if defined(lint)
-#	define HIDDEN	static
-# else
-#	define HIDDEN	/***/
-# endif
+#  if defined(lint)
+#    define HIDDEN	static
+#  else
+#    define HIDDEN	/***/
+#  endif
 #endif
 
 
