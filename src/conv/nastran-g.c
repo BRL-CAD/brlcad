@@ -114,9 +114,9 @@ static fastf_t conv[3]={
 
 static int			units;		/* units flag */
 static char			*output_file = "nastran.g";
-static struct rt_wdb		*fdout;		/* brlcad output file */
-static FILE			*fdin;		/* NASTRAN input file */
-static FILE			*fdtmp;		/* temporary version of NASTRAN input */
+static struct rt_wdb		*fpout;		/* brlcad output file */
+static FILE			*fpin;		/* NASTRAN input file */
+static FILE			*fptmp;		/* temporary version of NASTRAN input */
 static char			*Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
 static long			start_off;
 static char			*delims=", \t";
@@ -141,7 +141,7 @@ static struct shell		*nmg_shell;	/* NMG shell */
 static struct bn_tol		tol;		/* tolerance for NMG's */
 static int			polysolids=1;	/* flag for outputting NMG's rather than BOT's */
 
-HIDDEN int get_next_record( FILE *fd, int call_input, int write_flag );
+HIDDEN int get_next_record( FILE *fp, int call_input, int write_flag );
 HIDDEN int convert_pt( const point_t pt, struct coord_sys *cs, point_t out_pt );
 
 #define		INPUT_OK	0
@@ -164,12 +164,12 @@ reset_input(void)
 	for( i=0 ; i < 20 ; i++ )
 		prev_rec[i][0] = '\0';
 
-	fseek( fdin, start_off, SEEK_SET );
+	fseek( fpin, start_off, SEEK_SET );
 	line_count = bulk_data_start_line;
 
-	tmp = bu_fgets( next_line, MAXLINELEN, fdin );
+	tmp = bu_fgets( next_line, MAXLINELEN, fpin );
 	while( tmp && *tmp == '$' )
-		tmp = bu_fgets( next_line, MAXLINELEN, fdin );
+		tmp = bu_fgets( next_line, MAXLINELEN, fpin );
 
 	if( tmp != (char *)NULL )
 		input_status = INPUT_OK;
@@ -194,9 +194,9 @@ write_fields(void)
 		j = 0;
 		while( curr_rec[i][j] != '\0' && isspace( curr_rec[i][j] ) )
 			j++;
-		fprintf( fdtmp, "%s,", &curr_rec[i][j] );
+		fprintf( fptmp, "%s,", &curr_rec[i][j] );
 	}
-	fprintf( fdtmp, "\n" );
+	fprintf( fptmp, "\n" );
 }
 
 HIDDEN void
@@ -245,7 +245,7 @@ do_silly_nastran_shortcuts(void)
 }
 
 HIDDEN void
-get_large_field_input(FILE *fd, int write_flag)
+get_large_field_input(FILE *fp, int write_flag)
 {
 	char **tmp_rec;
 	int field_no;
@@ -282,7 +282,7 @@ get_large_field_input(FILE *fd, int write_flag)
 
 	if( next_line[0] == '*' )
 	{
-		if( !get_next_record( fd, 0, 0 ) )
+		if( !get_next_record( fp, 0, 0 ) )
 		{
 			bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count );
 		}
@@ -306,7 +306,7 @@ get_large_field_input(FILE *fd, int write_flag)
 }
 
 HIDDEN void
-get_small_field_input(FILE *fd, int write_flag)
+get_small_field_input(FILE *fp, int write_flag)
 {
 	char **tmp_rec;
 	int field_no;
@@ -336,7 +336,7 @@ get_small_field_input(FILE *fd, int write_flag)
 
 	if( next_line[0] == '+' )
 	{
-		if( !get_next_record( fd, 0, 0 ) )
+		if( !get_next_record( fp, 0, 0 ) )
 		{
 			bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count );
 		}
@@ -360,7 +360,7 @@ get_small_field_input(FILE *fd, int write_flag)
 }
 
 HIDDEN void
-get_free_form_input(FILE *fd, int write_flag)
+get_free_form_input(FILE *fp, int write_flag)
 {
 	char **tmp_rec;
 	int field_no;
@@ -387,7 +387,7 @@ get_free_form_input(FILE *fd, int write_flag)
 		for( i=0 ; i<count ; i++ )
 		{
 			strncpy( line, prev_line, MAXLINELEN );
-			get_free_form_input( fd, write_flag );
+			get_free_form_input( fp, write_flag );
 		}
 		return;
 	}
@@ -417,7 +417,7 @@ get_free_form_input(FILE *fd, int write_flag)
 		if( strchr( curr_rec[9], '+' ) )
 		{
 			/* continuation card */
-			if( !get_next_record( fd, 0, 0 ) )
+			if( !get_next_record( fp, 0, 0 ) )
 			{
 				bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count );
 			}
@@ -445,7 +445,7 @@ get_free_form_input(FILE *fd, int write_flag)
 }
 
 HIDDEN int
-get_next_record( FILE *fd, int call_input, int write_flag )
+get_next_record( FILE *fp, int call_input, int write_flag )
 {
 	char *tmp;
 	int form;
@@ -457,7 +457,7 @@ get_next_record( FILE *fd, int call_input, int write_flag )
 	while( 1 )
 	{
 		line_count++;
-		tmp = bu_fgets( prev_line, MAXLINELEN, fd );
+		tmp = bu_fgets( prev_line, MAXLINELEN, fp );
 		if( !tmp || prev_line[0] != '$' )
 			break;
 	}
@@ -515,7 +515,7 @@ get_next_record( FILE *fd, int call_input, int write_flag )
 	/* if this is FREE_FIELD, call approporiate processor */
 	if( form == FREE_FIELD )
 	{
-		get_free_form_input( fd, write_flag );
+		get_free_form_input( fp, write_flag );
 		return( 1 );
 	}
 
@@ -527,13 +527,13 @@ get_next_record( FILE *fd, int call_input, int write_flag )
 
 	if( form == LARGE_FIELD )
 	{
-		get_large_field_input( fd, write_flag );
+		get_large_field_input( fp, write_flag );
 		return( 1 );
 	}
 
 	/* default is SMALL_FIELD */
 	form = SMALL_FIELD;
-	get_small_field_input( fd, write_flag );
+	get_small_field_input( fp, write_flag );
 	return( 1 );
 
 }
@@ -558,7 +558,7 @@ convert_input(void)
 
 	reset_input();
 
-	while( get_next_record( fdin, 1, 1 ) );
+	while( get_next_record( fpin, 1, 1 ) );
 }
 
 HIDDEN int
@@ -1153,7 +1153,7 @@ get_cbar(void)
 	VSUB2( height, pt2, pt1 );
 
 	sprintf( cbar_name, "cbar.%d", eid );
-	mk_rcc( fdout, cbar_name, pt1, height, radius );
+	mk_rcc( fpout, cbar_name, pt1, height, radius );
 
 	mk_addmember( cbar_name, &pb->head.l, NULL, WMOP_UNION );
 }
@@ -1169,7 +1169,7 @@ main(int argc, char **argv)
 	struct wmember all_head;
 	char *nastran_file = "Converted from NASTRAN file (stdin)";
 
-	fdin = stdin;
+	fpin = stdin;
 
 	units = INCHES;
 
@@ -1205,8 +1205,8 @@ main(int argc, char **argv)
 				break;
 			case 'i':
 				nastran_file = bu_optarg;
-				fdin = fopen( bu_optarg, "r" );
-				if( fdin == (FILE *)NULL )
+				fpin = fopen( bu_optarg, "r" );
+				if( fpin == (FILE *)NULL )
 				{
 					bu_log( "Cannot open NASTRAN file (%s) for reading!\n", bu_optarg );
 					bu_exit(1, Usage, argv[0] );
@@ -1218,14 +1218,14 @@ main(int argc, char **argv)
 		}
 	}
 
-	fdout = wdb_fopen( output_file );
-	if( fdout == NULL )
+	fpout = wdb_fopen( output_file );
+	if( fpout == NULL )
 	{
 		bu_log( "Cannot open BRL-CAD file (%s) for writing!\n", output_file );
 		bu_exit(1, Usage, argv[0] );
 	}
 
-	if( !fdin || !fdout )
+	if( !fpin || !fpout )
 	{
 		bu_exit(1, Usage, argv[0] );
 	}
@@ -1243,13 +1243,13 @@ main(int argc, char **argv)
 	/* first pass, find start of NASTRAN "bulk data" */
 	start_off = (-1);
 	bulk_data_start_line = 0;
-	while( bu_fgets( line, MAXLINELEN, fdin ) )
+	while( bu_fgets( line, MAXLINELEN, fpin ) )
 	{
 		bulk_data_start_line++;
 		if( strncmp( line, "BEGIN BULK", 10 ) )
 			continue;
 
-		start_off = ftell( fdin );
+		start_off = ftell( fpin );
 		break;
 	}
 
@@ -1260,8 +1260,8 @@ main(int argc, char **argv)
 	}
 
 	/* convert BULK data deck into something reasonable */
-	fdtmp = tmpfile();
-	if( fdtmp == NULL )
+	fptmp = bu_temp_file(NULL, 0);
+	if( fptmp == NULL )
 	{
 		perror( argv[0] );
 		bu_exit(1, "Cannot open temporary file\n" );
@@ -1277,8 +1277,8 @@ main(int argc, char **argv)
 	nmg_model = (struct model *)NULL;
 
 	/* count grid points */
-	fseek( fdtmp, 0, SEEK_SET );
-	while( bu_fgets( line, MAXLINELEN, fdtmp  ) )
+	fseek( fptmp, 0, SEEK_SET );
+	while( bu_fgets( line, MAXLINELEN, fptmp  ) )
 	{
 		if( !strncmp( line, "GRID", 4 ) )
 			grid_count++;
@@ -1289,8 +1289,8 @@ main(int argc, char **argv)
 	}
 
 	/* get default values and properties */
-	fseek( fdtmp, 0, SEEK_SET );
-	while( get_next_record( fdtmp, 1, 0 ) )
+	fseek( fptmp, 0, SEEK_SET );
+	while( get_next_record( fptmp, 1, 0 ) )
 	{
 		if( !strncmp( curr_rec[0], "BAROR", 5 ) )
 		{
@@ -1328,8 +1328,8 @@ main(int argc, char **argv)
 	g_pts = (struct grid_point *)bu_calloc( grid_count, sizeof( struct grid_point ), "grid points" );
 
 	/* get all grid points */
-	fseek( fdtmp, 0, SEEK_SET );
-	while( get_next_record( fdtmp, 1, 0 ) )
+	fseek( fptmp, 0, SEEK_SET );
+	while( get_next_record( fptmp, 1, 0 ) )
 	{
 		int gid;
 		int cid;
@@ -1355,8 +1355,8 @@ main(int argc, char **argv)
 
 
 	/* find coordinate systems */
-	fseek( fdtmp, 0, SEEK_SET );
-	while( get_next_record( fdtmp, 1, 0 ) )
+	fseek( fptmp, 0, SEEK_SET );
+	while( get_next_record( fptmp, 1, 0 ) )
 	{
 		if( strncmp( curr_rec[0], "CORD", 4 ) )
 			continue;
@@ -1411,11 +1411,11 @@ main(int argc, char **argv)
 	}
 #endif
 
-	mk_id( fdout, nastran_file );
+	mk_id( fpout, nastran_file );
 
 	/* get elements */
-	fseek( fdtmp, 0, SEEK_SET );
-	while( get_next_record( fdtmp, 1, 0 ) )
+	fseek( fptmp, 0, SEEK_SET );
+	while( get_next_record( fptmp, 1, 0 ) )
 	{
 		if( !strncmp( curr_rec[0], "CBAR", 4 ) )
 			get_cbar();
@@ -1431,9 +1431,9 @@ main(int argc, char **argv)
 	{
 		nmg_rebound( nmg_model, &tol );
 		if( polysolids )
-			write_shell_as_polysolid( fdout, "pshell.0", nmg_shell );
+			write_shell_as_polysolid( fpout, "pshell.0", nmg_shell );
 		else
-			mk_nmg( fdout, "pshell.0", nmg_model );
+			mk_nmg( fpout, "pshell.0", nmg_model );
 	}
 
 	BU_LIST_INIT( &head.l );
@@ -1455,15 +1455,15 @@ main(int argc, char **argv)
 		}
 		sprintf( name, "pshell.%d", psh->pid );
 		if( polysolids )
-			write_shell_as_polysolid( fdout, name, psh->s );
+			write_shell_as_polysolid( fpout, name, psh->s );
 		else
-			mk_nmg( fdout, name, m );
+			mk_nmg( fpout, name, m );
 
 		mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}
 	if( BU_LIST_NON_EMPTY( &head.l ) )
 	{
-		mk_lfcomb( fdout, "shells", &head, 0 );
+		mk_lfcomb( fpout, "shells", &head, 0 );
 		mk_addmember( "shells", &all_head.l, NULL, WMOP_UNION );
 	}
 
@@ -1476,21 +1476,21 @@ main(int argc, char **argv)
 			continue;
 
 		sprintf( name, "pbar_group.%d", pb->pid );
-		mk_lfcomb( fdout, name, &pb->head, 0 );
+		mk_lfcomb( fpout, name, &pb->head, 0 );
 
 		mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}
 	if( BU_LIST_NON_EMPTY( &head.l ) )
 	{
-		mk_lfcomb( fdout, "pbars", &head, 0 );
+		mk_lfcomb( fpout, "pbars", &head, 0 );
 		mk_addmember( "pbars", &all_head.l, NULL, WMOP_UNION );
 	}
 
 	if( BU_LIST_NON_EMPTY( &all_head.l ) )
 	{
-		mk_lfcomb( fdout, "all", &all_head, 0 );
+		mk_lfcomb( fpout, "all", &all_head, 0 );
 	}
-	wdb_close(fdout);
+	wdb_close(fpout);
 	return 0;
 }
 
