@@ -61,8 +61,11 @@
 
 __BEGIN_DECLS
 
-/* interface headers */
-#include <setjmp.h>
+/* system interface headers */
+#include <setjmp.h> /* for bu_setjmp */
+#include <stddef.h> /* for size_t */
+
+/* common interface headers */
 #include "machine.h"	/* required for fastf_t, genptr_t */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
 
@@ -1949,10 +1952,6 @@ BU_EXPORT BU_EXTERN(genptr_t bu_calloc,
 BU_EXPORT BU_EXTERN(void bu_prmem,
 		    (const char *str));
 
-BU_EXPORT BU_EXTERN(char *bu_strdupm,
-		    (const char *cp, const char *label));
-#define bu_strdup(s) bu_strdupm(s, "bu_strdup " BU_FLSTR)
-
 /* don't rely on non-constness of bu_dirname().. will change to const */
 BU_EXPORT BU_EXTERN(char *bu_dirname,
 		    (const char *cp));
@@ -2368,6 +2367,17 @@ BU_EXPORT BU_EXTERN(void bu_vls_detab,
 BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		    (struct bu_vls *vp,
 		     char *str));
+
+/* str.c */
+BU_EXPORT BU_EXTERN(size_t bu_strlcatm, (char *dst, const char *src, size_t size, const char *label));
+#define bu_strlcat(dst, src, size) bu_strlcatm(dst, src, size, BU_FLSTR)
+
+BU_EXPORT BU_EXTERN(size_t bu_strlcpym, (char *dst, const char *src, size_t size, const char *label));
+#define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, BU_FLSTR)
+
+BU_EXPORT BU_EXTERN(char *bu_strdupm, (const char *cp, const char *label));
+#define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
+
 
 /** @} */
 
