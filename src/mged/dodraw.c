@@ -78,42 +78,26 @@ struct db_tree_state	mged_initial_tree_state = {
 	0,			/* ts_sofar */
 	0, 0, 0,		/* region, air, gmater */
 	100,			/* GIFT los */
-#if __STDC__
 	{
-#endif
 		/* struct mater_info ts_mater */
-#if __STDC__
 		{
-#endif
 		    1.0, 0.0, 0.0
-#if __STDC__
-		}
-#endif
-		,		/* color, RGB */
+		},
+		/* color, RGB */
 		-1.0,			/* Temperature */
 		0,			/* ma_color_valid=0 --> use default */
 		0,			/* color inherit */
 		0,			/* mater inherit */
 		(char *)NULL		/* shader */
-#if __STDC__
-	}
-#endif
-	,
-#if __STDC__
+	},
 	{
-#endif
 	    1.0, 0.0, 0.0, 0.0,
 	    0.0, 1.0, 0.0, 0.0,
 	    0.0, 0.0, 1.0, 0.0,
 	    0.0, 0.0, 0.0, 1.0
-#if __STDC__
-	}
-#endif
-	,
+	},
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
-#if __STDC__
 	{
-#endif
 		/* attribute value set */
 		BU_AVS_MAGIC,
 		0,
@@ -121,10 +105,7 @@ struct db_tree_state	mged_initial_tree_state = {
 		NULL,
 		NULL,
 		NULL
-#if __STDC__
-	}
-#endif
-	,
+	},
 	0,				/* ts_stop_at_regions */
 	NULL,				/* ts_region_start_func */
 	NULL,				/* ts_region_end_func */

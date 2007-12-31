@@ -1327,13 +1327,6 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 #define A_GT_B		{ret = 1; goto out;}
 static int
 nmg_face_vu_compare(const void *aa, const void *bb)
-#if __STDC__
-
-
-#else
-
-
-#endif
 {
 	register const struct nmg_vu_stuff *a = (const struct nmg_vu_stuff *)aa;
 	register const struct nmg_vu_stuff *b = (const struct nmg_vu_stuff *)bb;

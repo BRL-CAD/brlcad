@@ -60,7 +60,6 @@ const struct bu_structparse rt_nul_parse[] = {
 	{""}
 };
 
-#if __STDC__ && !defined(alliant)
 # define RT_DECLARE_INTERFACE(name)	\
 	BU_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
 			struct rt_db_internal *ip, struct rt_i *rtip )); \
@@ -130,72 +129,6 @@ const struct bu_structparse rt_nul_parse[] = {
 			int free, struct db_i *dbip, \
 			struct resource *resp)); \
 	extern const struct bu_structparse rt_##name##_parse[];
-#else
-# define RT_DECLARE_INTERFACE(name)	\
-	BU_EXTERN(int rt_/**/name/**/_prep, (struct soltab *stp, \
-			struct rt_db_internal *ip, struct rt_i *rtip )); \
-	BU_EXTERN(int rt_/**/name/**/_shot, (struct soltab *stp, struct xray *rp, \
-			struct application *ap, struct seg *seghead )); \
-	BU_EXTERN(int rt_/**/name/**/_piece_shot, (\
-			struct rt_piecestate *psp, \
-			struct rt_piecelist *plp, \
-			double dist_corr, \
-			struct xray *rp, \
-			struct application *ap, \
-			struct seg *seghead )); \
-	BU_EXTERN(void rt_/**/name/**/_piece_hitsegs, (\
-			struct rt_piecestate *psp, \
-			struct seg *seghead, \
-			struct application *ap)); \
-	BU_EXTERN(void rt_/**/name/**/_print, (const struct soltab *stp)); \
-	BU_EXTERN(void rt_/**/name/**/_norm, (struct hit *hitp, \
-			struct soltab *stp, struct xray *rp)); \
-	BU_EXTERN(void rt_/**/name/**/_uv, (struct application *ap, \
-			struct soltab *stp, struct hit *hitp, \
-			struct uvcoord *uvp)); \
-	BU_EXTERN(void rt_/**/name/**/_curve, (struct curvature *cvp, \
-			struct hit *hitp, struct soltab *stp)); \
-	BU_EXTERN(int rt_/**/name/**/_class, ()); \
-	BU_EXTERN(void rt_/**/name/**/_free, (struct soltab *stp)); \
-	BU_EXTERN(int rt_/**/name/**/_plot, (struct bu_list *vhead, \
-			struct rt_db_internal *ip, \
-			const struct rt_tess_tol *ttol, \
-			const struct bn_tol *tol)); \
-	BU_EXTERN(void rt_/**/name/**/_vshot, (struct soltab *stp[], \
-			struct xray *rp[], \
-			struct seg segp[], int n, struct application *ap )); \
-	BU_EXTERN(int rt_/**/name/**/_tess, (struct nmgregion **r, \
-			struct model *m, struct rt_db_internal *ip, \
-			const struct rt_tess_tol *ttol, \
-			const struct bn_tol *tol)); \
-	BU_EXTERN(int rt_/**/name/**/_tnurb, (struct nmgregion **r, \
-			struct model *m, struct rt_db_internal *ip, \
-			const struct bn_tol *tol)); \
-	BU_EXTERN(int rt_/**/name/**/_import5, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, \
-			const struct db_i *dbip, struct resource *resp, const int minor_type )); \
-	BU_EXTERN(int rt_/**/name/**/_export5, (struct bu_external *ep, \
-			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip, struct resource *resp, \
-			const int minor_type )); \
-	BU_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
-			const struct bu_external *ep, const mat_t mat, \
-			const struct db_i *dbip, struct resource *resp )); \
-	BU_EXTERN(int rt_/**/name/**/_export, (struct bu_external *ep, \
-			const struct rt_db_internal *ip, \
-			double local2mm, const struct db_i *dbip, struct resource *resp )); \
-	BU_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip, \
-			struct resource *resp)); \
-	BU_EXTERN(int rt_/**/name/**/_describe, (struct bu_vls *str, \
-			const struct rt_db_internal *ip, int verbose, \
-			double mm2local, struct resource *resp, \
-						 struct db_i *db_i)); \
-	BU_EXTERN(int rt_/**/name/**/_xform, (struct rt_db_internal *op, \
-			const mat_t mat, struct rt_db_internal *ip, \
-			int free, struct db_i *dbip, \
-			struct resource *resp)); \
-	extern const struct bu_structparse rt_/**/name/**/_parse[];
-#endif
 
 /* Note:  no semi-colons at the end of these, please */
 RT_DECLARE_INTERFACE(nul)
@@ -487,7 +420,6 @@ BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op,
 	int free, struct db_i *dbip, struct resource *resp));
 
 /* Stub Tcl interfaces */
-#if __STDC__
 int rt_nul_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)  {
 	Tcl_AppendResult(interp, "rt_nul_tclget", (char *)NULL);
 	return TCL_ERROR;
@@ -504,39 +436,6 @@ int rt_nul_tclform(const struct rt_functab *ftp, Tcl_Interp *interp) {
 void rt_nul_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter) {
 	bu_bomb("rt_nul_make invoked\n");
 }
-#else
-int rt_nul_tclget(interp, intern, attr)
-Tcl_Interp *interp;
-const struct rt_db_internal *intern;
-const char *attr;
-{
-	Tcl_AppendResult(interp, "rt_nul_tclget", (char *)NULL);
-	return TCL_ERROR;
-}
-int rt_nul_tcladjust(interp, intern, argc, argv)
-Tcl_Interp *interp;
-struct rt_db_internal *intern;
-int argc;
-char **argv;
-{
-	Tcl_AppendResult(interp, "rt_nul_tcladjust", (char *)NULL);
-	return TCL_ERROR;
-}
-int rt_nul_tclform(ftp, interp)
-const struct rt_functab *ftp;
-Tcl_Interp *interp;
-{
-	Tcl_AppendResult(interp, "rt_nul_tclform", (char *)NULL);
-	return TCL_ERROR;
-}
-void rt_nul_make(ftp, intern, diameter)
-const struct rt_functab *ftp;
-struct rt_db_internal *intern;
-double diameter;
-{
-	bu_bomb("rt_nul_make invoked\n");
-}
-#endif
 
 const struct rt_functab rt_functab[] = {
 	{RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
@@ -1112,21 +1011,12 @@ const int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 /*
  *  Hooks for unimplemented routines
  */
-#if __STDC__
 #define DEF(func,args)	func BU_ARGS(args) { \
 	bu_log(#func " unimplemented\n"); return; }
 #define IDEF(func,args)	func BU_ARGS(args) { \
 	bu_log(#func " unimplemented\n"); return(0); }
 #define NDEF(func,args)	func BU_ARGS(args) { \
 	bu_log(#func " unimplemented\n"); return(-1); }
-#else
-#define DEF(func,args)	func BU_ARGS(args) { \
-	bu_log("func unimplemented\n"); return; }
-#define IDEF(func,args)	func BU_ARGS(args) { \
-	bu_log("func unimplemented\n"); return(0); }
-#define NDEF(func,args)	func BU_ARGS(args) { \
-	bu_log("func unimplemented\n"); return(-1); }
-#endif
 
 int IDEF(rt_nul_prep,(struct soltab *stp,
 			struct rt_db_internal *ip,
