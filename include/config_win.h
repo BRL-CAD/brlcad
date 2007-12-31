@@ -28,10 +28,12 @@
 
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
+
 /* XXX - This is temporary (atleast until a brlcad_config.h is
  * auto-generated on windows)
  */
 #define __STDC__ 1
+#define USE_PROTOTYPES 1
 
 #pragma warning( disable : 4244 4305 4018)
 /*  4244 conversion from type 1 to type 2
@@ -77,7 +79,6 @@
 #define HAVE_VFORK		1
 #define HAVE_WINSOCK_H		1
 #define REVERSE_IEEE		yes
-#define USE_PROTOTYPES		1
 
 /* XXX - do not rely on config_win.h providing these headers.  they
  * will be removed at some point.
