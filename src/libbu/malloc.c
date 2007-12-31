@@ -35,7 +35,6 @@
  * @n	bu_realloc	Reallocate storage, with visibility & checking
  * @n	bu_calloc	Allocate zero'ed storage
  * @n	bu_prmem	When debugging, print memory map
- * @n	bu_strdup_body	Duplicate a string in dynamic memory
  * @n	bu_malloc_len_roundup	Optimize sizing of malloc() requests
  * @n	bu_free_array	free elements of an array
  *
@@ -583,34 +582,6 @@ bu_prmem(const char *str)
     fprintf(stderr, "%lu allocation entries\n", count);
 
 
-}
-
-/**
- *		B U _ S T R D U P  / B U _ S T R D U P M
- *
- * Given a string, allocate enough memory to hold it using bu_malloc(),
- * duplicate the strings, returns a pointer to the new string.
- *
- * bu_strdup() is a macro that includes the current file name and line
- * number that can be used when bu debugging is enabled.
- */
-char *
-bu_strdupm(register const char *cp, const char *label)
-{
-	register char	*base;
-	register size_t	len;
-
-	len = strlen( cp )+1;
-	base = bu_malloc( len, label);
-
-	if(bu_debug&BU_DEBUG_MEM_LOG) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		fprintf(stderr, "%8lx strdup%7ld \"%s\"\n", (long)base, (long)len, cp );
-		bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
-	memcpy(base, cp, len);
-	return(base);
 }
 
 
