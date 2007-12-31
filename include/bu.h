@@ -176,75 +176,54 @@ __BEGIN_DECLS
  */
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
+
 /**
- *			B U _ F O R T R A N
+ * B U _ F O R T R A N
+ *
  * @def BU_FORTRAN
  *
- *  This macro is used to take the 'C' function name,
- *  and convert it at compile time to the
- *  FORTRAN calling convention used for this particular system.
+ * This macro is used to take the 'C' function name, and convert it at
+ * compile time to the FORTRAN calling convention.
  *
- *  Both lower-case and upper-case alternatives have to be provided
- *  because there is no way to get the C preprocessor to change the
- *  case of a token.
+ * Lower case, with a trailing underscore.
  */
-#if defined(apollo) || defined(mips) || defined(aux) || defined(linux)
-	/* Lower case, with a trailing underscore */
-#ifdef __STDC__
-#	define	BU_FORTRAN(lc,uc)	lc ## _
-#else
-#	define	BU_FORTRAN(lc,uc)	lc/**/_
-#endif
-#endif
-#if !defined(BU_FORTRAN)
-#	define	BU_FORTRAN(lc,uc)	lc
-#endif
+#define BU_FORTRAN(lc,uc)	lc ## _
+
 
 /**
  * Handy memory allocator macro
  *
  * @def BU_GETSTRUCT(ptr,struct_type)
- * Allocate storage for a structure
+ * Acquire storage for a given struct_type.
+ * e.g., BU_GETSTRUCT(ptr,structname);
  *
  * @def BU_GETUNION(ptr,union_type)
  * Allocate storage for a union
 */
-/* Acquire storage for a given struct, eg, BU_GETSTRUCT(ptr,structname); */
-#if __STDC__
-#  define BU_GETSTRUCT(_p,_str) \
+#define BU_GETSTRUCT(_p,_str) \
 	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), #_str " (getstruct)" BU_FLSTR)
-#  define BU_GETUNION(_p,_unn) \
+#define BU_GETUNION(_p,_unn) \
 	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), #_unn " (getunion)" BU_FLSTR)
-#else
-#  define BU_GETSTRUCT(_p,_str) \
-	_p = (struct _str *)bu_calloc(1,sizeof(struct _str), "_str (getstruct)" )
-#  define BU_GETUNION(_p,_unn) \
-	_p = (union _unn *)bu_calloc(1,sizeof(union _unn), "_unn (getunion)" )
-#endif
+
 
 /**
- *                B U _ G E T T Y P E
- *
+ * B U _ G E T T Y P E
  *
  * Acquire storage for a given TYPE, eg, BU_GETTYPE(ptr, typename);
  * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
  * for typedef'ed objects.
  */
-#if __STDC__
-#  define BU_GETTYPE(_p,_type) \
+#define BU_GETTYPE(_p,_type) \
 	_p = (_type *)bu_calloc(1,sizeof(_type), #_type " (gettype)" )
-#else
-#  define BU_GETTYPE(_p,_type) \
-	_p = (_type *)bu_calloc(1,sizeof(_type), "_type (getstruct)")
-#endif
 
 
-/*			B U _ C K M A G
+/**
+ * B U _ C K M A G
  *
  * @def BU_CKMAG(ptr,magic,string)
  *
- *  Macros to check and validate a structure pointer, given that
- *  the first entry in the structure is a magic number.
+ * Macros to check and validate a structure pointer, given that the
+ * first entry in the structure is a magic number.
  */
 #ifdef NO_BOMBING_MACROS
 #  define BU_CKMAG(_ptr, _magic, _str)
@@ -263,7 +242,9 @@ __BEGIN_DECLS
 	}
 #endif
 
-/**			B U _ A S S E R T
+
+/**
+ * B U _ A S S E R T
  *
  * @def BU_ASSERT(eqn)
  *  Quick and easy macros to generate an informative error message and
@@ -283,89 +264,50 @@ __BEGIN_DECLS
 #ifdef NO_BOMBING_MACROS
 #  define BU_ASSERT(_equation)
 #else
-#  ifdef __STDC__
-#    define BU_ASSERT(_equation)	\
+#  define BU_ASSERT(_equation)	\
 	if( !(_equation) )  { \
 		bu_log("BU_ASSERT( " #_equation " ) failed, file %s, line %d\n", \
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT failure\n"); \
 	}
-#  else
-#    define BU_ASSERT(_equation)	\
-	if( !(_equation) )  { \
-		bu_log("BU_ASSERT( _equation ) failed, file %s, line %d\n", \
-			__FILE__, __LINE__ ); \
-		bu_bomb("BU_ASSERT failure\n"); \
-	}
-#  endif
 #endif
 
 #ifdef NO_BOMBING_MACROS
 #  define BU_ASSERT_PTR(_lhs,_relation,_rhs)
 #else
-#  ifdef __STDC__
-#    define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
+#  define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_PTR( " #_lhs #_relation #_rhs " ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_PTR failure\n"); \
 	}
-#  else
-#    define BU_ASSERT_PTR(_lhs,_relation,_rhs)	\
-	if( !((_lhs) _relation (_rhs)) )  { \
-		bu_log("BU_ASSERT_PTR( _lhs _relation _rhs ) failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
-			(long)(_lhs), (long)(_rhs),\
-			__FILE__, __LINE__ ); \
-		bu_bomb("BU_ASSERT_PTR failure\n"); \
-	}
-#  endif
 #endif
 
 
 #ifdef NO_BOMBING_MACROS
 #  define BU_ASSERT_LONG(_lhs,_relation,_rhs)
 #else
-#  ifdef __STDC__
-#    define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
+#  define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_LONG( " #_lhs #_relation #_rhs " ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_LONG failure\n"); \
 	}
-#  else
-#    define BU_ASSERT_LONG(_lhs,_relation,_rhs)	\
-	if( !((_lhs) _relation (_rhs)) )  { \
-		bu_log("BU_ASSERT_LONG( _lhs _relation _rhs ) failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
-			(long)(_lhs), (long)(_rhs),\
-			__FILE__, __LINE__ ); \
-		bu_bomb("BU_ASSERT_LONG failure\n"); \
-	}
-#  endif
 #endif
 
 
 #ifdef NO_BOMBING_MACROS
 #  define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)
 #else
-#  ifdef __STDC__
-#    define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
+#  define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
 	if( !((_lhs) _relation (_rhs)) )  { \
 		bu_log("BU_ASSERT_DOUBLE( " #_lhs #_relation #_rhs " ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
 			(double)(_lhs), (double)(_rhs),\
 			__FILE__, __LINE__ ); \
 		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
 	}
-#  else
-#    define BU_ASSERT_DOUBLE(_lhs,_relation,_rhs)	\
-	if( !((_lhs) _relation (_rhs)) )  { \
-		bu_log("BU_ASSERT_DOUBLE( _lhs _relation _rhs ) failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
-			(long)(_lhs), (long)(_rhs),\
-			__FILE__, __LINE__ ); \
-		bu_bomb("BU_ASSERT_DOUBLE failure\n"); \
-	}
-#  endif
 #endif
 /** @} */
 
@@ -1336,18 +1278,16 @@ BU_EXPORT extern int	bu_debug;
  * compile-time initializers.
  *
  * Files using bu_offsetof or bu_offsetofarray will need to include
- * stddef.h
+ * stddef.h in order to get offsetof()
  */
-#if __STDC__ && !defined(ipsc860)
-#	define bu_offsetofarray(_t, _m)	offsetof(_t, _m[0])
+#ifndef offsetof
+#  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
+#  define bu_offsetofarray(_t, _m) (size_t)( (((_t *)0)->_m))
 #else
-#	define bu_offsetofarray(_t, _m)	(size_t)( (((_t *)0)->_m))
+#  define bu_offsetof(_t, _m) offsetof(_t, _m)
+#  define bu_offsetofarray(_t, _m) offsetof(_t, _m[0])
 #endif
-#if !defined(offsetof)
-#	define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
-#else
-#	define bu_offsetof(_t, _m) offsetof(_t, _m)
-#endif
+
 
 /**
  *  b u _ b y t e o f f s e t
@@ -2320,8 +2260,6 @@ BU_EXPORT BU_EXTERN(void bu_semaphore_release,
 /** @{ */
 
 /* vls.c */
-#define bu_vls_strcmp(a,b) strcmp(bu_vls_addr(a),bu_vls_addr(b))
-#define bu_vls_strncmp(a,b,n) strncmp(bu_vls_addr(a),bu_vls_addr(b),(n))
 BU_EXPORT BU_EXTERN(void bu_vls_init,
 		    (struct bu_vls *vp));
 BU_EXPORT BU_EXTERN(void bu_vls_init_if_uninit,
@@ -2375,6 +2313,13 @@ BU_EXPORT BU_EXTERN(void bu_vls_vlscat,
 BU_EXPORT BU_EXTERN(void bu_vls_vlscatzap,
 		    (struct bu_vls *dest,
 		     struct bu_vls *src));
+BU_EXPORT BU_EXTERN(int bu_vls_strcmp,
+		    (struct bu_vls *s1,
+		     struct bu_vls *s2));
+BU_EXPORT BU_EXTERN(int bu_vls_strncmp,
+		    (struct bu_vls *s1,
+		     struct bu_vls *s2,
+		     long n));
 BU_EXPORT BU_EXTERN(void bu_vls_from_argv,
 		    (struct bu_vls *vp,
 		     int argc,
