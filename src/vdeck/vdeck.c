@@ -19,31 +19,22 @@
  */
 /** @file vdeck.c
  *
- *  Author -
- *	Gary S. Moss
+ *	Derived from KARDS, written by Keith Applin.
  *
- */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
+ * Generate a COM-GEOM card images suitable for input to gift5 (also
+ * gift(1V)) from an mged(1V) target description.
+ *
+ * There are 3 files generated at a time, the Solid table, Region
+ * table, and Ident table, which when concatenated in that order, make
+ * a COM-GEOM deck.  The record formats in the order that they appear,
+ * are described below, and are strictly column oriented.
 
-/*
-	Derived from KARDS, written by Keith Applin.
-
-	Generate a COM-GEOM card images suitable for input to gift5
-	(also gift(1V)) from an mged(1V) target description.
-
-	There are 3 files generated at a time, the Solid table, Region table,
-	and Ident table, which when concatenated in that order, make a
-	COM-GEOM deck.  The record formats in the order that they appear, are
-	described below, and are strictly column oriented.
-
-	Note that the Solid table begins with a Title and a Control card, the
-	rest of the record types appear once for each object, that is, one
-	Solid record for each Solid, one Region and one
-	Ident record for each Region as totaled on the Control card, however,
-	the Solid and Region records may span more than 1 card.
-
+ * Note that the Solid table begins with a Title and a Control card,
+ * the rest of the record types appear once for each object, that is,
+ * one Solid record for each Solid, one Region and one Ident record
+ * for each Region as totaled on the Control card, however, the Solid
+ * and Region records may span more than 1 card.
+ *
 ----------------------------------------------------------------------------
 |File|Record  :             Contents              :       Format           |
 |----|---------------------------------------------------------------------|
@@ -57,9 +48,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 |----|---------------------------------------------------------------------|
 | 3  |Flag    : a -1 marks end of region table    : i5                     |
 |    |Idents  : reg_#,ident,space,mat,%,descriptn : 5i5,5x,a50             |
-|--------------------------------------------------------------------------|
-
+----------------------------------------------------------------------------
+ *
+ *  Author -
+ *	Gary S. Moss
  */
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -210,27 +204,22 @@ struct db_i	*dbip;		/* Database instance ptr */
  *  Print a non-newline-terminate string, and flush stdout
  */
 void
-prompt( fmt )
-char	*fmt;
+prompt( char *fmt )
 {
 	fputs( fmt, stdout );
 	fflush(stdout);
 }
 
-/*
- *			S O R T F U N C
+
+/**
+ * S O R T F U N C
  *
- *	Comparison function for qsort().
+ * Comparison function for qsort().
+ *
+ * 'a' is the exact template expected by qsort.
  */
 static int
-sortFunc( a, b )
-#if __STDC__
-const void	*a;		/* The exact template expected by qsort */
-const void	*b;
-#else
-const genptr_t	a;
-const genptr_t	b;
-#endif
+sortFunc(const void *a, const void *b)
 {
 	const char **lhs = (const char **)a;
 	const char **rhs = (const char **)b;
@@ -238,12 +227,12 @@ const genptr_t	b;
 	return( strcmp( *lhs, *rhs ) );
 }
 
-/*
+
+/**
  *			M A I N
  */
 int
-main( argc, argv )
-char	*argv[];
+main( int argc, char *argv[] )
 {
 	setbuf( stdout, bu_malloc( BUFSIZ, "stdout buffer" ) );
 	BU_LIST_INIT( &(sol_hd.l) );
@@ -372,17 +361,14 @@ out:
 	return 0;
 }
 
-/*
- *			F L A T T E N _ T R E E
+
+/**
+ * F L A T T E N _ T R E E
  *
- *  This routine turns a union tree into a flat string.
+ * This routine turns a union tree into a flat string.
  */
 void
-flatten_tree( vls, tp, op, neg )
-struct bu_vls	*vls;
-union tree	*tp;
-char		*op;
-int		neg;
+flatten_tree( struct bu_vls *vls, union tree *tp, char *op, int neg )
 {
 	int	bit;
 
@@ -419,8 +405,7 @@ int		neg;
 		return;
 
 	case OP_REGION:
-		bu_log("REGION 'stp'=x%x\n",
-		    tp->tr_a.tu_stp );
+		bu_log("REGION 'stp'=x%x\n", (unsigned int)tp->tr_a.tu_stp );
 		return;
 
 	default:
@@ -442,17 +427,15 @@ int		neg;
 	}
 }
 
-/*
- *			R E G I O N _ E N D
+
+/**
+ * R E G I O N _ E N D
  *
- *  This routine will be called by db_walk_tree() once all the
- *  solids in this region have been visited.
+ * This routine will be called by db_walk_tree() once all the solids
+ * in this region have been visited.
  */
-union tree *region_end( tsp, pathp, curtree, client_data )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-genptr_t		client_data;
+union tree *
+region_end( register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data )
 {
 	struct directory	*dp;
 	char			*fullname;
@@ -577,16 +560,14 @@ genptr_t		client_data;
 	return  (union tree *)0;
 }
 
-/*
- *			G E T T R E E _ L E A F
+
+/**
+ * G E T T R E E _ L E A F
  *
- *  Re-use the librt "soltab" structures here, for our own purposes.
+ * Re-use the librt "soltab" structures here, for our own purposes.
  */
-union tree *gettree_leaf( tsp, pathp, ip, client_data )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_db_internal	*ip;
-genptr_t		client_data;
+union tree *
+gettree_leaf( struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data )
 {
 	register fastf_t	f;
 	register struct soltab	*stp;
@@ -745,9 +726,9 @@ found_it:
 	return(curtree);
 }
 
+
 void
-swap_vec( v1, v2 )
-vect_t	v1, v2;
+swap_vec( vect_t v1, vect_t v2 )
 {
 	vect_t	work;
 
@@ -756,9 +737,9 @@ vect_t	v1, v2;
 	VMOVE( v2, work );
 }
 
+
 void
-swap_dbl( d1, d2 )
-register double	*d1, *d2;
+swap_dbl( register double *d1, register double *d2 )
 {
 	double	t;
 	t = *d1;
@@ -767,17 +748,14 @@ register double	*d1, *d2;
 	return;
 }
 
-/*
- *			A D D T O R
+
+/**
+ * A D D T O R
  *
- *  Process torus.
+ * Process torus.
  */
 void
-addtor( v, gp, name, num )
-struct bu_vls		*v;
-struct rt_tor_internal	*gp;
-char			*name;
-int			num;
+addtor( struct bu_vls *v, struct rt_tor_internal *gp, char *name, int num )
 {
 	BU_CK_VLS(v);
 	RT_TOR_CK_MAGIC(gp);
@@ -799,15 +777,12 @@ int			num;
 	bu_vls_strcat( v, "\n");
 }
 
-/*
- *			A D D H A L F
+
+/**
+ * A D D H A L F
  */
 void
-addhalf( v, gp, name, num )
-struct bu_vls		*v;
-struct rt_half_internal	*gp;
-char			*name;
-int			num;
+addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num )
 {
 	BU_CK_VLS(v);
 	RT_HALF_CK_MAGIC(gp);
@@ -822,15 +797,12 @@ int			num;
 	bu_vls_strcat( v, "\n" );
 }
 
-/*
- *			A D D A R B N
+
+/**
+ * A D D A R B N
  */
 void
-addarbn( v, gp, name, num )
-struct bu_vls		*v;
-struct rt_arbn_internal	*gp;
-char			*name;
-int			num;
+addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num )
 {
 	register int	i;
 
@@ -859,14 +831,9 @@ int			num;
 	}
 }
 
+
 static void
-vls_solid_pts( v, pts, npts, name, num, kind )
-struct bu_vls	*v;
-const point_t	pts[];
-const int	npts;
-const char	*name;
-const int	num;
-const char	*kind;
+vls_solid_pts(struct bu_vls *v, const point_t pts[], int npts, const char *name, int num, const char *kind )
 {
 	register int	i;
 
@@ -888,17 +855,14 @@ const char	*kind;
 	}
 }
 
-/*
+
+/**
  *			A D D A R B
  *
  *  Process generalized arb.
  */
 void
-addarb( v, gp, name, num )
-struct bu_vls		*v;
-struct rt_arb_internal	*gp;
-char			*name;
-int			num;
+addarb(struct bu_vls *v, struct rt_arb_internal *gp, char *name, int num )
 {
 	register int	i;
 	int	uniq_pts[8];
@@ -950,17 +914,13 @@ int			num;
 #define	ELL1	2
 #define SPH	3
 
-/*
- *			A D D E L L
+/**
+ * A D D E L L
  *
- *	Process the general ellipsoid.
+ * Process the general ellipsoid.
  */
 void
-addell( v, gp, name, num )
-struct bu_vls		*v;
-struct rt_ell_internal	*gp;
-char			*name;
-int			num;
+addell(struct bu_vls *v, struct rt_ell_internal *gp, char *name, int num )
 {
 	double	ma, mb, mc;
 	int	cgtype;
@@ -1039,23 +999,21 @@ int			num;
 	}
 }
 
+
 #define TGC	1
 #define TEC	2
 #define TRC	3
 #define REC	4
 #define RCC	5
 
-/*
- *			A D D T G C
+
+/**
+ * A D D T G C
  *
- *	Process generalized truncated cone.
+ * Process generalized truncated cone.
  */
 void
-addtgc( v, gp, name, num )
-struct bu_vls		*v;
-struct rt_tgc_internal	*gp;
-char			*name;
-int			num;
+addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num )
 {
 	vect_t	axb, cxd;
 	double	ma, mb, mc, md, maxb, mcxd, mh;
@@ -1210,16 +1168,12 @@ int			num;
 	}
 }
 
-/*
- *			A R S _ C U R V E _ O U T
+
+/**
+ * A R S _ C U R V E _ O U T
  */
 void
-ars_curve_out( v, fp, todo, curveno, num )
-struct bu_vls		*v;
-fastf_t			*fp;
-int			todo;
-int			curveno;
-int			num;
+ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num )
 {
 	while( todo > 0 )  {
 		vls_itoa( v, num, 5 );
@@ -1245,17 +1199,14 @@ int			num;
 	}
 }
 
-/*
- *			A D D A R S
+
+/**
+ * A D D A R S
  *
- *	Process triangular surfaced polyhedron - ars.
+ * Process triangular surfaced polyhedron - ars.
  */
 void
-addars( v, gp, name, num )
-struct bu_vls		*v;
-struct rt_ars_internal	*gp;
-char			*name;
-int			num;
+addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num )
 {
 	register int	i;
 
@@ -1275,14 +1226,14 @@ int			num;
 	}
 }
 
-/*	e w r i t e
-	Write with error checking.
+
+/**
+ * e w r i t e
+ *
+ * Write with error checking.
  */
 void
-ewrite( fp, buf, bytes )
-FILE		*fp;
-const char	*buf;
-unsigned	bytes;
+ewrite(FILE *fp, const char *buf, unsigned bytes )
 {
 	if( bytes == 0 )  return;
 
@@ -1293,20 +1244,14 @@ unsigned	bytes;
 	}
 }
 
-/*
-	Section 1:	C O M M A N D S
 
-			deck()
-			shell()
- */
-
-/*	d e c k ( )
-	make a COMGEOM deck for current list of objects
-
+/**
+ * d e c k
+ *
+ * make a COMGEOM deck for current list of objects
  */
 void
-deck( prefix )
-register char *prefix;
+deck( register char *prefix )
 {
 	nns = nnr = 0;
 
@@ -1412,12 +1357,14 @@ register char *prefix;
 	/* XXX should free soltab list */
 }
 
-/*	s h e l l ( )
-	Execute shell command.
+
+/**
+ * s h e l l
+ *
+ * Execute shell command.
  */
 int
-shell( args )
-char  *args[];
+shell(char *args[])
 {
 	register char	*from, *to;
 	char		*argv[4], cmdbuf[MAXLN];
@@ -1467,15 +1414,17 @@ char  *args[];
 	return( 0 );
 }
 
-/*	t o c ( )
-	Build a sorted list of names of all the objects accessable
-	in the object file.
+
+/**
+ * t o c
+ *
+ * Build a sorted list of names of all the objects accessable in the
+ * object file.
  */
 void
 toc()
 {
 	register struct directory *dp;
-	register int		i;
 	register int		count;
 
 	/* Determine necessary table size */
@@ -1497,21 +1446,14 @@ toc()
 	} FOR_ALL_DIRECTORY_END;
 }
 
-/*
-	Section 3:	L I S T   P R O C E S S I N G   R O U T I N E S
 
-			list_toc()
-			col_prt()
-			insert()
-			delete()
-*/
-
-/*	l i s t _ t o c ( )
-	List the table of contents.
+/**
+ * l i s t _ t o c
+ *
+ * List the table of contents.
  */
 void
-list_toc( args )
-char	 *args[];
+list_toc( char *args[] )
 {
 	register int	i, j;
 	(void) fflush( stdout );
@@ -1530,6 +1472,7 @@ char	 *args[];
 	return;
 }
 
+
 #define NAMESIZE	16
 #define MAX_COL	(NAMESIZE*5)
 #define SEND_LN()	{\
@@ -1538,13 +1481,14 @@ char	 *args[];
 			column = 0;\
 			}
 
-/*	c o l _ p r t ( )
-	Print list of names in tabular columns.
+
+/**
+ * c o l _ p r t
+ *
+ * Print list of names in tabular columns.
  */
 int
-col_prt( list, ct )
-register char	*list[];
-register int	ct;
+col_prt( register char *list[], register int ct )
 {
 	char		buf[MAX_COL+2];
 	register int	i, column, spaces;
@@ -1572,14 +1516,15 @@ register int	ct;
 	return	ct;
 }
 
-/*	i n s e r t ( )
-	Insert each member of the table of contents 'toc_list' which
-	matches one of the arguments into the current list 'curr_list'.
+
+/**
+ * i n s e r t
+ *
+ * Insert each member of the table of contents 'toc_list' which
+ * matches one of the arguments into the current list 'curr_list'.
  */
 int
-insert(  args,	ct )
-char		*args[];
-register int	ct;
+insert(char *args[], register int ct)
 {
 	register int	i, j, nomatch;
 
@@ -1603,13 +1548,14 @@ register int	ct;
 	return	curr_ct;
 }
 
-/*	d e l e t e ( )
-	delete all members of current list 'curr_list' which match
-	one of the arguments
+/**
+ * d e l e t e
+ *
+ * delete all members of current list 'curr_list' which match one of
+ * the arguments.
  */
 int
-delete(  args )
-char	*args[];
+delete(char *args[])
 {
 	register int	i;
 	register int	nomatch;
@@ -1647,22 +1593,14 @@ char	*args[];
 	return( curr_ct );
 }
 
-/*
-	Section 4:	S T R I N G   P R O C E S S I N G   R O U T I N E S
 
-			itoa()
-			check()
- */
-
-/*	i t o a ( )
-	Convert integer to ascii  wd format.
+/**
+ * i t o a
+ *
+ * Convert integer to ascii  wd format.
  */
 void
-itoa( n, s, w )
-register
-char	*s;
-register
-int   n,    w;
+itoa( register int n, register char *s, register int w )
 {
 	int	 c, i, j, sign;
 
@@ -1688,26 +1626,23 @@ int   n,    w;
 	}
 }
 
+
 void
-vls_blanks( v, n )
-struct bu_vls	*v;
-int		n;
+vls_blanks(struct bu_vls *v, int n )
 {
 	BU_CK_VLS(v);
 	bu_vls_strncat( v, "                                                                                                                                ",
 	    n);
 }
 
-/*
- *			V L S _ I T O A
+
+/**
+ * V L S _ I T O A
  *
- *	Convert integer to ascii  wd format.
+ * Convert integer to ascii  wd format.
  */
 void
-vls_itoa( v, n, w )
-struct bu_vls	*v;
-register int	n;
-register int	w;
+vls_itoa(struct bu_vls *v, int n, int w )
 {
 	int	 c, i, j, sign;
 	register char	*s;
@@ -1738,6 +1673,7 @@ register int	w;
 	}
 }
 
+
 void
 vls_ftoa_vec_cvt(struct bu_vls *v, const vect_t vec, int w, int d)
 {
@@ -1745,6 +1681,7 @@ vls_ftoa_vec_cvt(struct bu_vls *v, const vect_t vec, int w, int d)
 	vls_ftoa( v, vec[Y]*dbip->dbi_base2local, w, d );
 	vls_ftoa( v, vec[Z]*dbip->dbi_base2local, w, d );
 }
+
 
 void
 vls_ftoa_vec(struct bu_vls *v, const vect_t vec, int w, int d)
@@ -1754,16 +1691,18 @@ vls_ftoa_vec(struct bu_vls *v, const vect_t vec, int w, int d)
 	vls_ftoa( v, vec[Z], w, d );
 }
 
+
 void
 vls_ftoa_cvt(struct bu_vls *v, double f, int w, int d)
 {
 	vls_ftoa( v, f*dbip->dbi_base2local, w, d );
 }
 
-/*
- *			V L S _ F T O A
+
+/**
+ * V L S _ F T O A
  *
- *	Convert float to ascii  w.df format.
+ * Convert float to ascii  w.df format.
  */
 void
 vls_ftoa( struct bu_vls *v, double f, int w, int d )
@@ -1828,26 +1767,15 @@ vls_ftoa( struct bu_vls *v, double f, int w, int d )
 	}
 }
 
-/*
-	Section 5:	I / O   R O U T I N E S
+
+/**
+ * g e t c m d
  *
-			getcmd()
-			getarg()
-			menu()
-			blank_fill()
-			bug()
-			fbug()
- */
-
-/*	g e t c m d ( )
-	Return first character read from keyboard,
-	copy command into args[0] and arguments into args[1]...args[n].
-
+ * Return first character read from keyboard, copy command into
+ * args[0] and arguments into args[1]...args[n].
  */
 char
-getcmd( args, ct )
-char		*args[];
-register int	ct;
+getcmd(char *args[], register int ct)
 {
 	/* Get arguments.						 */
 	if( ct == 0 )
@@ -1871,20 +1799,19 @@ register int	ct;
 	return	(args[0])[0];
 }
 
-/*	g e t a r g ( )
-	Get a word of input into 'str',
-	Return 0 if newline is encountered.
-	Return 1 otherwise.
+
+/**
+ * g e t a r g
+ *
+ * Get a word of input into 'str', Return 0 if newline is encountered.
+ * Return 1 otherwise.
  */
 char
-getarg( str )
-register char	*str;
+getarg( register char *str )
 {
-	do
-	{
+	do {
 		*str = getchar();
-		if( (int)(*str) == ' ' )
-		{
+		if( (int)(*str) == ' ' ) {
 			*str = '\0';
 			return( 1 );
 		}
@@ -1897,12 +1824,14 @@ register char	*str;
 	return	0;
 }
 
-/*	m e n u ( )
-	Display menu stored at address 'addr'.
+
+/**
+ * m e n u
+ *
+ * Display menu stored at address 'addr'.
  */
 void
-menu( addr )
-char **addr;
+menu( char **addr )
 {
 	register char	**sbuf = addr;
 	while( *sbuf )
@@ -1911,31 +1840,27 @@ char **addr;
 	return;
 }
 
-/*	b l a n k _ f i l l ( )
-	Write count blanks to fildes.
+
+/**
+ * b l a n k _ f i l l 
+ *
+ * Write count blanks to fildes.
  */
 void
-blank_fill( fp, count )
-FILE		*fp;
-register int	count;
+blank_fill(FILE *fp, register int count)
 {
 	ewrite( fp, BLANKS, (unsigned) count );
 }
 
-/*
-	Section 6:	I N T E R R U P T   H A N D L E R S
- *
-			abort_sig()
-			quit()
- */
 
-/*	a b o r t ( )
-	Abort command without terminating run (restore command prompt) and
-	cleanup temporary files.
+/**
+ * a b o r t
+ *
+ * Abort command without terminating run (restore command prompt) and
+ * cleanup temporary files.
  */
-/*ARGSUSED*/
 void
-abort_sig( sig )
+abort_sig( int sig )
 {
 	(void) signal( SIGINT, quit );	/* reset trap */
 
@@ -1943,16 +1868,19 @@ abort_sig( sig )
 	longjmp( env, sig );
 }
 
-/*	q u i t ( )
-	Terminate run.
+
+/**
+ * q u i t
+ *
+ * Terminate run.
  */
-/*ARGSUSED*/
 void
-quit( sig )
+quit( int sig )
 {
 	(void) fprintf( stdout, "quitting...\n" );
 	bu_exit( 0, NULL );
 }
+
 
 /*
  * Local Variables:
