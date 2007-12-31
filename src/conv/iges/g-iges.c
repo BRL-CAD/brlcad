@@ -313,7 +313,7 @@ main(int argc, char *argv[])
 		}
 
 		/* Open the temporary file for the parameter section */
-		if( (fp_param=tmpfile()) == NULL ) {
+		if( (fp_param=bu_temp_file(NULL, 0)) == NULL ) {
 			perror( "g-iges" );
 			bu_exit(1, "Cannot open temporary file\n" );
 		}
@@ -607,7 +607,7 @@ genptr_t		client_data;
 			}
 
 			/* Open the temporary file for the parameter section */
-			if( (fp_param=tmpfile()) == NULL ) {
+			if( (fp_param=bu_temp_file(NULL, 0)) == NULL ) {
 				perror( "g-iges" );
 				bu_exit(1, "Cannot open temporary file\n" );
 			}
