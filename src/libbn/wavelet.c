@@ -161,12 +161,12 @@
 #include "vmath.h"
 #include "bn.h"
 
-
-#ifdef __STDC__
+/**
+ * This source file uses C-styple "templates" where functions specific
+ * to a set of specified data types are automatically
+ * declared/provided via one single macro implementation.
+ */
 #define decompose_1d(DATATYPE) bn_wlt_haar_1d_ ## DATATYPE ## _decompose
-#else
-#define decompose_1d(DATATYPE) bn_wlt_haar_1d_/**/DATATYPE/**/_decompose
-#endif
 
 
 #define make_wlt_haar_1d_decompose(DATATYPE)  \
@@ -231,11 +231,7 @@ unsigned long limit;	/* extent of decomposition */ \
 }
 
 
-#if defined(__STDC__)
 #define reconstruct(DATATYPE ) bn_wlt_haar_1d_ ## DATATYPE ## _reconstruct
-#else
-#define reconstruct(DATATYPE) bn_wlt_haar_1d_/**/DATATYPE/**/_reconstruct
-#endif
 
 #define make_wlt_haar_1d_reconstruct( DATATYPE ) \
 void \
@@ -335,11 +331,7 @@ make_wlt_haar_1d_decompose(long)
 make_wlt_haar_1d_reconstruct(long)
 
 
-#ifdef __STDC__
 #define decompose_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose
-#else
-#define decompose_2d(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_decompose
-#endif
 
 #define make_wlt_haar_2d_decompose(DATATYPE) \
 void \
@@ -437,11 +429,7 @@ unsigned long limit; \
 }
 
 
-#ifdef __STDC__
 #define reconstruct_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _reconstruct
-#else
-#define reconstruct_2d(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_reconstruct
-#endif
 
 #define make_wlt_haar_2d_reconstruct(DATATYPE) \
 void \
@@ -564,11 +552,7 @@ make_wlt_haar_2d_reconstruct(short)
 make_wlt_haar_2d_reconstruct(long)
 
 
-#ifdef __STDC__
 #define decompose_2d_2( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose2
-#else
-#define decompose_2d_2(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_decompose2
-#endif
 
 #define make_wlt_haar_2d_decompose2(DATATYPE) \
 void \
