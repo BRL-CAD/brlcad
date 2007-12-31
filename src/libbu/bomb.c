@@ -179,19 +179,23 @@ bu_bomb(const char *str)
 #if defined(DEBUG)
     /* save a backtrace, should hopefully have debug symbols */
     {
-	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
-
 	/* if the file already exists, there's probably another thread
 	 * writing out a report for the current process. acquire a
 	 * mapped file semaphore so we only have one thread writing to
-	 * the file at a time (can't use BU_SEM_SYSCALL).
+	 * the file at a time (can't just use BU_SEM_SYSCALL).
 	 */
 	bu_semaphore_acquire( BU_SEM_MAPPEDFILE );
+	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
 	if (!bu_file_exists(tracefile)) {
+	    bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    fputs("Saving stack trace to ", stderr);
 	    fputs(tracefile, stderr);
+	    fputs(str, stderr);
+	    fputs(str, stderr);
+	    fputs(str, stderr);
 	    fputc('\n', stderr);
 	    fflush(stderr);
+	    bu_semaphore_release( BU_SEM_SYSCALL );
 
 	    bu_crashreport(tracefile);
 	}
@@ -204,10 +208,13 @@ bu_bomb(const char *str)
 
     /* try to save a core dump */
     if( bu_debug & BU_DEBUG_COREDUMP )  {
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fputs("Causing intentional core dump due to debug flag\n", stdout);
 	fputs("Causing intentional core dump due to debug flag\n", stderr);
 	fflush(stdout);
 	fflush(stderr);
+	bu_semaphore_release( BU_SEM_SYSCALL );
+
 	fd = open("/dev/tty", 1);
 	if (fd > 0) {
 	    write(fd, "Causing intentional core dump due to debug flag\n", 48);
