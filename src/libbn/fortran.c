@@ -98,23 +98,14 @@ pl_strncpy(register char *out, register char *in, register int sz)
 }
 
 /**
- *  Macro 'F' is used to take the 'C' function name,
- *  and convert it to the convention used for a particular system.
- *  Both lower-case and upper-case alternatives have to be provided
- *  because there is no way to get the C preprocessor to change the
- *  case of a token.
+ * Macro 'F' is used to take the 'C' function name, and convert it to
+ * the convention used for a particular system.  Both lower-case and
+ * upper-case alternatives have to be provided because there is no way
+ * to get the C preprocessor to change the case of a token.
+ *
+ * Lower case, with a trailing underscore.
  */
-#if defined(apollo) || defined(mips) || defined(aux)
-	/* Lower case, with a trailing underscore */
-#ifdef __STDC__
-#	define	F(lc,uc)	lc ## _
-#else
-#	define	F(lc,uc)	lc/**/_
-#endif
-#endif
-#if !defined(F)
-#	define	F(lc,uc)	lc
-#endif
+#define	F(lc,uc) lc ## _
 
 /*
  *  These interfaces provide necessary access to C library routines
