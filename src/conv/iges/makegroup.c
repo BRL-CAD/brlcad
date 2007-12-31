@@ -18,20 +18,16 @@
  * information.
  */
 /** @file makegroup.c
+ *
+ * This routine creates a group called "all" consisting of all
+ * unreferenced entities.
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine creates a group called "all" consisting of
-	all unreferenced entities	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

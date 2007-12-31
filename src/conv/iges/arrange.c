@@ -18,20 +18,17 @@
  * information.
  */
 /** @file arrange.c
+ *
+ * This routine manipulates the boolean tree towards the form that
+ * BRL-CAD likes, i.e. (((a+b)-c)+d) as opposed to (a+(b-(c-d))).  The
+ * tree is traversed in LRN order.
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-/*	This routine manipulates the boolean tree towards the form
-	that BRL-CAD likes, i.e. (((a+b)-c)+d) as opposed to (a+(b-(c-d))).
-	The tree is traversed in LRN order.	*/
 
 #include "./iges_struct.h"
 

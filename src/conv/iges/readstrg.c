@@ -18,28 +18,23 @@
  * information.
  */
 /** @file readstrg.c
+ *
+ * This routine reads the next field in "card" buffer.  It expects the
+ * field to contain a character string of the form "nHstring" where n
+ * is the length of "string". If "id" is not the null string, then
+ * "id" is printed followed by "string".  If "id" is null, then the
+ * only action taken is to read the string (effectively skipping the
+ * field).
+ *
+ *	"eof" is the "end-of-field" delimiter
+ *	"eor" is the "end-of-record" delimiter
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* This routine reads the next field in "card" buffer
-	It expects the field to contain a character string
-	of the form "nHstring" where n is the length
-	of "string". If "id" is not the null string, then
-	"id" is printed followed by "string".  If "id" is null,
-	then the only action taken is to read the string
-	(effectively skipping the field).
-
-	"eof" is the "end-of-field" delimiter
-	"eor" is the "end-of-record" delimiter	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

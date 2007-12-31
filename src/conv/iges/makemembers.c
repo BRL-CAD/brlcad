@@ -18,21 +18,17 @@
  * information.
  */
 /** @file makemembers.c
+ *
+ * This routine traverses a boolean tree that has been converted to a
+ * BRL-CAD acceptable format, and creates the member records for the
+ * region.  The tree is traversed in LNR order.
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine traverses a boolean tree that has been converted
-	to a BRL-CAD acceptable format, and creates the member records
-	for the region.  The tree is traversed in LNR order.	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

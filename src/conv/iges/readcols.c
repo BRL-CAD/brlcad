@@ -18,21 +18,17 @@
  * information.
  */
 /** @file readcols.c
+ *
+ * This routine reads a specific number of characters from the "card"
+ * buffer.  The number is "cols".  The string of characters read is
+ * pointed to by "id".
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* This routine reads a specific number of characters from the "card"
-	buffer.  The number is "cols".  The string of characters read
-	is pointed to by "id". 	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

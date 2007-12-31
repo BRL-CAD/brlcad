@@ -107,10 +107,6 @@ OPTICAL_EXPORT extern int	rdebug;
  *  @author
  *	Michael John Muuss
  *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 /* These definitions are each for one bit */

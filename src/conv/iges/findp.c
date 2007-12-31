@@ -18,24 +18,20 @@
  * information.
  */
 /** @file findp.c
+ *
+ * This routine reads the last record in the IGES file.  That record
+ * contains the nunber of records in each section.  These numbers are
+ * used to calculate the starting record number for the parameter
+ * section and the directory section.  space is then reserved for the
+ * directory.  This routine depends on "fseek" and "ftell" operating
+ * with offsets given in bytes.
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* This routine reads the last record in the IGES file.
-	That record contains the nunber of records in each section.
-	These numbers are used to calculate the starting record number
-	for the parameter section and the directory section.
-	space is then reserved for the directory.  This routine depends on
-	"fseek" and "ftell" operating with offsets given in bytes.	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

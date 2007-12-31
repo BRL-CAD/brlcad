@@ -27,16 +27,6 @@
  *	Michael John Muuss
  *	Earl P Weaver
  *
- *	Ballistic Research Laboratory
- *	U. S. Army
- *	March, 1980
- *
- *
- *		R E V I S I O N   H I S T O R Y
- *
- *	March 81  CAS	Added ARS 'A' and 'B' record information
- *
- *	09/22/81  MJM	Changed m_ record to use matrix transformation
  */
 
 #define NAMESIZE	16

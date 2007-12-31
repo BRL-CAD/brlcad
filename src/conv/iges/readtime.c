@@ -18,33 +18,29 @@
  * information.
  */
 /** @file readtime.c
+ *
+ * This routine reads the next field in "card" buffer
+ *	It expects the field to contain a string of the form:
+ *		13HYYMMDD.HHNNSS or 15YYYYMMDD.HHNNSS
+ *		where:
+ *			YY is the year (last 2 digits) or YYYY is the year (all 4 digits)
+ *			MM is the month (01 - 12)
+ *			DD is the day (01 - 31)
+ *			HH is the hour (00 -23 )
+ *			NN is the minute (00 - 59)
+ *			SS is the second (00 - 59)
+ *	The string is read and printed out in the form:
+ *		/MM/DD/YYYY at HH:NN:SS
+ *
+ *	"eof" is the "end-of-field" delimiter
+ *	"eor" is the "end-of-record" delimiter
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* This routine reads the next field in "card" buffer
-	It expects the field to contain a string of the form:
-		13HYYMMDD.HHNNSS or 15YYYYMMDD.HHNNSS
-		where:
-			YY is the year (last 2 digits) or YYYY is the year (all 4 digits)
-			MM is the month (01 - 12)
-			DD is the day (01 - 31)
-			HH is the hour (00 -23 )
-			NN is the minute (00 - 59)
-			SS is the second (00 - 59)
-	The string is read and printed out in the form:
-		/MM/DD/YYYY at HH:NN:SS
-
-	"eof" is the "end-of-field" delimiter
-	"eor" is the "end-of-record" delimiter	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

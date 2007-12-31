@@ -18,21 +18,17 @@
  * information.
  */
 /** @file convsolids.c
+ *
+ * This routine loops through all the directory entries and calls
+ * appropriate routines to convert solid entities to BRL-CAD
+ * equivalents.
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine loops through all the directory entries and calls
-	appropriate routines to convert solid entities to BRL-CAD
-	equivalents	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

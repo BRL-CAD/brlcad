@@ -31,11 +31,6 @@
  *  @author
  *	Michael John Muuss
  *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  *  Include Sequencing -
  *	#  include <stdio.h>	/_* For FILE * *_/
  *	# include <math.h>

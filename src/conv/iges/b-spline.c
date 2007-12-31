@@ -18,28 +18,24 @@
  * information.
  */
 /** @file b-spline.c
- *  Authors -
+ *
+ * These functions evaluate a Rational B-Spline Curve
+ *
+ * Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
-/*	These functions evaluate a Rational B-Spline Curve */
-
 #include "common.h"
-
 
 #include <stdio.h>
 
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"		/* for declaration of bu_calloc() */
+
 
 #undef W		/* from vmath.h */
 

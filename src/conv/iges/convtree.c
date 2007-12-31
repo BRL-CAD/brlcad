@@ -18,20 +18,16 @@
  * information.
  */
 /** @file convtree.c
- *  Authors -
+ *
+ * This routine controls the conversion of IGES boolean trees
+ * to BRL-CAD objects.
+ *
+ * Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine controls the conversion of IGES boolean trees
-	to BRL-CAD objects	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

@@ -18,21 +18,17 @@
  * information.
  */
 /** @file readmatrix.c
- *  Authors -
+ * 
+ * Routine to read a transformation matrix from the IGES file.  xform
+ * is the pointer to the parameter entry for the matrix, rot is where
+ * the matrix is to be placed.
+ *
+*  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* Routine to read a transformation matrix from the IGES file.
-	xform is the pointer to the parameter entry for the matrix,
-	rot is where the matrix is to be placed. */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

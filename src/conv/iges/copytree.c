@@ -18,21 +18,17 @@
  * information.
  */
 /** @file copytree.c
- *  Authors -
+ *
+ * This routine copies a tree rooted at "root" by recursion the
+ * "parent" field of the root of the new tree is filed by the "parent"
+ * argument.
+ *
+ * Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine copies a tree rooted at "root" by recursion
-	the "parent" field of the root of the new tree is filed by
-	the "parent" argument	*/
 
 #include "./iges_struct.h"
 

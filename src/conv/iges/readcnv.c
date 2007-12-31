@@ -18,29 +18,23 @@
  * information.
  */
 /** @file readcnv.c
+ *
+ * This routine reads the next field in "card" buffer. It expects the
+ * field to contain a string representing a "float". The string is
+ * read and converted to type "fastf_t", mutilpied by "conv_factor",
+ * and returned in "inum".  If "id" is not the null string, then "id"
+ * is printed followed by the number.  "conv_factor" is a factor to
+ * convert to mm and multiply by a scale factor.
+ *
+ *	"eof" is the "end-of-field" delimiter
+ *	"eor" is the "end-of-record" delimiter
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* This routine reads the next field in "card" buffer
-	It expects the field to contain a string representing a "float"
-	The string is read and converted to type
-	"fastf_t", mutilpied by "conv_factor", and returned in "inum".
-	If "id" is not the null string, then
-	"id" is printed followed by the number.
-	"conv_factor" is a factor to convert to mm and multiply by
-	a scale factor.
-
-	"eof" is the "end-of-field" delimiter
-	"eor" is the "end-of-record" delimiter	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

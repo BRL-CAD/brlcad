@@ -18,26 +18,21 @@
  * information.
  */
 /** @file bubbleup.c
+ *
+ * This routine finds union operators in the boolean tree that cannot
+ * be handled by BRL-CAD (due to BRL-CAD's odd way of handling the
+ * union operator), and moves them toward the root of the tree.  To
+ * get the tree into a BRL-CAD-acceptable format, no intersection or
+ * subtraction operators can be above any union operator in the tree.
+ * Traverses the tree in LRN order.  Returns 1 if no change was made
+ * to the tree, 0 otherwise.
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine finds union operators in the boolean tree
-	that cannot be handled by BRL-CAD (due to BRL-CAD's odd
-	way of handling the union operator), and moves them
-	toward the root of the tree.  To get the tree into
-	a BRL-CAD-acceptable format, no intersection or
-	subtraction operators can be above any union operator
-	in the tree.  Traverses the tree in LRN order.  Returns 1
-	if no change was made to the tree, 0 otherwise.	*/
 
 #include "./iges_struct.h"
 

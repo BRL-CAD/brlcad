@@ -18,23 +18,18 @@
  * information.
  */
 /** @file makedir.c
+ *
+ * Routine to read the directory section of an IGES file.  and store
+ * needed info in the 'directory' structures.  dir[n] is the structure
+ * for entity #n.  The directory entry for entity #n is located on
+ * line D'2n+1' of the iges file.
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* Routine to read the directory section of an IGES file.
-	and store needed info in the 'directory' structures.
-	dir[n] is the structure for entity #n.
-	The directory entry for entity #n is located on
-	line D'2n+1' of the iges file.	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"

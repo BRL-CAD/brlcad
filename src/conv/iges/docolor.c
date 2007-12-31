@@ -18,20 +18,16 @@
  * information.
  */
 /** @file docolor.c
- *  Authors -
+ *
+ * This routine loops through all the directory entries and calls and
+ * sets colors according to the directory entry field #13
+ * 
+*  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine loops through all the directory entries and calls
-	and sets colors according to the directory entry field #13 */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
