@@ -28,12 +28,10 @@
  *  Assumption:  libc-provided sprintf() function is safe to use in parallel,
  *  on parallel systems.
  *
- *  @author
+ *  Authors -
  *	Michael John Muuss
- *
+ *	Christopher Sean Morrison
  */
-
-static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
@@ -52,7 +50,7 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 
 
 const char bu_vls_message[] = "bu_vls_str";
-extern const char bu_strdup_message[];
+const char bu_strdup_message[] = "bu_strdup string";
 
 /**
  *			B U _ V L S _ I N I T
@@ -433,6 +431,7 @@ bu_vls_strncat(register struct bu_vls *vp, const char *s, long int n)
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0';	/* force null termination */
 }
 
+
 /**
  *			B U _ V L S _ V L S C A T
  *
@@ -467,6 +466,47 @@ bu_vls_vlscatzap(register struct bu_vls *dest, register struct bu_vls *src)
     bu_vls_vlscat( dest, src );
     bu_vls_trunc( src, 0 );
 }
+
+
+/**
+ * b u _ v l s _ s t r c m p
+ *
+ * Lexicographically compare to vls strings.  Returns an integer
+ * greater than, equal to, or less than 0, according as the string s1
+ * is greater than, equal to, or less than the string s2.
+ */
+int
+bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
+{
+    BU_CK_VLS(s1);
+    BU_CK_VLS(s2);
+
+    return strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
+}
+
+
+/**
+ * b u _ v l s _ s t r n c m p
+ *
+ * Lexicographically compare two vls strings up to n characters.
+ * Returns an integer greater than, equal to, or less than 0,
+ * according as the string s1 is greater than, equal to, or less than
+ * the string s2.
+ */
+int
+bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, long n)
+{
+    BU_CK_VLS(s1);
+    BU_CK_VLS(s2);
+
+    if (n <= 0) {
+	/* they match at zero chars */
+	return 0;
+    }
+
+    return strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
+}
+
 
 /**
  *			B U _ V L S _ F R O M _ A R G V
