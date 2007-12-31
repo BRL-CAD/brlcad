@@ -22,9 +22,10 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * fix rt parallel crash
   (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
 
-* convert non-critical bu_bomb instances to bu_exit
+* fix parallel crash report generation (multiple BU_MAPPED_FILE's
+  getting acquired)
 
-* test parallel crash report generation
+* convert non-critical bu_bomb instances to bu_exit
 
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
