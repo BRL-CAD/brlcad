@@ -32,7 +32,6 @@
  *	The U. S. Army Research Laboratory			@n
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
@@ -274,7 +273,8 @@ for sh/bash users:\n\
 }
 
 
-/** b u _ d a t a _ m i s s i n g
+/**
+ * b u _ d a t a _ m i s s i n g
  *
  * print out an error/warning message if we cannot find the specified
  * BRLCAD_DATA (compile-time install path)
@@ -401,8 +401,9 @@ bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct b
 }
 
 
-/**	B U _ B R L C A D _ R O O T
- *@brief
+/**
+ * b u _ b r l c a d _ r o o t
+ *
  * Locate where the BRL-CAD applications and libraries are installed.
  *
  * The BRL-CAD root is searched for in the following order of
@@ -532,9 +533,8 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 
 
 /**
- *	B U _ B R L C A D _ D A T A
+ * b u _ b r l c a d _ d a t a
  *
- * @brief
  * Locate where the BRL-CAD data resources are installed.
  *
  * The BRL-CAD data resources are searched for in the following order
