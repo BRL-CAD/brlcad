@@ -179,11 +179,7 @@ HmWindow;
 	This routine returns true or false on success or failure to open
 	"/dev/tty".
 **/
-#if __STDC__
 extern boolean	HmInit( int x, int y, int maxvis );
-#else
-extern boolean	HmInit();
-#endif
 extern FILE	*HmTtyFp;
 extern int	HmLftMenu;
 extern int	HmTopMenu;
@@ -252,11 +248,7 @@ extern int	HmTtyFd;
 	that menu will scroll upward if possible and beep if not.
 
 **/
-#if __STDC__
 extern HmItem	*HmHit( HmMenu *menup );
-#else
-extern HmItem	*HmHit();
-#endif
 
 /**
 
@@ -268,11 +260,7 @@ extern HmItem	*HmHit();
 	screen used by the Hm package (from HmTopMenu to HmYCOMMO).
 
 **/
-#if __STDC__
 extern void	HmRedraw( void );
-#else
-extern void	HmRedraw();
-#endif
 
 /**
 
@@ -281,11 +269,7 @@ extern void	HmRedraw();
 	HmError() will display string on line HmYCOMMO.
 
 **/
-#if __STDC__
 extern void	HmError( char *str );
-#else
-extern void	HmError();
-#endif
 
 #define HmYCOMMO	(HmTopMenu+HmMaxVis+HmHGTBORDER)
 #define HmYPROMPT	(HmYCOMMO+1)
@@ -309,15 +293,10 @@ extern void	HmError();
 	HmGetchar() and the input stream is buffered.
 
 **/
-#if __STDC__
 extern int	HmGetchar( void );
 extern int	HmUngetchar( int c );
-#else
-extern int	HmGetchar();
-extern int	HmUngetchar();
-#endif
-/**
 
+/**
 	void	HmTtySet( void )
 	void	HmTtyReset( void )
 

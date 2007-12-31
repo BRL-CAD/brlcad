@@ -30,10 +30,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "./Sc.h"
 #include "./Hm.h"
@@ -42,28 +46,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #define ErLog	brst_log
-#if __STDC__
-extern void	exit( int s );
-extern unsigned alarm( unsigned s );
-#else
-extern void	exit();
-extern unsigned alarm();
-#endif
-
-#ifndef _POSIX_SOURCE
-#if __STDC__
-extern FILE    *fdopen(int, const char *);
-#else
-extern FILE    *fdopen();
-#endif
-#endif
 
 #define HmDEBUG		0
 
 #ifndef Max
-#define Max(_a,_b)	((_a)<(_b)?(_b):(_a))
-#define Min(_a,_b)	((_a)>(_b)?(_b):(_a))
+#  define Max(_a,_b)	((_a)<(_b)?(_b):(_a))
+#  define Min(_a,_b)	((_a)>(_b)?(_b):(_a))
 #endif
+
 #define HmRingbell()	(void) putchar( '\07' ),  (void) fflush( stdout )
 
 /* Keys for manipulating menus. */
@@ -124,15 +114,10 @@ struct nmllist
 		of the scrolling region.
  */
 void
-#if __STDC__
 HmBanner( char *pgmname, int borderchr )
-#else
-HmBanner( pgmname, borderchr )
-char *pgmname;
-int borderchr;
-#endif
-	{       register int    co;
-		register char   *p;
+{
+    register int    co;
+    register char   *p;
 #define HmBUFLEN	81
 		static char     HmPgmName[HmBUFLEN] = "No name";
 		static int      HmBorderChr = '_';
@@ -157,13 +142,8 @@ int borderchr;
 	Print contents of itemp.
  */
 static void
-#if __STDC__
 HmPrntItem( HmItem *itemp )
-#else
-HmPrntItem( itemp )
-register HmItem	*itemp;
-#endif
-	{
+{
 	(void) ErLog( "\t\tHmPrntItem(0x%x)\n", itemp );
 	for( ; itemp->text != (char *) NULL; itemp++ )
 		{
@@ -186,13 +166,8 @@ register HmItem	*itemp;
 	Print "windows" stack.
  */
 static void
-#if __STDC__
 HmPrntMenu( HmMenu *menup )
-#else
-HmPrntMenu( menup )
-HmMenu	*menup;
-#endif
-	{
+{
 	(void) ErLog( "\tHmPrntMenu( 0x%x )\n", menup );
 	(void) ErLog( "\t\tgenerator=0x%x\n", menup->generator );
 	(void) ErLog( "\t\tprevtop=%d\n", menup->prevtop );
@@ -208,12 +183,9 @@ HmMenu	*menup;
 	Print "windows" stack.
  */
 static void
-#if __STDC__
 HmPrntWindows( void )
-#else
-HmPrntWindows()
-#endif
-	{	register HmWindow	*win;
+{
+    register HmWindow	*win;
 	(void) ErLog( "HmPrntWindows()\n" );
 	for( win = windows; win != (HmWindow *) NULL; win = win->next )
 		{
@@ -236,13 +208,8 @@ HmPrntWindows()
 	Print all HmItem's in listp.
  */
 static void
-#if __STDC__
 HmPrntLList( HmLList *listp )
-#else
-HmPrntLList( listp )
-HmLList	*listp;
-#endif
-	{
+{
 	if( listp == (HmLList *) NULL )
 		return;
 	HmPrntItem( listp->itemp );
@@ -256,14 +223,10 @@ HmLList	*listp;
 	Free storage (allocated with malloc) for an array of HmItem's.
  */
 static void
-#if __STDC__
 HmFreeItems( HmItem *itemp )
-#else
-HmFreeItems( itemp )
-HmItem	*itemp;
-#endif
-	{	register HmItem	*citemp;
-		register int	count;
+{
+    register HmItem	*citemp;
+    register int	count;
 	for(	citemp = itemp, count = 1;
 		citemp->text != (char *) NULL;
 		citemp++, count++
@@ -284,14 +247,10 @@ HmItem	*itemp;
 	HmItem's.
  */
 static void
-#if __STDC__
 HmFreeLList( HmLList *listp )
-#else
-HmFreeLList( listp )
-register HmLList	*listp;
-#endif
-	{	register HmLList	*tp;
-	for( ; listp != (HmLList *) NULL; listp = tp )
+{
+    register HmLList	*tp;
+    for( ; listp != (HmLList *) NULL; listp = tp )
 		{
 		MmFree( HmItem, listp->itemp );
 		tp = listp->next;
@@ -314,16 +273,10 @@ register HmLList	*listp;
 		P_ON	means this entry is current so highlight it.
  */
 static void
-#if __STDC__
 HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
-#else
-HmPutItem( win, itemp, flag )
-register HmWindow	*win;
-register HmItem		*itemp;
-int			flag;
-#endif
-	{	register int	label_len = strlen( itemp->text );
-		static char	buf[HmMAXLINE];
+{
+    register int	label_len = strlen( itemp->text );
+    static char	buf[HmMAXLINE];
 		register char	*p = buf;
 		register int	col = win->menux;
 		register int	row = win->menuy+
@@ -412,16 +365,10 @@ int			flag;
 	for the corner characters.
  */
 static void
-#if __STDC__
 HmPutBorder( register HmWindow *win, register int row, char mark )
-#else
-HmPutBorder( win, row, mark )
-register HmWindow	*win;
-register int		row;
-char			mark;
-#endif
-	{	register int	i;
-		register int	bit = 1;
+{
+    register int	i;
+    register int	bit = 1;
 		register int	col = win->menux;
 		register int	bitmap = win->dirty[row - win->menuy];
 		static char	buf[HmMAXLINE];
@@ -453,14 +400,9 @@ char			mark;
 	col and row of the screen.
 */
 static void
-#if __STDC__
 HmSetbit( register HmWindow *win, int col, int row )
-#else
-HmSetbit( win, col, row )
-register HmWindow	*win;
-int			col, row;
-#endif
-	{	register int	bit = col - win->menux;
+{
+    register int	bit = col - win->menux;
 #if HmDEBUG && 0
 	(void) ErLog(	"HmSetbit:menu{<%d,%d>,<%d,%d>}col=%d,row=%d\n",
 			win->menux, win->menux+win->width+1,
@@ -483,14 +425,10 @@ int			col, row;
 	Mark as clean, the entire dirty bitmap for win.
  */
 static void
-#if __STDC__
 HmClrmap( HmWindow *win )
-#else
-HmClrmap( win )
-HmWindow	*win;
-#endif
-	{	register int	row;
-		register int	height = HmHEIGHT;
+{
+    register int	row;
+    register int	height = HmHEIGHT;
 	for( row = 0; row <= height+1; row++ )
 		win->dirty[row] = 0;
 	return;
@@ -502,14 +440,10 @@ HmWindow	*win;
 	Mark as dirty the entire dirty bitmap for win.
  */
 static void
-#if __STDC__
 HmSetmap( HmWindow *win )
-#else
-HmSetmap( win )
-HmWindow	*win;
-#endif
-	{	register int	row;
-		register int	height = HmHEIGHT;
+{
+    register int	row;
+    register int	height = HmHEIGHT;
 	for( row = 0; row <= height+1; row++ )
 		win->dirty[row] = ~0; /* 0xffff... */
 	return;
@@ -523,14 +457,8 @@ HmWindow	*win;
 	is outside of all these windows, return 0.
  */
 static HmWindow	*
-#if __STDC__
 HmInWin( register int x, register int y, register HmWindow *win )
-#else
-HmInWin( x, y, win )
-register int		x, y;
-register HmWindow	*win;
-#endif
-	{
+{
 #if HmDEBUG && 0
 	if( win != (HmWindow *) NULL )
 		(void) ErLog(	"HmInWin:x=%d y=%d win{<%d,%d>,<%d,%d>}\r\n",
@@ -556,14 +484,11 @@ register HmWindow	*win;
 	dirty are drawn.
  */
 static void
-#if __STDC__
 HmDrawWin( register HmWindow *win )
-#else
-HmDrawWin( win )
-register HmWindow	*win;
-#endif
-	{	register HmItem	*itemp;
-		int	height;
+{
+    register HmItem	*itemp;
+    int	height;
+
 #if HmDEBUG && 1
 	(void) ErLog(	"HmDrawWin:win{<%d,%d>,<%d,%d>}\r\n",
 			win->menux, win->menux+win->width+1,
@@ -597,14 +522,8 @@ register HmWindow	*win;
 	strikes a key (or uses the mouse).
  */
 static void
-#if __STDC__
 HmHelp( register HmWindow *win, int entry )
-#else
-HmHelp( win, entry )
-register HmWindow	*win;
-int	entry;
-#endif
-	{
+{
 	(void) ScMvCursor( HmLftMenu, HmYCOMMO );
 	(void) ScClrEOL();
 	(void) ScSetStandout();
@@ -620,13 +539,8 @@ int	entry;
 	Display str on line HmYCOMMO.
  */
 void
-#if __STDC__
 HmError( char *str )
-#else
-HmError( str )
-char	*str;
-#endif
-	{
+{
 	(void) ScMvCursor( HmLftMenu, HmYCOMMO );
 	(void) ScClrEOL();
 	(void) ScSetStandout();
@@ -643,14 +557,10 @@ char	*str;
 	of other menus as dirty so that they will be redrawn by HmHit().
  */
 static void
-#if __STDC__
 HmLiftWin( register HmWindow *win )
-#else
-HmLiftWin( win )
-register HmWindow	*win;
-#endif
-	{	register int	row, col;
-		register int	lastcol = -1, lastrow = -1;
+{
+    register int	row, col;
+    register int	lastcol = -1, lastrow = -1;
 		register int	endcol = win->menux + win->width + 2;
 		register int	endrow = win->menuy +
 				  HmHEIGHT + HmHGTBORDER;
@@ -690,13 +600,8 @@ register HmWindow	*win;
 	Add window to top of "windows" stack.
 */
 static void
-#if __STDC__
 HmPushWin( HmWindow *win )
-#else
-HmPushWin( win )
-HmWindow	*win;
-#endif
-	{
+{
 	win->next = windows;
 	windows = win;
 	return;
@@ -708,13 +613,8 @@ HmWindow	*win;
 	Delete window from top of "windows" stack.
 */
 static void
-#if __STDC__
 HmPopWin( HmWindow *win )
-#else
-HmPopWin( win )
-HmWindow	*win;
-#endif
-	{
+{
 	windows = win->next;
 	return;
 	}
@@ -725,13 +625,8 @@ HmWindow	*win;
 	Draw any dirty portions of all windows in stack starting at win.
 */
 static void
-#if __STDC__
 HmRefreshWin( HmWindow *win )
-#else
-HmRefreshWin( win )
-HmWindow	*win;
-#endif
-	{
+{
 	if( win == (HmWindow *) NULL )
 		{
 		HmDirty = 0;
@@ -747,13 +642,11 @@ HmWindow	*win;
 	Force a redraw of all active menus.
  */
 void
-#if __STDC__
 HmRedraw( void )
-#else
-HmRedraw()
-#endif
-	{	register HmWindow	*win;
-		register int		reset = 0;
+{
+    register HmWindow	*win;
+    register int		reset = 0;
+
 #if HmDEBUG && 1
 	HmPrntWindows();
 #endif
@@ -796,12 +689,8 @@ HmRedraw()
 	Set up terminal handler and MYX-menu options for menu interaction.
  */
 void
-#if __STDC__
 HmTtySet( void )
-#else
-HmTtySet()
-#endif
-	{
+{
 	set_Cbreak( HmTtyFd );
 	clr_Echo( HmTtyFd );
 	clr_Tabs( HmTtyFd );
@@ -822,12 +711,8 @@ HmTtySet()
 	Reset terminal handler and MYX-menu options to user settings.
 */
 void
-#if __STDC__
 HmTtyReset( void )
-#else
-HmTtyReset()
-#endif
-	{
+{
 	if( HmMyxflag )
 		{
 		/* Send escape codes to pop old toggle settings. */
@@ -848,14 +733,8 @@ HmTtyReset()
 	true for success and false for failure to open "/dev/tty".
  */
 boolean
-#if __STDC__
 HmInit( int x, int y, int maxvis )
-#else
-HmInit( x, y, maxvis )
-int	x, y;
-int	maxvis;
-#endif
-	{
+{
 	if(	(HmTtyFd = open( "/dev/tty", O_RDONLY )) == (-1)
 	    ||	(HmTtyFp = fdopen( HmTtyFd, "r" )) == NULL
 		)
@@ -878,25 +757,23 @@ int	maxvis;
 	Determine width and height of win->menup, and store in win.
  */
 static void
-#if __STDC__
 HmWidHgtMenu( register HmWindow *win )
-#else
-HmWidHgtMenu( win )
-register HmWindow	*win;
-#endif
-	{	register HmItem	*itemp;
-	/* Determine width of menu, allowing for border.		*/
-	for( itemp = win->menup->item; itemp->text != (char *) NULL; itemp++ )
-		{	register int	len = 0;
-			register int	i;
-		for( i = 0; itemp->text[i] != '\0' ; i++ )
-			if( ! (itemp->text[i] & 0200) )
-				len++;
-		win->width = Max( win->width, len );
-		}
-	win->height = HmENTRY;
-	return;
+{
+    register HmItem	*itemp;
+    
+    /* Determine width of menu, allowing for border.		*/
+    for( itemp = win->menup->item; itemp->text != (char *) NULL; itemp++ ) {
+	register int	len = 0;
+	register int	i;
+	for( i = 0; itemp->text[i] != '\0' ; i++ ) {
+	    if( ! (itemp->text[i] & 0200) )
+		len++;
 	}
+	win->width = Max( win->width, len );
+    }
+    win->height = HmENTRY;
+    return;
+}
 
 /*
 	boolean HmFitMenu( register HmWindow *nwin, register HmWindow *cwin )
@@ -905,13 +782,8 @@ register HmWindow	*win;
 	position in nwin, and return 1.  Otherwise, return 0.
  */
 static boolean
-#if __STDC__
 HmFitMenu( register HmWindow *nwin, register HmWindow *cwin  )
-#else
-HmFitMenu( nwin, cwin  )
-register HmWindow	*nwin, *cwin;
-#endif
-	{
+{
 	if( cwin == (HmWindow *) NULL )
 		return	0;
 	else
@@ -940,13 +812,8 @@ register HmWindow	*nwin, *cwin;
 	Find best screen position for win->menup.
  */
 static void
-#if __STDC__
 HmPosMenu( register HmWindow *win )
-#else
-HmPosMenu( win )
-register HmWindow	*win;
-#endif
-	{
+{
 	/* Determine origin (top-left corner) of menu.			*/
 	if( win->next != (HmWindow *) NULL )
 		{
@@ -977,15 +844,12 @@ register HmWindow	*win;
 	Implicit return in x and y.
  */
 static void
-#if __STDC__
 HmMyxMouse( register int *x, register int *y )
-#else
-HmMyxMouse( x, y )
-register int	*x, *y;
-#endif
-	{	register int	c;
-	c = HmGetchar();
-	switch( c )
+{
+    register int	c;
+
+    c = HmGetchar();
+    switch( c )
 		{
 	case Ctrl('A') :
 		*x = HmGetchar() - ' ' + 96;
@@ -1023,18 +887,15 @@ register int	*x, *y;
 	see "Hm.h".
  */
 HmItem *
-#if __STDC__
 HmHit( HmMenu *menup )
-#else
-HmHit( menup )
-HmMenu	*menup;			/* -> first HmItem in array.		*/
-#endif
-	{	register HmItem	*itemp;
-		HmItem		*retitemp = NULL;
+{
+    register HmItem	*itemp;
+    HmItem		*retitemp = NULL;
 		HmWindow	*win;
 		register int	done = 0;
 		int		dynamic = 0;
 		static int	HmLevel = 0;
+
 #if HmDEBUG
 	ErLog( "HmHit(0x%x)\n", menup );
 #endif

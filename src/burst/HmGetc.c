@@ -31,26 +31,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./Hm.h"
 /*LINTLIBRARY*/
 int
-#if __STDC__
 HmGetchar( void )
-#else
-HmGetchar()
-#endif
-	{	int	c;
-	while( (c = getc( HmTtyFp )) == EOF )
-		;
-	return	c;
-	}
+{
+    int	c;
+
+    while( (c = getc( HmTtyFp )) == EOF )
+	;
+
+    return c;
+}
 
 int
-#if __STDC__
 HmUngetchar( int c )
-#else
-HmUngetchar( c )
-#endif
-	{
-	return	ungetc( c, HmTtyFp );
-	}
+{
+    return	ungetc( c, HmTtyFp );
+}
 
 /*
  * Local Variables:
