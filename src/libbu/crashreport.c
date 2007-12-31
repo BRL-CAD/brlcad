@@ -61,6 +61,8 @@ static const char *path = NULL;
  * information, and current version information.
  *
  * returns truthfully if the crash report was written.
+ *
+ * due to various reasons, this routine is NOT thread-safe.
  */
 int
 bu_crashreport(const char *filename)
