@@ -46,12 +46,6 @@ typedef int bool;			/* Boolean data */
 
 typedef char *pointer;		/* generic pointer (void *) */
 
-#if !defined(__STDC__)
-#define	const		/* nothing */	/* (undefine for ANSI C) */
-#define	signed		/* nothing */	/* (undefine for ANSI C) */
-#define	volatile	/* nothing */	/* (undefine for ANSI C) */
-#endif
-
 /* Universal constants */
 
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
