@@ -770,7 +770,7 @@ struct db_i  {
 	/* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 	struct directory	*dbi_Head[RT_DBNHASH];
 	int			dbi_fd;		/**< @brief UNIX file descriptor */
-	FILE			*dbi_fp;	/**< @brief STDIO file descriptor */
+	FILE			*dbi_fp;	/**< @brief standard file pointer */
 	long			dbi_eof;	/**< @brief End+1 pos after db_scan() */
 	long			dbi_nrec;	/**< @brief # records after db_scan() */
 	int			dbi_uses;	/**< @brief # of uses of this struct */
@@ -3026,13 +3026,6 @@ RT_EXPORT BU_EXTERN(int db_fwrite_external,
 		     const char		*name,
 		     struct bu_external	*ep));
 
-
-/* It is normal to test for __STDC__ when using *_DEFINED tests but in
- * in this case "union record" is used for db_getmrec's return type.  This
- * requires that the "union_record *db_getmrec" be used whenever
- * RECORD_DEFINED is defined.
- */
-#if defined(RECORD_DEFINED)
 /* malloc & read records */
 RT_EXPORT BU_EXTERN(union record *db_getmrec,
 		    (const struct db_i *,
@@ -3050,26 +3043,7 @@ RT_EXPORT BU_EXTERN(int db_put,
 		     const struct directory *dp,
 		     union record *where,
 		     int offset, int len));
-#else /* RECORD_DEFINED */
-/* malloc & read records */
-RT_EXPORT BU_EXTERN(genptr_t db_getmrec,
-		    (const struct db_i *,
-		     const struct directory *dp));
-/* get several records from db */
-RT_EXPORT BU_EXTERN(int db_get,
-		    (const struct db_i *,
-		     const struct directory *dp,
-		     genptr_t where,
-		     int offset,
-		     int len));
-/* put several records into db */
-RT_EXPORT BU_EXTERN(int db_put,
-		    (const struct db_i *,
-		     const struct directory *dp,
-		     genptr_t where,
-		     int offset,
-		     int len));
-#endif /* RECORD_DEFINED */
+
 RT_EXPORT BU_EXTERN(int db_get_external,
 		    (struct bu_external *ep,
 		     const struct directory *dp,
