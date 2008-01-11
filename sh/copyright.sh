@@ -62,6 +62,7 @@ if [ "x$files" = "x" ] ; then
 	    grep -v '/.#' | \
 	    grep -v '.deps/' | \
 	    grep -v '.libs/' | \
+	    grep -v '.svn/' | \
 	    grep -v 'CVS' | \
 	    grep -v 'Makefile$' |\
 	    grep -v 'Makefile.in$' |\
