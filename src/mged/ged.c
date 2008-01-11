@@ -1,7 +1,7 @@
 /*                           G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@
 
 char MGEDCopyRight_Notice[] = "@(#) \
 BRL-CAD is Open Source software. \
-This software is Copyright (c) 1985-2007 by the United States Government \
+This software is Copyright (c) 1985-2008 by the United States Government \
 as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 
