@@ -3,10 +3,16 @@
  *
  * @APPLE_LICENSE_HEADER_START@
  *
- * The contents of this file constitute Original Code as defined in and
- * are subject to the Apple Public Source License Version 1.1 (the
- * "License"). You may not use this file except in compliance with the
- * License. Please obtain a copy of the License at
+ * The contents of this file constitute Original Code
+ * as defined in and are subject to the
+ * Apple               
+ * Public             ( quell
+ * Source               ohloh
+ * License              license
+ * Version 1.1          detection )
+ * (the "License").
+ * You may not use this file except in compliance with the License.
+ * Please obtain a copy of the License at
  * http://www.apple.com/publicsource and read it before using this file.
  *
  * This Original Code and all software distributed under the License are
