@@ -1306,8 +1306,7 @@ Engineering Company, 2002):</para>
       <para>To create an empty BRL-CAD model, use the following code snippet:</para>
       <para><programlisting>      struct rt_wdb *wdbp;
       if( (wdbp=wdb_fopen( new_file_name ) ) == RT_WDB_NULL ) {
-      bu_log( "Failed to open output file (%s)\n", new_file_name );
-      exit( 1 )
+      bu_exit(1, "Failed to open output file (%s)\n", new_file_name);
       }</programlisting></para>
       <para>Then use the wdbp pointer to pass to all the routines in libwdb.</para>
       <para>For example, to build a sphere centered at coordinates (1.0, 2.0, and 3.0)
@@ -1323,8 +1322,7 @@ suffice:</para>
 
       /* actually build the sphere */
       if( mk_sph( wdbp, sphere_name, center, radius ) ) {
-      bu_log( "Failed to make a sphere (%s)\n", sphere_name );
-      exit( 1 );
+      bu_exit(1, "Failed to make a sphere (%s)\n", sphere_name ;
       }</programlisting></para>
       <para>To build a region or combination in BRL-CAD, a call to mk_comb will do the job. This is a bit more complicated as it requires building a list of members prior to the call to mk_comb. In the example that follows, a region consisting of primitive ``s2'' subtracted from primitive ``s1'' is constructed:</para>
       <para><programlisting>struct bu_list head;
@@ -1338,24 +1336,21 @@ suffice:</para>
       /* add the first member (use the UNION operator here) */
       if( (wmp=mk_addmember( "s1", &amp;headp, NULL, WMOP_UNION) ) ==
       WMEMBER_NULL ) {
-      bu_log( "Failed to add member(s1)\n" );
-      exit( 1 );
+      bu_exit(1, "Failed to add member(s1)\n");
       }
 
 
       /* subtract the second member */
       if( (wmp=mk_addmember( "s2", &amp;headp, NULL, WMOP_SUBTRACT) ) ==
       WMEMBER_NULL ) {
-      bu_log( "Failed to add member(s2)\n" );
-      exit( 1 );
+      bu_exit(1, "Failed to add member(s2)\n");
       }
 
 
       /* build the actual region */q
       if( mk_comb( wdbp, "region_name", &amp;head, 1, NULL, NULL, NULL, 1000, 0,
       1, 100, 0, 0, 0 ) ) {
-      bu_log( "Error building region\n" );
-      exit( 1 );
+      bu_exit(1, "Error building region\n");
       }</programlisting></para>
       <para>If the system you are converting from is not a CSG system (which is the most likely case), then you will need to do some processing on the originating system to get the data in a form that BRL-CAD can use. If you have the API module for the originating system, you may be able to use one of those routines to create a triangulated representation of the model. This triangle data can then be used to build BOT primitives in the BRL-CAD model using the mk_bot routine. Each BOT primitive can be placed in a region of its own (as shown previously).</para>
       <para>A hybrid approach is also possible where simple shapes that can be identified as BRL-CAD primitive shapes are converted as BRL-CAD primitives, and everything else is converted as BOT primitives. If the converter requires building BOT primitives, you might want to consider a converter that produces a BRL-CAD ASCII format database. The "C" mk_bot routine is a very thin wrapper for the actual internal format of the BOT primitive and requires an intimate knowledge of its structure. The ASCII format is considerably simpler and easier to work with in this situation. As mentioned previously, the current ASCII format is simply a Tcl script. For example, the following is the ASCII form of a BRL-CAD database containing a single BOT:</para>
