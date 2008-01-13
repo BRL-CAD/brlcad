@@ -40,13 +40,12 @@
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 unsigned short	ibuf[512];
 float	obuf[512];
 
-static char usage[] = "\
-Usage: i-f [-n || scale] < shorts > floats\n";
 
 int main(int argc, char **argv)
 {
@@ -64,8 +63,7 @@ int main(int argc, char **argv)
 	}
 
 	if( argc > 1 || scale == 0 || isatty(fileno(stdin)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit( 1, "Usage: i-f [-n || scale] < shorts > floats\n" );
 	}
 
 	while( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {

@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 
 #define	MAXFFT	4096
 #define	MAXOUT	2048		/* MAXFFT/2 XXX (Actually + 1) */
@@ -91,8 +92,7 @@ int main(int argc, char **argv)
 	    }
 
 	if( L > MAXFFT ) {
-		fprintf( stderr, "dfft: can't go over %d\n", MAXFFT );
-		exit( 2 );
+		bu_exit(2, "dfft: can't go over %d\n", MAXFFT );
 	}
 
 	/* Calculate Critical Band filter weights */

@@ -111,9 +111,8 @@ png_save(int fd, char *rgb, int width, int height)
 
     fh = fdopen(fd,"wb");
     if(fh==NULL) {
-	perror("png_save trying to get FILE pointer for descriptor");
-	exit(-1);
-	return 0;
+	perror("fdopen");
+	bu_exit(-1, "png_save trying to get FILE pointer for descriptor\n");
     }
 
     png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -121,10 +120,8 @@ png_save(int fd, char *rgb, int width, int height)
 
     info_ptr = png_create_info_struct (png_ptr);
     if(info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
-	printf("Ohs Noes!\n"); fflush(stdout);
 	png_destroy_read_struct (&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
-	exit(-1);
-	return 0;
+	bu_exit(-1, "Ohs Noes!\n");
     }
 
     png_init_io (png_ptr, fh);
@@ -157,8 +154,7 @@ bw_save(int fd, char *rgb, int size)
 {
     int bwsize = size/3, i;
     if(bwsize*3 != size) {
-	printf("Huh, size=%d is not a multiple of 3.\n", size);
-	exit(-1);	/* flaming death */
+	bu_exit(-1, "Huh, size=%d is not a multiple of 3.\n", size);
     }
     /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
     for(i=0;i<bwsize;++i) rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
@@ -209,11 +205,10 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     bif->fd = open(bif->filename,O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
     if(bif->fd < 0) {
 	char buf[BUFSIZ];
-	snprintf(buf,BUFSIZ,"Opening output file \"%s\" for writing",bif->filename);
-	perror(buf);
+	perror("open");
 	free(bif);
-	exit(-1);
-	return NULL;
+	snprintf(buf,BUFSIZ,"ERROR opening output file \"%s\" for writing\n",bif->filename);
+	bu_exit(-1, buf);
     }
     bif->width = width;
     bif->height = height;

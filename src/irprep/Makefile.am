@@ -28,8 +28,13 @@ showtherm_LDADD = ${RT}
 firpass_SOURCES = firpass.c subroutines.c
 firpass_LDADD = ${RT}
 
+if WITH_X11
 irdisp_SOURCES = irdisp.c
 irdisp_CFLAGS = ${X_CFLAGS}
+irdisp_LDADD = \
+	${BU} \
+	${X_LIBS}
+endif
 
 ir_sgi_SOURCES = ir-sgi.c
 ir_sgi_LDADD = ${BU}

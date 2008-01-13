@@ -46,8 +46,6 @@
 char	*file_name = NULL;
 FILE	*infp = NULL;
 
-static char usage[] = "\
-Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n";
 
 #define	ADD	1
 #define MULT	2
@@ -85,8 +83,7 @@ get_args(int argc, register char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if( d == 0.0 ) {
-		    fprintf( stderr, "dmod: divide by zero!\n" );
-		    exit( 2 );
+		    bu_exit(2, "dmod: divide by zero!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -102,8 +99,7 @@ get_args(int argc, register char **argv)
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if( d == 0.0 ) {
-		    fprintf( stderr, "dmod: zero root!\n" );
-		    exit( 2 );
+		    bu_exit(2, "dmod: zero root!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -147,8 +143,7 @@ int main(int argc, char **argv)
 
     if( !get_args( argc, argv ) || isatty(fileno(infp))
 	|| isatty(fileno(stdout)) ) {
-	(void)fputs(usage, stderr);
-	exit( 1 );
+	bu_exit(1, "Usage: dmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [doubles]\n");
     }
 
     while( (n = fread(buf, sizeof(*buf), BUFLEN, infp)) > 0 ) {

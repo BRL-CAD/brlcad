@@ -35,15 +35,14 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "machine.h"
+#include "bu.h"
 
 #define	IBUFSIZE 1024		/* Max read size */
 double	buf[IBUFSIZE];		/* Input buffer */
 
 int	verbose = 0;
 
-
-static char usage[] = "\
-Usage: dstat [-v] [file.doubles]\n";
 
 int main(int argc, char **argv)
 {
@@ -65,8 +64,7 @@ int main(int argc, char **argv)
 	/* look for optional input file */
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1],"r")) == 0 ) {
-			fprintf( stderr, "dstat: can't open \"%s\"\n", argv[1] );
-			exit( 1 );
+			bu_exit(1, "dstat: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;
 		argc--;
@@ -75,8 +73,7 @@ int main(int argc, char **argv)
 
 	/* check usage */
 	if( argc > 1 || isatty(fileno(fp)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit(1, "Usage: dstat [-v] [file.doubles]\n");
 	}
 
 	/*

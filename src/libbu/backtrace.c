@@ -133,7 +133,7 @@ backtrace(char **args, int fd)
     if ((pipe(input) == -1) || (pipe(output) == -1)) {
 	perror("unable to open pipe");
 	fflush(stderr);
-	exit(1); /* can't call bu_bomb() */
+	exit(1); /* can't call bu_bomb()/bu_exit() */
     }
 
     pid = fork();
@@ -145,11 +145,11 @@ backtrace(char **args, int fd)
 	execvp(args[0], args); /* invoke debugger */
 	perror("exec failed");
 	fflush(stderr);
-	exit(1); /* can't call bu_bomb() */
+	exit(1); /* can't call bu_bomb()/bu_exit() */
     } else if (pid == (pid_t) -1) {
 	perror("unable to fork");
 	fflush(stderr);
-	exit(1); /* can't call bu_bomb() */
+	exit(1); /* can't call bu_bomb()/bu_exit() */
     }
 
     FD_ZERO(&fdset);

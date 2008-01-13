@@ -24,9 +24,6 @@
  *  Author -
  *	Phillip Dykstra
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -34,14 +31,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 
 double	obuf[2*1024];
 double	real[1024], imag[1024];
 
 void	open_file(FILE **fp, char *name);
 
-static char usage[] = "\
-Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n";
 
 int main(int argc, char **argv)
 {
@@ -51,8 +47,7 @@ int main(int argc, char **argv)
 	FILE	*rfp, *ifp;
 
 	if( argc != 3 || isatty(fileno(stdout)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit( 1, "Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n" );
 	}
 
 	open_file( &rfp, argv[1] );
@@ -94,8 +89,7 @@ open_file(FILE **fp, char *name)
 	}
 
 	if( (*fp = fopen( name, "r" )) == NULL ) {
-		fprintf( stderr, "d2-c: Can't open \"%s\"\n", name );
-		exit( 2 );
+		bu_exit(2, "d2-c: Can't open \"%s\"\n", name );
 	}
 }
 

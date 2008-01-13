@@ -82,8 +82,7 @@ bu_association (const char *fname,
 	 *	between ERROR_PERFORMING_THE_LOOKUP
 	 *	and VALUE_NOT_FOUND.
 	 */
-	bu_log("bu_association:  Cannot open association file '%s'\n", fname);
-	exit (1);
+	bu_exit(1, "bu_association:  Cannot open association file '%s'\n", fname);
     }
 
     bu_vls_init(&buffer);

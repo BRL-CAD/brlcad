@@ -266,7 +266,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 	if( !bu_semaphores )  {
 		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
 			nsemaphores, (long)sizeof(struct bu_semaphores));
-		exit(2);
+		exit(2); /* cannot call bu_exit() here */
 	}
 
 	/*
@@ -446,7 +446,7 @@ bu_semaphore_release(unsigned int i)
 	if( i >= bu_nsemaphores )  {
 		fprintf(stderr, "bu_semaphore_release(%d): semaphore # exceeds max of %d\n",
 			i, bu_nsemaphores - 1);
-		exit(3);
+		exit(3); /* cannot call bu_exit() here */
 	}
 
 	BU_CKMAG(&bu_semaphores[i], BU_SEMAPHORE_MAGIC, "bu_semaphore");

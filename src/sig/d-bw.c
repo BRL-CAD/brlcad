@@ -38,12 +38,11 @@
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 double	ibuf[512];
 unsigned char	obuf[512];
 
-static char usage[] = "\
-Usage: d-bw [-n || scale] < doubles > unsigned_chars\n";
 
 int main(int argc, char **argv)
 {
@@ -63,8 +62,7 @@ int main(int argc, char **argv)
 	}
 
 	if( argc > 1 || scale == 0 || isatty(fileno(stdin)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit(1, "Usage: d-bw [-n || scale] < doubles > unsigned_chars\n" );
 	}
 
 	clip_high = clip_low = 0;

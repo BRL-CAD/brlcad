@@ -46,8 +46,7 @@ char *progname = "(noname)";
  */
 void usage(void)
 {
-	(void) fprintf(stderr, "Usage: %s [ file ]\n", progname);
-	exit(1);
+	bu_exit(1, "Usage: %s [ file ]\n", progname);
 }
 
 /*

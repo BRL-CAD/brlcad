@@ -245,13 +245,11 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 		       rtip->rti_dbip->dbi_filename,
 		       rtip->rti_dbip->dbi_uses,
 		       rtip->rti_air_discards );
-	    bu_log("rt_prep_parallel:  no primitives left to prep\n");
-	    exit(1);
+	    bu_exit(1, "rt_prep_parallel:  no primitives left to prep\n");
 	}
 
 	if ( rtip->nregions <= 0 )  {
-	    bu_log("rt_prep_parallel:  no regions left to prep\n");
-	    exit(1);
+	    bu_exit(1, "rt_prep_parallel:  no regions left to prep\n");
 	}
 
 	/* In case everything is a halfspace, set a minimum space */
@@ -670,11 +668,10 @@ rt_init_resource(struct resource *resp,
 		struct resource	*ores = (struct resource *)
 			BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 		if( ores != NULL && ores != resp )  {
-			bu_log("rt_init_resource(cpu=%d) re-registering resource, had x%x, new=x%x\n",
+			bu_exit(1, "rt_init_resource(cpu=%d) re-registering resource, had x%x, new=x%x\n",
 				cpu_num,
 				ores,
 				resp );
-			exit(1);
 		}
 		BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
 	}
@@ -1256,8 +1253,7 @@ rt_find_path( struct db_i *dbip,
 	case OP_DB_LEAF:
 		dp = db_lookup( dbip, tp->tr_l.tl_name, 1 );
 		if( dp == DIR_NULL ) {
-			bu_log( "Unable to lookup geometry [%s]\nAborting.", tp->tr_l.tl_name );
-			exit(1);
+			bu_exit(1, "Unable to lookup geometry [%s]\nAborting.\n", tp->tr_l.tl_name );
 		}
 		db_add_node_to_full_path( *curr_path, dp );
 		if( dp == end ) {
@@ -1269,8 +1265,7 @@ rt_find_path( struct db_i *dbip,
 			(*curr_path) = newpath;
 		} else if( (dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION ) ) {
 			if( rt_db_get_internal( &intern, dp, dbip, NULL, resp ) < 0 ) {
-				bu_log( "Unable to load [%s]\nAborting.\n", tp->tr_l.tl_name );
-				exit(1);
+				bu_exit(1, "Unable to load [%s]\nAborting.\n", tp->tr_l.tl_name );
 			}
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 			rt_find_path( dbip, comb->tree, end, paths, curr_path, resp );
@@ -1291,8 +1286,7 @@ rt_find_path( struct db_i *dbip,
 		rt_find_path( dbip, tp->tr_b.tb_left, end, paths, curr_path, resp );
 		break;
 	default:
-		bu_log( "rt_find_path(): Unrecognized OP (%d)\n", tp->tr_op );
-		exit(1);
+		bu_exit(1, "rt_find_path(): Unrecognized OP (%d)\n", tp->tr_op );
 		break;
 	}
 }
@@ -1485,8 +1479,7 @@ unprep_leaf( struct db_tree_state *tsp,
 		}
 	}
 
-	bu_log( "rt_unprep(): Failed to find soltab structure for an instance of [%s]\n", dp->d_namep );
-	exit(1);
+	bu_exit(1, "rt_unprep(): Failed to find soltab structure for an instance of [%s]\n", dp->d_namep );
 
 	return( (union tree *)NULL );
 }
@@ -1742,9 +1735,7 @@ rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 			point_t region_min, region_max;
 
 			if( rt_bound_tree( rp->reg_treetop, region_min, region_max ) ) {
-				bu_log( "rt_reprep(): rt_bound_tree() FAILED for [%s]\n",
-					rp->reg_name );
-				exit(1);
+				bu_exit(1, "rt_reprep(): rt_bound_tree() FAILED for [%s]\n", rp->reg_name );
 			}
 			if( region_max[X] < INFINITY )  {
 				/* infinite regions are exempted from this */

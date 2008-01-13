@@ -1650,8 +1650,7 @@ main( int argc, char * *argv )
 	strcpy( rec.ss.ss_args, "file=bm.bw w=6 n=6 d=6.0" );
 
 	if( rt_ebm_prep( &Tsolid, &rec, 0 ) != 0 )  {
-		printf("prep failed\n");
-		exit(1);
+		bu_exit(1, "prep failed\n");
 	}
 	rt_ebm_print( &Tsolid );
 	ebmp = bmsp = (struct rt_ebm_specific *)Tsolid.st_specific;
@@ -1661,7 +1660,7 @@ main( int argc, char * *argv )
 #if 1
 	if( (fp = fopen("ebm.rays", "r")) == NULL )  {
 		perror("ebm.rays");
-		exit(1);
+		bu_exit(1, "ERROR: unable to open ebm.rays\n");
 	}
 	for(;;)  {
 		x = fscanf( fp, "%lf %lf %lf %lf %lf %lf\n",

@@ -53,8 +53,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 char *progname = "umod";
 char *file_name = NULL;
 
-char usage[] = "\
-Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n";
 
 #define	ADD	1
 #define MULT	2
@@ -92,8 +90,7 @@ get_args(int argc, register char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if( d == 0.0 ) {
-		    (void)fprintf( stderr, "bwmod: divide by zero!\n" );
-		    exit( 2 );
+		    bu_exit(2, "bwmod: divide by zero!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -109,8 +106,7 @@ get_args(int argc, register char **argv)
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if( d == 0.0 ) {
-		    (void)fprintf( stderr, "bwmod: zero root!\n" );
-		    exit( 2 );
+		    bu_exit(2, "bwmod: zero root!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -177,10 +173,8 @@ int main(int argc, char **argv)
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
 
-    if( !get_args( argc, argv ) || isatty(fileno(stdin))
-	|| isatty(fileno(stdout)) ) {
-	(void)fputs(usage, stderr);
-	exit( 1 );
+    if( !get_args( argc, argv ) || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
+	bu_exit( 1, "Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n" );
     }
 
     mk_trans_tbl();
@@ -196,9 +190,7 @@ int main(int argc, char **argv)
 	}
 	/* output */
 	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
-	    (void)fprintf(stderr, "%s: Error writing stdout\n",
-			  progname);
-	    exit(-1);
+	    bu_exit(-1, "%s: Error writing stdout\n", progname);
 	}
     }
 

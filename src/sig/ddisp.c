@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 		bu_exit(1, "%s", usage );
 	}
 	if( (fbp = fb_open( NULL, fbsize, fbsize )) == FBIO_NULL ) {
-		exit( 2 );
+		bu_exit(2, "Unable to open framebuffer\n");
 	}
 
 	L = (argc > 1) ? atoi(argv[1]) : 512;

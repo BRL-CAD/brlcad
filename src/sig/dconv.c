@@ -38,6 +38,7 @@
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 
 #define	MAXM	4096
 
@@ -50,11 +51,30 @@ double	savebuffer[MAXM-1];
 double	xbuf[2*MAXM];
 double	ibuf[2*MAXM];		/* impulse response */
 
-void	mult(double *o, double *b, int n);
 
-static const char usage[] = "\
-Usage: dconv filter < doubles > doubles\n\
- XXX Warning: kernal size must be 2^i - 1\n";
+/*
+ *  Multiply two "real valued" spectra of length n
+ *  and put the result in the first.
+ *  The order is: [Re(0),Re(1)...Re(N/2),Im(N/2-1),...,Im(1)]
+ *    so for: 0 < i < n/2, (x[i],x[n-i]) is a complex pair.
+ */
+void
+mult(double *o, double *b, int n)
+{
+	int	i;
+	double	r;
+
+	/* do DC and Nyquist components */
+	o[0] *= b[0];
+	o[n/2] *= b[n/2];
+
+	for( i = 1; i < n/2; i++ ) {
+		r = o[i] * b[i] - o[n-i] * b[n-i];
+		o[n-i] = o[i] * b[n-i] + o[n-i] * b[i];
+		o[i] = r;
+	}
+}
+
 
 int main(int argc, char **argv)
 {
@@ -67,7 +87,7 @@ int main(int argc, char **argv)
 	L = N - M + 1;	/* number of "good" points per section */
 
 	if( argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		bu_exit(1, "%s", usage );
+		bu_exit(1, "Usage: dconv filter < doubles > doubles\nXXX Warning: kernal size must be 2^i - 1\n" );
 	}
 
 #ifdef never
@@ -84,17 +104,14 @@ int main(int argc, char **argv)
 #endif /* never */
 
 	if( (fp = fopen( argv[1], "r" )) == NULL ) {
-		fprintf( stderr, "dconv: can't open \"%s\"\n", argv[1] );
-		exit( 2 );
+		bu_exit(2, "dconv: can't open \"%s\"\n", argv[1] );
 	}
 	if( (M = fread( ibuf, sizeof(*ibuf), 2*MAXM, fp )) == 0 ) {
-		fprintf( stderr, "dconv: problem reading filter file\n" );
-		exit( 3 );
+		bu_exit(3, "dconv: problem reading filter file\n" );
 	}
 	fclose( fp );
 	if( M > MAXM ) {
-		fprintf( stderr, "dconv: only compiled for up to %d sized filter kernels\n", MAXM );
-		exit( 4 );
+		bu_exit(4, "dconv: only compiled for up to %d sized filter kernels\n", MAXM );
 	}
 /*XXX HACK HACK HACK HACK XXX*/
 /* Assume M = 2^i - 1 */
@@ -134,29 +151,6 @@ M += 1;
 	}
 
 	return 0;
-}
-
-/*
- *  Multiply two "real valued" spectra of length n
- *  and put the result in the first.
- *  The order is: [Re(0),Re(1)...Re(N/2),Im(N/2-1),...,Im(1)]
- *    so for: 0 < i < n/2, (x[i],x[n-i]) is a complex pair.
- */
-void
-mult(double *o, double *b, int n)
-{
-	int	i;
-	double	r;
-
-	/* do DC and Nyquist components */
-	o[0] *= b[0];
-	o[n/2] *= b[n/2];
-
-	for( i = 1; i < n/2; i++ ) {
-		r = o[i] * b[i] - o[n-i] * b[n-i];
-		o[n-i] = o[i] * b[n-i] + o[n-i] * b[i];
-		o[i] = r;
-	}
 }
 
 /*

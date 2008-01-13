@@ -122,7 +122,7 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
  *
  * Exit:
  *	parameters have been set.
- *	if there is a fatal error exit(!0)
+ *	if there is a fatal error, exit non-zero
  *
  * Uses:
  *	width	- width of pixture

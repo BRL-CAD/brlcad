@@ -30,26 +30,24 @@
  *	25 October 1990
  *
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-char *progname = "(noname)";
+#include "machine.h"
+#include "bu.h"
 
-char	*file_name;
-
-char usage[] = "\
-Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n";
 
 #define	ADD	1
 #define MULT	2
 #define	ABS	3
 #define	POW	4
 #define	BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
+
+
+char *progname = "(noname)";
+char *file_name;
 
 int	numop = 0;		/* number of operations */
 int	op[256];		/* operations */
@@ -60,8 +58,7 @@ unsigned char clip_h[256];	/* map of values which clip high */
 unsigned char clip_l[256];	/* map of values which clip low */
 
 
-get_args( argc, argv )
-register char **argv;
+int get_args( int argc, char **argv )
 {
 	register int c;
 	double	d;
@@ -84,8 +81,7 @@ register char **argv;
 			op[ numop ] = MULT;
 			d = atof(bu_optarg);
 			if( d == 0.0 ) {
-				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
-				exit( 2 );
+				bu_exit(2, "bwmod: divide by zero!\n" );
 			}
 			val[ numop++ ] = 1.0 / d;
 			break;
@@ -101,8 +97,7 @@ register char **argv;
 			op[ numop ] = POW;
 			d = atof(bu_optarg);
 			if( d == 0.0 ) {
-				(void)fprintf( stderr, "bwmod: zero root!\n" );
-				exit( 2 );
+				bu_exit(2, "bwmod: zero root!\n" );
 			}
 			val[ numop++ ] = 1.0 / d;
 			break;
@@ -167,9 +162,7 @@ void mk_trans_tbl()
 	}
 }
 
-int main( argc, argv )
-int argc;
-char **argv;
+int main( int argc, char **argv )
 {
 	register unsigned int	i, j, n;
 	unsigned long clip_high, clip_low;
@@ -178,10 +171,8 @@ char **argv;
 	if (!(progname=strrchr(*argv, '/')))
 		progname = *argv;
 
-	if( !get_args( argc, argv ) || isatty(fileno(stdin))
-	    || isatty(fileno(stdout)) ) {
-		(void)fputs(usage, stderr);
-		exit( 1 );
+	if( !get_args( argc, argv ) || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
+		bu_exit( 1, "Usage: smod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n" );
 	}
 
 	mk_trans_tbl();
@@ -197,9 +188,7 @@ char **argv;
 		}
 		/* output */
 		if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
-			(void)fprintf(stderr, "%s: Error writing stdout\n",
-				progname);
-			exit(-1);
+			bu_exit(-1, "%s: Error writing stdout\n", progname);
 		}
 	}
 

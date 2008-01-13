@@ -40,13 +40,11 @@
 #endif
 
 #include "machine.h"
-
+#include "bu.h"
 
 float	ibuf[512];
 short	obuf[512];
 
-static char usage[] = "\
-Usage: f-i [-n || scale] < floats > shorts\n";
 
 int main(int argc, char **argv)
 {
@@ -66,8 +64,7 @@ int main(int argc, char **argv)
 	}
 
 	if( argc > 1 || scale == 0 || isatty(fileno(stdin)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit( 1, "Usage: f-i [-n || scale] < floats > shorts\n" );
 	}
 
 	clip_high = clip_low = 0;

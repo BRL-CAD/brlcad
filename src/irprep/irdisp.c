@@ -146,8 +146,7 @@ main(void)
 		X_or_SGI = irsgi;
 	else
 	{
-		fprintf( stderr , "Bad choice for display (%s)\n" , choice );
-		exit( 1 );
+		bu_exit(1, "Bad choice for display (%s)\n" , choice );
 	}
 	(void)printf("\nThe program %s in now being run.  If option\n", X_or_SGI);
 	(void)printf("0 or 1 was used when the name of a file is asked\n");

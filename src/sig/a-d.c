@@ -37,8 +37,6 @@
 
 #define	COMMENT_CHAR	'#'
 
-static const char usage[] = "\
-Usage: a-d [values] < ascii > doubles\n";
 
 int main(int argc, char **argv)
 {
@@ -46,7 +44,7 @@ int main(int argc, char **argv)
 	int	i;
 
 	if( isatty(fileno(stdout)) ) {
-		bu_exit(1, "%s", usage );
+	    bu_exit(1, "Usage: a-d [values] < ascii > doubles\n");
 	}
 
 	if( argc > 1 ) {
@@ -84,8 +82,7 @@ int main(int argc, char **argv)
 		    else if (feof(stdin))
 			exit (0);
 		    else {
-			bu_log("Error in input stream\n");
-			exit (1);
+			bu_exit(1, "Error in input stream\n");
 		    }
 		}
 	}

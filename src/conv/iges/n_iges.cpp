@@ -211,9 +211,8 @@ namespace brlcad {
       k = NRECS;
 
     if( fseek(in, 0, SEEK_SET) ) /* rewind file */ {
-      bu_log( "Cannot rewind file\n" );
       perror( "Recsize" );
-      exit( 1 );
+      bu_exit(-1, "Cannot rewind file\n" );
     }
 
     if( recl == 0 ) /* then LF's were found */ {
@@ -665,8 +664,7 @@ namespace brlcad {
   IGES::readStart(FILE* in) {
     Record start(in);
     if (!start.isStart()) {
-      cerr << "Start section not found" << endl;
-      exit(-1);
+      bu_exit(-1, "Start section not found\n");
     }
   }
 
@@ -690,8 +688,7 @@ namespace brlcad {
       paramSectionStart = test.where();
       debug( "Param section starts: " << paramSectionStart );
     } else {
-      cerr << "Param section not found! Aborting" << endl;
-      exit(-1);
+      bu_exit(-1, "Param section not found! Aborting\n");
     }
   }
 

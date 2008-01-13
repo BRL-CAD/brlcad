@@ -89,8 +89,7 @@ main(int argc, char **argv)
 
 #define A argv[1][1]
 	if( argc != 2 || argv[1][0] != '-' || ( A != 'o' && A != 'i' && A != 'v' )) {
-		fprintf(stderr,"Usage:  htester [-i|-o|-v] < input\n");
-		exit(1);
+		bu_exit(1, "Usage:  htester [-i|-o|-v] < input\n");
 	}
 
 	if( argv[1][1] == 'v' ) {

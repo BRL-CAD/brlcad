@@ -25,16 +25,41 @@
 #include <stdio.h>
 #include <math.h>
 
-double	buf[4096] = {0};
-
-static const char usage[] = "\
-Usage: dsel num\n\
-       dsel skip keep ...\n";
+#include "machine.h"
+#include "bu.h"
 
 #define INTEGER_MAX ( ((int) ~0) >> 1 )
 
-void	skip(register int num);
-void	keep(register int num);
+
+double	buf[4096] = {0};
+
+
+void
+skip(register int num)
+{
+	register int	n, m;
+
+	while( num > 0 ) {
+		n = num > 1024 ? 1024 : num;
+		if( (m = fread( buf, sizeof(*buf), n, stdin )) == 0 )
+			exit( 0 );
+		num -= m;
+	}
+}
+
+void
+keep(register int num)
+{
+	register int	n, m;
+
+	while( num > 0 ) {
+		n = num > 1024 ? 1024 : num;
+		if( (m = fread( buf, sizeof(*buf), n, stdin )) == 0 )
+			exit( 0 );
+		fwrite( buf, sizeof(*buf), m, stdout );
+		num -= n;
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -42,7 +67,7 @@ int main(int argc, char **argv)
 	int	nkeep;	/* number to keep */
 
 	if( argc < 1 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		bu_exit(1, "%s", usage );
+		bu_exit(1, "Usage: dsel num\n       dsel skip keep ...\n");
 	}
 
 	if( argc == 2 ) {
@@ -72,32 +97,6 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void
-skip(register int num)
-{
-	register int	n, m;
-
-	while( num > 0 ) {
-		n = num > 1024 ? 1024 : num;
-		if( (m = fread( buf, sizeof(*buf), n, stdin )) == 0 )
-			exit( 0 );
-		num -= m;
-	}
-}
-
-void
-keep(register int num)
-{
-	register int	n, m;
-
-	while( num > 0 ) {
-		n = num > 1024 ? 1024 : num;
-		if( (m = fread( buf, sizeof(*buf), n, stdin )) == 0 )
-			exit( 0 );
-		fwrite( buf, sizeof(*buf), m, stdout );
-		num -= n;
-	}
-}
 
 /*
  * Local Variables:

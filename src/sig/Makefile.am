@@ -45,23 +45,45 @@ a_d_LDADD = ${BU}
 d_a_SOURCES = d-a.c
 d_a_LDADD = ${BU}
 
-i_d_SOURCES = i-d.c
-d_i_SOURCES = d-i.c
-d_u_SOURCES = d-u.c
 bw_d_SOURCES = bw-d.c
-d_bw_SOURCES = d-bw.c
-d_f_SOURCES = d-f.c
-f_d_SOURCES = f-d.c
-f_i_SOURCES = f-i.c
-i_f_SOURCES = i-f.c
+bw_d_LDADD = ${BU}
 
 c_d_SOURCES = c-d.c
 c_d_LDADD = ${BU} ${LIBM}
 
+d_i_SOURCES = d-i.c
+d_i_LDADD = ${BU}
+
+d_u_SOURCES = d-u.c
+d_u_LDADD = ${BU}
+
+d_bw_SOURCES = d-bw.c
+d_bw_LDADD = ${BU}
+
+d_f_SOURCES = d-f.c
+d_f_LDADD = ${BU}
+
+f_d_SOURCES = f-d.c
+f_d_LDADD = ${BU}
+
+f_i_SOURCES = f-i.c
+f_i_LDADD = ${BU}
+
+i_d_SOURCES = i-d.c
+i_d_LDADD = ${BU}
+
+i_f_SOURCES = i-f.c
+i_f_LDADD = ${BU}
+
 i_a_SOURCES = i-a.c
 u_a_SOURCES = u-a.c
+
 u_d_SOURCES = u-d.c
+u_d_LDADD = ${BU}
+
 u_f_SOURCES = u-f.c
+u_f_LDADD =  ${BU}
+
 u_bw_SOURCES = u-bw.c
 
 #  Processors
@@ -97,7 +119,7 @@ umod_LDADD = ${BU} ${LIBM}
 #  Misc
 
 dstat_SOURCES = dstat.c
-dstat_LDADD = ${LIBM}
+dstat_LDADD = ${BU} ${LIBM}
 
 dsel_SOURCES = dsel.c
 dsel_LDADD = ${BU}

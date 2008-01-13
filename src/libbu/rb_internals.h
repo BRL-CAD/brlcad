@@ -63,10 +63,9 @@
 #define BU_RB_CKORDER(t, o)					\
     if (((o) < 0) || ((o) >= (t) -> rbt_nm_orders))		\
     {								\
-	bu_log(							\
+	bu_exit(0,						\
 	    "Error: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
 	    (o), (t) -> rbt_nm_orders - 1, __FILE__, __LINE__);	\
-	exit (0);						\
     }
 
 /*

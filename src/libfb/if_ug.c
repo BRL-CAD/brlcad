@@ -229,8 +229,7 @@ FBIO	*ifp;
 	/* Now, close down */
 	if ( ( status = ugraf ( UG_CLOSE, &ug_param ) ) != UGE_OK ) {
 		perror ( "ugraf close" );
-		fprintf(stderr, "ugraf close failed with %d\n", status );
-		exit ( 1 );
+		bu_exit(1, "ugraf close failed with %d\n", status );
 	}
 	return;
 }
@@ -298,9 +297,8 @@ char *str;
 
 #ifndef never
 	if ( ( status = ugraf ( UG_WAIT, &ug_param ) ) != UGE_OK ) {
-		fprintf(stderr,"ugraf wait failed with %d at %s\n", status, str );
 		perror ( "ugraf wait" );
-		exit ( 1 );
+		bu_exit(1, "ugraf wait failed with %d at %s\n", status, str );
 	}
 #endif
 }

@@ -39,22 +39,18 @@
 #include "bu.h"
 
 
-char *options = "h";
-char *progname = "(noname)";
-
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(void)
+void usage(const char *progname)
 {
-	(void) fprintf(stderr, "Usage: %s [ file ]\n", progname);
-	exit(1);
+	bu_exit(1, "Usage: %s [ file ]\n", progname);
 }
 
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char **av)
+int parse_args(int ac, char **av, char *progname)
 {
 	int  c;
 
@@ -65,11 +61,11 @@ int parse_args(int ac, char **av)
 	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac,av,"h")) != EOF)
 		switch (c) {
 		case '?'	:
 		case 'h'	:
-		default		: usage(); break;
+		default		: usage(progname); break;
 		}
 
 	return(bu_optind);
@@ -117,11 +113,12 @@ void comp_stats(FILE *fd)
  */
 int main(int ac, char **av)
 {
-	int arg_index;
+    char *progname = "(noname)";
+    int arg_index;
 
 	/* parse command flags
 	 */
-	arg_index = parse_args(ac, av);
+	arg_index = parse_args(ac, av, progname);
 	if (arg_index < ac) {
 		/* open file of shorts */
 		if (freopen(av[arg_index], "r", stdin) == (FILE *)NULL) {
@@ -129,7 +126,7 @@ int main(int ac, char **av)
 			return(-1);
 		}
 	} else if (isatty((int)fileno(stdin))) {
-		usage();
+		usage(progname);
 	}
 
 	comp_stats(stdin);

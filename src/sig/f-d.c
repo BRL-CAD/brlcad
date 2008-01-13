@@ -41,12 +41,11 @@
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 float	ibuf[512];
 double	obuf[512];
 
-static char usage[] = "\
-Usage: f-d [-n || scale] < floats > doubles\n";
 
 int main(int argc, char **argv)
 {
@@ -64,8 +63,7 @@ int main(int argc, char **argv)
 	}
 
 	if( argc > 1 || scale == 0 || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit(1, "Usage: f-d [-n || scale] < floats > doubles\n");
 	}
 
 	while( (num = fread( &ibuf[0], sizeof( ibuf[0] ), 512, stdin)) > 0 ) {
