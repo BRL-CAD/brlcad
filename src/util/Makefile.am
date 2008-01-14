@@ -639,13 +639,7 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
 	${PL_X_EXTRA} \
 	fix_polysolids.c \
-	pix-both-ik.c \
-	pix-ci.c \
-	pix-filt-ik.c \
-	pix-ik.c \
-	pix-ikr.c \
-	pix-lowp-ik.c \
-	pixt-ik.c
+	pix-ci.c
 
 DEPS=src/liborle src/libdm src/libfb
 
