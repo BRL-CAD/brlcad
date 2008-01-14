@@ -129,6 +129,7 @@ struct rt_metaball_internal {
 	long    magic;
 	int	method;
 	fastf_t	threshold;
+	fastf_t	goo;	/* not used in potential field */
 	struct bu_list	metaball_ctrl_head;
 };
 fastf_t rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb);
