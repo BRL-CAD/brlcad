@@ -29,8 +29,6 @@
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-static const char RCSid[] = "$Id";
-
 #include "common.h"
 
 #include <math.h>
@@ -665,7 +663,7 @@ reset_xforms( int sessionid )
 void
 rts_close_session( int sessionid )
 {
-	int i,j;
+	int i, j;
 
 	pthread_mutex_lock( &session_mutex );
 	if( sessionid == 0 ) {
@@ -2422,7 +2420,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getDbTitle(JNIEnv *env, jo
 JNIEXPORT jstring JNICALL
 Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getLibraryVersion(JNIEnv *env, jobject jobj )
 {
-	return( (*env)->NewStringUTF(env, RCSid) );
+	return( (*env)->NewStringUTF(env, rt_version()) );
 }
 
 /* JAVA shootArray method
