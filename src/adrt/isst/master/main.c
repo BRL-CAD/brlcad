@@ -22,12 +22,9 @@
  * Author -
  *   Justin Shumaker
  *
- * $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-# include "common.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>

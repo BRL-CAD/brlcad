@@ -1,12 +1,9 @@
 /*
  *  tie.c
  *
- *  RCSid:          $Id$
 */
 
-#ifdef HAVE_CONFIG_H
-# include "common.h"
-#endif
+#include "common.h"
 
 #include "tie.h"
 #include <math.h>
