@@ -52,10 +52,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSid[] = "$Id$";	/* used for debug ver */
-#endif
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -88,7 +84,7 @@ static const char RCSid[] = "$Id$";	/* used for debug ver */
 #  include <netdb.h>
 #  include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h>		/* for inet_addr() */
-#  undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
+#  undef LITTLE_ENDIAN		/* defined in netinet/{ip.h, tcp.h} */
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -170,7 +166,7 @@ static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 
 /* A macro for logging a string message when the debug file is open */
 #ifndef NO_DEBUG_CHECKING
-#  define DMSG(s) if(pkg_debug) {pkg_timestamp(); fprintf(pkg_debug,"%s",s); fflush(pkg_debug);}
+#  define DMSG(s) if(pkg_debug) {pkg_timestamp(); fprintf(pkg_debug,"%s", s); fflush(pkg_debug);}
 #else
 #  define DMSG(s) /**/
 #endif
@@ -1198,7 +1194,7 @@ pkg_flush(register struct pkg_conn *pc)
 	return( 0 );
     }
 
-    if( (i = write(pc->pkc_fd,pc->pkc_stream,pc->pkc_strpos)) != pc->pkc_strpos )  {
+    if( (i = write(pc->pkc_fd, pc->pkc_stream, pc->pkc_strpos)) != pc->pkc_strpos )  {
 	if( i < 0 ) {
 	    if( errno == EBADF )  return(-1);
 	    pkg_perror(pc->pkc_errlog, "pkg_flush: write");
@@ -1644,7 +1640,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
 	if( (i=pkg_inget( pc,
 			  ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
 			  1 )) != 1 )  {
-	    sprintf(errbuf,"pkg_gethdr: hdr read=%d?\n",i);
+	    sprintf(errbuf,"pkg_gethdr: hdr read=%d?\n", i);
 	    (pc->pkc_errlog)(errbuf);
 	    return(-1);
 	}
@@ -1774,9 +1770,7 @@ pkg_ck_debug(void)
 
     /* Log version number of this code */
     pkg_timestamp();
-#ifndef lint
-    fprintf( pkg_debug, "pkg_ck_debug %s\n", RCSid );
-#endif
+    fprintf( pkg_debug, "pkg_ck_debug %s\n", pkg_version() );
 }
 
 /*
