@@ -31,9 +31,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSmkbundle[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

@@ -35,9 +35,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

@@ -14,9 +14,6 @@
  *	Contributed to the US Army for unlimited distribution.
  *
  */
-#ifndef lint
-static const char RCSid[] = "$Id$";
-#endif
 #undef DEBUG
 
 #include "common.h"

@@ -31,9 +31,6 @@
  *	15 Aug 1985
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

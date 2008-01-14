@@ -46,9 +46,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #define PLOT_BOTH_FACES	1
 

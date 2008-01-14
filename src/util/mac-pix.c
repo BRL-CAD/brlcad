@@ -44,9 +44,6 @@
  *	Dave Johnson, Brown University Computer Science
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

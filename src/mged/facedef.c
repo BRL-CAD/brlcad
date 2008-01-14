@@ -22,9 +22,6 @@
  *	Daniel C. Dender
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

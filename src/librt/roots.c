@@ -33,9 +33,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSroots[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

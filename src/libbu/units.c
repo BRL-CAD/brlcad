@@ -29,9 +29,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char libbu_units_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

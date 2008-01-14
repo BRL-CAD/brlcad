@@ -32,9 +32,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

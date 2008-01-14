@@ -52,9 +52,6 @@
  *	4. Do raytracing.
  */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

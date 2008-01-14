@@ -18,9 +18,6 @@
  *	This software is Copyright (C) 1992 by Paladin Software
  *	All rights reserved.
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$";
-#endif
 
 #include "common.h"
 

@@ -35,9 +35,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSprep[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

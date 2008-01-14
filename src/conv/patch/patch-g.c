@@ -44,9 +44,6 @@
  *		Converted proc_tri and proc_plate to produce NMG's
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

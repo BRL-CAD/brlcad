@@ -35,9 +35,6 @@
  */
 
 
-#ifndef lint
-static const char RCSsemaphore[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

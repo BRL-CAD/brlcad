@@ -28,9 +28,6 @@
  *	Keith A. Applin
  *
  */
-#ifndef lint
-static const char RCSconcat[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

@@ -31,9 +31,6 @@
  *
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #define BSD43
 /* #define BSD42 */

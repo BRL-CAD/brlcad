@@ -42,9 +42,6 @@
  */
 
 
-#ifndef lint
-static const char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

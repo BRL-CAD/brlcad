@@ -39,9 +39,6 @@
  *
  * Date: Mon June 4, 1990
  */
-#ifndef lint
-static const char rcs_ident[] = "$Header$";
-#endif
 
 #include "common.h"
 

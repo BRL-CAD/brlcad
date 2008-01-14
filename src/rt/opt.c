@@ -30,9 +30,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-#ifndef lint
-static const char RCSrt[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

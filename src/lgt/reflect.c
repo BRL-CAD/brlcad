@@ -23,9 +23,6 @@
 	Thanks to Edwin O. Davisson and Robert Shnidman for contributions
 	to the refraction algorithm.
 */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

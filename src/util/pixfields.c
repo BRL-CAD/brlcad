@@ -28,9 +28,6 @@
  *	Christopher T. Johnson - 05 December 1989
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

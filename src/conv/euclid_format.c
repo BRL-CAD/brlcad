@@ -24,9 +24,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 

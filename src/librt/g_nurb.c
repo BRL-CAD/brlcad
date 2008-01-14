@@ -29,9 +29,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSnurb[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

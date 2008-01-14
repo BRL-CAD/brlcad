@@ -44,9 +44,6 @@
  */
 /** @} */
 
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

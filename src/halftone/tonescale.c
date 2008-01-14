@@ -51,9 +51,6 @@
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  */
 
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 

@@ -37,9 +37,6 @@
  */
 
 
-#ifndef lint
-static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

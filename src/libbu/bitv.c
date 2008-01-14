@@ -39,9 +39,6 @@
  *
  */
 
-#ifndef lint
-static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

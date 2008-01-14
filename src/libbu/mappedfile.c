@@ -48,9 +48,6 @@
  *
  */
 
-#ifndef lint
-static const char libbu_mappedfile_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

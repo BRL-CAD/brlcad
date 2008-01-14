@@ -29,9 +29,6 @@
  */
 
 
-#ifndef lint
-static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

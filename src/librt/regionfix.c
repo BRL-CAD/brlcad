@@ -30,9 +30,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

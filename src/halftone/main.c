@@ -64,9 +64,6 @@
  *	Christopher T. Johnson	- 90/03/21
  *
  */
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 

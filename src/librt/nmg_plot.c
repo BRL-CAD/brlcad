@@ -47,9 +47,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

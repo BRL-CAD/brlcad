@@ -32,9 +32,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char libbu_rb_free_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 

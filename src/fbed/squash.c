@@ -20,9 +20,6 @@
 /** @file squash.c
  *	Author:		Gary S. Moss
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 /*
  * squash.c - Filter super-sampled image for one scan line
  */

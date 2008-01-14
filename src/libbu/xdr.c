@@ -41,9 +41,6 @@
  */
 
 
-#ifndef lint
-static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

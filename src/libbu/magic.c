@@ -36,9 +36,6 @@
  *  @author	Michael John Muuss
  */
 
-#ifndef lint
-static const char RCSmagic[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

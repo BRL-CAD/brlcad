@@ -42,9 +42,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSmater[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

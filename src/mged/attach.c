@@ -35,9 +35,6 @@
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define WIN32_INCLUDE_ORDER_HACK

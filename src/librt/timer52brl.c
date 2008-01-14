@@ -32,9 +32,6 @@
  *
  */
 
-#ifndef lint
-static const char RCStimer[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include <stdio.h>
 #include <memory.h>

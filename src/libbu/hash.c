@@ -25,9 +25,6 @@
  *	An implimentation of hash tables.
  */
 
-#ifndef lint
-static const char libbu_hash_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 

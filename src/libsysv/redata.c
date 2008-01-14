@@ -12,9 +12,6 @@
  *	D A Gwyn
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #if defined(BSD)
 #ifndef lint

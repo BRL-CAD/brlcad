@@ -56,9 +56,6 @@
 /*		of rays leaving a region and entering engine air must be  */
 /*		used.  Not the total that leave throught engine air and  */
 /*		hit another region.  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

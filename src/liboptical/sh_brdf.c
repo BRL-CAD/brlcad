@@ -33,9 +33,6 @@
  *	in "Measuring and Modeling Anisotropic Reflection" (Which also references
  *	earlier work by Beckmann, Torrance, and Cook).
  */
-#ifndef lint
-static const char RCSbrdf[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

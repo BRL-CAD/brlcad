@@ -28,9 +28,6 @@
  *	Paul R. Stay
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Id$ (BRL)";
-#endif
 
 #include "common.h"
 

@@ -37,9 +37,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCScmd[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

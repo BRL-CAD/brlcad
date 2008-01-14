@@ -27,9 +27,6 @@
  * @author      Christopher Sean Morrison
  */
 
-#ifndef lint
-static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

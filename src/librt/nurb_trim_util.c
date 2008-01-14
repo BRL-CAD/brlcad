@@ -33,9 +33,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char rcs_ident[] = "$Header$";
-#endif
 
 #include "common.h"
 

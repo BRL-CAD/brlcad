@@ -31,9 +31,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char libbu_rb_order_stats_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 

@@ -26,9 +26,6 @@
  *	Gary S. Moss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Id$ (BRL)";
-#endif
 
 #include "common.h"
 

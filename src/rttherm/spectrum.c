@@ -40,9 +40,6 @@
  *
  *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

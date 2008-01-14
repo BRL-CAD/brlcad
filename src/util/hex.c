@@ -28,9 +28,6 @@
  *    h    help
  *    o    offset from begining of data from which to start dump
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

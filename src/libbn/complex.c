@@ -36,9 +36,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCScomplex[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

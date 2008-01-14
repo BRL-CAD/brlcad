@@ -34,9 +34,6 @@
  *	Susanne L. Muuss
  *
  */
-#ifndef lint
-static const char part_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

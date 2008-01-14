@@ -38,9 +38,6 @@
 #  include <unistd.h>
 #endif
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #define	MAXLINELEN	256
 

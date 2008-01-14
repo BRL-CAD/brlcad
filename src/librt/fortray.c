@@ -29,9 +29,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$";
-#endif
 
 #include "common.h"
 

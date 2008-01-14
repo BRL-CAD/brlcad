@@ -36,9 +36,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSdir[] = "@(#)$Header$";
-#endif
 
 #include "common.h"
 

@@ -38,9 +38,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCScut[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

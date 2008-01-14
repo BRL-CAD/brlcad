@@ -57,9 +57,6 @@
 /*	10 March 1992    - Print out PRISM release being used.  */
 /*	10 February 1992 - Fire rays from 3 orthogonal directions, if  */
 /*			   desired.  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

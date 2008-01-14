@@ -31,9 +31,6 @@
  *
  */
 
-#ifndef lint
-static const char libbu_printb_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

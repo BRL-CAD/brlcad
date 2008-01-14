@@ -35,9 +35,6 @@
  * Author -
  *	Robert G. Parker
  */
-#ifndef lint
-static const char RCSid[] = "";
-#endif
 
 #include "common.h"
 

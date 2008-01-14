@@ -30,9 +30,6 @@
  *	July 1999 by John P. Williams, QUADRA Enterprises to output VRML2 format
  */
 
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 

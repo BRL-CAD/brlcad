@@ -32,9 +32,6 @@
  *	Bill Mermagen Jr.
  */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

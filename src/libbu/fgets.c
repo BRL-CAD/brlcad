@@ -31,9 +31,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-#ifndef lint
-static const char libbu_fgets_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

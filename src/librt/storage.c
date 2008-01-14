@@ -36,9 +36,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSstorage[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

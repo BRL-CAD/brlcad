@@ -31,9 +31,6 @@
  */
 /** @} */
 
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include <stdio.h>
 #include <ctype.h>

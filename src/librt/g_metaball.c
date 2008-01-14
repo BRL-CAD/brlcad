@@ -37,9 +37,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSmetaball[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

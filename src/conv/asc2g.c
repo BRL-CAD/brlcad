@@ -31,9 +31,6 @@
  *	Susanne Muuss, J.D.	 Converted to libwdb, Oct. 1990
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

@@ -70,9 +70,6 @@
  *	"little-endian" (eg, VAX) byte-ordering.
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

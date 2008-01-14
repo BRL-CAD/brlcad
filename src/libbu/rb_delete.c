@@ -31,9 +31,6 @@
  */
 /** @} */
 
-#ifndef lint
-static char const libbu_rb_delete_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 

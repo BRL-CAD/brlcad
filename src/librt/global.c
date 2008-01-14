@@ -29,9 +29,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSglobal[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

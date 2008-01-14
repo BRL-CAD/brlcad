@@ -32,9 +32,6 @@
  *
  */
 
-#ifndef lint
-static const char RCShist[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

@@ -20,9 +20,6 @@
 /** @file octree.c
 	Author:		Gary S. Moss
 */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 /*
 	Originally extracted from SCCS archive:
 		SCCS id:	@(#) octree.c	2.1

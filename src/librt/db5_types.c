@@ -27,9 +27,6 @@
  *	Paul J. Tanenbaum
  *
  */
-#ifndef lint
-static const char RCSell[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

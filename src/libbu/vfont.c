@@ -33,9 +33,6 @@
  */
 
 
-#ifndef lint
-static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

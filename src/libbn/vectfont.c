@@ -52,9 +52,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char tp_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

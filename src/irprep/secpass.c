@@ -49,9 +49,6 @@
 /*	10 March 1992    - Print out PRISM release being used.  */
 /*	11 February 1993 - Add option to fire from three orthogonal  */
 /*			   directions.  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

@@ -24,9 +24,6 @@
  *	Christopher T. Johnson
  *
  */
-#ifndef lint
-static const char RCSpolyif[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

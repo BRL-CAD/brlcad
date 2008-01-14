@@ -29,9 +29,6 @@
  * 	Based rather heavily on plot-fb.c
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

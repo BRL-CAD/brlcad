@@ -26,9 +26,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 unsigned short
 fbgetshort(char *msgp)

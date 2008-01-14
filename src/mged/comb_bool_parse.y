@@ -17,9 +17,6 @@
  */
 
 %{
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

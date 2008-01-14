@@ -34,9 +34,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char librt_htbl_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

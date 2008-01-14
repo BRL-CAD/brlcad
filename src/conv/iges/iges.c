@@ -36,9 +36,6 @@
  *		How to handle xforms with scale factors?????
  */
 
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 

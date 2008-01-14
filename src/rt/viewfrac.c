@@ -25,9 +25,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

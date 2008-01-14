@@ -75,9 +75,6 @@
 
 	out_fb		same as -F out_fb, for convenience
 */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

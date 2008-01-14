@@ -62,9 +62,6 @@
 	gif_file	GIF input file to be translated (standard input if
 			no explicit GIF file name is specified)
 */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

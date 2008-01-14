@@ -27,9 +27,6 @@
  *	shape of the shell.
  */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

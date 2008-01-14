@@ -36,9 +36,6 @@
  *	due to the organization of the input file.
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

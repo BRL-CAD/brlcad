@@ -34,9 +34,6 @@
  *	Gary S. Moss, BRL. 03/12/85
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

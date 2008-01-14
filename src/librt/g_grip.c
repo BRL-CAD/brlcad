@@ -36,9 +36,6 @@
  *      Geometric Solutions, Inc.
  */
 
-#ifndef lint
-static const char RCSgrip[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

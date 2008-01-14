@@ -34,9 +34,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSshoot[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

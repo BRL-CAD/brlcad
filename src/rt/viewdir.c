@@ -31,9 +31,6 @@
  *	Aberdeen Proving Ground, Maryland  21005
  */
 
-#ifndef lint
-static const char RCSraydir[] = "@(#)$Header$";
-#endif
 
 #include "common.h"
 

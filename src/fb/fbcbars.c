@@ -60,9 +60,6 @@
  *	"bars" by Doris Kochanek, National Film Board of Canada
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

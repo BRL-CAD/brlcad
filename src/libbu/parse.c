@@ -48,9 +48,6 @@
  *
  */
 
-#ifndef lint
-static const char RCSparse[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

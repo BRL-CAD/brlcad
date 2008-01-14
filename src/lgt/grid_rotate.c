@@ -21,9 +21,6 @@
 	Author:		Jeff Hanes
 	Modified:	Gary S. Moss	(Added roll rotation.)
 */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 

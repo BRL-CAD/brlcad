@@ -35,9 +35,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
-#ifndef lint
-static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

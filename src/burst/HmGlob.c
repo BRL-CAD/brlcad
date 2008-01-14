@@ -23,9 +23,6 @@
  */
 
 /*LINTLIBRARY*/
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 #include <stdio.h>
 FILE	*HmTtyFp = NULL;   /* read keyboard, not stdin */
 int	HmLftMenu = 1;	   /* default top-level menu position */

@@ -37,9 +37,6 @@
  *    Christopher Sean Morrison
  */
 
-#ifndef lint
-static const char RCSbomb[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 

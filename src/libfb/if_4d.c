@@ -52,9 +52,6 @@
  */
 /** @} */
 
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #define class	inv_class	/* Map Irix 4 name into Irix 5 name */
 #define type	inv_type	/* Map Irix 4 name into Irix 5 name */
