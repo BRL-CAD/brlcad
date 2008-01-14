@@ -1684,6 +1684,9 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask)
 	Tcl_DeleteFileHandler(rtcop->fd);
 	close(rtcop->fd);
 
+	if (rtcop->dgop->dgo_rtCmdNotify != (void (*)())0)
+	    rtcop->dgop->dgo_rtCmdNotify();
+
 	bu_free((genptr_t)rtcop, "dgo_rtcheck_output_handler: rtcop");
 	return;
     }
@@ -1715,8 +1718,6 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 					 dgo_rtcheck_vector_handler,
 					 (ClientData)rtcp);
 		Tcl_Close(rtcp->interp, rtcp->chan);
-		fclose(rtcp->fp);
-		CloseHandle(rtcp->fd);
 
 		FOR_ALL_SOLIDS(sp, &rtcp->dgop->dgo_headSolid)
 			sp->s_flag = DOWN;
@@ -1762,12 +1763,13 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask)
 	Tcl_DeleteChannelHandler(rtcop->chan,
 				 dgo_rtcheck_output_handler,
 				 (ClientData)rtcop);
-#if 1
 	Tcl_Close(rtcop->interp, rtcop->chan);
-#endif
-	CloseHandle(rtcop->fd);
+
+	if (rtcop->dgop->dgo_rtCmdNotify != (void (*)())0)
+	    rtcop->dgop->dgo_rtCmdNotify();
 
 	bu_free((genptr_t)rtcop, "dgo_rtcheck_output_handler: rtcop");
+
 	return;
     }
 
@@ -3964,6 +3966,9 @@ dgo_rt_output_handler(ClientData	clientData,
 		bu_log("Raytrace complete.\n");
 	}
 
+	if (drcdp->dgop->dgo_rtCmdNotify != (void (*)())0)
+	    drcdp->dgop->dgo_rtCmdNotify();
+
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
 	bu_free((genptr_t)run_rtp, "dgo_rt_output_handler: run_rtp");
@@ -4014,9 +4019,6 @@ dgo_rt_output_handler(ClientData	clientData,
 				 dgo_rt_output_handler,
 				 (ClientData)drcdp);
 	Tcl_Close(drcdp->interp, run_rtp->chan);
-#if 0
-	CloseHandle(run_rtp->fd);
-#endif
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
@@ -4053,6 +4055,9 @@ dgo_rt_output_handler(ClientData	clientData,
 	    else
 		bu_log("Raytrace complete.\n");
 	}
+
+	if (drcdp->dgop->dgo_rtCmdNotify != (void (*)())0)
+	    drcdp->dgop->dgo_rtCmdNotify();
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
