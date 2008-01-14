@@ -51,6 +51,11 @@
 
 #include "common.h"
 
+#include "machine.h"
+#include "vmath.h"
+#include "bu.h"
+
+
 __BEGIN_DECLS
 
 #undef r_a /* defined on alliant in <machine/reg.h> included in signal.h */
