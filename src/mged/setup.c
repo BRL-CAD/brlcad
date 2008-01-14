@@ -50,6 +50,12 @@
 extern void cmd_setup(void);
 extern void init_qray(void);
 
+void
+mged_rtCmdNotify()
+{
+    pr_prompt();
+}
+
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -175,6 +181,7 @@ mged_setup(void)
 
     /* initialize MGED's drawable geometry object */
     dgop = dgo_open_cmd("mged", wdbp);
+    dgop->dgo_rtCmdNotify = mged_rtCmdNotify;
 
     view_state->vs_vop = vo_open_cmd("");
     view_state->vs_vop->vo_callback = mged_view_obj_callback;
