@@ -643,11 +643,11 @@ main(int argc, char **argv)
 		realt,
 		((double)nbytes)/realt/1024,
 		((double)nbytes)*8/realt/1024 );
-	exit(0);
+	return 0;
 
 usage:
 	fprintf(stderr, "%s", Usage);
-	exit(1);
+	return 1;
 }
 
 /*
