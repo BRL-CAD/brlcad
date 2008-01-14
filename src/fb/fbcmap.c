@@ -46,6 +46,7 @@
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
+#include "pkg.h"
 
 void		usage(char **argv);
 int		pars_Argv(int argc, register char **argv);
@@ -89,6 +90,9 @@ main(int argc, char **argv)
 		usage( NULL );
 		return	1;
 	}
+
+	if (pkg_init() != 0)
+	    bu_exit(1, NULL);
 
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		return	1;

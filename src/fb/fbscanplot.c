@@ -38,6 +38,7 @@
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
+#include "pkg.h"
 
 unsigned char	*scan;		/* Scanline to be examined */
 unsigned char	*outline;	/* output line buffer */
@@ -120,10 +121,13 @@ main(int argc, char **argv)
 	scr_height = fb_getheight(fbp);
 
 	if( outframebuffer != NULL ) {
-		if( (fboutp = fb_open( outframebuffer, scr_width, scr_width )) == NULL )
-			bu_exit( 3, "Unable to open framebuffer\n" );
+	    if (pkg_init() != 0)
+		bu_exit(1, NULL);
+
+	    if( (fboutp = fb_open( outframebuffer, scr_width, scr_width )) == NULL )
+		bu_exit( 3, "Unable to open framebuffer\n" );
 	} else
-		fboutp = fbp;
+	    fboutp = fbp;
 
 	/* Allocate the buffers */
 	scan = (unsigned char *)bu_malloc( (scr_width+2) * sizeof(RGBpixel), "scan" );

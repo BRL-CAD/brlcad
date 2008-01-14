@@ -42,7 +42,7 @@
 #include "machine.h"
 #include "bu.h"
 #include "fb.h"
-
+#include "pkg.h"
 
 typedef int	bool;			/* boolean data type */
 #define false	0
@@ -155,6 +155,9 @@ main(int argc, char **argv)
 		fputs( usage, stderr);
 		bu_exit(1, NULL);
 	}
+
+	if (pkg_init() != 0)
+	    bu_exit(1, NULL);
 
 	if( (fbp = fb_open( framebuffer, screen_width, screen_height )) == NULL )
 		bu_exit(12, NULL);

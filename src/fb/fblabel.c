@@ -48,7 +48,7 @@
 #include "bu.h"
 #include "fb.h"
 #include "vfont-if.h"
-
+#include "pkg.h"
 
 #define FONTBUFSZ 200
 
@@ -177,6 +177,9 @@ main(int argc, char **argv)
 		fputs( usage, stderr);
 		bu_exit(1, NULL);
 	}
+
+	if (pkg_init() != 0)
+	    bu_exit(1, NULL);
 
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )  {
 		fprintf(stderr, "fblabel:  Unable to open framebuffer %s\n", framebuffer);
