@@ -230,12 +230,17 @@ parse_fmt(char *uoutspec, int outcom_type)
     outitem	*oip;
     outitem	*prev_oip = OUTITEM_NULL;
     outval	*vtp;
+    int		slen;
+
 
     /* N.B. bu_malloc() only returns upon successful allocation */
 
-    mycopy = uos = bu_malloc(strlen(uoutspec) + 1, "uos");
-    strncpy(uos, uoutspec, strlen(uoutspec));
-    /* Break up the format specification into pieces,
+    slen = strlen(uoutspec);
+    mycopy = uos = bu_malloc(slen + 1, "uos");
+    strncpy(uos, uoutspec, slen);
+    uos[slen] = '\0';
+ 
+   /* Break up the format specification into pieces,
      * one per conversion specification (and, hopefully)
      * one per argument.
      */
