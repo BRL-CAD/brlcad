@@ -86,36 +86,36 @@ static unsigned char	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
 	fb_p += sizeof(RGBpixel); \
 	}
 char strg[51];
-char g(void),gc(void);
+char g(void), gc(void);
 struct colors {
 	char *name;
 	RGBpixel c_pixel;
 }colortab[] = {
-	{"black",	{0,0,0}},
-	{"blue",	{0,0,255}},
-	{"brown",	{200,130,0}},
-	{"cyan",	{0,255,200}},
-	{"flesh",	{255,200,160}},
-	{"gray",	{120,120,120}},
-	{"green",	{0,255,0}},
-	{"lime", 	{200,255,0}},
-	{"magenta",	{255,0,255}},
-	{"olive",	{220,190,0}},
-	{"orange",	{255,100,0}},
-	{"pink",	{255,200,200}},
-	{"red",		{255,0,0}},
-	{"rose",	{255,0,175}},
-	{"rust",	{200,100,0}},
-	{"silver",	{237,237,237}},
-	{"sky",		{0,255,255}},
-	{"violet",	{200,0,255}},
-	{"white",	{255,255,255}},
-	{"yellow",	{255,200,0}}
+	{"black",	{0, 0, 0}},
+	{"blue",	{0, 0, 255}},
+	{"brown",	{200, 130, 0}},
+	{"cyan",	{0, 255, 200}},
+	{"flesh",	{255, 200, 160}},
+	{"gray",	{120, 120, 120}},
+	{"green",	{0, 255, 0}},
+	{"lime", 	{200, 255, 0}},
+	{"magenta",	{255, 0, 255}},
+	{"olive",	{220, 190, 0}},
+	{"orange",	{255, 100, 0}},
+	{"pink",	{255, 200, 200}},
+	{"red",		{255, 0, 0}},
+	{"rose",	{255, 0, 175}},
+	{"rust",	{200, 100, 0}},
+	{"silver",	{237, 237, 237}},
+	{"sky",		{0, 255, 255}},
+	{"violet",	{200, 0, 255}},
+	{"white",	{255, 255, 255}},
+	{"yellow",	{255, 200, 0}}
 };
-int ifd,io,grid_w,grid_h,min_w,min_h,max_w,max_h,ni,opq=0;
-int ib=0,ic=0,nc=0,ibc=0,itc=3;
+int ifd, io, grid_w, grid_h, min_w, min_h, max_w, max_h, ni, opq=0;
+int ib=0, ic=0, nc=0, ibc=0, itc=3;
 int itmc[500];
-long itm[500],loci,locd,loct=0,loce,ctoi(void);
+long itm[500], loci, locd, loct=0, loce, ctoi(void);
 
 void	paint(void), prtclr(char raw), prtsmu(char raw);
 int	lookup(long int ix, long int *jx, int n);
@@ -126,9 +126,9 @@ main(int argc, char **argv)
 	int	c;
 	char *cp;
 	char cs[4];
-	int i,j,k,lclr,iquit=0,ichg=0,gclr(void),cclr(char *pc);
-	int il,iu,iclr,iskp,jclr,bsp(void);
-	int scr_w=512,scr_h=512,scr_set=0;
+	int i, j, k, lclr, iquit=0, ichg=0, gclr(void), cclr(char *pc);
+	int il, iu, iclr, iskp, jclr, bsp(void);
+	int scr_w=512, scr_h=512, scr_set=0;
 
 	printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
 /* check invocation */
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 		bu_exit(10, NULL);
 	}
 	for(i=1;i<argc;i++){
-		if(strcmp("-F",argv[i])==0){
+		if(strcmp("-F", argv[i])==0){
 #if 0
 			argv[++i];
 #else
@@ -153,18 +153,18 @@ main(int argc, char **argv)
 			 */
 			++i;
 #endif
-		} else if(strcmp("-W",argv[i])==0){
-			sscanf(argv[++i],"%d",&scr_w);
+		} else if(strcmp("-W", argv[i])==0){
+			sscanf(argv[++i], "%d",&scr_w);
 			scr_set=1;
-		} else if(strcmp("-N",argv[i])==0){
-			sscanf(argv[++i],"%d",&scr_h);
+		} else if(strcmp("-N", argv[i])==0){
+			sscanf(argv[++i], "%d",&scr_h);
 			scr_set=1;
-		} else if(strncmp("-",argv[i],1)==0){
-			printf("Unknown option: %s\n",argv[i]);
+		} else if(strncmp("-", argv[i], 1)==0){
+			printf("Unknown option: %s\n", argv[i]);
 			bu_exit(10, NULL);
 /* get plot file */
 		} else {
-			if((ifd=open(argv[i],2)) == -1){
+			if((ifd=open(argv[i], 2)) == -1){
 				perror(argv[i]);
 				bu_exit(10, NULL);
 			}
@@ -190,7 +190,7 @@ view:	printf("Title: ");
 	for(i=0;i<20;i++) putchar(gc());
 	grid_w=ctoi();
 	grid_h=ctoi();
-	printf("\nHorz, Vert: %4d %4d\n",grid_w,grid_h);
+	printf("\nHorz, Vert: %4d %4d\n", grid_w, grid_h);
 	if((grid_w > 512 || grid_h > 512) && scr_set==0){
 		if(grid_w>1024 || grid_h>1024){
 			printf("Number of pixels gt 1024\n");
@@ -201,11 +201,11 @@ view:	printf("Title: ");
 		printf("High resolution set\n");
 	}
 /*		open frame buffer */
-	if((fbp=fb_open(NULL,scr_w,scr_h))==NULL){
+	if((fbp=fb_open(NULL, scr_w, scr_h))==NULL){
 		printf("No device opened\n");
 		bu_exit(10, NULL);
 	}
-	(void)fb_wmap(fbp,COLORMAP_NULL);	/* std map */
+	(void)fb_wmap(fbp, COLORMAP_NULL);	/* std map */
 
 /* compute screen coordinates of min and max */
 	min_w=(scr_w-grid_w)/2;
@@ -213,7 +213,7 @@ view:	printf("Title: ");
 	max_w=min_w+grid_w;
 	max_h=min_h+grid_h;
 	locd=loct;
-/*	printf("min_w %d min_h %d\n",min_w,min_h); */
+/*	printf("min_w %d min_h %d\n", min_w, min_h); */
 
 /* find item - color table (default color = silver) */
 	while((c=gc())!='/') if(c==0) bu_exit(1, NULL);
@@ -256,21 +256,21 @@ view:	printf("Title: ");
 			break;
 		case 'a':
 			printf("Old color? ");
-			scanf("%3s",cs);
+			scanf("%3s", cs);
 			iclr=cclr(cs);
 			if(iclr<0){
 				prtclr(0);
 				break;
 			}
 			printf("New color? ");
-			scanf("%3s",cs);
+			scanf("%3s", cs);
 			jclr=cclr(cs);
 			if(jclr<0){
 				prtclr(0);
 				break;
 			}
 			ichg=1;
-			lseek(ifd,(off_t)loci,0);
+			lseek(ifd,(off_t)loci, 0);
 			loct=loci;
 			ic=0;
 			for(i=0;i<ni;i++){
@@ -278,14 +278,14 @@ view:	printf("Title: ");
 				for(k=0;(c=gc())!='\n';) strg[k++]=c;
 				strg[k]='\0';
 				if(itmc[i]!=iclr) continue;
-				printf("%5ld %-7s  %s\n",itm[i],
-					colortab[jclr].name,strg);
+				printf("%5ld %-7s  %s\n", itm[i],
+					colortab[jclr].name, strg);
 				itmc[i]=jclr;
 			}
 			break;
 		case 'b':
-			printf("%s background changed to ",colortab[ibc].name);
-			scanf("%3s",cs);
+			printf("%s background changed to ", colortab[ibc].name);
+			scanf("%3s", cs);
 			ibc=cclr(cs);
 			if(ibc<0){
 				ibc=0;
@@ -295,7 +295,7 @@ view:	printf("Title: ");
 		case 't':
 			printf("%s transparent color changed to ",
 				colortab[itc].name);
-			scanf("%3s",cs);
+			scanf("%3s", cs);
 			itc=cclr(cs);
 			if(itc<0){
 				prtclr(0);
@@ -306,14 +306,14 @@ view:	printf("Title: ");
 			prtclr(0);
 			break;
 		case 'l':
-			printf("Background color is %s\n",colortab[ibc].name);
-			printf("Transparent color is %s\n\n",colortab[itc].name);
-			lseek(ifd,(off_t)loci,0);
+			printf("Background color is %s\n", colortab[ibc].name);
+			printf("Transparent color is %s\n\n", colortab[itc].name);
+			lseek(ifd,(off_t)loci, 0);
 			loct=loci;
 			ic=0;
 			for(i=0;i<ni;i++){
 				for(j=0;j<10;j++) gc();
-				printf("%5ld %-7s  ",itm[i],
+				printf("%5ld %-7s  ", itm[i],
 					colortab[itmc[i]].name);
 				while((c=gc())!='\n') putchar(c);
 				putchar('\n');
@@ -343,14 +343,14 @@ view:	printf("Title: ");
 			if(ichg!=0){
 				for(i=0;i<ni;i++){
 					loci+=6;
-					lseek(ifd,(off_t)loci,0);
+					lseek(ifd,(off_t)loci, 0);
 					ic=0;
-					for(j=0,cp=colortab[itmc[i]].name;j<3;
-							cp++,j++){
+					for(j=0, cp=colortab[itmc[i]].name;j<3;
+							cp++, j++){
 						loci++;
-						write(ifd,cp,1);
+						write(ifd, cp, 1);
 					}
-					lseek(ifd,(off_t)++loci,0);
+					lseek(ifd,(off_t)++loci, 0);
 					while((c=gc())!='\n') loci++;
 					loci++;
 				}
@@ -358,7 +358,7 @@ view:	printf("Title: ");
 			}
 			if(iquit!=0) bu_exit(0, NULL);
 			loct=loce;
-			lseek(ifd,(off_t)loce,0);
+			lseek(ifd,(off_t)loce, 0);
 			ic=0;
 			fb_close(fbp);
 			goto view;
@@ -368,14 +368,14 @@ view:	printf("Title: ");
 			printf("Upper limit? ");
 			scanf("%d",&iu);
 			printf("Color? ");
-			scanf("%3s",cs);
+			scanf("%3s", cs);
 			iclr=cclr(cs);
 			if(iclr<0){
 				prtclr(0);
 				break;
 }
 			ichg=1;
-			lseek(ifd,(off_t)loci,0);
+			lseek(ifd,(off_t)loci, 0);
 			loct=loci;
 			ic=0;
 			for(i=0;i<ni;i++){
@@ -383,15 +383,15 @@ view:	printf("Title: ");
 				for(k=0;(c=gc())!='\n';) strg[k++]=c;
 				strg[k]='\0';
 				if(itm[i]<il || itm[i]>iu) continue;
-				printf("%5ld %-7s  %s\n",itm[i],
-					colortab[iclr].name,strg);
+				printf("%5ld %-7s  %s\n", itm[i],
+					colortab[iclr].name, strg);
 				itmc[i]=iclr;
 			}
 			break;
 		case 's':
 			prtsmu(0);
 			ichg=1;
-			lseek(ifd,(off_t)loci,0);
+			lseek(ifd,(off_t)loci, 0);
 			loct=loci;
 			ic=0;
 			iskp=0;
@@ -402,7 +402,7 @@ back:				for(j=0;j<10;j++) gc();
 				for(k=0;(c=gc())!='\n';) strg[k++]=c;
 				strg[k]='\0';
 again:				printf("      %-7s  %s%c%5ld ",
-					colortab[itmc[i]].name,strg,13,itm[i]);
+					colortab[itmc[i]].name, strg, 13, itm[i]);
 				if(iskp>0){
 					iskp--;
 					printf("\015\n");
@@ -419,7 +419,7 @@ again:				printf("      %-7s  %s%c%5ld ",
 					goto back;
 /* ctrl c - stop */
 				}else if(k==-3){
-					printf("%c\n",13);
+					printf("%c\n", 13);
 					break;
 /* ctrl v - skip 20 lines */
 				}else if(k==-22){
@@ -434,8 +434,8 @@ again:				printf("      %-7s  %s%c%5ld ",
 					prtclr(1);
 					goto again;
 				}
-				printf("%c%5ld %-7s%c\n",13,itm[i],
-					colortab[itmc[i]].name,13);
+				printf("%c%5ld %-7s%c\n", 13, itm[i],
+					colortab[itmc[i]].name, 13);
 				lclr=itmc[i];
 			}
 			reset_Tty(0);
@@ -450,11 +450,11 @@ paint(void)
 /* Paint picture */
 {
 	char c;
-	int i,j,iw,ih,iwih,trnf,flop;
+	int i, j, iw, ih, iwih, trnf, flop;
 	int	inten = 0;
 	int	inten_high;
-	long li,lj,numb(void);
-	RGBpixel ocl,tcl,pmix,tp,bp;
+	long li, lj, numb(void);
+	RGBpixel ocl, tcl, pmix, tp, bp;
 	register unsigned char *fb_p;	/* Current position in buffer.	*/
 
 	printf("Picture is being painted\n");
@@ -464,8 +464,8 @@ paint(void)
 	tp[RED]=colortab[itc].c_pixel[RED];
 	tp[GRN]=colortab[itc].c_pixel[GRN];
 	tp[BLU]=colortab[itc].c_pixel[BLU];
-	fb_clear(fbp,bp);
-	lseek(ifd,(off_t)locd,0);
+	fb_clear(fbp, bp);
+	lseek(ifd,(off_t)locd, 0);
 	loct=locd;
 	ic=0;
 	nc=0;
@@ -510,7 +510,7 @@ noread:		if(io>31){
 /* miss target (<sp>)*/
 		case 0:
 			lj=numb();
-			for(li=0;li<lj;li++,iw++) FBWPIXEL(bp);
+			for(li=0;li<lj;li++, iw++) FBWPIXEL(bp);
 			trnf=0;
 			flop=1;
 			iwih=(iw+ih)&1;
@@ -532,8 +532,8 @@ noread:		if(io>31){
 /* opaque item (#) */
 		case 3:
 			lj=numb();
-			if((i=lookup(lj,itm,ni))<0){
-				printf("Item %ld not in table\n",lj);
+			if((i=lookup(lj, itm, ni))<0){
+				printf("Item %ld not in table\n", lj);
 				j=15;
 			} else {
 				j=itmc[i];
@@ -556,7 +556,7 @@ noread:		if(io>31){
 				tcl[GRN]= ((int)tp[GRN]*inten)>>8;
 				tcl[BLU]= ((int)tp[BLU]*inten)>>8;
 			}
-			for(li=0;li<lj;li++,iw++){
+			for(li=0;li<lj;li++, iw++){
 				if(flop) iwih= ++iwih&1;
 				if(trnf==4){
 					flop= ++flop&1;
@@ -578,7 +578,7 @@ noread:		if(io>31){
 /* end of line (.)*/
 		case 14:
 			if(iw>min_w){
-				fb_write(fbp,min_w,ih,pix_buf,(iw-min_w));
+				fb_write(fbp, min_w, ih, pix_buf,(iw-min_w));
 				iw=min_w;
 				fb_p=pix_buf;
 			}
@@ -618,7 +618,7 @@ int cclr(char *pc)
 long ctoi(void)
 /*		change char string to integer */
 {
-	long num,neg;
+	long num, neg;
 	char cc;
 	num=0;
 	neg=1;
@@ -656,7 +656,7 @@ char g(void)
 int bsp(void)
 /* back up a line in plot file buff */
 {
-	int kloct,kib;
+	int kloct, kib;
 	kloct=loct;
 	kib=ib;
 	while(ibuf[--ib]!='\n'){
@@ -679,19 +679,19 @@ char gc(void)
 {
 	loct++;
 	if((++ib)>=ic){
-		ic=read(ifd,ibuf,1024);
+		ic=read(ifd, ibuf, 1024);
 		ib=0;
 		if(ic<=0) return(0);
 	}
 	if(ibuf[ib]=='>') ibuf[ib]='^';
 	if(ibuf[ib]=='?') ibuf[ib]='@';
-/*	printf("GC: ibuf[ib],ib,ic %c %d %d \n",ibuf[ib],ib,ic);*/
+/*	printf("GC: ibuf[ib], ib, ic %c %d %d \n", ibuf[ib], ib, ic);*/
 /*	putchar(ibuf[ib]); */
 	return(ibuf[ib]);
 }
 int gclr(void)
 {
-	char c,cs[3];
+	char c, cs[3];
 	int i;
 	for(i=0;i<3;i++){
 		while((c=getchar())<97||c>122){
@@ -708,12 +708,12 @@ int gclr(void)
 }
 int lookup(long int ix, long int *jx, int n)
 {
-	int i,ia,ib;
+	int i, ia, ib;
 	ia= -1;
 	ib=n;
 	while(1){
 		i=(ia+ib)/2;
-/*printf("LOOKUP: ix,jx,ia,ib,i %d %d %d %d %d\n",ix,*(jx+i),ia,ib,i);*/
+/*printf("LOOKUP: ix, jx, ia, ib, i %d %d %d %d %d\n", ix,*(jx+i), ia, ib, i);*/
 		if(ix== *(jx+i)) return(i);
 		if(i<=ia) return(-1);
 		if(ix> *(jx+i)) ia=i;
@@ -727,7 +727,7 @@ prtclr(char raw)
 	printf("Available Colors\n");
 	if(raw)	putchar('\015');
 	for(i=0;i<20;i++){
-		printf("%-8s",colortab[i].name);
+		printf("%-8s", colortab[i].name);
 		if((i%7)==6){
 			if(raw) putchar('\015');
 			putchar('\n');

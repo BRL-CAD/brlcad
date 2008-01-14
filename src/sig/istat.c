@@ -61,7 +61,7 @@ int parse_args(int ac, char **av, char *progname)
 	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,"h")) != EOF)
+	while ((c=bu_getopt(ac, av, "h")) != EOF)
 		switch (c) {
 		case '?'	:
 		case 'h'	:

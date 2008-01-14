@@ -62,8 +62,8 @@
 #define TCOPY(_t, _fv, _fi, _tv, _ti) { \
 	*(_t *)&((uint8_t *)_tv)[_ti] = *(_t *)&((uint8_t *)_fv)[_fi]; }
 
-#define _MIN(a,b) (a)<(b)?(a):(b)
-#define _MAX(a,b) (a)>(b)?(a):(b)
+#define _MIN(a, b) (a)<(b)?(a):(b)
+#define _MAX(a, b) (a)>(b)?(a):(b)
 #define	MATH_MIN3(_a, _b, _c, _d) _a = _MIN((_b), _MIN((_c), (_d)))
 #define MATH_MAX3(_a, _b, _c, _d) _a = _MAX((_b), _MAX((_c), (_d)))
 #define	MATH_VEC_SET(_a, _b, _c, _d) VSET(_a.v,_b,_c,_d)

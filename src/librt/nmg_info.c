@@ -1456,7 +1456,7 @@ nmg_find_eu_left_non_unit(fastf_t *left, const struct edgeuse *eu)
 	const struct faceuse	*fu;
 	vect_t			Norm;
 	vect_t			edgevect;
-	pointp_t		p1,p2;
+	pointp_t		p1, p2;
 
 	NMG_CK_EDGEUSE(eu);
 	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -1;

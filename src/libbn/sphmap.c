@@ -136,7 +136,7 @@ spm_free(spm_map_t *mp)
 /*
  *		S P M _ R E A D
  *@brief
- *  Read the value of the pixel at the given normalized (u,v)
+ *  Read the value of the pixel at the given normalized (u, v)
  *  coordinates.  It does NOT check the sanity of the coords.
  *
  *@n  0.0 <= u < 1.0	Left to Right
@@ -164,7 +164,7 @@ spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, doubl
 /*
  *		S P M _ W R I T E
  *@breif
- *  Write the value of the pixel at the given normalized (u,v)
+ *  Write the value of the pixel at the given normalized (u, v)
  *  coordinates.  It does NOT check the sanity of the coords.
  *
  *@n  0.0 <= u < 1.0	Left to Right
@@ -192,7 +192,7 @@ spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, doub
 /*
  *		S P M _ G E T
  *@brief
- *  Return a pointer to the storage element indexed by (u,v)
+ *  Return a pointer to the storage element indexed by (u, v)
  *  coordinates.  It does NOT check the sanity of the coords.
  *
  *@n  0.0 <= u < 1.0	Left to Right

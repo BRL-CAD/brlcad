@@ -301,10 +301,10 @@ reverse_buffer(void)
  *  Currently this needs to be able to buffer the entire image
  *  in memory at one time.
  *
- *  To rotate a point (x,y) CCW about the origin:
+ *  To rotate a point (x, y) CCW about the origin:
  *    x' = x cos(a) - y sin(a)
  *    y' = x sin(a) + y cos(a)
- *  To rotate it about a point (xc,yc):
+ *  To rotate it about a point (xc, yc):
  *    x' = (x-xc) cos(a) - (y-yc) sin(a) + xc
  *       = x cos(a) - y sin(a) + [xc - xc cos(a) + yc sin(a)]
  *    y' = (x-xc) sin(a) + (y-yc) cos(a) + yc
@@ -336,7 +336,7 @@ arbrot(double a)
 
 	if( buflines != nyin ) {
 		/* I won't all fit in the buffer */
-		fprintf(stderr,"bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
+		fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
 		bu_exit (1, NULL);
 	}
 	if( buflines > nyin ) buflines = nyin;

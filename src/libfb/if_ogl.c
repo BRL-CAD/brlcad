@@ -651,9 +651,9 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 		op[x].blue  = CMB(ifp)[oglp[x].blue];
 	    }
 
-	    glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
-	    glRasterPos2i(xbase,y);
-	    glDrawPixels(npix,1,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
+	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+	    glRasterPos2i(xbase, y);
+	    glDrawPixels(npix, 1, GL_ABGR_EXT, GL_UNSIGNED_BYTE,
 			 (const GLvoid *) op);
 
 	}
@@ -661,12 +661,12 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
     } else  {
 	/* No need for software colormapping */
 
-	glPixelStorei(GL_UNPACK_ROW_LENGTH,SGI(ifp)->mi_memwidth);
-	glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
-	glPixelStorei(GL_UNPACK_SKIP_ROWS,ybase);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, SGI(ifp)->mi_memwidth);
+	glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
 
-	glRasterPos2i(xbase,ybase);
-	glDrawPixels(npix,nlines,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
+	glRasterPos2i(xbase, ybase);
+	glDrawPixels(npix, nlines, GL_ABGR_EXT, GL_UNSIGNED_BYTE,
 		     (const GLvoid *) ifp->if_mem);
     }
 }
@@ -882,7 +882,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
 					  OGL(ifp)->vip, 0, True);
     }
-    direct = glXIsDirect(OGL(ifp)->dispp,OGL(ifp)->glxc);
+    direct = glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc);
     if (!direct) {
 	/* we failed to get a direct context, so we must acquire/release the context */
 	multiple_windows=1;
@@ -911,7 +911,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	    color_cell[i].blue = CMB(ifp)[i];
 	    color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	}
-	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell,256);
+	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
     } else { /* read only colormap */
 	if( CJDEBUG ) {
 	    printf("Allocating read-only colormap.");
@@ -1184,7 +1184,7 @@ fb_ogl_close(FBIO *ifp)
      *
      *  The simple for i=0..20 loop will not work, because that
      *  smashes some window-manager files.  Therefore, we content
-     *  ourselves with eliminating stdin and stdout (fd 0,1), in the
+     *  ourselves with eliminating stdin and stdout (fd 0, 1), in the
      *  hopes that this will successfully terminate any pipes or
      *  network connections.  Standard error/out may be used to print
      *  framebuffer debug messages, so they're kept around.
@@ -1291,7 +1291,7 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
     if( CJDEBUG ) printf("entering ogl_clear\n");
 
     if (multiple_windows) {
-	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False){
 	    fb_log("Warning, ogl_clear: glXMakeCurrent unsuccessful.\n");
 	}
     }
@@ -1347,7 +1347,7 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
 
 	if (multiple_windows) {
 	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	}
     }
 
@@ -1392,7 +1392,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	ogl_clipper(ifp);
     }else{
 	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
 	    }
 	}
@@ -1425,7 +1425,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 	if (multiple_windows) {
 	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	}
     }
 
@@ -1450,7 +1450,7 @@ ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 
-/*read count pixels into pixelp starting at x,y*/
+/*read count pixels into pixelp starting at x, y*/
 HIDDEN int
 ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
@@ -1501,7 +1501,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 }
 
 
-/*write count pixels from pixelp starting at xstart,ystart*/
+/*write count pixels from pixelp starting at xstart, ystart*/
 HIDDEN int
 ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count)
 {
@@ -1589,7 +1589,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	return ret;
 
     if (multiple_windows) {
-	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False){
 	    fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
 	}
     }
@@ -1608,7 +1608,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	    ogl_xmit_scanlines( ifp, ybase, 1, xstart, count );
 	    if (OGL(ifp)->copy_flag){
 		/* repaint one scanline from backbuffer */
-		backbuffer_to_screen(ifp,ybase);
+		backbuffer_to_screen(ifp, ybase);
 	    }
 	} else {
 	    /* Normal case -- multi-pixel write */
@@ -1626,7 +1626,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 
 	if (multiple_windows) {
 	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	}
     }
 
@@ -1677,7 +1677,7 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
     if(!OGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
 	    }
 	}
@@ -1695,7 +1695,7 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 	if (multiple_windows) {
 	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	}
     }
 
@@ -1746,7 +1746,7 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 
     if(!OGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
 	    }
 	}
@@ -1764,7 +1764,7 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 
 	if (multiple_windows) {
 	    /* unattach context for other threads to use */
-	    glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	}
     }
 
@@ -1855,7 +1855,7 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 	    /* Software color mapping, trigger a repaint */
 
 	    if (multiple_windows) {
-		if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+		if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False){
 		    fb_log("Warning, ogl_wmap: glXMakeCurrent unsuccessful.\n");
 		}
 	    }
@@ -1868,7 +1868,7 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 	    }
 	    if (multiple_windows) {
 		/* unattach context for other threads to use, also flushes */
-		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+		glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 	    }
 	} else {
 	    /* Send color map to hardware */
@@ -2032,7 +2032,7 @@ ogl_flush(FBIO *ifp)
 {
     if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
 	if (multiple_windows) {
-	    if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+	    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
 	    }
 	}
@@ -2069,9 +2069,9 @@ fb_cnull(ifp)
  * 	 - the current zoom (if_xzoom, if_yzoom)
  * Calculate:
  *	 - the position of the viewport in image space
- *		(xscrmin,xscrmax,yscrmin,yscrmax)
+ *		(xscrmin, xscrmax, yscrmin, yscrmax)
  *	 - the portion of the image which is visible in the viewport
- *		(xpixmin,xpixmax,ypixmin,ypixmax)
+ *		(xpixmin, xpixmax, ypixmin, ypixmax)
  */
 void
 ogl_clipper(register FBIO *ifp)
@@ -2264,7 +2264,7 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 
 	/* clear entire window */
 	glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
-	glClearColor(0,0,0,0);
+	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	/* Set normal viewport size to minimum of actual window
@@ -2290,7 +2290,7 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
-		 -1.0,1.0);
+		 -1.0, 1.0);
 	glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
     } else if( (OGL(ifp)->win_width > ifp->if_width) ||
 	       (OGL(ifp)->win_height > ifp->if_height) ) {
@@ -2299,13 +2299,13 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
 	    glDrawBuffer(GL_FRONT);
 	    glViewport(0, 0, OGL(ifp)->win_width,
 		       OGL(ifp)->win_height);
-	    glClearColor(0,0,0,0);
+	    glClearColor(0, 0, 0, 0);
 	    glClear(GL_COLOR_BUFFER_BIT);
 	    glDrawBuffer(GL_BACK);
 	} else {
 	    glViewport(0, 0, OGL(ifp)->win_width,
 		       OGL(ifp)->win_height);
-	    glClearColor(0,0,0,0);
+	    glClearColor(0, 0, 0, 0);
 	    glClear(GL_COLOR_BUFFER_BIT);
 	}
 	/* center viewport */
@@ -2324,22 +2324,22 @@ expose_callback(FBIO *ifp, XEvent *eventPtr)
     }
 
     if( CJDEBUG ) {
-	int dbb,db,view[4],getster,getaux;
+	int dbb, db, view[4], getster, getaux;
 	glGetIntegerv(GL_VIEWPORT, view);
 	glGetIntegerv(GL_DOUBLEBUFFER,&dbb);
 	glGetIntegerv(GL_DRAW_BUFFER,&db);
-	fb_log("Viewport: x %d y %d width %d height %d\n",view[0],
-	       view[1],view[2],view[3]);
-	fb_log("expose: double buffered: %d, draw buffer %d\n",dbb,db);
-	fb_log("front %d\tback%d\n",GL_FRONT,GL_BACK);
+	fb_log("Viewport: x %d y %d width %d height %d\n", view[0],
+	       view[1], view[2], view[3]);
+	fb_log("expose: double buffered: %d, draw buffer %d\n", dbb, db);
+	fb_log("front %d\tback%d\n", GL_FRONT, GL_BACK);
 	glGetIntegerv(GL_STEREO,&getster);
 	glGetIntegerv(GL_AUX_BUFFERS,&getaux);
-	fb_log("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
+	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
     }
 
     if( multiple_windows ) {
 	/* unattach context for other threads to use */
-	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 #if 0
     XFlush(OGL(ifp)->dispp);
@@ -2377,10 +2377,10 @@ ogl_configureWindow(FBIO *ifp, int width, int height)
  *
  */
 HIDDEN void
-reorder_cursor(char *dst,char *src, int xbits, int ybits)
+reorder_cursor(char *dst, char *src, int xbits, int ybits)
 {
     int xbytes;
-    int i,j,k;
+    int i, j, k;
 
     if( (xbytes = xbits /8) * 8 != xbits)
 	xbytes++;
@@ -2446,7 +2446,7 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
 							   clp->yscrmax + CLIP_XTRA);
 
 	/* copy image from backbuffer */
-	glRasterPos2i(clp->xpixmin,clp->ypixmin);
+	glRasterPos2i(clp->xpixmin, clp->ypixmin);
 	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 		     SGI(ifp)->mi_yoff + clp->ypixmin,
 		     clp->xpixmax - clp->xpixmin +1,
@@ -2457,7 +2457,7 @@ backbuffer_to_screen(register FBIO *ifp, int one_y)
     } else if (one_y < clp->ypixmin) {
 	return;
     } else { /* draw one scanline */
-	glRasterPos2i(clp->xpixmin,one_y);
+	glRasterPos2i(clp->xpixmin, one_y);
 	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 		     SGI(ifp)->mi_yoff + one_y,
 		     clp->xpixmax - clp->xpixmin +1,
@@ -2513,10 +2513,10 @@ fb_ogl_choose_visual(FBIO *ifp)
 	/* search for all visuals matching current criteria */
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++){
 	    /* requirements */
-	    glXGetConfig(OGL(ifp)->dispp,vip,GLX_USE_GL,&use);
+	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_USE_GL,&use);
 	    if( !use)
 		continue;
-	    glXGetConfig(OGL(ifp)->dispp,vip,GLX_RGBA,&rgba);
+	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_RGBA,&rgba);
 	    if (!rgba)
 		continue;
 	    /* desires */
@@ -2534,7 +2534,7 @@ fb_ogl_choose_visual(FBIO *ifp)
 		continue;
 	    if ( (m_hard_cmap) && (vip->colormap_size<256))
 		continue;
-	    glXGetConfig(OGL(ifp)->dispp,vip,GLX_DOUBLEBUFFER,&dbfr);
+	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER,&dbfr);
 	    if ( (m_doub_buf) && (!dbfr) )
 		continue;
 	    if ( (m_sing_buf) && (dbfr) )

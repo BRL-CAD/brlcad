@@ -550,7 +550,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 	    /* skip this one */
 	    img_sp->i_through=0;
-	    HREVERSE(img_sp->i_plane,img_sp->i_plane);
+	    HREVERSE(img_sp->i_plane, img_sp->i_plane);
 
 	    return -1;
 	  }

@@ -192,37 +192,37 @@ HIDDEN int rt_projZmax_comp BU_ARGS((const void * p1, const void * p2));
 HIDDEN int
 rt_projXmin_comp(const void *p1, const void *p2)
 {
-	return CMP(p1,p2,st_min,X);
+	return CMP(p1, p2, st_min, X);
 }
 
 HIDDEN int
 rt_projXmax_comp(const void *p1, const void *p2)
 {
-	return CMP(p1,p2,st_max,X);
+	return CMP(p1, p2, st_max, X);
 }
 
 HIDDEN int
 rt_projYmin_comp(const void *p1, const void *p2)
 {
-	return CMP(p1,p2,st_min,Y);
+	return CMP(p1, p2, st_min, Y);
 }
 
 HIDDEN int
 rt_projYmax_comp(const void *p1, const void *p2)
 {
-	return CMP(p1,p2,st_max,Y);
+	return CMP(p1, p2, st_max, Y);
 }
 
 HIDDEN int
 rt_projZmin_comp(const void *p1, const void *p2)
 {
-	return CMP(p1,p2,st_min,Z);
+	return CMP(p1, p2, st_min, Z);
 }
 
 HIDDEN int
 rt_projZmax_comp(const void *p1, const void *p2)
 {
-	return CMP(p1,p2,st_max,Z);
+	return CMP(p1, p2, st_max, Z);
 }
 
 HIDDEN struct cmp_pair {
@@ -361,7 +361,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		if( stp->st_aradius <= 0 )  continue;
 		if( stp->st_aradius >= INFINITY )  continue;
 		for( j=0; j<3; j++ )  {
-			BU_HIST_TALLY( &start_hist[j],stp->st_min[j] );
+			BU_HIST_TALLY( &start_hist[j], stp->st_min[j] );
 			BU_HIST_TALLY( &end_hist[j],  stp->st_max[j] );
 		}
 	}
@@ -874,7 +874,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	switch( rtip->rti_space_partition ) {
 	case RT_PART_NUGRID:
 		rtip->rti_CutHead.cut_type = CUT_NUGRIDNODE;
-		rt_nugrid_cut( &rtip->rti_CutHead.nugn, &finp->bn, rtip, 0,0 );
+		rt_nugrid_cut( &rtip->rti_CutHead.nugn, &finp->bn, rtip, 0, 0 );
 		rt_fr_cut( rtip, finp ); /* done with finite solids box */
 		break;
 	case RT_PART_NUBSPT: {
@@ -1276,7 +1276,7 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 		struct rt_piecelist *plp = &inp->bn.bn_piecelist[i];	/* input */
 		struct soltab *stp = plp->stp;
 		struct rt_piecelist *olp = &outp->bn.bn_piecelist[outp->bn.bn_piecelen]; /* output */
-		int j,k;
+		int j, k;
 		long piece_list[PIECE_BLOCK];	/* array of pieces */
 		long piece_count=0;		/* count of used slots in above array */
 		long *more_pieces=NULL;		/* dynamically allocated array for overflow of above array */
@@ -1431,7 +1431,7 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 {
 	RT_CHECK_SOLTAB(stp);
 	if( RT_G_DEBUG&DEBUG_BOXING )  {
-		bu_log("rt_ck_overlap(%s)\n",stp->st_name);
+		bu_log("rt_ck_overlap(%s)\n", stp->st_name);
 		VPRINT(" box min", min);
 		VPRINT(" sol min", stp->st_min);
 		VPRINT(" box max", max);
@@ -1615,7 +1615,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 	register int	i;
 	register double	left, right;
 
-	if(RT_G_DEBUG&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess(x%x, %c)\n",cutp,"XYZ345"[axis]);
+	if(RT_G_DEBUG&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess(x%x, %c)\n", cutp,"XYZ345"[axis]);
 
 	/*  In absolute terms, each box must be at least 1mm wide after cut. */
 	if( (right=cutp->bn.bn_max[axis])-(left=cutp->bn.bn_min[axis]) < 2.0 )
@@ -1732,7 +1732,7 @@ rt_ct_get(struct rt_i *rtip)
 		register int bytes;
 
 		bytes = bu_malloc_len_roundup(64*sizeof(union cutter));
-		cutp = (union cutter *)bu_malloc(bytes," rt_ct_get");
+		cutp = (union cutter *)bu_malloc(bytes, " rt_ct_get");
 		/* Remember this allocation for later */
 		bu_ptbl_ins( &rtip->rti_busy_cutter_nodes, (long *)cutp );
 		/* Now, dice it up */
@@ -1833,7 +1833,7 @@ rt_pr_cut(register const union cutter *cutp, int lvl)
 
 				/* recursion level */
 {
-	register int i,j;
+	register int i, j;
 
 	bu_log("%.8x ", cutp);
 	for( i=lvl; i>0; i-- )
@@ -2345,7 +2345,7 @@ remove_from_bsp( struct soltab *stp, union cutter *cutp, struct bn_tol *tol )
 void
 insert_in_bsp( struct soltab *stp, union cutter *cutp )
 {
-	int i,j;
+	int i, j;
 
 	switch( cutp->cut_type ) {
 	case CUT_BOXNODE:

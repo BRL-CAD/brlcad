@@ -32,27 +32,27 @@
 
 #define	STKBLK	100	/* Allocation block size */
 
-static void Initastack(),Apush();
-static void Initsstack(),Spush();
-static void Afreestack(),Sfreestack();
+static void Initastack(), Apush();
+static void Initsstack(), Spush();
+static void Afreestack(), Sfreestack();
 
 static char *Apop();
 static struct node *Spop();
 
 /* Some junk for this routines private node stack */
 struct node **sstk_p;
-int sjtop,sstklen;
+int sjtop, sstklen;
 
 /* some junk for this routines private character string stack */
 char **stk;
-int jtop,stklen;
+int jtop, stklen;
 
 void
 Showtree( root )
 struct node *root;
 {
 	struct node *ptr;
-	char *opa,*opb,*tmp,oper[4];
+	char *opa,*opb,*tmp, oper[4];
 
 	strcpy( oper , "   " );
 

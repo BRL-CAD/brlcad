@@ -54,7 +54,7 @@ mat_t	identity;
 /* This is a holding place for the current display managers default wireframe color */
 extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 
-/* Screen coords of actual eye position.  Usually it is at (0,0,+1),
+/* Screen coords of actual eye position.  Usually it is at (0, 0,+1),
  * but in head-tracking and VR applications, it can move.
  */
 #if 0
@@ -98,7 +98,7 @@ persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fa
  *  Create a perspective matrix that transforms the +/1 viewing cube,
  *  with the acutal eye position (not at Z=+1) specified in viewing coords,
  *  into a related space where the eye has been sheared onto the Z axis
- *  and repositioned at Z=(0,0,1), with the same perspective field of view
+ *  and repositioned at Z=(0, 0, 1), with the same perspective field of view
  *  as before.
  *
  *  The Zbuffer clips off stuff with negative Z values.
@@ -115,7 +115,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
 	point_t	sheared_eye;
 #if 0
 	fastf_t	near1, far1;
-	point_t	a,b;
+	point_t	a, b;
 #endif
 
 	if( eye[Z] < SMALL )  {
@@ -137,12 +137,12 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
 VPRINT("sheared_eye", sheared_eye);
 #endif
 
-	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
+	/* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
 	MAT_IDN(xlate);
 	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
 	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
 
-	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
+	/* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
 	MAT_IDN( persp );
 	/* From page 492 of Graphics Gems */
 	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
@@ -169,32 +169,32 @@ VPRINT("sheared_eye", sheared_eye);
 #endif
 	bn_mat_mul( pmat, xlate, t2 );
 #if 0
-bn_mat_print("pmat",pmat);
+bn_mat_print("pmat", pmat);
 
 	/* Some quick checking */
 	VSET( a, 0.0, 0.0, -1.0 );
 	MAT4X3PNT( b, pmat, a );
-	VPRINT("0,0,-1 ->", b);
+	VPRINT("0, 0,-1 ->", b);
 
 	VSET( a, 1.0, 1.0, -1.0 );
 	MAT4X3PNT( b, pmat, a );
-	VPRINT("1,1,-1 ->", b);
+	VPRINT("1, 1,-1 ->", b);
 
 	VSET( a, 0.0, 0.0, 0.0 );
 	MAT4X3PNT( b, pmat, a );
-	VPRINT("0,0,0 ->", b);
+	VPRINT("0, 0, 0 ->", b);
 
 	VSET( a, 1.0, 1.0, 0.0 );
 	MAT4X3PNT( b, pmat, a );
-	VPRINT("1,1,0 ->", b);
+	VPRINT("1, 1, 0 ->", b);
 
 	VSET( a, 1.0, 1.0, 1.0 );
 	MAT4X3PNT( b, pmat, a );
-	VPRINT("1,1,1 ->", b);
+	VPRINT("1, 1, 1 ->", b);
 
 	VSET( a, 0.0, 0.0, 1.0 );
 	MAT4X3PNT( b, pmat, a );
-	VPRINT("0,0,1 ->", b);
+	VPRINT("0, 0, 1 ->", b);
 #endif
 }
 
@@ -212,7 +212,7 @@ bn_mat_print("pmat",pmat);
  *  skew due to the eyepoint being offset parallel to the image plane.
  *
  *  The gist of the algorithm is to translate the display plate to the
- *  view center, shear the eye point to (0,0,1), translate back,
+ *  view center, shear the eye point to (0, 0, 1), translate back,
  *  then apply an off-axis perspective projection.
  *
  *  Another (partial) reference is "A comparison of stereoscopic cursors
@@ -223,7 +223,7 @@ static void
 deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
 			/* lower left corner of screen */
 			/* upper right (high) corner of screen */
-			/* eye location.  Traditionally at (0,0,1) */
+			/* eye location.  Traditionally at (0, 0, 1) */
 {
 	vect_t	diff;	/* H - L */
 	vect_t	sum;	/* H + L */
@@ -262,7 +262,7 @@ drawSolid(register struct solid *sp,
 	  short b) {
 
   if(sp->s_cflag){
-    if(!DM_SAME_COLOR(r,g,b,
+    if(!DM_SAME_COLOR(r, g, b,
 		      (short)geometry_default_color[0],
 		      (short)geometry_default_color[1],
 		      (short)geometry_default_color[2])){
@@ -272,13 +272,13 @@ drawSolid(register struct solid *sp,
 		     (short)geometry_default_color[2],
 		     0,
 		     sp->s_transparency);
-      DM_COPY_COLOR(r,g,b,
+      DM_COPY_COLOR(r, g, b,
 		    (short)geometry_default_color[0],
 		    (short)geometry_default_color[1],
 		    (short)geometry_default_color[2]);
     }
   } else {
-    if(!DM_SAME_COLOR(r,g,b,
+    if(!DM_SAME_COLOR(r, g, b,
 		      (short)sp->s_color[0],
 		      (short)sp->s_color[1],
 		      (short)sp->s_color[2])){
@@ -288,7 +288,7 @@ drawSolid(register struct solid *sp,
 		     (short)sp->s_color[2],
 		     0,
 		     sp->s_transparency);
-      DM_COPY_COLOR(r,g,b,
+      DM_COPY_COLOR(r, g, b,
 		    (short)sp->s_color[0],
 		    (short)sp->s_color[1],
 		    (short)sp->s_color[2]);

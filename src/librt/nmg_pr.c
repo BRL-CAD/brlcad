@@ -202,7 +202,7 @@ nmg_pr_fg(const long int *magic, char *h)
 {
 	const struct face_g_snurb *fgs;
 	int ncoords;
-	int i,j,k,l;
+	int i, j, k, l;
 
 	MKPAD(h);
 
@@ -548,7 +548,7 @@ nmg_pr_eg(const long int *eg_magic_p, char *h)
 		case NMG_EDGE_G_CNURB_MAGIC:
 		{
 			struct edge_g_cnurb *eg_c=(struct edge_g_cnurb *)eg_magic_p;
-			int i,j,l;
+			int i, j, l;
 			int ncoords;
 
 			bu_log( "%sEDGE_G_CNURB %8x\n" , h , eg_c );

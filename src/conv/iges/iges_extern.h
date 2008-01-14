@@ -28,7 +28,7 @@ extern int do_projection;
 extern char eor; /* IGES end of record delimeter */
 extern char eof; /* IGES end of field delimeter */
 extern char card[256]; /* input buffer, filled by readrec */
-extern fastf_t scale,inv_scale; /* IGES file scale factor and inverse */
+extern fastf_t scale, inv_scale; /* IGES file scale factor and inverse */
 extern fastf_t conv_factor; /* Conversion factor from IGES file units to mm */
 extern mat_t *identity; /* identity matrix */
 extern int units; /* IGES file units code */

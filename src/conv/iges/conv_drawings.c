@@ -49,7 +49,7 @@ Getstrg( str , id )
 char **str;
 char *id;
 {
-	int i=(-1),length=0,done=0,lencard;
+	int i=(-1), length=0, done=0, lencard;
 	char num[80];
 
 	if( card[counter] == eof ) /* This is an empty field */
@@ -139,7 +139,7 @@ struct bu_list *vhead;
 	for( i=0 ; i<nstrings ; i++ )
 	{
 		int str_len=0;
-		fastf_t width=0.0,height=0.0;
+		fastf_t width=0.0, height=0.0;
 		int font_code=1;
 		fastf_t slant_ang;
 		fastf_t rot_ang=0.0;
@@ -147,7 +147,7 @@ struct bu_list *vhead;
 		int internal_rot=0;
 		double local_scale;
 		char one_char[2];
-		point_t loc,tmp;
+		point_t loc, tmp;
 		char *str;
 
 		Readint( &str_len , "" );
@@ -182,8 +182,8 @@ struct bu_list *vhead;
 		{
 			/* handle vertical text, one character at a time */
 			int j;
-			double tmp_x,tmp_y;
-			double xdel,ydel;
+			double tmp_x, tmp_y;
+			double xdel, ydel;
 
 			xdel = local_scale * sin( rot_ang );
 			ydel = local_scale * cos( rot_ang );
@@ -263,10 +263,10 @@ int entno;
 struct bu_list *vhead;
 {
 	int entity_type;
-	int npts,i;
-	point_t tmp,tmp2,tmp3,center;
-	vect_t v1,v2,v3;
-	fastf_t a,b,c;
+	int npts, i;
+	point_t tmp, tmp2, tmp3, center;
+	vect_t v1, v2, v3;
+	fastf_t a, b, c;
 
 	Readrec( dir[entno]->param );
 	Readint( &entity_type , "" );
@@ -338,7 +338,7 @@ struct bu_list *vhead;
 	  case 5:
 	  case 6:
 		{
-			fastf_t delta,cosdel,sindel,rx,ry;
+			fastf_t delta, cosdel, sindel, rx, ry;
 
 			delta = bn_pi/10.0;
 			cosdel = cos( delta );
@@ -431,7 +431,7 @@ mat_t *xform;
 	int npts;
 	int entno;
 	int i;
-	fastf_t sina,cosa;
+	fastf_t sina, cosa;
 
 	NMG_CK_MODEL( m );
 
@@ -550,7 +550,7 @@ int entno;
 	int entity_type;
 	int no_of_views;
 	int no_of_entities;
-	int i,j,junk;
+	int i, j, junk;
 	struct views_visible *vv;
 
 	if( dir[entno]->form != 3 && dir[entno]->form != 4 )
@@ -592,7 +592,7 @@ Do_view( m , view_vis_list , entno , x , y , ang )
 struct model *m;
 struct bu_ptbl *view_vis_list;
 int entno;
-fastf_t x,y,ang;
+fastf_t x, y, ang;
 {
 	int view_de;
 	int entity_type;
@@ -605,7 +605,7 @@ fastf_t x,y,ang;
 	int clip_de[6];
 	plane_t clip[6];
 	mat_t *xform;
-	int i,j;
+	int i, j;
 
 	view_de = entno * 2 + 1;
 

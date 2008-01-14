@@ -62,8 +62,8 @@ typedef struct
 typedef struct segment
 {
 	struct segment	*links; 	/* segment list thread */
-	coords		sxy;		/* (X,Y) coordinates of start */
-	coords		exy;		/* (X,Y) coordinates of end */
+	coords		sxy;		/* (X, Y) coordinates of start */
+	coords		exy;		/* (X, Y) coordinates of end */
 }	segment;		/* entry in list of segments */
 
 struct queue;				/* (to clear from name space) */
@@ -72,7 +72,7 @@ typedef struct point
 {
 	struct point	*linkp; 	/* point list thread */
 	struct queue	*firstq;	/* NULL once output */
-	coords		xy;		/* (X,Y) coordinates of point */
+	coords		xy;		/* (X, Y) coordinates of point */
 }	point;			/* entry in list of points */
 
 typedef struct queue
@@ -473,7 +473,7 @@ Search(void)				/* output bounding polygon */
 		from += mindir + 180.0; /* reverse of saved "to" */
 		/* The following is needed only to improve accuracy: */
 		while ( from > 360.0 )
-			from -= 360.0;	/* reduce to range [0,360) */
+			from -= 360.0;	/* reduce to range [0, 360) */
 	}
 }
 

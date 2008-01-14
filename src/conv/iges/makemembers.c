@@ -41,7 +41,7 @@ struct wmember *head;
 	struct node *ptr;
 	struct wmember *wmem;
 	fastf_t *flt;
-	int op=Union,entno,i;
+	int op=Union, entno, i;
 
 	Freestack();
 	ptr = root;

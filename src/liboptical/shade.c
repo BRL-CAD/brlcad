@@ -170,7 +170,7 @@ shade_inputs( struct application *ap, const struct partition *pp, struct shadewo
 			}
 #endif
 			/* Check to make sure normals are OK */
-			f = VDOT(ap->a_ray.r_dir,swp->sw_hit.hit_normal);
+			f = VDOT(ap->a_ray.r_dir, swp->sw_hit.hit_normal);
 			if (f > 0.0 &&
 			    !BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
 			    static int counter = 0;
@@ -227,7 +227,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 		}
 		if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 ||
 		    swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
-			bu_log("shade_inputs:  bad u,v=%e,%e du,dv=%g,%g seg=%s %s surf=%d. xy=%d,%d Making green.\n",
+			bu_log("shade_inputs:  bad u, v=%e,%e du, dv=%g,%g seg=%s %s surf=%d. xy=%d,%d Making green.\n",
 				swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 				swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 				pp->pt_inseg->seg_stp->st_name,
@@ -236,7 +236,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 				ap->a_x, ap->a_y );
 #ifdef RT_MULTISPECTRAL
 			{
-				static const float green[3] = {0.0f,9.0f,0.0f};
+				static const float green[3] = {0.0f, 9.0f, 0.0f};
 				rt_spect_reflectance_rgb( swp->msw_color, green );
 			}
 #else

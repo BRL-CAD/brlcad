@@ -114,7 +114,7 @@ main(int argc, char **argv)
 		 *	that they can be converted to BASE units.
 		 */
 		(void)printf("* *  V E R Y    I M P O R T A N T    N O T I C E  * *\n");
-		(void)printf("    You must KNOW the units of the %s file\n",argv[1]);
+		(void)printf("    You must KNOW the units of the %s file\n", argv[1]);
 		(void)printf("    If you don't know, DON'T guess....find out\n");
 		(void)putchar( 7 );
 

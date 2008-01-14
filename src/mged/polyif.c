@@ -122,7 +122,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			for( i = 0; i < nused; i++, cmd++, pt++ )  {
 				/* For each polygon, spit it out.  Ignore vectors */
 				switch( *cmd )  {
 				case BN_VLIST_LINE_MOVE:

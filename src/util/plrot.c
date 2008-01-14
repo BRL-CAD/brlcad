@@ -46,8 +46,8 @@
 #include "bn.h"
 
 #define	UPPER_CASE(c)	((c)-32)
-#define	COPY(n)	{fread(cbuf,1,n,fp); fwrite(cbuf,1,n,stdout);}
-#define	SKIP(n)	{fread(cbuf,1,n,fp);}
+#define	COPY(n)	{fread(cbuf, 1, n, fp); fwrite(cbuf, 1, n, stdout);}
+#define	SKIP(n)	{fread(cbuf, 1, n, fp);}
 #define LEN 265
 
 #define	putsi(s) {putchar(s); putchar((s)>>8);}
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 				fclose( fp );
 			if( strcmp(argv[bu_optind], "-") == 0 )
 				fp = stdin;
-			else if( (fp = fopen(argv[bu_optind],"r")) == NULL ) {
+			else if( (fp = fopen(argv[bu_optind], "r")) == NULL ) {
 				fprintf( stderr, "plrot: can't open \"%s\"\n", argv[bu_optind] );
 				continue;
 			}

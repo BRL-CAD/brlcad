@@ -489,7 +489,7 @@ horiz_cmp(struct cell *botp, int mem_width, int y)
 
 			/* To make sure that all the vertical lines are in the
 			 * correct place, if cellp is the same as botp, then
-			 * to start,move half a cell right to start, else move half a
+			 * to start, move half a cell right to start, else move half a
 			 * cell left; and to end, move right and up one half cell.
 			 */
 

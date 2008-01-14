@@ -133,7 +133,7 @@ struct resource	resource[MAX_PSW];	/* memory resources for multi-cpu processing 
 
 struct cstate {
     int curr_view;	/* the "view" number we are shooting */
-    int u_axis; /* these 3 are in the range 0..2 inclusive and indicate which axis (X,Y,or Z) */
+    int u_axis; /* these 3 are in the range 0..2 inclusive and indicate which axis (X, Y, or Z) */
     int v_axis; /* is being used for the U, V, or invariant vector direction */
     int i_axis;
 
@@ -152,7 +152,7 @@ struct cstate {
     vect_t v_dir;		/* direction of V vector for "current view" */
     struct rt_i *rtip;
     long steps[3];	/* this is per-dimension, not per-view */
-    vect_t span;	/* How much space does the geometry span in each of X,Y,Z directions */
+    vect_t span;	/* How much space does the geometry span in each of X, Y, Z directions */
     vect_t area;	/* area of the view for view with invariant at index */
 
 };
@@ -461,7 +461,7 @@ parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac,av,options)) != EOF) {
+    while ((c=bu_getopt(ac, av, options)) != EOF) {
 	switch (c) {
 	case 'A'	:
 	    {
@@ -2059,7 +2059,7 @@ main(int ac, char *av[])
      *  title string in the header (ID) record.
      */
     if( (rtip=rt_dirbuild(av[arg_count], idbuf, IDBUFSIZE)) == RTI_NULL ) {
-	fprintf(stderr,"g_qa: rt_dirbuild failure on %s\n", av[arg_count]);
+	fprintf(stderr, "g_qa: rt_dirbuild failure on %s\n", av[arg_count]);
 	bu_exit(2, NULL);
     }
     rtip->useair = use_air;
@@ -2074,7 +2074,7 @@ main(int ac, char *av[])
      */
     for ( ; arg_count < ac ; arg_count++ )  {
 	if( rt_gettree(rtip, av[arg_count]) < 0 )
-	    fprintf(stderr,"rt_gettree(%s) FAILED\n", av[arg_count]);
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", av[arg_count]);
     }
 
     /*
@@ -2090,7 +2090,7 @@ main(int ac, char *av[])
      * This gets the database ready for ray tracing.
      * (it precomputes some values, sets up space partitioning, etc.)
      */
-    rt_prep_parallel(rtip,ncpu);
+    rt_prep_parallel(rtip, ncpu);
 
     /* we now have to subdivide space
      *

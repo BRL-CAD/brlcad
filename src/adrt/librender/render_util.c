@@ -189,8 +189,8 @@ void render_util_spall_list(tie_t *tie, tie_ray_t *ray, tfloat angle, void **dat
   shotline.mesh_list = NULL;
   shotline.mesh_num = 0;
 
-  MATH_VEC_SET(shotline.in, 0, 0 ,0);
-  MATH_VEC_SET(shotline.out, 0, 0 ,0);
+  MATH_VEC_SET(shotline.in, 0, 0 , 0);
+  MATH_VEC_SET(shotline.out, 0, 0 , 0);
 
   /* Fire the center ray first */
   tie_work(tie, ray, &id, shot_hit, &shotline);

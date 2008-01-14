@@ -269,7 +269,7 @@ int parseArguments(int argc, char **argv)
   char *progname;
   int color[3];
 
-  progname = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH,sizeof(char), "progname");
+  progname = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH, sizeof(char), "progname");
 
   if (argc > 1) {
     strncpy(progname, argv[0], (strlen(argv[0])>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])));
@@ -281,7 +281,7 @@ int parseArguments(int argc, char **argv)
 
   bu_opterr = 0;
 
-  while ((c=bu_getopt(argc,argv,options)) != EOF){
+  while ((c=bu_getopt(argc, argv, options)) != EOF){
     switch (c) {
     case 'I' :
       interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
@@ -1039,7 +1039,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh combination: wire [%d] of [%d]\n", count+1, count2);
       }
       else {
-	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s],count2[%d] FAILED\n", wireName, count);
+	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED\n", wireName, count);
 	errors++;
       }
       matrixextractor->wm_mat[3]  = dx;
@@ -1050,7 +1050,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh region: wire [%d] of [%d]\n", count+1, count2);
       }
       else {
-	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s],count2[%d] FAILED (region)\n", wireName, count);
+	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED (region)\n", wireName, count);
 	errors++;
       }
       matrixextractor->wm_mat[3]  = dx;
@@ -1074,7 +1074,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
       if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_lcomb meshname[%s] FAILED\n", meshname);
       errors++;
     }
-    if (mk_lcomb (fp, getPrePostName(NULL,meshname,DEFAULT_REGIONSUFFIX), &meshregionmembers, 1, meshMaterial, meshMaterialParams, meshMaterialColor, 0)==0) {
+    if (mk_lcomb (fp, getPrePostName(NULL, meshname, DEFAULT_REGIONSUFFIX), &meshregionmembers, 1, meshMaterial, meshMaterialParams, meshMaterialColor, 0)==0) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...completed mesh [%s] region\n", getPrePostName(NULL, meshname, DEFAULT_REGIONSUFFIX));
       if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:meshname[%s]\n", meshname);
     }
@@ -1202,7 +1202,7 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire combination: piece [%d] of [%d]\n", count+1, count2);
     }
     else {
-      if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s],count2[%d] FAILED\n", wirename, count);
+      if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED\n", wirename, count);
       errors++;
     }
     matrixextractor->wm_mat[3]  = dx;
@@ -1213,7 +1213,7 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire region: piece [%d] of [%d]\n", count+1, count2);
     }
     else {
-      if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s],count2[%d] FAILED (region)\n", wirename, count);
+      if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED (region)\n", wirename, count);
       errors++;
     }
     matrixextractor->wm_mat[3]  = dx;
@@ -1915,7 +1915,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence name\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(fenceName, verboseinput, DEFAULT_MAXNAMELENGTH);
@@ -1923,7 +1923,7 @@ int main(int argc, char **argv)
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
-      if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Start Position(x,y,z): [%f %f %f] ", fenceStartPosition[0], fenceStartPosition[1], fenceStartPosition[2]);
+      if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Start Position(x, y, z): [%f %f %f] ", fenceStartPosition[0], fenceStartPosition[1], fenceStartPosition[2]);
       if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH * 3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceStartPosition");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceStartPosition");
@@ -1932,7 +1932,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for start position\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for start position\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf%lf%lf", &fenceStartPosition[0], &fenceStartPosition[1], &fenceStartPosition[2]);
@@ -1940,7 +1940,7 @@ int main(int argc, char **argv)
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
-      if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "End Position(x,y,z): [%f %f %f] ", fenceEndPosition[0], fenceEndPosition[1], fenceEndPosition[2]);
+      if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "End Position(x, y, z): [%f %f %f] ", fenceEndPosition[0], fenceEndPosition[1], fenceEndPosition[2]);
       if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceEndPosition");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceEndPosition");
@@ -1949,7 +1949,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for end position\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for end position\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf%lf%lf", &fenceEndPosition[0], &fenceEndPosition[1], &fenceEndPosition[2]);
@@ -1957,7 +1957,7 @@ int main(int argc, char **argv)
       }
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
-      if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Height(i,j,k): [%f %f %f] ", fenceHeight[0], fenceHeight[1], fenceHeight[2]);
+      if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Height(i, j, k): [%f %f %f] ", fenceHeight[0], fenceHeight[1], fenceHeight[2]);
       if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceHeight");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceHeight");
@@ -1966,7 +1966,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence height\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence height\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf%lf%lf", &fenceHeight[0], &fenceHeight[1], &fenceHeight[2]);
@@ -1994,7 +1994,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence material\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(fenceMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2011,7 +2011,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence material params\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material params\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(fenceMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2028,7 +2028,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence material color\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence material color\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
@@ -2064,7 +2064,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole name\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(poleName, verboseinput, DEFAULT_MAXNAMELENGTH);
@@ -2081,7 +2081,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole height\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole height\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &poleHeight);
@@ -2098,7 +2098,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole radius\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole radius\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &poleRadius);
@@ -2115,7 +2115,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole spacing\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole spacing\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &fencePoleSpacing);
@@ -2132,7 +2132,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole material\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(poleMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2149,7 +2149,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole material params\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material params\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(poleMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2166,7 +2166,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole material color\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for pole material color\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
@@ -2202,7 +2202,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh name\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(meshName, verboseinput, DEFAULT_MAXNAMELENGTH);
@@ -2219,7 +2219,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh height\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh height\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &meshHeight);
@@ -2236,7 +2236,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh width\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh width\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &meshWidth);
@@ -2253,7 +2253,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh material\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(meshMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2270,7 +2270,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh material params\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material params\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(meshMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2287,7 +2287,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh material color\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for mesh material color\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
@@ -2323,7 +2323,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire name\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(wireName, verboseinput, DEFAULT_MAXNAMELENGTH);
@@ -2340,7 +2340,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] wire radius\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] wire radius\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &wireRadius);
@@ -2357,7 +2357,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire angle\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire angle\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &wireAngle);
@@ -2374,7 +2374,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire material\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(wireMaterial, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2391,7 +2391,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire material params\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material params\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  strncpy(wireMaterialParams, verboseinput, DEFAULT_MAXNAMELENGTH*3);
@@ -2408,7 +2408,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire material color\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire material color\n", verboseinput);
 	}
 	if(strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%d%d%d", &colorinput[0], &colorinput[1], &colorinput[2]);
@@ -2441,7 +2441,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire segment length\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire segment length\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &wireSegmentLength);
@@ -2458,7 +2458,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire segment separation\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for wire segment separation\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  sscanf(verboseinput, "%lf", &wireSegmentSeparation);
@@ -2475,7 +2475,7 @@ int main(int argc, char **argv)
 	len = strlen(verboseinput);
 	if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 	if (debug) {
-	  fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for segment name\n", verboseinput);
+	  fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for segment name\n", verboseinput);
 	}
 	if (strcmp(verboseinput, "") != 0) {
 	  strncpy(segmentName, verboseinput, DEFAULT_MAXNAMELENGTH);

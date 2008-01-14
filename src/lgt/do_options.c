@@ -3359,7 +3359,7 @@ setup_Lgts(int frame)
 			VSCALE( grid_hor, grid_hor, 1.0/mag );
 			VCROSS( grid_ver, lgts[0].dir, grid_hor );
 			if( (mag = MAGNITUDE( grid_ver )) < EPSILON )
-				{ /* Must be top ([+/-]90,90) view. */
+				{ /* Must be top ([+/-]90, 90) view. */
 				VMOVE( grid_ver, y_axis );
 				}
 			else

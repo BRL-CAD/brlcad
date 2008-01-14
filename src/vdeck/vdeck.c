@@ -35,20 +35,20 @@
  * for each Region as totaled on the Control card, however, the Solid
  * and Region records may span more than 1 card.
  *
-----------------------------------------------------------------------------
-|File|Record  :             Contents              :       Format           |
-|----|---------------------------------------------------------------------|
-| 1  |Title   : target_units, title               : a2,3x,a60              |
-|    |Control : #_of_solids, #_of_regions         : i5,i5                  |
-|    |Solid   : sol_#,sol_type,params.,comment    : i5,a5,6f10.0,a10       |
-|    | cont'  : sol_#,parameters,comment          : i5,5x,6f10.0,a10       |
-|----|---------------------------------------------------------------------|
-| 2  |Region  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
-|    | cont'  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
-|----|---------------------------------------------------------------------|
-| 3  |Flag    : a -1 marks end of region table    : i5                     |
-|    |Idents  : reg_#,ident,space,mat,%,descriptn : 5i5,5x,a50             |
-----------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+|File|Record  :             Contents              :       Format               |
+|----|-------------------------------------------------------------------------|
+| 1  |Title   : target_units, title               : a2, 3x, a60                |
+|    |Control : #_of_solids, #_of_regions         : i5, i5                     |
+|    |Solid   : sol_#, sol_type, params., comment : i5, a5, 6f10.0, a10        |
+|    | cont'  : sol_#, parameters, comment        : i5, 5x, 6f10.0, a10        |
+|----|-------------------------------------------------------------------------|
+| 2  |Region  : reg_#,(op,[sol/reg]_#)*, comment  : i5, 1x, 9(a2, i5), 1x, a10 |
+|    | cont'  : reg_#,(op,[sol/reg]_#)*, comment  : i5, 1x, 9(a2, i5), 1x, a10 |
+|----|-------------------------------------------------------------------------|
+| 3  |Flag    : a -1 marks end of region table    : i5                         |
+|    |Idents  : reg_#, ident, space, mat,%, desc  : 5i5, 5x, a50               |
+--------------------------------------------------------------------------------
  *
  *  Author -
  *	Gary S. Moss
@@ -251,7 +251,7 @@ main( int argc, char *argv[] )
 
 	/* Build directory from object file.	 	*/
 	if( db_dirbuild(dbip) < 0 )  {
-		fprintf(stderr,"db_dirbuild() failure\n");
+		fprintf(stderr, "db_dirbuild() failure\n");
 		return 1;
 	}
 
@@ -873,7 +873,7 @@ addarb(struct bu_vls *v, struct rt_arb_internal *gp, char *name, int num )
 	/* Enter new arb code.						*/
 	if( (i = cgarbs( &cgtype, gp, uniq_pts, samevecs, CONV_EPSILON )) == 0 ||
 	    redoarb( pts, gp, uniq_pts, samevecs, i, cgtype ) == 0 )  {
-		fprintf(stderr,"vdeck: addarb(%s): failure\n", name);
+		fprintf(stderr, "vdeck: addarb(%s): failure\n", name);
 		vls_itoa( v, num, 5 );
 		bu_vls_strncat( v, "arb??", 5 );
 		vls_blanks( v, 6*10 );
@@ -1041,12 +1041,12 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num )
 	 */
 	if( mc != 0.0 && md != 0.0 &&
 	    fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON &&
-	    fabs( fabs(VDOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON )  {
+	    fabs( fabs(VDOT(axb, cxd)) - (maxb*mcxd) ) < CONV_EPSILON )  {
 		cgtype = TEC;
 	}
 
 	/* Check for right cylinder.					*/
-	if( fabs( fabs(VDOT(gp->h,axb)) - (mh*maxb) ) < CONV_EPSILON )  {
+	if( fabs( fabs(VDOT(gp->h, axb)) - (mh*maxb) ) < CONV_EPSILON )  {
 		if( fabs( ma-mb ) < CONV_EPSILON )  {
 			if( fabs( ma-mc ) < CONV_EPSILON )
 				cgtype = RCC;
@@ -1270,7 +1270,7 @@ deck( register char *prefix )
 	}
 
 
-	/* Target units (a2,3x)						*/
+	/* Target units (a2, 3x)						*/
 	ewrite( solfp, bu_units_string(dbip->dbi_local2base), 2 );
 	blank_fill( solfp, 3 );
 
@@ -1328,7 +1328,7 @@ deck( register char *prefix )
 	if( db_walk_tree( dbip, curr_ct, (const char **)curr_list,
 	    1, &rt_initial_tree_state,
 	    0, region_end, gettree_leaf, (genptr_t)NULL ) < 0 )  {
-		fprintf(stderr,"Unable to treewalk any trees!\n");
+		fprintf(stderr, "Unable to treewalk any trees!\n");
 		bu_exit(11, NULL);
 	}
 
@@ -1631,8 +1631,9 @@ void
 vls_blanks(struct bu_vls *v, int n )
 {
 	BU_CK_VLS(v);
-	bu_vls_strncat( v, "                                                                                                                                ",
-	    n);
+	/* 128 spaces */
+	bu_vls_strncat(v, "                                                                                                                                ",
+		       n);
 }
 
 

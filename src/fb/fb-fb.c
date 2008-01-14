@@ -109,7 +109,7 @@ main(int argc, char **argv)
 
 	if( (in_fbp = fb_open( in_fb_name, 0, 0 )) == NULL )  {
 		if( in_fb_name )
-			fprintf(stderr,"fb-fb: unable to open input '%s'\n", in_fb_name );
+			fprintf(stderr, "fb-fb: unable to open input '%s'\n", in_fb_name );
 		bu_exit(12, NULL);
 	}
 
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 
 	if( (out_fbp = fb_open( out_fb_name, scr_width, scr_height )) == FBIO_NULL )  {
 		if( out_fb_name )
-			fprintf(stderr,"fb-fb: unable to open output '%s'\n", out_fb_name );
+			fprintf(stderr, "fb-fb: unable to open output '%s'\n", out_fb_name );
 		bu_exit(12, NULL);
 	}
 

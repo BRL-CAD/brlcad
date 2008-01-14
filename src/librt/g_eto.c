@@ -64,13 +64,13 @@
  *
  *  Given V, N, C, r, and rd, there is a set of points on this eto
  *
- *  { (x,y,z) | (x,y,z) is on eto defined by V, N, C, r, rd }
+ *  { (x, y, z) | (x, y, z) is on eto defined by V, N, C, r, rd }
  *
  *  Through a series of  Transformations, this set will be
  *  transformed into a set of points on an eto centered at the origin
  *  which lies on the X-Y plane (ie, N is on the Z axis).
  *
- *  { (x',y',z') | (x',y',z') is an eto at origin }
+ *  { (x', y', z') | (x', y', z') is an eto at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -126,7 +126,7 @@
  *  The gradient of the eto at W' is in fact the
  *  normal vector.
  *
- *  For f(x,y,z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ *  For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
  *
  *  Note that the normal vector (gradient) produced above will not have
  *  unit length.  Also, to make this useful for the original eto, it will
@@ -340,7 +340,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	int	j;
 	vect_t	cor_pprime;	/* new ray origin */
 	fastf_t	cor_proj;
-	fastf_t	A1,A2,A3,A4,A5,A6,A7,A8,B1,B2,B3,C1,C2,C3,D1,term;
+	fastf_t	A1, A2, A3, A4, A5, A6, A7, A8, B1, B2, B3, C1, C2, C3, D1, term;
 
 	/* Convert vector into the space of the unit eto */
 	MAT4X3VEC( dprime, eto->eto_R, rp->r_dir );
@@ -479,7 +479,7 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		return(0);		/* No hit */
 
 	default:
-		bu_log("rt_eto_shot: reduced 4 to %d roots\n",i);
+		bu_log("rt_eto_shot: reduced 4 to %d roots\n", i);
 		bn_pr_roots( stp->st_name, val, 4 );
 		return(0);		/* No hit */
 
@@ -574,7 +574,7 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  *               2                                      2
  *             Rc                                     Rd
  *
- *  The normal is the gradient of f(x,y,z) = 0 or
+ *  The normal is the gradient of f(x, y, z) = 0 or
  *
  *	(df/dx, df/dy, df/dz)
  */
@@ -640,7 +640,7 @@ rt_eto_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	dv = eto->eto_rd * sin(phi);
 	dh = -eto->eto_rd * cos(phi);
 
-	/* build coord system for ellipse: x,y directions are Dp,Cp */
+	/* build coord system for ellipse: x, y directions are Dp, Cp */
 	VCOMB2( Cp, ch, Ru, cv, Nu );
 	VCOMB2( Dp, dh, Ru, dv, Nu );
 	VUNITIZE( Cp );
@@ -843,36 +843,36 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		VUNITIZE( Xu );
 		/* vertex of ellipse */
 		VJOIN1( Ell_V, tip->eto_V, tip->eto_r, Xu );
-		/* coord system for ellipse: x,y directions are Dp,Cp */
+		/* coord system for ellipse: x, y directions are Dp, Cp */
 		VCOMB2( Cp, ch, Xu, cv, Nu );
 		VCOMB2( Dp, dh, Xu, dv, Nu );
 		VUNITIZE( Cp );
 		VUNITIZE( Dp );
 
 /* convert 2D address to index into 1D array */
-#define ETO_PT(www,lll)	((((www)%nells)*npts)+((lll)%npts))
-#define ETO_PTA(ww,ll)	(&eto_ells[ETO_PT(ww,ll)*3])
-#define ETO_NMA(ww,ll)	(norms[ETO_PT(ww,ll)])
+#define ETO_PT(www, lll)	((((www)%nells)*npts)+((lll)%npts))
+#define ETO_PTA(ww, ll)	(&eto_ells[ETO_PT(ww, ll)*3])
+#define ETO_NMA(ww, ll)	(norms[ETO_PT(ww, ll)])
 
 		/* make ellipse */
 		for (j = 0; j < npts; j++) {
-			VJOIN2( ETO_PTA(i,j),
+			VJOIN2( ETO_PTA(i, j),
 				Ell_V, ell[j][X], Dp, ell[j][Y], Cp );
 		}
 	}
 
 	/* draw ellipses */
 	for (i = 0; i < nells; i++) {
-		RT_ADD_VLIST( vhead, ETO_PTA(i,npts-1), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, ETO_PTA(i, npts-1), BN_VLIST_LINE_MOVE );
 		for( j = 0; j < npts; j++ )
-			RT_ADD_VLIST( vhead, ETO_PTA(i,j), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, ETO_PTA(i, j), BN_VLIST_LINE_DRAW );
 	}
 
 	/* draw connecting circles */
 	for (i = 0; i < npts; i++) {
-		RT_ADD_VLIST( vhead, ETO_PTA(nells-1,i), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, ETO_PTA(nells-1, i), BN_VLIST_LINE_MOVE );
 		for( j = 0; j < nells; j++ )
-			RT_ADD_VLIST( vhead, ETO_PTA(j,i), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, ETO_PTA(j, i), BN_VLIST_LINE_DRAW );
 	}
 
 	bu_free( (char *)eto_ells, "ells[]" );
@@ -1101,18 +1101,18 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		VUNITIZE( Xu );
 		/* vertex of ellipse */
 		VJOIN1( Ell_V, tip->eto_V, tip->eto_r, Xu );
-		/* coord system for ellipse: x,y directions are Dp,Cp */
+		/* coord system for ellipse: x, y directions are Dp, Cp */
 		VCOMB2( Cp, ch, Xu, cv, Nu );
 		VCOMB2( Dp, dh, Xu, dv, Nu );
 		VUNITIZE( Cp );
 		VUNITIZE( Dp );
 		/* make ellipse */
 		for (j = 0; j < npts; j++) {
-			VJOIN2( ETO_PTA(i,j),
+			VJOIN2( ETO_PTA(i, j),
 				Ell_V, ell[j][X], Dp, ell[j][Y], Cp );
-			VBLEND2( ETO_NMA(i,j),
+			VBLEND2( ETO_NMA(i, j),
 				a*a*ell[j][X], Dp , b*b*ell[j][Y], Cp );
-			VUNITIZE( ETO_NMA(i,j) );
+			VUNITIZE( ETO_NMA(i, j) );
 		}
 	}
 
@@ -1128,10 +1128,10 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	nfaces = 0;
 	for( i = 0; i < nells; i++ )  {
 		for( j = 0; j < npts; j++ )  {
-			vertp[0] = &verts[ ETO_PT(i+0,j+0) ];
-			vertp[1] = &verts[ ETO_PT(i+0,j+1) ];
-			vertp[2] = &verts[ ETO_PT(i+1,j+1) ];
-			vertp[3] = &verts[ ETO_PT(i+1,j+0) ];
+			vertp[0] = &verts[ ETO_PT(i+0, j+0) ];
+			vertp[1] = &verts[ ETO_PT(i+0, j+1) ];
+			vertp[2] = &verts[ ETO_PT(i+1, j+1) ];
+			vertp[3] = &verts[ ETO_PT(i+1, j+0) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				bu_log("rt_eto_tess() nmg_cmface failed, i=%d/%d, j=%d/%d\n",
 					i, nells, j, npts );
@@ -1143,7 +1143,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Associate vertex geometry */
 	for( i = 0; i < nells; i++ )  {
 		for( j = 0; j < npts; j++ )  {
-			nmg_vertex_gv( verts[ETO_PT(i,j)], ETO_PTA(i,j) );
+			nmg_vertex_gv( verts[ETO_PT(i, j)], ETO_PTA(i, j) );
 		}
 	}
 
@@ -1164,11 +1164,11 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
-			VREVERSE( rev_norm , ETO_NMA(i,j) );
+			VREVERSE( rev_norm , ETO_NMA(i, j) );
 
-			NMG_CK_VERTEX( verts[ETO_PT(i,j)] );
+			NMG_CK_VERTEX( verts[ETO_PT(i, j)] );
 
-			for( BU_LIST_FOR( vu , vertexuse , &verts[ETO_PT(i,j)]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &verts[ETO_PT(i, j)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1178,7 +1178,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , ETO_NMA(i,j) );
+					nmg_vertexuse_nv( vu , ETO_NMA(i, j) );
 				else if( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu , rev_norm );
 			}

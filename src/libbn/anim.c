@@ -40,7 +40,7 @@
  * @li anim_v_unpermute()	undo camera animation permutation
  * @li anim_tran()		transpose matrix in place
  * @li anim_mat2zyx()		extract angles from rotation matrix
- * @li anim_mat2ypr()		extract yaw,pitch,roll from rotation matrix
+ * @li anim_mat2ypr()		extract yaw, pitch, roll from rotation matrix
  * @li anim_mat2quat()		extract quaternion from rotation matrix
  * @li anim_ypr2mat()		create rotation matrix from ypr, etc.
  * @li anim_ypr2vmat()
@@ -183,7 +183,7 @@ void anim_tran(mat_t m)
  *  Convert the rotational part of a 4x4 transformation matrix
  * to zyx form, that is to say, rotations carried out in the order z, y,
  * and then x. The angles are stored in radians as a vector in the order
- * x,y,z. A return value of ERROR1 means that arbitrary assumptions were
+ * x, y, z. A return value of ERROR1 means that arbitrary assumptions were
  * necessary. ERROR2 means that the conversion failed.
  */
 int anim_mat2zyx(const mat_t viewrot, vect_t angle)
@@ -195,13 +195,13 @@ int anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	if ((viewrot[1]==0.0) && (viewrot[0]==0.0)){
 		return_value = ERROR1;
 		angle[0] = 0.0;
-		angle[2] = atan2(viewrot[4],viewrot[5]);
-		/*bu_log("Warning: x arbitrarily set to 0.0; z set to %f.\n",angle[2]);*/
+		angle[2] = atan2(viewrot[4], viewrot[5]);
+		/*bu_log("Warning: x arbitrarily set to 0.0; z set to %f.\n", angle[2]);*/
 	}
 	else {
 		return_value = NORMAL;
-		angle[2] = atan2(-viewrot[1],viewrot[0]);
-		angle[0] = atan2(-viewrot[6],viewrot[10]);
+		angle[2] = atan2(-viewrot[1], viewrot[0]);
+		angle[0] = atan2(-viewrot[6], viewrot[10]);
 	}
 
 	sin_x = sin(angle[0]);
@@ -251,7 +251,7 @@ int anim_mat2zyx(const mat_t viewrot, vect_t angle)
  * Convert the rotational part of a 4x4 transformation matrix
  * to yaw-pitch-roll form, that is to say, +roll degrees about the x-axis,
  * -pitch degrees about the y-axis, and +yaw degrees about the
- * z-axis. The angles are stored in radians as a vector in the order y,p,r.
+ * z-axis. The angles are stored in radians as a vector in the order y, p, r.
  * A return of ERROR1 means that arbitrary assumptions were necessary.
  * ERROR2 means that the conversion failed.
  */
@@ -264,13 +264,13 @@ int anim_mat2ypr(mat_t viewrot, vect_t angle)
 	if ((viewrot[9]==0.0) && (viewrot[10]==0.0)){
 		return_value = ERROR1;
 		angle[2] = 0.0;
-		angle[0] = atan2(-viewrot[1],viewrot[5]);
-		/*bu_log("Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n",angle[0]);*/
+		angle[0] = atan2(-viewrot[1], viewrot[5]);
+		/*bu_log("Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n", angle[0]);*/
 	}
 	else {
 		return_value = NORMAL;
-		angle[0] = atan2(viewrot[4],viewrot[0]);
-		angle[2] = atan2(viewrot[9],viewrot[10]);
+		angle[0] = atan2(viewrot[4], viewrot[0]);
+		angle[2] = atan2(viewrot[9], viewrot[10]);
 	}
 
 	sin_y = sin(angle[0]);
@@ -294,13 +294,13 @@ int anim_mat2ypr(mat_t viewrot, vect_t angle)
 		return(ERROR2);
 	}
 	else if ( (!id_y) && id_r )
-		angle[1] = atan2( -(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r),viewrot[9]/sin_r);
+		angle[1] = atan2( -(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r), viewrot[9]/sin_r);
 	else if ( id_y && (!id_r) )
-		angle[1] = atan2( -(viewrot[6]+cos_y*sin_r)/(sin_y*cos_r),viewrot[10]/cos_r);
+		angle[1] = atan2( -(viewrot[6]+cos_y*sin_r)/(sin_y*cos_r), viewrot[10]/cos_r);
 	else if ( id_y && id_r )
-		angle[1] = atan2( -(viewrot[5]-cos_y*cos_r)/(sin_y*sin_r),viewrot[4]/sin_y);
+		angle[1] = atan2( -(viewrot[5]-cos_y*cos_r)/(sin_y*sin_r), viewrot[4]/sin_y);
 	else if ( (!id_y) && (!id_r) )
-		angle[1] = atan2( -(viewrot[2]-sin_y*sin_r)/(cos_y*cos_r),viewrot[0]/cos_y);
+		angle[1] = atan2( -(viewrot[2]-sin_y*sin_r)/(cos_y*cos_r), viewrot[0]/cos_y);
 
 
 	/* assume the smallest possible arc-length from frame to frame */
@@ -319,7 +319,7 @@ int anim_mat2ypr(mat_t viewrot, vect_t angle)
  * @brief
  * This interprets the rotational part of a 4x4 transformation
  *  matrix in terms of unit quaternions. The result is stored as a vector in
- * the order x,y,z,w.
+ * the order x, y, z, w.
  * The algorithm is from Ken Shoemake, Animating Rotation with Quaternion
  * Curves, 1985 SIGGraph Conference Proceeding, p.245.
  */
@@ -389,7 +389,7 @@ int anim_mat2quat(quat_t quat, const mat_t viewrot)
  */
 void anim_ypr2mat(mat_t m, const vect_t a)
 {
-	fastf_t cos_y,cos_p,cos_r,sin_y,sin_p,sin_r;
+	fastf_t cos_y, cos_p, cos_r, sin_y, sin_p, sin_r;
 
 	cos_y = cos(a[0]);
 	cos_p = cos(a[1]);
@@ -417,19 +417,19 @@ void anim_ypr2mat(mat_t m, const vect_t a)
 }
 
 /** ANIM_YPR2VMAT
- * @brief Create a post-multiplication rotation matrix ,which could
+ * @brief Create a post-multiplication rotation matrix , which could
  * be used to move the virtual camera to the given yaw, pitch,
  * and roll,  which are stored in radians in the given vector a. The
  * following are equivalent sets of commands:
- * 	ypr2vmat(matrix,a);
+ * 	ypr2vmat(matrix, a);
  *		or
- *	ypr2mat(matrix,a);
+ *	ypr2mat(matrix, a);
  * 	v_permute(matrix);
  *	transpose(matrix;
  */
 void anim_ypr2vmat(mat_t m, const vect_t a)
 {
-	fastf_t cos_y,cos_p,cos_r,sin_y,sin_p,sin_r;
+	fastf_t cos_y, cos_p, cos_r, sin_y, sin_p, sin_r;
 
 	cos_y = cos(a[0]);
 	cos_p = cos(a[1]);
@@ -584,7 +584,7 @@ void anim_x_y_z2mat(mat_t m, double x, double y, double z)
  */
 void anim_dx_y_z2mat(mat_t m, double x, double y, double z)
 {
-	fastf_t cosx,cosy,cosz,sinx,siny,sinz;
+	fastf_t cosx, cosy, cosz, sinx, siny, sinz;
 
 	x *= (M_PI*0.0055555555556);
 	y *= (M_PI*0.0055555555556);
@@ -616,7 +616,7 @@ void anim_dx_y_z2mat(mat_t m, double x, double y, double z)
  */
 void anim_zyx2mat(mat_t m, const vect_t a)
 {
-	fastf_t cosX,cosY,cosZ,sinX,sinY,sinZ;
+	fastf_t cosX, cosY, cosZ, sinX, sinY, sinZ;
 
 	cosX = cos(a[0]);
 	cosY = cos(a[1]);
@@ -679,7 +679,7 @@ void anim_z_y_x2mat(mat_t m, double x, double y, double z)
  */
 void anim_dz_y_x2mat(mat_t m, double x, double y, double z)
 {
-	fastf_t cosx,cosy,cosz,sinx,siny,sinz;
+	fastf_t cosx, cosy, cosz, sinx, siny, sinz;
 
 	x *= (M_PI*0.0055555555556);
 	y *= (M_PI*0.0055555555556);
@@ -721,7 +721,7 @@ void anim_quat2mat(mat_t m, const quat_t qq)
 	QMOVE(q, qq);
 	QUNITIZE(q);
 
-	VADD2N(two_q,q,q,4);
+	VADD2N(two_q, q, q, 4);
 
 	m[0] 	= 1.0 - two_q[Y]*q[Y] - two_q[Z]*q[Z];
 	m[1]	= two_q[X]*q[Y] - two_q[W]*q[Z];
@@ -762,7 +762,7 @@ void anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 					* determine roll */
 		hypotenuse = sqrt(d2[0]*d2[0]+d2[1]*d2[1]);
 		if (hypotenuse < VDIVIDE_TOL){ /* use x-axis as default*/
-			VSET(d2,1,0,0);
+			VSET(d2, 1, 0, 0);
 			hypotenuse = 1;
 		}
 		if (d[2] < 0)
@@ -803,7 +803,7 @@ void anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 void anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
 {
 	vect_t temp;
-	fastf_t hyp, sign,inv,mag;
+	fastf_t hyp, sign, inv, mag;
 	vect_t dx;
 
 	VMOVE( dx, dx2 );
@@ -882,9 +882,9 @@ int anim_steer_mat(mat_t  mat, vect_t point, int end)
 	static vect_t norm;
 	static int state = ASM_EMPTY;
 
-	VMOVE(p1,p2);
-	VMOVE(p2,p3);
-	VMOVE(p3,point);
+	VMOVE(p1, p2);
+	VMOVE(p2, p3);
+	VMOVE(p3, point);
 
 	switch(state) {
 	case ASM_EMPTY:
@@ -898,29 +898,29 @@ int anim_steer_mat(mat_t  mat, vect_t point, int end)
 	case ASM_FIRST:
 		if (end) {
 			/* only one point specified, use default direction*/
-			VSET(dir,1.0,0.0,0.0);
-			VSET(norm,0.0,1.0,0.0);
+			VSET(dir, 1.0, 0.0, 0.0);
+			VSET(norm, 0.0, 1.0, 0.0);
 			state = ASM_EMPTY;
 		} else {
-			VSUBUNIT(dir,p3,p2);
+			VSUBUNIT(dir, p3, p2);
 			VSET(norm, 0.0, 1.0, 0.0);
 			state = ASM_FULL;
 		}
 		break;
 	case ASM_FULL:
 		if (end) {
-			VSUBUNIT(dir,p2,p1);
+			VSUBUNIT(dir, p2, p1);
 			state = ASM_EMPTY;
 		} else {
-			VSUBUNIT(dir,p3,p1);
+			VSUBUNIT(dir, p3, p1);
 			state = ASM_FULL;
 		}
 	}
 
 	/* go for it */
-	anim_dirn2mat(mat,dir,norm); /* create basic rotation matrix */
+	anim_dirn2mat(mat, dir, norm); /* create basic rotation matrix */
 	VSET(norm, mat[1], mat[5], 0.0); /* save for next time */
-	VMOVE(point,p2); /* for main's purposes, the current point is p2 */
+	VMOVE(point, p2); /* for main's purposes, the current point is p2 */
 	return(1); /* return signal go ahead and print */
 
 }
@@ -966,13 +966,13 @@ void anim_rotatez(fastf_t a, vect_t d)
  */
 void anim_mat_print(FILE *fp, const mat_t m, int s_colon)
 {
-	bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
-	bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
-	bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
-	bu_flog( fp,"%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
+	bu_flog( fp, "%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
+	bu_flog( fp, "%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
+	bu_flog( fp, "%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
+	bu_flog( fp, "%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
 	if (s_colon)
-		bu_flog( fp,";");
-	bu_flog( fp,"\n");
+		bu_flog( fp, ";");
+	bu_flog( fp, "\n");
 }
 
 
@@ -989,11 +989,11 @@ void anim_mat_printf(
 	const char *endstr)
 {
 	char mystr[80];
-	snprintf(mystr, 80, "%s%s%s%s%%s",formstr,formstr,formstr,formstr);
-	bu_flog( fp,mystr, m[0], m[1], m[2], m[3], linestr);
-	bu_flog( fp,mystr, m[4], m[5], m[6], m[7], linestr);
-	bu_flog( fp,mystr, m[8], m[9], m[10], m[11], linestr);
-	bu_flog( fp,mystr, m[12], m[13], m[14], m[15], endstr);
+	snprintf(mystr, 80, "%s%s%s%s%%s", formstr, formstr, formstr, formstr);
+	bu_flog( fp, mystr, m[0], m[1], m[2], m[3], linestr);
+	bu_flog( fp, mystr, m[4], m[5], m[6], m[7], linestr);
+	bu_flog( fp, mystr, m[8], m[9], m[10], m[11], linestr);
+	bu_flog( fp, mystr, m[12], m[13], m[14], m[15], endstr);
 }
 
 /* ANIM_VIEW_REV

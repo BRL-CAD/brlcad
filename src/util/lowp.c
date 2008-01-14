@@ -53,11 +53,11 @@ int infd1, infd2, infd3;		/* input fd's */
 int
 main(int argc, char **argv)
 {
-	int x,y;
+	int x, y;
 	int readval;
 
 	if( argc < 2 )  {
-		fprintf(stderr,"%s", usage);
+		fprintf(stderr, "%s", usage);
 		bu_exit (1, NULL);
 	}
 

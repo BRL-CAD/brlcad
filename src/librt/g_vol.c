@@ -66,7 +66,7 @@ struct rt_vol_specific {
 	vect_t		vol_ynorm;
 	vect_t		vol_znorm;
 	mat_t		vol_mat;	/* model to ideal space */
-	vect_t		vol_origin;	/* local coords of grid origin (0,0,0) for now */
+	vect_t		vol_origin;	/* local coords of grid origin (0, 0, 0) for now */
 	vect_t		vol_large;	/* local coords of XYZ max */
 };
 #define VOL_NULL	((struct rt_vol_specific *)0)
@@ -80,8 +80,8 @@ const struct bu_structparse rt_vol_parse[] = {
 	{"%d",	1, "d",		VOL_O(zdim),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "lo",	VOL_O(lo),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "hi",	VOL_O(hi),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	ELEMENTS_PER_VECT, "size",bu_offsetofarray(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	16, "mat", bu_offsetofarray(struct rt_vol_internal,mat), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	ELEMENTS_PER_VECT, "size", bu_offsetofarray(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	16, "mat", bu_offsetofarray(struct rt_vol_internal, mat), BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -917,9 +917,9 @@ int
 rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register struct rt_vol_internal *vip;
-	register short	x,y,z;
-	register short	v1,v2;
-	point_t		a,b,c,d;
+	register short	x, y, z;
+	register short	v1, v2;
+	point_t		a, b, c, d;
 
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -932,22 +932,22 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	for( z=-1; z<=vip->zdim; z++ )  {
 		for( x=-1; x<=vip->xdim; x++ )  {
 			for( y=-1; y<=vip->ydim; y++ )  {
-				v1 = VOL(vip, x,y,z);
-				v2 = VOL(vip, x+1,y,z);
+				v1 = VOL(vip, x, y, z);
+				v2 = VOL(vip, x+1, y, z);
 				if( OK(vip, v1) == OK(vip, v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, x+0.5, y-0.5, z-0.5 );
 				VSET( b, x+0.5, y-0.5, z+0.5 );
 				for( ++y; y<=vip->ydim; y++ )  {
-					v1 = VOL(vip, x,y,z);
-					v2 = VOL(vip, x+1,y,z);
+					v1 = VOL(vip, x, y, z);
+					v2 = VOL(vip, x+1, y, z);
 					if( OK(vip, v1) == OK(vip, v2) )
 						break;
 				}
 				/* End of run of edge.  One cell beyond. */
 				VSET( c, x+0.5, y-0.5, z+0.5 );
 				VSET( d, x+0.5, y-0.5, z-0.5 );
-				rt_vol_plate( a,b,c,d, vip->mat, vhead, vip );
+				rt_vol_plate( a, b, c, d, vip->mat, vhead, vip );
 			}
 		}
 	}
@@ -958,22 +958,22 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	for( z=-1; z<=vip->zdim; z++ )  {
 		for( y=-1; y<=vip->ydim; y++ )  {
 			for( x=-1; x<=vip->xdim; x++ )  {
-				v1 = VOL(vip, x,y,z);
-				v2 = VOL(vip, x,y+1,z);
+				v1 = VOL(vip, x, y, z);
+				v2 = VOL(vip, x, y+1, z);
 				if( OK(vip, v1) == OK(vip, v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, x-0.5, y+0.5, z-0.5 );
 				VSET( b, x-0.5, y+0.5, z+0.5 );
 				for( ++x; x<=vip->xdim; x++ )  {
-					v1 = VOL(vip, x,y,z);
-					v2 = VOL(vip, x,y+1,z);
+					v1 = VOL(vip, x, y, z);
+					v2 = VOL(vip, x, y+1, z);
 					if( OK(vip, v1) == OK(vip, v2) )
 						break;
 				}
 				/* End of run of edge.  One cell beyond */
 				VSET( c, (x-0.5), (y+0.5), (z+0.5) );
 				VSET( d, (x-0.5), (y+0.5), (z-0.5) );
-				rt_vol_plate( a,b,c,d, vip->mat, vhead, vip );
+				rt_vol_plate( a, b, c, d, vip->mat, vhead, vip );
 			}
 		}
 	}
@@ -984,22 +984,22 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	for( x=-1; x<=vip->xdim; x++ )  {
 		for( z=-1; z<=vip->zdim; z++ )  {
 			for( y=-1; y<=vip->ydim; y++ )  {
-				v1 = VOL(vip, x,y,z);
-				v2 = VOL(vip, x,y,z+1);
+				v1 = VOL(vip, x, y, z);
+				v2 = VOL(vip, x, y, z+1);
 				if( OK(vip, v1) == OK(vip, v2) )  continue;
 				/* Note start point, continue scan */
 				VSET( a, (x-0.5), (y-0.5), (z+0.5) );
 				VSET( b, (x+0.5), (y-0.5), (z+0.5) );
 				for( ++y; y<=vip->ydim; y++ )  {
-					v1 = VOL(vip, x,y,z);
-					v2 = VOL(vip, x,y,z+1);
+					v1 = VOL(vip, x, y, z);
+					v2 = VOL(vip, x, y, z+1);
 					if( OK(vip, v1) == OK(vip, v2) )
 						break;
 				}
 				/* End of run of edge.  One cell beyond */
 				VSET( c, (x+0.5), (y-0.5), (z+0.5) );
 				VSET( d, (x-0.5), (y-0.5), (z+0.5) );
-				rt_vol_plate( a,b,c,d, vip->mat, vhead, vip );
+				rt_vol_plate( a, b, c, d, vip->mat, vhead, vip );
 			}
 		}
 	}
@@ -1041,7 +1041,7 @@ int
 rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct rt_vol_internal	*vip;
-	register int	x,y,z;
+	register int	x, y, z;
 	int		i;
 	struct shell	*s;
 	struct vertex	*verts[4];
@@ -1068,7 +1068,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		{
 			for( z=0 ; z<vip->zdim ; z++ )
 			{
-				point_t pt,pt1;
+				point_t pt, pt1;
 
 				/* skip empty cells */
 				if( !OK( vip , VOL( vip , x , y , z ) ) )

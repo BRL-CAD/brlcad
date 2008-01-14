@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 	plane_t pl;
 	int i;
 	float a, b, c, d;
-	int old_id=(-1),e;
+	int old_id=(-1), e;
 
 	printf( "$03" );
 

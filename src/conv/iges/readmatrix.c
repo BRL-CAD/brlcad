@@ -40,7 +40,7 @@ Readmatrix( xform , rot )
 int xform;
 mat_t rot;
 {
-	int i,j;
+	int i, j;
 
 	/* read the actual transformation matrix and store */
 

@@ -352,7 +352,7 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
 	mat_t u_mat, v_mat;
 
 	/* dork the normal around
-	 * Convert the normal to shader space, get u,v coordinate system
+	 * Convert the normal to shader space, get u, v coordinate system
 	 */
 
 	if (rdebug&RDEBUG_SHADE) {

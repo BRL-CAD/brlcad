@@ -339,7 +339,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		NMG_CK_VERTEXUSE(vu);
 		NMG_CK_VERTEX(vu->v_p);
 		if( nmg_is_vertex_in_facelist( vu->v_p, &s->fu_hd ) ||
-		    nmg_is_vertex_in_looplist( vu->v_p, &s->lu_hd,0 ) ||
+		    nmg_is_vertex_in_looplist( vu->v_p, &s->lu_hd, 0 ) ||
 		    nmg_is_vertex_in_edgelist( vu->v_p, &s->eu_hd ) )  {
 			/* Kill lu and mate */
 			if( nextlu == lu->lumate_p )
@@ -529,7 +529,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 				found = 0;
 				for( BU_LIST_FOR( lu2, loopuse, &fu->lu_hd ) )
 				{
-					int class1,class2;
+					int class1, class2;
 
 					NMG_CK_LOOPUSE( lu2 );
 
@@ -630,7 +630,7 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
 		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 		while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
 			if (lu->orientation == orient) {
-				lu = BU_LIST_PNEXT(loopuse,lu);
+				lu = BU_LIST_PNEXT(loopuse, lu);
 				nmg_klu(BU_LIST_PLAST(loopuse, lu));
 			} else if (lu->orientation == OT_UNSPEC &&
 			    BU_LIST_FIRST_MAGIC(&lu->down_hd) ==
@@ -639,9 +639,9 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
 				vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 				pt = vu->v_p->vg_p->coord;
 				VPRINT("nmg_sanitize_s_lv() OT_UNSPEC at", pt);
-				lu = BU_LIST_PNEXT(loopuse,lu);
+				lu = BU_LIST_PNEXT(loopuse, lu);
 			} else {
-				lu = BU_LIST_PNEXT(loopuse,lu);
+				lu = BU_LIST_PNEXT(loopuse, lu);
 			}
 		}
 
@@ -666,7 +666,7 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
 	lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
 	while (BU_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
 		if (lu->orientation == orient) {
-			lu = BU_LIST_PNEXT(loopuse,lu);
+			lu = BU_LIST_PNEXT(loopuse, lu);
 			nmg_klu(BU_LIST_PLAST(loopuse, lu));
 		} else if (lu->orientation == OT_UNSPEC &&
 		    BU_LIST_FIRST_MAGIC(&lu->down_hd) ==
@@ -675,9 +675,9 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 			pt = vu->v_p->vg_p->coord;
 			VPRINT("nmg_sanitize_s_lv() OT_UNSPEC at", pt);
-			lu = BU_LIST_PNEXT(loopuse,lu);
+			lu = BU_LIST_PNEXT(loopuse, lu);
 		} else {
-			lu = BU_LIST_PNEXT(loopuse,lu);
+			lu = BU_LIST_PNEXT(loopuse, lu);
 		}
 	}
 
@@ -2393,7 +2393,7 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
  *		v                 |
  *		G---------------->H
  *
- *  When nmg_cut_loop(A,D) is called, the new loop ABCD is clockwise,
+ *  When nmg_cut_loop(A, D) is called, the new loop ABCD is clockwise,
  *  even though the original loop was counter-clockwise.
  *  There is no way to determine this without referring to the
  *  face normal and vertex geometry, which being a topology routine

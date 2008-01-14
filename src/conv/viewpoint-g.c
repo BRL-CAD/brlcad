@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	char *base_name;		/* title and top level group name */
 	char coords_name[LINELEN] = {0};	/* input coordinates file name */
 	char elems_name[LINELEN] = {0};		/* input elements file name */
-	float x,y,z,nx,ny,nz;		/* vertex and normal coords */
+	float x, y, z, nx, ny, nz;		/* vertex and normal coords */
 	char *ptr1,*ptr2;
 	int name_len;
 	struct bn_tol tol;

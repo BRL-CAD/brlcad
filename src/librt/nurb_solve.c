@@ -81,7 +81,7 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 	s = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 	    "rt_nurb_solve: s");/* Create temp array */
 
-	rt_nurb_doolittle (mat_1,mat_2, dim, coords);/* Create LU decomosition */
+	rt_nurb_doolittle (mat_1, mat_2, dim, coords);/* Create LU decomosition */
 
 	for( k =0; k < coords; k++)
 	{
@@ -110,9 +110,9 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 		}
 	}
 
-	bu_free ((char *)y,"rt_nurb_solve: y");			/* Free up storage */
-	bu_free ((char *)b,"rt_nurb_solve: b");			/* Free up storage */
-	bu_free ((char *)s,"rt_nurb_solve: s");			/* Free up storage */
+	bu_free ((char *)y, "rt_nurb_solve: y");			/* Free up storage */
+	bu_free ((char *)b, "rt_nurb_solve: b");			/* Free up storage */
+	bu_free ((char *)s, "rt_nurb_solve: s");			/* Free up storage */
 }
 
 /*
@@ -207,9 +207,9 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 		}
 
 	}
-	bu_free( (char *)d,"rt_nurb_doolittle:d");		/* Free up the storage. */
-	bu_free( (char *)s,"rt_nurb_doolittle:s");
-	bu_free( (char *)ds,"rt_nurb_doolittle:ds" );
+	bu_free( (char *)d, "rt_nurb_doolittle:d");		/* Free up the storage. */
+	bu_free( (char *)s, "rt_nurb_doolittle:s");
+	bu_free( (char *)ds, "rt_nurb_doolittle:ds" );
 }
 
 void
@@ -217,7 +217,7 @@ rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* s
 
 
 {
-	register int i,j;
+	register int i, j;
 	fastf_t tmp;
 
 	for(i = 0; i < n; i++)
@@ -234,7 +234,7 @@ rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* s
 
 
 {
-	register int i,j;
+	register int i, j;
 	fastf_t tmp;
 
 	for( i = n - 1; i >= 0; i-- )
@@ -253,8 +253,8 @@ rt_nurb_p_mat(const fastf_t *mat, int dim)
 	int i;
 
 	for( i = 0; i < dim; i++)
-		fprintf(stderr,"%f\n", mat[i]);
-	fprintf(stderr,"\n");
+		fprintf(stderr, "%f\n", mat[i]);
+	fprintf(stderr, "\n");
 }
 
 /*

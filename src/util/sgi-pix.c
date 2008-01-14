@@ -42,7 +42,7 @@
 #    include <gl.h>
 #  endif
 
-#  define	MIN(a,b)	((a)<(b)?(a):(b))
+#  define	MIN(a, b)	((a)<(b)?(a):(b))
 #  define	ABS(a)		((a)<0? -(a):(a))
 
 char rbuf[2048];
@@ -79,8 +79,8 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 
 #    if !defined(mips)
     /* 3D only */
-    viewport(0,1023,0,767);
-    ortho2(-0.5,1023.5,-0.5,767.5);
+    viewport(0, 1023, 0, 767);
+    ortho2(-0.5, 1023.5,-0.5, 767.5);
 #    endif
 
     for(y=0; y<ysize; y++) {
@@ -92,21 +92,21 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 	    n = togo;
 	    if(n>256)
 		n = 256;
-	    cmov2i(xorg+pos,yorg+y);
-	    gl_readscreen(n,rbuf+pos,gbuf+pos,bbuf+pos);
+	    cmov2i(xorg+pos, yorg+y);
+	    gl_readscreen(n, rbuf+pos, gbuf+pos, bbuf+pos);
 	    pos += n;
 	    togo -= n;
 	}
 #    else
-	cmov2i(xorg,yorg+y);
-	readRGB(n,rbuf,gbuf,bbuf);
+	cmov2i(xorg, yorg+y);
+	readRGB(n, rbuf, gbuf, bbuf);
 #    endif
 	for( i = 0; i < xsize; i++ ) {
 	    obuf[3*i] = rbuf[i];
 	    obuf[3*i+1] = gbuf[i];
 	    obuf[3*i+2] = bbuf[i];
 	}
-	if( fwrite(obuf,3,xsize,ofp) != xsize )  {
+	if( fwrite(obuf, 3, xsize, ofp) != xsize )  {
 	    perror("fwrite");
 	    exit(2);
 	}
@@ -123,15 +123,15 @@ cmap_savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
     screenspace();
 
     for(y=0; y<ysize; y++) {
-	cmov2i(xorg,yorg+y);
-	readpixels(xsize,buff);
+	cmov2i(xorg, yorg+y);
+	readpixels(xsize, buff);
 
 	for( i = 0; i < xsize; i++ ) {
 	    obuf[i*3] = cmap[buff[i]].red;
 	    obuf[i*3+1] = cmap[buff[i]].grn;
 	    obuf[i*3+2] = cmap[buff[i]].blu;
 	}
-	if( fwrite(obuf,3,xsize,ofp) != xsize )  {
+	if( fwrite(obuf, 3, xsize, ofp) != xsize )  {
 	    perror("fwrite");
 	    exit(2);
 	}
@@ -182,7 +182,7 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
 	    *op++ = (w>> 8) & 0xFF;
 	    *op++ = (w>>16) & 0xFF;
 	}
-	if( fwrite(obuf,3,xsize,ofp) != xsize )  {
+	if( fwrite(obuf, 3, xsize, ofp) != xsize )  {
 	    perror("fwrite");
 	    exit(2);
 	}
@@ -218,10 +218,10 @@ main(int argc, char *argv[])
     }
     if( argc == 2 ) {
 	fname = argv[1];
-	ofp = fopen(fname,"w");
+	ofp = fopen(fname, "w");
     } else if( argc == 6 ) {
 	fname = argv[5];
-	ofp = fopen(fname,"w");
+	ofp = fopen(fname, "w");
     } else {
 	fname = "-";
 	ofp = stdout;
@@ -235,8 +235,8 @@ main(int argc, char *argv[])
     }
 
     /* Convert rectangle edges to origin and size */
-    xorg = MIN(x1,x2);
-    yorg = MIN(y1,y2);
+    xorg = MIN(x1, x2);
+    yorg = MIN(y1, y2);
     if(xorg<0)
 	xorg = 0;
     if(yorg<0)
@@ -277,13 +277,13 @@ main(int argc, char *argv[])
 	planes = getplanes();
 	bu_log("%d planes\n", planes);
 	for( i = 0; i < 4096; i++ ) {
-	    short r,g,b;
+	    short r, g, b;
 	    getmcolor( i, &r, &g, &b );
 	    cmap[i].red = r;
 	    cmap[i].grn = g;
 	    cmap[i].blu = b;
 	}
-	cmap_savescreen(ofp,x1,x2,y1,y2);
+	cmap_savescreen(ofp, x1, x2, y1, y2);
 	if( mode != 1 )  {
 	    /* Double buffered mode, swap 'em back */
 	    swapbuffers();

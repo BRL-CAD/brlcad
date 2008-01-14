@@ -133,10 +133,10 @@ main(int argc, char **argv)
     int rndtabi=0;
     fastf_t halfpadlen, delta, prev_dist;
 
-    VSETALL(zero,0.0);
-    VSETALL(to_track,0.0);
-    VSETALL(centroid,0.0);
-    VSETALL(rcentroid,0.0);
+    VSETALL(zero, 0.0);
+    VSETALL(to_track, 0.0);
+    VSETALL(centroid, 0.0);
+    VSETALL(rcentroid, 0.0);
     y_rot = 0.0;
     num_wheels = 0;
     last_steer = last_frame = 0;
@@ -145,29 +145,29 @@ main(int argc, char **argv)
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (!get_args(argc,argv))
-	fprintf(stderr,"Anim_track: Argument error.\n");
+    if (!get_args(argc, argv))
+	fprintf(stderr, "Anim_track: Argument error.\n");
 
     if (axes || cent ){ /* vehicle has own reference frame */
-	anim_add_trans(m_axes,centroid,zero);
-	anim_add_trans(m_rev_axes,zero,rcentroid);
+	anim_add_trans(m_axes, centroid, zero);
+	anim_add_trans(m_rev_axes, zero, rcentroid);
     }
 
     /* get track information from specified file */
 
-    if (!(stream = fopen(*(argv+bu_optind),"r"))){
-	fprintf(stderr,"Track: Could not open file %s.\n",*(argv+bu_optind));
+    if (!(stream = fopen(*(argv+bu_optind), "r"))){
+	fprintf(stderr, "Track: Could not open file %s.\n",*(argv+bu_optind));
 	return(0);
     }
     num_wheels = -1;
     if (one_radius) {
 	while (!feof(stream)) {
-	    fscanf(stream,"%*f %*f %*f");
+	    fscanf(stream, "%*f %*f %*f");
 	    num_wheels++;
 	}
     } else {
 	while (!feof(stream)) {
-	    fscanf(stream,"%*f %*f %*f %*f");
+	    fscanf(stream, "%*f %*f %*f %*f");
 	    num_wheels++;
 	}
     }
@@ -176,18 +176,18 @@ main(int argc, char **argv)
 
     /*allocate memory for track information*/
     /* x: contains track geometry for the current frame */
-    x = (struct all *) bu_calloc(num_wheels,sizeof(struct all), "x all");
+    x = (struct all *) bu_calloc(num_wheels, sizeof(struct all), "x all");
     /* wh: contains geometry of wheels in mged database */
-    wh = (struct wheel *) bu_calloc(num_wheels,sizeof(struct wheel), "wh wheel");
+    wh = (struct wheel *) bu_calloc(num_wheels, sizeof(struct wheel), "wh wheel");
 
     /*read original wheel positions*/
     for (i=0;i<NW;i++){
-	fscanf(stream,"%lf %lf %lf", temp, temp+1, temp+2);
+	fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
 	if (one_radius)
 	    x[i].w.rad = radius;
 	else
-	    fscanf(stream,"%lf",& x[i].w.rad);
-	MAT4X3PNT(x[i].w.pos,m_rev_axes,temp);
+	    fscanf(stream, "%lf",& x[i].w.rad);
+	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
 	else
@@ -203,11 +203,11 @@ main(int argc, char **argv)
 
     /* initialize to_track */
     VSET(to_track, 0.0, track_y, 0.0);
-    VSET(to_front,1.0,0.0,0.0);
+    VSET(to_front, 1.0, 0.0, 0.0);
 
     if (get_circumf&& (!read_wheels)) {
 	track_prep();
-	printf("%.10g\n",tracklen);
+	printf("%.10g\n", tracklen);
 	return(0);
     }
 
@@ -245,15 +245,15 @@ main(int argc, char **argv)
 	    val = scanf("%lf %lf %lf",&yaw,&pch,&roll);
 	    if (val < 3)
 		break;
-	    anim_dy_p_r2mat(mat_x,yaw,pch,roll);
-	    anim_dy_p_r2mat(mat_x,yaw,pch,roll);
-	    anim_add_trans(mat_x,cent_pos,rcentroid);
+	    anim_dy_p_r2mat(mat_x, yaw, pch, roll);
+	    anim_dy_p_r2mat(mat_x, yaw, pch, roll);
+	    anim_add_trans(mat_x, cent_pos, rcentroid);
 	}
 
 	if (read_wheels) {
 	    /* read in all wheel positions */
 	    for(i=0;i<NW;i++){
-		val=scanf("%lf %lf",x[i].w.pos, x[i].w.pos + 2);
+		val=scanf("%lf %lf", x[i].w.pos, x[i].w.pos + 2);
 		if (val < 2) {
 		    break;
 		}
@@ -270,29 +270,29 @@ main(int argc, char **argv)
 		    last_steer = 1;
 	    }
 	    go = anim_steer_mat(mat_x, cent_pos, last_steer);
-	    anim_add_trans(mat_x,cent_pos,rcentroid);
+	    anim_add_trans(mat_x, cent_pos, rcentroid);
 	}
 
 	/* call track_prep to calculate geometry of track */
 	if ((frame==first_frame)||read_wheels) {
 	    if ((track_prep())==-1){
-		fprintf(stderr,"Track: error in frame %d: track too short.\n",frame);
+		fprintf(stderr, "Track: error in frame %d: track too short.\n", frame);
 		break;
 	    }
 	    if (get_circumf) {
-		printf("%d\t%.10g\n",frame,tracklen);
+		printf("%d\t%.10g\n", frame, tracklen);
 	    }
 	}
 
 
 	if ((dist_mode==CALCULATED)||(dist_mode==STEERED)){
 	    /*determine distance traveled*/
-	    VMOVE(wheel_prev,wheel_now);
-	    MAT4X3PNT(wheel_now,mat_x,to_track);
+	    VMOVE(wheel_prev, wheel_now);
+	    MAT4X3PNT(wheel_now, mat_x, to_track);
 	    if (frame > first_frame){ /* increment distance by distance moved*/
-		VSUB2(vdelta,wheel_now,wheel_prev);
-		MAT3X3VEC(temp,mat_x,to_front);/*new front of vehicle*/
-		distance += VDOT(temp,vdelta);/*portion of vdelta in line with track*/
+		VSUB2(vdelta, wheel_now, wheel_prev);
+		MAT3X3VEC(temp, mat_x, to_front);/*new front of vehicle*/
+		distance += VDOT(temp, vdelta);/*portion of vdelta in line with track*/
 	    }
 	}
 
@@ -314,37 +314,37 @@ main(int argc, char **argv)
 	    }
 	    if (print_link) {
 		for (count=0;count<num_links;count++){
-		    (void) get_link(position,&y_rot,distance+tracklen*count/num_links+init_dist);
-		    anim_y_p_r2mat(wmat,0.0,y_rot,0.0);
-		    anim_add_trans(wmat,position,zero);
+		    (void) get_link(position,&y_rot, distance+tracklen*count/num_links+init_dist);
+		    anim_y_p_r2mat(wmat, 0.0, y_rot, 0.0);
+		    anim_add_trans(wmat, position, zero);
 		    if (axes || cent){ /* link moved to vehicle coords */
-			MAT_MOVE(mat_x,wmat);
-			bn_mat_mul(wmat,m_axes,mat_x);
+			MAT_MOVE(mat_x, wmat);
+			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    if (print_mode==PRINT_ANIM) {
-			printf("anim %s%d matrix %s\n", *(argv+link_nindex),count,link_cmd);
-			anim_mat_printf(stdout,wmat,"%.10g ","\n",";\n");
+			printf("anim %s%d matrix %s\n", *(argv+link_nindex), count, link_cmd);
+			anim_mat_printf(stdout, wmat, "%.10g ","\n",";\n");
 		    } else if (print_mode==PRINT_ARCED) {
-			printf("arced %s%d matrix %s ", *(argv+link_nindex),count,link_cmd);
-			anim_mat_printf(stdout,wmat,"%.10g ","","\n");
+			printf("arced %s%d matrix %s ", *(argv+link_nindex), count, link_cmd);
+			anim_mat_printf(stdout, wmat, "%.10g ","","\n");
 		    }
 		}
 	    }
 	    if (print_wheel){
 		for (count = 0;count<num_wheels;count++){
-		    anim_y_p_r2mat(wmat,0.0,-distance/wh[count].rad,0.0);
-		    VREVERSE(temp,wh[count].pos);
-		    anim_add_trans(wmat,x[count].w.pos,temp);
+		    anim_y_p_r2mat(wmat, 0.0,-distance/wh[count].rad, 0.0);
+		    VREVERSE(temp, wh[count].pos);
+		    anim_add_trans(wmat, x[count].w.pos, temp);
 		    if (axes || cent){
-			bn_mat_mul(mat_x,wmat,m_rev_axes);
-			bn_mat_mul(wmat,m_axes,mat_x);
+			bn_mat_mul(mat_x, wmat, m_rev_axes);
+			bn_mat_mul(wmat, m_axes, mat_x);
 		    }
 		    if (print_mode==PRINT_ANIM) {
-			printf("anim %s%d matrix %s\n",*(argv+wheel_nindex),count,wheel_cmd);
-			anim_mat_printf(stdout,wmat,"%.10g ","\n",";\n");
+			printf("anim %s%d matrix %s\n",*(argv+wheel_nindex), count, wheel_cmd);
+			anim_mat_printf(stdout, wmat, "%.10g ","\n",";\n");
 		    } else if (print_mode==PRINT_ARCED) {
-			printf("arced %s%d matrix %s ",*(argv+wheel_nindex),count,wheel_cmd);
-			anim_mat_printf(stdout,wmat,"%.10g ","","\n");
+			printf("arced %s%d matrix %s ",*(argv+wheel_nindex), count, wheel_cmd);
+			anim_mat_printf(stdout, wmat, "%.10g ","","\n");
 		    }
 		}
 	    }
@@ -378,7 +378,7 @@ int get_args(int argc, char **argv)
     len_mode = TRACK_MIN;
     anti_strobe = 0;
 
-    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch(c){
 	case 's':
@@ -398,9 +398,9 @@ int get_args(int argc, char **argv)
 	    break;
 	case 'b':
 	    bu_optind -= 1;
-	    sscanf(argv[bu_optind+(i++)],"%lf", &yaw );
-	    sscanf(argv[bu_optind+(i++)],"%lf", &pch );
-	    sscanf(argv[bu_optind+(i++)],"%lf", &rll );
+	    sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
+	    sscanf(argv[bu_optind+(i++)], "%lf", &pch );
+	    sscanf(argv[bu_optind+(i++)], "%lf", &rll );
 	    bu_optind += 3;
 	    anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 	    anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
@@ -408,48 +408,48 @@ int get_args(int argc, char **argv)
 	    break;
 	case 'd':
 	    bu_optind -= 1;
-	    sscanf(argv[bu_optind+(i++)],"%lf",centroid);
-	    sscanf(argv[bu_optind+(i++)],"%lf",centroid+1);
-	    sscanf(argv[bu_optind+(i++)],"%lf",centroid+2);
+	    sscanf(argv[bu_optind+(i++)], "%lf", centroid);
+	    sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
+	    sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
 	    bu_optind += 3;
-	    VREVERSE(rcentroid,centroid);
+	    VREVERSE(rcentroid, centroid);
 	    cent = 1;
 	    break;
 	case 'f':
-	    sscanf(bu_optarg,"%d",&first_frame);
+	    sscanf(bu_optarg, "%d",&first_frame);
 	    break;
 	case 'i':
-	    sscanf(bu_optarg,"%lf",&init_dist);
+	    sscanf(bu_optarg, "%lf",&init_dist);
 	    break;
 	case 'r':
-	    sscanf(bu_optarg,"%lf",&radius);
+	    sscanf(bu_optarg, "%lf",&radius);
 	    one_radius = 1;
 	    break;
 	case 'p':
-	    sscanf(bu_optarg,"%d", &num_links);
+	    sscanf(bu_optarg, "%d", &num_links);
 	    link_nindex = bu_optind;
 	    bu_optind += 1;
 	    print_link = 1;
 	    break;
 	case 'w':
 	    wheel_nindex = bu_optind - 1;
-	    /*sscanf(bu_optarg,"%s",wheel_name);*/
+	    /*sscanf(bu_optarg, "%s", wheel_name);*/
 	    print_wheel = 1;
 	    break;
 	case 'g':
-	    sscanf(bu_optarg,"%d",&arced_frame);
+	    sscanf(bu_optarg, "%d",&arced_frame);
 	    print_mode = PRINT_ARCED;
 	    break;
 	case 'm':
 	    switch (*bu_optarg) {
 	    case 'p':
-		strncpy(link_cmd,argv[bu_optind], 10);
+		strncpy(link_cmd, argv[bu_optind], 10);
 		break;
 	    case 'w':
-		strncpy(wheel_cmd,argv[bu_optind], 10);
+		strncpy(wheel_cmd, argv[bu_optind], 10);
 		break;
 	    default:
-		fprintf(stderr,"Unknown option: -m%c\n",*bu_optarg);
+		fprintf(stderr, "Unknown option: -m%c\n",*bu_optarg);
 		return(0);
 	    }
 	    bu_optind += 1;
@@ -461,24 +461,24 @@ int get_args(int argc, char **argv)
 		break;
 	    case 'f':
 		len_mode = TRACK_FIXED;
-		sscanf(argv[bu_optind],"%lf",&first_tracklen);
+		sscanf(argv[bu_optind], "%lf",&first_tracklen);
 		tracklen = first_tracklen;
 		bu_optind++;
 		break;
 	    case 's':
 		len_mode = TRACK_STRETCH;
-		sscanf(argv[bu_optind],"%lf",&first_tracklen);
+		sscanf(argv[bu_optind], "%lf",&first_tracklen);
 		tracklen = first_tracklen;
 		bu_optind++;
 		break;
 	    case 'e':
 		len_mode = TRACK_ELASTIC;
-		sscanf(argv[bu_optind],"%lf",&first_tracklen);
+		sscanf(argv[bu_optind], "%lf",&first_tracklen);
 		tracklen = first_tracklen;
 		bu_optind++;
 		break;
 	    default:
-		fprintf(stderr,"Unknown option: -l%c\n",*bu_optarg);
+		fprintf(stderr, "Unknown option: -l%c\n",*bu_optarg);
 		return(0);
 	    }
 	    break;
@@ -486,7 +486,7 @@ int get_args(int argc, char **argv)
 	    anti_strobe = 1;
 	    break;
 	default:
-	    fprintf(stderr,"Unknown option: -%c\n",c);
+	    fprintf(stderr, "Unknown option: -%c\n", c);
 	    return(0);
 	}
     }
@@ -512,10 +512,10 @@ int track_prep(void)
     /* first loop - get inter axle slopes and start/end angles */
     for (i=0;i<NW;i++){
 	/*calculate current slope vector*/
-	VSUB2(x[i].s.dir,x[i].w.pos,x[PREV(i)].w.pos);
+	VSUB2(x[i].s.dir, x[i].w.pos, x[PREV(i)].w.pos);
 	x[i].s.len = MAGNITUDE(x[i].s.dir);
 	/*calculate end angle of previous wheel assuming all convex*/
-	phi = atan2(x[i].s.dir[2],x[i].s.dir[0]);/*absolute angle of slope*/
+	phi = atan2(x[i].s.dir[2], x[i].s.dir[0]);/*absolute angle of slope*/
 	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
 	x[PREV(i)].w.ang1 = phi +  acos(costheta);
 	while (x[PREV(i)].w.ang1 < 0.0)
@@ -547,9 +547,9 @@ int track_prep(void)
 	x[i].t.pos0[1] = x[PREV(i)].w.pos[1];
 	x[i].t.pos0[2] = x[PREV(i)].w.pos[2] + x[PREV(i)].w.rad*sin(x[PREV(i)].w.ang1);
 	/*calculate length and direction of track segment*/
-	VSUB2(difference,x[i].t.pos1,x[i].t.pos0);
+	VSUB2(difference, x[i].t.pos1, x[i].t.pos0);
 	x[i].t.len = MAGNITUDE(difference);
-	VSCALE((x[i].t.dir),difference,(1.0/x[i].t.len));
+	VSCALE((x[i].t.dir), difference,(1.0/x[i].t.len));
     }
 
     /* calculate total track length used so far*/
@@ -581,16 +581,16 @@ int track_prep(void)
 	}
     }
 
-    getcurve(&curve_a,&curve_b,&curve_c,&(x[NW-1].w.ang1),&(x[0].w.ang0),hyperlen,x[NW-1].w.pos,x[0].w.pos,x[NW-1].w.rad,x[0].w.rad);
+    getcurve(&curve_a,&curve_b,&curve_c,&(x[NW-1].w.ang1),&(x[0].w.ang0), hyperlen, x[NW-1].w.pos, x[0].w.pos, x[NW-1].w.rad, x[0].w.rad);
 
     /* re-evaluate zeroth track section in light of curve information */
     x[0].t.pos0[X] = x[NW-1].w.pos[X] + x[NW-1].w.rad * cos(x[NW-1].w.ang1);
     x[0].t.pos0[Z] = x[NW-1].w.pos[Z] + x[NW-1].w.rad * sin(x[NW-1].w.ang1);
     x[0].t.pos1[X] = x[0].w.pos[X] + x[0].w.rad * cos(x[0].w.ang0);
     x[0].t.pos1[Z] = x[0].w.pos[Z] + x[0].w.rad * sin(x[0].w.ang0);
-    VSUB2(difference,x[0].t.pos1,x[0].t.pos0);
+    VSUB2(difference, x[0].t.pos1, x[0].t.pos0);
     x[0].t.len = MAGNITUDE(difference);
-    VSCALE(x[0].t.dir,difference,(1.0/x[0].t.len));
+    VSCALE(x[0].t.dir, difference,(1.0/x[0].t.len));
 
     if (curve_a > VDIVIDE_TOL)
 	s_start = hyper_get_s(curve_a, 0.0, x[0].t.pos0[X] - curve_c);
@@ -624,9 +624,9 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
     dist += x[0].t.len;
     for (i=0;i<NW;i++){
 	if ( (dist  -= x[i].t.len) < 0 ){
-	    VSCALE(temp,(x[i].t.dir),dist);
-	    VADD2(pos,x[i].t.pos1,temp);
-	    *angle_p = atan2(x[i].t.dir[2],x[i].t.dir[0]);
+	    VSCALE(temp,(x[i].t.dir), dist);
+	    VADD2(pos, x[i].t.pos1, temp);
+	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
 	    return(2*i);
 	}
 	if ((dist -= x[i].w.rad*x[i].w.arc) < 0){
@@ -644,14 +644,14 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
     if ( curve_a > VDIVIDE_TOL){
 	pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist, 0, 0, 0);
 	pos[Y] = x[0].w.pos[Y];
-	pos[Z] = hyper_get_z(curve_a,curve_b,0.0, pos[X]);
+	pos[Z] = hyper_get_z(curve_a, curve_b, 0.0, pos[X]);
 	pos[X] += curve_c;
-	*angle_p = hyper_get_ang(curve_a,curve_c, pos[X]);
+	*angle_p = hyper_get_ang(curve_a, curve_c, pos[X]);
     }
     else { /* practically linear */
-	VSCALE(temp,(x[0].t.dir),dist);
-	VADD2(pos,x[0].t.pos0,temp);
-	*angle_p = atan2(x[0].t.dir[Z],x[0].t.dir[X]);
+	VSCALE(temp,(x[0].t.dir), dist);
+	VADD2(pos, x[0].t.pos0, temp);
+	*angle_p = atan2(x[0].t.dir[Z], x[0].t.dir[X]);
     }
 
 
@@ -663,21 +663,21 @@ void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
 {
     int i;
     if (which <=0){
-	fprintf(stderr,"track length: %f\n",tracklen);
-	fprintf(stderr,"link length: %f\n",tracklen/num_links);
+	fprintf(stderr, "track length: %f\n", tracklen);
+	fprintf(stderr, "link length: %f\n", tracklen/num_links);
 	for (i=0;i<NW;i++){
-	    fprintf(stderr,"wheel %d: \n",i);
-	    fprintf(stderr," pos\t%f\t%f\t%f\t\n",x[i].w.pos[X],x[i].w.pos[Y],x[i].w.pos[Z]);
-	    fprintf(stderr," rad\t%f\tang0\t%f\tang1\t%f\tarc\t%f\n",x[i].w.rad,x[i].w.ang0,x[i].w.ang1,x[i].w.arc);
+	    fprintf(stderr, "wheel %d: \n", i);
+	    fprintf(stderr, " pos\t%f\t%f\t%f\t\n", x[i].w.pos[X], x[i].w.pos[Y], x[i].w.pos[Z]);
+	    fprintf(stderr, " rad\t%f\tang0\t%f\tang1\t%f\tarc\t%f\n", x[i].w.rad, x[i].w.ang0, x[i].w.ang1, x[i].w.arc);
 
-	    fprintf(stderr,"track %d: \n",i);
-	    fprintf(stderr," pos0\t%f\t%f\tpos1\t%f\t%f\n",x[i].t.pos0[X],x[i].t.pos0[Z],x[i].t.pos1[X],x[i].t.pos1[Z]);
-	    fprintf(stderr," dir\t%f\t%f\t%f\tlen\t%f\n",x[i].t.dir[X],x[i].t.dir[Y],x[i].t.dir[Z],x[i].t.len);
-	    fprintf(stderr,"slope %d: %f %f %f %f\n",i,x[i].s.dir[0],x[i].s.dir[1],x[i].s.dir[2],x[i].s.len);
+	    fprintf(stderr, "track %d: \n", i);
+	    fprintf(stderr, " pos0\t%f\t%f\tpos1\t%f\t%f\n", x[i].t.pos0[X], x[i].t.pos0[Z], x[i].t.pos1[X], x[i].t.pos1[Z]);
+	    fprintf(stderr, " dir\t%f\t%f\t%f\tlen\t%f\n", x[i].t.dir[X], x[i].t.dir[Y], x[i].t.dir[Z], x[i].t.len);
+	    fprintf(stderr, "slope %d: %f %f %f %f\n", i, x[i].s.dir[0], x[i].s.dir[1], x[i].s.dir[2], x[i].s.len);
 	}
     }
     /*	if (which >= 0){
-	fprintf(stderr,"%d %f %f %f %f\n",count,position[0],position[1],position[2],y_rot);
+	fprintf(stderr, "%d %f %f %f %f\n", count, position[0], position[1], position[2], y_rot);
 	}*/
 }
 

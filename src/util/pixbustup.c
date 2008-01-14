@@ -91,7 +91,7 @@ main(int argc, char **argv)
 		    break;
 		}
 		snprintf(name, 128, "%s.%d", base_name, framenumber);
-		if( (fd=creat(name,0444))<0 )  {
+		if( (fd=creat(name, 0444))<0 )  {
 			perror(name);
 			continue;
 		}

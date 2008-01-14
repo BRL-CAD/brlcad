@@ -107,7 +107,7 @@ mat_t IDENT;
 struct wmember *wmemberArray;
 
 /* the vector directions, in which the flakes will be drawn */
-/* theta,phi */
+/* theta, phi */
 int dir[9][2] = {  {0,-90},
 		   {60,-90},
 		   {120,-90},
@@ -543,7 +543,7 @@ void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
   bn_mat_mul2(toRelative, newPos); /* translate to new position */
   bn_mat_mul2(y, newPos);          /* rotate z */
   bn_mat_mul2(z, newPos);          /* rotate y */
-  MAT_DELTAS(*t, 0,0,0);
+  MAT_DELTAS(*t, 0, 0, 0);
   bn_mat_mul2(*t, newPos);
 
   memcpy(*t, newPos, sizeof(newPos));

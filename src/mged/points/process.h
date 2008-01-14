@@ -71,7 +71,7 @@ typedef struct point_line {
     (x).val[X] = (x).val[Y] = (x).val[Z] = (fastf_t)0.0;\
 }
 
-#define COPY_POINT_LINE_T(x,y) {\
+#define COPY_POINT_LINE_T(x, y) {\
     (x).type = (y).type;\
     (x).code = (y).code;\
     (x).index = (y).index;\

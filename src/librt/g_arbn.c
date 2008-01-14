@@ -197,13 +197,13 @@ rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		norm_dist = VDOT( aip->eqn[i], rp->r_pt ) - aip->eqn[i][3];
 		if( (slant_factor = -VDOT( aip->eqn[i], rp->r_dir )) < -1.0e-10 )  {
-			/* exit point, when dir.N < 0.  out = min(out,s) */
+			/* exit point, when dir.N < 0.  out = min(out, s) */
 			if( out > (s = norm_dist/slant_factor) )  {
 				out = s;
 				oplane = i;
 			}
 		} else if ( slant_factor > 1.0e-10 )  {
-			/* entry point, when dir.N > 0.  in = max(in,s) */
+			/* entry point, when dir.N > 0.  in = max(in, s) */
 			if( in < (s = norm_dist/slant_factor) )  {
 				in = s;
 				iplane = i;
@@ -299,8 +299,8 @@ rt_arbn_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 /**
  *  			R T _ A R B N _ U V
  *
- *  For a hit on a face of an ARB, return the (u,v) coordinates
- *  of the hit point.  0 <= u,v <= 1.
+ *  For a hit on a face of an ARB, return the (u, v) coordinates
+ *  of the hit point.  0 <= u, v <= 1.
  *  u extends along the arb_U direction defined by B-A,
  *  v extends along the arb_V direction defined by Nx(B-A).
  */
@@ -351,7 +351,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		for( j=i+1; j<aip->neqn; j++ )  {
 			double	dot;
 			int	point_count;	/* # points on this line */
-			point_t	a,b;		/* start and end points */
+			point_t	a, b;		/* start and end points */
 			vect_t	dist;
 
 			/* If normals are parallel, no intersection */
@@ -432,10 +432,10 @@ struct arbn_pts
 };
 struct arbn_edges
 {
-	int		v1_no,v2_no;	/* index into arbn_pts for endpoints of edge */
+	int		v1_no, v2_no;	/* index into arbn_pts for endpoints of edge */
 };
 
-#define		LOC(i,j)	i*(aip->neqn)+j
+#define		LOC(i, j)	i*(aip->neqn)+j
 
 static void
 Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_internal *aip)
@@ -445,7 +445,7 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 	for( face=0 ; face<aip->neqn ; face++ )
 	{
 		int done=0;
-		int edge1,edge2;
+		int edge1, edge2;
 
 		if( edge_count[face] < 3 )
 			continue;	/* nothing to sort */
@@ -455,11 +455,11 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 		while( !done )
 		{
 			int edge3;
-			int tmp_v1,tmp_v2;
+			int tmp_v1, tmp_v2;
 
 			/* Look for out of order edge (edge2) */
 			while( ++edge2 < edge_count[face] &&
-				edges[LOC(face,edge1)].v2_no == edges[LOC(face,edge2)].v1_no )
+				edges[LOC(face, edge1)].v2_no == edges[LOC(face, edge2)].v1_no )
 					edge1++;
 			if( edge2 == edge_count[face] )
 			{
@@ -471,8 +471,8 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 			/* look for edge (edge3) that belongs where edge2 is */
 			edge3 = edge2 - 1;
 			while( ++edge3 < edge_count[face] &&
-				edges[LOC(face,edge1)].v2_no != edges[LOC(face,edge3)].v1_no &&
-				edges[LOC(face,edge1)].v2_no != edges[LOC(face,edge3)].v2_no );
+				edges[LOC(face, edge1)].v2_no != edges[LOC(face, edge3)].v1_no &&
+				edges[LOC(face, edge1)].v2_no != edges[LOC(face, edge3)].v2_no );
 
 			if( edge3 == edge_count[face] )
 				bu_bomb( "rt_arbn_tess: Sort_edges: Cannot find next edge in loop\n" );
@@ -480,19 +480,19 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 			if( edge2 != edge3 )
 			{
 				/* swap edge2 and edge3 */
-				tmp_v1 = edges[LOC(face,edge2)].v1_no;
-				tmp_v2 = edges[LOC(face,edge2)].v2_no;
-				edges[LOC(face,edge2)].v1_no = edges[LOC(face,edge3)].v1_no;
-				edges[LOC(face,edge2)].v2_no = edges[LOC(face,edge3)].v2_no;
-				edges[LOC(face,edge3)].v1_no = tmp_v1;
-				edges[LOC(face,edge3)].v2_no = tmp_v2;
+				tmp_v1 = edges[LOC(face, edge2)].v1_no;
+				tmp_v2 = edges[LOC(face, edge2)].v2_no;
+				edges[LOC(face, edge2)].v1_no = edges[LOC(face, edge3)].v1_no;
+				edges[LOC(face, edge2)].v2_no = edges[LOC(face, edge3)].v2_no;
+				edges[LOC(face, edge3)].v1_no = tmp_v1;
+				edges[LOC(face, edge3)].v2_no = tmp_v2;
 			}
-			if( edges[LOC(face,edge1)].v2_no == edges[LOC(face,edge2)].v2_no )
+			if( edges[LOC(face, edge1)].v2_no == edges[LOC(face, edge2)].v2_no )
 			{
 				/* reverse order of edge */
-				tmp_v1 = edges[LOC(face,edge2)].v1_no;
-				edges[LOC(face,edge2)].v1_no = edges[LOC(face,edge2)].v2_no;
-				edges[LOC(face,edge2)].v2_no = tmp_v1;
+				tmp_v1 = edges[LOC(face, edge2)].v1_no;
+				edges[LOC(face, edge2)].v1_no = edges[LOC(face, edge2)].v2_no;
+				edges[LOC(face, edge2)].v2_no = tmp_v1;
 			}
 
 			edge1 = edge2;
@@ -520,7 +520,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	int			nverts;		/* maximum possible number of vertices = neqn!/(3!(neqn-3)! */
 	int			point_count=0;	/* actual number of vertices */
 	int			face_count=0;	/* actual number of faces built */
-	int			i,j,k,l,n;
+	int			i, j, k, l, n;
 	struct arbn_pts		*pts;
 	struct arbn_edges	*edges;		/* A list of edges for each plane eqn (each face) */
 	int			*edge_count;	/* number of edges for each face */
@@ -614,7 +614,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 			for( k=j+1 ; k<point_count ; k++ )
 			{
 				int match=(-1);
-				int pt1,pt2;
+				int pt1, pt2;
 				int duplicate=0;
 
 				/* skip points not on plane "i" */
@@ -666,10 +666,10 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 				/* check for duplicate edge */
 				for( l=0 ; l<edge_count[i] ; l++ )
 				{
-					if( (edges[LOC(i,l)].v1_no == pt1 &&
-					    edges[LOC(i,l)].v2_no == pt2) ||
-					    (edges[LOC(i,l)].v2_no == pt1 &&
-					    edges[LOC(i,l)].v1_no == pt2) )
+					if( (edges[LOC(i, l)].v1_no == pt1 &&
+					    edges[LOC(i, l)].v2_no == pt2) ||
+					    (edges[LOC(i, l)].v2_no == pt1 &&
+					    edges[LOC(i, l)].v1_no == pt2) )
 					{
 						duplicate = 1;
 						break;
@@ -715,11 +715,11 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		for( j=0 ; j<edge_count[i] ; j++ )
 		{
 			/* skip zero length edges */
-			if( pts[edges[LOC(i,j)].v1_no].vp == pts[edges[LOC(i,j)].v2_no].vp )
+			if( pts[edges[LOC(i, j)].v1_no].vp == pts[edges[LOC(i, j)].v2_no].vp )
 				continue;
 
 			/* put vertex pointers into loop_verts array */
-			loop_verts[loop_length] = pts[edges[LOC(i,j)].v2_no].vp;
+			loop_verts[loop_length] = pts[edges[LOC(i, j)].v2_no].vp;
 			loop_length++;
 		}
 
@@ -1124,7 +1124,7 @@ rt_arbn_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 		bu_vls_printf( &vls, "%.25g %.25g %.25g %.25g", V4ARGS( arbn->eqn[i] ) );
 	}
 	else {
-		Tcl_SetResult( interp,"ERROR: Unknown attribute, choices are N, P, or P#\n",
+		Tcl_SetResult( interp, "ERROR: Unknown attribute, choices are N, P, or P#\n",
 		TCL_STATIC );
 		bu_vls_free( &vls );
 		return( TCL_ERROR );

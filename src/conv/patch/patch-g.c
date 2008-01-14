@@ -124,15 +124,15 @@ int
 main(int argc, char **argv)
 {
 
-	int fd,nread;
+	int fd, nread;
 	FILE	*gfp=NULL;
 	FILE    *mfp=NULL;
-	char	buf[99],s[132+2];
+	char	buf[99], s[132+2];
 	int	c;
 	int j = 1;
 	int i;
 	int done;
-	int stop,num;
+	int stop, num;
 	char	name[NAMESIZE+1];
 
 	BU_LIST_INIT( &head.l);
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 	BU_LIST_INIT( &heade.l);
 	BU_LIST_INIT( &headf.l);
 
-	memset((char *)list, 0,sizeof(list));
+	memset((char *)list, 0, sizeof(list));
 
 	/* initialize tolerance structure */
 	tol.magic = BN_TOL_MAGIC;
@@ -256,7 +256,7 @@ main(int argc, char **argv)
 			case 'c':  /* center of object (used for some plate mode
 				    * triangle surface normal calculations
 							    */
-				sscanf( bu_optarg,"%lf %lf %lf",
+				sscanf( bu_optarg, "%lf %lf %lf",
 				    &Centroid[0],&Centroid[1],&Centroid[2]);
 
 				bu_log( "Centroid = ( %f %f %f )\n" , V3ARGS( Centroid ) );
@@ -373,12 +373,12 @@ main(int argc, char **argv)
 	if( mfp ) {
 		int eqlos, matcode;
 
-		while( bu_fgets(s,132+2,mfp) != NULL ) {
+		while( bu_fgets(s, 132+2, mfp) != NULL ) {
 
-			if( sscanf(s,"%6d%*66c%3d%5d",
+			if( sscanf(s, "%6d%*66c%3d%5d",
 			    &i,&eqlos,&matcode) != 3 ) {
 
-				bu_exit(1, "Incomplete line in materials file for component '%.4d'\n",i);
+				bu_exit(1, "Incomplete line in materials file for component '%.4d'\n", i);
 			}
 			nm[i].matcode = matcode;
 			nm[i].eqlos = eqlos;
@@ -387,11 +387,11 @@ main(int argc, char **argv)
 
 	for( i = done = 0; !done ; i++ )
 	{
-		nread = read(fd,buf,sizeof(buf));     /* read one line of file into a buffer  */
+		nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer  */
 
 		if(nread > 0){         /*  For valid reads, assign values to the input array  */
 
-			sscanf(buf,"%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+			sscanf(buf, "%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
 			    &in[i].x,&in[i].y,&in[i].z,&in[i].surf_mode,&in[i].surf_type,
 			    &in[i].surf_thick,&in[i].spacecode, &in[i].cc,
 			    &in[i].ept[0],&in[i].ept[1],&in[i].ept[2],
@@ -419,11 +419,11 @@ main(int argc, char **argv)
 			/*  Regurgitate data just loaded for debugging   */
 			if (debug > 0){
 				bu_log( "%lf %lf %lf %c %lf %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-				    in[i].x,in[i].y,in[i].z,in[i].surf_mode,in[i].surf_type,
-				    in[i].surf_thick,in[i].spacecode, in[i].cc,
-				    in[i].ept[0],in[i].ept[1],in[i].ept[2],
-				    in[i].ept[3],in[i].ept[4],in[i].ept[5],
-				    in[i].ept[6],in[i].ept[7],in[i].mirror,in[i].vc);
+				    in[i].x, in[i].y, in[i].z, in[i].surf_mode, in[i].surf_type,
+				    in[i].surf_thick, in[i].spacecode, in[i].cc,
+				    in[i].ept[0], in[i].ept[1], in[i].ept[2],
+				    in[i].ept[3], in[i].ept[4], in[i].ept[5],
+				    in[i].ept[6], in[i].ept[7], in[i].mirror, in[i].vc);
 			}
 			if (in[i].cc == 0) {
 				done = 1;
@@ -450,7 +450,7 @@ main(int argc, char **argv)
 
 			if( debug > 2 ) {
 				for( j=0; j<i; j++ )
-					bu_log("IN: %f %f %f\n",in[j].x,in[j].y,in[j].z);
+					bu_log("IN: %f %f %f\n", in[j].x, in[j].y, in[j].z);
 			}
 
 			if( RT_G_DEBUG&DEBUG_MEM_FULL )
@@ -508,7 +508,7 @@ main(int argc, char **argv)
 
 			default:
 				bu_log( "component %.4d: unknown solid type %d\n",
-				    in[i-1].cc,in[i-1].surf_type);
+				    in[i-1].cc, in[i-1].surf_type);
 				break;
 
 			}       /* end switch */
@@ -521,9 +521,9 @@ main(int argc, char **argv)
 			}
 
 			if( done ) {
-				snprintf(name, NAMESIZE, "%dxxx_series",in[0].cc/1000);
-				mk_lcomb(outfp,name,&headd,0,"","",rgb,0);
-				(void) mk_addmember(name,&heade.l,NULL, WMOP_UNION);
+				snprintf(name, NAMESIZE, "%dxxx_series", in[0].cc/1000);
+				mk_lcomb(outfp, name,&headd, 0, "","", rgb, 0);
+				(void) mk_addmember(name,&heade.l, NULL, WMOP_UNION);
 			}
 
 			/* We have already read the first record of the
@@ -538,12 +538,12 @@ main(int argc, char **argv)
 		}       /* end "processing" if */
 	}
 
-	snprintf(name, NAMESIZE, "%s",top_level);
-	mk_lcomb(outfp,name,&heade,0,"","",0,0);
+	snprintf(name, NAMESIZE, "%s", top_level);
+	mk_lcomb(outfp, name,&heade, 0, "","", 0, 0);
 
 	if( BU_LIST_NON_EMPTY( &headf.l )) {
-		sprintf(name,"check.group");
-		mk_lcomb(outfp,name,&headf,0,"","",0,0);
+		sprintf(name, "check.group");
+		mk_lcomb(outfp, name,&headf, 0, "","", 0, 0);
 	}
 
 	/* check for non-empty lists */
@@ -766,23 +766,23 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 
 	if (in[0].mirror >= 0) {
 	  if ((mrflg == 'n') && (ctflg == 'n')) {
-	    sprintf(new_name,"%c.%.4d.s%.2d",shflg,in[0].cc,cnt);
+	    sprintf(new_name, "%c.%.4d.s%.2d", shflg, in[0].cc, cnt);
 	  }
 	  else if ((mrflg == 'n') && (ctflg == 'y')) {
-	    sprintf(new_name,"%c.%.4d.c%.2d",shflg,in[0].cc,cnt);
+	    sprintf(new_name, "%c.%.4d.c%.2d", shflg, in[0].cc, cnt);
 	  }
 	  else if ((mrflg == 'y') && (ctflg == 'n')) {
-	    sprintf(new_name,"%c.%.4d.s%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
+	    sprintf(new_name, "%c.%.4d.s%.2d", shflg,(in[0].cc+in[0].mirror), cnt);
 	  }
 	  else {
-	    sprintf(new_name,"%c.%.4d.c%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
+	    sprintf(new_name, "%c.%.4d.c%.2d", shflg,(in[0].cc+in[0].mirror), cnt);
 	  }
 	}
 	else if (ctflg == 'n') {
-	  sprintf(new_name,"%c%c.%.4d.s%.2d",side,shflg,in[0].cc,cnt);
+	  sprintf(new_name, "%c%c.%.4d.s%.2d", side, shflg, in[0].cc, cnt);
 	}
 	else {
-	  sprintf(new_name,"%c%c.%.4d.c%.2d",side,shflg,in[0].cc,cnt);
+	  sprintf(new_name, "%c%c.%.4d.c%.2d", side, shflg, in[0].cc, cnt);
 	}
 
 	return( new_name );
@@ -974,8 +974,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	vect_t out;
 	int face_count;
 	int missed_faces;
-	int i,k;
-	int vert1,vert2;
+	int i, k;
+	int vert1, vert2;
 	fastf_t outdot;
 	fastf_t min_dot=MAX_FASTF;
 	vect_t norm;
@@ -1591,7 +1591,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		{
 			if( fu->orientation == OT_SAME )
 			{
-plane_t pl1,pl2;
+plane_t pl1, pl2;
 
 NMG_GET_FU_PLANE( pl1 , fu );
 				if( nmg_fu_planeeqn( fu , tol ) )
@@ -1714,12 +1714,12 @@ proc_region(char *name1)
 	if( cc != in[0].cc )
 	{
 		mir_count++;
-		snprintf(cname, NAMESIZE, "%s.r%.2d",tmpname,mir_count);
+		snprintf(cname, NAMESIZE, "%s.r%.2d", tmpname, mir_count);
 	}
 	else
 	{
 		reg_count++;
-		snprintf(cname, NAMESIZE, "%s.r%.2d",tmpname,reg_count);
+		snprintf(cname, NAMESIZE, "%s.r%.2d", tmpname, reg_count);
 	}
 
 
@@ -1731,10 +1731,10 @@ proc_region(char *name1)
 	}
 
 	if ( cc == in[0].cc){
-		(void) mk_addmember(cname,&heada.l,NULL, WMOP_UNION);
+		(void) mk_addmember(cname,&heada.l, NULL, WMOP_UNION);
 	}
 	else{
-		(void) mk_addmember(cname,&headb.l,NULL, WMOP_UNION);
+		(void) mk_addmember(cname,&headb.l, NULL, WMOP_UNION);
 	}
 
 	last_cc = in[0].cc;
@@ -1746,14 +1746,14 @@ proc_region(char *name1)
 void
 proc_triangle(int cnt)
 {
-	int	k,l;
+	int	k, l;
 	int	index;
 	int	cpts;
-	char	shflg,mrflg,ctflg;
+	char	shflg, mrflg, ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
-	char 	name[NAMESIZE+1],mirror_name[NAMESIZE+1];
+	char 	name[NAMESIZE+1], mirror_name[NAMESIZE+1];
 	plane_t pl;
 	point_t last;
 
@@ -1775,7 +1775,7 @@ proc_triangle(int cnt)
 				list[index].flag = 1;
 
 				if (debug > 3)
-					bu_log( "%d %f %f %f\n",list[index].flag,in[k].x,in[k].y,in[k].z);
+					bu_log( "%d %f %f %f\n", list[index].flag, in[k].x, in[k].y, in[k].z);
 			}
 
 		}
@@ -1795,12 +1795,12 @@ proc_triangle(int cnt)
 		}
 
 		if (debug > 3)
-			bu_log( "k=%d l=%d %f %f %f flag=%d\n",k,l,list[k].x,list[k].y,list[k].z,list[k].flag);
+			bu_log( "k=%d l=%d %f %f %f flag=%d\n", k, l, list[k].x, list[k].y, list[k].z, list[k].flag);
 	}
 
 	if (debug > 2){
 		for (k=1;(k<=l);k++)
-			bu_log( "%d %f %f %f\n",k,x[k],y[k],z[k]);
+			bu_log( "%d %f %f %f\n", k, x[k], y[k], z[k]);
 	}
 
 	VSET( last, MAX_FASTF, MAX_FASTF, MAX_FASTF );
@@ -1827,14 +1827,14 @@ proc_triangle(int cnt)
 	shflg = 'f';
 	mrflg = 'n';
 	ctflg = 'n';
-	strncpy( name,proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+	strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 	count++;
 
 	if(in[0].mirror != 0)
 	{
 
 		mrflg = 'y';
-		strncpy( mirror_name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+		strncpy( mirror_name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 		mir_count++;
 	}
 	else
@@ -1850,11 +1850,11 @@ proc_triangle(int cnt)
 	else
 	{
 		count++;
-		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+		(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 		proc_region( name );
 		if( mirror_name[0] )
 		{
-			(void) mk_addmember(mirror_name,&head.l,NULL, WMOP_UNION);
+			(void) mk_addmember(mirror_name,&head.l, NULL, WMOP_UNION);
 			mir_count++;
 			proc_region( mirror_name );
 		}
@@ -1959,7 +1959,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 	}
 	else
 	{
-		fastf_t x0,y0,z0;
+		fastf_t x0, y0, z0;
 		int x_same=1;
 		int y_same=1;
 		int z_same=1;
@@ -2019,14 +2019,14 @@ void
 proc_plate(int cnt)
 {
 	int	thick_no;
-	int k,l;
+	int k, l;
 	int index;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
 	int cpts;
-	char	shflg,mrflg,ctflg;
-	char	name[NAMESIZE+1],mirror_name[NAMESIZE+1];
+	char	shflg, mrflg, ctflg;
+	char	name[NAMESIZE+1], mirror_name[NAMESIZE+1];
 	plane_t pl;
 	point_t last;
 
@@ -2126,13 +2126,13 @@ proc_plate(int cnt)
 
 		if( debug > 2 ) {
 			for ( k=1;k<l; k++ )
-				bu_log( "Compressed: %f %f %f\n",x[k],y[k],z[k]);
+				bu_log( "Compressed: %f %f %f\n", x[k], y[k], z[k]);
 			bu_log( "%d unique plate thicknesses:\n", nthicks );
 			for( thick_no=0 ; thick_no < nthicks ; thick_no++ )
 				bu_log( "\t%g inches\n" , thicks[thick_no]*conv_mm2in );
 		}
 
-		Get_ave_plane( pl, l, x,y,z );
+		Get_ave_plane( pl, l, x, y, z );
 
 		VSET( last, MAX_FASTF, MAX_FASTF, MAX_FASTF );
 		VSET( centroid , 0.0 , 0.0 , 0.0 );
@@ -2161,12 +2161,12 @@ proc_plate(int cnt)
 			shflg = 't';
 			mrflg = 'n';
 			ctflg = 'n';
-			strncpy( name, proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+			strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 
 			if( in[0].mirror != 0 )
 			{
 				mrflg = 'y';
-				strncpy( mirror_name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+				strncpy( mirror_name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 			}
 			else
 				mirror_name[0] = '\0';
@@ -2181,11 +2181,11 @@ proc_plate(int cnt)
 			else
 			{
 				count++;
-				(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+				(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 				proc_region( name );
 				if( mirror_name[0] )
 				{
-					(void) mk_addmember(mirror_name,&head.l,NULL, WMOP_UNION);
+					(void) mk_addmember(mirror_name,&head.l, NULL, WMOP_UNION);
 					mir_count++;
 					proc_region( mirror_name );
 				}
@@ -2215,13 +2215,13 @@ proc_wedge(int cnt)
 {
 	point_t	pt8[8];
 	point_t inpt8[8];
-	int i,k;
+	int i, k;
 	vect_t	ab, ac , ad;
 	plane_t planes[5];
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
-	char	shflg='\0',mrflg,ctflg;
+	char	shflg='\0', mrflg, ctflg;
 	char	name[NAMESIZE+1];
 	int ret = 0;
 	static struct bn_tol *tols = &tol;
@@ -2234,35 +2234,35 @@ proc_wedge(int cnt)
 	}
 
 	for(k=0 ; k <= (cnt-1) ; k+=4){
-		VSET( pt8[0], in[k].x,in[k].y,in[k].z );
-		VSET( pt8[3], in[k+1].x,in[k+1].y,in[k+1].z );
-		VSET( pt8[1], in[k+2].x,in[k+2].y,in[k+2].z );
-		VSET( pt8[4], in[k+3].x,in[k+3].y,in[k+3].z );
+		VSET( pt8[0], in[k].x, in[k].y, in[k].z );
+		VSET( pt8[3], in[k+1].x, in[k+1].y, in[k+1].z );
+		VSET( pt8[1], in[k+2].x, in[k+2].y, in[k+2].z );
+		VSET( pt8[4], in[k+3].x, in[k+3].y, in[k+3].z );
 
-		VSUB2(ab,pt8[4],pt8[0]);
-		VSUB2(ac,pt8[3],pt8[0]);
-		VSUB2(ad,pt8[1],pt8[0]);
+		VSUB2(ab, pt8[4], pt8[0]);
+		VSUB2(ac, pt8[3], pt8[0]);
+		VSUB2(ad, pt8[1], pt8[0]);
 
-		VADD3(pt8[7],ab,ac,pt8[0]);
+		VADD3(pt8[7], ab, ac, pt8[0]);
 
-		VADD3(pt8[2],ac,ad,pt8[0]);
+		VADD3(pt8[2], ac, ad, pt8[0]);
 
-		VMOVE(pt8[6],pt8[7]);
-		VMOVE(pt8[5],pt8[4]);
+		VMOVE(pt8[6], pt8[7]);
+		VMOVE(pt8[5], pt8[4]);
 
 		/* name solids */
 
 		shflg = 'w';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 
 		/* make solids */
 
 		mk_arb8( outfp, name, &pt8[0][X] );
 		count++;
 
-		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+		(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 
 		if( in[k].surf_mode == '-' ){
 			point_t interior;
@@ -2271,7 +2271,7 @@ proc_wedge(int cnt)
 			fastf_t join_scale = 1.0/8.0;
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg,mrflg,count,ctflg), NAMESIZE );
+			strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
 
 		/* Create planes for arb6. Planes will be formed with
 		   normal pointing inward for creation of inner arb6 */
@@ -2279,23 +2279,23 @@ proc_wedge(int cnt)
 			VSETALL( interior, 0.0 )
 			for( i=0 ; i<8 ; i++ )
 				VJOIN1( interior, interior, join_scale,  pt8[i] )
-			ret = bn_mk_plane_3pts(planes[0],pt8[0],pt8[3],pt8[2],tols);
+			ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
 			VSUB2( diff, interior, pt8[0] )
 			if( VDOT( diff, planes[0] ) < 0.0 )
 				HREVERSE( planes[0], planes[0] )
-			ret = ret | bn_mk_plane_3pts(planes[1],pt8[2],pt8[3],pt8[6],tols);
+			ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
 			VSUB2( diff, interior, pt8[2] )
 			if( VDOT( diff, planes[1] ) < 0.0 )
 				HREVERSE( planes[1], planes[1] )
-			ret = ret | bn_mk_plane_3pts(planes[2],pt8[6],pt8[3],pt8[0],tols);
+			ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
 			VSUB2( diff, interior, pt8[6] )
 			if( VDOT( diff, planes[2] ) < 0.0 )
 				HREVERSE( planes[2], planes[2] )
-			ret = ret | bn_mk_plane_3pts(planes[3],pt8[4],pt8[0],pt8[1],tols);
+			ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
 			VSUB2( diff, interior, pt8[4] )
 			if( VDOT( diff, planes[3] ) < 0.0 )
 				HREVERSE( planes[3], planes[3] )
-			ret = ret | bn_mk_plane_3pts(planes[4],pt8[1],pt8[2],pt8[6],tols);
+			ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
 			VSUB2( diff, interior, pt8[1] )
 			if( VDOT( diff, planes[4] ) < 0.0 )
 				HREVERSE( planes[4], planes[4] )
@@ -2315,24 +2315,24 @@ proc_wedge(int cnt)
 		/* Find new vertices of interior arb6 using
 		   intersection of 3 planes subroutine */
 
-			ret = ret | bn_mkpoint_3planes(inpt8[0],planes[0],planes[3],planes[2]);
-			ret = ret | bn_mkpoint_3planes(inpt8[1],planes[0],planes[3],planes[4]);
-			ret = ret | bn_mkpoint_3planes(inpt8[2],planes[0],planes[1],planes[4]);
-			ret = ret | bn_mkpoint_3planes(inpt8[3],planes[0],planes[1],planes[2]);
-			ret = ret | bn_mkpoint_3planes(inpt8[4],planes[2],planes[3],planes[4]);
-			ret = ret | bn_mkpoint_3planes(inpt8[6],planes[1],planes[2],planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[0], planes[0], planes[3], planes[2]);
+			ret = ret | bn_mkpoint_3planes(inpt8[1], planes[0], planes[3], planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[2], planes[0], planes[1], planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[3], planes[0], planes[1], planes[2]);
+			ret = ret | bn_mkpoint_3planes(inpt8[4], planes[2], planes[3], planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[6], planes[1], planes[2], planes[4]);
 
-			VMOVE(inpt8[7],inpt8[6]);
-			VMOVE(inpt8[5],inpt8[4]);
+			VMOVE(inpt8[7], inpt8[6]);
+			VMOVE(inpt8[5], inpt8[4]);
 
 			if( ret == 0 ) { /* valid record */
 
 				mk_arb8( outfp, name, &inpt8[0][X] );
-				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+				(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 			}
 		}
 
@@ -2351,30 +2351,30 @@ proc_wedge(int cnt)
 	ret = 0;
 	for(k=0 ; k <= (cnt-1) && in[k].mirror != 0 ; k+=4){
 
-		VSET( pt8[0], in[k].x,-in[k].y,in[k].z );
-		VSET( pt8[3], in[k+1].x,-in[k+1].y,in[k+1].z );
-		VSET( pt8[1], in[k+2].x,-in[k+2].y,in[k+2].z );
-		VSET( pt8[4], in[k+3].x,-in[k+3].y,in[k+3].z );
+		VSET( pt8[0], in[k].x,-in[k].y, in[k].z );
+		VSET( pt8[3], in[k+1].x,-in[k+1].y, in[k+1].z );
+		VSET( pt8[1], in[k+2].x,-in[k+2].y, in[k+2].z );
+		VSET( pt8[4], in[k+3].x,-in[k+3].y, in[k+3].z );
 
-		VSUB2(ab,pt8[4],pt8[0]);
-		VSUB2(ac,pt8[3],pt8[0]);
-		VSUB2(ad,pt8[1],pt8[0]);
+		VSUB2(ab, pt8[4], pt8[0]);
+		VSUB2(ac, pt8[3], pt8[0]);
+		VSUB2(ad, pt8[1], pt8[0]);
 
-		VADD3(pt8[7],ab,ac,pt8[0]);
+		VADD3(pt8[7], ab, ac, pt8[0]);
 
-		VADD3(pt8[2],ac,ad,pt8[0]);
+		VADD3(pt8[2], ac, ad, pt8[0]);
 
-		VMOVE(pt8[6],pt8[7]);
-		VMOVE(pt8[5],pt8[4]);
+		VMOVE(pt8[6], pt8[7]);
+		VMOVE(pt8[5], pt8[4]);
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 
 		mk_arb8( outfp, name, &pt8[0][X] );
 		mir_count++;
 
-		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+		(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 		if( in[k].surf_mode == '-' ){
 			point_t interior;
 			vect_t diff;
@@ -2382,7 +2382,7 @@ proc_wedge(int cnt)
 			fastf_t join_scale = 1.0/8.0;
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg,mrflg,count,ctflg), NAMESIZE );
+			strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
 
 		/* Create planes for arb6. Planes will be formed with
 		   normal pointing inward for creation of inner arb6 */
@@ -2390,23 +2390,23 @@ proc_wedge(int cnt)
 			VSETALL( interior, 0.0 )
 			for( i=0 ; i<8 ; i++ )
 				VJOIN1( interior, interior, join_scale,  pt8[i] )
-			ret = bn_mk_plane_3pts(planes[0],pt8[0],pt8[3],pt8[2],tols);
+			ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
 			VSUB2( diff, interior, pt8[0] )
 			if( VDOT( diff, planes[0] ) < 0.0 )
 				HREVERSE( planes[0], planes[0] )
-			ret = ret | bn_mk_plane_3pts(planes[1],pt8[2],pt8[3],pt8[6],tols);
+			ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
 			VSUB2( diff, interior, pt8[2] )
 			if( VDOT( diff, planes[1] ) < 0.0 )
 				HREVERSE( planes[1], planes[1] )
-			ret = ret | bn_mk_plane_3pts(planes[2],pt8[6],pt8[3],pt8[0],tols);
+			ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
 			VSUB2( diff, interior, pt8[6] )
 			if( VDOT( diff, planes[2] ) < 0.0 )
 				HREVERSE( planes[2], planes[2] )
-			ret = ret | bn_mk_plane_3pts(planes[3],pt8[4],pt8[0],pt8[1],tols);
+			ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
 			VSUB2( diff, interior, pt8[4] )
 			if( VDOT( diff, planes[3] ) < 0.0 )
 				HREVERSE( planes[3], planes[3] )
-			ret = ret | bn_mk_plane_3pts(planes[4],pt8[1],pt8[2],pt8[6],tols);
+			ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
 			VSUB2( diff, interior, pt8[1] )
 			if( VDOT( diff, planes[4] ) < 0.0 )
 				HREVERSE( planes[4], planes[4] )
@@ -2426,24 +2426,24 @@ proc_wedge(int cnt)
 		/* Find new vertices of interior arb6 using
 		   intersection of 3 planes subroutine */
 
-			ret = ret | bn_mkpoint_3planes(inpt8[0],planes[0],planes[3],planes[2]);
-			ret = ret | bn_mkpoint_3planes(inpt8[1],planes[0],planes[3],planes[4]);
-			ret = ret | bn_mkpoint_3planes(inpt8[2],planes[0],planes[1],planes[4]);
-			ret = ret | bn_mkpoint_3planes(inpt8[3],planes[0],planes[1],planes[2]);
-			ret = ret | bn_mkpoint_3planes(inpt8[4],planes[2],planes[3],planes[4]);
-			ret = ret | bn_mkpoint_3planes(inpt8[6],planes[1],planes[2],planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[0], planes[0], planes[3], planes[2]);
+			ret = ret | bn_mkpoint_3planes(inpt8[1], planes[0], planes[3], planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[2], planes[0], planes[1], planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[3], planes[0], planes[1], planes[2]);
+			ret = ret | bn_mkpoint_3planes(inpt8[4], planes[2], planes[3], planes[4]);
+			ret = ret | bn_mkpoint_3planes(inpt8[6], planes[1], planes[2], planes[4]);
 
-			VMOVE(inpt8[7],inpt8[6]);
-			VMOVE(inpt8[5],inpt8[4]);
+			VMOVE(inpt8[7], inpt8[6]);
+			VMOVE(inpt8[5], inpt8[4]);
 
 			if( ret == 0 ) { /* valid record */
 
 				mk_arb8( outfp, name, &inpt8[0][X] );
-				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+				(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 			}
 		}
 
@@ -2466,7 +2466,7 @@ proc_sphere(int cnt)
 	fastf_t rad;
 	point_t center;
 	int i;
-	char    shflg='\0',mrflg,ctflg;
+	char    shflg='\0', mrflg, ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -2485,17 +2485,17 @@ proc_sphere(int cnt)
 		shflg = 's';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 		count++;
 
-		VSET(center,in[i].x,in[i].y,in[i].z);
+		VSET(center, in[i].x, in[i].y, in[i].z);
 
 		/* Make sphere if it has a "Good Radius" */
 		if( in[i+1].x > 0.0 ) {
 
-			mk_sph(outfp,name,center,in[i+1].x);
+			mk_sph(outfp, name, center, in[i+1].x);
 
-			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+			(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 
 
 			/* Check if hollow (i.e. plate mode) subract sphere with
@@ -2506,17 +2506,17 @@ proc_sphere(int cnt)
 				/* name inside solid */
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg,mrflg,count,ctflg), NAMESIZE );
+				strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
 
 				/* make inside solid */
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
-					mk_sph(outfp,name,center,rad);
-					(void)mk_addmember(name, &head.l,NULL, WMOP_SUBTRACT);
+					mk_sph(outfp, name, center, rad);
+					(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
-					(void)mk_addmember(name, &headf.l,NULL, WMOP_UNION);
+					(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 				}
 			}
 
@@ -2524,7 +2524,7 @@ proc_sphere(int cnt)
 				proc_region(name);
 		}
 		else {
-			bu_log( "Bad component %s\n",name);
+			bu_log( "Bad component %s\n", name);
 		}
 
 	}
@@ -2540,15 +2540,15 @@ proc_sphere(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 
-		VSET(center,in[i].x,-in[i].y,in[i].z);
+		VSET(center, in[i].x,-in[i].y, in[i].z);
 
 		if( in[i+1].x > 0.0 ) {
-			mk_sph(outfp,name,center,in[i+1].x);
+			mk_sph(outfp, name, center, in[i+1].x);
 			mir_count++;
 
-			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+			(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 
 			/* Check if mirrored surface is hollow (i.e. plate mode) subract
 				sphere with radius R1 - thickness */
@@ -2556,15 +2556,15 @@ proc_sphere(int cnt)
 			if (in[i].surf_mode== '-'){
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg,mrflg,mir_count,ctflg), NAMESIZE );
+				strncpy( name, proc_sname (shflg, mrflg, mir_count, ctflg), NAMESIZE );
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
-					mk_sph(outfp,name,center,rad);
-					(void)mk_addmember(name, &head.l,NULL, WMOP_SUBTRACT);
+					mk_sph(outfp, name, center, rad);
+					(void)mk_addmember(name, &head.l, NULL, WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
-					(void)mk_addmember(name, &headf.l,NULL, WMOP_UNION);
+					(void)mk_addmember(name, &headf.l, NULL, WMOP_UNION);
 				}
 			}
 
@@ -2572,7 +2572,7 @@ proc_sphere(int cnt)
 				proc_region(name);
 		}
 		else {
-			bu_log( "Bad component %s\n",name);
+			bu_log( "Bad component %s\n", name);
 		}
 
 	}
@@ -2592,9 +2592,9 @@ proc_box(int cnt)
 	point_t	pt8[8];
 	int k;
 	vect_t	ab, ac , ad, abi, aci, adi;
-	fastf_t len,leni;			/* box edge lengths */
+	fastf_t len, leni;			/* box edge lengths */
 	int valid;				/* valid inside box? */
-	char    shflg='\0',mrflg,ctflg;
+	char    shflg='\0', mrflg, ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -2608,38 +2608,38 @@ proc_box(int cnt)
 
 
 	for(k=0 ; k <= (cnt-1) ; k+=4){
-		VSET( pt8[0], in[k].x,in[k].y,in[k].z );
-		VSET( pt8[1], in[k+1].x,in[k+1].y,in[k+1].z );
-		VSET( pt8[4], in[k+2].x,in[k+2].y,in[k+2].z );
-		VSET( pt8[3], in[k+3].x,in[k+3].y,in[k+3].z );
+		VSET( pt8[0], in[k].x, in[k].y, in[k].z );
+		VSET( pt8[1], in[k+1].x, in[k+1].y, in[k+1].z );
+		VSET( pt8[4], in[k+2].x, in[k+2].y, in[k+2].z );
+		VSET( pt8[3], in[k+3].x, in[k+3].y, in[k+3].z );
 
-		VSUB2(ab,pt8[4],pt8[0]);
-		VSUB2(ac,pt8[3],pt8[0]);
-		VSUB2(ad,pt8[1],pt8[0]);
+		VSUB2(ab, pt8[4], pt8[0]);
+		VSUB2(ac, pt8[3], pt8[0]);
+		VSUB2(ad, pt8[1], pt8[0]);
 
-		VADD3(pt8[7],ab,ac,pt8[0]);
-		VADD3(pt8[5],ab,ad,pt8[0]);
-		VADD3(pt8[2],ac,ad,pt8[0]);
-		VADD4(pt8[6],ab,ac,ad,pt8[0]);
+		VADD3(pt8[7], ab, ac, pt8[0]);
+		VADD3(pt8[5], ab, ad, pt8[0]);
+		VADD3(pt8[2], ac, ad, pt8[0]);
+		VADD4(pt8[6], ab, ac, ad, pt8[0]);
 
 		/* name solids */
 
 		shflg = 'b';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 
 		/* make solid */
 
 		mk_arb8( outfp, name, &pt8[0][X] );
 		count++;
 
-		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+		(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 
 		if( in[k].surf_mode == '-' ){
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg,mrflg,count,ctflg), NAMESIZE );
+			strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -2671,21 +2671,21 @@ proc_box(int cnt)
 
 			if( valid ) {
 				VADD4( pt8[0], pt8[0], ab, ac, ad );
-				VADD2(pt8[4],abi,pt8[0]);
-				VADD2(pt8[3],aci,pt8[0]);
-				VADD2(pt8[1],adi,pt8[0]);
+				VADD2(pt8[4], abi, pt8[0]);
+				VADD2(pt8[3], aci, pt8[0]);
+				VADD2(pt8[1], adi, pt8[0]);
 
-				VADD3(pt8[7],abi,aci,pt8[0]);
-				VADD3(pt8[5],abi,adi,pt8[0]);
-				VADD3(pt8[2],aci,adi,pt8[0]);
-				VADD4(pt8[6],abi,aci,adi,pt8[0]);
+				VADD3(pt8[7], abi, aci, pt8[0]);
+				VADD3(pt8[5], abi, adi, pt8[0]);
+				VADD3(pt8[2], aci, adi, pt8[0]);
+				VADD4(pt8[6], abi, aci, adi, pt8[0]);
 
 				mk_arb8( outfp, name, &pt8[0][X] );
-				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+				(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 			}
 		}
 
@@ -2704,33 +2704,33 @@ proc_box(int cnt)
 	/*   Mirror Processing - duplicates above code!   */
 
 	for(k=0 ; k <= (cnt-1) && in[k].mirror != 0 ; k+=4){
-		VSET( pt8[0], in[k].x,-in[k].y,in[k].z );
-		VSET( pt8[1], in[k+1].x,-in[k+1].y,in[k+1].z );
-		VSET( pt8[4], in[k+2].x,-in[k+2].y,in[k+2].z );
-		VSET( pt8[3], in[k+3].x,-in[k+3].y,in[k+3].z );
+		VSET( pt8[0], in[k].x,-in[k].y, in[k].z );
+		VSET( pt8[1], in[k+1].x,-in[k+1].y, in[k+1].z );
+		VSET( pt8[4], in[k+2].x,-in[k+2].y, in[k+2].z );
+		VSET( pt8[3], in[k+3].x,-in[k+3].y, in[k+3].z );
 
-		VSUB2(ab,pt8[4],pt8[0]);
-		VSUB2(ac,pt8[3],pt8[0]);
-		VSUB2(ad,pt8[1],pt8[0]);
+		VSUB2(ab, pt8[4], pt8[0]);
+		VSUB2(ac, pt8[3], pt8[0]);
+		VSUB2(ad, pt8[1], pt8[0]);
 
-		VADD3(pt8[7],ab,ac,pt8[0]);
-		VADD3(pt8[5],ab,ad,pt8[0]);
-		VADD3(pt8[2],ac,ad,pt8[0]);
-		VADD4(pt8[6],ab,ac,ad,pt8[0]);
+		VADD3(pt8[7], ab, ac, pt8[0]);
+		VADD3(pt8[5], ab, ad, pt8[0]);
+		VADD3(pt8[2], ac, ad, pt8[0]);
+		VADD4(pt8[6], ab, ac, ad, pt8[0]);
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 
 		mk_arb8( outfp, name, &pt8[0][X] );
 		mir_count++;
 
-		(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+		(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 
 		if( in[k].surf_mode == '-' ){
 
 			ctflg = 'y';
-			strncpy( name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+			strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -2762,21 +2762,21 @@ proc_box(int cnt)
 
 			if( valid ) {
 				VADD4( pt8[0], pt8[0], ab, ac, ad );
-				VADD2(pt8[4],abi,pt8[0]);
-				VADD2(pt8[3],aci,pt8[0]);
-				VADD2(pt8[1],adi,pt8[0]);
+				VADD2(pt8[4], abi, pt8[0]);
+				VADD2(pt8[3], aci, pt8[0]);
+				VADD2(pt8[1], adi, pt8[0]);
 
-				VADD3(pt8[7],abi,aci,pt8[0]);
-				VADD3(pt8[5],abi,adi,pt8[0]);
-				VADD3(pt8[2],aci,adi,pt8[0]);
-				VADD4(pt8[6],abi,aci,adi,pt8[0]);
+				VADD3(pt8[7], abi, aci, pt8[0]);
+				VADD3(pt8[5], abi, adi, pt8[0]);
+				VADD3(pt8[2], aci, adi, pt8[0]);
+				VADD4(pt8[6], abi, aci, adi, pt8[0]);
 
 				mk_arb8( outfp, name, &pt8[0][X] );
-				(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+				(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 			}
 		}
 
@@ -2808,7 +2808,7 @@ proc_donut(int cnt)
 	int end_code;
 	struct wmember donut_head;
 	char name[NAMESIZE+1];
-	char shflg,mrflg,ctflg;
+	char shflg, mrflg, ctflg;
 	int count=0;
 	int make_basic_solids;
 	char scratch_name1[NAMESIZE+1];
@@ -2820,12 +2820,12 @@ proc_donut(int cnt)
 	{
 		if( (in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z) )
 		{
-			bu_log( "Bad Donut Length for component #%d",in[k].cc);
+			bu_log( "Bad Donut Length for component #%d", in[k].cc);
 			continue;
 		}
 		if( (in[k+3].x==in[k+4].x)&&(in[k+3].y==in[k+4].y)&&(in[k+3].z==in[k+4].z) )
 		{
-			bu_log( "Bad Donut Length for component #%d\n",in[k].cc);
+			bu_log( "Bad Donut Length for component #%d\n", in[k].cc);
 			continue;
 		}
 
@@ -2895,7 +2895,7 @@ proc_donut(int cnt)
 		shflg = 'd';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 		count++;
 
 		BU_LIST_INIT( &donut_head.l );
@@ -3062,9 +3062,9 @@ proc_donut(int cnt)
 
 				sprintf( scratch_name1_in, "tmp.%d", scratch_num );
 				scratch_num++;
-				mk_trc_top(outfp,scratch_name1_in,base1_in,top1_in,rbase1_in,rtop1_in);
+				mk_trc_top(outfp, scratch_name1_in, base1_in, top1_in, rbase1_in, rtop1_in);
 				(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
-				(void)mk_addmember(scratch_name1_in,&donut_head.l,NULL, WMOP_SUBTRACT);
+				(void)mk_addmember(scratch_name1_in,&donut_head.l, NULL, WMOP_SUBTRACT);
 
 				if( make_inside_trc( base2, top2, rbase2, rtop2, base2_in, top2_in, &rbase2_in, &rtop2_in, 0, 0, 1, in[k+4].rsurf_thick ) )
 				{
@@ -3075,9 +3075,9 @@ proc_donut(int cnt)
 
 				sprintf( scratch_name2_in, "tmp.%d", scratch_num );
 				scratch_num++;
-				mk_trc_top(outfp,scratch_name2_in,base2_in,top2_in,rbase2_in,rtop2_in);
+				mk_trc_top(outfp, scratch_name2_in, base2_in, top2_in, rbase2_in, rtop2_in);
 				(void)mk_addmember( scratch_name2, &donut_head.l, NULL, WMOP_UNION );
-				(void)mk_addmember(scratch_name2_in,&donut_head.l,NULL, WMOP_SUBTRACT);
+				(void)mk_addmember(scratch_name2_in,&donut_head.l, NULL, WMOP_SUBTRACT);
 			}
 
 			if( end_code == 1 || end_code == 3 || end_code == 5 || end_code == 6 )
@@ -3096,9 +3096,9 @@ proc_donut(int cnt)
 					}
 					sprintf( scratch_name4_in, "tmp.%d", scratch_num );
 					scratch_num++;
-					mk_trc_top(outfp,scratch_name4_in,base_in,top_in,rbase_in,rtop_in);
+					mk_trc_top(outfp, scratch_name4_in, base_in, top_in, rbase_in, rtop_in);
 					(void)mk_addmember( scratch_name4, &donut_head.l, NULL, WMOP_UNION );
-					(void)mk_addmember(scratch_name4_in,&donut_head.l,NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name4_in,&donut_head.l, NULL, WMOP_SUBTRACT);
 				}
 				else
 				{
@@ -3110,10 +3110,10 @@ proc_donut(int cnt)
 					}
 					sprintf( scratch_name4_in, "tmp.%d", scratch_num );
 					scratch_num++;
-					mk_trc_top(outfp,scratch_name4_in,base_in,top_in,rbase_in,rtop_in);
+					mk_trc_top(outfp, scratch_name4_in, base_in, top_in, rbase_in, rtop_in);
 					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
-					(void)mk_addmember(scratch_name4_in,&donut_head.l,NULL, WMOP_SUBTRACT);
-					(void)mk_addmember(scratch_name2,&donut_head.l,NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name4_in,&donut_head.l, NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name2,&donut_head.l, NULL, WMOP_SUBTRACT);
 				}
 			}
 			if( end_code == 2 || end_code == 3 || end_code == 4 || end_code == 6 )
@@ -3132,9 +3132,9 @@ proc_donut(int cnt)
 					}
 					sprintf( scratch_name3_in, "tmp.%d", scratch_num );
 					scratch_num++;
-					mk_trc_top(outfp,scratch_name3_in,base_in,top_in,rbase_in,rtop_in);
+					mk_trc_top(outfp, scratch_name3_in, base_in, top_in, rbase_in, rtop_in);
 					(void)mk_addmember( scratch_name3, &donut_head.l, NULL, WMOP_UNION );
-					(void)mk_addmember(scratch_name3_in,&donut_head.l,NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name3_in,&donut_head.l, NULL, WMOP_SUBTRACT);
 				}
 				else
 				{
@@ -3146,10 +3146,10 @@ proc_donut(int cnt)
 					}
 					sprintf( scratch_name3_in, "tmp.%d", scratch_num );
 					scratch_num++;
-					mk_trc_top(outfp,scratch_name3_in,base_in,top_in,rbase_in,rtop_in);
+					mk_trc_top(outfp, scratch_name3_in, base_in, top_in, rbase_in, rtop_in);
 					(void)mk_addmember( scratch_name1, &donut_head.l, NULL, WMOP_UNION );
-					(void)mk_addmember(scratch_name3_in,&donut_head.l,NULL, WMOP_SUBTRACT);
-					(void)mk_addmember(scratch_name2,&donut_head.l,NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name3_in,&donut_head.l, NULL, WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name2,&donut_head.l, NULL, WMOP_SUBTRACT);
 				}
 			}
 
@@ -3186,13 +3186,13 @@ proc_cylin(int cnt)
 	point_t	top;
 	point_t sbase;			/* For subtraction case */
 	point_t	stop; 			/* For subtraction case */
-	vect_t	ab,bc;
-	fastf_t	rad1,rad2;
-	fastf_t srad1,srad2;		/* for subtraction case */
-	int k,j;
+	vect_t	ab, bc;
+	fastf_t	rad1, rad2;
+	fastf_t srad1, srad2;		/* for subtraction case */
+	int k, j;
 	struct subtract_list *slist,*get_subtract(int cnt);
-	double	thick,ht,sht;
-	char    shflg='\0',mrflg,ctflg;
+	double	thick, ht, sht;
+	char    shflg='\0', mrflg, ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -3211,7 +3211,7 @@ proc_cylin(int cnt)
 
 		for( sp=slist; sp; sp=sp->next )
 			bu_log( "%d %d %d\n",
-			    sp->outsolid,sp->insolid,sp->inmirror );
+			    sp->outsolid, sp->insolid, sp->inmirror );
 	}
 
 
@@ -3221,7 +3221,7 @@ proc_cylin(int cnt)
 		shflg = 'c';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 
 		count++;
 
@@ -3229,8 +3229,8 @@ proc_cylin(int cnt)
 
 		if(!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))){
 
-			VSET(base,in[k].x,in[k].y,in[k].z);
-			VSET(top,in[k+1].x,in[k+1].y,in[k+1].z);
+			VSET(base, in[k].x, in[k].y, in[k].z);
+			VSET(top, in[k+1].x, in[k+1].y, in[k+1].z);
 
 			/* change valid 0 radius cone pts to very small radii,
 			 * also treat negative value radii as positive.
@@ -3246,26 +3246,26 @@ proc_cylin(int cnt)
 
 			/* make solid */
 
-			mk_trc_top(outfp,name,base,top,in[k+2].x,in[k+2].y);
-			mk_cyladdmember(name,&head,slist,0);
+			mk_trc_top(outfp, name, base, top, in[k+2].x, in[k+2].y);
+			mk_cyladdmember(name,&head, slist, 0);
 
-			/* mk_trc_top destroys the values of base,top */
-			VSET(base,in[k].x,in[k].y,in[k].z);
-			VSET(top,in[k+1].x,in[k+1].y,in[k+1].z);
+			/* mk_trc_top destroys the values of base, top */
+			VSET(base, in[k].x, in[k].y, in[k].z);
+			VSET(top, in[k+1].x, in[k+1].y, in[k+1].z);
 
 			j = (int)(in[k+2].z/mmtin);
 
 			if (in[k].surf_mode== '-'){     /* Plate mode */
 				vect_t unit_h;
 				fastf_t sin_ang;
-				fastf_t rad1_tmp,rad2_tmp;
+				fastf_t rad1_tmp, rad2_tmp;
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg,mrflg,count,ctflg), NAMESIZE );
+				strncpy( name, proc_sname (shflg, mrflg, count, ctflg), NAMESIZE );
 
 				rad1 = in[k+2].x;
 				rad2 = in[k+2].y;
-				VSUB2(ab,top,base);
+				VSUB2(ab, top, base);
 				ht = MAGNITUDE( ab );
 				sin_ang = ht/hypot( ht, rad2-rad1 );
 				switch(j){
@@ -3277,7 +3277,7 @@ proc_cylin(int cnt)
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_h_factor;
@@ -3290,8 +3290,8 @@ proc_cylin(int cnt)
 
 						/* base radius should really be zero, get close */
 						srad1 = .00001;
-						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					else if( srad2 <= 0.0 )
 					{
@@ -3305,28 +3305,28 @@ proc_cylin(int cnt)
 
 						/* top radius should really be zero, get close */
 						srad2 = .00001;
-						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, base, stop, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					else
 					{
-						mk_trc_top(outfp,name,base,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, base, top, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 
 				case 1: /* Base closed, top open */
 
-					VSUB2(ab,top,base);
+					VSUB2(ab, top, base);
 					ht = MAGNITUDE( ab );
 					VUNITIZE(ab);
 					VMOVE( unit_h, ab );
-					VSCALE(ab,ab,in[k].rsurf_thick);
-					VADD2(sbase,base,ab);
+					VSCALE(ab, ab, in[k].rsurf_thick);
+					VADD2(sbase, base, ab);
 
 					rad1 = in[k+2].x;
 					rad2 = in[k+2].y;
-					VSUB2(ab,top,sbase);
+					VSUB2(ab, top, sbase);
 					sht = MAGNITUDE( ab );
 					srad1 = rad2 - sht / ht * (rad2 - rad1);
 					thick = in[k+2].rsurf_thick / ht *
@@ -3335,20 +3335,20 @@ proc_cylin(int cnt)
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick - rad1)/(rad2-rad1);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, base, new_ht, unit_h );
 							srad1 = 0.00001;
-							mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3357,33 +3357,33 @@ proc_cylin(int cnt)
 
 						new_ht = sht + ht*srad2/(rad1-rad2);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, sbase, new_ht, unit_h );
 							srad2 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
-						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 				case 2: /* Base open, top closed */
 
-					VSUB2(ab,base,top);
+					VSUB2(ab, base, top);
 					ht = MAGNITUDE( ab );
 					VUNITIZE(ab);
 					VMOVE( unit_h, ab );
-					VSCALE(ab,ab,in[k].rsurf_thick);
-					VADD2(stop,top,ab);
+					VSCALE(ab, ab, in[k].rsurf_thick);
+					VADD2(stop, top, ab);
 
 					rad1 = in[k+2].x;
 					rad2 = in[k+2].y;
-					VSUB2(ab,stop,base);
+					VSUB2(ab, stop, base);
 					sht = MAGNITUDE( ab );
 					srad2 = rad1 - sht / ht * (rad1 - rad2);
 					thick = in[k+2].rsurf_thick / ht *
@@ -3392,20 +3392,20 @@ proc_cylin(int cnt)
 					srad2 = srad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = sht + ht*srad1/(rad2-rad1);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, stop, new_ht, unit_h )
 							srad1 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3414,38 +3414,38 @@ proc_cylin(int cnt)
 
 						new_ht = ht*(thick - rad2)/(rad1-rad2);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, top, new_ht, unit_h )
 							srad2 = 0.00001;
-							mk_trc_top(outfp,name,base,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, base, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
-						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, base, stop, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 
 				case 3: /* Both closed */
 
-					VSUB2(ab,top,base);
-					VSUB2(bc,base,top);
+					VSUB2(ab, top, base);
+					VSUB2(bc, base, top);
 					ht = MAGNITUDE( ab );
 					VUNITIZE(ab);
 					VMOVE( unit_h, ab );
 					VUNITIZE(bc);
-					VSCALE(ab,ab,in[k].rsurf_thick);
-					VSCALE(bc,bc,in[k].rsurf_thick);
-					VADD2(sbase,base,ab);
-					VADD2(stop,top,bc);
+					VSCALE(ab, ab, in[k].rsurf_thick);
+					VSCALE(bc, bc, in[k].rsurf_thick);
+					VADD2(sbase, base, ab);
+					VADD2(stop, top, bc);
 
 					rad1 = in[k+2].x;
 					rad2 = in[k+2].y;
-					VSUB2(ab,stop,base);
+					VSUB2(ab, stop, base);
 					sht = MAGNITUDE( ab );
 					rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
 					rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
@@ -3455,20 +3455,20 @@ proc_cylin(int cnt)
 					srad2 = rad2_tmp - thick;
 
 					if( (srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 < 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
 						if( new_ht >= sht )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, sbase, new_ht, unit_h )
 							srad1 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3479,20 +3479,20 @@ proc_cylin(int cnt)
 
 						new_ht = (-ht*srad2/(rad1-rad2));
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VREVERSE( rev_h, unit_h )
 							VJOIN1( stop, stop, new_ht, rev_h )
 							srad2 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
-						mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3504,7 +3504,7 @@ proc_cylin(int cnt)
 			}     		  /* end - plate mode modifications */
 		}         			  /* Degenerate length check */
 		else {
-			bu_log( "Bad Cylinder Length for %s\n",name);
+			bu_log( "Bad Cylinder Length for %s\n", name);
 		}
 		/* make regions */
 
@@ -3529,13 +3529,13 @@ proc_cylin(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 		mir_count++;
 
 		if(!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))){
 
-			VSET(base,in[k].x,-in[k].y,in[k].z);
-			VSET(top,in[k+1].x,-in[k+1].y,in[k+1].z);
+			VSET(base, in[k].x,-in[k].y, in[k].z);
+			VSET(top, in[k+1].x,-in[k+1].y, in[k+1].z);
 
 			if(in[k+2].x == 0)
 				in[k+2].x = .00001;
@@ -3546,26 +3546,26 @@ proc_cylin(int cnt)
 			if(in[k+2].y < 0)
 				in[k+2].y = -in[k+2].y;
 
-			mk_trc_top(outfp,name,base,top,in[k+2].x,in[k+2].y);
-			mk_cyladdmember(name,&head,slist,1);
+			mk_trc_top(outfp, name, base, top, in[k+2].x, in[k+2].y);
+			mk_cyladdmember(name,&head, slist, 1);
 
-			/* mk_trc_top destroys the values of base,top */
-			VSET(base,in[k].x,-in[k].y,in[k].z);
-			VSET(top,in[k+1].x,-in[k+1].y,in[k+1].z);
+			/* mk_trc_top destroys the values of base, top */
+			VSET(base, in[k].x,-in[k].y, in[k].z);
+			VSET(top, in[k+1].x,-in[k+1].y, in[k+1].z);
 
 			j = (int)(in[k+2].z/mmtin);
 
 			if (in[k].surf_mode== '-'){ 	/* Plate mode */
 				vect_t unit_h;
 				fastf_t sin_ang;
-				fastf_t rad1_tmp,rad2_tmp;
+				fastf_t rad1_tmp, rad2_tmp;
 
 				ctflg = 'y';
-				strncpy( name, proc_sname (shflg,mrflg,mir_count,ctflg), NAMESIZE );
+				strncpy( name, proc_sname (shflg, mrflg, mir_count, ctflg), NAMESIZE );
 
 				rad1 = in[k+2].x;
 				rad2 = in[k+2].y;
-				VSUB2(ab,top,base);
+				VSUB2(ab, top, base);
 				ht = MAGNITUDE( ab );
 				sin_ang = ht/hypot( ht, rad2-rad1 );
 
@@ -3578,7 +3578,7 @@ proc_cylin(int cnt)
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_h_factor;
@@ -3591,8 +3591,8 @@ proc_cylin(int cnt)
 
 						/* base radius should really be zero, get close */
 						srad1 = .00001;
-						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					else if( srad2 <= 0.0 )
 					{
@@ -3606,28 +3606,28 @@ proc_cylin(int cnt)
 
 						/* top radius should really be zero, get close */
 						srad2 = .00001;
-						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, base, stop, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					else
 					{
-						mk_trc_top(outfp,name,base,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, base, top, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 
 				case 1: /* Base closed, top open */
 
-					VSUB2(ab,top,base);
+					VSUB2(ab, top, base);
 					ht = MAGNITUDE( ab );
 					VUNITIZE(ab);
 					VMOVE( unit_h, ab );
-					VSCALE(ab,ab,in[k].rsurf_thick);
-					VADD2(sbase,base,ab);
+					VSCALE(ab, ab, in[k].rsurf_thick);
+					VADD2(sbase, base, ab);
 
 					rad1 = in[k+2].x;
 					rad2 = in[k+2].y;
-					VSUB2(ab,top,sbase);
+					VSUB2(ab, top, sbase);
 					sht = MAGNITUDE( ab );
 					srad1 = rad2 - sht / ht * (rad2 - rad1);
 					thick = in[k+2].rsurf_thick / ht *
@@ -3636,20 +3636,20 @@ proc_cylin(int cnt)
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick - rad1)/(rad2-rad1);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, base, new_ht, unit_h );
 							srad1 = 0.00001;
-							mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3658,33 +3658,33 @@ proc_cylin(int cnt)
 
 						new_ht = sht + ht*srad2/(rad1-rad2);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, sbase, new_ht, unit_h );
 							srad2 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
-						mk_trc_top(outfp,name,sbase,top,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, sbase, top, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 				case 2: /* Base open, top closed */
 
-					VSUB2(ab,base,top);
+					VSUB2(ab, base, top);
 					ht = MAGNITUDE( ab );
 					VUNITIZE(ab);
 					VMOVE( unit_h, ab );
-					VSCALE(ab,ab,in[k].rsurf_thick);
-					VADD2(stop,top,ab);
+					VSCALE(ab, ab, in[k].rsurf_thick);
+					VADD2(stop, top, ab);
 
 					rad1 = in[k+2].x;
 					rad2 = in[k+2].y;
-					VSUB2(ab,stop,base);
+					VSUB2(ab, stop, base);
 					sht = MAGNITUDE( ab );
 					srad2 = rad1 - sht / ht * (rad1 - rad2);
 					thick = in[k+2].rsurf_thick / ht *
@@ -3693,20 +3693,20 @@ proc_cylin(int cnt)
 					srad2 = srad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = sht + ht*srad1/(rad2-rad1);
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, stop, new_ht, unit_h )
 							srad1 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3715,38 +3715,38 @@ proc_cylin(int cnt)
 
 						new_ht = ht*(thick - rad2)/(rad1-rad2);
 						if( new_ht >= ht )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, top, new_ht, unit_h )
 							srad2 = 0.00001;
-							mk_trc_top(outfp,name,base,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, base, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
-						mk_trc_top(outfp,name,base,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, base, stop, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 
 				case 3: /* Both closed */
 
-					VSUB2(ab,top,base);
-					VSUB2(bc,base,top);
+					VSUB2(ab, top, base);
+					VSUB2(bc, base, top);
 					ht = MAGNITUDE( ab );
 					VUNITIZE(ab);
 					VMOVE( unit_h, ab );
 					VUNITIZE(bc);
-					VSCALE(ab,ab,in[k].rsurf_thick);
-					VSCALE(bc,bc,in[k].rsurf_thick);
-					VADD2(sbase,base,ab);
-					VADD2(stop,top,bc);
+					VSCALE(ab, ab, in[k].rsurf_thick);
+					VSCALE(bc, bc, in[k].rsurf_thick);
+					VADD2(sbase, base, ab);
+					VADD2(stop, top, bc);
 
 					rad1 = in[k+2].x;
 					rad2 = in[k+2].y;
-					VSUB2(ab,stop,base);
+					VSUB2(ab, stop, base);
 					sht = MAGNITUDE( ab );
 					rad1_tmp = rad2 - sht / ht * (rad2 - rad1);
 					rad2_tmp = rad1 - sht / ht * (rad1 - rad2);
@@ -3756,20 +3756,20 @@ proc_cylin(int cnt)
 					srad2 = rad2_tmp - thick;
 
 					if( (srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-						(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+						(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 					else if( srad1 < 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
 						if( new_ht >= sht )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, sbase, new_ht, unit_h )
 							srad1 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3780,20 +3780,20 @@ proc_cylin(int cnt)
 
 						new_ht = (-ht*srad2/(rad1-rad2));
 						if( new_ht <= 0.0 )
-							(void)mk_addmember(name,&headf.l,NULL, WMOP_UNION);
+							(void)mk_addmember(name,&headf.l, NULL, WMOP_UNION);
 						else
 						{
 							VREVERSE( rev_h, unit_h )
 							VJOIN1( stop, stop, new_ht, rev_h )
 							srad2 = 0.00001;
-							mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-							(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+							mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+							(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
-						mk_trc_top(outfp,name,sbase,stop,srad1,srad2);
-						(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+						mk_trc_top(outfp, name, sbase, stop, srad1, srad2);
+						(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3805,7 +3805,7 @@ proc_cylin(int cnt)
 			}/* plate mode */
 		}
 		else {
-			bu_log( "Bad Cylinder Length for %s\n",name);
+			bu_log( "Bad Cylinder Length for %s\n", name);
 		}
 		/* due to solid subtractions, this might be a null region */
 		if ((mir_count % num_unions) == 0 && (BU_LIST_NEXT_NOT_HEAD(&head, &head.l)))
@@ -3826,12 +3826,12 @@ void
 proc_rod(int cnt)
 {
 
-	int k,l,index;
+	int k, l, index;
 	point_t base;
 	point_t	top;
 	fastf_t tmp;
 	fastf_t tmp1;
-	char    shflg='\0',mrflg,ctflg;
+	char    shflg='\0', mrflg, ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -3858,7 +3858,7 @@ proc_rod(int cnt)
 				list[index].flag = 1;
 
 				if (debug > 3)
-					bu_log( "%d %f %f %f %f %d\n",list[index].flag,in[k].x,in[k].y,in[k].z,in[k].rsurf_thick,
+					bu_log( "%d %f %f %f %f %d\n", list[index].flag, in[k].x, in[k].y, in[k].z, in[k].rsurf_thick,
 					    in[k].mirror);
 			}
 
@@ -3881,15 +3881,15 @@ proc_rod(int cnt)
 			l= l+1;
 			if (debug > 3)
 				bu_log( "k=%d l=%d %f %f %f %f %d flag=%d\n",
-				    k,l,list[k].x,list[k].y,list[k].z,
-				    list[k].flag,list[k].radius,list[k].mirror);
+				    k, l, list[k].x, list[k].y, list[k].z,
+				    list[k].flag, list[k].radius, list[k].mirror);
 		}
 	}
 
 	if (debug > 2){
 		for (k=1;(k<=l);k++)
 			bu_log( "compressed: %d %f %f %f %f %d\n",
-			    k,x[k],y[k],z[k],radius[k],mirror[k]);
+			    k, x[k], y[k], z[k], radius[k], mirror[k]);
 	}
 
 	for(k=1 ; k < (l-1) ; k++){
@@ -3903,30 +3903,30 @@ proc_rod(int cnt)
 		shflg = 'r';
 		mrflg = 'n';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, count+1, ctflg), NAMESIZE );
 
 		/* make solids */
 		count++;
 
-		VSET(base,x[k],y[k],z[k]);
-		VSET(top,x[k+1],y[k+1],z[k+1]);
+		VSET(base, x[k], y[k], z[k]);
+		VSET(top, x[k+1], y[k+1], z[k+1]);
 
 		tmp = radius[k];
 		tmp1 = radius[k+1];
 
 		if((tmp > 0)&&(tmp1 > 0)){
-			mk_trc_top(outfp,name,base,top,tmp,tmp1);
+			mk_trc_top(outfp, name, base, top, tmp, tmp1);
 		}
 		else {
-			bu_log( "Bad Rod Radius for %s\n",name);
+			bu_log( "Bad Rod Radius for %s\n", name);
 		}
 
 		if( count > 1 && (count % num_unions) == 0 ){
-			(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+			(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 			proc_region( name );
-			(void)mk_addmember(name,&head.l,NULL, WMOP_UNION);
+			(void)mk_addmember(name,&head.l, NULL, WMOP_UNION);
 		} else {
-			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+			(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 		}
 	}
 	/* catch leftover solids */
@@ -3949,31 +3949,31 @@ proc_rod(int cnt)
 
 		mrflg = 'y';
 		ctflg = 'n';
-		strncpy( name, proc_sname (shflg,mrflg,mir_count+1,ctflg), NAMESIZE );
+		strncpy( name, proc_sname (shflg, mrflg, mir_count+1, ctflg), NAMESIZE );
 
 		/* make solids */
 		mir_count++;
 
-		VSET(base,x[k],-y[k],z[k]);
-		VSET(top,x[k+1],-y[k+1],z[k+1]);
+		VSET(base, x[k],-y[k], z[k]);
+		VSET(top, x[k+1],-y[k+1], z[k+1]);
 
 		tmp = radius[k];
 		tmp1 = radius[k+1];
 
 		if((tmp > 0)&&(tmp1 > 0)){
-			mk_trc_top(outfp,name,base,top,tmp,tmp1);
+			mk_trc_top(outfp, name, base, top, tmp, tmp1);
 		}
 		else {
-			bu_log( "Bad Rod Radius for %s\n",name);
+			bu_log( "Bad Rod Radius for %s\n", name);
 		}
 
 		if( mir_count > 1 && (mir_count % num_unions) == 0 ) {
-			(void)mk_addmember(name,&head.l,NULL, WMOP_SUBTRACT);
+			(void)mk_addmember(name,&head.l, NULL, WMOP_SUBTRACT);
 			proc_region( name );
-			(void)mk_addmember(name,&head.l,NULL, WMOP_UNION);
+			(void)mk_addmember(name,&head.l, NULL, WMOP_UNION);
 		}
 		else {
-			(void) mk_addmember(name,&head.l,NULL, WMOP_UNION);
+			(void) mk_addmember(name,&head.l, NULL, WMOP_UNION);
 		}
 
 	} /* for */
@@ -4006,8 +4006,8 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, in
 	}
 */
 
-	/*	VSUB2( out, centroid,verts[0]);
-	VADD3(tmp,verts[0],out,n);
+	/*	VSUB2( out, centroid, verts[0]);
+	VADD3(tmp, verts[0], out, n);
 */
 
 	if ((inv % 2)!= 0)  {
@@ -4053,24 +4053,24 @@ proc_label(char *labelfile)
 			snprintf(mgname, NAMESIZE, "%s", nm[in[0].cc + in[0].mirror].ug);
 		}
 		else {
-			snprintf(gname, NAMESIZE, "#%.4d",in[0].cc);
+			snprintf(gname, NAMESIZE, "#%.4d", in[0].cc);
 			snprintf(mgname, NAMESIZE, "#%.4d",(in[0].cc + in[0].mirror));
 		}
 		if( BU_LIST_NON_EMPTY( &heada.l ) )
 		{
-			mk_lcomb(outfp,gname,&heada,0,"","",0,0);
-			(void) mk_addmember(gname,&headd.l,NULL, WMOP_UNION);
+			mk_lcomb(outfp, gname,&heada, 0, "","", 0, 0);
+			(void) mk_addmember(gname,&headd.l, NULL, WMOP_UNION);
 		}
 		if( BU_LIST_NON_EMPTY( &headb.l ) )
 		{
-			mk_lcomb(outfp,mgname,&headb,0,"","",0,0);
-			(void) mk_addmember(mgname,&headd.l,NULL, WMOP_UNION);
+			mk_lcomb(outfp, mgname,&headb, 0, "","", 0, 0);
+			(void) mk_addmember(mgname,&headd.l, NULL, WMOP_UNION);
 		}
 	}
 	else {
-		sprintf(gname,"%dxxx_series",cur_series);
-		mk_lcomb(outfp,gname,&headd,0,"","",rgb,0);
-		(void) mk_addmember(gname,&heade.l,NULL, WMOP_UNION);
+		sprintf(gname, "%dxxx_series", cur_series);
+		mk_lcomb(outfp, gname,&headd, 0, "","", rgb, 0);
+		(void) mk_addmember(gname,&heade.l, NULL, WMOP_UNION);
 
 		cur_series = in[0].cc/1000 ;
 		set_color( cur_series );
@@ -4189,8 +4189,8 @@ set_color(int color)
 int
 inside_cyl(int i, int j)
 {
-	point_t	outbase,outtop,inbase,intop;
-	fastf_t	r1,r2;
+	point_t	outbase, outtop, inbase, intop;
+	fastf_t	r1, r2;
 
 	r1 = in[i+2].x;
 	r2 = in[i+2].y;
@@ -4198,11 +4198,11 @@ inside_cyl(int i, int j)
 	if( (r1 < in[j+2].x) || (r2 < in[j+2].y) )
 		return( 0 );
 
-	VSET( outbase, in[i].x,in[i].y,in[i].z );
-	VSET( outtop, in[i+1].x,in[i+1].y,in[i+1].z );
+	VSET( outbase, in[i].x, in[i].y, in[i].z );
+	VSET( outtop, in[i+1].x, in[i+1].y, in[i+1].z );
 
-	VSET( inbase, in[j].x,in[j].y,in[j].z );
-	VSET( intop, in[j+1].x,in[j+1].y,in[j+1].z );
+	VSET( inbase, in[j].x, in[j].y, in[j].z );
+	VSET( intop, in[j+1].x, in[j+1].y, in[j+1].z );
 
 	if( !pt_inside( inbase, outbase, outtop, r1, r2 ) )
 		return( 0 );
@@ -4214,13 +4214,13 @@ inside_cyl(int i, int j)
 
 /*			P T _ I N S I D E
  *
- * Returns 1 if point a is inside the cylinder defined by base,top,rad1,rad2.
+ * Returns 1 if point a is inside the cylinder defined by base, top, rad1, rad2.
  * Returns 0 if not.
  */
 int
 pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 )
 {
-	vect_t bt,ba;		/* bt: base to top, ba: base to a */
+	vect_t bt, ba;		/* bt: base to top, ba: base to a */
 	fastf_t mag_bt,
 	    dist,		/* distance to the normal between the axis
 				 * and the point
@@ -4235,7 +4235,7 @@ pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 )
 	mag_bt = MAGNITUDE( bt );
 	VUNITIZE( bt );
 
-	dist = VDOT( bt,ba );
+	dist = VDOT( bt, ba );
 	if( dist < -tol.dist  || dist - mag_bt > tol.dist )
 		return( 0 );
 
@@ -4244,14 +4244,14 @@ pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 )
 	pt_radsq = MAGSQ(ba) - (dist*dist);
 	if( debug>2 && pt_radsq - (radius*radius) < tol.dist_sq  ){
 		bu_log( "pt_inside: point (%.4f,%.4f,%.4f) inside cylinder endpoints (%.4f,%.4f,%.4f) and (%.4f,%.4f,%.4f)\n",
-		    a[0]/mmtin,a[1]/mmtin,a[2]/mmtin,
-		    base[0]/mmtin,base[1]/mmtin,base[2]/mmtin,
-		    top[0]/mmtin,top[1]/mmtin,top[2]/mmtin);
-		bu_log( "pt_inside: radius at that point is %f\n",radius/mmtin);
-		bu_log( "pt_inside: radial distance to point is %f\n",sqrt(pt_radsq)/mmtin );
-		bu_log( "pt_inside: square of radial distance is %f\n",pt_radsq/(mmtin*mmtin));
-		bu_log( "pt_inside: dist to base to point is %f\n",MAGSQ(ba)/mmtin );
-		bu_log( "pt_inside: dist to normal between axis and point is %f\n",dist/mmtin);
+		    a[0]/mmtin, a[1]/mmtin, a[2]/mmtin,
+		    base[0]/mmtin, base[1]/mmtin, base[2]/mmtin,
+		    top[0]/mmtin, top[1]/mmtin, top[2]/mmtin);
+		bu_log( "pt_inside: radius at that point is %f\n", radius/mmtin);
+		bu_log( "pt_inside: radial distance to point is %f\n", sqrt(pt_radsq)/mmtin );
+		bu_log( "pt_inside: square of radial distance is %f\n", pt_radsq/(mmtin*mmtin));
+		bu_log( "pt_inside: dist to base to point is %f\n", MAGSQ(ba)/mmtin );
+		bu_log( "pt_inside: dist to normal between axis and point is %f\n", dist/mmtin);
 	}
 	if( pt_radsq - (radius*radius) < tol.dist_sq )
 		return( 1 );
@@ -4275,7 +4275,7 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 {
 
 	char			tmpname[NAMESIZE];
-	int			cc,solnum;
+	int			cc, solnum;
 	struct subtract_list	*hold;
 
 	if( !slist ) {
@@ -4283,7 +4283,7 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 		return;
 	}
 
-	sscanf( name1,"%*[^0-9]%d%*[^0-9]%d", &cc, &solnum );
+	sscanf( name1, "%*[^0-9]%d%*[^0-9]%d", &cc, &solnum );
 
 	/* check to see whether this solid shows up in the subtract
 	 * list as a volume mode solid being subtracted
@@ -4298,7 +4298,7 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
 
 	for( slist = hold; slist; slist = slist->next ) {
 		if( slist->outsolid == solnum ){
-			sprintf(tmpname,"c.%.4d.s%.2d",cc,slist->insolid );
+			sprintf(tmpname, "c.%.4d.s%.2d", cc, slist->insolid );
 			(void)mk_addmember( tmpname, &(head->l), NULL, WMOP_SUBTRACT );
 		}
 	}
@@ -4322,7 +4322,7 @@ get_subtract(int cnt)
 {
 	static struct subtract_list	*slist = NULL;
 	struct subtract_list		*next,*add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror);
-	int i,j;
+	int i, j;
 
 	/* free up memory for slist, if any */
 	for( next=slist ; next; ){
@@ -4336,8 +4336,8 @@ get_subtract(int cnt)
 		for( j = i + 3; j < cnt ; j += 3 ) {
 			if( in[j].surf_mode == '-' )
 				continue;
-			if( inside_cyl(i,j) )
-				slist = add_to_list(slist,(i+3)/3,(j+3)/3,in[j].mirror);
+			if( inside_cyl(i, j) )
+				slist = add_to_list(slist,(i+3)/3,(j+3)/3, in[j].mirror);
 		}
 	}
 	return( slist );
@@ -4346,7 +4346,7 @@ get_subtract(int cnt)
 
 /*			A D D _ T O _ L I S T
  *
- * Add the inside,outside cylinder numbers to the subtraction list slist.
+ * Add the inside, outside cylinder numbers to the subtraction list slist.
  */
 struct subtract_list *
 add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror)
@@ -4360,7 +4360,7 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 		slist->next = (struct subtract_list *)NULL;
 	}
 	else
-		slist->next = add_to_list(slist->next,outsolid,insolid,inmirror);
+		slist->next = add_to_list(slist->next, outsolid, insolid, inmirror);
 
 	return( slist );
 }

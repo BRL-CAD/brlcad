@@ -197,7 +197,7 @@ const static point_t      rgb_NTSC[4] = {
  *  Returns RGB to XYZ matrix.
  *  From Roy Hall, pg 239-240.
  *
- *  The RGB white point of (1,1,1) times this matrix gives the
+ *  The RGB white point of (1, 1, 1) times this matrix gives the
  *  (Y=1 normalized) XYZ white point of (0.951368, 1, 1.08815)
  *  From Roy Hall, pg 54.
  *	MAT3X3VEC( xyz, rgb2xyz, rgb );
@@ -223,42 +223,42 @@ rt_clr__cspace_to_xyz (const point_t	cspace[4],
 	white[1] = 1.0;
 	white[2] = cspace[WHITE][Z] / cspace[WHITE][Y];
 
-#define tmat(a,b)	t_mat[(a)*4+(b)]
+#define tmat(a, b)	t_mat[(a)*4+(b)]
 	MAT_IDN(t_mat);
 	for (ii=0; ii<=2; ii++) {
-		tmat(0,ii) = cspace[ii][X];
-		tmat(1,ii) = cspace[ii][Y];
-		tmat(2,ii) = cspace[ii][Z];
+		tmat(0, ii) = cspace[ii][X];
+		tmat(1, ii) = cspace[ii][Y];
+		tmat(2, ii) = cspace[ii][Z];
 		ind[ii] = ii;
 	}
 
 	/* gaussian elimination  with partial pivoting */
 	for (ii=0; ii<2; ii++) {
 		for (jj=ii+1; jj<=2; jj++)  {
-			if (fabs(tmat(ind[jj],ii)) > fabs(tmat(ind[ii],ii))) {
+			if (fabs(tmat(ind[jj], ii)) > fabs(tmat(ind[ii], ii))) {
 				tmp_i=ind[jj];
 				ind[jj]=ind[ii];
 				ind[ii]=tmp_i;
 			}
 		}
-		if (tmat(ind[ii],ii) == 0.0) return 0;
+		if (tmat(ind[ii], ii) == 0.0) return 0;
 
 		for (jj=ii+1; jj<=2; jj++) {
-			mult = tmat(ind[jj],ii) / tmat(ind[ii],ii);
+			mult = tmat(ind[jj], ii) / tmat(ind[ii], ii);
 			for (kk=ii+1; kk<=2; kk++)
-			tmat(ind[jj],kk) -= tmat(ind[ii],kk) * mult;
+			tmat(ind[jj], kk) -= tmat(ind[ii], kk) * mult;
 			white[ind[jj]] -= white[ind[ii]] * mult;
 		}
 	}
-	if (tmat(ind[2],2) == 0.0) return 0;
+	if (tmat(ind[2], 2) == 0.0) return 0;
 
 	/* back substitution to solve for scale */
-	scale[ind[2]] = white[ind[2]] / tmat(ind[2],2);
-	scale[ind[1]] = (white[ind[1]] - (tmat(ind[1],2) *
-			scale[ind[2]])) / tmat(ind[1],1);
-	scale[ind[0]] = (white[ind[0]] - (tmat(ind[0],1) *
-			scale[ind[1]]) - (tmat(ind[0],2) *
-			scale[ind[2]])) / tmat(ind[0],0);
+	scale[ind[2]] = white[ind[2]] / tmat(ind[2], 2);
+	scale[ind[1]] = (white[ind[1]] - (tmat(ind[1], 2) *
+			scale[ind[2]])) / tmat(ind[1], 1);
+	scale[ind[0]] = (white[ind[0]] - (tmat(ind[0], 1) *
+			scale[ind[1]]) - (tmat(ind[0], 2) *
+			scale[ind[2]])) / tmat(ind[0], 0);
 
 	/* build matrix.  Embed 3x3 in BRL-CAD 4x4 */
 	for (ii=0; ii<=2; ii++) {

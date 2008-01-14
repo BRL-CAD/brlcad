@@ -51,21 +51,21 @@ char *p_rotfb[] = {
 };
 
 char *p_3pts[] = {
-	"Enter X,Y,Z of point",
-	"Enter Y,Z of point",
+	"Enter X, Y, Z of point",
+	"Enter Y, Z of point",
 	"Enter Z of point"
 };
 
 char *p_pleqn[] = {
-	"Enter A,B,C,D of plane equation: ",
-	"Enter B,C,D of plane equation: ",
-	"Enter C,D of plane equation: ",
+	"Enter A, B, C, D of plane equation: ",
+	"Enter B, C, D of plane equation: ",
+	"Enter C, D of plane equation: ",
 	"Enter D of plane equation: "
 };
 
 char *p_nupnt[] = {
-	"Enter X,Y,Z of fixed point: ",
-	"Enter Y,Z of fixed point: ",
+	"Enter X, Y, Z of fixed point: ",
+	"Enter Y, Z of fixed point: ",
 	"Enter Z of fixed point: "
 };
 
@@ -83,7 +83,7 @@ int
 f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	short int 	i;
-	int		face,prod,plane;
+	int		face, prod, plane;
 	struct rt_db_internal	intern;
 	struct rt_arb_internal	*arb;
 	struct rt_arb_internal	*arbo;
@@ -135,7 +135,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	face = atoi( argv[1] );
 
 	/* use product of vertices to distinguish faces */
-	for(i=0,prod=1;i<4;i++)  {
+	for(i=0, prod=1;i<4;i++)  {
 		if( face > 0 ){
 			prod *= face%10;
 			face /= 10;
@@ -197,7 +197,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  Tcl_AppendResult(interp,
 			   "\ta   planar equation\n",
 			   "\tb   3 points\n",
-			   "\tc   rot,fb angles + fixed pt\n",
+			   "\tc   rot, fb angles + fixed pt\n",
 			   "\td   same plane thru fixed pt\n",
 			   "\tq   quit\n\n",
 			   MORE_ARGS_STR, "Enter form of new face definition: ", (char *)NULL);
@@ -351,7 +351,7 @@ static int
 get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
 {
 	int i;
-	point_t	a,b,c;
+	point_t	a, b, c;
 
 	CHECK_DBI_NULL;
 
@@ -381,7 +381,7 @@ static void
 get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
 {
 	fastf_t rota, fb;
-	short int i,temp;
+	short int i, temp;
 	point_t		pt;
 
 	if(dbip == DBI_NULL)
@@ -390,7 +390,7 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
 	rota= atof(argv[0]) * degtorad;
 	fb  = atof(argv[1]) * degtorad;
 
-	/* calculate normal vector (length=1) from rot,fb */
+	/* calculate normal vector (length=1) from rot, fb */
 	plane[0] = cos(fb) * cos(rota);
 	plane[1] = cos(fb) * sin(rota);
 	plane[2] = sin(fb);

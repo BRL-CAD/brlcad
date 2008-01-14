@@ -58,30 +58,30 @@ main(int argc, char **argv)
 {
     int val;
     fastf_t yaw, pitch, roll, time;
-    vect_t temp,point,zero;
+    vect_t temp, point, zero;
     mat_t mat;
 
     VSETALL( temp , 0.0 );
     VSETALL( point , 0.0 );
     VSETALL( zero , 0.0 );
 
-    (void) get_args(argc,argv);
+    (void) get_args(argc, argv);
 
 
     while (1) {
 	/*read line from table */
-	val = scanf("%lf%*[^-0123456789]",&time); /*read time,ignore garbage*/
+	val = scanf("%lf%*[^-0123456789]",&time); /*read time, ignore garbage*/
 	val = scanf("%lf %lf %lf", point, point+1, point +2);
 	val = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	if (val < 3) {
 	    break;
 	}
 
-	anim_dy_p_r2mat(mat,yaw, pitch,roll);
-	anim_add_trans(mat,point,zero);
-	MAT4X3PNT(temp,mat,offset);
+	anim_dy_p_r2mat(mat, yaw, pitch, roll);
+	anim_add_trans(mat, point, zero);
+	MAT4X3PNT(temp, mat, offset);
 
-	printf("%.10g\t%.10g\t%.10g\t%.10g",time, temp[0], temp[1], temp[2]);
+	printf("%.10g\t%.10g\t%.10g\t%.10g", time, temp[0], temp[1], temp[2]);
 	if (full_print)
 	    printf("\t%.10g\t%.10g\t%.10g", yaw, pitch, roll);
 	printf("\n");
@@ -94,19 +94,19 @@ main(int argc, char **argv)
 int get_args(int argc, char **argv)
 {
     int c;
-    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch(c){
 	case 'r':
 	    full_print = 1;
 	    break;
 	case 'o':
-	    sscanf(argv[bu_optind-1],"%lf",offset+0);
-	    sscanf(argv[bu_optind],"%lf",offset+1);
-	    sscanf(argv[bu_optind+1],"%lf",offset+2);
+	    sscanf(argv[bu_optind-1], "%lf", offset+0);
+	    sscanf(argv[bu_optind], "%lf", offset+1);
+	    sscanf(argv[bu_optind+1], "%lf", offset+2);
 	    bu_optind += 2;
 	    break;
 	default:
-	    fprintf(stderr,"Unknown option: -%c\n",c);
+	    fprintf(stderr, "Unknown option: -%c\n", c);
 	    return(0);
 	}
     }

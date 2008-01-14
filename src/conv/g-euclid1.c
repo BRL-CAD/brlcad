@@ -137,7 +137,7 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
 
 	if( verbose )
 		bu_log( "Write_euclid_face: lu=x%x, facet_type=%d, regionid=%d, face_number=%d\n",
-			lu,facet_type,regionid,face_number );
+			lu, facet_type, regionid, face_number );
 
 	if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 		return;
@@ -179,7 +179,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
 {
 	struct shell *s;
 	struct facets *faces = NULL;
-	int i,j;
+	int i, j;
 
 	NMG_CK_REGION( r );
 
@@ -293,7 +293,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
 			}
 			else
 			{
-				int loop1,loop2;
+				int loop1, loop2;
 				int outer_loop_count;
 
 				/* must determine which holes go with which outer loops */

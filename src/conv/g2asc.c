@@ -61,7 +61,7 @@ const mat_t	id_mat = {
 
 char *name(char *str);
 char *strchop(char *str, int len);
-#define CH(x)	strchop(x,sizeof(x))
+#define CH(x)	strchop(x, sizeof(x))
 
 int	combdump(void);
 void	idendump(void), polyhead(void), polydata(void);
@@ -158,13 +158,13 @@ main(int argc, char **argv)
 		if( strcmp(iname, "-") == 0 )  {
 			ifp = stdin;
 		} else {
-			ifp = fopen(iname,"r");
+			ifp = fopen(iname, "r");
 		}
 		if( !ifp )  perror(iname);
 		if( strcmp(argv[2], "-") == 0 )  {
 			ofp = stdout;
 		} else {
-			ofp = fopen(argv[2],"w");
+			ofp = fopen(argv[2], "w");
 		}
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
@@ -442,9 +442,9 @@ void
 nmg_dump(void)
 {
 	union record		rec;
-	long			i,granules;
+	long			i, granules;
 	long			struct_count[26];
-	int			j,k;
+	int			j, k;
 
 	/* just in case someone changes the record size */
 	if( sizeof( union record )%32 )

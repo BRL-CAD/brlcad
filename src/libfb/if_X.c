@@ -161,7 +161,7 @@ struct	xinfo {
 	Window	curswin;		/* Cursor Window ID */
 
 	int	depth;			/* 1, 8, or 24bit */
-	int	mode;			/* 0,1,2 */
+	int	mode;			/* 0, 1, 2 */
 	ColorMap rgb_cmap;		/* User's libfb colormap */
 };
 #define	XI(ptr) ((struct xinfo *)((ptr)->u1.p))
@@ -732,7 +732,7 @@ X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int
 			/* pre-read the byte */
 			mvalue = *mbuffer;
 			/* diddle its bit */
-			for( bit=rem; (bit < 8) && (col < x+count); bit++,col++ ) {
+			for( bit=rem; (bit < 8) && (col < x+count); bit++, col++ ) {
 				/*val = (30*(pixelp)[RED] + 59*(pixelp)[GRN] + 11*(pixelp)[BLU] + 200) / 400;*/
 				/*pixelp++;*/
 				/*if( dither_bw(val, col, row) ) {*/
@@ -879,7 +879,7 @@ X_cursor(FBIO *ifp, int mode, int x, int y)
 {
 	fb_sim_cursor(ifp, mode, x, y);
 
-	/* remap image x,y to screen position */
+	/* remap image x, y to screen position */
 	x = (x-ifp->if_xcenter)*ifp->if_xzoom+ifp->if_width/2;
 	y = (y-ifp->if_ycenter)*ifp->if_yzoom+ifp->if_height/2;
 
@@ -936,14 +936,14 @@ x_setup(FBIO *ifp, int width, int height)
 	 *  "best" one.  For now use the default.  Most servers don't
 	 *  offer a choice yet anyway.
 	 */
-	visual = DefaultVisual(dpy,screen);
+	visual = DefaultVisual(dpy, screen);
 
 	/* save values in state struct */
 	XI(ifp)->dpy = dpy;
 	XI(ifp)->screen = screen;
 	XI(ifp)->visual = visual;
-	XI(ifp)->depth = DisplayPlanes(dpy,screen);
-	if( DisplayCells(dpy,screen) != 256 )
+	XI(ifp)->depth = DisplayPlanes(dpy, screen);
+	if( DisplayCells(dpy, screen) != 256 )
 		XI(ifp)->depth = 1;	/*XXX - until cmap fix */
 
 #if DEBUGX
@@ -986,7 +986,7 @@ printf("Creating window\n");
 	if( XI(ifp)->depth == 8 ) {
 		x_make_colormap(ifp);
 	} else {
-		XI(ifp)->cmap = DefaultColormap(dpy,screen);
+		XI(ifp)->cmap = DefaultColormap(dpy, screen);
 	}
 
 	/*
@@ -1119,7 +1119,7 @@ X_do_event(FBIO *ifp)
 				XDefineCursor(XI(ifp)->dpy, XI(ifp)->win, watch);
 				XFlush(XI(ifp)->dpy);
 #endif
-				Monochrome(bitbuf,bytebuf,ifp->if_width,ifp->if_height,XI(ifp)->method);
+				Monochrome(bitbuf, bytebuf, ifp->if_width, ifp->if_height, XI(ifp)->method);
 #if CURSOR
 				XDefineCursor(XI(ifp)->dpy, XI(ifp)->win, None);
 				XFlush(XI(ifp)->dpy);
@@ -1195,7 +1195,7 @@ Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height,
 	for( row = 0; row < height; row++ ) {
 		for( col=0; col < width; ) {
 			mvalue = 0x00;
-			for( bit=0; (bit < 8) && (col < width); bit++,col++ ) {
+			for( bit=0; (bit < 8) && (col < width); bit++, col++ ) {
 				/*if( dither_bw(val, col, row) ) {*/
 				if( method == 0 ) {
 					if( (int)*mpbuffer > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
@@ -1372,14 +1372,14 @@ x_make_colormap(FBIO *ifp)
 		XI(ifp)->win, XI(ifp)->visual, AllocNone);
 
 	if( color_map == (Colormap)NULL)
-		fprintf(stderr,"Warning: color map missing\n");
+		fprintf(stderr, "Warning: color map missing\n");
 
 	XI(ifp)->cmap = color_map;
 
 	/* Allocate the colors cells */
 	if( (XAllocColorCells( XI(ifp)->dpy, color_map, 0, NULL, 0,
 	      x_pixel_table, tot_levels )) == 0) {
-		fprintf(stderr,"XAllocColorCells died\n");
+		fprintf(stderr, "XAllocColorCells died\n");
 	}
 
 	/* XXX - HACK
@@ -1472,26 +1472,26 @@ x_print_display_info(Display *dpy)
 
 	printf("==== Screen %d ====\n", screen );
 	printf("%d x %d pixels, %d x %d mm, (%.2f x %.2f dpi)\n",
-		DisplayWidth(dpy,screen), DisplayHeight(dpy,screen),
-		DisplayWidthMM(dpy,screen), DisplayHeightMM(dpy,screen),
-		DisplayWidth(dpy,screen)*25.4/DisplayWidthMM(dpy,screen),
-		DisplayHeight(dpy,screen)*25.4/DisplayHeightMM(dpy,screen));
+		DisplayWidth(dpy, screen), DisplayHeight(dpy, screen),
+		DisplayWidthMM(dpy, screen), DisplayHeightMM(dpy, screen),
+		DisplayWidth(dpy, screen)*25.4/DisplayWidthMM(dpy, screen),
+		DisplayHeight(dpy, screen)*25.4/DisplayHeightMM(dpy, screen));
 	printf("%d DisplayPlanes (other Visuals, if any, may vary)\n",
-		DisplayPlanes(dpy,screen) );
-	printf("%d DisplayCells\n", DisplayCells(dpy,screen) );
-	printf("BlackPixel = %lu\n", BlackPixel(dpy,screen) );
-	printf("WhitePixel = %lu\n", WhitePixel(dpy,screen) );
+		DisplayPlanes(dpy, screen) );
+	printf("%d DisplayCells\n", DisplayCells(dpy, screen) );
+	printf("BlackPixel = %lu\n", BlackPixel(dpy, screen) );
+	printf("WhitePixel = %lu\n", WhitePixel(dpy, screen) );
 	printf("Save Unders: %s\n",
-		DoesSaveUnders(ScreenOfDisplay(dpy,screen)) ? "True" : "False");
-	i = DoesBackingStore(ScreenOfDisplay(dpy,screen));
+		DoesSaveUnders(ScreenOfDisplay(dpy, screen)) ? "True" : "False");
+	i = DoesBackingStore(ScreenOfDisplay(dpy, screen));
 	printf("Backing Store: %s\n", i == WhenMapped ? "WhenMapped" :
 		(i == Always ? "Always" : "NotUseful"));
 	printf("Installed Colormaps: min %d, max %d\n",
-		MinCmapsOfScreen(ScreenOfDisplay(dpy,screen)),
-		MaxCmapsOfScreen(ScreenOfDisplay(dpy,screen)) );
-	printf("DefaultColormap: 0lx%lx\n", DefaultColormap(dpy,screen));
+		MinCmapsOfScreen(ScreenOfDisplay(dpy, screen)),
+		MaxCmapsOfScreen(ScreenOfDisplay(dpy, screen)) );
+	printf("DefaultColormap: 0lx%lx\n", DefaultColormap(dpy, screen));
 
-	visual = DefaultVisual(dpy,screen);
+	visual = DefaultVisual(dpy, screen);
 	printf("---- Visual 0x%lx ----\n", (unsigned long int)visual );
 
 	switch(visual->class) {
@@ -1687,8 +1687,8 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 {
 	int	sxmin;		/* screen versions of above */
 	int	symin;
-	int	xlen, ylen;	/* number of image pixels in x,y */
-	int	sxlen, sylen;	/* screen pixels in x,y */
+	int	xlen, ylen;	/* number of image pixels in x, y */
+	int	sxlen, sylen;	/* screen pixels in x, y */
 	int	ix, iy;		/* image x, y */
 	int	sy;		/* screen x, y */
 	int	x, y;		/* dummys */

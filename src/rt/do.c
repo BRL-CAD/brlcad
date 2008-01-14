@@ -427,10 +427,10 @@ struct bu_structparse set_parse[] = {
 	{"%d",	1, "save_overlaps", bu_byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece),BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius),BU_STRUCTPARSE_FUNC_NULL },
-	{"%S",  1, "ray_data_file", bu_byteoffset(ray_data_file),BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "rt_bot_minpieces", bu_byteoffset(rt_bot_minpieces), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "rt_bot_tri_per_piece", bu_byteoffset(rt_bot_tri_per_piece), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
 	{"i", bu_byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
@@ -568,7 +568,7 @@ do_frame(int framenumber)
 	double	utime = 0.0;			/* CPU time used */
 	double	nutime = 0.0;			/* CPU time used, normalized by ncpu */
 	double	wallclock;		/* # seconds of wall clock time */
-	int	npix,i;			/* # of pixel values to be done */
+	int	npix, i;			/* # of pixel values to be done */
 	int	lim;
 	vect_t	work, temp;
 	quat_t	quat;
@@ -604,7 +604,7 @@ do_frame(int framenumber)
 	 *  This may alter cell size or width/height.
 	 */
 	grid_setup();
-	/* az/el 0,0 is when screen +Z is model +X */
+	/* az/el 0, 0 is when screen +Z is model +X */
 	VSET( work, 0, 0, 1 );
 	MAT3X3VEC( temp, view2model, work );
 	bn_ae_vec( &azimuth, &elevation, temp );
@@ -750,7 +750,7 @@ do_frame(int framenumber)
 				}
 				/* Read existing pix data into the frame buffer */
 				if (sb.st_size > 0) {
-					(void)fread(pixmap,1,(size_t)sb.st_size,outfp);
+					(void)fread(pixmap, 1,(size_t)sb.st_size, outfp);
 				}
 			}
 		}
@@ -911,7 +911,7 @@ do_frame(int framenumber)
  *
  *  Compute the rotation specified by the azimuth and elevation
  *  parameters.  First, note that these are specified relative
- *  to the GIFT "front view", ie, model (X,Y,Z) is view (Z,X,Y):
+ *  to the GIFT "front view", ie, model (X, Y, Z) is view (Z, X, Y):
  *  looking down X axis, Y right, Z up.
  *  A positive azimuth represents rotating the *eye* around the
  *  Y axis, or, rotating the *model* in -Y.
@@ -990,23 +990,23 @@ res_pr(void)
 	register struct resource *res;
 	register int i;
 
-	fprintf(stderr,"\nResource use summary, by processor:\n");
+	fprintf(stderr, "\nResource use summary, by processor:\n");
 	res = &resource[0];
 	for( i=0; i<npsw; i++, res++ )  {
 		fprintf(stderr, "---CPU %d:\n", i);
 		if( res->re_magic != RESOURCE_MAGIC )  {
-			fprintf(stderr,"Bad magic number!!\n");
+			fprintf(stderr, "Bad magic number!!\n");
 			continue;
 		}
-		fprintf(stderr,"seg       len=%10ld get=%10ld free=%10ld\n",
+		fprintf(stderr, "seg       len=%10ld get=%10ld free=%10ld\n",
 			res->re_seglen, res->re_segget, res->re_segfree );
-		fprintf(stderr,"partition len=%10ld get=%10ld free=%10ld\n",
+		fprintf(stderr, "partition len=%10ld get=%10ld free=%10ld\n",
 			res->re_partlen, res->re_partget, res->re_partfree );
 #if 0
-		fprintf(stderr,"bitv_elem len=%10ld get=%10ld free=%10ld\n",
+		fprintf(stderr, "bitv_elem len=%10ld get=%10ld free=%10ld\n",
 			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
 #endif
-		fprintf(stderr,"boolstack len=%10ld\n",
+		fprintf(stderr, "boolstack len=%10ld\n",
 			res->re_boolslen);
 	}
 }
@@ -1025,7 +1025,7 @@ struct command_tab rt_cmdtab[] = {
 	{"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
 		cm_lookat_pt,	4, 5},
 	{"viewrot", "4x4 matrix", "set view direction from matrix",
-		cm_vrot,	17,17},
+		cm_vrot,	17, 17},
 	{"orientation", "quaturnion", "set view direction from quaturnion",
 		cm_orientation,	5, 5},
 	{"end", 	"", "end of frame setup, begin raytrace",

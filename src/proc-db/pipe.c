@@ -41,7 +41,7 @@
  *
  * Version 3.1
  * Changes by:	John R. Anderson
- * Date:	Wednesday May 18,1994
+ * Date:	Wednesday May 18, 1994
  *	included in BRL-CAD distribution
  */
 
@@ -88,21 +88,21 @@ struct points
 	vect_t norm;	/* unit vector normal to "nprev" and "nnext" */
 	vect_t nmitre;	/* unit vector along mitre joint */
 	vect_t mnorm;	/* unit vector normal to mitre joint and "norm" */
-	char tube[NAMESIZE],tubflu[NAMESIZE];			/* solid names */
-	char elbow[NAMESIZE],elbflu[NAMESIZE],cut[NAMESIZE];	/* solid names */
-	char tube_r[NAMESIZE],tubflu_r[NAMESIZE];		/* region names */
-	char elbow_r[NAMESIZE],elbflu_r[NAMESIZE];		/* region names */
+	char tube[NAMESIZE], tubflu[NAMESIZE];			/* solid names */
+	char elbow[NAMESIZE], elbflu[NAMESIZE], cut[NAMESIZE];	/* solid names */
+	char tube_r[NAMESIZE], tubflu_r[NAMESIZE];		/* region names */
+	char elbow_r[NAMESIZE], elbflu_r[NAMESIZE];		/* region names */
 	struct points *next,*prev;
 };
 
 
-double radius,wall,pi,k;
+double radius, wall, pi, k;
 struct points *root;
 char	name[16];
 float	delta=10.0;		/* 10mm excess in ARB sizing for cutting tubes */
 mat_t	identity;
 
-int torus=0,sphere=0,mitre=0,nothing=0,cable=0;
+int torus=0, sphere=0, mitre=0, nothing=0, cable=0;
 
 /*	formats for solid and region names	*/
 char *tor_out="%02d-out.tor",*tor_in="%02d-in.tor";
@@ -137,7 +137,7 @@ void
 Readpoints(void)
 {
 	struct points *ptr,*prev;
-	fastf_t x,y,z;
+	fastf_t x, y, z;
 
 	ptr = root;
 	prev = NULL;
@@ -159,7 +159,7 @@ Readpoints(void)
 		ptr->next = NULL;
 		ptr->prev = prev;
 		prev = ptr;
-		VSET(ptr->p,k*x,k*y,k*z);
+		VSET(ptr->p, k*x, k*y, k*z);
 		ptr->tube[0] = '\0';
 		ptr->tubflu[0] = '\0';
 		ptr->elbow[0] = '\0';
@@ -277,7 +277,7 @@ Normals(void)
 void
 Adjust(void)
 {
-	fastf_t beta,d,len;
+	fastf_t beta, d, len;
 	struct points *ptr;
 
 	if( root == NULL )
@@ -507,7 +507,7 @@ Pipes(void)
 void
 Elbows(void)	/* make a tubing elbow and fluid elbow */
 {
-	vect_t RN1,RN2;
+	vect_t RN1, RN2;
 	point_t pts[8];
 	fastf_t len;
 	struct points *ptr;
@@ -669,10 +669,10 @@ int
 main(int argc, char **argv)
 {
 	int done;
-	char units[16],fname[80];
+	char units[16], fname[80];
 	int optc;
 
-	while( (optc = bu_getopt( argc,argv,"tsmnc" )) != -1)
+	while( (optc = bu_getopt( argc, argv, "tsmnc" )) != -1)
 	{
 		switch( optc )	/* Set joint type and cable option */
 		{
@@ -703,7 +703,7 @@ main(int argc, char **argv)
 	if( (torus + sphere + mitre + nothing) > 1 ) /* Too many joint options */
 	{
 		Usage();
-		fprintf( stderr , "Options t,s,m,n are mutually exclusive\n" );
+		fprintf( stderr , "Options t, s, m, n are mutually exclusive\n" );
 		return 1;
 	}
 	else if( (torus + sphere + mitre + nothing) == 0 ) {
@@ -735,7 +735,7 @@ main(int argc, char **argv)
 	k = 0.0;
 	while( k == 0.0 )
 	{
-		printf( "UNITS? (ft,in,m,cm, default is millimeters) ");
+		printf( "UNITS? (ft, in, m, cm, default is millimeters) ");
 		bu_fgets(units, sizeof(units), stdin);
 		switch (units[0])
 		{
@@ -805,15 +805,15 @@ main(int argc, char **argv)
 
 /*	Generate Title */
 
-	strncpy(fname,name, 80-1);
+	strncpy(fname, name, 80-1);
 	if( !cable )
-		strcat(fname," pipe and fluid");
+		strcat(fname, " pipe and fluid");
 	else
-		strcat(fname," cable");
+		strcat(fname, " cable");
 
 /*	Create ident record	*/
 
-	mk_id(fdout,fname);
+	mk_id(fdout, fname);
 
 	Pipes();	/* Construct the piping */
 

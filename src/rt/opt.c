@@ -226,7 +226,7 @@ int get_args( int argc, register char **argv )
 		case 'C':
 			{
 				char		buf[128] = {0};
-				int		r,g,b;
+				int		r, g, b;
 				register char	*cp = bu_optarg;
 
 				r = atoi(cp);
@@ -255,7 +255,7 @@ int get_args( int argc, register char **argv )
 				else
 				    background[2] = b / 255.0;
 #else
-				sprintf(buf,"set background=%f/%f/%f",
+				sprintf(buf, "set background=%f/%f/%f",
 					r/255., g/255., b/255. );
 				(void)rt_do_cmd( (struct rt_i *)0, buf,
 					rt_cmdtab );
@@ -335,14 +335,14 @@ int get_args( int argc, register char **argv )
 			/* Square size */
 			i = atoi( bu_optarg );
 			if( i < 2 || i > MAX_WIDTH )
-				fprintf(stderr,"squaresize=%d out of range\n", i);
+				fprintf(stderr, "squaresize=%d out of range\n", i);
 			else
 				width = height = i;
 			break;
 		case 'n':
 			i = atoi( bu_optarg );
 			if( i < 2 || i > MAX_WIDTH )
-				fprintf(stderr,"height=%d out of range\n", i);
+				fprintf(stderr, "height=%d out of range\n", i);
 			else
 				height = i;
 			break;
@@ -353,7 +353,7 @@ int get_args( int argc, register char **argv )
 		case 'w':
 			i = atoi( bu_optarg );
 			if( i < 2 || i > MAX_WIDTH )
-				fprintf(stderr,"width=%d out of range\n", i);
+				fprintf(stderr, "width=%d out of range\n", i);
 			else
 				width = i;
 			break;
@@ -382,31 +382,31 @@ int get_args( int argc, register char **argv )
 
 				/* Select lighting model # */
 				lightmodel= 1;	/* Initialize with Full Lighting Model */
-				item= strtok(bu_optarg,",");
+				item= strtok(bu_optarg, ",");
 				lightmodel= atoi(item);
 
 				if (lightmodel == 7) {					/* Process the photon mapping arguments */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[0]= item ? atoi(item) : 16384;		/* Number of Global Photons */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[1]= item ? atof(item) : 50;		/* Percent of Global Photons that should be used for Caustic Photons */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[2]= item ? atoi(item) : 10;		/* Number of Irradiance Sample Rays, Total Rays is this number squared */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[3]= item ? atof(item) : 60.0;		/* Angular Tolerance */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[4]= item ? atoi(item) : 0;		/* Random Seed */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[5]= item ? atoi(item) : 0;		/* Importance Mapping */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[6]= item ? atoi(item) : 0;		/* Irradiance Hypersampling */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[7]= item ? atoi(item) : 0;		/* Visualize Irradiance */
-					item= strtok(NULL,",");
+					item= strtok(NULL, ",");
 					pmargs[8]= item ? atof(item) : 1.0;		/* Scale Lumens */
-					item= strtok(NULL,",");
-					if (item) { strncpy(pmfile,item, 255-1); } else { pmfile[0]= 0; }
-/*					item ? strcpy(pmfile,item) : pmfile[0]= 0;*/	/* Scale Lumens */
+					item= strtok(NULL, ",");
+					if (item) { strncpy(pmfile, item, 255-1); } else { pmfile[0]= 0; }
+/*					item ? strcpy(pmfile, item) : pmfile[0]= 0;*/	/* Scale Lumens */
 				}
 			}
 			break;
@@ -423,7 +423,7 @@ int get_args( int argc, register char **argv )
 		case 'p':
 			rt_perspective = atof( bu_optarg );
 			if( rt_perspective < 0 || rt_perspective > 179 ) {
-				fprintf(stderr,"persp=%g out of range\n", rt_perspective);
+				fprintf(stderr, "persp=%g out of range\n", rt_perspective);
 				rt_perspective = 0;
 			}
 			break;
@@ -459,7 +459,7 @@ int get_args( int argc, register char **argv )
 					}
 				}
 				if( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
-				    fprintf(stderr,"Numer of requested cpus (%d) is out of range 1..%d", npsw, MAX_PSW);
+				    fprintf(stderr, "Numer of requested cpus (%d) is out of range 1..%d", npsw, MAX_PSW);
 
 				    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 					(RT_G_DEBUG & DEBUG_PARALLEL)) {
@@ -523,7 +523,7 @@ int get_args( int argc, register char **argv )
 				else
 					aspect = xx/yy;
 				if( aspect <= 0.0 ) {
-					fprintf(stderr,"Bogus aspect %g, using 1.0\n", aspect);
+					fprintf(stderr, "Bogus aspect %g, using 1.0\n", aspect);
 					aspect = 1.0;
 				}
 			}
@@ -547,13 +547,13 @@ int get_args( int argc, register char **argv )
 			    rt_text_mode = 1;
 			    break;
 			default:
-			    fprintf(stderr,"unknown option %c\n", *cp);
+			    fprintf(stderr, "unknown option %c\n", *cp);
 			    return(0);	/* BAD */
 			}
 		    }
 		    break;
 		default:		/* '?' */
-			fprintf(stderr,"unknown option %c\n", c);
+			fprintf(stderr, "unknown option %c\n", c);
 			return(0);	/* BAD */
 		}
 	}

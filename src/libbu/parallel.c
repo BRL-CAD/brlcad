@@ -437,14 +437,14 @@ bu_avail_cpus(void)
 
 	ncpu = 0;
 
-	fp = fopen (CPUINFO_FILE,"r");
+	fp = fopen (CPUINFO_FILE, "r");
 
 	if (fp == NULL) {
 	    ncpu = 1;
 	    perror (CPUINFO_FILE);
 	} else {
 	    while (bu_fgets(buf, 80, fp) != NULL) {
-		if (strncmp (buf, "processor",9) == 0) {
+		if (strncmp (buf, "processor", 9) == 0) {
 		    ++ ncpu;
 		}
 	    }
@@ -666,7 +666,7 @@ extern int	bu_pid_of_initiating_thread;	/* From ispar.c */
 
 static int	bu_nthreads_started = 0;	/* # threads started */
 static int	bu_nthreads_finished = 0;	/* # threads properly finished */
-static void	(*bu_parallel_func) BU_ARGS((int,genptr_t));	/* user function to run in parallel */
+static void	(*bu_parallel_func) BU_ARGS((int, genptr_t));	/* user function to run in parallel */
 static genptr_t	bu_parallel_arg;		/* User's arg to his threads */
 
 
@@ -695,7 +695,7 @@ bu_parallel_interface(void)
     {
 	pthread_t	pt;
 	pt = pthread_self();
-	fprintf(stderr,"bu_parallel_interface, Thread ID = 0x%x\n", (unsigned int)pt);
+	fprintf(stderr, "bu_parallel_interface, Thread ID = 0x%x\n", (unsigned int)pt);
     }
 #endif
 #endif
@@ -839,7 +839,7 @@ bu_parallel( func, ncpu, arg )
 	/* This is more expensive when GEMINUS>1 */
 	Dcreate( bu_parallel_interface );
     }
-    (*func)(0,arg);	/* avoid wasting this task */
+    (*func)(0, arg);	/* avoid wasting this task */
 #  endif /* HEP */
 
 #  ifdef CRAY
@@ -851,7 +851,7 @@ bu_parallel( func, ncpu, arg )
 	bu_taskcontrol[x].tsk_value = x;
 	TSKSTART( &bu_taskcontrol[x], bu_parallel_interface );
     }
-    (*func)(0,arg);	/* avoid wasting this task */
+    (*func)(0, arg);	/* avoid wasting this task */
 
     /* Wait for them to finish */
     for( x=1; x<ncpu; x++ )  {
@@ -870,8 +870,8 @@ bu_parallel( func, ncpu, arg )
 
 #	else
     {
-	asm("	movl		d6,d0");
-	asm("	subql		#1,d0");
+	asm("	movl		d6, d0");
+	asm("	subql		#1, d0");
 	asm("	cstart		d0");
 	asm("super_loop:");
 	bu_parallel_interface();		/* d7 has current index, like magic */
@@ -947,7 +947,7 @@ bu_parallel( func, ncpu, arg )
 	}
 
     }
-    (*func)(0,arg);	/* don't waste this thread */
+    (*func)(0, arg);	/* don't waste this thread */
     {
 	int	pid;
 	int	pstat;
@@ -1135,7 +1135,7 @@ bu_parallel( func, ncpu, arg )
     for (x = 0; x < ncpu; x++)  {
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
-	pthread_attr_setstacksize(&attrs,10*1024*1024);
+	pthread_attr_setstacksize(&attrs, 10*1024*1024);
 
 	if (pthread_create(&thread, &attrs,
 			   (void *(*)(void *))bu_parallel_interface, NULL)) {
@@ -1233,7 +1233,7 @@ bu_parallel( func, ncpu, arg )
 #else	/* PARALLEL */
     bu_log("bu_parallel( x%lx, %d., x%lx ):  Not compiled for PARALLEL machine, running single-threaded\n", (long)func, ncpu, (long)arg );
     /* do the work anyways */
-    (*func)(0,arg);
+    (*func)(0, arg);
 #endif	/* PARALLEL */
 
     return;

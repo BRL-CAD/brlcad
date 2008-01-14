@@ -837,7 +837,7 @@ nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g
 int
 nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, const fastf_t *pt1, const fastf_t *pt2, const struct bn_tol *tol)
 {
-	fastf_t t0,t1,t;
+	fastf_t t0, t1, t;
 	fastf_t delt;
 	int coincident=0;
 	int i;
@@ -1119,7 +1119,7 @@ const struct bn_tol	*tol;
 	struct bu_ptbl	eutab;
 	int		total = 0;
 	int		non_lseg=0;
-	register int	i,j;
+	register int	i, j;
 
 	NMG_CK_MODEL(m);
 	BN_CK_TOL(tol);
@@ -1190,7 +1190,7 @@ again:
 			int eus_are_coincident=0;
 
 
-			eu2 = (struct edgeuse *)BU_PTBL_GET(&eutab,j);
+			eu2 = (struct edgeuse *)BU_PTBL_GET(&eutab, j);
 
 			if( rt_g.NMG_debug & DEBUG_MESH )
 				bu_log( "nmg_mode_edge_fuse: checking eus x%x and x%x\n", eu1, eu2 );
@@ -1313,7 +1313,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
 {
 	struct bu_ptbl	etab;
 	int		total = 0;
-	register int	i,j;
+	register int	i, j;
 
 	NMG_CK_MODEL(m);
 	BN_CK_TOL(tol);
@@ -1341,7 +1341,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
 			struct edge_g_lseg	*eg2;
 			struct edgeuse		*eu2;
 
-			eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab,j);
+			eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, j);
 			NMG_CK_EDGE_G_EITHER(eg2);
 			if( eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC )  continue;
 			NMG_CK_EDGE_G_LSEG(eg2);
@@ -1359,7 +1359,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
 			 */
 			total++;
 			nmg_jeg( eg2, eg1 );
-			BU_PTBL_GET(&etab,i) = (long *)NULL;
+			BU_PTBL_GET(&etab, i) = (long *)NULL;
 			break;
 		}
 	}
@@ -1678,7 +1678,7 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 {
 	struct bu_ptbl	ftab;
 	int		total = 0;
-	register int	i,j;
+	register int	i, j;
 
 	NMG_CK_MODEL(m);
 	BN_CK_TOL(tol);
@@ -1886,7 +1886,7 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 				}
 
 				if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC) )
-					bu_log( "nmg_model_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu,eu->e_p, v );
+					bu_log( "nmg_model_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu, eu->e_p, v );
 
 				/* Break edge on vertex, but don't fuse yet. */
 				new_eu = nmg_ebreak( v, eu );

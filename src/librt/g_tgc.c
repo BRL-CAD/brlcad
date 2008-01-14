@@ -88,7 +88,7 @@ static void nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_
 void rt_pt_sort(register fastf_t *t, int npts);
 
 #define VLARGE		1000000.0
-#define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
+#define	ALPHA(x, y, c, d)	( (x)*(x)*(c) + (y)*(y)*(d) )
 
 const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "V", bu_offsetof(struct rt_tgc_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -176,7 +176,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		 */
 		VADD2( tip->v, tip->v, tip->h );
 		VREVERSE( tip->h, tip->h );
-#define VEXCHANGE( a, b, tmp )	{ VMOVE(tmp,a); VMOVE(a,b); VMOVE(b,tmp); }
+#define VEXCHANGE( a, b, tmp )	{ VMOVE(tmp, a); VMOVE(a, b); VMOVE(b, tmp); }
 		VEXCHANGE( tip->a, tip->c, work );
 		VEXCHANGE( tip->b, tip->d, work );
 		bu_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
@@ -186,7 +186,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VCROSS( work, tip->a, tip->b );
 	f = VDOT( tip->h, work ) / ( prod_ab*mag_h );
 	if ( NEAR_ZERO(f, RT_DOT_TOL) ) {
-		bu_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
+		bu_log("tgc(%s):  H lies in A-B plane\n", stp->st_name);
 		return(1);		/* BAD */
 	}
 
@@ -730,7 +730,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 		/* Here, 'npts' is number of points being returned */
 		if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
-			bu_log("tgc:  reduced %d to %d roots\n",nroots,npts);
+			bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 			bn_pr_roots( stp->st_name, val, nroots );
 		} else if (nroots < 0) {
 		    static int reported=0;
@@ -791,7 +791,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		/* the bottom end */
 		VJOIN1( work, pprime, t, dprime );
 		/* Must scale C and D vectors */
-		alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
+		alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
 		/*
 		bu_log("alf1 is %f, alf2 is %f\n", alf1, alf2);
@@ -857,7 +857,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
-		bu_log("tgc(%s):  %d intersects != {0,2,4}\n",
+		bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n",
 		    stp->st_name, npts );
 		bu_log( "\tray: pt = (%g %g %g), dir = (%g %g %g)\n",
 			V3ARGS( ap->a_ray.r_pt ),
@@ -1126,7 +1126,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			}
 			/* Here, 'npts' is number of points being returned */
 			if ( npts != 0 && npts != 2 && npts != 4 && npts > 0 ){
-				bu_log("tgc:  reduced %d to %d roots\n",nroots,npts);
+				bu_log("tgc:  reduced %d to %d roots\n", nroots, npts);
 				bn_pr_roots( "tgc", val, nroots );
 			} else if (nroots < 0) {
 			    static int reported=0;
@@ -1147,7 +1147,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			k[i] -= cor_proj;
 
 		if ( npts != 0 && npts != 2 && npts != 4 ){
-			bu_log("tgc(%s):  %d intersects != {0,2,4}\n",
+			bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n",
 			    stp[ix]->st_name, npts );
 			RT_TGC_SEG_MISS(segp[ix]);		/* No hit	*/
 			continue;
@@ -1244,7 +1244,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 			VJOIN1( work, pprime, t, dprime );
 			/* Must scale C and D vectors */
-			alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
+			alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
 			if ( alf1 <= 1.0 ){
 				pt[IN] = b;
@@ -1311,7 +1311,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 			VJOIN1( work, pprime, t, dprime );
 			/* Must scale C and D vectors. */
-			alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
+			alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
 			/*  It should not be possible for one planar intersection
 	 *  to be outside its ellipse while the other is inside ...
@@ -1388,7 +1388,7 @@ rt_pt_sort(register fastf_t t[], int npts)
  *  The equation for the standard cone *without* scaling is:
  *  (rotated the sheared)
  *
- *	f(X,Y,Z) =  X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
+ *	f(X, Y, Z) =  X**2 * Q**2  +  Y**2 * R**2  -  R**2 * Q**2 = 0
  *
  *  where,
  *		R = a + ((c - a)/|H'|)*Z
@@ -1401,7 +1401,7 @@ rt_pt_sort(register fastf_t t[], int npts)
  *		R = 1 + (c/a - 1)*Z
  *		Q = 1 + (d/b - 1)*Z
  *
- *  The gradient of f(x,y,z) = 0 is:
+ *  The gradient of f(x, y, z) = 0 is:
  *
  *	df/dx = 2 * x * Q**2
  *	df/dy = 2 * y * R**2
@@ -1926,11 +1926,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct faceuse		*fu,*fu_top,*fu_base;
 	struct rt_tgc_internal	*tip;
 	fastf_t			radius;		/* bounding sphere radius */
-	fastf_t			max_radius,min_radius; /* max/min of a,b,c,d */
-	fastf_t			h,a,b,c,d;	/* lengths of TGC vectors */
+	fastf_t			max_radius, min_radius; /* max/min of a, b, c, d */
+	fastf_t			h, a, b, c, d;	/* lengths of TGC vectors */
 	fastf_t			inv_length;	/* 1.0/length of a vector */
-	vect_t			unit_a,unit_b,unit_c,unit_d; /* units vectors in a,b,c,d directions */
-	fastf_t			rel,abs,norm;	/* interpreted tolerances */
+	vect_t			unit_a, unit_b, unit_c, unit_d; /* units vectors in a, b, c, d directions */
+	fastf_t			rel, abs, norm;	/* interpreted tolerances */
 	fastf_t			alpha_tol;	/* final tolerance for ellipse parameter */
 	fastf_t			abs_tol;	/* handle invalid ttol->abs */
 	int			nells;		/* total number of ellipses */
@@ -2060,7 +2060,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		if( ttol->norm > 0.0 )
 		{
-			fastf_t norm_top,norm_bot;
+			fastf_t norm_top, norm_bot;
 
 			if( a<b )
 				norm_bot = 2.0 * atan( tan( ttol->norm ) * (a/b) );
@@ -2098,13 +2098,13 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* get nunber and placement of intermediate ellipses */
 	{
-		fastf_t ratios[4],max_ratio;
+		fastf_t ratios[4], max_ratio;
 		fastf_t new_ratio = 0;
 		int which_ratio;
-		fastf_t len_ha,len_hb;
-		vect_t ha,hb;
+		fastf_t len_ha, len_hb;
+		vect_t ha, hb;
 		fastf_t ang;
-		fastf_t sin_ang,cos_ang,cos_m_1_sq, sin_sq;
+		fastf_t sin_ang, cos_ang, cos_m_1_sq, sin_sq;
 		fastf_t len_A, len_B, len_C, len_D;
 		int bot_ell=0, top_ell=1;
 		int reversed=0;
@@ -2308,7 +2308,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		for( j=0 ; j<nsegs ; j++ )
 		{
 			double alpha;
-			double sin_alpha,cos_alpha;
+			double sin_alpha, cos_alpha;
 
 			alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
 			sin_alpha = sin( alpha );
@@ -2471,7 +2471,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		{
 			point_t pt_geom;
 			double alpha;
-			double sin_alpha,cos_alpha;
+			double sin_alpha, cos_alpha;
 
 			alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
 			sin_alpha = sin( alpha );
@@ -2522,7 +2522,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Calculate vertexuse normals */
 	for( i=0 ; i<nells ; i++ )
 	{
-		int j,k;
+		int j, k;
 
 		k = i + 1;
 		if( k == nells )
@@ -2648,7 +2648,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *  the parameters of the TGC
  *
  *  The process is to create the nmg  topology of the TGC fill it
- *  in with a unit cylinder geometry (i.e. unitcircle at the top (0,0,1)
+ *  in with a unit cylinder geometry (i.e. unitcircle at the top (0, 0, 1)
  *  unit cylinder of radius 1, and unitcirlce at the bottom), and then
  *  scale it with a perspective matrix derived from the parameters of the
  *  tgc. The result is three trimmed nub surfaces which interpolate the
@@ -2736,7 +2736,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	NMG_CK_EDGEUSE(eu);
 	top_eu = eu;
 
-	VSET( uvw, 0,0,0);
+	VSET( uvw, 0, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw);
 	VSET( uvw, 1, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
@@ -2784,7 +2784,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	NMG_CK_EDGEUSE(eu);
 	bot_eu = eu;
 
-	VSET( uvw, 0,0,0);
+	VSET( uvw, 0, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw);
 	VSET( uvw, 1, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, uvw );
@@ -2813,7 +2813,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	eu= BU_LIST_LAST( edgeuse, &eu->l);
 
 	nmg_je( bot_eu, eu );
-	nmg_region_a( *r,tol);
+	nmg_region_a( *r, tol);
 
 	return( 0 );
 }
@@ -2858,7 +2858,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 	point_t	point;
 
 	nmg_face_g_snurb( fu,
-		2, 2,  			/* u,v order */
+		2, 2,  			/* u, v order */
 		4, 4,			/* number of knots */
 		NULL, NULL, 		/* initial knot vectors */
 		2, 2, 			/* n_rows, n_cols */
@@ -2922,7 +2922,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
 	for( ; i> 0; i--)
 	{
-		MAT4X3PNT(vect,rmat,mptr);
+		MAT4X3PNT(vect, rmat, mptr);
 		mptr[0] = vect[0];
 		mptr[1] = vect[1];
 		mptr[2] = vect[2];
@@ -2947,7 +2947,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 		nmg_vertex_gv( eu->vu_p->v_p, point );
 	}
 
-	nmg_edge_g_cnurb(eu, 3, 12, NULL, 9, RT_NURB_MAKE_PT_TYPE(3,3,1),
+	nmg_edge_g_cnurb(eu, 3, 12, NULL, 9, RT_NURB_MAKE_PT_TYPE(3, 3, 1),
 		NULL);
 
 	eg = eu->g.cnurb_p;
@@ -2979,7 +2979,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 		VSET(&eg->ctl_points[6], 0.5, 0.0, 1.0);
 		VSET(&eg->ctl_points[9], RAT, 0.0, RAT);
 		VSET(&eg->ctl_points[12], 1.0, .5, 1.0);
-		VSET(&eg->ctl_points[15], RAT,RAT, RAT);
+		VSET(&eg->ctl_points[15], RAT, RAT, RAT);
 		VSET(&eg->ctl_points[18], .5, 1.0, 1.0);
 		VSET(&eg->ctl_points[21], 0.0, RAT, RAT);
 		VSET(&eg->ctl_points[24], 0.0, .5, 1.0);
@@ -3010,7 +3010,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 		12, 4,
 		NULL, NULL,
 		2, 9,
-		RT_NURB_MAKE_PT_TYPE(4,3,1),
+		RT_NURB_MAKE_PT_TYPE(4, 3, 1),
 		NULL );
 
 	fg = fu->f_p->g.snurb_p;
@@ -3066,7 +3066,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 
 	rt_nurb_s_eval( fg, 0.0, 0.0, hvect);
 	HDIVIDE( point, hvect );
-	nmg_vertex_gv( eu->vu_p->v_p, point );	/* 0,0 vertex */
+	nmg_vertex_gv( eu->vu_p->v_p, point );	/* 0, 0 vertex */
 
 	VSET( uvw, 0, 0, 0);
 	nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
@@ -3087,7 +3087,7 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 
 	rt_nurb_s_eval( fg, 1., 1., hvect);
 	HDIVIDE( point, hvect);
-	nmg_vertex_gv( eu->vu_p->v_p, point );		/* 4,1 vertex */
+	nmg_vertex_gv( eu->vu_p->v_p, point );		/* 4, 1 vertex */
 
 	eu = BU_LIST_NEXT( edgeuse, &eu->l);
 

@@ -290,7 +290,7 @@ BN_EXPORT BU_EXTERN(void pdv_3ray,
  *  declared above.
  */
 
-#define PL_FORTRAN(lc,uc)	BU_FORTRAN(lc,uc)
+#define PL_FORTRAN(lc, uc)	BU_FORTRAN(lc, uc)
 
 BN_EXPORT BU_EXTERN(void tp_i2list,
 		    (FILE *fp,

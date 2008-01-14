@@ -68,9 +68,9 @@ tone_floyd(int pix, int x, int y, int nx, int ny, int new)
 {
 	static int *error = 0;
 	static int *thisline;
-	register int diff,value;
+	register int diff, value;
 	int Dir = nx-x;
-	register double w1,w3,w5,w7;
+	register double w1, w3, w5, w7;
 
 	if (RandomFlag) {
 		register double val;

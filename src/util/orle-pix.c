@@ -122,7 +122,7 @@ main(int argc, char **argv)
 		register RGBpixel	*to;
 
 		to = bg_scan;
-		for( i = 0; i < fb_size; i++,to++ )  {
+		for( i = 0; i < fb_size; i++, to++ )  {
 			COPYRGB( *to, bgpixel );
 		}
 	}

@@ -44,7 +44,7 @@
 
 extern int	LI, CO;
 #define MAX_PROMPT	10
-#define Alloc(p_,t_,s_) (p_) = (t_ *) bu_malloc((unsigned)(s_), #p_);
+#define Alloc(p_, t_, s_) (p_) = (t_ *) bu_malloc((unsigned)(s_), #p_);
 
 #ifndef Max
 #  define Max(_a,_b)	((_a)<(_b)?(_b):(_a))

@@ -20,7 +20,7 @@
 /** @file texture_bump.c
  *
  *  Comments -
- *      Texture Library - Bump Mapping maps R,G,Z to surface normal X,Y,Z
+ *      Texture Library - Bump Mapping maps R, G, Z to surface normal X, Y, Z
  *
  *  Author -
  *      Justin L. Shumaker

@@ -39,9 +39,9 @@
 /* #define DEBUG 1  Define to only print system commands */
 
 #ifdef DEBUG
-#define SYSTEM(c)	fprintf(stderr,"system(%s);\n",c)
+#define SYSTEM(c)	fprintf(stderr, "system(%s);\n", c)
 #else
-#define SYSTEM(c)	fprintf(stderr,"system(%s);\n",c); system(c)
+#define SYSTEM(c)	fprintf(stderr, "system(%s);\n", c); system(c)
 #endif
 
 #define CBARS_TIME	10		/* Normal */
@@ -54,7 +54,7 @@ record_seq(int number_of_images, int number_of_frames, int start_seq_number)
 
 	fprintf(stderr,
 		"number of images is %d, number of frames per image is %d\n",
-		number_of_images,number_of_frames);
+		number_of_images, number_of_frames);
 
 
 	SYSTEM("fbcbars");	/* Start out with color bars */
@@ -64,20 +64,20 @@ record_seq(int number_of_images, int number_of_frames, int start_seq_number)
 	SYSTEM("vas4 reset_time");
 
 	/* Handle the color bars specially. It is the first recording */
-	fprintf(stderr,"Record color bars for %d seconds\n",CBARS_TIME);
-	sprintf(cmd,"vas4 record %dsec", CBARS_TIME);
+	fprintf(stderr, "Record color bars for %d seconds\n", CBARS_TIME);
+	sprintf(cmd, "vas4 record %dsec", CBARS_TIME);
 	SYSTEM(cmd);
 
 	/* Now record the user files */
 	for (i=start_seq_number; i < start_seq_number+number_of_images; i++) {
-		sprintf(cmd,"display_image %d",i);
+		sprintf(cmd, "display_image %d", i);
 		SYSTEM(cmd);
-		sprintf(cmd,"vas4 record %d",number_of_frames);
+		sprintf(cmd, "vas4 record %d", number_of_frames);
 		SYSTEM(cmd);
 	}
 
 	/* Record last frame for 30 more seconds */
-	fprintf(stderr,"Last image\n");
+	fprintf(stderr, "Last image\n");
 	SYSTEM("vas4 record 30sec\n");
 
 	/* Wrap up by stopping the controller and rewind */

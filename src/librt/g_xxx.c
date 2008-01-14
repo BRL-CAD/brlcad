@@ -83,7 +83,7 @@ struct rt_xxx_internal {
 	vect_t	v;
 };
 #  define RT_XXX_INTERNAL_MAGIC	0xxx
-#  define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
+#  define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
 #endif
 
 /* ray tracing form of solid, including precomputed terms */
@@ -202,8 +202,8 @@ rt_xxx_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 /**
  *  			R T _ X X X _ U V
  *
- *  For a hit on the surface of an xxx, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an xxx, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */

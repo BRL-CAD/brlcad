@@ -47,7 +47,7 @@ main(int argc, char **argv)
 {
 	char colors[8][3];
 	int	numcolors = 0;
-	int	c,i,x,y,x1,x2,y1,y2,r,g,b;
+	int	c, i, x, y, x1, x2, y1, y2, r, g, b;
 
 	if (argc != 1) {
 		bu_exit(1, "Usage: %s < infile > outfile\n", argv[0]);
@@ -60,7 +60,7 @@ main(int argc, char **argv)
 			geti(x);
 			geti(y);
 			printf("PU;\n");
-			printf("PA %d %d;\n",x,y);
+			printf("PA %d %d;\n", x, y);
 			printf("PD;\n");
 			break;
 		case 'l':		/* line */
@@ -69,9 +69,9 @@ main(int argc, char **argv)
 			geti(x2);
 			geti(y2);
 			printf("PU;\n");
-			printf("PA %d %d;\n",x1,y1);
+			printf("PA %d %d;\n", x1, y1);
 			printf("PD;\n");
-			printf("PA %d %d;\n",x2,y2);
+			printf("PA %d %d;\n", x2, y2);
 			break;
 		case 'f':		/* line style */
 			while( getchar() != '\n');
@@ -81,13 +81,13 @@ main(int argc, char **argv)
 			geti(x);
 			geti(y);
 			printf("PU;\n");
-			printf("PA %d %d;\n",x,y);
+			printf("PA %d %d;\n", x, y);
 			break;
 		case 'n':		/* draw */
 			geti(x);
 			geti(y);
 			printf("PD;\n");
-			printf("PA %d %d;\n",x,y);
+			printf("PA %d %d;\n", x, y);
 			break;
 		case 't':		/* text */
 			while( getchar() != '\n' );
@@ -100,15 +100,15 @@ main(int argc, char **argv)
 			geti(y2);
 			x1 *= ASPECT;
 			x2 *= ASPECT;
-			printf("SC %d %d %d %d;\n",x1,x2,y1,y2);
+			printf("SC %d %d %d %d;\n", x1, x2, y1, y2);
 			printf("SP 1;\n");
 			printf("PU;\n");
-			printf("PA %d %d;\n",x1,y1);
+			printf("PA %d %d;\n", x1, y1);
 			printf("PD;\n");
-			printf("PA %d %d;\n",x1,y2);
-			printf("PA %d %d;\n",x2,y2);
-			printf("PA %d %d;\n",x2,y1);
-			printf("PA %d %d;\n",x1,y1);
+			printf("PA %d %d;\n", x1, y2);
+			printf("PA %d %d;\n", x2, y2);
+			printf("PA %d %d;\n", x2, y1);
+			printf("PA %d %d;\n", x1, y1);
 			break;
 		case 'C':		/* color */
 			r = getchar();
@@ -131,7 +131,7 @@ main(int argc, char **argv)
 				}
 				else
 					i = 8;
-			printf("SP %d;\n",i);
+			printf("SP %d;\n", i);
 			break;
 		default:
 			bu_log("unable to process cmd x%x\n", c);

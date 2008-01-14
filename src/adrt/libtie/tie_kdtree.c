@@ -138,7 +138,7 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
 
       /* Get Bounding Box of Triangle */
       MATH_BBOX(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
-/*printf("min: [%g, %g, %g], max: [%g, %g, %g]\n",min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
+/*printf("min: [%g, %g, %g], max: [%g, %g, %g]\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
       /* Check to see if defines a new Max or Min point */
       MATH_VEC_MIN(tie->min, min);
       MATH_VEC_MAX(tie->max, max);
@@ -154,22 +154,22 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
   /*
    * use separating axis theorem to test overlap between triangle and box
    * need to test for overlap in these directions:
-   * 1) the {x,y,z}-directions (actually, since we use the AABB of the triangle
+   * 1) the {x, y, z}-directions (actually, since we use the AABB of the triangle
    *    we do not even need to test these)
    * 2) normal of the triangle
-   * 3) crossproduct(edge from tri, {x,y,z}-directin)
+   * 3) crossproduct(edge from tri, {x, y, z}-directin)
    *    this gives 3x3=9 more tests
    */
   TIE_3 v0, v1, v2, normal, e0, e1, e2, fe, p;
   tfloat min, max, d, t, rad;
 
-  /* move everything so that the boxcenter is in (0,0,0) */
+  /* move everything so that the boxcenter is in (0, 0, 0) */
   MATH_VEC_SUB(v0, triverts[0], (*center));
   MATH_VEC_SUB(v1, triverts[1], (*center));
   MATH_VEC_SUB(v2, triverts[2], (*center));
 
   /*
-  * First test overlap in the {x,y,z}-directions
+  * First test overlap in the {x, y, z}-directions
   * find min, max of the triangle each direction, and test for overlap in
   * that direction -- this is equivalent to testing a minimal AABB around
   * the triangle against the AABB

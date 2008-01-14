@@ -73,7 +73,7 @@ main(int argc, char **argv)
      *  title string in the header (ID) record.
      */
     if( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }
 
@@ -89,7 +89,7 @@ main(int argc, char **argv)
      */
     while( argc > 2 )  {
 	if( rt_gettree(rtip, argv[2]) < 0 )
-	    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
 	argc--;
 	argv++;
     }
@@ -97,7 +97,7 @@ main(int argc, char **argv)
      * This next call gets the database ready for ray tracing.
      * (it precomputes some values, sets up space partitioning, etc.)
      */
-    rt_prep_parallel(rtip,1);
+    rt_prep_parallel(rtip, 1);
 
     /*
      * Set the ray start point and direction

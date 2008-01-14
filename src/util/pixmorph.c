@@ -26,7 +26,7 @@
  *
  *  Description -
  *      Morphs two pix files.  Performs the morph according to the given line
- *      segment correspondence file and two values in [0,1]: the first,
+ *      segment correspondence file and two values in [0, 1]: the first,
  *      warpfrac, is a value which describes how far each image is warped;
  *      the second, dissolvefrac, specifies how much of a cross-dissolve
  *      is performed on the two resulting warped images to produce an
@@ -163,7 +163,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 		/* This is a fairly straightforward implementation of the
 		   algorithm in Beier and Neely's paper.
 		   We work only with vector components here... note that
-		   Perpindicular((a,b)) = (b, -a). */
+		   Perpindicular((a, b)) = (b, -a). */
 
 		x_minus_p_x = x_x - tlines->s[MIDDLE].x1;
 		x_minus_p_y = x_y - tlines->s[MIDDLE].y1;

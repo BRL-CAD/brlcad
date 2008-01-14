@@ -305,7 +305,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 char *p_rfin[] = {
 	"Enter X, Y, Z of the known point: ",
-	"Enter Y,Z: ",
+	"Enter Y, Z: ",
 	"Enter Z: "
 };
 
@@ -384,7 +384,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "POINT %d...\n",i+2);
+	    bu_vls_printf(&tmp_vls, "POINT %d...\n", i+2);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), MORE_ARGS_STR,
 			     "Enter coordinate to solve for (x, y, or z): ", (char *)NULL);
 	    return TCL_ERROR;
@@ -487,7 +487,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	ndotv = VDOT( aip->pt[0], norm );
 
-	/* calculate the unknown coordinate for points 2,3,4 */
+	/* calculate the unknown coordinate for points 2, 3, 4 */
 	for(i=0; i<3; i++) {
 		int j;
 		j = i+1;

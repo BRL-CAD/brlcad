@@ -171,11 +171,11 @@ int	width, height;
 	y_window = 0;
 
 	if( (ugbuf = malloc( width*height*4 )) == NULL )  {
-		fprintf(stderr,"ug_open: malloc failure\n");
+		fprintf(stderr, "ug_open: malloc failure\n");
 		return(-1);
 	}
 	if( (ugbuf2 = malloc( width*height*4 )) == NULL )  {
-		fprintf(stderr,"ug_open: malloc 2 failure\n");
+		fprintf(stderr, "ug_open: malloc 2 failure\n");
 		return(-1);
 	}
 	if ( ( ugcurs = malloc( 16 * 16 * 4)) == NULL ) {
@@ -470,7 +470,7 @@ FBIO *ifp;
 	numx = (ifp->if_width-x_window) / x_zoom;
 	numy = (ifp->if_height-y_window) / y_zoom;
 
-fprintf( stderr, "numx,y= %d, %d; zoomx,y= %d, %d; windowx,y= %d, %d\n", numx, numy, x_zoom, y_zoom, x_window, y_window );
+fprintf( stderr, "numx, y= %d, %d; zoomx, y= %d, %d; windowx, y= %d, %d\n", numx, numy, x_zoom, y_zoom, x_window, y_window );
 
 	for( y = 0; y < numy; y++ ) {
 		for( yz = 0; yz < y_zoom; yz++ ) {

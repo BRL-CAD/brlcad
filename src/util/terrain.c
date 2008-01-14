@@ -74,7 +74,7 @@ int quiet = 0;
 
 int debug;
 
-/* transform a point in integer X,Y,Z space to appropriate noise space */
+/* transform a point in integer X, Y, Z space to appropriate noise space */
 static void
 xform(point_t t, point_t pt)
 {
@@ -132,7 +132,7 @@ func_fbm(unsigned short *buf)
 			pt[X] = x;
 
 			xform(t, pt);
-			v = bn_noise_fbm(t, fbm_h,fbm_lacunarity, fbm_octaves);
+			v = bn_noise_fbm(t, fbm_h, fbm_lacunarity, fbm_octaves);
 			if (v > 1.0 || v < -1.0)
 				if (debug) bu_log("clamping noise value %g \n", v);
 			v = v * 0.5 + 0.5;
@@ -588,7 +588,7 @@ parse_args(int ac, char **av)
 	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac, av, options)) != EOF)
 		switch (c) {
 		case 'v': debug = !debug; break;
 		case 'c': do_convert = !do_convert; break;

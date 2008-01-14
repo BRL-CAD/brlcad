@@ -2133,7 +2133,7 @@ bu_hexdump_external( FILE *fp, const struct bu_external *ep, const char *str)
 		}
 		fprintf(fp, " |");
 
-		for( j=0; j < 16; j++,sp++ )  {
+		for( j=0; j < 16; j++, sp++ )  {
 			if( sp >= endp )  break;
 			if( isprint(*sp) )
 				putc(*sp, fp);

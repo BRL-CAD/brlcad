@@ -150,7 +150,7 @@ FB_EXPORT extern int wgl_close_existing();
 /*
  * Copy one RGB pixel to another.
  */
-#define	COPYRGB(to,from) { (to)[RED]=(from)[RED];\
+#define	COPYRGB(to, from) { (to)[RED]=(from)[RED];\
 			   (to)[GRN]=(from)[GRN];\
 			   (to)[BLU]=(from)[BLU]; }
 
@@ -159,7 +159,7 @@ FB_EXPORT extern int wgl_close_existing();
  *  nor "return" a value.  For reasons of C syntax it needs the basename
  *  of an RGBpixel rather than a pointer to one.
  */
-#define	FB_WPIXEL(ifp,pp) {if((ifp)->if_pno==-1)_fb_pgin((ifp),(ifp)->if_pixcur/(ifp)->if_ppixels);\
+#define	FB_WPIXEL(ifp, pp) {if((ifp)->if_pno==-1)_fb_pgin((ifp),(ifp)->if_pixcur/(ifp)->if_ppixels);\
 	(*((ifp)->if_pcurp+0))=(pp)[0];(*((ifp)->if_pcurp+1))=(pp)[1];(*((ifp)->if_pcurp+2))=(pp)[2];\
 	(ifp)->if_pcurp+=3;(ifp)->if_pixcur++;(ifp)->if_pdirty=1;\
 	if((ifp)->if_pcurp>=(ifp)->if_pendp){_fb_pgout((ifp));(ifp)->if_pno= -1;}}

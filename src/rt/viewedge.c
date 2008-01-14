@@ -407,7 +407,7 @@ view_2init( struct application *ap )
     int i;
 
     if(outputfile)
-	bif = bu_image_save_open(outputfile,BU_IMAGE_AUTO,width,height,3);
+	bif = bu_image_save_open(outputfile, BU_IMAGE_AUTO, width, height, 3);
 
     /*
      * Per_processor_chuck specifies the number of pixels rendered
@@ -433,7 +433,7 @@ view_2init( struct application *ap )
      * Determine if the framebuffer is readable.
      */
     if (overlay || blend)
-	if (fb_read(fbp,0,0,fb_bg_color,1) < 0)
+	if (fb_read(fbp, 0, 0, fb_bg_color, 1) < 0)
 	    bu_exit (EXIT_FAILURE, "rt_edge: specified framebuffer is not readable, cannot merge.\n");
 
     /*
@@ -459,7 +459,7 @@ view_2init( struct application *ap )
     /*
      * If operating in overlay mode, we want the rtedge background color
      * to be the shaded images background. This sets the bg color
-     * automatically, but assumes that pixel 0,0 is background. If not,
+     * automatically, but assumes that pixel 0, 0 is background. If not,
      * the user can set it manually (so long as it isn't 0 0 1!).
      *
      */
@@ -517,7 +517,7 @@ view_eol( struct application *ap )
 	fastf_t hsv[3];
 
 	bu_semaphore_acquire (BU_SEM_SYSCALL);
-	if (fb_read(fbp,0,ap->a_y,blendline[cpu],per_processor_chunk) < 0)
+	if (fb_read(fbp, 0, ap->a_y, blendline[cpu], per_processor_chunk) < 0)
 	    bu_exit (EXIT_FAILURE, "rtedge: error reading from framebuffer.\n");
 	bu_semaphore_release (BU_SEM_SYSCALL);
 
@@ -542,7 +542,7 @@ view_eol( struct application *ap )
 		 * edge. Unless, of course, we are on the bottom
 		 * scanline or the leftmost column (x=y=0)
 		 */
-		if (i != 0 && ap->a_y != 0 && !diffpixel (rgb,fb_bg_color)) {
+		if (i != 0 && ap->a_y != 0 && !diffpixel (rgb, fb_bg_color)) {
 		    RGBpixel left;
 		    RGBpixel down;
 
@@ -595,7 +595,7 @@ view_eol( struct application *ap )
 		/*
 		 * Convert back to RGB.
 		 */
-		bu_hsv_to_rgb(hsv,rgb);
+		bu_hsv_to_rgb(hsv, rgb);
 
 		if (replace_down) {
 		    /*
@@ -643,7 +643,7 @@ view_eol( struct application *ap )
 	 * Write to a file.
 	 */
 	bu_semaphore_acquire (BU_SEM_SYSCALL);
-	bu_image_save_writeline(bif,ap->a_y,scanline[cpu]);
+	bu_image_save_writeline(bif, ap->a_y, scanline[cpu]);
 	bu_semaphore_release (BU_SEM_SYSCALL);
     }
     if (fbp == FBIO_NULL && outputfile == NULL)

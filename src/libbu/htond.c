@@ -284,7 +284,7 @@ ibm_normalized:
 
 		/* After suitable testing, this check can be deleted */
 		if( (left & 0x00800000) == 0 )  {
-			fprintf(stderr,"ibm->ieee missing 1, left=x%x\n", left);
+			fprintf(stderr, "ibm->ieee missing 1, left=x%x\n", left);
 			left = (left<<1) | (right>>31);
 			right <<= 1;
 			goto ibm_normalized;
@@ -342,7 +342,7 @@ ibm_normalized:
 #endif
 		exp += 1023 - 040000 - 1;
 		if( (exp & ~0x7FF) != 0 )  {
-			fprintf(stderr,"htond:  Cray exponent too large on x%x\n", word);
+			fprintf(stderr, "htond:  Cray exponent too large on x%x\n", word);
 			OUT_IEEE_NAN;
 		}
 
@@ -388,7 +388,7 @@ ibm_normalized:
 		/* What value here is a Convex NaN ? */
 		exp += 1023 - 1024 - 1;
 		if( (exp & ~0x7FF) != 0 )  {
-			fprintf(stderr,"htond:  Convex exponent too large on x%lx\n", word);
+			fprintf(stderr, "htond:  Convex exponent too large on x%lx\n", word);
 			OUT_IEEE_NAN;
 		}
 
@@ -514,7 +514,7 @@ vax_undef:		*out++ = 0x80;		/* VAX "undefined" */
 		exp += 129 - 1023;
 		/* Check for exponent out of range */
 		if( (exp & ~0xFF) != 0 )  {
-			fprintf(stderr,"ntohd: VAX exponent overflow\n");
+			fprintf(stderr, "ntohd: VAX exponent overflow\n");
 			goto vax_undef;
 		}
 		left = ((left & 0x000FFFFF)<<3) | signbit | (exp<<23) |
@@ -569,7 +569,7 @@ ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
 		exp /= 4;		/* excess 32, base 16 */
 		exp += (64-32+1);	/* excess 64, base 16, plus fudge */
 		if( (exp & ~0xFF) != 0 )  {
-			fprintf(stderr,"ntohd:  IBM exponent overflow\n");
+			fprintf(stderr, "ntohd:  IBM exponent overflow\n");
 			goto ibm_undef;
 		}
 
@@ -693,7 +693,7 @@ cray_out:
 		}
 		if( exp == 0x7FF )  {
 			/* IEEE NaN = Convex what? */
-			fprintf(stderr,"ntohd: Convex NaN unimplemented\n");
+			fprintf(stderr, "ntohd: Convex NaN unimplemented\n");
 			word = 0;
 			goto convex_out;
 		}

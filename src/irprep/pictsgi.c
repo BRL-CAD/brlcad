@@ -41,7 +41,7 @@ main(void)
    char gfile[16];		/*  .g file.  */
    char group[26];		/*  Group names.  */
    int ngrp;			/*  Number of groups.  */
-   int i,j,k;			/*  Loop counters.  */
+   int i, j, k;			/*  Loop counters.  */
 
    /*  Find option.  */
    (void)printf("This takes a BRL-CAD mged model with a PRISM\n");
@@ -78,7 +78,7 @@ main(void)
 	/*  Find name of .g file to be used.  */
 	(void)printf("Enter .g file to be raytraced (15 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%15s",gfile);
+	(void)scanf("%15s", gfile);
 	/*  Find number of groups to be raytraced.  */
 	(void)printf("Enter the number of groups to be raytraced.\n\t");
 	(void)fflush(stdout);
@@ -93,9 +93,9 @@ main(void)
 	}
 	for(j=0; j<ngrp; j++)
 	{
-	   (void)printf("Enter group %d (25 char max).\n\t",j);
+	   (void)printf("Enter group %d (25 char max).\n\t", j);
 	   (void)fflush(stdout);
-	   (void)scanf("%25s",group);
+	   (void)scanf("%25s", group);
 	   showtherm[i] = ' ';
 	   i++;
 	   k = 0;

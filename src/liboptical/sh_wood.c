@@ -655,7 +655,7 @@ HIDDEN int wood_render(struct application *ap, struct partition *partp, struct s
 	VMOVE (g, h);
 	VUNITIZE (g);				/* xlate to ray */
 
-	wt = wood_turb (x,y,z,wd) * wd->depth;	/* used in two places */
+	wt = wood_turb (x, y, z, wd) * wd->depth;	/* used in two places */
 
 	c = fabs (VDOT (g, wd->dir));
 	A = MAGNITUDE (h) + wt;

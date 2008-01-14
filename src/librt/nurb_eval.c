@@ -22,7 +22,7 @@
 /** @file nurb_eval.c
  *
  *	Evaluate a Non Uniform Rational B-spline curve or at the
- *	given (u,v) values.
+ *	given (u, v) values.
  *  Author -
  *	Paul Randal Stay
  *
@@ -82,7 +82,7 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
 	if( k_index < 0 )
 	{
 		bu_log( "rt_nurb_s_eval: u value outside parameter range\n");
-		bu_log( "\tUV = (%g %g )\n", u,v );
+		bu_log( "\tUV = (%g %g )\n", u, v );
 		rt_nurb_s_print( "", srf );
 		bu_bomb( "rt_nurb_s_eval: u value outside parameter range\n");
 	}

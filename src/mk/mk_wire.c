@@ -60,9 +60,9 @@ main(int argc, char **argv)
    double strtrad[MAXWIRESEG];	/*  Radius at starting point of segment.  */
    double endrad[MAXWIRESEG];	/*  Radius at ending point of segment.  */
 
-   char solcyl[8],regcyl[8];	/*  Solid & region name for cylinder (cone).  */
-   char solsph[8],regsph[8];	/*  Solid & region name for sphere.  */
-   char solsub1[8],solsub2[8];	/*  Solids that are subtracted.  */
+   char solcyl[8], regcyl[8];	/*  Solid & region name for cylinder (cone).  */
+   char solsph[8], regsph[8];	/*  Solid & region name for sphere.  */
+   char solsub1[8], solsub2[8];	/*  Solids that are subtracted.  */
    char group[6];		/*  Group name.  */
 
    point_t bs;			/*  Base of cone.  */
@@ -145,7 +145,7 @@ main(int argc, char **argv)
    /*  Find name of mged file to be created.  */
    (void)printf("Enter mged file name (25 char max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%26s",filemged);
+   (void)scanf("%26s", filemged);
 
    /*  Find the number of segments.  */
    (void)printf("Enter the number of segments (maximum of %d).\n\t",
@@ -203,18 +203,18 @@ main(int argc, char **argv)
    }							/*  END # 2  */
 
    /*  Print out all info.  */
-   (void)printf("\n\nmged file created:  %s\n",filemged);
+   (void)printf("\n\nmged file created:  %s\n", filemged);
    (void)fflush(stdout);
 
    /*  Print out coordinates of segments.  */
    for(i=0; i<numseg; i++)
    {							/*  START # 5  */
 	(void)printf("Segment # %d:  ",(i+1));
-	(void)printf("(%f,%f,%f)", strtpt[i][0],strtpt[i][1],strtpt[i][2]);
+	(void)printf("(%f,%f,%f)", strtpt[i][0], strtpt[i][1], strtpt[i][2]);
 	(void)printf(" %f\n", strtrad[i]);
 	(void)printf("              ");
-	(void)printf("(%f,%f,%f)", endpt[i][0],endpt[i][1],endpt[i][2]);
-	(void)printf("%f\n",endrad[i]);
+	(void)printf("(%f,%f,%f)", endpt[i][0], endpt[i][1], endpt[i][2]);
+	(void)printf("%f\n", endrad[i]);
 	(void)fflush(stdout);
    }							/*  END # 5  */
 
@@ -222,7 +222,7 @@ main(int argc, char **argv)
    fpw = wdb_fopen(filemged);
 
    /*  Write ident record.  */
-   mk_id(fpw,"Wiring");
+   mk_id(fpw, "Wiring");
 
    /*  Create solids.  */
 
@@ -253,7 +253,7 @@ main(int argc, char **argv)
 	rdc2 = (fastf_t)endrad[i];
 
 	/*  Fill in correct number in solid name.  */
-	(void)sprintf(temp,"%d",i);
+	(void)sprintf(temp, "%d", i);
 	if(i < 10)
 	{						/*  START # 11  */
 	   solcyl[5] = '0';
@@ -266,12 +266,12 @@ main(int argc, char **argv)
 	}						/*  END # 12  */
 	else
 	{						/*  START # 13  */
-	   (void)printf("** ERROR ** i = %d\n",i);
+	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 13  */
 
 	/*  Make cylinder.  */
-	mk_cone(fpw,solcyl,bs,dir,ht,rdc1,rdc2);
+	mk_cone(fpw, solcyl, bs, dir, ht, rdc1, rdc2);
 
    }							/*  END # 10  */
 
@@ -291,7 +291,7 @@ main(int argc, char **argv)
 	rds = (fastf_t)strtrad[i];
 
 	/*  Fill in correct number in solid name.  */
-	(void)sprintf(temp,"%d",i);
+	(void)sprintf(temp, "%d", i);
 	if(i < 10)
 	{						/*  START # 21  */
 	   solsph[5] = '0';
@@ -304,12 +304,12 @@ main(int argc, char **argv)
 	}						/*  END # 22  */
 	else
 	{						/*  START # 23  */
-	   (void)printf("** ERROR ** i = %d\n",i);
+	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 23  */
 
 	/*  Make sphere.  */
-	mk_sph(fpw,solsph,cent,rds);
+	mk_sph(fpw, solsph, cent, rds);
    }							/*  END # 20  */
 
    /*  Create regions.  */
@@ -322,8 +322,8 @@ main(int argc, char **argv)
    for(i=0; i<numseg; i++)
    {							/*  START # 30  */
 	/*  Fill in correct number in region & solid names.  */
-	(void)sprintf(temp,"%d",i);
-	(void)sprintf(temp1,"%d",(i+1));
+	(void)sprintf(temp, "%d", i);
+	(void)sprintf(temp1, "%d",(i+1));
 
 	if(i < 10)
 	{						/*  START # 31  */
@@ -363,7 +363,7 @@ main(int argc, char **argv)
 
 	else
 	{						/*  START # 37  */
-	   (void)printf("** ERROR ** i = %d\n",i);
+	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 37  */
 
@@ -374,15 +374,15 @@ main(int argc, char **argv)
 	   (void)mk_addmember(solsub1,&comb.l, NULL, WMOP_SUBTRACT);
 	}						/*  END # 38  */
 
-	mk_lfcomb(fpw,regcyl,&comb,1);
+	mk_lfcomb(fpw, regcyl,&comb, 1);
    }							/*  END # 30  */
 
    /*  Create region for each sphere.  */
    for(i=1; i<numseg; i++)
    {							/*  START # 40  */
 	/*  Fill in correct region & solid names.  */
-	(void)sprintf(temp,"%d",i);
-	(void)sprintf(temp1,"%d",(i - 1));
+	(void)sprintf(temp, "%d", i);
+	(void)sprintf(temp1, "%d",(i - 1));
 
 	if(i < 10)
 	{						/*  START # 41  */
@@ -410,7 +410,7 @@ main(int argc, char **argv)
 
 	else
 	{						/*  START # 43  */
-	   (void)printf("** ERROR ** i = %d\n",i);
+	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 43  */
 
@@ -418,7 +418,7 @@ main(int argc, char **argv)
 	(void)mk_addmember(solsub1,&comb.l, NULL, WMOP_SUBTRACT);
 	(void)mk_addmember(solsub2,&comb.l, NULL, WMOP_SUBTRACT);
 
-	mk_lfcomb(fpw,regsph,&comb,1);
+	mk_lfcomb(fpw, regsph,&comb, 1);
    }							/*  END # 40  */
 
    /*  Create group.  */
@@ -428,7 +428,7 @@ main(int argc, char **argv)
 
    for(i=0; i<numseg; i++)
    {							/*  START # 50  */
-	(void)sprintf(temp,"%d",i);
+	(void)sprintf(temp, "%d", i);
 
 	if(i < 10)
 	{						/*  START # 51  */
@@ -451,7 +451,7 @@ main(int argc, char **argv)
 
 	else
 	{						/*  START # 54  */
-	   (void)printf("** ERROR ** i = %d\n",i);
+	   (void)printf("** ERROR ** i = %d\n", i);
 	   (void)fflush(stdout);
 	}						/*  END # 54  */
 
@@ -459,7 +459,7 @@ main(int argc, char **argv)
 	if(i != 0)(void)mk_addmember(regsph,&comb1.l, NULL, WMOP_UNION);
    }							/*  END # 50  */
 
-   mk_lfcomb(fpw,group,&comb1,0);
+   mk_lfcomb(fpw, group,&comb1, 0);
    wdb_close(fpw);
    return 0;
 }							/*  END # 1  */

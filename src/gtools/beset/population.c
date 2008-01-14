@@ -103,7 +103,7 @@ pop_clean (struct population *p)
 void
 pop_spawn (struct population *p)
 {
-    int i,j;
+    int i, j;
     point_t p1, p2, p3;
     struct wmember wm_hd;
     double r1, r2, r3;
@@ -140,16 +140,16 @@ pop_spawn (struct population *p)
 	p->parent[i].id = i;
 	/*
 
-	snprintf(shape, 256, "ind%.3d-%.3d", i,0);
+	snprintf(shape, 256, "ind%.3d-%.3d", i, 0);
 	mk_sph(p->db_p->dbi_wdbp, shape, p1, r1);
 	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 
 
-	snprintf(shape, 256, "ind%.3d-%.3d", i,1);
-	mk_sph(p->db_p->dbi_wdbp,shape, p2, r2);
+	snprintf(shape, 256, "ind%.3d-%.3d", i, 1);
+	mk_sph(p->db_p->dbi_wdbp, shape, p2, r2);
 	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 
-	snprintf(shape, 256, "gen%.3dind%.3d-%.3d", 0,i,2);
+	snprintf(shape, 256, "gen%.3dind%.3d-%.3d", 0, i, 2);
 	mk_sph(p->db_p->dbi_wdbp, shape, p3, r3);
 	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 	*/
@@ -204,7 +204,7 @@ pop_wrand_ind(struct individual *i, int size, fastf_t total_fitness, int offset)
 }
 
 /**
- *	P O P _ R A N D --- random number (0,1)
+ *	P O P _ R A N D --- random number (0, 1)
  */
 fastf_t
 pop_rand (void)
@@ -455,7 +455,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    do{
 		num_nodes = 0;
 		crossover_parent = &parent1->tree;
-		crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree,0));
+		crossover_node = (int)(pop_rand() * db_count_tree_nodes(parent1->tree, 0));
 		node_idx = 0;
 		pop_functree(dbi_p, dbi_c, parent1->tree, resp, NULL);
 		cross_parent = crossover_parent;
@@ -486,7 +486,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 
 	    /* cross trees */
-	    *cross_parent = chosen_node->s_child,resp;
+	    *cross_parent = chosen_node->s_child, resp;
 	    *chosen_node->s_parent =cpoint;
 
 	    while(BU_LIST_WHILE(add, node, &node->l)){
@@ -520,7 +520,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    break;
 	    /*
 	    //random node to mutate
-	    n = (int)(pop_rand() * db_count_tree_nodes(parent1->tree,0));
+	    n = (int)(pop_rand() * db_count_tree_nodes(parent1->tree, 0));
 	    s_parent = &parent1->tree;
 	    s_node = n;
 	    node = 0;

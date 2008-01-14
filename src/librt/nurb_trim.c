@@ -60,7 +60,7 @@ struct _interior_line {
 #define TRIM_IN 	1
 #define TRIM_ON 	2
 
-/* The following defines need to be 0,2,3 in order to drive the quad table
+/* The following defines need to be 0, 2, 3 in order to drive the quad table
  * and determine the appropriate case for processing the trimming curve.
  */
 
@@ -69,13 +69,13 @@ struct _interior_line {
 #define CASE_C 		3
 
 int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
-0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
+0, 0, 0, 0, 0, 3, 0, 3, 0, 2, 3, 3, 0, 3, 3, 3
 };
 
 /* This routine determines what quadrants the trimming curves lies
  * in,  It then uses a table look up to determine the whether its
- * CASE{A,B,C}, One difference from the paper is the fact that
- * if any of the points lie on the axis of the u,v quadrant system
+ * CASE{A, B, C}, One difference from the paper is the fact that
+ * if any of the points lie on the axis of the u, v quadrant system
  * then the axis is only in either Quadrant 1 or Quadrant 2 and not
  * q3 or q4. THis handles the case of endpoint problems correctly.
  */
@@ -129,7 +129,7 @@ rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  *
  * If the two endpoints of the curve lie in different quadrants than
  * the axis crosses the curve an odd number of times (TRIM_IN). Otherwise
- * the curve crosses the u,v axis a even number of times (TRIM_OUT).
+ * the curve crosses the u, v axis a even number of times (TRIM_OUT).
  * No further processing is required.
  */
 int
@@ -234,8 +234,8 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 
 /* Process Case C curves;
- * A check is placed here to determin if the u,v is on the curve.
- * Determine how many times the curve will cross the u,v axis. If
+ * A check is placed here to determin if the u, v is on the curve.
+ * Determine how many times the curve will cross the u, v axis. If
  * the curve crosses an odd number of times than the point is IN,
  * else the point is OUT. Since a case C curve need processin a
  * call to clip hte curve so that it becomes either Case B, or Case A
@@ -256,7 +256,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	int trim_flag = 0;
 	int caset;
 
-	/* determine if the the u,v values are on the curve */
+	/* determine if the the u, v values are on the curve */
 
 	if( rt_nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_IN;
 
@@ -273,7 +273,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	{
 		BU_LIST_DEQUEUE( &clip->l );
 
-		caset = rt_trim_case(clip, u,v);
+		caset = rt_trim_case(clip, u, v);
 
 		trim_flag = 0;
 
@@ -306,8 +306,8 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 /* This routine will be called several times, once for each portion of
  * the trimming curve. It returns wheter a line extended from the
- * the <u,v> point will cross the trimming curve an even or odd number
- * of times. Or the <u,v> point could be on the curve in which case
+ * the <u, v> point will cross the trimming curve an even or odd number
+ * of times. Or the <u, v> point could be on the curve in which case
  * TRIM_ON will be returned. THe algorithm uses the approach taken
  * Tom Sederburge and uses bezier clipping to produce caseA and caseB
  * curves. If the original trimming curve is a CASE C curve then further
@@ -335,7 +335,7 @@ rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 
 /* This routines is used to determine how far a point is
- * from the u,v quadrant axes.
+ * from the u, v quadrant axes.
  *
  *	Equations 3, 4, 5 in Sederberg '90 paper
  */

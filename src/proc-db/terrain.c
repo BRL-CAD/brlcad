@@ -66,7 +66,7 @@ struct rt_wdb *outfp;
 /* simulate drand48() --  using 31-bit random() -- assumed to exist */
 double drand48() {
   extern long random();
-  return (double)random() / 2147483648.0; /* range [0,1) */
+  return (double)random() / 2147483648.0; /* range [0, 1) */
 }
 #endif
 
@@ -76,7 +76,7 @@ main(int argc, char **argv)
 
 	char * id_name = "terrain database";
 	char * nurb_name = "terrain";
-	int	i,j;
+	int	i, j;
 	fastf_t 	hscale;
 
 	outfp = wdb_fopen("terrain.g");

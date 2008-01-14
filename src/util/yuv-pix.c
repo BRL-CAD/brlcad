@@ -205,9 +205,9 @@ main(int argc, char **argv)
  *  U, V: -112 .. +112 range, offset by 128 [16 .. 240]
  */
 
-#define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
+#define	V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
-#define	CLIP(out,in)		{ register int t; \
+#define	CLIP(out, in)		{ register int t; \
 		if( (t = (in)) < 0 )  (out) = 0; \
 		else if( t >= 255 )  (out) = 255; \
 		else (out) = t; }
@@ -265,11 +265,11 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 	vp = vbuf;
 	cp = yuv_buf;
 	for( i = len/2; i; i-- ) {
-		*cp++ = V5DOT(u_filter,up) + 128.0;	/* u */
-		*cp++ = V5DOT(y_filter,yp) + 16.0;	/* y */
-		*cp++ = V5DOT(v_filter,vp) + 128.0;	/* v */
+		*cp++ = V5DOT(u_filter, up) + 128.0;	/* u */
+		*cp++ = V5DOT(y_filter, yp) + 16.0;	/* y */
+		*cp++ = V5DOT(v_filter, vp) + 128.0;	/* v */
 		yp++;
-		*cp++ = V5DOT(y_filter,yp) + 16.0;	/* y */
+		*cp++ = V5DOT(y_filter, yp) + 16.0;	/* y */
 		yp++;
 		up += 2;
 		vp += 2;

@@ -45,7 +45,7 @@ void math_mat_invert(tfloat *D, tfloat *M, int S);
 
 
 void math_mat_ident(tfloat *M, int S) {
-  int	i,j;
+  int	i, j;
 
   for(i = 0; i < S; i++)
     for(j = 0; j < S; j++)

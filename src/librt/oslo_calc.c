@@ -51,8 +51,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-#define AMAX(i,j)    ( (i) > (j) ? (i) : (j) )
-#define AMIN(i,j)    ( (i) < (j) ? (i) : (j) )
+#define AMAX(i, j)    ( (i) > (j) ? (i) : (j) )
+#define AMIN(i, j)    ( (i) < (j) ? (i) : (j) )
 
 struct oslo_mat *
 rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
@@ -178,7 +178,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 		o_ptr->o_vec = (fastf_t *) bu_malloc ( sizeof( fastf_t) * (v+1),
 			    "rt_nurb_calc_oslo: oslo vector");
 
-		o_ptr->offset = AMAX(muprim -v,0);
+		o_ptr->offset = AMAX(muprim -v, 0);
 		o_ptr->osize = v;
 
 		for ( i = v, p = 0; i >= 0; i--)
@@ -205,10 +205,10 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
 			(unsigned long)omp,  omp->offset,  omp->osize,
 			(unsigned long)omp->next);
 
-		fprintf(stderr,"\t%f",  omp->o_vec[0]);
+		fprintf(stderr, "\t%f",  omp->o_vec[0]);
 
 		for ( j = 1; j <= omp->osize; j++)
-			fprintf(stderr,"\t%f",  omp->o_vec[j]);
+			fprintf(stderr, "\t%f",  omp->o_vec[j]);
 		fprintf(  stderr, "\n");
 	}
 }

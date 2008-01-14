@@ -78,11 +78,11 @@ void read_mat (void)
 		       &q[0], &q[1], &q[2], &q[3]) != 4) {
 		bu_exit(1, "nirt: read_mat(): Failed to read orientation\n");
 	    }
-	    quat_quat2mat(m,q);
+	    quat_quat2mat(m, q);
 	    if (nirt_debug & DEBUG_MAT)
 		bn_mat_print("view matrix", m);
-	    azimuth() = atan2(-m[0],m[1]) / deg2rad;
-	    elevation() = atan2(m[10],m[6]) / deg2rad;
+	    azimuth() = atan2(-m[0], m[1]) / deg2rad;
+	    elevation() = atan2(m[10], m[6]) / deg2rad;
 	    status |= RMAT_SAW_ORI;
 	} else if (strncmp(buf, "viewrot", 7) == 0) {
 	    if (sscanf(buf + 7,
@@ -95,8 +95,8 @@ void read_mat (void)
 	    }
 	    if (nirt_debug & DEBUG_MAT)
 		bn_mat_print("view matrix", m);
-	    azimuth() = atan2(-m[0],m[1]) / deg2rad;
-	    elevation() = atan2(m[10],m[6]) / deg2rad;
+	    azimuth() = atan2(-m[0], m[1]) / deg2rad;
+	    elevation() = atan2(m[10], m[6]) / deg2rad;
 	    status |= RMAT_SAW_VR;
 	}
     }

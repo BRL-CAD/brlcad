@@ -126,7 +126,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-	register int	r,g,b;
+	register int	r, g, b;
 	register long int	i;
 
 	if ( !get_args( argc, argv ) )  {
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 		if( fb_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = (long)w;
 		} else {
-			fprintf(stderr,"pixbgstrip: unable to autosize\n");
+			fprintf(stderr, "pixbgstrip: unable to autosize\n");
 		}
 	}
 

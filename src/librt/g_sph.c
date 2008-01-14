@@ -53,7 +53,7 @@
  *
  *  Given V, A, where |A| = Radius, there is a set of points on this sphere
  *
- *  { (x,y,z) | (x,y,z) is on sphere defined by V, A }
+ *  { (x, y, z) | (x, y, z) is on sphere defined by V, A }
  *
  *  To find the intersection of a line with the sphere, consider
  *  the parametric line L:
@@ -97,7 +97,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct sph_specific *sph;
 	fastf_t	magsq_a, magsq_b, magsq_c;
-	vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
 	fastf_t	f;
 	struct rt_ell_internal	*eip;
 
@@ -125,7 +125,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		return(1);		/* ELL, not SPH */
 	}
 
-	/* Create unit length versions of A,B,C */
+	/* Create unit length versions of A, B, C */
 	f = 1.0/sqrt(magsq_a);
 	VSCALE( Au, eip->a, f );
 	f = 1.0/sqrt(magsq_b);
@@ -136,17 +136,17 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("sph(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+		bu_log("sph(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("sph(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("sph(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("sph(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("sph(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
@@ -363,8 +363,8 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ S P H _ U V
  *
- *  For a hit on the surface of an SPH, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an SPH, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */

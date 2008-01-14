@@ -73,16 +73,16 @@
  */
 
 /* point types */
-#define RT_NURB_PT_XY 	1			/**< @brief x,y coordintes */
-#define RT_NURB_PT_XYZ	2			/**< @brief x,y,z coordinates */
-#define RT_NURB_PT_UV	3			/**< @brief trim u,v parameter space */
+#define RT_NURB_PT_XY 	1			/**< @brief x, y coordintes */
+#define RT_NURB_PT_XYZ	2			/**< @brief x, y, z coordinates */
+#define RT_NURB_PT_UV	3			/**< @brief trim u, v parameter space */
 #define RT_NURB_PT_DATA 4			/**< @brief random data */
 #define RT_NURB_PT_PROJ	5			/**< @brief Projected Surface */
 
 #define RT_NURB_PT_RATIONAL	1
 #define RT_NURB_PT_NONRAT 	0
 
-#define RT_NURB_MAKE_PT_TYPE(n,t,h)	((n<<5) | (t<<1) | h)
+#define RT_NURB_MAKE_PT_TYPE(n, t, h)	((n<<5) | (t<<1) | h)
 #define RT_NURB_EXTRACT_COORDS(pt)	(pt>>5)
 #define RT_NURB_EXTRACT_PT_TYPE(pt)		((pt>>1) & 0x0f)
 #define RT_NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
@@ -94,11 +94,11 @@
 #define NMG_CK_CNURB(_p)	BU_CKMAG(_p, RT_CNURB_MAGIC, "cnurb")
 #define NMG_CK_SNURB(_p)	BU_CKMAG(_p, RT_SNURB_MAGIC, "snurb")
 
-#define GET_CNURB(p/*,m*/) 		{BU_GETSTRUCT(p, edge_g_cnurb); \
-	/* NMG_INCR_INDEX(p,m); */ \
+#define GET_CNURB(p/*, m*/) 		{BU_GETSTRUCT(p, edge_g_cnurb); \
+	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; }
-#define GET_SNURB(p/*,m*/) 		{BU_GETSTRUCT(p, face_g_snurb); \
-	/* NMG_INCR_INDEX(p,m); */ \
+#define GET_SNURB(p/*, m*/) 		{BU_GETSTRUCT(p, face_g_snurb); \
+	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; }
 
 #define RT_CNURB_MAGIC	0x636e7262
@@ -110,7 +110,7 @@
 struct rt_nurb_poly {
 	struct rt_nurb_poly * next;
 	point_t		ply[3];		/**< @brief Vertices */
-	fastf_t		uv[3][2];	/**< @brief U,V parametric values */
+	fastf_t		uv[3][2];	/**< @brief U, V parametric values */
 };
 
 struct rt_nurb_uv_hit {
@@ -129,10 +129,10 @@ struct oslo_mat {
 };
 
 #if !defined(MAX)
-# define MAX(i,j)    ( (i) > (j) ? (i) : (j) )
+# define MAX(i, j)    ( (i) > (j) ? (i) : (j) )
 #endif
 #if !defined(MIN)
-# define MIN(i,j)    ( (i) < (j) ? (i) : (j) )
+# define MIN(i, j)    ( (i) < (j) ? (i) : (j) )
 #endif
 
 /* --- new way */

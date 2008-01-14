@@ -751,7 +751,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	int i;
 	int first=1;
 	int is_light=0;
-	float r,g,b;
+	float r, g, b;
 	point_t ave_pt;
 	struct bu_vls shape_name;
 	char *full_path;
@@ -836,7 +836,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		path_2_vrml_id(&shape_name, full_path);
 		fprintf( fp, "\t\tDEF %s Shape { \n", bu_vls_addr(&shape_name));
 
-		fprintf( fp, "\t\t\t# Component_ID: %d   %s\n",comb->region_id,full_path);
+		fprintf( fp, "\t\t\t# Component_ID: %d   %s\n", comb->region_id, full_path);
 		fprintf( fp, "\t\t\tappearance Appearance { \n");
 
 		if( strncmp( "plastic", mat.shader, 7 ) == 0 )
@@ -1146,13 +1146,13 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 			fprintf( fp, "\t\t\ton \tTRUE\n" );
 			if( mat.lt_fraction > 0.0 )
 				fprintf( fp, "\t\t\tintensity \t%g\n", mat.lt_fraction );
-			fprintf( fp, "\t\t\tcolor \t%g %g %g\n", r,g,b );
+			fprintf( fp, "\t\t\tcolor \t%g %g %g\n", r, g, b );
 			fprintf( fp, "\t\t\tlocation \t%g %g %g\n", V3ARGS( ave_pt ) );
 			fprintf( fp, "\t\t\tdirection \t%g %g %g\n", V3ARGS( mat.lt_dir ) );
 			fprintf( fp, "\t\t\tcutOffAngle \t%g }\n", mat.lt_angle );
 		}
 		else
-			fprintf( fp, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n",r,g,b,V3ARGS( ave_pt ) );
+			fprintf( fp, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n", r, g, b, V3ARGS( ave_pt ) );
 	}
 
 	bu_vls_free(&vls);

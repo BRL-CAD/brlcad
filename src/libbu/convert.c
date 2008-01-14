@@ -384,7 +384,7 @@ bu_cv_itemlen(register int cookie)
 	static int host_size_table[8] = {0, sizeof(char),
 																	 sizeof(short), sizeof(int),
 																	 sizeof(long int), sizeof(double)};
-	static int net_size_table[8] = {0,1,2,4,8,8};
+	static int net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
 	if( cookie & CV_HOST_MASK )
 		return host_size_table[fmt];
@@ -640,13 +640,13 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
  *	fi
  *	if (infmt == outfmt) {
  *		if (inIsHost == outIsHost) {
- *			copy(in,out)
+ *			copy(in, out)
  *			exit
  *		else if (inIsHost == net) {
- *			ntoh?(in,out);
+ *			ntoh?(in, out);
  *			exit
  *		else
- *			hton?(in,out);
+ *			hton?(in, out);
  *			exit
  *		fi
  *	fi
@@ -655,7 +655,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
  *		from = in;
  *
  *		if (inIsHost == net) {
- *			ntoh?(from,t1);
+ *			ntoh?(from, t1);
  *			from = t1;
  *		fi
  *		if (infmt != double ) {
@@ -664,20 +664,20 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
  *			else
  *				to = t2;
  *			fi
- *			castdbl(from,to);
+ *			castdbl(from, to);
  *			from = to;
  *		fi
  *
  *		if (outfmt == double ) {
  *			if (outIsHost == net) {
- *				hton?(from,out);
+ *				hton?(from, out);
  *			fi
  *		else
  *			if (outIsHost == host) {
- *				dblcast(from,out);
+ *				dblcast(from, out);
  *			else
- *				dblcast(from,t3);
- *				hton?(t3,out);
+ *				dblcast(from, t3);
+ *				hton?(t3, out);
  *			fi
  *		fi
  *	done
@@ -688,9 +688,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 {
 	int	work_count = 4096;
 	int	number_done = 0;
-	int	inIsHost,outIsHost,infmt,outfmt,insize,outsize;
+	int	inIsHost, outIsHost, infmt, outfmt, insize, outsize;
 	size_t	bufsize;
-	genptr_t	t1,t2,t3;
+	genptr_t	t1, t2, t3;
 	genptr_t	from;
 	genptr_t	to;
 	genptr_t	hold;

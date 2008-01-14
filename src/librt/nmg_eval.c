@@ -632,7 +632,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
 
 	if( do_plot )  {
 		sprintf(fname, "nmg_eval%d.pl", num);
-		if( (fp = fopen(fname,"w")) == NULL )  {
+		if( (fp = fopen(fname, "w")) == NULL )  {
 			perror(fname);
 			return;
 		}

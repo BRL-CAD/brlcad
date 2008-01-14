@@ -77,7 +77,7 @@ parse_args (int ac, char *av[], struct options *opts)
     bu_optind = 0;
     av++; ac--;
 
-    while ((c=bu_getopt(ac,av,OPTIONS)) != EOF) {
+    while ((c=bu_getopt(ac, av, OPTIONS)) != EOF) {
 	switch (c) {
 	    case 'm':
 		opts->mut_rate = atoi(bu_optarg);
@@ -119,10 +119,10 @@ int main(int argc, char *argv[]){
     int i, g; /* generation and parent counters */
     int parent1, parent2;
     int gop;
-    int best,worst;
+    int best, worst;
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
-    struct population pop = {NULL,NULL,NULL,NULL,NULL,0};
+    struct population pop = {NULL, NULL, NULL, NULL, NULL, 0};
     char dbname[256] = {0};
     struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]){
     printf("\nFINAL POPULATION\n"
 	    "----------------\n");
     for(i = 0; i < pop.size; i++)
-	printf("%s\tf:%.5g\n",NL(pop.child[i].id),
+	printf("%s\tf:%.5g\n", NL(pop.child[i].id),
 		pop.child[i].fitness);
 #endif
 

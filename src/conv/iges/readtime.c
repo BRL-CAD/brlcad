@@ -49,7 +49,7 @@ void
 Readtime( id )
 char *id;
 {
-	int i=(-1),length=0,lencard,done=0,year;
+	int i=(-1), length=0, lencard, done=0, year;
 	char num[80];
 	char year_str[5];
 
@@ -104,11 +104,11 @@ char *id;
 		year_str[2] = '\0';
 		year = atoi( year_str );
 		year += 1900;
-		bu_log( "%c%c/%c%c/%d" , num[2],num[3],num[4],num[5],
+		bu_log( "%c%c/%c%c/%d" , num[2], num[3], num[4], num[5],
 			year );
 		if( length > 12 && length < 16 )
-		bu_log( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
-			num[10],num[11],num[12] );
+		bu_log( " at %c%c:%c%c:%c%c\n" , num[7], num[8], num[9],
+			num[10], num[11], num[12] );
 
 	}
 	else
@@ -117,10 +117,10 @@ char *id;
 		year_str[3] = num[3];
 		year_str[4] = '\0';
 		year = atoi( year_str );
-		bu_log( "%c%c/%c%c/%d" , num[4],num[5],num[6],num[7],
+		bu_log( "%c%c/%c%c/%d" , num[4], num[5], num[6], num[7],
 			year );
-		bu_log( " at %c%c:%c%c:%c%c\n" , num[9],num[10],num[11],
-			num[12],num[13],num[14] );
+		bu_log( " at %c%c:%c%c:%c%c\n" , num[9], num[10], num[11],
+			num[12], num[13], num[14] );
 	}
 
 	while( card[counter] != eof && card[counter] != eor )

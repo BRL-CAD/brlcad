@@ -160,11 +160,11 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 
 	if( !rpt_overlap ) {
 		bu_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
-			noverlaps,reg1->reg_name,
-			noverlaps,reg2->reg_name,
-			noverlaps,depth,
-			noverlaps,ihit[X],ihit[Y],ihit[Z],
-			noverlaps,ohit[X],ohit[Y],ohit[Z]);
+			noverlaps, reg1->reg_name,
+			noverlaps, reg2->reg_name,
+			noverlaps, depth,
+			noverlaps, ihit[X], ihit[Y], ihit[Z],
+			noverlaps, ohit[X], ohit[Y], ohit[Z]);
 
 	/* If we report overlaps, don't print if already noted once.
 	 * Build up a linked list of known overlapping regions and compare
@@ -174,7 +174,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 		struct overlap_list	*prev_ol = (struct overlap_list *)0;
 		struct overlap_list	*op;		/* overlap list */
 		struct overlap_list     *new_op;
-		new_op =(struct overlap_list *)bu_malloc(sizeof(struct overlap_list),"overlap list");
+		new_op =(struct overlap_list *)bu_malloc(sizeof(struct overlap_list), "overlap list");
 
 		/* look for it in our list */
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -183,7 +183,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 			/* if we already have an entry for this region pair,
 			 * we increase the counter and return
 			 */
-			if( (strcmp(reg1->reg_name,op->reg1) == 0) && (strcmp(reg2->reg_name,op->reg2) == 0) ) {
+			if( (strcmp(reg1->reg_name, op->reg1) == 0) && (strcmp(reg2->reg_name, op->reg2) == 0) ) {
 				op->count++;
 				if( depth > op->maxdepth )
 					op->maxdepth = depth;

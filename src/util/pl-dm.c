@@ -408,7 +408,7 @@ refresh(){
   struct plot_list *plp;
 
   DM_DRAW_BEGIN(dmp);
-  DM_LOADMATRIX(dmp,model2view,0);
+  DM_LOADMATRIX(dmp, model2view, 0);
 
   for(BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
     if(plp->pl_draw)
@@ -540,7 +540,7 @@ size_reset()
 	register int *cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 
-	for(j = 0; j < nused; j++,cmd++,pt++ ){
+	for(j = 0; j < nused; j++, cmd++, pt++ ){
 	  switch(*cmd){
 	  case BN_VLIST_POLY_START:
 	  case BN_VLIST_POLY_VERTNORM:
@@ -593,7 +593,7 @@ new_mats()
  * alpha, beta, and gamma as angles of rotation.
  *
  * NOTE:  Only initialize the rotation 3x3 parts of the 4x4
- * There is important information in dx,dy,dz,s .
+ * There is important information in dx, dy, dz, s .
  */
 static void
 buildHrot( mat, alpha, beta, ggamma )
@@ -683,11 +683,11 @@ char    **argv;
     do_size_reset = 0;
 
   /* read plot files */
-  for(read_file=0,i=1; i < argc; ++i){
+  for(read_file=0, i=1; i < argc; ++i){
     char *bnp;
 
     file = argv[i];
-    if((fp = fopen(file,"r")) == NULL){
+    if((fp = fopen(file, "r")) == NULL){
       bu_log("%s: can't open \"%s\"\n", argv[0], file);
       continue;
     }
@@ -704,7 +704,7 @@ char    **argv;
     /* check for existing objects with same name as argv[i] */
     for(BU_LIST_FOR(plp, plot_list, &HeadPlot.l)){
       /* found object with same name */
-      if(!strcmp(bu_vls_addr(&plp->pl_name),bnp)){
+      if(!strcmp(bu_vls_addr(&plp->pl_name), bnp)){
 	rt_vlblock_free(plp->pl_vbp);
 	goto up_to_vl;
       }

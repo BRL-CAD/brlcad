@@ -121,14 +121,14 @@ main(int argc, char **argv)
 	outbytes = inbytes * 2;		/* bytes/ output line */
 	outsize = file_width * file_height * 4 * 3;
 	if( (outbuf = (unsigned char *)malloc( outsize )) == (unsigned char *)0 )  {
-		fprintf(stderr,"pixinterp2x:  unable to malloc buffer\n");
+		fprintf(stderr, "pixinterp2x:  unable to malloc buffer\n");
 		bu_exit ( 1, NULL );
 	}
 
 	outy = -2;
 	for( iny = 0; iny < file_height; iny++ )  {
 		if( fread( (char *)inbuf, 1, inbytes, infp ) != inbytes )  {
-			fprintf(stderr,"pixinterp2x fread error\n");
+			fprintf(stderr, "pixinterp2x fread error\n");
 			break;
 		}
 

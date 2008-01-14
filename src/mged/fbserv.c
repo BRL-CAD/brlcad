@@ -180,7 +180,7 @@ set_port(void)
     }
 
     /*XXX hardwired for now */
-    sprintf(hostname,"localhost");
+    sprintf(hostname, "localhost");
 
 #define MAX_PORT_TRIES 100
 
@@ -340,9 +340,9 @@ set_port(void)
     /* Try a reasonable number of times to hang a listen */
     for(i = 0; i < MAX_PORT_TRIES; ++i){
 	if(mged_variables->mv_port < 1024)
-	    sprintf(portname,"%d", mged_variables->mv_port + 5559);
+	    sprintf(portname, "%d", mged_variables->mv_port + 5559);
 	else
-	    sprintf(portname,"%d", mged_variables->mv_port);
+	    sprintf(portname, "%d", mged_variables->mv_port);
 
 	/*
 	 * Hang an unending listen for PKG connections

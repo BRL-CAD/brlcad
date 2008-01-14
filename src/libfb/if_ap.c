@@ -154,18 +154,18 @@ int	width, height;
     window.left = 0;
     window.width = width;
     window.height = height;
-    pad_$create_window("",0,pad_$transcript,1,window,graphics_strid,status);
+    pad_$create_window("", 0, pad_$transcript, 1, window, graphics_strid, status);
 
 /*  Size and initialize the window  */
 
     display_bm_size.x_size = width;
     display_bm_size.y_size = height;
-    gpr_$init(mode,graphics_strid,display_bm_size,hi_plane,display_bm,status);
-    gpr_$set_window_id(window_id,status);
-    gpr_$enable_input(gpr_$entered_window,key_set,status);
-    gpr_$set_auto_close(grpahics_strid,1,true,status);
-    gpr_$set_obscured_opt(gpr_$pop_if_obs,status);
-    gpr_$set_auto_refresh(true,status);
+    gpr_$init(mode, graphics_strid, display_bm_size, hi_plane, display_bm, status);
+    gpr_$set_window_id(window_id, status);
+    gpr_$enable_input(gpr_$entered_window, key_set, status);
+    gpr_$set_auto_close(grpahics_strid, 1, true, status);
+    gpr_$set_obscured_opt(gpr_$pop_if_obs, status);
+    gpr_$set_auto_refresh(true, status);
     return(0);
 }
 
@@ -174,7 +174,7 @@ ap_close( ifp )
 FBIO	*ifp;
 {
     status_$t status;
-    gpr_$terminate(false,status);
+    gpr_$terminate(false, status);
     return(0);
 }
 
@@ -187,7 +187,7 @@ RGBpixel	*pp;
 
 /*  Clear to the background color  */
 
-    gpr_$clear(-2,status);
+    gpr_$clear(-2, status);
     return(0);
 }
 

@@ -41,7 +41,7 @@
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * A  "smarter" malloc v1.0			William L. Sebok
- *					Sept. 24, 1984 rev. June 30,1986
+ *					Sept. 24, 1984 rev. June 30, 1986
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
  *	Algorithm:
@@ -158,13 +158,13 @@ extern void (*mlabort)();
 
 #define debug 1
 #ifdef debug
-# define ASSERT(p,q)	if (!(p)) { \
+# define ASSERT(p, q)	if (!(p)) { \
 				bu_semaphore_acquire( BU_SEM_SYSCALL ); \
 				mllcerr(q); \
 				bu_semaphore_release( BU_SEM_SYSCALL ); \
 			}
 #else
-# define ASSERT(p,q)
+# define ASSERT(p, q)
 #endif
 
 #ifndef NULL
@@ -258,7 +258,7 @@ struct rt_pm_res *pmem;
 "\nrt_pmalloc: Entry in adjacency chain found with address lower than Chain head!\n"
 			)
 #endif
-		rt_pm_insque(TOADJ(p),pmem->adjhead.q_back);
+		rt_pm_insque(TOADJ(p), pmem->adjhead.q_back);
 	}
 
 foundit:
@@ -272,7 +272,7 @@ foundit:
 		q->ov_magic = MAGIC_FREE;
 
 		/* add surplus into adjacency chain */
-		rt_pm_insque(TOADJ(q),TOADJ(p));
+		rt_pm_insque(TOADJ(q), TOADJ(p));
 
 		/* add surplus into bucket chain */
 		rt_pm_insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
@@ -337,7 +337,7 @@ char *p;
 	register char *q;
 	q = p;
 	while (*q++);	/* find end of string */
-	(void)write(2,p,q-p-1);
+	(void)write(2, p, q-p-1);
 	if (mlabort)
 		(*mlabort)();
 	else
@@ -353,7 +353,7 @@ char *p;
  */
 
 static void
-rt_pm_insque(item,queu)
+rt_pm_insque(item, queu)
 register struct rt_qelem *item, *queu;
 /* insert "item" after "queu" */
 {
@@ -379,7 +379,7 @@ register struct rt_qelem *item;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *  rt_pfree					William L. Sebok
- * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30,1986
+ * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30, 1986
  *
  * 	rt_pfree takes a previously rt_pmalloc-allocated area at mem and frees it.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -492,7 +492,7 @@ register struct rt_pm_res *pmem;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *  rt_prealloc				William L. Sebok
- * A  "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30,1986
+ * A  "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30, 1986
  *
  *	rt_prealloc takes previously rt_pmalloc-allocated area at mem, and tries
  *	 to change its size to nbytes bytes, moving it and copying its
@@ -500,7 +500,7 @@ register struct rt_pm_res *pmem;
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 char *
-rt_prealloc(mem,nbytes, pmem)
+rt_prealloc(mem, nbytes, pmem)
 register char *mem; unsigned nbytes;
 register struct rt_pm_res *pmem;
 {
@@ -540,7 +540,7 @@ register struct rt_pm_res *pmem;
 				+ sizeof(struct overhead));
 			q->ov_length = surplus;
 			q->ov_magic = MAGIC_FREE;
-			rt_pm_insque(TOADJ(q),TOADJ(p));
+			rt_pm_insque(TOADJ(q), TOADJ(p));
 			rt_pm_insque(TOBUK(q),&pmem->buckets[mlindx(surplus)]);
 			p->ov_length -= surplus;
 		}
@@ -577,7 +577,7 @@ register struct rt_pm_res *pmem;
 		register Size n;
 		n = length - sizeof(struct overhead);
 		nbytes = (nbytes < n) ? nbytes: n;
-		(void)memmove(newmem,mem,nbytes);
+		(void)memmove(newmem, mem, nbytes);
 	}
 
 	if (endfree)
@@ -589,7 +589,7 @@ register struct rt_pm_res *pmem;
 #if 0
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *  rt_forget				William L. Sebok
- * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30,1986
+ * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30, 1986
  *
  *	rt_forget returns to the rt_pmalloc arena all memory allocated by sbrk()
  *	 above "bpnt".
@@ -661,7 +661,7 @@ struct rt_pm_res *pmem;
 			/* construct busy entry and free it */
 			q->ov_magic = MAGIC_BUSY;
 			q->ov_length = l;
-			rt_pm_insque(TOADJ(q),TOADJ(p));
+			rt_pm_insque(TOADJ(q), TOADJ(p));
 			rt_pfree((char *)q + sizeof(struct overhead));
 		} else if (pinvalid == 0) {
 			/* append it to previous entry */

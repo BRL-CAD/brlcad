@@ -188,7 +188,7 @@ add_to_list(struct nametbl *l, char *name)
 	l->names = (struct name *)bu_realloc(l->names, sizeof(struct name)*(l->names_len+1), "realloc l->names");
 	for (i = l->names_used; i < l->names_len; i++) {
 	    bu_vls_init(&l->names[i].src);
-	    l->names[i].dest = (struct bu_vls *)bu_calloc(l->name_size,sizeof(struct bu_vls), "alloc l->names.dest");
+	    l->names[i].dest = (struct bu_vls *)bu_calloc(l->name_size, sizeof(struct bu_vls), "alloc l->names.dest");
 	    for (j = 0; j < l->name_size; j++)
 		bu_vls_init(&l->names[i].dest[j]);
 	}
@@ -218,7 +218,7 @@ index_in_list(struct nametbl l, char *name)
 static int
 is_in_list(struct nametbl l, char *name)
 {
-    return index_in_list(l,name) != -1;
+    return index_in_list(l, name) != -1;
 }
 
 /**
@@ -563,7 +563,7 @@ copy_v5_comb_tree(union tree *tree, int idx)
 	    break;
 	case OP_DB_LEAF:
 	    buf = tree->tr_l.tl_name;
-	    tree->tr_l.tl_name = bu_strdup(bu_vls_addr(&obj_list.names[index_in_list(obj_list,buf)].dest[idx]));
+	    tree->tr_l.tl_name = bu_strdup(bu_vls_addr(&obj_list.names[index_in_list(obj_list, buf)].dest[idx]));
 	    bu_free(buf, "node name");
 	    break;
 	default:
@@ -1220,7 +1220,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	for (i = 0; i < n_links; i++) {
 	    /* global dbip */
 	    dps[i] = db_lookup(dbip, bu_vls_addr(&links[i].name), LOOKUP_QUIET);
-	    /* VSET(rots[i], 0,0,0);*/
+	    /* VSET(rots[i], 0, 0, 0);*/
 	}
 
 	for (i = 0; i < n_verts-1; i++)

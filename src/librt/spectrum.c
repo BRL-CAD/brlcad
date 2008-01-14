@@ -187,7 +187,7 @@ again:
  *  The assumption here is that the spectrum is made up of exactly three
  *  non-overlapping bands, and the reflectance is constant over each:
  *
- *	red	572nm to 1,000,000nm	(includes the full IR band)
+ *	red	572nm to 1, 000, 000nm	(includes the full IR band)
  *	green	492nm to 572nm		(just green)
  *	blue	1nm to 492nm		(includes Ultraviolet)
  *
@@ -226,9 +226,9 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 
 #define PLANCK_C1	37415		/* watts um^4 cm^-2 */
 #define PLANCK_C2	14387.86	/* um K */
-/* Russ gives these values at 37,415 and 14,388 */
-/* Handbook of Physics and Chem gives these values as 37,403 and 14,384 */
-/* Aircraft Combat Surv gives these values as 37,483.2 and 14,387.86 */
+/* Russ gives these values at 37, 415 and 14, 388 */
+/* Handbook of Physics and Chem gives these values as 37, 403 and 14, 384 */
+/* Aircraft Combat Surv gives these values as 37, 483.2 and 14, 387.86 */
 
 /* Requires wavelength _w in um, not nm, returns units: W / cm**2 / um */
 #define	PLANCK(_w,_tempK)	\

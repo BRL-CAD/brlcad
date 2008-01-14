@@ -155,7 +155,7 @@ struct command_tab view_cmdtab[] = {
     {"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
-     cm_vrot,	17,17},
+     cm_vrot,	17, 17},
     {"orientation", "quaturnion", "set view direction from quaturnion",
      cm_orientation,	5, 5},
     {"set", 	"", "show or set parameters",
@@ -281,13 +281,13 @@ rt_write(FILE *fp, fastf_t *eye_model)
     (void)fprintf(fp, "start 0; clean;\n");
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i=0;i<sp->s_fullpath.fp_len;i++) {
-	    DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags &= ~DIR_USED;
+	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
 	}
     }
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
 	    struct directory *dp;
-	    dp = DB_FULL_PATH_GET(&sp->s_fullpath,i);
+	    dp = DB_FULL_PATH_GET(&sp->s_fullpath, i);
 	    if (!(dp->d_flags & DIR_USED)) {
 		register struct animate *anp;
 		for (anp = dp->d_animate; anp;
@@ -301,7 +301,7 @@ rt_write(FILE *fp, fastf_t *eye_model)
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i=0;i<sp->s_fullpath.fp_len;i++) {
-	    DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_flags &= ~DIR_USED;
+	    DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags &= ~DIR_USED;
 	}
     }
 #undef DIR_USED
@@ -460,7 +460,7 @@ rt_output_handler(ClientData clientData, int mask)
 #ifndef _WIN32
     count = read((int)run_rtp->fd, line, RT_MAXLINE);
 #else
-    count = ReadFile(run_rtp->fd, line, 5120,&count,0);
+    count = ReadFile(run_rtp->fd, line, 5120,&count, 0);
 #endif
 
     if (count <= 0) {
@@ -475,7 +475,7 @@ rt_output_handler(ClientData clientData, int mask)
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
 #else
-	Tcl_DeleteChannelHandler(run_rtp->chan,rt_output_handler,(ClientData)run_rtp);
+	Tcl_DeleteChannelHandler(run_rtp->chan, rt_output_handler,(ClientData)run_rtp);
 	CloseHandle(run_rtp->fd);
 #endif
 
@@ -649,8 +649,8 @@ run_rt(void)
     register struct solid *sp;
     register int i;
     FILE *fp_in;
-    HANDLE pipe_in[2],hSaveStdin,pipe_inDup;
-    HANDLE pipe_err[2],hSaveStderr,pipe_errDup;
+    HANDLE pipe_in[2], hSaveStdin, pipe_inDup;
+    HANDLE pipe_err[2], hSaveStderr, pipe_errDup;
     vect_t eye_model;
     struct run_rt	*run_rtp;
 
@@ -716,9 +716,9 @@ run_rt(void)
     si.hStdError   = pipe_err[1];
 
 
-    snprintf(line, RT_MAXLINE+1, "%s ",rt_cmd_vec[0]);
+    snprintf(line, RT_MAXLINE+1, "%s ", rt_cmd_vec[0]);
     for(i=1;i<rt_cmd_vec_len;i++) {
-	snprintf(name, 2048, "%s ",rt_cmd_vec[i]);
+	snprintf(name, 2048, "%s ", rt_cmd_vec[i]);
 	strncat(line, name, RT_MAXLINE-strlen(line));
 	line[2048-1] = '\0'; /* sanity */
     }
@@ -760,8 +760,8 @@ run_rt(void)
     run_rtp->pid = pi.dwProcessId;
     run_rtp->aborted=0;
 
-    run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd,TCL_READABLE);
-    Tcl_CreateChannelHandler(run_rtp->chan,TCL_READABLE,
+    run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
+    Tcl_CreateChannelHandler(run_rtp->chan, TCL_READABLE,
 			     rt_output_handler, (ClientData)run_rtp);
 
     return 0;
@@ -1093,9 +1093,9 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if( view_state->vs_vop->vo_perspective > 0 )
 	(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
     for( i=2; i < argc; i++ )
-	(void)fprintf(fp,"%s ", argv[i]);
-    (void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
-    (void)fprintf(fp," %s\\\n ", dbip->dbi_filename);
+	(void)fprintf(fp, "%s ", argv[i]);
+    (void)fprintf(fp, "\\\n -o %s.pix\\\n $*\\\n", base);
+    (void)fprintf(fp, " %s\\\n ", dbip->dbi_filename);
 
     /* Find all unique top-level entries.
      *  Mark ones already done with s_wflag == UP
@@ -1116,8 +1116,8 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		forw->s_wflag = UP;
 	}
     }
-    (void)fprintf(fp,"\\\n 2>> %s.log\\\n", base);
-    (void)fprintf(fp," <<EOF\n");
+    (void)fprintf(fp, "\\\n 2>> %s.log\\\n", base);
+    (void)fprintf(fp, " <<EOF\n");
 
     {
 	vect_t eye_model;
@@ -1126,7 +1126,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	rt_write(fp, eye_model);
     }
 
-    (void)fprintf(fp,"\nEOF\n");
+    (void)fprintf(fp, "\nEOF\n");
     (void)fclose( fp );
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
@@ -1347,14 +1347,14 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
      * postponed until the end command runs.  Since we are at the "end"
      * of a commands section, we may finish the computations.
      */
-    /* First step:  put eye at view center (view 0,0,0) */
+    /* First step:  put eye at view center (view 0, 0, 0) */
     MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
     MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
     new_mats(); /* actually updates display here (maybe?) */
 
     /* XXX not sure why the correction factor is needed, but it works -- csm */
-    /*  Second step:  put eye at view 0,0,1.
-     *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
+    /*  Second step:  put eye at view 0, 0, 1.
+     *  For eye to be at 0, 0, 1, the old 0, 0,-1 needs to become 0, 0, 0.
      VSET(xlate, 0.0, 0.0, -1.0);
      MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
      MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, new_cent);
@@ -1437,7 +1437,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	default:
 	case -1:
 	    mode = -1;
-	    Tcl_AppendResult(interp, "default mode:  eyepoint at (0,0,1) viewspace\n", (char *)NULL);
+	    Tcl_AppendResult(interp, "default mode:  eyepoint at (0, 0, 1) viewspace\n", (char *)NULL);
 	    break;
 	case 0:
 	    Tcl_AppendResult(interp, "rotation supressed, center is eyepoint\n", (char *)NULL);
@@ -1487,7 +1487,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    register int	nused = vp->nused;
 		    register int	*cmd = vp->cmd;
 		    register point_t *pt = vp->pt;
-		    for( i = 0; i < nused; i++,cmd++,pt++ )  {
+		    for( i = 0; i < nused; i++, cmd++, pt++ )  {
 			switch( *cmd )  {
 			    case BN_VLIST_POLY_START:
 			    case BN_VLIST_POLY_VERTNORM:
@@ -1517,7 +1517,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+		for( i = 0; i < nused; i++, cmd++, pt++ )  {
 		    switch( *cmd )  {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
@@ -1570,7 +1570,7 @@ f_savekey(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
     if( argc > 2 ) {
 	time = atof( argv[2] );
-	(void)fprintf(fp,"%f\n", time);
+	(void)fprintf(fp, "%f\n", time);
     }
     /*
      *  Eye is in conventional place.
@@ -1611,7 +1611,7 @@ static struct command_tab cmdtab[] = {
     {"orientation", "quaturnion", "set view direction from quaturnion",
      cm_orientation,	5, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
-     cm_vrot,	17,17},
+     cm_vrot,	17, 17},
     {"end", 	"", "end of frame setup, begin raytrace",
      cm_end,		1, 1},
     {"multiview", "", "produce stock set of views",
@@ -1710,7 +1710,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Parse options */
     bu_optind = 1;			/* re-init bu_getopt() */
-    while( (c=bu_getopt(argc,argv,"d:vD:K:")) != EOF )  {
+    while( (c=bu_getopt(argc, argv, "d:vD:K:")) != EOF )  {
 	switch(c)  {
 	    case 'd':
 		rtif_delay = atof(bu_optarg);
@@ -1757,7 +1757,7 @@ f_preview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     rtif_vbp = rt_vlblock_init();
 
-    Tcl_AppendResult(interp, "eyepoint at (0,0,1) viewspace\n", (char *)NULL);
+    Tcl_AppendResult(interp, "eyepoint at (0, 0, 1) viewspace\n", (char *)NULL);
 
     /*
      *  Initialize the view to the current one in MGED
@@ -1843,9 +1843,9 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int pipe_out[2] = {0, 0};
     int pipe_err[2] = {0, 0};
 #  else
-    HANDLE pipe_in[2],hSaveStdin,pipe_inDup;
-    HANDLE pipe_out[2],hSaveStdout,pipe_outDup;
-    HANDLE pipe_err[2],hSaveStderr,pipe_errDup;
+    HANDLE pipe_in[2], hSaveStdin, pipe_inDup;
+    HANDLE pipe_out[2], hSaveStdout, pipe_outDup;
+    HANDLE pipe_err[2], hSaveStderr, pipe_errDup;
     STARTUPINFO si = {0};
     PROCESS_INFORMATION pi = {0};
     SECURITY_ATTRIBUTES sa          = {0};
@@ -2196,21 +2196,21 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     si.hStdError   = pipe_err[1];
 
 
-    snprintf(line1, 2048, "%s ",rt_cmd_vec[0]);
+    snprintf(line1, 2048, "%s ", rt_cmd_vec[0]);
     for(i=1;i<rt_cmd_vec_len;i++) {
-	snprintf(name, 1024, "%s ",rt_cmd_vec[i]);
+	snprintf(name, 1024, "%s ", rt_cmd_vec[i]);
 	strncat(line1, name, 2048-strlen(line1)-1);
 	line1[1024-1] = '\0'; /* sanity */
-	if(strstr(name,"-e") != NULL) {
+	if(strstr(name, "-e") != NULL) {
 	    i++;
-	    snprintf(name, 1024, "\"%s\" ",rt_cmd_vec[i]);
+	    snprintf(name, 1024, "\"%s\" ", rt_cmd_vec[i]);
 	    name[1024-1] = '\0'; /* sanity */
 	    strncat(line1, name, 2048-strlen(line1)-1);
 	    line1[2048-1] = '\0'; /* sanity */
 	}
     }
 
-    if(CreateProcess( NULL, line1, NULL, NULL,TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi )) {
+    if(CreateProcess( NULL, line1, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &pi )) {
 	SetStdHandle(STD_INPUT_HANDLE, hSaveStdin);
 	SetStdHandle(STD_OUTPUT_HANDLE, hSaveStdout);
 	SetStdHandle(STD_ERROR_HANDLE, hSaveStderr);
@@ -2370,9 +2370,9 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /*
-     * The last two arguments are expected to be x,y in view coordinates.
+     * The last two arguments are expected to be x, y in view coordinates.
      * It is also assumed that view z will be the front of the viewing cube.
-     * These coordinates are converted to x,y,z in model coordinates and then
+     * These coordinates are converted to x, y, z in model coordinates and then
      * converted to local units before being handed to nirt. All other
      * arguments are passed straight through to nirt.
      */
@@ -2549,7 +2549,7 @@ cm_end(int argc, char **argv)
 	RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_DRAW );
     }
 
-    /* First step:  put eye at view center (view 0,0,0) */
+    /* First step:  put eye at view center (view 0, 0, 0) */
     MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
     MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
     new_mats();
@@ -2567,8 +2567,8 @@ cm_end(int argc, char **argv)
     RT_ADD_VLIST(vhead, ym, BN_VLIST_LINE_DRAW);
     RT_ADD_VLIST(vhead, rtif_eye_model, BN_VLIST_LINE_MOVE);
 
-    /*  Second step:  put eye at view 0,0,1.
-     *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
+    /*  Second step:  put eye at view 0, 0, 1.
+     *  For eye to be at 0, 0, 1, the old 0, 0,-1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);

@@ -36,7 +36,7 @@ void
 Makegroup()
 {
 
-	int i,j,comblen=0,nurbs=0;
+	int i, j, comblen=0, nurbs=0;
 	struct wmember head,*wmem;
 	fastf_t *flt;
 

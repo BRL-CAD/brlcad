@@ -103,7 +103,7 @@ int main(int argc, char **argv)
      * the objects in the database file.  That is the job of rt_dirbuild()
      */
     if( (rtip=rt_dirbuild(argv[1], (char *)NULL, 0)) == RTI_NULL ) {
-	fprintf(stderr,"rt_dirbuild failure\n");
+	fprintf(stderr, "rt_dirbuild failure\n");
 	return 2;
     }
 
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
      */
     if( rt_gettrees_and_attrs( rtip, (const char **)NULL,
 			       argc, (const char **)argv, 1 ) ) {
-	fprintf(stderr,"rt_gettrees FAILED\n");
+	fprintf(stderr, "rt_gettrees FAILED\n");
 	return 1;
     }
 

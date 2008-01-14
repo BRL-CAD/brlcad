@@ -199,14 +199,14 @@ more:
 			/* Partition ends in this cell */
 			frac = (pp->pt_outhit->hit_dist -
 				cur_depth) / cell_depth;
-			fprintf(outfp,"%d %d %d %d %8f\n",
+			fprintf(outfp, "%d %d %d %d %8f\n",
 				ap->a_x, ap->a_y, d,
 				pp->pt_regionp->reg_regionid, frac );
 			continue;
 		}
 		/* Partition starts in this cell, ends in some later cell */
 		frac = ( (d+1) * cell_depth - cur_depth ) / cell_depth;
-		fprintf(outfp,"%d %d %d %d %8f\n",
+		fprintf(outfp, "%d %d %d %d %8f\n",
 			ap->a_x, ap->a_y, d,
 			pp->pt_regionp->reg_regionid, frac );
 		d++;

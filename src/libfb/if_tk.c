@@ -357,7 +357,7 @@ HIDDEN int
 tk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_getcursor( 0x%lx, 0x%x,0x%x,0x%x )\n",
+    fb_log( "fb_getcursor( 0x%lx, 0x%x, 0x%x, 0x%x )\n",
 	    (unsigned long)ifp, mode, x, y );
     fb_sim_getcursor( ifp, mode, x, y );
     fb_log( " <= %d %d %d\n", *mode, *x, *y );

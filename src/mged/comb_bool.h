@@ -49,7 +49,7 @@ struct bool_tree_node
 
 #define bt_opn(n)		((n) -> btn_opn)
 #define bt_leaf_name(n)		((n) -> btn_operands.leaf_name)
-#define bt_opd(n,d)		((n) -> btn_operands.operands[(d)])
+#define bt_opd(n, d)		((n) -> btn_operands.operands[(d)])
 
 #define bt_is_leaf(n)		(bt_opn((n)) == OPN_NULL)
 
@@ -107,7 +107,7 @@ extern int cvt_to_gift_bool();
 #endif
 
 
-#define show_tree(t,l)		if (l)				\
+#define show_tree(t, l)		if (l)				\
 				{				\
 				    show_tree_lisp((t));	\
 				    printf("\n");		\

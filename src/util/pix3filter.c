@@ -66,17 +66,17 @@ struct	kernels {
 	int	kernoffset;	/* To be added to result */
 } kernel[] = {
 	{ "Low Pass", "lo", {1, 3, 1, 3, 5, 3, 1, 3, 1,
-			    3, 5, 3, 5,10, 5, 3, 5, 3,
+			    3, 5, 3, 5, 10, 5, 3, 5, 3,
 			    1, 3, 1, 3, 5, 3, 1, 3, 1}, 84, 0 },
 	{ "High Pass", "hi", {-1, -2, -1, -2, -4, -2, -1, -2, -1,
 			     -2, -4, -2, -4, 56, -4, -2, -4, -2,
 			     -1, -2, -1, -2, -4, -2, -1, -2, -1}, 1, 0},
 	{ "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1,
-				 1, 1, 1, 1,27, 1, 1, 1, 1,
+				 1, 1, 1, 1, 27, 1, 1, 1, 1,
 				 1, 1, 1, 1, 1, 1, 1, 1, 1}, 53, 0},
 	{ "Animation Smear", "s",{1, 1, 1, 1, 1, 1, 1, 1, 1,
 				 1, 1, 1, 1, 1, 1, 1, 1, 1,
-				 2, 2, 2, 2,35, 2, 2, 2, 2}, 69, 0},
+				 2, 2, 2, 2, 35, 2, 2, 2, 2}, 69, 0},
 	{ NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0 },
 };
 
@@ -327,8 +327,8 @@ main(int argc, char **argv)
 				if( value > max ) max = value;
 				if( value < min ) min = value;
 				if( verbose && (value > 255 || value < 0) ) {
-					fprintf(stderr,"Value %d\n", value);
-					fprintf(stderr,"r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
+					fprintf(stderr, "Value %d\n", value);
+					fprintf(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
 				}
 				if( value < 0 )
 					obuf[x] = 0;

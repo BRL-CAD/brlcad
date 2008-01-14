@@ -62,7 +62,7 @@ struct nurb_hit {
 	fastf_t		hit_dist;	/* Distance from the r_pt to surface */
 	point_t		hit_point;	/* intersection point */
 	vect_t		hit_normal;	/* Surface normal */
-	fastf_t		hit_uv[2];	/* Surface parametric u,v */
+	fastf_t		hit_uv[2];	/* Surface parametric u, v */
 	char *		hit_private;	/* Store current nurb root */
 };
 
@@ -294,7 +294,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 			segp->seg_out.hit_vpriv[0] = h2->hit_uv[0];
 			segp->seg_out.hit_vpriv[1] = h2->hit_uv[1];
 			segp->seg_out.hit_private = h2->hit_private;
-			bu_free( (char *)h2,"rt_nurb_shot: nurb hit");
+			bu_free( (char *)h2, "rt_nurb_shot: nurb hit");
 			hit_num++;
 		}
 		else
@@ -393,8 +393,8 @@ rt_nurb_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 /**
  *  			R T _ N U R B _ U V
  *
- *  For a hit on the surface of an nurb, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an nurb, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -632,14 +632,14 @@ rt_nurb_import(struct rt_db_internal *ip, const struct bu_external *ep, register
 		}
 
 		if( rp->d.d_geom_type == 3)
-			pt_type = RT_NURB_MAKE_PT_TYPE(3,RT_NURB_PT_XYZ,RT_NURB_PT_NONRAT);
+			pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 		else
-			pt_type = RT_NURB_MAKE_PT_TYPE(4,RT_NURB_PT_XYZ,RT_NURB_PT_RATIONAL);
+			pt_type = RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
 
 		sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
-			rp->d.d_order[0],rp->d.d_order[1],
-			rp->d.d_kv_size[0],rp->d.d_kv_size[1],
-			rp->d.d_ctl_size[0],rp->d.d_ctl_size[1],
+			rp->d.d_order[0], rp->d.d_order[1],
+			rp->d.d_kv_size[0], rp->d.d_kv_size[1],
+			rp->d.d_ctl_size[0], rp->d.d_ctl_size[1],
 			pt_type, (struct resource *)NULL);
 
 		vp = (dbfloat_t *) &rp[1];
@@ -838,7 +838,7 @@ rt_nurb_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = total_grans * sizeof(union record);
-	ep->ext_buf = (genptr_t)bu_calloc(1,ep->ext_nbytes,"nurb external");
+	ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nurb external");
 	rec = (union record *)ep->ext_buf;
 
 	rec[0].B.B_id = ID_BSOLID;
@@ -939,7 +939,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 		ep->ext_nbytes += rt_nurb_bytes(sip->srfs[s]);
 	}
 
-	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes,"nurb external");
+	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "nurb external");
 	cp = (unsigned char *)ep->ext_buf;
 
 	(void)bu_plong( cp, sip->nsrf );
@@ -1033,14 +1033,14 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		s_size[1] = bu_glong( cp );
 		cp += SIZEOF_NETWORK_LONG;
 		if( pt_type == 3)
-			pt_type = RT_NURB_MAKE_PT_TYPE(3,RT_NURB_PT_XYZ,RT_NURB_PT_NONRAT);
+			pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 		else
-			pt_type = RT_NURB_MAKE_PT_TYPE(4,RT_NURB_PT_XYZ,RT_NURB_PT_RATIONAL);
+			pt_type = RT_NURB_MAKE_PT_TYPE(4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL);
 
 		sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
-			order[0],order[1],
-			u_size,v_size,
-			s_size[0],s_size[1],
+			order[0], order[1],
+			u_size, v_size,
+			s_size[0], s_size[1],
 			pt_type, (struct resource *)NULL);
 
 		srf = sip->srfs[s];
@@ -1348,9 +1348,9 @@ rt_nurb_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 							return( TCL_ERROR );
 						}
 						nurb->srfs[srf_no] = (struct face_g_snurb *) rt_nurb_new_snurb(
-						      order[0],order[1],
-						      u_size,v_size,
-						      s_size[0],s_size[1],
+						      order[0], order[1],
+						      u_size, v_size,
+						      s_size[0], s_size[1],
 						      pt_type, (struct resource *)NULL);
 						srf = nurb->srfs[srf_no];
 						bu_free( (char *)order, "order" );

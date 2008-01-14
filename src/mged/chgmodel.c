@@ -471,7 +471,7 @@ f_rmater(
   char line[LINELEN];
   char name[128];
   char shader[256];
-  int r,g,b;
+  int r, g, b;
   int override;
   int inherit;
 
@@ -543,7 +543,7 @@ extract_mater_from_line(
 	int *override,
 	int *inherit)
 {
-  int i,j,k;
+  int i, j, k;
   char *str[3];
 
   str[0] = name;
@@ -1841,7 +1841,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
 	VSUB2(model_incr, new_vertex, ed_sol_pt);
 	MAT_DELTAS_VEC(incr, model_incr);
-	MAT_COPY(old,modelchanges);
+	MAT_COPY(old, modelchanges);
 	bn_mat_mul(modelchanges, incr, old);
 #ifdef DO_NEW_EDIT_MATS
 	new_edit_mats();
@@ -2030,7 +2030,7 @@ f_fracture(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  bu_vls_free(&tmp_vls);
 	}
 
-	/*	for(maxdigits=1,i=tf+tw+tp ; i > 0 ; i /= 10)
+	/*	for(maxdigits=1, i=tf+tw+tp ; i > 0 ; i /= 10)
 	 *	maxdigits++;
 	 */
 

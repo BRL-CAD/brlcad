@@ -464,7 +464,7 @@ equal_start:
 				 * Segment and partition start at
 				 * (roughly) the same point.
 				 * When fuseing 2 points together
-				 * i.e., when NEAR_ZERO(diff,tol) is true,
+				 * i.e., when NEAR_ZERO(diff, tol) is true,
 				 * the two points MUST be forced to become
 				 * exactly equal!
 				 */
@@ -859,7 +859,7 @@ rt_fdiff(double a, double b)
 	register double d;
 	register int ret;
 
-	/* d = Max(Abs(a),Abs(b)) */
+	/* d = Max(Abs(a), Abs(b)) */
 	d = (a >= 0.0) ? a : -a;
 	if( b >= 0.0 )  {
 		if( b > d )  d = b;
@@ -1196,7 +1196,7 @@ code2:
 			/* Keep partition, claiming region = regp */
 			bu_ptbl_zero(regiontable, (long *)lastregion);
 			lastregion = regp;
-			if(RT_G_DEBUG&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap policy!=(0,1) code=%d, p retained in region=%s\n",
+			if(RT_G_DEBUG&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
 				code, lastregion->reg_name );
 		}
 	}
@@ -1504,7 +1504,7 @@ stack:
 		treep = treep->tr_b.tb_left;
 		goto stack;
 	default:
-		bu_log("rt_booleval:  bad stack op x%x\n",treep->tr_op);
+		bu_log("rt_booleval:  bad stack op x%x\n", treep->tr_op);
 		return(TRUE);	/* screw up output */
 	}
 pop:
@@ -1596,7 +1596,7 @@ pop:
 		}
 		goto pop;
 	default:
-		bu_log("rt_booleval:  bad pop op x%x\n",treep->tr_op);
+		bu_log("rt_booleval:  bad pop op x%x\n", treep->tr_op);
 		return(TRUE);	/* screw up output */
 	}
 	/* NOTREACHED */
@@ -2116,7 +2116,7 @@ rt_reldiff(double a, double b)
 	register fastf_t	d;
 	register fastf_t	diff;
 
-	/* d = Max(Abs(a),Abs(b)) */
+	/* d = Max(Abs(a), Abs(b)) */
 	d = (a >= 0.0) ? a : -a;
 	if( b >= 0.0 )  {
 		if( b > d )  d = b;

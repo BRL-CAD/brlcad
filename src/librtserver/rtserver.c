@@ -3194,7 +3194,7 @@ main( int argc, char *argv[] )
 	}
 
 	for( i=0 ; i<grid_size ; i++ ) {
-		fprintf( stderr,"%s\n", result_map[i] );
+		fprintf( stderr, "%s\n", result_map[i] );
 	}
 
 

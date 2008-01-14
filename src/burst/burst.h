@@ -104,10 +104,10 @@ typedef genptr_t pointer;			/* generic pointer */
 #define DFL_UNITS	U_MILLIMETERS
 
 /* firing mode bit definitions */
-#define ASNBIT(w,b)	(w = (b))
-#define SETBIT(w,b)	(w |= (b))
-#define CLRBIT(w,b)	(w &= ~(b))
-#define TSTBIT(w,b)	((w)&(b))
+#define ASNBIT(w, b)	(w = (b))
+#define SETBIT(w, b)	(w |= (b))
+#define CLRBIT(w, b)	(w &= ~(b))
+#define TSTBIT(w, b)	((w)&(b))
 #define FM_GRID  0	/* generate grid of shotlines */
 #define FM_DFLT	 FM_GRID
 #define FM_PART  (1)	/* bit 0: ON = partial envelope, OFF = full */
@@ -190,9 +190,9 @@ typedef genptr_t pointer;			/* generic pointer */
 #define OUTSIDE_AIR	1	/* outside air is called 01 air */
 
 #define Air(rp)		((rp)->reg_aircode > 0)
-#define DiffAir(rp,sp)	((rp)->reg_aircode != (sp)->reg_aircode)
-#define SameAir(rp,sp)	((rp)->reg_aircode == (sp)->reg_aircode)
-#define SameCmp(rp,sp)	((rp)->reg_regionid == (sp)->reg_regionid)
+#define DiffAir(rp, sp)	((rp)->reg_aircode != (sp)->reg_aircode)
+#define SameAir(rp, sp)	((rp)->reg_aircode == (sp)->reg_aircode)
+#define SameCmp(rp, sp)	((rp)->reg_regionid == (sp)->reg_regionid)
 #define OutsideAir(rp)	((rp)->reg_aircode == OUTSIDE_AIR)
 #define InsideAir(rp)	(Air(rp)&& !OutsideAir(rp))
 

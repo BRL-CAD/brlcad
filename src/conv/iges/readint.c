@@ -43,7 +43,7 @@ Readint( inum , id )
 char *id;
 int *inum;
 {
-	int i=(-1),done=0,lencard;
+	int i=(-1), done=0, lencard;
 	char num[80];
 
 	if( card[counter] == eof ) /* This is an empty field */

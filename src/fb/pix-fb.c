@@ -214,7 +214,7 @@ main(int argc, char **argv)
 			file_width = w;
 			file_height = h;
 		} else {
-			fprintf(stderr,"pix-fb: unable to autosize\n");
+			fprintf(stderr, "pix-fb: unable to autosize\n");
 		}
 	}
 

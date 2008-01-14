@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	if( subimage_width <= 0 || subimage_height <= 0 )  {
 		subimage_width = subimage_height = atoi(argv[bu_optind]);
 		if( subimage_width == 0 ) {
-			fprintf(stderr,"fbanim: must specify image size\n");
+			fprintf(stderr, "fbanim: must specify image size\n");
 			bu_exit( 2, NULL );
 		}
 	}
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	}
 
 	if( (fbp = fb_open( NULL, screen_width, screen_height )) == NULL )  {
-		fprintf(stderr,"fbanim: fb_open failed\n");
+		fprintf(stderr, "fbanim: fb_open failed\n");
 		bu_exit(12, NULL);
 	}
 	screen_width = fb_getwidth(fbp);

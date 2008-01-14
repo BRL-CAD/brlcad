@@ -66,8 +66,8 @@ struct model *m;
 	int i;
 	int rational;
 	int ncoords;
-	int n_rows,n_cols,u_order,v_order;
-	int n_u,n_v;
+	int n_rows, n_cols, u_order, v_order;
+	int n_u, n_v;
 	int pt_type;
 	double a;
 
@@ -246,7 +246,7 @@ Get_cnurb( entity_no )
 int entity_no;
 {
 	struct edge_g_cnurb *crv;
-	point_t pt,pt2;
+	point_t pt, pt2;
 	int entity_type;
 	int num_pts;
 	int degree;
@@ -256,7 +256,7 @@ int entity_no;
 	int pt_type;
 	int ncoords;
 	double a;
-	double x,y,z;
+	double x, y, z;
 
 	if( dir[entity_no]->param <= pstart )
 	{
@@ -350,7 +350,7 @@ int entity_no;
 void
 Assign_vu_geom( vu, u, v, srf )
 struct vertexuse *vu;
-fastf_t u,v;
+fastf_t u, v;
 struct face_g_snurb *srf;
 {
 	point_t uvw;
@@ -417,7 +417,7 @@ struct face_g_snurb *srf;
 	struct edgeuse *eu;
 	struct edgeuse *new_eu;
 	struct vertex *vp;
-	double x,y,z;
+	double x, y, z;
 	point_t pt, pt2;
 	int ncoords;
 	int i;
@@ -593,8 +593,8 @@ struct faceuse *fu;
 	struct vertex *vp;
 	int entity_type;
 	int ncoords;
-	double x,y,z;
-	fastf_t u,v;
+	double x, y, z;
+	fastf_t u, v;
 	int i;
 
 	NMG_CK_SNURB( srf );
@@ -793,7 +793,7 @@ struct faceuse *fu;
 {
 	struct loopuse *lu;
 	int entity_type;
-	int surf_de,param_curve_de,model_curve_de;
+	int surf_de, param_curve_de, model_curve_de;
 	int i;
 
 	NMG_CK_SNURB( srf );
@@ -836,7 +836,7 @@ struct faceuse *fu;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
 	fastf_t *knots;
-	fastf_t u=0,v=0;
+	fastf_t u=0, v=0;
 	fastf_t *ctl_points;
 	int edge_no=0;
 	int pt_type;
@@ -863,7 +863,7 @@ struct faceuse *fu;
 	/* assign vertex geometry */
 	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
-		int u_index=0,v_index=0;
+		int u_index=0, v_index=0;
 
 		NMG_CK_EDGEUSE( eu );
 		vu = eu->vu_p;
@@ -989,7 +989,7 @@ struct shell *s;
 	struct vertex *verts[3];
 	int entity_type;
 	int surf_de;
-	int has_outer_boundary,inner_loop_count,outer_loop;
+	int has_outer_boundary, inner_loop_count, outer_loop;
 	int *inner_loop=NULL;
 	int i;
 	int lu_uv_orient;
@@ -1491,7 +1491,7 @@ void
 Convtrimsurfs()
 {
 
-	int i,convsurf=0,totsurfs=0;
+	int i, convsurf=0, totsurfs=0;
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;

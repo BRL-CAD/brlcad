@@ -49,8 +49,8 @@
 /*	 3 December 1991  - Add some comments.  */
 /*	27 February 1992  - Remove backward firing ray & replace with  */
 /*		simpilar solution.  If the ray goes from region i to  */
-/*		region j through engine air N(i) & N(i,j) are incremented.  */
-/*		Simply increment N(j) & N(j,i) also.  EASY.  Add loop  */
+/*		region j through engine air N(i) & N(i, j) are incremented.  */
+/*		Simply increment N(j) & N(j, i) also.  EASY.  Add loop  */
 /*		to check reciprocity.  Fix problem with number of rays  */
 /*		leaving a region.  To compute engine area the total number  */
 /*		of rays leaving a region and entering engine air must be  */
@@ -105,7 +105,7 @@ double nummiss;		/*  Number of misses.  */
 /* simulate drand48() --  using 31-bit random() -- assumed to exist */
 double drand48() {
   extern long random();
-  return (double)random() / 2147483648.0; /* range [0,1) */
+  return (double)random() / 2147483648.0; /* range [0, 1) */
 }
 #endif
 
@@ -117,20 +117,20 @@ int main(int argc, char **argv)
   int index;		/*  Index for rt_dirbuild & rt_gettree.  */
   char idbuf[32];	/*  Contains database name.  */
   struct region *pr;	/*  Used in finding region names.  */
-  double rho,phi,theta;/*  Spherical coordinates for starting point.  */
+  double rho, phi, theta;/*  Spherical coordinates for starting point.  */
   double areabs=0.0;	/*  Area of bounding sphere (mm**2).  */
   int ians;		/*  Answer of question.  */
   double strtpt[3];	/*  Starting point of ray.  */
   double strtdir[3];	/*  Starting direction.  */
   double loops;	/*  Number of rays fired.  */
   double r;		/*  Variable in loops.  */
-  int i,j,k;		/*  Variable in loops.  */
+  int i, j, k;		/*  Variable in loops.  */
   long seed;		/*  Initial seed for random number generator.  */
   double denom;	/*  Denominator.  */
   double elev;		/*  Elevation, used to find point on yz-plane.  */
   double az;		/*  Azimuth, used to find point on yz-plane.  */
   double rad;		/*  Radius, used to find point on yz-plane.  */
-  double s[3],t[3];	/*  Temporary variables used to find points.  */
+  double s[3], t[3];	/*  Temporary variables used to find points.  */
   double q;		/*  Temporary variable used to find points.  */
   int numreg;		/*  Number of regions.  */
   double center[3];	/*  Center of the bounding rpp.  */
@@ -159,7 +159,7 @@ int main(int argc, char **argv)
   int rnnreg[800];	/*  Region number from region # & name file.  */
   int jcnt;		/*  Counter.  */
   int equal;		/*  0=>equal, 1=>not equal.  */
-  double rcpi,rcpj;	/*  Used to check reciprocity.  */
+  double rcpi, rcpj;	/*  Used to check reciprocity.  */
   double rcp_diff;	/*  Difference in reciprocity.  */
   double rcp_pdiff;	/*  Percent difference in reciprocity.  */
 
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
   /*  Check to see if arguments are implimented correctly.  */
   if( (argv[1] == NULL) || (argv[2] == NULL) )
     {
-      (void)fprintf(stderr,"\nusage:  %s file.g objects\n\n", *argv);
+      (void)fprintf(stderr, "\nusage:  %s file.g objects\n\n", *argv);
     }
   else
     {						/*  START # 1  */
@@ -182,21 +182,21 @@ int main(int argc, char **argv)
       if(itype != 1) itype = 0;
 
       /*  Enter names of files to be used.  */
-      (void)fprintf(stderr,"Enter name of output file (15 char max).\n\t");
+      (void)fprintf(stderr, "Enter name of output file (15 char max).\n\t");
       (void)fflush(stderr);
-      (void)scanf("%15s",outfile);
+      (void)scanf("%15s", outfile);
 
       /*  Read name of the error file to be written.  */
       (void)printf("Enter the name of the error file (15 char max).\n\t");
       (void)fflush(stdout);
-      (void)scanf("%15s",errfile);
+      (void)scanf("%15s", errfile);
 
       /*  Enter name of region # & name file to be read.  */
       {
 	(void)printf("Enter region # & name file to be read ");
 	(void)printf("(15 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%15s",rnnfile);
+	(void)scanf("%15s", rnnfile);
       }
 
       /*  Check if dump is to occur.  */
@@ -207,19 +207,19 @@ int main(int argc, char **argv)
       (void)scanf("%d",&idump);
 
       /*  Find number of rays to be fired.  */
-      (void)fprintf(stderr,"Enter number of rays to be fired.  ");
+      (void)fprintf(stderr, "Enter number of rays to be fired.  ");
       (void)fflush(stderr);
       (void)scanf("%lf",&loops);
 
       /*  Set seed for random number generator.  */
       seed = 1;
-      (void)fprintf(stderr,"Do you wish to enter your own seed (0) or ");
-      (void)fprintf(stderr,"use the default of 1 (1)?  ");
+      (void)fprintf(stderr, "Do you wish to enter your own seed (0) or ");
+      (void)fprintf(stderr, "use the default of 1 (1)?  ");
       (void)fflush(stderr);
       (void)scanf("%d",&ians);
       if(ians == 0)
 	{
-	  (void)fprintf(stderr,"Enter unsigned integer seed.  ");
+	  (void)fprintf(stderr, "Enter unsigned integer seed.  ");
 	  (void)fflush(stderr);
 	  (void)scanf("%ld",&seed);
 	}
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 
       /*  Read region # & name file.  */
       rnnnum = 0;
-      fp1 = fopen(rnnfile,"r");
+      fp1 = fopen(rnnfile, "r");
       /*
        *	 (void)printf("Region # & name file opened.\n");
        *	 (void)fflush(stdout);
@@ -236,9 +236,9 @@ int main(int argc, char **argv)
       c = getc(fp1);
       while(c != EOF)
 	{
-	  (void)ungetc(c,fp1);
-	  (void)bu_fgets(line,200,fp1);
-	  (void)sscanf(line,"%d%149s",&tmpreg,tmpname);
+	  (void)ungetc(c, fp1);
+	  (void)bu_fgets(line, 200, fp1);
+	  (void)sscanf(line, "%d%149s",&tmpreg, tmpname);
 	  for(i=0; i<150; i++)
 	    {
 	      rnnname[rnnnum][i] = tmpname[i];
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 	    }
 	  rnnchar[i] = jcnt;
 	  /*
-	   *	   (void)printf("number of char, i= %d:  %d\n",i,rnnchar[i]);
+	   *	   (void)printf("number of char, i= %d:  %d\n", i, rnnchar[i]);
 	   *	   (void)fflush(stdout);
 	   */
 	}
@@ -275,15 +275,15 @@ int main(int argc, char **argv)
       /*
        *	 for(i=0; i<rnnnum; i++)
        *	 {
-       *	   (void)printf("%d\t%d\t-%s-\n",i,rnnchar[i],rnnname[i]);
+       *	   (void)printf("%d\t%d\t-%s-\n", i, rnnchar[i], rnnname[i]);
        *	   (void)fflush(stdout);
        *	 }
        */
 
       /*  Build directory.  */
       index = 1;	/*  Set index for rt_dirbuild.  */
-      rtip = rt_dirbuild(argv[index],idbuf,sizeof(idbuf));
-      (void)printf("Database Title:  %s\n",idbuf);
+      rtip = rt_dirbuild(argv[index], idbuf, sizeof(idbuf));
+      (void)printf("Database Title:  %s\n", idbuf);
       (void)fflush(stdout);
 
       /*  Set useair to 1 to show hits of air.  */
@@ -293,14 +293,14 @@ int main(int argc, char **argv)
       index = 2;	/*  Set index.  */
       while(argv[index] != NULL)
 	{
-	  rt_gettree(rtip,argv[index]);
+	  rt_gettree(rtip, argv[index]);
 	  index += 1;
 	}
 
       /*  Find number of regions.  */
       numreg = (int)rtip->nregions;
 
-      (void)fprintf(stderr,"Number of regions:  %d\n",numreg);
+      (void)fprintf(stderr, "Number of regions:  %d\n", numreg);
       (void)fflush(stderr);
 
       /*  Zero all arrays.  */
@@ -339,7 +339,7 @@ int main(int argc, char **argv)
       /*
        *	for(i=0; i<numreg; i++)
        *	{
-       *		(void)printf("%d - %s\n",i,info[i].name);
+       *		(void)printf("%d - %s\n", i, info[i].name);
        *		(void)fflush(stdout);
        *	}
        */
@@ -364,7 +364,7 @@ int main(int argc, char **argv)
       for(r=0; r<loops; r++)	/*  Number of rays fired.  */
 	{					/*  START # 2  */
 	  /*
-	   *	   (void)fprintf(stderr,"loop # %f\n",r);
+	   *	   (void)fprintf(stderr, "loop # %f\n", r);
 	   */
 
 	  /*  Find length of 'diagonal' (rho).  (In reality rho is  */
@@ -388,28 +388,28 @@ int main(int argc, char **argv)
 	  /*  of the unit vector of this point will eventually be  */
 	  /*  the firing direction.  */
 	  /*
-	   *	   (void)printf("\n\nrho:  %f\n",rho);
+	   *	   (void)printf("\n\nrho:  %f\n", rho);
 	   *	   (void)fflush(stdout);
 	   */
 	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  theta = q * 2. * PI;
 	  /*
-	   *	   (void)printf("random number:  %f, theta:  %f\n",q,theta);
+	   *	   (void)printf("random number:  %f, theta:  %f\n", q, theta);
 	   *	   (void)fflush(stdout);
 	   */
 	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  phi = ( q * 2.) - 1.;
 	  phi = acos(phi);
 	  /*
-	   *	   (void)printf("random number:  %f, phi:  %f\n",q,phi);
+	   *	   (void)printf("random number:  %f, phi:  %f\n", q, phi);
 	   *	   (void)fflush(stdout);
 	   */
 	  strtdir[X] = rho * sin(phi) * cos(theta);
 	  strtdir[Y] = rho * sin(phi) * sin(theta);
 	  strtdir[Z] = rho * cos(phi);
 	  /*
-	   *	   (void)printf("starting direction:  %f, %f, %f\n",strtdir[X],
-	   *		strtdir[Y],strtdir[Z]);
+	   *	   (void)printf("starting direction:  %f, %f, %f\n", strtdir[X],
+	   *		strtdir[Y], strtdir[Z]);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -417,7 +417,7 @@ int main(int argc, char **argv)
 	  elev = PI / 2. - phi;
 	  az = theta;
 	  /*
-	   *	   (void)printf("elevation:  %f, azimuth:  %f\n",elev,az);
+	   *	   (void)printf("elevation:  %f, azimuth:  %f\n", elev, az);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -426,20 +426,20 @@ int main(int argc, char **argv)
 	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  theta = q * 2. * PI;
 	  /*
-	   *	   (void)printf("random number:  %f, theta:  %f\n",q,theta);
+	   *	   (void)printf("random number:  %f, theta:  %f\n", q, theta);
 	   *	   (void)fflush(stdout);
 	   */
 	  q = BN_UNIF_DOUBLE(msr) + 0.5;
 	  rad = rho * sqrt( q );
 	  /*
-	   *	   (void)printf("random number:  %f, rad:  %f\n",q,rad);
+	   *	   (void)printf("random number:  %f, rad:  %f\n", q, rad);
 	   *	   (void)fflush(stdout);
 	   */
 	  s[X] = 0.;
 	  s[Y] = rad * cos(theta);
 	  s[Z] = rad * sin(theta);
 	  /*
-	   *	   (void)printf("vector in yz-plane:  %f, %f, %f\n",s[X],s[Y],s[Z]);
+	   *	   (void)printf("vector in yz-plane:  %f, %f, %f\n", s[X], s[Y], s[Z]);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
 	    + s[Y] * cos(az);
 	  t[Z] = s[X] * sin(elev) + s[Z] * cos(elev);
 	  /*
-	   *	   (void)printf("rotated vector:  %f, %f, %f\n",t[X],t[Y],t[Z]);
+	   *	   (void)printf("rotated vector:  %f, %f, %f\n", t[X], t[Y], t[Z]);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -459,8 +459,8 @@ int main(int argc, char **argv)
 	  strtpt[Y] = t[Y] + strtdir[Y];
 	  strtpt[Z] = t[Z] + strtdir[Z];
 	  /*
-	   *	   (void)printf("translated point:  %f, %f, %f\n",strtpt[X],
-	   *		strtpt[Y],strtpt[Z]);
+	   *	   (void)printf("translated point:  %f, %f, %f\n", strtpt[X],
+	   *		strtpt[Y], strtpt[Z]);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -472,7 +472,7 @@ int main(int argc, char **argv)
 
 	  /*
 	   *	   (void)printf("point in absolute coordinates:  %f, %f, %f\n",
-	   *		strtpt[X],strtpt[Y],strtpt[Z]);
+	   *		strtpt[X], strtpt[Y], strtpt[Z]);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -487,7 +487,7 @@ int main(int argc, char **argv)
 
 	  /*
 	   *	   (void)printf("starting direction (normalized):  %f, %f, %f\n",
-	   *		strtdir[X],strtdir[Y],strtdir[Z]);
+	   *		strtdir[X], strtdir[Y], strtdir[Z]);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -513,7 +513,7 @@ int main(int argc, char **argv)
 	   */
 
 	  /*
-	   *	   (void)printf("r = %f\n",r);
+	   *	   (void)printf("r = %f\n", r);
 	   *	   (void)fflush(stdout);
 	   */
 
@@ -537,7 +537,7 @@ int main(int argc, char **argv)
 							      info[i].lvrays) )
 			    sf = info[i].intrays[j] / info[i].lvrays;
 
-			  (void)printf("%d\t%d\t%f\n",i,j,sf);
+			  (void)printf("%d\t%d\t%f\n", i, j, sf);
 			  (void)fflush(stdout);
 			}
 		    }
@@ -577,7 +577,7 @@ int main(int argc, char **argv)
       /*
        *	   for(i=0; i<numreg; i++)
        *	   {
-       *		(void)printf("%d\t-%s-\n",info[i].numchar,info[i].name);
+       *		(void)printf("%d\t-%s-\n", info[i].numchar, info[i].name);
        *		(void)fflush(stdout);
        *	   }
        */
@@ -595,7 +595,7 @@ int main(int argc, char **argv)
 		{
 		  /*
 		   *			(void)printf("i=%d, j=%d, k=%d, jcnt=%d, -%c-, -%c-\n",
-		   *			   i,j,k,jcnt,info[i].name[k],rnnname[j][jcnt]);
+		   *			   i, j, k, jcnt, info[i].name[k], rnnname[j][jcnt]);
 		   *			(void)fflush(stdout);
 		   */
 		  if(jcnt<0) equal = 1;
@@ -613,11 +613,11 @@ int main(int argc, char **argv)
 
       /*  Check for reciprocity.  */
       /*  Open error file.  */
-      fp2 = fopen(errfile,"w");
-      (void)fprintf(fp2,"\nError file for shapefact.\n");
-      (void)fprintf(fp2,"Shape factor file created:  %s\n\n",outfile);
-      (void)fprintf(fp2,"Regions with reciprocity errors greater ");
-      (void)fprintf(fp2,"than 10%%.\n\n");
+      fp2 = fopen(errfile, "w");
+      (void)fprintf(fp2, "\nError file for shapefact.\n");
+      (void)fprintf(fp2, "Shape factor file created:  %s\n\n", outfile);
+      (void)fprintf(fp2, "Regions with reciprocity errors greater ");
+      (void)fprintf(fp2, "than 10%%.\n\n");
       (void)fflush(fp2);
 
       for(i=0; i<numreg; i++)
@@ -638,8 +638,8 @@ int main(int argc, char **argv)
 	      /*  Print reciprocity errors greater than 10%.  */
 	      if(rcp_pdiff > 0.1)
 		{
-		  (void)fprintf(fp2,"%d   %d   %f   %f   %f   %f\n",
-				info[i].regnum,info[j].regnum,rcpi,rcpj,rcp_diff,
+		  (void)fprintf(fp2, "%d   %d   %f   %f   %f   %f\n",
+				info[i].regnum, info[j].regnum, rcpi, rcpj, rcp_diff,
 				(rcp_pdiff * 100.));
 		  (void)fflush(fp2);
 		}
@@ -653,16 +653,16 @@ int main(int argc, char **argv)
       /*  Print out shape factor to regular output file.  */
       if(itype == 0)
 	{
-	  fp = fopen(outfile,"w");
-	  (void)fprintf(fp,"Number of forward rays fired:  %f\n\n",loops);
+	  fp = fopen(outfile, "w");
+	  (void)fprintf(fp, "Number of forward rays fired:  %f\n\n", loops);
 	  (void)fflush(fp);
 
 	  /*  Print out structure.  */
 	  for(i=0; i<numreg; i++)
 	    {
 	      /*  Print region number, region name, & engine area.  */
-	      (void)fprintf(fp,"%d\t%s\t%e\n",
-			    info[i].regnum,info[i].name,info[i].engarea);
+	      (void)fprintf(fp, "%d\t%s\t%e\n",
+			    info[i].regnum, info[i].name, info[i].engarea);
 	      (void)fflush(fp);
 
 	      /*  Zero sums for shape factors & rays hit.  */
@@ -677,8 +677,8 @@ int main(int argc, char **argv)
 		    sf = info[i].intrays[j] / info[i].lvrays;
 
 		  /*  Print region number & shape factor.  */
-		  (void)fprintf(fp,"   %d\t%e\n",
-				info[j].regnum,sf);
+		  (void)fprintf(fp, "   %d\t%e\n",
+				info[j].regnum, sf);
 		  (void)fflush(fp);
 
 		  /*  Print if number of rays leaving i & entering j is  */
@@ -689,9 +689,9 @@ int main(int argc, char **argv)
 		   *		{
 		   *		   stemp = info[i].intrays[j] - info[j].intrays[i];
 		   *		   if(stemp < 0) stemp = (-stemp);
-		   *		   (void)fprintf(fp,"     %e (%e) - %e (%e) - %e\n",
+		   *		   (void)fprintf(fp, "     %e (%e) - %e (%e) - %e\n",
 		   *			info[i].intrays[j],(stemp/info[i].intrays[j]),
-		   *			info[j].intrays[i],(stemp/info[j].intrays[i]),stemp);
+		   *			info[j].intrays[i],(stemp/info[j].intrays[i]), stemp);
 		   *		   (void)fflush(fp);
 		   *		}
 		   */
@@ -703,8 +703,8 @@ int main(int argc, char **argv)
 		}
 
 	      /*  Print sum of hits & sum of shape factors.  */
-	      (void)fprintf(fp,"  sum of hits:  %f\n",totalnh);
-	      (void)fprintf(fp,"  sum of shape factors:  %f\n\n",totalsf);
+	      (void)fprintf(fp, "  sum of hits:  %f\n", totalnh);
+	      (void)fprintf(fp, "  sum of shape factors:  %f\n\n", totalsf);
 	      (void)fflush(fp);
 	    }
 	  (void)fclose(fp);
@@ -715,7 +715,7 @@ int main(int argc, char **argv)
       /*  Create and write to generic shape factor file.  */
       if(itype == 1)
 	{
-	  fp = fopen(outfile,"w");
+	  fp = fopen(outfile, "w");
 	  for(i=0; i<numreg; i++)
 	    {
 	      /*  Count the number of shape factors.  */
@@ -726,8 +726,8 @@ int main(int argc, char **argv)
 		}
 	      /*  Print the # 5, region number (matches firpass &  */
 	      /*  secpass), engine area, & number of shape factors.  */
-	      (void)fprintf(fp," 5  %d  %e  %d\n",
-			    info[i].regnum,info[i].engarea,icnt);
+	      (void)fprintf(fp, " 5  %d  %e  %d\n",
+			    info[i].regnum, info[i].engarea, icnt);
 	      (void)fflush(fp);
 	      for(j=0; j<numreg; j++)
 		{
@@ -735,7 +735,7 @@ int main(int argc, char **argv)
 		    {
 		      sf = info[i].intrays[j] / info[i].lvrays;
 		      /*  Print each region # & shape factor.  */
-		      (void)fprintf(fp,"    %d  %e\n",info[j].regnum,sf);
+		      (void)fprintf(fp, "    %d  %e\n", info[j].regnum, sf);
 		      (void)fflush(fp);
 		    }
 		}
@@ -809,11 +809,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	      /*  Find leaving point.  */
 	      hitp = pp->pt_outhit;
 	      stp = pp->pt_outseg->seg_stp;
-	      RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+	      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
 	      /*  Flip normal if needed.  */
 	      if(pp->pt_outflip)
 		{
-		  VREVERSE(hitp->hit_normal,hitp->hit_normal);
+		  VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		  pp->pt_outflip = 0;
 		}
 	      iprev = icur;
@@ -841,13 +841,13 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	      /*  Only execute the following two statements if iprev >= 0.  */
 	      if(iprev < (-1))
 		{
-		  (void)fprintf(stderr,"ERROR -- iprev = %d\n",iprev);
+		  (void)fprintf(stderr, "ERROR -- iprev = %d\n", iprev);
 		  (void)fflush(stderr);
 		}
 	      if(iprev == (-1))
 		{
-		  (void)fprintf(stderr,"iprev = %d - entered ",iprev);
-		  (void)fprintf(stderr,"through engine air\n");
+		  (void)fprintf(stderr, "iprev = %d - entered ", iprev);
+		  (void)fprintf(stderr, "through engine air\n");
 		  (void)fflush(stderr);
 		}
 	      if(iprev > (-1))
@@ -873,11 +873,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	      /*  Find leave point.  */
 	      hitp = pp->pt_outhit;
 	      stp = pp->pt_outseg->seg_stp;
-	      RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+	      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
 	      /*  Flip normal if needed.  */
 	      if(pp->pt_outflip)
 		{
-		  VREVERSE(hitp->hit_normal,hitp->hit_normal);
+		  VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		  pp->pt_outflip = 0;
 		}
 	      iprev = icur;
@@ -906,11 +906,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	      /*  Find leaving point.  */
 	      hitp = pp->pt_outhit;
 	      stp = pp->pt_outseg->seg_stp;
-	      RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+	      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
 	      /*  Flip normal if needed.  */
 	      if(pp->pt_outflip)
 		{
-		  VREVERSE(hitp->hit_normal,hitp->hit_normal);
+		  VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		  pp->pt_outflip = 0;
 		}
 	      iprev = icur;
@@ -943,11 +943,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	      /*  Find leaving point.  */
 	      hitp = pp->pt_outhit;
 	      stp = pp->pt_outseg->seg_stp;
-	      RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+	      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
 	      /*  Flip normal if needed.  */
 	      if(pp->pt_outflip)
 		{
-		  VREVERSE(hitp->hit_normal,hitp->hit_normal);
+		  VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		  pp->pt_outflip = 0;
 		}
 	      iprev = icur;

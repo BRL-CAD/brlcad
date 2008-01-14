@@ -101,7 +101,7 @@ main(int argc, char **argv)
 
 	/* check for optional input file */
 	if( argc > 1 ) {
-		if( (fp = fopen(argv[1],"r")) == 0 ) {
+		if( (fp = fopen(argv[1], "r")) == 0 ) {
 			bu_exit(1, "pixstat: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;

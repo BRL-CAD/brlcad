@@ -878,13 +878,13 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 			switch( cur_dir )
 			{
 				case X:
-					cut_value = xy_rays[XY_CELL(cell_no,0)].r_pt[cur_dir];
+					cut_value = xy_rays[XY_CELL(cell_no, 0)].r_pt[cur_dir];
 					break;
 				case Y:
-					cut_value = xy_rays[XY_CELL(0,cell_no)].r_pt[cur_dir];
+					cut_value = xy_rays[XY_CELL(0, cell_no)].r_pt[cur_dir];
 					break;
 				case Z:
-					cut_value = xz_rays[XZ_CELL(0,cell_no)].r_pt[cur_dir];
+					cut_value = xz_rays[XZ_CELL(0, cell_no)].r_pt[cur_dir];
 					break;
 			}
 
@@ -1031,7 +1031,7 @@ shrink_wrap(struct shell *s)
 	struct bu_ptbl extra_verts;
 	struct model *m;
 	int vert_no;
-	int i,j;
+	int i, j;
 	int dirs;
 
 	NMG_CK_SHELL( s );
@@ -1078,8 +1078,8 @@ shrink_wrap(struct shell *s)
 				{
 					for( j=0 ; j<cell_count[Z] ; j++ )
 					{
-						VMOVE( ap.a_ray.r_pt, yz_rays[YZ_CELL(i,j)].r_pt )
-						VMOVE( ap.a_ray.r_dir, yz_rays[YZ_CELL(i,j)].r_dir )
+						VMOVE( ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt )
+						VMOVE( ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir )
 						(void)rt_shootray( &ap );
 					}
 				}
@@ -1089,8 +1089,8 @@ shrink_wrap(struct shell *s)
 				{
 					for( j=0 ; j<cell_count[Z] ; j++ )
 					{
-						VMOVE( ap.a_ray.r_pt, xz_rays[XZ_CELL(i,j)].r_pt )
-						VMOVE( ap.a_ray.r_dir, xz_rays[XZ_CELL(i,j)].r_dir )
+						VMOVE( ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt )
+						VMOVE( ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir )
 						(void)rt_shootray( &ap );
 					}
 				}
@@ -1100,8 +1100,8 @@ shrink_wrap(struct shell *s)
 				{
 					for( j=0 ; j<cell_count[Y] ; j++ )
 					{
-						VMOVE( ap.a_ray.r_pt, xy_rays[XY_CELL(i,j)].r_pt )
-						VMOVE( ap.a_ray.r_dir, xy_rays[XY_CELL(i,j)].r_dir )
+						VMOVE( ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt )
+						VMOVE( ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir )
 						(void)rt_shootray( &ap );
 					}
 				}
@@ -1534,10 +1534,10 @@ Make_shell(void)
 			{
 				for( z_index=0 ; z_index < cell_count[Z] - 1 ; z_index++ )
 				{
-					cell_no[0] = YZ_CELL(y_index,z_index);
-					cell_no[1] = YZ_CELL(y_index-1,z_index);
-					cell_no[2] = YZ_CELL(y_index-1,z_index+1);
-					cell_no[3] = YZ_CELL(y_index,z_index+1);
+					cell_no[0] = YZ_CELL(y_index, z_index);
+					cell_no[1] = YZ_CELL(y_index-1, z_index);
+					cell_no[2] = YZ_CELL(y_index-1, z_index+1);
+					cell_no[3] = YZ_CELL(y_index, z_index+1);
 
 					for( i=0 ; i<4 ; i++ )
 					{
@@ -1574,10 +1574,10 @@ Make_shell(void)
 			{
 				for( z_index=0 ; z_index < cell_count[Z] - 1 ; z_index++ )
 				{
-					cell_no[0] = XZ_CELL(x_index,z_index);
-					cell_no[1] = XZ_CELL(x_index+1,z_index);
-					cell_no[2] = XZ_CELL(x_index+1,z_index+1);
-					cell_no[3] = XZ_CELL(x_index,z_index+1);
+					cell_no[0] = XZ_CELL(x_index, z_index);
+					cell_no[1] = XZ_CELL(x_index+1, z_index);
+					cell_no[2] = XZ_CELL(x_index+1, z_index+1);
+					cell_no[3] = XZ_CELL(x_index, z_index+1);
 
 					for( i=0 ; i<4 ; i++ )
 					{
@@ -1614,10 +1614,10 @@ Make_shell(void)
 			{
 				for( y_index=0 ; y_index < cell_count[Y] - 1 ; y_index++ )
 				{
-					cell_no[0] = XY_CELL(x_index,y_index);
-					cell_no[1] = XY_CELL(x_index-1,y_index);
-					cell_no[2] = XY_CELL(x_index-1,y_index+1);
-					cell_no[3] = XY_CELL(x_index,y_index+1);
+					cell_no[0] = XY_CELL(x_index, y_index);
+					cell_no[1] = XY_CELL(x_index-1, y_index);
+					cell_no[2] = XY_CELL(x_index-1, y_index+1);
+					cell_no[3] = XY_CELL(x_index, y_index+1);
 
 					for( i=0 ; i<4 ; i++ )
 					{
@@ -1761,7 +1761,7 @@ main(int argc, char **argv)
 {
 	char idbuf[132];
 	struct application ap;
-	int i,j;
+	int i, j;
 	int c;
 	fastf_t x_start, y_start, z_start;
 	fastf_t bb_area[3];
@@ -1994,17 +1994,17 @@ main(int argc, char **argv)
 	{
 		for( j=0 ; j<cell_count[Z] ; j++ )
 		{
-			VSET( yz_rays[YZ_CELL(i,j)].r_dir, 1.0, 0.0, 0.0 )
-			VSET( yz_rays[YZ_CELL(i,j)].r_pt,
+			VSET( yz_rays[YZ_CELL(i, j)].r_dir, 1.0, 0.0, 0.0 )
+			VSET( yz_rays[YZ_CELL(i, j)].r_pt,
 				rtip->mdl_min[X] - cell_size,
 				y_start + (fastf_t)i * cell_size,
 				z_start + (fastf_t)j * cell_size )
-			yz_parts[YZ_CELL(i,j)].is_void = UNKNOWN;
-			yz_parts[YZ_CELL(i,j)].in_coord = -MAX_FASTF;
-			yz_parts[YZ_CELL(i,j)].out_coord = -MAX_FASTF;
-			yz_parts[YZ_CELL(i,j)].in = (struct end_pt *)NULL;
-			yz_parts[YZ_CELL(i,j)].out = (struct end_pt *)NULL;
-			BU_LIST_INIT( &yz_parts[YZ_CELL(i,j)].l );
+			yz_parts[YZ_CELL(i, j)].is_void = UNKNOWN;
+			yz_parts[YZ_CELL(i, j)].in_coord = -MAX_FASTF;
+			yz_parts[YZ_CELL(i, j)].out_coord = -MAX_FASTF;
+			yz_parts[YZ_CELL(i, j)].in = (struct end_pt *)NULL;
+			yz_parts[YZ_CELL(i, j)].out = (struct end_pt *)NULL;
+			BU_LIST_INIT( &yz_parts[YZ_CELL(i, j)].l );
 		}
 	}
 
@@ -2012,32 +2012,32 @@ main(int argc, char **argv)
 	{
 		for( j=0 ; j<cell_count[Y] ; j++ )
 		{
-			VSET( xy_rays[XY_CELL(i,j)].r_dir, 0.0, 0.0, 1.0 )
-			VSET( xy_rays[XY_CELL(i,j)].r_pt,
+			VSET( xy_rays[XY_CELL(i, j)].r_dir, 0.0, 0.0, 1.0 )
+			VSET( xy_rays[XY_CELL(i, j)].r_pt,
 				x_start + (fastf_t)i * cell_size,
 				y_start + (fastf_t)j * cell_size,
 				rtip->mdl_min[Z] - cell_size )
-			xy_parts[XY_CELL(i,j)].is_void = UNKNOWN;
-			xy_parts[XY_CELL(i,j)].in_coord = -MAX_FASTF;
-			xy_parts[XY_CELL(i,j)].out_coord = -MAX_FASTF;
-			xy_parts[XY_CELL(i,j)].in = (struct end_pt *)NULL;
-			xy_parts[XY_CELL(i,j)].out = (struct end_pt *)NULL;
-			BU_LIST_INIT( &xy_parts[XY_CELL(i,j)].l );
+			xy_parts[XY_CELL(i, j)].is_void = UNKNOWN;
+			xy_parts[XY_CELL(i, j)].in_coord = -MAX_FASTF;
+			xy_parts[XY_CELL(i, j)].out_coord = -MAX_FASTF;
+			xy_parts[XY_CELL(i, j)].in = (struct end_pt *)NULL;
+			xy_parts[XY_CELL(i, j)].out = (struct end_pt *)NULL;
+			BU_LIST_INIT( &xy_parts[XY_CELL(i, j)].l );
 		}
 
 		for( j=0 ; j<cell_count[Z] ; j++ )
 		{
-			VSET( xz_rays[XZ_CELL(i,j)].r_dir, 0.0, 1.0, 0.0 )
-			VSET( xz_rays[XZ_CELL(i,j)].r_pt,
+			VSET( xz_rays[XZ_CELL(i, j)].r_dir, 0.0, 1.0, 0.0 )
+			VSET( xz_rays[XZ_CELL(i, j)].r_pt,
 				x_start + (fastf_t)i * cell_size,
 				rtip->mdl_min[Y] - cell_size,
 				z_start + (fastf_t)j * cell_size )
-			xz_parts[XZ_CELL(i,j)].is_void = UNKNOWN;
-			xz_parts[XZ_CELL(i,j)].in_coord = -MAX_FASTF;
-			xz_parts[XZ_CELL(i,j)].out_coord = -MAX_FASTF;
-			xz_parts[XZ_CELL(i,j)].in = (struct end_pt *)NULL;
-			xz_parts[XZ_CELL(i,j)].out = (struct end_pt *)NULL;
-			BU_LIST_INIT( &xz_parts[XZ_CELL(i,j)].l );
+			xz_parts[XZ_CELL(i, j)].is_void = UNKNOWN;
+			xz_parts[XZ_CELL(i, j)].in_coord = -MAX_FASTF;
+			xz_parts[XZ_CELL(i, j)].out_coord = -MAX_FASTF;
+			xz_parts[XZ_CELL(i, j)].in = (struct end_pt *)NULL;
+			xz_parts[XZ_CELL(i, j)].out = (struct end_pt *)NULL;
+			BU_LIST_INIT( &xz_parts[XZ_CELL(i, j)].l );
 		}
 	}
 
@@ -2052,9 +2052,9 @@ main(int argc, char **argv)
 				{
 					ap.a_x = i;
 					ap.a_y = j;
-					ap.a_user = YZ_CELL(i,j);
-					VMOVE( ap.a_ray.r_pt, yz_rays[YZ_CELL(i,j)].r_pt )
-					VMOVE( ap.a_ray.r_dir, yz_rays[YZ_CELL(i,j)].r_dir )
+					ap.a_user = YZ_CELL(i, j);
+					VMOVE( ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt )
+					VMOVE( ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir )
 					(void)rt_shootray( &ap );
 				}
 			}
@@ -2066,9 +2066,9 @@ main(int argc, char **argv)
 				{
 					ap.a_x = i;
 					ap.a_y = j;
-					ap.a_user = XZ_CELL(i,j);
-					VMOVE( ap.a_ray.r_pt, xz_rays[XZ_CELL(i,j)].r_pt )
-					VMOVE( ap.a_ray.r_dir, xz_rays[XZ_CELL(i,j)].r_dir )
+					ap.a_user = XZ_CELL(i, j);
+					VMOVE( ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt )
+					VMOVE( ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir )
 					(void)rt_shootray( &ap );
 				}
 			}
@@ -2080,9 +2080,9 @@ main(int argc, char **argv)
 				{
 					ap.a_x = i;
 					ap.a_y = j;
-					ap.a_user = XY_CELL(i,j);
-					VMOVE( ap.a_ray.r_pt, xy_rays[XY_CELL(i,j)].r_pt )
-					VMOVE( ap.a_ray.r_dir, xy_rays[XY_CELL(i,j)].r_dir )
+					ap.a_user = XY_CELL(i, j);
+					VMOVE( ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt )
+					VMOVE( ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir )
 					(void)rt_shootray( &ap );
 				}
 			}

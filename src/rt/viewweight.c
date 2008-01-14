@@ -156,7 +156,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 	    dp->volume = depth * cell_height * cell_width;
 #if 0
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    bu_log( "hit: reg_name=\"%s\"\n",reg->reg_name );
+	    bu_log( "hit: reg_name=\"%s\"\n", reg->reg_name );
 	    bu_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
 		    reg->reg_gmater, reg->reg_los, density[reg->reg_gmater],
 		    depth, dp->weight );
@@ -396,9 +396,9 @@ void	view_end(struct application *ap)
 	item_wt = (fastf_t *) bu_malloc( sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt" );
 	for( i=1; i<=MAX_ITEM; i++ )
 	    item_wt[i] = -1.0;
-	fprintf(outfp,"Weight by item number (in %s):\n\n",units);
-	fprintf(outfp,"Item  Weight  Region Names\n" );
-	fprintf(outfp,"---- -------- --------------------\n" );
+	fprintf(outfp, "Weight by item number (in %s):\n\n", units);
+	fprintf(outfp, "Item  Weight  Region Names\n" );
+	fprintf(outfp, "---- -------- --------------------\n" );
 	for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	    register int i = rp->reg_regionid;
 
@@ -411,14 +411,14 @@ void	view_end(struct application *ap)
 	    int CR = 0;
 	    if( item_wt[i] < 0 )
 		continue;
-	    fprintf(outfp,"%4d %8.3f ", i, item_wt[i] );
+	    fprintf(outfp, "%4d %8.3f ", i, item_wt[i] );
 	    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 		if( rp->reg_regionid == i ) {
 		    register int l = strlen(rp->reg_name);
 		    l = l > 65 ? l-65 : 0;
 		    if( CR )
-			fprintf(outfp,"              ");
-		    fprintf(outfp,"%-65.65s\n", &rp->reg_name[l] );
+			fprintf(outfp, "              ");
+		    fprintf(outfp, "%-65.65s\n", &rp->reg_name[l] );
 		    CR = 1;
 		}
 	    }

@@ -49,7 +49,7 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+#define NEAR_ZERO(val, epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
 
 #ifndef INFINITY		/* if INFINITY is not defined define it */
 #define INFINITY	(1.0e20)

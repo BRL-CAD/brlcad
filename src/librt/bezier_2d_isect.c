@@ -140,7 +140,7 @@ ControlPolygonFlatEnough(
 			max_distance_above = MAX(max_distance_above, distance[i]);
 		}
     }
-    bu_free((char *)distance,"ControlPolygonFlatEnough" );
+    bu_free((char *)distance, "ControlPolygonFlatEnough" );
 
     {
 	double	det, dInv;

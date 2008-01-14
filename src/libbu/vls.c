@@ -680,7 +680,7 @@ bu_vls_read( struct bu_vls *vp, int fd )
  *  to the end of the vls pointed to by "vp".
  *  The newline from the file is read, but not stored into the vls.
  *
- *  The most common error is to forget to bu_vls_trunc(vp,0) before
+ *  The most common error is to forget to bu_vls_trunc(vp, 0) before
  *  reading the next line into the vls.
  *
  *  Returns -

@@ -56,8 +56,8 @@ double	ibuf[2*MAXM];		/* impulse response */
 /*
  *  Multiply two "real valued" spectra of length n
  *  and put the result in the first.
- *  The order is: [Re(0),Re(1)...Re(N/2),Im(N/2-1),...,Im(1)]
- *    so for: 0 < i < n/2, (x[i],x[n-i]) is a complex pair.
+ *  The order is: [Re(0), Re(1)...Re(N/2), Im(N/2-1),..., Im(1)]
+ *    so for: 0 < i < n/2, (x[i], x[n-i]) is a complex pair.
  */
 void
 mult(double *o, double *b, int n)

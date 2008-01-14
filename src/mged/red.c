@@ -141,7 +141,7 @@ put_rgb_into_comb(struct rt_comb_internal *comb, char *str)
 	return;
     }
 
-    /* clamp the RGB values to [0,255] */
+    /* clamp the RGB values to [0, 255] */
     if(r < 0)
 	r = 0;
     else if(r > 255)
@@ -755,8 +755,8 @@ checkcomb(void)
     FILE *fp;
     int node_count=0;
     int nonsubs=0;
-    int i,j,done,ch;
-    int done2,first;
+    int i, j, done, ch;
+    int done2, first;
     char relation;
     char name_v4[NAMESIZE+1];
     char *name_v5=NULL;
@@ -765,7 +765,7 @@ checkcomb(void)
     char lineCopy[RT_MAXLINE] = {0};
     char *ptr = (char *)NULL;
     int region=(-1);
-    int id=0,air=0;
+    int id=0, air=0;
     int rgb_valid;
 
     if( (fp=fopen( red_tmpfil , "r" )) == NULL ) {
@@ -1327,7 +1327,7 @@ mktemp_comb(char *str)
        a template name is expected as in "mk_temp()" with
        5 trailing X's */
 
-    int counter,done;
+    int counter, done;
     char *ptr;
 
 

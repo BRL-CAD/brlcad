@@ -100,7 +100,7 @@ fr_string_f2c(char *str, int maxlen)
  *  initialized here (eg, Cray).
  */
 void
-BU_FORTRAN(frdir,FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
+BU_FORTRAN(frdir, FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
 {
 	char	*file;
 
@@ -114,7 +114,7 @@ BU_FORTRAN(frdir,FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
  *  Add another top-level tree to the in-core geometry.
  */
 void
-BU_FORTRAN(frtree,FRTREE)(int		*fail,
+BU_FORTRAN(frtree, FRTREE)(int		*fail,
 			  struct rt_i	**rtip,
 			  char		*objname,
 			  int		*objlen)
@@ -132,7 +132,7 @@ BU_FORTRAN(frtree,FRTREE)(int		*fail,
  *
  */
 void
-BU_FORTRAN(frprep,FRPREP)(struct rt_i	**rtip)
+BU_FORTRAN(frprep, FRPREP)(struct rt_i	**rtip)
 {
     RT_CHECK_RTI(*rtip);
     rt_prep(*rtip);
@@ -153,7 +153,7 @@ struct context {
  * NOTE that the [0] element here corresponds with the caller's (1) element.
  */
 void
-BU_FORTRAN(frshot,FRSHOT)(int			*nloc,		/* input & output */
+BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
 			  double		*indist,	/* output only */
 			  double		*outdist,
 			  int			*region_ids,
@@ -276,7 +276,7 @@ fr_miss(struct application *ap)
  *  structures are reconstructed, suitable for passing to RT_HIT_NORM.
  */
 void
-BU_FORTRAN(frnorm,FRNORM)(double		*normal,	/* output only */
+BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
 			  int			*index,		/* input only */
 			  double		*indist,
 			  struct context	*context,
@@ -325,7 +325,7 @@ BU_FORTRAN(frnorm,FRNORM)(double		*normal,	/* output only */
  *  Return the number of regions that exist in the model
  */
 void
-BU_FORTRAN(frnreg,FRNREG)(int *nreg, struct rt_i **rtip)
+BU_FORTRAN(frnreg, FRNREG)(int *nreg, struct rt_i **rtip)
 {
 	*nreg = (*rtip)->nregions;
 }
@@ -339,7 +339,7 @@ BU_FORTRAN(frnreg,FRNREG)(int *nreg, struct rt_i **rtip)
  *  XXX buflen is provided "automaticly" on the Apollo.
  */
 void
-BU_FORTRAN(frname,FRNAME)(char		*fbuf,
+BU_FORTRAN(frname, FRNAME)(char		*fbuf,
 			  int		*region_num,
 			  struct rt_i	**rtip,
 			  int		fbuflen)

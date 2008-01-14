@@ -34,17 +34,17 @@
  *
  *  Given V, H, vrad, and hrad, there is a set of points on this cylinder
  *
- *  { (x,y,z) | (x,y,z) is on cylinder }
+ *  { (x, y, z) | (x, y, z) is on cylinder }
  *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on a unit cylinder (or cone)
  *  with the transformed base (V') located at the origin
  *  with a transformed radius of 1 (vrad').
  *  The height of the cylinder (or cone) along the +Z axis is +1
- *  (ie, H' = (0,0,1) ), with a transformed radius of hrad/vrad.
+ *  (ie, H' = (0, 0, 1) ), with a transformed radius of hrad/vrad.
  *
  *
- *  { (x',y',z') | (x',y',z') is on cylinder at origin }
+ *  { (x', y', z') | (x', y', z') is on cylinder at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -213,8 +213,8 @@ struct part_specific {
 const struct bu_structparse rt_part_parse[] = {
     { "%f", 3, "V",  bu_offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",  bu_offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_v",bu_offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_h",bu_offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_v", bu_offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r_h", bu_offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
  };
 
@@ -836,8 +836,8 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
 /**
  *  			R T _ P A R T _ U V
  *
- *  For a hit on the surface of a particle, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of a particle, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation along H
  *

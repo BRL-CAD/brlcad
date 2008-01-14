@@ -81,7 +81,7 @@ In the above listing:
 	 BN_VLIST_POLY_VERTNORM	6	/ per-vertex normal, for interpoloation /
 
 "x y z" refer to floating point values which represent a point or normal
-	vector. For commands 0,1,3,4, and 5, they represent a point, while
+	vector. For commands 0, 1, 3, 4, and 5, they represent a point, while
 	for commands 2 and 6 they represent normal vectors
 
 author - Carl Nuzman
@@ -131,10 +131,10 @@ Example Use -
 #define VDRW_PREFIX_LEN	6
 #define VDRW_MAXNAME	31
 #define VDRW_DEF_COLOR	0xffff00
-#define REV_BU_LIST_FOR(p,structure,hp)	\
-	(p)=BU_LIST_LAST(structure,hp);	\
-	BU_LIST_NOT_HEAD(p,hp);		\
-	(p)=BU_LIST_PLAST(structure,p)
+#define REV_BU_LIST_FOR(p, structure, hp)	\
+	(p)=BU_LIST_LAST(structure, hp);	\
+	BU_LIST_NOT_HEAD(p, hp);		\
+	(p)=BU_LIST_PLAST(structure, p)
 
 static struct bu_list vdraw_head;
 struct rt_curve {
@@ -180,7 +180,7 @@ char **argv;
 	}
 
 	MAT_DELTAS_GET_NEG(pos, view_state->vs_toViewcenter);
-	sprintf(result_string,"%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
+	sprintf(result_string, "%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
 	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
 
@@ -205,7 +205,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	sprintf(result_string,"%.12e", view_state->vs_Viewscale);
+	sprintf(result_string, "%.12e", view_state->vs_Viewscale);
 	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
 
@@ -239,18 +239,18 @@ char **argv;
 	switch(	c ) {
 	case 'c': 	/*center*/
 		MAT_DELTAS_GET_NEG(pos, view_state->vs_toViewcenter);
-		sprintf(result_string,"%.12g %.12g %.12g", pos[0], pos[1], pos[2]);
+		sprintf(result_string, "%.12g %.12g %.12g", pos[0], pos[1], pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 's':	/*size*/
 		/* don't use base2local, because rt doesn't */
-		sprintf(result_string,"%.12g", view_state->vs_Viewscale * 2.0);
+		sprintf(result_string, "%.12g", view_state->vs_Viewscale * 2.0);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'e':	/*eye*/
 		VSET(temp, 0.0, 0.0, 1.0);
 		MAT4X3PNT(pos, view_state->vs_view2model, temp);
-		sprintf(result_string,"%.12g %.12g %.12g",pos[0],pos[1],pos[2]);
+		sprintf(result_string, "%.12g %.12g %.12g", pos[0], pos[1], pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'y':	/*ypr*/
@@ -262,11 +262,11 @@ char **argv;
 			return TCL_ERROR;
 		}
 		VSCALE(temp, temp, bn_radtodeg);
-		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
+		sprintf(result_string, "%.12g %.12g %.12g", temp[0], temp[1], temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'a': 	/* aet*/
-		bn_mat_trn(mymat,view_state->vs_Viewrot);
+		bn_mat_trn(mymat, view_state->vs_Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
 		if (c==2) {
@@ -278,17 +278,17 @@ char **argv;
 		if (temp[0] < 180.0 ) temp[0] += 180;
 		temp[1] = -temp[1];
 		temp[2] = -temp[2];
-		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
+		sprintf(result_string, "%.12g %.12g %.12g", temp[0], temp[1], temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'q':	/*quat*/
-		quat_mat2quat(quat,view_state->vs_Viewrot);
-		sprintf(result_string,"%.12g %.12g %.12g %.12g", quat[0],quat[1],quat[2],quat[3]);
+		quat_mat2quat(quat, view_state->vs_Viewrot);
+		sprintf(result_string, "%.12g %.12g %.12g %.12g", quat[0], quat[1], quat[2], quat[3]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	default:
 		Tcl_AppendResult(interp,
-			"cmd_viewget: invalid argument. Must be one of center,size,eye,ypr.",
+			"cmd_viewget: invalid argument. Must be one of center, size, eye, ypr.",
 			(char *)NULL);
 		return TCL_ERROR;
 
@@ -331,10 +331,10 @@ char **argv;
 				Tcl_AppendResult(interp, "viewset: quat options requires four parameters", (char *)NULL);
 				return TCL_ERROR;
 			}
-			res = sscanf(argv[i+1],"%lf",quat);
-			res += sscanf(argv[i+2],"%lf",quat+1);
-			res += sscanf(argv[i+3],"%lf",quat+2);
-			res += sscanf(argv[i+4],"%lf",quat+3);
+			res = sscanf(argv[i+1], "%lf", quat);
+			res += sscanf(argv[i+2], "%lf", quat+1);
+			res += sscanf(argv[i+3], "%lf", quat+2);
+			res += sscanf(argv[i+4], "%lf", quat+3);
 			if (res < 4) {
 				Tcl_AppendResult(interp, "viewset: quat option requires four parameters", (char *)NULL);
 				return TCL_ERROR;
@@ -342,14 +342,14 @@ char **argv;
 			in_quat = 1;
 			i += 5;
 			break;
-		case 'y':	/* yaw,pitch,roll */
+		case 'y':	/* yaw, pitch, roll */
 			if (i+3 >= argc) {
 				Tcl_AppendResult(interp, "viewset: ypr option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
 			}
-			res = sscanf(argv[i+1],"%lf",ypr);
-			res += sscanf(argv[i+2],"%lf",ypr+1);
-			res += sscanf(argv[i+3],"%lf",ypr+2);
+			res = sscanf(argv[i+1], "%lf", ypr);
+			res += sscanf(argv[i+2], "%lf", ypr+1);
+			res += sscanf(argv[i+3], "%lf", ypr+2);
 			if (res < 3) {
 				Tcl_AppendResult(interp, "viewset: ypr option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
@@ -357,14 +357,14 @@ char **argv;
 			in_ypr = 1;
 			i += 4;
 			break;
-		case 'a':	/* azimuth,elevation,twist */
+		case 'a':	/* azimuth, elevation, twist */
 			if (i+3 >= argc) {
 				Tcl_AppendResult(interp, "viewset: aet option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
 			}
-			res = sscanf(argv[i+1],"%lf",aet);
-			res += sscanf(argv[i+2],"%lf",aet+1);
-			res += sscanf(argv[i+3],"%lf",aet+2);
+			res = sscanf(argv[i+1], "%lf", aet);
+			res += sscanf(argv[i+2], "%lf", aet+1);
+			res += sscanf(argv[i+3], "%lf", aet+2);
 			if (res < 3) {
 				Tcl_AppendResult(interp, "viewset: aet option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
@@ -377,9 +377,9 @@ char **argv;
 				Tcl_AppendResult(interp, "viewset: center option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
 			}
-			res = sscanf(argv[i+1],"%lf",center);
-			res += sscanf(argv[i+2],"%lf",center+1);
-			res += sscanf(argv[i+3],"%lf",center+2);
+			res = sscanf(argv[i+1], "%lf", center);
+			res += sscanf(argv[i+2], "%lf", center+1);
+			res += sscanf(argv[i+3], "%lf", center+2);
 			if (res < 3) {
 				Tcl_AppendResult(interp, "viewset: center option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
@@ -392,9 +392,9 @@ char **argv;
 				Tcl_AppendResult(interp, "viewset: eye option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
 			}
-			res = sscanf(argv[i+1],"%lf",eye);
-			res += sscanf(argv[i+2],"%lf",eye+1);
-			res += sscanf(argv[i+3],"%lf",eye+2);
+			res = sscanf(argv[i+1], "%lf", eye);
+			res += sscanf(argv[i+2], "%lf", eye+1);
+			res += sscanf(argv[i+3], "%lf", eye+2);
 			if (res < 3) {
 				Tcl_AppendResult(interp, "viewset: eye option requires three parameters", (char *)NULL);
 				return TCL_ERROR;
@@ -407,7 +407,7 @@ char **argv;
 				Tcl_AppendResult(interp, "viewset: size option requires a parameter", (char *)NULL);
 				return TCL_ERROR;
 			}
-			res = sscanf(argv[i+1],"%lf",&size);
+			res = sscanf(argv[i+1], "%lf",&size);
 			if (res<1) {
 				Tcl_AppendResult(interp, "viewset: size option requires a parameter", (char *)NULL);
 				return TCL_ERROR;
@@ -416,7 +416,7 @@ char **argv;
 			i += 2;
 			break;
 		default:
-			sprintf(result_string,"viewset: Unknown option %.40s.", argv[i]);
+			sprintf(result_string, "viewset: Unknown option %.40s.", argv[i]);
 			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_ERROR;
 		}

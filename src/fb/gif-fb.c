@@ -109,7 +109,7 @@ static int	background;		/* color index of screen background */
 static int	entries;		/* # of global color map entries */
 static RGBpixel	*g_cmap;		/* malloc()ed global color map */
 static RGBpixel	*cmap;			/* malloc()ed local color map */
-/* NOTE:  Relies on R,G,B order and also on RGBpixel being 3 unsigned chars. */
+/* NOTE:  Relies on R, G, B order and also on RGBpixel being 3 unsigned chars. */
 
 #define	GIF_EXTENSION	'!'
 #define	GIF_IMAGE	','

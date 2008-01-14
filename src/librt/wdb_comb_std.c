@@ -194,7 +194,7 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
 	node->tr_op = OP_DB_LEAF;
 	node->tr_l.tl_mat = (matp_t)NULL;
 	if (ptr_lparen || ptr_rparen) {
-		int tmp1,tmp2;
+		int tmp1, tmp2;
 
 		if (ptr_rparen)
 			tmp1 = ptr_rparen - name;

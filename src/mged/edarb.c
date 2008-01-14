@@ -59,7 +59,7 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-void	ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb),old_ext4to6();
+void	ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb), old_ext4to6();
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
@@ -164,13 +164,13 @@ editarb( vect_t pos_model )
 		}
 		if(MAGNITUDE(edge_dir) == 0.0)
 			goto err;
-		/* bounding planes bp1,bp2 */
+		/* bounding planes bp1, bp2 */
 		bp1 = *edptr++;
 		bp2 = *edptr++;
 
 		/* move the edge */
 /*
-bu_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
+bu_log("moving edge: %d%d  bound planes: %d %d\n", pt1+1, pt2+1, bp1+1, bp2+1);
 */
 		if( mv_edge(pos_model, bp1, bp2, pt1, pt2, edge_dir) )
 			goto err;
@@ -186,12 +186,12 @@ bu_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 
 	if(newp >= 0 && newp < 6) {
 		for(i=0; i<3; i++) {
-			/* redo this plane (newp), use points p1,p2,p3 */
+			/* redo this plane (newp), use points p1, p2, p3 */
 			p1 = *edptr++;
 			p2 = *edptr++;
 			p3 = *edptr++;
 /*
-bu_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+bu_log("redo plane %d with points %d %d %d\n", newp+1, p1+1, p2+1, p3+1);
 */
 			if( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 						arb->pt[p3], &mged_tol ) )
@@ -212,7 +212,7 @@ bu_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 			p2 = *iptr++;
 			p3 = *iptr++;
 /*
-bu_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
+bu_log("REdo plane %d with points %d %d %d\n", newp+1, p1+1, p2+1, p3+1);
 */
 			if( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 					arb->pt[p3], &mged_tol ))
@@ -229,7 +229,7 @@ bu_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 			break;
 		/* intersect proper planes to define vertex p1 */
 /*
-bu_log("intersect: type=%d   point = %d\n",es_type,p1+1);
+bu_log("intersect: type=%d   point = %d\n", es_type, p1+1);
 */
 		if( rt_arb_3face_intersect( arb->pt[p1], (const plane_t *)es_peqn, es_type, p1*3 ))
 			goto err;
@@ -240,7 +240,7 @@ bu_log("intersect: type=%d   point = %d\n",es_type,p1+1);
 	 */
 	if(es_type == ARB7 && es_edflag == PTARB) {
 /*
-bu_log("redo plane 2 == 5,6,7 for ARB7\n");
+bu_log("redo plane 2 == 5, 6, 7 for ARB7\n");
 */
 		if(  bn_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
 			goto err;
@@ -280,7 +280,7 @@ err:
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1,pt2+1);
+	  bu_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1, pt2+1);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}
@@ -291,7 +291,7 @@ err:
 }
 
 /*  MV_EDGE:
- *	Moves an arb edge (end1,end2) with bounding
+ *	Moves an arb edge (end1, end2) with bounding
  *	planes bp1 and bp2 through point "thru".
  *	The edge has (non-unit) slope "dir".
  *	Note that the fact that the normals here point in rather than
@@ -360,7 +360,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n",es_type);
+	  bu_vls_printf(&tmp_vls, "ARB%d: extrusion of faces not allowed\n", es_type);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	  return TCL_ERROR;
@@ -540,7 +540,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct rt_arb_internal	*arb;
 	int i, j;
 	fastf_t rota, fb;
-	vect_t norm1,norm2,norm3;
+	vect_t norm1, norm2, norm3;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -577,7 +577,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* put vertex of new solid at center of screen */
 	VSET(arb->pt[0], -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
 
-	/* calculate normal vector defined by rot,fb */
+	/* calculate normal vector defined by rot, fb */
 	norm1[0] = cos(fb) * cos(rota);
 	norm1[1] = cos(fb) * sin(rota);
 	norm1[2] = sin(fb);
@@ -594,7 +594,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	VCROSS( norm2 , norm3 , norm1 );
 
 	/* create new rpp 20x20x2 */
-	/* the 20x20 faces are in rot,fb plane */
+	/* the 20x20 faces are in rot, fb plane */
 	VUNITIZE( norm2 );
 	VUNITIZE( norm3 );
 	VJOIN1( arb->pt[1] , arb->pt[0] , 508.0 , norm2 );
@@ -670,7 +670,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "ARB%d: mirroring of faces not allowed\n",es_type);
+	  bu_vls_printf(&tmp_vls, "ARB%d: mirroring of faces not allowed\n", es_type);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 
@@ -1024,7 +1024,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* ARB7 */	0,  1,  2,  3,  4,  5,  6, -1,
 	/* ARB8 */	0,  1,  2,  3,  4,  5,  6,  7
     };
-#define		ARB_VERT_LOC(n,v)	vert_loc[((n) - 4) * 8 + (v) - 1]
+#define		ARB_VERT_LOC(n, v)	vert_loc[((n) - 4) * 8 + (v) - 1]
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;

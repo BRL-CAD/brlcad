@@ -53,7 +53,7 @@
  *	tone_floyd()	- Floyd-Steinburg halftone.
  *	tone_folly()	- 0 degree halftone screen (from Folly and Van Dam)
  *	tone_classic()	- 45 degree classical halftone screen.
- *	tonescale()	- Generates a tone scale map default is 0,0 to 255,255
+ *	tonescale()	- Generates a tone scale map default is 0, 0 to 255, 255
  *	cubic_init()	- Generates "cubics" for tonescale for a set of points.
  *
  * Method:
@@ -140,7 +140,7 @@ void
 setup(int argc, char **argv)
 {
 	int c;
-	int i,j;
+	int i, j;
 	int *Xlist, *Ylist;
 	int	autosize = 0;
 
@@ -168,7 +168,7 @@ setup(int argc, char **argv)
 			Method = atoi(bu_optarg);
 		break;
 		case 'R':
-			RandomFlag = bn_unif_init(1,0);
+			RandomFlag = bn_unif_init(1, 0);
 		break;
 		case 'S':
 			Surpent = 1;
@@ -180,18 +180,18 @@ setup(int argc, char **argv)
 /*
  * Tone scale processing is a little strange.  The -T option is followed
  * be a list of points.  The points are collected and one point is added
- * at 1024,1024 to let tonescale be stupid.  Cubic_init takes the list
+ * at 1024, 1024 to let tonescale be stupid.  Cubic_init takes the list
  * of points and generates "cubics" for tonescale to use in generating
  * curve to use for the tone map.  If tonescale is called with no cubics
- * defined tonescale will generate a straight-line (generaly from 0,0 to
- * 255,255).
+ * defined tonescale will generate a straight-line (generaly from 0, 0 to
+ * 255, 255).
  */
 		case 'T':
 			--bu_optind;
 			for(i=bu_optind; i < argc && (isdigit(*argv[i]) ||
 			    (*argv[i] == '-' && isdigit(*(argv[i]+1)))) ; i++);
 			if ((c=i-bu_optind) % 2) {
-				fprintf(stderr,"Missing Y coordent for tone map.\n");
+				fprintf(stderr, "Missing Y coordent for tone map.\n");
 				bu_exit(1, NULL);
 			}
 			Xlist = (int *) bu_malloc((c+2)*sizeof(int), "Xlist");
@@ -204,8 +204,8 @@ setup(int argc, char **argv)
 			}
 			Xlist[j] = 1024;
 			Ylist[j] = 1024;
-			if (Debug>6) fprintf(stderr,"Number points=%d\n",j+1);
-			(void) cubic_init(j+1,Xlist,Ylist);
+			if (Debug>6) fprintf(stderr, "Number points=%d\n", j+1);
+			(void) cubic_init(j+1, Xlist, Ylist);
 			bu_free(Xlist, "Xlist");
 			bu_free(Ylist, "Ylist");
 		break;
@@ -235,25 +235,25 @@ setup(int argc, char **argv)
 			bu_exit(1, "Automatic sizing can not be used with pipes.\n");
 		}
 	} else {
-		if (freopen(argv[bu_optind],"r",stdin) == NULL ) {
+		if (freopen(argv[bu_optind], "r", stdin) == NULL ) {
 			bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
 		}
 		if (autosize) {
 			if ( !fb_common_file_size((unsigned long int *)&width, (unsigned long int *)&height, argv[bu_optind], 1)) {
-				(void) fprintf(stderr,"halftone: unable to autosize.\n");
+				(void) fprintf(stderr, "halftone: unable to autosize.\n");
 			}
 		}
 	}
 
 	if ( argc > ++bu_optind) {
-		(void) fprintf(stderr,"halftone: excess argument(s) ignored.\n");
+		(void) fprintf(stderr, "halftone: excess argument(s) ignored.\n");
 	}
 }
 
 int
 main(int argc, char **argv)
 {
-	int pixel,x,y,i;
+	int pixel, x, y, i;
 	unsigned char *Line, *Out;
 	int NewFlag = 1;
 	int Scale;
@@ -261,13 +261,13 @@ main(int argc, char **argv)
 /*
  *	parameter processing.
  */
-	setup(argc,argv);
+	setup(argc, argv);
 /*
  *	Get a tone map.  Map is the result.  1.0 is slope, 0.0 is
  *	the Y intercept (y=mx+b). 0 is the address of a function to
  *	do a x to y mapping, 0 means use the default function.
  */
-	(void) tonescale(Map,1.0,0.0,0);
+	(void) tonescale(Map, 1.0, 0.0, 0);
 
 /*
  * Currently the halftone file is scaled from 0 to 255 on output to
@@ -277,12 +277,12 @@ main(int argc, char **argv)
 	Scale = 255/Levels;
 
 	if (Debug) {
-		fprintf(stderr,"Debug = %d, Scale = %d\n",Debug, Scale);
+		fprintf(stderr, "Debug = %d, Scale = %d\n", Debug, Scale);
 	}
 
 	if (Debug>2) {
-		for(i=0;i<256;i++) fprintf(stderr,"%d ",Map[i]);
-		fprintf(stderr,"\n");
+		for(i=0;i<256;i++) fprintf(stderr, "%d ", Map[i]);
+		fprintf(stderr, "\n");
 	}
 
 	Line = (unsigned char *) bu_malloc(width, "Line");
@@ -305,7 +305,7 @@ main(int argc, char **argv)
  *		started.
  */
 		NewFlag = 1;
-		(void) sharpen(Line,1,width,stdin,Map);
+		(void) sharpen(Line, 1, width, stdin, Map);
 /*
  *		Only M_FLOYD will have Surpent != 0.
  */
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 			NewFlag=0;
 		}
 		}
-		fwrite(Out,1,width,stdout);
+		fwrite(Out, 1, width, stdout);
 	}
 	bu_free(Line, "Line");
 	bu_free(Out, "Out");

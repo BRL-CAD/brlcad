@@ -912,7 +912,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	}
     }
     if( verbose )
-	bu_log("Attempting to process region %s\n",db_path_to_string( pathp ));
+	bu_log("Attempting to process region %s\n", db_path_to_string( pathp ));
 
     ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
     BU_UNSETJUMP;		/* Relinquish the protection */
@@ -1013,7 +1013,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	tpercent = (float)(regions_written * 100) / regions_tried;
 	if( verbose )
 	    bu_log("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		   regions_tried, regions_converted, regions_written, npercent,tpercent);
+		   regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */

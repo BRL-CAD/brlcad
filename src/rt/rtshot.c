@@ -202,25 +202,25 @@ main(int argc, char **argv)
 	    break;
 	case 'u':
 	    sscanf( argv[1], "%x", (unsigned int *)&bu_debug );
-	    fprintf(stderr,"librt bu_debug=x%x\n", bu_debug);
+	    fprintf(stderr, "librt bu_debug=x%x\n", bu_debug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
 	case 'x':
 	    sscanf( argv[1], "%x", (unsigned int *)&rt_g.debug );
-	    fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
+	    fprintf(stderr, "librt rt_g.debug=x%x\n", rt_g.debug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
 	case 'X':
 	    sscanf( argv[1], "%x", (unsigned int *)&rdebug );
-	    fprintf(stderr,"rdebug=x%x\n", rdebug);
+	    fprintf(stderr, "rdebug=x%x\n", rdebug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
 	case 'N':
 	    sscanf( argv[1], "%x", (unsigned int *)&rt_g.NMG_debug);
-	    fprintf(stderr,"librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
+	    fprintf(stderr, "librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
@@ -284,7 +284,7 @@ main(int argc, char **argv)
     }
     if( argc < 2 )  {
 	(void)fputs(usage, stderr);
-	bu_exit(1,"rtshot: MGED database not specified\n");
+	bu_exit(1, "rtshot: MGED database not specified\n");
     }
 
     if( set_dir + set_pt + set_at != 2 )  goto err;
@@ -301,7 +301,7 @@ main(int argc, char **argv)
     argv++;
     argc--;
     if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	bu_exit(2,"rtshot:  rt_dirbuild failure\n");
+	bu_exit(2, "rtshot:  rt_dirbuild failure\n");
     }
 
     if( overlap_claimant_handling )

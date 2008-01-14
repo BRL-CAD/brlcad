@@ -2283,11 +2283,11 @@ dgo_E_cmd(struct dg_obj	*dgop,
 
 	/* Parse options. */
 	bu_optind = 1;          /* re-init bu_getopt() */
-	while((c=bu_getopt(argc,argv,"sC:")) != EOF) {
+	while((c=bu_getopt(argc, argv, "sC:")) != EOF) {
 		switch (c) {
 		case 'C':
 			{
-				int		r,g,b;
+				int		r, g, b;
 				register char	*cp = bu_optarg;
 
 				r = atoi(cp);

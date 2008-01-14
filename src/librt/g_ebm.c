@@ -66,7 +66,7 @@ struct rt_ebm_specific {
 	vect_t		ebm_ynorm;
 	vect_t		ebm_znorm;
 	vect_t		ebm_cellsize;	/* ideal coords: size of each cell */
-	vect_t		ebm_origin;	/* local coords of grid origin (0,0,0) for now */
+	vect_t		ebm_origin;	/* local coords of grid origin (0, 0, 0) for now */
 	vect_t		ebm_large;	/* local coords of XYZ max */
 	mat_t		ebm_mat;	/* model to ideal space */
 };
@@ -1114,7 +1114,7 @@ int
 rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register struct rt_ebm_internal *eip;
-	register int	x,y;
+	register int	x, y;
 	register int	following;
 	register int	base;
 /*	int		i; */
@@ -1193,10 +1193,10 @@ rt_ebm_plate(int x1, int y1, int x2, int y2, double t, register fastf_t *mat, re
 struct ebm_edge
 {
 	struct bu_list	l;
-	int		x1,y1;
-	int		x2,y2;
+	int		x1, y1;
+	int		x2, y2;
 	int		left;	/* 1=>material to left, 0=>material to right */
-	struct vertex	*v;	/* vertex at x1,y1 */
+	struct vertex	*v;	/* vertex at x1, y1 */
 };
 
 /* either x1==x2, or y1==y2 */
@@ -1234,8 +1234,8 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 	struct ebm_edge loops;
 	int vertical;
 	int done;
-	int from_x,from_y,to_x,to_y;
-	int start_x,start_y;
+	int from_x, from_y, to_x, to_y;
+	int start_x, start_y;
 	int max_loop_length=0;
 	int loop_length;
 
@@ -1287,7 +1287,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 			struct ebm_edge *e,*e_poss[2];
 			int poss;
 
-			/* now find an edge that starts where this one stops (at to_x,to_y) */
+			/* now find an edge that starts where this one stops (at to_x, to_y) */
 			poss = 0;
 			for( BU_LIST_FOR( e , ebm_edge , &edges->l ) )
 			{
@@ -1399,10 +1399,10 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct vertex	**loop_verts;
 	struct ebm_edge	edges;		/* list of edges */
 	struct ebm_edge *e,*start_loop;
-	int		start,x,y,left;
+	int		start, x, y, left;
 	int		max_loop_length;
 	int		loop_length;
-	vect_t		height,h;
+	vect_t		height, h;
 
 	BN_CK_TOL( tol );
 	NMG_CK_MODEL( m );
@@ -1491,7 +1491,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			{
 				struct faceuse *fu1;
 				struct ebm_edge *e1;
-				point_t pt_ebm,pt_model;
+				point_t pt_ebm, pt_model;
 				int done=0;
 
 				if( e->left )
@@ -1743,7 +1743,7 @@ main( int argc, char * *argv )
 #endif
 
 #if 0
-	/* (6,5) (2,5) (3,4) (1.2,1.2)
+	/* (6, 5) (2, 5) (3, 4) (1.2, 1.2)
 	 * were especially troublesome */
 	xx=6;
 	yy=1.5;
@@ -1753,7 +1753,7 @@ main( int argc, char * *argv )
 #endif
 
 #if 0
-	/* (1,2) (3,2) (0,2) (0,0.3)
+	/* (1, 2) (3, 2) (0, 2) (0, 0.3)
 	 * were especially troublesome */
 	xx=0;
 	yy=0.3;
@@ -1947,7 +1947,7 @@ rt_ebm_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 			bu_vls_printf( &vls, "%.25g ", ebm->mat[i] );
 	}
 	else {
-		Tcl_SetResult( interp,"ERROR: Unknown attribute, choices are F, W, N, or H\n",
+		Tcl_SetResult( interp, "ERROR: Unknown attribute, choices are F, W, N, or H\n",
 		TCL_STATIC );
 		bu_vls_free( &vls );
 		return( TCL_ERROR );

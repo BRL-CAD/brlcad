@@ -79,17 +79,17 @@ bool AproxEqColor(unsigned char a, unsigned char b, int t)
 		return true;
 	}
 
-#define AproxPixel(a,b,t) \
-	(AproxEqColor((a)[RED],(b)[RED],t) && \
-	 AproxEqColor((a)[GRN],(b)[GRN],t) && \
-	 AproxEqColor((a)[BLU],(b)[BLU],t))
+#define AproxPixel(a, b, t) \
+	(AproxEqColor((a)[RED],(b)[RED], t) && \
+	 AproxEqColor((a)[GRN],(b)[GRN], t) && \
+	 AproxEqColor((a)[BLU],(b)[BLU], t))
 
 #define Fgets_Bomb() \
 		fb_log( "\%s\"(%d) EOF encountered prematurely.\n", \
 				__FILE__, __LINE__ ); \
 		return 0;
 
-#define EqPixel(a,b) \
+#define EqPixel(a, b) \
 	 ((a)[RED] == (b)[RED] && (a)[GRN] == (b)[GRN] && (a)[BLU] == (b)[BLU])
 
 static Panel panel;	      /* Current panel. */

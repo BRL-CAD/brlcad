@@ -156,9 +156,9 @@ int f_test_bomb_hook(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 static struct cmdtab cmdtab[] = {
 	{"%", f_comm},
-	{"35,25",	bv_35_25},
+	{"35, 25",	bv_35_25},
 	{"3ptarb", f_3ptarb},
-	{"45,45",	bv_45_45},
+	{"45, 45",	bv_45_45},
 	{"accept",	be_accept},
 	{"adc", f_adc},
 	{"adjust",	cmd_adjust},
@@ -709,7 +709,7 @@ cmd_setup(void)
 	if (pathname) {
 	    /* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
 	    int i;
-	    strcat(pathname,"/");
+	    strcat(pathname, "/");
 	    for (i=0;i<strlen(pathname);i++) {
 		if(pathname[i]=='\\')
 		    pathname[i]='/'; }
@@ -1808,7 +1808,7 @@ f_ps(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	vsp = view_state;  /* save state info pointer */
 
-	bu_free((genptr_t)menu_state,"f_ps: menu_state");
+	bu_free((genptr_t)menu_state, "f_ps: menu_state");
 	menu_state = dml->dml_menu_state;
 
 	scroll_top = dml->dml_scroll_top;
@@ -1859,7 +1859,7 @@ f_pl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	view_state = dml->dml_view_state;  /* use dml's state info */
 	*mged_variables = *dml->dml_mged_variables; /* struct copy */
 
-	bu_free((genptr_t)menu_state,"f_pl: menu_state");
+	bu_free((genptr_t)menu_state, "f_pl: menu_state");
 	menu_state = dml->dml_menu_state;
 
 	scroll_top = dml->dml_scroll_top;
@@ -2059,7 +2059,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 	/* read in all the bots */
-	for (idx=1,i=2 ; i < argc ; i++ ) {
+	for (idx=1, i=2 ; i < argc ; i++ ) {
 	    if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
 		continue;
 	    }
@@ -3157,7 +3157,7 @@ cmd_list(ClientData	clientData,
 			register int	i;
 			for( i=0; i < ipathpos; i++ ) {
 				bu_vls_printf(&vls, "/%s",
-					      DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep );
+					      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep );
 			}
 		} else
 			return TCL_ERROR;

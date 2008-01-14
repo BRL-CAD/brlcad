@@ -184,9 +184,9 @@ main(int argc, char **argv)
 	doscale();
 
 	/* Initialize the Tektronix */
-	(void)putc(ESC,stdout);
-	(void)putc(';',stdout);		/* Miniature typeface */
-	(void)putc(US,stdout);
+	(void)putc(ESC, stdout);
+	(void)putc(';', stdout);		/* Miniature typeface */
+	(void)putc(US, stdout);
 
 	while( (c = getchar()) != EOF ) {
 		/* look it up */
@@ -291,12 +291,12 @@ main(int argc, char **argv)
 
 		case 'c':	/* circle */
 		case 'i':	/* d_circle */
-			fprintf(stderr,"pl-tek: circle unimplemented\n");
+			fprintf(stderr, "pl-tek: circle unimplemented\n");
 			break;
 
 		case 'a':	/* arc */
 		case 'r':	/* d_arc */
-			fprintf(stderr,"pl-tek: arc unimplemented\n");
+			fprintf(stderr, "pl-tek: arc unimplemented\n");
 			break;
 
 		case 'f':	/* linmod */
@@ -449,10 +449,10 @@ static int oextra = -1;
 static void
 tekcont(register int x, register int y)
 {
-	int hix,hiy,lox,loy,extra;
+	int hix, hiy, lox, loy, extra;
 	int n;
 
-	if( verbose ) fprintf(stderr," tekcont(%d,%d)\n", x, y );
+	if( verbose ) fprintf(stderr, " tekcont(%d,%d)\n", x, y );
 	hix=(x>>7) & 037;
 	hiy=(y>>7) & 037;
 	lox = (x>>2)&037;
@@ -460,39 +460,39 @@ tekcont(register int x, register int y)
 	extra = (x & 03) + ((y<<2) & 014);
 	n = (abs(hix-ohix) + abs(hiy-ohiy) + 6) / 12;
 	if(hiy != ohiy){
-		(void)putc(hiy|040,stdout);
+		(void)putc(hiy|040, stdout);
 		ohiy=hiy;
 	}
 	if(hix != ohix) {
 		if(extra != oextra) {
-			(void)putc(extra|0140,stdout);
+			(void)putc(extra|0140, stdout);
 			oextra=extra;
 		}
-		(void)putc(loy|0140,stdout);
-		(void)putc(hix|040,stdout);
+		(void)putc(loy|0140, stdout);
+		(void)putc(hix|040, stdout);
 		ohix=hix;
 		oloy=loy;
 	} else {
 		if(extra != oextra) {
-			(void)putc(extra|0140,stdout);
-			(void)putc(loy|0140,stdout);
+			(void)putc(extra|0140, stdout);
+			(void)putc(loy|0140, stdout);
 			oextra=extra;
 			oloy=loy;
 		} else if(loy != oloy) {
-			(void)putc(loy|0140,stdout);
+			(void)putc(loy|0140, stdout);
 			oloy=loy;
 		}
 	}
-	(void)putc(lox|0100,stdout);
+	(void)putc(lox|0100, stdout);
 	while(n--)
-		(void)putc(0,stdout);
+		(void)putc(0, stdout);
 }
 
 static void
 tekmove(int xi, int yi)
 {
-	(void)putc(GS,stdout);			/* Next vector blank */
-	tekcont(xi,yi);
+	(void)putc(GS, stdout);			/* Next vector blank */
+	tekcont(xi, yi);
 }
 
 static void
@@ -500,8 +500,8 @@ tekerase(void)
 {
 	extern unsigned sleep(unsigned int);	/* DAG -- was missing */
 
-	(void)putc(ESC,stdout);
-	(void)putc(FF,stdout);
+	(void)putc(ESC, stdout);
+	(void)putc(FF, stdout);
 	ohix = ohiy = oloy = oextra = -1;
 	(void)fflush(stdout);
 
@@ -511,9 +511,9 @@ tekerase(void)
 static void
 teklabel(register char *s)
 {
-	(void)putc(US,stdout);
+	(void)putc(US, stdout);
 	for( ; *s; s++ )
-		(void)putc(*s,stdout);
+		(void)putc(*s, stdout);
 	ohix = ohiy = oloy = oextra = -1;
 }
 
@@ -522,7 +522,7 @@ teklinemod(register char *s)
 {
 	register int c;				/* DAG -- was char */
 
-	(void)putc(ESC,stdout);
+	(void)putc(ESC, stdout);
 	switch(s[0]){
 	case 'l':
 		c = 'd';
@@ -539,13 +539,13 @@ teklinemod(register char *s)
 		c = '`';
 		break;
 	}
-	(void)putc(c,stdout);
+	(void)putc(c, stdout);
 }
 
 static void
 tekpoint(int xi, int yi) {
-	tekmove(xi,yi);
-	tekcont(xi,yi);
+	tekmove(xi, yi);
+	tekcont(xi, yi);
 }
 
 /*

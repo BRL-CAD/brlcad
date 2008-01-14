@@ -66,7 +66,7 @@ rt_nurb_nodes(fastf_t *nodes, const struct knot_vector *knots, int order)
 void
 rt_nurb_interp_mat(fastf_t *imat, struct knot_vector *knots, fastf_t *nodes, int order, int dim)
 {
-	int i,j;
+	int i, j;
 	int ptr;
 
 	ptr = 0;
@@ -99,7 +99,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
 	interp_mat = (fastf_t *) bu_malloc( n * n * sizeof(fastf_t),
 		"rt_nurb_interp: interp_mat");
 
-	nodes = (fastf_t *) bu_malloc( n * sizeof(fastf_t),"rt_nurb_interp:nodes");
+	nodes = (fastf_t *) bu_malloc( n * sizeof(fastf_t), "rt_nurb_interp:nodes");
 	local_data = (fastf_t *)bu_malloc( n * 3 * sizeof(fastf_t), "rt_nurb_interp() local_data[]");
 
 	crv->ctl_points = (fastf_t *) bu_malloc( n * 3 * sizeof(fastf_t),
@@ -154,14 +154,14 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
  *	2)  Fit a curve to the control points from step 1 in each column.
  *  The result is a mesh of control points which defines the surface.
  *
- *  Input data is assumed to be a 3-tuple of (X,Y,Z) where Z is the
+ *  Input data is assumed to be a 3-tuple of (X, Y, Z) where Z is the
  *  independent variable being interpolated to make the surface.
  */
 void
 rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ymax, int xmax)
 
 
-				/* data[x,y] */
+				/* data[x, y] */
 				/* nrow = max Y */
 				/* ncol = max X */
 {
@@ -177,7 +177,7 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 	srf->s_size[0] = xmax;
 	srf->s_size[1] = ymax;
 	srf->l.magic = RT_SNURB_MAGIC;
-	srf->pt_type = RT_NURB_MAKE_PT_TYPE(3,RT_NURB_PT_XYZ,RT_NURB_PT_NONRAT);
+	srf->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 
 	/* the U knot vector replates to the points in a row
 	 * therefore you want to determin how many cols there are
@@ -201,8 +201,8 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
 	/* Interpolate the data across the rows, fitting a curve to each. */
 	for( y = 0; y < ymax; y++)  {
 		crv[y].l.magic = RT_CNURB_MAGIC;
-		/* Build curve from from (0,y) to (xmax-1, y) */
-		rt_nurb_cinterp( &crv[y], order, &NVAL(0,y), xmax );
+		/* Build curve from from (0, y) to (xmax-1, y) */
+		rt_nurb_cinterp( &crv[y], order, &NVAL(0, y), xmax );
 	}
 #undef NVAL
 

@@ -30,7 +30,7 @@
 /*  Program to make a handle using libwdb.  The objects will be  */
 /*  in millimeters.  This handle will be constructed using three  */
 /*  cylinders, two tori, and two arb8s.  The base of the handle  */
-/*  will be centered at (0,0,0) and the height of the handle  */
+/*  will be centered at (0, 0, 0) and the height of the handle  */
 /*  will extend in the positive z-direction.  */
 
 #include "common.h"
@@ -57,15 +57,15 @@ main(int argc, char **argv)
 {							/*  START # 1  */
    struct rt_wdb *fpw;			/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */
-   double hgt,len;		/*  Height & length of handle.  */
-   double r1,r2;		/*  Radius of tori & radius of cylinders.  */
+   double hgt, len;		/*  Height & length of handle.  */
+   double r1, r2;		/*  Radius of tori & radius of cylinders.  */
    point_t pts[8];		/*  Eight points of arb8.  */
    point_t bs;			/*  Base of rcc.  */
    vect_t ht;			/*  Height of rcc.  */
    fastf_t rad;			/*  Radius of rcc.  */
    point_t cent;		/*  Center of torus.  */
    vect_t norm;			/*  Normal of torus.  */
-   double rad1,rad2;		/*  R1 and r2 of torus.  */
+   double rad1, rad2;		/*  R1 and r2 of torus.  */
    char *temp;			/*  Temporary character string.  */
    char temp1[16];		/*  Temporary character string.  */
 
@@ -77,7 +77,7 @@ main(int argc, char **argv)
    struct wmember comb;		/*  Used to make regions.  */
    struct wmember comb1;	/*  Used to make groups.  */
 
-   int i,j,k;			/*  Loop counters.  */
+   int i, j, k;			/*  Loop counters.  */
 
    /*  Set up solid, region, and group names.  */
    solnam[0] = 's';
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 
    /*  Explain makings of handle.  */
    (void)printf("\nThis program constructs a handle with the base centered\n");
-   (void)printf("at (0,0,0) and the height extending in the positive z-\n");
+   (void)printf("at (0, 0, 0) and the height extending in the positive z-\n");
    (void)printf("direction.  The handle will be composed of 3 cylinders,\n");
    (void)printf("2 tori, and 2 arb8s.\n\n");
    (void)fflush(stdout);
@@ -117,7 +117,7 @@ main(int argc, char **argv)
    (void)printf("Enter the name of the mged file to be created ");
    (void)printf("(25 char max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%26s",filemged);
+   (void)scanf("%26s", filemged);
 
    /*  Find number of handles to create (<=26).  */
    (void)printf("Enter number of handles to create (26 max).\n\t");
@@ -183,7 +183,7 @@ main(int argc, char **argv)
 		   k++;
 		}					/*  END # 9  */
 		temp1[k] = '\0';
-		(void)sscanf(temp1,"%d",&numhan);
+		(void)sscanf(temp1, "%d",&numhan);
 		if(numhan > 26) numhan = 26;
 	   }						/*  END # 8  */
 
@@ -200,8 +200,8 @@ main(int argc, char **argv)
 		   k++;
 		}					/*  END # 11  */
 		temp1[k] = '\0';
-		if(temp[1] == 'l') (void)sscanf(temp1,"%lf",&len);
-		else if(temp[1] == 'h') (void)sscanf(temp1,"%lf",&hgt);
+		if(temp[1] == 'l') (void)sscanf(temp1, "%lf",&len);
+		else if(temp[1] == 'h') (void)sscanf(temp1, "%lf",&hgt);
 	   }						/*  END # 10  */
 
 	   /*  -r1 or -r2 - radii for torus.  */
@@ -217,26 +217,26 @@ main(int argc, char **argv)
 		   k++;
 		}					/*  END # 13  */
 		temp1[k] = '\0';
-		if(temp[2] == '1') (void)sscanf(temp1,"%lf",&r1);
-		else if(temp[2] == '2') (void)sscanf(temp1,"%lf",&r2);
+		if(temp[2] == '1') (void)sscanf(temp1, "%lf",&r1);
+		else if(temp[2] == '2') (void)sscanf(temp1, "%lf",&r2);
 	   }						/*  END # 12  */
 	}						/*  END # 5  */
    }							/*  END # 4  */
 
    /*  Print out dimensions of the handle.  */
-   (void)printf("\nmged file name:  %s\n",filemged);
-   (void)printf("length:  %f mm\n",len);
-   (void)printf("height:  %f mm\n",hgt);
-   (void)printf("radius of tori:  %f mm\n",r1);
-   (void)printf("radius of cylinders:  %f mm\n",r2);
-   (void)printf("number of handles:  %d\n\n",numhan);
+   (void)printf("\nmged file name:  %s\n", filemged);
+   (void)printf("length:  %f mm\n", len);
+   (void)printf("height:  %f mm\n", hgt);
+   (void)printf("radius of tori:  %f mm\n", r1);
+   (void)printf("radius of cylinders:  %f mm\n", r2);
+   (void)printf("number of handles:  %d\n\n", numhan);
    (void)fflush(stdout);
 
    /*  Open mged file for writing to.  */
    fpw = wdb_fopen(filemged);
 
    /*  Write ident record.  */
-   mk_id(fpw,"handles");
+   mk_id(fpw, "handles");
 
    for(i=0; i<numhan; i++)
    {							/*  START # 2  */
@@ -253,7 +253,7 @@ main(int argc, char **argv)
    rad = (fastf_t)r2;
    solnam[5] = 97 + i;
    solnam[6] = '1';
-   mk_rcc(fpw,solnam,bs,ht,rad);
+   mk_rcc(fpw, solnam, bs, ht, rad);
 
    /*  Create right cylinder.  */
    bs[0] = (fastf_t)0.;
@@ -264,12 +264,12 @@ main(int argc, char **argv)
    ht[2] = (fastf_t) (hgt - r1 - r2);
    rad = (fastf_t)r2;
    solnam[6] = '2';
-   mk_rcc(fpw,solnam,bs,ht,rad);
+   mk_rcc(fpw, solnam, bs, ht, rad);
 
    /*  Create left cylinder.  */
    bs[1] = (-bs[1]);
    solnam[6] = '3';
-   mk_rcc(fpw,solnam,bs,ht,rad);
+   mk_rcc(fpw, solnam, bs, ht, rad);
 
    /*  Create right torus.  */
    cent[0] = (fastf_t)0.;
@@ -281,12 +281,12 @@ main(int argc, char **argv)
    rad1 = r1;
    rad2 = r2;
    solnam[6] = '4';
-   mk_tor(fpw,solnam,cent,norm,rad1,rad2);
+   mk_tor(fpw, solnam, cent, norm, rad1, rad2);
 
    /*  Create left torus.  */
    cent[1] = (-cent[1]);
    solnam[6] = '5';
-   mk_tor(fpw,solnam,cent,norm,rad1,rad2);
+   mk_tor(fpw, solnam, cent, norm, rad1, rad2);
 
    /*  Create right arb8.  */
    pts[0][0] = (fastf_t)r2;
@@ -314,7 +314,7 @@ main(int argc, char **argv)
    pts[7][1] = (fastf_t) (len / 2. - r1 - r2);
    pts[7][2] = (fastf_t) (hgt -r1 - r2);
    solnam[6] ='6';
-   mk_arb8(fpw,solnam, &pts[0][X]);
+   mk_arb8(fpw, solnam, &pts[0][X]);
 
    /*  Create left arb8.  */
    pts[0][1] = (-pts[0][1]);
@@ -326,7 +326,7 @@ main(int argc, char **argv)
    pts[6][1] = (-pts[6][1]);
    pts[7][1] = (-pts[7][1]);
    solnam[6] = '7';
-   mk_arb8(fpw,solnam, &pts[0][X]);
+   mk_arb8(fpw, solnam, &pts[0][X]);
 
    /*  Create all regions.  */
 
@@ -337,17 +337,17 @@ main(int argc, char **argv)
    (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
    regnam[5] = 97 + i;
    regnam[6] = '1';
-   mk_lfcomb(fpw,regnam,&comb,1);
+   mk_lfcomb(fpw, regnam,&comb, 1);
 
    solnam[6] = '2';
    (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
    regnam[6] = '2';
-   mk_lfcomb(fpw,regnam,&comb,1);
+   mk_lfcomb(fpw, regnam,&comb, 1);
 
    solnam[6] = '3';
    (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
    regnam[6] = '3';
-   mk_lfcomb(fpw,regnam,&comb,1);
+   mk_lfcomb(fpw, regnam,&comb, 1);
 
    solnam[6] = '4';
    (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
@@ -358,7 +358,7 @@ main(int argc, char **argv)
    solnam[6] = '2';
    (void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
    regnam[6] = '4';
-   mk_lfcomb(fpw,regnam,&comb,1);
+   mk_lfcomb(fpw, regnam,&comb, 1);
 
    solnam[6] = '5';
    (void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
@@ -369,7 +369,7 @@ main(int argc, char **argv)
    solnam[6] = '3';
    (void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
    regnam[6] = '5';
-   mk_lfcomb(fpw,regnam,&comb,1);
+   mk_lfcomb(fpw, regnam,&comb, 1);
 
    /*  Create a group.  */
 
@@ -387,7 +387,7 @@ main(int argc, char **argv)
    regnam[6] = '5';
    (void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
    grpnam[3] = 97 + i;
-   mk_lfcomb(fpw,grpnam,&comb1,0);
+   mk_lfcomb(fpw, grpnam,&comb1, 0);
 
    }							/*  END # 2  */
 

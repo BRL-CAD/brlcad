@@ -69,7 +69,7 @@ rt_get_timer(struct bu_vls	*vp, double *elapsed)
 
 	/* Real time.  1 second resolution. */
 	(void)time(&now);
-	elapsed_secs = difftime(now,time0);
+	elapsed_secs = difftime(now, time0);
 
 	finish = clock();
 	sys_cpu_secs = (double)(finish - start);

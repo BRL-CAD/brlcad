@@ -237,7 +237,7 @@ phong_free(char *cp)
  *
  Color pixel based on the energy of a point light source (Eps)
  plus some diffuse illumination (Epd) reflected from the point
- <x,y> :
+ <x, y> :
 
  E = Epd + Eps		(1)
 
@@ -277,7 +277,7 @@ phong_free(char *cp)
  developed by Bui-Tuong Phong, [see Wm M. Newman and R. F. Sproull,
  "Principles of Interactive Computer Graphics", 	McGraw-Hill, 1979]
 
- Er = Ra(m)*cos(Ia) + Rd(m)*cos(I1) + W(I1,m)*cos(s)^^n
+ Er = Ra(m)*cos(Ia) + Rd(m)*cos(I1) + W(I1, m)*cos(s)^^n
  where,
 
  Er	is the energy reflected in the observer's direction.
@@ -309,7 +309,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
     register	fastf_t	*to_light;
     register	int	i;
     register	fastf_t	cosine;
-    vect_t			work,color;
+    vect_t			work, color;
     vect_t			reflected;
     point_t			pt;
     fastf_t			dist;
@@ -369,7 +369,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	    /* Diffuse reflectance from "Ambient" light source (at eye) */
 	    if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if (cosine > 1.00001 )  {
-		    bu_log("cosAmb=1+%g %s surfno=%d (x%d,y%d,lvl%d)\n",
+		    bu_log("cosAmb=1+%g %s surfno=%d (x%d, y%d, lvl%d)\n",
 			   cosine-1,
 			   pp->pt_inseg->seg_stp->st_dp->d_namep,
 			   swp->sw_hit.hit_surfno,
@@ -405,7 +405,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	    {
 		float emission[3];
 		struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
-		VMOVE(emission,ps->emission);
+		VMOVE(emission, ps->emission);
 #if SW_SET_TRANSMIT
 		if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
 		    VSETALL(emission, swp->sw_phong_emission);
@@ -421,7 +421,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 #if SW_SET_TRANSMIT
 	    if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
 		vect_t tmp;
-		VSETALL(tmp,swp->sw_phong_emission);
+		VSETALL(tmp, swp->sw_phong_emission);
 		VADD2( swp->sw_color, swp->sw_color, tmp);
 	    } else {
 		VADD2( swp->sw_color, swp->sw_color, ps->emission );
@@ -458,7 +458,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 		/* Diffuse reflectance from this light source. */
 		if ((cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0 )  {
 		    if (cosine > 1.00001 )  {
-			bu_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
+			bu_log("cosI=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
 			       ap->a_x, ap->a_y, ap->a_level);
 			cosine = 1;
 		    }
@@ -469,7 +469,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 			    dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
 			dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
 			refl= dist * ps->wgt_diffuse * cosine * swp->sw_lightfract[i] * lp->lt_intensity;
-			/*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n",dist,pt[0],pt[1],pt[2]);*/
+			/*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n", dist, pt[0], pt[1], pt[2]);*/
 		    } else
 #endif
 			{
@@ -497,7 +497,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 		VSUB2( reflected, work, to_light );
 		if ((cosine = -VDOT( reflected, ap->a_ray.r_dir )) > 0 )  {
 		    if (cosine > 1.00001 )  {
-			bu_log("cosS=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
+			bu_log("cosS=1+%g (x%d, y%d, lvl%d)\n", cosine-1,
 			       ap->a_x, ap->a_y, ap->a_level);
 			cosine = 1;
 		    }

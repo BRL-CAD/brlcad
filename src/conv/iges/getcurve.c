@@ -49,7 +49,7 @@ struct ptlist **curv_pts;
 {
 	int type;
 	int npts = 0;
-	int i,j;
+	int i, j;
 	double pi;
 	struct ptlist *ptr,*prev;
 
@@ -100,9 +100,9 @@ struct ptlist **curv_pts;
 		}
 		case 100:	/* circular arc */
 		{
-			point_t center,start,stop,tmp;
-			fastf_t common_z,ang1,ang2,delta;
-			double cosdel,sindel,rx,ry;
+			point_t center, start, stop, tmp;
+			fastf_t common_z, ang1, ang2, delta;
+			double cosdel, sindel, rx, ry;
 
 			delta = (2.0*pi)/ARCSEGS;
 
@@ -183,9 +183,9 @@ struct ptlist **curv_pts;
 		case 106:	/* copius data */
 		{
 			int	interpflag;	/* interpretation flag
-							1 => x,y pairs (common z-coord)
-							2 => x,y,z coords
-							3 => x,y,z coords and i,j,k vectors */
+							1 => x, y pairs (common z-coord)
+							2 => x, y, z coords
+							3 => x, y, z coords and i, j, k vectors */
 			int	ntuples;	/* number of points */
 			fastf_t common_z;	/* common z-coordinate */
 			point_t	pt1;		/* temporary storage for incoming point */
@@ -436,8 +436,8 @@ struct ptlist **curv_pts;
 		}
 		case 104:	/* conic arc */
 		{
-			double A,B,C,D,E,F,a,b,c,del,I,theta,dpi,t1,t2,xc,yc;
-			point_t v1,v2,tmp;
+			double A, B, C, D, E, F, a, b, c, del, I, theta, dpi, t1, t2, xc, yc;
+			point_t v1, v2, tmp;
 			mat_t rot1;
 			int num_points;
 
@@ -531,7 +531,7 @@ struct ptlist **curv_pts;
 			switch( type )
 			{
 
-				double p,r1;
+				double p, r1;
 
 			    case 3:	/* parabola */
 
@@ -559,7 +559,7 @@ struct ptlist **curv_pts;
 					break;
 				}
 
-				/* calculate vertex (xc,yc). This is based on the
+				/* calculate vertex (xc, yc). This is based on the
 					parametric representation:
 					   x = xc + a*t*t*cos(theta) - t*sin(theta)
 					   y = yc + a*t*t*sin(theta) + t*cos(theta)
@@ -634,9 +634,9 @@ struct ptlist **curv_pts;
 			    case 1:	/* ellipse */
 			    case 2:	/* hyperbola */
 			    {
-				double A1,C1,F1,alpha,beta;
+				double A1, C1, F1, alpha, beta;
 				mat_t rot2;
-				point_t v3,tmp2;
+				point_t v3, tmp2;
 
 				/* calculate center of ellipse or hyperbola */
 				xc = (B*E/4.0 - D*C/2.0)/a;
@@ -826,11 +826,11 @@ struct ptlist **curv_pts;
 		}
 		case 126:	/* rational B-spline */
 		{
-			int k,m,n,a,prop1,prop2,prop3,prop4;
+			int k, m, n, a, prop1, prop2, prop3, prop4;
 			fastf_t *t;	/* knot values */
 			fastf_t *w;	/* weights */
 			point_t *cntrl_pts;	/* control points */
-			fastf_t v0,v1;	/* starting and stopping parameter values */
+			fastf_t v0, v1;	/* starting and stopping parameter values */
 			fastf_t v;	/* current parameter value */
 			fastf_t delv;	/* parameter increment */
 

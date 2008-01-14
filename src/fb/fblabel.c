@@ -159,7 +159,7 @@ get_args(int argc, register char **argv)
 	xpos = atoi( argv[bu_optind++]);
 	ypos = atoi( argv[bu_optind++]);
 	textstring = argv[bu_optind++];
-	if(debug) (void)fprintf(stderr,"fblabel %d %d %s\n", xpos, ypos, textstring);
+	if(debug) (void)fprintf(stderr, "fblabel %d %d %s\n", xpos, ypos, textstring);
 
 	if ( argc > bu_optind )
 		(void)fprintf( stderr, "fblabel: excess argument(s) ignored\n" );
@@ -222,7 +222,7 @@ do_line(register struct vfont *vfp, register char *line)
 		vdp = &vfp->vf_dispatch[char_id];
 		width = vdp->vd_left + vdp->vd_right;
 		height = vdp->vd_up + vdp->vd_down;
-		if(debug) fprintf(stderr,"%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
+		if(debug) fprintf(stderr, "%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
 
 		/*
 		 *  Space characters are frequently not represented
@@ -244,7 +244,7 @@ do_line(register struct vfont *vfp, register char *line)
 		}
 
 		if( currx + width > fb_getwidth(fbp) - 1 )  {
-			fprintf(stderr,"fblabel:  Ran off screen\n");
+			fprintf(stderr, "fblabel:  Ran off screen\n");
 			break;
 		}
 

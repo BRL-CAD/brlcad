@@ -45,7 +45,7 @@
 #define CenterCell(b)	(b += roundToInt( (fastf_t) zoom / 2.0 ))
 
 /* Compare one RGB pixel to another. */
-#define	SAMERGB(a,b)	((a)[RED] == (b)[RED] &&\
+#define	SAMERGB(a, b)	((a)[RED] == (b)[RED] &&\
 			 (a)[GRN] == (b)[GRN] &&\
 			 (a)[BLU] == (b)[BLU])
 
@@ -199,7 +199,7 @@ register struct application	*ap;
 	brst_log( "paintSpallFb:gridhor=<%g,%g,%g> gridver=<%g,%g,%g>\n",
 		gridhor[X], gridhor[Y], gridhor[Z],
 		gridver[X], gridver[Y], gridver[Z] );
-	brst_log( "paintSpallFb:fb_write(x=%d,y=%d,pixel={%d,%d,%d})\n",
+	brst_log( "paintSpallFb:fb_write(x=%d, y=%d, pixel={%d,%d,%d})\n",
 		x, y,
 		(int) pixel[RED],
 		(int) pixel[GRN],

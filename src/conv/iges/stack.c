@@ -30,7 +30,7 @@
 #define	STKBLK	100	/* Allocation block size */
 
 static union tree **stk;
-static int jtop,stklen;
+static int jtop, stklen;
 
 void
 Initstack()

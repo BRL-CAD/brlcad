@@ -1114,13 +1114,13 @@ process_entities_polyline_code( int code )
 
 					for( j=1 ; j<mesh_n_count ; j++ ) {
 						for( i=1 ; i<mesh_m_count ; i++ ) {
-							add_triangle( polyline_vert_indices[PVINDEX(i-1,j-1)],
-								      polyline_vert_indices[PVINDEX(i-1,j)],
-								      polyline_vert_indices[PVINDEX(i,j-1)],
+							add_triangle( polyline_vert_indices[PVINDEX(i-1, j-1)],
+								      polyline_vert_indices[PVINDEX(i-1, j)],
+								      polyline_vert_indices[PVINDEX(i, j-1)],
 								      curr_layer );
-							add_triangle( polyline_vert_indices[PVINDEX(i-1,j-1)],
-								      polyline_vert_indices[PVINDEX(i,j-1)],
-								      polyline_vert_indices[PVINDEX(i,j)],
+							add_triangle( polyline_vert_indices[PVINDEX(i-1, j-1)],
+								      polyline_vert_indices[PVINDEX(i, j-1)],
+								      polyline_vert_indices[PVINDEX(i, j)],
 								      curr_layer );
 						}
 					}
@@ -2159,13 +2159,13 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 	bn_vlist_2string( &vhead, &free_hd, copyOfText,
 			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			  scale, textRotation );
-	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	nmg_vlist_to_eu( &vhead, layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
     } else if( horizAlignment == LEFT && vertAlignment == BASELINE ) {
 	bn_vlist_2string( &vhead, &free_hd, copyOfText,
 			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			  textHeight, textRotation );
-	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	nmg_vlist_to_eu( &vhead, layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
     } else if( (horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == BASELINE ) {
 	double len = stringLength * textHeight;
@@ -2174,7 +2174,7 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 	bn_vlist_2string( &vhead, &free_hd, copyOfText,
 			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			  textHeight, textRotation );
-	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	nmg_vlist_to_eu( &vhead, layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
     } else if( (horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == VMIDDLE ) {
 	double len = stringLength * textHeight;
@@ -2185,7 +2185,7 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 	bn_vlist_2string( &vhead, &free_hd, copyOfText,
 			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			  textHeight, textRotation );
-	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	nmg_vlist_to_eu( &vhead, layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
     } else if( horizAlignment == RIGHT && vertAlignment == BASELINE ) {
 	double len = stringLength * textHeight;
@@ -2194,7 +2194,7 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 	bn_vlist_2string( &vhead, &free_hd, copyOfText,
 			  firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			  textHeight, textRotation );
-	nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	nmg_vlist_to_eu( &vhead, layers[curr_layer]->s );
 	BN_FREE_VLIST( &free_hd, &vhead );
     } else {
 	bu_log( "cannot handle this alignment: horiz = %d, vert = %d\n", horizAlignment, vertAlignment );
@@ -2294,9 +2294,9 @@ drawMtext( char *text, int attachPoint, int drawingDirection, double textHeight,
 	    }
 	    *cp = '\0';
 	    bn_vlist_2string( &vhead, &free_hd, c,
-			      startx,starty,
+			      startx, starty,
 			      scale, rotationAngle );
-	    nmg_vlist_to_eu( &vhead,layers[curr_layer]->s );
+	    nmg_vlist_to_eu( &vhead, layers[curr_layer]->s );
 	    BN_FREE_VLIST( &free_hd, &vhead );
 	    c = ++cp;
 	    startx -= lineSpace * ydir[X];
@@ -2485,8 +2485,8 @@ process_mtext_entities_code( int code )
     static double charWidth=0.0;
     static double rectWidth=0.0;
     static double rotationAngle=0.0;
-    static double insertionPoint[3]={0,0,0};
-    static double xAxisDirection[3]={0,0,0};
+    static double insertionPoint[3]={0, 0, 0};
+    static double xAxisDirection[3]={0, 0, 0};
     point_t tmp_pt;
     int coord;
 
@@ -2864,7 +2864,7 @@ process_dimension_entities_code( int code )
 static int
 process_arc_entities_code( int code )
 {
-	static point_t center={0,0,0};
+	static point_t center={0, 0, 0};
 	static fastf_t radius;
 	static fastf_t start_angle, end_angle;
 	int num_segs;
@@ -3630,7 +3630,7 @@ main( int argc, char *argv[] )
 
 		if( layers[i]->curr_tri && layers[i]->vert_tree_root->curr_vert > 2 ) {
 			sprintf( tmp_name, "bot.s%d", i );
-			if( mk_bot( out_fp, tmp_name, RT_BOT_SURFACE, RT_BOT_UNORIENTED,0,
+			if( mk_bot( out_fp, tmp_name, RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0,
 				    layers[i]->vert_tree_root->curr_vert, layers[i]->curr_tri, layers[i]->vert_tree_root->the_array,
 				    layers[i]->part_tris, (fastf_t *)NULL, (struct bu_bitv *)NULL ) ) {
 				bu_log( "Failed to make Bot\n" );

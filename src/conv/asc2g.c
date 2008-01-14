@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 
     Tcl_FindExecutable(argv[0]);
 
-    ifp = fopen(argv[1],"r");
+    ifp = fopen(argv[1], "r");
     if( !ifp )  perror(argv[1]);
 
     ofp = wdb_fopen(argv[2]);
@@ -987,7 +987,7 @@ combbld(void)
 		temp_pflag ? matparm : (char *)0,
 		override ? (unsigned char *)rgb : (unsigned char *)0,
 		regionid, aircode, material, los, inherit, 0, 1) < 0 )  {
-	fprintf(stderr,"asc2g: mk_lrcomb fail\n");
+	fprintf(stderr, "asc2g: mk_lrcomb fail\n");
 	abort();
     }
 
@@ -1182,38 +1182,38 @@ identbld(void)
     /* XXX Should use db_conversions() for this */
     switch(units)  {
 	case ID_NO_UNIT:
-	    strncpy(unit_str,"mm",4);
+	    strncpy(unit_str, "mm", 4);
 	    break;
 	case ID_MM_UNIT:
-	    strncpy(unit_str,"mm",4);
+	    strncpy(unit_str, "mm", 4);
 	    break;
 	case ID_UM_UNIT:
-	    strncpy(unit_str,"um",4);
+	    strncpy(unit_str, "um", 4);
 	    break;
 	case ID_CM_UNIT:
-	    strncpy(unit_str,"cm",4);
+	    strncpy(unit_str, "cm", 4);
 	    break;
 	case ID_M_UNIT:
-	    strncpy(unit_str,"m",4);
+	    strncpy(unit_str, "m", 4);
 	    break;
 	case ID_KM_UNIT:
-	    strncpy(unit_str,"km",4);
+	    strncpy(unit_str, "km", 4);
 	    break;
 	case ID_IN_UNIT:
-	    strncpy(unit_str,"in",4);
+	    strncpy(unit_str, "in", 4);
 	    break;
 	case ID_FT_UNIT:
-	    strncpy(unit_str,"ft",4);
+	    strncpy(unit_str, "ft", 4);
 	    break;
 	case ID_YD_UNIT:
-	    strncpy(unit_str,"yard",4);
+	    strncpy(unit_str, "yard", 4);
 	    break;
 	case ID_MI_UNIT:
-	    strncpy(unit_str,"mile",4);
+	    strncpy(unit_str, "mile", 4);
 	    break;
 	default:
-	    fprintf(stderr,"asc2g: unknown v4 units code = %d, defaulting to millimeters\n", units);
-	    strncpy(unit_str,"mm",4);
+	    fprintf(stderr, "asc2g: unknown v4 units code = %d, defaulting to millimeters\n", units);
+	    strncpy(unit_str, "mm", 4);
     }
     local2mm = bu_units_conversion(unit_str);
     if( local2mm <= 0 )  {
@@ -1339,7 +1339,7 @@ materbld(void)
 {
     register char *cp;
     int	low, hi;
-    int	r,g,b;
+    int	r, g, b;
 
     cp = buf;
     cp++;				/* skip ID_MATERIAL */
@@ -1553,7 +1553,7 @@ botbld(void)
     char			my_name[NAME_LEN];
     char			type;
     int			mode, orientation, error_mode, num_vertices, num_faces;
-    int			i,j;
+    int			i, j;
     double			a[3];
     fastf_t			*vertices;
     fastf_t			*thick=NULL;
@@ -1666,7 +1666,7 @@ pipebld(void)
     bu_fgets( buf, BUFSIZE, ifp);
     while( strncmp (buf , "END_PIPE", 8 ) )
 	{
-	    double id,od,x,y,z,bendradius;
+	    double id, od, x, y, z, bendradius;
 
 	    sp = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "pipe");
 

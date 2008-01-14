@@ -110,11 +110,11 @@ get_args(int argc, register char **argv)
 	switch( c )  {
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-		fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
+		fprintf(stderr, "librt rt_g.debug=x%x\n", rt_g.debug);
 		break;
 	    case 'X':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rdebug );
-		fprintf(stderr,"rt rdebug=x%x\n", rdebug);
+		fprintf(stderr, "rt rdebug=x%x\n", rdebug);
 		break;
 
 	    case 'n':
@@ -125,7 +125,7 @@ get_args(int argc, register char **argv)
 		break;
 
 	    default:		/* '?' */
-		fprintf(stderr,"unknown option %c\n", c);
+		fprintf(stderr, "unknown option %c\n", c);
 		return(0);	/* BAD */
 	}
     }
@@ -177,13 +177,13 @@ main(int argc, char **argv)
     VMOVE( ap.a_ray.r_dir, first_dir );
     VUNITIZE( ap.a_ray.r_dir );	/* initial dir, for dir_prev_step */
 
-    fprintf(stderr,"nsteps = %d, incr_dist = %gmm\n", nsteps, incr_dist );
-    fprintf(stderr,"viewsize = %gmm\n", viewsize);
+    fprintf(stderr, "nsteps = %d, incr_dist = %gmm\n", nsteps, incr_dist );
+    fprintf(stderr, "viewsize = %gmm\n", viewsize);
 
     /* Load database */
     title_file = argv[bu_optind++];
     if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	fprintf(stderr,"rtwalk:  rt_dirbuild failure\n");
+	fprintf(stderr, "rtwalk:  rt_dirbuild failure\n");
 	bu_exit(2, NULL);
     }
     ap.a_rt_i = rtip;
@@ -192,7 +192,7 @@ main(int argc, char **argv)
     /* Walk trees */
     for( i=bu_optind; i < argc; i++ )  {
 	if( rt_gettree(rtip, argv[bu_optind]) < 0 )
-	    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[bu_optind]);
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[bu_optind]);
 	bu_optind++;
     }
 
@@ -247,7 +247,7 @@ main(int argc, char **argv)
 	/* See if goal has been reached */
 	VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
 	if( (max_dist_togo=MAGNITUDE(first_dir)) < 1.0 )  {
-	    fprintf(stderr,"Complete in %d steps\n", curstep);
+	    fprintf(stderr, "Complete in %d steps\n", curstep);
 	    bu_exit(0, NULL);
 	}
 
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 	    int	i;
 
 	    /* Shoot Ray */
-	    if(R_DEBUG>=3)fprintf(stderr,"try=%d, maxtogo=%g  ",
+	    if(R_DEBUG>=3)fprintf(stderr, "try=%d, maxtogo=%g  ",
 				  failed_try, max_dist_togo);
 	    ap.a_hit = hit;
 	    ap.a_miss = miss;
@@ -317,21 +317,21 @@ main(int argc, char **argv)
 		    VMOVE( ap.a_ray.r_dir, dir_prev_step );
 		    continue;
 		}
-		if(R_DEBUG>=3)fprintf(stderr,"Try tangent\n");
+		if(R_DEBUG>=3)fprintf(stderr, "Try tangent\n");
 		proj_goal(&ap);
 		continue;
 	    } else if( failed_try <= 7 )  {
 		/* Try 7 azimuthal escapes, 1..7 */
 		i = failed_try-1+1;	/*  1..7 */
-		if(R_DEBUG>=3)fprintf(stderr,"Try az %d\n", i);
+		if(R_DEBUG>=3)fprintf(stderr, "Try az %d\n", i);
 		bn_mat_ae( mat, i*45.0, 0.0 );
 	    } else if( failed_try <= 14 ) {
 		/* Try 7 Elevations to escape, 8..14 */
 		i = failed_try-8+1;	/*     1..7 */
-		if(R_DEBUG>=3)fprintf(stderr,"Try el %d\n", i);
+		if(R_DEBUG>=3)fprintf(stderr, "Try el %d\n", i);
 		bn_mat_ae( mat, 0.0, i*45.0 );
 	    } else {
-		fprintf(stderr,"trapped, giving up on escape\n");
+		fprintf(stderr, "trapped, giving up on escape\n");
 		bu_exit(1, NULL);
 	    }
 	    MAT4X3VEC( ap.a_ray.r_dir, mat, first_dir );
@@ -376,7 +376,7 @@ main(int argc, char **argv)
 	/* Save status */
 	VMOVE( norm_prev_step, norm_cur_try );
     }
-    fprintf(stderr,"%d steps used without reaching goal by %gmm\n", curstep, max_dist_togo);
+    fprintf(stderr, "%d steps used without reaching goal by %gmm\n", curstep, max_dist_togo);
     bu_exit(1, NULL);
 }
 

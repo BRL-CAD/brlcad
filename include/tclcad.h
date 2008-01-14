@@ -61,10 +61,10 @@ __BEGIN_DECLS
  *  in parens.
  */
 #if __STDC__ || USE_PROTOTYPES
-#	define	TCLCAD_EXTERN(type_and_name,args)	extern type_and_name args
+#	define	TCLCAD_EXTERN(type_and_name, args)	extern type_and_name args
 #	define	TCLCAD_ARGS(args)			args
 #else
-#	define	TCLCAD_EXTERN(type_and_name,args)	extern type_and_name()
+#	define	TCLCAD_EXTERN(type_and_name, args)	extern type_and_name()
 #	define	TCLCAD_ARGS(args)			()
 #endif
 

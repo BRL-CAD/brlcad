@@ -46,8 +46,8 @@ struct subtracts
 
 struct trclist
 {
-	point_t base,top;
-	fastf_t r1,r2;
+	point_t base, top;
+	fastf_t r1, r2;
 	int op; /* 0 => union, 1=> subtract */
 	int index;
 	char name[NAMESIZE];
@@ -73,7 +73,7 @@ int entityno;
 	vect_t		tmp;			/* temporary storage for a vector */
 	struct trclist	*trcs,*trcptr,*ptr2;	/* Pointers to linked list of TRC`s */
 	fastf_t		r2;			/* TRC radius */
-	fastf_t		hmax,hmin;		/* Max and Min distances along axis of rotation */
+	fastf_t		hmax, hmin;		/* Max and Min distances along axis of rotation */
 	fastf_t		rmax;			/* Max radius */
 	int		cutop = Intersect;	/* Operator for cutting solid */
 	char		cutname[NAMESIZE];	/* Name for cutting solid */
@@ -243,7 +243,7 @@ int entityno;
 		trcptr = trcs;
 		while( trcptr != NULL )
 		{
-			fastf_t hb1,ht1,hb2,ht2; /* distance from "pt" to bottom and top of TRC's */
+			fastf_t hb1, ht1, hb2, ht2; /* distance from "pt" to bottom and top of TRC's */
 			fastf_t	rtmp;	/* interpolated radii for TRC */
 			fastf_t tmpp;	/* temp storage */
 
@@ -326,8 +326,8 @@ int entityno;
 	if( fract < 1.0 )
 	{
 		/* Must calculate a cutting solid */
-		vect_t pdir,enddir,startdir;
-		fastf_t len,theta;
+		vect_t pdir, enddir, startdir;
+		fastf_t len, theta;
 		point_t pts[8];
 
 		/* Calculate direction from axis to curve */

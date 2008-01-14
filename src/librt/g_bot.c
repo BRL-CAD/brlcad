@@ -407,8 +407,8 @@ rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ B O T _ U V
  *
- *  For a hit on the surface of an bot, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an bot, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -2492,7 +2492,7 @@ rt_bot_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
 int
 rt_bot_vertex_fuse( struct rt_bot_internal *bot )
 {
-	int i,j,k;
+	int i, j, k;
 	int count=0;
 
 	RT_BOT_CK_MAGIC( bot );
@@ -2552,7 +2552,7 @@ int
 rt_bot_face_fuse( struct rt_bot_internal *bot )
 {
 	int num_faces;
-	int i,j,k,l;
+	int i, j, k, l;
 	int count=0;
 
 	RT_BOT_CK_MAGIC( bot );
@@ -2672,7 +2672,7 @@ rt_bot_face_fuse( struct rt_bot_internal *bot )
 int
 rt_bot_condense( struct rt_bot_internal *bot )
 {
-	int i,j,k;
+	int i, j, k;
 	int num_verts;
 	int dead_verts=0;
 	int *verts;
@@ -3736,7 +3736,7 @@ int
 rt_bot_smooth( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle )
 {
 	int vert_no;
-	int i,j,k;
+	int i, j, k;
 	struct rt_i *rtip;
 	struct application ap;
 	fastf_t normal_dot_tol=0.0;

@@ -65,7 +65,7 @@ FILE *fpw1;		/*  Allows file to be written to from all func.  */
 /* simulate drand48() --  using 31-bit random() -- assumed to exist */
 double drand48() {
   extern long random();
-  return (double)random() / 2147483648.0; /* range [0,1) */
+  return (double)random() / 2147483648.0; /* range [0, 1) */
 }
 #endif
 
@@ -85,18 +85,18 @@ int main(int argc, char **argv)
    double radall;	/*  Radius of bounding sphere.  */
    long seed;		/*  Seed for random number generator.  */
    double rayfir;	/*  Number of rays to be fired.  */
-   double rho,phi,theta;/*  Spherical coordinates for starting point.  */
-   double elev,az,rds;	/*  Elevation, azimuth, & radius for finding vector  */
+   double rho, phi, theta;/*  Spherical coordinates for starting point.  */
+   double elev, az, rds;	/*  Elevation, azimuth, & radius for finding vector  */
 			/*  in yz-plane.  */
    double strtpt[3];	/*  Starting point.  */
    double strtdir[3];	/*  Starting direction.  */
    double denom;	/*  Denominator.  */
 
    int ians;		/*  Answer to question.  */
-   int i,j,k,m;		/*  Loop counters.  */
+   int i, j, k, m;		/*  Loop counters.  */
    double r;		/*  Loop counter.  */
    double q;		/*  Temporary variable.  */
-   double s[3],t[3];	/*  Temporary variables.  */
+   double s[3], t[3];	/*  Temporary variables.  */
 
    FILE *fpw;		/*  Allows a file to be written.  */
    char outfile[26];	/*  Output file name.  */
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
    /*  Check to see if arguments are implimented correctly.  */
    if( (argv[1] == NULL) || (argv[2] == NULL) )
    {
-	(void)fprintf(stderr,"\nusage:  %s file.g objects\n\n", *argv);
+	(void)fprintf(stderr, "\nusage:  %s file.g objects\n\n", *argv);
    }
 
    else
@@ -119,50 +119,50 @@ int main(int argc, char **argv)
 	/*  Find name of output file.  */
 	(void)printf("Enter name of output file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%25s",outfile);
+	(void)scanf("%25s", outfile);
 
 	/*  Find name of longwave radiation exchange (lwx) file  */
 	/*  for use with PRISM (not quite PRISM ready).  */
 	(void)printf("Enter name of longwave radiation exchange");
 	(void)printf(" file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%25s",lwxfile);
+	(void)scanf("%25s", lwxfile);
 
 	/*  Find name of error file.  */
 	(void)printf("Enter name of error file (25 char max).\n\t");
 	(void)fflush(stdout);
-	(void)scanf("%25s",errfile);
+	(void)scanf("%25s", errfile);
 
 	/*  Open files.  */
-	fpw = fopen(outfile,"w");
-	fpw1 = fopen(errfile,"w");
-	fpw2 = fopen(lwxfile,"w");
+	fpw = fopen(outfile, "w");
+	fpw1 = fopen(errfile, "w");
+	fpw2 = fopen(lwxfile, "w");
 
 	/*  Write info to output & error file.  */
-	(void)fprintf(fpw,"\n.g file used:  %s\n",argv[1]);
-	(void)fprintf(fpw,"regions used:\n");
-	(void)fprintf(fpw1,"\n.g file used:  %s\n",argv[1]);
-	(void)fprintf(fpw1,"regions used:\n");
+	(void)fprintf(fpw, "\n.g file used:  %s\n", argv[1]);
+	(void)fprintf(fpw, "regions used:\n");
+	(void)fprintf(fpw1, "\n.g file used:  %s\n", argv[1]);
+	(void)fprintf(fpw1, "regions used:\n");
 	i = 2;
 	while(argv[i] != NULL)
 	{
-	   (void)fprintf(fpw,"\t%s\n",argv[i]);
-	   (void)fprintf(fpw1,"\t%s\n",argv[i]);
+	   (void)fprintf(fpw, "\t%s\n", argv[i]);
+	   (void)fprintf(fpw1, "\t%s\n", argv[i]);
 	   i++;
 	}
-	(void)fprintf(fpw,"output file created:  %s\n",outfile);
-	(void)fprintf(fpw,"error file created:  %s\n",errfile);
-	(void)fprintf(fpw,"lwx file created:  %s\n",errfile);
+	(void)fprintf(fpw, "output file created:  %s\n", outfile);
+	(void)fprintf(fpw, "error file created:  %s\n", errfile);
+	(void)fprintf(fpw, "lwx file created:  %s\n", errfile);
 	(void)fflush(fpw);
-	(void)fprintf(fpw1,"output file created:  %s\n",outfile);
-	(void)fprintf(fpw1,"error file created:  %s\n",errfile);
-	(void)fprintf(fpw1,"lwx file created:  %s\n",errfile);
+	(void)fprintf(fpw1, "output file created:  %s\n", outfile);
+	(void)fprintf(fpw1, "error file created:  %s\n", errfile);
+	(void)fprintf(fpw1, "lwx file created:  %s\n", errfile);
 	(void)fflush(fpw1);
 
 	/*  Build directory.  */
 	index = 1;      /*  Set index for rt_dirbuild.  */
-	rtip = rt_dirbuild(argv[index],idbuf,sizeof(idbuf));
-	(void)printf("Database Title:  %s\n",idbuf);
+	rtip = rt_dirbuild(argv[index], idbuf, sizeof(idbuf));
+	(void)printf("Database Title:  %s\n", idbuf);
 	(void)fflush(stdout);
 
 	/*  Set useair to 0 to show no hits of air.  */
@@ -172,14 +172,14 @@ int main(int argc, char **argv)
 	index = 2;      /*  Set index.  */
 	while(argv[index] != NULL)
 	{
-		rt_gettree(rtip,argv[index]);
+		rt_gettree(rtip, argv[index]);
 		index += 1;
 	}
 
 	/*  Find number of regions.  */
 	numreg = (int)rtip->nregions;
 
-	(void)fprintf(stderr,"Number of regions:  %d\n",numreg);
+	(void)fprintf(stderr, "Number of regions:  %d\n", numreg);
 	(void)fflush(stderr);
 
 	/*  Malloc everything now that the number of regions is known.  */
@@ -235,13 +235,13 @@ int main(int argc, char **argv)
 	/*  Print info on min, max, center, radius, & surface area  */
 	/*  of entire model.  */
 	(void)printf("Min & max for entire model.\n");
-	(void)printf("\tX:  %f - %f\n",minall[X],maxall[X]);
-	(void)printf("\tY:  %f - %f\n",minall[Y],maxall[Y]);
-	(void)printf("\tZ:  %f - %f\n",minall[Z],maxall[Z]);
-	(void)printf("Center:  %f, %f, %f\n\n",centall[X],centall[Y],
+	(void)printf("\tX:  %f - %f\n", minall[X], maxall[X]);
+	(void)printf("\tY:  %f - %f\n", minall[Y], maxall[Y]);
+	(void)printf("\tZ:  %f - %f\n", minall[Z], maxall[Z]);
+	(void)printf("Center:  %f, %f, %f\n\n", centall[X], centall[Y],
 		centall[Z]);
-	(void)printf("Radius:  %f\n",radall);
-	(void)printf("Surface Area:  %f\n\n",areaall);
+	(void)printf("Radius:  %f\n", radall);
+	(void)printf("Surface Area:  %f\n\n", areaall);
 	(void)fflush(stdout);
 
 	/*  Find number of rays to fire.  */
@@ -250,26 +250,26 @@ int main(int argc, char **argv)
 	(void)scanf("%lf",&rayfir);
 
 	/*  Write info to files.  */
-	(void)fprintf(fpw,"Min & max for entire region:\n");
-	(void)fprintf(fpw,"\tX:  %f - %f\n",minall[X],maxall[X]);
-	(void)fprintf(fpw,"\tY:  %f - %f\n",minall[Y],maxall[Y]);
-	(void)fprintf(fpw,"\tZ:  %f - %f\n",minall[Z],maxall[Z]);
-	(void)fprintf(fpw,"Center:  %f, %f, %f\n",centall[X],
-		centall[Y],centall[Z]);
-	(void)fprintf(fpw,"Radius:  %f\n",radall);
-	(void)fprintf(fpw,"Surface area:  %f\n",areaall);
-	(void)fprintf(fpw,"Number of rays fired:  %f\n\n",rayfir);
+	(void)fprintf(fpw, "Min & max for entire region:\n");
+	(void)fprintf(fpw, "\tX:  %f - %f\n", minall[X], maxall[X]);
+	(void)fprintf(fpw, "\tY:  %f - %f\n", minall[Y], maxall[Y]);
+	(void)fprintf(fpw, "\tZ:  %f - %f\n", minall[Z], maxall[Z]);
+	(void)fprintf(fpw, "Center:  %f, %f, %f\n", centall[X],
+		centall[Y], centall[Z]);
+	(void)fprintf(fpw, "Radius:  %f\n", radall);
+	(void)fprintf(fpw, "Surface area:  %f\n", areaall);
+	(void)fprintf(fpw, "Number of rays fired:  %f\n\n", rayfir);
 	(void)fflush(fpw);
 
-	(void)fprintf(fpw1,"Min & max for entire region:\n");
-	(void)fprintf(fpw1,"\tX:  %f - %f\n",minall[X],maxall[X]);
-	(void)fprintf(fpw1,"\tY:  %f - %f\n",minall[Y],maxall[Y]);
-	(void)fprintf(fpw1,"\tZ:  %f - %f\n",minall[Z],maxall[Z]);
-	(void)fprintf(fpw1,"Center:  %f, %f, %f\n",centall[X],
-		centall[Y],centall[Z]);
-	(void)fprintf(fpw1,"Radius:  %f\n",radall);
-	(void)fprintf(fpw1,"Surface area:  %f\n",areaall);
-	(void)fprintf(fpw1,"Number of rays fired:  %f\n\n",rayfir);
+	(void)fprintf(fpw1, "Min & max for entire region:\n");
+	(void)fprintf(fpw1, "\tX:  %f - %f\n", minall[X], maxall[X]);
+	(void)fprintf(fpw1, "\tY:  %f - %f\n", minall[Y], maxall[Y]);
+	(void)fprintf(fpw1, "\tZ:  %f - %f\n", minall[Z], maxall[Z]);
+	(void)fprintf(fpw1, "Center:  %f, %f, %f\n", centall[X],
+		centall[Y], centall[Z]);
+	(void)fprintf(fpw1, "Radius:  %f\n", radall);
+	(void)fprintf(fpw1, "Surface area:  %f\n", areaall);
+	(void)fprintf(fpw1, "Number of rays fired:  %f\n\n", rayfir);
 	(void)fflush(fpw1);
 
 	/*  Put region names into structure.  */
@@ -286,10 +286,10 @@ int main(int argc, char **argv)
 	/*  Write region names to error file.  */
 	for(i=0; i<numreg; i++)
 	{
-	   (void)fprintf(fpw1,"region %d:  %s\n",(i + 1),info[i].name);
+	   (void)fprintf(fpw1, "region %d:  %s\n",(i + 1), info[i].name);
 	   (void)fflush(fpw1);
 	}
-	(void)fprintf(fpw1,"\n");
+	(void)fprintf(fpw1, "\n");
 	(void)fflush(fpw1);
 
 	/*  Set seed for random number generator.  */
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
 	   (void)fflush(stdout);
 	   (void)scanf("%ld",&seed);
 	}
-	msr = bn_unif_init(seed,0);
+	msr = bn_unif_init(seed, 0);
 
 	(void)printf("Seed initialized\n");
 	(void)fflush(stdout);
@@ -327,7 +327,7 @@ int main(int argc, char **argv)
 	   for(r=0; r<rayfir; r++)
 	   {						/*  START # 150  */
 /*
- *		(void)printf("In loop - %f\n",r);
+ *		(void)printf("In loop - %f\n", r);
  *		(void)fflush(stdout);
  */
 
@@ -419,14 +419,14 @@ int main(int argc, char **argv)
 	   for(i=0; i<numreg; i++)
 	   {						/*  START # 160  */
 	   /*  Write region names to output file.  */
-	   (void)fprintf(fpw,"Region %d:  %s\n",(i+1),info[i].name);
+	   (void)fprintf(fpw, "Region %d:  %s\n",(i+1), info[i].name);
 	   (void)fflush(fpw);
 
 	   /*  Find shape factors & print.  */
 	   if(info[i].lvrays == 0)
 	   {						/*  START # 1060  */
-		(void)fprintf(fpw1,"**  ERROR - # or rays hitting region ");
-		(void)fprintf(fpw1,"%d is 0.  **\n",i);
+		(void)fprintf(fpw1, "**  ERROR - # or rays hitting region ");
+		(void)fprintf(fpw1, "%d is 0.  **\n", i);
 		(void)fflush(fpw1);
 	   }						/*  END # 1060  */
 
@@ -437,32 +437,32 @@ int main(int argc, char **argv)
 		for(j=0; j<numreg; j++)
 		{					/*  START # 1080  */
 			info[i].sf[j] = info[i].intrays[j] / info[i].lvrays;
-			(void)fprintf(fpw,"\t%d   %d   %f\n",
-				(i + 1),(j + 1),info[i].sf[j]);
+			(void)fprintf(fpw, "\t%d   %d   %f\n",
+				(i + 1),(j + 1), info[i].sf[j]);
 			(void)fflush(fpw);
 
-			(void)fprintf(fpw1,"reg %d - reg %d - rays leave ",
+			(void)fprintf(fpw1, "reg %d - reg %d - rays leave ",
 				(i + 1),(j + 1));
-			(void)fprintf(fpw1,"& int %f - rays leave %f ",
-				info[i].intrays[j],info[i].lvrays);
-			(void)fprintf(fpw1,"- sf %f - area %f\n",
-				info[i].sf[j],info[i].regarea);
+			(void)fprintf(fpw1, "& int %f - rays leave %f ",
+				info[i].intrays[j], info[i].lvrays);
+			(void)fprintf(fpw1, "- sf %f - area %f\n",
+				info[i].sf[j], info[i].regarea);
 			(void)fflush(fpw1);
 		}					/*  END # 1080  */
 	   }						/*  END # 1070  */
 	   }						/*  END # 160  */
 
 	   /*  Write lwx file.  */
-	   (void)fprintf(fpw2,"Longwave Radiation Exchange Factors ");
-	   (void)fprintf(fpw2,"for %s\n",argv[1]);
-	   (void)fprintf(fpw2,"Number of Regions = %4d\n",numreg);
-	   (void)fprintf(fpw2,"TEMIS\n\n");
+	   (void)fprintf(fpw2, "Longwave Radiation Exchange Factors ");
+	   (void)fprintf(fpw2, "for %s\n", argv[1]);
+	   (void)fprintf(fpw2, "Number of Regions = %4d\n", numreg);
+	   (void)fprintf(fpw2, "TEMIS\n\n");
 
 	   for(i=0; i<numreg; i++)
 	   {						/*  START # 1090  */
-		(void)fprintf(fpw2,"Region\tArea\tEmissivity\n");
+		(void)fprintf(fpw2, "Region\tArea\tEmissivity\n");
 		/*  Area is put into square meters.  */
-		(void)fprintf(fpw2,"%d\t%f\n",(i + 1),
+		(void)fprintf(fpw2, "%d\t%f\n",(i + 1),
 			(info[i].regarea / 1000. / 1000.));
 
 		/*  Count the number of shape factors.  */
@@ -471,7 +471,7 @@ int main(int argc, char **argv)
 		{
 		   if(info[i].sf[j] != 0.) k++;
 		}
-		(void)fprintf(fpw2,"Bij\t%d\n",k);
+		(void)fprintf(fpw2, "Bij\t%d\n", k);
 
 		/*  Print shape factors.  */
 		m = 0;
@@ -479,18 +479,18 @@ int main(int argc, char **argv)
 		{					/*  START # 1100  */
 		   if(info[i].sf[j] != 0.)
 		   {					/*  START # 1110  */
-			(void)fprintf(fpw2,"%4d   %.4f   ",(j + 1),
+			(void)fprintf(fpw2, "%4d   %.4f   ",(j + 1),
 				info[i].sf[j]);
 			m++;
 			if(m == 5)
 			{				/*  START # 1120  */
 			   m = 0;
-			   (void)fprintf(fpw2,"\n");
+			   (void)fprintf(fpw2, "\n");
 			}				/*  END # 1120  */
 		   }					/*  END # 1110  */
 		}					/*  END # 1100  */
-		if(m != 0) (void)fprintf(fpw2,"\n");
-		(void)fprintf(fpw2," Gnd         Sky\n\n");
+		if(m != 0) (void)fprintf(fpw2, "\n");
+		(void)fprintf(fpw2, " Gnd         Sky\n\n");
 		(void)fflush(fpw2);
 	   }						/*  END # 1090  */
 
@@ -530,7 +530,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
    double tol[3];	/*  Used to check tolerance of equal numbers.  */
 
 /*
- * (void)fprintf(fpw1,"In function hit.\n");
+ * (void)fprintf(fpw1, "In function hit.\n");
  * (void)fflush(fpw1);
  */
 
@@ -561,11 +561,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   /*  Find the leave point of the first region.  */
 	   hitp = pp->pt_outhit;
 	   stp = pp->pt_outseg->seg_stp;
-	   RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+	   RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
 	   /*  Flip normal if needed.  */
 	   if(pp->pt_outflip)
 	   {
-		VREVERSE(hitp->hit_normal,hitp->hit_normal);
+		VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		pp->pt_outflip = 0;
 	   }
 	   lvpt[X] = hitp->hit_point[X];
@@ -586,11 +586,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   /*  Find the enter point for the second region.  */
 	   hitp = pp->pt_inhit;
 	   stp = pp->pt_inseg->seg_stp;
-	   RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+	   RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
 	   /*  Flip normal if needed.  */
 	   if(pp->pt_inflip)
 	   {
-		VREVERSE(hitp->hit_normal,hitp->hit_normal);
+		VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		pp->pt_inflip = 0;
 	   }
 	   entpt[X] = hitp->hit_point[X];
@@ -627,11 +627,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 	   /*  Find leaving point.  */
 	   hitp = pp->pt_outhit;
 	   stp = pp->pt_outseg->seg_stp;
-	   RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+	   RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
 	   /*  Flip normal if needed.  */
 	   if(pp->pt_outflip)
 	   {
-		VREVERSE(hitp->hit_normal,hitp->hit_normal);
+		VREVERSE(hitp->hit_normal, hitp->hit_normal);
 		pp->pt_outflip = 0;
 	   }
 	   lvpt[X] = hitp->hit_point[X];

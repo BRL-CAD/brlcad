@@ -78,8 +78,8 @@ main(int argc, char **argv)
 
     yaw = pch = rll = 0.0;
 
-    if (!get_args(argc,argv))
-	fprintf(stderr,"Anim_fly: Get_args error");
+    if (!get_args(argc, argv))
+	fprintf(stderr, "Anim_fly: Get_args error");
 
     /* read first two lines of table to determine the time step used */
     /* (a constant time step is assumed throughout the rest of the file)*/
@@ -101,12 +101,12 @@ main(int argc, char **argv)
     VMOVEN(points+8, second, 4);
     num_read=4; /* in order to pass test if n=1 */
     for (cur=points+12; cur<points+(4*(3*enn+1)); cur+=4){
-	num_read=scanf("%lf %lf %lf %lf", cur,cur+1,cur+2,cur+3);
+	num_read=scanf("%lf %lf %lf %lf", cur, cur+1, cur+2, cur+3);
     }
     if (num_read<4){
-	fprintf(stderr,"Anim_fly: Not enough lines in input table.\n");
-	fprintf(stderr,"Increase number of lines or reduce the minimum stepsize with -s.\n");
-	fprintf(stderr,"Currently the minumum step size is %g seconds.\n",desired_step);
+	fprintf(stderr, "Anim_fly: Not enough lines in input table.\n");
+	fprintf(stderr, "Increase number of lines or reduce the minimum stepsize with -s.\n");
+	fprintf(stderr, "Currently the minumum step size is %g seconds.\n", desired_step);
 	return 0;
     }
 
@@ -118,9 +118,9 @@ main(int argc, char **argv)
 	switch (status) {
 	case START: /* first n points */
 	    pp += 4;
-	    get_orientation(points+pp,points+pp+4*enn,points+pp+4*2*enn, f_prm_0, &yaw, &pch, &rll);
+	    get_orientation(points+pp, points+pp+4*enn, points+pp+4*2*enn, f_prm_0, &yaw, &pch, &rll);
 	    if (!(count%print_int)&&!estimate_f) {
-		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[pp+0],points[pp+1],points[pp+2],points[pp+3],yaw,pch,rll);
+		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n", points[pp+0], points[pp+1], points[pp+2], points[pp+3], yaw, pch, rll);
 	    }
 	    if (pp >= 4*enn)
 		status=MIDDLE;
@@ -129,14 +129,14 @@ main(int argc, char **argv)
 	    for (i=0; i<3*enn*4; i++){
 		VMOVEN(points+(4*i), points+(4*(i+1)), 4);
 	    }
-	    num_read=scanf("%lf %lf %lf %lf", points+(4*(3*enn)),points+(4*(3*enn)+1),points+(4*(3*enn)+2),points+(4*(3*enn)+3));
+	    num_read=scanf("%lf %lf %lf %lf", points+(4*(3*enn)), points+(4*(3*enn)+1), points+(4*(3*enn)+2), points+(4*(3*enn)+3));
 	    if (num_read < 4) {
 		pp = 0;
 		status = WANE;
 	    }
-	    get_orientation(points,points+(4*enn),points+4*(2*enn), f_prm_1, &yaw, &pch, &rll);
+	    get_orientation(points, points+(4*enn), points+4*(2*enn), f_prm_1, &yaw, &pch, &rll);
 	    if (!(count%print_int)&&!estimate_f) {
-		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[4*(enn)+0],points[4*(enn)+1],points[4*(enn)+2],points[4*(enn)+3],yaw,pch,rll);
+		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n", points[4*(enn)+0], points[4*(enn)+1], points[4*(enn)+2], points[4*(enn)+3], yaw, pch, rll);
 	    }
 	    break;
 	case WANE: /* last n - 1 middle points */
@@ -147,15 +147,15 @@ main(int argc, char **argv)
 		pp = 0;
 		break;
 	    }
-	    get_orientation(points+pp,points+pp+4*enn,points+pp+4*2*enn, f_prm_1, &yaw, &pch, &rll);
+	    get_orientation(points+pp, points+pp+4*enn, points+pp+4*2*enn, f_prm_1, &yaw, &pch, &rll);
 	    if (!(count%print_int)&&!estimate_f) {
-		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[4*(enn)+0+pp],points[4*(enn)+1+pp],points[4*(enn)+2+pp],points[4*(enn)+3+pp],yaw,pch,rll);
+		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n", points[4*(enn)+0+pp], points[4*(enn)+1+pp], points[4*(enn)+2+pp], points[4*(enn)+3+pp], yaw, pch, rll);
 	    }
 	    break;
 	case END: /* last n points */
-	    get_orientation(points+pp,points+pp+4*enn,points+pp+4*2*enn, f_prm_2, &yaw, &pch, &rll);
+	    get_orientation(points+pp, points+pp+4*enn, points+pp+4*2*enn, f_prm_2, &yaw, &pch, &rll);
 	    if (!(count%print_int)&&!estimate_f) {
-		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n",points[8*enn+pp+0],points[8*enn+pp+1],points[8*enn+pp+2],points[8*enn+pp+3],yaw,pch,rll);
+		printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t%.10g\n", points[8*enn+pp+0], points[8*enn+pp+1], points[8*enn+pp+2], points[8*enn+pp+3], yaw, pch, rll);
 	    }
 	    pp += 4;
 	    if (pp >= 4*enn)
@@ -170,7 +170,7 @@ main(int argc, char **argv)
     /* Return the factor needed to achieve the requested max_bank */
     if (estimate_f){
 	if (max_cross < VDIVIDE_TOL) {
-	    printf("%.10g\n",0.0);
+	    printf("%.10g\n", 0.0);
 	} else {
 	    printf("%.10g\n", 1000.0 * max_bank/max_cross);
 	}
@@ -183,20 +183,20 @@ void
 get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ??? */), fastf_t *p_yaw, fastf_t *p_pch, fastf_t *p_rll)
 {
     int i;
-    fastf_t step,vel[3],accel[3];
-    fastf_t f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h),xyz2yaw(fastf_t *d),xyz2pch(fastf_t *d),bank(fastf_t *acc, fastf_t *vel);
+    fastf_t step, vel[3], accel[3];
+    fastf_t f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h), xyz2yaw(fastf_t *d), xyz2pch(fastf_t *d), bank(fastf_t *acc, fastf_t *vel);
 
     static fastf_t last_yaw;
     static int not_first_time, upside_down;
 
     step = p2[0] - p1[0];
     for (i=1;i<4;i++) {
-	vel[i-1] = (*function)(p0[i],p1[i],p2[i],step);
-	accel[i-1] = f_double_prm(p0[i],p1[i],p2[i],step);
+	vel[i-1] = (*function)(p0[i], p1[i], p2[i], step);
+	accel[i-1] = f_double_prm(p0[i], p1[i], p2[i], step);
     }
     *p_yaw = xyz2yaw(vel);
     *p_pch = xyz2pch(vel);
-    *p_rll = bank(accel,vel);
+    *p_rll = bank(accel, vel);
 
     if (fabs(*p_pch)==90.0) /* don't change yaw if velocity vertical */
 	*p_yaw = last_yaw;
@@ -217,7 +217,7 @@ get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ?
 fastf_t	xyz2yaw(fastf_t *d)
 {
     fastf_t yaw;
-    yaw = RTOD*atan2(d[1],d[0]);
+    yaw = RTOD*atan2(d[1], d[0]);
     if (yaw < 0.0) yaw += 360.0;
     return yaw;
 }
@@ -227,7 +227,7 @@ fastf_t	xyz2pch(fastf_t *d)
 {
     fastf_t x;
     x = sqrt(d[0]*d[0] + d[1]*d[1]);
-    return (RTOD*atan2(d[2],x));
+    return (RTOD*atan2(d[2], x));
 
 }
 
@@ -286,18 +286,18 @@ int get_args(int argc, char **argv)
     int c;
 
     estimate_f = 0;
-    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch(c){
 	case 'b':
-	    sscanf(bu_optarg,"%lf",&max_bank);
+	    sscanf(bu_optarg, "%lf",&max_bank);
 	    estimate_f = 1;
 	    break;
 	case 'f':
-	    sscanf(bu_optarg,"%lf",&magic_factor);
+	    sscanf(bu_optarg, "%lf",&magic_factor);
 	    magic_factor *= 0.001; /* to put factors in a more reasonable range */
 	    break;
 	case 'p':
-	    sscanf(bu_optarg,"%d",&print_int);
+	    sscanf(bu_optarg, "%d",&print_int);
 	    break;
 	case 'r':
 	    loop = 0;
@@ -306,7 +306,7 @@ int get_args(int argc, char **argv)
 	    sscanf(bu_optarg, "%lf", &desired_step);
 	    break;
 	default:
-	    fprintf(stderr,"Unknown option: -%c\n",c);
+	    fprintf(stderr, "Unknown option: -%c\n", c);
 	    return(0);
 	}
     }

@@ -43,18 +43,18 @@ int
 main(int argc, char **argv)
 {
     double factor, temp;
-    int i,j,doit, of, count, val, *col_list;
+    int i, j, doit, of, count, val, *col_list;
 
     if (argc < 4){
-	fprintf(stderr,"Usage: chan_mult factor num_columnss column [col ... ] < in.file > out.file\n");
+	fprintf(stderr, "Usage: chan_mult factor num_columnss column [col ... ] < in.file > out.file\n");
 	return(-1);
     }
 
-    sscanf(*(argv+1),"%lf",&factor);
-    sscanf(*(argv+2),"%d",&of);
-    col_list = (int *) bu_calloc(argc-2,sizeof(int), "int array");
+    sscanf(*(argv+1), "%lf",&factor);
+    sscanf(*(argv+2), "%d",&of);
+    col_list = (int *) bu_calloc(argc-2, sizeof(int), "int array");
     for (i=3;i<argc;i++){
-	sscanf(*(argv+i),"%d",col_list+(i-3));
+	sscanf(*(argv+i), "%d", col_list+(i-3));
     }
 
     count = 0;
@@ -69,9 +69,9 @@ main(int argc, char **argv)
 		    doit = 1;
 	    }
 	    if (doit)
-		printf("%.10g\t",temp*factor);
+		printf("%.10g\t", temp*factor);
 	    else
-		printf("%.10g\t",temp);
+		printf("%.10g\t", temp);
 	}
 	if ( count == (of-1))
 	    printf("\n");

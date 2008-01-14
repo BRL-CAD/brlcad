@@ -20,7 +20,7 @@
 /** @file usepen.c
  *
  * Functions -
- *	usepen		Use x,y data from data tablet
+ *	usepen		Use x, y data from data tablet
  *	buildHrot	Generate rotation matrix
  *	wrt_view	Modify xform matrix with respect to current view
  *
@@ -66,7 +66,7 @@ static void	illuminate(int y);
 /*
  *			F _ M O U S E
  *
- * X and Y are expected to be in -2048 <= x,y <= +2047 range.
+ * X and Y are expected to be in -2048 <= x, y <= +2047 range.
  * The "up" flag is 1 on the not-pressed to pressed transition,
  * and 0 on the pressed to not-pressed transition.
  *
@@ -531,8 +531,8 @@ f_matpick(
 		  return TCL_ERROR;
 		/* Find arc on illump path which runs from d0 to d1 */
 		for( j=1; j < illump->s_fullpath.fp_len; j++ )  {
-			if( DB_FULL_PATH_GET(&illump->s_fullpath,j-1) != d0 )  continue;
-			if( DB_FULL_PATH_GET(&illump->s_fullpath,j-0) != d1 )  continue;
+			if( DB_FULL_PATH_GET(&illump->s_fullpath, j-1) != d0 )  continue;
+			if( DB_FULL_PATH_GET(&illump->s_fullpath, j-0) != d1 )  continue;
 			ipathpos = j;
 			goto got;
 		}
@@ -550,8 +550,8 @@ got:
 	/* Include all solids with same tree top */
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
 		for( j = 0; j <= ipathpos; j++ )  {
-			if( DB_FULL_PATH_GET(&sp->s_fullpath,j) !=
-			    DB_FULL_PATH_GET(&illump->s_fullpath,j) )
+			if( DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
+			    DB_FULL_PATH_GET(&illump->s_fullpath, j) )
 				break;
 		}
 		/* Only accept if top of tree is identical */

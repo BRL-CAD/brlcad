@@ -142,14 +142,14 @@ stxt_read(register struct stxt_specific *stp)
 			stp->stx_file[0] = '\0';
 			return(0);
 		}
-		linebuf = bu_malloc(stp->stx_fw*3,"texture file line");
+		linebuf = bu_malloc(stp->stx_fw*3, "texture file line");
 
 		for( i = 0; i < stp->stx_n; i++ )  {
-			if ((rd = fread(linebuf,1,stp->stx_fw*3,fp)) != stp->stx_fw*3 ) {
+			if ((rd = fread(linebuf, 1, stp->stx_fw*3, fp)) != stp->stx_fw*3 ) {
 				bu_log("stxt_read: read error on %s\n", name);
 				stp->stx_file[0] = '\0';
 				(void)fclose(fp);
-				bu_free(linebuf,"file line, error");
+				bu_free(linebuf, "file line, error");
 				return(0);
 			}
 			memcpy(stp->stx_pixels + ln*stp->stx_w*3, linebuf, stp->stx_w*3);
@@ -157,7 +157,7 @@ stxt_read(register struct stxt_specific *stp)
 			rdd += rd;
 		}
 		(void)fclose(fp);
-		bu_free(linebuf,"texture file line");
+		bu_free(linebuf, "texture file line");
 	}
 	return(1);	/* OK */
 }
@@ -242,7 +242,7 @@ brick_render(struct application *ap, struct partition *pp, struct shadework *swp
 	double iptr;
 	fastf_t sx, sy, sz;
 	int	tx, ty, tz;
-	register long r,g,b;
+	register long r, g, b;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
@@ -296,7 +296,7 @@ brick_render(struct application *ap, struct partition *pp, struct shadework *swp
 *		sz = 2 * ( 1 - f );
 **********************************/
 
-/*bu_log("sx = %f\tsy = %f\tsz = %f\n",sx,sy,sz);*/
+/*bu_log("sx = %f\tsy = %f\tsz = %f\n", sx, sy, sz);*/
 
 	/* Index into TEXTURE SPACE */
 	tx = sx * (stp->stx_w-1);
@@ -333,7 +333,7 @@ rbound_render(struct application *ap, struct partition *pp, struct shadework *sw
 		(struct stxt_specific *)dp;
 	fastf_t sx, sy, sz;
 	int	tx, ty, tz;
-	register long r,g,b;
+	register long r, g, b;
 
 	int u1, u2, u3;
 	register unsigned char *cp;
@@ -350,7 +350,7 @@ rbound_render(struct application *ap, struct partition *pp, struct shadework *sw
 		return(1);
 	}
 
-	/* NORMALIZE x,y,z to [0..1) */
+	/* NORMALIZE x, y, z to [0..1) */
 #if 1
 	/* XXX hack hack, permute axes, for vertical letters.  -M */
 	sz = (swp->sw_hit.hit_point[0] - stp->stx_min[0]) /
@@ -404,7 +404,7 @@ mbound_render(struct application *ap, struct partition *pp, struct shadework *sw
 		(struct stxt_specific *)dp;
 	fastf_t sx, sy, sz;
 	int	tx, ty, tz;
-	register long r,g,b;
+	register long r, g, b;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
@@ -420,7 +420,7 @@ mbound_render(struct application *ap, struct partition *pp, struct shadework *sw
 		return(1);
 	}
 
-	/* NORMALIZE x,y,z to [0..1) */
+	/* NORMALIZE x, y, z to [0..1) */
 	sx = (swp->sw_hit.hit_point[0] - ap->a_rt_i->mdl_min[0]) /
 		(ap->a_rt_i->mdl_max[0] - ap->a_rt_i->mdl_min[0] + 1.0);
 	sy = (swp->sw_hit.hit_point[1] - ap->a_rt_i->mdl_min[1]) /

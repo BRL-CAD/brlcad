@@ -39,8 +39,8 @@
 
 #define	MYMETHOD	on
 
-#define	MAX(x,y)	(((x)>(y))?(x):(y))
-#define	MIN(x,y)	(((x)<(y))?(x):(y))
+#define	MAX(x, y)	(((x)>(y))?(x):(y))
+#define	MIN(x, y)	(((x)<(y))?(x):(y))
 
 #define	HSCREEN	1024	/* Max Horizontal screen resolution */
 #define	VSCREEN	1024	/* Max Vertical screen resolution   */
@@ -201,7 +201,7 @@ Efill(void)
 
 /*
  * Fill the upper and lower horizon arrays from x1 to x2
- *  with a line spanning (x1,y1) to (x2,y2).
+ *  with a line spanning (x1, y1) to (x2, y2).
  */
 void
 Horizon(int x1, int y1, int x2, int y2)
@@ -225,7 +225,7 @@ Horizon(int x1, int y1, int x2, int y2)
 }
 
 /*
- * Find the intersection (xi,yi) between the line (x1,y1)->(x2,y2)
+ * Find the intersection (xi, yi) between the line (x1, y1)->(x2, y2)
  *  and the horizon hor[].
  */
 void
@@ -293,7 +293,7 @@ sign(int i)
 }
 
 /*
- * DRAW - plot a line from (x1,y1) to (x2,y2)
+ * DRAW - plot a line from (x1, y1) to (x2, y2)
  *  An integer Bresenham algorithm for any quadrant.
  */
 void

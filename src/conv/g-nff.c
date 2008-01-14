@@ -442,7 +442,7 @@ genptr_t		client_data;
 
 			sofar = db_path_to_string(pathp);
 			bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
+			fprintf(fpe, "Failed Bool. Eval.: %s\n", sofar);
 			fflush(fpe);
 			bu_free( (char *)sofar, "sofar" );
 
@@ -469,7 +469,7 @@ genptr_t		client_data;
 			goto out;
 		}
 	}
-	printf("Attempting to process region %s\n",db_path_to_string( pathp ));
+	printf("Attempting to process region %s\n", db_path_to_string( pathp ));
 	fflush(stdout);
 	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
 
@@ -531,7 +531,7 @@ genptr_t		client_data;
 
 				sofar = db_path_to_string(pathp);
 				bu_log( "FAILED in triangulator: %s\n", sofar );
-				fprintf(fpe,"Failed in triangulator: %s\n",sofar);
+				fprintf(fpe, "Failed in triangulator: %s\n", sofar);
 				fflush(fpe);
 				bu_free( (char *)sofar, "sofar" );
 
@@ -594,7 +594,7 @@ out:
 		npercent = (float)(regions_converted * 100) / regions_tried;
 		tpercent = (float)(regions_written * 100) / regions_tried;
 		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		regions_tried, regions_converted, regions_written, npercent,tpercent);
+		regions_tried, regions_converted, regions_written, npercent, tpercent);
 	}
 
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */

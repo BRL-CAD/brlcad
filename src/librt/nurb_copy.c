@@ -52,7 +52,7 @@ rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 
 	n = (struct face_g_snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
 		srf->u.k_size, srf->v.k_size,
-		srf->s_size[0],srf->s_size[1],
+		srf->s_size[0], srf->s_size[1],
 		srf->pt_type, res);
 
 	for( i = 0; i < srf->u.k_size; i++)

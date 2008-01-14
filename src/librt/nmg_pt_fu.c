@@ -99,7 +99,7 @@ struct fpi {
 static int	nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
 
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, const int in_or_out_only);
-static int	compute_loop_class(struct fpi *fpi, const struct loopuse *lu,struct edge_info *edge_list);
+static int	compute_loop_class(struct fpi *fpi, const struct loopuse *lu, struct edge_info *edge_list);
 static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only);
 int		nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol);
 #endif
@@ -367,9 +367,9 @@ nmg_eu_is_part_of_crack(const struct edgeuse *eu)
  *	closest to the point. The EU and its left vector form an XY
  *	coordinate system in the face, with EU along the X-axis and
  *	its left vector along the Y-axis. Use these to decompose the
- *	direction of the prev_eu into X and Y coordinates (xo,yo) then
- *	do the same for the vector to the point to be classed (xpt,ypt).
- *	If (xpt,ypt) makes a smaller angle with EU than does (xo,yo),
+ *	direction of the prev_eu into X and Y coordinates (xo, yo) then
+ *	do the same for the vector to the point to be classed (xpt, ypt).
+ *	If (xpt, ypt) makes a smaller angle with EU than does (xo, yo),
  *	then PT is in the face, otherwise it is out.
  *
  *
@@ -388,10 +388,10 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	vect_t eu_dir;
 	vect_t other_eudir;
 	vect_t pt_dir;
-	fastf_t xo,yo;
-	fastf_t xpt,ypt;
+	fastf_t xo, yo;
+	fastf_t xpt, ypt;
 	fastf_t len;
-	int quado,quadpt;
+	int quado, quadpt;
 	int class = NMG_CLASS_Unknown;
 	int eu_is_crack=0;
 	int prev_eu_is_crack=0;
@@ -493,7 +493,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	/* left is the Y-axis of our XY-coordinate system */
 	if( nmg_find_eu_leftvec( left,  eu ) )
 	{
-		bu_log( "nmg_class_pt_euvu: nmg_find_eu_leftvec() for eu=x%x failed!\n",eu );
+		bu_log( "nmg_class_pt_euvu: nmg_find_eu_leftvec() for eu=x%x failed!\n", eu );
 		bu_bomb( "nmg_class_pt_euvu: nmg_find_eu_leftvec() failed!" );
 	}
 
@@ -522,7 +522,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	VSUB2( other_eudir, v2->vg_p->coord, v0->vg_p->coord );
 
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
-		bu_log( "\teu_dir=(%g %g %g), other_eudir=(%x %x %x)\n",V3ARGS( eu_dir ), V3ARGS( other_eudir ) );
+		bu_log( "\teu_dir=(%g %g %g), other_eudir=(%x %x %x)\n", V3ARGS( eu_dir ), V3ARGS( other_eudir ) );
 
 	/* get X and Y components for other_eu */
 	xo = VDOT( eu_dir, other_eudir );
@@ -532,7 +532,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	quado = Quadrant( xo, yo );
 
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
-		bu_log( "\txo=%g, yo=%g, qudarant=%d\n", xo,yo,quado );
+		bu_log( "\txo=%g, yo=%g, qudarant=%d\n", xo, yo, quado );
 
 	/* get direction to PT from origin */
 	VSUB2( pt_dir, pt, v0->vg_p->coord );
@@ -548,7 +548,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	quadpt = Quadrant( xpt, ypt );
 
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
-		bu_log( "\txpt=%g, ypt=%g, qudarant=%d\n", xpt,ypt,quadpt );
+		bu_log( "\txpt=%g, ypt=%g, qudarant=%d\n", xpt, ypt, quadpt );
 
 	/* do a quadrant comparison first (cheap!!!) */
 	if( quadpt < quado )
@@ -567,7 +567,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	ypt = ypt/len;
 
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
-		bu_log( "\tNormalized xo,yo=(%g %g), xpt,ypt=( %g %g )\n", xo,yo,xpt,ypt );
+		bu_log( "\tNormalized xo, yo=(%g %g), xpt, ypt=( %g %g )\n", xo, yo, xpt, ypt );
 
 	switch( quadpt )
 	{

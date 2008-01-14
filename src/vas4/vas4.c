@@ -131,7 +131,7 @@ main(int argc, char **argv)
 	 *  First group of commands.
 	 *  No checking of VAS IV status is performed first.
 	 */
-	if (strcmp(argv[1],"init") == 0) {
+	if (strcmp(argv[1], "init") == 0) {
 		vas_open();
 		if( get_vas_status() < 0 )
 			bu_exit(1, NULL);
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 			exit_code = 1;
 		goto done;
 	}
-	else if (strcmp(argv[1],"status") == 0) {
+	else if (strcmp(argv[1], "status") == 0) {
 		vas_open();
 		(void)get_vas_status();
 		(void)get_vtr_status(1);
@@ -149,7 +149,7 @@ main(int argc, char **argv)
 		(void)get_frame_code();
 		goto done;
 	}
-	else if (strcmp(argv[1],"sequence") == 0) {
+	else if (strcmp(argv[1], "sequence") == 0) {
 		if (argc == 2) {
 			number_of_images = 1;
 			number_of_frames = 1;
@@ -190,19 +190,19 @@ main(int argc, char **argv)
 	if( get_vas_status() < 0 )
 		bu_exit(1, NULL);
 
-	if (strcmp(argv[1],"rewind") == 0) {
+	if (strcmp(argv[1], "rewind") == 0) {
 		vas_putc(C_REWIND);
 		goto done;
 	}
-	else if (strcmp(argv[1],"play") == 0) {
+	else if (strcmp(argv[1], "play") == 0) {
 		vas_putc(C_PLAY);
 		goto done;
 	}
-	else if (strcmp(argv[1],"stop") == 0) {
+	else if (strcmp(argv[1], "stop") == 0) {
 		vas_putc(C_STOP);
 		goto done;
 	}
-	else if (strcmp(argv[1],"fforward") == 0) {
+	else if (strcmp(argv[1], "fforward") == 0) {
 		vas_putc(C_FFORWARD);
 		goto done;
 	}
@@ -284,7 +284,7 @@ main(int argc, char **argv)
 		program_recording(0, scene_number, start_frame);
 		goto done;
 	}
-	else if (strcmp(argv[1],"record") == 0) {
+	else if (strcmp(argv[1], "record") == 0) {
 		if (argc == 3) {
 			number_of_frames = str2frames(argv[2]);
 			if (number_of_frames < 1) {
@@ -314,50 +314,50 @@ done:
 void
 usage(void)
 {
-	fprintf(stderr,"Usage: vas4 [-d] [-h] [-F framebuffer]\n");
-	fprintf(stderr,"	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
-	fprintf(stderr,"	keyword [options]\n");
-	fprintf(stderr,"Keywords:\n");
-	fprintf(stderr,"  init\n");
-	fprintf(stderr,"  status\n");
-	fprintf(stderr,"  stop\n");
-	fprintf(stderr,"  play\n");
-	fprintf(stderr,"  rewind\n");
-	fprintf(stderr,"  fforward\n");
-	fprintf(stderr,"  new [scene_number [start_frame]]\n");
-	fprintf(stderr,"  old [scene_number [start_frame]]\n");
-	fprintf(stderr,"  record [n_frames]\n");
-	fprintf(stderr,"  sequence [n_images n_frames [start_seq]]\n");
-	fprintf(stderr,"  search [frame]\n");
-	fprintf(stderr,"  time0\n");
-	fprintf(stderr,"  reset_time\n");
+	fprintf(stderr, "Usage: vas4 [-d] [-h] [-F framebuffer]\n");
+	fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
+	fprintf(stderr, "	keyword [options]\n");
+	fprintf(stderr, "Keywords:\n");
+	fprintf(stderr, "  init\n");
+	fprintf(stderr, "  status\n");
+	fprintf(stderr, "  stop\n");
+	fprintf(stderr, "  play\n");
+	fprintf(stderr, "  rewind\n");
+	fprintf(stderr, "  fforward\n");
+	fprintf(stderr, "  new [scene_number [start_frame]]\n");
+	fprintf(stderr, "  old [scene_number [start_frame]]\n");
+	fprintf(stderr, "  record [n_frames]\n");
+	fprintf(stderr, "  sequence [n_images n_frames [start_seq]]\n");
+	fprintf(stderr, "  search [frame]\n");
+	fprintf(stderr, "  time0\n");
+	fprintf(stderr, "  reset_time\n");
 	bu_exit(1, NULL);
 }
 
 void
 usage_new(void)
 {
-	fprintf(stderr,"Usage: vas4 new [sn]\n");
-	fprintf(stderr,"\t[sn]\tscene number must be >= 1\n");
+	fprintf(stderr, "Usage: vas4 new [sn]\n");
+	fprintf(stderr, "\t[sn]\tscene number must be >= 1\n");
 	bu_exit(1, NULL);
 }
 
 void
 usage_record(void)
 {
-	fprintf(stderr,"Usage: vas4 record [nf]\n");
-	fprintf(stderr,"\t[nf]\tnumber of frames must be >= 1\n");
+	fprintf(stderr, "Usage: vas4 record [nf]\n");
+	fprintf(stderr, "\t[nf]\tnumber of frames must be >= 1\n");
 	bu_exit(1, NULL);
 }
 
 void
 usage_seq(void)
 {
-	fprintf(stderr,"Usage: vas4 sequence [n nf] [start]\n");
-	fprintf(stderr,"\t[n nf]\tthe number of images n must be > 1\n");
-	fprintf(stderr,"\t\tand the number of frames nf  must be > 1\n");
-	fprintf(stderr,"\t[start] is the starting sequence number\n");
-	fprintf(stderr,"\t\tIf start is specified, n and nf must also be specified\n");
+	fprintf(stderr, "Usage: vas4 sequence [n nf] [start]\n");
+	fprintf(stderr, "\t[n nf]\tthe number of images n must be > 1\n");
+	fprintf(stderr, "\t\tand the number of frames nf  must be > 1\n");
+	fprintf(stderr, "\t[start] is the starting sequence number\n");
+	fprintf(stderr, "\t\tIf start is specified, n and nf must also be specified\n");
 	bu_exit(1, NULL);
 }
 
@@ -406,7 +406,7 @@ program_recording(int new, int scene_number, int start_frame)
 
 	/* New scene only records 4 sec matte */
 	if( new )  {
-		fprintf(stderr,"Recording built-in title matte\n");
+		fprintf(stderr, "Recording built-in title matte\n");
 		do_record(1);
 	}
 }
@@ -421,7 +421,7 @@ record_add_to_scene(int number_of_frames)
 	vas_putnum(number_of_frames);
 	vas_putc(C_ENTER);
 
-	fprintf(stderr,"Recording %d frames, %g seconds\n",
+	fprintf(stderr, "Recording %d frames, %g seconds\n",
 		number_of_frames, (double)number_of_frames/30.);
 	do_record(0);
 }
@@ -471,7 +471,7 @@ do_record(int wait)
 			 * Preroll failed (typ. due to timer),
 			 * VAS is backspacing for retry, wait for GO.
 			 */
-			vas_await(R_RECORD,99);
+			vas_await(R_RECORD, 99);
 			vas_putc(C_RECORD);
 			continue;
 		case R_CUT_IN:
@@ -586,25 +586,25 @@ get_vtr_status(int chatter)
 	buf[3] = vas_getc();
 
 	if( buf[0] != 'V' )  {
-		fprintf(stderr,"Link to VTR is not working\n");
+		fprintf(stderr, "Link to VTR is not working\n");
 		return(-1);
 	}
 	if( buf[1] != 'R' )  {
 		if( buf[1] == 'L' )  {
-			fprintf(stderr,"VTR is in Local mode, can not be program controlled\n");
+			fprintf(stderr, "VTR is in Local mode, can not be program controlled\n");
 			return(-1);
 		}
 		fprintf(stderr, "VTR is in unknown mode\n");
 		return(-1);
 	}
 	if( buf[2] == 'R' )  {
-		if(chatter) fprintf(stderr,"VTR is online and ready to roll\n");
+		if(chatter) fprintf(stderr, "VTR is online and ready to roll\n");
 		return(1);	/* very OK */
 	} else if(  buf[2] == 'N' )  {
-		if(chatter) fprintf(stderr,"VTR is online and stopped\n");
+		if(chatter) fprintf(stderr, "VTR is online and stopped\n");
 		return(0);	/* OK */
 	} else {
-		fprintf(stderr,"VTR is online and has unknown ready status\n");
+		fprintf(stderr, "VTR is online and has unknown ready status\n");
 		return(-1);
 	}
 	/* [3] is S for stop, P for play,
@@ -632,10 +632,10 @@ get_frame_code(void)
 	frame[5] = vas_getc();
 	frame[6] = '\0';
 	if( status != 'C' && status != '<' )  {
-		fprintf(stderr,"get_frame_code:  unable to acquire\n");
+		fprintf(stderr, "get_frame_code:  unable to acquire\n");
 		return(-1);
 	}
-	fprintf(stderr,"Scene %s, Frame %s\n", scene, frame);
+	fprintf(stderr, "Scene %s, Frame %s\n", scene, frame);
 	/* May want to do something more here */
 	return(0);
 }

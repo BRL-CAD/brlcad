@@ -619,7 +619,7 @@ int		npix;
 		 *  Alas, SGI never documents the threshold value;
 		 *  the one here is pure guesswork.
 		 *  Also note that on a VGX machine this might be
-		 *  better accomplished with pixmode(PM_STRIDE,wds/scanline),
+		 *  better accomplished with pixmode(PM_STRIDE, wds/scanline),
 		 *  but no earlier models have this subroutine, sigh.
 		 */
 		if( npix > 32 && ifp->if_width == SGI(ifp)->mi_memwidth)  {
@@ -1378,7 +1378,7 @@ FBIO	*ifp;
 	 *  The simple for i=0..20 loop will not work, because that
 	 *  smashes some window-manager files.  Therefore, we content
 	 *  ourselves with eliminating stdin, stdout, and stderr,
-	 *  (fd 0,1,2), in the hopes that this will successfully
+	 *  (fd 0, 1, 2), in the hopes that this will successfully
 	 *  terminate any pipes or network connections.  In the case
 	 *  of calls from rfbd, in normal (non -d) mode, it gets the
 	 *  network connection on stdin/stdout, so this is adequate.
@@ -1436,7 +1436,7 @@ FBIO	*ifp;
 
 		case QREADERROR:
 			/* These are fatal errors, bail out */
-			if( fp ) fprintf(fp,"libfb/sgi_close: qreaderror, aborting\n");
+			if( fp ) fprintf(fp, "libfb/sgi_close: qreaderror, aborting\n");
 			goto out;
 
 		default:
@@ -1447,7 +1447,7 @@ FBIO	*ifp;
 			 *  unexpected things.  But, lots show up.
 			 *  At least this gives visibility.
 			 */
-			if( fp ) fprintf(fp,"libfb/sgi_close: qread %d, val %d\r\n", dev, val );
+			if( fp ) fprintf(fp, "libfb/sgi_close: qread %d, val %d\r\n", dev, val );
 			break;
 		}
 	}

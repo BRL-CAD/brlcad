@@ -355,7 +355,7 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
     }
 
     /* send the external representation over the wire */
-    bu_log("Sending %s\n",dp->d_namep);
+    bu_log("Sending %s\n", dp->d_namep);
 
     /* pad the data with the length in ascii for convenience */
     bytes_sent = pkg_send(MSG_GEOM, ext.ext_buf, ext.ext_nbytes, stash->connection);

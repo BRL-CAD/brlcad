@@ -231,15 +231,15 @@ int main(int ac, char *av[])
     ipu_delete_file(dsp, 1);
     /* Don't bother clearing memory, it takes too long */
     ipu_create_file(dsp, 1, ipu_filetype, width, height, 0);
-    ipu_scan_config(dsp,units,divisor,conv,0,0);
+    ipu_scan_config(dsp, units, divisor, conv, 0, 0);
 
     if (conv == IPU_AUTOSCALE)
-	ipu_scan_file(dsp,1/*id*/,
-		      0/*wait*/,0,0,0,0,&param);
+	ipu_scan_file(dsp, 1/*id*/,
+		      0/*wait*/, 0, 0, 0, 0,&param);
     else
-	ipu_scan_file(dsp,1/*id*/,
-		      0/*wait*/,scr_xoff,scr_yoff,
-		      width,height,&param);
+	ipu_scan_file(dsp, 1/*id*/,
+		      0/*wait*/, scr_xoff, scr_yoff,
+		      width, height,&param);
 
     ipu_acquire(dsp, 30);
 

@@ -2645,7 +2645,7 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 void
 set_identity( ProMatrix xform )
 {
-	int i,j;
+	int i, j;
 
 	for( i=0 ; i<4 ; i++ ) {
 		for( j=0 ; j<4 ; j++ ) {
@@ -3684,7 +3684,7 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 	/* Pro/E says always check the size of w_char */
 	status = ProWcharSizeVerify (sizeof (wchar_t), &i);
 	if ( status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t)) ) {
-		sprintf(astr,"ERROR wchar_t Incorrect size (%d). Should be: %d",
+		sprintf(astr, "ERROR wchar_t Incorrect size (%d). Should be: %d",
 			sizeof(wchar_t), i );
 		status = ProMessageDisplay(MSGFIL, "USER_ERROR", astr);
 		printf("%s\n", astr);

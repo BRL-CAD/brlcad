@@ -84,9 +84,9 @@ main(int argc, char **argv)
 	tol.para = 1 - tol.perp;
 
 	if( argc >= 3 ) {
-		ifp = fopen(argv[1],"r");
+		ifp = fopen(argv[1], "r");
 		if( !ifp )  perror(argv[1]);
-		ofp = fopen(argv[2],"w");
+		ofp = fopen(argv[2], "w");
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
 			bu_exit(1, "poly-bot: can't open files.");

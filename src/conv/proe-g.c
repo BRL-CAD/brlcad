@@ -52,7 +52,7 @@
 #include "wdb.h"
 
 extern char *bu_optarg;
-extern int bu_optind,bu_opterr,optopt;
+extern int bu_optind, bu_opterr, optopt;
 
 static	struct wmember all_head;
 static char *input_file;	/* name of the input file */
@@ -437,8 +437,8 @@ Convert_assy(char *line)
 		}
 		else if( !strncmp( &line1[start] , "matrix" , 6 ) || !strncmp( &line1[start] , "MATRIX" , 6 ) )
 		{
-			int i,j;
-			double scale,inv_scale;
+			int i, j;
+			double scale, inv_scale;
 
 			for( j=0 ; j<4 ; j++ )
 			{
@@ -528,9 +528,9 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 			fastf_t tmp_dist;
 			point_t origin;
 			plane_t plane;
-			vect_t e1,e2;
-			double u_min,u_max,v_min,v_max;
-			double x,y,z;
+			vect_t e1, e2;
+			double u_min, u_max, v_min, v_max;
+			double x, y, z;
 			int orient;
 			point_t arb_pt[8];
 			point_t rpp_corner;
@@ -681,9 +681,9 @@ Convert_part(char *line)
 	char *brlcad_name;
 	struct wmember head;
 	struct wmember *wmem;
-	vect_t normal={0,0,0};
+	vect_t normal={0, 0, 0};
 	int solid_in_region=0;
-	point_t part_max,part_min;	/* Part RPP */
+	point_t part_max, part_min;	/* Part RPP */
 
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Conv_prt():\n" );
@@ -800,7 +800,7 @@ Convert_part(char *line)
 		}
 		else if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
 		{
-			float x,y,z;
+			float x, y, z;
 
 			start += 6;
 			sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
@@ -817,7 +817,7 @@ Convert_part(char *line)
 			{
 				if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
 				{
-					float x,y,z;
+					float x, y, z;
 
 					start += 6;
 					sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
@@ -843,7 +843,7 @@ Convert_part(char *line)
 					endloop = 1;
 				else if ( !strncmp( &line1[start] , "vertex" , 6 ) || !strncmp( &line1[start] , "VERTEX" , 6 ) )
 				{
-					double x,y,z;
+					double x, y, z;
 
 					sscanf( &line1[start+6] , "%lf%lf%lf" , &x , &y , &z );
 					if( top_level )
@@ -1059,7 +1059,7 @@ Rm_nulls(void)
 		struct rt_db_internal	intern;
 		struct rt_comb_internal	*comb;
 		int j;
-		int node_count,actual_count;
+		int node_count, actual_count;
 		int changed=0;
 
 		/* skip solids */

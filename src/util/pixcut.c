@@ -64,7 +64,7 @@ pixcut: Usage:	[-v] [-h] [-H] [-a] [-# num_bytes] [-C red/green/blue]\n\
 void
 parse_color(unsigned char *bak, char *s)
 {
-	int red,green,blue;
+	int red, green, blue;
 	int result;
 
 	result = sscanf(s, "%d/%d/%d", &red, &green, &blue);
@@ -137,7 +137,7 @@ get_args(register int argc, register char **argv)
 		input = stdin;
 	} else {
 		in_name = argv[bu_optind];
-		if (strcmp(in_name,"-") == 0) {
+		if (strcmp(in_name, "-") == 0) {
 			if (isatty(fileno(stdin))) return(0);
 			input = stdin;
 		} else {
@@ -170,13 +170,13 @@ main(int argc, char **argv)
 	for (i=0;i<SIZEBACK;i++) background[i] = 0;
 	background[2] = 1;
 
-	if (!get_args(argc,argv)) {
-		(void)fprintf(stderr,"%s",usage);
+	if (!get_args(argc, argv)) {
+		(void)fprintf(stderr, "%s", usage);
 		bu_exit (1, NULL);
 	}
 	/* Should we autosize the input? */
 	if (isfile && autosize) {
-		unsigned long int w,h;
+		unsigned long int w, h;
 		if (fb_common_file_size(&w, &h, in_name, num_bytes)) {
 			org_width = (long)w;
 			org_height = (long)h;
@@ -203,14 +203,14 @@ main(int argc, char **argv)
  * Spew at the user if they asked.
  */
 	if (Verbose) {
-		(void)fprintf(stderr,"pixcut: Copyright (C) 1992 Paladin Software\n");
-		(void)fprintf(stderr,"pixcut: All rights reserved.\npixcut:\n");
-		(void)fprintf(stderr,"pixcut: original image %ldx%ld\n",
+		(void)fprintf(stderr, "pixcut: Copyright (C) 1992 Paladin Software\n");
+		(void)fprintf(stderr, "pixcut: All rights reserved.\npixcut:\n");
+		(void)fprintf(stderr, "pixcut: original image %ldx%ld\n",
 		    org_width, org_height);
-		(void)fprintf(stderr,"pixcut: new image %ldx%ld\n",
+		(void)fprintf(stderr, "pixcut: new image %ldx%ld\n",
 		    new_width, new_height);
-		(void)fprintf(stderr,"pixcut: offset %ldx%ld\n", base_x, base_y);
-		(void)fprintf(stderr,"pixcut: background color %d/%d/%d\n",
+		(void)fprintf(stderr, "pixcut: offset %ldx%ld\n", base_x, base_y);
+		(void)fprintf(stderr, "pixcut: background color %d/%d/%d\n",
 		    background[0], background[1], background[2]);
 
 		if (base_x < 0 || base_y < 0 ||
@@ -226,7 +226,7 @@ main(int argc, char **argv)
 			}
 			if (base_y < 0) {
 				if (last) {
-					(void) fprintf(stderr," %s",last);
+					(void) fprintf(stderr, " %s", last);
 					comma=1;
 				}
 				last = "bottom";
@@ -234,9 +234,9 @@ main(int argc, char **argv)
 			if (base_x+new_width >org_width ){
 				if (last) {
 					if (comma) {
-						(void)fprintf(stderr,", %s",last);
+						(void)fprintf(stderr, ", %s", last);
 					} else {
-						(void)fprintf(stderr," %s",last);
+						(void)fprintf(stderr, " %s", last);
 					}
 					comma=1;
 				}
@@ -244,18 +244,18 @@ main(int argc, char **argv)
 			if (base_y+new_height > org_height) {
 				if (last) {
 					if (comma) {
-						(void)fprintf(stderr,", %s",last);
+						(void)fprintf(stderr, ", %s", last);
 					} else {
-						(void)fprintf(stderr," %s",last);
+						(void)fprintf(stderr, " %s", last);
 					}
 					comma = 1;
 				}
 				last = "top";
 			}
 			if (comma) {
-				(void)fprintf(stderr," and %s.\n",last);
+				(void)fprintf(stderr, " and %s.\n", last);
 			} else {
-				(void)fprintf(stderr," %s.\n",last);
+				(void)fprintf(stderr, " %s.\n", last);
 			}
 		}
 	}
@@ -282,7 +282,7 @@ main(int argc, char **argv)
  * Now fill the output buffer with the background color if needed.
  */
 	if (base_x < 0 || base_y < 0 || base_x+new_width > org_width) {
-		for (i=0, cp = outbuf; i<new_width; i++,cp+=num_bytes) {
+		for (i=0, cp = outbuf; i<new_width; i++, cp+=num_bytes) {
 			register long int jj;
 			for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
 				cp[jj]=background[jj];
@@ -337,7 +337,7 @@ main(int argc, char **argv)
  * lines.
  */
 	if (row >= org_height) {
-		for (cp=outbuf,i=0;i<new_width;cp+=num_bytes,i++) {
+		for (cp=outbuf, i=0;i<new_width;cp+=num_bytes, i++) {
 			register long int jj;
 			for (jj=0; jj<num_bytes && jj<SIZEBACK;jj++) {
 				cp[jj] = background[jj];
@@ -349,7 +349,7 @@ main(int argc, char **argv)
  * output the remaining background lines (if any).
  */
 	while (row < finish) {
-		result = fwrite(outbuf,num_bytes, new_width, stdout);
+		result = fwrite(outbuf, num_bytes, new_width, stdout);
 		if (result != new_width) {
 			perror("pixcut: fwrite");
 			bu_exit (3, NULL);

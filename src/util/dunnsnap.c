@@ -124,14 +124,14 @@ main(int argc, char **argv)
 
 	/* check argument */
 	if( nframes < 0 )  {
-		fprintf(stderr,"dunnsnap: negative frame count\n");
+		fprintf(stderr, "dunnsnap: negative frame count\n");
 		goto bad;
 	}
 	if( nframes >= 10000 )
-		fprintf(stderr,"dunnsnap: What a lot of film!\n");
+		fprintf(stderr, "dunnsnap: What a lot of film!\n");
 
 	if (!ready(2)) {
-		fprintf(stderr,"dunnsnap:  camera not ready at startup\n");
+		fprintf(stderr, "dunnsnap:  camera not ready at startup\n");
 		goto bad;
 	}
 
@@ -140,12 +140,12 @@ main(int argc, char **argv)
 	while (nframes>0) {
 
 		if (!ready(20)) {
-			fprintf(stderr,"dunnsnap: camera not ready at frame start\n");
+			fprintf(stderr, "dunnsnap: camera not ready at frame start\n");
 			goto bad;
 		}
 
 		if (!goodstatus()) {
-			fprintf(stderr,"dunnsnap: badstatus\n");
+			fprintf(stderr, "dunnsnap: badstatus\n");
 			goto bad;
 		}
 
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 
 		/* Wait a long time here, because exposure can be lengthy */
 		if (!ready(45)) {
-			fprintf(stderr,"dunnsnap: camera not ready after expose cmd\n");
+			fprintf(stderr, "dunnsnap: camera not ready after expose cmd\n");
 			goto bad;
 		}
 		--nframes;

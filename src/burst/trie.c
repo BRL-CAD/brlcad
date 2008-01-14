@@ -162,7 +162,7 @@ int	level;
 	{	register Trie	*tp = triep;
 		static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
 #if DEBUG_TRIE
-	brst_log( "prntTrie(triep=0x%x,level=%d)\n", triep, level );
+	brst_log( "prntTrie(triep=0x%x, level=%d)\n", triep, level );
 #endif
 	if( tp == TRIE_NULL )
 		return;

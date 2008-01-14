@@ -145,7 +145,7 @@ do_cell(struct val *vp, double xc, double yc)
 	vp->v_y = yc;
 	nroots = rt_poly_roots( &polynom, roots, "" );
 	if( nroots < 0 || (nroots & 1) == 0 )  {
-		fprintf(stderr,"%d roots?\n", nroots);
+		fprintf(stderr, "%d roots?\n", nroots);
 		return;
 	}
 	for ( l=0; l < nroots; l++ ){
@@ -338,7 +338,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 	mk_sph( outfp, nbuf, center, r );
 
 	/*
-	 * Need to rotate from 0,0,-1 to vect "dir",
+	 * Need to rotate from 0, 0,-1 to vect "dir",
 	 * then xlate to final position.
 	 */
 	VSET( from, 0, 0, -1 );

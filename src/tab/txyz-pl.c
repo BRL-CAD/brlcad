@@ -63,8 +63,8 @@ char	*argv[];
 		i = sscanf( buf, "%lf %lf %lf %lf",
 			&t, &xyz[0], &xyz[1], &xyz[2] );
 		if(debug)  {
-			fprintf(stderr,"buf=%s", buf);
-			fprintf(stderr,"%d: %f\t%f\t%f\t%f\n",
+			fprintf(stderr, "buf=%s", buf);
+			fprintf(stderr, "%d: %f\t%f\t%f\t%f\n",
 				i, t, xyz[0], xyz[1], xyz[2] );
 		}
 		if( i <= 0 )

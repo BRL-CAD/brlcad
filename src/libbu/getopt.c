@@ -49,8 +49,8 @@ char	*bu_optarg = NULL;	/**< argument associated with option */
 #define BADCH	(int)'?'
 #define EMSG	""
 #define tell(s)	if(bu_opterr)  { \
-		fputs(*nargv,stderr);fputs(s,stderr); \
-		fputc(bu_optopt,stderr);fputc('\n',stderr); \
+		fputs(*nargv, stderr);fputs(s, stderr); \
+		fputc(bu_optopt, stderr);fputc('\n', stderr); \
 	} return(BADCH);
 
 
@@ -77,7 +77,7 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
 	    return(EOF);
 	}
     }				/* option letter okay? */
-    if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr,bu_optopt))) {
+    if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, bu_optopt))) {
 #if 0
 	if(*place == '\0') {
 	    ++bu_optind;

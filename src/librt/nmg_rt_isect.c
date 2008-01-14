@@ -745,7 +745,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 		bu_log("vertex_neighborhood\n");
 
 	nmg_model_bb( min_pt, max_pt, nmg_find_model( vu_p->up.magic_p ));
-	for (dimen= -MAX_FASTF,i=3 ; i-- ; ) {
+	for (dimen= -MAX_FASTF, i=3 ; i-- ; ) {
 		t = max_pt[i]-min_pt[i];
 		if (t > dimen) dimen = t;
 	}
@@ -900,7 +900,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 	VMOVE(myhit->inbound_norm, norm);
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("North Pole Min: %g to %g %g %g\n", North_min,
-			norm[0], norm[1],norm[2]);
+			norm[0], norm[1], norm[2]);
 
 	/* compute status of ray as it is in-bound on the vertex */
 	VSUB2(VtoPole, North_Pole, vu_p->v_p->vg_p->coord);
@@ -1292,7 +1292,7 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 		VCROSS(edge_left, eu_vec, rd->rp->r_dir);
 		VCROSS(myhit->inbound_norm, eu_vec, edge_left);
 		if (VDOT(myhit->inbound_norm, rd->rp->r_dir) > 0.0) {
-			VREVERSE(myhit->inbound_norm,myhit->inbound_norm);
+			VREVERSE(myhit->inbound_norm, myhit->inbound_norm);
 		}
 		VMOVE(myhit->outbound_norm, myhit->inbound_norm);
 
@@ -1933,7 +1933,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 			vect_t u_dir, v_dir;
 			point_t ctl_pt[4];
 			vect_t hit_dir;
-			int i,j;
+			int i, j;
 			int rational;
 			int coords;
 			fastf_t *pt;

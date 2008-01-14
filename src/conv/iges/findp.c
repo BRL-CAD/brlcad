@@ -39,7 +39,7 @@
 int
 Findp()
 {
-	int saverec,rec2,i;
+	int saverec, rec2, i;
 	long offset;
 	char str[8];
 

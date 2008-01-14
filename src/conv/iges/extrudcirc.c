@@ -38,8 +38,8 @@ vect_t evect;	/* extrusion vector */
 {
 	point_t		base;		/* center of cylinder base */
 	fastf_t		radius;		/* radius of cylinder */
-	fastf_t		x1,y1;		/* Start point */
-	fastf_t		x2,y2;		/* Terminate point */
+	fastf_t		x1, y1;		/* Start point */
+	fastf_t		x2, y2;		/* Terminate point */
 	int		sol_num;	/* Solid number */
 
 	/* Acquiring Data */

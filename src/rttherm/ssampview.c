@@ -292,7 +292,7 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	BN_CK_TABLE(spectrum);
 
 	if( x < 0 || x >= width )  {
-	    Tcl_AppendResult(interp,"x out of range", (char *)NULL);
+	    Tcl_AppendResult(interp, "x out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	if( y < 0 || y >= height )  {
@@ -327,7 +327,7 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 /*
  *			G E T S P E C T X Y
  *
- *  Given the x,y coordinates of a pixel in the multi-spectral image,
+ *  Given the x, y coordinates of a pixel in the multi-spectral image,
  *  return the spectral data found there in Tcl string form.
  */
 int
@@ -868,7 +868,7 @@ show_color(int off)
 			bu_vls_printf(&str, "}" );
 			Tcl_Eval( interp, bu_vls_addr(&str) );
 
-			bu_vls_trunc(&str,0);
+			bu_vls_trunc(&str, 0);
 			bu_vls_printf(&str, "popup_plot_tabdata centerpoint_shifted {");
 			bn_tabdata_to_tcl(&str, new);
 			bu_vls_printf(&str, "}" );

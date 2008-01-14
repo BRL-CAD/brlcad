@@ -53,21 +53,21 @@ int get_args(int argc, char **argv);
 int
 main(int argc, char **argv)
 {
-    int	length,frame_number, number, success, maxnum;
-    int 	first_frame,spread,reserve;
+    int	length, frame_number, number, success, maxnum;
+    int 	first_frame, spread, reserve;
     long	last_pos;
     char	line[MAXLEN];
     char    pbuffer[MAXLEN*MAXLINES];
 
 
-    if (!get_args(argc,argv))
-	fprintf(stderr,"Get_args error\n");
+    if (!get_args(argc, argv))
+	fprintf(stderr, "Get_args error\n");
 
     /* copy any lines preceeding the first "start" command */
     last_pos = ftell(stdin);
-    while (bu_fgets(line,MAXLEN,stdin)!=NULL){
-	if (strncmp(line,"start",5)){
-	    printf("%s",line);
+    while (bu_fgets(line, MAXLEN, stdin)!=NULL){
+	if (strncmp(line, "start", 5)){
+	    printf("%s", line);
 	    last_pos = ftell(stdin);
 	}
 	else
@@ -75,13 +75,13 @@ main(int argc, char **argv)
     }
 
     /* read the frame number of the first "start" command */
-    sscanf( strpbrk(line,"0123456789"),"%d", &frame_number);
+    sscanf( strpbrk(line, "0123456789"),"%d", &frame_number);
 
     /* find the highest frame number in the file */
     maxnum = 0;
-    while(bu_fgets(line,MAXLEN,stdin)!=NULL){
-	if(!strncmp(line,"start",5)){
-	    sscanf(strpbrk(line,"0123456789"),"%d",&number);
+    while(bu_fgets(line, MAXLEN, stdin)!=NULL){
+	if(!strncmp(line, "start", 5)){
+	    sscanf(strpbrk(line, "0123456789"),"%d",&number);
 	    maxnum = (maxnum>number)?maxnum:number;
 	}
     }
@@ -112,29 +112,29 @@ main(int argc, char **argv)
 	while (!feof(stdin)){
 
 	    /*read to next "start" command*/
-	    while (bu_fgets(line,MAXLEN,stdin)!=NULL){
-		if (!strncmp(line,"start",5)){
-		    sscanf( strpbrk(line,"0123456789"),"%d", &number);
+	    while (bu_fgets(line, MAXLEN, stdin)!=NULL){
+		if (!strncmp(line, "start", 5)){
+		    sscanf( strpbrk(line, "0123456789"),"%d", &number);
 		    break;
 		}
 	    }
 	    if (number==frame_number){
 		if (!success){ /*first successful match*/
-		    printf("%s",line);
+		    printf("%s", line);
 		    if (!suppressed) printf("clean;\n");
 		    success = 1;
 		    last_pos = ftell(stdin);
 		}
 		/* print contents until next "end" */
-		while (bu_fgets(line,MAXLEN,stdin)!=NULL){
-		    if (!strncmp(line,"end;",4))
+		while (bu_fgets(line, MAXLEN, stdin)!=NULL){
+		    if (!strncmp(line, "end;", 4))
 			break;
-		    else if (strncmp(line,"clean",5))
-			printf("%s",line);
+		    else if (strncmp(line, "clean", 5))
+			printf("%s", line);
 		}
 		/* save contents until next "start" */
-		while (bu_fgets(line,MAXLEN,stdin)!=NULL){
-		    if(!strncmp(line,"start",5))
+		while (bu_fgets(line, MAXLEN, stdin)!=NULL){
+		    if(!strncmp(line, "start", 5))
 			break;
 		    else {
 			reserve -= strlen(line);
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 	if (success)
 	    printf("end;\n");
 	/* print saved-up post-raytracing commands, if any */
-	printf("%s",pbuffer);
+	printf("%s", pbuffer);
 
 	/* get next frame number */
 	if (incremental){
@@ -177,7 +177,7 @@ int get_args(int argc, char **argv)
     int c;
     suppressed = 0;
 
-    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch(c){
 	case 'c':
 	    suppressed = 1;
@@ -186,7 +186,7 @@ int get_args(int argc, char **argv)
 	    incremental = 1;
 	    break;
 	default:
-	    fprintf(stderr,"Unknown option: -%c\n",c);
+	    fprintf(stderr, "Unknown option: -%c\n", c);
 	    return(0);
 	}
     }

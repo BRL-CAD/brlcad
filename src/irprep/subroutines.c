@@ -55,7 +55,7 @@ void rotate(double *p, double *a, double *np)
 	/*	    is the x-coordinate, np[1] is the y-coordinate,  */
 	/*	    and np[2] is the z-coordinate.  */
 
-	double sa[3],ca[3];	/*  Sine and cosine of each angle.  */
+	double sa[3], ca[3];	/*  Sine and cosine of each angle.  */
 
 	/*  Find sine and cosine of each angle.  */
 	sa[0] = sin(a[0]);

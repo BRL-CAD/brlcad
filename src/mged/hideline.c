@@ -62,9 +62,9 @@
 
 #define MOVE(v)	  VMOVE(last_move,(v))
 
-#define DRAW(v)	{ vect_t a,b;\
-		  MAT4X3PNT(a,view_state->vs_model2view,last_move);\
-		  MAT4X3PNT(b,view_state->vs_model2view,(v));\
+#define DRAW(v)	{ vect_t a, b;\
+		  MAT4X3PNT(a, view_state->vs_model2view, last_move);\
+		  MAT4X3PNT(b, view_state->vs_model2view,(v));\
 		  pdv_3line(plotfp, a, b ); }
 
 extern struct db_i *dbip;	/* current database instance */
@@ -87,18 +87,18 @@ hit_headon(struct application *ap, struct partition *PartHeadp)
 	if (PartHeadp->pt_forw->pt_forw != PartHeadp)
 	  Tcl_AppendResult(interp, "hit_headon: multiple partitions\n", (char *)NULL);
 
-	VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point,ap->a_ray.r_pt,
+	VJOIN1(PartHeadp->pt_forw->pt_inhit->hit_point, ap->a_ray.r_pt,
 	    PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	VSUB2(diff,PartHeadp->pt_forw->pt_inhit->hit_point,aim_point);
+	VSUB2(diff, PartHeadp->pt_forw->pt_inhit->hit_point, aim_point);
 
 	diff_solid = (FIRST_SOLID(sp) !=
 		PartHeadp->pt_forw->pt_inseg->seg_stp->st_dp);
 	len = MAGNITUDE(diff);
 
-	if (	NEAR_ZERO(len,epsilon)
+	if (	NEAR_ZERO(len, epsilon)
 	    ||
 	    ( diff_solid &&
-	    VDOT(diff,ap->a_ray.r_dir) > 0 )
+	    VDOT(diff, ap->a_ray.r_dir) > 0 )
 	    )
 		return(1);
 	else
@@ -139,16 +139,16 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	FILE 	*plotfp;
 	char 	visible;
-	int 	i,numobjs;
-	char 	*objname[MAXOBJECTS],title[1];
-	fastf_t 	len,u,step;
+	int 	i, numobjs;
+	char 	*objname[MAXOBJECTS], title[1];
+	fastf_t 	len, u, step;
 	float 	ratio;
 	vect_t	last_move;
 	struct rt_i	*rtip;
 	struct resource resource;
 	struct application a;
 	vect_t temp;
-	vect_t last,dir;
+	vect_t last, dir;
 	register struct bn_vlist	*vp;
 
 	CHECK_DBI_NULL;
@@ -163,7 +163,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if ((plotfp = fopen(argv[1],"w")) == NULL) {
+	if ((plotfp = fopen(argv[1], "w")) == NULL) {
 	  Tcl_AppendResult(interp, "f_hideline: unable to open \"", argv[1],
 			   "\" for writing.\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -187,7 +187,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  Tcl_AppendResult(interp, "\t", objname[i], "\n", (char *)NULL);
 
 	/* Initialization for librt */
-	if ((rtip = rt_dirbuild(dbip->dbi_filename,title,0)) == RTI_NULL) {
+	if ((rtip = rt_dirbuild(dbip->dbi_filename, title, 0)) == RTI_NULL) {
 	  Tcl_AppendResult(interp, "f_hideline: unable to open model file \"",
 			   dbip->dbi_filename, "\"\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -203,9 +203,9 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	a.a_rbeam = 0;
 
 	if (argc > 2) {
-		sscanf(argv[2],"%f",&step);
+		sscanf(argv[2], "%f",&step);
 		step = view_state->vs_Viewscale/step;
-		sscanf(argv[3],"%f",&epsilon);
+		sscanf(argv[3], "%f",&epsilon);
 		epsilon *= view_state->vs_Viewscale/100;
 	} else {
 		step = view_state->vs_Viewscale/256;
@@ -213,13 +213,13 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	for (i = 0; i < numobjs; i++)
-	  if (rt_gettree(rtip,objname[i]) == -1)
+	  if (rt_gettree(rtip, objname[i]) == -1)
 	    Tcl_AppendResult(interp, "f_hideline: rt_gettree failed on \"",
 			     objname[i], "\"\n", (char *)NULL);
 
 	/* Crawl along the vectors raytracing as we go */
 	VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
-	MAT4X3VEC(a.a_ray.r_dir,view_state->vs_view2model,temp);
+	MAT4X3VEC(a.a_ray.r_dir, view_state->vs_view2model, temp);
 	VUNITIZE(a.a_ray.r_dir);
 
 	FOR_ALL_SOLIDS(sp) {
@@ -234,7 +234,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			for( i = 0; i < nused; i++, cmd++, pt++ )  {
 			  Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
 				switch( *cmd )  {
 				case BN_VLIST_POLY_START:
@@ -263,10 +263,10 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 					  bu_vls_free(&tmp_vls);
 					}
 					for (u = 0; u <= len; u += step) {
-						VJOIN1(aim_point,last,u,dir);
-						MAT4X3PNT(temp,view_state->vs_model2view,aim_point);
+						VJOIN1(aim_point, last, u, dir);
+						MAT4X3PNT(temp, view_state->vs_model2view, aim_point);
 						temp[Z] = 100;			/* parallel project */
-						MAT4X3PNT(a.a_ray.r_pt,view_state->vs_view2model,temp);
+						MAT4X3PNT(a.a_ray.r_pt, view_state->vs_view2model, temp);
 						if (rt_shootray(&a)) {
 							if (!visible) {
 								visible = TRUE;

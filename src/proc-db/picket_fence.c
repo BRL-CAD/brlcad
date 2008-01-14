@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
   fastf_t ps;
   long numposts;
   fastf_t zstep;
-  unsigned char matcolor[3] = {0,0,0};
+  unsigned char matcolor[3] = {0, 0, 0};
 
   int round = 0;
 

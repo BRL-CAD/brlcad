@@ -104,8 +104,8 @@ main(int argc, char **argv)
 	if( owidth < todo )  todo = owidth;
 	if( todo > iwidth/(discard+1) )  todo = iwidth/(discard+1);
 #if 0
-	fprintf(stderr,"dh=%d dw=%d, discard=%d\n", dh, dw, discard);
-	fprintf(stderr,"todo=%d\n", todo);
+	fprintf(stderr, "dh=%d dw=%d, discard=%d\n", dh, dw, discard);
+	fprintf(stderr, "todo=%d\n", todo);
 #endif
 
 	while( !feof(stdin) )  {

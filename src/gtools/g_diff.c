@@ -674,7 +674,7 @@ remove_region_attrs( Tcl_Obj *obj )
     int len=0;
     Tcl_Obj **objs;
     char *key;
-    int i,j;
+    int i, j;
     int found_material=0;
 
     if( Tcl_ListObjGetElements( interp, obj, &len, &objs ) != TCL_OK ) {

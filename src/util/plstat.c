@@ -161,7 +161,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 	if( argc == 2 ) {
-		if( (fp = fopen(argv[1],"r")) == NULL ) {
+		if( (fp = fopen(argv[1], "r")) == NULL ) {
 			perror( "plstat" );
 			bu_exit ( 1, NULL );
 		}

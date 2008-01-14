@@ -71,12 +71,12 @@ static void  nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m);
  *
  *  Given V, A, B, and C, there is a set of points on this ellipsoid
  *
- *  { (x,y,z) | (x,y,z) is on ellipsoid defined by V, A, B, C }
+ *  { (x, y, z) | (x, y, z) is on ellipsoid defined by V, A, B, C }
  *
  *  Through a series of Affine Transformations, this set will be
  *  transformed into a set of points on a unit sphere at the origin
  *
- *  { (x',y',z') | (x',y',z') is on Sphere at origin }
+ *  { (x', y', z') | (x', y', z') is on Sphere at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -195,7 +195,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	mat_t	Rinv;
 	mat_t	SS;
 	mat_t	mtemp;
-	vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
 	vect_t	w1, w2, P;	/* used for bounding RPP */
 	fastf_t	f;
 
@@ -222,7 +222,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		return(1);		/* BAD */
 	}
 
-	/* Create unit length versions of A,B,C */
+	/* Create unit length versions of A, B, C */
 	f = 1.0/sqrt(magsq_a);
 	VSCALE( Au, eip->a, f );
 	f = 1.0/sqrt(magsq_b);
@@ -233,17 +233,17 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+		bu_log("ell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("ell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-		bu_log("ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
+		bu_log("ell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
 		return(1);		/* BAD */
 	}
 
@@ -371,7 +371,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	dp = VDOT( dprime, pprime );
 	dd = VDOT( dprime, dprime );
 
-	if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 )
+	if( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 )
 		return(0);		/* No hit */
 	root = sqrt(root);
 
@@ -428,7 +428,7 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		dp = VDOT( dprime, pprime );
 		dd = VDOT( dprime, dprime );
 
-		if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 ) {
+		if( (root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0 ) {
 			RT_ELL_SEG_MISS(segp[i]);		/* No hit */
 		}
 		else {
@@ -512,8 +512,8 @@ rt_ell_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ E L L _ U V
  *
- *  For a hit on the surface of an ELL, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an ELL, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -582,7 +582,7 @@ rt_ell_16pts(register fastf_t *ov,
 	     fastf_t *A,
 	     fastf_t *B)
 {
-	static fastf_t c, d, e, f,g,h;
+	static fastf_t c, d, e, f, g, h;
 
 	e = h = .92388;			/* cos(22.5) */
 	c = d = .707107;		/* cos(45) */
@@ -743,7 +743,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	mat_t	S;
 	mat_t	invR;
 	mat_t	invS;
-	vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
 	fastf_t	Alen, Blen, Clen;
 	fastf_t	invAlen, invBlen, invClen;
 	fastf_t	magsq_a, magsq_b, magsq_c;
@@ -777,7 +777,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		return(-2);		/* BAD */
 	}
 
-	/* Create unit length versions of A,B,C */
+	/* Create unit length versions of A, B, C */
 	invAlen = 1.0/(Alen = sqrt(magsq_a));
 	VSCALE( Au, state.eip->a, invAlen );
 	invBlen = 1.0/(Blen = sqrt(magsq_b));
@@ -1331,7 +1331,7 @@ rt_ell_ifree(struct rt_db_internal *ip)
 }
 
 /*  The U parameter runs south to north.
- *  In order to orient loop CCW, need to start with 0,1-->0,0 transition
+ *  In order to orient loop CCW, need to start with 0, 1-->0, 0 transition
  *  at the south pole.
  */
 static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
@@ -1356,7 +1356,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	mat_t		invRoS;
 	mat_t	unit2model;
 	mat_t	xlate;
-	vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
 	fastf_t	Alen, Blen, Clen;
 	fastf_t	invAlen, invBlen, invClen;
 	fastf_t	magsq_a, magsq_b, magsq_c;
@@ -1385,7 +1385,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		return(-2);		/* BAD */
 	}
 
-	/* Create unit length versions of A,B,C */
+	/* Create unit length versions of A, B, C */
 	invAlen = 1.0/(Alen = sqrt(magsq_a));
 	VSCALE( Au, eip->a, invAlen );
 	invBlen = 1.0/(Blen = sqrt(magsq_b));
@@ -1511,7 +1511,7 @@ VPRINT("xyz", eu->vu_p->v_p->vg_p->coord);
 nmg_hack_snurb( &sn, fu->f_p->g.snurb_p );
 VPRINT("uv", eu->vu_p->a.cnurb_p->param);
 rt_nurb_s_eval( &sn, V2ARGS(eu->vu_p->a.cnurb_p->param), param );
-VPRINT("surf(u,v)", param);
+VPRINT("surf(u, v)", param);
 #endif
 
 		nmg_edge_g_cnurb_plinear(eu);
@@ -1525,7 +1525,7 @@ VPRINT("surf(u,v)", param);
 }
 
 /*
- *  u,v=(0,0) is supposed to be the south pole, at Z=-1.0
+ *  u, v=(0, 0) is supposed to be the south pole, at Z=-1.0
  *  The V direction runs from the south to the north pole.
  */
 static void
@@ -1541,9 +1541,9 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 	/* Let the library allocate all the storage */
 	/* The V direction runs from south to north pole */
 	nmg_face_g_snurb( fu,
-		3, 3,		/* u,v order */
-		8, 12,		/* Number of knots, u,v */
-		NULL, NULL,	/* initial u,v knot vectors */
+		3, 3,		/* u, v order */
+		8, 12,		/* Number of knots, u, v */
+		NULL, NULL,	/* initial u, v knot vectors */
 		9, 5,		/* n_rows, n_cols */
 		RT_NURB_MAKE_PT_TYPE( 4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL ),
 		NULL );		/* initial mesh */
@@ -1576,7 +1576,7 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 	op = fg->ctl_points;
 
 /* Inspired by MAT4X4PNT */
-#define M(x,y,z,w)	{ \
+#define M(x, y, z, w)	{ \
 	*op++ = m[ 0]*(x) + m[ 1]*(y) + m[ 2]*(z) + m[ 3]*(w);\
 	*op++ = m[ 4]*(x) + m[ 5]*(y) + m[ 6]*(z) + m[ 7]*(w);\
 	*op++ = m[ 8]*(x) + m[ 9]*(y) + m[10]*(z) + m[11]*(w);\

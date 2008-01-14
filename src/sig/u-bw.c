@@ -42,7 +42,7 @@ int main(int ac, char **av)
 		for (i=0 ; i < num ; i++)
 			obuf[i] = (unsigned char)ibuf[i];
 
-		if (fwrite(&obuf[0], sizeof(*obuf),num,stdout)!=num) {
+		if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
 			(void)fprintf(stderr, "%s: error writing output\n", *av);
 			return(-1);
 		}
@@ -52,7 +52,7 @@ int main(int ac, char **av)
 		for (i=0 ; i < num ; i++)
 			obuf[i] = (unsigned char)(ibuf[i] >> 8);
 
-		if (fwrite(&obuf[0], sizeof(*obuf),num,stdout)!=num) {
+		if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
 			(void)fprintf(stderr, "%s: error writing output\n", *av);
 			return(-1);
 		}

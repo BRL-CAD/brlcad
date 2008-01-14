@@ -79,10 +79,10 @@ __BEGIN_DECLS
  *  in parens.
  */
 #if __STDC__ || USE_PROTOTYPES
-#  define WDB_EXTERN(type_and_name,args)	extern type_and_name args
+#  define WDB_EXTERN(type_and_name, args)	extern type_and_name args
 #  define WDB_ARGS(args)			args
 #else
-#  define WDB_EXTERN(type_and_name,args)	extern type_and_name()
+#  define WDB_EXTERN(type_and_name, args)	extern type_and_name()
 #  define WDB_ARGS(args)			()
 #endif
 
@@ -258,8 +258,8 @@ typedef enum {
 } wdb_binunif;
 WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, long count) );
 
-#define mk_bsolid(fp,name,nsurf,res)	+++error_obsolete_libwdb_routine+++
-#define mk_bsurf(fp,srf)		+++error_obsolete_libwdb_routine+++
+#define mk_bsolid(fp, name, nsurf, res)	+++error_obsolete_libwdb_routine+++
+#define mk_bsurf(fp, srf)		+++error_obsolete_libwdb_routine+++
 
 /* bot.c */
 WDB_EXPORT int
@@ -310,7 +310,7 @@ WDB_EXPORT int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_
 WDB_EXPORT int mk_nmg( struct rt_wdb *filep, const char *name, struct model *m );
 WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s );
 
-#define write_shell_as_polysolid(ofp,name,s)	mk_bot_from_nmg(ofp,name,s)
+#define write_shell_as_polysolid(ofp, name, s)	mk_bot_from_nmg(ofp, name, s)
 
 /* skt.c */
 WDB_EXPORT int mk_sketch(
@@ -361,24 +361,24 @@ WDB_EXPORT WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const ch
 			const vect_t cellsize, const matp_t mat));
 WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
 			const char *treetop, int meth));
-#define mk_strsol(fp,name,solid,arg)	+++error_obsolete_libwdb_routine+++
+#define mk_strsol(fp, name, solid, arg)	+++error_obsolete_libwdb_routine+++
 
 /*
  *  The polysolid has been replaced by the BoT.
  *  Automatic conversion is provided by rt_pg_to_bot()
  */
-#define mk_polysolid(fp,name)	+++error_obsolete_libwdb_routine+++
-#define mk_poly(fp,npts,verts,norms)	+++error_obsolete_libwdb_routine+++
-#define mk_fpoly(fp,npts,verts)	+++error_obsolete_libwdb_routine+++
+#define mk_polysolid(fp, name)	+++error_obsolete_libwdb_routine+++
+#define mk_poly(fp, npts, verts, norms)	+++error_obsolete_libwdb_routine+++
+#define mk_fpoly(fp, npts, verts)	+++error_obsolete_libwdb_routine+++
 
 /* mater.c */
 WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
 
 
 /* These routines have been replaced by the construction routines below */
-#define mk_rcomb(fp,name,len,reg,shadername,mparam,rgb,id,air,mater,los,flag)	+++error_obsolete_libwdb_routine+++
-#define mk_fcomb(fp,name,len,reg)				+++error_obsolete_libwdb_routine+++
-#define mk_memb(fp,name,map,op)					+++error_obsolete_libwdb_routine+++
+#define mk_rcomb(fp, name, len, reg, shadername, mparam, rgb, id, air, mater, los, flag)	+++error_obsolete_libwdb_routine+++
+#define mk_fcomb(fp, name, len, reg)				+++error_obsolete_libwdb_routine+++
+#define mk_memb(fp, name, map, op)					+++error_obsolete_libwdb_routine+++
 
 /*
  *  Combination (region&group) construction routines
@@ -394,7 +394,7 @@ WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 
 #define mk_lcomb(_fp,_name,_headp,_rf,_shadername,_shaderargs,_rgb,_inh)	\
 	mk_comb(_fp,_name,&((_headp)->l),_rf,_shadername,_shaderargs,\
-		_rgb,0,0,0,0,_inh,0,0)
+		_rgb, 0, 0, 0, 0,_inh, 0, 0)
 
 /* mk_lrcomb() would not append, and did not have GIFT semantics */
 /* mk_lrcomb() had (struct wmember *) head, need (struct bu_list *) */
@@ -432,9 +432,9 @@ mk_region1(
 	const char *shaderargs,
 	const unsigned char *rgb );
 
-#define mk_fastgen_region(fp,name,headp,mode,shadername,shaderargs,rgb,id,air,material,los,inherit)	\
-	mk_comb(fp,name,headp,mode,shadername,shaderargs,rgb,id,air,\
-		material,los,inherit,0,0)
+#define mk_fastgen_region(fp, name, headp, mode, shadername, shaderargs, rgb, id, air, material, los, inherit)	\
+	mk_comb(fp, name, headp, mode, shadername, shaderargs, rgb, id, air,\
+		material, los, inherit, 0, 0)
 
 
 /* Values for wm_op.  These must track db.h */
@@ -443,7 +443,7 @@ mk_region1(
 #define WMOP_UNION	'u'
 
 /* Convienient definitions */
-#define mk_lfcomb(fp,name,headp,region)		mk_lcomb( fp, name, headp, \
+#define mk_lfcomb(fp, name, headp, region)		mk_lcomb( fp, name, headp, \
 	region, (char *)0, (char *)0, (unsigned char *)0, 0 );
 
 /*
@@ -469,8 +469,8 @@ WDB_EXPORT extern int	mk_version;		/**< @brief  Which version database to write 
  */
 WDB_EXPORT void mk_freemembers( struct bu_list *headp );
 
-#define mk_fwrite_internal(fp,name,ip)		+++error_obsolete_libwdb_routine+++
-#define mk_export_fwrite(wdbp,name,gp,id)	wdb_export(wdbp,name,gp,id,mk_conv2mm)
+#define mk_fwrite_internal(fp, name, ip)		+++error_obsolete_libwdb_routine+++
+#define mk_export_fwrite(wdbp, name, gp, id)	wdb_export(wdbp, name, gp, id, mk_conv2mm)
 
 /*
  *	Dynamic geometry routines

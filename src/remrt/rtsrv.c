@@ -282,7 +282,7 @@ main(int argc, char **argv)
 		(void)close(1);
 		(void)close(2);
 
-		/* For stdio & perror safety, reopen 0,1,2 */
+		/* For stdio & perror safety, reopen 0, 1, 2 */
 		(void)open("/dev/null", 0);	/* to fd 0 */
 		(void)dup(0);			/* to fd 1 */
 		(void)dup(0);			/* to fd 2 */
@@ -299,7 +299,7 @@ main(int argc, char **argv)
 	/* Send our version string */
 	if( pkg_send( MSG_VERSION,
 	    PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"pkg_send MSG_VERSION error\n");
+		fprintf(stderr, "pkg_send MSG_VERSION error\n");
 		return 1;
 	}
 	if( debug )  fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION );
@@ -427,7 +427,7 @@ ph_enqueue(register struct pkg_conn *pc, char *buf)
 void
 ph_cd(register struct pkg_conn *pc, char *buf)
 {
-	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
+	if(debug)fprintf(stderr, "ph_cd %s\n", buf);
 	if( chdir( buf ) < 0 )
 		bu_exit(1, "ph_cd: chdir(%s) failure\n", buf);
 	(void)free(buf);
@@ -437,7 +437,7 @@ void
 ph_restart(register struct pkg_conn *pc, char *buf)
 {
 
-	if(debug)fprintf(stderr,"ph_restart %s\n", buf);
+	if(debug)fprintf(stderr, "ph_restart %s\n", buf);
 	bu_log("Restarting\n");
 	pkg_close(pcsrv);
 	execlp( "rtsrv", "rtsrv", control_host, tcp_port, (char *)0);
@@ -491,7 +491,7 @@ ph_dirbuild(register struct pkg_conn *pc, char *buf)
 
 	if( pkg_send( MSG_DIRBUILD_REPLY,
 	    idbuf, strlen(idbuf)+1, pcsrv ) < 0 )
-		fprintf(stderr,"MSG_DIRBUILD_REPLY error\n");
+		fprintf(stderr, "MSG_DIRBUILD_REPLY error\n");
 }
 
 /*
@@ -541,7 +541,7 @@ ph_gettrees(register struct pkg_conn *pc, char *buf)
 
 	/* Load the desired portion of the model */
 	if( rt_gettrees(rtip, argc, (const char **)argv, npsw) < 0 )
-		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
+		fprintf(stderr, "rt_gettrees(%s) FAILED\n", argv[0]);
 
 	/* In case it changed from startup time via an OPT command */
 	if( npsw > 1 )  {
@@ -559,7 +559,7 @@ ph_gettrees(register struct pkg_conn *pc, char *buf)
 	/* Acknowledge that we are ready */
 	if( pkg_send( MSG_GETTREES_REPLY,
 	    title_obj, strlen(title_obj)+1, pcsrv ) < 0 )
-		fprintf(stderr,"MSG_START error\n");
+		fprintf(stderr, "MSG_START error\n");
 }
 
 /*
@@ -691,7 +691,7 @@ prepare(void)
 void
 ph_lines(struct pkg_conn *pc, char *buf)
 {
-	auto int		a,b, fr;
+	auto int		a, b, fr;
 	struct line_info	info;
 	register struct rt_i	*rtip = ap.a_rt_i;
 	struct	bu_external	ext;
@@ -732,13 +732,13 @@ ph_lines(struct pkg_conn *pc, char *buf)
 		bu_exit(98, "ph_lines: bu_struct_export failure\n");
 
 	if(debug)  {
-		fprintf(stderr,"PIXELS fr=%d pix=%d..%d, rays=%d, cpu=%g\n",
+		fprintf(stderr, "PIXELS fr=%d pix=%d..%d, rays=%d, cpu=%g\n",
 			info.li_frame,
 			info.li_startpix, info.li_endpix,
 			info.li_nrays, info.li_cpusec);
 	}
 	if( pkg_2send( MSG_PIXELS, ext.ext_buf, ext.ext_nbytes, scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
-		fprintf(stderr,"MSG_PIXELS send error\n");
+		fprintf(stderr, "MSG_PIXELS send error\n");
 		db_free_external(&ext);
 	}
 
@@ -810,7 +810,7 @@ bu_log( char *fmt, ... )
 	}
 	if(debug) fprintf(stderr, "%s", buf);
 	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
+		fprintf(stderr, "pkg_send MSG_PRINT failed\n");
 		bu_exit(12, NULL);
 	}
 out:
@@ -832,13 +832,13 @@ bu_bomb(const char *str)
 	char	*bomb = "RTSRV terminated by bu_bomb()\n";
 
 	if( pkg_send( MSG_PRINT, (char *)str, strlen(str)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"bu_bomb MSG_PRINT failed\n");
+		fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
 	}
 	if( pkg_send( MSG_PRINT, bomb, strlen(bomb)+1, pcsrv ) < 0 )  {
-		fprintf(stderr,"bu_bomb MSG_PRINT failed\n");
+		fprintf(stderr, "bu_bomb MSG_PRINT failed\n");
 	}
 
-	if(debug)  fprintf(stderr,"\n%s\n", str);
+	if(debug)  fprintf(stderr, "\n%s\n", str);
 	fflush(stderr);
 	if( RT_G_DEBUG || rt_g.NMG_debug || bu_debug || debug )
 		abort();	/* should dump */
@@ -878,7 +878,7 @@ ph_end(register struct pkg_conn *pc, char *buf)
 void
 ph_print(register struct pkg_conn *pc, char *buf)
 {
-	fprintf(stderr,"msg: %s\n", buf);
+	fprintf(stderr, "msg: %s\n", buf);
 	(void)free(buf);
 }
 

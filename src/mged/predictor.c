@@ -207,7 +207,7 @@ predictor_frame(void)
 	mat_t	predictor;
 	mat_t	predictorXv2m;
 	point_t	m;		/* model coords */
-	point_t	mA,mB,mC,mD,mE,mF,mG,mH,mI,mJ,mK,mL;
+	point_t	mA, mB, mC, mD, mE, mF, mG, mH, mI, mJ, mK, mL;
 	struct bu_list	trail;
 	point_t	framecenter_m;
 #if 0

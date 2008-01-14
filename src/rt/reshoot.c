@@ -29,25 +29,25 @@
  * eliminate extraneous information to produce the input to this
  * program.  The following awk program, will suffice:  @verbatim
 
-	/Pnt/ { START=index($0,"(") + 1
-	       STR=substr($0, START, index($0,")") - START)
+	/Pnt/ { START=index($0, "(") + 1
+	       STR=substr($0, START, index($0, ")") - START)
 	       gsub(  ", "  , "," , STR)
-	       printf "Pnt=%s\n",STR
+	       printf "Pnt=%s\n", STR
 
 	       }
 
 
-	/Dir/ { START=index($0,"(") + 1
-	       STR=substr($0, START, index($0,")") - START)
+	/Dir/ { START=index($0, "(") + 1
+	       STR=substr($0, START, index($0, ")") - START)
 	       gsub(  ", "  , "," , STR)
-	       printf "Dir=%s\n",STR
+	       printf "Dir=%s\n", STR
 	       }
 	/PT/  { PARTIN=$3
 	       PARTOUT=$5
 	       }
 	/InHIT/ { INHIT=$2 }
 	/OutHIT/ { OUTHIT=$2 }
-	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2,PARTIN,INHIT,PARTOUT,OUTHIT}
+	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2, PARTIN, INHIT, PARTOUT, OUTHIT}
 
 @endverbatim
  * If this awk program is stored in the file p.awk then: @verbatim
@@ -55,8 +55,8 @@
 @endverbatim
  * will produce a suitable input file for this program.  The form is as
  * follows: @verbatim
-	Pnt=1,2,3
-	Dir=4,5,6
+	Pnt=1, 2, 3
+	Dir=4, 5, 6
 		region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
 @endverbatim
  * where the line begining with "region" may be repeated any number of times, representing each
@@ -211,11 +211,11 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	}
 
 	if ( strcmp(pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive))) {
-	    bu_vls_printf(&result,"\tin primitive name mismatch %s %s\n",pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
+	    bu_vls_printf(&result, "\tin primitive name mismatch %s %s\n", pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
 	    status = 1;
 	}
 	if ( strcmp(pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive))) {
-	    bu_vls_printf(&result, "\tout primitive name mismatch %s %s\n",pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
+	    bu_vls_printf(&result, "\tout primitive name mismatch %s %s\n", pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
@@ -348,7 +348,7 @@ main(int argc, char **argv)
      */
     while( argc > 2 )  {
 	if( rt_gettree(rtip, argv[2]) < 0 )
-	    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
 	argc--;
 	argv++;
     }
@@ -356,7 +356,7 @@ main(int argc, char **argv)
      * This next call gets the database ready for ray tracing.
      * (it precomputes some values, sets up space partitioning, etc.)
      */
-    rt_prep_parallel(rtip,1);
+    rt_prep_parallel(rtip, 1);
 
 
     bu_vls_init(&buf);

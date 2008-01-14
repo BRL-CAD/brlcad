@@ -284,7 +284,7 @@ rt_shootray( struct application *ap )
 	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	if(RT_G_DEBUG&DEBUG_SHOOT)  rt_pr_partitions(rtip,&FinalPart,"a_hit()");
+	if(RT_G_DEBUG&DEBUG_SHOOT)  rt_pr_partitions(rtip,&FinalPart, "a_hit()");
 
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";

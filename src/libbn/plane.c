@@ -379,12 +379,12 @@ bn_2line3_colinear(const fastf_t *p1,
 	if( bn_distsq_line3_pt3( p1, d1, tail ) > tol->dist_sq )  goto fail;
 
 	if( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_2line3colinear(range=%g) ret=1\n",range);
+		bu_log("bn_2line3colinear(range=%g) ret=1\n", range);
 	}
 	return 1;
 fail:
 	if( bu_debug & BU_DEBUG_MATH )  {
-		bu_log("bn_2line3colinear(range=%g) ret=0\n",range);
+		bu_log("bn_2line3colinear(range=%g) ret=0\n", range);
 	}
 	return 0;
 }
@@ -460,7 +460,7 @@ bn_isect_line3_plane(fastf_t *dist,
  *
  *  In order that all the geometry under consideration be in "front"
  *  of the ray, it is necessary to pass the minimum point of the model
- *  RPP.  If this convention is unnecessary, just pass (0,0,0) as rpp_min.
+ *  RPP.  If this convention is unnecessary, just pass (0, 0, 0) as rpp_min.
  *
  *
  * @return	 0	OK, line of intersection stored in `pt' and `dir'.
@@ -1219,7 +1219,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
  * @return   0	lines are co-linear (t returned for u=0 to give distance to A)
  * @return   1	intersection found (t and u returned)
  *
- * @param[out]	t,u	line parameter of interseciton
+ * @param[out]	t, u	line parameter of interseciton
  *		When explicit return >= 0, t and u are the
  *		line parameters of the intersection point on the 2 rays.
  *		The actual intersection coordinates can be found by
@@ -1231,12 +1231,12 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
  * @param	c	direction 2
  * @param tol	tolerance values
  *
- *	t,u	When explicit return >= 0, t and u are the
+ *	t, u	When explicit return >= 0, t and u are the
  *		line parameters of the intersection point on the 2 rays.
  *		The actual intersection coordinates can be found by
  *		substituting either of these into the original ray equations.
  *
- * XXX It would be sensible to change the t,u pair to dist[2].
+ * XXX It would be sensible to change the t, u pair to dist[2].
  *
  *
  */
@@ -1254,7 +1254,7 @@ bn_isect_line3_line3(fastf_t *t,
 	vect_t		h;
 	register fastf_t	det;
 	register fastf_t	det1;
-	register short int	q,r,s;
+	register short int	q, r, s;
 
 	BN_CK_TOL(tol);
 
@@ -1306,7 +1306,7 @@ bn_isect_line3_line3(fastf_t *t,
 	 *  This component will have the least effect on the parameters
 	 *  in the system, being most nearly perpendicular to the plane.
 	 *  Denote the two remaining components by the
-	 *  subscripts q and r, rather than x,y,z.
+	 *  subscripts q and r, rather than x, y, z.
 	 *  Subscript s is the smallest component, used for checking later.
 	 */
 	abs_n[X] = (n[X] >= 0) ? n[X] : (-n[X]);
@@ -2274,7 +2274,7 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
  *
  *  Trig note -
  *
- *  theta = atan2(x,y) returns an angle in the range -pi to +pi.
+ *  theta = atan2(x, y) returns an angle in the range -pi to +pi.
  *  Here, we need an angle in the range of 0 to 2pi.
  *  This could be implemented by adding 2pi to theta when theta is negative,
  *  but this could have nasty numeric ambiguity right in the vicinity
@@ -2476,7 +2476,7 @@ bn_does_ray_isect_tri(
  *		beta
  *
  *  The intersection point P is computed by determining 2 quantities,
- *  (alpha,beta) which indicate the parametric distance along VA and VB
+ *  (alpha, beta) which indicate the parametric distance along VA and VB
  *  respectively.  The intersection point is thus:
  *
  *	P = V + (alpha * VA) + (beta * VB)
@@ -2694,7 +2694,7 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
  * that point is the solution.
  *
  * The method used here is based on:
- *	An expression for the distance from a point to a plane is VDOT(pt,plane)-plane[H].
+ *	An expression for the distance from a point to a plane is VDOT(pt, plane)-plane[H].
  *	Square that distance and sum for all planes to get the "total" distance.
  *	For minimum total distance, the partial derivatives of this expression (with
  *	respect to x, y, and z) must all be zero.
@@ -2775,8 +2775,8 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const int pl_count)
  * @return	!0  if ray hits RPP.
  *
  *
- * @param[in,out] a	Start point of lseg
- * @param[in,out] b	End point of lseg
+ * @param[in, out] a	Start point of lseg
+ * @param[in, out] b	End point of lseg
  * @param[in] min	min point of RPP
  * @param[in] max	amx point of RPP
  *

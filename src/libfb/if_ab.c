@@ -312,11 +312,11 @@ ab_open(register FBIO *ifp, register char *file, int width, int height)
     }
 
     if( ifp->if_xyoff )  {
-	sprintf(message,"ab_open %d*%d xoff=%ld yoff=%ld",
+	sprintf(message, "ab_open %d*%d xoff=%ld yoff=%ld",
 		ifp->if_width, ifp->if_height,
 		ifp->if_xyoff>>16, ifp->if_xyoff&0xFFFF );
     } else {
-	sprintf(message,"ab_open %d*%d",
+	sprintf(message, "ab_open %d*%d",
 		ifp->if_width, ifp->if_height);
     }
     ab_log(ifp, message);
@@ -427,7 +427,7 @@ ab_close(FBIO *ifp)
 HIDDEN int
 ab_clear(FBIO *ifp, unsigned char *bgpp)
 {
-    register int	r,g,b;
+    register int	r, g, b;
     register int	count;
     register char	*cp;
 
@@ -708,7 +708,7 @@ ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
     memset((char *)&sinme, 0, sizeof(sinme));
 
     if( (rlogin_service = getservbyname("shell", "tcp")) == NULL )  {
-	fb_log("getservbyname(shell,tcp) fail\n");
+	fb_log("getservbyname(shell, tcp) fail\n");
 	return(-1);
     }
     sinhim.sin_port = rlogin_service->s_port;
@@ -925,9 +925,9 @@ ab_get_reply(int fd)
  *  U, V: -112 .. +112 range, offset by 128 [16 .. 240]
  */
 
-#define	VDOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
-#define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
-#define	CLIP(out,in)		{ register int t; \
+#define	VDOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
+#define	V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
+#define	CLIP(out, in)		{ register int t; \
 		if( (t = (in)) < 0 )  (out) = 0; \
 		else if( t >= 255 )  (out) = 255; \
 		else (out) = t; }
@@ -984,11 +984,11 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
     vp = vbuf;
     cp = yuv_buf;
     for( i = len/2; i; i-- ) {
-	*cp++ = V5DOT(u_filter,up) + 128.0;	/* u */
-	*cp++ = V5DOT(y_filter,yp) + 16.0;	/* y */
-	*cp++ = V5DOT(v_filter,vp) + 128.0;	/* v */
+	*cp++ = V5DOT(u_filter, up) + 128.0;	/* u */
+	*cp++ = V5DOT(y_filter, yp) + 16.0;	/* y */
+	*cp++ = V5DOT(v_filter, vp) + 128.0;	/* v */
 	yp++;
-	*cp++ = V5DOT(y_filter,yp) + 16.0;	/* y */
+	*cp++ = V5DOT(y_filter, yp) + 16.0;	/* y */
 	yp++;
 	up += 2;
 	vp += 2;

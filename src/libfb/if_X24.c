@@ -95,7 +95,7 @@
 
 /* Print a debug message on first time into a piece of code */
 #if 0
-# define DEBUG1(str)	{static int before=1; if(before) {write(2,str, strlen(str)); before=0;} }
+# define DEBUG1(str)	{static int before=1; if(before) {write(2, str, strlen(str)); before=0;} }
 #else
 # define DEBUG1(str)	/*NIL*/
 #endif
@@ -235,7 +235,7 @@ struct	xinfo {
 	int		xi_shmid;	/* Sys V shared mem id */
 #endif
 
-	unsigned long	xi_mode;	/* 0,1,2 */
+	unsigned long	xi_mode;	/* 0, 1, 2 */
 	unsigned long	xi_flags;
 
 	ColorMap 	*xi_rgb_cmap;	/* User's libfb colormap */
@@ -2350,24 +2350,24 @@ Display *dpy;
 
 	printf("==== Screen %d ====\n", screen);
 	printf("%d x %d pixels, %d x %d mm, (%.2f x %.2f dpi)\n",
-		DisplayWidth(dpy,screen), DisplayHeight(dpy,screen),
-		DisplayWidthMM(dpy,screen), DisplayHeightMM(dpy,screen),
-		DisplayWidth(dpy,screen)*25.4/DisplayWidthMM(dpy,screen),
-		DisplayHeight(dpy,screen)*25.4/DisplayHeightMM(dpy,screen));
+		DisplayWidth(dpy, screen), DisplayHeight(dpy, screen),
+		DisplayWidthMM(dpy, screen), DisplayHeightMM(dpy, screen),
+		DisplayWidth(dpy, screen)*25.4/DisplayWidthMM(dpy, screen),
+		DisplayHeight(dpy, screen)*25.4/DisplayHeightMM(dpy, screen));
 	printf("%d DisplayPlanes (other Visuals, if any, may vary)\n",
-		DisplayPlanes(dpy,screen));
-	printf("%d DisplayCells\n", DisplayCells(dpy,screen));
-	printf("BlackPixel = %lu\n", BlackPixel(dpy,screen));
-	printf("WhitePixel = %lu\n", WhitePixel(dpy,screen));
+		DisplayPlanes(dpy, screen));
+	printf("%d DisplayCells\n", DisplayCells(dpy, screen));
+	printf("BlackPixel = %lu\n", BlackPixel(dpy, screen));
+	printf("WhitePixel = %lu\n", WhitePixel(dpy, screen));
 	printf("Save Unders: %s\n",
-		DoesSaveUnders(ScreenOfDisplay(dpy,screen)) ? "True" : "False");
-	i = DoesBackingStore(ScreenOfDisplay(dpy,screen));
+		DoesSaveUnders(ScreenOfDisplay(dpy, screen)) ? "True" : "False");
+	i = DoesBackingStore(ScreenOfDisplay(dpy, screen));
 	printf("Backing Store: %s\n", i == WhenMapped ? "WhenMapped" :
 		(i == Always ? "Always" : "NotUseful"));
 	printf("Installed Colormaps: min %d, max %d\n",
-		MinCmapsOfScreen(ScreenOfDisplay(dpy,screen)),
-		MaxCmapsOfScreen(ScreenOfDisplay(dpy,screen)));
-	printf("DefaultColormap: 0x%lx\n", DefaultColormap(dpy,screen));
+		MinCmapsOfScreen(ScreenOfDisplay(dpy, screen)),
+		MaxCmapsOfScreen(ScreenOfDisplay(dpy, screen)));
+	printf("DefaultColormap: 0x%lx\n", DefaultColormap(dpy, screen));
 
 
 	for (i = 0; i < num; i++) {

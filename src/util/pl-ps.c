@@ -333,7 +333,7 @@ main(int argc, char **argv)
 			} else if( strcmp( strarg, "dotdashed" ) == 0 )  {
 				printf("DDV ");
 			} else {
-				fprintf(stderr,"linmod %s unknown\n", strarg);
+				fprintf(stderr, "linmod %s unknown\n", strarg);
 			}
 			break;
 		}

@@ -883,7 +883,7 @@ HmItem *itemp;
 	GetVar( gridrt, ip, unitconv );
 	GetVar( griddn, ip, unitconv );
 	GetVar( gridup, ip, unitconv );
-	(void) snprintf( scrbuf,LNBUFSZ, 
+	(void) snprintf( scrbuf, LNBUFSZ, 
 			"%s\t\t%g %g %g %g",
 			itemp != NULL ? itemp->text : cmdname,
 			gridlf, gridrt, griddn, gridup );

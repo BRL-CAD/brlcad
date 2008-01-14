@@ -48,7 +48,7 @@ int face_orient;
 	struct vertex		***verts;	/* list of vertices */
 	struct iges_vertex_list	*v_list;
 	int			done;
-	int			i,j,k;
+	int			i, j, k;
 
 	/* Acquiring Data */
 

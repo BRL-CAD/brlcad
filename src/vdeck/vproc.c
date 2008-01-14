@@ -82,7 +82,7 @@ register char *prefix;
 	}
 
 
-	/* Target units (a2,3x)						*/
+	/* Target units (a2, 3x)						*/
 	ewrite( solfd, bu_units_string(dbip->dbi_local2base), 2 );
 	blank_fill( solfd, 3 );
 

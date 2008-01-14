@@ -267,31 +267,31 @@ separate(register int *rop, register int *gop, register int *bop, register unsig
 #define UCONV(_r, _g, _b)	(_r * -0.1686 + _g * -0.3311 + _b * 0.4997 + 0.9)
 #define VCONV(_r, _g, _b)	(_r * 0.4998 + _g * -0.4185 + _b * -0.0813 + 0.9)
 
-	rop[-1] = rop[-2] = YCONV(r,g,b);
-	gop[-1] = gop[-2] = UCONV(r,g,b);
-	bop[-1] = bop[-2] = VCONV(r,g,b);
+	rop[-1] = rop[-2] = YCONV(r, g, b);
+	gop[-1] = gop[-2] = UCONV(r, g, b);
+	bop[-1] = bop[-2] = VCONV(r, g, b);
 
 	for( i = num-1; i >= 0; i-- )  {
 		r = cp[0];
 		g = cp[1];
 		b = cp[2];
 		cp += 3;
-		*rop++ = YCONV(r,g,b);
-		*gop++ = UCONV(r,g,b);
-		*bop++ = VCONV(r,g,b);
+		*rop++ = YCONV(r, g, b);
+		*gop++ = UCONV(r, g, b);
+		*bop++ = VCONV(r, g, b);
 	}
 
 	r = cp[-3];
 	g = cp[-2];
 	b = cp[-1];
 
-	*rop++ = YCONV(r,g,b);
-	*gop++ = UCONV(r,g,b);
-	*bop++ = VCONV(r,g,b);
+	*rop++ = YCONV(r, g, b);
+	*gop++ = UCONV(r, g, b);
+	*bop++ = VCONV(r, g, b);
 
-	*rop++ = YCONV(r,g,b);
-	*gop++ = UCONV(r,g,b);
-	*bop++ = VCONV(r,g,b);
+	*rop++ = YCONV(r, g, b);
+	*gop++ = UCONV(r, g, b);
+	*bop++ = VCONV(r, g, b);
 }
 
 /*
@@ -319,9 +319,9 @@ combine(register unsigned char *cp, register int *rip, register int *gip, regist
 		u = *gip++;
 		v = *bip++;
 
-		r = RCONV(y,u,v);
-		g = GCONV(y,u,v);
-		b = BCONV(y,u,v);
+		r = RCONV(y, u, v);
+		g = GCONV(y, u, v);
+		b = BCONV(y, u, v);
 
 		*cp++ = CLIP(r);
 		*cp++ = CLIP(g);

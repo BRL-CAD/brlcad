@@ -224,7 +224,7 @@ rt_tcl_cutter( ClientData clientData, Tcl_Interp *interp, int argc, const char *
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(interp,rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	n = atoi(argv[2]);
 	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[3] ) == TCL_ERROR )
@@ -379,7 +379,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(interp,rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[index] ) == TCL_ERROR )
 		return TCL_ERROR;
@@ -415,7 +415,7 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(interp,rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	if( argc == 3 )  {
 		ap->a_onehit = atoi(argv[2]);
@@ -448,7 +448,7 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(interp,rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	if( argc == 3 )  {
 		ap->a_no_booleans = atoi(argv[2]);
@@ -482,7 +482,7 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(interp,rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	rt_ck(rtip);
 
@@ -516,7 +516,7 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(interp,rtip);
+	RT_CK_RTI_TCL(interp, rtip);
 
 	if( argc >= 3 && !rtip->needprep )  {
 		Tcl_AppendResult( interp,
@@ -897,7 +897,7 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 
 	RT_CK_DB_INTERNAL(intern);
 	comb = (struct rt_comb_internal *)intern->idb_ptr;
-	RT_CK_COMB_TCL(interp,comb);
+	RT_CK_COMB_TCL(interp, comb);
 
 	if( item==0 ) {
 		/* Print out the whole combination. */

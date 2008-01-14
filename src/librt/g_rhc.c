@@ -27,7 +27,7 @@
  *
  *  Given V, H, R, and B, there is a set of points on this rhc
  *
- *  { (x,y,z) | (x,y,z) is on rhc }
+ *  { (x, y, z) | (x, y, z) is on rhc }
  *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on an rhc located at the origin
@@ -37,7 +37,7 @@
  *  tip of the hyperbola and the vertex of the asymptotic cone.
  *
  *
- *  { (x',y',z') | (x',y',z') is on rhc at origin }
+ *  { (x', y', z') | (x', y', z') is on rhc at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -605,8 +605,8 @@ rt_rhc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ R H C _ U V
  *
- *  For a hit on the surface of an rhc, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an rhc, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -629,7 +629,7 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
 	switch( hitp->hit_surfno )  {
 	case RHC_NORM_BODY:
-		/* Skin.  x,y coordinates define rotation.  radius = 1 */
+		/* Skin.  x, y coordinates define rotation.  radius = 1 */
 		len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
 		uvp->uv_u = acos(pprime[Y]/len) * bn_invpi;
 		uvp->uv_v = -pprime[X];		/* height */
@@ -909,7 +909,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct faceuse	**outfaceuses;
 	struct vertex	**vfront, **vback, **vtemp, *vertlist[4];
 	vect_t		*norms;
-	fastf_t		bb_plus_2bc,b_plus_c,r_sq;
+	fastf_t		bb_plus_2bc, b_plus_c, r_sq;
 	int		failure=0;
 
 	NMG_CK_MODEL( m );

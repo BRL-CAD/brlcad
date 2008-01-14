@@ -73,7 +73,7 @@
 
 /*
  * Translate between different coordinate systems at play:
- *	H,V	The units of the input file.  (from GIFT)
+ *	H, V	The units of the input file.  (from GIFT)
  *	C	The relative cell number, within the input
  *	VP	The pixel within the viewport (a sub-rectangle of the screen)
  *		Includes offsetting for the "key" area within the viewport.
@@ -582,7 +582,7 @@ static bool display_Cells (long int ncells)
 	    COPYRGB(&buf[3*i], BACKGROUND);
 	}
 	/*  Center the color key from side-to-side in the viewport.
-	 *  Find screen coords of min and max vals, clip to (0,fb_width).
+	 *  Find screen coords of min and max vals, clip to (0, fb_width).
 	 *  If there are fewer than 11 cells, the run the key
 	 *  from the left edge to beyond the right edge.
 	 */
@@ -975,12 +975,12 @@ static void prnt_Usage(void)
 static void log_Run(void)
 {
     time_t              clock;
-    mat_t		model2hv;		/* model to h,v matrix */
-    mat_t		hv2model;		/* h,v tp model matrix */
+    mat_t		model2hv;		/* model to h, v matrix */
+    mat_t		hv2model;		/* h, v tp model matrix */
     quat_t		orient;			/* orientation */
-    point_t		hv_eye;			/* eye position in h,v coords */
+    point_t		hv_eye;			/* eye position in h, v coords */
     point_t		m_eye;			/* eye position in model coords */
-    fastf_t		hv_viewsize;		/* size of view in h,v coords */
+    fastf_t		hv_viewsize;		/* size of view in h, v coords */
     fastf_t		m_viewsize;		/* size of view in model coords. */
 
     /* Current date and time get printed in header comment */

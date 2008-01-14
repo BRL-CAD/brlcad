@@ -224,7 +224,7 @@ bitx(register char *bitstring, register int posn)
 #if 0 /* Was #ifdef vax , but doesn't work on 4.3BSD */
 	register field;
 
-	asm("extzv	r10,$1,(r11),r8");
+	asm("extzv	r10,$1,(r11), r8");
 	return field;
 #else
 	for( ; posn >= 8; posn -= 8, bitstring++ )

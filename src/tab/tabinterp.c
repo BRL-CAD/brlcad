@@ -73,7 +73,7 @@ struct chan {
 #define INTERP_RATE	4
 #define INTERP_ACCEL	5
 #define	INTERP_QUAT	6	/* first chan of 4 that define a quaternion */
-#define INTERP_QUAT2	7	/* an additional quaterion chan (2,3,4) */
+#define INTERP_QUAT2	7	/* an additional quaterion chan (2, 3, 4) */
 #define INTERP_NEXT	8	/* method to look forward/backward in time */
 	int	c_periodic;	/* cyclic end conditions? */
 	int	c_sourcechan;	/* index of source chan (QUAT, NEXT) */
@@ -148,7 +148,7 @@ main( int argc, char **argv )
 	register char	*buf;
 	register int	ret;
 
-	get_args(argc,argv);
+	get_args(argc, argv);
 	/*
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
@@ -833,7 +833,7 @@ accel_interpolate( struct chan *chp, fastf_t *times )
 int
 spline( register struct chan *chp, fastf_t *times )
 {
-	double	d,s;
+	double	d, s;
 	double	u = 0;
 	double	v = 0;
 	double	hi;			/* horiz interval i-1 to i */
@@ -1223,13 +1223,13 @@ chan_not_loaded_or_specified( int ch )
 int get_args(int argc, char **argv)
 {
 	int c;
-	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 		switch(c){
 		case 'q':
 			verbose = 0;
 			break;
 		default:
-			fprintf(stderr,"Unknown option: -%c\n",c);
+			fprintf(stderr, "Unknown option: -%c\n", c);
 			return(0);
 		}
 	}

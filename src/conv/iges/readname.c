@@ -42,7 +42,7 @@ void
 Readname( ptr , id )
 char *id,**ptr;
 {
-	int i=(-1),length=0,done=0,lencard;
+	int i=(-1), length=0, done=0, lencard;
 	char num[80],*ch;
 
 

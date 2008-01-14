@@ -155,14 +155,14 @@ main(int argc, char **argv)
 	iradius = 125.0/2;
 	oradius = iradius + (5-4.134) * inches2mm / 2;		/* 5" outer diameter */
 #endif
-	fprintf(stderr,"inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
+	fprintf(stderr, "inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
 
 	length = 187 * inches2mm;
 #ifdef never
 	spacing = 100;			/* mm per sample */
 	nsamples = ceil(length/spacing);
-	fprintf(stderr,"length=%gmm, spacing=%gmm\n", length, spacing);
-	fprintf(stderr,"nframes=%d\n", nframes);
+	fprintf(stderr, "length=%gmm, spacing=%gmm\n", length, spacing);
+	fprintf(stderr, "nframes=%d\n", nframes);
 #endif
 
 	for( frame=0;; frame++ )  {
@@ -259,10 +259,10 @@ build_spline(char *name, int npts, double radius)
 	 *  The V direction is down the first column,
 	 *  and has NROWS+order[V] positions.
 	 */
-	bp = rt_nurb_new_snurb( 3,	4,		/* u,v order */
-		N_CIRCLE_KNOTS,	npts+6,		/* u,v knot vector size */
+	bp = rt_nurb_new_snurb( 3,	4,		/* u, v order */
+		N_CIRCLE_KNOTS,	npts+6,		/* u, v knot vector size */
 		npts+2,		NCOLS,		/* nrows, ncols */
-		RT_NURB_MAKE_PT_TYPE(4,2,1),
+		RT_NURB_MAKE_PT_TYPE(4, 2, 1),
 		&rt_uniresource);
 
 	/*  Build the U knots */
@@ -349,7 +349,7 @@ read_frame( FILE *fp )
 		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
 		if( buf[0] == '\0' || buf[0] == '\n' )
 			/* Blank line, marks break in implicit connection */
-			fprintf(stderr,"implicit break unimplemented\n");
+			fprintf(stderr, "implicit break unimplemented\n");
 			continue;
 		}
 		if( buf[0] == '=' )  {
@@ -384,7 +384,7 @@ read_frame( FILE *fp )
 	/* Ferret out next time marker */
 	while(1)  {
 		if( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
-			fprintf(stderr,"EOF?\n");
+			fprintf(stderr, "EOF?\n");
 			return(-1);
 		}
 		if( strncmp(buf, "TIME", strlen("TIME")) != 0 )  continue;
@@ -432,7 +432,7 @@ read_frame( FILE *fp )
 	nsamples++;
 #endif
 	if( nsamples <= 4 )  {
-		fprintf(stderr,"insufficient samples\n");
+		fprintf(stderr, "insufficient samples\n");
 		return(-1);
 	}
 	return(0);			/* OK */

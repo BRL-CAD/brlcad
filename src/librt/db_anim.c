@@ -466,12 +466,12 @@ db_write_anim(FILE *fop, struct animate *anp)
 		bu_log("db_write_anim: Writing %s\n", thepath);
 	}
 
-	fprintf(fop,"anim %s ", thepath);
+	fprintf(fop, "anim %s ", thepath);
 	bu_free(thepath, "path string");
 
 	switch (anp->an_type) {
 	case RT_AN_MATRIX:
-		fputs("matrix ",fop);
+		fputs("matrix ", fop);
 		switch (anp->an_u.anu_m.anm_op) {
 		case ANM_RSTACK:
 			fputs("rstack\n", fop);
@@ -489,18 +489,18 @@ db_write_anim(FILE *fop, struct animate *anp)
 			fputs("rboth\n", fop);
 			break;
 		default:
-			fputs("unknown\n",fop);
+			fputs("unknown\n", fop);
 			bu_log("db_write_anim: unknown matrix operation\n");
 		}
 		for (i=0; i<16; i++) {
 			fprintf(fop, " %.15e", anp->an_u.anu_m.anm_mat[i]);
 			if ((i == 15) || ((i&3) == 3)) {
-				fputs("\n",fop);
+				fputs("\n", fop);
 			}
 		}
 		break;
 	case RT_AN_MATERIAL:
-		fputs("material ",fop);
+		fputs("material ", fop);
 		switch (anp->an_u.anu_p.anp_op) {
 		case RT_ANP_REPLACE:
 			fputs("replace ", fop);
@@ -514,7 +514,7 @@ db_write_anim(FILE *fop, struct animate *anp)
 		}
 		break;
 	case RT_AN_COLOR:
-		fprintf(fop,"color %d %d %d", anp->an_u.anu_c.anc_rgb[0],
+		fprintf(fop, "color %d %d %d", anp->an_u.anu_c.anc_rgb[0],
 		    anp->an_u.anu_c.anc_rgb[1], anp->an_u.anu_c.anc_rgb[2]);
 		break;
 	case RT_AN_SOLID:

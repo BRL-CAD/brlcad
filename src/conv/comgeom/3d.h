@@ -30,7 +30,7 @@
  */
 
 #define NAMESIZE	16
-#define NAMEMOVE(from,to)	strncpy(to,from,NAMESIZE)
+#define NAMEMOVE(from, to)	strncpy(to, from, NAMESIZE)
 extern char	*strncpy();
 
 /*
@@ -138,7 +138,7 @@ union record  {
 #define TOR	16
 #define TGC	17
 #define GENTGC	18	/* Supergeneralized TGC; internal form */
-#define GENELL	19	/* Ready for drawing ELL:  V,A,B,C */
+#define GENELL	19	/* Ready for drawing ELL:  V, A, B, C */
 #define GENARB8	20	/* Generalized ARB8: V, and 7 other vectors */
 #define	ARS	21	/* arbitrary triangular surfaced polyhedron */
 #define ARSCONT 22	/* extention record type for ARS solid */
@@ -147,36 +147,36 @@ union record  {
  *			V E C T O R   M A T H
  */
 
-/* Set a vector pointer 'a' to have x,y,z elements b,c,d */
-#define VSET(a,b,c,d)	*(a) = (b);\
+/* Set a vector pointer 'a' to have x, y, z elements b, c, d */
+#define VSET(a, b, c, d)	*(a) = (b);\
 			*((a)+1) = (c);\
 			*((a)+2) = (d)
 
-/* Transfer x,y,z from vector pointed at by 'b' to that pointed by 'a' */
-#define VMOVE(a,b)	*(a) = *(b);\
+/* Transfer x, y, z from vector pointed at by 'b' to that pointed by 'a' */
+#define VMOVE(a, b)	*(a) = *(b);\
 			*((a)+1) = *((b)+1);\
 			*((a)+2) = *((b)+2)
 
-/* Add x,y,z in vectors 'b' and 'c', store in 'a' */
-#define VADD2(a,b,c)	*(a) = *(b) + *(c);\
+/* Add x, y, z in vectors 'b' and 'c', store in 'a' */
+#define VADD2(a, b, c)	*(a) = *(b) + *(c);\
 			*((a)+1) = *((b)+1) + *((c)+1);\
 			*((a)+2) = *((b)+2) + *((c)+2)
 
-/* Subtract x,y,z in vector 'c' from 'b', store in 'a' */
-#define VSUB2(a,b,c)	*(a) = *(b) - *(c);\
+/* Subtract x, y, z in vector 'c' from 'b', store in 'a' */
+#define VSUB2(a, b, c)	*(a) = *(b) - *(c);\
 			*((a)+1) = *((b)+1) - *((c)+1);\
 			*((a)+2) = *((b)+2) - *((c)+2)
 
-#define VADD3(a,b,c,d)	*(a) = *(b) + *(c) + *(d);\
+#define VADD3(a, b, c, d)	*(a) = *(b) + *(c) + *(d);\
 			*((a)+1) = *((b)+1) + *((c)+1) + *((d)+1);\
 			*((a)+2) = *((b)+2) + *((c)+2) + *((d)+2)
 
-#define VADD4(a,b,c,d,e) *(a) = *(b) + *(c) + *(d) + *(e);\
+#define VADD4(a, b, c, d, e) *(a) = *(b) + *(c) + *(d) + *(e);\
 			*((a)+1) = *((b)+1) + *((c)+1) + *((d)+1) + *((e)+1);\
 			*((a)+2) = *((b)+2) + *((c)+2) + *((d)+2) + *((e)+2)
 
 /* Scale all elements in 'b' by multiplication by scalar 'c', store in 'a' */
-#define VSCALE(a,b,c)	*(a) = *(b) * (c);\
+#define VSCALE(a, b, c)	*(a) = *(b) * (c);\
 			*((a)+1) = *((b)+1) * (c);\
 			*((a)+2) = *((b)+2) * (c)
 
@@ -185,7 +185,7 @@ union record  {
  *	scalar 'c' times vector 'd' plus
  *	scalar 'e' times vector 'f'
  */
-#define VCOMPOSE(a,b,c,d,e,f)	\
+#define VCOMPOSE(a, b, c, d, e, f)	\
 	*(a+0) = *(b+0) + c * (*(d+0)) + e * (*(f+0));\
 	*(a+1) = *(b+1) + c * (*(d+1)) + e * (*(f+1));\
 	*(a+2) = *(b+2) + c * (*(d+2)) + e * (*(f+2))

@@ -27,7 +27,7 @@
  *
  *  Given V, H, R, and B, there is a set of points on this epa
  *
- *  { (x,y,z) | (x,y,z) is on epa }
+ *  { (x, y, z) | (x, y, z) is on epa }
  *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on an epa located at the origin
@@ -36,7 +36,7 @@
  *  the origin.
  *
  *
- *  { (x',y',z') | (x',y',z') is on epa at origin }
+ *  { (x', y', z') | (x', y', z') is on epa at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -524,7 +524,7 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 		scale = - hitp->hit_vpriv[X];
 
 		MAT_IDN( M1 );
-		M1[10] = 0;	/* M1[3,3] = 0 */
+		M1[10] = 0;	/* M1[3, 3] = 0 */
 		/* M1 = invR * S * M1 * S * R */
 		bn_mat_mul( M2, epa->epa_invRoS, M1);
 		bn_mat_mul( M1, M2, epa->epa_SoR );
@@ -551,8 +551,8 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ E P A _ U V
  *
- *  For a hit on the surface of an epa, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an epa, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -1004,8 +1004,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
-	vect_t		apex_norm,rev_norm;
-	vect_t		A_orig,B_orig;
+	vect_t		apex_norm, rev_norm;
+	vect_t		A_orig, B_orig;
 	struct vertex	*apex_v;
 	struct vertexuse *vu;
 	struct faceuse *fu;

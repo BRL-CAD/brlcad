@@ -216,7 +216,7 @@ int	width, height;
 
 	/*printf("GSD unit = %d\n", unit);*/
 	/* GDSLSIZE 16bit words in display list */
-	if (open_gds(unit,GDSDLSIZE) < 0) {
+	if (open_gds(unit, GDSDLSIZE) < 0) {
 		fb_log("error %d\n", f_geterror());
 		exit(1);
 	}
@@ -281,7 +281,7 @@ RGBpixel	*pp;
 	if (pp != RGBPIXEL_NULL) {
 		setaltcolor(COLR24((*pp)[RED],(*pp)[GRN],(*pp)[BLU]));
 	} else {
-		setaltcolor(COLR24(0,0,0));
+		setaltcolor(COLR24(0, 0, 0));
 	}
 
 	rect.x0 = 0;
@@ -312,7 +312,7 @@ int	count;
 	size.width = count;
 	size.height = 1;	/*XXX*/
 
-	f_rdpixar_f(&dest,&size,2,pixelp);
+	f_rdpixar_f(&dest,&size, 2, pixelp);
 	return(count);
 }
 
@@ -342,20 +342,20 @@ int	count;
 	size.width = count;
 	size.height = 1;	/*XXX*/
 #if 0
-	f_pixar_ff(&dest,&size,2,pixelp);
+	f_pixar_ff(&dest,&size, 2, pixelp);
 #else
 #	if 0
 	/* This way dumps core if writes are longer than 1020 bytes -M */
-	f_pixar_ff(&dest,&size,3,lbuf);
+	f_pixar_ff(&dest,&size, 3, lbuf);
 #	else
 	if( count > 800 )  {
 		size.width = 800;
-		f_pixar_ff(&dest,&size,3,lbuf);
+		f_pixar_ff(&dest,&size, 3, lbuf);
 		size.width = count-800;
 		dest.x = 800;
-		f_pixar_ff(&dest,&size,3,&lbuf[800][0]);
+		f_pixar_ff(&dest,&size, 3,&lbuf[800][0]);
 	} else {
-		f_pixar_ff(&dest,&size,3,lbuf);
+		f_pixar_ff(&dest,&size, 3, lbuf);
 	}
 #	endif
 #endif
@@ -371,7 +371,7 @@ ColorMap	*cmp;
 	int	i;
 	struct color cmap[256];
 
-	if (f_rdclut(0,256,cmap)) {
+	if (f_rdclut(0, 256, cmap)) {
 		fb_log("error 2\n");
 		exit(1);
 	}
@@ -402,7 +402,7 @@ ColorMap	*cmp;
 		for (i = 0; i < 256; i++)
 			cmap[i].red = cmap[i].green = cmap[i].blue = i;
 	}
-	if (f_wrclut(0,256,cmap)) {
+	if (f_wrclut(0, 256, cmap)) {
 		fb_log("error 2\n");
 		exit(1);
 	}
@@ -450,7 +450,7 @@ int	xzoom, yzoom;
 
 /* return base^pow */
 HIDDEN int
-ipow(base,pow)
+ipow(base, pow)
 int base;
 int pow;
 {
@@ -481,7 +481,7 @@ int	*xzoom, *yzoom;
 
 	f_rdzoom(&rfactor);
 	ifp->if_xzoom = rfactor.x;
-	ifp->if_yzoom = ipow(2,rfactor.y);	/* Bug fix - see above */
+	ifp->if_yzoom = ipow(2, rfactor.y);	/* Bug fix - see above */
 	*xzoom = ifp->if_xzoom;
 	*yzoom = ifp->if_yzoom;
 
@@ -594,7 +594,7 @@ RGBpixel	*pp;
 	dest.y = ymin;
 	size.width = width;
 	size.height = height;
-	f_rdpixar_f(&dest,&size,2,pp);
+	f_rdpixar_f(&dest,&size, 2, pp);
 
 	return( width*height );
 #else
@@ -618,7 +618,7 @@ RGBpixel	*pp;
 	dest.y = ymin;
 	size.width = width;
 	size.height = height;
-	f_pixar_ff(&dest,&size,2,pp);
+	f_pixar_ff(&dest,&size, 2, pp);
 
 	return( width*height );
 #else

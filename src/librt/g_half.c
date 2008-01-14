@@ -33,7 +33,7 @@
  *
  *  The inside of the halfspace bounded by the plane
  *  consists of all points P such that
- *	VDOT(P,N) - N[3] <= 0,
+ *	VDOT(P, N) - N[3] <= 0,
  *
  *  where N[3] stores the value d.
  *  See the remarks in h/vmath.h for more details.
@@ -163,12 +163,12 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 		norm_dist = VDOT( halfp->half_eqn, rp->r_pt ) - halfp->half_eqn[3];
 		if( (slant_factor = -VDOT( halfp->half_eqn, rp->r_dir )) < -1.0e-10 )  {
-			/* exit point, when dir.N < 0.  out = min(out,s) */
+			/* exit point, when dir.N < 0.  out = min(out, s) */
 			out = norm_dist/slant_factor;
 			if( !NEAR_ZERO(out, INFINITY) )
 				return(0);	/* MISS */
 		} else if ( slant_factor > 1.0e-10 )  {
-			/* entry point, when dir.N > 0.  in = max(in,s) */
+			/* entry point, when dir.N > 0.  in = max(in, s) */
 			in = norm_dist/slant_factor;
 			if( !NEAR_ZERO(in, INFINITY) )
 				return(0);	/* MISS */
@@ -229,10 +229,10 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 		if((slant_factor = -VDOT(halfp->half_eqn, rp[i]->r_dir)) <
 								-1.0e-10) {
-			/* exit point, when dir.N < 0.  out = min(out,s) */
+			/* exit point, when dir.N < 0.  out = min(out, s) */
 			out = norm_dist/slant_factor;
 		} else if ( slant_factor > 1.0e-10 )  {
-			/* entry point, when dir.N > 0.  in = max(in,s) */
+			/* entry point, when dir.N > 0.  in = max(in, s) */
 			in = norm_dist/slant_factor;
 		}  else  {
 			/* ray is parallel to plane when dir.N == 0.
@@ -305,8 +305,8 @@ rt_hlf_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ H L F _ U V
  *
- *  For a hit on a face of an HALF, return the (u,v) coordinates
- *  of the hit point.  0 <= u,v <= 1.
+ *  For a hit on a face of an HALF, return the (u, v) coordinates
+ *  of the hit point.  0 <= u, v <= 1.
  *  u extends along the Xbase direction
  *  v extends along the "Ybase" direction
  *  Note that a "toroidal" map is established, varying each from
@@ -492,7 +492,7 @@ rt_hlf_xform(
 {
 	struct rt_half_internal *hip, *hop;
 	point_t			orig_pt, pt;
-	register double		f,t;
+	register double		f, t;
 
 	RT_CK_DB_INTERNAL( ip );
 	hip = (struct rt_half_internal *)ip->idb_ptr;
@@ -550,7 +550,7 @@ rt_hlf_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	point_t		orig_pt;
 	point_t		pt;
 	fastf_t		orig_eqn[3*2];
-	register double	f,t;
+	register double	f, t;
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -635,7 +635,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	struct rt_half_internal	*hip;
 	point_t			tmp_pt, new_pt;
 	plane_t			tmp_plane;
-	register double		f,t;
+	register double		f, t;
 
 	BU_CK_EXTERNAL( ep );
 

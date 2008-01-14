@@ -159,7 +159,7 @@ main(int argc, char *argv[])
      */
     for( i=bu_optind ; i<argc ; i++ ) {
 	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], NUM_OF_CPUS_TO_USE,
-		     &init_state ,region_start, region_end, primitive_func, (genptr_t) &user_data);
+		     &init_state , region_start, region_end, primitive_func, (genptr_t) &user_data);
     }
 
     return 0;

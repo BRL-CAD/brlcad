@@ -2486,7 +2486,7 @@ init_sedit(void)
 
 		if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
 		{
-		  Tcl_AppendResult(interp,"Cannot calculate plane equations for ARB8\n",
+		  Tcl_AppendResult(interp, "Cannot calculate plane equations for ARB8\n",
 				   (char *)NULL);
 		  rt_db_free_internal( &es_int, &rt_uniresource );
 		  return;

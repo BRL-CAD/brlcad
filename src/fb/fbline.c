@@ -278,7 +278,7 @@ Raster(register struct stroke *vp)
 			vp->e -= vp->minor;
 		}
 	}
-	fprintf(stderr,"line left screen?\n");
+	fprintf(stderr, "line left screen?\n");
 }
 
 /*

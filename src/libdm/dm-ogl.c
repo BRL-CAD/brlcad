@@ -892,10 +892,10 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
     bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
 
     bu_log("%s", bu_vls_addr(&tmp_vls));
     bu_vls_free(&tmp_vls);
@@ -989,7 +989,7 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		register int	nused = tvp->nused;
 		register int	*cmd = tvp->cmd;
 		register point_t *pt = tvp->pt;
-		for (i = 0; i < nused; i++,cmd++,pt++) {
+		for (i = 0; i < nused; i++, cmd++, pt++) {
 			if (dmp->dm_debugLevel > 2)
 				bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
 			switch (*cmd) {
@@ -1149,16 +1149,16 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 
     glGetFloatv(GL_PROJECTION_MATRIX, pmat);
     bu_log("projection matrix:\n");
-    bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-    bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-    bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-    bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+    bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+    bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+    bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+    bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
     glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
     bu_log("modelview matrix:\n");
-    bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-    bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-    bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-    bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+    bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+    bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+    bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+    bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
   }
 
   glBegin(GL_LINES);

@@ -123,7 +123,7 @@ int main(int argc, char **argv)
   FILE *fp2;		/*  conductivity table file  */
   char tblfile[16];	/*  conductivity table file  */
 
-  int i,j;		/*  integers used in loops  */
+  int i, j;		/*  integers used in loops  */
   int numreg;		/*  number of regions  */
   int nmged;		/*  number of regions in mged file  */
   double gridspace;	/*  spacing between fired rays  */
@@ -142,12 +142,12 @@ int main(int argc, char **argv)
   double k[41];	/*  thermal conductivity  */
   int itype;		/*  type of length measurement to use for  */
 			/*  rk calculations  */
-  double rki,rkj;	/*  used in finding rk  */
-  double ki,kj;	/*  thermal conductivity of region  */
-  double leni,lenj;	/*  lengths used in finding rk  */
+  double rki, rkj;	/*  used in finding rk  */
+  double ki, kj;	/*  thermal conductivity of region  */
+  double leni, lenj;	/*  lengths used in finding rk  */
   double areai;	/*  areas used in finding rk  */
   double a1;		/*  area used in writing conductivity table  */
-  double l1,l2,l3,l4;	/*  lengths used in writing conductivity table  */
+  double l1, l2, l3, l4;	/*  lengths used in writing conductivity table  */
   FILE *fp4;		/*  error file  */
   char fileerr[16];	/*  error file  */
 
@@ -156,12 +156,12 @@ int main(int argc, char **argv)
 			/*  angle[2]-rotation about z-axis.  */
   double strtpt[3];	/*  Starting point of fired ray.  */
   double strtdir[3];	/*  Starting direction of fired ray.  */
-  double r[3],t[3];	/*  Used in computing rotations.  */
+  double r[3], t[3];	/*  Used in computing rotations.  */
   double center[3];	/*  Center point of bounding rpp.  */
   double diagonal;	/*  Length of diagonal of bounding rpp.  */
-  double xmin,xmax;	/*  Maximum & minimum x of grid.  */
-  double ymin,ymax;	/*  Maximum & minimum y of grid.  */
-  double zmin,zmax;	/*  Maximum & minimum z of grid.  */
+  double xmin, xmax;	/*  Maximum & minimum x of grid.  */
+  double ymin, ymax;	/*  Maximum & minimum y of grid.  */
+  double zmin, zmax;	/*  Maximum & minimum z of grid.  */
   int nadjreg;		/*  Number of adjacent regions.  */
   int prmrel;		/*  PRISM release number, 2=>2.0, 3=>3.0.  */
   int ifire;		/*  Number of sets of rays to be fired, 0=>  */
@@ -171,31 +171,31 @@ int main(int argc, char **argv)
   /*  Check to see if arguments implimented correctly.  */
   if(argv[1] == NULL || argv[2] == NULL)
     {
-      (void)fprintf(stderr,"\nusage:  secpass file.g objects\n\n");
+      (void)fprintf(stderr, "\nusage:  secpass file.g objects\n\n");
     }
 
   else
     {	/*  START # 2  */
 
 	/*  Ask if output goes to standard out or to a file.  */
-      (void)fprintf(stdout,"Write output to standard out (0) or a file(1) ");
-      (void)fprintf(stdout,"not at all (2)?  ");
+      (void)fprintf(stdout, "Write output to standard out (0) or a file(1) ");
+      (void)fprintf(stdout, "not at all (2)?  ");
       (void)fflush(stdout);
       (void)scanf("%d",&iwrite);
       if((iwrite != 0) && (iwrite != 1)) iwrite=2;
       if(iwrite == 1)
 	{
-	  (void)fprintf(stdout,"Enter name of output file (15 char max).  ");
+	  (void)fprintf(stdout, "Enter name of output file (15 char max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%15s",filename);
-	  fp3 = fopen(filename,"w");
+	  (void)scanf("%15s", filename);
+	  fp3 = fopen(filename, "w");
 	}
 
       /*  Which file that has second pass information in it?  */
-      (void)fprintf(stdout,"Enter name of file that has second pass ");
-      (void)fprintf(stdout,"information\nin it (15 char max).  ");
+      (void)fprintf(stdout, "Enter name of file that has second pass ");
+      (void)fprintf(stdout, "information\nin it (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%15s",spfile);
+      (void)scanf("%15s", spfile);
 
       /*  Ask for type of output file to be generated.  */
       (void)printf("Enter type of output file to be generated.\n");
@@ -208,10 +208,10 @@ int main(int argc, char **argv)
       /*  to for use in PRISM.  */
       if(typeout == 0)
 	{
-	  (void)fprintf(stdout,"Enter name of file to be created for PRISM ");
-	  (void)fprintf(stdout,"conductivity\ninformation (15 char max).  ");
+	  (void)fprintf(stdout, "Enter name of file to be created for PRISM ");
+	  (void)fprintf(stdout, "conductivity\ninformation (15 char max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%15s",confile);
+	  (void)scanf("%15s", confile);
 
 	  /*  Find which release of PRISM is being used.  The format  */
 	  /*  for writing region numbers is I3 for PRISM 2.0 & I6 for  */
@@ -230,39 +230,39 @@ int main(int argc, char **argv)
 	  (void)printf("Enter name of generic file to be created (15 char ");
 	  (void)printf("max).  ");
 	  (void)fflush(stdout);
-	  (void)scanf("%15s",genfile);
+	  (void)scanf("%15s", genfile);
 	}
 
       /*  Which calculated length should be used when writing to  */
       /*  this file:  1 -> average length, 2 -> rms length, 3 ->  */
       /*  minimum length, and 4 -> maximum length.  */
-      (void)fprintf(stdout,"Which length calculation should be used when\n");
-      (void)fprintf(stdout,"computing conduction\nbetween regions?\n");
-      (void)fprintf(stdout,"\t1 - average length\n");
-      (void)fprintf(stdout,"\t2 - rms length\n");
-      (void)fprintf(stdout,"\t3 - minimum length\n");
-      (void)fprintf(stdout,"\t4 - maximum length\n");
+      (void)fprintf(stdout, "Which length calculation should be used when\n");
+      (void)fprintf(stdout, "computing conduction\nbetween regions?\n");
+      (void)fprintf(stdout, "\t1 - average length\n");
+      (void)fprintf(stdout, "\t2 - rms length\n");
+      (void)fprintf(stdout, "\t3 - minimum length\n");
+      (void)fprintf(stdout, "\t4 - maximum length\n");
       (void)fflush(stdout);
       (void)scanf("%d",&itype);
 
       /*  Read name of file to write conductivity information to  */
       /*  in table format.  */
-      (void)fprintf(stdout,"Enter name of file to be created for ");
-      (void)fprintf(stdout,"conductivity\ntable (15 char max).  ");
+      (void)fprintf(stdout, "Enter name of file to be created for ");
+      (void)fprintf(stdout, "conductivity\ntable (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%15s",tblfile);
+      (void)scanf("%15s", tblfile);
 
       /*  Read name of material file that contains thermal  */
       /*  conductivity information.  */
-      (void)fprintf(stdout,"Enter name of material file (15 char max).  ");
+      (void)fprintf(stdout, "Enter name of material file (15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%15s",filemat);
+      (void)scanf("%15s", filemat);
 
       /*  Read name of error file.  */
-      (void)fprintf(stdout,"Enter name of error file to be created ");
-      (void)fprintf(stdout,"(15 char max).  ");
+      (void)fprintf(stdout, "Enter name of error file to be created ");
+      (void)fprintf(stdout, "(15 char max).  ");
       (void)fflush(stdout);
-      (void)scanf("%15s",fileerr);
+      (void)scanf("%15s", fileerr);
 
       /*  Choose whether 3 orthogonal sets of rays are to be fired  */
       /*  or 1 set of rays is to be fired.  */
@@ -284,46 +284,46 @@ int main(int argc, char **argv)
       /*  Write out file information.  */
       if(iwrite ==1)
 	{
-	  (void)fprintf(fp3,"\nsecond pass file:  %s\n",spfile);
-	  (void)fprintf(fp3,"material file:  %s\n",filemat);
+	  (void)fprintf(fp3, "\nsecond pass file:  %s\n", spfile);
+	  (void)fprintf(fp3, "material file:  %s\n", filemat);
 	  if(typeout == 0)
 	    {
-	      (void)fprintf(fp3,"conductivity file for use ");
-	      (void)fprintf(fp3,"with PRISM:  %s\n",confile);
-	      (void)fprintf(fp3,"  (format is PRISM %d.0)\n",prmrel);
+	      (void)fprintf(fp3, "conductivity file for use ");
+	      (void)fprintf(fp3, "with PRISM:  %s\n", confile);
+	      (void)fprintf(fp3, "  (format is PRISM %d.0)\n", prmrel);
 	    }
-	  if(typeout == 1) (void)fprintf(fp3,"generic file:  %s\n",genfile);
+	  if(typeout == 1) (void)fprintf(fp3, "generic file:  %s\n", genfile);
 	  (void)fflush(fp3);
-	  if(itype == 1) (void)fprintf(fp3,"\taverage length being used\n");
-	  if(itype == 2) (void)fprintf(fp3,"\trms length being used\n");
-	  if(itype == 3) (void)fprintf(fp3,"\tminimum length being used\n");
-	  if(itype == 4) (void)fprintf(fp3,"\tmaximum length being used\n");
-	  (void)fprintf(fp3,"conductivity table file:  %s\n",tblfile);
-	  (void)fprintf(fp3,"error file:  %s\n\n",fileerr);
+	  if(itype == 1) (void)fprintf(fp3, "\taverage length being used\n");
+	  if(itype == 2) (void)fprintf(fp3, "\trms length being used\n");
+	  if(itype == 3) (void)fprintf(fp3, "\tminimum length being used\n");
+	  if(itype == 4) (void)fprintf(fp3, "\tmaximum length being used\n");
+	  (void)fprintf(fp3, "conductivity table file:  %s\n", tblfile);
+	  (void)fprintf(fp3, "error file:  %s\n\n", fileerr);
 	  (void)fflush(fp3);
 	}
 
       /*  Read thermal conductivity file.  */
-      fp5 = fopen(filemat,"r");
+      fp5 = fopen(filemat, "r");
       for(i=0; i<41; i++)
 	{
-	  (void)bu_fgets(line,151,fp5);
-	  (void)sscanf(line,"%*d%*f%*f%*f%*f%lf",&k[i]);
+	  (void)bu_fgets(line, 151, fp5);
+	  (void)sscanf(line, "%*d%*f%*f%*f%*f%lf",&k[i]);
 	}
 
       /*  Print out the thermal conductivity.  */
       /*
        *	for(i=0; i<41; i++)
        *	{
-       *	   (void)fprintf(stdout,"  thermal conductivity %d = %f\n",i,k[i]);
+       *	   (void)fprintf(stdout, "  thermal conductivity %d = %f\n", i, k[i]);
        *	   (void)fflush(stdout);
        *	}
        */
 
       /*  Build the directory.  */
       index = 1;	/*  Set index for rt_dirbuild.  */
-      rtip=rt_dirbuild(argv[index],idbuf,sizeof(idbuf));
-      (void)fprintf(stdout,"Database title:  %s\n",idbuf);
+      rtip=rt_dirbuild(argv[index], idbuf, sizeof(idbuf));
+      (void)fprintf(stdout, "Database title:  %s\n", idbuf);
       (void)fflush(stdout);
 
       /*  Set useair to 1, to show hits of air.  */
@@ -333,28 +333,28 @@ int main(int argc, char **argv)
       index = 2;	/*  Set index for rt_gettree.  */
       while(argv[index] != NULL)
 	{
-	  rt_gettree(rtip,argv[index]);
+	  rt_gettree(rtip, argv[index]);
 	  index += 1;
 	}
 
       /*  Find total number of regions in mged file.  */
       nmged = (int)rtip->nregions;
 
-      (void)fprintf(stdout,"Number of regions in mged file:  %d\n",nmged);
+      (void)fprintf(stdout, "Number of regions in mged file:  %d\n", nmged);
       (void)fflush(stdout);
 
       if(iwrite == 1)
 	{
-	  (void)fprintf(fp3,"Number of regions in mged file:  %d\n",nmged);
+	  (void)fprintf(fp3, "Number of regions in mged file:  %d\n", nmged);
 	  (void)fflush(fp3);
 	}
 
       /*  Number of regions known, everything can be malloced.  */
-      (void)fprintf(stdout,"Mallocing arrays.\n");
+      (void)fprintf(stdout, "Mallocing arrays.\n");
       (void)fflush(stdout);
 
       cond = (struct table *)bu_malloc( nmged * sizeof(struct table), "cond" );
-      (void)fprintf(stdout,"cond malloced\n");
+      (void)fprintf(stdout, "cond malloced\n");
       (void)fflush(stdout);
       for(i=0; i<nmged; i++)
 	{
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
 	  cond[i].rkmin = (double *)bu_malloc( nmged * sizeof(double), "cond[i].rkmin" );
 	  cond[i].rkmax = (double *)bu_malloc( nmged * sizeof(double), "cond[i].rkmax" );
 	}
-      (void)fprintf(stdout,"loop malloced\n");
+      (void)fprintf(stdout, "loop malloced\n");
       (void)fflush(stdout);
 
       /*  All variables 'dimensioned', now zero all variables.  */
@@ -393,44 +393,44 @@ int main(int argc, char **argv)
 	      cond[i].rkmax[j] = (double)0.;
 	    }
 	}
-      (void)fprintf(stdout,"All variables zeroed.\n");
+      (void)fprintf(stdout, "All variables zeroed.\n");
       (void)fflush(stdout);
 
       /*  Now open file with second pass information in it.  */
-      fp = fopen(spfile,"r");
-      (void)fprintf(stdout,"second pass file opened\n");
+      fp = fopen(spfile, "r");
+      (void)fprintf(stdout, "second pass file opened\n");
       (void)fflush(stdout);
 
       /*  Read number of regions in file.  */
-      (void)fscanf(fp,"%d\n",&numreg);
-      (void)fprintf(stdout,"The number of regions read was %d\n",numreg);
+      (void)fscanf(fp, "%d\n",&numreg);
+      (void)fprintf(stdout, "The number of regions read was %d\n", numreg);
       (void)fflush(stdout);
 
       if(iwrite == 1)
 	{
-	  (void)fprintf(fp3,"number of regions read from second ");
-	  (void)fprintf(fp3,"pass file:  %d\n",numreg);
+	  (void)fprintf(fp3, "number of regions read from second ");
+	  (void)fprintf(fp3, "pass file:  %d\n", numreg);
 	  (void)fflush(fp3);
 	}
 
       /*  Read all information in file.  */
       for(i=0; i<numreg; i++)
 	{
-	  (void)fscanf(fp,"%*d%le%le%le%d\n",&cond[i].centroid[0],
+	  (void)fscanf(fp, "%*d%le%le%le%d\n",&cond[i].centroid[0],
 		       &cond[i].centroid[1],
 		       &cond[i].centroid[2],&cond[i].mat);
 	  /*
-	   *	   (void)fprintf(stdout,"reg=%8d, centroid:  %10.0f, %10.0f, %10.0f\n",
-	   *		i,cond[i].centroid[0],cond[i].centroid[1],cond[i].centroid[2]);
+	   *	   (void)fprintf(stdout, "reg=%8d, centroid:  %10.0f, %10.0f, %10.0f\n",
+	   *		i, cond[i].centroid[0], cond[i].centroid[1], cond[i].centroid[2]);
 	   *	   (void)fflush(stdout);
 	   */
 
 	  for(j=0; j<numreg; j++)
 	    {
-	      (void)fscanf(fp,"%*d%le\n",&cond[i].shrarea[j]);
+	      (void)fscanf(fp, "%*d%le\n",&cond[i].shrarea[j]);
 	      /*
-	       *		(void)fprintf(stdout,"\treg=%8d, area=%10.0f\n",
-	       *		   j,cond[i].shrarea[j]);
+	       *		(void)fprintf(stdout, "\treg=%8d, area=%10.0f\n",
+	       *		   j, cond[i].shrarea[j]);
 	       *		(void)fflush(stdout);
 	       */
 	    }
@@ -442,22 +442,22 @@ int main(int argc, char **argv)
       /*  and the second pass file are equal.  */
       if(nmged != numreg)
 	{
-	  (void)fprintf(stdout,"ERROR -- The number of regions in the mged\n");
-	  (void)fprintf(stdout,"file (%d) does not equal the number of\n",
+	  (void)fprintf(stdout, "ERROR -- The number of regions in the mged\n");
+	  (void)fprintf(stdout, "file (%d) does not equal the number of\n",
 			nmged);
-	  (void)fprintf(stdout,"regions in the second pass file (%d).\n",
+	  (void)fprintf(stdout, "regions in the second pass file (%d).\n",
 			numreg);
-	  (void)fprintf(stdout,"Watch for unexplained errors.\n");
+	  (void)fprintf(stdout, "Watch for unexplained errors.\n");
 	  (void)fflush(stdout);
 
 	  if(iwrite == 1)
 	    {
-	      (void)fprintf(fp3,"ERROR -- The number of regions in the mged\n");
-	      (void)fprintf(fp3,"file (%d) does not equal the number of\n",
+	      (void)fprintf(fp3, "ERROR -- The number of regions in the mged\n");
+	      (void)fprintf(fp3, "file (%d) does not equal the number of\n",
 			    nmged);
-	      (void)fprintf(fp3,"regions in the second pass file (%d).\n",
+	      (void)fprintf(fp3, "regions in the second pass file (%d).\n",
 			    numreg);
-	      (void)fprintf(fp3,"Watch for unexplained errors.\n");
+	      (void)fprintf(fp3, "Watch for unexplained errors.\n");
 	      (void)fflush(fp3);
 	    }
 	}
@@ -492,46 +492,46 @@ int main(int argc, char **argv)
 
       /*  Print center of bounding rpp, diagonal, & maximum  */
       /*  & minimum of grid.  */
-      (void)fprintf(stdout,"Center of bounding rpp ( %f, %f, %f )\n",
-		    center[X],center[Y],center[Z]);
-      (void)fprintf(stdout,"Length of diagonal of bounding rpp:  %f\n",
+      (void)fprintf(stdout, "Center of bounding rpp ( %f, %f, %f )\n",
+		    center[X], center[Y], center[Z]);
+      (void)fprintf(stdout, "Length of diagonal of bounding rpp:  %f\n",
 		    diagonal);
-      (void)fprintf(stdout,"Minimums & maximums of grid:\n");
-      (void)fprintf(stdout,"  %f - %f\n",xmin,xmax);
-      (void)fprintf(stdout,"  %f - %f\n",ymin,ymax);
-      (void)fprintf(stdout,"  %f - %f\n\n",zmin,zmax);
+      (void)fprintf(stdout, "Minimums & maximums of grid:\n");
+      (void)fprintf(stdout, "  %f - %f\n", xmin, xmax);
+      (void)fprintf(stdout, "  %f - %f\n", ymin, ymax);
+      (void)fprintf(stdout, "  %f - %f\n\n", zmin, zmax);
       (void)fflush(stdout);
 
       /*  Write model minimum & maximum.  */
-      (void)fprintf(stdout,"Model minimum & maximum.\n");
-      (void)fprintf(stdout,"\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n\n",
-		    rtip->mdl_min[X],rtip->mdl_max[X],
-		    rtip->mdl_min[Y],rtip->mdl_max[Y],
-		    rtip->mdl_min[Z],rtip->mdl_max[Z]);
+      (void)fprintf(stdout, "Model minimum & maximum.\n");
+      (void)fprintf(stdout, "\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n\n",
+		    rtip->mdl_min[X], rtip->mdl_max[X],
+		    rtip->mdl_min[Y], rtip->mdl_max[Y],
+		    rtip->mdl_min[Z], rtip->mdl_max[Z]);
       (void)fflush(stdout);
 
       if(iwrite == 1)
 	{
-	  (void)fprintf(fp3,"Model minimum & maximum.\n");
-	  (void)fprintf(fp3,"\tX:  %f to %f\n\tY:  %f kto %f\n",
-			rtip->mdl_min[X],rtip->mdl_max[X],
-			rtip->mdl_min[Y],rtip->mdl_max[Y]);
-	  (void)fprintf(fp3,"\tZ:  %f to %f\n\n",
-			rtip->mdl_min[Z],rtip->mdl_max[Z]);
+	  (void)fprintf(fp3, "Model minimum & maximum.\n");
+	  (void)fprintf(fp3, "\tX:  %f to %f\n\tY:  %f kto %f\n",
+			rtip->mdl_min[X], rtip->mdl_max[X],
+			rtip->mdl_min[Y], rtip->mdl_max[Y]);
+	  (void)fprintf(fp3, "\tZ:  %f to %f\n\n",
+			rtip->mdl_min[Z], rtip->mdl_max[Z]);
 	  (void)fflush(fp3);
 	}
 
       /*  User enters grid spacing.  All units are in mm.  */
-      (void)fprintf(stdout,"Enter spacing (mm) between fired rays.  ");
+      (void)fprintf(stdout, "Enter spacing (mm) between fired rays.  ");
       (void)fflush(stdout);
       (void)scanf("%lf",&gridspace);
 
-      (void)fprintf(stdout,"\ngrid spacing:  %f\n",gridspace);
+      (void)fprintf(stdout, "\ngrid spacing:  %f\n", gridspace);
       (void)fflush(stdout);
 
       if(iwrite == 1)
 	{
-	  (void)fprintf(fp3,"gridspacing:  %f\n\n",gridspace);
+	  (void)fprintf(fp3, "gridspacing:  %f\n\n", gridspace);
 	  (void)fflush(fp3);
 	}
 
@@ -553,7 +553,7 @@ int main(int argc, char **argv)
       /*  Set up and shoot down the 1st axis, positive to negative  */
       /*  (x-axis).  */
 
-      (void)fprintf(stdout,"\nShooting down 1st axis.\n");
+      (void)fprintf(stdout, "\nShooting down 1st axis.\n");
       (void)fflush(stdout);
 
       strtpt[X] = xmax;
@@ -568,14 +568,14 @@ int main(int argc, char **argv)
       t[Y] = strtpt[Y] - center[Y];
       t[Z] = strtpt[Z] - center[Z];
 
-      (void)rotate(t,angle,r);
+      (void)rotate(t, angle, r);
 
       ap.a_ray.r_pt[X] = center[X] + r[X];
       ap.a_ray.r_pt[Y] = center[Y] + r[Y];
       ap.a_ray.r_pt[Z] = center[Z] + r[Z];
 
       /*  Rotate firing direction.  (new dir = R[D])  */
-      (void)rotate(strtdir,angle,r);
+      (void)rotate(strtdir, angle, r);
       ap.a_ray.r_dir[X] = r[X];
       ap.a_ray.r_dir[Y] = r[Y];
       ap.a_ray.r_dir[Z] = r[Z];
@@ -599,7 +599,7 @@ int main(int argc, char **argv)
 	  t[Y] = strtpt[Y] - center[Y];
 	  t[Z] = strtpt[Z] - center[Z];
 
-	  (void)rotate(t,angle,r);
+	  (void)rotate(t, angle, r);
 
 	  ap.a_ray.r_pt[X] = center[X] + r[X];
 	  ap.a_ray.r_pt[Y] = center[Y] + r[Y];
@@ -626,14 +626,14 @@ int main(int argc, char **argv)
 	  t[Y] = strtpt[Y] - center [Y];
 	  t[Z] = strtpt[Z] - center [Z];
 
-	  (void)rotate(t,angle,r);
+	  (void)rotate(t, angle, r);
 
 	  ap.a_ray.r_pt[X] = center[X] + r[X];
 	  ap.a_ray.r_pt[Y] = center[Y] + r[Y];
 	  ap.a_ray.r_pt[Z] = center[Z] + r[Z];
 
 	  /*  Rotate firing direction (new dir = R[D])  */
-	  (void)rotate(strtdir,angle,r);
+	  (void)rotate(strtdir, angle, r);
 
 	  ap.a_ray.r_dir[X] = r[X];
 	  ap.a_ray.r_dir[Y] = r[Y];
@@ -657,7 +657,7 @@ int main(int argc, char **argv)
 	      t[Y] = strtpt[Y] - center[Y];
 	      t[Z] = strtpt[Z] - center[Z];
 
-	      (void)rotate(t,angle,r);
+	      (void)rotate(t, angle, r);
 
 	      ap.a_ray.r_pt[X] = center[X] + r[X];
 	      ap.a_ray.r_pt[Y] = center[Y] + r[Y];
@@ -680,7 +680,7 @@ int main(int argc, char **argv)
 	  t[Y] = strtpt[Y] - center[Y];
 	  t[Z] = strtpt[Z] - center[Z];
 
-	  (void)rotate(t,angle,r);
+	  (void)rotate(t, angle, r);
 
 	  ap.a_ray.r_pt[X] = r[X];
 	  ap.a_ray.r_pt[Y] = r[Y];
@@ -704,7 +704,7 @@ int main(int argc, char **argv)
 	      t[Y] = strtpt[Y] - center[Y];
 	      t[Z] = strtpt[Z] - center[Z];
 
-	      (void)rotate(t,angle,r);
+	      (void)rotate(t, angle, r);
 
 	      ap.a_ray.r_pt[X] = center[X] + r[X];
 	      ap.a_ray.r_pt[Y] = center[Y] + r[Y];
@@ -715,7 +715,7 @@ int main(int argc, char **argv)
       /*  Calculate final length between centroid & shared surface area.  */
       if(iwrite == 0)
 	{
-	  (void)fprintf(stdout,"\n\nFinal numbers.\n");
+	  (void)fprintf(stdout, "\n\nFinal numbers.\n");
 	  (void)fflush(stdout);
 	}
 
@@ -724,13 +724,13 @@ int main(int argc, char **argv)
 
 	  if(iwrite == 0)
 	    {
-	      (void)fprintf(stdout,"reg#=%d, matid=%d\n",(i+1),cond[i].mat);
+	      (void)fprintf(stdout, "reg#=%d, matid=%d\n",(i+1), cond[i].mat);
 	      (void)fflush(stdout);
 	    }
 
 	  if(iwrite == 1)
 	    {
-	      (void)fprintf(fp3,"reg#=%d, matid=%d\n",(i+1),cond[i].mat);
+	      (void)fprintf(fp3, "reg#=%d, matid=%d\n",(i+1), cond[i].mat);
 	      (void)fflush(fp3);
 	    }
 
@@ -744,23 +744,23 @@ int main(int argc, char **argv)
 
 		  if(iwrite == 0)
 		    {
-		      (void)fprintf(stdout,"\tadjreg=%d, numcal=%f, shrarea=%f, ",
-				    (j+1),cond[i].numcal[j],cond[i].shrarea[j]);
-		      (void)fprintf(stdout,"avglen=%f\n",cond[i].avglen[j]);
-		      (void)fprintf(stdout,"\t\trmslen=%f, ",cond[i].rmslen[j]);
-		      (void)fprintf(stdout,"minlen=%f, maxlen=%f\n",
-				    cond[i].minlen[j],cond[i].maxlen[j]);
+		      (void)fprintf(stdout, "\tadjreg=%d, numcal=%f, shrarea=%f, ",
+				    (j+1), cond[i].numcal[j], cond[i].shrarea[j]);
+		      (void)fprintf(stdout, "avglen=%f\n", cond[i].avglen[j]);
+		      (void)fprintf(stdout, "\t\trmslen=%f, ", cond[i].rmslen[j]);
+		      (void)fprintf(stdout, "minlen=%f, maxlen=%f\n",
+				    cond[i].minlen[j], cond[i].maxlen[j]);
 		      (void)fflush(stdout);
 		    }
 
 		  if(iwrite == 1)
 		    {
-		      (void)fprintf(fp3,"\tadjreg=%d, numcal=%f, shrarea=%f, ",
-				    (j+1),cond[i].numcal[j],cond[i].shrarea[j]);
-		      (void)fprintf(fp3,"avglen=%f\n",cond[i].avglen[j]);
-		      (void)fprintf(fp3,"\t\trmslen=%f, ",cond[i].rmslen[j]);
-		      (void)fprintf(fp3,"minlen=%f, maxlen=%f\n",
-				    cond[i].minlen[j],cond[i].maxlen[j]);
+		      (void)fprintf(fp3, "\tadjreg=%d, numcal=%f, shrarea=%f, ",
+				    (j+1), cond[i].numcal[j], cond[i].shrarea[j]);
+		      (void)fprintf(fp3, "avglen=%f\n", cond[i].avglen[j]);
+		      (void)fprintf(fp3, "\t\trmslen=%f, ", cond[i].rmslen[j]);
+		      (void)fprintf(fp3, "minlen=%f, maxlen=%f\n",
+				    cond[i].minlen[j], cond[i].maxlen[j]);
 		      (void)fflush(fp3);
 		    }
 
@@ -776,31 +776,31 @@ int main(int argc, char **argv)
       if(iwrite == 1)
 	{
 	  /*  Print summary of all files used.  */
-	  (void)fprintf(fp3,"\n\nSUMMARY OF FILES USED & CREATED\n");
-	  (void)fprintf(fp3,"\t.g file used:  %s\n",argv[1]);
-	  (void)fprintf(fp3,"\tregions used:\n");
+	  (void)fprintf(fp3, "\n\nSUMMARY OF FILES USED & CREATED\n");
+	  (void)fprintf(fp3, "\t.g file used:  %s\n", argv[1]);
+	  (void)fprintf(fp3, "\tregions used:\n");
 	  (void)fflush(fp3);
 	  i=2;
 	  while(argv[i] != NULL)
 	    {
-	      (void)fprintf(fp3,"\t\t%s\n",argv[i]);
+	      (void)fprintf(fp3, "\t\t%s\n", argv[i]);
 	      (void)fflush(fp3);
 	      i++;
 	    }
-	  (void)fprintf(fp3,"\tfile containing second pass information:  %s\n",
+	  (void)fprintf(fp3, "\tfile containing second pass information:  %s\n",
 			spfile);
-	  (void)fprintf(fp3,"\tmaterial file used:  %s\n",filemat);
-	  (void)fprintf(fp3,"\toutput file created:  %s\n",filename);
+	  (void)fprintf(fp3, "\tmaterial file used:  %s\n", filemat);
+	  (void)fprintf(fp3, "\toutput file created:  %s\n", filename);
 	  if(typeout == 0)
 	    {
-	      (void)fprintf(fp3,"\tconductivity file created:  %s\n",confile);
-	      (void)fprintf(fp3,"\t  (format is PRISM %d.0)\n",prmrel);
+	      (void)fprintf(fp3, "\tconductivity file created:  %s\n", confile);
+	      (void)fprintf(fp3, "\t  (format is PRISM %d.0)\n", prmrel);
 	    }
-	  if(typeout == 1) (void)fprintf(fp3,"\tgeneric file created:  %s\n"
-					 ,genfile);
-	  (void)fprintf(fp3,"\tconductivity table file created:  %s\n",
+	  if(typeout == 1) (void)fprintf(fp3, "\tgeneric file created:  %s\n"
+					 , genfile);
+	  (void)fprintf(fp3, "\tconductivity table file created:  %s\n",
 			tblfile);
-	  (void)fprintf(fp3,"\terror file created:  %s\n\n\n",fileerr);
+	  (void)fprintf(fp3, "\terror file created:  %s\n\n\n", fileerr);
 	  (void)fflush(fp3);
 
 	  (void)fclose(fp3);
@@ -811,8 +811,8 @@ int main(int argc, char **argv)
       /*  Open conductivity file to be used with PRISM if needed.  */
       if(typeout == 0)
 	{
-	  fp1=fopen(confile,"w");
-	  (void)fprintf(fp1,"Conductivity file for use with PRISM.\n");
+	  fp1=fopen(confile, "w");
+	  (void)fprintf(fp1, "Conductivity file for use with PRISM.\n");
 	  (void)fflush(fp1);
 	}
 
@@ -898,48 +898,48 @@ int main(int argc, char **argv)
 		    if( (itype == 1) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
 			if(prmrel == 2)
-			  (void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkavg[j],
+			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkavg[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 			if(prmrel == 3)
-			  (void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkavg[j],
+			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkavg[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
 		    if( (itype == 2) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
 			if(prmrel == 2)
-			  (void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkrms[j],
+			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkrms[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 			if(prmrel == 3)
-			  (void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkrms[j],
+			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkrms[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
 		    if( (itype == 3) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
 			if(prmrel == 2)
-			  (void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkmin[j],
+			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkmin[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 			if(prmrel == 3)
-			  (void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkmin[j],
+			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkmin[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
 		    if( (itype == 4) && (cond[i].shrarea[j] > ZEROTOL) )
 		      {
 			if(prmrel == 2)
-			  (void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkmax[j],
+			  (void)fprintf(fp1, "%3d %3d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkmax[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 			if(prmrel == 3)
-			  (void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
-					(j+1),(i+1),cond[i].rkmax[j],
+			  (void)fprintf(fp1, "%6d %6d %7.3f %.3e\n",
+					(j+1),(i+1), cond[i].rkmax[j],
 					(cond[i].shrarea[j] * 1.0e-6));
 		      }
 
@@ -961,7 +961,7 @@ int main(int argc, char **argv)
       if(typeout == 1)
 	{
 	  /*  Open file.  */
-	  fp6 = fopen(genfile,"w");
+	  fp6 = fopen(genfile, "w");
 	  (void)printf("Opened generic file.\n");
 	  (void)fflush(stdout);
 
@@ -974,13 +974,13 @@ int main(int argc, char **argv)
 	       */
 	      nadjreg = 0;
 	      /*
-	       *		(void)printf("nadjreg = %d\n",nadjreg);
+	       *		(void)printf("nadjreg = %d\n", nadjreg);
 	       *		(void)fflush(stdout);
 	       */
 	      for(j=0; j<numreg; j++)
 		{
 		  /*
-		   *		   (void)printf("%d, %d, %f\n",i,j,cond[i].shrarea[j]);
+		   *		   (void)printf("%d, %d, %f\n", i, j, cond[i].shrarea[j]);
 		   *		   (void)fflush(stdout);
 		   */
 		  if(cond[i].shrarea[j] > ZEROTOL) nadjreg += 1;
@@ -990,22 +990,22 @@ int main(int argc, char **argv)
 	       *		(void)fflush(stdout);
 	       */
 
-	      (void)fprintf(fp6,"4  %5d  %5d\n",(i+1),nadjreg);
+	      (void)fprintf(fp6, "4  %5d  %5d\n",(i+1), nadjreg);
 	      (void)fflush(fp6);
 
 	      for(j=0; j<numreg; j++)
 		{
 		  if(cond[i].shrarea[j] > ZEROTOL)
 		    {
-		      (void)fprintf(fp6,"   %5d  %.3e  ",(j+1),
+		      (void)fprintf(fp6, "   %5d  %.3e  ",(j+1),
 				    (cond[i].shrarea[j] * 1.e-6));
-		      if(itype == 1) (void)fprintf(fp6,"%.3e\n",
+		      if(itype == 1) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].avglen[j] * 1.e-3));
-		      if(itype == 2) (void)fprintf(fp6,"%.3e\n",
+		      if(itype == 2) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].rmslen[j] * 1.e-3));
-		      if(itype == 3) (void)fprintf(fp6,"%.3e\n",
+		      if(itype == 3) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].minlen[j] * 1.e-3));
-		      if(itype == 4) (void)fprintf(fp6,"%.3e\n",
+		      if(itype == 4) (void)fprintf(fp6, "%.3e\n",
 						   (cond[i].maxlen[j] * 1.e-3));
 		    }
 		  (void)fflush(fp6);
@@ -1018,15 +1018,15 @@ int main(int argc, char **argv)
 
       /*  Open conductivity table file and write information to  */
       /*  it.  All units will be in meters or square meters.  */
-      fp2=fopen(tblfile,"w");
-      (void)fprintf(fp2,"Conductivity table.  Units are in meters or ");
-      (void)fprintf(fp2,"square meters.\n");
+      fp2=fopen(tblfile, "w");
+      (void)fprintf(fp2, "Conductivity table.  Units are in meters or ");
+      (void)fprintf(fp2, "square meters.\n");
 
-      (void)fprintf(fp2," reg, mat, adj,   shrarea,");
-      (void)fprintf(fp2,"    avglen,     rkavg,");
-      (void)fprintf(fp2,"    rmslen,     rkrms,");
-      (void)fprintf(fp2,"    minlen,     rkmin,");
-      (void)fprintf(fp2,"    maxlen,     rkmax\n");
+      (void)fprintf(fp2, " reg, mat, adj,   shrarea,");
+      (void)fprintf(fp2, "    avglen,     rkavg,");
+      (void)fprintf(fp2, "    rmslen,     rkrms,");
+      (void)fprintf(fp2, "    minlen,     rkmin,");
+      (void)fprintf(fp2, "    maxlen,     rkmax\n");
 
       (void)fflush(fp2);
 
@@ -1042,21 +1042,21 @@ int main(int argc, char **argv)
 		  l3 = cond[i].minlen[j] * 1.e-3;
 		  l4 = cond[i].maxlen[j] * 1.e-3;
 
-		  (void)fprintf(fp2,"%4d,%4d,%4d, %.3e,",
-				(i+1),cond[i].mat,(j+1),a1);
+		  (void)fprintf(fp2, "%4d,%4d,%4d, %.3e,",
+				(i+1), cond[i].mat,(j+1), a1);
 		  if(j > i)
 		    {
-		      (void)fprintf(fp2," %.3e, %.3e,",l1,cond[i].rkavg[j]);
-		      (void)fprintf(fp2," %.3e, %.3e,",l2,cond[i].rkrms[j]);
-		      (void)fprintf(fp2," %.3e, %.3e,",l3,cond[i].rkmin[j]);
-		      (void)fprintf(fp2," %.3e, %.3e\n",l4,cond[i].rkmax[j]);
+		      (void)fprintf(fp2, " %.3e, %.3e,", l1, cond[i].rkavg[j]);
+		      (void)fprintf(fp2, " %.3e, %.3e,", l2, cond[i].rkrms[j]);
+		      (void)fprintf(fp2, " %.3e, %.3e,", l3, cond[i].rkmin[j]);
+		      (void)fprintf(fp2, " %.3e, %.3e\n", l4, cond[i].rkmax[j]);
 		    }
 		  else
 		    {
-		      (void)fprintf(fp2," %.3e, %.3e,",l1,cond[j].rkavg[i]);
-		      (void)fprintf(fp2," %.3e, %.3e,",l2,cond[j].rkrms[i]);
-		      (void)fprintf(fp2," %.3e, %.3e,",l3,cond[j].rkmin[i]);
-		      (void)fprintf(fp2," %.3e, %.3e\n",l4,cond[j].rkmax[i]);
+		      (void)fprintf(fp2, " %.3e, %.3e,", l1, cond[j].rkavg[i]);
+		      (void)fprintf(fp2, " %.3e, %.3e,", l2, cond[j].rkrms[i]);
+		      (void)fprintf(fp2, " %.3e, %.3e,", l3, cond[j].rkmin[i]);
+		      (void)fprintf(fp2, " %.3e, %.3e\n", l4, cond[j].rkmax[i]);
 		    }
 
 		  (void)fflush(fp2);
@@ -1069,48 +1069,48 @@ int main(int argc, char **argv)
       /*------------------------------------------------------------------*/
 
       /*  Print summary of all files used.  */
-      (void)fprintf(stdout,"\n\nSUMMARY OF FILES USED & CREATED\n");
-      (void)fprintf(stdout,"\t.g file used:  %s\n",argv[1]);
-      (void)fprintf(stdout,"\tregions used:\n");
+      (void)fprintf(stdout, "\n\nSUMMARY OF FILES USED & CREATED\n");
+      (void)fprintf(stdout, "\t.g file used:  %s\n", argv[1]);
+      (void)fprintf(stdout, "\tregions used:\n");
       (void)fflush(stdout);
       i=2;
       while(argv[i] != NULL)
 	{
-	  (void)fprintf(stdout,"\t\t%s\n",argv[i]);
+	  (void)fprintf(stdout, "\t\t%s\n", argv[i]);
 	  (void)fflush(stdout);
 	  i++;
 	}
-      (void)fprintf(stdout,"\tfile containing second pass information:  %s\n",
+      (void)fprintf(stdout, "\tfile containing second pass information:  %s\n",
 		    spfile);
-      (void)fprintf(stdout,"\tmaterial file used:  %s\n",filemat);
+      (void)fprintf(stdout, "\tmaterial file used:  %s\n", filemat);
       if(iwrite == 1)
 	{
-	  (void)fprintf(stdout,"\toutput file created:  %s\n",filename);
+	  (void)fprintf(stdout, "\toutput file created:  %s\n", filename);
 	}
       if(typeout == 0)
 	{
-	  (void)fprintf(stdout,"\tconductivity file created:  %s\n",confile);
-	  (void)fprintf(stdout,"\t  (format is PRISM %d.0)\n",prmrel);
+	  (void)fprintf(stdout, "\tconductivity file created:  %s\n", confile);
+	  (void)fprintf(stdout, "\t  (format is PRISM %d.0)\n", prmrel);
 	}
-      if(typeout == 1) (void)printf("\tgeneric file created:  %s\n",genfile);
-      (void)fprintf(stdout,"\tconductivity table file created:  %s\n",tblfile);
-      (void)fprintf(stdout,"\terror file created:  %s\n\n\n",fileerr);
+      if(typeout == 1) (void)printf("\tgeneric file created:  %s\n", genfile);
+      (void)fprintf(stdout, "\tconductivity table file created:  %s\n", tblfile);
+      (void)fprintf(stdout, "\terror file created:  %s\n\n\n", fileerr);
       (void)fflush(stdout);
 
       /*------------------------------------------------------------------*/
 
       /*  Open error file.  */
-      fp4 = fopen(fileerr,"w");
+      fp4 = fopen(fileerr, "w");
 
       /*  Write errors to error file.  */
-      (void)fprintf(fp4,"\nERRORS from secpass\n\n");
+      (void)fprintf(fp4, "\nERRORS from secpass\n\n");
       /*  Write type of file created to error file.  */
       if(typeout == 0)
 	{
-	  (void)fprintf(fp4,"PRISM %d.0 conductivity file, %s, created.\n\n",
-			prmrel,confile);
+	  (void)fprintf(fp4, "PRISM %d.0 conductivity file, %s, created.\n\n",
+			prmrel, confile);
 	}
-      if(typeout == 1) (void)fprintf(fp4,"Generic file, %s, created.\n\n",
+      if(typeout == 1) (void)fprintf(fp4, "Generic file, %s, created.\n\n",
 				     genfile);
       (void)fflush(fp4);
       for(i=0; i<numreg; i++)
@@ -1120,10 +1120,10 @@ int main(int argc, char **argv)
 	      if( (cond[i].numcal[j] > ZEROTOL) &&
 		  ( cond[i].numcal[j] < MINCAL ) )
 		{
-		  (void)fprintf(fp4,"region %d, adjacent region %d:\n",
+		  (void)fprintf(fp4, "region %d, adjacent region %d:\n",
 				(i+1),(j+1));
-		  (void)fprintf(fp4,"\tnumber of length calculations ");
-		  (void)fprintf(fp4,"below minimum of %d\n",MINCAL);
+		  (void)fprintf(fp4, "\tnumber of length calculations ");
+		  (void)fprintf(fp4, "below minimum of %d\n", MINCAL);
 		  (void)fflush(fp4);
 		}
 	    }
@@ -1133,7 +1133,7 @@ int main(int argc, char **argv)
       /*------------------------------------------------------------------*/
 
       /*  Everything completed, free memory.  */
-      (void)fprintf(stdout,"Freeing memory.\n");
+      (void)fprintf(stdout, "Freeing memory.\n");
       (void)fflush(stdout);
       for(i=0; i<nmged; i++)
 	{
@@ -1170,7 +1170,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 			/*  centroid & adjacent surface area  */
 
   /*
-   * (void)fprintf(stdout,"In hit function.\n");
+   * (void)fprintf(stdout, "In hit function.\n");
    * (void)fflush(stdout);
    */
 
@@ -1182,7 +1182,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
       /*  Find hit point of entering ray.  */
       hitp = pp->pt_inhit;
       stp = pp->pt_inseg->seg_stp;
-      RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
       enterpt[X] = hitp->hit_point[X];
       enterpt[Y] = hitp->hit_point[Y];
       enterpt[Z] = hitp->hit_point[Z];
@@ -1233,7 +1233,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 		}
 
 	      /*
-	       *		(void)fprintf(stdout,"\treg#:  %d, length:  %f\n",iprev,dist);
+	       *		(void)fprintf(stdout, "\treg#:  %d, length:  %f\n", iprev, dist);
 	       *		(void)fflush(stdout);
 	       */
 
@@ -1270,7 +1270,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 		}
 
 	      /*
-	       *		(void)fprintf(stdout,"\treg#:  %d, length:  %f\n",icur,dist);
+	       *		(void)fprintf(stdout, "\treg#:  %d, length:  %f\n", icur, dist);
 	       *		(void)fflush(stdout);
 	       */
 
@@ -1280,16 +1280,16 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
       /*  Find hit point of leaving ray.  */
       hitp = pp->pt_outhit;
       stp = pp->pt_outseg->seg_stp;
-      RT_HIT_NORM(hitp,stp,&(ap_p->a_ray));
+      RT_HIT_NORM(hitp, stp,&(ap_p->a_ray));
       leavept[X] = hitp->hit_point[X];
       leavept[Y] = hitp->hit_point[Y];
       leavept[Z] = hitp->hit_point[Z];
 
       /*
-       *	(void)fprintf(stdout,"current region:  %d, previous region:  %d\n",icur,iprev);
-       *	(void)fprintf(stdout,"   entering pt:  %f, %f, %f\n",enterpt[X],enterpt[Y],
+       *	(void)fprintf(stdout, "current region:  %d, previous region:  %d\n", icur, iprev);
+       *	(void)fprintf(stdout, "   entering pt:  %f, %f, %f\n", enterpt[X], enterpt[Y],
        *		enterpt[Z]);
-       *	(void)fprintf(stdout,"   leaving pt:   %f, %f, %f\n",leavept[X],leavept[Y],
+       *	(void)fprintf(stdout, "   leaving pt:   %f, %f, %f\n", leavept[X], leavept[Y],
        *		leavept[Z]);
        */
 
@@ -1308,7 +1308,7 @@ miss(register struct application *ap_p)
 {	/*  START # 1M  */
 
   /*
-   * (void)fprintf(stdout,"In miss function.\n");
+   * (void)fprintf(stdout, "In miss function.\n");
    * (void)fflush(stdout);
    */
 

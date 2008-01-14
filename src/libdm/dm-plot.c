@@ -340,10 +340,10 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 		bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
+		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
+		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
+		bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
 
 		Tcl_AppendStringsToObj(obj, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -395,7 +395,7 @@ plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		register int	nused = tvp->nused;
 		register int	*cmd = tvp->cmd;
 		register point_t *pt = tvp->pt;
-		for (i = 0; i < nused; i++,cmd++,pt++) {
+		for (i = 0; i < nused; i++, cmd++, pt++) {
 			static vect_t	start, fin;
 			switch (*cmd) {
 			case BN_VLIST_POLY_START:

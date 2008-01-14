@@ -38,12 +38,12 @@
  *
  * All characters reference absolute points within a 10 x 10 square
  */
-#define	brt(x,y)	(11*x+y)
-#define drk(x,y)	-(11*x+y)
+#define	brt(x, y)	(11*x+y)
+#define drk(x, y)	-(11*x+y)
 #define	LAST		-128		/**< @brief  0200 Marks end of stroke list */
 #define	NEGY		-127		/**< @brief  0201 Denotes negative y stroke */
-#define bneg(x,y)	NEGY, brt(x,y)
-#define dneg(x,y)	NEGY, drk(x,y)
+#define bneg(x, y)	NEGY, brt(x, y)
+#define dneg(x, y)	NEGY, drk(x, y)
 
 #if defined(mips)
 #  define TINY	int

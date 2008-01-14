@@ -41,27 +41,27 @@ struct colors {
 	char		*name;
 	unsigned char	c_pixel[3];
 }colortab[] = {
-	{"black",	{20,20,20}},
-	{"blue",	{0,0,255}},
-	{"brown",	{200,130,0}},
-	{"cyan",	{0,255,200}},
-	{"flesh",	{255,200,160}},
-	{"gray",	{120,120,120}},
-	{"green",	{0,255,0}},
-	{"lime", 	{200,255,0}},
-	{"magenta",	{255,0,255}},
-	{"olive",	{220,190,0}},
-	{"orange",	{255,100,0}},
-	{"pink",	{255,200,200}},
-	{"red",		{255,0,0}},
-	{"rose",	{255,0,175}},
-	{"rust",	{200,100,0}},
-	{"silver",	{237,237,237}},
-	{"sky",		{0,255,255}},
-	{"violet",	{200,0,255}},
-	{"white",	{255,255,255}},
-	{"yellow",	{255,200,0}},
-	{"",		{0,0,0}}
+	{"black",	{20, 20, 20}},
+	{"blue",	{0, 0, 255}},
+	{"brown",	{200, 130, 0}},
+	{"cyan",	{0, 255, 200}},
+	{"flesh",	{255, 200, 160}},
+	{"gray",	{120, 120, 120}},
+	{"green",	{0, 255, 0}},
+	{"lime", 	{200, 255, 0}},
+	{"magenta",	{255, 0, 255}},
+	{"olive",	{220, 190, 0}},
+	{"orange",	{255, 100, 0}},
+	{"pink",	{255, 200, 200}},
+	{"red",		{255, 0, 0}},
+	{"rose",	{255, 0, 175}},
+	{"rust",	{200, 100, 0}},
+	{"silver",	{237, 237, 237}},
+	{"sky",		{0, 255, 255}},
+	{"violet",	{200, 0, 255}},
+	{"white",	{255, 255, 255}},
+	{"yellow",	{255, 200, 0}},
+	{"",		{0, 0, 0}}
 };
 int	ncolors = sizeof(colortab)/sizeof(struct colors);
 int	curcolor = 0;
@@ -107,7 +107,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
 	mk_sph( outfp, nbuf, center, r );
 
 	/*
-	 * Need to rotate from 0,0,-1 to vect "dir",
+	 * Need to rotate from 0, 0,-1 to vect "dir",
 	 * then xlate to final position.
 	 */
 	VSET( from, 0, 0, -1 );

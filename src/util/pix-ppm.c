@@ -140,7 +140,7 @@ main(int argc, char **argv)
 			file_width = (long)w;
 			file_height = (long)h;
 		} else {
-			fprintf(stderr,"pix-ppm: unable to autosize\n");
+			fprintf(stderr, "pix-ppm: unable to autosize\n");
 		}
 	}
 

@@ -1690,7 +1690,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
      *
      *  The sw_intensity field does NOT include the light's
      *  emission spectrum (color), only path attenuation.
-     *  sw_intensity=(1,1,1) for no attenuation.
+     *  sw_intensity=(1, 1, 1) for no attenuation.
      */
     tl_p = swp->sw_tolight;
 

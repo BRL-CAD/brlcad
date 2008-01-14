@@ -380,7 +380,7 @@ db_dirbuild( struct db_i *dbip )
 		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 	    /* Missing _GLOBAL object so create it and set default title and units */
-	    db5_update_ident(dbip, "Untitled BRL-CAD Database",1.0);
+	    db5_update_ident(dbip, "Untitled BRL-CAD Database", 1.0);
 	    return 0;	/* not a fatal error, user may have deleted it */
 	}
 	BU_INIT_EXTERNAL(&ext);

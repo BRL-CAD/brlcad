@@ -497,7 +497,7 @@ ipu_put_image(struct dsreq *dsp,
 		g = & grn[buf_line*w];
 		b = & blu[buf_line*w];
 
-		for (pixel=0,ip=0 ; pixel < w ; pixel++ ) {
+		for (pixel=0, ip=0 ; pixel < w ; pixel++ ) {
 		    r[pixel] = scanline[ip++];
 		    g[pixel] = scanline[ip++];
 		    b[pixel] = scanline[ip++];
@@ -691,7 +691,7 @@ ipu_print_file(struct dsreq *dsp,
     if (ipu_debug) fprintf(stderr,
 			   "ipu_print_file(id=%d copies=%d wait=%d sx=%d sy=%d sw=%d sh=%d\n\
 	0x%x 0x%x 0x%x 0x%x)\n", id, copies, wait, sx, sy, sw, sh,
-			   pr_param->c[0],pr_param->c[1],pr_param->c[2],pr_param->c[3]);
+			   pr_param->c[0], pr_param->c[1], pr_param->c[2], pr_param->c[3]);
 
 
     memset(p=(u_char *)CMDBUF(dsp), 0, 16);
@@ -814,8 +814,8 @@ ipu_scan_file(struct dsreq *dsp,
     if (ipu_debug) fprintf(stderr,
 			   "ipu_scan_file(id=%d wait=%d sx=%d sy=%d sw=%d sh=%d\n\
 		0x%x 0x%x 0x%x 0x%x)\n", id, wait, sx, sy, w, h,
-			   sc_param->c[0],sc_param->c[1],
-			   sc_param->c[2],sc_param->c[3]);
+			   sc_param->c[0], sc_param->c[1],
+			   sc_param->c[2], sc_param->c[3]);
 
     memset(p=(u_char *)CMDBUF(dsp), 0, 16);
     p[0] = 0xc0;
@@ -1237,7 +1237,7 @@ int parse_args(ac, av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac,av,options)) != EOF) {
+    while ((c=bu_getopt(ac, av, options)) != EOF) {
 	/* slup off a printer queue name */
 	if (c == 'q' ||  c == 'p') {
 	    print_queue = bu_optarg;
@@ -1263,7 +1263,7 @@ int parse_args(ac, av)
 	case 'c'	: clear = !clear; break;
 	case 'd'	: if (isprint(*bu_optarg)) {
 	    memset(scsi_device, 0, sizeof(scsi_device));
-	    strncpy(scsi_device,bu_optarg,sizeof(scsi_device)-1);
+	    strncpy(scsi_device, bu_optarg, sizeof(scsi_device)-1);
 	} else
 	    usage("-d scsi_device_name\n");
 	    break;
@@ -1336,7 +1336,7 @@ int parse_args(ac, av)
 	    conv = IPU_RESOLUTION;
 	} else {
 	    fprintf(stderr,
-		    "Resolution error (%d)\n",c);
+		    "Resolution error (%d)\n", c);
 	    bu_exit(-1, NULL);
 	}
 	    if (ipu_debug)

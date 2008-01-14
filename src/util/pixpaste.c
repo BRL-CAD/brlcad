@@ -128,7 +128,7 @@ get_args(register int argc, register char **argv)
 		return(0);
 	} else {
 		orig_name = argv[bu_optind];
-		if (strcmp(orig_name,"-") == 0) {
+		if (strcmp(orig_name, "-") == 0) {
 			if (isatty(fileno(stdin))) return(0);
 			orig = stdin;
 		} else {
@@ -177,29 +177,29 @@ main(int argc, char **argv)
 	register long int i;
 	long int row, result;
 
-	if (!get_args(argc,argv)) {
-		(void)fprintf(stderr,"%s",usage);
+	if (!get_args(argc, argv)) {
+		(void)fprintf(stderr, "%s", usage);
 		bu_exit (1, NULL);
 	}
 	/* Should we autosize the original? */
 	if (orig_isfile && orig_autosize) {
-		unsigned long int w,h;
+		unsigned long int w, h;
 		if (fb_common_file_size(&w, &h, orig_name, num_bytes)) {
 			org_width = (long)w;
 			org_height = (long)h;
 		} else {
-			(void) fprintf(stderr, "pixpaste: unable to autosize \"%s\"\n",orig_name);
+			(void) fprintf(stderr, "pixpaste: unable to autosize \"%s\"\n", orig_name);
 		}
 	}
 
 	/* Should we autosize the paste file? */
 	if (paste_isfile && paste_autosize) {
-		unsigned long int w,h;
+		unsigned long int w, h;
 		if (fb_common_file_size(&w, &h, paste_name, num_bytes)) {
 			paste_width = (long)w;
 			paste_height = (long)h;
 		} else {
-			(void) fprintf(stderr, "pixpaste: unable to autosize \"%s\"\n",paste_name);
+			(void) fprintf(stderr, "pixpaste: unable to autosize \"%s\"\n", paste_name);
 		}
 	}
 
@@ -209,12 +209,12 @@ main(int argc, char **argv)
  * Spew some interesting info at the people...
  */
 	if (Verbose) {
-		(void) fprintf(stderr,"pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n");
-		(void) fprintf(stderr,"pixpaste: Original image %ldx%ld\n",
+		(void) fprintf(stderr, "pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n");
+		(void) fprintf(stderr, "pixpaste: Original image %ldx%ld\n",
 		    org_width, org_height);
-		(void) fprintf(stderr,"pixpaste: Inserted image %ldx%ld\n",
+		(void) fprintf(stderr, "pixpaste: Inserted image %ldx%ld\n",
 		    paste_width, paste_height);
-		(void) fprintf(stderr,"pixpaste: Inserted at %ldx%ld\n",
+		(void) fprintf(stderr, "pixpaste: Inserted at %ldx%ld\n",
 		    base_x, base_y);
 	}
 
@@ -241,7 +241,7 @@ pixpaste: new image == original image.\n");
 			result = fread(buffer, num_bytes, org_width, orig);
 			if (result != org_width) {
 				E=1;
-				(void)fprintf(stderr,"pixpaste: original file is short.\n");
+				(void)fprintf(stderr, "pixpaste: original file is short.\n");
 			}
 			result = fwrite(buffer, num_bytes, result, stdout);
 			if (!E && result != org_width) {
@@ -273,7 +273,7 @@ pixpaste: new image == original image.\n");
 	while (row < 0) {
 		result = fread(pastebuf, num_bytes, paste_width, paste);
 		if (result != paste_width) {
-			(void)fprintf(stderr,"pixpaste: paste file is short.\n");
+			(void)fprintf(stderr, "pixpaste: paste file is short.\n");
 			row=0;
 			paste_height=0;
 		}
@@ -286,7 +286,7 @@ pixpaste: new image == original image.\n");
 	while (row < base_y) {
 		result=fread(origbuf, num_bytes, org_width, orig);
 		if (result != org_width) {
-			(void)fprintf(stderr,"pixpaste: original image is short.\n");
+			(void)fprintf(stderr, "pixpaste: original image is short.\n");
 			(void)fwrite(origbuf, num_bytes, result, stdout);
 			bu_exit (0, NULL);
 		}
@@ -312,7 +312,7 @@ pixpaste: new image == original image.\n");
 		}
 		result=fread(pastebuf, num_bytes, paste_width, paste);
 		if (result != paste_width) {
-			(void)fprintf(stderr,"pixpaste: paste image is short.\n");
+			(void)fprintf(stderr, "pixpaste: paste image is short.\n");
 			base_y = paste_height = 0;
 		}
 		result = fwrite(origbuf, num_bytes, org_width, stdout);

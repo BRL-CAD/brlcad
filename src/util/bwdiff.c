@@ -86,17 +86,17 @@ main(int argc, char **argv)
 	int	i, n, m;
 
 	while( argc > 3 ) {
-		if( strcmp(argv[1],"-m") == 0 ) {
+		if( strcmp(argv[1], "-m") == 0 ) {
 			mode = MAG;
-		} else if( strcmp(argv[1],"-g") == 0 ) {
+		} else if( strcmp(argv[1], "-g") == 0 ) {
 			mode = GREATER;
-		} else if( strcmp(argv[1],"-l") == 0 ) {
+		} else if( strcmp(argv[1], "-l") == 0 ) {
 			mode = LESS;
-		} else if( strcmp(argv[1],"-e") == 0 ) {
+		} else if( strcmp(argv[1], "-e") == 0 ) {
 			mode = EQUAL;
-		} else if( strcmp(argv[1],"-n") == 0 ) {
+		} else if( strcmp(argv[1], "-n") == 0 ) {
 			mode = NEQ;
-		} else if( strcmp(argv[1],"-b") == 0 ) {
+		} else if( strcmp(argv[1], "-b") == 0 ) {
 			backgnd++;
 		} else
 			break;
@@ -112,8 +112,8 @@ main(int argc, char **argv)
 	open_file(&fp2, argv[2]);
 
 	while(1) {
-		n = fread(ibuf1,1,512,fp1);
-		m = fread(ibuf2,1,512,fp2);
+		n = fread(ibuf1, 1, 512, fp1);
+		m = fread(ibuf2, 1, 512, fp2);
 		if( (n == 0) && (m == 0))
 			break;
 		p1 = &ibuf1[0];

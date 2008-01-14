@@ -354,7 +354,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		if (tsp->ts_mater.ma_color_valid != 0)
 			fprintf(fp_fig,
 				"\t\tattribute=%s;\n", bu_vls_addr(&file_base));
-		fprintf(fp_fig, "\t\tsite base->location=trans(0,0,0);\n");
+		fprintf(fp_fig, "\t\tsite base->location=trans(0, 0, 0);\n");
 		fprintf(fp_fig, "\t}\n");
 
 		if( bu_vls_strlen(&base_seg) <= 0 )  {
@@ -458,7 +458,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 	for (i = 0; i < BU_PTBL_END(&vtab); i++)  {
 		struct vertex			*v;
 		register struct vertex_g	*vg;
-		v = (struct vertex *)BU_PTBL_GET(&vtab,i);
+		v = (struct vertex *)BU_PTBL_GET(&vtab, i);
 		NMG_CK_VERTEX(v);
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G(vg);
@@ -512,14 +512,14 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 						NMG_CK_VERTEXUSE(eu->vu_p);
 						NMG_CK_VERTEX(eu->vu_p->v_p);
 						NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-						fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
+						fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map, eu->vu_p->v_p));
 					}
 				} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd)
 					== NMG_VERTEXUSE_MAGIC) {
 					v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 					NMG_CK_VERTEX(v);
 					NMG_CK_VERTEX_G(v->vg_p);
-					fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
+					fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map, v));
 				} else
 					bu_log("jack_faces: loopuse mess up! (1)\n");
 				fprintf(fp_psurf, ";\n");
@@ -536,14 +536,14 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 					NMG_CK_VERTEXUSE(eu->vu_p);
 					NMG_CK_VERTEX(eu->vu_p->v_p);
 					NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-					fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
+					fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map, eu->vu_p->v_p));
 				}
 			} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd)
 				== NMG_VERTEXUSE_MAGIC) {
 				v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 				NMG_CK_VERTEX(v);
 				NMG_CK_VERTEX_G(v->vg_p);
-				fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
+				fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map, v));
 			} else
 				bu_log("jack_faces: loopuse mess up! (1)\n");
 			fprintf(fp_psurf, ";\n");
@@ -556,7 +556,7 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 			NMG_CK_VERTEXUSE(eu->vu_p);
 			NMG_CK_VERTEX(eu->vu_p->v_p);
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
+			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map, eu->vu_p->v_p));
 		}
 		if (BU_LIST_FIRST_MAGIC(&s->eu_hd) == NMG_EDGEUSE_MAGIC)
 			fprintf(fp_psurf, ";\n");
@@ -566,7 +566,7 @@ jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
 			NMG_CK_VERTEXUSE(s->vu_p);
 			NMG_CK_VERTEX(s->vu_p->v_p);
 			NMG_CK_VERTEX_G(s->vu_p->v_p->vg_p);
-			fprintf(fp_psurf, "%d;\n", NMG_INDEX_GET(map,s->vu_p->v_p));
+			fprintf(fp_psurf, "%d;\n", NMG_INDEX_GET(map, s->vu_p->v_p));
 		}
 
 		if (BU_LIST_IS_EMPTY(&s->fu_hd) &&

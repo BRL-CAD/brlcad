@@ -37,18 +37,18 @@ int entityno;	/* extrusion entity number */
 int curve;	/* elliptical arc entity number */
 vect_t evect;	/* extrusion vector */
 {
-	fastf_t		a,b,c,d,e,f;	/* Coefficients of conic equation
+	fastf_t		a, b, c, d, e, f;	/* Coefficients of conic equation
 					  a*X*X + b*X*Y + c*Y*Y + d*X + e*Y + f = 0 */
 	fastf_t		conv_sq;	/* conv-factor squared */
-	point_t		start,stop;	/* starting and stopping points on arc */
+	point_t		start, stop;	/* starting and stopping points on arc */
 	int		sol_num;	/* Solid number */
-	fastf_t		q1,q2,q3;	/* terms for determining type of conic */
+	fastf_t		q1, q2, q3;	/* terms for determining type of conic */
 	int		ellipse;	/* flag to indicate eillipse */
 	fastf_t		tmp;		/* scratch */
 	point_t		center;		/* center of ellipse */
 	fastf_t		theta;		/* angle that elipse is rotated */
-	fastf_t		a1,c1,f1;	/* coefficients of translated and rotated ellipse */
-	vect_t		r1,r2;		/* radii vectors for ellipse and TGC */
+	fastf_t		a1, c1, f1;	/* coefficients of translated and rotated ellipse */
+	vect_t		r1, r2;		/* radii vectors for ellipse and TGC */
 
 	/* Acquiring Data */
 

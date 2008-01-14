@@ -65,7 +65,7 @@ fastf_t
 rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
 {
 	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
-	fastf_t d1,d2,d3;
+	fastf_t d1, d2, d3;
 	int i;
 	fastf_t *pt;
 
@@ -168,7 +168,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	fastf_t der2[5], t, *pt;
 	fastf_t num_coord_factor, final_t;
 	int num_coords;
-	int i,j;
+	int i, j;
 
 	if( crv->order < 3)
 		return( -1.0 );

@@ -42,8 +42,8 @@
 #include "bu.h"
 
 
-double col[3] = {128,128,128};		/* r,g,b */
-double hsv[3];				/* h,s,v */
+double col[3] = {128, 128, 128};		/* r, g, b */
+double hsv[3];				/* h, s, v */
 
 int	file_width = 512;
 int	file_height = 512;
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 		}
 
 		/* A white stripe, 4 lines high */
-		for( i=0; i<4; i++,line++ )  {
+		for( i=0; i<4; i++, line++ )  {
 			*vp++ = 250;
 			*vp++ = 250;
 			*vp++ = 250;

@@ -66,7 +66,7 @@
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
- *  X is 0..width,0..height
+ *  X is 0..width, 0..height
  */
 #define DIVBY4096(x) (((double)(x))*INV_4096)
 #define	GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
@@ -112,7 +112,7 @@
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 #define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
 
-#define GET_DM(p,structure,w,hp) { \
+#define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \
 	for(BU_LIST_FOR(tp, structure, hp)) { \
 		if(w == tp->win) { \

@@ -25,7 +25,7 @@
 /*	G I F - F B	Gif to Frame Buffer
  *
  * Gif-fb takes a GIF file and writes it to a frame buffer.
- * GIF files contain one or more 1,2,4, or 8 bit deep pictures
+ * GIF files contain one or more 1, 2, 4, or 8 bit deep pictures
  * with one or more color maps. Gif-fb will select the correct
  * color map and display the first picture on the frame-buffer.
  *
@@ -114,7 +114,7 @@ int getByte(FILE *inp);
 int
 main(int argc, char **argv)
 {
-	int	 i,idx,n;
+	int	 i, idx, n;
 	int	maxcolors;
 	int	code;
 	int	verbose=0;
@@ -125,14 +125,14 @@ main(int argc, char **argv)
 	unsigned char line[3*2048];
 	unsigned char *lp;
 
-	int lineNumber,lineInc,lineIdx;
-	static int lace[4] = {8,8,4,2};
-	static int offs[4] = {0,4,2,1};
+	int lineNumber, lineInc, lineIdx;
+	static int lace[4] = {8, 8, 4, 2};
+	static int offs[4] = {0, 4, 2, 1};
 
 	FBIO *fbp;
 	FILE *fp;
 
-	while ((code = bu_getopt(argc,argv,"vFh")) != EOF){
+	while ((code = bu_getopt(argc, argv, "vFh")) != EOF){
 		switch (code) {
 		case 'h':
 			headers=1;
@@ -151,7 +151,7 @@ main(int argc, char **argv)
 
 	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) ) {
-			(void) fprintf(stderr, "%s: No input file.\n",argv[0]);
+			(void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 			usage(argv);
 			bu_exit(1, NULL);
 		}
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 		file_name = argv[bu_optind];
 		if( (fp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
-			    "%s: cannot open \"%s\" for reading\n",argv[0],
+			    "%s: cannot open \"%s\" for reading\n", argv[0],
 			    file_name );
 			usage(argv);
 			bu_exit(1, NULL);
@@ -173,7 +173,7 @@ main(int argc, char **argv)
 	n= fread(&Header, 1, 13, fp);
 
 	if (n != 13) {
-		fprintf(stderr,"%s: only %d bytes in header.\n",argv[0],n);
+		fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
 		bu_exit(1, NULL);
 	}
 
@@ -183,7 +183,7 @@ main(int argc, char **argv)
 	CR	    = (Header.GH_Flags>>4) & 0x07;
 	GlobalPixels= (Header.GH_Flags&0x07) + 1;
 	if (headers) {
-		fprintf(stderr,"-w%d -n%d\n", ScreenWidth, ScreenHeight);
+		fprintf(stderr, "-w%d -n%d\n", ScreenWidth, ScreenHeight);
 		bu_exit(0, NULL);
 	}
 /*
@@ -191,13 +191,13 @@ main(int argc, char **argv)
  * "smarter" user look over the header even if the header is barfO.
  */
 	if (verbose) {
-		fprintf(stderr,"Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
+		fprintf(stderr, "Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
 		    Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
 		    CR, GlobalPixels, Header.GH_Background);
 	}
 
 	if (Header.GH_EOB) {
-		fprintf(stderr,"%s: missing EOB in header.\n",argv[0]);
+		fprintf(stderr, "%s: missing EOB in header.\n", argv[0]);
 		bu_exit(1, NULL);
 	}
 	maxcolors = 1 << GlobalPixels;
@@ -208,7 +208,7 @@ main(int argc, char **argv)
 	for (i=0;i<maxcolors;i++) {
 		n = fread(&GlobalColors[i], 1, 3, fp);
 		if (n != 3) {
-			fprintf(stdout,"%s: only read %d global colors.\n",
+			fprintf(stdout, "%s: only read %d global colors.\n",
 			    argv[0], i);
 			bu_exit(1, NULL);
 		}
@@ -219,15 +219,15 @@ main(int argc, char **argv)
 	n= fread(&Im, 1, sizeof(Im), fp);
 
 	if (n != sizeof(Im)) {
-		fprintf(stderr,"%s: only %d bytes in image header.\n",
+		fprintf(stderr, "%s: only %d bytes in image header.\n",
 		    argv[0], n);
 		bu_exit(1, NULL);
 	}
 	if (verbose) {
-		fprintf(stderr,"Magic=%c, left=%d, top=%d, Width=%d, Height=%d\n",
+		fprintf(stderr, "Magic=%c, left=%d, top=%d, Width=%d, Height=%d\n",
 		    Im.IH_Magic, WORD(Im.IH_Left), WORD(Im.IH_Top), WORD(Im.IH_Width),
 		    WORD(Im.IH_Height));
-		fprintf(stderr,"Map=%d, Interlaced=%d, pixel=%d\n",
+		fprintf(stderr, "Map=%d, Interlaced=%d, pixel=%d\n",
 		    Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
 	}
 
@@ -258,7 +258,7 @@ main(int argc, char **argv)
 	MinBits = getc(fp) + 1;
 
 	if (verbose) {
-		fprintf(stderr,"MinBits=%d\n", MinBits);
+		fprintf(stderr, "MinBits=%d\n", MinBits);
 	}
 
 	if (interlaced ) {
@@ -274,7 +274,7 @@ main(int argc, char **argv)
 /*
  * Open the frame buffer.
  */
-	fbp = fb_open(framebuffer,WORD(Im.IH_Width),
+	fbp = fb_open(framebuffer, WORD(Im.IH_Width),
 	    WORD(Im.IH_Height));
 
 /*
@@ -290,7 +290,7 @@ main(int argc, char **argv)
 			*lp++ = GlobalColors[idx].green;
 			*lp++ = GlobalColors[idx].blue;
 		}
-		fb_write(fbp,0,WORD(Im.IH_Height)-lineNumber,line,
+		fb_write(fbp, 0, WORD(Im.IH_Height)-lineNumber, line,
 		    WORD(Im.IH_Width));
 		fb_flush(fbp);
 		lineNumber += lineInc;
@@ -403,11 +403,11 @@ getcode(FILE *inp)
  */
 int getByte(FILE *inp)
 {
-	int code,incode;
-	static int	firstcode,oldcode;
+	int code, incode;
+	static int	firstcode, oldcode;
 	static int	firstTime = 1;
-	static int	clear_code,end_code;
-	static int	max_code,next_ent;
+	static int	clear_code, end_code;
+	static int	max_code, next_ent;
 #define	PREFIX	0
 #define SUFIX	1
 	static int	table[2][1<<12];
@@ -488,7 +488,7 @@ int getByte(FILE *inp)
 void
 usage(char **argv)
 {
-	fprintf(stderr,"%s [-h] [-v] [-F frame_buffer] [gif_file]\n",argv[0]);
+	fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
 }
 
 /*

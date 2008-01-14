@@ -500,12 +500,12 @@ rat_cursor(FBIO *ifp, int mode, int x, int y)
  */
 _rat_init(FBIO *ifp)
 {
-	static unsigned char firstcmds[] = {0x10,0x01,0xFD,0x00};
+	static unsigned char firstcmds[] = {0x10, 0x01, 0xFD, 0x00};
 
 	static unsigned char buff[] =
-		{0x01,0x00,		/* Enter graphics	*/
-		0x48,0x00,		/* MEMSEL 0		*/
-		0x9D,0xFF,0x07,0x00};	/* WRMASK 255 7		*/
+		{0x01, 0x00,		/* Enter graphics	*/
+		0x48, 0x00,		/* MEMSEL 0		*/
+		0x9D, 0xFF, 0x07, 0x00};	/* WRMASK 255 7		*/
 
 	if( warm()
 	    &&	entergraphics()

@@ -210,8 +210,8 @@ rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struc
 /**
  *  			R T _ S K E T C H _ U V
  *
- *  For a hit on the surface of an sketch, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an sketch, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -1840,7 +1840,7 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 int
 curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 {
-    int i,j;
+    int i, j;
 
     bu_vls_printf( vls, " SL {" );
     for( j=0 ; j<crv->seg_count ; j++ )

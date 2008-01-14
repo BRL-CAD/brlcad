@@ -33,12 +33,12 @@
  * @li bn_mat_trn( &o, &i )		Transpose matrix i into matrix o
  * @li bn_mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
  * @li bn_ae_vec( &az, &el, v )	Find az/elev from dir vector
- * @li bn_aet_vec( &az, &el, &twist, v1, v2 ) Find az,el,twist from two vectors
+ * @li bn_aet_vec( &az, &el, &twist, v1, v2 ) Find az, el, twist from two vectors
  * @li bn_mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
  * @li bn_eigen2x2()			Eigen values and vectors
  * @li bn_mat_lookat			Make rot mat:  xform from D to -Z
  * @li bn_mat_fromto			Make rot mat:  xform from A to
- * @li bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
+ * @li bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt, dir), through ang
  * @li bn_mat_is_equal()		Is mat a equal to mat b?
  *
  *
@@ -374,9 +374,9 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 /*
  *			B N _ V T O H _ M O V E
  *
- * Takes a pointer to a [x,y,z] vector, and a pointer
- * to space for a homogeneous vector [x,y,z,w],
- * and builds [x,y,z,1].
+ * Takes a pointer to a [x, y, z] vector, and a pointer
+ * to space for a homogeneous vector [x, y, z, w],
+ * and builds [x, y, z, 1].
 void
 bn_vtoh_move(register vert_t h2, register const vert_t v2)
 {
@@ -390,7 +390,7 @@ bn_vtoh_move(register vert_t h2, register const vert_t v2)
 /**
  *			B N _ H T O V _ M O V E
  *
- * Takes a pointer to [x,y,z,w], and converts it to
+ * Takes a pointer to [x, y, z, w], and converts it to
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.
  */
@@ -520,7 +520,7 @@ bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 void
 bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *vec_twist, fastf_t accuracy)
 {
-	vect_t zero_twist,ninety_twist;
+	vect_t zero_twist, ninety_twist;
 	vect_t z_dir;
 
 	/* Get az and el as usual */
@@ -1179,7 +1179,7 @@ bn_mat_is_identity(const mat_t m)
 void
 bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
 {
-	mat_t tran1,tran2,rot;
+	mat_t tran1, tran2, rot;
 	double cos_ang, sin_ang, one_m_cosang;
 	double n1_sq, n2_sq, n3_sq;
 	double n1_n2, n1_n3, n2_n3;

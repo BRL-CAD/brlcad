@@ -247,7 +247,7 @@ mmenu_display(int y_top)
 		  GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
 		  GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
-  for( menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++,menu++ )  {
+  for( menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
     if( *m == MENU_NULL )  continue;
     for( item=0, mptr = *m;
 	 mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
@@ -339,7 +339,7 @@ mmenu_select( int pen_y, int do_func )
 	 */
 	yy = menu_state->ms_top;
 
-	for( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++,menu++ )  {
+	for( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0';

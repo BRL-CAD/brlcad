@@ -177,15 +177,15 @@ main(int argc, char **argv)
 	}
 
 	if (r_debug)  {
-		fprintf( stderr,"Image bounds\n\tmin %d %d\n\tmax %d %d\n",
+		fprintf( stderr, "Image bounds\n\tmin %d %d\n\tmax %d %d\n",
 			rle_dflt_hdr.xmin, rle_dflt_hdr.ymin,
 			rle_dflt_hdr.xmax, rle_dflt_hdr.ymax );
 		fprintf(stderr, "%d color channels\n", rle_dflt_hdr.ncolors);
-		fprintf(stderr,"%d color map channels\n", rle_dflt_hdr.ncmap);
+		fprintf(stderr, "%d color map channels\n", rle_dflt_hdr.ncmap);
 		if ( rle_dflt_hdr.alpha )
 			fprintf( stderr, "Alpha Channel present in input, ignored.\n");
 		for( i=0; i < rle_dflt_hdr.ncolors; i++ )
-			fprintf(stderr,"Background channel %d = %d\n",
+			fprintf(stderr, "Background channel %d = %d\n",
 				i, rle_dflt_hdr.bg_color[i] );
 		rle_debug(1);
 	}

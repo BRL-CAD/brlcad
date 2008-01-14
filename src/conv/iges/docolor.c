@@ -47,7 +47,7 @@ void
 Docolor()
 {
 
-	int i,j;
+	int i, j;
 	fastf_t a;
 
 	for( i=0 ; i<totentities ; i++ )

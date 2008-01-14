@@ -4,7 +4,7 @@
 	purpose by anyone.
 
 	Henry Spencer @ U of Toronto Zoology
-	{allegra,ihnp4,decvax,pyramid}!utzoo!henry
+	{allegra, ihnp4, decvax, pyramid}!utzoo!henry
 	Wed Jun 25 19:21:34 EDT 1986
 */
 

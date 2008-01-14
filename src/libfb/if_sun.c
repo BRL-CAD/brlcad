@@ -106,7 +106,7 @@ HIDDEN int	linger();
 #define DITHERSZ	8	/* Size of dither pattern used. */
 #define DITHMASK(ii) ((ii)&07)	/* Masks of DITHERSZ bits. */
 
-#define EQUALRGB(aa,bb) \
+#define EQUALRGB(aa, bb) \
 	((aa)[RED]==(bb)[RED]&&(aa)[GRN]==(bb)[GRN]&&(aa)[BLU]==(bb)[BLU])
 #define XIMAGE2SCR( x ) \
  ((x)*ifp->if_xzoom-(ifp->if_xcenter*ifp->if_xzoom-ifp->if_width/2))
@@ -199,23 +199,23 @@ struct suninfo
 #define if_mem		u2.p	/* shared memory pointer */
 #define if_cmap		u3.p	/* color map in shared memory */
 #define if_windowfd	u4.l	/* f. b. window file descriptor under SUNTOOLS */
-#define sunrop(dx,dy,w,h,op,pix,sx,sy) \
+#define sunrop(dx, dy, w, h, op, pix, sx, sy) \
 		if( sun_pixwin ) \
-			pw_rop(SUNPW(ifp),dx,dy,w,h,op,pix,sx,sy); \
+			pw_rop(SUNPW(ifp), dx, dy, w, h, op, pix, sx, sy); \
 		else \
-			pr_rop(SUNPR(ifp),dx,dy,w,h,PIX_DONTCLIP|op,pix,sx,sy)
+			pr_rop(SUNPR(ifp), dx, dy, w, h, PIX_DONTCLIP|op, pix, sx, sy)
 
-#define sunput(dx,dy,v) \
+#define sunput(dx, dy, v) \
 		if( sun_pixwin ) \
-			pw_put(SUNPW(ifp),dx,dy,v); \
+			pw_put(SUNPW(ifp), dx, dy, v); \
 		else \
-			pr_put(SUNPR(ifp),dx,dy,v);
+			pr_put(SUNPR(ifp), dx, dy, v);
 
-#define sunreplrop(dx,dy,dw,dh,op,spr,sx,sy) \
+#define sunreplrop(dx, dy, dw, dh, op, spr, sx, sy) \
 		if( sun_pixwin ) \
-			pw_replrop(SUNPW(ifp),dx,dy,dw,dh,op,spr,sx,sy); \
+			pw_replrop(SUNPW(ifp), dx, dy, dw, dh, op, spr, sx, sy); \
 		else \
-			pr_replrop(SUNPR(ifp),dx,dy,dw,dh,op,spr,sx,sy);
+			pr_replrop(SUNPR(ifp), dx, dy, dw, dh, op, spr, sx, sy);
 
 #define SUNPW(ptr)	((Pixwin *)((ptr)->u5.p))
 #define SUNPWL(ptr)	((ptr)->u5.p)	/* left hand side version. */
@@ -643,7 +643,7 @@ RGBpixel	*pp;
 	register int	xzoom = ifp->if_xzoom;
 	int		xl = XIMAGE2SCR( xlft );
 
-	/*fb_log( "sun_scanwrite(%d,%d,%d,0x%x)\n", xlft, ybtm, xrgt, pp );
+	/*fb_log( "sun_scanwrite(%d,%d,%d, 0x%x)\n", xlft, ybtm, xrgt, pp );
 		/* XXX-debug */
 
 	if( SUN(ifp)->su_depth == 1 ) {
@@ -729,7 +729,7 @@ register int		offset;
 {
 	register int		y;
 	register RGBpixel	*p;
-	/*fb_log( "sun_rectwrite(xmin=%d,ymin=%d,xmax=%d,ymax=%d,buf=0x%x,offset=%d)\n",
+	/*fb_log( "sun_rectwrite(xmin=%d, ymin=%d, xmax=%d, ymax=%d, buf=0x%x, offset=%d)\n",
 		xmin, ymin, xmax, ymax, buf, offset ); /* XXX--debug */
 	p = buf-offset+ymin*ifp->if_width+xmin;
 	for( y = ymin; y <= ymax; y++, p += ifp->if_width )
@@ -1351,7 +1351,7 @@ int	x, y;
 	x *= ifp->if_xzoom;
 	y *= ifp->if_yzoom;
 	y = ifp->if_height - y;
-	/* Move cursor/mouse to <x,y>. */
+	/* Move cursor/mouse to <x, y>. */
 	if(	x < 1 || x > ifp->if_width
 	    ||	y < 1 || y > ifp->if_height
 		)
@@ -1414,7 +1414,7 @@ register int	count;
 	int		xmax, ymax;
 	register int	xwidth;
 
-	/*fb_log( "sun_write(0x%x,%d,%d,0x%x,%d)\n", ifp, x, y, p, count );
+	/*fb_log( "sun_write(0x%x,%d,%d, 0x%x,%d)\n", ifp, x, y, p, count );
 		/* XXX--debug */
 	/* Store pixels in memory. */
 	/*sun_storepixel( ifp, x, y, p, count );*/
@@ -1565,7 +1565,7 @@ FBIO	*ifp;
 		return 1;	/* release the parent */
 #endif
 
-	notify_interpose_destroy_func(SUN(ifp)->frame,my_real_destroy);
+	notify_interpose_destroy_func(SUN(ifp)->frame, my_real_destroy);
 
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 250000;

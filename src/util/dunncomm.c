@@ -234,8 +234,8 @@ goodstatus(void)
 
 	printf("\007dunnsnap: status error from camera\n");
 	printf("status[0]= 0x%x [1]= 0x%x [2]= 0x%x [3]= 0x%x\n",
-		status[0]&0x7f,status[1]&0x7f,
-		status[2]&0x7f,status[3]&0x7f);
+		status[0]&0x7f, status[1]&0x7f,
+		status[2]&0x7f, status[3]&0x7f);
 	return 0;	/* status is bad or request timed out */
 }
 
@@ -363,7 +363,7 @@ dunnsend(char color, int val)
 	char digit;
 
 	if(val < 0 || val > 255) {
-		printf("dunncolor: bad value %d\n",val);
+		printf("dunncolor: bad value %d\n", val);
 		return(-1);
 	}
 
@@ -388,7 +388,7 @@ dunnsend(char color, int val)
 	write(fd, &digit, 1);
 	hangten();
 	digit = (val%10 + 0x30)&0x7f;
-	write(fd, &digit,1);
+	write(fd, &digit, 1);
 	hangten();
 	return(0);		/* OK */
 }

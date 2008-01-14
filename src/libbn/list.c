@@ -42,7 +42,7 @@
 /**
  *			T P _ I 2 L I S T
  *
- *  Take a set of x,y coordinates, and plot them as a
+ *  Take a set of x, y coordinates, and plot them as a
  *  polyline, ie, connect them with line segments.
  *  For markers, use tp_mlist(), below.
  *  This "C" interface expects arrays of INTs.
@@ -65,7 +65,7 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
 /**
  *			T P _ 2 L I S T
  *
- *  Take a set of x,y coordinates, and plot them as a
+ *  Take a set of x, y coordinates, and plot them as a
  *  polyline, ie, connect them with line segments.
  *  For markers, use tp_mlist(), below.
  *  This "C" interface expects arrays of DOUBLES.
@@ -139,7 +139,7 @@ int		*n;
 /**
  *			T P _ 2 M L I S T
  *
- *  Take a set of x,y co-ordinates and plots them,
+ *  Take a set of x, y co-ordinates and plots them,
  *  with a combination of connecting lines and/or place markers.
  *  It is important to note that the arrays
  *  are arrays of doubles, and express UNIX-plot coordinates in the
@@ -213,7 +213,7 @@ float	*size;
 		return;
 
 	if( *flag & TP_LINE )
-		PL_FORTRAN(f2list,F2LIST)( fp, x, y, np );
+		PL_FORTRAN(f2list, F2LIST)( fp, x, y, np );
 	if( *flag & TP_MARK )  {
 		tp_2marker( *fp, *mark, *x++, *y++, *size );
 		counter = 1;			/* We already plotted one */

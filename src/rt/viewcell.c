@@ -60,7 +60,7 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
-static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
+static mat_t	model2hv;		/* model coords to GIFT h, v in inches */
 
 
 const char title[] = "RT Cell";
@@ -140,7 +140,7 @@ view_2init(struct application *ap)
 	}
 
 	/*
-	 *  GIFT uses an H,V coordinate system that is anchored at the
+	 *  GIFT uses an H, V coordinate system that is anchored at the
 	 *  model origin, but rotated according to the view.
 	 *  For convenience later, build a matrix that will take
 	 *  a point in model space (with units of mm), and convert it
@@ -184,7 +184,7 @@ int
 rayhit(struct application *ap, register struct partition *PartHeadp, struct seg *segp)
 {
 	register struct partition *pp = PartHeadp->pt_forw;
-	point_t			hv;		/* GIFT h,v coords, in inches */
+	point_t			hv;		/* GIFT h, v coords, in inches */
 	fastf_t			dot;
 	vect_t			normal;
 
@@ -193,13 +193,13 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 	if( jitter & JITTER_CELL )  {
 		/*
-		 *  Find exact h,v coordinates of actual ray start by
-		 *  projecting start point into GIFT h,v coordinates.
+		 *  Find exact h, v coordinates of actual ray start by
+		 *  projecting start point into GIFT h, v coordinates.
 		 */
 		MAT4X3PNT( hv, model2hv, ap->a_ray.r_pt );
 	} else {
 		/*
-		 *  Find the H,V coordinates of the grid cell _center_,
+		 *  Find the H, V coordinates of the grid cell _center_,
 		 *  for GIFT compatible behavior.
 		 *  RT uses the lower left _corner_ of each cell.
 		 */

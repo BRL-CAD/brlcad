@@ -48,7 +48,7 @@ void
 rt_nurb_reverse_srf(struct face_g_snurb *srf)
 {
 
-	int i,j,k;
+	int i, j, k;
 	int coords;
 	int row, col;
 	fastf_t * p_ptr;

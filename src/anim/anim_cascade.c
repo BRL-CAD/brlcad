@@ -94,8 +94,8 @@ main (int argc, char **argv)
 
     read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;
 
-    if (!get_args(argc,argv))
-	fprintf(stderr,"anim_cascade: Argument error.");
+    if (!get_args(argc, argv))
+	fprintf(stderr, "anim_cascade: Argument error.");
 
     switch (output_mode) {
     case CASCADE_A:
@@ -168,13 +168,13 @@ main (int argc, char **argv)
 	    if (val < 1) break;
 	}
 	if (read_cen1)
-	    val =scanf("%lf %lf %lf",cen1, cen1+1, cen1+2);
+	    val =scanf("%lf %lf %lf", cen1, cen1+1, cen1+2);
 	if (read_rot1) {
 	    val=scanf("%lf %lf %lf", &yaw1, &pitch1, &roll1);
 	    anim_dy_p_r2mat(m_rot1, yaw1, pitch1, roll1);
 	}
 	if (read_cen2) {
-	    val=scanf("%lf %lf %lf", cen2, cen2+1,cen2+2);
+	    val=scanf("%lf %lf %lf", cen2, cen2+1, cen2+2);
 	}
 	if (read_rot2) {
 	    val=scanf("%lf %lf %lf", &yaw2, &pitch2, &roll2);
@@ -184,7 +184,7 @@ main (int argc, char **argv)
 
 	if (output_mode==CASCADE_R) {
 	    anim_tran(m_rot1);
-	    VSUB2(rotated,cen2,cen1);
+	    VSUB2(rotated, cen2, cen1);
 	    MAT4X3PNT(cen_ans, m_rot1, rotated);
 	    bn_mat_mul(m_ans, m_rot1, m_rot2);
 	} else if (output_mode==CASCADE_F) {
@@ -201,7 +201,7 @@ main (int argc, char **argv)
 	VSCALE(ang_ans, rad_ang_ans, RTOD);
 
 	if (print_time){
-	    printf("%g",time);
+	    printf("%g", time);
 	}
 	printf("\t%.12g\t%.12g\t%.12g", cen_ans[0], cen_ans[1], cen_ans[2]);
 	printf("\t%.12g\t%.12g\t%.12g", ang_ans[0], ang_ans[1], ang_ans[2]);
@@ -216,71 +216,71 @@ main (int argc, char **argv)
 
 int get_args(int argc, char **argv)
 {
-    int c,d;
+    int c, d;
 
     output_mode = CASCADE_A;
     cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
     print_time = 1;
-    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch(c){
 	case 'f':
 	    d = *(bu_optarg);
 	    if (d == 'c'){
-		sscanf(argv[bu_optind],"%lf",fcenter+0);
-		sscanf(argv[bu_optind+1],"%lf",fcenter+1);
-		sscanf(argv[bu_optind+2],"%lf",fcenter+2);
+		sscanf(argv[bu_optind], "%lf", fcenter+0);
+		sscanf(argv[bu_optind+1], "%lf", fcenter+1);
+		sscanf(argv[bu_optind+2], "%lf", fcenter+2);
 		bu_optind += 3;
 		cmd_fcen = 1;
 		break;
 	    } else if ( d =='y'){
-		sscanf(argv[bu_optind],"%lf",fypr+0);
-		sscanf(argv[bu_optind+1],"%lf",fypr+1);
-		sscanf(argv[bu_optind+2],"%lf",fypr+2);
+		sscanf(argv[bu_optind], "%lf", fypr+0);
+		sscanf(argv[bu_optind+1], "%lf", fypr+1);
+		sscanf(argv[bu_optind+2], "%lf", fypr+2);
 		bu_optind += 3;
 		cmd_fypr = 1;
 		break;
 	    } else {
-		fprintf(stderr,"anim_cascade: unknown option -f%c\n", d);
+		fprintf(stderr, "anim_cascade: unknown option -f%c\n", d);
 	    }
 	    break;
 	case 'r':
 	    d = *(bu_optarg);
 	    if (d == 'c'){
-		sscanf(argv[bu_optind],"%lf",rcenter+0);
-		sscanf(argv[bu_optind+1],"%lf",rcenter+1);
-		sscanf(argv[bu_optind+2],"%lf",rcenter+2);
+		sscanf(argv[bu_optind], "%lf", rcenter+0);
+		sscanf(argv[bu_optind+1], "%lf", rcenter+1);
+		sscanf(argv[bu_optind+2], "%lf", rcenter+2);
 		bu_optind += 3;
 		cmd_rcen = 1;
 		break;
 	    } else if ( d =='y'){
-		sscanf(argv[bu_optind],"%lf",rypr+0);
-		sscanf(argv[bu_optind+1],"%lf",rypr+1);
-		sscanf(argv[bu_optind+2],"%lf",rypr+2);
+		sscanf(argv[bu_optind], "%lf", rypr+0);
+		sscanf(argv[bu_optind+1], "%lf", rypr+1);
+		sscanf(argv[bu_optind+2], "%lf", rypr+2);
 		bu_optind += 3;
 		cmd_rypr = 1;
 		break;
 	    } else {
-		fprintf(stderr,"anim_cascade: unknown option -r%c\n", d);
+		fprintf(stderr, "anim_cascade: unknown option -r%c\n", d);
 	    }
 	    break;
 	case 'a':
 	    d = *(bu_optarg);
 	    if (d == 'c'){
-		sscanf(argv[bu_optind],"%lf",acenter+0);
-		sscanf(argv[bu_optind+1],"%lf",acenter+1);
-		sscanf(argv[bu_optind+2],"%lf",acenter+2);
+		sscanf(argv[bu_optind], "%lf", acenter+0);
+		sscanf(argv[bu_optind+1], "%lf", acenter+1);
+		sscanf(argv[bu_optind+2], "%lf", acenter+2);
 		bu_optind += 3;
 		cmd_acen = 1;
 		break;
 	    } else if ( d =='y'){
-		sscanf(argv[bu_optind],"%lf",aypr+0);
-		sscanf(argv[bu_optind+1],"%lf",aypr+1);
-		sscanf(argv[bu_optind+2],"%lf",aypr+2);
+		sscanf(argv[bu_optind], "%lf", aypr+0);
+		sscanf(argv[bu_optind+1], "%lf", aypr+1);
+		sscanf(argv[bu_optind+2], "%lf", aypr+2);
 		bu_optind += 3;
 		cmd_aypr = 1;
 		break;
 	    } else {
-		fprintf(stderr,"anim_cascade: unknown option -a%c\n", d);
+		fprintf(stderr, "anim_cascade: unknown option -a%c\n", d);
 	    }
 	    break;
 	case 'o':
@@ -292,14 +292,14 @@ int get_args(int argc, char **argv)
 	    } else if (d == 'a') { /* default */
 		output_mode = CASCADE_A;
 	    } else {
-		fprintf(stderr,"anim_cascade: unknown option -i%c\n",d);
+		fprintf(stderr, "anim_cascade: unknown option -i%c\n", d);
 	    }
 	    break;
 	case 's':
 	    print_time = 0;
 	    break;
 	default:
-	    fprintf(stderr,"anim_cascade: unknown option: -%c\n",c);
+	    fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
 	    return(0);
 	}
     }

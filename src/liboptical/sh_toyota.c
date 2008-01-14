@@ -89,8 +89,8 @@ struct bu_structparse toyota_parse[] = {
 	{"%f", 1, "beta",	CL_O(beta),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "weather",	CL_O(weather),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", 1, "sun_sang",	CL_O(sun_sang),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "index_refrac",CL_O(index_refrac),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 1, "atmos_trans",CL_O(atmos_trans),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "index_refrac", CL_O(index_refrac),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 1, "atmos_trans", CL_O(atmos_trans),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "glass",	CL_O(glass),		BU_STRUCTPARSE_FUNC_NULL },
@@ -1463,7 +1463,7 @@ atmos_irradiance(fastf_t lambda)
  *
  *	Data from Inn, Edward; Tanaka, Yoshio; Journal of the Optical
  *	Society of America, Volume 43, Number 10, "Absorption Coefficient of
- *	Ozone in the Ultraviolet and Visible Regions," October 1953,
+ *	Ozone in the Ultraviolet and Visible Regions, " October 1953,
  *	pp. 870-3.
  */
 fastf_t
@@ -1547,7 +1547,7 @@ ozone_absorption(fastf_t lambda)
  *	Do a table lookup to get data on spectral irradiance of daylight.
  *	Table taken from Judd, D B; MacAdam, D L; Wyszecki, G J; Journal
  *	for Optical Science of America, Vol. 54, 1964, "Spectral Distribution
- *	of Typical Daylight as a Function of Correlated Color Temperature,"
+ *	of Typical Daylight as a Function of Correlated Color Temperature, "
  *	pp. 1031-40.
  */
 void
@@ -1687,7 +1687,7 @@ if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return(0.);}
 
 	/* Chromaticity coordinates, taken from Wyszecki, Guenter; Stiles, */
 	/* WS; "Color Science: Concepts and Methods, Quantitative Data and */
-	/* Formulae," John Wiley and Sons, 1982, pp. 145-6. */
+	/* Formulae, " John Wiley and Sons, 1982, pp. 145-6. */
 	if (t_cp >= 4000. && t_cp < 7000.) {
 		x =
 			-4.6070e9/(t_cp*t_cp*t_cp)
@@ -1765,7 +1765,7 @@ sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf
 	em = e0 * exp(-(cr + cm + coz)*air_mass(sun_alt));
 	ls = em/sun_sang;
 #if 0
-bu_log("e0 = %g\ncr = %g\ncm = %g\ncoz = %g\nem = %g\n", e0,cr,cm,coz,em);
+bu_log("e0 = %g\ncr = %g\ncm = %g\ncoz = %g\nem = %g\n", e0, cr, cm, coz, em);
 bu_log("sun radiance = %g\n", ls);
 #endif
 	return(ls);
@@ -1978,7 +1978,7 @@ bu_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
  *	approximation.
  *
  *	Taken from Wyszecki, Guenter; Stiles, WS; "Color Science:
- *	Concepts and Methods, Quantitative Data and Formulae," John
+ *	Concepts and Methods, Quantitative Data and Formulae, " John
  *	Wiley and Sons, 1982, pp. 615, table taken from pp. 806-7.
  *
  *	They, in turn, took the data from Vos, J J, Colorimetric and
@@ -2137,7 +2137,7 @@ lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb)
 	rgb[0] += r/(r+g+b) * irrad/1e4;
 	rgb[1] += g/(r+g+b) * irrad/1e4;
 	rgb[2] += b/(r+g+b) * irrad/1e4;
-bu_log("rgb = (%g %g %g), irrad = %g\n",r,g,b,irrad);
+bu_log("rgb = (%g %g %g), irrad = %g\n", r, g, b, irrad);
 }
 
 /*
@@ -2257,7 +2257,7 @@ if (i_dot_n >= 1.) i_dot_n = .9999;
 #else
 			if (rdebug&RDEBUG_RAYPLOT )  {
 				VSCALE(work, Sky_elmnt, 200.);
-				VADD2(work,swp->sw_hit.hit_point,work);
+				VADD2(work, swp->sw_hit.hit_point, work);
 				pl_color( stdout, 0, 255, 0 );
 				pdv_3line( stdout, swp->sw_hit.hit_point, work);
 			}
@@ -2299,7 +2299,7 @@ bu_log("irradiance = %g\n", irradiance);
 #endif
 	if (rdebug&RDEBUG_RAYPLOT )  {
 		VSCALE(work, Ctr, 200.);
-		VADD2(work,swp->sw_hit.hit_point,work);
+		VADD2(work, swp->sw_hit.hit_point, work);
 		pl_color( stdout, 255, 50, 0 );
 		pdv_3line( stdout, swp->sw_hit.hit_point, work);
 	}
@@ -2441,7 +2441,7 @@ bu_log("S . N = %g\n", sun_dot_n);
 		/* XXX Hack:  it always misses */
 		if (rdebug&RDEBUG_RAYPLOT )  {
 			VSCALE(work, Reflected, 200.);
-			VADD2(work,swp->sw_hit.hit_point,work);
+			VADD2(work, swp->sw_hit.hit_point, work);
 			pl_color( stdout, 0, 150, 255 );
 			pdv_3line( stdout, swp->sw_hit.hit_point, work);
 		}
@@ -2510,7 +2510,7 @@ bu_log("i_refl = %g\n", i_refl);
 		/* Convert wavelength and radiance into RGB triple. */
 		lambda_to_rgb(ts->lambda, i_refl, swp->sw_color);
 #if 0
-bu_log("rgb = (%g  %g  %g)\n",swp->sw_color[0], swp->sw_color[1], swp->sw_color[2]);
+bu_log("rgb = (%g  %g  %g)\n", swp->sw_color[0], swp->sw_color[1], swp->sw_color[2]);
 #endif
 	}
 

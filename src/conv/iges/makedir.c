@@ -40,7 +40,7 @@ void
 Makedir()
 {
 
-	int found,i,saverec,entcount=(-1),paramptr=0,paramguess=0;
+	int found, i, saverec, entcount=(-1), paramptr=0, paramguess=0;
 	char str[9];
 
 	str[8] = '\0';
@@ -178,7 +178,7 @@ Makedir()
 	}
 
 out:
-	bu_log( "\t%d\n\n" ,entcount+1 );
+	bu_log( "\t%d\n\n" , entcount+1 );
 	if( paramguess )
 		bu_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
 }

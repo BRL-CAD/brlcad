@@ -78,21 +78,21 @@ get_args(int argc, register char **argv)
 		case 'm':
 			max = atoi(bu_optarg);
 			if ((max < 0) || (max > 255)) {
-				fprintf(stderr,"pixfade: max out of range");
+				fprintf(stderr, "pixfade: max out of range");
 				bu_exit (1, NULL);
 			}
 			break;
 		case 'p':
 			multiplier = atof(bu_optarg) / 100.0;
 			if (multiplier < 0.0) {
-				fprintf(stderr,"pixfade: percent is negitive");
+				fprintf(stderr, "pixfade: percent is negitive");
 				bu_exit (1, NULL);
 			}
 			break;
 		case 'f':
 			multiplier = atof(bu_optarg);
 			if (multiplier < 0.0) {
-				fprintf(stderr,"pixfade: fraction is negitive");
+				fprintf(stderr, "pixfade: fraction is negitive");
 				bu_exit (1, NULL);
 			}
 			break;
@@ -104,7 +104,7 @@ get_args(int argc, register char **argv)
 
 	if( bu_optind >= argc )  {
 		if( isatty(fileno(stdin)) )  {
-			fprintf(stderr,"pixfade: stdin is a tty\n");
+			fprintf(stderr, "pixfade: stdin is a tty\n");
 			return(0);
 		}
 		inp = stdin;
@@ -121,7 +121,7 @@ get_args(int argc, register char **argv)
 		(void)fprintf( stderr, "pixfade: excess argument(s) ignored\n" );
 
 	if( isatty(fileno(stdout)) )  {
-		fprintf(stderr,"pixfade: stdout is a tty\n");
+		fprintf(stderr, "pixfade: stdout is a tty\n");
 		return(0);
 	}
 
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 {
 	register float	*randp;
 	struct color_rec {
-		unsigned char red,green,blue;
+		unsigned char red, green, blue;
 	} cur_color;
 
 	bn_rand_init( randp, 0);
@@ -143,13 +143,13 @@ main(int argc, char **argv)
 		bu_exit ( 1, NULL );
 	}
 
-/* fprintf(stderr,"pixfade: max = %d, multiplier = %f\n",max,multiplier); */
+/* fprintf(stderr, "pixfade: max = %d, multiplier = %f\n", max, multiplier); */
 
 
 	for(;;)  {
 		register double	t;
 
-		if( fread(&cur_color,1,3,inp) != 3 )  break;
+		if( fread(&cur_color, 1, 3, inp) != 3 )  break;
 		if( feof(inp) )  break;
 
 		t = cur_color.red * multiplier + bn_rand_half(randp);
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 		else
 			cur_color.blue = t;
 
-		fwrite(&cur_color,1,3,stdout);
+		fwrite(&cur_color, 1, 3, stdout);
 	}
 	return 0;
 }

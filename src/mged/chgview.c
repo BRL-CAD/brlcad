@@ -1626,7 +1626,7 @@ pr_schain(struct solid *startp, int lvl)
 		  sp->s_center[Y]*base2local,
 		  sp->s_center[Z]*base2local,
 		  sp->s_size*base2local );
-    bu_vls_printf(&vls, "reg=%d\n",sp->s_regionid );
+    bu_vls_printf(&vls, "reg=%d\n", sp->s_regionid );
     bu_vls_printf(&vls, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)%s%s%s\n",
 		  sp->s_basecolor[0],
 		  sp->s_basecolor[1],
@@ -1654,7 +1654,7 @@ pr_schain(struct solid *startp, int lvl)
       npts += nused;
       if( lvl <= 2 )  continue;
 
-      for( i = 0; i < nused; i++,cmd++,pt++ )  {
+      for( i = 0; i < nused; i++, cmd++, pt++ )  {
 	bu_vls_printf(&vls, "  %s (%g, %g, %g)\n",
 		      rt_vlist_cmd_descriptions[*cmd],
 		      V3ARGS( *pt ) );
@@ -1775,11 +1775,11 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /* XXX Could this make use of db_full_path_subset()? */
 	  if (nmatch == 0 || nmatch != ri) {
 		  i = sp -> s_fullpath.fp_len-1;
-		  if (DB_FULL_PATH_GET(&sp->s_fullpath,i) == dp) {
+		  if (DB_FULL_PATH_GET(&sp->s_fullpath, i) == dp) {
 			  a_new_match = 1;
 			  j = nm_pieces - 1;
 			  for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
-				  sname = DB_FULL_PATH_GET(&sp->s_fullpath,i)->d_namep;
+				  sname = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep;
 				  if ((*sname != *(path_piece[j]))
 				      || strcmp(sname, path_piece[j]))
 					  a_new_match = 0;
@@ -3191,10 +3191,10 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	} else {
 usage:
 	  Tcl_AppendResult(interp,
-		"knob: x,y,z for rotation in degrees\n",
-		"knob: S for scale, X,Y,Z for slew (rates, range -1..+1)\n",
-		"knob: ax,ay,az for absolute rotation in degrees, aS for absolute scale,\n",
-		"knob: aX,aY,aZ for absolute slew.  calibrate to set current slew to 0\n",
+		"knob: x, y, z for rotation in degrees\n",
+		"knob: S for scale; X, Y, Z for slew (rates, range -1..+1)\n",
+		"knob: ax, ay, az for absolute rotation in degrees; aS for absolute scale.\n",
+		"knob: aX, aY, aZ for absolute slew.  calibrate to set current slew to 0\n",
 		"knob: xadc, yadc, distadc (values, range -2048..+2047)\n",
 		"knob: ang1, ang2 for adc angles in degrees\n",
 		"knob: zero (cancel motion)\n", (char *)NULL);
@@ -3550,7 +3550,7 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *
  *  Set the center of rotation, either in model coordinates, or
  *  in view (+/-1) coordinates.
- *  The default is to rotate around the view center: v=(0,0,0).
+ *  The default is to rotate around the view center: v=(0, 0, 0).
  */
 int
 f_vrot_center(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -4213,7 +4213,7 @@ f_view_ring(ClientData	clientData,
 		return TCL_ERROR;
 	}
 
-	if (!strcmp(argv[1],"add")) {
+	if (!strcmp(argv[1], "add")) {
 		if (argc != 2) {
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "help view_ring");
@@ -4246,7 +4246,7 @@ f_view_ring(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	if (!strcmp(argv[1],"next")) {
+	if (!strcmp(argv[1], "next")) {
 		if (argc != 2) {
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "help view_ring");
@@ -4285,7 +4285,7 @@ f_view_ring(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	if (!strcmp(argv[1],"prev")) {
+	if (!strcmp(argv[1], "prev")) {
 		if (argc != 2) {
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "help view_ring");
@@ -4324,7 +4324,7 @@ f_view_ring(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	if (!strcmp(argv[1],"toggle")) {
+	if (!strcmp(argv[1], "toggle")) {
 		struct view_ring *save_last_view;
 
 		if (argc != 2) {
@@ -4357,7 +4357,7 @@ f_view_ring(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	if (!strcmp(argv[1],"delete")) {
+	if (!strcmp(argv[1], "delete")) {
 		if (argc != 3) {
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "help view_ring");
@@ -4407,7 +4407,7 @@ f_view_ring(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	if (!strcmp(argv[1],"goto")) {
+	if (!strcmp(argv[1], "goto")) {
 		if (argc != 3) {
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "help view_ring");
@@ -4454,7 +4454,7 @@ f_view_ring(ClientData	clientData,
 		return TCL_OK;
 	}
 
-	if (!strcmp(argv[1],"get")) {
+	if (!strcmp(argv[1], "get")) {
 		/* return current view */
 		if (argc == 2) {
 			bu_vls_init(&vls);
@@ -4613,7 +4613,7 @@ mged_vrot(char origin, fastf_t *newrot)
 		point_t		new_cent_model;
 
 		if (origin == 'e') {
-			/* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
+			/* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
 			VSET( rot_pt, 0.0, 0.0, 1.0 );		/* point to rotate around */
 		} else if (origin == 'k' && state == ST_S_EDIT) {
 			/* rotate around keypoint */
@@ -4624,7 +4624,7 @@ mged_vrot(char origin, fastf_t *newrot)
 			MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
 			MAT4X3PNT(rot_pt, view_state->vs_vop->vo_model2view, kpWmc);
 		} else {
-			/* rotate around model center (0,0,0) */
+			/* rotate around model center (0, 0, 0) */
 			VSET(new_origin, 0.0, 0.0, 0.0);
 			MAT4X3PNT(rot_pt, view_state->vs_vop->vo_model2view, new_origin);  /* point to rotate around */
 		}
@@ -4642,7 +4642,7 @@ mged_vrot(char origin, fastf_t *newrot)
 		/* XXX I think the only consumer of ModelDelta is the predictor frame */
 		wrt_view(view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);		/* pure rotation */
 	} else
-		/* Traditional method:  rotate around view center (0,0,0) viewspace */
+		/* Traditional method:  rotate around view center (0, 0, 0) viewspace */
 		wrt_view(view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);
 
 	/* Update the rotation component of the model2view matrix */

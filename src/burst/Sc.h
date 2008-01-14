@@ -117,7 +117,7 @@ extern boolean	ScInit();
 	char	*ScHO	(move cursor to top-left corner of screen)
 	boolean	ScHmCursor( void )
 
-	char	*ScCM	(move cursor to column and row <x,y>)
+	char	*ScCM	(move cursor to column and row <x, y>)
 	boolean	ScMvCursor( x, y )
 
 	char	*ScCS	(set scrolling region from top to btm incl.)

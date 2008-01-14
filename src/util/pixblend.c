@@ -179,7 +179,7 @@ main(int argc, char **argv)
 
 	if( value < 0.0 || value > 1.0)
 	{
-		fprintf(stderr,"pixblend: Blend value must be between 0.0 and 1.0\n");
+		fprintf(stderr, "pixblend: Blend value must be between 0.0 and 1.0\n");
 		bu_exit (0, NULL);
 
 	}

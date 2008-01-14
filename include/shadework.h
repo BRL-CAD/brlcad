@@ -47,7 +47,7 @@ struct shadework {
 	fastf_t		sw_color[3];	/**< @brief  shaded color */
 	fastf_t		sw_basecolor[3]; /**< @brief  base color */
 #endif
-	struct hit	sw_hit;		/**< @brief  ray hit (dist,point,normal) */
+	struct hit	sw_hit;		/**< @brief  ray hit (dist, point, normal) */
 	struct uvcoord	sw_uv;
 #ifdef RT_MULTISPECTRAL
 	struct bn_tabdata *msw_intensity[SW_NLIGHTS];

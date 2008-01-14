@@ -249,13 +249,13 @@ dotitles(struct bu_vls *overlay_vls)
 	bu_vls_init(&path_lhs);
 	bu_vls_init(&path_rhs);
 	for (i = 0; i < ipathpos; i++) {
-	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
+	    dp = DB_FULL_PATH_GET(&illump->s_fullpath, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
 	    }
 	}
 	for (; i < illump->s_fullpath.fp_len; i++) {
-	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
+	    dp = DB_FULL_PATH_GET(&illump->s_fullpath, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_rhs, "/%s", dp->d_namep);
 	    }
@@ -429,7 +429,7 @@ dotitles(struct bu_vls *overlay_vls)
 			       color_scheme->cs_state_text2[1],
 			       color_scheme->cs_state_text2[2], 1, 1.0);
 		DM_DRAW_STRING_2D( dmp,
-				   DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep,
+				   DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep,
 				   GED2PM1(x), GED2PM1(y), 0, 0 );
 		y += MENU_DY;
 	    }
@@ -588,7 +588,7 @@ dotitles(struct bu_vls *overlay_vls)
 		    (state == ST_O_PATH || state == ST_O_EDIT) )
 		    bu_vls_strcat( &vls, "/__MATRIX__" );
 		bu_vls_printf(&vls, "/%s",
-			      DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep );
+			      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep );
 	    }
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],

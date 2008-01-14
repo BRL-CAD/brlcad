@@ -301,7 +301,7 @@ void do_pixel(int cpu,
 	(void)rt_shootray( &a );
 
 	if( stereo )  {
-	    fastf_t right,left;
+	    fastf_t right, left;
 
 	    right = CRT_BLEND(a.a_color);
 
@@ -381,7 +381,7 @@ void do_pixel(int cpu,
 	    (void)rt_shootray( &a );
 
 	    if( stereo )  {
-		fastf_t right,left;
+		fastf_t right, left;
 
 		right = CRT_BLEND(a.a_color);
 
@@ -415,7 +415,7 @@ void do_pixel(int cpu,
 	}
     } /* end unrolling else case */
 
-    /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n",pixelnum%width,pixelnum/width,a.a_color[0],a.a_color[1],a.a_color[2]); */
+    /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
     /* we're done */
     view_pixel( &a );
@@ -576,7 +576,7 @@ grid_setup(void)
 		VSET( v_ll, -1, -1, 0 );
 		MAT4X3PNT( m_ll, view2model, v_ll );
 		MAT4X3PNT( hv_ll, model2hv, m_ll );
-		VSET( hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]),floor(hv_ll[Z]) );
+		VSET( hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]), floor(hv_ll[Z]) );
 		VSUB2( hv_delta, hv_ll, hv_wanted );
 
 		MAT4X3PNT( m_delta, hv2model, hv_delta );
@@ -672,7 +672,7 @@ void do_run( int a, int b )
 	int pid, wpid;
 	int waitret;
 	void *buffer = (void*)0;
-	int p[2] = {0,0};
+	int p[2] = {0, 0};
 	struct resource *tmp_res;
 
 	if( rt_g.rtg_parallel ) {

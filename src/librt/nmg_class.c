@@ -174,7 +174,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t
 			break;
 		case 2:
 			/* Hit second vertex */
-			closest->p.vu = BU_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p;
+			closest->p.vu = BU_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
 			break;
 		}
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) bu_log("\t\t%s\n", nmg_class_name(closest->class) );
@@ -381,7 +381,7 @@ out:
 		point_t	left_pt;
 		fu = eu->up.lu_p->up.fu_p;
 		bits = (long *)bu_calloc( nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
-		sprintf(buf,"faceclass%d.pl", num++);
+		sprintf(buf, "faceclass%d.pl", num++);
 		if( (fp = fopen(buf, "w")) == NULL) bu_bomb(buf);
 		nmg_pl_fu( fp, fu, bits, 0, 0, 255 );	/* blue */
 		pl_color( fp, 0, 255, 0 );	/* green */
@@ -594,7 +594,7 @@ static const point_t nmg_good_dirs[10] = {
 	{0, 0, 1},
 	{1, 1, 1},
 	{-3,-2,-1},
-	{-1,0, 0},
+	{-1, 0, 0},
 	{0,-1, 0},
 	{0, 0,-1},
 	{-1,-1,-1}
@@ -1001,7 +1001,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 		{
 			/* XXXX This topological algorithm assumes that the intersector is perfect */
 
-			int in=0,out=0,on=0,unk=0;
+			int in=0, out=0, on=0, unk=0;
 			struct edgeuse *eu_loop;
 			struct edgeuse *eu_on=(struct edgeuse *)NULL;
 
@@ -1330,7 +1330,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 	fu2 = lu2->up.fu_p;
 
 	if( fu1->f_p->g.plane_p != fu2->f_p->g.plane_p )  {
-		vect_t fu1_norm,fu2_norm;
+		vect_t fu1_norm, fu2_norm;
 #if 0
 		bu_log("nmg_2lu_identical() loops lu1=x%x lu2=x%x are shared, face geometry is not? fg1=x%x, fg2=x%x\n",
 			lu1, lu2, fu1->f_p->g.plane_p, fu2->f_p->g.plane_p);
@@ -2028,7 +2028,7 @@ retry:
 	{
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 			bu_log( "Final class = %s\n", nmg_class_name( class ) );
-		NMG_INDEX_SET( classlist[class],lu->l_p );
+		NMG_INDEX_SET( classlist[class], lu->l_p );
 		if( class == NMG_CLASS_AonBanti )
 			nmg_reclassify_lu_eu( lu, classlist, NMG_CLASS_AonBanti );
 
@@ -2496,7 +2496,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 			}
 			else
 			{
-				vect_t inward1,inward2;
+				vect_t inward1, inward2;
 
 				/* not all edges are shared,
 				 * try to fnd a vertex in lu1

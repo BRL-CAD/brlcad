@@ -53,7 +53,7 @@
 void
 rt_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf)
 {
-	int i,j;
+	int i, j;
 	const fastf_t * m_ptr = srf->ctl_points;
 	int evp = RT_NURB_EXTRACT_COORDS( srf->pt_type);
 	int rat = RT_NURB_IS_PT_RATIONAL( srf->pt_type);

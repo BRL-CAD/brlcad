@@ -793,7 +793,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/* nhits is even, build segments */
 	{
 		register struct seg *segp;
-		register int	i,j;
+		register int	i, j;
 
 		/* Check in/out properties */
 		for( i=nhits; i > 0; i -= 2 )  {
@@ -906,8 +906,8 @@ rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ A R S _ U V
  *
- *  For a hit on a face of an ARB, return the (u,v) coordinates
- *  of the hit point.  0 <= u,v <= 1.
+ *  For a hit on a face of an ARB, return the (u, v) coordinates
+ *  of the hit point.  0 <= u, v <= 1.
  *  u extends along the Xbasis direction defined by B-A,
  *  v extends along the "Ybasis" direction defined by (B-A)xN.
  */
@@ -980,16 +980,16 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return(0);
 }
 
-#define IJ(ii,jj)	(((i+(ii))*(arip->pts_per_curve+1))+(j+(jj)))
-#define ARS_PT(ii,jj)	(&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
-#define FIND_IJ(a,b)	\
-	if( !(verts[IJ(a,b)]) )  { \
-		verts[IJ(a,b)] = \
-		nmg_find_pt_in_shell( s, ARS_PT(a,b), tol ); \
+#define IJ(ii, jj)	(((i+(ii))*(arip->pts_per_curve+1))+(j+(jj)))
+#define ARS_PT(ii, jj)	(&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
+#define FIND_IJ(a, b)	\
+	if( !(verts[IJ(a, b)]) )  { \
+		verts[IJ(a, b)] = \
+		nmg_find_pt_in_shell( s, ARS_PT(a, b), tol ); \
 	}
-#define ASSOC_GEOM(corn, a,b)	\
+#define ASSOC_GEOM(corn, a, b)	\
 	if( !((*corners[corn])->vg_p) )  { \
-		nmg_vertex_gv( *(corners[corn]), ARS_PT(a,b) ); \
+		nmg_vertex_gv( *(corners[corn]), ARS_PT(a, b) ); \
 	}
 /**
  *			R T _ A R S _ T E S S
@@ -1023,7 +1023,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			if( VAPPROXEQUAL( ARS_PT(0,-2), ARS_PT(0,-1), tol->dist ) )
 				continue;
 
-			code = bn_dist_pt3_lseg3( &dist, pca, ARS_PT(0,-2), ARS_PT(0,-1), ARS_PT(0,0), tol );
+			code = bn_dist_pt3_lseg3( &dist, pca, ARS_PT(0,-2), ARS_PT(0,-1), ARS_PT(0, 0), tol );
 
 			if( code < 2 )
 			{
@@ -1031,7 +1031,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				bu_log( "\tCurve #%d, points #%d through %d are:\n", i, j-2, j );
 				bu_log( "\t\t%d (%f %f %f)\n", j-2, V3ARGS( ARS_PT(0,-2) ) );
 				bu_log( "\t\t%d (%f %f %f)\n", j-1, V3ARGS( ARS_PT(0,-1) ) );
-				bu_log( "\t\t%d (%f %f %f)\n", j, V3ARGS( ARS_PT(0,0) ) );
+				bu_log( "\t\t%d (%f %f %f)\n", j, V3ARGS( ARS_PT(0, 0) ) );
 				bad_ars = 1;
 				j++;
 			}
@@ -1080,10 +1080,10 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			/*
 			 *  First triangular face
 			 */
-			if( bn_3pts_distinct( ARS_PT(0,0), ARS_PT(1,1),
-				ARS_PT(0,1), tol )
-			   && !bn_3pts_collinear( ARS_PT(0,0), ARS_PT(1,1),
-				ARS_PT(0,1), tol )
+			if( bn_3pts_distinct( ARS_PT(0, 0), ARS_PT(1, 1),
+				ARS_PT(0, 1), tol )
+			   && !bn_3pts_collinear( ARS_PT(0, 0), ARS_PT(1, 1),
+				ARS_PT(0, 1), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
 				FIND_IJ(0, 0);
@@ -1091,13 +1091,13 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				FIND_IJ(0, 1);
 
 				/* Construct first face topology, CCW order */
-				corners[0] = &verts[IJ(0,0)];
-				corners[1] = &verts[IJ(0,1)];
-				corners[2] = &verts[IJ(1,1)];
+				corners[0] = &verts[IJ(0, 0)];
+				corners[1] = &verts[IJ(0, 1)];
+				corners[2] = &verts[IJ(1, 1)];
 
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
 					bu_log("rt_ars_tess() nmg_cmface failed, skipping face a[%d][%d]\n",
-						i,j);
+						i, j);
 				}
 
 				/* Associate vertex geometry, if new */
@@ -1114,10 +1114,10 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			/*
 			 *  Second triangular face
 			 */
-			if( bn_3pts_distinct( ARS_PT(1,0), ARS_PT(1,1),
-				ARS_PT(0,0), tol )
-			   && !bn_3pts_collinear( ARS_PT(1,0), ARS_PT(1,1),
-				ARS_PT(0,0), tol )
+			if( bn_3pts_distinct( ARS_PT(1, 0), ARS_PT(1, 1),
+				ARS_PT(0, 0), tol )
+			   && !bn_3pts_collinear( ARS_PT(1, 0), ARS_PT(1, 1),
+				ARS_PT(0, 0), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
 				FIND_IJ(1, 0);
@@ -1125,13 +1125,13 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				FIND_IJ(0, 0);
 
 				/* Construct second face topology, CCW */
-				corners[0] = &verts[IJ(1,0)];
-				corners[1] = &verts[IJ(0,0)];
-				corners[2] = &verts[IJ(1,1)];
+				corners[0] = &verts[IJ(1, 0)];
+				corners[1] = &verts[IJ(0, 0)];
+				corners[2] = &verts[IJ(1, 1)];
 
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
 					bu_log("rt_ars_tess() nmg_cmface failed, skipping face b[%d][%d]\n",
-						i,j);
+						i, j);
 				}
 
 				/* Associate vertex geometry, if new */
@@ -1177,7 +1177,7 @@ rt_ars_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	register struct rt_ars_internal *ars=(struct rt_ars_internal *)intern->idb_ptr;
 	Tcl_DString	ds;
 	struct bu_vls	vls;
-	int		i,j;
+	int		i, j;
 
 	RT_ARS_CK_MAGIC( ars );
 
@@ -1257,7 +1257,7 @@ int
 rt_ars_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
 	struct rt_ars_internal		*ars;
-	int				i,j,k;
+	int				i, j, k;
 	int				len;
 	fastf_t				*array;
 

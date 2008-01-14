@@ -873,7 +873,7 @@ incr_refs( dbip, comb, tp, user_ptr1, user_ptr2, user_ptr3 )
 struct db_i		*dbip;
 struct rt_comb_internal	*comb;
 union tree		*tp;
-genptr_t		user_ptr1,user_ptr2,user_ptr3;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
 {
 	struct directory *dp;
 

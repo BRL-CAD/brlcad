@@ -38,7 +38,7 @@ struct faceuse *fu;
 int loop_entityno;
 int face_orient;
 {
-	int i,j,k;
+	int i, j, k;
 	int entity_type;
 	int no_of_edges;
 	int no_of_param_curves;
@@ -195,7 +195,7 @@ int face_orient;
 		if( ivert != eu->vu_p->v_p || jvert != eu->eumate_p->vu_p->v_p )
 		{
 			bu_log( "ivert=x%x, jvert=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x\n",
-				ivert,jvert,eu->vu_p->v_p,eu->eumate_p->vu_p->v_p );
+				ivert, jvert, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p );
 			bu_exit(1, "Add_nurb_loop_to_face: Edgeuse/vertex mixup!\n" );
 		}
 

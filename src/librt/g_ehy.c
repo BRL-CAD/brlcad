@@ -27,7 +27,7 @@
  *
  *  Given V, H, R, and B, there is a set of points on this ehy
  *
- *  { (x,y,z) | (x,y,z) is on ehy }
+ *  { (x, y, z) | (x, y, z) is on ehy }
  *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on an ehy located at the origin
@@ -37,7 +37,7 @@
  *  vertex of the asymptotic cone.
  *
  *
- *  { (x',y',z') | (x',y',z') is on ehy at origin }
+ *  { (x', y', z') | (x', y', z') is on ehy at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -566,8 +566,8 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ E H Y _ U V
  *
- *  For a hit on the surface of an ehy, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an ehy, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -1345,8 +1345,8 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	nmg_vertex_tabulate( &vert_tab , &s->l.magic );
 	for( i=0 ; i<BU_PTBL_END( &vert_tab ) ; i++ )
 	{
-		point_t pt_prime,tmp_pt;
-		vect_t norm,rev_norm,tmp_vect;
+		point_t pt_prime, tmp_pt;
+		vect_t norm, rev_norm, tmp_vect;
 		struct vertex_g *vg;
 		struct vertex *v;
 		struct vertexuse *vu;

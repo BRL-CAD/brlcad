@@ -45,7 +45,7 @@ struct solid_list
 void
 Convassem()
 {
-	int			i,j,k,comblen,conv=0,totass=0;
+	int			i, j, k, comblen, conv=0, totass=0;
 	struct solid_list	*root,*ptr;
 	struct wmember		head,*wmem;
 	int			no_of_assoc=0;

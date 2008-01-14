@@ -237,7 +237,7 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 int
 f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	register int	i,k;
+	register int	i, k;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
@@ -364,7 +364,7 @@ cmd_killall(ClientData	clientData,
 
 	return wdb_killall_cmd(wdbp, interp, argc, argv);
 #else
-	register int	i,k;
+	register int	i, k;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;

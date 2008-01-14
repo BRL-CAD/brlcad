@@ -463,7 +463,7 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
     /* something considerably larger than squared floating point fuss */
     const fastf_t small = 1.0e-8;
 
-#define Max3(a,b,c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
+#define Max3(a, b, c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
 
     cube.dgr = 3;
     cube.cf[0] = 1.0;
@@ -552,7 +552,7 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
     bu_vls_strcat( &str, buf );
 
     exp = eqn->dgr;
-    for ( n=0; n<=eqn->dgr; n++,exp-- )  {
+    for ( n=0; n<=eqn->dgr; n++, exp-- )  {
 	register double coeff = eqn->cf[n];
 	if( n > 0 )  {
 	    if( coeff < 0 )  {

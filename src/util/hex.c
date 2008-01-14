@@ -73,7 +73,7 @@ void dump(FILE *fd)
 		addr=0;
 		while (addr < offset) {
 			if ((i=fread(buf, 1, sizeof(buf), fd)) == 0) {
-				fprintf(stderr,"%s: offset exceeds end of input!\n", progname);
+				fprintf(stderr, "%s: offset exceeds end of input!\n", progname);
 				bu_exit (-1, NULL);
 			}
 			else addr += i;
@@ -88,7 +88,7 @@ void dump(FILE *fd)
 		printf("%08lx", addr);
 
 		/* produce the hexadecimal dump */
-		for (i=0,p=buf ; i < DUMPLEN ; ++i) {
+		for (i=0, p=buf ; i < DUMPLEN ; ++i) {
 			if (i < bytes) {
 				if (i%4 == 0) printf("  %02x", *p++ & 0x0ff);
 				else printf(" %02x", *p++ & 0x0ff);
@@ -115,7 +115,7 @@ void dump(FILE *fd)
  */
 void usage(void)
 {
-	(void) fprintf(stderr,"Usage: %s [-o offset] [file...]\n", progname);
+	(void) fprintf(stderr, "Usage: %s [-o offset] [file...]\n", progname);
 	bu_exit (1, NULL);
 }
 
@@ -142,14 +142,14 @@ main(int ac, char **av)
 	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac, av, options)) != EOF)
 		if (c == 'o'){
 			newoffset = strtol(bu_optarg, &eos, 0);
 
 			if (eos != bu_optarg)
 				offset = newoffset;
 			else
-				fprintf(stderr,"%s: error parsing offset \"%s\"\n",
+				fprintf(stderr, "%s: error parsing offset \"%s\"\n",
 					progname, bu_optarg);
 		}
 		else usage();

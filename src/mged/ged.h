@@ -89,10 +89,10 @@
 #define MGED_DG_NAME "dg"
 
 #if USE_PROTOTYPES
-#	define	MGED_EXTERN(type_and_name,args)	extern type_and_name args
+#	define	MGED_EXTERN(type_and_name, args)	extern type_and_name args
 #	define	MGED_ARGS(args)			args
 #else
-#	define	MGED_EXTERN(type_and_name,args)	extern type_and_name()
+#	define	MGED_EXTERN(type_and_name, args)	extern type_and_name()
 #	define	MGED_ARGS(args)			()
 #endif
 
@@ -144,7 +144,7 @@ extern int	los_default;
  *
  *  Solids are defined in "model space".
  *  The screen is in "view space".
- *  The visible part of view space is -1.0 <= x,y,z <= +1.0
+ *  The visible part of view space is -1.0 <= x, y, z <= +1.0
  *
  *  The transformation from the origin of model space to the
  *  origin of view space (the "view center") is contained
@@ -816,8 +816,8 @@ void init_sedit(void);
 
 #if 0
 #ifdef HIDE_MGEDS_ARB_ROUTINES
-#  define rt_arb_calc_planes(planes,arb,type,tol) \
-rt_arb_calc_planes(interp,arb,type,planes,tol)
+#  define rt_arb_calc_planes(planes, arb, type, tol) \
+rt_arb_calc_planes(interp, arb, type, planes, tol)
 #else
 int rt_arb_calc_planes(
 	plane_t			planes[6],

@@ -169,14 +169,14 @@ view_2init( struct application *ap )
     uvertp[1] = uhoriz[2] * unorml[0] - unorml[2]* uhoriz[0];
     uvertp[2] = uhoriz[0] * unorml[1] - unorml[0]* uhoriz[1];
     VUNITIZE( uvertp );
-    VPRINT("uhoriz",uhoriz);
-    VPRINT("unorml",unorml);
-    VPRINT("uvertp",uvertp);
+    VPRINT("uhoriz", uhoriz);
+    VPRINT("unorml", unorml);
+    VPRINT("uvertp", uvertp);
     totali = 0.0;
     totalq = 0.0;
 
     VSET(temp, 0.0, 0.0, -1.414 );
-    MAT4X3PNT( aimpt,view2model, temp);
+    MAT4X3PNT( aimpt, view2model, temp);
     bu_log("aim point %f %f %f\n", aimpt[0], aimpt[1], aimpt[2]);
     bu_log("viewsize %f\n", viewsize);
     backoff = 1.414 * viewsize/2.0;

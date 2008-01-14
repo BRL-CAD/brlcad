@@ -30,7 +30,7 @@
 /*  Program to make a window frame using libwdb.  The objects will be  */
 /*  in millimeters.  The window frames are composed of four arb8s and  */
 /*  eight cylinders.  The front of the window frame is centered at  */
-/*  (0,0,0) and extends in the negative x-direction the depth of the  */
+/*  (0, 0, 0) and extends in the negative x-direction the depth of the  */
 /*  window frame.  */
 
 #include "common.h"
@@ -57,7 +57,7 @@ main(int argc, char **argv)
 {							/*  START # 1  */
    struct rt_wdb *fpw;		/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */
-   double hgt,wid,dpt;		/*  Height, width, & depth of outside window  */
+   double hgt, wid, dpt;		/*  Height, width, & depth of outside window  */
 				/*  frame.  */
    double rds;			/*  Radius of the corner of window frame.  */
    double isw;			/*  Width of frame itself.  */
@@ -76,7 +76,7 @@ main(int argc, char **argv)
    struct wmember comb;		/*  Used to make regions.  */
    struct wmember comb1;	/*  Used to make groups.  */
 
-   int i,j,k;			/*  Loop counters.  */
+   int i, j, k;			/*  Loop counters.  */
 
    /*  Set up solid, region, and group names.  */
    solnam[0] = 's';
@@ -109,13 +109,13 @@ main(int argc, char **argv)
    /*  Print info about the window.  */
    (void)printf("\nThe window frames are composed of 4 arb8s and 8\n");
    (void)printf("cylinders.  The front of the window frame is centered\n");
-   (void)printf("at (0,0,0) and extends in the negative x-direction\n");
+   (void)printf("at (0, 0, 0) and extends in the negative x-direction\n");
    (void)printf("the depth of the window frame.\n\n");
 
    /*  Find name of mged file to be created.  */
    (void)printf("Enter the mged file to be created (25 char max).\n\t");
    (void)fflush(stdout);
-   (void)scanf("%26s",filemged);
+   (void)scanf("%26s", filemged);
 
    /*  Find the number of window frames to create.  */
    (void)printf("Enter the number of window frames to create (26 max).\n\t");
@@ -181,33 +181,33 @@ main(int argc, char **argv)
 		temp1[k] = '\0';
 		if(temp[1] == 'n')
 		{
-		   (void)sscanf(temp1,"%d",&numwin);
+		   (void)sscanf(temp1, "%d",&numwin);
 		   if(numwin > 26) numwin = 26;
 		}
-		else if(temp[1] == 'h') (void)sscanf(temp1,"%lf",&hgt);
-		else if(temp[1] == 'w') (void)sscanf(temp1,"%lf",&wid);
-		else if(temp[1] == 'd') (void)sscanf(temp1,"%lf",&dpt);
-		else if(temp[1] == 'r') (void)sscanf(temp1,"%lf",&rds);
-		else if(temp[1] == 'i') (void)sscanf(temp1,"%lf",&isw);
+		else if(temp[1] == 'h') (void)sscanf(temp1, "%lf",&hgt);
+		else if(temp[1] == 'w') (void)sscanf(temp1, "%lf",&wid);
+		else if(temp[1] == 'd') (void)sscanf(temp1, "%lf",&dpt);
+		else if(temp[1] == 'r') (void)sscanf(temp1, "%lf",&rds);
+		else if(temp[1] == 'i') (void)sscanf(temp1, "%lf",&isw);
 	   }						/*  END # 8  */
 	}						/*  END # 5  */
    }							/*  END # 4  */
 
    /*  Print out all info.  */
-   (void)printf("\nmged file:  %s\n",filemged);
-   (void)printf("height of window frame:  %f mm\n",hgt);
-   (void)printf("width of window frame:  %f mm\n",wid);
-   (void)printf("depth of window frame:  %f mm\n",dpt);
-   (void)printf("radius of corner:  %f mm\n",rds);
-   (void)printf("width of frame:  %f mm\n",isw);
-   (void)printf("number of window frames:  %d\n\n",numwin);
+   (void)printf("\nmged file:  %s\n", filemged);
+   (void)printf("height of window frame:  %f mm\n", hgt);
+   (void)printf("width of window frame:  %f mm\n", wid);
+   (void)printf("depth of window frame:  %f mm\n", dpt);
+   (void)printf("radius of corner:  %f mm\n", rds);
+   (void)printf("width of frame:  %f mm\n", isw);
+   (void)printf("number of window frames:  %d\n\n", numwin);
    (void)fflush(stdout);
 
    /*  Open mged file.  */
    fpw = wdb_fopen(filemged);
 
    /*  Write ident record.  */
-   mk_id(fpw,"window frames");
+   mk_id(fpw, "window frames");
 
    for(i=0; i<numwin; i++)
    {							/*  START # 2  */
@@ -239,7 +239,7 @@ main(int argc, char **argv)
 	solnam[5] = 97 + i;
 	solnam[6] = '0';
 	solnam[7] = '1';
-	mk_arb8(fpw,solnam, &pts[0][X]);
+	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/*  Create second arb8.  */
 	pts[0][1] = (fastf_t) (wid / 2.);
@@ -259,7 +259,7 @@ main(int argc, char **argv)
 	pts[7][1] = (fastf_t) ((-wid) / 2.);
 	pts[7][2] = (fastf_t) (hgt / 2. - rds);
 	solnam[7] = '2';
-	mk_arb8(fpw,solnam, &pts[0][X]);
+	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/*  Create cylinder 1.  */
 	bs[0] = (fastf_t)0.;
@@ -270,22 +270,22 @@ main(int argc, char **argv)
 	ht[2] = (fastf_t)0.;
 	rad = (fastf_t)rds;
 	solnam[7] = '3';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Create cylinder 2.  */
 	bs[2] = (-bs[2]);
 	solnam[7] = '4';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Create cylinder 3.  */
 	bs[1] = (-bs[1]);
 	solnam[7] = '5';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Create cylinder 4.  */
 	bs[2] = (-bs[2]);
 	solnam[7] = '6';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Create all inside solids.  */
 	/*  Create arb8 3.  */
@@ -314,7 +314,7 @@ main(int argc, char **argv)
 	pts[7][1] = (fastf_t) (rds - wid / 2.);
 	pts[7][2] = (fastf_t) (hgt / 2. - isw);
 	solnam[7] = '7';
-	mk_arb8(fpw,solnam, &pts[0][X]);
+	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/*  Create arb8 4.  */
 	pts[0][1] = (fastf_t) (wid / 2. - isw);
@@ -334,7 +334,7 @@ main(int argc, char **argv)
 	pts[7][1] = (fastf_t) ((-wid) / 2. + isw);
 	pts[7][2] = (fastf_t) (hgt / 2. - rds);
 	solnam[7] = '8';
-	mk_arb8(fpw,solnam, &pts[0][X]);
+	mk_arb8(fpw, solnam, &pts[0][X]);
 
 	/*  Create cylinder 5.  */
 	bs[0] = (fastf_t)0.;
@@ -345,23 +345,23 @@ main(int argc, char **argv)
 	ht[2] = (fastf_t)0.;
 	rad = (fastf_t) (rds - isw);
 	solnam[7] = '9';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Create cylinder 6.  */
 	bs[2] = (-bs[2]);
 	solnam[6] = '1';
 	solnam[7] = '0';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Create cylinder 7.  */
 	bs[1] = (-bs[1]);
 	solnam[7] = '1';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Create cylinder 8.  */
 	bs[2] = (-bs[2]);
 	solnam[7] = '2';
-	mk_rcc(fpw,solnam,bs,ht,rad);
+	mk_rcc(fpw, solnam, bs, ht, rad);
 
 	/*  Make all regions.  */
 
@@ -377,14 +377,14 @@ main(int argc, char **argv)
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[5] = 97 + i;
 	regnam[6] = '1';
-	mk_lfcomb(fpw,regnam,&comb,1);
+	mk_lfcomb(fpw, regnam,&comb, 1);
 
 	solnam[7] = '2';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
 	solnam[7] = '8';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '2';
-	mk_lfcomb(fpw,regnam,&comb,1);
+	mk_lfcomb(fpw, regnam,&comb, 1);
 
 	solnam[7] = '3';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
@@ -395,7 +395,7 @@ main(int argc, char **argv)
 	solnam[7] = '9';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '3';
-	mk_lfcomb(fpw,regnam,&comb,1);
+	mk_lfcomb(fpw, regnam,&comb, 1);
 
 	solnam[7] = '4';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_INTERSECT);
@@ -407,7 +407,7 @@ main(int argc, char **argv)
 	solnam[7] = '0';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '4';
-	mk_lfcomb(fpw,regnam,&comb,1);
+	mk_lfcomb(fpw, regnam,&comb, 1);
 
 	solnam[6] = '0';
 	solnam[7] = '5';
@@ -420,7 +420,7 @@ main(int argc, char **argv)
 	solnam[7] = '1';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '5';
-	mk_lfcomb(fpw,regnam,&comb,1);
+	mk_lfcomb(fpw, regnam,&comb, 1);
 
 	solnam[6] = '0';
 	solnam[7] = '6';
@@ -433,7 +433,7 @@ main(int argc, char **argv)
 	solnam[7] = '2';
 	(void)mk_addmember(solnam,&comb.l, NULL, WMOP_SUBTRACT);
 	regnam[6] = '6';
-	mk_lfcomb(fpw,regnam,&comb,1);
+	mk_lfcomb(fpw, regnam,&comb, 1);
 
 	/*  Create group.  */
 
@@ -454,7 +454,7 @@ main(int argc, char **argv)
 	(void)mk_addmember(regnam,&comb1.l, NULL, WMOP_UNION);
 
 	grpnam[3] = 97 + i;
-	mk_lfcomb(fpw,grpnam,&comb1,0);
+	mk_lfcomb(fpw, grpnam,&comb1, 0);
    }							/*  START # 2  */
 
    /*  Close file.  */

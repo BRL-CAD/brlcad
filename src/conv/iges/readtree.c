@@ -33,7 +33,7 @@
 union tree *Readtree( matp )
 mat_t *matp;
 {
-	int length,i,k,op;
+	int length, i, k, op;
 	union tree *ptr,*Pop();
 	matp_t new_mat;
 

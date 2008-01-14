@@ -188,7 +188,7 @@ main(int argc, char **argv)
 void
 load_buffer(void)
 {
-	register unsigned char	r,g,b;
+	register unsigned char	r, g, b;
 	register unsigned char	*cp;
 	register int		i;
 	register int		inbase;

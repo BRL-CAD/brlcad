@@ -35,7 +35,7 @@
 #include "plot3.h"
 
 
-int	x,y,z;
+int	x, y, z;
 int	npts;
 char	name[128];
 
@@ -48,7 +48,7 @@ main(void)
     if( scanf( "%d %d %128s", &npts, &z, name ) != 3 )  break;
     for( i=0; i<npts; i++ )  {
       if( scanf( "%d %d", &x, &y ) != 2 )
-	fprintf(stderr,"bad xy\n");
+	fprintf(stderr, "bad xy\n");
       if( i==0 )
 	pl_3move( stdout, x, y, z );
       else

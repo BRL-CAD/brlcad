@@ -174,8 +174,8 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ G R P _ U V
  *
- *  For a hit on a face of an HALF, return the (u,v) coordinates
- *  of the hit point.  0 <= u,v <= 1.
+ *  For a hit on a face of an HALF, return the (u, v) coordinates
+ *  of the hit point.  0 <= u, v <= 1.
  *  u extends along the Xbase direction
  *  v extends along the "Ybase" direction
  *  Note that a "toroidal" map is established, varying each from
@@ -274,7 +274,7 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	union record	*rp;
 
 	fastf_t		orig_eqn[3*3];
-	register double	f,t;
+	register double	f, t;
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -350,7 +350,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 {
 	struct rt_grip_internal *gip;
 	fastf_t			vec[7];
-	register double		f,t;
+	register double		f, t;
 
 	RT_CK_DB_INTERNAL( ip );
 	BU_CK_EXTERNAL( ep );

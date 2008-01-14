@@ -81,7 +81,7 @@ main(int argc, char **argv)
     char	table_file[256] = {0};
 
     if( argc < 2 || argc > 3 )  {
-	fprintf(stderr,"Usage:  tabsub prototype_file [table_file]\n");
+	fprintf(stderr, "Usage:  tabsub prototype_file [table_file]\n");
 	bu_exit(12, NULL);
     }
     strncpy(proto_file, argv[1], 255);
@@ -125,7 +125,7 @@ get_proto(char **buffer, char *file)
     }
 
     if( sb.st_size == 0 )  {
-	fprintf(stderr,"tabsub:  %s is empty\n", file );
+	fprintf(stderr, "tabsub:  %s is empty\n", file );
 	bu_exit(1, NULL);
     }
     *buffer = bu_malloc( (size_t)(sb.st_size+4), "prototype document");
@@ -214,11 +214,11 @@ do_lines(FILE *fp, char *buffer)
 				}
 				*tp++ = '\0';
 			} else {
-				fprintf( stderr,"Line %d:  Bad sequence '@%c'\n", line, *cp);
+				fprintf( stderr, "Line %d:  Bad sequence '@%c'\n", line, *cp);
 				fprintf( stdout, "@%c", *cp++ );
 				continue;
 			}
-			if(debug) fprintf(stderr,"token='%s'\n", token);
+			if(debug) fprintf(stderr, "token='%s'\n", token);
 
 			if( isdigit( token[0] ) )  {
 				fputs( chanwords[str2chan_index(token)],
@@ -369,7 +369,7 @@ multi_words( char *words[], int	nwords )
 		MAT_DELTAS( mat, args[1], args[2], args[3] );
 		if( NEAR_ZERO( args[7], VDIVIDE_TOL ) )  {
 			/* Nearly zero, signal error */
-			fprintf(stderr,"Orient scale arg is near zero ('%s')\n",
+			fprintf(stderr, "Orient scale arg is near zero ('%s')\n",
 				words[7] );
 			return(-1);
 		} else {
@@ -437,7 +437,7 @@ multi_words( char *words[], int	nwords )
 		mat_t	mat;
 		quat_t	quat;
 
-		/* Usage: quat x,y,z,w */
+		/* Usage: quat x, y, z, w */
 		if( nwords < 5 ) return -1;
 		QSET( quat, atof(words[1]), atof(words[2]),
 			atof(words[3]), atof(words[4]) );
@@ -468,7 +468,7 @@ multi_words( char *words[], int	nwords )
 		} else if( strcmp( words[1], "-Z" ) == 0 )  {
 			VSET( from, 0, 0, -1 );
 		} else {
-			fprintf(stderr,"fromto '%s' is not +/-XYZ\n", words[1]);
+			fprintf(stderr, "fromto '%s' is not +/-XYZ\n", words[1]);
 			return -1;
 		}
 		VSET( cur, atof(words[2]), atof(words[3]), atof(words[4]) );
@@ -512,7 +512,7 @@ str2chan_index( char *s )
 
 	chan = atoi( s );
 	if( chan < 0 || chan > nwords-2 )  {
-		fprintf(stderr,"Line %d:  chan %d out of range 0..%d\n", line, chan, nwords-2 );
+		fprintf(stderr, "Line %d:  chan %d out of range 0..%d\n", line, chan, nwords-2 );
 		return(0);		/* Flag [0]:  time channel */
 	}
 	return(chan+1);

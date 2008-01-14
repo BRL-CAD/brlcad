@@ -950,8 +950,8 @@ Bn_Init(Tcl_Interp *interp)
 }
 
 
-double bn_noise_fbm(point_t point,double h_val,double lacunarity,double octaves);
-double bn_noise_turb(point_t point,double h_val,double lacunarity,double octaves);
+double bn_noise_fbm(point_t point, double h_val, double lacunarity, double octaves);
+double bn_noise_turb(point_t point, double h_val, double lacunarity, double octaves);
 /** @} */
 /*
  * Local Variables:

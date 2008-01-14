@@ -381,7 +381,7 @@ genptr_t		client_data;
 		}
 	}
 	if( verbose )
-		bu_log("Attempting to process region %s\n",db_path_to_string( pathp ));
+		bu_log("Attempting to process region %s\n", db_path_to_string( pathp ));
 
 	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
 	BU_UNSETJUMP;		/* Relinquish the protection */

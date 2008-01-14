@@ -145,13 +145,13 @@ main(int argc, char **argv)
 {
 	register int c;
 	int i;
-	int vert1,vert2;
+	int vert1, vert2;
 	int vert_no;
 	int no_of_verts;
 	int comp_code;
 	int array_size=START_ARRAY_SIZE;		/* size of "tankill_verts" array */
 	int surr_code;	/* not useful */
-	float x,y,z;
+	float x, y, z;
 	struct tankill_verts *verts;
 	struct vertex **face_verts[3];
 	struct model *m;

@@ -45,7 +45,7 @@ Readrec( recno )
 int recno;
 {
 
-	int i,ch;
+	int i, ch;
 	long offset;
 
 	currec = recno;

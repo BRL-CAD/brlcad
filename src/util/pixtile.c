@@ -142,7 +142,7 @@ main(int argc, char **argv)
 	}
 
 	if( file_width < 1 ) {
-		fprintf(stderr,"pixtile: width of %d out of range\n", file_width);
+		fprintf(stderr, "pixtile: width of %d out of range\n", file_width);
 		bu_exit (12, NULL);
 	}
 
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 	maximage = im_line * im_high;
 
 	if( (obuf = (char *)malloc( swathbytes )) == (char *)0 )  {
-		(void)fprintf(stderr,"pixtile:  malloc %d failure\n", swathbytes );
+		(void)fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes );
 		bu_exit (10, NULL);
 	}
 
@@ -174,11 +174,11 @@ main(int argc, char **argv)
 			int fd;
 
 			if(image >= maximage )  {
-				fprintf(stderr,"\npixtile: frame full\n");
+				fprintf(stderr, "\npixtile: frame full\n");
 				/* All swaths already written out */
 				bu_exit (0, NULL);
 			}
-			fprintf(stderr,"%d ", framenumber);  fflush(stdout);
+			fprintf(stderr, "%d ", framenumber);  fflush(stdout);
 			if( is_stream )  {
 				fd = 0;		/* stdin */
 			} else {
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 				} else {
 					snprintf(name, 256, "%s.%d", base_name, framenumber);
 				}
-				if( (fd=open(name,0))<0 )  {
+				if( (fd=open(name, 0))<0 )  {
 					perror(name);
 					goto done;
 				}
@@ -219,7 +219,7 @@ done:
 	/* Flush partial frame? */
 	if( rel != 0 )
 		(void)write( 1, obuf, swathbytes );
-	fprintf(stderr,"\n");
+	fprintf(stderr, "\n");
 	bu_exit (0, NULL);
 }
 

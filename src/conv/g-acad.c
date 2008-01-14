@@ -234,13 +234,13 @@ main(int argc, char **argv)
 
 /* Write out ACAD facet header */
 	if (inches)
-		fprintf(fp,"BRL-CAD generated ACAD FACET FILE (Units in)\n");
+		fprintf(fp, "BRL-CAD generated ACAD FACET FILE (Units in)\n");
 	else
-		fprintf(fp,"BRL-CAD generated ACAD FACET FILE (Units mm)\n");
+		fprintf(fp, "BRL-CAD generated ACAD FACET FILE (Units mm)\n");
 
 /* Generate space for number of facet entities, will write over later */
 
-	fprintf(fp,"               ");
+	fprintf(fp, "               ");
 
 	/* Walk indicated tree(s).  Each region will be output separately */
 	(void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
@@ -270,8 +270,8 @@ main(int argc, char **argv)
 /* XXX Write out number of facet entities to .facet file */
 
 	rewind(fp);
-	fseek(fp,46,0); /* Re-position pointer to 2nd line */
-	fprintf(fp,"%d\n",regions_written); /* Write out number of regions */
+	fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
+	fprintf(fp, "%d\n", regions_written); /* Write out number of regions */
 	fclose(fp);
 
 	/* Release dynamic storage */
@@ -393,7 +393,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 /* No mirror plane */
 	fprintf( fp, "%d\n", 0);
 /* Number of vertices */
-	fprintf( fp, "%d\n",numverts);
+	fprintf( fp, "%d\n", numverts);
 
 
 	/* Write numverts, then vertices */
@@ -409,11 +409,11 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 	}
 
 /* Number of sub-parts (always 1 with BRL-CAD) */
-	fprintf( fp, "%d\n",1);
+	fprintf( fp, "%d\n", 1);
 /* Write out name again */
 	fprintf( fp, "%s\n", (region_name+1));
 /* Number of triangles, number of vert/tri (3) */
-	fprintf( fp,"%d       %d\n",numtri,3);
+	fprintf( fp, "%d       %d\n", numtri, 3);
 
 	/* output triangles */
 	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
@@ -481,8 +481,8 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 		}
 	}
 /*	regions_converted++;
-	printf("Processed region %s\n",region_name);
-	printf("Regions attempted = %d Regions done = %d\n",regions_tried,regions_converted);
+	printf("Processed region %s\n", region_name);
+	printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
 	fflush(stdout);
 */
 	bu_ptbl_free( &verts);
@@ -533,7 +533,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 			sofar = db_path_to_string(pathp);
 			bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
+			fprintf(fpe, "Failed Bool. Eval.: %s\n", sofar);
 			fflush(fpe);
 			bu_free( (char *)sofar, "sofar" );
 
@@ -560,7 +560,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			goto out;
 		}
 	}
-	printf("Attempting to process region %s\n",db_path_to_string( pathp ));
+	printf("Attempting to process region %s\n", db_path_to_string( pathp ));
 	fflush(stdout);
 	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol, &rt_uniresource );	/* librt/nmg_bool.c */
 
@@ -622,7 +622,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 				sofar = db_path_to_string(pathp);
 				bu_log( "FAILED in triangulator: %s\n", sofar );
-				fprintf(fpe,"Failed in triangulator: %s\n",sofar);
+				fprintf(fpe, "Failed in triangulator: %s\n", sofar);
 				fflush(fpe);
 				bu_free( (char *)sofar, "sofar" );
 
@@ -676,7 +676,7 @@ out:
 		npercent = (float)(regions_converted * 100) / regions_tried;
 		tpercent = (float)(regions_written * 100) / regions_tried;
 		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		regions_tried, regions_converted, regions_written, npercent,tpercent);
+		regions_tried, regions_converted, regions_written, npercent, tpercent);
 	}
 
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */

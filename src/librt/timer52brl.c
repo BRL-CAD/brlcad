@@ -74,7 +74,7 @@ tvsub(tdiff, t1, t0)
  *
  */
 double
-rt_read_timer(str,len)
+rt_read_timer(str, len)
 char *str;
 {
 	struct timeval timedol;
@@ -94,7 +94,7 @@ char *str;
 }
 
 static void
-psecs(l,cp)
+psecs(l, cp)
 long l;
 register char *cp;
 {
@@ -102,19 +102,19 @@ register char *cp;
 
 	i = l / 3600;
 	if (i) {
-		sprintf(cp,"%d:", i);
+		sprintf(cp, "%d:", i);
 		END(cp);
 		i = l % 3600;
-		sprintf(cp,"%d%d", (i/60) / 10, (i/60) % 10);
+		sprintf(cp, "%d%d", (i/60) / 10, (i/60) % 10);
 		END(cp);
 	} else {
 		i = l;
-		sprintf(cp,"%d", i / 60);
+		sprintf(cp, "%d", i / 60);
 		END(cp);
 	}
 	i %= 60;
 	*cp++ = ':';
-	sprintf(cp,"%d%d", i / 10, i % 10);
+	sprintf(cp, "%d%d", i / 10, i % 10);
 }
 
 static void
@@ -144,13 +144,13 @@ prusage(r0, r1, e, b, outp)
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			sprintf(outp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
 			END(outp);
 			break;
 
 		case 'S':
 			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			sprintf(outp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
 			END(outp);
 			break;
 
@@ -160,60 +160,60 @@ prusage(r0, r1, e, b, outp)
 			break;
 
 		case 'P':
-			sprintf(outp,"%d%%", (int) (t*100 / ((ms ? ms : 1))));
+			sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
 			END(outp);
 			break;
 
 		case 'W':
 			i = r1->ru_nswap - r0->ru_nswap;
-			sprintf(outp,"%d", i);
+			sprintf(outp, "%d", i);
 			END(outp);
 			break;
 
 		case 'X':
-			sprintf(outp,"%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+			sprintf(outp, "%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
 			END(outp);
 			break;
 
 		case 'D':
-			sprintf(outp,"%d", t == 0 ? 0 :
+			sprintf(outp, "%d", t == 0 ? 0 :
 			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
 			END(outp);
 			break;
 
 		case 'K':
-			sprintf(outp,"%d", t == 0 ? 0 :
+			sprintf(outp, "%d", t == 0 ? 0 :
 			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
 			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
 			END(outp);
 			break;
 
 		case 'M':
-			sprintf(outp,"%d", r1->ru_maxrss/2);
+			sprintf(outp, "%d", r1->ru_maxrss/2);
 			END(outp);
 			break;
 
 		case 'F':
-			sprintf(outp,"%d", r1->ru_majflt-r0->ru_majflt);
+			sprintf(outp, "%d", r1->ru_majflt-r0->ru_majflt);
 			END(outp);
 			break;
 
 		case 'R':
-			sprintf(outp,"%d", r1->ru_minflt-r0->ru_minflt);
+			sprintf(outp, "%d", r1->ru_minflt-r0->ru_minflt);
 			END(outp);
 			break;
 
 		case 'I':
-			sprintf(outp,"%d", r1->ru_inblock-r0->ru_inblock);
+			sprintf(outp, "%d", r1->ru_inblock-r0->ru_inblock);
 			END(outp);
 			break;
 
 		case 'O':
-			sprintf(outp,"%d", r1->ru_oublock-r0->ru_oublock);
+			sprintf(outp, "%d", r1->ru_oublock-r0->ru_oublock);
 			END(outp);
 			break;
 		case 'C':
-			sprintf(outp,"%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
+			sprintf(outp, "%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
 				r1->ru_nivcsw-r0->ru_nivcsw );
 			END(outp);
 			break;

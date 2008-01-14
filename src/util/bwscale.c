@@ -158,7 +158,7 @@ get_args(int argc, register char **argv)
 /* ceiling and floor functions for positive numbers */
 #define	CEILING(x)	(((x) > (int)(x)) ? (int)(x)+1 : (int)(x))
 #define	FLOOR(x)	((int)(x))
-#define	MIN(x,y)	(((x) > (y)) ? (y) : (x))
+#define	MIN(x, y)	(((x) > (y)) ? (y) : (x))
 
 
 /*

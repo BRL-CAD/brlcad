@@ -45,7 +45,7 @@
 #include "zlib.h"
 
 
-static png_color_16 def_backgrd={ 0,0,0,0,0 };
+static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
 static char *usage="Usage:\n\t%s [-v] [png_input_file] > pix_output_file\n";
@@ -201,7 +201,7 @@ main(int argc, char **argv)
 
 	png_read_image( png_p, rows );
 
-	fwrite( image, file_width*file_height*3, 1,stdout );
+	fwrite( image, file_width*file_height*3, 1, stdout );
 
 	if( verbose )
 	{

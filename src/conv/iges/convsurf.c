@@ -38,7 +38,7 @@ void
 Convsurfs()
 {
 
-	int i,totsurfs=0,convsurf=0;
+	int i, totsurfs=0, convsurf=0;
 	struct face_g_snurb **surfs;
 	struct face_g_snurb *srf;
 

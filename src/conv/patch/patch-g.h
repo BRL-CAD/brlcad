@@ -51,7 +51,7 @@ struct patch_faces
 
 struct patches{
 
-	fastf_t x,y,z;
+	fastf_t x, y, z;
 	int flag;
 	fastf_t radius;
 	int mirror;
@@ -82,7 +82,7 @@ fastf_t		vertice[5][3];
 fastf_t		first[5][3];
 fastf_t		normal[5][3];
 point_t		ce[4];
-point_t		centroid,Centroid;	/* object, description centroids */
+point_t		centroid, Centroid;	/* object, description centroids */
 unsigned char	rgb[3];
 int debug = 0;
 float mmtin = 25.4;
@@ -118,14 +118,14 @@ int nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 
 struct patches list[15000];
-fastf_t x[1500],y[1500],z[1500];
+fastf_t x[1500], y[1500], z[1500];
 int mirror[1500];
 fastf_t radius[1500];
 fastf_t thk[1500];
 
 struct wmember head;			/* solids for current region */
-struct wmember heada;			/* for component,regions on one side */
-struct wmember headb;			/* for component,mirror regions */
+struct wmember heada;			/* for component, regions on one side */
+struct wmember headb;			/* for component, mirror regions */
 struct wmember headc;			/* second level grouping ? */
 struct wmember headd;			/* current thousand series group */
 struct wmember heade;			/* group containing everything */

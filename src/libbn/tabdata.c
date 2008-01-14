@@ -831,7 +831,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 			 *	Partial interval from k to newx[i+1]
 			 */
 			fastf_t wsum;		/* weighted sum */
-			fastf_t	a,b;		/* values being averaged */
+			fastf_t	a, b;		/* values being averaged */
 			int	s;
 
 			/* Partial interval from newx[i] to j+1 */
@@ -1318,7 +1318,7 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
 /*
  *			B N _ T A B D A T A _ F R O M _ A R R A Y
  *@brief
- *  Given an array of (x,y) pairs, build the relevant bn_table and
+ *  Given an array of (x, y) pairs, build the relevant bn_table and
  *  bn_tabdata structures.
  *
  *  The table is terminated by an x value <= 0.

@@ -36,13 +36,13 @@
 
 
 int do_projection=1;
-char eor,eof,card[256];
-fastf_t scale,inv_scale,conv_factor;
-int units,counter,pstart,dstart,totentities,dirarraylen;
+char eor, eof, card[256];
+fastf_t scale, inv_scale, conv_factor;
+int units, counter, pstart, dstart, totentities, dirarraylen;
 FILE *fd;
 struct rt_wdb *fdout;
 char brlcad_file[256];
-int reclen,currec,ntypes;
+int reclen, currec, ntypes;
 int brlcad_att_de=0;
 struct iges_directory **dir;
 struct reglist *regroot;

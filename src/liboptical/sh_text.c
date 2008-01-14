@@ -122,7 +122,7 @@ struct bu_structparse txt_parse[] = {
 	{"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL }, /*compat*/
-	{"%d",	1, "trans_valid",TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL },
@@ -258,7 +258,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 /*
  *  			T X T _ R E N D E R
  *
- *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  Given a u, v coordinate within the texture ( 0 <= u, v <= 1.0 ),
  *  return a pointer to the relevant pixel.
  *
  *  Note that .pix files are stored left-to-right, bottom-to-top,
@@ -271,7 +271,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		(struct txt_specific *)dp;
 	fastf_t xmin, xmax, ymin, ymax;
 	int dx, dy;
-	register fastf_t r,g,b;
+	register fastf_t r, g, b;
 	struct uvcoord uvc;
 	long tmp;
 
@@ -284,7 +284,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 		bu_log( "in txt_render(): du=%g, dv=%g\n",
 			uvc.uv_du, uvc.uv_dv );
 
-	/* take care of scaling U,V coordinates to get the desired amount
+	/* take care of scaling U, V coordinates to get the desired amount
 	 * of replication of the texture
 	 */
 	uvc.uv_u *= tp->tx_scale[X];
@@ -535,7 +535,7 @@ opaque:
 /*
  *  			B W T X T _ R E N D E R
  *
- *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  Given a u, v coordinate within the texture ( 0 <= u, v <= 1.0 ),
  *  return the filtered intensity.
  *
  *  Note that .bw files are stored left-to-right, bottom-to-top,
@@ -549,7 +549,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 	fastf_t xmin, xmax, ymin, ymax;
 	int line;
 	int dx, dy;
-	int x,y;
+	int x, y;
 	register long bw;
 	struct uvcoord uvc;
 	long tmp;
@@ -567,7 +567,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 		return(1);
 	}
 
-	/* take care of scaling U,V coordinates to get the desired amount
+	/* take care of scaling U, V coordinates to get the desired amount
 	 * of replication of the texture
 	 */
 	uvc.uv_u *= tp->tx_scale[X];
@@ -910,7 +910,7 @@ star_render(register struct application *ap, register struct partition *pp, stru
 /*
  *  			B M P _ R E N D E R
  *
- *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  Given a u, v coordinate within the texture ( 0 <= u, v <= 1.0 ),
  *  compute a new surface normal.
  *  For now we come up with a local coordinate system, and
  *  make bump perturbations from the red and blue channels of
@@ -942,7 +942,7 @@ bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	}
 	/* u is left->right index, v is line number bottom->top */
 	if (swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
-		bu_log("bmp_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
+		bu_log("bmp_render:  bad u, v=%g,%g du, dv=%g,%g seg=%s\n",
 			swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 			swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );

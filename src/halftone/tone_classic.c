@@ -41,12 +41,12 @@ extern struct bn_unif *RandomFlag;
  *	Page 86 of Digital Halftoning.
  */
 static unsigned char	ordered[6][6] = {
-	{5,4,3,14,15,16},
-	{6,1,2,13,18,17},
-	{9,7,8,10,12,11},
-	{14,15,16,5,4,3},
-	{13,18,17,6,1,2},
-	{10,12,11,9,7,8}};
+	{5, 4, 3, 14, 15, 16},
+	{6, 1, 2, 13, 18, 17},
+	{9, 7, 8, 10, 12, 11},
+	{14, 15, 16, 5, 4, 3},
+	{13, 18, 17, 6, 1, 2},
+	{10, 12, 11, 9, 7, 8}};
 
 /*	tone_classic	classic diaginal clustered halftones.
  *

@@ -136,14 +136,14 @@ int main(int argc, char **argv)
 
 	while( !feof( stdin ) ) {
 #ifdef DEBUG
-		fprintf(stderr,"\nWant to xform [%d %d]\n", xform_start, xform_end );
-		fprintf(stderr,"Buffer contains %d samples, from [%d (%d)]\n", buf_num, buf_start, buf_start+buf_num-1 );
+		fprintf(stderr, "\nWant to xform [%d %d]\n", xform_start, xform_end );
+		fprintf(stderr, "Buffer contains %d samples, from [%d (%d)]\n", buf_num, buf_start, buf_start+buf_num-1 );
 #endif /* DEBUG */
 		if( START_IN_BUFFER ) {
 			buf_index = xform_start - buf_start;
 			if( END_NOT_IN_BUFFER ) {
 #ifdef DEBUG
-				fprintf(stderr,"\tend isn't in buffer.\n");
+				fprintf(stderr, "\tend isn't in buffer.\n");
 #endif /* DEBUG */
 				/* Move start to origin */
 				memmove(&buf[0], &buf[buf_index], (buf_num-buf_index)*sizeof(*buf));
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 			}
 		} else {
 #ifdef DEBUG
-			fprintf(stderr,"\tstart isn't in buffer.\n");
+			fprintf(stderr, "\tstart isn't in buffer.\n");
 #endif /* DEBUG */
 			if( input_sample != xform_start )
 				seek_sample( xform_start );
@@ -203,7 +203,7 @@ seek_sample(int n)
 {
 	double	foo;
 
-	fprintf(stderr,"seeking sample %d\n", n );
+	fprintf(stderr, "seeking sample %d\n", n );
 	while( input_sample < n ) {
 		fread( &foo, sizeof(foo), 1, stdin );
 		input_sample++;
@@ -238,7 +238,7 @@ buf_start, buf_num, num_to_read, buf_index );
 	}
 
 #ifdef DEBUG
-	fprintf(stderr,"filled buffer now has %d samples, [%d (%d)].  Input at %d\n", buf_num, buf_start, buf_start+buf_num-1, input_sample );
+	fprintf(stderr, "filled buffer now has %d samples, [%d (%d)].  Input at %d\n", buf_num, buf_start, buf_start+buf_num-1, input_sample );
 #endif /* DEBUG */
 }
 

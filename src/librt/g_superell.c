@@ -73,12 +73,12 @@ const struct bu_structparse rt_superell_parse[] = {
  *
  *  Given V, A, B, and C, there is a set of points on this superellipsoid
  *
- *  { (x,y,z) | (x,y,z) is on superellipsoid defined by V, A, B, C }
+ *  { (x, y, z) | (x, y, z) is on superellipsoid defined by V, A, B, C }
  *
  *  Through a series of Affine Transformations, this set will be
  *  transformed into a set of points on a unit sphere at the origin
  *
- *  { (x',y',z') | (x',y',z') is on Sphere at origin }
+ *  { (x', y', z') | (x', y', z') is on Sphere at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -201,7 +201,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   struct rt_superell_internal	*eip;
   fastf_t	magsq_a, magsq_b, magsq_c;
   mat_t	R, TEMP;
-  vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+  vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
   vect_t	w1, w2, P;	/* used for bounding RPP */
   fastf_t	f;
 
@@ -219,17 +219,17 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     return(1);		/* BAD */
   }
   if (eip->n < rtip->rti_tol.dist || eip->e < rtip->rti_tol.dist) {
-    bu_log("superell(%s):  near-zero length <n,e> curvature (%g, %g) causes problems\n",
+    bu_log("superell(%s):  near-zero length <n, e> curvature (%g, %g) causes problems\n",
 	   stp->st_name, eip->n, eip->e);
     /* BAD */
   }
   if (eip->n > 10000.0 || eip->e > 10000.0) {
-    bu_log("superell(%s):  very large <n,e> curvature (%g, %g) causes problems\n",
+    bu_log("superell(%s):  very large <n, e> curvature (%g, %g) causes problems\n",
 	   stp->st_name, eip->n, eip->e);
     /* BAD */
   }
 
-  /* Create unit length versions of A,B,C */
+  /* Create unit length versions of A, B, C */
   f = 1.0/sqrt(magsq_a);
   VSCALE( Au, eip->a, f );
   f = 1.0/sqrt(magsq_b);
@@ -240,17 +240,17 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
   /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
   f = VDOT( Au, Bu );
   if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-    bu_log("superell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
+    bu_log("superell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
     return(1);		/* BAD */
   }
   f = VDOT( Bu, Cu );
   if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-    bu_log("superell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
+    bu_log("superell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
     return(1);		/* BAD */
   }
   f = VDOT( Au, Cu );
   if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
-    bu_log("superell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
+    bu_log("superell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
     return(1);		/* BAD */
   }
 
@@ -379,7 +379,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   vect_t normalizedShotPoint; /* P' with normalized dist from superell */
   bn_complex_t complexRoot[4]; /* roots returned from poly solver */
   double realRoot[4];  /* real ray distance values */
-  register int i,j;
+  register int i, j;
   register struct seg *segp;
 
   /* translate ray point */
@@ -460,7 +460,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     return(0);		/* No hit */
 
   default:
-    bu_log("rt_superell_shot: reduced 4 to %d roots\n",i);
+    bu_log("rt_superell_shot: reduced 4 to %d roots\n", i);
     bn_pr_roots( stp->st_name, complexRoot, 4 );
     return(0);		/* No hit */
 
@@ -531,7 +531,7 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
   /* XXX END CUT */
 
   /* Is there any possibility of hitting another segment?  Only when there
-   * is a concave curvature (<n,e> > <2.0, 2.0>).
+   * is a concave curvature (<n, e> > <2.0, 2.0>).
    */
   if ( (superell->superell_n > 2.0) || (superell->superell_e > 2.0) ) {
 
@@ -598,8 +598,8 @@ rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, str
 /**
  *  			R T _ S U P E R E L L _ U V
  *
- *  For a hit on the surface of an SUPERELL, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an SUPERELL, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -642,7 +642,7 @@ rt_superell_16pts(register fastf_t *ov,
 	     fastf_t *A,
 	     fastf_t *B)
 {
-	static fastf_t c, d, e, f,g,h;
+	static fastf_t c, d, e, f, g, h;
 
 	e = h = .92388;			/* cos(22.5) */
 	c = d = .707107;		/* cos(45) */
@@ -1015,7 +1015,7 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 		INTCLAMP(mag_c * mm2local) );
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\t<n,e> (%g, %g)\n", INTCLAMP(tip->n), INTCLAMP(tip->e));
+	sprintf(buf, "\t<n, e> (%g, %g)\n", INTCLAMP(tip->n), INTCLAMP(tip->e));
 	bu_vls_strcat(str, buf);
 
 	if( !verbose )  return(0);
@@ -1049,7 +1049,7 @@ rt_superell_ifree(struct rt_db_internal *ip)
 }
 
 /*  The U parameter runs south to north.
- *  In order to orient loop CCW, need to start with 0,1-->0,0 transition
+ *  In order to orient loop CCW, need to start with 0, 1-->0, 0 transition
  *  at the south pole.
  */
 static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {

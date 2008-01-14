@@ -579,9 +579,9 @@ int		npix;
 				op[x].blue  = CMB(ifp)[wglp[x].blue];
 			}
 
-			glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
-			glRasterPos2i(xbase,y);
-			glDrawPixels(npix,1,GL_BGRA_EXT,GL_UNSIGNED_BYTE,
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+			glRasterPos2i(xbase, y);
+			glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
 					(const GLvoid *) op);
 
 		}
@@ -589,12 +589,12 @@ int		npix;
 	} else  {
 		/* No need for software colormapping */
 
-		glPixelStorei(GL_UNPACK_ROW_LENGTH,SGI(ifp)->mi_memwidth);
-		glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
-		glPixelStorei(GL_UNPACK_SKIP_ROWS,ybase);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, SGI(ifp)->mi_memwidth);
+		glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+		glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
 
-		glRasterPos2i(xbase,ybase);
-		glDrawPixels(npix,nlines,GL_BGRA_EXT,GL_UNSIGNED_BYTE,
+		glRasterPos2i(xbase, ybase);
+		glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
 				(const GLvoid *) ifp->if_mem);
 	}
 }
@@ -611,7 +611,7 @@ LONG WINAPI MainWndProc (
 	fprintf(stderr, "XXXMainWndProc: msg - WM_PAINT\n");
 #endif
 	if(!WGL(saveifp)->use_ext_ctrl)
-	    expose_callback(saveifp,0);
+	    expose_callback(saveifp, 0);
 	break;
     case WM_LBUTTONDOWN:
 	break;
@@ -823,7 +823,7 @@ int	width, height;
     wndclass.cbWndExtra    = 0;
     wndclass.hInstance     = Tk_GetHINSTANCE();
     wndclass.hIcon         = LoadIcon (Tk_GetHINSTANCE(), "Win OpenGL");
-    wndclass.hCursor       = LoadCursor (NULL,IDC_ARROW);
+    wndclass.hCursor       = LoadCursor (NULL, IDC_ARROW);
     wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     wndclass.lpszMenuName  = "Win OpenGL";
     wndclass.lpszClassName = "Win OpenGL";
@@ -867,7 +867,7 @@ int	width, height;
 	WGL(ifp)->alive = 1;
 	WGL(ifp)->firstTime = 1;
 
-	ShowWindow(WGL(ifp)->hwnd,SW_SHOW);
+	ShowWindow(WGL(ifp)->hwnd, SW_SHOW);
 	UpdateWindow(WGL(ifp)->hwnd);
 
 	/* Loop through events until first exposure event is processed */
@@ -1189,7 +1189,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 	if( CJDEBUG ) printf("entering wgl_clear\n");
 
 	if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
 		fb_log("Warning, wgl_clear: wglMakeCurrent unsuccessful.\n");
 		}
 	}
@@ -1245,7 +1245,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
-		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
 	}
 	}
 
@@ -1293,7 +1293,7 @@ int	xzoom, yzoom;
 		wgl_clipper(ifp);
 	}else{
 	if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
 			fb_log("Warning, wgl_view: wglMakeCurrent unsuccessful.\n");
 		}
 	}
@@ -1326,7 +1326,7 @@ int	xzoom, yzoom;
 
 	if (multiple_windows) {
 		/* unattach context for other threads to use */
-		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
 	}
 	}
 
@@ -1354,7 +1354,7 @@ int	*xzoom, *yzoom;
 
 
 HIDDEN int
-wgl_read( ifp, x, y, pixelp, count ) /*read count pixels into pixelp starting at x,y*/
+wgl_read( ifp, x, y, pixelp, count ) /*read count pixels into pixelp starting at x, y*/
 FBIO	*ifp;
 int	x, y;
 unsigned char	*pixelp;
@@ -1408,7 +1408,7 @@ int	count;
 
 
 HIDDEN int
-wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart,ystart*/
+wgl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart, ystart*/
 FBIO	*ifp;
 int	xstart, ystart;
 const unsigned char	*pixelp;
@@ -1498,7 +1498,7 @@ int	count;
 		return ret;
 
 	if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
 		    fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
 		}
 	}
@@ -1519,7 +1519,7 @@ int	count;
 		wgl_xmit_scanlines( ifp, ybase, 1, xstart, count );
 		if (WGL(ifp)->copy_flag){
 		    /* repaint one scanline from backbuffer */
-		    backbuffer_to_screen(ifp,ybase);
+		    backbuffer_to_screen(ifp, ybase);
 		}
 	} else {
 		/* Normal case -- multi-pixel write */
@@ -1537,7 +1537,7 @@ int	count;
 
 	if (multiple_windows) {
 	    /* unattach context for other threads to use */
-	    wglMakeCurrent(WGL(ifp)->hdc,NULL);
+	    wglMakeCurrent(WGL(ifp)->hdc, NULL);
 	}
 	}
 
@@ -1593,7 +1593,7 @@ wgl_writerect(FBIO *ifp,
 
 	if(!WGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
-	if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
 		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 	}
@@ -1611,7 +1611,7 @@ wgl_writerect(FBIO *ifp,
 
 	if (multiple_windows) {
 	/* unattach context for other threads to use */
-	wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
+	wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
 	}
 	}
 
@@ -1667,7 +1667,7 @@ wgl_bwwriterect(FBIO *ifp,
 
 	if(!WGL(ifp)->use_ext_ctrl){
 	if (multiple_windows) {
-	if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
 		fb_log("Warning, wgl_writerect: wglMakeCurrent unsuccessful.\n");
 	}
 	}
@@ -1685,7 +1685,7 @@ wgl_bwwriterect(FBIO *ifp,
 
 	if (multiple_windows) {
 	/* unattach context for other threads to use */
-	wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
+	wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
 	}
 	}
 
@@ -1778,7 +1778,7 @@ wgl_wmap(register FBIO *ifp,
 		/* Software color mapping, trigger a repaint */
 
 		if (multiple_windows) {
-		if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+		if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
 			fb_log("Warning, wgl_wmap: wglMakeCurrent unsuccessful.\n");
 		}
 		}
@@ -1791,7 +1791,7 @@ wgl_wmap(register FBIO *ifp,
 		}
 		if (multiple_windows) {
 		/* unattach context for other threads to use, also flushes */
-		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
 		}
 	} else {
 		/* Send color map to hardware */
@@ -1904,7 +1904,7 @@ wgl_flush(FBIO *ifp)
 {
 	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		if (multiple_windows) {
-			if (wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc)==False){
+			if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False){
 				fb_log("Warning, wgl_flush: wglMakeCurrent unsuccessful.\n");
 			}
 		}
@@ -1940,9 +1940,9 @@ fb_cnull(FBIO *ifp)
  * 	 - the current zoom (if_xzoom, if_yzoom)
  * Calculate:
  *	 - the position of the viewport in image space
- *		(xscrmin,xscrmax,yscrmin,yscrmax)
+ *		(xscrmin, xscrmax, yscrmin, yscrmax)
  *	 - the portion of the image which is visible in the viewport
- *		(xpixmin,xpixmax,ypixmin,ypixmax)
+ *		(xpixmin, xpixmax, ypixmin, ypixmax)
  */
 void
 wgl_clipper(register FBIO *ifp)
@@ -2042,7 +2042,7 @@ expose_callback(FBIO *ifp,
 
 
 	if( multiple_windows || WGL(ifp)->firstTime ) {
-		if( wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc) == False) {
+		if( wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc) == False) {
 			fb_log("Warning, libfb/expose_callback: wglMakeCurrent unsuccessful.\n");
 		}
 	}
@@ -2082,7 +2082,7 @@ expose_callback(FBIO *ifp,
 
 		/* clear entire window */
 		glViewport(0, 0, WGL(ifp)->win_width, WGL(ifp)->win_height);
-		glClearColor(0,0,0,0);
+		glClearColor(0, 0, 0, 0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		/* Set normal viewport size to minimum of actual window
@@ -2108,7 +2108,7 @@ expose_callback(FBIO *ifp,
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
-				-1.0,1.0);
+				-1.0, 1.0);
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 	} else if( (WGL(ifp)->win_width > ifp->if_width) ||
 		   (WGL(ifp)->win_height > ifp->if_height) ) {
@@ -2117,13 +2117,13 @@ expose_callback(FBIO *ifp,
 			glDrawBuffer(GL_FRONT);
 			glViewport(0, 0, WGL(ifp)->win_width,
 				   WGL(ifp)->win_height);
-			glClearColor(0,0,0,0);
+			glClearColor(0, 0, 0, 0);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glDrawBuffer(GL_BACK);
 		} else {
 			glViewport(0, 0, WGL(ifp)->win_width,
 				   WGL(ifp)->win_height);
-			glClearColor(0,0,0,0);
+			glClearColor(0, 0, 0, 0);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
 		/* center viewport */
@@ -2142,22 +2142,22 @@ expose_callback(FBIO *ifp,
 	}
 
 	if( CJDEBUG ) {
-		int dbb,db,view[4],getster,getaux;
+		int dbb, db, view[4], getster, getaux;
 		glGetIntegerv(GL_VIEWPORT, view);
 		glGetIntegerv(GL_DOUBLEBUFFER,&dbb);
 		glGetIntegerv(GL_DRAW_BUFFER,&db);
-		fb_log("Viewport: x %d y %d width %d height %d\n",view[0],
-		       view[1],view[2],view[3]);
-		fb_log("expose: double buffered: %d, draw buffer %d\n",dbb,db);
-		fb_log("front %d\tback%d\n",GL_FRONT,GL_BACK);
+		fb_log("Viewport: x %d y %d width %d height %d\n", view[0],
+		       view[1], view[2], view[3]);
+		fb_log("expose: double buffered: %d, draw buffer %d\n", dbb, db);
+		fb_log("front %d\tback%d\n", GL_FRONT, GL_BACK);
 		glGetIntegerv(GL_STEREO,&getster);
 		glGetIntegerv(GL_AUX_BUFFERS,&getaux);
-		fb_log("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
+		fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
 	}
 
 	if( multiple_windows ) {
 		/* unattach context for other threads to use */
-		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
+		wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc);
 	}
 }
 
@@ -2199,7 +2199,7 @@ reorder_cursor(char *dst,
 	       int ybits)
 {
 	int xbytes;
-	int i,j,k;
+	int i, j, k;
 
 	if( (xbytes = xbits /8) * 8 != xbits)
 		xbytes++;
@@ -2270,7 +2270,7 @@ backbuffer_to_screen(register FBIO *ifp,
 			clp->yscrmax + CLIP_XTRA);
 
 		/* copy image from backbuffer */
-		glRasterPos2i(clp->xpixmin,clp->ypixmin);
+		glRasterPos2i(clp->xpixmin, clp->ypixmin);
 		glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 			SGI(ifp)->mi_yoff + clp->ypixmin,
 			clp->xpixmax - clp->xpixmin +1,
@@ -2281,7 +2281,7 @@ backbuffer_to_screen(register FBIO *ifp,
 	} else if (one_y < clp->ypixmin) {
 		return;
 	} else { /* draw one scanline */
-		glRasterPos2i(clp->xpixmin,one_y);
+		glRasterPos2i(clp->xpixmin, one_y);
 		glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
 			SGI(ifp)->mi_yoff + one_y,
 			clp->xpixmax - clp->xpixmin +1,

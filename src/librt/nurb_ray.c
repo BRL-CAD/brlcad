@@ -122,7 +122,7 @@ rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pl
  * but for now I want to be able to useit with debugging.
  * 						- Paul
  */
-#define FINDZERO(x0,x1,y0,y1) (x0 - y0 * ( x1 - x0) / (y1-y0))
+#define FINDZERO(x0, x1, y0, y1) (x0 - y0 * ( x1 - x0) / (y1-y0))
 
 struct internal_line {
 	fastf_t a, b;

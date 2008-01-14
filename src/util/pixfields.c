@@ -132,7 +132,7 @@ main(int argc, char **argv)
 		if( fread( line1, 3*sizeof(char), width, fldonefp ) != width )
 			break;
 		if( fread( line2, 3*sizeof(char), width, fldtwofp ) != width )  {
-			fprintf(stderr,"pixfields: premature EOF on 2nd file?\n");
+			fprintf(stderr, "pixfields: premature EOF on 2nd file?\n");
 			bu_exit (2, NULL);
 		}
 		if ( (line_number & 1) == 0 )  {

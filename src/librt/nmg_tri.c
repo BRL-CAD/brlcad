@@ -244,7 +244,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 			NMG_CK_EDGEUSE( eu );
 
 			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-				if ( (p=find_pt2d(tbl2d,eu->vu_p)) ) {
+				if ( (p=find_pt2d(tbl2d, eu->vu_p)) ) {
 					pdv_3move(fd, eu->vu_p->v_p->vg_p->coord);
 
 					sprintf(buf, "%g, %g",
@@ -412,11 +412,11 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
  *	Create the 2D coordinate table for the vertexuses of a face.
  *
  *	---------	-----------------------------------
- *	|pt2d --+-----> |     struct pt2d.{magic,coord[3]} |
+ *	|pt2d --+-----> |     struct pt2d.{magic, coord[3]} |
  *	---------	-----------------------------------
- *			|     struct pt2d.{magic,coord[3]} |
+ *			|     struct pt2d.{magic, coord[3]} |
  *			-----------------------------------
- *			|     struct pt2d.{magic,coord[3]} |
+ *			|     struct pt2d.{magic, coord[3]} |
  *			-----------------------------------
  *
  *	When the caller is done, nmg_free_2d_map() should be called to dispose

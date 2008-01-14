@@ -70,7 +70,7 @@ bn_vlist_3string(struct bu_list *vhead,
 
 {
 	register unsigned char *cp;
-	double	offset;			/* offset of char from given x,y */
+	double	offset;			/* offset of char from given x, y */
 	int	ysign;			/* sign of y motion, either +1 or -1 */
 	vect_t	temp;
 	vect_t	loc;
@@ -83,9 +83,9 @@ bn_vlist_3string(struct bu_list *vhead,
 	/*
 	 *  The point "origin" will be the center of the axis rotation.
 	 *  The text is located in a local coordinate system with the
-	 *  lower left corner of the first character at (0,0,0), with
+	 *  lower left corner of the first character at (0, 0, 0), with
 	 *  the text proceeding onward towards +X.
-	 *  We need to rotate the text around it's local (0,0,0),
+	 *  We need to rotate the text around it's local (0, 0, 0),
 	 *  and then translate to the user's designated "origin".
 	 *  If the user provided translation or
 	 *  scaling in his matrix, it will *also* be applied.

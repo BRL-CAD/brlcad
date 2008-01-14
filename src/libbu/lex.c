@@ -149,7 +149,7 @@ top:
 	*used = cp - sp -1;
 	if (*used == 0) *used = 1;
 	unit = (char *)bu_malloc(*used+1, "unit token");
-	strncpy(unit,sp,*used);
+	strncpy(unit, sp,*used);
 	unit[*used] = '\0';
 	*used = sp-bu_vls_addr(rtstr) + *used;
 	if (*used == 0) *used = 1;
@@ -202,8 +202,8 @@ bu_lex(
 			for (cp=unit; *cp && *cp>='0' && *cp <='7'; cp++);
 			if (!*cp) {	/* We have an octal value */
 				token->type = BU_LEX_INT;
-				sscanf(unit,"%o", (unsigned int *)&token->t_int.value);
-				bu_free(unit,"unit token");
+				sscanf(unit, "%o", (unsigned int *)&token->t_int.value);
+				bu_free(unit, "unit token");
 				return used;
 			}
 			/*
@@ -216,7 +216,7 @@ bu_lex(
 				for(;*cp && isxdigit(*cp);cp++);
 				if (!*cp) {
 					token->type = BU_LEX_INT;
-					sscanf(unit,"%x",(unsigned int *)&token->t_int.value);
+					sscanf(unit, "%x",(unsigned int *)&token->t_int.value);
 					bu_free(unit, "unit token");
 					return used;
 				}
@@ -229,7 +229,7 @@ bu_lex(
 		for (cp=unit; *cp && isdigit(*cp); cp++);
 		if (!*cp) {
 			token->type = BU_LEX_INT;
-			sscanf(unit,"%d", &token->t_int.value);
+			sscanf(unit, "%d", &token->t_int.value);
 			bu_free(unit, "unit token");
 			return used;
 		}

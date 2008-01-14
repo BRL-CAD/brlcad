@@ -232,13 +232,13 @@ int main(int argc, char **argv)
 		    hostname[0] != '\0' )
 			(void)fprintf(stderr, "Running on %s\n", hostname);
 #else
-	sprintf(hostname,"Microsoft Windows");
+	sprintf(hostname, "Microsoft Windows");
 	(void)fprintf(stderr, "Running on %s\n", hostname);
 #endif
 	}
 
 	if( bu_optind >= argc )  {
-		fprintf(stderr,"%s:  MGED database not specified\n", argv[0]);
+		fprintf(stderr, "%s:  MGED database not specified\n", argv[0]);
 		(void)fputs(usage, stderr);
 		return 1;
 	}
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 		if( sub_xmax >= width || sub_ymax >= height ) {
 			fprintf( stderr, "rt: illegal values for subgrid %d,%d,%d,%d\n",
 				 sub_xmin, sub_ymin, sub_xmax, sub_ymax );
-			fprintf( stderr, "\tFor a %d X %d image, the subgrid must be within 0,0,%d,%d\n",
+			fprintf( stderr, "\tFor a %d X %d image, the subgrid must be within 0, 0,%d,%d\n",
 				 width, height, width-1, height-1 );
 			return 1;
 		}
@@ -308,7 +308,7 @@ int main(int argc, char **argv)
 	if (npsw > 1) {
 	    rt_g.rtg_parallel = 1;
 	    if (rt_verbosity & VERBOSE_MULTICPU)
-		fprintf(stderr,"Planning to run with %d processors\n", npsw );
+		fprintf(stderr, "Planning to run with %d processors\n", npsw );
 	} else {
 	    rt_g.rtg_parallel = 0;
 	}
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
 		fbp = fb_open( framebuffer, xx, yy );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		if( fbp == FBIO_NULL )  {
-			fprintf(stderr,"rt:  can't open frame buffer\n");
+			fprintf(stderr, "rt:  can't open frame buffer\n");
 			pkg_terminate();
 			return 12;
 		}
@@ -455,7 +455,7 @@ int main(int argc, char **argv)
 		if( outfp == NULL )  outfp = stdout;
 		/* output_is_binary is changed by view_init, as appropriate */
 		if( output_is_binary && isatty(fileno(outfp)) )  {
-			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
+			fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
 			return 14;
 		}
 	}
@@ -504,7 +504,7 @@ int main(int argc, char **argv)
 		 */
 		while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 			if( R_DEBUG&RDEBUG_PARSE )
-				fprintf(stderr,"cmd: %s\n", buf );
+				fprintf(stderr, "cmd: %s\n", buf );
 			ret = rt_do_cmd( rtip, buf, rt_cmdtab );
 			bu_free( buf, "rt_read_cmd command buffer" );
 			if( ret < 0 )

@@ -55,11 +55,11 @@ main()
    FILE *fpw;			/*  Used to write a file.  */
    char file[MAXFIL];		/*  File to be read.  */
    char line[151];		/*  Used to read one line of a file.  */
-   unsigned int main_w,main_h;	/*  Width & height of main window.  */
-   unsigned int wide,high;	/*  Width and height of picture window.  */
-   double pixval[MAXPIX][MAXPIX];/*  Pixel value (width,height).  */
-   double min,max;		/*  Minimum & maximum pixel values.  */
-   int i,j,k;			/*  Loop counters.  */
+   unsigned int main_w, main_h;	/*  Width & height of main window.  */
+   unsigned int wide, high;	/*  Width and height of picture window.  */
+   double pixval[MAXPIX][MAXPIX];/*  Pixel value (width, height).  */
+   double min, max;		/*  Minimum & maximum pixel values.  */
+   int i, j, k;			/*  Loop counters.  */
    double r;			/*  Temporary variable.  */
    int dcol;			/*  Color step.  */
    double pixbin[MAXCOL + 1];	/*  Pixel bins.  */
@@ -71,9 +71,9 @@ main()
    int icolor[MAXPIX][MAXPIX];	/*  Indicates color.  */
    float rgbcol[MAXCOL][3];	/*  RGB colors.  */
    float check;			/*  Used for finding colors.  */
-   long x1,x2,y1,y2;		/*  Corners of window.  */
-   float r1,r2,s1,s2;		/*  Used in determining rectangle to fill.  */
-   long a,b;			/*  Dummy variable.  */
+   long x1, x2, y1, y2;		/*  Corners of window.  */
+   float r1, r2, s1, s2;		/*  Used in determining rectangle to fill.  */
+   long a, b;			/*  Dummy variable.  */
    char string[11];		/*  Used to write a character string.  */
    int c;			/*  Character used to determine end of  */
 				/*  program.  */
@@ -91,9 +91,9 @@ main()
    blackvec[2] = 0;
 
    /*  Get file name to be read.  */
-   (void)printf("Enter name of file to be read (%d char max).\n\t",MAXFIL);
+   (void)printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
    (void)fflush(stdout);
-   (void)scanf("%25s",file);
+   (void)scanf("%25s", file);
 
    /*  Determine what color scale should be used.  */
    (void)printf("Indicate color scale to be used.\n");
@@ -118,9 +118,9 @@ main()
    if(flag_pix == 1)
    {
 	(void)printf("Enter the name of the pix file to be created ");
-	(void)printf("(%d char max).\n\t",MAXFIL);
+	(void)printf("(%d char max).\n\t", MAXFIL);
 	(void)fflush(stdout);
-	(void)scanf("%25s",file_pix); /* MAXFIL */
+	(void)scanf("%25s", file_pix); /* MAXFIL */
    }
 
    (void)printf("Setting color scale - ");
@@ -134,7 +134,7 @@ main()
 	(void)fflush(stdout);
 	if(MAXCOL > 256)
 	{
-	   (void)printf("Maximum number of colors, %d, is ",MAXCOL);
+	   (void)printf("Maximum number of colors, %d, is ", MAXCOL);
 	   (void)printf("greater than 256.\n");
 	   (void)printf("This may create problems.\n");
 	   (void)fflush(stdout);
@@ -156,7 +156,7 @@ main()
 	(void)fflush(stdout);
 	if(MAXCOL > 1280.)
 	{
-	   (void)printf("Maximum number of colors, %d, is ",MAXCOL);
+	   (void)printf("Maximum number of colors, %d, is ", MAXCOL);
 	   (void)printf("greater than 1280.\n");
 	   (void)printf("This may create problems.\n");
 	   (void)fflush(stdout);
@@ -164,7 +164,7 @@ main()
 	/*  Color step.  */
 	dcol = (int)(1280. / MAXCOL);
 	i = 0;
-	/*  Colors (0,0,0) to (0,0,255).  */
+	/*  Colors (0, 0, 0) to (0, 0, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -174,7 +174,7 @@ main()
 	   check += (float)dcol;
 	   i++;
 	}
-	/*  Colors (0,0,255) to (0,255,255).  */
+	/*  Colors (0, 0, 255) to (0, 255, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -184,7 +184,7 @@ main()
 	   check += (float)dcol;
 	   i++;
 	}
-	/*  Colors (0,255,255) to (0,255,0).  */
+	/*  Colors (0, 255, 255) to (0, 255, 0).  */
 	check = 255.;
 	while( (check >= 0.) && (i < MAXCOL) )
 	{
@@ -194,7 +194,7 @@ main()
 	   check -= (float)dcol;
 	   i++;
 	}
-	/*  Colors (0,255,0) to (255,255,0).  */
+	/*  Colors (0, 255, 0) to (255, 255, 0).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -204,7 +204,7 @@ main()
 	   check += (float)dcol;
 	   i++;
 	}
-	/*  Colors (255,255,0) to (255,255,255).  */
+	/*  Colors (255, 255, 0) to (255, 255, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -223,7 +223,7 @@ main()
 	(void)fflush(stdout);
 	if(MAXCOL > 1280.)
 	{
-	   (void)printf("Maximum number of colors, %d, is ",MAXCOL);
+	   (void)printf("Maximum number of colors, %d, is ", MAXCOL);
 	   (void)printf("greater than 1280.\n");
 	   (void)printf("This may create problems.\n");
 	   (void)fflush(stdout);
@@ -231,7 +231,7 @@ main()
 	/*  Color step.  */
 	dcol = (int)(1280. / MAXCOL);
 	i = 0;
-	/*  Colors (0,0,0) to (0,0,255).  */
+	/*  Colors (0, 0, 0) to (0, 0, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -241,7 +241,7 @@ main()
 	   check += (float)dcol;
 	   i++;
 	}
-	/*  Colors (0,0,255) to (255,0,255).  */
+	/*  Colors (0, 0, 255) to (255, 0, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -251,7 +251,7 @@ main()
 	   check += (float)dcol;
 	   i++;
 	}
-	/*  Colors (255,0,255) to (255,0,0).  */
+	/*  Colors (255, 0, 255) to (255, 0, 0).  */
 	check = 255.;
 	while( (check >= 0.) && (i < MAXCOL) )
 	{
@@ -261,7 +261,7 @@ main()
 	   check -= (float)dcol;
 	   i++;
 	}
-	/*  Colors (255,0,0) to (255,255,0).  */
+	/*  Colors (255, 0, 0) to (255, 255, 0).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -271,7 +271,7 @@ main()
 	   check += (float)dcol;
 	   i++;
 	}
-	/*  Colors (255,255,0) to (255,255,255).  */
+	/*  Colors (255, 255, 0) to (255, 255, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -290,33 +290,33 @@ main()
    (void)fflush(stdout);
 
    /*  Open file for reading.  */
-   fpr = fopen(file,"r");
+   fpr = fopen(file, "r");
 
    /*  Check for existance of file.  */
    while(fpr == NULL)
    {
 	(void)printf("\nThe file does not exist, try again.\n");
 	(void)fflush(stdout);
-	(void)scanf("%25s",file); /* MAXFIL */
-	fpr = fopen(file,"r");
+	(void)scanf("%25s", file); /* MAXFIL */
+	fpr = fopen(file, "r");
    }
 
    /*  Read width and height of window.  */
-   (void)bu_fgets(line,150,fpr);
-   (void)sscanf(line,"%u %u",&wide,&high);
+   (void)bu_fgets(line, 150, fpr);
+   (void)sscanf(line, "%u %u",&wide,&high);
 
    /*  Check that width and height are not too big.  */
    if(wide > MAXPIX)
    {
-	(void)printf("The width of the window, %d, is greater\n",wide);
-	(void)printf("than the maximum for width, %d.  Press\n",MAXPIX);
+	(void)printf("The width of the window, %d, is greater\n", wide);
+	(void)printf("than the maximum for width, %d.  Press\n", MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
    }
    if(high > MAXPIX)
    {
-	(void)printf("The height of the window, %d, is greater\n",wide);
-	(void)printf("than the maximum for height, %d.  Press\n",MAXPIX);
+	(void)printf("The height of the window, %d, is greater\n", wide);
+	(void)printf("than the maximum for height, %d.  Press\n", MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
    }
@@ -326,8 +326,8 @@ main()
    {
 	for(j=0; j<(int)wide; j++)
 	{
-	   (void)bu_fgets(line,150,fpr);
-	   (void)sscanf(line,"%lf",&pixval[j][i]);
+	   (void)bu_fgets(line, 150, fpr);
+	   (void)sscanf(line, "%lf",&pixval[j][i]);
 	}
    }
 
@@ -338,15 +338,15 @@ main()
    (void)fflush(stdout);
 
    /*  Print out width and height of window.  */
-   (void)printf("Width:  %d\n",wide);
-   (void)printf("Height:  %d\n",high);
+   (void)printf("Width:  %d\n", wide);
+   (void)printf("Height:  %d\n", high);
    (void)fflush(stdout);
 
    /*  Print out the first ten values as check.  */
 /*
  * for(i=0; i<10; i++)
  * {
- *	(void)printf("value %d:  %f\n",(i+1),pixval[0][i]);
+ *	(void)printf("value %d:  %f\n",(i+1), pixval[0][i]);
  *	(void)fflush(stdout);
  * }
  */
@@ -356,7 +356,7 @@ main()
 /*
  * for(i=((int)wide - 11); i<(int)wide; i++)
  * {
- *	(void)printf("value %d:  %f\n",(i+1),pixval[(int)high - 1][i]);
+ *	(void)printf("value %d:  %f\n",(i+1), pixval[(int)high - 1][i]);
  *	(void)fflush(stdout);
  * }
  */
@@ -380,8 +380,8 @@ main()
    }
 
    /*  Write minimum and maximum pixel values.  */
-   (void)printf("Minimum:  %f\n",min);
-   (void)printf("Maximum:  %f\n",max);
+   (void)printf("Minimum:  %f\n", min);
+   (void)printf("Maximum:  %f\n", max);
 
    (void)printf("Finding pixel bins - ");
    (void)fflush(stdout);
@@ -430,7 +430,7 @@ main()
    y1 = (long)(100 + high + 50);
    x2 = x1 + (long)700;
    y2 = y1 + (long)50;
-   prefposition(x1,x2,y1,y2);
+   prefposition(x1, x2, y1, y2);
 
    /*  Graphics in foreground.  */
    foreground();
@@ -443,7 +443,7 @@ main()
    gconfig();
 
    /*  Scale window.  */
-   ortho2(0.,(float)MAXCOL,0.,50.);
+   ortho2(0.,(float)MAXCOL, 0., 50.);
 
    /*  Set background color.  */
    c3s(blackvec);
@@ -460,28 +460,28 @@ main()
 	r2 = (float)(i + 1);
 	s1 = 0.;
 	s2 = 25.;
-	rectf(r1,s1,r2,s2);
+	rectf(r1, s1, r2, s2);
    }
 
    /*  Write minimum and maximum temperature.  */
    color(YELLOW);
-   cmov2(0.1,30.);
-   (void)sprintf(string,"%.0f",min);
+   cmov2(0.1, 30.);
+   (void)sprintf(string, "%.0f", min);
    charstr(string);
-   cmov2((MAXCOL * .24),30.);
+   cmov2((MAXCOL * .24), 30.);
    r = min + (max - min) / 4.;
-   (void)sprintf(string,"%.0f",r);
+   (void)sprintf(string, "%.0f", r);
    charstr(string);
-   cmov2((MAXCOL * .49),30.);
+   cmov2((MAXCOL * .49), 30.);
    r = min + (max - min) / 2.;
-   (void)sprintf(string,"%.0f",r);
+   (void)sprintf(string, "%.0f", r);
    charstr(string);
-   cmov2((MAXCOL * .74),30.);
+   cmov2((MAXCOL * .74), 30.);
    r = min + (max - min) * 3. / 4.;
-   (void)sprintf(string,"%.0f",r);
+   (void)sprintf(string, "%.0f", r);
    charstr(string);
-   cmov2((MAXCOL * .98),30.);
-   (void)sprintf(string,"%.0f",max);
+   cmov2((MAXCOL * .98), 30.);
+   (void)sprintf(string, "%.0f", max);
    charstr(string);
 
    /*  Set location of window.  */
@@ -489,7 +489,7 @@ main()
    y1 = (long)100;
    x2 = x1 + (long)wide;
    y2 = y1 + (long)high;
-   prefposition(x1,x2,y1,y2);
+   prefposition(x1, x2, y1, y2);
 
    /*  Prevent graphics from being put in background.  */
    foreground();
@@ -498,7 +498,7 @@ main()
    winopen("SEE2");
 
    /*  Scale window.  */
-   ortho2(0.,(float)wide,0.,(float)high);
+   ortho2(0.,(float)wide, 0.,(float)high);
 
    /*  Use rgb mode.  */
    RGBmode();
@@ -523,12 +523,12 @@ main()
 	   r2 = (float)(j + 1);
 	   s1 = (float)(high - i - 1);
 	   s2 = (float)(high - i);
-	   rectf(r1,s1,r2,s2);
+	   rectf(r1, s1, r2, s2);
 	}
 	/*  Print scan line number if necessary.  */
 	if(iscan == 0)
 	{
-	   (void)printf("scan line:  %d\n",i);
+	   (void)printf("scan line:  %d\n", i);
 	   (void)fflush(stdout);
 	}
    }
@@ -549,24 +549,24 @@ main()
    if(flag_pix == 1)
    {						/*  START # 20.  */
 	/*  Open pix file.  */
-	fpw = fopen(file_pix,"w");
+	fpw = fopen(file_pix, "w");
 
 	for(i=high; i>0; i--)
 	{					/*  START # 21.  */
 	   for(j=0; j<wide; j++)
 	   {					/*  START # 22.  */
 		d = (unsigned char)(rgbcol[icolor[j][i-1]][0]);
-		putc(d,fpw);
+		putc(d, fpw);
 		d = (unsigned char)(rgbcol[icolor[j][i-1]][1]);
-		putc(d,fpw);
+		putc(d, fpw);
 		d = (unsigned char)(rgbcol[icolor[j][i-1]][2]);
-		putc(d,fpw);
+		putc(d, fpw);
 	   }					/*  END # 22.  */
 	}					/*  END # 21.  */
 
 	/*  Close file.  */
 	(void)fclose(fpw);
-	(void)printf("Pix file, %s, has been written.\n",file_pix);
+	(void)printf("Pix file, %s, has been written.\n", file_pix);
 	(void)fflush(stdout);
    }						/*  END # 20.  */
 
@@ -578,7 +578,7 @@ main()
 #include <stdio.h>
 main(void)
 {
-	fprintf(stderr,"see2: This program only works on an SGI workstation\n");
+	fprintf(stderr, "see2: This program only works on an SGI workstation\n");
 	bu_exit(1, NULL);
 }
 #endif	/* !defined(IRIX) */

@@ -199,7 +199,7 @@ main(int argc, char **argv)
 	if( file_height == 0 )
 		file_height = screen_height;
 
-	/* Clip below and to left of (0,0) */
+	/* Clip below and to left of (0, 0) */
 	if( screen_xoff < 0 )  {
 		file_width += screen_xoff;
 		screen_xoff = 0;

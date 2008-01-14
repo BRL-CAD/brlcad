@@ -418,7 +418,7 @@ find_solid_with_path(register struct db_full_path *pathp)
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls,"find_solid_with_path() found %d matches\n", count);
+	  bu_vls_printf(&tmp_vls, "find_solid_with_path() found %d matches\n", count);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}

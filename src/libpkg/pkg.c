@@ -166,7 +166,7 @@ static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 
 /* A macro for logging a string message when the debug file is open */
 #ifndef NO_DEBUG_CHECKING
-#  define DMSG(s) if(pkg_debug) {pkg_timestamp(); fprintf(pkg_debug,"%s", s); fflush(pkg_debug);}
+#  define DMSG(s) if(pkg_debug) {pkg_timestamp(); fprintf(pkg_debug, "%s", s); fflush(pkg_debug);}
 #else
 #  define DMSG(s) /**/
 #endif
@@ -335,7 +335,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #ifdef HAVE_SYS_UN_H
-    if( host == NULL || strlen(host) == 0 || strcmp(host,"unix") == 0 ) {
+    if( host == NULL || strlen(host) == 0 || strcmp(host, "unix") == 0 ) {
 	/* UNIX Domain socket, port = pathname */
 	sunhim.sun_family = AF_UNIX;
 	strncpy( sunhim.sun_path, service, sizeof(sunhim.sun_path) );
@@ -792,7 +792,7 @@ pkg_close(register struct pkg_conn *pc)
     }
 
     if( pc->pkc_buf != (char *)0 )  {
-	sprintf(errbuf,"pkg_close(x%lx):  partial input pkg discarded, buf=x%lx\n",
+	sprintf(errbuf, "pkg_close(x%lx):  partial input pkg discarded, buf=x%lx\n",
 		(long)pc, (long)(pc->pkc_buf));
 	pc->pkc_errlog(errbuf);
 	(void)free( pc->pkc_buf );
@@ -921,7 +921,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 	    pkg_perror(pc->pkc_errlog, "pkg_send: writev");
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_send of %d+%d, wrote %d\n",
+	sprintf(errbuf, "pkg_send of %d+%d, wrote %d\n",
 		(int)sizeof(hdr), len, i);
 	(pc->pkc_errlog)(errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
@@ -945,7 +945,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 		pkg_perror(pc->pkc_errlog, "pkg_send: tbuf write");
 		return(-1);
 	    }
-	    sprintf(errbuf,"pkg_send of %d, wrote %d\n",
+	    sprintf(errbuf, "pkg_send of %d, wrote %d\n",
 		    len, i-(int)sizeof(hdr) );
 	    (pc->pkc_errlog)(errbuf);
 	    return(i-sizeof(hdr));	/* amount of user data sent */
@@ -959,7 +959,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 	    pkg_perror(pc->pkc_errlog, "pkg_send: header write");
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_send header of %d, wrote %d\n",
+	sprintf(errbuf, "pkg_send header of %d, wrote %d\n",
 		(int)sizeof(hdr), i);
 	(pc->pkc_errlog)(errbuf);
 	return(-1);		/* amount of user data sent */
@@ -971,7 +971,7 @@ pkg_send(int type, const char *buf, int len, register struct pkg_conn *pc)
 	    pkg_perror(pc->pkc_errlog, "pkg_send: write");
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_send of %d, wrote %d\n", len, i);
+	sprintf(errbuf, "pkg_send of %d, wrote %d\n", len, i);
 	(pc->pkc_errlog)(errbuf);
 	return(i);		/* amount of user data sent */
     }
@@ -1044,7 +1044,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	    (pc->pkc_errlog)(errbuf);
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote %d\n",
+	sprintf(errbuf, "pkg_2send of %d+%d+%d, wrote %d\n",
 		(int)sizeof(hdr), len1, len2, i);
 	(pc->pkc_errlog)(errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
@@ -1070,7 +1070,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 		pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
 		return(-1);
 	    }
-	    sprintf(errbuf,"pkg_2send of %d+%d, wrote %d\n",
+	    sprintf(errbuf, "pkg_2send of %d+%d, wrote %d\n",
 		    len1, len2, i-(int)sizeof(hdr) );
 	    (pc->pkc_errlog)(errbuf);
 	    return(i-sizeof(hdr));	/* amount of user data sent */
@@ -1087,7 +1087,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	    (pc->pkc_errlog)(errbuf);
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote header=%d\n",
+	sprintf(errbuf, "pkg_2send of %d+%d+%d, wrote header=%d\n",
 		(int)sizeof(hdr), len1, len2, i );
 	(pc->pkc_errlog)(errbuf);
 	return(-1);		/* amount of user data sent */
@@ -1101,7 +1101,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	    (pc->pkc_errlog)(errbuf);
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote len1=%d\n",
+	sprintf(errbuf, "pkg_2send of %d+%d+%d, wrote len1=%d\n",
 		(int)sizeof(hdr), len1, len2, i );
 	(pc->pkc_errlog)(errbuf);
 	return(i);		/* amount of user data sent */
@@ -1116,7 +1116,7 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 	    (pc->pkc_errlog)(errbuf);
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote len2=%d\n",
+	sprintf(errbuf, "pkg_2send of %d+%d+%d, wrote len2=%d\n",
 		(int)sizeof(hdr), len1, len2, i );
 	(pc->pkc_errlog)(errbuf);
 	return(len1+i);		/* amount of user data sent */
@@ -1200,7 +1200,7 @@ pkg_flush(register struct pkg_conn *pc)
 	    pkg_perror(pc->pkc_errlog, "pkg_flush: write");
 	    return(-1);
 	}
-	sprintf(errbuf,"pkg_flush of %d, wrote %d\n",
+	sprintf(errbuf, "pkg_flush of %d, wrote %d\n",
 		pc->pkc_strpos, i);
 	(pc->pkc_errlog)(errbuf);
 	pc->pkc_strpos -= i;
@@ -1584,7 +1584,7 @@ pkg_dispatch(register struct pkg_conn *pc)
 	pc->pkc_switch[i].pks_handler(pc, tempbuf);
 	return(1);
     }
-    sprintf(errbuf,"pkg_dispatch:  no handler for message type %d, len %ld\n",
+    sprintf(errbuf, "pkg_dispatch:  no handler for message type %d, len %ld\n",
 	    pc->pkc_type, pc->pkc_len );
     (pc->pkc_errlog)(errbuf);
     (void)free(pc->pkc_buf);
@@ -1617,7 +1617,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
     if( (i = pkg_inget( pc, (char *)&(pc->pkc_hdr),
 			sizeof(struct pkg_header) )) != sizeof(struct pkg_header) )  {
 	if(i > 0) {
-	    sprintf(errbuf,"pkg_gethdr: header read of %d?\n", i);
+	    sprintf(errbuf, "pkg_gethdr: header read of %d?\n", i);
 	    (pc->pkc_errlog)(errbuf);
 	}
 	return(-1);
@@ -1640,7 +1640,7 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
 	if( (i=pkg_inget( pc,
 			  ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
 			  1 )) != 1 )  {
-	    sprintf(errbuf,"pkg_gethdr: hdr read=%d?\n", i);
+	    sprintf(errbuf, "pkg_gethdr: hdr read=%d?\n", i);
 	    (pc->pkc_errlog)(errbuf);
 	    return(-1);
 	}

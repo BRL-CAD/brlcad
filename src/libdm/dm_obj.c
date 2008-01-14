@@ -310,7 +310,7 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* check to see if display manager object exists */
 	for (BU_LIST_FOR(dmop, dm_obj, &HeadDMObj.l)) {
-		if (strcmp(argv[name_index],bu_vls_addr(&dmop->dmo_name)) == 0) {
+		if (strcmp(argv[name_index], bu_vls_addr(&dmop->dmo_name)) == 0) {
 			Tcl_AppendStringsToObj(obj, "dmo_open: ", argv[name_index],
 					       " exists.", (char *)NULL);
 			Tcl_SetObjResult(interp, obj);
@@ -394,11 +394,11 @@ dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* acquire dm_obj struct */
-	BU_GETSTRUCT(dmop,dm_obj);
+	BU_GETSTRUCT(dmop, dm_obj);
 
 	/* initialize dm_obj */
 	bu_vls_init(&dmop->dmo_name);
-	bu_vls_strcpy(&dmop->dmo_name,argv[name_index]);
+	bu_vls_strcpy(&dmop->dmo_name, argv[name_index]);
 	dmop->dmo_dmp = dmp;
 	VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
 	VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
@@ -1184,7 +1184,7 @@ dmo_drawString_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **a
 	size = atoi(argv[5]);
 	use_aspect = atoi(argv[6]);
 
-	return DM_DRAW_STRING_2D(dmop->dmo_dmp,argv[2],x,y,size,use_aspect);
+	return DM_DRAW_STRING_2D(dmop->dmo_dmp, argv[2], x, y, size, use_aspect);
 }
 
 static int
@@ -1207,7 +1207,7 @@ dmo_drawPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	x = atof(argv[2]);
 	y = atof(argv[3]);
 
-	return DM_DRAW_POINT_2D(dmop->dmo_dmp,x,y);
+	return DM_DRAW_POINT_2D(dmop->dmo_dmp, x, y);
 }
 
 /*
@@ -1239,7 +1239,7 @@ dmo_drawLine_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	x2 = atof(argv[4]);
 	y2 = atof(argv[5]);
 
-	return DM_DRAW_LINE_2D(dmop->dmo_dmp,x1,y1,x2,y2);
+	return DM_DRAW_LINE_2D(dmop->dmo_dmp, x1, y1, x2, y2);
 }
 
 /*
@@ -1277,7 +1277,7 @@ dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	}
 
 	/* XXX this causes a core dump if vp is bogus */
-	BN_CK_VLIST_TCL(interp,vp);
+	BN_CK_VLIST_TCL(interp, vp);
 
 	return DM_DRAW_VLIST(dmop->dmo_dmp, vp);
 }
@@ -1374,9 +1374,9 @@ dmo_drawScale_cmd(struct dm_obj	*dmop,
     x2 = 0.5;
     y1 = -0.8;
     y2 = -0.8;
-    DM_DRAW_LINE_2D(dmop->dmo_dmp,x1,y1,x2,y2);
-    DM_DRAW_LINE_2D(dmop->dmo_dmp,x1,y1+0.01,x1,y1-0.01);
-    DM_DRAW_LINE_2D(dmop->dmo_dmp,x2,y1+0.01,x2,y1-0.01);
+    DM_DRAW_LINE_2D(dmop->dmo_dmp, x1, y1, x2, y2);
+    DM_DRAW_LINE_2D(dmop->dmo_dmp, x1, y1+0.01, x1, y1-0.01);
+    DM_DRAW_LINE_2D(dmop->dmo_dmp, x2, y1+0.01, x2, y1-0.01);
     DM_DRAW_STRING_2D(dmop->dmo_dmp, "0", x1-0.005, y1 + 0.02, 1, 0);
     DM_DRAW_STRING_2D(dmop->dmo_dmp, bu_vls_addr(&vls),
 		      x2-(soffset * 0.015),
@@ -1758,16 +1758,16 @@ dmo_labelPrimitive(struct dg_obj		*dgop,
 
 	fp = &RT_NURB_GET_CONTROL_POINT( surf, 0, 0 );
 	MAT4X3PNT(pos_view, xform, fp);
-	POINT_LABEL_STR( pos_view, " 0,0" );
+	POINT_LABEL_STR( pos_view, " 0, 0" );
 	fp = &RT_NURB_GET_CONTROL_POINT( surf, 0, surf->s_size[1]-1 );
 	MAT4X3PNT(pos_view, xform, fp);
-	POINT_LABEL_STR( pos_view, " 0,u" );
+	POINT_LABEL_STR( pos_view, " 0, u" );
 	fp = &RT_NURB_GET_CONTROL_POINT( surf, surf->s_size[0]-1, 0 );
 	MAT4X3PNT(pos_view, xform, fp);
-	POINT_LABEL_STR( pos_view, " v,0" );
+	POINT_LABEL_STR( pos_view, " v, 0" );
 	fp = &RT_NURB_GET_CONTROL_POINT( surf, surf->s_size[0]-1, surf->s_size[1]-1 );
 	MAT4X3PNT(pos_view, xform, fp);
-	POINT_LABEL_STR( pos_view, " u,v" );
+	POINT_LABEL_STR( pos_view, " u, v" );
     }
 
 	break;
@@ -2287,7 +2287,7 @@ dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				      (unsigned char)r,
 				      (unsigned char)g,
 				      (unsigned char)b,
-				      1,1.0);
+				      1, 1.0);
 	}
 
 	/* wrong number of arguments */
@@ -3045,9 +3045,9 @@ dmo_png_cmd(struct dm_obj	*dmop,
 	    bu_log("blue_shift - %ld\n", blue_shift);
 	    bu_log("Reversing the byte order!!!\n");
 #endif
-	    DM_REVERSE_COLOR_BYTE_ORDER(red_shift,ximage_p->red_mask);
-	    DM_REVERSE_COLOR_BYTE_ORDER(green_shift,ximage_p->green_mask);
-	    DM_REVERSE_COLOR_BYTE_ORDER(blue_shift,ximage_p->blue_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(red_shift, ximage_p->red_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(green_shift, ximage_p->green_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(blue_shift, ximage_p->blue_mask);
 	}
 
     } else if (bytes_per_pixel == 2) {
@@ -3362,7 +3362,7 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			return TCL_ERROR;
 		}
 
-		return DM_DEBUG(dmop->dmo_dmp,level);
+		return DM_DEBUG(dmop->dmo_dmp, level);
 	}
 
 	bu_vls_init(&vls);

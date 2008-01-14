@@ -762,7 +762,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			struct edgeuse *eu1,*eu2;
-			vect_t v1,v2;
+			vect_t v1, v2;
 
 			NMG_CK_LOOPUSE( lu );
 

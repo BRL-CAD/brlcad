@@ -89,7 +89,7 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
-static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
+static mat_t	model2hv;		/* model coords to GIFT h, v in inches */
 
 static FILE	*plotfp;		/* optional plotting file */
 static long	line_num;		/* count of lines output to shotline file */
@@ -198,7 +198,7 @@ view_2init(struct application *ap)
 	 *	number of views, title
 	 *  Initially, do only one view per run of RTG3.
 	 */
-	fprintf(outfp,"%5d %s %s\n", 1, save_file, save_obj);
+	fprintf(outfp, "%5d %s %s\n", 1, save_file, save_obj);
 
 	/*
 	 *  Header for each view, to be read by COVART format:
@@ -222,7 +222,7 @@ view_2init(struct application *ap)
 		azimuth, elevation, cell_width*MM2IN );
 
 	/*
-	 *  GIFT uses an H,V coordinate system that is anchored at the
+	 *  GIFT uses an H, V coordinate system that is anchored at the
 	 *  model origin, but rotated according to the view.
 	 *  For convenience later, build a matrix that will take
 	 *  a point in model space (with units of mm), and convert it
@@ -272,9 +272,9 @@ view_pixel(void)
  *  'dcorrection' distance correction factor.
  *
  *  Also note that the GIFT-3 format requires information about the start
- *  point of the ray in two formats.  First, the h,v coordinates of the
+ *  point of the ray in two formats.  First, the h, v coordinates of the
  *  grid cell CENTERS (in screen space coordinates) are needed.
- *  Second, the ACTUAL h,v coordinates fired from are needed.
+ *  Second, the ACTUAL h, v coordinates fired from are needed.
  *
  *  An optional rtg3.pl UnixPlot file is written, permitting a
  *  color vector display of ray-model intersections.
@@ -290,7 +290,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	const char		*fmt;		/* printf() format string */
 	struct bu_vls		str;
 	char			buf[128];	/* temp. sprintf() buffer */
-	point_t			hv;		/* GIFT h,v coords, in inches */
+	point_t			hv;		/* GIFT h, v coords, in inches */
 	point_t			hvcen;
 	int			prev_id=-1;
 	point_t			first_hit;
@@ -333,7 +333,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	bu_vls_extend( &str, 80 * (comp_count+1) );
 
 	/*
-	 *  Find the H,V coordinates of the grid cell center.
+	 *  Find the H, V coordinates of the grid cell center.
 	 *  RT uses the lower left corner of each cell.
 	 */
 	{
@@ -348,8 +348,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	}
 
 	/*
-	 *  Find exact h,v coordinates of actual ray start by
-	 *  projecting start point into GIFT h,v coordinates.
+	 *  Find exact h, v coordinates of actual ray start by
+	 *  projecting start point into GIFT h, v coordinates.
 	 */
 	MAT4X3PNT( hv, model2hv, ap->a_ray.r_pt );
 
@@ -357,7 +357,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	 *  In RT, rays are launched from the plane of the screen,
 	 *  and ray distances are relative to the start point.
 	 *  In GIFT-3 output files, ray distances are relative to
-	 *  the (H,V) plane translated so that it contains the origin.
+	 *  the (H, V) plane translated so that it contains the origin.
 	 *  A distance correction is required to convert between the two.
 	 *  Since this really should be computed only once, not every time,
 	 *  the trip_count flag was added.
@@ -395,8 +395,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 			bu_log("ERROR: dfirst=%g at partition x%x\n", dfirst , PartHeadp->pt_forw );
 			bu_log("\tdcorrection = %f\n" , dcorrection );
 			bu_log("\tray start point is ( %f %f %f ) in direction ( %f %f %f )\n" , V3ARGS( ap->a_ray.r_pt ) , V3ARGS( ap->a_ray.r_dir ) );
-			VJOIN1( PartHeadp->pt_forw->pt_inhit->hit_point , ap->a_ray.r_pt ,PartHeadp->pt_forw->pt_inhit->hit_dist , ap->a_ray.r_dir );
-			VJOIN1( PartHeadp->pt_back->pt_outhit->hit_point , ap->a_ray.r_pt ,PartHeadp->pt_forw->pt_outhit->hit_dist , ap->a_ray.r_dir );
+			VJOIN1( PartHeadp->pt_forw->pt_inhit->hit_point , ap->a_ray.r_pt , PartHeadp->pt_forw->pt_inhit->hit_dist , ap->a_ray.r_dir );
+			VJOIN1( PartHeadp->pt_back->pt_outhit->hit_point , ap->a_ray.r_pt , PartHeadp->pt_forw->pt_outhit->hit_dist , ap->a_ray.r_dir );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
 	/* End of bug trap. */
@@ -404,8 +404,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	/*
 	 *  Output the ray header.  The GIFT statements that
 	 *  would have generated this are:
-	 *  410	write(1,411) hcen,vcen,h,v,ncomp,dfirst,dlast,a,e
-	 *  411	format(2f7.1,2f9.3,i3,2f8.2,' A',f6.1,' E',f6.1)
+	 *  410	write(1, 411) hcen, vcen, h, v, ncomp, dfirst, dlast, a, e
+	 *  411	format(2f7.1, 2f9.3, i3, 2f8.2,' A', f6.1,' E', f6.1)
 	 */
 
 #define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f"
@@ -426,7 +426,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	 *  there are more than 80 columns on UNIX "cards", and
 	 *  add debugging information to the end of the line to
 	 *  allow this shotline to be reproduced offline.
-	 *   -b gives the shotline x,y coordinates when re-running RTG3,
+	 *   -b gives the shotline x, y coordinates when re-running RTG3,
 	 *   -p and -d are used with RTSHOT
 	 *  The easy way to activate this is with the harmless -!1 option
 	 *  when running RTG3.
@@ -448,16 +448,16 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		/*
 		 *  The GIFT statements that would have produced
 		 *  this output are:
-		 *	do 632 i=icomp,iend
+		 *	do 632 i=icomp, iend
 		 *	if(clos(icomp).gt.999.99.or.slos(i).gt.999.9) goto 635
 		 * 632	continue
-		 * 	write(1,633)(item(i),clos(i),cangi(i),cango(i),
-		 * &			kspac(i),slos(i),i=icomp,iend)
-		 * 633	format(1x,3(i4,f6.2,2f5.1,i1,f5.1))
+		 * 	write(1, 633)(item(i), clos(i), cangi(i), cango(i),
+		 * &			kspac(i), slos(i), i=icomp, iend)
+		 * 633	format(1x, 3(i4, f6.2, 2f5.1, i1, f5.1))
 		 *	goto 670
-		 * 635	write(1,636)(item(i),clos(i),cangi(i),cango(i),
-		 * &			kspac(i),slos(i),i=icomp,iend)
-		 * 636	format(1x,3(i4,f6.1,2f5.1,i1,f5.0))
+		 * 635	write(1, 636)(item(i), clos(i), cangi(i), cango(i),
+		 * &			kspac(i), slos(i), i=icomp, iend)
+		 * 636	format(1x, 3(i4, f6.1, 2f5.1, i1, f5.0))
 		 */
 		fastf_t	comp_thickness;	/* component line of sight thickness */
 		fastf_t	in_obliq;	/* in obliquity angle */
@@ -486,8 +486,8 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		 */
 #if 0
 		if( comp_thickness <= 0 )  {
-			VJOIN1( pp->pt_inhit->hit_point , ap->a_ray.r_pt ,pp->pt_inhit->hit_dist , ap->a_ray.r_dir );
-			VJOIN1( pp->pt_outhit->hit_point , ap->a_ray.r_pt ,pp->pt_outhit->hit_dist , ap->a_ray.r_dir );
+			VJOIN1( pp->pt_inhit->hit_point , ap->a_ray.r_pt , pp->pt_inhit->hit_dist , ap->a_ray.r_dir );
+			VJOIN1( pp->pt_outhit->hit_point , ap->a_ray.r_pt , pp->pt_outhit->hit_dist , ap->a_ray.r_dir );
 			bu_log("ERROR: comp_thickness=%g for region id = %d at h=%g, v=%g (x=%d, y=%d), partition at x%x\n",
 				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y , pp );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
@@ -658,7 +658,7 @@ out:
 			VJOIN1(outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
 				ap->a_ray.r_dir);
 				pl_color(plotfp, 0, 255, 0);	/* green */
-			pdv_3line(plotfp, inpt,outpt);
+			pdv_3line(plotfp, inpt, outpt);
 
 			if(air_thickness > 0) {
 				vect_t     air_end;

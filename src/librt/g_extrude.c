@@ -186,7 +186,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	}
 	curr_vert = skt->vert_count;
 
-	/* and the u,v vectors */
+	/* and the u, v vectors */
 	MAT4X3VEC( extr->u_vec, extr->rot, eip->u_vec );
 	MAT4X3VEC( extr->v_vec, extr->rot, eip->v_vec );
 
@@ -1091,8 +1091,8 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
 /**
  *  			R T _ E X T R U D E _ U V
  *
- *  For a hit on the surface of an extrude, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an extrude, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */

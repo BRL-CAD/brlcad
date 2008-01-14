@@ -220,7 +220,7 @@ main(int argc, char **argv)
 					scanline );
 
 			if( got != screen_width )  {
-				fprintf(stderr,"fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
+				fprintf(stderr, "fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
 					y, got, screen_width);
 				break;
 			}
@@ -243,7 +243,7 @@ main(int argc, char **argv)
 					scanline );
 
 			if( got != screen_width )  {
-				fprintf(stderr,"fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
+				fprintf(stderr, "fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
 					y, got, screen_width);
 				break;
 			}

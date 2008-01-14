@@ -123,7 +123,7 @@ stk_open(FBIO *ifp, char *file, int width, int height)
 	FB_CK_FBIO(ifp);
 
 	/* Check for /dev/stack */
-	if( strncmp(file,ifp->if_name,strlen("/dev/stack")) != 0 ) {
+	if( strncmp(file, ifp->if_name, strlen("/dev/stack")) != 0 ) {
 		fb_log( "stack_dopen: Bad device %s\n", file );
 		return(-1);
 	}

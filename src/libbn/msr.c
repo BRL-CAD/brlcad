@@ -86,9 +86,9 @@ struct bn_unif *
 bn_unif_init(long int setseed, int method)
 {
 	struct bn_unif *p;
-	p = (struct bn_unif *) bu_malloc(sizeof(struct bn_unif),"bn_unif");
+	p = (struct bn_unif *) bu_malloc(sizeof(struct bn_unif), "bn_unif");
 	p->msr_longs = (long *) bu_malloc(BN_MSR_MAXTBL*sizeof(long), "msr long table");
-	p->msr_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double),"msr double table");
+	p->msr_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr double table");
 	p->msr_seed = 1;
 	p->msr_long_ptr = 0;
 	p->msr_double_ptr = 0;
@@ -132,7 +132,7 @@ bn_unif_init(long int setseed, int method)
 long
 bn_unif_long_fill(struct bn_unif *p)
 {
-	register long test,work_seed;
+	register long test, work_seed;
 	register int i;
 
 	/*
@@ -194,7 +194,7 @@ bn_unif_long_fill(struct bn_unif *p)
 double
 bn_unif_double_fill(struct bn_unif *p)
 {
-	register long test,work_seed;
+	register long test, work_seed;
 	register int i;
 
 	/*
@@ -267,9 +267,9 @@ struct bn_gauss *
 bn_gauss_init(long int setseed, int method)
 {
 	struct bn_gauss *p;
-	p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss),"bn_msr_guass");
-	p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double),"msr guass table");
-	p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double),"msr guass doubles");
+	p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss), "bn_msr_guass");
+	p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass table");
+	p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass doubles");
 	p->msr_gauss_seed = 1;
 	p->msr_gauss_ptr = 0;
 	p->msr_gauss_dbl_ptr = 0;
@@ -314,13 +314,13 @@ double
 bn_gauss_fill(struct bn_gauss *p)
 {
 	register int i;
-	/* register */ double v1,v2,r,fac;
+	/* register */ double v1, v2, r, fac;
 
 	BN_CK_GAUSS(p);
 
 	if (p->msr_gausses) {
 		for (i=0; i< BN_MSR_MAXTBL-1; ) {
-			BN_UNIF_CIRCLE((struct bn_unif *)p,v1,v2,r);
+			BN_UNIF_CIRCLE((struct bn_unif *)p, v1, v2, r);
 			if (r<0.00001) continue;
 			fac = sqrt(-2.0*log(r)/r);
 			p->msr_gausses[i++] = v1*fac;
@@ -330,7 +330,7 @@ bn_gauss_fill(struct bn_gauss *p)
 	}
 
 	do {
-		BN_UNIF_CIRCLE((struct bn_unif *)p,v1,v2,r);
+		BN_UNIF_CIRCLE((struct bn_unif *)p, v1, v2, r);
 	} while (r < 0.00001);
 	fac = sqrt(-2.0*log(r)/r);
 	return(v1*fac);
@@ -342,8 +342,8 @@ void
 bn_gauss_free(struct bn_gauss *p)
 {
 	bu_free(p->msr_gauss_doubles, "msr guass doubles");
-	bu_free(p->msr_gausses,"msr guass table");
-	bu_free(p,"bn_msr_guass");
+	bu_free(p->msr_gausses, "msr guass table");
+	bu_free(p, "bn_msr_guass");
 }
 
 

@@ -341,14 +341,14 @@ struct frame *FreeFrame;
 	(p)->fr_forw = FreeFrame; FreeFrame = (p); }
 
 /* Insert "new" partition in front of "old" frame element */
-#define INSERT_FRAME(new,old)	{ \
+#define INSERT_FRAME(new, old)	{ \
 	(new)->fr_back = (old)->fr_back; \
 	(old)->fr_back = (new); \
 	(new)->fr_forw = (old); \
 	(new)->fr_back->fr_forw = (new);  }
 
 /* Append "new" partition after "old" frame element */
-#define APPEND_FRAME(new,old)	{ \
+#define APPEND_FRAME(new, old)	{ \
 	(new)->fr_forw = (old)->fr_forw; \
 	(new)->fr_back = (old); \
 	(old)->fr_forw = (new); \
@@ -545,7 +545,7 @@ main(int argc, char **argv)
 
 	/* Random inits */
 	our_hostname = get_our_hostname();
-	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, brlcad_ident("Network-Distributed RT (REMRT)"));
+	fprintf(stderr, "%s %s %s\n", stamp(), our_hostname, brlcad_ident("Network-Distributed RT (REMRT)"));
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */
@@ -611,14 +611,14 @@ main(int argc, char **argv)
 		/* parse command line args for sizes, etc */
 		finalframe = -1;
 		if( !get_args( argc, argv ) )  {
-			fprintf(stderr,"remrt:  bad arg list\n");
+			fprintf(stderr, "remrt:  bad arg list\n");
 			bu_exit(1, NULL);
 		}
 		if (interactive) work_allocate_method = OPT_FRAME;
 
 		/* take note of database name and treetops */
 		if( bu_optind+2 > argc )  {
-			fprintf(stderr,"remrt:  insufficient args\n");
+			fprintf(stderr, "remrt:  insufficient args\n");
 			bu_exit(2, NULL);
 		}
 		build_start_cmd( argc, argv, bu_optind );
@@ -1383,9 +1383,9 @@ do_a_frame(void)
  *
  *  The .pix file for this frame already has some pixels stored in it
  *  from some earlier, aborted run.
- *  view_pixel() is always careful to write (0,0,1) or some other
+ *  view_pixel() is always careful to write (0, 0, 1) or some other
  *  non-zero tripple in all rendered pixels.
- *  Therefore, if a (0,0,0) tripple is found in the file, it is
+ *  Therefore, if a (0, 0, 0) tripple is found in the file, it is
  *  part of some span which was not yet rendered.
  *
  *  At the outset, the frame is assumed to be entirely un-rendered.
@@ -1553,7 +1553,7 @@ frame_is_done(register struct frame *fr)
 		char *cmd;
 		int len = strlen(frame_script) + strlen(fr->fr_filename) + 20;
 		cmd = malloc(len); /* spaces and frame number */
-		snprintf(cmd, len, "%s %s %ld",frame_script,fr->fr_filename,
+		snprintf(cmd, len, "%s %s %ld", frame_script, fr->fr_filename,
 		    fr->fr_number);
 		if(rem_debug) bu_log("%s %s\n", stamp(), cmd);
 		(void) system(cmd);
@@ -1807,7 +1807,7 @@ top:
 			for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 				if( sp->sr_pc == PKC_NULL )  continue;
 
-				if( (ret = task_server(sp,fr,nowp)) < 0 )  {
+				if( (ret = task_server(sp, fr, nowp)) < 0 )  {
 					/* fr is no longer valid */
 					goto top;
 				} else if (ret == 2) {
@@ -3269,7 +3269,7 @@ cd_movie(int argc, char **argv)
 	register FILE	*fp;
 	register struct frame	*fr;
 	struct frame		dummy_frame;
-	int		a,b;
+	int		a, b;
 	int		i;
 
 	/* movie mat a b */
@@ -3497,7 +3497,7 @@ cd_frames( int argc, char **argv )
 int
 cd_memprint(int argc, char **argv)
 {
-	if (strcmp(argv[1],"on")==0) {
+	if (strcmp(argv[1], "on")==0) {
 		rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
 	} else if (strcmp(argv[1], "off") == 0) {
 		rt_g.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
@@ -3744,10 +3744,10 @@ cd_host(int argc, char **argv)
 				bu_log("passive ");
 				break;
 			case HT_RS:
-				bu_log("r/s %d ",ihp->ht_rs);
+				bu_log("r/s %d ", ihp->ht_rs);
 				break;
 			case HT_PASSRS:
-				bu_log("passive r/s %d ",ihp->ht_rs);
+				bu_log("passive r/s %d ", ihp->ht_rs);
 				break;
 			default:
 				bu_log("?when? ");

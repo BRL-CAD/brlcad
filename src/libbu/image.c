@@ -77,7 +77,7 @@ static int
 guess_file_format(char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if(!strncmp(filename,#name":",strlen(#name))){strncpy(trimmedname,filename+strlen(#name)+1,BUFSIZ);return BU_IMAGE_##name; }
+#define CMP(name) if(!strncmp(filename,#name":", strlen(#name))){strncpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(BMP);
@@ -88,10 +88,10 @@ guess_file_format(char *filename, char *trimmedname)
     strncpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
-#define CMP(name,ext) if(!strncmp(filename+strlen(filename)-strlen(#name)-1,"."#ext,strlen(#name)+1)) return BU_IMAGE_##name;
-    CMP(PNG,png);
-    CMP(BMP,bmp);
-    CMP(BW,bw);
+#define CMP(name, ext) if(!strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_IMAGE_##name;
+    CMP(PNG, png);
+    CMP(BMP, bmp);
+    CMP(BW, bw);
 #undef CMP
     /* defaulting to PIX */
     return BU_IMAGE_PIX;
@@ -105,7 +105,7 @@ png_save(int fd, char *rgb, int width, int height)
     int i = 0;
     FILE *fh;
 
-    fh = fdopen(fd,"wb");
+    fh = fdopen(fd, "wb");
     if(fh==NULL) {
 	perror("fdopen");
 	bu_exit(-1, "png_save trying to get FILE pointer for descriptor\n");
@@ -172,10 +172,10 @@ int
 bu_image_save(char *data, int width, int height, int depth, char *filename, int filetype)
 {
     int i;
-    struct bu_image_file *bif = bu_image_save_open(filename,filetype,width,height,depth);
+    struct bu_image_file *bif = bu_image_save_open(filename, filetype, width, height, depth);
     if(bif==NULL) return -1;
     for(i=0;i<height;++i) {
-	if(bu_image_save_writeline(bif,i,(unsigned char*)(data+i*width*depth))==-1) {
+	if(bu_image_save_writeline(bif, i,(unsigned char*)(data+i*width*depth))==-1) {
 	    bu_log("Uh?");
 	}
     }
@@ -185,11 +185,11 @@ bu_image_save(char *data, int width, int height, int depth, char *filename, int 
 struct bu_image_file *
 bu_image_save_open(char *filename, int format, int width, int height, int depth)
 {
-    struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file),"bu_image_save_open");
+    struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
     bif->magic = BU_IMAGE_FILE_MAGIC;
     if(format == BU_IMAGE_AUTO) {
 	char buf[BUFSIZ];
-	bif->format = guess_file_format(filename,buf);
+	bif->format = guess_file_format(filename, buf);
 	bif->filename = strdup(buf);
     } else {
 	bif->format = format;
@@ -198,12 +198,12 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 
     /* if we want the ability to "continue" a stopped output, this would be
      * where to check for an existing "partial" file. */
-    bif->fd = open(bif->filename,O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
+    bif->fd = open(bif->filename, O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
     if(bif->fd < 0) {
 	char buf[BUFSIZ];
 	perror("open");
 	free(bif);
-	snprintf(buf,BUFSIZ,"ERROR opening output file \"%s\" for writing\n",bif->filename);
+	snprintf(buf, BUFSIZ, "ERROR opening output file \"%s\" for writing\n", bif->filename);
 	bu_exit(-1, buf);
     }
     bif->width = width;
@@ -226,9 +226,9 @@ bu_image_save_close(struct bu_image_file *bif)
 {
     int r = 0;
     switch(bif->format) {
-	case BU_IMAGE_BMP: r = bmp_save(bif->fd,bif->data,bif->width,bif->height); break;
-	case BU_IMAGE_PNG: r = png_save(bif->fd,bif->data,bif->width,bif->height); break;
-	case BU_IMAGE_PIX: r = pix_save(bif->fd,bif->data,bif->width*bif->height*bif->depth); break;
+	case BU_IMAGE_BMP: r = bmp_save(bif->fd, bif->data, bif->width, bif->height); break;
+	case BU_IMAGE_PNG: r = png_save(bif->fd, bif->data, bif->width, bif->height); break;
+	case BU_IMAGE_PIX: r = pix_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
 	case BU_IMAGE_BW: r = bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
     }
     switch(r) {
@@ -236,9 +236,9 @@ bu_image_save_close(struct bu_image_file *bif)
 	/* 1 signals success with no further action needed */
 	case 2: close(bif->fd); break;
     }
-    bu_free(bif->filename,"bu_image_file filename");
-    bu_free(bif->data,"bu_image_file data");
-    bu_free(bif,"bu_image_file");
+    bu_free(bif->filename, "bu_image_file filename");
+    bu_free(bif->data, "bu_image_file data");
+    bu_free(bif, "bu_image_file");
     return 0;
 }
 

@@ -810,7 +810,7 @@ main( int argc, char *argv[] )
 	}
 
 	if( argc - bu_optind < 2 ) {
-		bu_exit(1, "%s\n",usage );
+		bu_exit(1, "%s\n", usage );
 	}
 
 	ply_file = argv[bu_optind++];

@@ -20,7 +20,7 @@
  */
 /** @file fbpoint.c
  *
- *  Tool to identify X,Y coordinates on the screen.
+ *  Tool to identify X, Y coordinates on the screen.
  *
  *  Authors -
  *	Michael Johns Muuss

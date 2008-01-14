@@ -204,7 +204,7 @@ make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bi
 	 *  Set exterior dimensions to interior dimensions.
 	 *  Then, thicken them as necessary due to presence of
 	 *  exterior walls.
-	 *  It may be useful to return the exterior min,max.
+	 *  It may be useful to return the exterior min, max.
 	 */
 	VMOVE( omin, imin );
 	VMOVE( omax, imax );

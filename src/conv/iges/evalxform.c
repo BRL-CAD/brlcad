@@ -43,7 +43,7 @@ void
 Evalxform()
 {
 
-	int i,j,xform;
+	int i, j, xform;
 	struct list *ptr,*ptr1,*ptr_root;
 	mat_t rot;
 

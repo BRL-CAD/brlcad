@@ -70,7 +70,7 @@ char	inbuf[sizeof(struct rasterfile)];
 #define RMT_RAW		2
 	/* Sun supported ras_maptype's */
 #define RMT_NONE	0	/* ras_maplength is expected to be 0 */
-#define RMT_EQUAL_RGB	1	/* red[ras_maplength/3],green[],blue[] */
+#define RMT_EQUAL_RGB	1	/* red[ras_maplength/3], green[], blue[] */
 
 /*
  * NOTES:
@@ -207,7 +207,7 @@ decoderead(unsigned char *buf, int size, int length, FILE *fp)
 	number_read = 0;
 
 	if (size != 1) {
-		fprintf(stderr,"decoderead: unable to process size = %d.\n",
+		fprintf(stderr, "decoderead: unable to process size = %d.\n",
 			size);
 		bu_exit (1, NULL);
 	}
@@ -321,7 +321,7 @@ main(int argc, char **argv)
 	case RT_STANDARD:
 		break;
 	default:
-		fprintf(stderr,"sun-pix:  Unable to process type %d images\n",
+		fprintf(stderr, "sun-pix:  Unable to process type %d images\n",
 			header.ras_type );
 		bu_exit (1, NULL);
 	}
@@ -337,10 +337,10 @@ main(int argc, char **argv)
 			(void)getc(fp);
 		}
 		if (colorout) {
-			fprintf(stdout,"%d\t%04x %04x %04x\n",off,off<<8,
-			    off<<8,off<<8);
-			fprintf(stdout,"%d\t%04x %04x %04x\n",on,on<<8,
-			    on<<8,on<<8);
+			fprintf(stdout, "%d\t%04x %04x %04x\n", off, off<<8,
+			    off<<8, off<<8);
+			fprintf(stdout, "%d\t%04x %04x %04x\n", on, on<<8,
+			    on<<8, on<<8);
 			break;
 		}
 
@@ -362,7 +362,7 @@ main(int argc, char **argv)
 	case 8:
 		/* 8-bit image */
 		if (header.ras_maptype != RMT_EQUAL_RGB) {
-			fprintf(stderr,"sun-pix:  unable to handle depth=8, maptype = %d.\n",
+			fprintf(stderr, "sun-pix:  unable to handle depth=8, maptype = %d.\n",
 				header.ras_maptype);
 			bu_exit (1, NULL);
 		}
@@ -390,7 +390,7 @@ main(int argc, char **argv)
 		}
 		if (colorout) {
 			for (x = 0; x <header.ras_maplength/3; x++) {
-				fprintf(stdout,"%d\t%04x %04x %04x\n",
+				fprintf(stdout, "%d\t%04x %04x %04x\n",
 				    x, Cmap[x].CL_red<<8, Cmap[x].CL_green<<8,
 				    Cmap[x].CL_blue<<8);
 			}
@@ -412,7 +412,7 @@ main(int argc, char **argv)
 		}
 		break;
 	default:
-		fprintf(stderr,"sun-pix:  unable to handle depth=%d\n",
+		fprintf(stderr, "sun-pix:  unable to handle depth=%d\n",
 			header.ras_depth );
 		bu_exit (1, NULL);
 	}

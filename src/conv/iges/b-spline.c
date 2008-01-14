@@ -83,7 +83,7 @@ fastf_t t;	/* parameter value */
 int i;		/* interval number ( 0 through k ) */
 int k;		/* degree of basis function */
 {
-	fastf_t denom1,denom2,retval=0.0;
+	fastf_t denom1, denom2, retval=0.0;
 
 	if( (i+1) > (numknots-1) )
 	{
@@ -120,13 +120,13 @@ B_spline( t , m , k , P , W , pt )
 fastf_t t;	/* parameter value */
 int k;		/* order */
 int m;		/* upper limit of sum (number of control points - 1) */
-point_t P[];	/* Control Points (x,y,z) */
+point_t P[];	/* Control Points (x, y, z) */
 fastf_t W[];	/* Weights for Control Points */
 point_t pt;	/* Evaluated point on spline */
 {
 
-	fastf_t tmp,numer[3],denom=0.0;
-	int i,j;
+	fastf_t tmp, numer[3], denom=0.0;
+	int i, j;
 
 	for( j=0 ; j<3 ; j++ )
 		numer[j] = 0.0;

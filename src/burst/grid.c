@@ -156,7 +156,7 @@ doBursts()
 						gridModel() */
 	for( ; ! userinterrupt; view_pix( &ag ) )
 		{
-		if(	TSTBIT(firemode,FM_FILE)
+		if(	TSTBIT(firemode, FM_FILE)
 		    &&	(!(status = readBurst( burstpoint )) || status == EOF)
 			)
 			break;
@@ -170,7 +170,7 @@ doBursts()
 			brst_log( "Fatal error: raytracing aborted.\n" );
 			return	0;
 			}
-		if( ! TSTBIT(firemode,FM_FILE) )
+		if( ! TSTBIT(firemode, FM_FILE) )
 			{
 			view_pix( &ag );
 			break;
@@ -967,9 +967,9 @@ register struct application	*ap;
 	{	register fastf_t	*vec = ap->a_uvec;
 		fastf_t			gridyinc[3], gridxinc[3];
 		fastf_t			scalecx, scalecy;
-	if( TSTBIT(firemode,FM_SHOT) )
+	if( TSTBIT(firemode, FM_SHOT) )
 		{
-		if( TSTBIT(firemode,FM_FILE) )
+		if( TSTBIT(firemode, FM_FILE) )
 			{
 			switch( readShot( vec ) )
 				{
@@ -980,7 +980,7 @@ register struct application	*ap;
 			}
 		else	/* Single shot specified. */
 			CopyVec( vec, fire );
-		if( TSTBIT(firemode,FM_3DIM) )
+		if( TSTBIT(firemode, FM_3DIM) )
 			{	fastf_t	hitpoint[3];
 			/* Project 3-d hit-point back into grid space. */
 			CopyVec( hitpoint, vec );
@@ -1038,28 +1038,28 @@ gridInit()
 	rt_prep_timer();
 
 #if DEBUG_SHOT
-	if( TSTBIT(firemode,FM_BURST) )
+	if( TSTBIT(firemode, FM_BURST) )
 		brst_log( "gridInit: reading burst points.\n" );
 	else	{
-		if( TSTBIT(firemode,FM_SHOT) )
+		if( TSTBIT(firemode, FM_SHOT) )
 			brst_log( "gridInit: shooting discrete shots.\n" );
 		else
 			brst_log( "gridInit: shooting %s.\n",
-				TSTBIT(firemode,FM_PART) ?
+				TSTBIT(firemode, FM_PART) ?
 				"partial envelope" : "full envelope" );
 		}
-	if( TSTBIT(firemode,FM_BURST) || TSTBIT(firemode,FM_SHOT) )
+	if( TSTBIT(firemode, FM_BURST) || TSTBIT(firemode, FM_SHOT) )
 		{
 		brst_log( "gridInit: reading %s coordinates from %s.\n",
-			TSTBIT(firemode,FM_3DIM) ? "3-d" : "2-d",
-			TSTBIT(firemode,FM_FILE) ? "file" : "command stream" );
+			TSTBIT(firemode, FM_3DIM) ? "3-d" : "2-d",
+			TSTBIT(firemode, FM_FILE) ? "file" : "command stream" );
 
 		}
 	else
-	if( TSTBIT(firemode,FM_FILE) || TSTBIT(firemode,FM_3DIM) )
+	if( TSTBIT(firemode, FM_FILE) || TSTBIT(firemode, FM_3DIM) )
 		brst_log( "BUG: insane combination of fire mode bits:0x%x\n",
 			firemode );
-	if( TSTBIT(firemode,FM_BURST) || shotburst )
+	if( TSTBIT(firemode, FM_BURST) || shotburst )
 		nriplevels = 1;
 	else
 		nriplevels = 0;
@@ -1092,16 +1092,16 @@ gridInit()
 	consVector( viewdir, viewazim, viewelev );
 
 	/* reposition file pointers if necessary */
-	if( TSTBIT(firemode,FM_SHOT) && TSTBIT(firemode,FM_FILE) )
+	if( TSTBIT(firemode, FM_SHOT) && TSTBIT(firemode, FM_FILE) )
 		rewind( shotfp );
 	else
-	if( TSTBIT(firemode,FM_BURST) && TSTBIT(firemode,FM_FILE) )
+	if( TSTBIT(firemode, FM_BURST) && TSTBIT(firemode, FM_FILE) )
 		rewind( burstfp );
 
 	/* Compute distances from grid origin (model origin) to each
 		border of grid, and grid indices at borders of grid.
 	 */
-	if( ! TSTBIT(firemode,FM_PART) )
+	if( ! TSTBIT(firemode, FM_PART) )
 		{	fastf_t modelmin[3];
 			fastf_t modelmax[3];
 		if( groundburst )
@@ -1217,9 +1217,9 @@ gridInit()
 		gridyfin++;
 		}
 #if DEBUG_SHOT
-	brst_log( "gridInit: xorg,xfin,yorg,yfin=%d,%d,%d,%d\n",
+	brst_log( "gridInit: xorg, xfin, yorg, yfin=%d,%d,%d,%d\n",
 		gridxorg, gridxfin, gridyorg, gridyfin );
-	brst_log( "gridInit: left,right,down,up=%g,%g,%g,%g\n",
+	brst_log( "gridInit: left, right, down, up=%g,%g,%g,%g\n",
 		gridlf, gridrt, griddn, gridup );
 #endif
 
@@ -1262,7 +1262,7 @@ gridModel()
 	ag.a_overlap = reportoverlaps ? f_Overlap : f_HushOverlap;
 	ag.a_logoverlap = rt_silent_logoverlap;
 	ag.a_rt_i = rtip;
-	if( ! TSTBIT(firemode,FM_BURST) )
+	if( ! TSTBIT(firemode, FM_BURST) )
 		{ /* set up for shotlines */
 		ag.a_hit = f_ShotHit;
 		ag.a_miss = f_ShotMiss;
@@ -1284,7 +1284,7 @@ gridModel()
 	rt_prep_timer();
 	notify( "Raytracing", NOTIFY_ERASE );
 
-	if( TSTBIT(firemode,FM_BURST) )  {
+	if( TSTBIT(firemode, FM_BURST) )  {
 		if( ! doBursts() )
 			return;
 		else
@@ -1328,7 +1328,7 @@ gridShot()
 	noverlaps = 0;
 	for( ; ! userinterrupt; view_pix( &a ) )
 		{
-		if( ! TSTBIT(firemode,FM_SHOT) && currshot > lastshot )
+		if( ! TSTBIT(firemode, FM_SHOT) && currshot > lastshot )
 			break;
 		if( ! (status = getRayOrigin( &a )) || status == EOF )
 			break;
@@ -1343,7 +1343,7 @@ gridShot()
 			brst_log( "Fatal error: raytracing aborted.\n" );
 			return	0;
 			}
-		if( ! TSTBIT(firemode,FM_FILE) && TSTBIT(firemode,FM_SHOT) )
+		if( ! TSTBIT(firemode, FM_FILE) && TSTBIT(firemode, FM_SHOT) )
 			{
 			view_pix( &a );
 			break;
@@ -1473,7 +1473,7 @@ readShot( vec )
 register fastf_t	*vec;
 	{
 	assert( shotfp != (FILE *) NULL );
-	if( ! TSTBIT(firemode,FM_3DIM) ) /* absence of 3D flag means 2D */
+	if( ! TSTBIT(firemode, FM_3DIM) ) /* absence of 3D flag means 2D */
 		{	int	items;
 		/* read 2D firing coordinates from input stream */
 		if( (items =
@@ -1499,7 +1499,7 @@ register fastf_t	*vec;
 			}
 		}
 	else
-	if( TSTBIT(firemode,FM_3DIM) ) /* 3D coordinates */
+	if( TSTBIT(firemode, FM_3DIM) ) /* 3D coordinates */
 		{	int	items;
 		/* read 3D firing coordinates from input stream */
 		if( (items =
@@ -1802,7 +1802,7 @@ view_pix( ap )
 register struct application	*ap;
 	{
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	if( ! TSTBIT(firemode,FM_BURST) )
+	if( ! TSTBIT(firemode, FM_BURST) )
 		prntGridOffsets( ap->a_x, ap->a_y );
 	if( tty )
 		prntTimer( NULL );

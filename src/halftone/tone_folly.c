@@ -42,10 +42,10 @@ extern struct bn_unif *RandomFlag;
  * 	From page 135 of Digital Halftoning.
  */
 static unsigned char	ordered[4][4] = {
-	{2,16,3,13},
-	{12,8,9,5},
-	{4,14,1,15},
-	{10,6,11,7}};
+	{2, 16, 3, 13},
+	{12, 8, 9, 5},
+	{4, 14, 1, 15},
+	{10, 6, 11, 7}};
 
 /*	tone_folly	4x4 square ordered dither dispersed (folly and van dam)
  *

@@ -313,7 +313,7 @@ for sh/bash users:\n\
 static int
 bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
-    int llen,rlen;
+    int llen, rlen;
     static const char *currdir=".";
 
     /* swap right with left if there is no left so logic is simplified

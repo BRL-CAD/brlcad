@@ -37,7 +37,7 @@ void
 Convsolids()
 {
 
-	int i,totsolids=0,conv=0;
+	int i, totsolids=0, conv=0;
 
 	bu_log( "\n\nConverting solid entities:\n" );
 

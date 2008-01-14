@@ -100,11 +100,11 @@ static float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, c
   VSUB2(u, S1P1, S1P0);
   VSUB2(v, S2P1, S2P0);
   VSUB2(w, S1P0, S2P0);
-  a = VDOT(u,u);  /* always >= 0 */
-  b = VDOT(u,v);
-  c = VDOT(v,v);  /* always >= 0 */
-  d = VDOT(u,w);
-  e = VDOT(v,w);
+  a = VDOT(u, u);  /* always >= 0 */
+  b = VDOT(u, v);
+  c = VDOT(v, v);  /* always >= 0 */
+  d = VDOT(u, w);
+  e = VDOT(v, w);
   D = a*c - b*b;  /* always >= 0 */
   sc = sN = sD = D;  /* sc = sN / sD, default sD = D >= 0 */
   tc = tN = tD = D;  /* tc = tN / tD, default tD = D >= 0 */

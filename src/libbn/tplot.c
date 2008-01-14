@@ -23,23 +23,23 @@
  *
  * @brief
  *	This routine is designed to simplify the creation of
- *  X,Y plots for user.
+ *  X, Y plots for user.
  *
  *			George W. Hartwig, Jr.
  *				16 March 1979
  *
  *	This routine is designed to simplify the creation of
- * X,Y plots for user. The user need only furnish this program
+ * X, Y plots for user. The user need only furnish this program
  * the data arrays to be plotted, the lengths of the respective
  * axis, titles for the axis, and the point on the page corresponding
- * to data point (0,0).
+ * to data point (0, 0).
  *	The program will then do everything else required to make
  * the plot appear on the user's terminal including scaling of the
  * data, centering of the titles and positioning on the page.
  *
  * where
- * -	int xp,yp	page point corresponding to (0,0) of the data
- * -	int xl,yl	lengths of the x and y axis, respectively
+ * -	int xp, yp	page point corresponding to (0, 0) of the data
+ * -	int xl, yl	lengths of the x and y axis, respectively
  * -	char xtitle[], ytitle[]	titles for the axis
  * -	float x[], y[]	the floating point data arrays
  * -	int n		the number of points in the data arrays
@@ -84,8 +84,8 @@ double tp_ipow(double x, int n);
  * @param fp file pointer
  * @param xtitle title for the x axis
  * @param ytitle title for the y axis
- * @param xp is the x page point desired to be (0,0) for plot
- * @param yp is the y page point desired to be (0,0) for plot
+ * @param xp is the x page point desired to be (0, 0) for plot
+ * @param yp is the y page point desired to be (0, 0) for plot
  * @param xl is the length of the x axis
  * @param yl is the length of the y axis
  * @param n is the number of points
@@ -130,7 +130,7 @@ tp_plot(FILE *fp,
     xpen = xp;
 
     pl_move(fp, xpen, yp-TIC);
-    pl_cont(fp, xpen,yp);
+    pl_cont(fp, xpen, yp);
 
     /* label first tic */
     lab = xmin;
@@ -162,7 +162,7 @@ tp_plot(FILE *fp,
     /* draw first y label */
     lab = ymin;
     snprintf( str, 32, "%3.3g", lab );
-    tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
+    tp_2symbol( fp, str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 
     i=0;
     while((ypen+ddy)<=yend){
@@ -173,14 +173,14 @@ tp_plot(FILE *fp,
 	lab += dy;
 	if(( i%ytics) ==0){
 	    snprintf( str, 32, "%3.3g", lab );
-	    tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
+	    tp_2symbol( fp, str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 	}
     }
 
     /* insert y-axis title here */
     xtl= xp-1500;
     ytl= yp + (yl - strlen(ytitle)*cscale)/2 ;
-    tp_2symbol( fp,ytitle,(double)xtl,(double)ytl,100.0,90.0);
+    tp_2symbol( fp, ytitle,(double)xtl,(double)ytl, 100.0, 90.0);
 
     /* now at long last plot the data */
     j = 0;
@@ -225,7 +225,7 @@ tp_plot(FILE *fp,
 void
 tp_ftoa(float x, char *s)
 {
-    int ex,tmp;
+    int ex, tmp;
     float coef;
     char esgn, nsgn;
     char i;
@@ -363,7 +363,7 @@ tp_fixsc(float *x,
 	i=12;
     }
 
-    delta *= tp_ipow(10.0,ex);
+    delta *= tp_ipow(10.0, ex);
     if(i == 12)
 	delta = 1.0/delta;
     *dx = delta;
@@ -442,7 +442,7 @@ tp_sep(float x, float *coef, int *ex)
  */
 double tp_ipow (double x, int n)
 {
-    return(n>0?x*tp_ipow(x,n-1):1);
+    return(n>0?x*tp_ipow(x, n-1):1);
 }
 
 

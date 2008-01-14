@@ -292,7 +292,7 @@ mged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struc
 	 * has no idea or need to know what type of solid this is.
 	 */
 	if (ip->idb_type == ID_GRIP) {
-		int r,g,b;
+		int r, g, b;
 		r= tsp->ts_mater.ma_color[0];
 		g= tsp->ts_mater.ma_color[1];
 		b= tsp->ts_mater.ma_color[2];
@@ -595,7 +595,7 @@ drawtrees(
 
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"dfnqrstuvwSTP:C:")) != EOF )  {
+	while( (c=bu_getopt(argc, argv, "dfnqrstuvwSTP:C:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -635,7 +635,7 @@ drawtrees(
 			break;
 		case 'C':
 			{
-				int		r,g,b;
+				int		r, g, b;
 				register char	*cp = bu_optarg;
 
 				r = atoi(cp);
@@ -803,7 +803,7 @@ mged_bound_solid(register struct solid *sp)
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
-		for( j = 0; j < nused; j++,cmd++,pt++ )  {
+		for( j = 0; j < nused; j++, cmd++, pt++ )  {
 			switch( *cmd )  {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
@@ -1329,7 +1329,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* Parse options. */
 	make_bot = 1;
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"ntTP:")) != EOF )  {
+	while( (c=bu_getopt(argc, argv, "ntTP:")) != EOF )  {
 		switch(c)  {
 		case 'n':
 			make_bot = 0;
@@ -1574,7 +1574,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"tP:")) != EOF )  {
+	while( (c=bu_getopt(argc, argv, "tP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
 #if 0

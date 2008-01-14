@@ -31,21 +31,21 @@
  *      If a = 0 we have the reals; if one coord is zero we have
  *	 complex numbers (2D rotations).
  *
- *  [r,a][s,b] = [rs - a.b, rb + sa + axb]
+ *  [r, a][s, b] = [rs - a.b, rb + sa + axb]
  *
  *       -1
- *  [r,a]   = (r - a) / (r^2 + a.a)
+ *  [r, a]   = (r - a) / (r^2 + a.a)
  *
  *  Powers of quaternions yield incremental rotations,
  *   e.g. Q^3 is rotated three times as far as Q.
  *
  *  Some operations on quaternions:
  *            -1
- *   [0,P'] = Q  [0,P]Q		Rotate a point P by quaternion Q
+ *   [0, P'] = Q  [0, P]Q		Rotate a point P by quaternion Q
  *                     -1  a
- *   slerp(Q,R,a) = Q(Q  R)	Spherical linear interp: 0 < a < 1
+ *   slerp(Q, R, a) = Q(Q  R)	Spherical linear interp: 0 < a < 1
  *
- *   bisect(P,Q) = (P + Q) / |P + Q|	Great circle bisector
+ *   bisect(P, Q) = (P + Q) / |P + Q|	Great circle bisector
  *
  *
  *  @author
@@ -86,7 +86,7 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 #define XX	0
 #define YY	5
 #define ZZ	10
-#define MMM(a,b)		mat[4*(a)+(b)]
+#define MMM(a, b)		mat[4*(a)+(b)]
 
 	tr = mat[XX] + mat[YY] + mat[ZZ];
 	if( tr > 0.0 )  {
@@ -102,35 +102,35 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 	/* Find dominant element of primary diagonal */
 	if( mat[YY] > mat[XX] )  {
 		if( mat[ZZ] > mat[YY] )  {
-			s = sqrt( MMM(Z,Z) - (MMM(X,X)+MMM(Y,Y)) + 1.0 );
+			s = sqrt( MMM(Z, Z) - (MMM(X, X)+MMM(Y, Y)) + 1.0 );
 			quat[Z] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (MMM(X,Y) - MMM(Y,X)) * s;
-			quat[X] = (MMM(Z,X) + MMM(X,Z)) * s;
-			quat[Y] = (MMM(Z,Y) + MMM(Y,Z)) * s;
+			quat[W] = (MMM(X, Y) - MMM(Y, X)) * s;
+			quat[X] = (MMM(Z, X) + MMM(X, Z)) * s;
+			quat[Y] = (MMM(Z, Y) + MMM(Y, Z)) * s;
 		} else {
-			s = sqrt( MMM(Y,Y) - (MMM(Z,Z)+MMM(X,X)) + 1.0 );
+			s = sqrt( MMM(Y, Y) - (MMM(Z, Z)+MMM(X, X)) + 1.0 );
 			quat[Y] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (MMM(Z,X) - MMM(X,Z)) * s;
-			quat[Z] = (MMM(Y,Z) + MMM(Z,Y)) * s;
-			quat[X] = (MMM(Y,X) + MMM(X,Y)) * s;
+			quat[W] = (MMM(Z, X) - MMM(X, Z)) * s;
+			quat[Z] = (MMM(Y, Z) + MMM(Z, Y)) * s;
+			quat[X] = (MMM(Y, X) + MMM(X, Y)) * s;
 		}
 	} else {
 		if( mat[ZZ] > mat[XX] )  {
-			s = sqrt( MMM(Z,Z) - (MMM(X,X)+MMM(Y,Y)) + 1.0 );
+			s = sqrt( MMM(Z, Z) - (MMM(X, X)+MMM(Y, Y)) + 1.0 );
 			quat[Z] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (MMM(X,Y) - MMM(Y,X)) * s;
-			quat[X] = (MMM(Z,X) + MMM(X,Z)) * s;
-			quat[Y] = (MMM(Z,Y) + MMM(Y,Z)) * s;
+			quat[W] = (MMM(X, Y) - MMM(Y, X)) * s;
+			quat[X] = (MMM(Z, X) + MMM(X, Z)) * s;
+			quat[Y] = (MMM(Z, Y) + MMM(Y, Z)) * s;
 		} else {
-			s = sqrt( MMM(X,X) - (MMM(Y,Y)+MMM(Z,Z)) + 1.0 );
+			s = sqrt( MMM(X, X) - (MMM(Y, Y)+MMM(Z, Z)) + 1.0 );
 			quat[X] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (MMM(Y,Z) - MMM(Z,Y)) * s;
-			quat[Y] = (MMM(X,Y) + MMM(Y,X)) * s;
-			quat[Z] = (MMM(X,Z) + MMM(Z,X)) * s;
+			quat[W] = (MMM(Y, Z) - MMM(Z, Y)) * s;
+			quat[Y] = (MMM(X, Y) + MMM(Y, X)) * s;
+			quat[Z] = (MMM(X, Z) + MMM(Z, X)) * s;
 		}
 	}
 #undef MMM

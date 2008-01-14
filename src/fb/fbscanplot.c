@@ -141,7 +141,7 @@ main(int argc, char **argv)
 	fb_make_linear_cmap(&map);
 	if( cmap_crunch )  {
 		if( fb_rmap( fbp, &map ) < 0 )
-			fprintf(stderr,"fbscanplot: error reading colormap\n");
+			fprintf(stderr, "fbscanplot: error reading colormap\n");
 	}
 
 	/* extend the edges with one duplicate pixel each way */

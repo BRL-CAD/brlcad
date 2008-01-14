@@ -22,7 +22,7 @@
  *	Ray Tracing program, lighting model manager.
  *
  *  Output is either interactive to a frame buffer, or written in a file.
- *  The output format is a .PIX file (a byte stream of R,G,B as u_char's).
+ *  The output format is a .PIX file (a byte stream of R, G, B as u_char's).
  *
  *  The extern "lightmodel" selects which one is being used:
  *	0	Full lighting model (default)
@@ -153,7 +153,7 @@ struct bu_structparse view_parse[] = {
 	{"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "a_onehit",	bu_byteoffset(a_onehit),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", ELEMENTS_PER_VECT, "background", bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "overlay",	bu_byteoffset(overlay),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "ov", bu_byteoffset(overlay),	BU_STRUCTPARSE_FUNC_NULL },
 #endif
@@ -169,7 +169,7 @@ struct bu_structparse view_parse[] = {
 void
 view_pixel(register struct application *ap)
 {
-	register int	r,g,b;
+	register int	r, g, b;
 	register char	*pixelp;
 	register struct scanline	*slp;
 	register int	do_eol = 0;
@@ -229,7 +229,7 @@ view_pixel(register struct application *ap)
 	}
 
 	if(R_DEBUG&RDEBUG_HITS) bu_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
-		r,g,b, ap->a_x, ap->a_y,
+		r, g, b, ap->a_x, ap->a_y,
 		V3ARGS(ap->a_color) );
 
 	switch( buf_mode )  {
@@ -396,7 +396,7 @@ view_pixel(register struct application *ap)
 
 	case BUFMODE_INCR:
 		{
-			register int dx,dy;
+			register int dx, dy;
 			register int spread;
 
 			spread = 1<<(incr_nlevel-incr_level);
@@ -1327,7 +1327,7 @@ bu_log("mallocing curr_float_frame\n");
 			cur_pixel = 0;
 			last_pixel = width*height-1;
 			if( npsw == 1 )
-				reproject_worker(0,NULL);
+				reproject_worker(0, NULL);
 			else
 				bu_parallel( reproject_worker, npsw, NULL );
 		} else {
@@ -1429,7 +1429,7 @@ bu_log("mallocing curr_float_frame\n");
 
 		/* Build Photon Map */
 		PM_Activated= 1;
-		BuildPhotonMap(ap,eye_model,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5],(int)pmargs[6],(int)pmargs[7],pmargs[8],pmfile);
+		BuildPhotonMap(ap, eye_model, npsw, width, height, hypersample,(int)pmargs[0], pmargs[1],(int)pmargs[2], pmargs[3],(int)pmargs[4],(int)pmargs[5],(int)pmargs[6],(int)pmargs[7], pmargs[8], pmfile);
 
 		memcpy(ap, &bakapp, sizeof(struct application));
 		/* Set callback for ray hit */

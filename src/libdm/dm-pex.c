@@ -70,7 +70,7 @@
 #define IMMED_MODE_SPT(info) (((info)->subset_info & 0xffff) ==\
 			      PEXCompleteImplementation ||\
 			      (info)->subset_info & PEXImmediateMode)
-#define Pex_VMOVE(a,b) {\
+#define Pex_VMOVE(a, b) {\
 			(a).x = (b)[X];\
 			(a).y = (b)[Y];\
 			(a).z = (b)[Z]; }
@@ -605,7 +605,7 @@ register short r, g, b;
       /* Viewing region is from -1.0 to +1.0 */
       /* 2^31 ~= 2e9 -- dynamic range of a long int */
       /* 2^(31-11) = 2^20 ~= 1e6 */
-      for( i = 0; i < nused; i++,cmd++,pt++ )  {
+      for( i = 0; i < nused; i++, cmd++, pt++ )  {
 	switch( *cmd )  {
 	case BN_VLIST_POLY_START:
 	case BN_VLIST_POLY_VERTNORM:

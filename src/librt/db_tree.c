@@ -2499,7 +2499,7 @@ void
 db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, mat_t arc, struct mater_info *materp)
 {
 	register struct animate *anp;
-	register int i,j;
+	register int i, j;
 
 	/* Check here for animation to apply */
 

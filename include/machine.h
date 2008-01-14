@@ -692,7 +692,7 @@ typedef void *genptr_t;
 	extern double hypot(double, double);
 #else
 #  include <math.h>
-#  define hypot(x,y)      sqrt( (x)*(x)+(y)*(y) )
+#  define hypot(x, y)      sqrt( (x)*(x)+(y)*(y) )
 #endif
 #endif
 

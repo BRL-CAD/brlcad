@@ -38,7 +38,7 @@ int entityno;
 int face_orient;
 {
 	struct faceuse *fu_tmp;
-	plane_t pl_fu,pl_fu_tmp;
+	plane_t pl_fu, pl_fu_tmp;
 
 	NMG_CK_SHELL( s );
 	NMG_CK_FACEUSE( fu );

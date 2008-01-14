@@ -221,7 +221,7 @@ unsigned long addr;
 	}
 
 	if( type & (M_TOVFL|M_BOVFL) )  {
-		(void)printf("mfree(addr=%d,size=%d)  error type=0%o\n",
+		(void)printf("mfree(addr=%d, size=%d)  error type=0%o\n",
 			addr, size, type );
 		if( prevp )
 			(void)printf("prevp: m_addr=%d, m_size=%d\n",

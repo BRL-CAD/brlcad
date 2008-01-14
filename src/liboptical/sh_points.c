@@ -20,8 +20,8 @@
 /** @file sh_points.c
  *			P O I N T S . C
  *
- *  Reads a file of u,v point locations and associated RGB color values.
- *  For each u,v texture mapping cell, this routine fills in the color
+ *  Reads a file of u, v point locations and associated RGB color values.
+ *  For each u, v texture mapping cell, this routine fills in the color
  *  of the "brightest" point contained in that cell (if any).
  *
  *  This routine was born in order to environment map the Yale Bright
@@ -125,7 +125,7 @@ points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 		bu_log("points_setup: can't open \"%s\"\n", ptp->pt_file);
 		goto fail;
 	}
-	while( bu_fgets(buf,512,fp) != NULL ) {
+	while( bu_fgets(buf, 512, fp) != NULL ) {
 		double	u, v, mag;
 		struct points	*headp, *pp;
 
@@ -156,7 +156,7 @@ fail:
 /*
  *  			P O I N T S _ R E N D E R
  *
- *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  Given a u, v coordinate within the texture ( 0 <= u, v <= 1.0 ),
  *  and a "size" of the pixel being rendered (du, dv), fill in the
  *  color of the "brightest" point (if any) within that region.
  */
@@ -174,9 +174,9 @@ points_render(struct application *ap, struct partition *partp, struct shadework 
 
 swp->sw_uv.uv_du = ap->a_diverge;
 swp->sw_uv.uv_dv = ap->a_diverge;
-	/*bu_log( "du,dv = %g %g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv);*/
+	/*bu_log( "du, dv = %g %g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv);*/
 
-	/* compute and clip bounds in u,v space */
+	/* compute and clip bounds in u, v space */
 	umin = swp->sw_uv.uv_u - swp->sw_uv.uv_du;
 	umax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
 	vmin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;

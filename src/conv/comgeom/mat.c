@@ -305,9 +305,9 @@ mat_inv(register matp_t output, matp_t input)
 /*
  *			V T O H _ M O V E
  *
- * Takes a pointer to a [x,y,z] vector, and a pointer
- * to space for a homogeneous vector [x,y,z,w],
- * and builds [x,y,z,1].
+ * Takes a pointer to a [x, y, z] vector, and a pointer
+ * to space for a homogeneous vector [x, y, z, w],
+ * and builds [x, y, z, 1].
  */
 vtoh_move(register float *h, register float *v)
 {
@@ -320,7 +320,7 @@ vtoh_move(register float *h, register float *v)
 /*
  *			H T O V _ M O V E
  *
- * Takes a pointer to [x,y,z,w], and converts it to
+ * Takes a pointer to [x, y, z, w], and converts it to
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.
  */

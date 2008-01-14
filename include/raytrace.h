@@ -262,7 +262,7 @@ struct xray {
 };
 #define RAY_NULL	((struct xray *)0)
 #define RT_RAY_MAGIC	0x78726179	/**< @brief "xray" */
-#define RT_CK_RAY(_p)	BU_CKMAG(_p,RT_RAY_MAGIC,"struct xray");
+#define RT_CK_RAY(_p)	BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 
 /**
  *			H I T
@@ -288,7 +288,7 @@ struct hit {
 };
 #define HIT_NULL	((struct hit *)0)
 #define RT_HIT_MAGIC	0x20686974	/**< @brief " hit" */
-#define RT_CK_HIT(_p)	BU_CKMAG(_p,RT_HIT_MAGIC,"struct hit")
+#define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
  * Old macro:
@@ -407,15 +407,15 @@ struct seg {
 #define RT_CHECK_SEG(_p)	BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 #define RT_CK_SEG(_p)		BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
-#define RT_GET_SEG(p,res)    { \
-	while( !BU_LIST_WHILE((p),seg,&((res)->re_seg)) || !(p) ) \
+#define RT_GET_SEG(p, res)    { \
+	while( !BU_LIST_WHILE((p), seg,&((res)->re_seg)) || !(p) ) \
 		rt_get_seg(res); \
 	BU_LIST_DEQUEUE( &((p)->l) ); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
 	res->re_segget++; }
 
-#define RT_FREE_SEG(p,res)  { \
+#define RT_FREE_SEG(p, res)  { \
 	RT_CHECK_SEG(p); \
 	BU_LIST_INSERT( &((res)->re_seg), &((p)->l) ); \
 	res->re_segfree++; }
@@ -577,7 +577,7 @@ struct region  {
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_REGION_MAGIC	0xdffb8001
-#define RT_CK_REGION(_p)	BU_CKMAG(_p,RT_REGION_MAGIC,"struct region")
+#define RT_CK_REGION(_p)	BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
 /**
  *  			P A R T I T I O N
@@ -610,9 +610,9 @@ struct partition {
 #define PT_HD_MAGIC	0x87687680
 
 #define RT_CHECK_PT(_p)	RT_CK_PT(_p)	/**< @brief compat */
-#define RT_CK_PT(_p)	BU_CKMAG(_p,PT_MAGIC, "struct partition")
-#define RT_CK_PARTITION(_p)	BU_CKMAG(_p,PT_MAGIC, "struct partition")
-#define RT_CK_PT_HD(_p)	BU_CKMAG(_p,PT_HD_MAGIC, "struct partition list head")
+#define RT_CK_PT(_p)	BU_CKMAG(_p, PT_MAGIC, "struct partition")
+#define RT_CK_PARTITION(_p)	BU_CKMAG(_p, PT_MAGIC, "struct partition")
+#define RT_CK_PT_HD(_p)	BU_CKMAG(_p, PT_HD_MAGIC, "struct partition list head")
 
 /* Macros for copying only the essential "middle" part of a partition struct */
 #define RT_PT_MIDDLE_START	pt_inseg		/**< @brief 1st elem to copy */
@@ -620,18 +620,18 @@ struct partition {
 #define RT_PT_MIDDLE_LEN(p) \
 	(((char *)&(p)->RT_PT_MIDDLE_END) - ((char *)&(p)->RT_PT_MIDDLE_START))
 
-#define RT_DUP_PT(ip,new,old,res)	{ \
-	GET_PT(ip,new,res); \
+#define RT_DUP_PT(ip, new, old, res)	{ \
+	GET_PT(ip, new, res); \
 	memcpy((char *)(&(new)->RT_PT_MIDDLE_START), (char *)(&(old)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old)); \
 	(new)->pt_overlap_reg = NULL; \
 	bu_ptbl_cat( &(new)->pt_seglist, &(old)->pt_seglist );  }
 
 /** Clear out the pointers, empty the hit list */
-#define GET_PT_INIT(ip,p,res)	{\
-	GET_PT(ip,p,res); \
+#define GET_PT_INIT(ip, p, res)	{\
+	GET_PT(ip, p, res); \
 	memset(((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p)); }
 
-#define GET_PT(ip,p,res)   { \
+#define GET_PT(ip, p, res)   { \
 	if( BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
 		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
 		bu_ptbl_reset( &(p)->pt_seglist ); \
@@ -643,7 +643,7 @@ struct partition {
 	} \
 	res->re_partget++; }
 
-#define FREE_PT(p,res)  { \
+#define FREE_PT(p, res)  { \
 	BU_LIST_APPEND( &(res->re_parthead), (struct bu_list *)(p) ); \
 	if( (p)->pt_overlap_reg )  { \
 		bu_free( (genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg" );\
@@ -691,7 +691,7 @@ union cutter  {
 	union cutter *cut_forw;		/**< @brief Freelist forward link */
 	struct cutnode  {
 		int	cn_type;
-		int	cn_axis;	/**< @brief 0,1,2 = cut along X,Y,Z */
+		int	cn_axis;	/**< @brief 0, 1, 2 = cut along X, Y, Z */
 		fastf_t	cn_point;	/**< @brief cut through axis==point */
 		union cutter *cn_l;	/**< @brief val < point */
 		union cutter *cn_r;	/**< @brief val >= point */
@@ -785,8 +785,8 @@ struct db_i  {
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
 
-#define RT_CHECK_DBI(_p)		BU_CKMAG(_p,DBI_MAGIC,"struct db_i")
-#define RT_CHECK_DBI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,DBI_MAGIC,"struct db_i")
+#define RT_CHECK_DBI(_p)		BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
+#define RT_CHECK_DBI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, DBI_MAGIC, "struct db_i")
 #define RT_CK_DBI(_p)			RT_CHECK_DBI(_p)
 #define RT_CK_DBI_TCL(_interp,_p)	RT_CHECK_DBI_TCL(_interp,_p)
 
@@ -913,7 +913,7 @@ struct rt_comb_internal  {
 #define RT_COMB_MAGIC	0x436f6d49	/**< @brief "ComI" */
 #define RT_CHECK_COMB(_p)		BU_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
 #define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
-#define RT_CHECK_COMB_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p,RT_COMB_MAGIC, "rt_comb_internal" )
+#define RT_CHECK_COMB_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p, RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB_TCL(_interp,_p)	RT_CHECK_COMB_TCL(_interp,_p)
 
 /**
@@ -942,7 +942,7 @@ struct rt_binunif_internal {
 #define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55	/* "BinU" */
 #define RT_CHECK_BINUNIF(_p)		BU_CKMAG( _p , RT_BINUNIF_INTERNAL_MAGIC , "rt_binunif_internal" )
 #define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
-#define RT_CHECK_BINUNIF_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p,RT_BINUNIF_MAGIC, "rt_binunif_internal" )
+#define RT_CHECK_BINUNIF_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
 #define RT_CK_BINUNIF_TCL(_interp,_p)	RT_CHECK_BINUNIF_TCL(_interp,_p)
 
 /**
@@ -1157,8 +1157,8 @@ struct rt_wdb  {
 };
 
 #define	RT_WDB_MAGIC			0x5f576462
-#define RT_CHECK_WDB(_p)		BU_CKMAG(_p,RT_WDB_MAGIC,"rt_wdb")
-#define RT_CHECK_WDB_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RT_WDB_MAGIC,"rt_wdb")
+#define RT_CHECK_WDB(_p)		BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
+#define RT_CHECK_WDB_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p)			RT_CHECK_WDB(_p)
 #define RT_CK_WDB_TCL(_interp,_p)	RT_CHECK_WDB_TCL(_interp,_p)
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
@@ -1553,7 +1553,7 @@ struct pixel_ext {
  *			A P P L I C A T I O N
  *@brief
  *  This structure is the only parameter to rt_shootray().
- *  The entire structure should be zeroed (e.g. by memset(,0,) ) before it
+ *  The entire structure should be zeroed (e.g. by memset(, 0,) ) before it
  *  is used the first time.
  *
  *  When calling rt_shootray(), these fields are mandatory:
@@ -1649,9 +1649,9 @@ struct application  {
 };
 #define RT_AFN_NULL	((int (*)())0)
 #define RT_AP_MAGIC	0x4170706c	/**< @brief  "Appl" */
-#define RT_CK_AP(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
-#define RT_CK_APPLICATION(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
-#define RT_CK_AP_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RT_AP_MAGIC,"struct application")
+#define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
+#define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
+#define RT_CK_AP_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, RT_AP_MAGIC, "struct application")
 #define RT_APPLICATION_INIT(_p)	{ \
 		memset((char *)(_p), 0, sizeof(struct application)); \
 		(_p)->a_magic = RT_AP_MAGIC; \
@@ -1810,8 +1810,8 @@ struct rt_i {
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/**< @brief  magic # for integrity check */
 
-#define RT_CHECK_RTI(_p)		BU_CKMAG(_p,RTI_MAGIC,"struct rt_i")
-#define RT_CHECK_RTI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p,RTI_MAGIC,"struct rt_i")
+#define RT_CHECK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+#define RT_CHECK_RTI_TCL(_interp,_p)	BU_CKMAG_TCL(_interp,_p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p)			RT_CHECK_RTI(_p)
 #define RT_CK_RTI_TCL(_interp,_p)	RT_CHECK_RTI_TCL(_interp,_p)
 
@@ -1844,7 +1844,7 @@ struct rt_i {
 /** Place an entire chain of bn_vlist structs on the freelist */
 #define RT_FREE_VLIST(hd)	BN_FREE_VLIST(&rt_g.rtg_vlfree, hd)
 
-#define RT_ADD_VLIST(hd,pnt,draw)  BN_ADD_VLIST(&rt_g.rtg_vlfree,hd,pnt,draw)
+#define RT_ADD_VLIST(hd, pnt, draw)  BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, pnt, draw)
 
 
 /*
@@ -1853,9 +1853,9 @@ struct rt_i {
 #undef V2PRINT
 #undef VPRINT
 #undef HPRINT
-#define V2PRINT(a,b)	bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1] );
-#define VPRINT(a,b)	bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a,b)	bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
+#define V2PRINT(a, b)	bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1] );
+#define VPRINT(a, b)	bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a, b)	bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /**
  *			C O M M A N D _ T A B
@@ -3069,7 +3069,7 @@ RT_EXPORT BU_EXTERN(int db_scan,
 		     int do_old_matter,
 		     genptr_t client_data));
 					/* update db unit conversions */
-#define db_ident(a,b,c)		+++error+++
+#define db_ident(a, b, c)		+++error+++
 RT_EXPORT BU_EXTERN(int db_update_ident,
 		    (struct db_i *dbip,
 		     const char *title,
@@ -3978,7 +3978,7 @@ RT_EXPORT BU_EXTERN(int nmg_demote_eu,
 RT_EXPORT BU_EXTERN(void nmg_movevu,
 		    (struct vertexuse *vu,
 		     struct vertex *v));
-#define nmg_moveeu(a,b)		nmg_je(a,b)
+#define nmg_moveeu(a, b)		nmg_je(a, b)
 RT_EXPORT BU_EXTERN(void nmg_je,
 		    (struct edgeuse *eudst,
 		     struct edgeuse *eusrc));
@@ -5658,7 +5658,7 @@ RT_EXPORT BU_EXTERN(long nmg_find_max_index,
 
 /* From dspline.c */
 RT_EXPORT BU_EXTERN(void rt_dspline_matrix,
-		    (mat_t m,const char *type,
+		    (mat_t m, const char *type,
 		     const double	tension,
 		     const double	bias));
 RT_EXPORT BU_EXTERN(double rt_dspline4,

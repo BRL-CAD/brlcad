@@ -29,7 +29,7 @@
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
- *  X is 0..width,0..height
+ *  X is 0..width, 0..height
  */
 #define	GED_TO_Xx(_dmp, x) ((int)(((x)/4096.0+0.5)*((struct pex_vars *)((_dmp)->dmr_vars))->width))
 #define	GED_TO_Xy(_dmp, x) ((int)((0.5-(x)/4096.0)*((struct pex_vars *)((_dmp)->dmr_vars))->height))
@@ -66,7 +66,7 @@ struct pex_vars {
   PEXRenderer renderer;
   PEXRendererAttributes rattrs;
   int is_monochrome;
-  unsigned long black,gray,white,yellow,red,blue;
+  unsigned long black, gray, white, yellow, red, blue;
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
   struct modifiable_pex_vars mvars;
 };

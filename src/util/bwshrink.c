@@ -133,7 +133,7 @@ void parse_args(int ac, char **av)
 	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac, av, options)) != EOF)
 		switch (c) {
 		case 'f'	: if ((c = atoi(bu_optarg)) > 1)
 					factor = c;

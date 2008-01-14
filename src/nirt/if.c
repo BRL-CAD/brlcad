@@ -247,7 +247,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	fprintf(stderr, "Previously unreported overlaps.  Shouldn't happen\n");
 	ovp = ovlp_list.forw;
 	while( ovp != &ovlp_list ) {
-		bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n",ovp -> reg1 -> reg_name, ovp -> reg2 -> reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
+		bu_log( " OVERLAP:\n\t%s %s (%g %g %g) %g\n", ovp -> reg1 -> reg_name, ovp -> reg2 -> reg_name, V3ARGS( ovp->in_point ), ovp->out_dist - ovp->in_dist );
 	    ovp = ovp->forw;
 	}
     }

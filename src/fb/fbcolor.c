@@ -46,7 +46,7 @@
 
 int curchan = 0;	/* 0=r, 1=g, 2=b */
 
-int col[6] = {128,128,128};		/* r,g,b h,s,v */
+int col[6] = {128, 128, 128};		/* r, g, b h, s, v */
 
 unsigned char buf[3*2048];
 ColorMap old_map;
@@ -76,7 +76,7 @@ main(int argc, char **argv)
 		return	1;
 	}
 	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
-		fprintf(stderr,"fbcolor:  fb_open(%s) failure\n", framebuffer);
+		fprintf(stderr, "fbcolor:  fb_open(%s) failure\n", framebuffer);
 		return	1;
 	}
 
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 
 	rgbhsv( col, &col[3] );
 
-	/* Note that color 0,0,0 is special;  use 1,1,1 for black */
+	/* Note that color 0, 0, 0 is special;  use 1, 1, 1 for black */
 	/* Red */
 	for( i=0; i<255; i++)  {
 		buf[3*i+RED] = i;
@@ -142,12 +142,12 @@ main(int argc, char **argv)
 		for( ; i<255; i++ )
 			cm.cm_blue[i] = 0;
 
-		/* 0,0,0 is color chosen */
+		/* 0, 0, 0 is color chosen */
 		cm.cm_red[0] = col[RED]<<8;
 		cm.cm_green[0] = col[GRN]<<8;
 		cm.cm_blue[0] = col[BLU]<<8;
 
-		/* 1,1,1 is for black */
+		/* 1, 1, 1 is for black */
 		cm.cm_red[1] = 0;
 		cm.cm_green[1] = 0;
 		cm.cm_blue[1] = 0;

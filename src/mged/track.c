@@ -293,19 +293,19 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	grpname[5] = solname[8] = regname[8] = '\0';
 	grpname[8] = solname[11] = regname[11] = '\0';
 /*
-	bu_log("\nX of first road wheel  %10.4f\n",fw[0]);
-	bu_log("X of last road wheel   %10.4f\n",lw[0]);
-	bu_log("Z of road wheels       %10.4f\n",fw[1]);
-	bu_log("radius of road wheels  %10.4f\n",fw[2]);
-	bu_log("\nX of drive wheel       %10.4f\n",dw[0]);
-	bu_log("Z of drive wheel       %10.4f\n",dw[1]);
-	bu_log("radius of drive wheel  %10.4f\n",dw[2]);
-	bu_log("\nX of idler wheel       %10.4f\n",iw[0]);
-	bu_log("Z of idler wheel       %10.4f\n",iw[1]);
-	bu_log("radius of idler wheel  %10.4f\n",iw[2]);
-	bu_log("\nY MIN of track         %10.4f\n",tr[0]);
-	bu_log("Y MAX of track         %10.4f\n",tr[1]);
-	bu_log("thickness of track     %10.4f\n",tr[2]);
+	bu_log("\nX of first road wheel  %10.4f\n", fw[0]);
+	bu_log("X of last road wheel   %10.4f\n", lw[0]);
+	bu_log("Z of road wheels       %10.4f\n", fw[1]);
+	bu_log("radius of road wheels  %10.4f\n", fw[2]);
+	bu_log("\nX of drive wheel       %10.4f\n", dw[0]);
+	bu_log("Z of drive wheel       %10.4f\n", dw[1]);
+	bu_log("radius of drive wheel  %10.4f\n", dw[2]);
+	bu_log("\nX of idler wheel       %10.4f\n", iw[0]);
+	bu_log("Z of idler wheel       %10.4f\n", iw[1]);
+	bu_log("radius of idler wheel  %10.4f\n", iw[2]);
+	bu_log("\nY MIN of track         %10.4f\n", tr[0]);
+	bu_log("Y MAX of track         %10.4f\n", tr[1]);
+	bu_log("thickness of track     %10.4f\n", tr[2]);
 */
 
 /* Check for names to use:
@@ -378,7 +378,7 @@ tryagain:	/* sent here to try next set of names */
 	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
 	crdummy(iw, tr, 1);
-	if( wrobj(solname,DIR_SOLID) )
+	if( wrobj(solname, DIR_SOLID) )
 	  return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -389,7 +389,7 @@ tryagain:	/* sent here to try next set of names */
 	VMOVE(temp1, &sol.s_values[0]);
 	crname(solname, 5, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if(wrobj(solname,DIR_SOLID))
+	if(wrobj(solname, DIR_SOLID))
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -400,7 +400,7 @@ tryagain:	/* sent here to try next set of names */
 	trcurve(dw, tr);
 	crname(solname, 6, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname,DIR_SOLID) )
+	if( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -411,7 +411,7 @@ tryagain:	/* sent here to try next set of names */
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
 	crname(solname, 7, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname,DIR_SOLID) )
+	if( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -422,7 +422,7 @@ tryagain:	/* sent here to try next set of names */
 	strncpy(sol.s_name, solname, NAMESIZE-1);
 	sol.s_type = ID_ARB8;
 	crdummy(dw, tr, 2);
-	if( wrobj(solname,DIR_SOLID) )
+	if( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -431,7 +431,7 @@ tryagain:	/* sent here to try next set of names */
 	bottom(temp1, temp2, tr);
 	crname(solname, 9, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname,DIR_SOLID) )
+	if( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -444,7 +444,7 @@ tryagain:	/* sent here to try next set of names */
 	top(temp1, temp2, tr);
 	crname(solname, 10, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj(solname,DIR_SOLID) )
+	if( wrobj(solname, DIR_SOLID) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 

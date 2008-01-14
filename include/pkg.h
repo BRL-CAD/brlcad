@@ -56,10 +56,10 @@
  *  in parens.
  */
 #if __STDC__ || USE_PROTOTYPES
-#	define	PKG_EXTERN(type_and_name,args)	extern type_and_name args
+#	define	PKG_EXTERN(type_and_name, args)	extern type_and_name args
 #	define	PKG_ARGS(args)			args
 #else
-#	define	PKG_EXTERN(type_and_name,args)	extern type_and_name()
+#	define	PKG_EXTERN(type_and_name, args)	extern type_and_name()
 #	define	PKG_ARGS(args)			()
 #endif
 
@@ -117,7 +117,7 @@ struct pkg_conn {
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
 
 
-#define pkg_send_vls(type,vlsp,pkg)	\
+#define pkg_send_vls(type, vlsp, pkg)	\
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 

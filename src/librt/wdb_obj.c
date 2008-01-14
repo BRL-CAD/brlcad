@@ -343,8 +343,8 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"move_arb_face",	wdb_move_arb_face_tcl},
 	{"mv",		wdb_move_tcl},
 	{"mvall",	wdb_move_all_tcl},
-	{"nmg_collapse",wdb_nmg_collapse_tcl},
-	{"nmg_simplify",wdb_nmg_simplify_tcl},
+	{"nmg_collapse", wdb_nmg_collapse_tcl},
+	{"nmg_simplify", wdb_nmg_simplify_tcl},
 	{"observer",	wdb_observer_tcl},
 	{"ocenter",	wdb_ocenter_tcl},
 	{"orotate",	wdb_orotate_tcl},
@@ -601,7 +601,7 @@ Usage: wdb_open\n\
 
 		if ((dbip = wdb_prep_dbip(interp, argv[i])) == DBI_NULL)
 			return TCL_ERROR;
-		RT_CK_DBI_TCL(interp,dbip);
+		RT_CK_DBI_TCL(interp, dbip);
 
 		wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 	} else if (strcmp(argv[2], "file") == 0) {
@@ -764,7 +764,7 @@ wdb_match_cmd(struct rt_wdb	*wdbp,
 {
 	struct bu_vls	matches;
 
-	RT_CK_WDB_TCL(interp,wdbp);
+	RT_CK_WDB_TCL(interp, wdbp);
 
 	/* Verify that this wdb supports lookup operations
 	   (non-null dbip) */
@@ -1179,7 +1179,7 @@ wdb_adjust_cmd(struct rt_wdb	*wdbp,
 	name = argv[1];
 
 	/* Verify that this wdb supports lookup operations (non-null dbip) */
-	RT_CK_DBI_TCL(interp,wdbp->dbip);
+	RT_CK_DBI_TCL(interp, wdbp->dbip);
 
 	dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
 	if (dp == DIR_NULL) {
@@ -1715,7 +1715,7 @@ wdb_shells_cmd(struct rt_wdb	*wdbp,
 	     char		**argv)
 {
 	struct directory *old_dp,*new_dp;
-	struct rt_db_internal old_intern,new_intern;
+	struct rt_db_internal old_intern, new_intern;
 	struct model *m_tmp,*m;
 	struct nmgregion *r_tmp,*r;
 	struct shell *s_tmp,*s;
@@ -2714,7 +2714,7 @@ wdb_killall_cmd(struct rt_wdb	*wdbp,
 		int		argc,
 		char 		**argv)
 {
-	register int			i,k;
+	register int			i, k;
 	register struct directory	*dp;
 	struct rt_db_internal		intern;
 	struct rt_comb_internal		*comb;
@@ -4422,7 +4422,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"ntT")) != EOF )  {
+	while( (c=bu_getopt(argc, argv, "ntT")) != EOF )  {
 		switch(c)  {
 		case 'n':
 			make_bot = 0;
@@ -4626,7 +4626,7 @@ wdb_find_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
-    register int				i,k;
+    register int				i, k;
     register struct directory		*dp;
     struct rt_db_internal			intern;
     register struct rt_comb_internal	*comb=(struct rt_comb_internal *)NULL;
@@ -4794,11 +4794,11 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    /* check to see if the region id or air code matches one in our list */
-	    for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l)) {
+	    for (BU_LIST_FOR(itnp, wdb_id_to_names,&headIdName.l)) {
 		if ((comb->region_id == itnp->id) ||
 		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GETSTRUCT(inp,wdb_id_names);
+		    BU_GETSTRUCT(inp, wdb_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l,&inp->l);
@@ -4809,7 +4809,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
 
 	    if (!found) {
 		/* create new id_to_names node */
-		BU_GETSTRUCT(itnp,wdb_id_to_names);
+		BU_GETSTRUCT(itnp, wdb_id_to_names);
 		if (0 < comb->region_id)
 		    itnp->id = comb->region_id;
 		else
@@ -4818,7 +4818,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
 		BU_LIST_INIT(&itnp->headName.l);
 
 		/* add region name to our name list for this region */
-		BU_GETSTRUCT(inp,wdb_id_names);
+		BU_GETSTRUCT(inp, wdb_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l,&inp->l);
@@ -4833,7 +4833,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
     }
 
     /* place data in a dynamic tcl string */
-    while (BU_LIST_WHILE(itnp,wdb_id_to_names,&headIdName.l)) {
+    while (BU_LIST_WHILE(itnp, wdb_id_to_names,&headIdName.l)) {
 	char buf[32];
 
 	/* add this id to the list */
@@ -4842,7 +4842,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
 
 	/* start sublist of names associated with this id */
 	Tcl_DStringStartSublist(&ds);
-	while (BU_LIST_WHILE(inp,wdb_id_names,&itnp->headName.l)) {
+	while (BU_LIST_WHILE(inp, wdb_id_names,&itnp->headName.l)) {
 	    /* add the this name to this sublist */
 	    Tcl_DStringAppendElement(&ds, bu_vls_addr(&inp->name));
 
@@ -4882,7 +4882,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 	      int		argc,
 	      char 		**argv)
 {
-	register int	i,j;
+	register int	i, j;
 	register struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
@@ -4939,13 +4939,13 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 		n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
 		switch (n) {
 		case 1:
-			for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l))
+			for (BU_LIST_FOR(itnp, wdb_id_to_names,&headIdName.l))
 				if (itnp->id == start)
 					break;
 
 			/* id not found */
 			if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
-				BU_GETSTRUCT(itnp,wdb_id_to_names);
+				BU_GETSTRUCT(itnp, wdb_id_to_names);
 				itnp->id = start;
 				BU_LIST_INSERT(&headIdName.l,&itnp->l);
 				BU_LIST_INIT(&itnp->headName.l);
@@ -4964,13 +4964,13 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 			for (k = 0; k < range; ++k) {
 				int id = start + k;
 
-				for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l))
+				for (BU_LIST_FOR(itnp, wdb_id_to_names,&headIdName.l))
 					if (itnp->id == id)
 						break;
 
 				/* id not found */
 				if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
-					BU_GETSTRUCT(itnp,wdb_id_to_names);
+					BU_GETSTRUCT(itnp, wdb_id_to_names);
 					itnp->id = id;
 					BU_LIST_INSERT(&headIdName.l,&itnp->l);
 					BU_LIST_INIT(&itnp->headName.l);
@@ -4993,11 +4993,11 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 			}
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 			/* check to see if the region id or air code matches one in our list */
-			for (BU_LIST_FOR(itnp,wdb_id_to_names,&headIdName.l)) {
+			for (BU_LIST_FOR(itnp, wdb_id_to_names,&headIdName.l)) {
 				if ((!isAir && comb->region_id == itnp->id) ||
 				    (isAir && comb->aircode == itnp->id)) {
 					/* add region name to our name list for this region */
-					BU_GETSTRUCT(inp,wdb_id_names);
+					BU_GETSTRUCT(inp, wdb_id_names);
 					bu_vls_init(&inp->name);
 					bu_vls_strcpy(&inp->name, dp->d_namep);
 					BU_LIST_INSERT(&itnp->headName.l,&inp->l);
@@ -5014,7 +5014,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 	}
 
 	/* place data in interp and free memory */
-	 while (BU_LIST_WHILE(itnp,wdb_id_to_names,&headIdName.l)) {
+	 while (BU_LIST_WHILE(itnp, wdb_id_to_names,&headIdName.l)) {
 		if (!sflag) {
 			struct bu_vls vls;
 
@@ -5025,7 +5025,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 			bu_vls_free(&vls);
 		}
 
-		while (BU_LIST_WHILE(inp,wdb_id_names,&itnp->headName.l)) {
+		while (BU_LIST_WHILE(inp, wdb_id_names,&itnp->headName.l)) {
 			if (sflag)
 				Tcl_AppendElement(interp, bu_vls_addr(&inp->name));
 			else
@@ -5755,7 +5755,7 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 		}
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls,"Calculational tolerances:\n");
+		bu_vls_printf(&vls, "Calculational tolerances:\n");
 		bu_vls_printf(&vls,
 			      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)",
 			      wdbp->wdb_tol.dist, wdbp->wdb_tol.perp,
@@ -5981,7 +5981,7 @@ wdb_push_leaf(struct db_tree_state	*tsp,
  *  way to check and this method will always work.)
  */
 	bu_semaphore_acquire(RT_SEM_WORKER);
-	FOR_ALL_WDB_PUSH_SOLIDS(pip,wpdp->pi_head) {
+	FOR_ALL_WDB_PUSH_SOLIDS(pip, wpdp->pi_head) {
 		if (pip->pi_dir == dp ) {
 			if (!bn_mat_is_equal(pip->pi_mat,
 					     tsp->ts_mat, tsp->ts_tol)) {
@@ -6065,7 +6065,7 @@ wdb_push_cmd(struct rt_wdb	*wdbp,
 
 	RT_CHECK_DBI(wdbp->dbip);
 
-	BU_GETSTRUCT(wpdp,wdb_push_data);
+	BU_GETSTRUCT(wpdp, wdb_push_data);
 	wpdp->interp = interp;
 	wpdp->push_error = 0;
 	wpdp->pi_head.magic = WDB_MAGIC_PUSH_ID;
@@ -6133,7 +6133,7 @@ wdb_push_cmd(struct rt_wdb	*wdbp,
  * We've built the push solid list, now all we need to do is apply
  * the matrix we've stored for each solid.
  */
-	FOR_ALL_WDB_PUSH_SOLIDS(pip,wpdp->pi_head) {
+	FOR_ALL_WDB_PUSH_SOLIDS(pip, wpdp->pi_head) {
 		if (rt_db_get_internal(&es_int, pip->pi_dir, wdbp->dbip, pip->pi_mat, &rt_uniresource) < 0) {
 			Tcl_AppendResult(interp, "f_push: Read error fetching '",
 				   pip->pi_dir->d_namep, "'\n", (char *)NULL);
@@ -7499,7 +7499,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		char 		**argv)
 {
 	register int		i;
-	point_t			rpp_min,rpp_max;
+	point_t			rpp_min, rpp_max;
 	struct directory	*dp;
 	struct rt_arb_internal	*arb;
 	struct rt_db_internal	new_intern;
@@ -10279,7 +10279,7 @@ wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 	/* process args */
 	bu_optind = 1;
 	bu_opterr = 0;
-	while( (c=bu_getopt(argc,argv,"c:n:e:")) != EOF )  {
+	while( (c=bu_getopt(argc, argv, "c:n:e:")) != EOF )  {
 		switch(c) {
 			case 'c':
 				max_chord_error = atof( bu_optarg );
@@ -10699,11 +10699,11 @@ wdb_move_arb_face_tcl(ClientData	clientData,
 
 
 static short int rt_arb_vertices[5][24] = {
-	{ 1,2,3,0, 1,2,4,0, 2,3,4,0, 1,3,4,0, 0,0,0,0, 0,0,0,0 },	/* arb4 */
-	{ 1,2,3,4, 1,2,5,0, 2,3,5,0, 3,4,5,0, 1,4,5,0, 0,0,0,0 },	/* arb5 */
-	{ 1,2,3,4, 2,3,6,5, 1,5,6,4, 1,2,5,0, 3,4,6,0, 0,0,0,0 },	/* arb6 */
-	{ 1,2,3,4, 5,6,7,0, 1,4,5,0, 2,3,7,6, 1,2,6,5, 4,3,7,5 },	/* arb7 */
-	{ 1,2,3,4, 5,6,7,8, 1,5,8,4, 2,3,7,6, 1,2,6,5, 4,3,7,8 }	/* arb8 */
+	{ 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* arb4 */
+	{ 1, 2, 3, 4, 1, 2, 5, 0, 2, 3, 5, 0, 3, 4, 5, 0, 1, 4, 5, 0, 0, 0, 0, 0 },	/* arb5 */
+	{ 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 },	/* arb6 */
+	{ 1, 2, 3, 4, 5, 6, 7, 0, 1, 4, 5, 0, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 5 },	/* arb7 */
+	{ 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }	/* arb8 */
 };
 
 int

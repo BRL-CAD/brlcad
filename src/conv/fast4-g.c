@@ -145,7 +145,7 @@ struct fast4_color {
 };
 
 struct cline {
-    int pt1,pt2;
+    int pt1, pt2;
     int element_id;
     int made;
     fastf_t thick;
@@ -249,7 +249,7 @@ static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file]
 	d - print debugging info\n\
 	q - quiet mode (don't say anyhing except error messages\n\
 	w - print warnings about creating default names\n\
-	c - process only the listed region ids, may be a list (3001,4082,5347) or a range (2314-3527)\n\
+	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n\
 	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n\
 	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
 	b - set LIBBU debug flag\n\
@@ -515,7 +515,7 @@ Insert_region_name(char *name, int reg_id)
 {
     struct name_tree *nptr_model,*rptr_model;
     struct name_tree *new_ptr;
-    int foundn,foundr;
+    int foundn, foundr;
     int diff;
 
     if( debug )
@@ -1124,7 +1124,7 @@ add_to_series(char *name, int reg_id)
 	    return;
 	}
 
-    if( mk_addmember( name , &group_head[group_id].l, NULL ,WMOP_UNION ) == (struct wmember *)NULL )
+    if( mk_addmember( name , &group_head[group_id].l, NULL , WMOP_UNION ) == (struct wmember *)NULL )
 	bu_log( "add_to_series: mk_addmember failed for region %s\n" , name );
 }
 
@@ -1265,7 +1265,7 @@ f4_do_groups(void)
 static void
 f4_do_name(void)
 {
-    int i,j;
+    int i, j;
     int g_id;
     int c_id;
     char comp_name[LINELEN] = {0}; /* should only use 25 chars */
@@ -1342,7 +1342,7 @@ static void
 f4_do_grid(void)
 {
     int grid_no;
-    fastf_t x,y,z;
+    fastf_t x, y, z;
 
     if( !pass )	/* not doing geometry yet */
 	return;
@@ -1484,7 +1484,7 @@ static void
 f4_do_cline(void)
 {
     int element_id;
-    int pt1,pt2;
+    int pt1, pt2;
     fastf_t thick;
     fastf_t radius;
     vect_t height;
@@ -1545,12 +1545,12 @@ static void
 f4_do_ccone1(void)
 {
     int element_id;
-    int pt1,pt2;
+    int pt1, pt2;
     fastf_t thick;
-    int c1,c2;
-    int end1,end2;
+    int c1, c2;
+    int end1, end2;
     vect_t height;
-    fastf_t r1,r2;
+    fastf_t r1, r2;
     char *outer_name;
     char *inner_name;
     char *name = (char *)NULL;
@@ -1674,11 +1674,11 @@ f4_do_ccone1(void)
 	    point_t base;
 	    point_t top;
 	    vect_t inner_height;
-	    fastf_t inner_r1,inner_r2;
+	    fastf_t inner_r1, inner_r2;
 	    fastf_t length;
 	    fastf_t sin_ang;
 	    fastf_t slant_len;
-	    fastf_t r1a,r2a;
+	    fastf_t r1a, r2a;
 	    vect_t height_dir;
 
 	    /* make outside TGC */
@@ -1776,9 +1776,9 @@ static void
 f4_do_ccone2(void)
 {
     int element_id;
-    int pt1,pt2;
-    int c1,c2;
-    fastf_t ro1,ro2,ri1,ri2;
+    int pt1, pt2;
+    int c1, c2;
+    fastf_t ro1, ro2, ri1, ri2;
     vect_t height;
     char *name = (char *)NULL;
     struct wmember r_head;
@@ -2369,7 +2369,7 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	}
     else
 	{
-	    thickness[face_count] = 0,0;
+	    thickness[face_count] = 0, 0;
 	    facemode[face_count] = 0;
 	}
 
@@ -2384,7 +2384,7 @@ static void
 f4_do_tri(void)
 {
     int element_id;
-    int pt1,pt2,pt3;
+    int pt1, pt2, pt3;
     fastf_t thick;
     int pos;
 
@@ -2457,7 +2457,7 @@ static void
 f4_do_quad(void)
 {
     int element_id;
-    int pt1,pt2,pt3,pt4;
+    int pt1, pt2, pt3, pt4;
     fastf_t thick = 0.0;
     int pos = 0;
 
@@ -2717,7 +2717,7 @@ f4_do_hex1(void)
     int pts[8];
     int element_id;
     int i;
-    int cont1,cont2;
+    int cont1, cont2;
 
     strncpy( field , &line[8] , 8 );
     element_id = atoi( field );
@@ -2821,7 +2821,7 @@ f4_do_hex2(void)
     int pts[8];
     int element_id;
     int i;
-    int cont1,cont2;
+    int cont1, cont2;
     point_t points[8];
     char *name = (char *)NULL;
 
@@ -3532,7 +3532,7 @@ main(int argc, char **argv)
 
     if(bu_debug )
 	{
-	    bu_printb( "librtbu_debug",bu_debug, DEBUG_FORMAT );
+	    bu_printb( "librtbu_debug", bu_debug, DEBUG_FORMAT );
 	    bu_log("\n");
 	}
     if( rt_g.NMG_debug )

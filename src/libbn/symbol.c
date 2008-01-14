@@ -66,7 +66,7 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 				/* scale factor to change 1x1 char sz */
 {
 	register unsigned char *cp;
-	double	offset;			/* offset of char from given x,y */
+	double	offset;			/* offset of char from given x, y */
 	int	ysign;			/* sign of y motion, either +1 or -1 */
 	vect_t	temp;
 	vect_t	loc;
@@ -79,9 +79,9 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 	/*
 	 *  The point "origin" will be the center of the axis rotation.
 	 *  The text is located in a local coordinate system with the
-	 *  lower left corner of the first character at (0,0,0), with
+	 *  lower left corner of the first character at (0, 0, 0), with
 	 *  the text proceeding onward towards +X.
-	 *  We need to rotate the text around it's local (0,0,0),
+	 *  We need to rotate the text around it's local (0, 0, 0),
 	 *  and then translate to the user's designated "origin".
 	 *  If the user provided translation or
 	 *  scaling in his matrix, it will *also* be applied.
@@ -139,7 +139,7 @@ void
 tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
 
 				/* string of chars to be plotted */
-				/* x,y of lower left corner of 1st char */
+				/* x, y of lower left corner of 1st char */
 
 				/* scale factor to change 1x1 char sz */
 				/* degrees ccw from X-axis */

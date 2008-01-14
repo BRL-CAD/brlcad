@@ -257,7 +257,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 	double	height = center[Z];
 	int	index = 0;
 	point_t	loc_cent;
-	point_t	a,b;
+	point_t	a, b;
 	fastf_t	*maj_axis, *min_axis;
 	vect_t	long_axis, short_axis;
 	vect_t	other_axis;

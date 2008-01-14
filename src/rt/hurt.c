@@ -165,7 +165,7 @@ struct bu_structparse view_parse[] = {
     {"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL, "bounces", &max_bounces },
     {"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL, "max ireflect", &max_ireflect },
     {"%d",	1, "a_onehit",	bu_byteoffset(a_onehit),		BU_STRUCTPARSE_FUNC_NULL, "one hit", &a_onehit },
-    {"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL, "background color", &background },
+    {"%f", ELEMENTS_PER_VECT, "background", bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL, "background color", &background },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -270,7 +270,7 @@ int main(int argc, char **argv)
     }
 
     if( bu_optind >= argc )  {
-	fprintf(stderr,"%s:  MGED database not specified\n", argv[0]);
+	fprintf(stderr, "%s:  MGED database not specified\n", argv[0]);
 	(void)fputs(usage, stderr);
 	return 1;
     }
@@ -302,7 +302,7 @@ int main(int argc, char **argv)
     if (npsw > 1) {
 	rt_g.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr,"Planning to run with %d processors\n", npsw );
+	    fprintf(stderr, "Planning to run with %d processors\n", npsw );
     } else {
 	rt_g.rtg_parallel = 0;
     }
@@ -403,7 +403,7 @@ int main(int argc, char **argv)
 	fbp = fb_open( framebuffer, xx, yy );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( fbp == FBIO_NULL )  {
-	    fprintf(stderr,"rt:  can't open frame buffer\n");
+	    fprintf(stderr, "rt:  can't open frame buffer\n");
 	    return 12;
 	}
 
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
 	/* If not going to framebuffer, or to a file, then use stdout */
 	if( outfp == NULL )  outfp = stdout;
 	if( isatty(fileno(outfp)) )  {
-	    fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
+	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
 	    return 14;
 	}
     }
@@ -521,7 +521,7 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'C':
 		{
-		    int		r,g,b;
+		    int		r, g, b;
 		    register char	*cp = bu_optarg;
 
 		    r = atoi(cp);
@@ -620,7 +620,7 @@ int get_args( int argc, register char **argv )
 	    case 'p':
 		rt_perspective = atof( bu_optarg );
 		if( rt_perspective < 0 || rt_perspective > 179 ) {
-		    fprintf(stderr,"persp=%g out of range\n", rt_perspective);
+		    fprintf(stderr, "persp=%g out of range\n", rt_perspective);
 		    rt_perspective = 0;
 		}
 		break;
@@ -668,13 +668,13 @@ int get_args( int argc, register char **argv )
 		    else
 			aspect = xx/yy;
 		    if( aspect <= 0.0 ) {
-			fprintf(stderr,"Bogus aspect %g, using 1.0\n", aspect);
+			fprintf(stderr, "Bogus aspect %g, using 1.0\n", aspect);
 			aspect = 1.0;
 		    }
 		}
 		break;
 	    default:		/* '?' */
-		fprintf(stderr,"unknown option %c\n", c);
+		fprintf(stderr, "unknown option %c\n", c);
 		return(0);	/* BAD */
 	}
     }
@@ -964,7 +964,7 @@ struct command_tab rt_cmdtab[] = {
     {"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
-     cm_vrot,	17,17},
+     cm_vrot,	17, 17},
     {"orientation", "quaturnion", "set view direction from quaturnion",
      cm_orientation,	5, 5},
     {"end", 	"", "end of frame setup, begin raytrace",
@@ -1194,7 +1194,7 @@ do_frame(int framenumber)
      *  This may alter cell size or width/height.
      */
     grid_setup();
-    /* az/el 0,0 is when screen +Z is model +X */
+    /* az/el 0, 0 is when screen +Z is model +X */
     VSET( work, 0, 0, 1 );
     MAT3X3VEC( temp, view2model, work );
     bn_ae_vec( &azimuth, &elevation, temp );
@@ -1337,7 +1337,7 @@ do_frame(int framenumber)
  *
  *  Compute the rotation specified by the azimuth and elevation
  *  parameters.  First, note that these are specified relative
- *  to the GIFT "front view", ie, model (X,Y,Z) is view (Z,X,Y):
+ *  to the GIFT "front view", ie, model (X, Y, Z) is view (Z, X, Y):
  *  looking down X axis, Y right, Z up.
  *  A positive azimuth represents rotating the *eye* around the
  *  Y axis, or, rotating the *model* in -Y.
@@ -1608,7 +1608,7 @@ void do_pixel(int cpu,
 	}
     } /* end unrolling else case */
 
-    /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n",pixelnum%width,pixelnum/width,a.a_color[0],a.a_color[1],a.a_color[2]); */
+    /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
     /* we're done */
     view_pixel( &a );
@@ -1735,7 +1735,7 @@ void do_run( int a, int b )
 void
 view_pixel(register struct application *ap)
 {
-    register int	r,g,b;
+    register int	r, g, b;
 
     if( ap->a_user == 0 )  {
 	/* Shot missed the model, don't dither */

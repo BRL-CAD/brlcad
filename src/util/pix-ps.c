@@ -184,7 +184,7 @@ main(int argc, char **argv)
 		num = 0;
 		while( num < bytes_per_patch ) {
 			/*fprintf( ofp, "%02x", getc(infp) );*/
-			hexout(ofp,getc(infp));
+			hexout(ofp, getc(infp));
 			if( (++num % 32) == 0 )
 				fprintf( ofp, "\n " );
 		}

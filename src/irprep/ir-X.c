@@ -106,11 +106,11 @@ main(void)
    FILE *fpw;			/*  Used to write a file.  */
    char file[MAXFIL];		/*  File to be read.  */
    char line[151];		/*  Used to read one line of a file.  */
-   unsigned int main_w,main_h;	/*  Width & height of main window.  */
-   unsigned int wide,high;	/*  Width and height of picture window.  */
-   double pixval[MAXPIX][MAXPIX];/*  Pixel value (width,height).  */
-   double min=0.0,max=0.0;	/*  Minimum & maximum pixel values.  */
-   int i,j,k,m;			/*  Loop counters.  */
+   unsigned int main_w, main_h;	/*  Width & height of main window.  */
+   unsigned int wide, high;	/*  Width and height of picture window.  */
+   double pixval[MAXPIX][MAXPIX];/*  Pixel value (width, height).  */
+   double min=0.0, max=0.0;	/*  Minimum & maximum pixel values.  */
+   int i, j, k, m;			/*  Loop counters.  */
    double r;			/*  Temporary variable.  */
    double dcol;			/*  Color step.  */
    double pixbin[MAXCOL + 1];	/*  Pixel bins.  */
@@ -129,9 +129,9 @@ main(void)
    struct colstr array[MAXCOL + EXTRA];	/*  Array for color information.  */
 
    /*  Get file name to be read.  */
-   (void)printf("Enter name of file to be read (%d char max).\n\t",MAXFIL);
+   (void)printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
    (void)fflush(stdout);
-   (void)scanf("%25s",file);
+   (void)scanf("%25s", file);
 
    /*  Find what color shading to use.  */
    (void)printf("Indicate type of color shading to use.\n");
@@ -152,9 +152,9 @@ main(void)
    if(flag_pix == 1)
    {
 	(void)printf("Enter name of the pix file to be created ");
-	(void)printf("(%d char max).\n\t",MAXFIL);
+	(void)printf("(%d char max).\n\t", MAXFIL);
 	(void)fflush(stdout);
-	(void)scanf("%25s",file_pix);
+	(void)scanf("%25s", file_pix);
    }
 
    (void)printf("Zeroing color info array ");
@@ -213,14 +213,14 @@ main(void)
 	(void)fflush(stdout);
 	if(MAXCOL > 1280.)
 	{
-	   (void)printf("Maximum number of colors, %d, is ",MAXCOL);
+	   (void)printf("Maximum number of colors, %d, is ", MAXCOL);
 	   (void)printf("greater than 1280.\n");
 	   (void)printf("This may create problems.\n");
 	}
 	/*  Color step.  */
 	dcol = 1280. / MAXCOL;
 	i = 0;
-	/*  Colors (0,0,0) to (0,0,255).  */
+	/*  Colors (0, 0, 0) to (0, 0, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -230,7 +230,7 @@ main(void)
 	   check += dcol;
 	   i++;
 	}
-	/*  Colors (0,0,255) to (0,255,255).  */
+	/*  Colors (0, 0, 255) to (0, 255, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -240,7 +240,7 @@ main(void)
 	   check += dcol;
 	   i++;
 	}
-	/*  Colors (0,255,255) to (0,255,0).  */
+	/*  Colors (0, 255, 255) to (0, 255, 0).  */
 	check = 255.;
 	while( (check >= 0.) && (i < MAXCOL) )
 	{
@@ -250,7 +250,7 @@ main(void)
 	   check -= dcol;
 	   i++;
 	}
-	/*  Colors (0,255,0) to (255,255,0).  */
+	/*  Colors (0, 255, 0) to (255, 255, 0).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -260,7 +260,7 @@ main(void)
 	   check += dcol;
 	   i++;
 	}
-	/*  Colors (255,255,0) to (255,255,255).  */
+	/*  Colors (255, 255, 0) to (255, 255, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -278,14 +278,14 @@ main(void)
 	(void)fflush(stdout);
 	if(MAXCOL > 1280.)
 	{
-	   (void)printf("Maximum number of colors, %d, is ",MAXCOL);
+	   (void)printf("Maximum number of colors, %d, is ", MAXCOL);
 	   (void)printf("greater than 1280.\n");
 	   (void)printf("This may create problems.\n");
 	}
 	/*  Color step.  */
 	dcol = 1280. / MAXCOL;
 	i = 0;
-	/*  Colors (0,0,0) to (0,0,255).  */
+	/*  Colors (0, 0, 0) to (0, 0, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -295,7 +295,7 @@ main(void)
 	   check += dcol;
 	   i++;
 	}
-	/*  Colors (0,0,255) to (255,0,255).  */
+	/*  Colors (0, 0, 255) to (255, 0, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -305,7 +305,7 @@ main(void)
 	   check += dcol;
 	   i++;
 	}
-	/*  Colors (255,0,255) to (255,0,0).  */
+	/*  Colors (255, 0, 255) to (255, 0, 0).  */
 	check = 255.;
 	while( (check >= 0.) && (i < MAXCOL) )
 	{
@@ -315,7 +315,7 @@ main(void)
 	   check -= dcol;
 	   i++;
 	}
-	/*  Colors (255,0,0) to (255,255,0).  */
+	/*  Colors (255, 0, 0) to (255, 255, 0).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -325,7 +325,7 @@ main(void)
 	   check += dcol;
 	   i++;
 	}
-	/*  Colors (255,255,0) to (255,255,255).  */
+	/*  Colors (255, 255, 0) to (255, 255, 255).  */
 	check = 0.;
 	while( (check <= 255.) && (i < MAXCOL) )
 	{
@@ -344,8 +344,8 @@ main(void)
 /*
  * for(i=0; i<MAXCOL; i++)
  * {
- *	(void)printf("Color %d:  %d, %d, %d\n",i,colval[i].red,
- *		colval[i].green,colval[i].blue);
+ *	(void)printf("Color %d:  %d, %d, %d\n", i, colval[i].red,
+ *		colval[i].green, colval[i].blue);
  *	(void)fflush(stdout);
  * }
  */
@@ -354,33 +354,33 @@ main(void)
    (void)fflush(stdout);
 
    /*  Open file for reading.  */
-   fpr = fopen(file,"r");
+   fpr = fopen(file, "r");
 
    /*  Check for non-existant file.  */
    while(fpr == NULL)
    {
 	(void)printf("\nThis file does not exist, please try again.\n");
 	(void)fflush(stdout);
-	(void)scanf("%25s",file);
-	fpr = fopen(file,"r");
+	(void)scanf("%25s", file);
+	fpr = fopen(file, "r");
    }
 
    /*  Read width and height of window.  */
-   (void)bu_fgets(line,150,fpr);
-   (void)sscanf(line,"%u %u",&wide,&high);
+   (void)bu_fgets(line, 150, fpr);
+   (void)sscanf(line, "%u %u",&wide,&high);
 
    /*  Check that width and height are not too big.  */
    if(wide > MAXPIX)
    {
-	(void)printf("The width of the window, %d, is greater\n",wide);
-	(void)printf("than the maximum for width, %d.  Press\n",MAXPIX);
+	(void)printf("The width of the window, %d, is greater\n", wide);
+	(void)printf("than the maximum for width, %d.  Press\n", MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
    }
    if(high > MAXPIX)
    {
-	(void)printf("The height of the window, %d, is greater\n",wide);
-	(void)printf("than the maximum for height, %d.  Press\n",MAXPIX);
+	(void)printf("The height of the window, %d, is greater\n", wide);
+	(void)printf("than the maximum for height, %d.  Press\n", MAXPIX);
 	(void)printf("delete to end program.\n");
 	(void)fflush(stdout);
    }
@@ -390,8 +390,8 @@ main(void)
    {
 	for(j=0; j<(int)wide; j++)
 	{
-	   (void)bu_fgets(line,150,fpr);
-	   (void)sscanf(line,"%lf",&pixval[j][i]);
+	   (void)bu_fgets(line, 150, fpr);
+	   (void)sscanf(line, "%lf",&pixval[j][i]);
 	}
    }
 
@@ -402,15 +402,15 @@ main(void)
    (void)fflush(stdout);
 
    /*  Print out width and height of window.  */
-   (void)printf("Width:  %d\n",wide);
-   (void)printf("Height:  %d\n",high);
+   (void)printf("Width:  %d\n", wide);
+   (void)printf("Height:  %d\n", high);
    (void)fflush(stdout);
 
    /*  Print out the first ten values as check.  */
 /*
  * for(i=0; i<10; i++)
  * {
- *	(void)printf("value %d:  %f\n",(i+1),pixval[0][i]);
+ *	(void)printf("value %d:  %f\n",(i+1), pixval[0][i]);
  *	(void)fflush(stdout);
  * }
  */
@@ -420,7 +420,7 @@ main(void)
 /*
  * for(i=((int)wide - 11); i<(int)wide; i++)
  * {
- *	(void)printf("value %d:  %f\n",(i+1),pixval[(int)high - 1][i]);
+ *	(void)printf("value %d:  %f\n",(i+1), pixval[(int)high - 1][i]);
  *	(void)fflush(stdout);
  * }
  */
@@ -444,8 +444,8 @@ main(void)
    }
 
    /*  Write minimum and maximum pixel values.  */
-   (void)printf("Minimum:  %f\n",min);
-   (void)printf("Maximum:  %f\n",max);
+   (void)printf("Minimum:  %f\n", min);
+   (void)printf("Maximum:  %f\n", max);
    (void)fflush(stdout);
 
    (void)printf("Finding pixel bins ");
@@ -549,10 +549,10 @@ main(void)
    /*  Write out count for each array.  */
 /* for(i=0; i<lstarr; i++)
  * {
- *	(void)printf("Color %d - count %d ",i,array[i].cnt);
+ *	(void)printf("Color %d - count %d ", i, array[i].cnt);
  *	if(array[i].more > 0)
  *	{
- *	   (void)printf("- more %d\n",array[i].more);
+ *	   (void)printf("- more %d\n", array[i].more);
  *	}
  *	else
  *	{
@@ -570,14 +570,14 @@ main(void)
    root_id = DefaultRootWindow(my_display);
 
    /*  Find value for black & white.  */
-   black = BlackPixel(my_display,DefaultScreen(my_display));
-   white = WhitePixel(my_display,DefaultScreen(my_display));
+   black = BlackPixel(my_display, DefaultScreen(my_display));
+   white = WhitePixel(my_display, DefaultScreen(my_display));
 
    /*  Create a window & find its id.  */
    main_w = wide + (unsigned int)150;
    main_h = high + (unsigned int)150;
-   my_window = XCreateSimpleWindow(my_display,root_id,0,0,
-	main_w,main_h,50,white,black);
+   my_window = XCreateSimpleWindow(my_display, root_id, 0, 0,
+	main_w, main_h, 50, white, black);
 
    /*  Set appropriate fields in window hits structure.  */
    /*  This is only done for the first window created.  */
@@ -587,41 +587,41 @@ main(void)
 
    /*  Inform window manager of hints.  */
    /*  Set XSetStandarProperties instead of XSetNormalHints.  */
-   XSetStandardProperties(my_display,my_window,winttl,winttl,None,a,0,
+   XSetStandardProperties(my_display, my_window, winttl, winttl, None, a, 0,
 	&window_hints);
 
    /*  Create picture window & find its id.  */
-   wind_pic = XCreateSimpleWindow(my_display,my_window,20,20,wide,high,
-	5,white,black);
+   wind_pic = XCreateSimpleWindow(my_display, my_window, 20, 20, wide, high,
+	5, white, black);
 
    /*  Create exit window & find its id.  */
-   wind_exit = XCreateSimpleWindow(my_display,my_window,(wide + 30),
-	(high + 65),80,30,5,white,black);
+   wind_exit = XCreateSimpleWindow(my_display, my_window,(wide + 30),
+	(high + 65), 80, 30, 5, white, black);
 
    /*  Create color scale window & find its id.  */
-   wind_scale = XCreateSimpleWindow(my_display,my_window,10,(high + 50),
-	(2 * MAXCOL),60,5,white,black);
+   wind_scale = XCreateSimpleWindow(my_display, my_window, 10,(high + 50),
+	(2 * MAXCOL), 60, 5, white, black);
 
    /*  Select input event masks that are to be responed to (exposure).  */
    input_event_mask = ExposureMask | ButtonPressMask;
 
    /*  Notify server about input event masks.  */
-   XSelectInput(my_display,my_window,ExposureMask);
-   XSelectInput(my_display,wind_pic,ExposureMask);
-   XSelectInput(my_display,wind_exit,input_event_mask);
-   XSelectInput(my_display,wind_scale,input_event_mask);
+   XSelectInput(my_display, my_window, ExposureMask);
+   XSelectInput(my_display, wind_pic, ExposureMask);
+   XSelectInput(my_display, wind_exit, input_event_mask);
+   XSelectInput(my_display, wind_scale, input_event_mask);
 
    /*  Map window to display so that it will show up.  */
-   XMapWindow(my_display,my_window);
+   XMapWindow(my_display, my_window);
 
    /*  Map picture window, exit window, & color scale window to display  */
    /*  so that they will show up.  */
-   XMapWindow(my_display,wind_pic);
-   XMapWindow(my_display,wind_exit);
-   XMapWindow(my_display,wind_scale);
+   XMapWindow(my_display, wind_pic);
+   XMapWindow(my_display, wind_exit);
+   XMapWindow(my_display, wind_scale);
 
    /*  Create graphics context (gc) for my window.  */
-   my_gc = XCreateGC(my_display,my_window,None,NULL);
+   my_gc = XCreateGC(my_display, my_window, None, NULL);
 
    /*  Create a loop so that events will occur.  */
    for(;;)
@@ -647,10 +647,10 @@ main(void)
 			rect[i].height = 1;
 		   }
 		   m = array[k].cnt;
-		   XAllocColor(my_display,DefaultColormap(my_display,screen),
+		   XAllocColor(my_display, DefaultColormap(my_display, screen),
 			&colval[k]);
-		   XSetForeground(my_display,my_gc,colval[k].pixel);
-		   XFillRectangles(my_display,wind_pic,my_gc,rect,m);
+		   XSetForeground(my_display, my_gc, colval[k].pixel);
+		   XFillRectangles(my_display, wind_pic, my_gc, rect, m);
 
 		   /*  Send extra array if there is a lot of that color.  */
 		   if(array[k].more > 0)
@@ -664,10 +664,10 @@ main(void)
 			   rect[i].height = 1;
 			}
 			m = array[j].cnt;
-			XAllocColor(my_display,DefaultColormap(my_display,
+			XAllocColor(my_display, DefaultColormap(my_display,
 				screen),&colval[k]);
-			XSetForeground(my_display,my_gc,colval[k].pixel);
-			XFillRectangles(my_display,wind_pic,my_gc,rect,m);
+			XSetForeground(my_display, my_gc, colval[k].pixel);
+			XFillRectangles(my_display, wind_pic, my_gc, rect, m);
 		   }
 		  }
 		}
@@ -676,10 +676,10 @@ main(void)
 	     /*  If exit window is exposed write label.  */
 	     else if(event_received.xexpose.window == wind_exit)
 	     {						/*  START # 2  */
-		XSetForeground(my_display,my_gc,white);
-		font = XLoadFont(my_display,"8x13bold");
-		XSetFont(my_display,my_gc,font);
-		XDrawString(my_display,wind_exit,my_gc,25,20,exit,
+		XSetForeground(my_display, my_gc, white);
+		font = XLoadFont(my_display, "8x13bold");
+		XSetFont(my_display, my_gc, font);
+		XDrawString(my_display, wind_exit, my_gc, 25, 20, exit,
 			strlen(exit));
 	     }						/*  END # 2  */
 
@@ -688,34 +688,34 @@ main(void)
 	     {
 		for(i=0; i<MAXCOL; i++)
 		{
-		   XAllocColor(my_display,DefaultColormap(my_display,
+		   XAllocColor(my_display, DefaultColormap(my_display,
 			screen),&colval[i]);
-		   XSetForeground(my_display,my_gc,colval[i].pixel);
-		   XFillRectangle(my_display,wind_scale,my_gc,
-			(i * 2),0,2,30);
+		   XSetForeground(my_display, my_gc, colval[i].pixel);
+		   XFillRectangle(my_display, wind_scale, my_gc,
+			(i * 2), 0, 2, 30);
 		}
 		/*  Write label.  */
-		XSetForeground(my_display,my_gc,white);
-		font = XLoadFont(my_display,"8x13bold");
-		XSetFont(my_display,my_gc,font);
-		(void)sprintf(string,"%.0f",min);
-		XDrawString(my_display,wind_scale,my_gc,
-			2,45,string,strlen(string));
+		XSetForeground(my_display, my_gc, white);
+		font = XLoadFont(my_display, "8x13bold");
+		XSetFont(my_display, my_gc, font);
+		(void)sprintf(string, "%.0f", min);
+		XDrawString(my_display, wind_scale, my_gc,
+			2, 45, string, strlen(string));
 		r = min + (max - min) / 4.;
-		(void)sprintf(string,"%.0f",r);
-		XDrawString(my_display,wind_scale,my_gc,
-			(MAXCOL * 2 / 4 - 8),45,string,strlen(string));
+		(void)sprintf(string, "%.0f", r);
+		XDrawString(my_display, wind_scale, my_gc,
+			(MAXCOL * 2 / 4 - 8), 45, string, strlen(string));
 		r = min + (max - min) / 2.;
-		(void)sprintf(string,"%.0f",r);
-		XDrawString(my_display,wind_scale,my_gc,
-			(MAXCOL * 2 / 2 - 8),45,string,strlen(string));
+		(void)sprintf(string, "%.0f", r);
+		XDrawString(my_display, wind_scale, my_gc,
+			(MAXCOL * 2 / 2 - 8), 45, string, strlen(string));
 		r = min + (max - min) * 3. / 4.;
-		(void)sprintf(string,"%.0f",r);
-		XDrawString(my_display,wind_scale,my_gc,
-			(MAXCOL * 2 * 3 / 4 - 8),45,string,strlen(string));
-		(void)sprintf(string,"%.0f",max);
-		XDrawString(my_display,wind_scale,my_gc,
-			(MAXCOL * 2 - 16),45,string,strlen(string));
+		(void)sprintf(string, "%.0f", r);
+		XDrawString(my_display, wind_scale, my_gc,
+			(MAXCOL * 2 * 3 / 4 - 8), 45, string, strlen(string));
+		(void)sprintf(string, "%.0f", max);
+		XDrawString(my_display, wind_scale, my_gc,
+			(MAXCOL * 2 - 16), 45, string, strlen(string));
 	     }
 	   break;
 
@@ -729,7 +729,7 @@ main(void)
 		if(flag_pix == 1)
 		{					/*  START # 1.  */
 		   /*  Open pix file to be written to.  */
-		   fpw = fopen(file_pix,"w");
+		   fpw = fopen(file_pix, "w");
 
 		   /*  Write colors to file.  */
 		   for(i=high; i>0; i--)
@@ -738,20 +738,20 @@ main(void)
 			{				/*  START # 3.  */
 			   c = (unsigned char)( (int)(colval[color[j][i-1]].red
 				/ 256) );
-			   putc(c,fpw);
+			   putc(c, fpw);
 			   c = (unsigned char)( (int)
 				(colval[color[j][i-1]].green / 256) );
-			   putc(c,fpw);
+			   putc(c, fpw);
 			   c = (unsigned char)( (int)(colval[color[j][i-1]].blue
 				/ 256) );
-			   putc(c,fpw);
+			   putc(c, fpw);
 			}				/*  END # 3.  */
 		   }					/*  END # 2.  */
 
 		   /*  Close file.  */
 		   (void)fclose(fpw);
 
-		   (void)printf("Pix file, %s, has been written.\n",file_pix);
+		   (void)printf("Pix file, %s, has been written.\n", file_pix);
 		   (void)fflush(stdout);
 		}					/*  END # 1.  */
 

@@ -312,7 +312,7 @@ main(int argc, char **argv)
 					goto success;
 				}
 			} else {
-				for( ep = ap+width; ap < ep; ap++,bp++ )  {
+				for( ep = ap+width; ap < ep; ap++, bp++ )  {
 					if( *ap > *bp )  {
 						if( !(GT & wanted) )
 							goto fail;

@@ -558,10 +558,10 @@ struct dm_list {
 
 #define BV_MAXFUNC	64	/* largest code used */
 
-#define FOR_ALL_DISPLAYS(p,hp) \
-	for(BU_LIST_FOR(p,dm_list,hp))
+#define FOR_ALL_DISPLAYS(p, hp) \
+	for(BU_LIST_FOR(p, dm_list, hp))
 
-#define GET_DM_LIST(p,id) { \
+#define GET_DM_LIST(p, id) { \
 		register struct dm_list *tp; \
 \
 		FOR_ALL_DISPLAYS(tp, &head_dm_list.l) { \

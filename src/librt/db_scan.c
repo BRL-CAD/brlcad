@@ -49,7 +49,7 @@
 
 #define DEBUG_PR(aaa, rrr) 	{\
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_scan x%x %c (0%o)\n", \
-		aaa,rrr.u_id,rrr.u_id ); }
+		aaa, rrr.u_id, rrr.u_id ); }
 
 /**
  *			D B _ S C A N
@@ -541,17 +541,17 @@ db_v4_get_units_code( const char *str )
 		return ID_UM_UNIT;
 	if( strcmp(str, "cm") == 0 || strcmp(str, "centimeters") == 0)
 		return ID_CM_UNIT;
-	if( strcmp(str,"m")==0 || strcmp(str,"meters")==0 )
+	if( strcmp(str, "m")==0 || strcmp(str,"meters")==0 )
 		return ID_M_UNIT;
 	if( strcmp(str, "km") == 0 || strcmp(str, "kilometers") == 0)
 		return ID_KM_UNIT;
-	if( strcmp(str,"in")==0 || strcmp(str,"inches")==0 || strcmp(str,"inch")==0 )
+	if( strcmp(str, "in")==0 || strcmp(str,"inches")==0 || strcmp(str,"inch")==0 )
 		return ID_IN_UNIT;
-	if( strcmp(str,"ft")==0 || strcmp(str,"feet")==0 || strcmp(str,"foot")==0 )
+	if( strcmp(str, "ft")==0 || strcmp(str,"feet")==0 || strcmp(str,"foot")==0 )
 		return ID_FT_UNIT;
-	if( strcmp(str,"yd")==0 || strcmp(str,"yards")==0 || strcmp(str,"yard")==0 )
+	if( strcmp(str, "yd")==0 || strcmp(str,"yards")==0 || strcmp(str,"yard")==0 )
 		return ID_YD_UNIT;
-	if( strcmp(str,"mi")==0 || strcmp(str,"miles")==0 || strcmp(str,"mile")==0 )
+	if( strcmp(str, "mi")==0 || strcmp(str,"miles")==0 || strcmp(str,"mile")==0 )
 		return ID_MI_UNIT;
 
 	return -1;		/* error */

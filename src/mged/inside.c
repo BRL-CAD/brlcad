@@ -245,7 +245,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if( intern.idb_type == ID_ARB8 )  {
 	  /* find the comgeom arb type, & reorganize */
-	  int uvec[8],svec[11];
+	  int uvec[8], svec[11];
 
 	  if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &mged_tol , uvec , svec ) == 0 ) {
 	    Tcl_AppendResult(interp, outdp->d_namep, ": BAD ARB\n", (char *)NULL);
@@ -604,7 +604,7 @@ arbin(
 	   * in the original solid
 	   */
 	  point_t pt[4];
-	  fastf_t dist0,dist1;
+	  fastf_t dist0, dist1;
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -761,7 +761,7 @@ arbin(
 			  struct bu_vls tmp_vls;
 
 			  bu_vls_init(&tmp_vls);
-			  bu_vls_printf(&tmp_vls,"Could not move face plane for arb7, face #%d\n",
+			  bu_vls_printf(&tmp_vls, "Could not move face plane for arb7, face #%d\n",
 					i );
 			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			  bu_vls_free(&tmp_vls);
@@ -827,11 +827,11 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	vect_t norm;		/* unit vector normal to base */
 	fastf_t normal_height;	/* height in direction normal to base */
-	vect_t v,h;		/* parameters for inside TGC */
+	vect_t v, h;		/* parameters for inside TGC */
 	point_t top;		/* vertex at top of inside TGC */
-	fastf_t mag_a,mag_b,mag_c,mag_d; /* lengths of original semi-radii */
-	fastf_t new_mag_a,new_mag_b,new_mag_c,new_mag_d; /* new lengths */
-	vect_t unit_a,unit_b,unit_c,unit_d; /* unit vectors along semi radii */
+	fastf_t mag_a, mag_b, mag_c, mag_d; /* lengths of original semi-radii */
+	fastf_t new_mag_a, new_mag_b, new_mag_c, new_mag_d; /* new lengths */
+	vect_t unit_a, unit_b, unit_c, unit_d; /* unit vectors along semi radii */
 	fastf_t ratio;
 
 	RT_TGC_CK_MAGIC(tgc);
@@ -930,7 +930,7 @@ tgcin(struct rt_db_internal *ip, fastf_t thick[6])
 		point_t pt_a, pt_b, pt_c, pt_d;	/* points at tips of semi radii */
 		fastf_t delta_ac, delta_bd;	/* radius change for thickness */
 		fastf_t dot;	/* dot product */
-		fastf_t ratio1,ratio2;
+		fastf_t ratio1, ratio2;
 
 		if( (thick[2] >= new_mag_a || thick[2] >= new_mag_b) &&
 		    (thick[2] >= new_mag_c || thick[2] >= new_mag_d) )

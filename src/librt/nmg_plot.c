@@ -518,17 +518,17 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
 	if (MAGSQ(delta_vec) > VDIVIDE_TOL) {
 		VUNITIZE(delta_vec);
 		VJOIN2(base, this_vg->coord,
-			(nmg_eue_dist*1.3),delta_vec,
-			(nmg_eue_dist*0.8),face_normal);
+			(nmg_eue_dist*1.3), delta_vec,
+			(nmg_eue_dist*0.8), face_normal);
 
 	} else if (tip) {
 		VJOIN2(base, this_vg->coord,
-			(nmg_eue_dist*1.3),prev_left,
-			(nmg_eue_dist*0.8),face_normal);
+			(nmg_eue_dist*1.3), prev_left,
+			(nmg_eue_dist*0.8), face_normal);
 	} else {
 		VJOIN2(base, this_vg->coord,
-			(nmg_eue_dist*1.3),eu_left,
-			(nmg_eue_dist*0.8),face_normal);
+			(nmg_eue_dist*1.3), eu_left,
+			(nmg_eue_dist*0.8), face_normal);
 	}
 }
 
@@ -2464,7 +2464,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 			/* evaluate curve at parameter values */
 			crv_param += param_delta;
 
-			VSETALL(uvw,0);
+			VSETALL(uvw, 0);
 
 			rt_nurb_c_eval( c, crv_param, uvw );
 

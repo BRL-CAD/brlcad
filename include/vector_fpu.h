@@ -145,7 +145,7 @@ dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
 {
     double val = identity;
     for (int i = limit-1; i >= 0; i--) {
-	val = op(data.v[i],val);
+	val = op(data.v[i], val);
     }
     return val;
 }
@@ -155,7 +155,7 @@ dvec<LEN>::foldl(double identity, const dvec_op& op, int limit)
 {
     double val = identity;
     for (int i = 0; i < limit; i++) {
-	val = op(val,data.v[i]);
+	val = op(val, data.v[i]);
     }
     return val;
 }
@@ -190,16 +190,16 @@ class vec2d {
 public:
 
   vec2d() {
-    _init(0,0);
+    _init(0, 0);
   }
 
   vec2d(double x, double y) {
-    _init(x,y);
+    _init(x, y);
   }
 
   vec2d(const vec2d& proto)
   {
-    _init(proto.v[0],proto.v[1]);
+    _init(proto.v[0], proto.v[1]);
   }
 
   vec2d& operator=(const vec2d& b)
@@ -236,12 +236,12 @@ public:
 
   vec2d madd(const double& scalar, const vec2d& b) const
   {
-    return vec2d(v[0]*scalar+b.v[0],v[1]*scalar+b.v[1]);
+    return vec2d(v[0]*scalar+b.v[0], v[1]*scalar+b.v[1]);
   }
 
   vec2d madd(const vec2d& s, const vec2d& b) const
   {
-    return vec2d(v[0]*s.v[0]+b.v[0],v[1]*s.v[1]+b.v[1]);
+    return vec2d(v[0]*s.v[0]+b.v[0], v[1]*s.v[1]+b.v[1]);
   }
 
 private:

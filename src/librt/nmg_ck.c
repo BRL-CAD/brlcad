@@ -120,7 +120,7 @@ nmg_vvu(const struct vertexuse *vu, const long int *up_magic_p)
 	if( magic != NMG_VERTEXUSE_MAGIC && magic != BU_LIST_HEAD_MAGIC )
 		bu_bomb("nmg_vvu() vertexuse forw is bad vertexuse\n");
 
-	if (BU_LIST_PNEXT_PLAST(vertexuse,vu) != vu )
+	if (BU_LIST_PNEXT_PLAST(vertexuse, vu) != vu )
 		bu_bomb("nmg_vvu() vertexuse not back of next vertexuse\n");
 
 	nmg_vvertex(vu->v_p, vu);
@@ -274,7 +274,7 @@ nmg_veu(const struct bu_list *hp, const long int *up_magic_p)
 		NMG_CK_EDGEUSE(eulast);
 
 		/* Check that forw->back is us */
-		if (BU_LIST_PPREV_CIRC(edgeuse,eunext) != eu )  {
+		if (BU_LIST_PPREV_CIRC(edgeuse, eunext) != eu )  {
 		    if (eunext->l.back)
 			bu_bomb("nmg_veu() next edgeuse has back that points elsewhere\n");
 		    bu_bomb("nmg_veu() next edgeuse has NULL back\n");
@@ -430,7 +430,7 @@ nmg_vlu(const struct bu_list *hp, const long int *up)
 
 		if (!lu->l.forw)
 			bu_bomb("nmg_vlu() loopuse has null forw pointer\n");
-		if (BU_LIST_PNEXT_PLAST(loopuse,lu) != lu )
+		if (BU_LIST_PNEXT_PLAST(loopuse, lu) != lu )
 			bu_bomb("nmg_vlu() forw loopuse has back pointing somewhere else\n");
 
 		if (!lu->lumate_p)
@@ -916,7 +916,7 @@ nmg_ck_lu(const long int *parent, const struct loopuse *lu, const char *str)
 	/* check the parent of lu and lumate WRT each other */
 	NMG_CK_LOOPUSE(lu->lumate_p);
 	if (*lu->lumate_p->up.magic_p != *lu->up.magic_p) {
-	    strncat(errstr,"nmg_ck_lu() loopuse mate has different kind of parent\n", len-strlen(errstr)-1);
+	    strncat(errstr, "nmg_ck_lu() loopuse mate has different kind of parent\n", len-strlen(errstr)-1);
 	    errstr[len-1] = '\0'; /* sanity */
 	    bu_bomb(errstr);
 	}
@@ -1003,7 +1003,7 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE_G_PLANE(f->g.plane_p);
 	if (f->fu_p != fu && f->fu_p->fumate_p != fu) {
-	    strncat(errstr,"nmg_ck_f() Cannot get from face to \"parent faceuse\"\n", len-strlen(errstr)-1);
+	    strncat(errstr, "nmg_ck_f() Cannot get from face to \"parent faceuse\"\n", len-strlen(errstr)-1);
 	    errstr[len-1] = '\0'; /* sanity */
 	    bu_bomb(errstr);
 	}
@@ -1636,8 +1636,8 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	struct bu_vls str;
 	struct faceuse *fu;
 	struct vertexuse *vu;
-	fastf_t dist1,dist2;
-	int found1=0,found2=0;
+	fastf_t dist1, dist2;
+	int found1=0, found2=0;
 	plane_t	n1, n2;
 
 	NMG_CK_VERTEX( vp );

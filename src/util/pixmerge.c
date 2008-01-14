@@ -226,13 +226,13 @@ main(int argc, char **argv)
 			else
 				bp = cb2;
 			if( wanted & NE )  {
-				for( ep = cb1+width; ap < ep; ap++,bp++ )  {
+				for( ep = cb1+width; ap < ep; ap++, bp++ )  {
 					if( *ap != *bp )
 						goto success;
 				}
 				goto fail;
 			} else {
-				for( ep = cb1+width; ap < ep; ap++,bp++ )  {
+				for( ep = cb1+width; ap < ep; ap++, bp++ )  {
 					if( *ap > *bp )  {
 						if( !(GT & wanted) ) goto fail;
 					} else if( *ap == *bp )  {

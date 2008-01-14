@@ -35,7 +35,7 @@
 
 fastf_t
 splinef( c , s )
-fastf_t c[4],s;
+fastf_t c[4], s;
 {
 	int i;
 	float retval;

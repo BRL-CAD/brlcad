@@ -94,7 +94,7 @@ int entityno;
 	/*
 	 * Making the necessaries. First an id is made for the new entity.
 	 * Then the vertices for the bottom and top faces are found.  Point
-	 * is located in the lower left corner of the solid,and the vertices are
+	 * is located in the lower left corner of the solid, and the vertices are
 	 * counted in the counter-clockwise direction, bottom face first.
 	 * Once all the vertices are identified, the points of these vertices are
 	 * loaded into an array of points and handed off to mk_arb8().

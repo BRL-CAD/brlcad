@@ -36,7 +36,7 @@
 void
 Do_subfigs()
 {
-	int i,j;
+	int i, j;
 	int entity_type;
 	struct wmember head1;
 	struct wmember *wmem;

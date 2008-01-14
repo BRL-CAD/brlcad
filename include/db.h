@@ -76,7 +76,7 @@
  */
 typedef float dbfloat_t;
 
-#define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
+#define NAMEMOVE(from, to)	(void)strncpy(to, from, NAMESIZE)
 
 #define DB_MINREC	128
 
@@ -143,7 +143,7 @@ union record  {
 		char	s_type;		/* GED primitive type */
 /* also TOR 	16	   toroid */
 #define GENTGC	18	/* supergeneralized TGC; internal form */
-#define GENELL	19	/* ready for drawing ELL:  V,A,B,C */
+#define GENELL	19	/* ready for drawing ELL:  V, A, B, C */
 #define GENARB8	20	/* generalized ARB8:  V, and 7 other vectors */
 #define	ARS	21	/* HACK arbitrary triangular-surfaced polyhedron */
 #define ARSCONT 22	/* HACK extension record type for ARS solid */

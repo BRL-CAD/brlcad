@@ -139,14 +139,14 @@ struct ptlist
 struct segment
 {
 	int segno;
-	fastf_t tmin,tmax;
-	fastf_t cx[4],cy[4],cz[4];
+	fastf_t tmin, tmax;
+	fastf_t cx[4], cy[4], cz[4];
 	struct segment *next;
 };
 
 struct spline
 {
-	int ndim,nsegs;
+	int ndim, nsegs;
 	struct segment *start;
 };
 

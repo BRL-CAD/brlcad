@@ -116,7 +116,7 @@ struct bu_structparse bbd_print_tab[] = {
     {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse bbd_parse_tab[] = {
-    {"i",bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"i", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 

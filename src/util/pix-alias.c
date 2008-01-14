@@ -138,8 +138,8 @@ void doit(void)
 
 void usage(void)
 {
-	(void)fprintf(stderr,"Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
-	(void)fprintf(stderr,"\t< BRLpixfile > ALIASpixfile\n");
+	(void)fprintf(stderr, "Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
+	(void)fprintf(stderr, "\t< BRLpixfile > ALIASpixfile\n");
 	bu_exit (1, NULL);
 }
 
@@ -163,7 +163,7 @@ main(int ac, char **av)
 
 	/* get all the option flags from the command line
 	 */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac, av, options)) != EOF)
 		switch (c) {
 		case 'w' : x = atoi(bu_optarg); break;
 		case 'n' : y = atoi(bu_optarg); break;

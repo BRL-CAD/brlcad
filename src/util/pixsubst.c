@@ -35,7 +35,7 @@ int
 main(int argc, char **argv)
 {
 
-	unsigned char pix[3],pixin[3],pixout[3];
+	unsigned char pix[3], pixin[3], pixout[3];
 	int npixels;
 
 	if( argc != 4 && argc != 7 )

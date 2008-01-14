@@ -702,7 +702,7 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	/* 2^31 ~= 2e9 -- dynamic range of a long int */
 	/* 2^(31-11) = 2^20 ~= 1e6 */
 	/* Integerize and let the X server do the clipping */
-	for (i = 0; i < nused; i++,cmd++,pt++) {
+	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 

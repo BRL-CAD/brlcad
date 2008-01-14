@@ -84,7 +84,7 @@ __BEGIN_DECLS
  *	be considered the same point.
  *	For example:
 @code
-		point_t	a,b;
+		point_t	a, b;
 		vect_t	diff;
 		VSUB2( diff, a, b );
 		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
@@ -98,9 +98,9 @@ __BEGIN_DECLS
  *	dot product is nearly zero, then they are perpendicular.
  *	For example:
 @code
-		vect_t	a,b;
-		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
-		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
+		vect_t	a, b;
+		if( fabs(VDOT(a, b)) >= tol->para )	a & b are parallel
+		if( fabs(VDOT(a, b)) <= tol->perp )	a & b are perpendicular
 @endcode
  *
  *  @note
@@ -1580,7 +1580,7 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;
  *		register point_t *pt = vp->pt;
- *		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+ *		for( i = 0; i < nused; i++, cmd++, pt++ )  {
  *			access( *cmd, *pt );
  *			access( vp->cmd[i], vp->pt[i] );
  *		}
@@ -1613,7 +1613,7 @@ struct bn_vlist  {
  *
  * Note that BN_GET_VLIST and BN_FREE_VLIST are non-PARALLEL.
  */
-#define BN_GET_VLIST(_free_hd,p) {\
+#define BN_GET_VLIST(_free_hd, p) {\
 		(p) = BU_LIST_FIRST( bn_vlist, (_free_hd) ); \
 		if( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
 			(p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
@@ -1625,12 +1625,12 @@ struct bn_vlist  {
 	}
 
 /** Place an entire chain of bn_vlist structs on the freelist _free_hd */
-#define BN_FREE_VLIST(_free_hd,hd)	{ \
+#define BN_FREE_VLIST(_free_hd, hd)	{ \
 	BU_CK_LIST_HEAD( (hd) ); \
 	BU_LIST_APPEND_LIST( (_free_hd), (hd) ); \
 	}
 
-#define BN_ADD_VLIST(_free_hd,_dest_hd,pnt,draw)  { \
+#define BN_ADD_VLIST(_free_hd,_dest_hd, pnt, draw)  { \
 	register struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD( _dest_hd ); \
 	_vp = BU_LIST_LAST( bn_vlist, (_dest_hd) ); \

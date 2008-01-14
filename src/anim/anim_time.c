@@ -56,7 +56,7 @@ extern char *bu_optarg;
 #define TIME_RELATIVE	2
 
 /* command line variables */
-fastf_t inv0,inv1;
+fastf_t inv0, inv1;
 int v0_set =	 TIME_NONE;
 int v1_set =	 TIME_NONE;
 int query =	 0;
@@ -71,8 +71,8 @@ fastf_t
 gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
 {
 
-    fastf_t old,new,temp;
-    int countdown,success;
+    fastf_t old, new, temp;
+    int countdown, success;
     countdown = MAXITS;
 
     old = init;
@@ -89,10 +89,10 @@ gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
 	    break;
 	}
 	if (debug)
-	    printf("c: %d %f\t%f\n",countdown,new,new-old);
+	    printf("c: %d %f\t%f\n", countdown, new, new-old);
 	old = new;
     }
-    if (!success) fprintf(stderr,"warning - max iterations reached\n");
+    if (!success) fprintf(stderr, "warning - max iterations reached\n");
     return (new);
 
 }
@@ -101,17 +101,17 @@ int
 main(int argc, char **argv)
 {
     fastf_t *l, *x, *y, *z;
-    fastf_t temp0,temp1,temp2,start=0.0,end,v0,v1;
-    int i,j , num,plen;
+    fastf_t temp0, temp1, temp2, start=0.0, end, v0, v1;
+    int i, j , num, plen;
 
 
-    fastf_t time,dist,slope,a,b,c;
+    fastf_t time, dist, slope, a, b, c;
 
 
     plen = 0;
 
-    if (!get_args(argc,argv)) {
-	fprintf(stderr,"Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
+    if (!get_args(argc, argv)) {
+	fprintf(stderr, "Usage: anim_time [-s#] [-e#] [-d] < in.table\n");
 	return 1;
     }
 
@@ -119,22 +119,22 @@ main(int argc, char **argv)
 	maxlines = MAXLEN;
     }
 
-    l = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"l[]");
+    l = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "l[]");
     if (verbose) {
-	x = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"x[]");
-	y = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"y[]");
-	z = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t),"z[]");
+	x = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "x[]");
+	y = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "y[]");
+	z = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "z[]");
     } else {
-	x = (fastf_t *) bu_malloc(2*sizeof(fastf_t),"x[]");
-	y = (fastf_t *) bu_malloc(2*sizeof(fastf_t),"y[]");
-	z = (fastf_t *) bu_malloc(2*sizeof(fastf_t),"z[]");
+	x = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "x[]");
+	y = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "y[]");
+	z = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "z[]");
     }
     l[0] = 0.0;
 
     while(plen<maxlines){
 	i = (verbose) ? plen : plen%2;
 	j = (verbose) ? (plen-1) : (plen+1)%2;
-	num = scanf("%lf %lf %lf %lf",&end,x+i,y+i,z+i);
+	num = scanf("%lf %lf %lf %lf",&end, x+i, y+i, z+i);
 	if (num<4)
 	    break;
 	if(plen){
@@ -154,16 +154,16 @@ main(int argc, char **argv)
     dist = l[plen-1];
 
     if (query){
-	printf("%f\n",dist);
+	printf("%f\n", dist);
 	return(0);
     }
 
     if (time < DIVIDE_TOL){
-	fprintf(stderr,"anim_time: time too small. Only %f s.\n",time);
+	fprintf(stderr, "anim_time: time too small. Only %f s.\n", time);
 	return 10;
     }
     if (dist < DIVIDE_TOL){
-	fprintf(stderr,"anim_time: pathlength too small. Only %f\n",dist);
+	fprintf(stderr, "anim_time: pathlength too small. Only %f\n", dist);
 	return 10;
     }
     slope = dist/time;
@@ -194,19 +194,19 @@ main(int argc, char **argv)
 	break;
     }
     if (v0<0.0) {
-	fprintf(stderr,"anim_time: Start velocity must be non-negative.\n");
+	fprintf(stderr, "anim_time: Start velocity must be non-negative.\n");
 	return 1;
     }
     if (v1<0.0) {
-	fprintf(stderr,"anim_time: End velocity must be non-negative.\n");
+	fprintf(stderr, "anim_time: End velocity must be non-negative.\n");
 	return 1;
     }
     if (v0>3*slope) {
-	fprintf(stderr,"anim_time: Start velocity must be not be greater than %f units/s for this path.\n", 3.0*slope);
+	fprintf(stderr, "anim_time: Start velocity must be not be greater than %f units/s for this path.\n", 3.0*slope);
 	return 1;
     }
     if (v1>3*slope) {
-	fprintf(stderr,"anim_time: End velocity must not be greater than %f for this path.\n", 3.0*slope);
+	fprintf(stderr, "anim_time: End velocity must not be greater than %f for this path.\n", 3.0*slope);
 	return 1;
     }
 
@@ -216,19 +216,19 @@ main(int argc, char **argv)
 
     temp2 = 1.0/slope;
     if (verbose) {
-	printf("%.12e\t%.12e\t%.12e\t%.12e\n",start,x[0],y[0],z[0]);
+	printf("%.12e\t%.12e\t%.12e\t%.12e\n", start, x[0], y[0], z[0]);
 	for (i=1; i<plen-1; i++){
-	    temp0 = gettime(l[i],a,b,c,l[i]*temp2);
-	    printf("%.12e\t%.12e\t%.12e\t%.12e\n",temp0+start,x[i],y[i],z[i]);
+	    temp0 = gettime(l[i], a, b, c, l[i]*temp2);
+	    printf("%.12e\t%.12e\t%.12e\t%.12e\n", temp0+start, x[i], y[i], z[i]);
 	}
-	printf("%.12e\t%.12e\t%.12e\t%.12e\n",end,x[plen-1],y[plen-1],z[plen-1]);
+	printf("%.12e\t%.12e\t%.12e\t%.12e\n", end, x[plen-1], y[plen-1], z[plen-1]);
     } else {
-	printf("%.12e\n",start);
+	printf("%.12e\n", start);
 	for (i=1; i<plen-1; i++){
-	    temp0 = gettime(l[i],a,b,c,l[i]*temp2);
-	    printf("%.12e\n",temp0+start);
+	    temp0 = gettime(l[i], a, b, c, l[i]*temp2);
+	    printf("%.12e\n", temp0+start);
 	}
-	printf("%.12e\n",end);
+	printf("%.12e\n", end);
     }
 
     bu_free((char *) l, "l[]");
@@ -244,29 +244,29 @@ int get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch(c){
 	case 's':
-	    sscanf(bu_optarg,"%lf",&inv0);
+	    sscanf(bu_optarg, "%lf",&inv0);
 	    v0_set = TIME_ABSOLUTE;
 	    break;
 	case 'e':
-	    sscanf(bu_optarg,"%lf",&inv1);
+	    sscanf(bu_optarg, "%lf",&inv1);
 	    v1_set = TIME_ABSOLUTE;
 	    break;
 	case 'i':
-	    sscanf(bu_optarg,"%lf",&inv0);
+	    sscanf(bu_optarg, "%lf",&inv0);
 	    v0_set = TIME_RELATIVE;
 	    if ((inv0>3.0)||(inv0<0.0)) {
-		fprintf(stderr,"anim_time: -i argument must lie between 0.0 and 3.0\n");
+		fprintf(stderr, "anim_time: -i argument must lie between 0.0 and 3.0\n");
 		return 0;
 	    }
 	    break;
 	case 'f':
-	    sscanf(bu_optarg,"%lf",&inv1);
+	    sscanf(bu_optarg, "%lf",&inv1);
 	    v1_set = TIME_RELATIVE;
 	    if ((inv1>3.0)||(inv1<0.0)) {
-		fprintf(stderr,"anim_time: -f argument must lie between 0.0 and 3.0\n");
+		fprintf(stderr, "anim_time: -f argument must lie between 0.0 and 3.0\n");
 		return 0;
 	    }
 	    break;
@@ -274,7 +274,7 @@ int get_args(int argc, char **argv)
 	    query = 1;
 	    break;
 	case 'm':
-	    sscanf(bu_optarg,"%d",&maxlines);
+	    sscanf(bu_optarg, "%d",&maxlines);
 	    domem = 1;
 	    break;
 	case 'v':
@@ -284,7 +284,7 @@ int get_args(int argc, char **argv)
 	    debug = 1;
 	    break;
 	default:
-	    fprintf(stderr,"Unknown option: -%c\n",c);
+	    fprintf(stderr, "Unknown option: -%c\n", c);
 	    return 0;
 	}
     }

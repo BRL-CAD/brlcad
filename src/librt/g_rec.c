@@ -29,13 +29,13 @@
  *
  *  Given V, H, A, and B, there is a set of points on this cylinder
  *
- *  { (x,y,z) | (x,y,z) is on cylinder }
+ *  { (x, y, z) | (x, y, z) is on cylinder }
  *
  *  Through a series of Affine Transformations, this set of points will be
  *  transformed into a set of points on a unit cylinder located at the origin
  *  with a radius of 1, and a height of +1 along the +Z axis.
  *
- *  { (x',y',z') | (x',y',z') is on cylinder at origin }
+ *  { (x', y', z') | (x', y', z') is on cylinder at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -759,8 +759,8 @@ rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R E C _ U V
  *
- *  For a hit on the surface of an REC, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an REC, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *
  *  u is the rotation around the cylinder, and
  *  v is the displacement along H.
@@ -784,7 +784,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
 	switch( hitp->hit_surfno )  {
 	case REC_NORM_BODY:
-		/* Skin.  x,y coordinates define rotation.  radius = 1 */
+		/* Skin.  x, y coordinates define rotation.  radius = 1 */
 		ratio = pprime[Y];
 		if( ratio > 1.0 )
 			ratio = 1.0;

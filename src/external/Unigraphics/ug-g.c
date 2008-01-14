@@ -1250,7 +1250,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	struct UF_CURVE_line_s line_data;
 	struct UF_CURVE_arc_s arc_data;
 	int verts_alloced=0;
-	int i,j;
+	int i, j;
 	struct rt_db_internal intern;
 	uf_list_p_t sketch_list;
 	int num_sketches=0;
@@ -3814,7 +3814,7 @@ do_groove( int groove_type,
 	point_t base;
 	vect_t dirx;
 	fastf_t groove_width, groove_radius, ball_radius, corner_radius;
-	int i,j;
+	int i, j;
 	uf_list_p_t face_list;
 	int num_faces;
 	fastf_t inner_radius, outer_radius;
@@ -4309,7 +4309,7 @@ convert_a_feature( tag_t feat_tag,
 		double plane_pt[3], plane_norm[3];
 		double mirror_mtx[16];
 		mat_t mirror_mat;
-		int i,j;
+		int i, j;
 		struct wmember mirror_head;
 
 		UF_func( UF_MODL_ask_feat_relatives( feat_tag, &num_parents, &parents, &num_children, &children ) );
@@ -4410,7 +4410,7 @@ convert_a_feature( tag_t feat_tag,
 
 				/* we need to build a combination */
 				comb_name = create_unique_brlcad_combination_name();
-				(void)mk_comb( wdb_fd, comb_name, &mirror_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0 ,0 );
+				(void)mk_comb( wdb_fd, comb_name, &mirror_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0 , 0 );
 				add_to_obj_list( comb_name );
 				(void)mk_addmember( comb_name, &head->l, NULL, brlcad_op );
 			}
@@ -4635,7 +4635,7 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
 			char *comb_name;
 
 			comb_name = create_unique_brlcad_combination_name();
-			(void)mk_comb( wdb_fd, comb_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0 ,0 );
+			(void)mk_comb( wdb_fd, comb_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0 , 0 );
 
 			return( comb_name );
 		}
@@ -4881,7 +4881,7 @@ char *
 process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv, char *part_name )
 {
 	tag_t child_tag;
-	int i,j;
+	int i, j;
 	mat_t tmp_xform;
 	char refset_name[REFSET_NAME_LEN];
 	char instance_name[INSTANCE_NAME_LEN];
@@ -5696,7 +5696,7 @@ int parse_args(int ac, char *av[])
 	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac, av, options)) != EOF)
 		switch (c) {
 		case 'i'	: ident = atoi( bu_optarg ); break;
 		case 'o'	: output_file = strdup( bu_optarg ); break;

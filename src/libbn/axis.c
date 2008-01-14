@@ -28,10 +28,10 @@
  *
  *	The strategy behind this routine is to split the axis
  * into SEGMENTS, which run from one tick to the next.  The
- * origin of the first segment (x,y), the origin of the bottom
- * of the first tick (xbott,ybott), and the origin of the first
- * tick label (xnum,ynum) are computed along with the delta x
- * and delta y (xincr,yincr) which describes the interval to
+ * origin of the first segment (x, y), the origin of the bottom
+ * of the first tick (xbott, ybott), and the origin of the first
+ * tick label (xnum, ynum) are computed along with the delta x
+ * and delta y (xincr, yincr) which describes the interval to
  * the start of the next tick.
  *
  *  @author
@@ -98,8 +98,8 @@ tp_3axis(FILE *fp,
 
 	/*
 	 *  The point "origin" will be the center of the axis rotation.
-	 *  On the assumption that this origin point is not at (0,0,0),
-	 *  translate origin to (0,0,0) & apply the provided rotation matrix.
+	 *  On the assumption that this origin point is not at (0, 0, 0),
+	 *  translate origin to (0, 0, 0) & apply the provided rotation matrix.
 	 *  If the user provides translation or
 	 *  scaling in his matrix, it will also be applied, but in most
 	 *  cases that would not be useful.

@@ -62,7 +62,7 @@ struct mfuncs {
 
 /*
  *  mf_inputs lists what optional shadework fields are needed.
- *  dist, point, color, & default(trans,reflect,ri) are always provided
+ *  dist, point, color, & default(trans, reflect, ri) are always provided
  */
 #define MFI_NORMAL	0x01		/**< @brief  Need normal */
 #define MFI_UV		0x02		/**< @brief  Need uv */

@@ -410,7 +410,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	if( mk_lrcomb( fp_out, dp->d_namep, &headp, comb->region_flag,
 	    matname, matparm,
 	    color, comb->region_id,
-	    comb->aircode, comb->GIFTmater,comb->los,
+	    comb->aircode, comb->GIFTmater, comb->los,
 	    comb->inherit ) ) {
 	    bu_log( "G-nmg: error in making region (%s)\n" , dp->d_namep );
 	}

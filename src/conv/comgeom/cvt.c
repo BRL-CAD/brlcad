@@ -161,7 +161,7 @@ main(int argc, char **argv)
     }
 
     if( version != 1 && version != 4 && version != 5 )  {
-	fprintf(stderr,"version %d not supported\n", version );
+	fprintf(stderr, "version %d not supported\n", version );
 	(void)fputs(usage, stderr);
 	return 1;
     }
@@ -298,7 +298,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 	if( i > 0 ) {
-	    printf("\nprocessed %d of %d solids\n\n",sol_work,sol_total);
+	    printf("\nprocessed %d of %d solids\n\n", sol_work, sol_total);
 	    if( sol_work < sol_total && version > 1 )  {
 		printf("some solids are missing, aborting\n");
 		return 1;

@@ -78,7 +78,7 @@ char *name;
 	int found;
 	int namelen;
 	int char_ptr;
-	int i,j;
+	int i, j;
 
 	/* replace white space */
 	namelen = strlen( name );
@@ -222,7 +222,7 @@ int entityno;
 int skip;
 {
 	int			sol_num;
-	int			i,j,k;
+	int			i, j, k;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			name_de=0;
@@ -294,7 +294,7 @@ int entityno;
 	int no_of_annot;
 	int no_of_assoc;
 	int no_of_props;
-	int i,j,k;
+	int i, j, k;
 	int name_de=0;
 	char *name;
 
@@ -372,7 +372,7 @@ Get_csg_name( entityno )
 int entityno;
 {
 	int			sol_num;
-	int			i,j,k;
+	int			i, j, k;
 	int			num;
 	int			skip;
 	int			no_of_assoc=0;
@@ -453,7 +453,7 @@ Get_brep_name( entityno )
 int entityno;
 {
 	int			sol_num;
-	int			i,j,k;
+	int			i, j, k;
 	int			num;
 	int			skip;
 	int			no_of_assoc=0;

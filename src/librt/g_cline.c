@@ -117,14 +117,14 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	VSETALL( rad, cline_ip->radius + max_tr );
 	VADD2( work, cline_ip->v, rad );
-	VMINMAX( stp->st_min,stp->st_max, work );
+	VMINMAX( stp->st_min, stp->st_max, work );
 	VSUB2( work, cline_ip->v, rad );
-	VMINMAX( stp->st_min,stp->st_max, work );
+	VMINMAX( stp->st_min, stp->st_max, work );
 	VADD2( top, cline_ip->v, cline_ip->h );
 	VADD2( work, top, rad );
-	VMINMAX( stp->st_min,stp->st_max, work );
+	VMINMAX( stp->st_min, stp->st_max, work );
 	VSUB2( work, top, rad );
-	VMINMAX( stp->st_min,stp->st_max, work );
+	VMINMAX( stp->st_min, stp->st_max, work );
 
 	return( 0 );
 }
@@ -407,8 +407,8 @@ rt_cline_curve(register struct curvature *cvp, register struct hit *hitp, struct
 /**
  *  			R T _ C L I N E_ U V
  *
- *  For a hit on the surface of an cline, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an cline, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  */
 void
 rt_cline_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)

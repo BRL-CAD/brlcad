@@ -54,7 +54,7 @@ int	buflines;			/* Number of lines held in buffer */
 int	buf_start = -1000;		/* First line in buffer */
 
 float	xnum, ynum;			/* Number of pixels in new file */
-float	ulx,uly,urx,ury,lrx,lry,llx,lly;	/* Corners of original file */
+float	ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
 
 FILE	*ifp, *ofp;
 
@@ -140,13 +140,13 @@ main(int argc, char **argv)
 		}
 		printf("Line Length and Number of scan lines (in new file)?: ");
 		scanf( "%f%f", &xnum, &ynum );
-		printf("Upper left corner in input file (x,y)?: ");
+		printf("Upper left corner in input file (x, y)?: ");
 		scanf( "%f%f", &ulx, &uly );
-		printf("Upper right corner (x,y)?: ");
+		printf("Upper right corner (x, y)?: ");
 		scanf( "%f%f", &urx, &ury );
-		printf("Lower right (x,y)?: ");
+		printf("Lower right (x, y)?: ");
 		scanf( "%f%f", &lrx, &lry );
-		printf("Lower left (x,y)?: ");
+		printf("Lower left (x, y)?: ");
 		scanf( "%f%f", &llx, &lly );
 	}
 

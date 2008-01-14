@@ -22,7 +22,7 @@
 /** @file nurb_norm.c
  *
  *  	Calulate and return the normal of a surface given the
- *	U,V parametric values.
+ *	U, V parametric values.
  *
  *  Author -
  *	Paul R. Stay
@@ -245,8 +245,8 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		usrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
 		vsrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
-		rt_nurb_s_eval(usrf, u,v, ue);
-		rt_nurb_s_eval(vsrf, u,v, ve);
+		rt_nurb_s_eval(usrf, u, v, ue);
+		rt_nurb_s_eval(vsrf, u, v, ve);
 
 		VCROSS( norm, ue, ve);
 		VUNITIZE( norm);
@@ -269,9 +269,9 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		usrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
 		vsrf = (struct face_g_snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
 
-		rt_nurb_s_eval(usrf, u,v, ue);
+		rt_nurb_s_eval(usrf, u, v, ue);
 
-		rt_nurb_s_eval(vsrf, u,v, ve);
+		rt_nurb_s_eval(vsrf, u, v, ve);
 
 		w = se[3];
 		inv_w = 1.0 / w;

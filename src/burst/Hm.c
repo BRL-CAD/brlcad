@@ -96,7 +96,7 @@ static boolean	HmPkgInit = 0;
 static HmWindow	*windows = NULL;
 
 #define HmENTRY		(itemp-win->menup->item)
-#define HmHEIGHT	Min(win->height,HmMaxVis)
+#define HmHEIGHT	Min(win->height, HmMaxVis)
 typedef struct nmllist HmLList;
 struct nmllist
 	{
@@ -401,7 +401,7 @@ HmSetbit( register HmWindow *win, int col, int row )
 {
     register int	bit = col - win->menux;
 #if HmDEBUG && 0
-	(void) ErLog(	"HmSetbit:menu{<%d,%d>,<%d,%d>}col=%d,row=%d\n",
+	(void) ErLog(	"HmSetbit:menu{<%d,%d>,<%d,%d>}col=%d, row=%d\n",
 			win->menux, win->menux+win->width+1,
 			win->menuy, win->menuy+HmHEIGHT+1,
 			col, row
@@ -450,7 +450,7 @@ HmSetmap( HmWindow *win )
 	HmWindow *HmInWin( register  x, register y, register HmWindow *win )
 
 	Return pointer to top window in stack, starting with win whose
-	boundaries contain the screen coordinate <x,y>.  If the point
+	boundaries contain the screen coordinate <x, y>.  If the point
 	is outside of all these windows, return 0.
  */
 static HmWindow	*
@@ -663,7 +663,7 @@ HmRedraw( void )
 			else
 				win->menup->prevtop = 0;
 			/* Must reallocate "dirty" bit map to fit new size. */
-			MmVFree( Min(win->height,HmLastMaxVis)+HmHGTBORDER,
+			MmVFree( Min(win->height, HmLastMaxVis)+HmHGTBORDER,
 				 int, win->dirty );
 			if(	(win->dirty =
 				MmVAllo( HmHEIGHT+HmHGTBORDER, int )

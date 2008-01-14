@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
 	/* generate a 10 x 10 grid of random height data */
 
-	pl_color(stdout,155, 55, 55);
+	pl_color(stdout, 155, 55, 55);
 
 	for( i = 0; i < 10; i++)
 		for( j = 0; j < 10; j++)

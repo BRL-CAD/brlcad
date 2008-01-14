@@ -33,10 +33,10 @@
 
 /* Conversion Factors (to mm)	*/
 fastf_t cnv[]={
-/*	default,inch, mm, ? , feet,  miles  ,meters,kilometers,mils  ,microns,
-		cm ,microinches	*/
-	1.0,    25.4,1.0,1.0,304.8,1609344.0,1000.0, 1000000.0,0.0254,0.001,
-		10.0,0.0000254	};
+/*	default, inch, mm, ? , feet,  miles  , meters, kilometers, mils  , microns,
+		cm , microinches	*/
+	1.0,    25.4, 1.0, 1.0, 304.8, 1609344.0, 1000.0, 1000000.0, 0.0254, 0.001,
+		10.0, 0.0000254	};
 
 /* IGES Version */
 #define NO_OF_VERSIONS	10
@@ -57,7 +57,7 @@ Readglobal( file_count )
 int file_count;
 {
 
-	int field=2,i;
+	int field=2, i;
 	fastf_t a;
 	char *name;
 

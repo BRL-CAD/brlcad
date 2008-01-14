@@ -308,7 +308,7 @@ find_pipept_nearest_pt( const struct bu_list *pipe_hd, const point_t pt )
 	struct wdb_pipept *nearest=(struct wdb_pipept *)NULL;
 	struct bn_tol tmp_tol;
 	fastf_t min_dist = MAX_FASTF;
-	vect_t dir,work;
+	vect_t dir, work;
 
 	tmp_tol.magic = BN_TOL_MAGIC;
 	tmp_tol.dist = 0.0;

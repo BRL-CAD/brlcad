@@ -100,7 +100,7 @@ int main(int ac, char *av[])
 
 
     if ((rtip=rt_dirbuild(av[1], idbuf, sizeof(idbuf)))==RTI_NULL){
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }
 

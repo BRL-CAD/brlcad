@@ -133,7 +133,7 @@ main(int argc, char **argv)
 			file_width = (long)w;
 			file_height = (long)h;
 		} else {
-			fprintf(stderr,"bw-png: unable to autosize\n");
+			fprintf(stderr, "bw-png: unable to autosize\n");
 		}
 	}
 

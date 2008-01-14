@@ -285,8 +285,8 @@ rt_nmg_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ N M G _ U V
  *
- *  For a hit on the surface of an nmg, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an nmg, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -972,9 +972,9 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 }
 
 /* forw may never be null;  back may be null for loopuse (sigh) */
-#define INDEX(o,i,elem)	\
+#define INDEX(o, i, elem)	\
 	(void)bu_plong(&(o)->elem[0], rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
-#define INDEXL(oo,ii,elem)	{ \
+#define INDEXL(oo, ii, elem)	{ \
 	register long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
 	if( _f == DISK_INDEX_NULL )  bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	(void)bu_plong( (oo)->elem.forw, _f ); \
@@ -1297,7 +1297,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 			d = &((struct disk_vertexuse_a_cnurb *)op)[oindex];
 			NMG_CK_VERTEXUSE_A_CNURB(vua);
 			PUTMAGIC( DISK_VERTEXUSE_A_CNURB_MAGIC );
-			/* (u,v) parameters on curves don't scale */
+			/* (u, v) parameters on curves don't scale */
 			htond( d->param, (unsigned char *)vua->param, 3 );
 		}
 		return;
@@ -1336,8 +1336,8 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
  *
  *  NOTE that the "< 0" test here is a comparison with DISK_INDEX_LISTHEAD.
  */
-#define INDEX(o,i,ty,elem)	(i)->elem = (struct ty *)ptrs[bu_glong((o)->elem)]
-#define INDEXL_HD(oo,ii,elem,hd)	{ \
+#define INDEX(o, i, ty, elem)	(i)->elem = (struct ty *)ptrs[bu_glong((o)->elem)]
+#define INDEXL_HD(oo, ii, elem, hd)	{ \
 	register int	sub; \
 	if( (sub = bu_glong((oo)->elem.forw)) < 0 ) \
 		(ii)->elem.forw = &(hd); \
@@ -1348,7 +1348,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 
 /* For use with the edgeuse l2 / edge_g eu2_hd secondary list */
 /* The subscripts will point to the edgeuse, not the edgeuse's l2 rt_list */
-#define INDEXL_HD2(oo,ii,elem,hd)	{ \
+#define INDEXL_HD2(oo, ii, elem, hd)	{ \
 	register int	sub; \
 	register struct edgeuse	*eu2; \
 	if( (sub = bu_glong((oo)->elem.forw)) < 0 ) { \

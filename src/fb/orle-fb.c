@@ -128,7 +128,7 @@ main(int argc, char **argv)
 		break;
 	}
 	if( scanbuf == RGBPIXEL_NULL )  {
-		fprintf(stderr," rle-fb:  unable to malloc pixel buffer\n");
+		fprintf(stderr, " rle-fb:  unable to malloc pixel buffer\n");
 		return(1);
 	}
 
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 		{	register int	i;
 			register RGBpixel	*to;
 		to = bg_scan;
-		for( i = 0; i < width; i++,to++ )  {
+		for( i = 0; i < width; i++, to++ )  {
 			COPYRGB( *to, bgpixel );
 			}
 		}

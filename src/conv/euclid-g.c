@@ -201,7 +201,7 @@ main(int argc, char **argv)
 	else
 	{
 		char tol_str[BRLCAD_TITLE_LENGTH];
-		int title_len,tol_len;
+		int title_len, tol_len;
 
 		snprintf( title, BRLCAD_TITLE_LENGTH, "%s", efile );
 		title_len = strlen( title );
@@ -311,7 +311,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 static void
 build_groups(struct rt_wdb *fpout)
 {
-	int i,j;
+	int i, j;
 	struct wmember head;
 	struct wmember head_all;
 	char group_name[18];
@@ -950,7 +950,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 		 */
 		for( shell1_no=0 ; shell1_no < shell_count ; shell1_no++ )
 		{
-			int outers=0,inners=0;
+			int outers=0, inners=0;
 
 			shell_inout[shell1_no] = 0;
 			for( shell2_no=0 ; shell2_no < shell_count ; shell2_no++ )

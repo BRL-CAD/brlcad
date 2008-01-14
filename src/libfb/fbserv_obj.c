@@ -128,10 +128,10 @@ static struct pkg_switch pkg_switch[] = {
 	{ MSG_CLOSE,		fbs_pkgfoo,		"Close Connection" },
 	{ MSG_FBREADRECT, 	fbs_rfbreadrect,	"Read Rectangle" },
 	{ MSG_FBWRITERECT,	fbs_rfbwriterect,	"Write Rectangle" },
-	{ MSG_FBWRITERECT + MSG_NORETURN, fbs_rfbwriterect,"Write Rectangle" },
-	{ MSG_FBBWREADRECT, 	fbs_rfbbwreadrect,"Read BW Rectangle" },
-	{ MSG_FBBWWRITERECT,	fbs_rfbbwwriterect,"Write BW Rectangle" },
-	{ MSG_FBBWWRITERECT+MSG_NORETURN, fbs_rfbbwwriterect,"Write BW Rectangle" },
+	{ MSG_FBWRITERECT + MSG_NORETURN, fbs_rfbwriterect, "Write Rectangle" },
+	{ MSG_FBBWREADRECT, 	fbs_rfbbwreadrect, "Read BW Rectangle" },
+	{ MSG_FBBWWRITERECT,	fbs_rfbbwwriterect, "Write BW Rectangle" },
+	{ MSG_FBBWWRITERECT+MSG_NORETURN, fbs_rfbbwwriterect, "Write BW Rectangle" },
 	{ MSG_FBFLUSH,		fbs_rfbflush,	"Flush Output" },
 	{ MSG_FBFLUSH + MSG_NORETURN, fbs_rfbflush, "Flush Output" },
 	{ MSG_FBFREE,		fbs_rfbfree,	"Free Resources" },
@@ -158,7 +158,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
     }
 
     /*XXX hardwired for now */
-    sprintf(hostname,"localhost");
+    sprintf(hostname, "localhost");
 
     if (port < 0)
 	port = 5559;
@@ -298,9 +298,9 @@ fbs_open(struct fbserv_obj *fbsp, int port)
   /* Try a reasonable number of times to hang a listen */
   for (i = 0; i < MAX_PORT_TRIES; ++i) {
     if (fbsp->fbs_listener.fbsl_port < 1024)
-      sprintf(portname,"%d", fbsp->fbs_listener.fbsl_port + 5559);
+      sprintf(portname, "%d", fbsp->fbs_listener.fbsl_port + 5559);
     else
-      sprintf(portname,"%d", fbsp->fbs_listener.fbsl_port);
+      sprintf(portname, "%d", fbsp->fbs_listener.fbsl_port);
 
     /*
      * Hang an unending listen for PKG connections

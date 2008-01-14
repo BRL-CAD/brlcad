@@ -490,7 +490,7 @@ nmg_mf(struct loopuse *lu1)
  *  'v' will be fused together.  XXX Why is this good?
  *
  *  If a convenient shell does not exist, use s=nmg_msv() to make
- *  the shell and vertex, then call lu=nmg_mlv(s,s->vu_p->v_p,OT_SAME),
+ *  the shell and vertex, then call lu=nmg_mlv(s, s->vu_p->v_p, OT_SAME),
  *  followed by nmg_kvu(s->vu_p).
  *
  *  Implicit returns -
@@ -683,7 +683,7 @@ nmg_mvvu(long int *upptr, struct model *m)
 	ret_vu = nmg_mvu(v, upptr, m);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_mvvu(upptr=x%x,m=x%x) returns vu=x%x\n" , upptr , m , ret_vu );
+		bu_log("nmg_mvvu(upptr=x%x, m=x%x) returns vu=x%x\n" , upptr , m , ret_vu );
 	}
 
 	return( ret_vu );
@@ -1020,7 +1020,7 @@ nmg_ml(struct shell *s)
 
 		/*  Insert the next new edgeuse(s) at tail of the loop's list
 		 *  (ie, insert just before the head).
-		 *  head, .....,p2, p1, (tail)
+		 *  head, ....., p2, p1, (tail)
 		 */
 		BU_LIST_INSERT( &lu1->down_hd, &p1->l );
 		BU_LIST_INSERT( &lu2->down_hd, &p2->l );
@@ -1724,7 +1724,7 @@ nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
  *
  *  Given a vertex with associated geometry in model space
  *  which lies on a face_g_snurb surface, it will have
- *  a corresponding set of (u,v) or (u,v,w) parameters on that surface.
+ *  a corresponding set of (u, v) or (u, v, w) parameters on that surface.
  *  Build the association here.
  *
  *  Note that all vertexuses of a single vertex which are all used
@@ -1985,7 +1985,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
  *  For an edgeuse associated with a face_g_snurb surface,
  *  create a spline "curve" in the parameter space of the snurb
  *  which describes a STRAIGHT LINE in parameter space
- *  from the u,v parameters of the start vertex to the end vertex.
+ *  from the u, v parameters of the start vertex to the end vertex.
  *
  *  The parameters of the end points are found in the vertexuse attributes
  *  at either end of the edgeuse, which should have already been established.
@@ -2522,7 +2522,7 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 		/* If next faceuse shares this face, skip it */
 		if( BU_LIST_NOT_HEAD(fu, &fu->l) &&
 		    ( BU_LIST_NEXT(faceuse, &fu->l)->f_p == f ) )  {
-			fu = BU_LIST_PNEXT(faceuse,fu);
+			fu = BU_LIST_PNEXT(faceuse, fu);
 		}
 	}
 	for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {

@@ -173,7 +173,7 @@ struct	ikinfo {
 	struct	ik_fbc	ikfbcmem;	/* Current FBC state */
 	short	*_ikUBaddr;		/* Mapped-in Ikonas address */
 	/* Current values initialized in adage_init() */
-	int	mode;			/* 0,1,2 */
+	int	mode;			/* 0, 1, 2 */
 	int	x_window, y_window;	/* Ikonas, upper left of window */
 	int	y_winoff;		/* y window correction factor */
 	int	x_corig, y_corig;	/* cursor origin offsets */
@@ -437,8 +437,8 @@ adage_clear(FBIO *ifp, RGBpixel (*bgpp))
  *		      + start of pixelp buffer.
  */
 
-#define	IKSEEK(x,y)	if(lseek(ifp->if_fd,(off_t)((y)*ifp->if_width+(x))\
-			*sizeof(IKONASpixel),0) == -1) return -1;
+#define	IKSEEK(x, y)	if(lseek(ifp->if_fd,(off_t)((y)*ifp->if_width+(x))\
+			*sizeof(IKONASpixel), 0) == -1) return -1;
 
 HIDDEN int
 adage_read(FBIO *ifp, int x, int y, RGBpixel (*pixelp), long int count)
@@ -856,7 +856,7 @@ imax(int a, int b)
 
 /*			a d a g e _ w i n d o w _ s e t ( )
  *
- *	Set FBC window location to specified values so that <x,y> are
+ *	Set FBC window location to specified values so that <x, y> are
  *	at screen center given current zoom.
  */
 HIDDEN int
@@ -1105,7 +1105,7 @@ adage_wmap(FBIO *ifp, register ColorMap *cp)
 	long cmap[1024] = {0};
 	register int i, j;
 
-	/* Note that RGB10(r,g,b) flips to cmap order (b,g,r). */
+	/* Note that RGB10(r, g, b) flips to cmap order (b, g, r). */
 	if( cp == (ColorMap *) NULL )  {
 		for( i=0; i < 256; i++ )  {
 			j = i<<2;

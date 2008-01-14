@@ -57,7 +57,7 @@
 #  define NULL 0
 #endif
 
-#define	NMG_EXTERN(type_and_name,args)	RT_EXTERN(type_and_name,args)
+#define	NMG_EXTERN(type_and_name, args)	RT_EXTERN(type_and_name, args)
 
 
 #define DEBUG_PL_ANIM	0x00000001	/**< @brief 1 mged: animated evaluation */
@@ -341,7 +341,7 @@ struct face_g_snurb {
 	struct knot_vector	u;	/**< @brief surface knot vectors */
 	struct knot_vector	v;	/**< @brief surface knot vectors */
 	/* surface control points */
-	int			s_size[2]; /**< @brief mesh size, u,v */
+	int			s_size[2]; /**< @brief mesh size, u, v */
 	int			pt_type; /**< @brief surface point type */
 	fastf_t			*ctl_points; /**< @brief array [size[0]*size[1]] */
 	/* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
@@ -454,7 +454,7 @@ struct loopuse {
  *
  *  Only the first vertex of an edge is kept in an edgeuse (eu->vu_p).
  *  The other vertex can be found by either eu->eumate_p->vu_p or
- *  by BU_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p.  Note that the first
+ *  by BU_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p.  Note that the first
  *  form gives a vertexuse in the faceuse of *opposite* orientation,
  *  while the second form gives a vertexuse in the faceuse of the correct
  *  orientation.  If going on to the vertex (vu_p->v_p), both forms
@@ -487,7 +487,7 @@ struct edge_g_lseg {
 };
 
 /*
- *  The ctl_points on this curve are (u,v) values on the face's surface.
+ *  The ctl_points on this curve are (u, v) values on the face's surface.
  *  As a storage and performance efficiency measure, if order <= 0,
  *  then the cnurb is a straight line segment in parameter space,
  *  and the k.knots and ctl_points pointers will be NULL.
@@ -524,7 +524,7 @@ struct edgeuse {
 		struct edge_g_lseg  *lseg_p;
 		struct edge_g_cnurb *cnurb_p;
 	} g;				/**< @brief geometry */
-	/* (u,v,w) param[] of vu is found in vu_p->vua_p->param */
+	/* (u, v, w) param[] of vu is found in vu_p->vua_p->param */
 	long			index;	/**< @brief struct # in this model */
 };
 
@@ -574,7 +574,7 @@ struct vertexuse_a_plane {
 
 struct vertexuse_a_cnurb {
 	long			magic;
-	fastf_t			param[3]; /**< @brief (u,v,w) of vu on eu's cnurb */
+	fastf_t			param[3]; /**< @brief (u, v, w) of vu on eu's cnurb */
 	long			index;	/**< @brief struct # in this model */
 };
 
@@ -583,7 +583,7 @@ struct vertexuse_a_cnurb {
  *  Primarily used by nmg_mk.c
  */
 
-#define NMG_GETSTRUCT(p,str)	BU_GETSTRUCT(p,str)
+#define NMG_GETSTRUCT(p, str)	BU_GETSTRUCT(p, str)
 
 
 #define NMG_FREESTRUCT(ptr, str) { \
@@ -602,26 +602,26 @@ struct vertexuse_a_cnurb {
 #define NMG_INCR_INDEX(_p,_m)	\
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-#define GET_REGION(p,m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p,m);}
-#define GET_REGION_A(p,m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p,m);}
-#define GET_SHELL(p,m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p,m);}
-#define GET_SHELL_A(p,m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p,m);}
-#define GET_FACE(p,m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p,m);}
-#define GET_FACE_G_PLANE(p,m) {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p,m);}
-#define GET_FACE_G_SNURB(p,m) {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p,m);}
-#define GET_FACEUSE(p,m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p,m);}
-#define GET_LOOP(p,m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p,m);}
-#define GET_LOOP_G(p,m)	    {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p,m);}
-#define GET_LOOPUSE(p,m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE_G_LSEG(p,m)  {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE_G_CNURB(p,m) {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p,m);}
-#define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEX_G(p,m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE(p,m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE_A_PLANE(p,m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE_A_CNURB(p,m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p,m);}
+#define GET_REGION(p, m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
+#define GET_REGION_A(p, m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
+#define GET_SHELL(p, m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
+#define GET_SHELL_A(p, m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p, m);}
+#define GET_FACE(p, m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p, m);}
+#define GET_FACE_G_PLANE(p, m) {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p, m);}
+#define GET_FACE_G_SNURB(p, m) {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p, m);}
+#define GET_FACEUSE(p, m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p, m);}
+#define GET_LOOP(p, m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
+#define GET_LOOP_G(p, m)	    {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
+#define GET_LOOPUSE(p, m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE(p, m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE_G_LSEG(p, m)  {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE_G_CNURB(p, m) {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, m);}
+#define GET_EDGEUSE(p, m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEX(p, m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEX_G(p, m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE(p, m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE_A_PLANE(p, m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
 
 #define FREE_MODEL(p)	    NMG_FREESTRUCT(p, model)
 #define FREE_REGION(p)	    NMG_FREESTRUCT(p, nmgregion)

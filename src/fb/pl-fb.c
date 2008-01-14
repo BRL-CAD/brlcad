@@ -96,16 +96,16 @@
 
 
   top of frame
-  ---------------------------------------------------------
+  -------------------------------------------------------
   |			.				|
-  |scan line ->...........................................|
-  ^	|			.				|
-  |	|			^				|
+  |scan line ->.........................................|
+  ^	|		.				|
+  |	|		^				|
   |			|				|
-  |Y axis							|
+  |Y axis						|
   |plot							|
-  ^	|^							|
-  |	||							|
+  ^	|^						|
+  |	||						|
   ||	X axis						|
   |-----> plot						|
   ---------------------------------------------------------
@@ -189,7 +189,7 @@ typedef struct descr {
 
 #define	CK_STROKE(_sp)	{ \
 	if((_sp)->magic != STROKE_MAGIC)  {  \
-		fprintf(stderr,"Bad stroke struct, ptr=x%lx, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
+		fprintf(stderr, "Bad stroke struct, ptr=x%lx, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
 			(long)(_sp), (long)((_sp)->magic), (long)STROKE_MAGIC,  \
 			__FILE__, __LINE__ );  \
 		abort();  \
@@ -211,12 +211,12 @@ static double	delta;			/* larger window dimension */
 static double	deltao2;		/* delta / 2 */
 
 struct	relvect {
-    short	x,y;			/* x, y values (255,255 is end) */
+    short	x, y;			/* x, y values (255, 255 is end) */
 };
 
 #define	END	-1,-1			/* end of stroke description */
-#define	NIL	0,0
-#define min(a,b)	((a)<(b)?(a):(b))
+#define	NIL	0, 0
+#define min(a, b)	((a)<(b)?(a):(b))
 /*
  *  These character sets are taken from the Motorola MC6575 Pattern Generator,
  *  page 5-119 of 'The Complete Motorola Microcomputer Data Library'
@@ -442,13 +442,13 @@ OutBuild(void)				/* returns true if successful */
     register stroke *vp;		/* -> rasterization descr */
 
     if( single_banded ) {
-	if( debug ) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
+	if( debug ) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
 	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 	    return false;	/* can't write image file */
 	if( over )  {
 	    /* Read back the composite image */
 	    if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-		fprintf(stderr,"pl-fb:  band read error\n");
+		fprintf(stderr, "pl-fb:  band read error\n");
 	}
 	return true;
     }
@@ -464,11 +464,11 @@ OutBuild(void)				/* returns true if successful */
 	  hp < bandEnd;
 	  hp = np++, ystart += lines_per_band
 	  )	{
-	if(debug) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
+	if(debug) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
 	if( over )  {
 	    /* Read in current band */
 	    if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-		fprintf(stderr,"pl-fb:  band read error\n");
+		fprintf(stderr, "pl-fb:  band read error\n");
 	} else {
 	    /* clear pixels in the band */
 	    memset((char *)buffer, 0, buffersize);
@@ -480,7 +480,7 @@ OutBuild(void)				/* returns true if successful */
 	/* Raster() either re-queued the descriptor onto the
 	   next band list or else it freed the descriptor */
 
-	if(debug) fprintf(stderr,"OutBuild:  fbwrite y=%d\n", ystart);
+	if(debug) fprintf(stderr, "OutBuild:  fbwrite y=%d\n", ystart);
 	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 	    return false;	/* can't write image file */
     }
@@ -503,7 +503,7 @@ get_strokes(void)
 	/* Attempt to draw/free some vectors and try again */
 	OutBuild();
 	if( (cp = malloc(bytes)) == (char *)0 ) {
-	    fprintf(stderr,"pl-fb: malloc failed!\n");
+	    fprintf(stderr, "pl-fb: malloc failed!\n");
 	    bu_exit( 2, NULL );
 	}
     }
@@ -644,7 +644,7 @@ FreeUp(void)
 static int
 Foo(int code)				/* returns status code */
 {
-    if( debug ) fprintf(stderr,"Foo(%d)\n", code);
+    if( debug ) fprintf(stderr, "Foo(%d)\n", code);
     fb_close( fbp );		/* release framebuffer */
 
     FreeUp();			/* deallocate descriptors */
@@ -761,7 +761,7 @@ GetCoords(register coords *coop)
 
     x = sxt16((long)(buf[1]<<8) | buf[0]);
     y = sxt16((long)(buf[3]<<8) | buf[2]);
-    if( debug )  fprintf(stderr,"Coord: (%g,%g) ", x, y);
+    if( debug )  fprintf(stderr, "Coord: (%g,%g) ", x, y);
 
     /* limit left, bottom */
     if ( (x -= space.left) < 0 )
@@ -780,14 +780,14 @@ GetCoords(register coords *coop)
 	coop->y = YMAX;
 
     if( debug )
-	fprintf( stderr,"Pixel: (%d,%d)\n", coop->x, coop->y);
+	fprintf( stderr, "Pixel: (%d,%d)\n", coop->x, coop->y);
 
     return true;
 }
 
 
 /*
-  GetCoords - input x,y coordinates and scale into pixels
+  GetCoords - input x, y coordinates and scale into pixels
 */
 bool Get3Coords(register coords *coop)
 {
@@ -805,7 +805,7 @@ bool Get3DCoords(register coords *coop)
 {
     static unsigned char in[3*8];
     static double	out[2];
-    register double	x,y;
+    register double	x, y;
 
     /* read coordinates */
     if ( fread( in, sizeof(in), 1, pfin ) != 1 )
@@ -831,8 +831,8 @@ bool Get3DCoords(register coords *coop)
 	coop->y = YMAX;
 
     if( debug )  {
-	fprintf(stderr,"Coord3: (%g,%g) ", out[0], out[1]);
-	fprintf(stderr,"Pixel3: (%d,%d)\n", coop->x, coop->y);
+	fprintf(stderr, "Coord3: (%g,%g) ", out[0], out[1]);
+	fprintf(stderr, "Pixel3: (%d,%d)\n", coop->x, coop->y);
     }
     return( true );
 }
@@ -844,7 +844,7 @@ GetDCoords(register coords *coop)
 {
     static unsigned char	in[2*8];
     static double	out[2];
-    register double	x,y;
+    register double	x, y;
 
     /* read coordinates */
     if ( fread( in, sizeof(in), 1, pfin ) != 1 )
@@ -870,8 +870,8 @@ GetDCoords(register coords *coop)
 	coop->y = YMAX;
 
     if( debug )  {
-	fprintf(stderr,"Coord2: (%g,%g) ", out[0], out[1]);
-	fprintf(stderr,"Pixel2: (%d,%d)\n", coop->x, coop->y);
+	fprintf(stderr, "Coord2: (%g,%g) ", out[0], out[1]);
+	fprintf(stderr, "Pixel2: (%d,%d)\n", coop->x, coop->y);
     }
     return true;
 }
@@ -972,26 +972,26 @@ DoFile(void)	/* returns vpl status code */
 	    for ( ; ; )		/* read until EOF*/
 		{
 		    c = getc( pfin );
-		    if( debug > 1 )  fprintf(stderr,"%c\n", c);
+		    if( debug > 1 )  fprintf(stderr, "%c\n", c);
 		    switch ( c )
 			{	/* record type */
 			    case EOF:
-				if( debug ) fprintf( stderr,"EOF\n");
+				if( debug ) fprintf( stderr, "EOF\n");
 
 				if ( plotted )  {
 				    /* flush strokes */
-				    if( debug ) fprintf( stderr,"flushing\n");
+				    if( debug ) fprintf( stderr, "flushing\n");
 				    if ( !OutBuild() )
 					return Foo( -6 );
 				}
 				return Foo( 0 );/* success */
 
 			    case 'e':	/* erase */
-				if( debug )  fprintf( stderr,"Erase\n");
+				if( debug )  fprintf( stderr, "Erase\n");
 
 				if ( plotted )  {
 				    /* flush strokes */
-				    if( debug ) fprintf( stderr,"flushing\n");
+				    if( debug ) fprintf( stderr, "flushing\n");
 				    if ( !OutBuild() )
 					return Foo( -6 );
 				}
@@ -1004,11 +1004,11 @@ DoFile(void)	/* returns vpl status code */
 				break;	/* next frame */
 
 			    case 'F':	/* flush */
-				if( debug )  fprintf( stderr,"Flush\n");
+				if( debug )  fprintf( stderr, "Flush\n");
 
 				if ( plotted )  {
 				    /* flush strokes */
-				    if( debug ) fprintf( stderr,"flushing\n");
+				    if( debug ) fprintf( stderr, "flushing\n");
 				    if ( !OutBuild() )
 					return Foo( -6 );
 				    if( !immediate )
@@ -1019,7 +1019,7 @@ DoFile(void)	/* returns vpl status code */
 
 			    case 'f':	/* linemod */
 				if(debug)
-				    fprintf( stderr,"linemod\n");
+				    fprintf( stderr, "linemod\n");
 				/* ignore for time being */
 				while ( (c = getc( pfin )) != EOF
 					&& c != '\n'
@@ -1034,11 +1034,11 @@ DoFile(void)	/* returns vpl status code */
 				virpos = newpos;
 				if( c == 'M'  )  {
 				    if( debug )
-					fprintf( stderr,"Move3\n");
+					fprintf( stderr, "Move3\n");
 				    continue;
 				}
 				if( debug )
-				    fprintf( stderr,"Line3\n");
+				    fprintf( stderr, "Line3\n");
 
 			    case 'N':	/* continue3 */
 			    case 'P':	/* point3 */
@@ -1046,11 +1046,11 @@ DoFile(void)	/* returns vpl status code */
 				    return Foo( -9 );
 				if ( c == 'P' )  {
 				    if( debug )
-					fprintf( stderr,"point3\n");
+					fprintf( stderr, "point3\n");
 				    virpos = newpos;
 				} else
 				    if( debug )
-					fprintf( stderr,"cont3\n");
+					fprintf( stderr, "cont3\n");
 
 				if ( !BuildStr( &virpos, &newpos ) )
 				    return Foo( -10 );
@@ -1065,12 +1065,12 @@ DoFile(void)	/* returns vpl status code */
 				virpos = newpos;
 				if ( c == 'm' )  {
 				    if( debug )
-					fprintf( stderr,"move\n");
+					fprintf( stderr, "move\n");
 				    continue;
 				}
 				/* line: fall through */
 				if( debug )
-				    fprintf( stderr,"line\n");
+				    fprintf( stderr, "line\n");
 
 			    case 'n':	/* cont */
 			    case 'p':	/* point */
@@ -1078,11 +1078,11 @@ DoFile(void)	/* returns vpl status code */
 				    return Foo( -9 );
 				if ( c == 'p' )  {
 				    if( debug )
-					fprintf( stderr,"point\n");
+					fprintf( stderr, "point\n");
 				    virpos = newpos;
 				} else
 				    if( debug )
-					fprintf( stderr,"cont\n");
+					fprintf( stderr, "cont\n");
 
 				if ( !BuildStr( &virpos, &newpos ) )
 				    return Foo( -10 );
@@ -1098,11 +1098,11 @@ DoFile(void)	/* returns vpl status code */
 				virpos = newpos;
 				if( c == 'O'  )  {
 				    if( debug )
-					fprintf( stderr,"dMove3\n");
+					fprintf( stderr, "dMove3\n");
 				    continue;
 				}
 				if( debug )
-				    fprintf( stderr,"dLine3\n");
+				    fprintf( stderr, "dLine3\n");
 
 			    case 'Q':	/* continue3 */
 			    case 'X':	/* point3 */
@@ -1110,11 +1110,11 @@ DoFile(void)	/* returns vpl status code */
 				    return Foo( -9 );
 				if ( c == 'X' )  {
 				    if( debug )
-					fprintf( stderr,"dpoint3\n");
+					fprintf( stderr, "dpoint3\n");
 				    virpos = newpos;
 				} else
 				    if( debug )
-					fprintf( stderr,"dcont3\n");
+					fprintf( stderr, "dcont3\n");
 
 				if ( !BuildStr( &virpos, &newpos ) )
 				    return Foo( -10 );
@@ -1129,12 +1129,12 @@ DoFile(void)	/* returns vpl status code */
 				virpos = newpos;
 				if ( c == 'o' )  {
 				    if( debug )
-					fprintf( stderr,"dmove\n");
+					fprintf( stderr, "dmove\n");
 				    continue;
 				}
 				/* line: fall through */
 				if( debug )
-				    fprintf( stderr,"dline\n");
+				    fprintf( stderr, "dline\n");
 
 			    case 'q':	/* cont */
 			    case 'x':	/* point */
@@ -1142,11 +1142,11 @@ DoFile(void)	/* returns vpl status code */
 				    return Foo( -9 );
 				if ( c == 'x' )  {
 				    if( debug )
-					fprintf( stderr,"dpoint\n");
+					fprintf( stderr, "dpoint\n");
 				    virpos = newpos;
 				} else
 				    if( debug )
-					fprintf( stderr,"dcont\n");
+					fprintf( stderr, "dcont\n");
 
 				if ( !BuildStr( &virpos, &newpos ) )
 				    return Foo( -10 );
@@ -1159,7 +1159,7 @@ DoFile(void)	/* returns vpl status code */
 				    unsigned char	in[6*8];
 				    double	out[6];
 				    if( debug )
-					fprintf( stderr,"dspace3\n");
+					fprintf( stderr, "dspace3\n");
 				    if( fread( in, sizeof(in), 1, pfin) != 1 )
 					return Foo( -11 );
 				    ntohd( (unsigned char *)out, in, 5 );
@@ -1178,7 +1178,7 @@ DoFile(void)	/* returns vpl status code */
 				    unsigned char	in[4*8];
 				    double	out[4];
 				    if( debug )
-					fprintf( stderr,"dspace\n");
+					fprintf( stderr, "dspace\n");
 				    if( fread( in, sizeof(in), 1, pfin) != 1 )
 					return Foo( -11 );
 				    ntohd( (unsigned char *)out, in, 4 );
@@ -1192,7 +1192,7 @@ DoFile(void)	/* returns vpl status code */
 			    case 'S':
 				{
 				    if( debug )
-					fprintf( stderr,"space3\n");
+					fprintf( stderr, "space3\n");
 				    if( fread( (char *)buf3,
 					       (int)sizeof buf3, 1, pfin)
 					!= 1
@@ -1210,7 +1210,7 @@ DoFile(void)	/* returns vpl status code */
 
 			    case 's':	/* space */
 				if( debug )
-				    fprintf( stderr,"space\n");
+				    fprintf( stderr, "space\n");
 				{
 				    if ( fread( (char *)buf2,
 						(int)sizeof buf2, 1, pfin
@@ -1234,7 +1234,7 @@ DoFile(void)	/* returns vpl status code */
 				}
 				deltao2 = delta / 2.0;
 				if( debug )
-				    fprintf( stderr,"Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
+				    fprintf( stderr, "Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
 					     space.left, space.right,
 					     space.bottom, space.top,
 					     delta );
@@ -1244,7 +1244,7 @@ DoFile(void)	/* returns vpl status code */
 				if( fread( cur_color, 1, 3, pfin) != 3 )
 				    return Foo( -11 );
 				if( debug )
-				    fprintf( stderr,"Color is R%d G%d B%d\n",
+				    fprintf( stderr, "Color is R%d G%d B%d\n",
 					     cur_color[RED],
 					     cur_color[GRN],
 					     cur_color[BLU]);
@@ -1252,7 +1252,7 @@ DoFile(void)	/* returns vpl status code */
 
 			    case 't':	/* label */
 				if( debug )
-				    fprintf( stderr,"label: ");
+				    fprintf( stderr, "label: ");
 
 				newpos = virpos;
 				while ( (c = getc( pfin )) != EOF && c != '\n'
@@ -1275,7 +1275,7 @@ DoFile(void)	/* returns vpl status code */
 				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
 					return Foo( -11 );
 				    if( debug )
-					fprintf( stderr,"circle ignored\n" );
+					fprintf( stderr, "circle ignored\n" );
 				    continue;
 				}
 			    case 'i':
@@ -1284,7 +1284,7 @@ DoFile(void)	/* returns vpl status code */
 				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
 					return Foo( -11 );
 				    if( debug )
-					fprintf( stderr,"d_circle ignored\n" );
+					fprintf( stderr, "d_circle ignored\n" );
 				    continue;
 				}
 			    case 'a':
@@ -1293,7 +1293,7 @@ DoFile(void)	/* returns vpl status code */
 				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
 					return Foo( -11 );
 				    if( debug )
-					fprintf( stderr,"arc ignored\n" );
+					fprintf( stderr, "arc ignored\n" );
 				    continue;
 				}
 			    case 'r':
@@ -1302,12 +1302,12 @@ DoFile(void)	/* returns vpl status code */
 				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
 					return Foo( -11 );
 				    if( debug )
-					fprintf( stderr,"d_arc ignored\n" );
+					fprintf( stderr, "d_arc ignored\n" );
 				    continue;
 				}
 
 			    default:
-				fprintf( stderr,"bad command '%c' (0x%02x)\n", c, c );
+				fprintf( stderr, "bad command '%c' (0x%02x)\n", c, c );
 
 				return Foo( -12 );	/* bad input */
 			}
@@ -1383,7 +1383,7 @@ main(int argc, char **argv)
 
     /* Open frame buffer, adapt to slightly smaller ones */
     if( (fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL ) {
-	fprintf(stderr,"pl-fb: fb_open failed\n");
+	fprintf(stderr, "pl-fb: fb_open failed\n");
 	bu_exit(1, NULL);
     }
     Npixels = fb_getwidth(fbp);
@@ -1413,13 +1413,13 @@ main(int argc, char **argv)
 
     buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
     if( (buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL)  {
-	fprintf(stderr,"pl-fb:  malloc error\n");
+	fprintf(stderr, "pl-fb:  malloc error\n");
 	bu_exit(1, NULL);
     }
     /* Extra band protects against requeueing off the top */
     band = (struct band *)malloc((BANDSLOP)*sizeof(struct band));
     if( band == (struct band *)0 )  {
-	fprintf(stderr,"pl-fb: malloc error2\n");
+	fprintf(stderr, "pl-fb: malloc error2\n");
 	bu_exit(1, NULL);
     }
     memset((char *)band, 0, (BANDSLOP)*sizeof(struct band));
@@ -1427,7 +1427,7 @@ main(int argc, char **argv)
     if( single_banded && over ) {
 	/* Read in initial screen */
 	if( fb_read( fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-	    fprintf(stderr,"pl-fb: band read error\n");
+	    fprintf(stderr, "pl-fb: band read error\n");
     }
     if( debug )
 	fprintf(stderr, "pl-fb output of %s\n", filename);

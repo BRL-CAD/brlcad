@@ -71,7 +71,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	static int linelen;
 	int result;
 	register int newvalue;
-	register  int i,value;
+	register  int i, value;
 
 /*
  *	if no sharpening going on then just read from the file and exit.
@@ -117,7 +117,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 		unsigned char *tmp;
 
 		if (linelen != num) {
-			fprintf(stderr,"sharpen: buffer size changed!\n");
+			fprintf(stderr, "sharpen: buffer size changed!\n");
 			bu_exit(2, NULL);
 		}
 /*

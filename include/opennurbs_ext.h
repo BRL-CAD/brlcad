@@ -144,7 +144,7 @@ namespace brlcad {
   BVNode<BV>::BVNode(const BV& node) : m_node(node) {
     for (int i = 0; i < 3; i++) {
       double d = m_node.m_max[i] - m_node.m_min[i];
-      if (ON_NearZero(d,ON_ZERO_TOLERANCE)) {
+      if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
 	m_node.m_min[i] -= 0.001;
 	m_node.m_max[i] += 0.001;
       }
@@ -338,11 +338,11 @@ namespace brlcad {
   template<class BV>
   ON_2dPoint
   SubsurfaceBVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) {
-    double uvs[5][2] = {{m_u.Min(),m_v.Min()},  // include the corners for an easy refinement
-			{m_u.Max(),m_v.Min()},
-			{m_u.Max(),m_v.Max()},
-			{m_u.Min(),m_v.Max()},
-			{m_u.Mid(),m_v.Mid()}}; // include the estimate
+    double uvs[5][2] = {{m_u.Min(), m_v.Min()},  // include the corners for an easy refinement
+			{m_u.Max(), m_v.Min()},
+			{m_u.Max(), m_v.Max()},
+			{m_u.Min(), m_v.Max()},
+			{m_u.Mid(), m_v.Mid()}}; // include the estimate
     ON_3dPoint corners[5];
     const ON_Surface* surf = m_face->SurfaceOf();
 
@@ -350,10 +350,10 @@ namespace brlcad {
     v = m_v;
 
     // XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
-    if (!surf->EvPoint(uvs[0][0],uvs[0][1],corners[0]) ||
-	!surf->EvPoint(uvs[1][0],uvs[1][1],corners[1]) ||
-	!surf->EvPoint(uvs[2][0],uvs[2][1],corners[2]) ||
-	!surf->EvPoint(uvs[3][0],uvs[3][1],corners[3])) {
+    if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
+	!surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
+	!surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
+	!surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
       throw new exception(); // XXX - fix this
     }
     corners[4] = BVNode<BV>::m_estimate;
@@ -413,14 +413,14 @@ namespace brlcad {
    * - get an estimate using the surface tree (if non-null, create
    * one otherwise)
    *
-   * - find a point (u,v) for which S(u,v) is closest to _point_
+   * - find a point (u, v) for which S(u, v) is closest to _point_
    *                                                     _      __
-   *   -- minimize the distance function: D(u,v) = sqrt(|S(u,v)-pt|^2)
+   *   -- minimize the distance function: D(u, v) = sqrt(|S(u, v)-pt|^2)
    *                                       _      __
-   *   -- simplify by minimizing f(u,v) = |S(u,v)-pt|^2
+   *   -- simplify by minimizing f(u, v) = |S(u, v)-pt|^2
    *
    *   -- minimum occurs when the gradient is zero, i.e.
-   *     \f[ \nabla f(u,v) = |\vec{S}(u,v)-\vec{p}|^2 = 0 \f]
+   *     \f[ \nabla f(u, v) = |\vec{S}(u, v)-\vec{p}|^2 = 0 \f]
    */
   bool
   get_closest_point(ON_2dPoint& outpt,
@@ -434,8 +434,8 @@ namespace brlcad {
    *
    * Pull an arbitrary model-space *curve* onto the given *surface* as a
    * curve within the surface's domain when, for each point c = C(t) on
-   * the curve and the closest point s = S(u,v) on the surface, we have:
-   * distance(c,s) <= *tolerance*.
+   * the curve and the closest point s = S(u, v) on the surface, we have:
+   * distance(c, s) <= *tolerance*.
    *
    * The resulting 2-dimensional curve will be approximated using the
    * following process:
@@ -444,9 +444,9 @@ namespace brlcad {
    * (ensure tolerance constraint). Sampling terminates when the
    * following flatness criterion is met:
    *    given two parameters on the curve t1 and t2 (which map to points p1 and p2 on the curve)
-   *    let m be a parameter randomly chosen near the middle of the interval [t1,t2]
+   *    let m be a parameter randomly chosen near the middle of the interval [t1, t2]
    *                                                              ____
-   *    then the curve between t1 and t2 is flat if distance(C(m),p1p2) < flatness
+   *    then the curve between t1 and t2 is flat if distance(C(m), p1p2) < flatness
    *
    * 2. Use the sampled points to perform a global interpolation using
    *    universal knot generation to build a B-Spline curve.

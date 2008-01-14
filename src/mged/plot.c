@@ -222,7 +222,7 @@ f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			for( i = 0; i < nused; i++, cmd++, pt++ )  {
 				switch( *cmd )  {
 				case BN_VLIST_POLY_START:
 				case BN_VLIST_POLY_VERTNORM:
@@ -408,7 +408,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    register int	nused = vp->nused;
 	    register int	*cmd = vp->cmd;
 	    register point_t *pt = vp->pt;
-	    for( i = 0; i < nused; i++,cmd++,pt++ )  {
+	    for( i = 0; i < nused; i++, cmd++, pt++ )  {
 	      switch( *cmd )  {
 	      case BN_VLIST_POLY_START:
 	      case BN_VLIST_POLY_VERTNORM:

@@ -72,7 +72,7 @@ main(int argc, char **argv)
 
 	/* look for optional input file */
 	if( argc > 1 ) {
-		if( (fp = fopen(argv[1],"r")) == 0 ) {
+		if( (fp = fopen(argv[1], "r")) == 0 ) {
 			bu_exit(1, "pixhist: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;

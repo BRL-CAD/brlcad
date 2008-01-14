@@ -111,7 +111,7 @@ void computeScanline( int pid, genptr_t arg ) {
 
 		for (j=0; j<width; j++) {
 			/*			char solidName[256]="";*/
-			unsigned int r,g,b;
+			unsigned int r, g, b;
 			unsigned char rgb[3];
 			point_t p1;
 			mat_t matrix;
@@ -127,7 +127,7 @@ void computeScanline( int pid, genptr_t arg ) {
 			 * be modified.  as such, we created one prototypical object, and all
 			 * of the regions will use it.
 			 ***
-			   sprintf(solidName, "%dx%d.s", i+1,j+1);
+			   sprintf(solidName, "%dx%d.s", i+1, j+1);
 				 bu_semaphore_acquire(P2G_WORKER);
 				 mk_sph(db_fp, solidName, p1, objectSize/2.0);
 				 bu_semaphore_release(P2G_WORKER);
@@ -144,7 +144,7 @@ void computeScanline( int pid, genptr_t arg ) {
 			VSET(rgb, r, g, b);
 			/* VSET(rgb, 200 , 200, 200); */
 
-			sprintf(scratch, "%dx%d.r", i+1,j+1);
+			sprintf(scratch, "%dx%d.r", i+1, j+1);
 			MAT_IDN(matrix);
 			MAT_DELTAS(matrix, p1[0], p1[1], 0.0);
 

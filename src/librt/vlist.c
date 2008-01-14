@@ -222,7 +222,7 @@ rt_ck_vlist( const struct bu_list *vhead )
 		BN_CK_VLIST( vp );
 		npts += nused;
 
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+		for( i = 0; i < nused; i++, cmd++, pt++ )  {
 			register int	j;
 
 			for( j=0; j < 3; j++ )  {
@@ -267,7 +267,7 @@ rt_vlist_copy( struct bu_list *dest, const struct bu_list *src )
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+		for( i = 0; i < nused; i++, cmd++, pt++ )  {
 			BN_ADD_VLIST( &rt_g.rtg_vlfree, dest, *pt, *cmd );
 		}
 	}
@@ -418,7 +418,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 		register int	i;
 		register int	nused = vp->nused;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++,pt++ )  {
+		for( i = 0; i < nused; i++, pt++ )  {
 			htond( bp, (unsigned char *)pt, 3 );
 			bp += 3*8;
 		}
@@ -510,7 +510,7 @@ rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 		register const int	*cmd = vp->cmd;
 		register point_t	 *pt = vp->pt;
 
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+		for( i = 0; i < nused; i++, cmd++, pt++ )  {
 			switch( *cmd )  {
 			case BN_VLIST_POLY_START:
 				break;
@@ -703,7 +703,7 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	const struct uplot	*up;
 	char			carg[256];
 	fastf_t			arg[6];
-	vect_t			a,b;
+	vect_t			a, b;
 	point_t			last_pos;
 	static point_t		lpnt;		/* last point of a move/draw series */
 	static int		moved = 0;	/* moved since color change */
@@ -890,7 +890,7 @@ rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, 
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+		for( i = 0; i < nused; i++, cmd++, pt++ )  {
 			/* XXX Skip polygon markers? */
 			sprintf( label, " %g, %g, %g",
 				(*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local );

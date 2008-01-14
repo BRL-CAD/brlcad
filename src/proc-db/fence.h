@@ -109,7 +109,7 @@
  *   fence, poles, mesh, and wire are all truth values (1 == TRUE,
  *     0 == FALSE) that indicate whether or not the user will be prompted
  *     for respective values when the program is running in interactive
- *     mode.  that is to say that if the values are (1,1,1,0) respectively,
+ *     mode.  that is to say that if the values are (1, 1, 1, 0) respectively,
  *     then the user will be prompted (if in interactive mode) for the
  *     height and width of the fence, poles, and mesh, but will not be
  *     prompted for values for the wire (such as wire radius).  default
@@ -120,14 +120,14 @@
  *     may be changed through a command-line value
  */
 #define DEFAULT_FENCENAME "fence"
-#define DEFAULT_FENCESTARTPOSITION {0.0,0.0,0.0}
-#define DEFAULT_FENCEENDPOSITION {3000.0,0.0,0.0}
-#define DEFAULT_FENCEWIDTH {3000.0,0.0,0.0}
-#define DEFAULT_FENCEHEIGHT {0.0,0.0,2000.0}
+#define DEFAULT_FENCESTARTPOSITION {0.0, 0.0, 0.0}
+#define DEFAULT_FENCEENDPOSITION {3000.0, 0.0, 0.0}
+#define DEFAULT_FENCEWIDTH {3000.0, 0.0, 0.0}
+#define DEFAULT_FENCEHEIGHT {0.0, 0.0, 2000.0}
 #define DEFAULT_FENCEPOLESPACING 3000.0
 #define DEFAULT_FENCEMATERIAL "plastic"
 #define DEFAULT_FENCEMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_FENCEMATERIALCOLOR {128,128,128}
+#define DEFAULT_FENCEMATERIALCOLOR {128, 128, 128}
 
 #define DEFAULT_FENCEFENCE 1
 #define DEFAULT_FENCEPOLES 0
@@ -152,7 +152,7 @@
 #define DEFAULT_POLERADIUS 30.0
 #define DEFAULT_POLEMATERIAL "plastic"
 #define DEFAULT_POLEMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_POLEMATERIALCOLOR {128,128,128}
+#define DEFAULT_POLEMATERIALCOLOR {128, 128, 128}
 
 /* these are the parameters for the mesh object that gets generated.
  * there is only one mesh object, consisting of two wires translated
@@ -166,7 +166,7 @@
 #define DEFAULT_MESHWIDTH DEFAULT_FENCEPOLESPACING
 #define DEFAULT_MESHMATERIAL "plastic"
 #define DEFAULT_MESHMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_MESHMATERIALCOLOR {128,128,128}
+#define DEFAULT_MESHMATERIALCOLOR {128, 128, 128}
 
 /*   the mesh piece count is a count of the number of actual wire segments
  *     that form a single mesh cell.  this value should not be changed (20)
@@ -193,7 +193,7 @@
 #define DEFAULT_WIREANGLE 45.0
 #define DEFAULT_WIREMATERIAL "plastic"
 #define DEFAULT_WIREMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_WIREMATERIALCOLOR {128,128,128}
+#define DEFAULT_WIREMATERIALCOLOR {128, 128, 128}
 #define DEFAULT_WIRESEGMENTLENGTH 50.0
 #define DEFAULT_WIRESEGMENTSEPARATION DEFAULT_WIRERADIUS
 /* the max wire segments should not be changed as it is mearly a max

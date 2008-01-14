@@ -235,7 +235,7 @@ getsolid(void)
 		strncpy( solid_type, scard+2, 3 );
 		break;
 	default:
-		fprintf(stderr,"getsolid() version %d unimplemented\n", version);
+		fprintf(stderr, "getsolid() version %d unimplemented\n", version);
 		bu_exit(1, NULL);
 		break;
 	}
@@ -725,7 +725,7 @@ read_arbn(char *name)
 	int	npt;			/* # vertex pts to be read in */
 	int	npe;			/* # planes from 3 vertex points */
 	int	neq;			/* # planes from equation */
-	int	nae;			/* # planes from az,el & vertex index */
+	int	nae;			/* # planes from az, el & vertex index */
 	int	nface;			/* total number of faces */
 	double	*input_points = (double *)0;
 	double	*vertex = (double *)0;	/* vertex list of final solid */
@@ -788,8 +788,8 @@ bad:
 			return(-1);
 		}
 		for( j=0; j<6; j++ )  {
-			int	q,r,s;
-			point_t	a,b,c;
+			int	q, r, s;
+			point_t	a, b, c;
 
 			q = getint( scard, 10+j*10+0, 4 );
 			r = getint( scard, 10+j*10+4, 3 );
@@ -820,7 +820,7 @@ bad:
 			} else {
 				VMOVE( c, &input_points[((s)-1)*3] );
 			}
-			if( bn_mk_plane_3pts( eqn[cur_eq], a,b,c, &tol ) < 0 )  {
+			if( bn_mk_plane_3pts( eqn[cur_eq], a, b, c, &tol ) < 0 )  {
 				printf("arbn degenerate plane\n");
 				VPRINT("a", a);
 				VPRINT("b", b);

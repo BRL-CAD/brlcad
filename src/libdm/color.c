@@ -37,7 +37,7 @@ void dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixe
 the color requested. */
 unsigned long
 dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd)
-			/* values assumed to be [0,255] */
+			/* values assumed to be [0, 255] */
 
 	/* cube dimension */
 {

@@ -56,7 +56,7 @@ main(int argc, char **argv)
 	register int 	start,  finish, incr;
 
 	register double	d;
-	register double	dstart, dfinish,dincr;
+	register double	dstart, dfinish, dincr;
 
 	if (argc < 3 || argc > 4) {
 		bu_exit(9, "Usage:  loop start finish [incr]\n");
@@ -135,9 +135,9 @@ main(int argc, char **argv)
 
 		/* printf format string fmt_string */
 		if (zeros > 0)
-			snprintf(fmt_string, 50, "%%0%dd\n",field_width);
+			snprintf(fmt_string, 50, "%%0%dd\n", field_width);
 		else
-			strncpy(fmt_string,"%d\n", 50-1);
+			strncpy(fmt_string, "%d\n", 50-1);
 		fmt_string[50-1] = '\0'; /* sanity */
 
 		start  = atoi(argv[1]);

@@ -51,10 +51,10 @@
 
 /* This uses the traditional De Boor-Cox algorithm,
  *
- *   D[k,i] (u) =
+ *   D[k, i] (u) =
  *
  *	   U[i+n-k] - mu 		        mu - U[i-1]
- *	   ________________ D[k-1, i-1] (mu)+_________________  D[k-1,i] (mu)
+ *	   ________________ D[k-1, i-1] (mu)+_________________  D[k-1, i] (mu)
  *	   U[i+n-k] - U[i-1]		     U[i+n-k] - U[i-1]
  *
  * For U[i-1]] <= mu < U[i] where U is the knot vector, k is the order,

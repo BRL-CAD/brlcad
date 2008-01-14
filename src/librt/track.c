@@ -349,19 +349,19 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   ++i;
   solname[i] = regname[i] = '\0';
 /*
-  bu_log("\nX of first road wheel  %10.4f\n",fw[0]);
-  bu_log("X of last road wheel   %10.4f\n",lw[0]);
-  bu_log("Z of road wheels       %10.4f\n",fw[1]);
-  bu_log("radius of road wheels  %10.4f\n",fw[2]);
-  bu_log("\nX of drive wheel       %10.4f\n",dw[0]);
-  bu_log("Z of drive wheel       %10.4f\n",dw[1]);
-  bu_log("radius of drive wheel  %10.4f\n",dw[2]);
-  bu_log("\nX of idler wheel       %10.4f\n",iw[0]);
-  bu_log("Z of idler wheel       %10.4f\n",iw[1]);
-  bu_log("radius of idler wheel  %10.4f\n",iw[2]);
-  bu_log("\nY MIN of track         %10.4f\n",tr[0]);
-  bu_log("Y MAX of track         %10.4f\n",tr[1]);
-  bu_log("thickness of track     %10.4f\n",tr[2]);
+  bu_log("\nX of first road wheel  %10.4f\n", fw[0]);
+  bu_log("X of last road wheel   %10.4f\n", lw[0]);
+  bu_log("Z of road wheels       %10.4f\n", fw[1]);
+  bu_log("radius of road wheels  %10.4f\n", fw[2]);
+  bu_log("\nX of drive wheel       %10.4f\n", dw[0]);
+  bu_log("Z of drive wheel       %10.4f\n", dw[1]);
+  bu_log("radius of drive wheel  %10.4f\n", dw[2]);
+  bu_log("\nX of idler wheel       %10.4f\n", iw[0]);
+  bu_log("Z of idler wheel       %10.4f\n", iw[1]);
+  bu_log("radius of idler wheel  %10.4f\n", iw[2]);
+  bu_log("\nY MIN of track         %10.4f\n", tr[0]);
+  bu_log("Y MAX of track         %10.4f\n", tr[1]);
+  bu_log("thickness of track     %10.4f\n", tr[2]);
 */
 
 /* Check for names to use:
@@ -431,7 +431,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   strncpy(sol.s_name, solname, len-1);
   sol.s_type = ID_ARB8;
   crdummy(iw, tr, 1);
-  if (wrobj(wdbp, interp,solname,DIR_SOLID) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 
@@ -443,7 +443,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   VMOVE(temp1, &sol.s_values[0]);
   crname(interp, solname, 4, len);
   strncpy(sol.s_name, solname, len-1);
-  if (wrobj(wdbp, interp,solname,DIR_SOLID))
+  if (wrobj(wdbp, interp, solname, DIR_SOLID))
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 
@@ -455,7 +455,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   trcurve(dw, tr);
   crname(interp, solname, 5, len);
   strncpy(sol.s_name, solname, len-1);
-  if (wrobj(wdbp, interp,solname,DIR_SOLID) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 
@@ -467,7 +467,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   VMOVE(&sol.s_values[15], &sol.s_values[9]);
   crname(interp, solname, 6, len);
   strncpy(sol.s_name, solname, len-1);
-  if (wrobj(wdbp, interp,solname,DIR_SOLID) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 
@@ -479,7 +479,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   strncpy(sol.s_name, solname, len-1);
   sol.s_type = ID_ARB8;
   crdummy(dw, tr, 2);
-  if (wrobj(wdbp, interp,solname,DIR_SOLID) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 
@@ -489,7 +489,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   bottom(temp1, temp2, tr);
   crname(interp, solname, 8, len);
   strncpy(sol.s_name, solname, len-1);
-  if (wrobj(wdbp, interp,solname,DIR_SOLID) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 
@@ -503,7 +503,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   top(temp1, temp2, tr);
   crname(interp, solname, 9, len);
   strncpy(sol.s_name, solname, len-1);
-  if (wrobj(wdbp, interp,solname,DIR_SOLID) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 

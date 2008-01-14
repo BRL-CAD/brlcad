@@ -46,7 +46,7 @@
 #include "bn.h"
 #include "zlib.h"
 
-static png_color_16 def_backgrd={ 0,0,0,0,0 };
+static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
 static char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
@@ -85,7 +85,7 @@ main(int argc, char **argv)
 	{
 		if( strcmp( argv[1], "-v" ) == 0 )
 			verbose = 1;
-		else if( strcmp(argv[1],"-ntsc") == 0 )
+		else if( strcmp(argv[1], "-ntsc") == 0 )
 		{
 			/* NTSC weights */
 			rweight = 0.30;
@@ -93,7 +93,7 @@ main(int argc, char **argv)
 			bweight = 0.11;
 			red = green = blue = 1;
 		}
-		else if( strcmp(argv[1],"-crt") == 0 )
+		else if( strcmp(argv[1], "-crt") == 0 )
 		{
 			/* CRT weights */
 			rweight = 0.26;
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		if( (fp_in = fopen(argv[1], "rb")) == NULL )
 		{
 			perror(argv[1]);
-			bu_log ( "png-bw: cannot open \"%s\" for reading\n",argv[1] );
+			bu_log ( "png-bw: cannot open \"%s\" for reading\n", argv[1] );
 			bu_exit( EXIT_FAILURE, "Cannot open input file\n" );
 		}
 	}
@@ -261,7 +261,7 @@ main(int argc, char **argv)
 
 	if( !convert_to_bw )
 	{
-		fwrite( image, file_width*file_height, 1,stdout );
+		fwrite( image, file_width*file_height, 1, stdout );
 		bu_exit ( 0, NULL );
 	}
 

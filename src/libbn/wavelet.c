@@ -496,7 +496,7 @@ unsigned long limit; \
 				i = x_tmp + y*row_len; \
 				j = i + row_len; \
  \
-				for (d=0 ; d < channels ; d++,avg++,detail++){ \
+				for (d=0 ; d < channels ; d++, avg++, detail++){ \
 					buf[i++] = *avg + *detail; \
 					buf[j++] = *avg - *detail; \
 				} \
@@ -527,7 +527,7 @@ unsigned long limit; \
 				i = row_start + x * channels; \
 				j = i + channels; \
  \
-				for (d=0 ; d < channels ; d++,avg++,detail++){ \
+				for (d=0 ; d < channels ; d++, avg++, detail++){ \
 					buf[i++] = *avg + *detail; \
 					buf[j++] = *avg - *detail; \
 				} \

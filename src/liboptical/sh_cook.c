@@ -342,7 +342,7 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
 
 		n_dot_h = VDOT( swp->sw_hit.hit_normal, h );
 		a = acos( n_dot_h );		/*XXXXXX*/
-		D = beckmann( a, ps->m2 );	/*XXX Sum k[i]*beck(a,m[i]) */
+		D = beckmann( a, ps->m2 );	/*XXX Sum k[i]*beck(a, m[i]) */
 		e_dot_h = -VDOT( ap->a_ray.r_dir, h );
 #if 0
 		F = fresnel( e_dot_h, ps->n[0] );

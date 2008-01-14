@@ -129,7 +129,7 @@ main(int argc, char **argv)
 	}
 
 	if( in_width < 1 ) {
-		fprintf(stderr,"pixuntile: width of %d out of range\n", in_width);
+		fprintf(stderr, "pixuntile: width of %d out of range\n", in_width);
 		bu_exit (12, NULL);
 	}
 
@@ -143,7 +143,7 @@ main(int argc, char **argv)
 			for( i = 0; i < numx; i++ ) {
 				if( f[i] != 0 )
 					fclose(f[i]);
-				fprintf(stderr,"%d ", framenumber);  fflush(stdout);
+				fprintf(stderr, "%d ", framenumber);  fflush(stdout);
 				if( islist )  {
 					/* See if we read all the files */
 					if( bu_optind >= argc )
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 				} else {
 					snprintf( name, 256, "%s.%d", base_name, framenumber );
 				}
-				if( (f[i] = fopen(name,"w")) == NULL ) {
+				if( (f[i] = fopen(name, "w")) == NULL ) {
 					perror( name );
 					goto done;
 				}
@@ -166,7 +166,7 @@ main(int argc, char **argv)
 		y = (y + 1) % out_height;
 	}
 done:
-	fprintf( stderr,"\n" );
+	fprintf( stderr, "\n" );
 	bu_exit ( 0, NULL );
 }
 

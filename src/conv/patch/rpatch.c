@@ -52,7 +52,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 {
 	char *ptr;
 	char tmp_str[MAXLINELEN];
-	int width,precision;
+	int width, precision;
 	int leading_spaces=1;
 	int i;
 
@@ -195,9 +195,9 @@ int
 main(int argc, char **argv)
 {
 	char line[MAXLINELEN];
-	float x,y,z,hold,work;
+	float x, y, z, hold, work;
 	char minus;
-	int ity,ity1,ico,isq[8],m,n,cc,tmp;
+	int ity, ity1, ico, isq[8], m, n, cc, tmp;
 	int i;
 	int type3_is_donut=0;
 	int c;
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 
 		/* write output */
 		printf( "%8.3f %8.3f %9.3f %c %2d %2d %1d %4d %11d ",
-			x,y,z,minus,ity,ico,ity1,cc,isq[0] );
+			x, y, z, minus, ity, ico, ity1, cc, isq[0] );
 		for( i=1 ; i<8 ; i++ )
 			printf( "%5d" , isq[i] );
 		printf( " %3d %3d\n" , m , n );

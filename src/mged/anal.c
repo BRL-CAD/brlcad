@@ -211,7 +211,7 @@ do_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		break;
 
 	default:
-		bu_vls_printf(vp,"analyze: unable to process %s solid\n",
+		bu_vls_printf(vp, "analyze: unable to process %s solid\n",
 			rt_functab[ip->idb_type].ft_name );
 		break;
 	}
@@ -220,11 +220,11 @@ do_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /* edge definition array */
 static const int nedge[5][24] = {
-	{0,1, 1,2, 2,0, 0,3, 3,2, 1,3, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},	/* ARB4 */
-	{0,1, 1,2, 2,3, 0,3, 0,4, 1,4, 2,4, 3,4, -1,-1,-1,-1,-1,-1,-1,-1},	/* ARB5 */
-	{0,1, 1,2, 2,3, 0,3, 0,4, 1,4, 2,5, 3,5, 4,5, -1,-1,-1,-1,-1,-1},	/* ARB6 */
-	{0,1, 1,2, 2,3, 0,3, 0,4, 3,4, 1,5, 2,6, 4,5, 5,6, 4,6, -1,-1},		/* ARB7 */
-	{0,1, 1,2, 2,3, 0,3, 0,4, 4,5, 1,5, 5,6, 6,7, 4,7, 3,7, 2,6},
+	{0, 1, 1, 2, 2, 0, 0, 3, 3, 2, 1, 3, -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},	/* ARB4 */
+	{0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 4, 3, 4, -1,-1,-1,-1,-1,-1,-1,-1},	/* ARB5 */
+	{0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 5, 3, 5, 4, 5, -1,-1,-1,-1,-1,-1},	/* ARB6 */
+	{0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 3, 4, 1, 5, 2, 6, 4, 5, 5, 6, 4, 6, -1,-1},		/* ARB7 */
+	{0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 4, 5, 1, 5, 5, 6, 6, 7, 4, 7, 3, 7, 2, 6},
 };
 
 /*
@@ -246,7 +246,7 @@ arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 	/* find the specific arb type, in GIFT order. */
 	if( (cgtype = rt_arb_std_type( ip, &mged_tol )) == 0 ) {
-		bu_vls_printf(vp,"arb_anal: bad ARB\n");
+		bu_vls_printf(vp, "arb_anal: bad ARB\n");
 		return;
 	}
 
@@ -255,19 +255,19 @@ arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	type = cgtype - 4;
 
 	/* analyze each face, use center point of arb for reference */
-	bu_vls_printf(vp,"\n------------------------------------------------------------------------------\n");
-	bu_vls_printf(vp,"| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
-	bu_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
+	bu_vls_printf(vp, "\n------------------------------------------------------------------------------\n");
+	bu_vls_printf(vp, "| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
+	bu_vls_printf(vp, "|------|---------------|----------------------------------|------------------|\n");
 	rt_arb_centroid( center_pt, arb, cgtype );
 
 	for(i=0; i<6; i++)
 		tot_area += anal_face( vp, i, center_pt, arb, type, &mged_tol );
 
-	bu_vls_printf(vp,"------------------------------------------------------------------------------\n");
+	bu_vls_printf(vp, "------------------------------------------------------------------------------\n");
 
 	/* analyze each edge */
-	bu_vls_printf(vp,"    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
-	bu_vls_printf(vp,"    |----------------|----------------|----------------|----------------|\n  ");
+	bu_vls_printf(vp, "    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
+	bu_vls_printf(vp, "    |----------------|----------------|----------------|----------------|\n  ");
 
 	/* set up the records for arb4's and arb6's */
 	{
@@ -285,18 +285,18 @@ arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 				break;
 		}
 	}
-	bu_vls_printf(vp,"  ---------------------------------------------------------------------\n");
+	bu_vls_printf(vp, "  ---------------------------------------------------------------------\n");
 
 	/* find the volume - break arb8 into 6 arb4s */
 	for(i=0; i<6; i++)
 		tot_vol += find_vol( i, arb, &mged_tol );
 
-	bu_vls_printf(vp,"      | Volume = %18.8f    Surface Area = %15.8f |\n",
+	bu_vls_printf(vp, "      | Volume = %18.8f    Surface Area = %15.8f |\n",
 			tot_vol*base2local*base2local*base2local,
 			tot_area*base2local*base2local);
-	bu_vls_printf(vp,"      |          %18.8f gal                               |\n",
+	bu_vls_printf(vp, "      |          %18.8f gal                               |\n",
 		tot_vol/GALLONS_TO_MM3);
-	bu_vls_printf(vp,"      -----------------------------------------------------------------\n");
+	bu_vls_printf(vp, "      -----------------------------------------------------------------\n");
 }
 
 /* ARB face printout array */
@@ -402,8 +402,8 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 	/* find plane eqn for this face */
 	if( bn_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
 	    arb->pt[c], tol ) < 0 )  {
-		bu_vls_printf(vp,"| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
-				a+1,b+1,c+1,d+1);
+		bu_vls_printf(vp, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
+				a+1, b+1, c+1, d+1);
 		return 0;
 	}
 
@@ -447,12 +447,12 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 		face_area += area[i];
 	}
 
-	bu_vls_printf(vp,"| %4d |",prface[type][face]);
-	bu_vls_printf(vp," %6.8f %6.8f | %6.8f %6.8f %6.8f %11.8f |",
+	bu_vls_printf(vp, "| %4d |", prface[type][face]);
+	bu_vls_printf(vp, " %6.8f %6.8f | %6.8f %6.8f %6.8f %11.8f |",
 		angles[3], angles[4],
-		plane[0],plane[1],plane[2],
+		plane[0], plane[1], plane[2],
 		plane[3]*base2local);
-	bu_vls_printf(vp,"   %13.8f  |\n",
+	bu_vls_printf(vp, "   %13.8f  |\n",
 		(area[0]+area[1])*base2local*base2local);
 	return face_area;
 }
@@ -475,14 +475,14 @@ anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int ty
 		if( (a = edge%4) == 0 )
 			return;
 		if( a == 1 ) {
-			bu_vls_printf(vp,"  |                |                |                |\n  ");
+			bu_vls_printf(vp, "  |                |                |                |\n  ");
 			return;
 		}
 		if( a == 2 ) {
-			bu_vls_printf(vp,"  |                |                |\n  ");
+			bu_vls_printf(vp, "  |                |                |\n  ");
 			return;
 		}
-		bu_vls_printf(vp,"  |                |\n  ");
+		bu_vls_printf(vp, "  |                |\n  ");
 		return;
 	}
 
@@ -491,7 +491,7 @@ anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int ty
 		a+1, b+1, MAGNITUDE(v_temp)*base2local);
 
 	if( ++edge%4 == 0 )
-		bu_vls_printf(vp,"  |\n  ");
+		bu_vls_printf(vp, "  |\n  ");
 }
 
 
@@ -504,7 +504,7 @@ find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
 	vect_t	v_temp;
 	plane_t	plane;
 
-	/* a,b,c = base of the arb4 */
+	/* a, b, c = base of the arb4 */
 	a = farb4[loc][0];
 	b = farb4[loc][1];
 	c = farb4[loc][2];
@@ -551,7 +551,7 @@ tor_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	vol = 2.0 * pi * pi * r1 * r2 * r2;
 	sur_area = 4.0 * pi * pi * r1 * r2;
 
-	bu_vls_printf(vp,"TOR Vol = %.8f (%.8f gal)   Surface Area = %.8f\n",
+	bu_vls_printf(vp, "TOR Vol = %.8f (%.8f gal)   Surface Area = %.8f\n",
 		vol*base2local*base2local*base2local,
 		vol/GALLONS_TO_MM3,
 		sur_area*base2local*base2local);
@@ -590,14 +590,14 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	type = 0;
 
 	vol = 4.0 * pi * ma * mb * mc / 3.0;
-	bu_vls_printf(vp,"ELL Volume = %.8f (%.8f gal)",
+	bu_vls_printf(vp, "ELL Volume = %.8f (%.8f gal)",
 		vol*base2local*base2local*base2local,
 		vol/GALLONS_TO_MM3);
 
 	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
 		sur_area = 4.0 * pi * ma * ma;
-		bu_vls_printf(vp,"   Surface Area = %.8f\n",
+		bu_vls_printf(vp, "   Surface Area = %.8f\n",
 				sur_area*base2local*base2local);
 		return;
 	}
@@ -649,7 +649,7 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		}
 	}
 	else {
-		bu_vls_printf(vp,"   Cannot find surface area\n");
+		bu_vls_printf(vp, "   Cannot find surface area\n");
 		return;
 	}
 	ecc = sqrt(major*major - minor*minor) / major;
@@ -663,7 +663,7 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		sur_area = 0.0;
 	}
 
-	bu_vls_printf(vp,"   Surface Area = %.8f\n",
+	bu_vls_printf(vp, "   Surface Area = %.8f\n",
 			sur_area*base2local*base2local);
 }
 
@@ -696,14 +696,14 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	type = 0;
 
 	vol = 4.0 * pi * ma * mb * mc / 3.0;
-	bu_vls_printf(vp,"SUPERELL Volume = %.8f (%.8f gal)",
+	bu_vls_printf(vp, "SUPERELL Volume = %.8f (%.8f gal)",
 		vol*base2local*base2local*base2local,
 		vol/GALLONS_TO_MM3);
 
 	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
 		sur_area = 4.0 * pi * ma * ma;
-		bu_vls_printf(vp,"   Surface Area = %.8f\n",
+		bu_vls_printf(vp, "   Surface Area = %.8f\n",
 				sur_area*base2local*base2local);
 		return;
 	}
@@ -755,7 +755,7 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		}
 	}
 	else {
-		bu_vls_printf(vp,"   Cannot find surface area\n");
+		bu_vls_printf(vp, "   Cannot find surface area\n");
 		return;
 	}
 	ecc = sqrt(major*major - minor*minor) / major;
@@ -769,7 +769,7 @@ superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 		sur_area = 0.0;
 	}
 
-	bu_vls_printf(vp,"   Surface Area = %.8f\n",
+	bu_vls_printf(vp, "   Surface Area = %.8f\n",
 			sur_area*base2local*base2local);
 }
 
@@ -801,7 +801,7 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	mh = MAGNITUDE( tgc->h );
 
 	/* check for right cylinder */
-	if( fabs(fabs(VDOT(tgc->h,axb)) - (mh*maxb)) < .00001 ) {
+	if( fabs(fabs(VDOT(tgc->h, axb)) - (mh*maxb)) < .00001 ) {
 		/* have a right cylinder */
 		if(fabs(ma-mb) < .00001) {
 			/* have a circular base */
@@ -848,18 +848,18 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 			break;
 
 		default:
-			bu_vls_printf(vp,"TGC Cannot find areas and volume\n");
+			bu_vls_printf(vp, "TGC Cannot find areas and volume\n");
 			return;
 	}
 
 	/* print the results */
-	bu_vls_printf(vp,"Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",
+	bu_vls_printf(vp, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",
 			area_base*base2local*base2local,
 			area_top*base2local*base2local,
 			area_side*base2local*base2local);
-	bu_vls_printf(vp,"Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
+	bu_vls_printf(vp, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
 			(area_base+area_top+area_side)*base2local*base2local,
-			vol*base2local*base2local*base2local,vol/GALLONS_TO_MM3);
+			vol*base2local*base2local*base2local, vol/GALLONS_TO_MM3);
 	/* Print units? */
 	return;
 
@@ -870,7 +870,7 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 static void
 ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 {
-	bu_vls_printf(vp,"ARS analyze not implemented\n");
+	bu_vls_printf(vp, "ARS analyze not implemented\n");
 }
 
 /*	XXX	analyze spline needed
@@ -879,7 +879,7 @@ ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
  * struct bu_vls	*vp;
  * const struct rt_db_internal	*ip;
  * {
- * 	bu_vls_printf(vp,"SPLINE analyze not implemented\n");
+ * 	bu_vls_printf(vp, "SPLINE analyze not implemented\n");
  * }
  */
 
@@ -887,7 +887,7 @@ ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 static void
 part_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 {
-	bu_vls_printf(vp,"PARTICLE analyze not implemented\n");
+	bu_vls_printf(vp, "PARTICLE analyze not implemented\n");
 }
 
 #define arcsinh(x) (log((x) + sqrt((x)*(x) + 1.)))
@@ -918,11 +918,11 @@ rpc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	area_body = .5*sqrt(r*r + 4.*b*b) + .25*r*r/b*arcsinh(2.*b/r);
 	area_body *= 2.;
 
-	bu_vls_printf(vp,"Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
+	bu_vls_printf(vp, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
 			area_parab*base2local*base2local,
 			2*r*h*base2local*base2local,
 			area_body*base2local*base2local);
-	bu_vls_printf(vp,"Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
+	bu_vls_printf(vp, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
 			(2*area_parab+2*r*h+area_body)*base2local*base2local,
 			vol_parab*base2local*base2local*base2local,
 			vol_parab/GALLONS_TO_MM3);
@@ -962,11 +962,11 @@ rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 	area_body = 2.*(L_eval(r) - L_eval(0.));
 #endif
 
-	bu_vls_printf(vp,"Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
+	bu_vls_printf(vp, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
 			area_hyperb*base2local*base2local,
 			2*r*h*base2local*base2local,
 			area_body*base2local*base2local);
-	bu_vls_printf(vp,"Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
+	bu_vls_printf(vp, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
 			(2*area_hyperb+2*r*h+2*area_body)*base2local*base2local,
 			vol_hyperb*base2local*base2local*base2local,
 			vol_hyperb/GALLONS_TO_MM3);

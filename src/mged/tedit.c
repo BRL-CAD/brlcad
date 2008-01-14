@@ -265,7 +265,7 @@ writesolid(void)
 			(void)fprintf( fp , "A: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->a ) );
 			(void)fprintf( fp , "B: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->b ) );
 			(void)fprintf( fp , "C: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->c ) );
-			(void)fprintf( fp , "<n,e>: <%.9f, %.9f>\n", superell->n, superell->e);
+			(void)fprintf( fp , "<n, e>: <%.9f, %.9f>\n", superell->n, superell->e);
 			break;
 	}
 
@@ -326,7 +326,7 @@ readsolid(void)
 		struct rt_part_internal *part;
 		struct rt_superell_internal *superell;
 		char *str;
-		double a,b,c,d;
+		double a, b, c, d;
 
 		default:
 		  Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
@@ -850,9 +850,9 @@ editit(const char *file)
 	void (*s2)();
 	void (*s3)();
 
-	editor = Tcl_GetVar(interp,"editor", TCL_GLOBAL_ONLY);
+	editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
 	if(!editor || editor[0] == '\0')
-	    editor = Tcl_GetVar(interp,"EDITOR", TCL_GLOBAL_ONLY);
+	    editor = Tcl_GetVar(interp, "EDITOR", TCL_GLOBAL_ONLY);
 
 	if(!editor || editor[0] == '\0')
 	    editor = getenv("EDITOR");

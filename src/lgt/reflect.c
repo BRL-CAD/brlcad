@@ -1540,7 +1540,7 @@ f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg
 	developed by Bui-Tuong Phong, [see Wm M. Newman and R. F. Sproull,
 	"Principles of Interactive Computer Graphics", 	McGraw-Hill, 1979]
 
-	Er = Ra(m)*cos(Ia) + Rd(m)*cos(Il) + W(Il,m)*cos(s)^^n
+	Er = Ra(m)*cos(Ia) + Rd(m)*cos(Il) + W(Il, m)*cos(s)^^n
 	where,
 
 	Er	is the energy reflected in the observer's direction.

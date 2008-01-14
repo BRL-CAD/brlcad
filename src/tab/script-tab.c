@@ -276,7 +276,7 @@ struct command_tab rt_cmdtab[] = {
 	{"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
 		cm_lookat_pt,	4, 5},
 	{"viewrot", "4x4 matrix", "set view direction from matrix",
-		cm_vrot,	17,17},
+		cm_vrot,	17, 17},
 	{"orientation", "quaturnion", "set view direction from quaturnion",
 		cm_orientation,	5, 5},
 	{"end", 	"", "end of frame setup, begin raytrace",
@@ -311,7 +311,7 @@ char	**argv;
 	register int	ret;
 
 	if( argc != 1 || isatty(fileno(stdin)) )  {
-		fprintf(stderr,"Usage: script-tab < script > table\n");
+		fprintf(stderr, "Usage: script-tab < script > table\n");
 		return 1;
 	}
 
@@ -323,7 +323,7 @@ char	**argv;
 	 */
 	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 #if		0
-		fprintf(stderr,"cmd: %s\n", buf );
+		fprintf(stderr, "cmd: %s\n", buf );
 #endif
 		ret = rt_do_cmd( NULL, buf, rt_cmdtab );
 		if( ret < 0 )  {

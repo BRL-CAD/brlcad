@@ -147,16 +147,16 @@ mread(int		fd,
 static void
 err(char *s)
 {
-	fprintf(stderr,"ttcp%s: ", trans?"-t":"-r");
+	fprintf(stderr, "ttcp%s: ", trans?"-t":"-r");
 	perror(s);
-	fprintf(stderr,"errno=%d\n",errno);
+	fprintf(stderr, "errno=%d\n", errno);
 	exit(1);
 }
 
 void
 mes(char *s)
 {
-	fprintf(stderr,"ttcp%s: %s\n", trans?"-t":"-r", s);
+	fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", s);
 }
 
 void
@@ -221,7 +221,7 @@ read_timer(char *str, int len)
 	cput /= HZ;
 	if( cput < 0.00001 )  cput = 0.01;
 	if( realt < 0.00001 )  realt = cput;
-	sprintf(line,"%g CPU secs in %g elapsed secs (%g%%)",
+	sprintf(line, "%g CPU secs in %g elapsed secs (%g%%)",
 		cput, realt,
 		cput/realt*100 );
 	(void)strncpy( str, line, len );
@@ -282,14 +282,14 @@ prusage(register struct rusage *r0,
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-			sprintf(outp,"%ld.%01ld", (long int)tdiff.tv_sec,
+			sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec,
 				(long int)tdiff.tv_usec/100000L);
 			END(outp);
 			break;
 
 		case 'S':
 			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-			sprintf(outp,"%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
+			sprintf(outp, "%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
 			END(outp);
 			break;
 
@@ -299,60 +299,60 @@ prusage(register struct rusage *r0,
 			break;
 
 		case 'P':
-			sprintf(outp,"%d%%", (int) (t*100 / ((ms ? ms : 1))));
+			sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
 			END(outp);
 			break;
 
 		case 'W':
 			i = r1->ru_nswap - r0->ru_nswap;
-			sprintf(outp,"%d", i);
+			sprintf(outp, "%d", i);
 			END(outp);
 			break;
 
 		case 'X':
-			sprintf(outp,"%ld", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+			sprintf(outp, "%ld", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
 			END(outp);
 			break;
 
 		case 'D':
-			sprintf(outp,"%ld", t == 0 ? 0 :
+			sprintf(outp, "%ld", t == 0 ? 0 :
 			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
 			END(outp);
 			break;
 
 		case 'K':
-			sprintf(outp,"%ld", t == 0 ? 0 :
+			sprintf(outp, "%ld", t == 0 ? 0 :
 			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
 			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
 			END(outp);
 			break;
 
 		case 'M':
-			sprintf(outp,"%ld", r1->ru_maxrss/2);
+			sprintf(outp, "%ld", r1->ru_maxrss/2);
 			END(outp);
 			break;
 
 		case 'F':
-			sprintf(outp,"%ld", r1->ru_majflt-r0->ru_majflt);
+			sprintf(outp, "%ld", r1->ru_majflt-r0->ru_majflt);
 			END(outp);
 			break;
 
 		case 'R':
-			sprintf(outp,"%ld", r1->ru_minflt-r0->ru_minflt);
+			sprintf(outp, "%ld", r1->ru_minflt-r0->ru_minflt);
 			END(outp);
 			break;
 
 		case 'I':
-			sprintf(outp,"%ld", r1->ru_inblock-r0->ru_inblock);
+			sprintf(outp, "%ld", r1->ru_inblock-r0->ru_inblock);
 			END(outp);
 			break;
 
 		case 'O':
-			sprintf(outp,"%ld", r1->ru_oublock-r0->ru_oublock);
+			sprintf(outp, "%ld", r1->ru_oublock-r0->ru_oublock);
 			END(outp);
 			break;
 		case 'C':
-			sprintf(outp,"%ld+%ld", r1->ru_nvcsw-r0->ru_nvcsw,
+			sprintf(outp, "%ld+%ld", r1->ru_nvcsw-r0->ru_nvcsw,
 				r1->ru_nivcsw-r0->ru_nivcsw );
 			END(outp);
 			break;
@@ -388,19 +388,19 @@ psecs(long l, register char *cp)
 
 	i = l / 3600;
 	if (i) {
-		sprintf(cp,"%d:", i);
+		sprintf(cp, "%d:", i);
 		END(cp);
 		i = l % 3600;
-		sprintf(cp,"%d%d", (i/60) / 10, (i/60) % 10);
+		sprintf(cp, "%d%d", (i/60) / 10, (i/60) % 10);
 		END(cp);
 	} else {
 		i = l;
-		sprintf(cp,"%d", i / 60);
+		sprintf(cp, "%d", i / 60);
 		END(cp);
 	}
 	i %= 60;
 	*cp++ = ':';
-	sprintf(cp,"%d%d", i / 10, i % 10);
+	sprintf(cp, "%d%d", i / 10, i % 10);
 }
 #endif
 
@@ -538,7 +538,7 @@ main(int argc, char **argv)
 
 	if( (buf = (char *)malloc(buflen)) == (char *)NULL)
 		err("malloc");
-	fprintf(stderr,"ttcp%s: nbuf=%d, buflen=%d, port=%d\n",
+	fprintf(stderr, "ttcp%s: nbuf=%d, buflen=%d, port=%d\n",
 		trans?"-t":"-r",
 		nbuf, buflen, port);
 
@@ -567,7 +567,7 @@ main(int argc, char **argv)
 		/* otherwise, we are the server and
 		 * should listen for the connections
 		 */
-		listen(fd,0);   /* allow a queue of 0 */
+		listen(fd, 0);   /* allow a queue of 0 */
 		if(options)  {
 #ifdef BSD42
 			if( setsockopt(fd, SOL_SOCKET, options, 0, 0) < 0)
@@ -590,11 +590,11 @@ main(int argc, char **argv)
 		if (trans)  {
 			pattern( buf, buflen );
 			if(udp)  (void)Nwrite( fd, buf, 4 ); /* rcvr start */
-			while (nbuf-- && Nwrite(fd,buf,buflen) == buflen)
+			while (nbuf-- && Nwrite(fd, buf, buflen) == buflen)
 				nbytes += buflen;
 			if(udp)  (void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		} else {
-			while ((cnt=Nread(fd,buf,buflen)) > 0)  {
+			while ((cnt=Nread(fd, buf, buflen)) > 0)  {
 				static int going = 0;
 				if( cnt <= 4 )  {
 					if( going )
@@ -608,34 +608,34 @@ main(int argc, char **argv)
 	} else {
 		register int cnt;
 		if (trans)  {
-			while((cnt=read(0,buf,buflen)) > 0 &&
-			    Nwrite(fd,buf,cnt) == cnt)
+			while((cnt=read(0, buf, buflen)) > 0 &&
+			    Nwrite(fd, buf, cnt) == cnt)
 				nbytes += cnt;
 		}  else  {
-			while((cnt=Nread(fd,buf,buflen)) > 0 &&
-			    write(1,buf,cnt) == cnt)
+			while((cnt=Nread(fd, buf, buflen)) > 0 &&
+			    write(1, buf, cnt) == cnt)
 				nbytes += cnt;
 		}
 	}
 	if(errno) err("IO");
-	(void)read_timer(stats,sizeof(stats));
+	(void)read_timer(stats, sizeof(stats));
 	if(udp&&trans)  {
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 		(void)Nwrite( fd, buf, 4 ); /* rcvr end */
 	}
-	fprintf(stderr,"ttcp%s: %s\n", trans?"-t":"-r", stats);
+	fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", stats);
 	if( cput <= 0.0 )  cput = 0.001;
 	if( realt <= 0.0 )  realt = 0.001;
-	fprintf(stderr,"ttcp%s: %ld bytes processed\n",
+	fprintf(stderr, "ttcp%s: %ld bytes processed\n",
 		trans?"-t":"-r", nbytes );
-	fprintf(stderr,"ttcp%s: %9g CPU sec  = %9g KB/cpu sec,  %9g Kbits/cpu sec\n",
+	fprintf(stderr, "ttcp%s: %9g CPU sec  = %9g KB/cpu sec,  %9g Kbits/cpu sec\n",
 		trans?"-t":"-r",
 		cput,
 		((double)nbytes)/cput/1024,
 		((double)nbytes)*8/cput/1024 );
-	fprintf(stderr,"ttcp%s: %9g real sec = %9g KB/real sec, %9g Kbits/sec\n",
+	fprintf(stderr, "ttcp%s: %9g real sec = %9g KB/real sec, %9g Kbits/sec\n",
 		trans?"-t":"-r",
 		realt,
 		((double)nbytes)/realt/1024,

@@ -67,9 +67,9 @@
  *	10 to 390		Ultraviolet
  *	390 to 770		Visible
  *	770 to 1500		Near IR
- *	1500 to 6,000		Middle IR	(includes 3-5 um band)
- *	6,000 to 40,000		Far IR		(includes 8-12 um band)
- *	40,000 to 1,000,000	Extreme IR
+ *	1500 to 6, 000		Middle IR	(includes 3-5 um band)
+ *	6, 000 to 40, 000		Far IR		(includes 8-12 um band)
+ *	40, 000 to 1, 000, 000	Extreme IR
  *	> 10**6 nm		Microwaves	(300 GHz to 300 MHz)
  *	> 10**9 nm		Radio waves	(300 MHz and down)
  *

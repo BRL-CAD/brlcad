@@ -266,13 +266,13 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op, resp);
 		break;
 
-	case OP_NOT: bu_log("Warning: 'Not' region operator in %s\n",tb->name);
+	case OP_NOT: bu_log("Warning: 'Not' region operator in %s\n", tb->name);
 		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
 		break;
-	case OP_GUARD:bu_log("Warning: 'Guard' region operator in %s\n",tb->name);
+	case OP_GUARD:bu_log("Warning: 'Guard' region operator in %s\n", tb->name);
 		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
 		break;
-	case OP_XNOP:bu_log("Warning: 'XNOP' region operator in %s\n",tb->name);
+	case OP_XNOP:bu_log("Warning: 'XNOP' region operator in %s\n", tb->name);
 		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
 		break;
 
@@ -402,8 +402,8 @@ gauss_free(char *cp)
  * 1.0 / ( (2*PI)^(3/2) * sigmaX*sigmaY*sigmaZ )) *
  *      exp( -0.5 * ( (x-ux)^2/sigmaX + (y-uy)^2/sigmaY + (z-uz)^2/sigmaZ ) )
  *
- * for a given point "pt" where the center of the puff is at {ux,uy,uz} and
- * the size of 1 standard deviation is {sigmaX,sigmaY,sigmaZ}
+ * for a given point "pt" where the center of the puff is at {ux, uy, uz} and
+ * the size of 1 standard deviation is {sigmaX, sigmaY, sigmaZ}
  */
 static double
 gauss_eval(fastf_t *pt, fastf_t *ell_center, fastf_t *sigma)

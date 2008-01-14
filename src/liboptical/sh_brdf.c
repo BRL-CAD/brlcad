@@ -158,7 +158,7 @@ brdf_free(char *cp)
  *
 	Color pixel based on the energy of a point light source (Eps)
 	plus some diffuse illumination (Epd) reflected from the point
-	<x,y> :
+	<x, y> :
 
 				E = Epd + Eps		(1)
 
@@ -185,7 +185,7 @@ brdf_free(char *cp)
 	specular reflectance coeffient and a term dependent on the
 	surface roughness :
 
-				Rs = W(I,O) * R(I,O,r)	(5)
+				Rs = W(I, O) * R(I, O, r)	(5)
 
 	Where,
 		I is the angle of incidence.
@@ -202,7 +202,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 	register struct light_specific *lp;
 	register fastf_t *intensity, *to_light;
 	register int	i;
-	register fastf_t cosi,cosr;
+	register fastf_t cosi, cosr;
 	register fastf_t refl;
 	vect_t h_dir;
 	vect_t to_eye;
@@ -232,7 +232,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if ((cosr = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if (cosr > 1.00001 )  {
-			bu_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosr-1,
+			bu_log("cosAmb=1+%g (x%d, y%d, lvl%d)\n", cosr-1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosr = 1;
 		}
@@ -259,7 +259,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 
 		if ((cosi = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
 			if (cosi > 1.00001 )  {
-				bu_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosi-1,
+				bu_log("cosI=1+%g (x%d, y%d, lvl%d)\n", cosi-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosi = 1;
 			}

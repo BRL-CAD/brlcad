@@ -146,7 +146,7 @@ char line[MAX_LINE_LEN];
 	float colr[3]={0.5, 0.5, 0.5};
 	unsigned char color[3]={ 128, 128, 128 };
 	struct wmember head;
-	vect_t normal={0,0,0};
+	vect_t normal={0, 0, 0};
 	int solid_in_region=0;
 
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )
@@ -246,7 +246,7 @@ char line[MAX_LINE_LEN];
 		}
 		else if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
 		{
-			float x,y,z;
+			float x, y, z;
 
 			start += 6;
 			sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
@@ -263,7 +263,7 @@ char line[MAX_LINE_LEN];
 			{
 				if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
 				{
-					float x,y,z;
+					float x, y, z;
 
 					start += 6;
 					sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
@@ -289,7 +289,7 @@ char line[MAX_LINE_LEN];
 					endloop = 1;
 				else if ( !strncmp( &line1[start] , "vertex" , 6 ) || !strncmp( &line1[start] , "VERTEX" , 6 ) )
 				{
-					double x,y,z;
+					double x, y, z;
 
 					sscanf( &line1[start+6] , "%lf%lf%lf" , &x , &y , &z );
 

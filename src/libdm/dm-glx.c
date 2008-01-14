@@ -604,10 +604,10 @@ struct dm *dmp;
 
     /* avoids error messages when reattaching */
     mmode(MVIEWING);
-    lmbind(LIGHT2,0);
-    lmbind(LIGHT3,0);
-    lmbind(LIGHT4,0);
-    lmbind(LIGHT5,0);
+    lmbind(LIGHT2, 0);
+    lmbind(LIGHT3, 0);
+    lmbind(LIGHT4, 0);
+    lmbind(LIGHT5, 0);
 
     frontbuffer(1);
     glx_clearToBlack(dmp);
@@ -750,10 +750,10 @@ int which_eye;
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
     bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9], mat[13]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10], mat[14]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11], mat[15]);
 
     Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
     bu_vls_free(&tmp_vls);
@@ -842,7 +842,7 @@ register struct bn_vlist *vp;
   register float	*gtvec;
   char	gtbuf[16+3*sizeof(double)];
   int first;
-  int i,j;
+  int i, j;
 
   if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "glx_drawVList()\n", (char *)NULL);
@@ -863,7 +863,7 @@ register struct bn_vlist *vp;
     register int	nused = tvp->nused;
     register int	*cmd = tvp->cmd;
     register point_t *pt = tvp->pt;
-    for( i = 0; i < nused; i++,cmd++,pt++ )  {
+    for( i = 0; i < nused; i++, cmd++, pt++ )  {
       switch( *cmd )  {
       case BN_VLIST_LINE_MOVE:
 	/* Move, start line */
@@ -927,7 +927,7 @@ static int
 glx_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
-int x,y;
+int x, y;
 int size;
 int use_aspect;
 {
@@ -1181,8 +1181,8 @@ struct dm *dmp;
   if( !((struct glx_vars *)dmp->dm_vars)->mvars.lighting_on )  {
     /* Turn it off */
     mmode(MVIEWING);
-    lmbind(MATERIAL,0);
-    lmbind(LMODEL,0);
+    lmbind(MATERIAL, 0);
+    lmbind(LMODEL, 0);
     mmode(MSINGLE);
   } else {
     /* Turn it on */
@@ -1201,10 +1201,10 @@ struct dm *dmp;
     glx_make_materials();	/* Define material properties */
 
     lmbind(LMODEL, 2);	/* infinite */
-    lmbind(LIGHT2,2);
-    lmbind(LIGHT3,3);
-    lmbind(LIGHT4,4);
-    lmbind(LIGHT5,5);
+    lmbind(LIGHT2, 2);
+    lmbind(LIGHT3, 3);
+    lmbind(LIGHT4, 4);
+    lmbind(LIGHT5, 5);
 
     /* RGB color commands & lighting */
     lmcolor( LMC_COLOR );
@@ -1512,7 +1512,7 @@ static float white_local_light[] = {
  *  Lighting model parameters
  *	AMBIENT		amount of ambient light present in the scene, 0..1
  *	ATTENUATION	fixed and variable attenuation factor, 0..1
- *	LOCALVIEWER	1=eye at (0,0,0), 0=eye at (0,0,+inf)
+ *	LOCALVIEWER	1=eye at (0, 0, 0), 0=eye at (0, 0,+inf)
  */
 static float	default_lmodel[] = {
 	AMBIENT,	0.2,  0.2,  0.2,

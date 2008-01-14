@@ -550,7 +550,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     struct bu_ptbl *tbl;
     int match_count=0;
     int attr_count;
-    int i,j;
+    int i, j;
     int draw;
 
     RT_CK_DBI(dbip);
@@ -565,7 +565,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     tbl = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "wdb_get_by_attr ptbl" );
     bu_ptbl_init( tbl, 128, "wdb_get_by_attr ptbl_init" );
 
-    FOR_ALL_DIRECTORY_START(dp,dbip) {
+    FOR_ALL_DIRECTORY_START(dp, dbip) {
 
 	if( (dp->d_flags & dir_flags) == 0 ) continue;
 

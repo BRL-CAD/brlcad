@@ -80,7 +80,7 @@ int parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac,av,options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
 	case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
 	case '?'	:
@@ -259,8 +259,8 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 
 
     snprintf(Value, 32, "%s.dxf", name);
-    if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n",Value);
-    FH= fopen(Value,"w");
+    if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n", Value);
+    FH= fopen(Value, "w");
 
 
     /* Write Header */
@@ -290,33 +290,33 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "64\n");
     fprintf(FH, "71\n"); /* number of verticies */
 
-    fprintf(FH, "%d\n",num_vertices);
+    fprintf(FH, "%d\n", num_vertices);
 
     quads = count_quad_faces(bot);
 
     fprintf(FH, "72\n"); /* number of faces */
-    fprintf(FH, "%d\n",num_faces-quads);
+    fprintf(FH, "%d\n", num_faces-quads);
     fprintf(FH, "0\n");
 
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %d verticies\n",num_vertices);
+	fprintf(stderr, "writing %d verticies\n", num_vertices);
     for (i= 0; i < num_vertices; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
 	fprintf(FH, "Meshes\n");
 	fprintf(FH, "10\n");
-	fprintf(FH, "%.6f\n",vertices[3*i+0]/1000.0);
+	fprintf(FH, "%.6f\n", vertices[3*i+0]/1000.0);
 
 	fprintf(FH, "20\n");
-	fprintf(FH, "%.6f\n",vertices[3*i+1]/1000.0);
+	fprintf(FH, "%.6f\n", vertices[3*i+1]/1000.0);
 
 	fprintf(FH, "30\n");
-	fprintf(FH, "%.6f\n",vertices[3*i+2]/1000.0);
+	fprintf(FH, "%.6f\n", vertices[3*i+2]/1000.0);
 	fprintf(FH, "70\n");
 	fprintf(FH, "192\n");
 	fprintf(FH, "0\n");
-	/*printf("\t%g %g %g\n",vertices[3*i+0],vertices[3*i+1],vertices[3*i+2]);*/
+	/*printf("\t%g %g %g\n", vertices[3*i+0], vertices[3*i+1], vertices[3*i+2]);*/
     }
 
     if (debug&DEBUG_STATS)
@@ -338,15 +338,15 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 	fprintf(FH, "10\n0.0\n20\n0.0\n30\n0.0\n"); /* WCS origin */
 	fprintf(FH, "70\n128\n");/* line type pattern is continuous */
 	if (  tris_are_planar_quad(bot, i, vidx) ) {
-	    fprintf(FH, "71\n%d\n",vidx[0]+1); /* vertex 1 */
-	    fprintf(FH, "72\n%d\n",vidx[1]+1); /* vertex 2 */
-	    fprintf(FH, "73\n%d\n",vidx[2]+1); /* vertex 3 */
-	    fprintf(FH, "74\n%d\n",vidx[3]+1); /* vertex 4 */
+	    fprintf(FH, "71\n%d\n", vidx[0]+1); /* vertex 1 */
+	    fprintf(FH, "72\n%d\n", vidx[1]+1); /* vertex 2 */
+	    fprintf(FH, "73\n%d\n", vidx[2]+1); /* vertex 3 */
+	    fprintf(FH, "74\n%d\n", vidx[3]+1); /* vertex 4 */
 	    i++;
 	} else {
-	    fprintf(FH, "71\n%d\n",faces[i*3+0]+1); /* vertex 1 */
-	    fprintf(FH, "72\n%d\n",faces[i*3+1]+1); /* vertex 2 */
-	    fprintf(FH, "73\n%d\n",faces[i*3+2]+1); /* vertex 3 */
+	    fprintf(FH, "71\n%d\n", faces[i*3+0]+1); /* vertex 1 */
+	    fprintf(FH, "72\n%d\n", faces[i*3+1]+1); /* vertex 2 */
+	    fprintf(FH, "73\n%d\n", faces[i*3+2]+1); /* vertex 3 */
 	}
 	fprintf(FH, "0\n");
     }
@@ -535,7 +535,7 @@ int main(int ac, char *av[])
     RT_INIT_DB_INTERNAL(&intern);
 
     if ((rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf)))==RTI_NULL){
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }
 
@@ -546,7 +546,7 @@ int main(int ac, char *av[])
 	struct directory *dirp;
 
 	for ( ; arg_count < ac ; arg_count++ ) {
-	    printf("current: %s\n",av[arg_count]);
+	    printf("current: %s\n", av[arg_count]);
 
 	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count],
 				       &dirp,

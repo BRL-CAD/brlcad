@@ -77,7 +77,7 @@ In the above listing:
 	 BN_VLIST_POLY_VERTNORM	6	/ per-vertex normal, for interpolation /
 
 "x y z" refer to floating point values which represent a point or normal
-	vector. For commands 0,1,3,4, and 5, they represent a point, while
+	vector. For commands 0, 1, 3, 4, and 5, they represent a point, while
 	for commands 2 and 6 they represent normal vectors
 
 author - Carl Nuzman
@@ -121,10 +121,10 @@ Acknowledgements:
 #define M_SQRT2		1.41421356237309504880
 #endif
 
-#define REV_BU_LIST_FOR(p,structure,hp)	\
-	(p)=BU_LIST_LAST(structure,hp);	\
-	BU_LIST_NOT_HEAD(p,hp);		\
-	(p)=BU_LIST_PLAST(structure,p)
+#define REV_BU_LIST_FOR(p, structure, hp)	\
+	(p)=BU_LIST_LAST(structure, hp);	\
+	BU_LIST_NOT_HEAD(p, hp);		\
+	(p)=BU_LIST_PLAST(structure, p)
 
 /* defined in librt/dg_obj.c */
 extern int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
@@ -227,7 +227,7 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		index = uind;
 	}
 
-	if (sscanf(argv[2],"%d",&(cp->cmd[index])) < 1) {
+	if (sscanf(argv[2], "%d",&(cp->cmd[index])) < 1) {
 		Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -311,19 +311,19 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	while (vp != cp) {
 		for (i = vp->nused-1; i > 0; i--) {
 			vp->cmd[i] = vp->cmd[i-1];
-			VMOVE(vp->pt[i],vp->pt[i-1]);
+			VMOVE(vp->pt[i], vp->pt[i-1]);
 		}
-		wp = BU_LIST_PLAST(bn_vlist,vp);
+		wp = BU_LIST_PLAST(bn_vlist, vp);
 		vp->cmd[0] = wp->cmd[BN_VLIST_CHUNK-1];
-		VMOVE(vp->pt[0],wp->pt[BN_VLIST_CHUNK-1]);
+		VMOVE(vp->pt[0], wp->pt[BN_VLIST_CHUNK-1]);
 		vp = wp;
 	}
 
 	for (i=vp->nused-1; i>index; i--) {
 		vp->cmd[i] = vp->cmd[i-1];
-		VMOVE(vp->pt[i],vp->pt[i-1]);
+		VMOVE(vp->pt[i], vp->pt[i-1]);
 	}
-	if (sscanf(argv[2],"%d",&(vp->cmd[index])) < 1) {
+	if (sscanf(argv[2], "%d",&(vp->cmd[index])) < 1) {
 		Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -395,7 +395,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 
 	for (i = uind; i < vp->nused - 1; i++) {
 		vp->cmd[i] = vp->cmd[i+1];
-		VMOVE(vp->pt[i],vp->pt[i+1]);
+		VMOVE(vp->pt[i], vp->pt[i+1]);
 	}
 
 	wp = BU_LIST_PNEXT(bn_vlist, vp);
@@ -405,11 +405,11 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		}
 
 		vp->cmd[BN_VLIST_CHUNK-1] = wp->cmd[0];
-		VMOVE(vp->pt[BN_VLIST_CHUNK-1],wp->pt[0]);
+		VMOVE(vp->pt[BN_VLIST_CHUNK-1], wp->pt[0]);
 
 		for (i=0; i< wp->nused - 1; i++) {
 			wp->cmd[i] = wp->cmd[i+1];
-			VMOVE(wp->pt[i],wp->pt[i+1]);
+			VMOVE(wp->pt[i], wp->pt[i+1]);
 		}
 		vp = wp;
 		wp = BU_LIST_PNEXT(bn_vlist, vp);
@@ -501,7 +501,7 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%d %.12e %.12e %.12e",
 		vp->cmd[uind], vp->pt[uind][0],
-		vp->pt[uind][1],vp->pt[uind][2]);
+		vp->pt[uind][1], vp->pt[uind][2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -550,7 +550,7 @@ vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	dgo_notify(dgop, interp);
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls,"%d",index);
+	bu_vls_printf(&vls, "%d", index);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -577,7 +577,7 @@ vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		return TCL_ERROR;
 	}
 	if (argv[1][0] == 'c') {
-		if (sscanf(argv[2],"%lx", &rgb)>0)
+		if (sscanf(argv[2], "%lx", &rgb)>0)
 			dgop->dgo_currVHead->vdc_rgb = rgb;
 		return TCL_OK;
 	}
@@ -596,7 +596,7 @@ vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 		/* otherwise name not yet used */
 		strncpy(dgop->dgo_currVHead->vdc_name, argv[2], RT_VDRW_MAXNAME);
 		dgop->dgo_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0';
-		Tcl_AppendResult(interp,"0",(char *)NULL);
+		Tcl_AppendResult(interp, "0",(char *)NULL);
 		return TCL_OK;
 	}
 
@@ -684,7 +684,7 @@ vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	struct bu_vls vls;
 
 	if (argc < 2) {
-		Tcl_AppendResult(interp,"vdraw: need more args",(char *)NULL);
+		Tcl_AppendResult(interp, "vdraw: need more args",(char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -701,12 +701,12 @@ vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		return TCL_OK;
 	case 'd':
 		if (argc < 3) {
-			Tcl_AppendResult(interp,"vdraw: need name of vlist to delete", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: need name of vlist to delete", (char *)NULL);
 			return TCL_ERROR;
 		}
 		rcp2 = (struct vd_curve *)NULL;
 		for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
-			if (!strncmp(rcp->vdc_name,argv[2],RT_VDRW_MAXNAME)) {
+			if (!strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
 				rcp2 = rcp;
 				break;
 			}
@@ -730,7 +730,7 @@ vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		bu_free((genptr_t) rcp2, "vd_curve");
 		return TCL_OK;
 	default:
-		Tcl_AppendResult(interp,"vdraw: unknown option to vdraw vlist", (char *)NULL);
+		Tcl_AppendResult(interp, "vdraw: unknown option to vdraw vlist", (char *)NULL);
 		return TCL_ERROR;
 	}
 }

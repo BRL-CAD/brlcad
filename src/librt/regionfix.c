@@ -113,13 +113,13 @@ rt_regionfix(struct rt_i *rtip)
 		}
 		*tabp++ = '\0';
 		while( *tabp && isspace( *tabp ) )  tabp++;
-		if( (ret = regcomp(&re_space,line,0)) != 0 )  {
+		if( (ret = regcomp(&re_space, line, 0)) != 0 )  {
 			bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret );
 			continue;		/* just ignore it */
 		}
 
 		for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-			ret = regexec(&re_space, (char *)rp->reg_name, 0, 0,0);
+			ret = regexec(&re_space, (char *)rp->reg_name, 0, 0, 0);
 			if(RT_G_DEBUG&DEBUG_INSTANCE)  {
 				bu_log("'%s' %s '%s'\n", line,
 					ret==1 ? "==" : "!=",

@@ -115,7 +115,7 @@ display_Temps(int xmin, int ymin)
 			if( D_XPOS % interval == 0 )
 				{	int	temp = AMBIENT+percent*RANGE;
 					register int	index = temp - ir_min;
-				pixel = (RGBpixel *) ir_table[Min(index,ir_max_index)];
+				pixel = (RGBpixel *) ir_table[Min(index, ir_max_index)];
 					/* LINT: this should be an &ir_table...,
 						allowed by ANSI C, but not current
 						compilers. */
@@ -143,7 +143,7 @@ display_Temps(int xmin, int ymin)
 		do_line(	x+2,
 				y+(interval-(12/shrinkfactor))/2,
 				tempstr
-/*,shrinkfactor*/
+/*, shrinkfactor*/
 				);
 		}
 	fb_flush( fbiop );

@@ -57,9 +57,9 @@ find_nearest_ars_pt(
 	point_t pick_pt,
 	vect_t dir)
 {
-	int i,j;
+	int i, j;
 	int pt_no;
-	int closest_i=0,closest_j=0;
+	int closest_i=0, closest_j=0;
 	fastf_t min_dist_sq=MAX_FASTF;
 
 	RT_ARS_CK_MAGIC( ars );

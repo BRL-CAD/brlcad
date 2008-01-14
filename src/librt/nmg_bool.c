@@ -443,7 +443,7 @@ nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 	struct bu_ptbl loops;
 	struct faceuse *fu;
 	struct loopuse *lu;
-	int i,j;
+	int i, j;
 
 	NMG_CK_SHELL( s );
 	BN_CK_TOL( tol );

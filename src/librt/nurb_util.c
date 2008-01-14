@@ -180,7 +180,7 @@ void
 rt_nurb_c_print(const struct edge_g_cnurb *crv)
 {
 	register fastf_t * ptr;
-	int i,j;
+	int i, j;
 
 	NMG_CK_CNURB(crv);
 	bu_log("curve = {\n");
@@ -247,7 +247,7 @@ rt_nurb_pr_kv(const struct knot_vector *kv)
 void
 rt_nurb_pr_mesh(const struct face_g_snurb *m)
 {
-	int i,j,k;
+	int i, j, k;
 	fastf_t * m_ptr = m->ctl_points;
 	int evp = RT_NURB_EXTRACT_COORDS(m->pt_type);
 

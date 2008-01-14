@@ -175,12 +175,12 @@ main(int argc, char **argv)
 	}
 
 	if( file_width < 1 ) {
-		fprintf(stderr,"pixflip-fb: width of %d out of range\n", file_width);
+		fprintf(stderr, "pixflip-fb: width of %d out of range\n", file_width);
 		bu_exit(12, NULL);
 	}
 
 	if( (fbp = fb_open( NULL, screen_width, screen_height )) == FBIO_NULL )  {
-		fprintf(stderr,"pixflip-fb: fb_open failed\n");
+		fprintf(stderr, "pixflip-fb: fb_open failed\n");
 		bu_exit(12, NULL);
 	}
 	screen_width = fb_getwidth(fbp);
@@ -209,13 +209,13 @@ main(int argc, char **argv)
 	for( maxframe = 0; maxframe < MAXFRAMES;  )  {
 
 		if( (obuf = (unsigned char *)malloc( scanbytes )) == (unsigned char *)0 )  {
-			(void)fprintf(stderr,"pixflip-fb:  malloc %d failure\n", scanbytes );
+			(void)fprintf(stderr, "pixflip-fb:  malloc %d failure\n", scanbytes );
 			break;
 		}
 		memset((char *)obuf, 0, scanbytes);
 		frames[maxframe] = obuf;
 
-		fprintf(stderr,"%d ", framenumber);  fflush(stdout);
+		fprintf(stderr, "%d ", framenumber);  fflush(stdout);
 		if( islist )  {
 			/* See if we read all the files */
 			if( bu_optind >= argc )
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 		} else {
 			snprintf(name, 256, "%s.%d", input_basename, framenumber);
 		}
-		if( (fd=open(name,0))<0 )  {
+		if( (fd=open(name, 0))<0 )  {
 			perror(name);
 			goto done;
 		}
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 		if( i <= 0 )  {
 			perror(name);
 		} else if( i != scanbytes ) {
-			fprintf(stderr,"\npixflip-fb:  %s wanted %d got %d\n",
+			fprintf(stderr, "\npixflip-fb:  %s wanted %d got %d\n",
 				name, scanbytes, i );
 		}
 		close(fd);
@@ -268,7 +268,7 @@ done:
 	}
 	fb_close( fbp );
 
-	fprintf(stderr,"\n");
+	fprintf(stderr, "\n");
 	bu_exit(0, NULL);
 }
 
@@ -281,7 +281,7 @@ showframe(register int i)
 	}
 
 	if( i < 0 || i > maxframe )  {
-		fprintf(stderr,"pixflip-fb:  %d out of range\n", i);
+		fprintf(stderr, "pixflip-fb:  %d out of range\n", i);
 		return;
 	}
 

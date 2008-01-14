@@ -281,9 +281,9 @@ void write_mesh_data()
 	char format;
 
 	/* face triples */
-	uint8_t ind8[3] = {0,0,0};
-	uint16_t ind16[3] = {0,0,0};
-	uint32_t ind32[3] = {0,0,0};
+	uint8_t ind8[3] = {0, 0, 0};
+	uint16_t ind16[3] = {0, 0, 0};
+	uint32_t ind32[3] = {0, 0, 0};
 
 	if ( verbose ) {
 	    fprintf( stderr, ">> writing out mesh '%s' (%u, %u)\n", curr->name,

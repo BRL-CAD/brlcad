@@ -87,7 +87,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 	register struct partition *pp;
 	register struct hit *hitp;
 	double cosI0;
-	register int i,j;
+	register int i, j;
 	vect_t		normal;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
@@ -99,7 +99,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 	hitp = pp->pt_inhit;
 	RT_HIT_NORMAL( normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
-#define pchar(c) {putc(c,stdout);if(col++==74){putc('\n',stdout);col=0;}}
+#define pchar(c) {putc(c, stdout);if(col++==74){putc('\n', stdout);col=0;}}
 
 	cosI0 = -VDOT(normal, ap->a_ray.r_dir);
 	if( pp->pt_inflip )
@@ -192,7 +192,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	ap->a_onehit = 1;
 
 	if( !minus_o )
-		fprintf(stderr,"Warning:  -o ignored, .PP goes to stdout\n");
+		fprintf(stderr, "Warning:  -o ignored, .PP goes to stdout\n");
 
 	fprintf(stdout, "%s: %s (RT)\n", file, obj );
 	fprintf(stdout, "%10d%10d", (int)azimuth, (int)elevation );

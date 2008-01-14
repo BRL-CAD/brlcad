@@ -70,12 +70,12 @@ main(void)
 		} while( (i = lmap[a]) < 0 );
 
 		if( (b = getchar()) == EOF || b > 255 )  {
-			fprintf(stderr,"asc2pix: unexpected EOF in middle of hex number\n");
+			fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
 			return 1;
 		}
 
 		if( (b = rmap[b]) < 0 )  {
-			fprintf(stderr,"asc2pix: illegal hex code in file, aborting\n");
+			fprintf(stderr, "asc2pix: illegal hex code in file, aborting\n");
 			return 1;
 		}
 

@@ -70,7 +70,7 @@ struct mfuncs spm_mfuncs[] = {
 /*
  *  			S P M _ R E N D E R
  *
- *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  Given a u, v coordinate within the texture ( 0 <= u, v <= 1.0 ),
  *  return a pointer to the relevant pixel.
  */
 HIDDEN int

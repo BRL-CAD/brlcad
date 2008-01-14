@@ -193,7 +193,7 @@ vo_open_cmd(const char	*oname)
 	Tcl_Interp	*interp = (Tcl_Interp *)NULL;
 	struct view_obj *vop;
 
-	BU_GETSTRUCT(vop,view_obj);
+	BU_GETSTRUCT(vop, view_obj);
 
 	/* initialize view_obj */
 	bu_vls_init(&vop->vo_name);
@@ -929,12 +929,12 @@ vo_eye_cmd(struct view_obj	*vop,
 
 	VSCALE(eye_model, eye_model, vop->vo_local2base);
 
-	/* First step:  put eye at view center (view 0,0,0) */
+	/* First step:  put eye at view center (view 0, 0, 0) */
 	MAT_DELTAS_VEC_NEG(vop->vo_center, eye_model);
 	vo_update(vop, interp, 0);
 
-	/*  Second step:  put eye at view 0,0,1.
-	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
+	/*  Second step:  put eye at view 0, 0, 1.
+	 *  For eye to be at 0, 0, 1, the old 0, 0,-1 needs to become 0, 0, 0.
 	 */
 	VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
 	MAT4X3PNT(new_cent, vop->vo_view2model, xlate);
@@ -1496,7 +1496,7 @@ vo_rot(struct view_obj	*vop,
 			MAT4X3PNT(rot_pt, vop->vo_model2view, vop->vo_keypoint);
 			break;
 		case 'm':
-			/* rotate around model center (0,0,0) */
+			/* rotate around model center (0, 0, 0) */
 			VSET(new_origin, 0.0, 0.0, 0.0);
 			MAT4X3PNT(rot_pt, vop->vo_model2view, new_origin);
 			break;
@@ -2859,7 +2859,7 @@ vo_update(struct view_obj	*vop,
 		   &vop->vo_aet[2],
 		   temp, temp1, (fastf_t)0.005);
 
-	/* Force azimuth range to be [0,360] */
+	/* Force azimuth range to be [0, 360] */
 	if ((NEAR_ZERO(vop->vo_aet[1] - 90.0,(fastf_t)0.005) ||
 	     NEAR_ZERO(vop->vo_aet[1] + 90.0,(fastf_t)0.005)) &&
 	    vop->vo_aet[0] < 0 &&
@@ -2937,7 +2937,7 @@ vo_persp_mat(mat_t	m,
  *  Create a perspective matrix that transforms the +/1 viewing cube,
  *  with the acutal eye position (not at Z=+1) specified in viewing coords,
  *  into a related space where the eye has been sheared onto the Z axis
- *  and repositioned at Z=(0,0,1), with the same perspective field of view
+ *  and repositioned at Z=(0, 0, 1), with the same perspective field of view
  *  as before.
  *
  *  The Zbuffer clips off stuff with negative Z values.
@@ -2970,12 +2970,12 @@ vo_mike_persp_mat(mat_t		pmat,
 		return;
 	}
 
-	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
+	/* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
 	MAT_IDN(xlate);
 	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
 	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
 
-	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
+	/* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
 	MAT_IDN( persp );
 	/* From page 492 of Graphics Gems */
 	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */

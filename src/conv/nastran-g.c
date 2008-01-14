@@ -746,7 +746,7 @@ get_coord_sys(void)
 	char type;
 	char *ptr;
 	struct coord_sys *cs;
-	int i,gid;
+	int i, gid;
 	double tmp[3];
 	point_t tmp_pt;
 

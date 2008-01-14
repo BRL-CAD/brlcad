@@ -55,7 +55,7 @@
  * occupy more space than the output.  Also output are
  * the minimum value encountered (MIN), and a delta
  * factor showing the increase in value each XXXX.
- * This DX factor is rounded to 1,2,4,5,8,or 10 to
+ * This DX factor is rounded to 1, 2, 4, 5, 8, or 10 to
  * produce nicer looking axes.
  *
  *

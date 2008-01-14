@@ -531,7 +531,7 @@ qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t 
     RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_MOVE );
     RT_ADD_VLIST( vhead, out_pt, BN_VLIST_LINE_DRAW );
 
-    if(!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt,in_pt,SQRT_SMALL_FASTF)){
+    if(!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)){
       vhead = rt_vlblock_find(vbp,
 			      qray_void_color.r,
 			      qray_void_color.g,

@@ -35,7 +35,7 @@ union radrec {
 		char	head[4];
 		float	id;		/* idrun */
 		float	miview;		/* - iview */
-		float	cx, cy, cz;	/* aimpoint: tcenter(1,2,3) */
+		float	cx, cy, cz;	/* aimpoint: tcenter(1, 2, 3) */
 		float	back;		/* backoff */
 		float	e, a;		/* elevation, azimuth (deg) */
 		float	vert, horz;	/* height, width of Em plane */
@@ -50,7 +50,7 @@ union radrec {
 		char	head[4];
 		float	pad1;		/* always zero */
 		float	irf;		/* number of ray segments */
-		float	ox, oy, oz;	/* firing point: xb(1,2,3) */
+		float	ox, oy, oz;	/* firing point: xb(1, 2, 3) */
 		float	h, v;		/* Em plane coordinates */
 		float	ih, iv;		/* Em plane cell number */
 		float	pad2[8];
@@ -61,9 +61,9 @@ union radrec {
 		char	head[4];
 		float	packedid;	/* never zero */
 		float	sight;		/* 1 = line of sight, else 0 */
-		float	ix, iy, iz;	/* intersection: xb(1,2,3) */
-		float	nx, ny, nz;	/* normal: wb(1,2,3) */
-		float	px, py, pz;	/* principal: pdir(1,2,3) */
+		float	ix, iy, iz;	/* intersection: xb(1, 2, 3) */
+		float	nx, ny, nz;	/* normal: wb(1, 2, 3) */
+		float	px, py, pz;	/* principal: pdir(1, 2, 3) */
 		float	rc1, rc2;	/* curvature */
 		float	dfirst;		/* path length */
 		float	ireg;		/* region */

@@ -47,7 +47,7 @@
 #  include <fcntl.h>
 #endif
 
-static png_color_16 def_backgrd={ 0,0,0,0,0 };
+static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
 static int	scanpix;		/* # of pixels of scanline */

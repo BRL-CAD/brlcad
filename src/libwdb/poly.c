@@ -83,10 +83,10 @@ fastf_t	verts[][3];
 fastf_t	norms[][3];
 {
 	union record rec;
-	register int i,j;
+	register int i, j;
 
 	if( npts < 3 || npts > 5 )  {
-		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
+		fprintf(stderr, "mk_poly:  npts=%d is bad\n", npts);
 		return(-1);
 	}
 
@@ -126,7 +126,7 @@ fastf_t	verts[][3];
 	vect_t	v1, v2, norms[5];
 
 	if( npts < 3 || npts > 5 )  {
-		fprintf(stderr,"mk_poly:  npts=%d is bad\n", npts);
+		fprintf(stderr, "mk_poly:  npts=%d is bad\n", npts);
 		return(-1);
 	}
 

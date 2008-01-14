@@ -76,10 +76,10 @@ main(int argc, char **argv)
 		bu_exit(25, "usage: dunncolor [-p] baseval redval greenval blueval\n");
 	}
 
-	dunnsend('A',atoi(*++argv));
-	dunnsend('R',atoi(*++argv));
-	dunnsend('G',atoi(*++argv));
-	dunnsend('B',atoi(*++argv));
+	dunnsend('A', atoi(*++argv));
+	dunnsend('R', atoi(*++argv));
+	dunnsend('G', atoi(*++argv));
+	dunnsend('B', atoi(*++argv));
 
 	getexposure("new");
 

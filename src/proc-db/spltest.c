@@ -44,7 +44,7 @@ void make_face( point_t a, point_t b, point_t c, point_t d, int order);
 
 main(int argc, char **argv)
 {
-	point_t	a,b,c,d;
+	point_t	a, b, c, d;
 	struct rt_wdb *fp;
 
 	si.magic = RT_NURB_INTERNAL_MAGIC;

@@ -82,7 +82,7 @@ main(int argc, char **argv)
 	rle_wpos( xpos, ypos, 1 );
 
 	if( (fbp = fb_open( fb_file, width, width )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
+		fprintf(stderr, "fb_open failed\n");
 		bu_exit(12, NULL);
 	}
 
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 
 	for( y = ypos; y < y_end; y++ )  {
 		if (rle_debug) {
-		    fprintf(stderr,"line %d\n", y);
+		    fprintf(stderr, "line %d\n", y);
 		}
 		if (fb_read( fbp, xpos, y, (unsigned char *)scan_buf, xlen ) == -1)  {
 		    fprintf(stderr, "read of %d pixels from (%d,%d) failed!\n", xlen, xpos, y );

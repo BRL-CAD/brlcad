@@ -474,7 +474,7 @@ char *p_eto[] = {
 };
 
 char *p_binunif[] = {
-	"Enter minor type (f,d,c,s,i,L,C,S,I, or L): ",
+	"Enter minor type (f, d, c, s, i, L, C, S, I, or L): ",
 	"Enter name of file containing the data: ",
 	"Enter number of values to read (-1 for entire file): "
 };
@@ -558,7 +558,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				rcc_in(char **cmd_argvs, struct rt_db_internal *intern), rhc_in(char **cmd_argvs, struct rt_db_internal *intern), rpc_in(char **cmd_argvs, struct rt_db_internal *intern), rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), orpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
 				sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), tec_in(char **cmd_argvs, struct rt_db_internal *intern), tgc_in(char **cmd_argvs, struct rt_db_internal *intern), tor_in(char **cmd_argvs, struct rt_db_internal *intern), ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp),
 				trc_in(char **cmd_argvs, struct rt_db_internal *intern), ebm_in(char **cmd_argvs, struct rt_db_internal *intern), vol_in(char **cmd_argvs, struct rt_db_internal *intern), hf_in(char **cmd_argvs, struct rt_db_internal *intern), bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
-				dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern),dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
+				dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern), dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 				binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern),
 				metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt);
 
@@ -577,7 +577,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
 	bu_opterr = 0;          /* suppress bu_getopt()'s error message */
-	while( (c=bu_getopt(argc,argv,"sf")) != EOF )  {
+	while( (c=bu_getopt(argc, argv, "sf")) != EOF )  {
 		switch(c)  {
 		case 's':
 			do_solid_edit = 1;
@@ -1419,7 +1419,7 @@ int
 pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 {
 	register struct rt_pipe_internal *pipe;
-	int i,num_points;
+	int i, num_points;
 
 	CHECK_DBI_NULL;
 
@@ -2600,7 +2600,7 @@ superell_in(char *cmd_argvs[], struct rt_db_internal *intern)
 
 	CHECK_DBI_NULL;
 
-	n = 14;				/* SUPERELL has 12 (same as ELL) + 2 (for <n,e>) params */
+	n = 14;				/* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
 
 	intern->idb_type = ID_SUPERELL;
 	intern->idb_meth = &rt_functab[ID_SUPERELL];

@@ -58,7 +58,7 @@ struct	kernels {
 } kernel[] = {
 	{ "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0 },
 	{ "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128 },
-	{ "High Pass", "hi", {-1, -2, -1, -2,13, -2, -1, -2, -1}, 1, 0 },
+	{ "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0 },
 	{ "Horizontal Gradiant", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128 },
 	{ "Vertical Gradient", "vg", {1, 1, 1, 0, 0, 0, -1, -1, -1}, 6, 128 },
 	{ "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1}, 9, 0 },
@@ -195,8 +195,8 @@ main(int argc, char **argv)
 				if( value > max ) max = value;
 				if( value < min ) min = value;
 				if( verbose && (value > 255 || value < 0) ) {
-					fprintf(stderr,"Value %d\n", value);
-					fprintf(stderr,"r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
+					fprintf(stderr, "Value %d\n", value);
+					fprintf(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
 				}
 				if( value < 0 )
 					obuf[x] = 0;

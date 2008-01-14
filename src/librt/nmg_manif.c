@@ -102,7 +102,7 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 		     * faces known to be 2manifolds.
 		     */
 		    while (manifolds &&
-			NMG_MANIFOLDS(manifolds,newfu) & NMG_2MANIFOLD &&
+			NMG_MANIFOLDS(manifolds, newfu) & NMG_2MANIFOLD &&
 			eur != eu->eumate_p) {
 				eur = nmg_radial_face_edge_in_shell(
 					eur->eumate_p);
@@ -195,8 +195,8 @@ static void paint_face(struct faceuse *fu, char *paint_table, int paint_color, c
 			if( newfu == fu->fumate_p )
 				continue;
 			else if (newfu->orientation == OT_SAME)
-				paint_face(newfu,paint_table,paint_color,
-					paint_meaning,tbl);
+				paint_face(newfu, paint_table, paint_color,
+					paint_meaning, tbl);
 			else {
 				/* mark this group as being interior */
 				paint_meaning[paint_color] = PAINT_INTERIOR;
@@ -340,7 +340,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 			/* if this has already been marked as a 2-manifold
 			 * then we don't need to check it again
 			 */
-			if (NMG_MANIFOLDS(tbl,fu_p) & NMG_2MANIFOLD)
+			if (NMG_MANIFOLDS(tbl, fu_p) & NMG_2MANIFOLD)
 				continue;
 
 			if (nmg_dangling_face(fu_p, tbl)) {

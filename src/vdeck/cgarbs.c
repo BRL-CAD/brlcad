@@ -198,30 +198,30 @@ const int	cgtype;
 		/* arb7 vectors: 0 1 2 3 4 5 6 4 */
 		switch( svec[2] ) {
 		case 0:			/* 0 = 1, 3, or 4 */
-			if(svec[3] == 1)	arb_mv(pts,gp,4,7,6,5,1,4,3,1);
-			if(svec[3] == 3)	arb_mv(pts,gp,4,5,6,7,0,1,2,0);
-			if(svec[3] == 4)	arb_mv(pts,gp,1,2,6,5,0,3,7,0);
+			if(svec[3] == 1)	arb_mv(pts, gp, 4, 7, 6, 5, 1, 4, 3, 1);
+			if(svec[3] == 3)	arb_mv(pts, gp, 4, 5, 6, 7, 0, 1, 2, 0);
+			if(svec[3] == 4)	arb_mv(pts, gp, 1, 2, 6, 5, 0, 3, 7, 0);
 			break;
 		case 1:			/* 1 = 2 or 5 */
-			if(svec[3] == 2)	arb_mv(pts,gp,0,4,7,3,1,5,6,1);
-			if(svec[3] == 5)	arb_mv(pts,gp,0,3,7,4,1,2,6,1);
+			if(svec[3] == 2)	arb_mv(pts, gp, 0, 4, 7, 3, 1, 5, 6, 1);
+			if(svec[3] == 5)	arb_mv(pts, gp, 0, 3, 7, 4, 1, 2, 6, 1);
 			break;
 		case 2:			/* 2 = 3 or 6 */
-			if(svec[3] == 3)	arb_mv(pts,gp,6,5,4,7,2,1,0,2);
-			if(svec[3] == 6)	arb_mv(pts,gp,3,0,4,7,2,1,5,2);
+			if(svec[3] == 3)	arb_mv(pts, gp, 6, 5, 4, 7, 2, 1, 0, 2);
+			if(svec[3] == 6)	arb_mv(pts, gp, 3, 0, 4, 7, 2, 1, 5, 2);
 			break;
 		case 3:			/* 3 = 7 */
-			arb_mv(pts,gp,2,1,5,6,3,0,4,3);
+			arb_mv(pts, gp, 2, 1, 5, 6, 3, 0, 4, 3);
 			break;
 		case 4:			/* 4 = 5 */
 			/* if 4 = 7  do nothing */
-			if(svec[3] == 5)	arb_mv(pts,gp,1,2,3,0,5,6,7,5);
+			if(svec[3] == 5)	arb_mv(pts, gp, 1, 2, 3, 0, 5, 6, 7, 5);
 			break;
 		case 5:			/* 5 = 6 */
-			arb_mv(pts,gp,2,3,0,1,6,7,4,6);
+			arb_mv(pts, gp, 2, 3, 0, 1, 6, 7, 4, 6);
 			break;
 		case 6:			/* 6 = 7 */
-			arb_mv(pts,gp,3,0,1,2,7,4,5,7);
+			arb_mv(pts, gp, 3, 0, 1, 2, 7, 4, 5, 7);
 			break;
 		default:
 			(void) fprintf( stderr, "redoarb: bad arb7\n" );
@@ -237,36 +237,36 @@ const int	cgtype;
 		switch( prod ) {
 		case 24:	/* 0123 unique */
 			/* 4=7 and 5=6  OR  4=5 and 6=7 */
-			if(svec[3] == 7)	arb_mv(pts,gp,3,0,1,2,4,4,5,5);
-			else	arb_mv(pts,gp,0,1,2,3,4,4,6,6);
+			if(svec[3] == 7)	arb_mv(pts, gp, 3, 0, 1, 2, 4, 4, 5, 5);
+			else	arb_mv(pts, gp, 0, 1, 2, 3, 4, 4, 6, 6);
 			break;
 		case 1680:	/* 4567 unique */
 			/* 0=3 and 1=2  OR  0=1 and 2=3 */
-			if(svec[3] == 3)	arb_mv(pts,gp,7,4,5,6,0,0,1,1);
-			else	arb_mv(pts,gp,4,5,6,7,0,0,2,2);
+			if(svec[3] == 3)	arb_mv(pts, gp, 7, 4, 5, 6, 0, 0, 1, 1);
+			else	arb_mv(pts, gp, 4, 5, 6, 7, 0, 0, 2, 2);
 			break;
 		case 160:	/* 0473 unique */
 			/* 1=2 and 5=6  OR  1=5 and 2=6 */
-			if(svec[3] == 2)	arb_mv(pts,gp,0,3,7,4,1,1,5,5);
-			else	arb_mv(pts,gp,4,0,3,7,1,1,2,2);
+			if(svec[3] == 2)	arb_mv(pts, gp, 0, 3, 7, 4, 1, 1, 5, 5);
+			else	arb_mv(pts, gp, 4, 0, 3, 7, 1, 1, 2, 2);
 			break;
 		case 672:	/* 3267 unique */
 			/* 0=1 and 4=5  OR  0=4 and 1=5 */
-			if(svec[3] == 1)	arb_mv(pts,gp,3,2,6,7,0,0,4,4);
-			else	arb_mv(pts,gp,7,3,2,6,0,0,1,1);
+			if(svec[3] == 1)	arb_mv(pts, gp, 3, 2, 6, 7, 0, 0, 4, 4);
+			else	arb_mv(pts, gp, 7, 3, 2, 6, 0, 0, 1, 1);
 			break;
 		case 252:	/* 1256 unique */
 			/* 0=3 and 4=7  OR 0=4 and 3=7 */
-			if(svec[3] == 3)	arb_mv(pts,gp,1,2,6,5,0,0,4,4);
-			else	arb_mv(pts,gp,5,1,2,6,0,0,3,3);
+			if(svec[3] == 3)	arb_mv(pts, gp, 1, 2, 6, 5, 0, 0, 4, 4);
+			else	arb_mv(pts, gp, 5, 1, 2, 6, 0, 0, 3, 3);
 			break;
 		case 60:	/* 0154 unique */
 			/* 2=3 and 6=7  OR  2=6 and 3=7 */
-			if(svec[3] == 3)	arb_mv(pts,gp,0,1,5,4,2,2,6,6);
-			else	arb_mv(pts,gp,5,1,0,4,2,2,3,3);
+			if(svec[3] == 3)	arb_mv(pts, gp, 0, 1, 5, 4, 2, 2, 6, 6);
+			else	arb_mv(pts, gp, 5, 1, 0, 4, 2, 2, 3, 3);
 			break;
 		default:
-			(void) fprintf( stderr,"redoarb: bad arb6\n");
+			(void) fprintf( stderr, "redoarb: bad arb6\n");
 			return( 0 );
 		}
 		break;
@@ -278,25 +278,25 @@ const int	cgtype;
 			prod = prod * (svec[i] + 1);
 		switch( prod ) {
 		case 24:	/* 0=1=2=3 */
-			arb_mv(pts,gp,4,5,6,7,0,0,0,0);
+			arb_mv(pts, gp, 4, 5, 6, 7, 0, 0, 0, 0);
 			break;
 		case 1680:	/* 4=5=6=7 */
 			/* do nothing */
 			break;
 		case 160:	/* 0=3=4=7 */
-			arb_mv(pts,gp,1,2,6,5,0,0,0,0);
+			arb_mv(pts, gp, 1, 2, 6, 5, 0, 0, 0, 0);
 			break;
 		case 672:	/* 2=3=7=6 */
-			arb_mv(pts,gp,0,1,5,4,2,2,2,2);
+			arb_mv(pts, gp, 0, 1, 5, 4, 2, 2, 2, 2);
 			break;
 		case 252:	/* 1=2=5=6 */
-			arb_mv(pts,gp,0,3,7,4,1,1,1,1);
+			arb_mv(pts, gp, 0, 3, 7, 4, 1, 1, 1, 1);
 			break;
 		case 60:	/* 0=1=5=4 */
-			arb_mv(pts,gp,3,2,6,7,0,0,0,0);
+			arb_mv(pts, gp, 3, 2, 6, 7, 0, 0, 0, 0);
 			break;
 		default:
-			(void) fprintf( stderr,"redoarb: bad arb5\n" );
+			(void) fprintf( stderr, "redoarb: bad arb5\n" );
 			return( 0 );
 		}
 		break;
@@ -305,7 +305,7 @@ const int	cgtype;
 		/* arb4 vectors:  0 1 2 0 4 4 4 4 */
 		j = svec[6];
 		if( svec[0] == 2 )	j = svec[4];
-		arb_mv(pts,gp,uniq[0],uniq[1],svec[2],uniq[0],j,j,j,j);
+		arb_mv(pts, gp, uniq[0], uniq[1], svec[2], uniq[0], j, j, j, j);
 		break;
 	default:
 		(void) fprintf( stderr,

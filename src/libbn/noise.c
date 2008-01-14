@@ -73,8 +73,8 @@
  * noise values.
  *
  *@n x, y, z are set to the noise space location for the source point.
- *@n ix, iy, iz are the integer lattice point (integer portion of x,y,z)
- *@n fx, fy, fz are the fractional lattice distance above ix,iy,iz
+ *@n ix, iy, iz are the integer lattice point (integer portion of x, y, z)
+ *@n fx, fy, fz are the fractional lattice distance above ix, iy, iz
  *
  * The noise function has a finite domain, which can be exceeded when
  * using fractal textures with very high frequencies.  This routine is
@@ -119,7 +119,7 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
  */
 static double	RTable[MAXSIZE];
 
-#define INCRSUM(m,s,x,y,z)	((s)*(RTable[m]*0.5		\
+#define INCRSUM(m, s, x, y, z)	((s)*(RTable[m]*0.5		\
 					+ RTable[m+1]*(x)	\
 					+ RTable[m+2]*(y)	\
 					+ RTable[m+3]*(z)))
@@ -163,7 +163,7 @@ static struct str_ht ht;
  * this table.  It's not quite clear that we really need this big a table.
  * The extra size does provide some extra randomness for intermediate results.
  */
-#define Hash3d(a,b,c) \
+#define Hash3d(a, b, c) \
 	ht.hashTable[  \
 		ht.hashTable[  \
 			ht.hashTable[(a) & 0xfff] ^ ((b) & 0xfff) \
@@ -269,7 +269,7 @@ bn_noise_perlin(fastf_t *point)
 	y = p[Y];
 	z = p[Z];
 
-	jx = ix + 1; /* (jx,jy,jz) = integer lattice point above (ix,iy,iz) */
+	jx = ix + 1; /* (jx, jy, jz) = integer lattice point above (ix, iy, iz) */
 	jy = iy + 1;
 	jz = iz + 1;
 
@@ -277,7 +277,7 @@ bn_noise_perlin(fastf_t *point)
 	sy = SMOOTHSTEP(fy);
 	sz = SMOOTHSTEP(fz);
 
-	/* the complement values of sx,sy,sz */
+	/* the complement values of sx, sy, sz */
 	tx = 1.0 - sx;
 	ty = 1.0 - sy;
 	tz = 1.0 - sz;
@@ -334,9 +334,9 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
 
 
 	/* sets:
-	 * x,y,z to range [0..maxval],
-	 * ix,iy,iz to integer portion,
-	 * fx,fy,fz to fractional portion
+	 * x, y, z to range [0..maxval],
+	 * ix, iy, iz to integer portion,
+	 * fx, fy, fz to fractional portion
 	 */
 	filter_args( point, p, f, ip);
 	ix = ip[X];
@@ -353,7 +353,7 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
 	sy = SMOOTHSTEP(y - iy);
 	sz = SMOOTHSTEP(z - iz);
 
-	/* the complement values of sx,sy,sz */
+	/* the complement values of sx, sy, sz */
 	tx = 1.0 - sx;
 	ty = 1.0 - sy;
 	tz = 1.0 - sz;
@@ -366,58 +366,58 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
 	py = y-iy;
 	pz = z-iz;
 	s = tx*ty*tz;
-	result[0] = INCRSUM(m,s,px,py,pz);
-	result[1] = INCRSUM(m+4,s,px,py,pz);
-	result[2] = INCRSUM(m+8,s,px,py,pz);
+	result[0] = INCRSUM(m, s, px, py, pz);
+	result[1] = INCRSUM(m+4, s, px, py, pz);
+	result[2] = INCRSUM(m+8, s, px, py, pz);
 
 	m = Hash3d( jx, iy, iz ) & 0xFF;
 	px = x-jx;
 	s = sx*ty*tz;
-	result[0] += INCRSUM(m,s,px,py,pz);
-	result[1] += INCRSUM(m+4,s,px,py,pz);
-	result[2] += INCRSUM(m+8,s,px,py,pz);
+	result[0] += INCRSUM(m, s, px, py, pz);
+	result[1] += INCRSUM(m+4, s, px, py, pz);
+	result[2] += INCRSUM(m+8, s, px, py, pz);
 
 	m = Hash3d( jx, jy, iz ) & 0xFF;
 	py = y-jy;
 	s = sx*sy*tz;
-	result[0] += INCRSUM(m,s,px,py,pz);
-	result[1] += INCRSUM(m+4,s,px,py,pz);
-	result[2] += INCRSUM(m+8,s,px,py,pz);
+	result[0] += INCRSUM(m, s, px, py, pz);
+	result[1] += INCRSUM(m+4, s, px, py, pz);
+	result[2] += INCRSUM(m+8, s, px, py, pz);
 
 	m = Hash3d( ix, jy, iz ) & 0xFF;
 	px = x-ix;
 	s = tx*sy*tz;
-	result[0] += INCRSUM(m,s,px,py,pz);
-	result[1] += INCRSUM(m+4,s,px,py,pz);
-	result[2] += INCRSUM(m+8,s,px,py,pz);
+	result[0] += INCRSUM(m, s, px, py, pz);
+	result[1] += INCRSUM(m+4, s, px, py, pz);
+	result[2] += INCRSUM(m+8, s, px, py, pz);
 
 	m = Hash3d( ix, jy, jz ) & 0xFF;
 	pz = z-jz;
 	s = tx*sy*sz;
-	result[0] += INCRSUM(m,s,px,py,pz);
-	result[1] += INCRSUM(m+4,s,px,py,pz);
-	result[2] += INCRSUM(m+8,s,px,py,pz);
+	result[0] += INCRSUM(m, s, px, py, pz);
+	result[1] += INCRSUM(m+4, s, px, py, pz);
+	result[2] += INCRSUM(m+8, s, px, py, pz);
 
 	m = Hash3d( jx, jy, jz ) & 0xFF;
 	px = x-jx;
 	s = sx*sy*sz;
-	result[0] += INCRSUM(m,s,px,py,pz);
-	result[1] += INCRSUM(m+4,s,px,py,pz);
-	result[2] += INCRSUM(m+8,s,px,py,pz);
+	result[0] += INCRSUM(m, s, px, py, pz);
+	result[1] += INCRSUM(m+4, s, px, py, pz);
+	result[2] += INCRSUM(m+8, s, px, py, pz);
 
 	m = Hash3d( jx, iy, jz ) & 0xFF;
 	py = y-iy;
 	s = sx*ty*sz;
-	result[0] += INCRSUM(m,s,px,py,pz);
-	result[1] += INCRSUM(m+4,s,px,py,pz);
-	result[2] += INCRSUM(m+8,s,px,py,pz);
+	result[0] += INCRSUM(m, s, px, py, pz);
+	result[1] += INCRSUM(m+4, s, px, py, pz);
+	result[2] += INCRSUM(m+8, s, px, py, pz);
 
 	m = Hash3d( ix, iy, jz ) & 0xFF;
 	px = x-ix;
 	s = tx*ty*sz;
-	result[0] += INCRSUM(m,s,px,py,pz);
-	result[1] += INCRSUM(m+4,s,px,py,pz);
-	result[2] += INCRSUM(m+8,s,px,py,pz);
+	result[0] += INCRSUM(m, s, px, py, pz);
+	result[1] += INCRSUM(m+4, s, px, py, pz);
+	result[2] += INCRSUM(m+8, s, px, py, pz);
 }
 /*************************************************************
  *@brief

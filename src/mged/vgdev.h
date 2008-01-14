@@ -128,7 +128,7 @@
 #define VA_DOTTED	000040	/* dotted line */
 #define VA_DASH		000020	/* dashed line */
 
-#define VGI_SHOW(pt,coord,op)	((pt)<<4|(coord)|(op))	/* Compose a vector */
+#define VGI_SHOW(pt, coord, op)	((pt)<<4|(coord)|(op))	/* Compose a vector */
 #define VGI_V_X		1	/* Vector Drawing:  X coordinate */
 #define VGI_V_Y		2
 #define VGI_V_Z		3

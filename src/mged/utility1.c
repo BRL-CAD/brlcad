@@ -479,7 +479,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 			comb->GIFTmater,
 			comb->los );
 		for(i=0; i < pathpos; i++)
-			fprintf(fp, "/%s",path[i]->d_namep);
+			fprintf(fp, "/%s", path[i]->d_namep);
 		fprintf(fp, "/%s\n", dp->d_namep );
 		rt_comb_ifree( &intern, &rt_uniresource );
 		return TCL_OK;
@@ -529,7 +529,7 @@ struct id_to_names {
 int
 f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-	register int	i,j;
+	register int	i, j;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
@@ -834,7 +834,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int
 	struct rt_tree_array *tree_list;
 	int node_count;
 	int actual_count;
-	int i,k;
+	int i, k;
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -928,7 +928,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int
 			{
 				if( sol_dp->d_flags & DIR_COMB )
 				{
-					(void)fprintf(tabptr,"   RG %c %s\n",
+					(void)fprintf(tabptr, "   RG %c %s\n",
 						op, sol_dp->d_namep);
 					continue;
 				}
@@ -952,13 +952,13 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int
 						nsoltemp = 0;
 					}
 					nsoltemp = sol_number( temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old );
-					(void)fprintf(tabptr,"   %c [%d] ", op, nsoltemp );
+					(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp );
 				}
 			}
 			else
 			{
 				nsoltemp = sol_number( old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old );
-				(void)fprintf(tabptr,"   %c [%d] ", op, nsoltemp );
+				(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp );
 				continue;
 			}
 
@@ -1109,32 +1109,32 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)time( &now );
 	timep = ctime( &now );
 	timep[24] = '\0';
-	(void)fprintf(tabptr,"1 -8    Summary Table {%s}  (written: %s)\n",argv[0],timep);
-	(void)fprintf(tabptr,"2 -7         file name    : %s\n",dbip->dbi_filename);
-	(void)fprintf(tabptr,"3 -6         \n");
-	(void)fprintf(tabptr,"4 -5         \n");
+	(void)fprintf(tabptr, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
+	(void)fprintf(tabptr, "2 -7         file name    : %s\n", dbip->dbi_filename);
+	(void)fprintf(tabptr, "3 -6         \n");
+	(void)fprintf(tabptr, "4 -5         \n");
 #ifndef _WIN32
-	(void)fprintf(tabptr,"5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
+	(void)fprintf(tabptr, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
 #else
 	{
 	char uname[256];
 	DWORD dwNumBytes = 256;
 	if(GetUserName(uname, &dwNumBytes))
-		(void)fprintf(tabptr,"5 -4         user         : %s\n",uname);
+		(void)fprintf(tabptr, "5 -4         user         : %s\n", uname);
 	else
-		(void)fprintf(tabptr,"5 -4         user         : UNKNOWN\n");
+		(void)fprintf(tabptr, "5 -4         user         : UNKNOWN\n");
 	}
 #endif
-	(void)fprintf(tabptr,"6 -3         target title : %s\n",cur_title);
-	(void)fprintf(tabptr,"7 -2         target units : %s\n",
+	(void)fprintf(tabptr, "6 -3         target title : %s\n", cur_title);
+	(void)fprintf(tabptr, "7 -2         target units : %s\n",
 		bu_units_string(dbip->dbi_local2base) );
-	(void)fprintf(tabptr,"8 -1         objects      :");
+	(void)fprintf(tabptr, "8 -1         objects      :");
 	for(i=2; i<argc; i++) {
 		if( (i%8) == 0 )
-			(void)fprintf(tabptr,"\n                           ");
-		(void)fprintf(tabptr," %s",argv[i]);
+			(void)fprintf(tabptr, "\n                           ");
+		(void)fprintf(tabptr, " %s", argv[i]);
 	}
-	(void)fprintf(tabptr,"\n\n");
+	(void)fprintf(tabptr, "\n\n");
 
 	/* make the tables */
 	for( i=2 ; i<argc ; i++ )
@@ -1142,7 +1142,7 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		struct directory *dp;
 
 		bu_ptbl_reset( &cur_path );
-		if( (dp = db_lookup( dbip, argv[i],LOOKUP_NOISY)) != DIR_NULL )
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
 			new_tables( dp, &cur_path, identity, flag);
 		else
 			Tcl_AppendResult(interp, " skip this object\n", (char *)NULL);
@@ -1152,21 +1152,21 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		(void)unlink( "/tmp/mged_discr\0" );
-		(void)fprintf(tabptr,"\n\nNumber Primitives = %d  Number Regions = %d\n",
-				numsol,numreg);
+		(void)fprintf(tabptr, "\n\nNumber Primitives = %d  Number Regions = %d\n",
+				numsol, numreg);
 
 		bu_vls_printf(&tmp_vls, "Processed %d Primitives and %d Regions\n",
-			      numsol,numreg);
+			      numsol, numreg);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 
 		(void)fclose( tabptr );
 	}
 
 	else {
-		(void)fprintf(tabptr,"* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
+		(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 		(void)fclose( tabptr );
 
-		bu_vls_printf(&tmp_vls, "Processed %d Regions\n",numreg);
+		bu_vls_printf(&tmp_vls, "Processed %d Regions\n", numreg);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 
 		/* make ordered idents */

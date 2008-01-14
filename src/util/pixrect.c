@@ -52,7 +52,7 @@ static char	*file_name;
 
 static int 	linelen;		/* input width input file */
 static int 	xorig = 0;     		/* Bottom left corner to extract from */
-static int 	yorig = 0;		/* Default at (0,0) pixels     */
+static int 	yorig = 0;		/* Default at (0, 0) pixels     */
 static int 	xnum  = 0;
 static int 	ynum  = 0;
 static int 	bytes_per_pixel = 3;	/* Default for RGB */
@@ -128,7 +128,7 @@ get_args(register int argc, register char **argv)
 		/* Obtain file pointers */
 		if ((ifp = fopen(argv[argc-2], "r")) == NULL) {
 			fprintf(stderr, "%s", usage);
-			bu_exit(2,"pixrect: can't open %s\n", argv[argc-1]);
+			bu_exit(2, "pixrect: can't open %s\n", argv[argc-1]);
 		}
 		if ((ofp = fopen(argv[argc-1], "w")) == NULL) {
 			fprintf(stderr, "%s", usage);
@@ -138,7 +138,7 @@ get_args(register int argc, register char **argv)
 		/* Get info */
 		printf( "Area to extract (x, y) in pixels " );
 		scanf( "%d%d", &xnum, &ynum );
-		printf( "Origin to extract from (0,0 is lower left) " );
+		printf( "Origin to extract from (0, 0 is lower left) " );
 		scanf( "%d%d", &xorig, &yorig );
 		printf( "Scan line length of input file " );
 		scanf( "%d", &linelen );
@@ -178,7 +178,7 @@ get_args(register int argc, register char **argv)
 
 #if 0
 	if (argc > ++bu_optind)
-		fprintf(stderr,"pixrect: excess argument(s) ignored\n");
+		fprintf(stderr, "pixrect: excess argument(s) ignored\n");
 #endif
 
 	return(1);		/* OK */
@@ -195,7 +195,7 @@ main(register int argc, register char **argv)
 	int	row;
 	long	offset;
 
-	if (!get_args(argc,argv)) {
+	if (!get_args(argc, argv)) {
 		bu_exit(1, "%s", usage);
 	}
 

@@ -66,7 +66,7 @@ sh_directchange_rgb(ClientData clientData, Tcl_Interp *interp, int argc, const c
 	struct rt_i	*rtip;
 	struct region	*regp;
 	struct directory *dp;
-	float		r,g,b;
+	float		r, g, b;
 
 	if( argc != 6 )  {
 		Tcl_AppendResult(interp, "Usage: sh_directchange_rgb $rtip comb r g b\n", NULL);

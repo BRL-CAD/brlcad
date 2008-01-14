@@ -567,7 +567,7 @@ rt_comb_import5(
 						sizeof(mat_t), "v5comb mat");
 					bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
 					if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
-						bu_free( (char *)tp->tr_l.tl_mat,"tl_mat");
+						bu_free( (char *)tp->tr_l.tl_mat, "tl_mat");
 						tp->tr_l.tl_mat = (matp_t)NULL;
 					}
 				}
@@ -649,7 +649,7 @@ rt_comb_import5(
 	}
 	sp = &stack[0];
 
-	for( i=0; i < rpn_len; i++,exprp++ )  {
+	for( i=0; i < rpn_len; i++, exprp++ )  {
 		union tree	*tp;
 		long		mi;
 
@@ -687,7 +687,7 @@ rt_comb_import5(
 						sizeof(mat_t), "v5comb mat");
 					bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
 					if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
-						bu_free( (char *)tp->tr_l.tl_mat,"tl_mat");
+						bu_free( (char *)tp->tr_l.tl_mat, "tl_mat");
 						tp->tr_l.tl_mat = (matp_t)NULL;
 					}
 				}

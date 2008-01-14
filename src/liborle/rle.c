@@ -39,9 +39,9 @@
 #include "orle.h"
 
 #define PRNT_A1_DEBUG(_op,_n) \
-	if(rle_debug) (void)fprintf(stderr,"%s(%d)\n",_op,_n)
+	if(rle_debug) (void)fprintf(stderr, "%s(%d)\n",_op,_n)
 #define PRNT_A2_DEBUG(_op,_n,_c) \
-	if(rle_debug) (void)fprintf(stderr,"%s(%ld,%d)\n",_op,(long)(_n),_c)
+	if(rle_debug) (void)fprintf(stderr, "%s(%ld,%d)\n",_op,(long)(_n),_c)
 #define CUR	RED		/* Must be rightmost part of Pixel.		*/
 
 /*	States for run detection					*/
@@ -58,26 +58,26 @@
 	(void) putc( v & 0xFF, fp ); (void) putc( (v>>8) & 0xFF, fp );}
 
 /* short instructions */
-#define mk_short_1(oper,a1)		/* one argument short */ \
+#define mk_short_1(oper, a1)		/* one argument short */ \
 	{(void) putc( oper, fp ); (void) putc( a1, fp );}
 
-#define mk_short_2(oper,a1,a2)		/* two argument short */ \
+#define mk_short_2(oper, a1, a2)		/* two argument short */ \
 	{(void) putc( oper, fp ); (void) putc( a1, fp ); putshort( a2 )}
 
 /* long instructions */
-#define mk_long_1(oper,a1)		/* one argument long */ \
+#define mk_long_1(oper, a1)		/* one argument long */ \
 	{(void) putc( LONG|oper, fp ); (void) putc( 0, fp ); putshort( a1 )}
 
-#define mk_long_2(oper,a1,a2)		/* two argument long */ \
+#define mk_long_2(oper, a1, a2)		/* two argument long */ \
 	{(void) putc( LONG|oper, fp ); (void) putc( 0, fp ); putshort( a1 )\
 		putshort( a2 )}
 
 /* Choose between long and short format instructions.			*/
-#define mk_inst_1(oper,a1)    /* one argument inst */ \
-	{if( a1 > UPPER ) mk_long_1(oper,a1) else mk_short_1(oper,a1)}
+#define mk_inst_1(oper, a1)    /* one argument inst */ \
+	{if( a1 > UPPER ) mk_long_1(oper, a1) else mk_short_1(oper, a1)}
 
-#define mk_inst_2(oper,a1,a2) /* two argument inst */ \
-	{if( a1 > UPPER ) mk_long_2(oper,a1,a2)	else mk_short_2(oper,a1,a2)}
+#define mk_inst_2(oper, a1, a2) /* two argument inst */ \
+	{if( a1 > UPPER ) mk_long_2(oper, a1, a2)	else mk_short_2(oper, a1, a2)}
 
 /* Skip one or more blank lines in the RLE file.			*/
 #define SkipBlankLines(nblank)	RSkipLines(nblank)
@@ -91,7 +91,7 @@
 #define SkipPixels(nskip)	if( (nskip) > 0 ) RSkipPixels(nskip)
 
 /* Output an enumerated set of intensities for current color channel.	*/
-#define PutRun(color, num)	RRunData(num-1,color)
+#define PutRun(color, num)	RRunData(num-1, color)
 
 /* Opcode definitions.							*/
 #define	RSkipLines(_n) \

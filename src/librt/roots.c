@@ -63,9 +63,9 @@ static const bn_poly_t bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
  *
  * where
  *
- *	b0 = a0,	bi = b(i-1)*Z + ai,	i = 1,2,...n
- *	c0 = b0,	ci = c(i-1)*Z + bi,	i = 1,2,...n-1
- *	d0 = c0,	di = d(i-1)*Z + ci,	i = 1,2,...n-2
+ *	b0 = a0,	bi = b(i-1)*Z + ai,	i = 1, 2,...n
+ *	c0 = b0,	ci = c(i-1)*Z + bi,	i = 1, 2,...n-1
+ *	d0 = c0,	di = d(i-1)*Z + ci,	i = 1, 2,...n-2
  */
 void
 rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, register bn_complex_t *b, register bn_complex_t *c, register bn_complex_t *d)
@@ -76,7 +76,7 @@ rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, 
     register int	n;
     register int	m;
 
-    bn_cx_cons(b,eqn->cf[0],0.0);
+    bn_cx_cons(b, eqn->cf[0], 0.0);
     *c = *b;
     *d = *c;
 
@@ -205,7 +205,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
  *
  *		p(Z) = bn,	where
  *
- *		b0 = a0,	bi = b(i-1)*Z + ai,	i = 1,2,...n
+ *		b0 = a0,	bi = b(i-1)*Z + ai,	i = 1, 2,...n
  */
 int
 rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nroots)

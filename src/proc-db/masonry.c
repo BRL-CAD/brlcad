@@ -142,7 +142,7 @@ set_translate(char *s)
  * alpha, beta, and gamma as angles of rotation.
  *
  * NOTE:  Only initialize the rotation 3x3 parts of the 4x4
- * There is important information in dx,dy,dz,s .
+ * There is important information in dx, dy, dz, s .
  */
 void
 buildHrot(register matp_t mat, double alpha, double beta, double ggamma)
@@ -236,7 +236,7 @@ int parse_args(int ac, char **av)
 	bu_opterr = 0;
 
 	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
+	while ((c=bu_getopt(ac, av, options)) != EOF)
 		switch (c) {
 		case 'T'	: set_translate(bu_optarg);
 				units_lock = 1;
@@ -547,7 +547,7 @@ frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, doub
 			mk_v_rpp(fd, wm_hd,
 				sx,	op->sx-bd_thin,
 				0.0, 	bd_thick,
-				bd_thin,WALL_HEIGHT-bd_thin);
+				bd_thin, WALL_HEIGHT-bd_thin);
 		}
 	}
 
@@ -636,7 +636,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 						studs, dx / unit_conv,
 						span / unit_conv);
 
-				for(pos=op->sx+dx ; studs ; pos+=dx,studs--) {
+				for(pos=op->sx+dx ; studs ; pos+=dx, studs--) {
 					if (debug)
 						bu_log("making xtra stud @ %g\n",
 						pos / unit_conv);
@@ -672,7 +672,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 			/* put the beam in */
 			mk_h_rpp(fd, wm_hd,
 				max(0.0, op->sx-bd_thin),
-				min(WALL_WIDTH,op->ex+bd_thin),
+				min(WALL_WIDTH, op->ex+bd_thin),
 				0.0, bd_thick,
 				WALL_HEIGHT-bd_thin-beam_height,
 				WALL_HEIGHT-bd_thin);
@@ -716,7 +716,7 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 
 			mk_h_rpp(fd, wm_hd,
 				max(0.0, op->sx-bd_thin),
-				min(WALL_WIDTH,op->ex+bd_thin),
+				min(WALL_WIDTH, op->ex+bd_thin),
 				0.0, bd_thick,
 				op->ez, WALL_HEIGHT-bd_thin);
 

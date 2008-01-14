@@ -66,7 +66,7 @@ struct submodel_specific {
 	struct rt_i	*rtip;		/* sub model */
 };
 #define RT_SUBMODEL_SPECIFIC_MAGIC	0x73756253	/* subS */
-#define RT_CK_SUBMODEL_SPECIFIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_SPECIFIC_MAGIC,"submodel_specific")
+#define RT_CK_SUBMODEL_SPECIFIC(_p)	BU_CKMAG(_p, RT_SUBMODEL_SPECIFIC_MAGIC, "submodel_specific")
 
 
 /**
@@ -585,8 +585,8 @@ rt_submodel_curve(register struct curvature *cvp, register struct hit *hitp, str
 /**
  *  			R T _ S U B M O D E L _ U V
  *
- *  For a hit on the surface of an submodel, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an submodel, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */

@@ -222,8 +222,8 @@ void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
 #else
-void stdin_input(ClientData clientData,int mask);
-void std_out_or_err(ClientData clientData,int mask);
+void stdin_input(ClientData clientData, int mask);
+void std_out_or_err(ClientData clientData, int mask);
 #endif
 #else
 void stdin_input();
@@ -501,7 +501,7 @@ main(int argc, char **argv)
     new_mats();
 
     mmenu_init();
-    btn_head_menu(0,0,0);
+    btn_head_menu(0, 0, 0);
     mged_link_vars(curr_dm_list);
 
 
@@ -689,11 +689,7 @@ main(int argc, char **argv)
 #endif
 
 	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
-#if !defined(_WIN32) || defined(__CYGWIN__)
 	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, stdin_file);
-#else
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, chan);
-#endif
 
 #ifdef SIGINT
 	(void)signal( SIGINT, SIG_IGN );
@@ -1887,7 +1883,7 @@ refresh(void)
 	if (mapped && dirty) {
 	    dirty = 0;
 	    do_time = 1;
-	    VMOVE(geometry_default_color,color_scheme->cs_geo_def);
+	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
 	    if(dbip != DBI_NULL){
 		if(do_overlay){
@@ -2327,7 +2323,7 @@ do_rc(void)
     }
     if (Tcl_EvalFile( interp, bu_vls_addr(&str) ) != TCL_OK) {
 	bu_log("Error reading %s:\n%s\n", RCFILE,
-	       Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	       Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
     }
 
     bu_vls_free(&str);
@@ -2561,7 +2557,7 @@ f_opendb(
     if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
 		      Tcl_GetStringResult(interp),
-		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		      Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_vls_free(&msg);
@@ -2572,7 +2568,7 @@ f_opendb(
     if (wdb_create_cmd(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
 		      Tcl_GetStringResult(interp),
-		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		      Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_vls_free(&msg);
@@ -2585,7 +2581,7 @@ f_opendb(
     if (Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
 		      Tcl_GetStringResult(interp),
-		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		      Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_vls_free(&msg);

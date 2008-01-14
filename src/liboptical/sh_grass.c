@@ -372,7 +372,7 @@ make_proto(struct grass_specific *grass_sp)
    * a rotation/scale of this first one.
    */
   bn_mat_zrot(r, sin(bn_degtorad*137.0), cos(bn_degtorad*137.0));
-  MAT_COPY(m,r);
+  MAT_COPY(m, r);
 
   seg_delta_angle = (87.0 / (double)BLADE_SEGS_MAX);
 
@@ -938,7 +938,7 @@ stat_cell(fastf_t *cell_pos, struct grass_ray *r, struct grass_specific *grass_s
 
 static void
 plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
-					/* cell number (such as 5,3) */
+					/* cell number (such as 5, 3) */
 
 
 {
@@ -970,7 +970,7 @@ plot_cell(long int *cell, struct grass_ray *r, struct grass_specific *grass_sp)
  */
 static void
 isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double out_dist, struct grass_specific *grass_sp, double curr_dist)
-					/* cell number (such as 5,3) */
+					/* cell number (such as 5, 3) */
 
 
 {
@@ -1109,8 +1109,8 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 	int x, y;
 	long cell[3];
 
-#define FLAG(x,y) ((1 << ((y+1)*3)) << (x+1))
-#define ISDONE(x,y,flags) ( ! (FLAG(x,y) & flags))
+#define FLAG(x, y) ((1 << ((y+1)*3)) << (x+1))
+#define ISDONE(x, y, flags) ( ! (FLAG(x, y) & flags))
 
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -1121,7 +1121,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 	for (y=-1; y < 2 ; y++) {
 		for (x=-1; x < 2 ; x++) {
 
-			if ( ISDONE(x,y,flags) ) continue;
+			if ( ISDONE(x, y, flags) ) continue;
 
 			cell[X] = cell_num[X] + x;
 			cell[Y] = cell_num[Y] + y;
@@ -1208,7 +1208,7 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
 	/* The only thing we can really do to get the size of the
 	 * ray footprint at the In Hit point is get 3 (possibly different)
 	 * radii in the Region coordinate system.  We construct a unit vector
-	 * in model space with equal X,Y,Z and transform it to region space.
+	 * in model space with equal X, Y, Z and transform it to region space.
 	 */
 	radius = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 	VSETALL(v, radius);

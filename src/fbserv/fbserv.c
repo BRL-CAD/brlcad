@@ -252,7 +252,7 @@ new_client(struct pkg_conn *pcp)
 		setup_socket( pcp->pkc_fd );
 		return;
 	}
-	fprintf(stderr,"fbserv: too many clients\n");
+	fprintf(stderr, "fbserv: too many clients\n");
 	pkg_close(pcp);
 }
 
@@ -343,7 +343,7 @@ main(int argc, char **argv)
 			if( port < 1024 )
 				port += 5559;
 		}
-		snprintf(portname, PORTSZ, "%d",port);
+		snprintf(portname, PORTSZ, "%d", port);
 
 		/*
 		 * Hang an unending listen for PKG connections
@@ -366,7 +366,7 @@ main(int argc, char **argv)
 	if( port_set ) {
 		if( port < 1024 )
 			port += 5559;
-		sprintf(portname,"%d",port);
+		sprintf(portname, "%d", port);
 	} else {
 		snprintf(portname, PORTSZ, "%s","remotefb");
 	}
@@ -470,7 +470,7 @@ main_loop(void)
 		for (i = MAX_CLIENTS-1; i >= 0; i--) {
 			if (clients[i] == NULL )  continue;
 			if (pkg_process( clients[i] ) < 0) {
-				fprintf(stderr,"pkg_process error encountered (1)\n");
+				fprintf(stderr, "pkg_process error encountered (1)\n");
 			}
 			if (! FD_ISSET( clients[i]->pkc_fd, &infds )) continue;
 			if (pkg_suckin( clients[i] ) <= 0) {
@@ -484,7 +484,7 @@ main_loop(void)
 		for (i = MAX_CLIENTS-1; i >= 0; i--) {
 			if (clients[i] == NULL )  continue;
 			if (pkg_process( clients[i] ) < 0) {
-				fprintf(stderr,"pkg_process error encountered (2)\n");
+				fprintf(stderr, "pkg_process error encountered (2)\n");
 			}
 		}
 		if (once_only && nopens > 1 && ncloses > 1)

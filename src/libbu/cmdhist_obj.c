@@ -181,7 +181,7 @@ cho_open(ClientData clientData, Tcl_Interp *interp, char *name)
 
 	/* check to see if command history object exists */
 	for (BU_LIST_FOR(chop, bu_cmdhist_obj, &HeadCmdHistObj.l)) {
-		if (strcmp(name,bu_vls_addr(&chop->cho_name)) == 0) {
+		if (strcmp(name, bu_vls_addr(&chop->cho_name)) == 0) {
 			Tcl_AppendResult(interp, "ch_open: ", name,
 					 " exists.\n", (char *)NULL);
 			return CMDHIST_OBJ_NULL;

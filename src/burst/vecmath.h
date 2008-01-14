@@ -66,8 +66,8 @@
 #define Expand_Vec_Int( V )	(int)(V)[X], (int)(V)[Y], (int)(V)[Z]
 #define LOG10E	0.43429448190325182765112891891660508229439700580367
 					/* log of e to the base 10 */
-#define Mag( A )	      	sqrt( AbsDotProd(A,A) )
-#define Mag3(a1,a2,a3)		(sqrt(Sqr(a1)+Sqr(a2)+Sqr(a3)))
+#define Mag( A )	      	sqrt( AbsDotProd(A, A) )
+#define Mag3(a1, a2, a3)		(sqrt(Sqr(a1)+Sqr(a2)+Sqr(a3)))
 #ifndef Min
 #define Min( a, b )		((a) < (b) ? (a) : (b))
 #define Max( a, b )		((a) > (b) ? (a) : (b))
@@ -108,7 +108,7 @@
 			} \
 		}
 
-#define V_Print(a,b,func) \
+#define V_Print(a, b, func) \
 		func( "%s\t<%12.6f,%12.6f,%12.6f>\n", a, (b)[0], (b)[1], (b)[2] )
 #ifndef X
 #define X		0

@@ -348,7 +348,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
 		if( nhits > 2 )
 		{
-			fastf_t dot1,dot2;
+			fastf_t dot1, dot2;
 			int j;
 
 			/* likely an extra hit,

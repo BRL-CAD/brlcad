@@ -222,7 +222,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
 	RT_CK_RTI(rtip);
 
-	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) START\n",
+	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d, ncpu=%d) START\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses, ncpu);
 
@@ -430,7 +430,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	rtip->needprep = 0;		/* prep is done */
 	bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
 
-	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) FINISH\n",
+	if(RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d, ncpu=%d) FINISH\n",
 			rtip->rti_dbip->dbi_filename,
 			rtip->rti_dbip->dbi_uses, ncpu);
 }
@@ -577,7 +577,7 @@ rt_plot_solid(
 	}
 
 	/* Take color from one region */
-	if( (regp = (struct region *)BU_PTBL_GET(&stp->st_regions,0)) != REGION_NULL )  {
+	if( (regp = (struct region *)BU_PTBL_GET(&stp->st_regions, 0)) != REGION_NULL )  {
 		pl_color( fp,
 			(int)(255*regp->reg_mater.ma_color[0]),
 			(int)(255*regp->reg_mater.ma_color[1]),
@@ -1443,7 +1443,7 @@ unprep_leaf( struct db_tree_state *tsp,
 			if( stp->st_rtip == rtip ) {
 				long bit=stp->st_bit;
 				struct region *rp;
-				int i,j;
+				int i, j;
 
 				/* found soltab for this instance */
 
@@ -1491,7 +1491,7 @@ rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *
 {
 	struct bu_ptbl unprep_regions;
 	struct db_full_path *path;
-	int i,j,k;
+	int i, j, k;
 
 	rt_res_pieces_clean( resp, rtip );
 

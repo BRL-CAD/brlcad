@@ -334,7 +334,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	VMINMAX(stp->st_min, stp->st_max, work);
 	/* Now find the center and radius for a bounding sphere. */
 	{
-		fastf_t	dx,dy,dz;
+		fastf_t	dx, dy, dz;
 		fastf_t	f;
 
 		VADD2SCALE( stp->st_center, stp->st_max, stp->st_min, 0.5);
@@ -400,7 +400,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 
 		/* Get the points of one of the triangles */
 
-		/* 0,0 -> tri_A */
+		/* 0, 0 -> tri_A */
 		VJOIN3(tri_A, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+0, yvect);
 		sp++;
@@ -431,7 +431,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 		register double *fp;
 		fp = (double *)hfp->hf_mp->apbuf +
 			yCell * hfp->hf_w + xCell;
-		/* 0,0 -> A */
+		/* 0, 0 -> A */
 		VJOIN3(tri_A, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+0, yvect);
 		fp++;
@@ -456,7 +456,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 		VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
 	}
 
-	/*	0,1		1,1
+	/*	0, 1		1, 1
 	 *	  o		o
 	 *	  	    _
 	 *	  ^          //|
@@ -471,7 +471,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	 *	  | //
 	 *
 	 *	  o  -------->  o
-	 *	0,0	BA1st	1,0
+	 *	0, 0	BA1st	1, 0
 	 *
 	 * wn1st and wn2nd are non-unit normal vectors pointing out of screen
 	 */
@@ -568,7 +568,7 @@ leave:
 	if (!fnd1 && !fnd2) return 0;
 
 	if (RT_G_DEBUG & DEBUG_HF) {
-		bu_log("rt_hf_cell_shot: hit(%d).\n",fnd1+fnd2);
+		bu_log("rt_hf_cell_shot: hit(%d).\n", fnd1+fnd2);
 	}
 
 	/*
@@ -583,7 +583,7 @@ leave:
 	 * replace the out if dn>0 or the in if dn<0.
 	 */
 
-/* bu_log("cell: k1st=%g, k2nd=%g\n", k1st,k2nd); */
+/* bu_log("cell: k1st=%g, k2nd=%g\n", k1st, k2nd); */
 
 	if (!fnd2 ) {
 		hitp->hit_magic = RT_HIT_MAGIC;
@@ -676,7 +676,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 	}
 
 	VJOIN1(loc, rp->r_pt, inout, rp->r_dir);
-	VSUB2(loc,loc,hf->hf_V);
+	VSUB2(loc, loc, hf->hf_V);
 
 	/* find the left, right and xx */
 	switch (plane) {
@@ -784,7 +784,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	fastf_t	in, out;
 	vect_t aray, curloc;
 
-memset(hits, 0,sizeof(hits));
+memset(hits, 0, sizeof(hits));
 
 	in = -INFINITY;
 	out = INFINITY;
@@ -942,8 +942,8 @@ memset(hits, 0,sizeof(hits));
 	 */
 	{
 		vect_t tmp;
-		VMOVE(tmp,rp->r_dir);
-		tmp[Z] = 0.0;	/* XXX Bogus?  Assumes X,Y in XY plane */
+		VMOVE(tmp, rp->r_dir);
+		tmp[Z] = 0.0;	/* XXX Bogus?  Assumes X, Y in XY plane */
 		VUNITIZE(tmp);
 		cosine = VDOT(tmp, hf->hf_X);
 	}
@@ -964,13 +964,13 @@ memset(hits, 0,sizeof(hits));
 		double tmp;
 		register double farZ, minZ, maxZ;
 		int	xCell, yCell, signX, signY;
-		double	highest,lowest, error,delta;
+		double	highest, lowest, error, delta;
 		double	deltaZ;
 
 		vect_t	goesIN, goesOUT;
 
 		VJOIN1(goesIN, rp->r_pt, allDist[3], rp->r_dir); /* Xmax plane */
-		VJOIN1(goesOUT,rp->r_pt, allDist[0], rp->r_dir); /* Xmin plane */
+		VJOIN1(goesOUT, rp->r_pt, allDist[0], rp->r_dir); /* Xmin plane */
 		VSUB2(aray, goesOUT, goesIN);
 		VSUB2(curloc, goesIN, hf->hf_V);
 
@@ -1092,17 +1092,17 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 				register unsigned short *sp;
 				sp = (unsigned short *)hf->hf_mp->apbuf +
 				    yCell * hf->hf_w + xCell;
-				/* 0,0 */
+				/* 0, 0 */
 				highest = lowest = *sp++;
-				/* 1,0 */
+				/* 1, 0 */
 				if (lowest > (double)*sp) lowest=*sp;
 				if (highest < (double)*sp) highest=*sp;
 				sp+=hf->hf_w;
-				/* 1,1 */
+				/* 1, 1 */
 				if (lowest > (double)*sp) lowest=*sp;
 				if (highest < (double)*sp) highest=*sp;
 				sp--;
-				/* 0,1 */
+				/* 0, 1 */
 				if (lowest > (double)*sp) lowest = *sp;
 				if (highest < (double)*sp) highest = *sp;
 				lowest *= hf->hf_file2mm;
@@ -1111,17 +1111,17 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 				register double *fp;
 				fp = (double *)hf->hf_mp->apbuf +
 				    yCell * hf->hf_w + xCell;
-				/* 0,0 */
+				/* 0, 0 */
 				highest = lowest = *fp++;
-				/* 1,0 */
+				/* 1, 0 */
 				if (lowest > *fp) lowest=*fp;
 				if (highest < *fp) highest=*fp;
 				fp+=hf->hf_w;
-				/* 1,1 */
+				/* 1, 1 */
 				if (lowest > *fp) lowest=*fp;
 				if (highest < *fp) highest=*fp;
 				fp--;
-				/* 0,1 */
+				/* 0, 1 */
 				if (lowest > *fp) lowest = *fp;
 				if (highest < *fp) highest = *fp;
 				lowest *= hf->hf_file2mm;
@@ -1170,17 +1170,17 @@ skip_first:
 					register unsigned short *sp;
 					sp = (unsigned short *)hf->hf_mp->apbuf +
 					    yCell * hf->hf_w + xCell;
-					/* 0,0 */
+					/* 0, 0 */
 					highest = lowest = *sp++;
-					/* 1,0 */
+					/* 1, 0 */
 					if (lowest > (double)*sp) lowest=*sp;
 					if (highest < (double)*sp) highest=*sp;
 					sp+=hf->hf_w;
-					/* 1,1 */
+					/* 1, 1 */
 					if (lowest > (double)*sp) lowest=*sp;
 					if (highest < (double)*sp) highest=*sp;
 					sp--;
-					/* 0,1 */
+					/* 0, 1 */
 					if (lowest > (double)*sp) lowest = *sp;
 					if (highest < (double)*sp) highest = *sp;
 					lowest *= hf->hf_file2mm;
@@ -1189,17 +1189,17 @@ skip_first:
 					register double *fp;
 					fp = (double *)hf->hf_mp->apbuf +
 					    yCell * hf->hf_w + xCell;
-					/* 0,0 */
+					/* 0, 0 */
 					highest = lowest = *fp++;
-					/* 1,0 */
+					/* 1, 0 */
 					if (lowest > *fp) lowest=*fp;
 					if (highest < *fp) highest=*fp;
 					fp+=hf->hf_w;
-					/* 1,1 */
+					/* 1, 1 */
 					if (lowest > *fp) lowest=*fp;
 					if (highest < *fp) highest=*fp;
 					fp--;
-					/* 0,1 */
+					/* 0, 1 */
 					if (lowest > *fp) lowest = *fp;
 					if (highest < *fp) highest = *fp;
 					lowest *= hf->hf_file2mm;
@@ -1237,12 +1237,12 @@ skip_first:
 		register double farZ, minZ, maxZ;
 		double	deltaZ;
 		int	xCell, yCell, signX, signY;
-		double	highest,lowest, error,delta;
+		double	highest, lowest, error, delta;
 
 		vect_t	goesIN, goesOUT;
 
 		VJOIN1(goesIN, rp->r_pt, allDist[4], rp->r_dir);
-		VJOIN1(goesOUT,rp->r_pt, allDist[1], rp->r_dir);
+		VJOIN1(goesOUT, rp->r_pt, allDist[1], rp->r_dir);
 		VSUB2(aray, goesOUT, goesIN);
 		VSUB2(curloc, goesIN, hf->hf_V);
 
@@ -1351,17 +1351,17 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 				register unsigned short *sp;
 				sp = (unsigned short *)hf->hf_mp->apbuf +
 				    yCell * hf->hf_w + xCell;
-				/* 0,0 */
+				/* 0, 0 */
 				highest = lowest = *sp++;
-				/* 1,0 */
+				/* 1, 0 */
 				if (lowest > (double)*sp) lowest=*sp;
 				if (highest < (double)*sp) highest=*sp;
 				sp+=hf->hf_w;
-				/* 1,1 */
+				/* 1, 1 */
 				if (lowest > (double)*sp) lowest=*sp;
 				if (highest < (double)*sp) highest=*sp;
 				sp--;
-				/* 0,1 */
+				/* 0, 1 */
 				if (lowest > (double)*sp) lowest = *sp;
 				if (highest < (double)*sp) highest = *sp;
 				lowest *= hf->hf_file2mm;
@@ -1370,17 +1370,17 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 				register double *fp;
 				fp = (double *)hf->hf_mp->apbuf +
 				    yCell * hf->hf_w + xCell;
-				/* 0,0 */
+				/* 0, 0 */
 				highest = lowest = *fp++;
-				/* 1,0 */
+				/* 1, 0 */
 				if (lowest > *fp) lowest=*fp;
 				if (highest < *fp) highest=*fp;
 				fp+=hf->hf_w;
-				/* 1,1 */
+				/* 1, 1 */
 				if (lowest > *fp) lowest=*fp;
 				if (highest < *fp) highest=*fp;
 				fp--;
-				/* 0,1 */
+				/* 0, 1 */
 				if (lowest > *fp) lowest = *fp;
 				if (highest < *fp) highest = *fp;
 				lowest *= hf->hf_file2mm;
@@ -1430,17 +1430,17 @@ skip_2nd:
 					register unsigned short *sp;
 					sp = (unsigned short *)hf->hf_mp->apbuf +
 					    yCell * hf->hf_w + xCell;
-					/* 0,0 */
+					/* 0, 0 */
 					highest = lowest = *sp++;
-					/* 1,0 */
+					/* 1, 0 */
 					if (lowest > (double)*sp) lowest=*sp;
 					if (highest < (double)*sp) highest=*sp;
 					sp+=hf->hf_w;
-					/* 1,1 */
+					/* 1, 1 */
 					if (lowest > (double)*sp) lowest=*sp;
 					if (highest < (double)*sp) highest=*sp;
 					sp--;
-					/* 0,1 */
+					/* 0, 1 */
 					if (lowest > (double)*sp) lowest = *sp;
 					if (highest < (double)*sp) highest = *sp;
 					lowest *= hf->hf_file2mm;
@@ -1449,17 +1449,17 @@ skip_2nd:
 					register double *fp;
 					fp = (double *)hf->hf_mp->apbuf +
 					    yCell * hf->hf_w + xCell;
-					/* 0,0 */
+					/* 0, 0 */
 					highest = lowest = *fp++;
-					/* 1,0 */
+					/* 1, 0 */
 					if (lowest > *fp) lowest=*fp;
 					if (highest < *fp) highest=*fp;
 					fp+=hf->hf_w;
-					/* 1,1 */
+					/* 1, 1 */
 					if (lowest > *fp) lowest=*fp;
 					if (highest < *fp) highest=*fp;
 					fp--;
-					/* 0,1 */
+					/* 0, 1 */
 					if (lowest > *fp) lowest = *fp;
 					if (highest < *fp) highest = *fp;
 					lowest *= hf->hf_file2mm;
@@ -1494,7 +1494,7 @@ skip_2nd:
 	}
 	/* Sort hits, near to Far */
 	{
-		register int i,j;
+		register int i, j;
 		struct hit tmp;
 		for ( i=0; i< nhits-1; i++) {
 			for (j=i+1; j<nhits; j++) {
@@ -1512,9 +1512,9 @@ skip_2nd:
 		VREVERSE(hits[nhits].hit_normal, hits[nhits-1].hit_normal);
 		nhits++;
 		if (nerrors++ < 300 ) {
-			bu_log("rt_hf_shot(%s): %d hit(s)@ %d %d: ", stp->st_name, nhits-1,ap->a_x, ap->a_y);
+			bu_log("rt_hf_shot(%s): %d hit(s)@ %d %d: ", stp->st_name, nhits-1, ap->a_x, ap->a_y);
 			for(i=0; i< nhits; i++) {
-				bu_log("%f(%d), ",hits[i].hit_dist,hits[i].hit_surfno);
+				bu_log("%f(%d), ", hits[i].hit_dist, hits[i].hit_surfno);
 			}
 			bu_log("\n");
 		}
@@ -1598,8 +1598,8 @@ rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct so
 /**
  *  			R T _ H F _ U V
  *
- *  For a hit on the surface of an hf, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of an hf, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */

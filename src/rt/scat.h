@@ -35,7 +35,7 @@
 
 static struct rayinfo {
 	int	sight;
-	int	x,y;		/* x y corrdintaes of the grid */
+	int	x, y;		/* x y corrdintaes of the grid */
 	vect_t	ip;		/* intersection point */
 	vect_t	norm;		/* normal vector */
 	vect_t	spec;		/* specular direction */

@@ -41,11 +41,11 @@ int
 main(void)
 {
 	point_t *pts = (point_t *)NULL;
-	int ident,face_type,npts,face_no;
+	int ident, face_type, npts, face_no;
 	plane_t pl;
 	int tmp_i;
 	float tmp_a;
-	float a,b,c,d;
+	float a, b, c, d;
 	int old_id=(-1);
 	int face_count=0;
 

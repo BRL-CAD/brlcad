@@ -248,7 +248,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		 *	This will prevent doing microscopic models.
 		 */
 		t0 = ssp->box_start;
-		/* NB: can't compute px,py,pz here since t0 may advance
+		/* NB: can't compute px, py, pz here since t0 may advance
 		   in the following statement! */
 
 top:		switch( curcut->cut_type ) {
@@ -494,7 +494,7 @@ pop_space_stack:
 					V3ARGS(cutp->bn.bn_min) );
 				bu_log( "  max (%.20e,%.20e,%.20e)\n",
 					V3ARGS(cutp->bn.bn_max) );
-				bu_log( "pt=(%g,%g,%g)\n",px, py, pz );
+				bu_log( "pt=(%g,%g,%g)\n", px, py, pz );
 				rt_pr_cut( cutp, 0 );
 
 				/*
@@ -600,7 +600,7 @@ push_to_next_box:				;
 			if( !rt_in_rpp( &ssp->newray, ssp->inv_dir,
 					cutp->bn.bn_min,
 					cutp->bn.bn_max) )  {
-				bu_log("rt_advance_to_next_cell():  MISSED BOX\nrmin,rmax(%.20e,%.20e) box(%.20e,%.20e)\n",
+				bu_log("rt_advance_to_next_cell():  MISSED BOX\nrmin, rmax(%.20e,%.20e) box(%.20e,%.20e)\n",
 				       ssp->newray.r_min,
 				       ssp->newray.r_max,
 				       ssp->box_start, ssp->box_end );
@@ -1251,7 +1251,7 @@ start_cell:
 				/* Add seg chain to list awaiting rt_boolweave() */
 				{
 					register struct seg *s2;
-					while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
+					while(BU_LIST_WHILE(s2, seg,&(new_segs.l)))  {
 						BU_LIST_DEQUEUE( &(s2->l) );
 						/* Restore to original distance */
 						s2->seg_in.hit_dist += ss.dist_corr;
@@ -1395,7 +1395,7 @@ weave:
 	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	if(debug_shoot)  rt_pr_partitions(rtip,&FinalPart,"a_hit()");
+	if(debug_shoot)  rt_pr_partitions(rtip,&FinalPart, "a_hit()");
 
 	/*
 	 *  Before recursing, release storage for unused Initial partitions.
@@ -1408,7 +1408,7 @@ hitit:
 	 *  finished_segs is only used by special hit routines
 	 *  which don't follow the traditional solid modeling paradigm.
 	 */
-	if(RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart,"Partition list passed to a_hit() routine");
+	if(RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart, "Partition list passed to a_hit() routine");
 	if (ap->a_hit) {
 	    ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
 	    status = "HIT";

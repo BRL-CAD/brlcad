@@ -258,8 +258,8 @@ const struct bn_tol	*tol;
 		eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(eu);
 		if (bn_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-		    BU_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
-		    BU_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
+		    BU_LIST_PNEXT(edgeuse, eu)->vu_p->v_p->vg_p->coord,
+		    BU_LIST_PLAST(edgeuse, eu)->vu_p->v_p->vg_p->coord,
 		    tol ) )  {
 			bu_log("At %d in %s\n", __LINE__, __FILE__);
 			bu_bomb("polytonmg() cannot make plane equation\n");

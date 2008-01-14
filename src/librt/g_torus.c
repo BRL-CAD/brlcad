@@ -56,9 +56,9 @@
  * The TORUS has the following input fields:
  *	V	V from origin to center
  *	H	Radius Vector, Normal to plane of torus.  |H| = R2
- *	A,B	perpindicular, to CENTER of torus.  |A|==|B|==R1
- *	F5,F6	perpindicular, for inner edge (unused)
- *	F7,F8	perpindicular, for outer edge (unused)
+ *	A, B	perpindicular, to CENTER of torus.  |A|==|B|==R1
+ *	F5, F6	perpindicular, for inner edge (unused)
+ *	F7, F8	perpindicular, for outer edge (unused)
  *
  */
 
@@ -75,14 +75,14 @@ const struct bu_structparse rt_tor_parse[] = {
  *
  *  Given V, H, A, and B, there is a set of points on this torus
  *
- *  { (x,y,z) | (x,y,z) is on torus defined by V, H, A, B }
+ *  { (x, y, z) | (x, y, z) is on torus defined by V, H, A, B }
  *
  *  Through a series of  Transformations, this set will be
  *  transformed into a set of points on a unit torus (R1==1)
  *  centered at the origin
  *  which lies on the X-Y plane (ie, H is on the Z axis).
  *
- *  { (x',y',z') | (x',y',z') is on unit torus at origin }
+ *  { (x', y', z') | (x', y', z') is on unit torus at origin }
  *
  *  The transformation from X to X' is accomplished by:
  *
@@ -146,7 +146,7 @@ const struct bu_structparse rt_tor_parse[] = {
  *
  *	w**2 - 4*( X**2 + Y**2 )  =  0
  *
- *  For f(x,y,z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ *  For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
  *
  *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
  *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
@@ -471,7 +471,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		return(0);		/* No hit */
 
 	default:
-		bu_log("rt_tor_shot: reduced 4 to %d roots\n",i);
+		bu_log("rt_tor_shot: reduced 4 to %d roots\n", i);
 		bn_pr_roots( stp->st_name, val, 4 );
 		return(0);		/* No hit */
 
@@ -715,7 +715,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		}
 		else if( num_zero != 2 && num_zero != 4 ) {
 #if 0
-			bu_log("rt_tor_shot: reduced 4 to %d roots\n",i);
+			bu_log("rt_tor_shot: reduced 4 to %d roots\n", i);
 			bn_pr_roots( stp->st_name, val, 4 );
 #endif
 			SEG_MISS(segp[i]);		/* MISS */
@@ -818,7 +818,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  *
  *	w**2 - 4*( X**2 + Y**2 )  =  0
  *
- *  For f(x,y,z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ *  For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
  *
  *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
  *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
@@ -913,7 +913,7 @@ rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	VSUB2(work, hitp -> hit_point, tor -> tor_V);
 	MAT4X3VEC(pprime, tor -> tor_SoR, work);
 	/*
-	 * -pi/2 <= atan2(x,y) <= pi/2
+	 * -pi/2 <= atan2(x, y) <= pi/2
 	 */
 	uvp -> uv_u = atan2(pprime[Y], pprime[X]) * bn_inv2pi + 0.5;
 
@@ -1005,7 +1005,7 @@ rt_num_circular_segments(double	maxerr, double	radius)
  * The TORUS has the following input fields:
  *	ti.v	V from origin to center
  *	ti.h	Radius Vector, Normal to plane of torus
- *	ti.a,ti.b	perpindicular, to CENTER of torus (for top, bottom)
+ *	ti.a, ti.b	perpindicular, to CENTER of torus (for top, bottom)
  *
  */
 int
@@ -1078,9 +1078,9 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	pts = (fastf_t *)bu_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_plot pts[]" );
 
-#define TOR_PT(www,lll)	((((www)%nw)*nlen)+((lll)%nlen))
-#define TOR_PTA(ww,ll)	(&pts[TOR_PT(ww,ll)*3])
-#define TOR_NORM_A(ww,ll)	(&norms[TOR_PT(ww,ll)*3])
+#define TOR_PT(www, lll)	((((www)%nw)*nlen)+((lll)%nlen))
+#define TOR_PTA(ww, ll)	(&pts[TOR_PT(ww, ll)*3])
+#define TOR_NORM_A(ww, ll)	(&norms[TOR_PT(ww, ll)*3])
 
 	for( len = 0; len < nlen; len++ )  {
 		beta = bn_twopi * len / nlen;
@@ -1095,24 +1095,24 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
-			VADD3( TOR_PTA(w,len), tip->v, edge, radius );
+			VADD3( TOR_PTA(w, len), tip->v, edge, radius );
 		}
 	}
 
 	/* Draw lengthwise (around outside rim) */
 	for( w = 0; w < nw; w++ )  {
 		len = nlen-1;
-		RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE );
 		for( len = 0; len < nlen; len++ )  {
-			RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW );
 		}
 	}
 	/* Draw around the "width" (1 cross section) */
 	for( len = 0; len < nlen; len++ )  {
 		w = nw-1;
-		RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE );
 		for( w = 0; w < nw; w++ )  {
-			RT_ADD_VLIST( vhead, TOR_PTA(w,len), BN_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW );
 		}
 	}
 
@@ -1214,10 +1214,10 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
-			VADD3( TOR_PTA(w,len), tip->v, edge, radius );
+			VADD3( TOR_PTA(w, len), tip->v, edge, radius );
 
-			VMOVE( TOR_NORM_A(w,len) , edge );
-			VUNITIZE( TOR_NORM_A(w,len) );
+			VMOVE( TOR_NORM_A(w, len) , edge );
+			VUNITIZE( TOR_NORM_A(w, len) );
 		}
 	}
 
@@ -1234,10 +1234,10 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	nfaces = 0;
 	for( w = 0; w < nw; w++ )  {
 		for( len = 0; len < nlen; len++ )  {
-			vertp[0] = &verts[ TOR_PT(w+0,len+0) ];
-			vertp[1] = &verts[ TOR_PT(w+0,len+1) ];
-			vertp[2] = &verts[ TOR_PT(w+1,len+1) ];
-			vertp[3] = &verts[ TOR_PT(w+1,len+0) ];
+			vertp[0] = &verts[ TOR_PT(w+0, len+0) ];
+			vertp[1] = &verts[ TOR_PT(w+0, len+1) ];
+			vertp[2] = &verts[ TOR_PT(w+1, len+1) ];
+			vertp[3] = &verts[ TOR_PT(w+1, len+0) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				bu_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
 					w, nw, len, nlen );
@@ -1249,7 +1249,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Associate vertex geometry */
 	for( w = 0; w < nw; w++ )  {
 		for( len = 0; len < nlen; len++ )  {
-			nmg_vertex_gv( verts[TOR_PT(w,len)], TOR_PTA(w,len) );
+			nmg_vertex_gv( verts[TOR_PT(w, len)], TOR_PTA(w, len) );
 		}
 	}
 
@@ -1267,9 +1267,9 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
-			VREVERSE( rev_norm , TOR_NORM_A(w,len) );
+			VREVERSE( rev_norm , TOR_NORM_A(w, len) );
 
-			for( BU_LIST_FOR( vu , vertexuse , &verts[TOR_PT(w,len)]->vu_hd ) )
+			for( BU_LIST_FOR( vu , vertexuse , &verts[TOR_PT(w, len)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1279,7 +1279,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , TOR_NORM_A(w,len) );
+					nmg_vertexuse_nv( vu , TOR_NORM_A(w, len) );
 				else if( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu , rev_norm );
 			}

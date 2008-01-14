@@ -206,7 +206,7 @@ register RGBpixel	*pixelp;
 	return	(Colorindex)best;
 }
 
-#define SET(i,r,g,b)	{ \
+#define SET(i, r, g, b)	{ \
 	rgb_table[i][RED] = r; \
 	rgb_table[i][GRN] = g; \
 	rgb_table[i][BLU] = b; }

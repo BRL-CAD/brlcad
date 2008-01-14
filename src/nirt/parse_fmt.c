@@ -675,7 +675,7 @@ direct_output(char *buffer, com_table *ctp)
 	    openfunc=fopen;
 	}
 
-	new_dest = bu_malloc(strlen(buffer + i)+1,"new_dest");
+	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
 	snprintf(new_dest, strlen(buffer+i), "%s", buffer + i);
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {

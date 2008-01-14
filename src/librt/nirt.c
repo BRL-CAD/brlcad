@@ -107,9 +107,9 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	int pipe_out[2];
 	int pipe_err[2];
 #else
-	HANDLE pipe_in[2],hSaveStdin,pipe_inDup;
-	HANDLE pipe_out[2],hSaveStdout,pipe_outDup;
-	HANDLE pipe_err[2],hSaveStderr,pipe_errDup;
+	HANDLE pipe_in[2], hSaveStdin, pipe_inDup;
+	HANDLE pipe_out[2], hSaveStdout, pipe_outDup;
+	HANDLE pipe_err[2], hSaveStderr, pipe_errDup;
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	SECURITY_ATTRIBUTES sa;
@@ -578,9 +578,9 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     }
 
     /*
-     * The last two arguments are expected to be x,y in view coordinates.
+     * The last two arguments are expected to be x, y in view coordinates.
      * It is also assumed that view z will be the front of the viewing cube.
-     * These coordinates are converted to x,y,z in model coordinates and then
+     * These coordinates are converted to x, y, z in model coordinates and then
      * converted to local units before being handed to nirt. All other
      * arguments are passed straight through to nirt.
      */

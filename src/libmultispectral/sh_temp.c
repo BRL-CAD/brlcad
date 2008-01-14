@@ -79,7 +79,7 @@ struct bu_structparse temp_parse[] = {
 /*
  *  			T X T _ R E N D E R
  *
- *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  Given a u, v coordinate within the texture ( 0 <= u, v <= 1.0 ),
  *  return a pointer to the relevant pixel.
  *
  *  Note that .pix files are stored left-to-right, bottom-to-top,

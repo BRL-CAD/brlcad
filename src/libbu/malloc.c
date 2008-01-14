@@ -188,7 +188,7 @@ bu_memdebug_check(register char *ptr, const char *str)
 
 	if( bu_memdebug == (struct memdebug *)0 )  {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		fprintf(stderr,"bu_memdebug_check(x%lx, %s)  no memdebug table yet\n",
+		fprintf(stderr, "bu_memdebug_check(x%lx, %s)  no memdebug table yet\n",
 			(long)ptr, str);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 		return MEMDEBUG_NULL;
@@ -201,7 +201,7 @@ bu_memdebug_check(register char *ptr, const char *str)
 		ip = (long *)(ptr+mp->mdb_len-sizeof(long));
 		if( *ip != MDB_MAGIC )  {
 			bu_semaphore_acquire(BU_SEM_SYSCALL);
-			fprintf(stderr,"ERROR bu_memdebug_check(x%lx, %s) %s, barrier word corrupted!\nbarrier at x%lx was=x%lx s/b=x%x, len=%d\n",
+			fprintf(stderr, "ERROR bu_memdebug_check(x%lx, %s) %s, barrier word corrupted!\nbarrier at x%lx was=x%lx s/b=x%x, len=%d\n",
 				(long)ptr, str, mp->mdb_str,
 				(long)ip, *ip, MDB_MAGIC, mp->mdb_len);
 			bu_semaphore_release(BU_SEM_SYSCALL);
@@ -241,7 +241,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	}
 
 	if( size == 0 )  {
-		fprintf(stderr,"ERROR: bu_alloc size=0 (cnt=%d, sz=%d) %s\n", cnt, sz, str );
+		fprintf(stderr, "ERROR: bu_alloc size=0 (cnt=%d, sz=%d) %s\n", cnt, sz, str );
 		bu_bomb("ERROR: bu_malloc(0)\n");
 	}
 
@@ -288,7 +288,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 #endif
 
 	if( ptr==(char *)0 )  {
-		fprintf(stderr,"bu_malloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
+		fprintf(stderr, "bu_malloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
 		bu_bomb("bu_malloc: malloc failure");
 	}
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
@@ -311,7 +311,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 			BU_LIST_INIT(bu_memq);
 		}
 		BU_LIST_APPEND(bu_memq,&(mp->q));
-		BU_LIST_MAGIC_SET(&(mp->q),MDB_MAGIC);
+		BU_LIST_MAGIC_SET(&(mp->q), MDB_MAGIC);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 	bu_n_malloc++;
@@ -358,20 +358,20 @@ bu_free(genptr_t ptr, const char *str)
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 	if(ptr == (char *)0 || ptr == (char *)(-1L) )  {
-		fprintf(stderr,"%8lx free ERROR %s\n", (long)ptr, str);
+		fprintf(stderr, "%8lx free ERROR %s\n", (long)ptr, str);
 		return;
 	}
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
 		struct memdebug	*mp;
 		if( (mp = bu_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
-		    fprintf(stderr,"ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", (long)ptr, str);
+		    fprintf(stderr, "ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", (long)ptr, str);
 		} else {
 		    mp->mdb_len = 0;	/* successful delete */
 		}
 	} else if (bu_debug&BU_DEBUG_MEM_QCHECK ) {
 		struct memqdebug *mp = ((struct memqdebug *)ptr)-1;
-		if (BU_LIST_MAGIC_WRONG(&(mp->q),MDB_MAGIC)) {
-		    fprintf(stderr,"ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", (long)ptr, str);
+		if (BU_LIST_MAGIC_WRONG(&(mp->q), MDB_MAGIC)) {
+		    fprintf(stderr, "ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", (long)ptr, str);
 		} else {
 		    ptr = (genptr_t)mp;
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -419,7 +419,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
 		if( ptr && (mp = bu_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
-			fprintf(stderr,"%8lx realloc%6d %s ** barrier check failure\n",
+			fprintf(stderr, "%8lx realloc%6d %s ** barrier check failure\n",
 				(long)ptr, (int)cnt, str );
 		}
 		/* Pad, plus full long for magic number */
@@ -430,8 +430,8 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 		cnt = (cnt + 2*sizeof(struct memqdebug) - 1)
 		    &(~(sizeof(struct memqdebug)-1));
 
-		if (BU_LIST_MAGIC_WRONG(&(mp->q),MDB_MAGIC)) {
-			fprintf(stderr,"ERROR bu_realloc(x%lx, %s) pointer bad, "
+		if (BU_LIST_MAGIC_WRONG(&(mp->q), MDB_MAGIC)) {
+			fprintf(stderr, "ERROR bu_realloc(x%lx, %s) pointer bad, "
 				"or not allocated with bu_malloc!  Ignored.\n",
 				(long)ptr, str);
 			/*
@@ -450,7 +450,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
-	ptr = realloc(ptr,cnt);
+	ptr = realloc(ptr, cnt);
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
@@ -458,17 +458,17 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (ptr == original_ptr) {
-			fprintf(stderr,"%8lx realloc%6d %s [grew in place]\n",
+			fprintf(stderr, "%8lx realloc%6d %s [grew in place]\n",
 				   (long)ptr, (int)cnt, str );
 		} else {
-			fprintf(stderr,"%8lx realloc%6d %s [moved from %8lx]\n",
+			fprintf(stderr, "%8lx realloc%6d %s [moved from %8lx]\n",
 				   (long)ptr, (int)cnt, str, (long unsigned int)original_ptr);
 		}
 
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 	if( ptr==(char *)0 && cnt > 0 )  {
-		fprintf(stderr,"bu_realloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
+		fprintf(stderr, "bu_realloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
 		bu_bomb("bu_realloc: malloc failure");
 	}
 	if( bu_debug&BU_DEBUG_MEM_CHECK && ptr )  {
@@ -492,7 +492,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 		mp->m.mdb_str = str;
 		BU_ASSERT(bu_memq != BU_LIST_NULL);
 		BU_LIST_APPEND(bu_memq,&(mp->q));
-		BU_LIST_MAGIC_SET(&(mp->q),MDB_MAGIC);
+		BU_LIST_MAGIC_SET(&(mp->q), MDB_MAGIC);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 	bu_n_realloc++;
@@ -513,15 +513,15 @@ bu_prmem(const char *str)
     register long *ip;
     register size_t count = 0;
 
-    fprintf(stderr,"\nbu_prmem(): dynamic memory use (%s)\n", str);
+    fprintf(stderr, "\nbu_prmem(): dynamic memory use (%s)\n", str);
     if( (bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK)) == 0 )  {
-	fprintf(stderr,"\tMemory debugging is now OFF\n");
+	fprintf(stderr, "\tMemory debugging is now OFF\n");
     }
 #if 0
-    fprintf(stderr,"\t%ld slots in memdebug table (not # of allocs)\n Address Length Purpose\n",
+    fprintf(stderr, "\t%ld slots in memdebug table (not # of allocs)\n Address Length Purpose\n",
 	    (long)bu_memdebug_len);
 #else
-    fprintf(stderr," Address Length Purpose\n");
+    fprintf(stderr, " Address Length Purpose\n");
 #endif
     if( bu_memdebug_len > 0 )  {
 	mp = &bu_memdebug[bu_memdebug_len-1];
@@ -533,20 +533,20 @@ bu_prmem(const char *str)
 	    count++;
 	    ip = (long *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(long));
 	    if( mp->mdb_str == bu_strdup_message )  {
-		fprintf(stderr,"%8lx %6d bu_strdup: \"%s\"\n",
+		fprintf(stderr, "%8lx %6d bu_strdup: \"%s\"\n",
 			(long)(mp->mdb_addr), mp->mdb_len,
 			((char *)mp->mdb_addr) );
 	    } else if( mp->mdb_str == bu_vls_message )  {
-		fprintf(stderr,"%8lx %6d bu_vls: \"%s\"\n",
+		fprintf(stderr, "%8lx %6d bu_vls: \"%s\"\n",
 			(long)(mp->mdb_addr), mp->mdb_len,
 			((char *)mp->mdb_addr) );
 	    } else {
-		fprintf(stderr,"%8lx %6d %s\n",
+		fprintf(stderr, "%8lx %6d %s\n",
 			(long)(mp->mdb_addr), mp->mdb_len,
 			mp->mdb_str);
 	    }
 	    if( *ip != MDB_MAGIC )  {
-		fprintf(stderr,"\tCorrupted end marker was=x%lx\ts/b=x%x\n",
+		fprintf(stderr, "\tCorrupted end marker was=x%lx\ts/b=x%x\n",
 			*ip, MDB_MAGIC);
 	    }
 	}
@@ -554,21 +554,21 @@ bu_prmem(const char *str)
 
 
     if (bu_memq != BU_LIST_NULL)  {
-	fprintf(stderr,"memdebug queue\n Address Length Purpose\n");
+	fprintf(stderr, "memdebug queue\n Address Length Purpose\n");
 	BU_LIST_EACH(bu_memq, mqp, struct memqdebug) {
-	    if (BU_LIST_MAGIC_WRONG(&(mqp->q),MDB_MAGIC)
-		|| BU_LIST_MAGIC_WRONG(&(mqp->m),MDB_MAGIC))
+	    if (BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC)
+		|| BU_LIST_MAGIC_WRONG(&(mqp->m), MDB_MAGIC))
 		bu_bomb("bu_prmem() malloc tracing queue corrupted!\n");
 	    if( mqp->m.mdb_str == bu_strdup_message )  {
-		fprintf(stderr,"%8lx %6d bu_strdup: \"%s\"\n",
+		fprintf(stderr, "%8lx %6d bu_strdup: \"%s\"\n",
 			(long)(mqp->m.mdb_addr), mqp->m.mdb_len,
 			((char *)mqp->m.mdb_addr) );
 	    } else if( mqp->m.mdb_str == bu_vls_message )  {
-		fprintf(stderr,"%8lx %6d bu_vls: \"%s\"\n",
+		fprintf(stderr, "%8lx %6d bu_vls: \"%s\"\n",
 			(long)(mqp->m.mdb_addr), mqp->m.mdb_len,
 			((char *)mqp->m.mdb_addr) );
 	    } else {
-		fprintf(stderr,"%8lx %6d %s\n",
+		fprintf(stderr, "%8lx %6d %s\n",
 			(long)(mqp->m.mdb_addr), mqp->m.mdb_len,
 			mqp->m.mdb_str);
 	    }
@@ -646,13 +646,13 @@ bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 
 
 	if (ptr == (char *)NULL) {
-		fprintf(stderr,"bu_ck_malloc_ptr(x%lx, %s) null pointer\n\n", (long)ptr, str);
+		fprintf(stderr, "bu_ck_malloc_ptr(x%lx, %s) null pointer\n\n", (long)ptr, str);
 		bu_bomb("Goodbye");
 	}
 
 	if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	if( bu_memdebug == (struct memdebug *)0 )  {
-		fprintf(stderr,"bu_ck_malloc_ptr(x%lx, %s)  no memdebug table yet\n",
+		fprintf(stderr, "bu_ck_malloc_ptr(x%lx, %s)  no memdebug table yet\n",
 			(long)ptr, str);
 		/* warning only -- the program is just getting started */
 		return;
@@ -666,19 +666,19 @@ bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 		/* Found the relevant entry */
 		ip = (long *)(((char *)ptr)+mp->mdb_len-sizeof(long));
 		if( *ip != MDB_MAGIC )  {
-			fprintf(stderr,"ERROR bu_ck_malloc_ptr(x%lx, %s) barrier word corrupted! was=x%lx s/b=x%x\n",
+			fprintf(stderr, "ERROR bu_ck_malloc_ptr(x%lx, %s) barrier word corrupted! was=x%lx s/b=x%x\n",
 				(long)ptr, str, (long)*ip, MDB_MAGIC);
 			bu_bomb("bu_ck_malloc_ptr\n");
 		}
 		return;		/* OK */
 	}
-	fprintf(stderr,"WARNING: bu_ck_malloc_ptr(x%lx, %s)\
+	fprintf(stderr, "WARNING: bu_ck_malloc_ptr(x%lx, %s)\
 	pointer not in table of allocated memory.\n", (long)ptr, str);
 	} else if (bu_debug&BU_DEBUG_MEM_QCHECK) {
 		struct memqdebug *mp = (struct memqdebug *)ptr;
-		if (BU_LIST_MAGIC_WRONG(&(mp->q),MDB_MAGIC)
+		if (BU_LIST_MAGIC_WRONG(&(mp->q), MDB_MAGIC)
 		    || mp->m.magic != MDB_MAGIC) {
-			fprintf(stderr,"WARNING: bu_ck_malloc_ptr(x%lx, %s)"
+			fprintf(stderr, "WARNING: bu_ck_malloc_ptr(x%lx, %s)"
 				" memory corrupted.\n", (long)ptr, str);
 		}
 	}
@@ -705,7 +705,7 @@ bu_mem_barriercheck(void)
 	register long	*ip;
 
 	if( bu_memdebug == (struct memdebug *)0 )  {
-		fprintf(stderr,"bu_mem_barriercheck()  no memdebug table yet\n");
+		fprintf(stderr, "bu_mem_barriercheck()  no memdebug table yet\n");
 		return 0;
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -713,14 +713,14 @@ bu_mem_barriercheck(void)
 		if( !mp->magic )  continue;
 		if( mp->magic != MDB_MAGIC )  {
 			bu_semaphore_release( BU_SEM_SYSCALL );
-			fprintf(stderr,"  mp->magic = x%lx, s/b=x%x\n", (long)(mp->magic), MDB_MAGIC );
+			fprintf(stderr, "  mp->magic = x%lx, s/b=x%x\n", (long)(mp->magic), MDB_MAGIC );
 			bu_bomb("bu_mem_barriercheck() malloc tracing table corrupted!\n");
 		}
 		if( mp->mdb_len <= 0 )  continue;
 		ip = (long *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(long));
 		if( *ip != MDB_MAGIC )  {
 			bu_semaphore_release( BU_SEM_SYSCALL );
-			fprintf(stderr,"ERROR bu_mem_barriercheck(x%lx, len=%d) barrier word corrupted!\n\tbarrier at x%lx was=x%lx s/b=x%x %s\n",
+			fprintf(stderr, "ERROR bu_mem_barriercheck(x%lx, len=%d) barrier word corrupted!\n\tbarrier at x%lx was=x%lx s/b=x%x %s\n",
 				(long)mp->mdb_addr, mp->mdb_len,
 				(long)ip, *ip, MDB_MAGIC, mp->mdb_str);
 			return -1;	/* FAIL */

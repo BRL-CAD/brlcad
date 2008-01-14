@@ -57,7 +57,7 @@ main(int argc, char **argv)
 	int	i, bit;
 	int	line;
 
-	if( argc > 1 && strcmp(argv[1],"-v") == 0 ) {
+	if( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
 		verbose++;
 		argc--;
 		argv++;

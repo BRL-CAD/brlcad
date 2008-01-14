@@ -568,7 +568,7 @@ int main(int argc, char *argv[]) {
   */
 
   if((rtip = rt_dirbuild(argv[0], idbuf, sizeof(idbuf))) == RTI_NULL) {
-    fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+    fprintf(stderr, "rtexample: rt_dirbuild failure\n");
     bu_exit(2, NULL);
   }
 

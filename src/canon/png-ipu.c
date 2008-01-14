@@ -73,7 +73,7 @@
 #ifdef IPU_FULL_LIB
 
 
-static png_color_16 def_backgrd={ 255,255,255,255,255 };	/* white */
+static png_color_16 def_backgrd={ 255, 255, 255, 255, 255 };	/* white */
 static double	def_screen_gamma=1.0;	/* Don't add more gamma, by default */
 
 static unsigned char **scanline;	/* 1 scanline pixel buffer */

@@ -88,7 +88,7 @@
 #  else
 #    define MAP_RESERVED	16		/* # slots reserved by MEX */
 #  endif
-#  define COLOR_APPROX(r,g,b)	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
+#  define COLOR_APPROX(r, g, b)	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
 
 /* Window Location */
 #  ifdef mips
@@ -803,7 +803,7 @@ getieee( FILE *fp, double out[], int n )
  *
  *  UNIX-Plot integers are 16bit VAX order (little-endian) 2's complement.
  */
-#define	geti(fp,x)	{ (x) = getc(fp); (x) |= (short)(getc(fp)<<8); }
+#define	geti(fp, x)	{ (x) = getc(fp); (x) |= (short)(getc(fp)<<8); }
 #define	getb(fp)	(getc(fp))
 
 void
@@ -865,96 +865,96 @@ uplot( FILE *fp, Coord max[3], Coord min[3] )
 			break;
 		/* 2D integer */
 		case 's':
-			geti(fp,x1);
-			geti(fp,y1);
-			geti(fp,x2);
-			geti(fp,y2);
+			geti(fp, x1);
+			geti(fp, y1);
+			geti(fp, x2);
+			geti(fp, y2);
 			min[0] = x1; min[1] = y1;
 			max[0] = x2; max[1] = y2;
 			min[2] = -1.0; max[2] = 1.0;
 			break;
 		case 'p':
-			geti(fp,x);
-			geti(fp,y);
+			geti(fp, x);
+			geti(fp, y);
 			pnti( x, y, 0 );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'm':
-			geti(fp,x);
-			geti(fp,y);
+			geti(fp, x);
+			geti(fp, y);
 			movei( x, y, 0 );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'n':
-			geti(fp,x);
-			geti(fp,y);
+			geti(fp, x);
+			geti(fp, y);
 			drawi( x, y, 0 );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'l':
-			geti(fp,x1);
-			geti(fp,y1);
-			geti(fp,x2);
-			geti(fp,y2);
+			geti(fp, x1);
+			geti(fp, y1);
+			geti(fp, x2);
+			geti(fp, y2);
 			movei( x1, y1, 0 );
 			drawi( x2, y2, 0 );
 			xp = x2; yp = y2; zp = 0;
 			break;
 		case 'c':
-			geti(fp,x);
-			geti(fp,y);
-			geti(fp,r);
+			geti(fp, x);
+			geti(fp, y);
+			geti(fp, r);
 			circ( (double)x, (double)y, (double)r );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'a':
-			geti(fp,x);
-			geti(fp,y);
-			geti(fp,x1);
-			geti(fp,y1);
-			geti(fp,x2);
-			geti(fp,y2);
+			geti(fp, x);
+			geti(fp, y);
+			geti(fp, x1);
+			geti(fp, y1);
+			geti(fp, x2);
+			geti(fp, y2);
 			/* ARC XXX */
 			break;
 		/* 3D integer */
 		case 'S':
-			geti(fp,x1);
-			geti(fp,y1);
-			geti(fp,z1);
-			geti(fp,x2);
-			geti(fp,y2);
-			geti(fp,z2);
+			geti(fp, x1);
+			geti(fp, y1);
+			geti(fp, z1);
+			geti(fp, x2);
+			geti(fp, y2);
+			geti(fp, z2);
 			min[0] = x1; min[1] = y1; min[2] = z1;
 			max[0] = x2; max[1] = y2; max[2] = z2;
 			break;
 		case 'P':
-			geti(fp,x);
-			geti(fp,y);
-			geti(fp,z);
+			geti(fp, x);
+			geti(fp, y);
+			geti(fp, z);
 			pnti( x, y, z );
 			xp = x; yp = y; zp = z;
 			break;
 		case 'M':
-			geti(fp,x);
-			geti(fp,y);
-			geti(fp,z);
+			geti(fp, x);
+			geti(fp, y);
+			geti(fp, z);
 			movei( x, y, z );
 			xp = x; yp = y; zp = z;
 			break;
 		case 'N':
-			geti(fp,x);
-			geti(fp,y);
-			geti(fp,z);
+			geti(fp, x);
+			geti(fp, y);
+			geti(fp, z);
 			drawi( x, y, z );
 			xp = x; yp = y; zp = z;
 			break;
 		case 'L':
-			geti(fp,x1);
-			geti(fp,y1);
-			geti(fp,z1);
-			geti(fp,x2);
-			geti(fp,y2);
-			geti(fp,z2);
+			geti(fp, x1);
+			geti(fp, y1);
+			geti(fp, z1);
+			geti(fp, x2);
+			geti(fp, y2);
+			geti(fp, z2);
 			movei( x1, y1, z1 );
 			drawi( x2, y2, z2 );
 			xp = x2; yp = y2; zp = z2;
@@ -965,7 +965,7 @@ uplot( FILE *fp, Coord max[3], Coord min[3] )
 			b = getb(fp);
 			if( cmap_mode ) {
 				if( ismex() )
-					color( COLOR_APPROX(r,g,b) );
+					color( COLOR_APPROX(r, g, b) );
 				else
 					color( (b&0xf0)<<4 | (g&0xf0) | (r>>4) );
 			} else {
@@ -1076,7 +1076,7 @@ view_loop()
 			if( cmap_mode ) {
 				color(BLACK);
 			} else {
-				RGBcolor(0,0,0);
+				RGBcolor(0, 0, 0);
 			}
 			clear();
 			if( axis )
@@ -1086,11 +1086,11 @@ view_loop()
 				/* set the default drawing color to white */
 				if( cmap_mode ) {
 					if( ismex() )
-						color( COLOR_APPROX(255,255,255) );
+						color( COLOR_APPROX(255, 255, 255) );
 					else
 						color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
 				} else {
-					RGBcolor(255,255,255);
+					RGBcolor(255, 255, 255);
 				}
 				callobj( o );
 			}
@@ -1153,8 +1153,8 @@ main(int argc, char *argv[])
 	}
 	while( bu_optind < argc ) {
 		file = argv[bu_optind];
-		if( (fp = fopen(file,"r")) == NULL ) {
-			fprintf(stderr,"pl-sgi: can't open \"%s\"\n", file);
+		if( (fp = fopen(file, "r")) == NULL ) {
+			fprintf(stderr, "pl-sgi: can't open \"%s\"\n", file);
 			bu_exit ( 3, NULL );
 		}
 		file_input = 1;

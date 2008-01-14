@@ -21,7 +21,7 @@
 /** @{ */
 /** @file nurb_c2.c
  *
- *	Given parametric u,v values, return the curvature of the
+ *	Given parametric u, v values, return the curvature of the
  *	surface.
  *
  *  Author -
@@ -66,11 +66,11 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	uvs = rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 
 	rt_nurb_s_eval(srf, u, v, se);
-	rt_nurb_s_eval(us, u,v, ue);
-	rt_nurb_s_eval(vs, u,v, ve);
-	rt_nurb_s_eval(uus, u,v, uue);
-	rt_nurb_s_eval(vvs, u,v, vve);
-	rt_nurb_s_eval(uvs, u,v, uve);
+	rt_nurb_s_eval(us, u, v, ue);
+	rt_nurb_s_eval(vs, u, v, ve);
+	rt_nurb_s_eval(uus, u, v, uue);
+	rt_nurb_s_eval(vvs, u, v, vve);
+	rt_nurb_s_eval(uvs, u, v, uve);
 
 	rt_nurb_free_snurb( us, (struct resource *)NULL);
 	rt_nurb_free_snurb( vs, (struct resource *)NULL);
@@ -146,7 +146,7 @@ rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t
 	if( fabs( E*G - F*F) < 0.0001 )		/* XXX */
 	{
 		bu_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
-			E,F,G);
+			E, F, G);
 		bn_vec_ortho(cvp->crv_pdir, norm);	/* sanity */
 		return;
 	}

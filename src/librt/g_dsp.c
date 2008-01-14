@@ -41,7 +41,7 @@
  *		7	ZTOP (computed)
  *
  *  if the "struct hit" surfno surface is ZMAX, then
- *  	hit_vpriv[X,Y] holds the cell that was hit.
+ *  	hit_vpriv[X, Y] holds the cell that was hit.
  * 	hit_vpriv[Z] is 0 if this was an in-hit.  1 if an out-hit
  *
  *
@@ -91,7 +91,7 @@ struct dsp_bb {
      * the next two elements indicate the number and locations of
      * sub-bounding rpps.
      *
-     * dsp_b_ch_dim is typically DIM_BB_CHILDREN,DIM_BB_CHILDREN
+     * dsp_b_ch_dim is typically DIM_BB_CHILDREN, DIM_BB_CHILDREN
      * except for "border" areas of the array
      */
     unsigned short	dspb_subcell_size;/* XXX This is not yet computed */
@@ -104,7 +104,7 @@ struct dsp_bb {
  * This structure provides a handle to all of the bounding boxes for the DSP
  * at a particular resolution.
  */
-#define LAYER(l, x,y) l->p[l->dim[1]*y+x]
+#define LAYER(l, x, y) l->p[l->dim[1]*y+x]
 struct dsp_bb_layer {
     int	dim[2];		/* the dimensions of the array at element p */
     struct dsp_bb *p;	/* array of dsp_bb's for this level */
@@ -203,7 +203,7 @@ struct isect_stuff {
     struct bbox_isect	minbox;
 
     int			num_segs;
-    int			dmin, dmax;	/* for dsp_in_rpp , {X,Y,Z}MIN/MAX */
+    int			dmin, dmax;	/* for dsp_in_rpp , {X, Y, Z}MIN/MAX */
 };
 
 
@@ -819,8 +819,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 		for (y=0 ; y < curr->dim[Y] ; y++ ) {
 	    for (x=0 ; x < curr->dim[X] ; x++ ) {
 				int n, xp, yp;
-				/* x,y are in the coordinates in the current
-				 * layer.  xp,yp are the coordinates of the
+				/* x, y are in the coordinates in the current
+				 * layer.  xp, yp are the coordinates of the
 				 * same area in the previous (lower) layer.
 				 */
 				xp = x * DIM_BB_CHILDREN;
@@ -1940,7 +1940,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 		    VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
 		}
 
-		if (ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax,255, 255, 255))
+		if (ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255))
 		    return 1;
 
 		hitp = 0;
@@ -2146,7 +2146,7 @@ recurse_dsp_bb(struct isect_stuff *isect,
     double	tX, tY;		/* dist from hit pt. to next cell boundary */
     double	curr_dist;
     short	cX, cY;		/* coordinates of current cell */
-    short	cs;		/* cell X,Y dimension */
+    short	cs;		/* cell X, Y dimension */
     short	stepX, stepY;	/* dist to step in child array for each dir */
     short	stepPX, stepPY;
     double 	out_dist;
@@ -2966,8 +2966,8 @@ rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 /**
  *  			R T _ D S P _ U V
  *
- *  For a hit on the surface of a dsp, return the (u,v) coordinates
- *  of the hit point, 0 <= u,v <= 1.
+ *  For a hit on the surface of a dsp, return the (u, v) coordinates
+ *  of the hit point, 0 <= u, v <= 1.
  *  u = azimuth
  *  v = elevation
  */
@@ -3001,7 +3001,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     /* du, dv indicate the extent of the ray radius in UV coordinates.
      * To compute this, transform unit vectors from solid space to model
      * space.  We remember the length of the resultant vectors and then
-     * unitize them to get u,v directions in model coordinate space.
+     * unitize them to get u, v directions in model coordinate space.
      */
     VSET( tmp, XSIZ(dsp), 0.0, 0.0 );	/* X direction vector */
     MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp ); /* into model space */
@@ -4104,7 +4104,7 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 	    while( sp && sp->sp_name != NULL ) {
 		Tcl_DStringAppendElement( &ds, sp->sp_name );
 		bu_vls_trunc( &str, 0 );
-		bu_vls_struct_item(&str,sp,(char *)dsp_ip,' ');
+		bu_vls_struct_item(&str, sp,(char *)dsp_ip,' ');
 		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
 		++sp;
 	    }
@@ -4183,7 +4183,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
     intern->idb_meth = ftp;
 
-    dsp =(struct rt_dsp_internal *)bu_calloc(sizeof(struct rt_dsp_internal),1, "rt_dsp_internal");
+    dsp =(struct rt_dsp_internal *)bu_calloc(sizeof(struct rt_dsp_internal), 1, "rt_dsp_internal");
 
     intern->idb_ptr = (genptr_t)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
@@ -4451,7 +4451,7 @@ dsp_pos(point_t out, /* return value */
 	VPRINT("user_pt", p);
 	VPRINT("tri_pt", tri_pt);
 	VPRINT("model_space", out);
-	bu_log("X: %d Y:%d\n",x, y);
+	bu_log("X: %d Y:%d\n", x, y);
     }
 
     return 0;

@@ -62,7 +62,7 @@ main(int argc, char **argv)
 	/* Get info */
 	printf( "Area to extract (x, y) in pixels " );
 	scanf( "%d%d", &xnum, &ynum );
-	printf( "Origin to extract from (0,0 is lower left) " );
+	printf( "Origin to extract from (0, 0 is lower left) " );
 	scanf( "%d%d", &xorig, &yorig );
 	printf( "Scan line length of input file " );
 	scanf( "%d", &linelen );

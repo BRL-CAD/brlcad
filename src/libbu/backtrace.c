@@ -81,8 +81,8 @@ static int backtrace_done = 0;
 static int interrupt_wait = 0;
 
 /* avoid stack variables for backtrace() */
-static int input[2] = {0,0};
-static int output[2] = {0,0};
+static int input[2] = {0, 0};
+static int output[2] = {0, 0};
 static fd_set fdset;
 static fd_set readset;
 static struct timeval tv;

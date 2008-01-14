@@ -668,7 +668,7 @@ rt_binunif_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 			bu_vls_strcpy( &vls, "binunif" );
 			bu_vls_printf( &vls, " T %d D {", bip->type );
 			c = ext.ext_buf;
-			for( i=0 ; i<ext.ext_nbytes ; i++,c++ ) {
+			for( i=0 ; i<ext.ext_nbytes ; i++, c++ ) {
 				if( i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
 				bu_vls_printf( &vls, "%2.2x", *c );
 			}
@@ -687,7 +687,7 @@ rt_binunif_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 				status = TCL_ERROR;
 			} else {
 				c = ext.ext_buf;
-				for( i=0 ; i<ext.ext_nbytes ; i++,c++ ) {
+				for( i=0 ; i<ext.ext_nbytes ; i++, c++ ) {
 					if( i != 0 && i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
 					bu_vls_printf( &vls, "%2.2x", *c );
 				}

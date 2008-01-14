@@ -170,7 +170,7 @@ dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 {
   double _t[LEN] VEC_ALIGN;
   for (int i = 0; i < LEN; i++) _t[i] = s;
-  dvec<LEN> t(_t,true);
+  dvec<LEN> t(_t, true);
   return madd(t, b);
 }
 
@@ -182,7 +182,7 @@ dvec<LEN>::foldr(double identity, const dvec_op& op, int limit)
     a_store(_t);
     double val = identity;
     for (int i = limit-1; i >= 0; i--) {
-	val = op(_t[i],val);
+	val = op(_t[i], val);
     }
     return val;
 }
@@ -234,11 +234,11 @@ class vec2d {
 public:
 
   vec2d() {
-    _init(0,0);
+    _init(0, 0);
   }
 
   vec2d(double x, double y) {
-    _init(x,y);
+    _init(x, y);
   }
 
   vec2d(const vec2d& proto)
@@ -271,32 +271,32 @@ public:
 
   vec2d operator+(const vec2d& b) const
   {
-    return vec2d(_mm_add_pd(_vec,b._vec));
+    return vec2d(_mm_add_pd(_vec, b._vec));
   }
 
   vec2d operator-(const vec2d& b) const
   {
-    return vec2d(_mm_sub_pd(vec(),b.vec()));
+    return vec2d(_mm_sub_pd(vec(), b.vec()));
   }
 
   vec2d operator*(const vec2d& b) const
   {
-    return vec2d(_mm_mul_pd(vec(),b.vec()));
+    return vec2d(_mm_mul_pd(vec(), b.vec()));
   }
 
   vec2d operator/(const vec2d& b) const
   {
-    return vec2d(_mm_div_pd(vec(),b.vec()));
+    return vec2d(_mm_div_pd(vec(), b.vec()));
   }
 
   vec2d madd(const double& scalar, const vec2d& b) const
   {
-    return madd(vec2d(scalar,scalar), b);
+    return madd(vec2d(scalar, scalar), b);
   }
 
   vec2d madd(const vec2d& s, const vec2d& b) const
   {
-    return vec2d(_mm_add_pd(_mm_mul_pd(vec(),s.vec()),b.vec()));
+    return vec2d(_mm_add_pd(_mm_mul_pd(vec(), s.vec()), b.vec()));
   }
 
 private:

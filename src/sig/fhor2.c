@@ -36,8 +36,8 @@
 
 #define	MYMETHOD	on
 
-#define	MAX(x,y)	(((x)>(y))?(x):(y))
-#define	MIN(x,y)	(((x)<(y))?(x):(y))
+#define	MAX(x, y)	(((x)>(y))?(x):(y))
+#define	MIN(x, y)	(((x)<(y))?(x):(y))
 
 #define	HSCREEN	1024	/* Max Horizontal screen resolution */
 #define	VSCREEN	1024	/* Max Vertical screen resolution   */
@@ -145,7 +145,7 @@ Point(int x, int y)
 }
 
 /*
- * DRAW - plot a line from (x1,y1) to (x2,y2)
+ * DRAW - plot a line from (x1, y1) to (x2, y2)
  *  An integer Bresenham algorithm for any quadrant.
  */
 Draw(int x1, int y1, int x2, int y2)

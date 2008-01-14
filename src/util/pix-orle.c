@@ -161,7 +161,7 @@ main(int argc, char **argv)
 
 	/* Read image a scanline at a time, and encode it */
 	for( y = 0; y < file_height; y++ )  {
-		if(rle_debug)fprintf(stderr,"encoding line %d\n", y);
+		if(rle_debug)fprintf(stderr, "encoding line %d\n", y);
 		if( fread( (char *)scan_buf, sizeof(RGBpixel), file_width, infp ) != file_width)  {
 			(void) fprintf(	stderr,
 				"read of %d pixels on line %d failed!\n",

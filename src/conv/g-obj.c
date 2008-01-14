@@ -233,9 +233,9 @@ main(int argc, char **argv)
 
 /* Write out  header */
 	if (inches)
-		fprintf(fp,"# BRL-CAD generated Wavefront OBJ file (Units in)\n");
+		fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units in)\n");
 	else
-		fprintf(fp,"# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
+		fprintf(fp, "# BRL-CAD generated Wavefront OBJ file (Units mm)\n");
 
 	fprintf( fp, "# BRL-CAD model: %s\n# BRL_CAD objects:", argv[0] );
 
@@ -298,7 +298,7 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
 	region_name = db_path_to_string( pathp );
 
 #if 0
-	printf("Attempting to process region %s\n",region_name);
+	printf("Attempting to process region %s\n", region_name);
 	fflush(stdout);
 #endif
 
@@ -520,8 +520,8 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
 		}
 	}
 /*	regions_converted++;
-	printf("Processed region %s\n",region_name);
-	printf("Regions attempted = %d Regions done = %d\n",regions_tried,regions_converted);
+	printf("Processed region %s\n", region_name);
+	printf("Regions attempted = %d Regions done = %d\n", regions_tried, regions_converted);
 	fflush(stdout);
 */
 	vert_offset += numverts;
@@ -578,7 +578,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 			sofar = db_path_to_string(pathp);
 			bu_log( "FAILED in Boolean evaluation: %s\n", sofar );
-			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
+			fprintf(fpe, "Failed Bool. Eval.: %s\n", sofar);
 			fflush(fpe);
 			bu_free( (char *)sofar, "sofar" );
 
@@ -656,7 +656,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 				sofar = db_path_to_string(pathp);
 				bu_log( "FAILED in triangulator: %s\n", sofar );
-				fprintf(fpe,"Failed in triangulator: %s\n",sofar);
+				fprintf(fpe, "Failed in triangulator: %s\n", sofar);
 				fflush(fpe);
 				bu_free( (char *)sofar, "sofar" );
 
@@ -713,7 +713,7 @@ out:
 		npercent = (float)(regions_converted * 100) / regions_tried;
 		tpercent = (float)(regions_written * 100) / regions_tried;
 		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
-		regions_tried, regions_converted, regions_written, npercent,tpercent);
+		regions_tried, regions_converted, regions_written, npercent, tpercent);
 	}
 
 	BU_GETUNION(curtree, tree);

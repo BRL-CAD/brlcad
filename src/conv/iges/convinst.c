@@ -33,7 +33,7 @@ void
 Convinst()
 {
 
-	int			i,j,k;
+	int			i, j, k;
 	int			type;
 	int			pointer;
 	int			conv=0;

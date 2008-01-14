@@ -443,17 +443,17 @@ register FBIO	*ifp;
 				for( i=xwidth; i > 0; i--)  {
 					switch( ifp->if_mode ) {
 					case MODE_RGB:
-						PASSCMD(hole,3,FBCrgbcolor);
+						PASSCMD(hole, 3, FBCrgbcolor);
 						hole->s = (ip[RED]);
 						hole->s = (ip[GRN]);
 						hole->s = (ip[BLU]);
 						break;
 					case MODE_FIT:
-						PASSCMD(hole,1,FBCcolor);
+						PASSCMD(hole, 1, FBCcolor);
 						hole->s = get_Color_Index( ifp, ip );
 						break;
 					case MODE_APPROX:
-						PASSCMD(hole,1,FBCcolor);
+						PASSCMD(hole, 1, FBCcolor);
 						hole->s = COLOR_APPROX(ip);
 						break;
 					}
@@ -482,7 +482,7 @@ register FBIO	*ifp;
 
 					switch( ifp->if_mode ) {
 					case MODE_RGB:
-						PASSCMD(hole,3,FBCrgbcolor);
+						PASSCMD(hole, 3, FBCrgbcolor);
 						hole->s = CMR(ifp)[ip[RED]];
 						hole->s = CMG(ifp)[ip[GRN]];
 						hole->s = CMB(ifp)[ip[BLU]];
@@ -491,14 +491,14 @@ register FBIO	*ifp;
 						new[RED] = CMR(ifp)[ip[RED]];
 						new[GRN] = CMG(ifp)[ip[GRN]];
 						new[BLU] = CMB(ifp)[ip[BLU]];
-						PASSCMD(hole,1,FBCcolor);
+						PASSCMD(hole, 1, FBCcolor);
 						hole->s = get_Color_Index( ifp, new );
 						break;
 					case MODE_APPROX:
 						new[RED] = CMR(ifp)[ip[RED]];
 						new[GRN] = CMG(ifp)[ip[GRN]];
 						new[BLU] = CMB(ifp)[ip[BLU]];
-						PASSCMD(hole,1,FBCcolor);
+						PASSCMD(hole, 1, FBCcolor);
 						hole->s = COLOR_APPROX(new);
 						break;
 					}
@@ -988,7 +988,7 @@ int	count;
 
 				switch( ifp->if_mode )  {
 				case MODE_RGB:
-					PASSCMD(hole,3,FBCrgbcolor);
+					PASSCMD(hole, 3, FBCrgbcolor);
 					if ( SGI(ifp)->si_cmap_flag == FALSE ) {
 						hole->s = (cp[RED]);
 						hole->s = (cp[GRN]);
@@ -1000,7 +1000,7 @@ int	count;
 					}
 					break;
 				case MODE_FIT:
-					PASSCMD(hole,1,FBCcolor);
+					PASSCMD(hole, 1, FBCcolor);
 					if ( SGI(ifp)->si_cmap_flag == FALSE ) {
 						hole->s = get_Color_Index( ifp, cp );
 					} else {
@@ -1012,7 +1012,7 @@ int	count;
 					}
 					break;
 				case MODE_APPROX:
-					PASSCMD(hole,1,FBCcolor);
+					PASSCMD(hole, 1, FBCcolor);
 					if ( SGI(ifp)->si_cmap_flag == FALSE ) {
 						hole->s = COLOR_APPROX(cp);
 					} else {
@@ -1136,7 +1136,7 @@ int	count;
 							*op++ = (*pixelp)[GRN]];
 						new[BLU] = CMB(ifp)[
 							*op++ = (*pixelp)[BLU]];
-						hole->s = get_Color_Index(ifp,new);
+						hole->s = get_Color_Index(ifp, new);
 					}
 				}
 			}
@@ -1329,7 +1329,7 @@ int	x, y;
 	if( qtest() )
 		sgw_inqueue(ifp);
 
-	fb_sim_cursor(ifp,mode,x,y);
+	fb_sim_cursor(ifp, mode, x, y);
 	SGI(ifp)->si_curs_on = mode;
 	if( ! mode )  {
 		cursoff();
@@ -1430,7 +1430,7 @@ register RGBpixel	*pixelp;
 	return	(Colorindex)best;
 }
 
-#define SET(i,r,g,b)	{ \
+#define SET(i, r, g, b)	{ \
 	rgb_table[i][RED] = r; \
 	rgb_table[i][GRN] = g; \
 	rgb_table[i][BLU] = b; }
@@ -1616,17 +1616,17 @@ RGBpixel	*pixelp;
 
 	switch( ifp->if_mode ) {
 	case MODE_RGB:
-		PASSCMD(hole,3,FBCrgbcolor);
+		PASSCMD(hole, 3, FBCrgbcolor);
 		hole->s = (*pixelp)[RED];
 		hole->s = (*pixelp)[GRN];
 		hole->s = (*pixelp)[BLU];
 		break;
 	case MODE_FIT:
-		PASSCMD(hole,1,FBCcolor);
+		PASSCMD(hole, 1, FBCcolor);
 		hole->s = get_Color_Index( ifp, pixelp );
 		break;
 	case MODE_APPROX:
-		PASSCMD(hole,1,FBCcolor);
+		PASSCMD(hole, 1, FBCcolor);
 		hole->s = COLOR_APPROX(*pixelp);
 		break;
 	}

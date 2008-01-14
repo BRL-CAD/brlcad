@@ -478,7 +478,7 @@ main(int argc, char **argv)
 	if( bu_optind >= argc )  {
 		/* Process one TROFF file from stdin */
 		if( overlay_from_stdin )  {
-			fprintf(stderr,"cat-fb: -O ignored, stdin used for C/A/T code\n");
+			fprintf(stderr, "cat-fb: -O ignored, stdin used for C/A/T code\n");
 			overlay_from_stdin = 0;
 		}
 		ofile(stdin);
@@ -551,18 +551,18 @@ ofile(register FILE *fp)
 			continue;
 		if (c & 0200) {
 			esc += (~c) & 0177;
-			if(debug>1)fprintf(stderr,"esc+= %d ", (~c)&0177 );
+			if(debug>1)fprintf(stderr, "esc+= %d ", (~c)&0177 );
 			continue;
 		}
 		if (esc) {
 			if (back)
 				esc = -esc;
-			if(debug>1)fprintf(stderr,"esc=%d, back=%d\n", esc, back);
+			if(debug>1)fprintf(stderr, "esc=%d, back=%d\n", esc, back);
 			col += esc;
 			ypos = CONVERT(col);
 			esc = 0;
 		}
-		if(debug>1)fprintf(stderr,"   0%o v=%d (row=%g) h=%d (col=%g)\n", c, xpos, row, ypos, col);
+		if(debug>1)fprintf(stderr, "   0%o v=%d (row=%g) h=%d (col=%g)\n", c, xpos, row, ypos, col);
 
 		if ((c & 0377) < 0100)	/*  Purely for efficiency  */
 			goto normal_char;
@@ -655,7 +655,7 @@ ofile(register FILE *fp)
 					c = CONVERT(row);
 				}
 				xpos = c;
-				if(debug)fprintf(stderr,"v=%d (row=%g)\n", xpos, row);
+				if(debug)fprintf(stderr, "v=%d (row=%g)\n", xpos, row);
 				continue;
 			}
 			if ((c & 0360) == 0120)	/* size change */ {
@@ -699,7 +699,7 @@ findsize(register int code)
 	if (back)
 		delta = -delta;
 	esc += delta;	/* Compensate for C/A/T hardware shift during size change */
-	if(debug)fprintf(stderr,"findsize: changing escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
+	if(debug)fprintf(stderr, "findsize: changing escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
 	last_ssize = psp->stupid_code;
 	return (psp->real_code);
 }
@@ -761,7 +761,7 @@ readinfont(void)
 
 	if( (vfp = vfont_get( cbuf )) == VFONT_NULL )  {
 		/* Ignore font change */
-		fprintf(stderr,"cat-fb:  Unable to acquire font '%s'\n", cbuf);
+		fprintf(stderr, "cat-fb:  Unable to acquire font '%s'\n", cbuf);
 		fontwanted = 0;
 		return (-1);
 	}
@@ -771,7 +771,7 @@ readinfont(void)
 	fontdes[cfont].fnum = fnum;
 	fontdes[cfont].psize = fontdes[cfont].psize = size;
 	fontdes[cfont].vfp = vfp;
-	if(debug) fprintf(stderr,"slot %d = %s\n", cfont, cbuf );
+	if(debug) fprintf(stderr, "slot %d = %s\n", cfont, cbuf );
 
 	fontwanted = 0;
 	new_font_num = new_pt_size = -1;
@@ -852,7 +852,7 @@ outc(int code)
 	/* xpos is vertical (typ. called Y), ypos is horizontal (typ. X)
 	 * like a strip-chart recorder */
 	if(debug)  {
-		fprintf(stderr,"%c h=%d v=%d  (row=%g col=%g) l=%d r=%d  u=%d d=%d  w=%d\n",
+		fprintf(stderr, "%c h=%d v=%d  (row=%g col=%g) l=%d r=%d  u=%d d=%d  w=%d\n",
 		c, ypos, xpos,
 		row, col,
 		vdp->vd_left, vdp->vd_right,

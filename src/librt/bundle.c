@@ -381,7 +381,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 				/* Add seg chain to list awaiting rt_boolweave() */
 				{
 					register struct seg *s2;
-					while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
+					while(BU_LIST_WHILE(s2, seg,&(new_segs.l)))  {
 						BU_LIST_DEQUEUE( &(s2->l) );
 						/* Restore to original distance */
 						s2->seg_in.hit_dist += ss.dist_corr;
@@ -484,7 +484,7 @@ weave:
 	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	if(debug_shoot)  rt_pr_partitions(rtip,&FinalPart,"a_hit()");
+	if(debug_shoot)  rt_pr_partitions(rtip,&FinalPart, "a_hit()");
 
 	/*
 	 *  Before recursing, release storage for unused Initial partitions.
@@ -497,7 +497,7 @@ hitit:
 	 *  finished_segs is only used by special hit routines
 	 *  which don't follow the traditional solid modeling paradigm.
 	 */
-	if(RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart,"Parition list passed to a_hit() routine");
+	if(RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip,&FinalPart, "Parition list passed to a_hit() routine");
 	ap->a_return = ap->a_hit( ap, &FinalPart, &finished_segs );
 	status = "HIT";
 

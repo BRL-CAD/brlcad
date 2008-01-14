@@ -34,7 +34,7 @@
  *	map	is filled using eqptr
  *
  * Uses:
- *	EqCubics	x,A,B,C,D of a set of cubics for a curve
+ *	EqCubics	x, A, B, C, D of a set of cubics for a curve
  *
  * Calls:
  *	eq_line	given x return y; requires EqLineSlope and EqLineB
@@ -61,7 +61,7 @@
 #define	DLEVEL	1
 extern int Debug;
 typedef struct Cubic {
-	double	x,A,B,C,D;
+	double	x, A, B, C, D;
 } C;
 static struct Cubic	*EqCubics=0;
 int eq_cubic(int x);
@@ -69,7 +69,7 @@ int eq_cubic(int x);
 void
 tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
 {
-	int i,result;
+	int i, result;
 
 /*
  * 	Is there a function we should be using?
@@ -98,13 +98,13 @@ tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
 		result=eqptr(i);
 		if (result<0) {
 			if (Debug >= DLEVEL) {
-				fprintf(stderr,"tonescale: y=%d, x=%d\n",
+				fprintf(stderr, "tonescale: y=%d, x=%d\n",
 				    result, i);
 			}
 			result=0;
 		} else if (result > 255) {
 			if (Debug >= DLEVEL) {
-				fprintf(stderr,"tonescale: y=%d, x=%d\n",
+				fprintf(stderr, "tonescale: y=%d, x=%d\n",
 				    result, i);
 			}
 			result=255;
@@ -145,7 +145,7 @@ eq_cubic(int x)
 	struct Cubic *p = EqCubics;
 
 	if (!p) {
-		fprintf(stderr,"eq_cubic called with no cubics!\n");
+		fprintf(stderr, "eq_cubic called with no cubics!\n");
 		return(x);
 	}
 	while (x >= (p+1)->x) p++;
@@ -239,9 +239,9 @@ cubic_init(int n, int *x, int *y)
 	free(l);
 	if (Debug>1) {
 		for(i=0;i<n;i++) {
-			fprintf(stderr,"x=%g, A=%g, B=%g, C=%g, D=%g\n",
-			EqCubics[i].x,EqCubics[i].A,EqCubics[i].B,
-			EqCubics[i].C,EqCubics[i].D);
+			fprintf(stderr, "x=%g, A=%g, B=%g, C=%g, D=%g\n",
+			EqCubics[i].x, EqCubics[i].A, EqCubics[i].B,
+			EqCubics[i].C, EqCubics[i].D);
 		}
 	}
 }

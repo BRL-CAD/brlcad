@@ -227,7 +227,7 @@ void
 do_grid(char *line)
 {
 	int grid_no;
-	fastf_t x,y,z;
+	fastf_t x, y, z;
 
 	if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed at start of do_grid\n" );
@@ -309,7 +309,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	}
 	else
 	{
-		thickness[face_count] = 0,0;
+		thickness[face_count] = 0, 0;
 		facemode[face_count] = 0;
 	}
 
@@ -323,7 +323,7 @@ void
 do_tri(char *line)
 {
 	int element_id;
-	int pt1,pt2,pt3;
+	int pt1, pt2, pt3;
 	fastf_t thick;
 	int pos;
 
@@ -389,7 +389,7 @@ void
 do_quad(char *line)
 {
 	int element_id;
-	int pt1,pt2,pt3,pt4;
+	int pt1, pt2, pt3, pt4;
 	fastf_t thick = 0.0;
 	int pos = 0;
 
@@ -569,7 +569,7 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
     lines = strdup(argv[2]);
     cp = line = lines;
 
-    FIND_NEWLINE(cp,eosFlag);
+    FIND_NEWLINE(cp, eosFlag);
 
     strncpy(field, line+8, 8);
     group_id = atoi(field);
@@ -595,7 +595,7 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
     while (!eosFlag) {
 	++cp;
 	line = cp;
-	FIND_NEWLINE(cp,eosFlag);
+	FIND_NEWLINE(cp, eosFlag);
 
 	if (!strncmp(line , "GRID" , 4))
 	    do_grid(line);

@@ -53,8 +53,8 @@ main(int argc, char **argv)
 	char line[LINE_LEN];
 	char *cptr;
 	int rshift=5;
-	int nlg=512,nlt=256;
-	int x,y;
+	int nlg=512, nlt=256;
+	int x, y;
 	fastf_t delta_z=0;
 	fastf_t delta_angle;
 	fastf_t angle=0.0;
