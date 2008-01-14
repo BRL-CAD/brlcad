@@ -52,6 +52,10 @@
  *
  */
 
+#ifndef lint
+static const char RCSid[] = "$Id$";	/* used for debug ver */
+#endif
+
 #include "common.h"
 
 #include <stdlib.h>

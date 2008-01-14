@@ -29,6 +29,8 @@
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
+static const char RCSid[] = "$Id";
+
 #include "common.h"
 
 #include <math.h>
