@@ -283,11 +283,7 @@ main(int argc, char **argv)
 			break;
 		    case 'n':		/* "not new" == "classic" */
 		    case 'c':
-#ifdef _WIN32
 			classic_mged = 1;
-#else
-			MessageBox(NULL,"-c OPTION NOT AVAILABLE","NOT SUPPORTED",MB_OK);
-#endif
 			break;
 		    case 'x':
 			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
