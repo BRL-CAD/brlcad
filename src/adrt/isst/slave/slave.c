@@ -36,7 +36,6 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "isst.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
