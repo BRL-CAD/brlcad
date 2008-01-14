@@ -297,13 +297,30 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
   }
 
   if(dmp->dm_top){
-    /* Make xtkwin a toplevel window */
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
-      Tk_CreateWindowFromPath(interp,
-			      tkwin,
-			      bu_vls_addr(&dmp->dm_pathName),
-			      bu_vls_addr(&dmp->dm_dName));
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
+      /* Make xtkwin a toplevel window */
+#if 1
+      Tcl_DString ds;
+      char *cp;
+      int ret;
+
+      Tcl_DStringInit(&ds);
+      Tcl_DStringAppend(&ds, "toplevel ", -1);
+      Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->dm_pathName), -1);
+      if (Tcl_Eval(interp, Tcl_DStringValue(&ds)) != TCL_OK) {
+	  Tcl_DStringFree(&ds);
+	  return DM_NULL;
+      }
+      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
+	  Tk_NameToWindow(interp, bu_vls_addr(&dmp->dm_pathName), tkwin);
+      Tcl_DStringFree(&ds);
+#else
+      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
+	  Tk_CreateWindowFromPath(interp,
+				  tkwin,
+				  bu_vls_addr(&dmp->dm_pathName),
+				  bu_vls_addr(&dmp->dm_dName));
+#endif
+      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
   }else{
      char *cp;
 
@@ -468,8 +485,9 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	return DM_NULL;
     }
 
-  Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-  return dmp;
+    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+
+    return dmp;
 }
 
 /*
