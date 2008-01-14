@@ -404,7 +404,8 @@ int main(int argc, char **argv)
 	if( outputfile && strcmp( outputfile, "-") == 0 )
 		outputfile = (char *)0;
 
-	pkg_init();
+	if (framebuffer != (char *)0)
+	    pkg_init();
 
 	/*
 	 *  Initialize application.
@@ -446,7 +447,7 @@ int main(int argc, char **argv)
 			zoom = 1;
 		}
 		(void)fb_view( fbp, width/2, height/2,
-			zoom, zoom );
+			       zoom, zoom );
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	}
 	if( (outputfile == (char *)0) && (fbp == FBIO_NULL) )  {
@@ -455,7 +456,6 @@ int main(int argc, char **argv)
 		/* output_is_binary is changed by view_init, as appropriate */
 		if( output_is_binary && isatty(fileno(outfp)) )  {
 			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
-			pkg_terminate();
 			return 14;
 		}
 	}
@@ -486,8 +486,9 @@ int main(int argc, char **argv)
 		    /* Release the framebuffer, if any */
 		    if( fbp != FBIO_NULL ) {
 			fb_close(fbp);
+			pkg_terminate();
 		    }
-		    pkg_terminate();
+
 		    return 1;
 		}
 	} else if( !isatty(fileno(stdin)) && old_way( stdin ) )  {
@@ -517,10 +518,11 @@ int main(int argc, char **argv)
 	}
 
 	/* Release the framebuffer, if any */
-	if( fbp != FBIO_NULL )
+	if (fbp != FBIO_NULL) {
 		fb_close(fbp);
+		pkg_terminate();
+	}
 
-	pkg_terminate();
 	return(0);
 }
 
