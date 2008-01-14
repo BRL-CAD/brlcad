@@ -44,6 +44,7 @@ bin_PROGRAMS = \
 	dunncolor \
 	dunnsnap \
 	files-tape \
+	fix_polysolids \
 	gencolor \
 	hex \
 	imgdims \
@@ -257,6 +258,9 @@ dunnsnap_LDADD = ${FB} ${BU}
 
 files_tape_SOURCES = files-tape.c
 files_tape_LDADD = ${BU}
+
+fix_polysolids_SOURCES = fix_polysolids.c
+fix_polysolids_LDADD = ${RT} ${BU}
 
 gencolor_SOURCES = gencolor.c
 gencolor_LDADD = ${BU}
@@ -633,12 +637,10 @@ sample_applications_DATA = \
 	pl-dm.c \
 	roots_example.c
 
-# XXX need to investigate why these .c are not being built
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
-	${PL_X_EXTRA} \
-	fix_polysolids.c
+	${PL_X_EXTRA}
 
 DEPS=src/liborle src/libdm src/libfb
 
