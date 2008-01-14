@@ -39,6 +39,7 @@
 
 #include "bu.h"
 
+static const char *RCSid = "$Id$";
 
 #define	NUM	3000
 double	orig[NUM], after[NUM];
