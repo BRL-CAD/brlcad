@@ -7,6 +7,7 @@ bin_SCRIPTS = \
 	cray.sh \
 	facetall.sh \
 	indent.sh \
+	news2tracker.sh \
 	pixinfo.sh \
 	pixread.sh \
 	pixwrite.sh \
