@@ -131,6 +131,7 @@ struct rt_metaball_internal {
 	fastf_t	threshold;
 	struct bu_list	metaball_ctrl_head;
 };
+fastf_t rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb);
 #define RT_METABALL_INTERNAL_MAGIC      0x62616c6c	/* ball */
 #define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_METABALL_INTERNAL_MAGIC,"rt_metaball_internal")
 
