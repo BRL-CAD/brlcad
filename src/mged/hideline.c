@@ -19,12 +19,6 @@
  */
 /** @file hideline.c
  *
- */
-
-/*
- *			H I D E L I N E . C
- *
- * Description -
  *	Takes the vector  list for the  current  display  and  raytraces
  *	along those vectors.  If the first point hit in the model is the
  *	same as that  vector,  continue  the line  through  that  point;
@@ -43,16 +37,7 @@
  * History -
  *	01 Aug 88		Began initial coding
  *
- *  Source -
- *	Research  Institute,  E-47
- *	University of Alabama in Huntsville
- *	Huntsville, AL 35899
- *	(205) 895-6467	UAH
- *	(205) 876-1089	Redstone Arsenal
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -63,8 +48,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "solid.h"
+
+#include "./ged.h"
 #include "./mged_dm.h"
 
 
