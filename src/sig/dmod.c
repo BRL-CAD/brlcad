@@ -28,6 +28,7 @@
  *	Phillip Dykstra
  *	17 Apr 1987
  */
+
 #include "common.h"
 
 #include <stdio.h>

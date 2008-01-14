@@ -27,7 +27,6 @@
  *	shape of the shell.
  */
 
-
 #include "common.h"
 
 /* system headers */

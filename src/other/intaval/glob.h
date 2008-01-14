@@ -47,6 +47,7 @@
 #define GLOB_INCLUDED
 
 #include "common.h"
+
 #include "machine.h"
 #include "vmath.h"
 

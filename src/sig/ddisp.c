@@ -21,6 +21,7 @@
  *
  *  Data Display - shows doubles on a framebuffer in various ways.
  */
+
 #include "common.h"
 
 #include <string.h>

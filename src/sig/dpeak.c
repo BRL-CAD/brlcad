@@ -22,6 +22,7 @@
  *  An EXPERIMENTAL routine to find the N peak values in data set.
  *  Where "peak" means negative second difference, local maximum.
  */
+
 #include "common.h"
 
 #include <string.h>

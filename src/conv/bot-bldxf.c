@@ -22,6 +22,7 @@
  *	Options
  *	h	help
  */
+
 #include "common.h"
 
 #include <stdlib.h>

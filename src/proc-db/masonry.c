@@ -24,6 +24,7 @@
  *	Currently builds "wood frame" walls for typical building constructs.
  *
  */
+
 #include "common.h"
 
 #include <stdlib.h>

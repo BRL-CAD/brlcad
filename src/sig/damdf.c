@@ -22,6 +22,7 @@
  *  Average Magnitude Difference Function
  *  (Experimental: for pitch extraction)
  */
+
 #include "common.h"
 
 #include <string.h>

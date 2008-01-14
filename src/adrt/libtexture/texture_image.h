@@ -37,7 +37,9 @@
 #define _TEXTURE_IMAGE_H
 
 #if 0
+
 #include "common.h"
+
 #endif
 
 #include "texture.h"

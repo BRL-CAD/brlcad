@@ -27,7 +27,6 @@
 
 #include "common.h"
 
-
 #include <stdio.h>
 
 #if HAS_SGIGL

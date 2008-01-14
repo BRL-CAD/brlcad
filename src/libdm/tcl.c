@@ -29,8 +29,8 @@
  * Author -
  *	Robert G. Parker
  */
-#include "common.h"
 
+#include "common.h"
 
 #include <math.h>
 #include "tcl.h"

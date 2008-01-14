@@ -41,10 +41,7 @@
  *	24 Sep 1986
  */
 
-
-
 #include "common.h"
-
 
 #include <stdio.h>
 

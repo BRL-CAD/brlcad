@@ -51,7 +51,6 @@
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

@@ -36,7 +36,6 @@
  *  @author	Michael John Muuss
  */
 
-
 #include "common.h"
 
 #include <stdio.h>

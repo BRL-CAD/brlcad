@@ -41,7 +41,6 @@
  *	output file.
  */
 
-
 #include "common.h"
 
 /* system headers */

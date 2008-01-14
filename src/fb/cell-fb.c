@@ -24,7 +24,6 @@
  *	Modifications by:	Paul J. Tanenbaum
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

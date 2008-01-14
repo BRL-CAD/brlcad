@@ -39,8 +39,8 @@
 #include "umath.h"
 #include "texture.h"
 #include "tienet.h"
-#include "common.h"
 
+#include "common.h"
 
 #define K *1024
 #define M *1024 K

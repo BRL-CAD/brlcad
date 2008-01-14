@@ -25,7 +25,6 @@
 
 #include "common.h"
 
-
 #include <stdio.h>		/* Direct the output to stdout */
 #include <unistd.h>
 #include "machine.h"		/* BRL-CAD specific machine data types */

@@ -20,6 +20,7 @@
 /** @file cmd.h
  *
  */
+
 #include "common.h"
 
 #include "./ged.h"  /* for MGED_EXTERN */

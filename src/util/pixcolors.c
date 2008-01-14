@@ -28,6 +28,7 @@
  *	Options
  *	v	list colors
  */
+
 #include "common.h"
 
 #ifdef HAVE_UNISTD_H

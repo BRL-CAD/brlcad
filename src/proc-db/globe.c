@@ -22,6 +22,7 @@
  * unified solid spherical object.  Kinda like an onion, not a cake, an onion.
  *
  */
+
 #include "common.h"
 
 #include <stdlib.h>

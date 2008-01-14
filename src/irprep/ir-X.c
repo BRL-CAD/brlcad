@@ -44,8 +44,8 @@
 /*	30 September 1994 - Change name from see.c to ir-X.c	*/
 
 /*  Include files needed.  */
-#include "common.h"
 
+#include "common.h"
 
 #include <stdio.h>
 #include <string.h>

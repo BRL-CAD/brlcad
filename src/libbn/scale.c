@@ -35,10 +35,7 @@
  *	Nothing else in BRL-CAD uses this.
  */
 
-
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <math.h>

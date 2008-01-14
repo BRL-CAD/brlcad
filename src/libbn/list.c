@@ -28,10 +28,7 @@
  * @n	August 04, 1978
  */
 
-
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include "machine.h"

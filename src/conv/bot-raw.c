@@ -21,6 +21,7 @@
 /** @file bot-raw.c
  *
  */
+
 #include "common.h"
 
 #include <stdlib.h>

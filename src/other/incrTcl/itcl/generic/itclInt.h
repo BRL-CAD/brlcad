@@ -50,6 +50,7 @@
 #define ITCLINT_H
 
 /* included so we avoid tcl's compat headers */
+
 #include "common.h"
 
 #include "tclInt.h"

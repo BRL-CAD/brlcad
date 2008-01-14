@@ -59,7 +59,6 @@
  *	   Australian National University.
  */
 
-
 #include "common.h"
 
 #include <stdio.h>

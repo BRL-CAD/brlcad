@@ -30,7 +30,6 @@
  *	John R. Anderson
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

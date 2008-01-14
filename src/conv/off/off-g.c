@@ -27,7 +27,6 @@
  *	Glenn Edward Durfee
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

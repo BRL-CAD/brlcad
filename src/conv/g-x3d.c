@@ -32,7 +32,6 @@
  *
  */
 
-
 #include "common.h"
 
 /* system headers */

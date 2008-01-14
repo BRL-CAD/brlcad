@@ -30,7 +30,9 @@
 #include <string.h>
 #include <sys/time.h>
 #include "adrt_common.h"
+
 #include "common.h"
+
 #include "rise.h"
 #include "tienet.h"
 

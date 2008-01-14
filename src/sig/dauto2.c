@@ -22,8 +22,8 @@
  *
  *  Compute the autocorrelation function of doubles.
  */
-#include "common.h"
 
+#include "common.h"
 
 #include <string.h>
 #include <stdlib.h>

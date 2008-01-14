@@ -52,9 +52,7 @@
  *	4. Do raytracing.
  */
 
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <math.h>

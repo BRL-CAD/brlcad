@@ -27,6 +27,7 @@
  *
  *  cc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o roots_example roots_example.c -lrt -lbn -lbu
  */
+
 #include "common.h"
 
 #include "machine.h"

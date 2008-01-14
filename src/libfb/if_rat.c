@@ -39,9 +39,7 @@
  */
 /** @} */
 
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <fcntl.h>

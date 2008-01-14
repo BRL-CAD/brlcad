@@ -46,6 +46,7 @@ extern "C" {
 #endif
 
 #include "common.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

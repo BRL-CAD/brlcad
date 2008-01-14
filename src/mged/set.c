@@ -27,7 +27,6 @@
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include "machine.h"
 #include "bu.h"

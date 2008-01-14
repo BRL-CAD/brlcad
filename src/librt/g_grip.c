@@ -36,7 +36,6 @@
  *      Geometric Solutions, Inc.
  */
 
-
 #include "common.h"
 
 #include <stddef.h>

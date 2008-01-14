@@ -61,7 +61,6 @@
  * @li anim_view_rev()		reverse view matrix
  */
 
-
 #include "common.h"
 
 #include <stdio.h>

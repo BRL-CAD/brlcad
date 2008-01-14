@@ -25,7 +25,6 @@
  *	An implimentation of hash tables.
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

@@ -36,7 +36,6 @@
  *		How to handle xforms with scale factors?????
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

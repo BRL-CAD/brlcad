@@ -26,7 +26,6 @@
  *
  */
 
-
 #include "common.h"
 
 #include <strings.h>

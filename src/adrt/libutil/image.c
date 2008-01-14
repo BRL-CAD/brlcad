@@ -40,7 +40,9 @@
 #include "tienet.h"
 #include "time.h"
 #ifdef HAVE_CONFIG_H
+
 #include "common.h"
+
 #endif
 
 

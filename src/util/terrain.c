@@ -37,6 +37,7 @@
  *	c	toggle host-net conversion
  *	o	offset
  */
+
 #include "common.h"
 
 #include <stdlib.h>

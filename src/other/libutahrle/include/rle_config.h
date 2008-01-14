@@ -125,6 +125,7 @@ extern char *getenv();
 /* include common.h so that HAVE_ symbols may be used to work around
  * compilation support issues.  e.g. sys_errlist on solaris.
  */
+
 #include "common.h"
 
 /** @} */

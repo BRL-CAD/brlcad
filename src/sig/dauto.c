@@ -25,6 +25,7 @@
  *  The first value is based on L samples, the last on only one.
  *  Zeros are assumed outside of the range of an input record.
  */
+
 #include "common.h"
 
 #include <stdlib.h>

@@ -20,6 +20,7 @@
 /** @file prnt.c
  *	Author:		Gary S. Moss
  */
+
 #include "common.h"
 
 #include <stdio.h>

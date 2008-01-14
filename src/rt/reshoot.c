@@ -71,6 +71,7 @@
  * field a_onehit is set to zero in the original application, causing
  * all rays to be shot all the way through the geometry
  */
+
 #include "common.h"
 
 #include <stdlib.h>

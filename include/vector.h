@@ -2,6 +2,7 @@
 #define __VECTOR
 
 #include "common.h"
+
 #include <math.h>
 
 extern "C++" {

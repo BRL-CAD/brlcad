@@ -26,7 +26,6 @@
 
 /*	18 November 1991 - Put /n/walrus/usr/brlcad/include into includes.  */
 
-
 #include "common.h"
 
 #include <stdio.h>

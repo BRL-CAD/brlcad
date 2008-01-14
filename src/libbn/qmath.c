@@ -56,10 +56,7 @@
  *
  */
 
-
-
 #include "common.h"
-
 
 #include <stdio.h>		/* DEBUG need stderr for now... */
 #include <math.h>

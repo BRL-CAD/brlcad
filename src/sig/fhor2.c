@@ -23,6 +23,7 @@
  *  given at the same resolution as the screen.
  *  No lines need to be drawn, nor intersection computed!
  */
+
 #include "common.h"
 
 #include <string.h>

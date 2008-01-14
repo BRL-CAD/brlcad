@@ -37,7 +37,6 @@
 
 #include "common.h"
 
-
 #ifndef HAVE_BSDSELECT
 int
 bsdselect(long readfds, int sec, int us);

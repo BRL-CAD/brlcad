@@ -37,7 +37,6 @@
  *    Christopher Sean Morrison
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

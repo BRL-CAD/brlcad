@@ -21,6 +21,7 @@
  *	Routines to support viewing of BRL-CAD models by using MUVES
  *	component/system names
  */
+
 #include "common.h"
 
 #include <stdlib.h>

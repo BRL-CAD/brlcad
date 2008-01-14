@@ -27,7 +27,6 @@
  * @author      Christopher Sean Morrison
  */
 
-
 #include "common.h"
 
 #include <string.h>

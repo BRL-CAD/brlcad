@@ -28,8 +28,8 @@
  *
  *  Phil Dykstra - 5 Nov 85.
  */
-#include "common.h"
 
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h> /* for atof() */

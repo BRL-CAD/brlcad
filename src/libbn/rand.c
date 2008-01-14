@@ -25,7 +25,6 @@
  * These are our tables of random numbers.
  */
 
-
 #include "common.h"
 
 #include <stdio.h>

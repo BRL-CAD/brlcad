@@ -42,6 +42,7 @@
 #include <unistd.h>
 
 #include "common.h"
+
 #include "image.h"
 #include "umath.h"
 

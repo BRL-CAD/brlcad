@@ -22,6 +22,7 @@
  *  Extract sliding windows of double values.
  *  Apply window functions if desired.
  */
+
 #include "common.h"
 
 #include <string.h>

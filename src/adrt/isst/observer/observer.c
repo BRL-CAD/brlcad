@@ -25,6 +25,7 @@
  */
 
 #include "common.h"
+
 #include "observer.h"
 #include <pthread.h>
 #include <stdio.h>

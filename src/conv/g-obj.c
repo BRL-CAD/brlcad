@@ -29,7 +29,6 @@
  *	Bill Mermagen Jr.
  */
 
-
 #include "common.h"
 
 /* system headers */

@@ -29,7 +29,6 @@
 
 /*	22 February 1993 - Original copy.  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

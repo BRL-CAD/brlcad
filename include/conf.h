@@ -28,6 +28,7 @@
 #define __CONF_H__
 
 #warning "The conf.h header is deprecated -- use common.h instead"
+
 #include "common.h"
 
 #endif /* __CONF_H__ */

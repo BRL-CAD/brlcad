@@ -45,7 +45,6 @@
  *	included in BRL-CAD distribution
  */
 
-
 #include "common.h"
 
 #include <stdlib.h>

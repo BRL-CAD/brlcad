@@ -30,6 +30,7 @@
  *  cc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o rtexample rtexample.c -lbu -lrt -lm
  *
  */
+
 #include "common.h"
 
 #include <stdlib.h>

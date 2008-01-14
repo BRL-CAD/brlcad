@@ -30,7 +30,6 @@
  *	July 1999 by John P. Williams, QUADRA Enterprises to output VRML2 format
  */
 
-
 #include "common.h"
 
 /* system headers */

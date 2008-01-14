@@ -23,7 +23,6 @@
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include "machine.h"

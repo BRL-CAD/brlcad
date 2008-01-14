@@ -34,8 +34,6 @@
  *  because bu_log() accquires semaphore #0 (BU_SEM_SYSCALL).
  */
 
-
-
 #include "common.h"
 
 #include <stdlib.h>

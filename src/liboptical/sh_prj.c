@@ -26,6 +26,7 @@
  *	is far too anemic to support this sort of shader.
  *
  */
+
 #include "common.h"
 
 #include <stddef.h>

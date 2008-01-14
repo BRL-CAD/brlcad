@@ -24,7 +24,6 @@
  * To provide timing information on Microsoft Windows NT.
  */
 
-
 #include "common.h"
 
 #include <stdio.h>

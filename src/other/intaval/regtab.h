@@ -49,6 +49,7 @@
 #include <string>
 
 #include "common.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "wdb.h"

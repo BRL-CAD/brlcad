@@ -29,6 +29,7 @@
  *	Author:		Gary S. Moss
  *	Idea originated by Mike John Muuss
  */
+
 #include "common.h"
 
 #include <stdio.h>

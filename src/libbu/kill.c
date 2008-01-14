@@ -27,6 +27,7 @@
  * Source -
  *   BRL-CAD Open Source
  */
+
 #include "common.h"
 
 /* system headers */

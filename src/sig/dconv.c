@@ -29,6 +29,7 @@
  *  are thrown away, while the last M-1 points of each input section
  *  are saved for the next xform.
  */
+
 #include "common.h"
 
 #include <string.h>

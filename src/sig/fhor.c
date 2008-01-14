@@ -25,6 +25,7 @@
  * Ref: "Procedural Elements for Computer Graphics,"
  *       D. F. Rogers.
  */
+
 #include "common.h"
 
 #include <string.h>

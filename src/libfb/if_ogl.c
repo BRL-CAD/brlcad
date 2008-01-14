@@ -44,7 +44,6 @@
  */
 /** @} */
 
-
 #include "common.h"
 
 #ifdef IF_OGL

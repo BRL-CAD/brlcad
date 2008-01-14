@@ -37,9 +37,7 @@
  *
  */
 
-
 #include "common.h"
-
 
 #include <stdio.h>
 #ifdef HAVE_MEMORY_H
