@@ -14,104 +14,6 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/libbn.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\Debug/libbn.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="4"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="tcl84_d.lib libbu_d.lib"
-				OutputFile="Debug/libbn_d.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/libbn_d.pdb"
-				ImportLibrary=".\Debug/libbn_d.lib"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libbn_d.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
@@ -225,18 +127,6 @@
 				RelativePath="..\..\..\src\libbn\anim.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -248,18 +138,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\axis.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -273,18 +151,6 @@
 				RelativePath="..\..\..\src\libbn\bn_tcl.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -296,18 +162,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\complex.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -321,18 +175,6 @@
 				RelativePath="..\..\..\src\libbn\const.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -344,18 +186,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\font.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -369,18 +199,6 @@
 				RelativePath="..\..\..\src\libbn\fortran.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -392,18 +210,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\list.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -417,18 +223,6 @@
 				RelativePath="..\..\..\src\libbn\marker.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -440,18 +234,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\mat.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -465,18 +247,6 @@
 				RelativePath="..\..\..\src\libbn\msr.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -488,18 +258,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\noise.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -513,18 +271,6 @@
 				RelativePath="..\..\..\src\libbn\plane.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -536,18 +282,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\plot3.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -561,18 +295,6 @@
 				RelativePath="..\..\..\src\libbn\poly.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -584,18 +306,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\qmath.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -609,18 +319,6 @@
 				RelativePath="..\..\..\src\libbn\rand.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -632,18 +330,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\scale.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -657,18 +343,6 @@
 				RelativePath="..\..\..\src\libbn\sphmap.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -680,18 +354,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\symbol.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -705,18 +367,6 @@
 				RelativePath="..\..\..\src\libbn\tabdata.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -728,18 +378,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\tplot.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -753,18 +391,6 @@
 				RelativePath="..\..\..\src\libbn\vectfont.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -776,18 +402,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\vector.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -805,18 +419,6 @@
 				RelativePath="..\..\..\src\libbn\vert_tree.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -828,18 +430,6 @@
 			<File
 				RelativePath="..\..\..\src\libbn\wavelet.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_MBCS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DEBUG;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;$(NoInherit)"
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>

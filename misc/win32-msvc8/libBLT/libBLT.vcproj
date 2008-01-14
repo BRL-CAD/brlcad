@@ -14,103 +14,6 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/libBLT.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/blt/src;../../../include"
-				PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\Debug/libBLT.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="4"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib oldnames.lib tcl84_d.lib tk84_d.lib"
-				OutputFile="Debug/BLT24_d.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/BLT24_d.pdb"
-				ImportLibrary=".\Debug/BLT24_d.lib"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;BLT24_d.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
@@ -224,17 +127,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltAlloc.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -246,17 +138,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltArrayObj.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -270,17 +151,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltBeep.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -292,17 +162,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltBgexec.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -316,17 +175,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltBind.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -338,17 +186,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltBitmap.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -362,17 +199,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltBusy.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -384,17 +210,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltCanvEps.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -408,17 +223,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltChain.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -430,17 +234,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltColor.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -454,17 +247,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltConfig.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -476,17 +258,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltContainer.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -500,17 +271,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltCutbuffer.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -522,17 +282,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltDebug.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -546,17 +295,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltDragdrop.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -568,17 +306,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltGraph.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -592,17 +319,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltGrAxis.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -614,17 +330,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltGrBar.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -638,17 +343,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltGrElem.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -660,17 +354,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltGrGrid.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -684,17 +367,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltGrHairs.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -706,17 +378,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltGrLegd.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -730,17 +391,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltGrLine.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -752,17 +402,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltGrMarker.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -776,17 +415,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltGrMisc.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -798,17 +426,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltGrPen.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -822,17 +439,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltGrPs.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -844,17 +450,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltHash.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -868,17 +463,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltHierbox.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -890,17 +474,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltHtext.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -914,17 +487,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltImage.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -936,17 +498,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltInit.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -960,17 +511,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltList.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -982,17 +522,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltNsUtil.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1006,17 +535,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltObjConfig.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1028,17 +546,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltParse.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1052,17 +559,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltPool.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1074,17 +570,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltPs.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1098,17 +583,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltScrollbar.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1120,17 +594,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltSpline.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1144,17 +607,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltSwitch.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1166,17 +618,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltTable.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1190,17 +631,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltTabnotebook.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1212,17 +642,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltTabset.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1236,17 +655,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltTed.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1258,17 +666,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltText.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1282,17 +679,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltTile.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1304,17 +690,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltTree.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1328,17 +703,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltTreeCmd.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1350,17 +714,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltTreeView.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1374,17 +727,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltTreeViewCmd.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1396,17 +738,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltTreeViewColumn.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1420,17 +751,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltTreeViewEdit.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1442,17 +762,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltTreeViewStyle.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1466,17 +775,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltUtil.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1488,17 +786,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltVecCmd.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1512,17 +799,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltVecMath.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1534,17 +810,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltVecObjCmd.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1558,17 +823,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltVector.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1580,17 +834,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltWatch.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1604,17 +847,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltWinDde.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1626,17 +858,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltWindow.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1650,17 +871,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltWinDraw.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1672,17 +882,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltWinImage.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1696,17 +895,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltWinMain.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1718,17 +906,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltWinop.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1742,17 +919,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltWinPipe.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1764,17 +930,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\bltWinPrnt.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1788,17 +943,6 @@
 				RelativePath="..\..\..\src\other\blt\src\bltWinUtil.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1810,17 +954,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\pure_api.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1834,17 +967,6 @@
 				RelativePath="..\..\..\src\other\blt\src\tkButton.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1856,17 +978,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\tkConsole.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1880,17 +991,6 @@
 				RelativePath="..\..\..\src\other\blt\src\tkFrame.c"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1902,17 +1002,6 @@
 			<File
 				RelativePath="..\..\..\src\other\blt\src\tkScrollbar.c"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions="WIN32;_DEBUG;CONSOLE;_MBCS;_USRDLL;TCL_THREADS=1;_X86_;__STDC__;_MT;IGNORE_CONFIG_H;$(NoInherit)"
-						BasicRuntimeChecks="3"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
