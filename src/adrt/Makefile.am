@@ -5,13 +5,15 @@ adrtd = \
 	rise
 
 always_compile = \
+	isst \
+	libcommon \
+	librender \
+	libtexture \
 	libtie \
 	libtienet \
-	libtexture \
-	librender \
-	libcommon \
 	libutil \
-	isst
+	master \
+	slave
 
 if BUILD_ADRT
 SUBDIRS = \
