@@ -173,7 +173,7 @@ static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
 
 int
 pkg_init() {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
     WORD wVersionRequested;
     WSADATA wsaData;
 
@@ -189,7 +189,7 @@ pkg_init() {
 
 void
 pkg_terminate() {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
     WSACleanup();
 #endif
 }
@@ -261,7 +261,7 @@ pkg_plong(char *buf, long unsigned int l)
 struct pkg_conn *
 pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
     LPHOSTENT lpHostEntry;
     register SOCKET netfd;
     SOCKADDR_IN saServer;
@@ -291,7 +291,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if( errlog == NULL )
 	errlog = pkg_errlog;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
     if ((lpHostEntry = gethostbyname(host)) == NULL) {
 	pkg_perror(errlog, "pkg_open:  gethostbyname");
 	return(PKC_ERROR);
@@ -450,7 +450,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 {
     register struct servent *sp;
     int	pkg_listenfd;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
     SOCKADDR_IN saServer;
 #else
     struct sockaddr_in sinme;
@@ -476,7 +476,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 	errlog = pkg_errlog;
 
     /* WIN32 STUFF ========================= */
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
     memset((char *)&saServer, 0, sizeof(saServer));
 
     if (atoi(service) > 0) {
@@ -690,7 +690,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     }
 #endif
     do  {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	s2 = accept(fd, (struct sockaddr *)NULL, NULL);
 #else
 	s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
@@ -698,7 +698,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 	if (s2 < 0) {
 	    if(errno == EINTR)
 		continue;
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
 	    if(errno == WSAEWOULDBLOCK)
 		return(PKC_NULL);
 #else
