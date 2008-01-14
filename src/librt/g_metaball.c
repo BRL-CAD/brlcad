@@ -54,6 +54,10 @@
 #include "wdb.h"
 #include "./debug.h"
 
+/* these three defines are used with the method field */
+#define METABALL_METABALL	0
+#define METABALL_ISOPOTENTIAL	1
+#define METABALL_BLOB		2
 
 /*
  *  Algorithm:
@@ -130,6 +134,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	nmb->magic = RT_METABALL_INTERNAL_MAGIC;
 	BU_LIST_INIT( &nmb->metaball_ctrl_head );
 	nmb->threshold = mb->threshold;
+	nmb->method = mb->method;
 
 	/* and copy the list of control points */
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
@@ -189,11 +194,16 @@ rt_metaballpt_print( const struct wdb_metaballpt *metaball, double mm2local )
 	VSCALE( p1, metaball->coord, mm2local );
 	bu_log( "\tat (%g %g %g)\n", V3ARGS( p1 ) );
 	bu_log( "\tfield strength = %g\n", metaball->fldstr*mm2local );
+	return;
 }
 
 fastf_t
-rt_metaball_point_value(point_t *p, struct bu_list *points)
-{
+rt_metaball_point_value_metaball(point_t *p, struct bu_list *points) {
+    bu_exit(1, "rt_metaball_point_value_metaball() No implemented");
+}
+
+fastf_t
+rt_metaball_point_value_iso(point_t *p, struct bu_list *points) {
 	struct wdb_metaballpt *mbpt;
 	fastf_t ret = 0.0;
 	point_t v;
@@ -203,6 +213,29 @@ rt_metaball_point_value(point_t *p, struct bu_list *points)
 		ret += mbpt->fldstr / MAGSQ(v);	/* f/r^2 */
 	}
 	return ret;
+}
+
+fastf_t
+rt_metaball_point_value_blob(point_t *p, struct bu_list *points) {
+    bu_exit(1,"rt_metaball_point_value_blob() No implemented");
+}
+
+/* main point evaluation function, to be exposed to the ugly outside world. */
+fastf_t
+rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb)
+{
+    RT_METABALL_CK_MAGIC(mb);
+    switch( mb->method ) {
+	case METABALL_METABALL:
+	    break;
+	case METABALL_ISOPOTENTIAL:
+	    return rt_metaball_point_value_iso( p, &mb->metaball_ctrl_head );
+	case METABALL_BLOB:
+	    break;
+	default:
+	    break;
+    }
+    return 0;
 }
 
 /*
@@ -229,27 +262,24 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		distleft -= step;
 		VADD2(p, p, inc);
 		if(stat == 1) {
-			if(rt_metaball_point_value(&p, &mb->metaball_ctrl_head) < mb->threshold ) {
+			if(rt_metaball_point_value(&p, mb) < mb->threshold )
 				if(step<=finalstep) {
 					STEPIN(out);
 					stat = 0;
-					if(segsleft <= 0) {
+					if(segsleft <= 0)
 					    return retval;
-					}
 				} else
 					STEPBACK
-			}
-		} else {
-			if(rt_metaball_point_value(&p, &mb->metaball_ctrl_head) > mb->threshold ) {
+		} else
+			if(rt_metaball_point_value(&p, mb) > mb->threshold )
 				if(step<=finalstep) {
 					RT_GET_SEG(segp, ap->a_resource);
 					segp->seg_stp = stp;
 					STEPIN(in);
 					segp->seg_out.hit_dist = segp->seg_in.hit_dist + .1; /* cope with silliness */
 					BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-					if(segsleft <= 0){	/* exit now if we're one-hit (like visual rendering) */
+					if(segsleft <= 0)	/* exit now if we're one-hit (like visual rendering) */
 						return retval;
-					}
 					/* reset the ray-walk shtuff */
 					stat = 1;
 					VSUB2(p, p, inc);
@@ -257,8 +287,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 					step = initstep;
 				} else
 					STEPBACK
-			}
-		}
 	}
 #undef STEPBACK
 #undef STEPIN
