@@ -638,8 +638,7 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
 	${PL_X_EXTRA} \
-	fix_polysolids.c \
-	pix-ci.c
+	fix_polysolids.c
 
 DEPS=src/liborle src/libdm src/libfb
 
