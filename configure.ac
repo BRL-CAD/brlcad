@@ -3803,22 +3803,22 @@ AC_CONFIG_FILES([
 	src/adrt/Makefile
 	src/adrt/bench/Makefile
 	src/adrt/doc/Makefile
+	src/adrt/isst/Makefile
+	src/adrt/isst/observer/Makefile
 	src/adrt/libcommon/Makefile
+	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
 	src/adrt/libtie/Makefile
 	src/adrt/libtienet/Makefile
 	src/adrt/libutil/Makefile
-	src/adrt/librender/Makefile
+	src/adrt/master/Makefile
+	src/adrt/misc/Makefile
 	src/adrt/rise/Makefile
 	src/adrt/rise/master/Makefile
 	src/adrt/rise/observer/Makefile
 	src/adrt/rise/slave/Makefile
-	src/adrt/isst/Makefile
-	src/adrt/isst/master/Makefile
-	src/adrt/isst/observer/Makefile
-	src/adrt/isst/slave/Makefile
 	src/adrt/scripts/Makefile
-	src/adrt/misc/Makefile
+	src/adrt/slave/Makefile
 	src/anim/Makefile
 	src/archer/Makefile
 	src/archer/plugins/Commands/Makefile
