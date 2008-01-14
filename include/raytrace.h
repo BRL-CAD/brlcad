@@ -1251,6 +1251,7 @@ struct dg_obj {
 	int			dgo_shaded_mode;	/**< @brief  1 - draw bots shaded by default */
 	char			*dgo_outputHandler;	/**< @brief  tcl script for handling output */
 	int			dgo_uplotOutputMode;	/**< @brief  output mode for unix plots */
+    	void			(*dgo_rtCmdNotify)();	/**< @brief  function called when rt command completes */
 };
 RT_EXPORT extern struct dg_obj HeadDGObj;		/**< @brief  head of drawable geometry object list */
 #define RT_DGO_NULL		((struct dg_obj *)NULL)
