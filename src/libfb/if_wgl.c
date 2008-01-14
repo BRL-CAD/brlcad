@@ -870,14 +870,11 @@ int	width, height;
 	ShowWindow(WGL(ifp)->hwnd,SW_SHOW);
 	UpdateWindow(WGL(ifp)->hwnd);
 
-
 	/* Loop through events until first exposure event is processed */
-	/*	while (WGL(ifp)->firstTime == 1)
-		wgl_do_event(ifp);
-	*/
+	while (WGL(ifp)->firstTime == 1)
+	    wgl_do_event(ifp);
 
 	return 0;
-
 }
 
 
@@ -1521,8 +1518,8 @@ int	count;
 #endif
 		wgl_xmit_scanlines( ifp, ybase, 1, xstart, count );
 		if (WGL(ifp)->copy_flag){
-			/* repaint one scanline from backbuffer */
-			backbuffer_to_screen(ifp,ybase);
+		    /* repaint one scanline from backbuffer */
+		    backbuffer_to_screen(ifp,ybase);
 		}
 	} else {
 		/* Normal case -- multi-pixel write */
@@ -2032,9 +2029,6 @@ wgl_do_event(FBIO *ifp)
 	    DispatchMessage(&msg);
 	}
     }
-
-    /* let's not starve the processor */
-    Sleep( 250 );
 }
 
 HIDDEN void
@@ -2165,11 +2159,6 @@ expose_callback(FBIO *ifp,
 		/* unattach context for other threads to use */
 		wglMakeCurrent(WGL(ifp)->hdc,WGL(ifp)->glxc);
 	}
-
-#if 0
-	XFlush(WGL(ifp)->dispp);
-	glFlush();
-#endif
 }
 
 void
