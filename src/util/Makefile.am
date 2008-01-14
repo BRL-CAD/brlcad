@@ -145,8 +145,6 @@ dist_bin_SCRIPTS = rtwizard morphedit.tcl
 # XXX - example code doesn't work so disable for now
 # pl_dm_SOURCES = pl-dm.c
 # pl_dm_LDADD = ${BU} ${DM}
-#
-# pl_starbase_SOURCES = pl-starbase.c
 
 alias_pix_SOURCES = alias-pix.c
 alias_pix_LDADD = ${BU}
