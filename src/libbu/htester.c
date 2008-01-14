@@ -39,7 +39,6 @@
 
 #include "bu.h"
 
-static const char *RCSid = "$Id$";
 
 #define	NUM	3000
 double	orig[NUM], after[NUM];
@@ -87,11 +86,6 @@ main(int argc, char **argv)
 #define A argv[1][1]
 	if( argc != 2 || argv[1][0] != '-' || ( A != 'o' && A != 'i' && A != 'v' )) {
 		bu_exit(1, "Usage:  htester [-i|-o|-v] < input\n");
-	}
-
-	if( argv[1][1] == 'v' ) {
-	    printf("%s\n", RCSid);
-	    return 0;
 	}
 
 	/* First stage, generate the reference pattern */
