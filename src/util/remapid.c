@@ -587,11 +587,10 @@ int read_int (REMAPID_FILE *sfp, int *ch, int *n)
     }
     else if (*ch == EOF)
 	remapid_file_err(sfp, "remapid",
-	    "Encountered EOF while expecting an integer", -1);
+			 "Encountered EOF while expecting an integer", -1);
     else
-	remapid_file_err(sfp, "remapid:read_int()",
-	    "Encountered nondigit",
-	(int)(    (sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
+	remapid_file_err(sfp, "remapid:read_int()", "Encountered nondigit",
+			 (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
     return (-1);
 }
 
@@ -619,9 +618,8 @@ int read_block (REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 	    else
 		return (2);
 	default:
-	    remapid_file_err(sfp, "remapid:read_block()",
-		"Syntax error",
-	(int)(	(sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
+	    remapid_file_err(sfp, "remapid:read_block()", "Syntax error",
+			     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
 	    return (-1);
     }
 }
@@ -664,10 +662,8 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 		case 2:
 		    if (num1 >= num2)
 		    {
-			remapid_file_err(sfp, "remapid:read_spec()",
-			    "Range out of order",
-			(int)(    (sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
-			    - 1) );
+			remapid_file_err(sfp, "remapid:read_spec()", "Range out of order",
+					 (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
 			bu_exit (-1, NULL);
 		    }
 		    for (i = num1; i <= num2; ++i)
@@ -692,10 +688,8 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 			return (-1);
 		    break;
 		default:
-		    remapid_file_err(sfp, "remapid:read_spec()",
-			"Syntax error",
-			(int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf))
-			- 1) );
+		    remapid_file_err(sfp, "remapid:read_spec()", "Syntax error",
+				     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
 		    bu_exit (-1, NULL);
 	    }
 	    break;
@@ -855,12 +849,9 @@ tankill_reassign(char *db_name)
  */
 void print_usage (void)
 {
-#define OPT_STRING	"gt?"
-
-    bu_log("Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'\n\
-	%sNote: The '-g' option modifies file.g in place\n\
-	%sthe '-t' option writes a modified file.tankill to stdout\n",
-	"  ", "        ");
+    bu_exit(1, "Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'\n\
+  Note: The '-g' option modifies file.g in place\n\
+        the '-t' option writes a modified file.tankill to stdout\n");
 }
 
 /*
@@ -879,7 +870,7 @@ main (int argc, char **argv)
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
-    while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
+    while ((ch = bu_getopt(argc, argv, "gt?")) != EOF)
 	switch (ch)
 	{
 	    case 'g':
@@ -891,8 +882,6 @@ main (int argc, char **argv)
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
-		return(0);
 	}
 
     switch (argc - bu_optind)
@@ -905,7 +894,6 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, NULL);
     }
 
 	rt_init_resource( &rt_uniresource, 0, NULL );

@@ -35,9 +35,6 @@
  *	16 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -45,8 +42,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
+#define	round(x) ((int)(x+0.5))
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
 
 unsigned char	*buffer;
@@ -57,16 +56,51 @@ int	buf_start = -1000;		/* First line in buffer */
 float	xnum, ynum;			/* Number of pixels in new file */
 float	ulx,uly,urx,ury,lrx,lry,llx,lly;	/* Corners of original file */
 
-#define	round(x) ((int)(x+0.5))
-
-void	init_buffer(int scanlen), fill_buffer(int y);
-
 FILE	*ifp, *ofp;
 
 static const char usage[] = "\
 Usage: bwcrop in.bw out.bw (I prompt!)\n\
    or  bwcrop in.bw out.bw inwidth outwidth outheight\n\
 	ulx uly urx ury lrx lry llx lly\n";
+
+/*
+ * Determine max number of lines to buffer.
+ *  and malloc space for it.
+ *  XXX - CHECK FILE SIZE
+ */
+void
+init_buffer(int scanlen)
+{
+	int	max;
+
+	/* See how many we could buffer */
+	max = MAXBUFBYTES / scanlen;
+
+	/*
+	 * Do a max of 512.  We really should see how big
+	 * the input file is to decide if we should buffer
+	 * less than our max.
+	 */
+	if( max > 512 ) max = 512;
+
+	buflines = max;
+	buffer = (unsigned char *)bu_malloc( buflines * scanlen, "buffer" );
+}
+
+/*
+ * Load the buffer with scan lines centered around
+ * the given y coordinate.
+ */
+void
+fill_buffer(int y)
+{
+	buf_start = y - buflines/2;
+	if( buf_start < 0 ) buf_start = 0;
+
+	fseek( ifp, buf_start * scanlen, 0 );
+	fread( buffer, scanlen, buflines, ifp );
+}
+
 
 int
 main(int argc, char **argv)
@@ -79,12 +113,10 @@ main(int argc, char **argv)
 		bu_exit(1, "%s", usage );
 	}
 	if ((ifp = fopen(argv[1], "r")) == NULL) {
-		fprintf( stderr, "bwcrop: can't open %s\n", argv[1] );
-		exit( 2 );
+		bu_exit(2, "bwcrop: can't open %s\n", argv[1] );
 	}
 	if ((ofp = fopen(argv[2], "w")) == NULL) {
-		fprintf( stderr, "bwcrop: can't open %s\n", argv[1] );
-		exit( 3 );
+		bu_exit(3, "bwcrop: can't open %s\n", argv[1] );
 	}
 
 	if( argc == 14 ) {
@@ -104,8 +136,7 @@ main(int argc, char **argv)
 		printf("Scanline length in input file: ");
 		scanf( "%d", &scanlen );
 		if( scanlen <= 0 ) {
-			fprintf(stderr,"bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
-			exit( 4 );
+			bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
 		}
 		printf("Line Length and Number of scan lines (in new file)?: ");
 		scanf( "%f%f", &xnum, &ynum );
@@ -155,46 +186,11 @@ main(int argc, char **argv)
 			fwrite(&value, sizeof(value), 1, ofp);
 		}
 	}
+
+	bu_free(buffer, "buffer");
 	return (0);
 }
 
-/*
- * Determine max number of lines to buffer.
- *  and malloc space for it.
- *  XXX - CHECK FILE SIZE
- */
-void
-init_buffer(int scanlen)
-{
-	int	max;
-
-	/* See how many we could buffer */
-	max = MAXBUFBYTES / scanlen;
-
-	/*
-	 * Do a max of 512.  We really should see how big
-	 * the input file is to decide if we should buffer
-	 * less than our max.
-	 */
-	if( max > 512 ) max = 512;
-
-	buflines = max;
-	buffer = (unsigned char *)malloc( buflines * scanlen );
-}
-
-/*
- * Load the buffer with scan lines centered around
- * the given y coordinate.
- */
-void
-fill_buffer(int y)
-{
-	buf_start = y - buflines/2;
-	if( buf_start < 0 ) buf_start = 0;
-
-	fseek( ifp, buf_start * scanlen, 0 );
-	fread( buffer, scanlen, buflines, ifp );
-}
 
 /*
  * Local Variables:

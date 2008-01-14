@@ -27,9 +27,6 @@
  *	13 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -41,10 +38,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <unistd.h>
 #endif
 
+#include "machine.h"
+#include "bu.h"
+
+
 unsigned char	ibuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
 
-char *Usage = "usage: pix-bw3 redout greenout blueout < file.pix\n";
 
 int
 main(int argc, char **argv)
@@ -54,8 +54,7 @@ main(int argc, char **argv)
 	register unsigned char *ibufp;
 
 	if( argc != 4 || isatty(fileno(stdin)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+		bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");
 	}
 
 	rfp = fopen( argv[1], "w" );
@@ -63,8 +62,7 @@ main(int argc, char **argv)
 	bfp = fopen( argv[3], "w" );
 
 	if( rfp == NULL || gfp == NULL || bfp == NULL ) {
-		fprintf( stderr, "pix-bw3: Can't open output files\n" );
-		exit( 2 );
+		bu_exit(2, "pix-bw3: Can't open output files\n" );
 	}
 
 	while( (num = fread( ibuf, sizeof( char ), 3*1024, stdin )) > 0 ) {

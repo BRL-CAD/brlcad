@@ -546,12 +546,7 @@ ogl_zapmem(void)
  *			S I G K I D
  */
 HIDDEN void
-#if _XOPEN_SOURCE
 sigkid(int pid)
-
-#else
-     sigkid(int pid)
-#endif
 {
     exit(0);
 }

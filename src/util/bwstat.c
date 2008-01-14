@@ -35,9 +35,6 @@
  *	6 Aug 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -47,15 +44,34 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <unistd.h>
 #include <math.h>
 
+#include "machine.h"
+#include "bu.h"
+
+
 #define	IBUFSIZE 1024		/* Max read size in pixels */
 unsigned char buf[IBUFSIZE];	/* Input buffer */
 
 int	verbose = 0;
 long	bin[256];		/* Histogram bins */
 
-void	show_hist(long int *bin, int sum);
 
-static char *Usage = "usage: bwstat [-v] [file.bw]\n";
+static const char *Usage = "usage: bwstat [-v] [file.bw]\n";
+
+/*
+ * Display the histogram values.
+ */
+void
+show_hist(long int *bin, int sum)
+{
+	int	i;
+
+	printf( "Histogram:\n" );
+
+	for( i = 0; i < 256; i++ ) {
+		printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0 );
+	}
+}
+
 
 int
 main(int argc, char **argv)
@@ -79,8 +95,7 @@ main(int argc, char **argv)
 	/* look for optional input file */
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1],"r")) == 0 ) {
-			fprintf( stderr, "bwstat: can't open \"%s\"\n", argv[1] );
-			exit( 1 );
+			bu_exit(1, "bwstat: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;
 		argc--;
@@ -89,8 +104,7 @@ main(int argc, char **argv)
 
 	/* check usage */
 	if( argc > 1 || isatty(fileno(fp)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+		bu_exit(1, "%s", Usage );
 	}
 
 	/*
@@ -160,21 +174,6 @@ main(int argc, char **argv)
 		show_hist( bin, sum );
 
 	return 0;
-}
-
-/*
- * Display the histogram values.
- */
-void
-show_hist(long int *bin, int sum)
-{
-	int	i;
-
-	printf( "Histogram:\n" );
-
-	for( i = 0; i < 256; i++ ) {
-		printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0 );
-	}
 }
 
 /*

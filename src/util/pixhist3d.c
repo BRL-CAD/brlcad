@@ -32,9 +32,6 @@
  *	20 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -48,6 +45,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
+#include "bu.h"
+
 
 /*
  * Smallest non-zero value we will plot.
@@ -67,6 +66,7 @@ void	disp_array(long int (*v)[256], int xoff, int yoff);
 
 static const char *Usage = "usage: pixhist3d [file.pix]\n";
 
+
 int
 main(int argc, char **argv)
 {
@@ -85,8 +85,7 @@ main(int argc, char **argv)
 	}
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
-		exit(12);
+		bu_exit(12, "fb_open failed\n");
 	}
 
 	while( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {

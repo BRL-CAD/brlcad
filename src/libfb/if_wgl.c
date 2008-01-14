@@ -465,14 +465,9 @@ wgl_zapmem()
  *			S I G K I D
  */
 HIDDEN void
-#if _XOPEN_SOURCE
 sigkid( pid )
-int pid;
-#else
-sigkid()
-#endif
 {
-	exit(0);
+    exit(0);
 }
 
 

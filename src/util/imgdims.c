@@ -60,9 +60,10 @@ Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'\n\
     or 'imgdims [-# bytes/pixel] num_bytes'\n";
 #define OPT_STRING	"ns#:?"
 
+
 static void print_usage (void)
 {
-    (void) bu_log("%s", usage);
+    bu_exit(1, "%s", usage);
 }
 
 static int grab_number (char *buf, int *np)
@@ -137,18 +138,15 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel-size value: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, NULL);
 		}
 		break;
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
     if (argc - bu_optind != 1)
     {
 	print_usage();
-	bu_exit (1, NULL);
     }
 
     argument = argv[bu_optind];
@@ -157,7 +155,6 @@ main (int argc, char **argv)
     {
 	bu_log("Cannot find file '%s'\n", argument);
 	print_usage();
-	bu_exit (1, NULL);
     }
 
     /*

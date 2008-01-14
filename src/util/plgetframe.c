@@ -28,9 +28,6 @@
  *	Phillip Dykstra
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -41,6 +38,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+
+#include "machine.h"
+#include "bu.h"
+
 
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -117,11 +118,8 @@ struct uplot letters[] = {
 };
 
 int	verbose;
-
-static char usage[] = "\
-Usage: plgetframe [-v] desired_frame < unix_plot\n";
-
 char	buf[8*32];
+
 
 int
 main(int argc, char **argv)
@@ -141,7 +139,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 	if( argc < 2 || isatty(fileno(stdin)) ) {
-		bu_exit(1, "%s", usage );
+		bu_exit(1, "Usage: plgetframe [-v] desired_frame < unix_plot\n" );
 	}
 	desired_frame = atoi(argv[1]);
 	current_frame = 0;
@@ -156,8 +154,7 @@ main(int argc, char **argv)
 		if( c == 'e' )  {
 			current_frame++;
 			if(verbose)  {
-				fprintf(stderr, "%d, ", current_frame);
-				fflush(stderr);
+				bu_log("%d, ", current_frame);
 			}
 			if( current_frame > desired_frame )
 				break;
@@ -165,7 +162,7 @@ main(int argc, char **argv)
 		}
 
 		if( up->targ == TBAD ) {
-			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
+			bu_log( "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
 
@@ -217,7 +214,8 @@ main(int argc, char **argv)
 			}
 		}
 	}
-	exit(0);
+
+	return 0;
 }
 
 /*

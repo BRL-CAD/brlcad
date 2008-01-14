@@ -25,16 +25,7 @@
  * Author -
  *	Mark Huston Bowden
  *
- *  Source -
- *	Research Institute, E-47
- *	University of Alabama in Huntsville
- *	Huntsville, AL  35899
- *	(205) 895-6467 UAH
- *	(205) 876-1089 Redstone Arsenal
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -42,10 +33,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <string.h>
 
+#include "machine.h"
+#include "bu.h"
+
 
 #define ASPECT	(9.8/7.1)
 #define	geti(x)	{ (x) = getchar(); (x) |= (short)(getchar()<<8); }
 #define getb(x)	((x) = getchar())
+
 
 int
 main(int argc, char **argv)
@@ -55,8 +50,7 @@ main(int argc, char **argv)
 	int	c,i,x,y,x1,x2,y1,y2,r,g,b;
 
 	if (argc != 1) {
-		printf("Usage: %s < infile > outfile\n",argv[0]);
-		exit(1);
+		bu_exit(1, "Usage: %s < infile > outfile\n", argv[0]);
 	}
 
 	getb(c);
@@ -140,12 +134,13 @@ main(int argc, char **argv)
 			printf("SP %d;\n",i);
 			break;
 		default:
-			fprintf(stderr,"unable to process cmd x%x\n", c);
+			bu_log("unable to process cmd x%x\n", c);
 			break;
 		}
 		getb(c);
 	} while (!feof(stdin));
-	exit(0);
+
+	return 0;
 }
 
 /*

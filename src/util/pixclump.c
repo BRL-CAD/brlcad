@@ -25,31 +25,31 @@
  *  Author -
  *	Paul J. Tanenbaum
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
-#include "bu.h"
 #include "vmath.h"
+#include "bu.h"
 
 
 #define	RED			0
 #define	GRN			1
 #define	BLU			2
+
+#define	PC_DEBUG_TABLE		0x01
+#define	PC_DEBUG_MATCH		0x02
+#define	PC_DEBUG_OUTPUT		0x04
+#define OPT_STRING	"c:f:x:?"
+
 
 /*
  *	Global variables
@@ -58,19 +58,17 @@ unsigned char	(*color_tbl)[3];	/* Table of quantized colors */
 int		color_tbl_size;		/* Capacity of table */
 int		next_color;		/* Number of colors now in table */
 static int	debug = 0;
-#define	PC_DEBUG_TABLE		0x01
-#define	PC_DEBUG_MATCH		0x02
-#define	PC_DEBUG_OUTPUT		0x04
 
 static char usage[] = "\
 Usage: 'pixclump [-c R/G/B] [-f color_file] [-x debug_flags]\n\
 		 [infile.pix [outfile.pix]]'\n";
-#define OPT_STRING	"c:f:x:?"
+
 
 static void print_usage (void)
 {
-    (void) bu_log("%s", usage);
+    bu_exit(1, "%s", usage);
 }
+
 
 static void print_debug_usage (void)
 {
@@ -87,7 +85,10 @@ static void print_debug_usage (void)
     bu_log("Debug bits and their meanings...\n");
     for (i = 1; (flag_denotation[i]) != 0; ++i)
 	bu_log("0x%04x	%s\n", 1 << (i-1), flag_denotation[i]);
+
+    print_usage();
 }
+
 
 static void add_to_table (unsigned char *rgb)
 {
@@ -115,7 +116,7 @@ static void fill_table (char *f_name)
     struct bu_vls	v;
 
     if ((fp = fopen(f_name, "r")) == NULL)
-	bu_exit (1, "Cannot open color file '%s'\n", bu_optarg);
+	bu_exit(1, "Cannot open color file '%s'\n", bu_optarg);
 
     bu_vls_init(&v);
     for (line_nm = 1; bu_vls_gets(&v, fp) != -1;
@@ -126,7 +127,7 @@ static void fill_table (char *f_name)
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
 	if (! bu_str_to_rgb(bp, rgb))
-	    bu_exit (1, "Illegal color: '%s' on line %d of file '%s'\n", bp, line_nm, f_name);
+	    bu_exit(1, "Illegal color: '%s' on line %d of file '%s'\n", bp, line_nm, f_name);
 	add_to_table(rgb);
     }
 }
@@ -135,11 +136,11 @@ static void print_table (void)
 {
     int	i;
 
-    printf("-----------\nColor Table\n-----------\n");
+    bu_log("-----------\nColor Table\n-----------\n");
     for (i = 0; i < next_color; ++i)
-	printf("%3d %3d %3d\n",
+	bu_log("%3d %3d %3d\n",
 	    color_tbl[i][RED], color_tbl[i][GRN], color_tbl[i][BLU]);
-    printf("-----------\n");
+    bu_log("-----------\n");
 }
 
 /*
@@ -161,6 +162,7 @@ static int color_diff (unsigned char *pix, int i)
 	(pix[BLU] - cte[BLU]) * (pix[BLU] - cte[BLU])
     );
 }
+
 
 int
 main (int argc, char **argv)
@@ -200,7 +202,6 @@ main (int argc, char **argv)
 		{
 		    bu_log("Illegal color: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, NULL);
 		}
 		add_to_table(rgb);
 		cf_name = 0;
@@ -213,15 +214,12 @@ main (int argc, char **argv)
 		if (sscanf(bu_optarg, "%x", (unsigned int *) &debug) != 1)
 		{
 		    bu_log("Invalid debug-flag value: '%s'\n", bu_optarg);
-		    print_usage();
 		    print_debug_usage();
-		    bu_exit (1, NULL);
 		}
 		break;
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
     switch (argc - bu_optind)
     {
@@ -237,7 +235,6 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, NULL);
     }
 
     /*
@@ -247,12 +244,12 @@ main (int argc, char **argv)
     {
 	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
-	    bu_exit (1, "Cannot open input file '%s'\n", inf_name);
+	    bu_exit(1, "Cannot open input file '%s'\n", inf_name);
 	if (outfp == NULL)
 	{
 	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
-		bu_exit (1, "Cannot open output file '%s'\n", outf_name);
+		bu_exit(1, "Cannot open output file '%s'\n", outf_name);
 	}
     }
 
@@ -265,7 +262,6 @@ main (int argc, char **argv)
 	{
 	    bu_log("FATAL: pixclump reads only from file or pipe\n");
 	    print_usage();
-	    bu_exit (1, NULL);
 	}
     }
 
@@ -278,7 +274,6 @@ main (int argc, char **argv)
     {
 	bu_log("pixclump: No colors specified\n");
 	print_usage();
-	bu_exit (1, NULL);
     }
     if (debug & PC_DEBUG_TABLE)
 	print_table();
@@ -308,7 +303,7 @@ main (int argc, char **argv)
 	}
 	if (fwrite((genptr_t) color_tbl[best_color],
 		    3 * sizeof(unsigned char), 1, outfp) != 1)
-	    bu_exit (1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
+	    bu_exit(1, "pixclump:  Error writing pixel to file '%s'\n", outf_name);
     }
     return 0;
 }

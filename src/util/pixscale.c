@@ -36,13 +36,16 @@
  * 	23 Sep 1986
  *
  */
+
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-extern int	bu_getopt(int, char *const *, const char *);
-extern char	*bu_optarg;
-extern int	bu_optind;
+#include "machine.h"
+#include "bu.h"
+
 
 #define	MAXBUFBYTES	3*1024*1024	/* max bytes to malloc in buffer space */
 
@@ -113,10 +116,8 @@ get_args(int argc, register char **argv)
 	if( bu_optind+5 == argc ) {
 		file_name = argv[bu_optind++];
 		if( (buffp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"pixscale: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
+		    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name );
+		    return(0);
 		}
 		inx = atoi(argv[bu_optind++]);
 		iny = atoi(argv[bu_optind++]);
@@ -132,15 +133,13 @@ get_args(int argc, register char **argv)
 	} else {
 		file_name = argv[bu_optind];
 		if( (buffp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"pixscale: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
+		    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name );
+		    return(0);
 		}
 	}
 
 	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "pixscale: excess argument(s) ignored\n" );
+	    bu_log( "pixscale: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
 }
@@ -178,7 +177,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	else
 		pylen = (double)iy / (double)oy;
 	if ( (pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0) ) {
-		fprintf( stderr, "pixscale: can't stretch one way and compress another!\n" );
+		bu_log( "pixscale: can't stretch one way and compress another!\n" );
 		return( -1 );
 	}
 	if( pxlen < 1.0 || pylen < 1.0 ) {
@@ -249,13 +248,11 @@ main(int argc, char **argv)
 	int i;
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "%s", usage );
 	}
 
 	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
-		fprintf( stderr, "pixscale: bad size\n" );
-		exit( 2 );
+	    bu_exit( 2, "pixscale: bad size\n" );
 	}
 
 	/* See how many lines we can buffer */
@@ -264,13 +261,12 @@ main(int argc, char **argv)
 	if (inx < outx) i = outx * 3;
 	else i = inx * 3;
 
-	if( (outbuf = malloc(i)) == NULL )
-		exit( 4 );
+	outbuf = bu_malloc(i, "outbuf");
 
 	/* Here we go */
 	i = scale( stdout, inx, iny, outx, outy );
-	free( outbuf );
-	free( buffer );
+	bu_free( outbuf, "outbuf" );
+	bu_free( buffer, "buffer" );
 	return( 0 );
 }
 
@@ -296,8 +292,9 @@ init_buffer(int scanlen)
 
 	buflines = max;
 	buf_start = (-buflines);
-	buffer = malloc( buflines * scanlen );
+	buffer = bu_malloc( buflines * scanlen, "buffer" );
 }
+
 
 /*
  * Load the buffer with scan lines centered around
@@ -313,8 +310,7 @@ fill_buffer(int y)
 
 	if( file_pos != buf_start * scanlen )  {
 		if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
-			fprintf( stderr, "pixscale: Can't seek to input pixel! y=%d\n", y );
-			exit( 3 );
+			bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y );
 		}
 		file_pos = buf_start * scanlen;
 	}

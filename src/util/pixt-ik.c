@@ -26,23 +26,28 @@
  *
  *  Mike Muuss, BRL.
  *
- *  $Revision$
  */
+
+#include "common.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 extern int ikfd;
 extern int ikhires;
 
 #define BLOCKSIZE	(24*1024)	/* Size of tape record */
-
 #define MAX_LINE	1024		/* Max pixels/line */
+
 static char scanline[BLOCKSIZE];	/* multi-scanline pixel buffer */
 static int scanbytes;			/* # of bytes of one scanline */
-
 static char outline[MAX_LINE*4];	/* Ikonas pixels */
+
 int reverse = 0;		/* rotate picture 180 degrees if non-zero */
 
-char usage[] = "Usage: pixt-ik [-h] [-r] file.pix [width]\n";
 
 int
 main(int argc, char **argv)
@@ -54,8 +59,7 @@ main(int argc, char **argv)
 	static int j;
 
 	if( argc < 2 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+		bu_exit(1, "Usage: pixt-ik [-h] [-r] file.pix [width]\n");
 	}
 
 	nlines = 512;
@@ -74,7 +78,7 @@ main(int argc, char **argv)
 	}
 	if( (infd = open( argv[1], 0 )) < 0 )  {
 		perror( argv[1] );
-		exit(3);
+		bu_exit(3, "Unable to open %s\n", argv[1]);
 	}
 	if( argc >= 3 )
 		nlines = atoi(argv[2] );
@@ -126,7 +130,8 @@ main(int argc, char **argv)
 				perror("pixt-ik READ ERROR");
 			    }
 			    (void)close(infd);
-			    exit(1);
+
+			    return 1;
 			}
 
 			in = scanline;
@@ -150,7 +155,7 @@ main(int argc, char **argv)
 	}
 	(void)close(infd);
 
-	exit(0);
+	return 0;
 }
 
 /*

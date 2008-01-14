@@ -24,9 +24,6 @@
  *	Based on scrsave.c
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -36,6 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "bu.h"
+
 
 #if HAS_SGIGL
 #  ifdef mips
@@ -165,16 +163,14 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
     npix = (xsize+1)*(ysize+1);		/* conservative */
     lbuf = (unsigned long *)malloc( sizeof(long) * npix );
     if( lbuf == (unsigned long *)NULL )  {
-	fprintf(stderr, "sgi-pix:  malloc error\n");
-	exit(1);
+	bu_exit(1, "sgi-pix:  malloc error\n");
     }
 
     npix = (xsize)*(ysize);			/* exact */
     got = readdisplay( xorg, yorg, xorg+xsize-1, yorg+ysize-1,
 		       lbuf, RD_FREEZE );
     if( got != npix )  {
-	fprintf(stderr,"sgi-pix: readdisplay() wanted %d, got %d\n",
-		npix, got );
+	bu_log("sgi-pix: readdisplay() wanted %d, got %d\n", npix, got );
     }
     lp = lbuf;
     for( y=0; y<ysize; y++ )  {
@@ -231,11 +227,10 @@ main(int argc, char *argv[])
 	ofp = stdout;
     }
     if( ofp == NULL ) {
-	fprintf(stderr,"sgi-pix: can't open \"%s\"\n", fname);
-	exit(2);
+	bu_exit(2, "sgi-pix: can't open \"%s\"\n", fname);
     }
     if( isatty(fileno(ofp)) ) {
-	fprintf(stderr, "%s", usage);
+	bu_log("%s", usage);
 	bu_exit(1, "sgi-pix: refuse to send binary output to terminal\n");
     }
 
@@ -254,8 +249,7 @@ main(int argc, char *argv[])
 	ysize = YMAXSCREEN-yorg;
     xsize++;
     ysize++;
-    fprintf(stderr,"origin(%d, %d) size (%d, %d)\n",
-	    xorg, yorg, xsize, ysize);
+    bu_log("origin(%d, %d) size (%d, %d)\n", xorg, yorg, xsize, ysize);
 
 #  ifdef mips
     foreground();
@@ -271,17 +265,17 @@ main(int argc, char *argv[])
 
     if((mode = getdisplaymode()) == 0) {
 	/* RGB mode */
-	fprintf(stderr,"RGB mode\n");
+	bu_log("RGB mode\n");
 	savescreen(ofp, xorg, yorg, xsize, ysize);
     } else {
 	if( mode == 1 )
-	    fprintf(stderr,"CMAP mode (single buffered)\n");
+	    bu_log("CMAP mode (single buffered)\n");
 	else  {
-	    fprintf(stderr,"CMAP mode (double buffered)\n");
+	    bu_log("CMAP mode (double buffered)\n");
 	    swapbuffers();
 	}
 	planes = getplanes();
-	fprintf(stderr,"%d planes\n", planes);
+	bu_log("%d planes\n", planes);
 	for( i = 0; i < 4096; i++ ) {
 	    short r,g,b;
 	    getmcolor( i, &r, &g, &b );
@@ -304,8 +298,7 @@ main(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-    fprintf(stderr, "sgi-pix:  This program only works on SGI machines\n");
-    exit(1);
+    bu_exit(1, "sgi-pix:  This program only works on SGI machines\n");
 }
 #endif
 

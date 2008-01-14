@@ -30,13 +30,7 @@
  *  Author -
  *	Paul J. Tanenbaum
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -428,8 +422,7 @@ void del_from_prioq (struct vertex *vp)
 	    vp, vp -> v_bridge, vp -> v_bridge -> b_index);
     if (bu_rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
     {
-	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
-	bu_exit (1, "  This should not happen\n");
+	bu_exit(1, "del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
     }
     bu_rb_delete(prioq, PRIOQ_INDEX);
 }
@@ -586,7 +579,7 @@ main (int argc, char **argv)
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
+		bu_exit (ch != '?', NULL);
 		return(0);
 	}
 
@@ -712,6 +705,7 @@ main (int argc, char **argv)
 	    BU_LIST_DEQUEUE(&(np -> l));
 	}
     }
+
     bu_log("MST weight: %g\n", weight);
     return 0;
 }

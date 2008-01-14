@@ -25,15 +25,15 @@
  *	Phillip Dykstra
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "machine.h"
+#include "bu.h"
 
 
 /* Dots are least most signifigant bit first in increasing index */
@@ -50,7 +50,6 @@ struct	{
 FILE	*magfp, *yelfp, *cyafp;
 int	verbose = 0;
 
-static char *Usage = "usage: ap-pix [-v] file.ap > file.pix (3456 x ?)\n";
 
 int
 main(int argc, char **argv)
@@ -65,14 +64,12 @@ main(int argc, char **argv)
 	}
 
 	if( argc != 2 ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+	    bu_exit( 1, "usage: ap-pix [-v] file.ap > file.pix (3456 x ?)\n" );
 	}
 
 	magfp = fopen( argv[1], "r" );
 	if( magfp == NULL ) {
-		fprintf( stderr, "ap-pix: can't open \"%s\"\n", argv[1] );
-		exit( 2 );
+	    bu_exit(2, "ap-pix: can't open \"%s\"\n", argv[1] );
 	}
 	yelfp = fopen( argv[1], "r" );
 	fseek( yelfp, (long)(50*sizeof(yelline)), 0 );

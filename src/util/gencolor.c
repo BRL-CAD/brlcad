@@ -27,9 +27,6 @@
  *	Phillip Dykstra
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -45,6 +42,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <fcntl.h>
 #endif
 
+#include "machine.h"
+#include "bu.h"
+
+
 #define	MAX_BYTES	(128*1024)
 
 static const char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\n";
@@ -52,6 +53,7 @@ static const char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\
 int	bytes_in_buf, copies_per_buf;
 
 unsigned char	buf[MAX_BYTES];
+
 
 int
 main(int argc, char **argv)
@@ -114,19 +116,19 @@ main(int argc, char **argv)
 				break;
 			}
 		}
-		exit(1);
+		return 1;
 	}
 
 	while( count > 0 ) {
 		times = copies_per_buf > count ? count : copies_per_buf;
 		if( write( 1, (char *)buf, len * times ) != len * times )  {
 			perror("write");
-			exit(1);
+			return 1;
 		}
 		count -= times;
 	}
 
-	exit( 0 );
+	return 0;
 }
 
 /*

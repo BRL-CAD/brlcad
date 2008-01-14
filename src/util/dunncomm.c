@@ -26,9 +26,6 @@
  *	August 1985
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -50,8 +47,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <sys/ioctl_compat.h>
 #  define OCRNL   0000010
 #endif
-
-#include "machine.h"
 
 /*
  *  This file will work IFF one of these three flags is set:
@@ -79,6 +74,10 @@ struct	termio	tty;
 
 #endif /* _POSIX_SOURCE */
 
+#include "machine.h"
+#include "bu.h"
+
+
 #ifndef OCRNL
 #  define OCRNL 0x00000008
 #endif
@@ -95,6 +94,7 @@ struct	termio	tty;
 #  define XTABS (TAB1 | TAB2)
 #endif /* XTABS */
 
+
 int fd;
 char cmd;
 unsigned char	status[4];
@@ -105,9 +105,9 @@ int	polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 void
 unsnooze(int x)
 {
-	printf("\007dunnsnap: request timed out, aborting\n");
-	exit(1);
+	bu_exit(1, "\007dunnsnap: request timed out, aborting\n");
 }
+
 
 /*
  *			D U N N O P E N
@@ -124,9 +124,8 @@ dunnopen(void)
 	if( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
 #endif
 	{
-		printf("\007dunnopen: can't open /dev/camera\n");
 		close(fd);
-		exit(10);
+		bu_exit(10, "\007dunnopen: can't open /dev/camera\n");
 	}
 #ifdef HAVE_TERMIOS_H
 	if( tcgetattr( fd, &tty ) < 0 )
@@ -134,9 +133,8 @@ dunnopen(void)
 	if( ioctl(fd, TCGETA, &tty) < 0)
 #endif
 	{
-		printf("\007dunnopen: can't open /dev/camera\n");
 		close(fd);
-		exit(10);
+		bu_exit(10, "\007dunnopen: can't open /dev/camera\n");
 	}
 
 	/* set up the camera device */
@@ -331,8 +329,7 @@ getexposure(char *title)
 	waittime.tv_usec = 0;
 
 	if(!ready(20)) {
-		printf("dunncolor: (getexposure) camera not ready\n");
-		exit(60);
+		bu_exit(60, "dunncolor: (getexposure) camera not ready\n");
 	}
 
 	if(polaroid)
@@ -344,8 +341,7 @@ getexposure(char *title)
 	FD_SET(fd, &readfds);
 	select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, &waittime);
 	if( FD_ISSET(fd, &readfds) ) {
-		printf("dunncolor:\007 %s request exposure value cmd: timed out\n", title);
-		exit(40);
+		bu_exit(40, "dunncolor:\007 %s request exposure value cmd: timed out\n", title);
 	}
 
 	readval = bu_mread(fd, values, 20);

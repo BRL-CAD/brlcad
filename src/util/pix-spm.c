@@ -24,17 +24,17 @@
  *  Phil Dykstra
  *  12 Aug 1986
  */
-#include "common.h"
 
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "machine.h"
-#include "fb.h"
 #include "spm.h"
+#include "fb.h"
+#include "bu.h"
 
-static	char *Usage = "usage: pix-spm file.pix size > file.spm\n";
 
 int
 main(int argc, char **argv)
@@ -43,8 +43,7 @@ main(int argc, char **argv)
 	spm_map_t *mp;
 
 	if( argc != 3 ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+		bu_exit( 1, "usage: pix-spm file.pix size > file.spm\n" );
 	}
 
 	size = atoi( argv[2] );

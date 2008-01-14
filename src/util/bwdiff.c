@@ -28,9 +28,6 @@
  *	26 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -40,12 +37,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
-FILE *fp1, *fp2;
 
 #define	DIFF	0
 #define	MAG	1
@@ -54,14 +51,33 @@ FILE *fp1, *fp2;
 #define	EQUAL	4
 #define	NEQ	5
 
+
+FILE *fp1, *fp2;
+
 int	mode = DIFF;
 int	backgnd = 0;
 unsigned char ibuf1[512], ibuf2[512], obuf[512];
 
-void	open_file(FILE **fp, char *name);
-
-char usage[] = "\
+static const char usage[] = "\
 Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw (- stdin, . skip)\n";
+
+void
+open_file(FILE **fp, char *name)
+{
+	/* check for special names */
+	if( strcmp( name, "-" ) == 0 ) {
+		*fp = stdin;
+		return;
+	} else if( strcmp( name, "." ) == 0 ) {
+		*fp = fopen( "/dev/null", "r" );
+		return;
+	}
+
+	if( (*fp = fopen( name, "r" )) == NULL ) {
+		bu_log(2, "bwdiff: Can't open \"%s\"\n", name );
+	}
+}
+
 
 int
 main(int argc, char **argv)
@@ -89,8 +105,7 @@ main(int argc, char **argv)
 	}
 
 	if( argc != 3 || isatty(fileno(stdout)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit(1, "%s", usage);
 	}
 
 	open_file(&fp1, argv[1]);
@@ -115,15 +130,7 @@ main(int argc, char **argv)
 		switch( mode ) {
 		case DIFF:
 			for( i = 0; i < n; i++ ) {
-#ifdef vax
-				/*
-				 * *p's promoted to ints automatically,
-				 * VAX then does /2 much faster! (extzv)
-				 */
-				*op++ = (*p1 - *p2)/2 + 128;
-#else
 				*op++ = (((int)*p1 - (int)*p2)>>1) + 128;
-#endif
 				p1++;
 				p2++;
 			}
@@ -191,23 +198,6 @@ main(int argc, char **argv)
 	return 0;
 }
 
-void
-open_file(FILE **fp, char *name)
-{
-	/* check for special names */
-	if( strcmp( name, "-" ) == 0 ) {
-		*fp = stdin;
-		return;
-	} else if( strcmp( name, "." ) == 0 ) {
-		*fp = fopen( "/dev/null", "r" );
-		return;
-	}
-
-	if( (*fp = fopen( name, "r" )) == NULL ) {
-		fprintf( stderr, "bwdiff: Can't open \"%s\"\n", name );
-		exit( 2 );
-	}
-}
 
 /*
  * Local Variables:

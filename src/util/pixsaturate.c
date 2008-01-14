@@ -41,19 +41,23 @@
  *
  *			Paul Haeberli - 1988
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
+
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 #define RINTLUM	(79)
 #define GINTLUM	(156)
 #define BINTLUM	(21)
 
 char	buf[3*16*1024];
+
 
 int
 main(int argc, char **argv)
@@ -67,8 +71,7 @@ main(int argc, char **argv)
 	register unsigned char	*cp;
 
 	if( argc != 2 )  {
-		fprintf(stderr, "Usage: pixsaturate saturation\n");
-		exit(1);
+		bu_exit(1, "Usage: pixsaturate saturation\n");
 	}
 	sat = atof(argv[1]);
 
@@ -95,10 +98,11 @@ main(int argc, char **argv)
 		}
 		if( fwrite( buf, 1, nby, stdout ) != nby )  {
 			perror("fwrite");
-			exit(1);
+			return 1;
 		}
 	}
-	return(0);
+
+	return 0;
 }
 
 /*

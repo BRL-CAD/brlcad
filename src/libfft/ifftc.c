@@ -18,20 +18,14 @@
  * information.
  */
 /** @file ifftc.c
+ *
  *  Split Radix Decimation in Freq
  *  Inverse FFT C code generator.
  *
  *  Author -
  *	Phil Dykstra
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -51,7 +45,7 @@ main(int argc, char **argv)
 
 	if( argc != 2 ) {
 		fprintf( stderr, "Usage: ifftc length > fftlength.c\n" );
-		exit(1);
+		return 1;
 	}
 
 	n = atoi(argv[1]);
@@ -59,7 +53,7 @@ main(int argc, char **argv)
 
 	ditsplit( x, n, m );
 	fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
-	return(0);
+	return 0;
 }
 
 /*

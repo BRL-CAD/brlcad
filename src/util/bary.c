@@ -26,9 +26,6 @@
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -52,12 +49,11 @@ struct site
 #define	SITE_NULL	((struct site *) 0)
 #define	SITE_MAGIC	0x73697465
 #define s_magic		l.magic
+#define OPT_STRING	"ns:t?"
 
 void print_usage (void)
 {
-#define OPT_STRING	"ns:t?"
-
-    bu_log("Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
+    bu_exit(1, "Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
 }
 
 void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
@@ -173,7 +169,6 @@ main (int argc, char **argv)
 		{
 		    bu_log("Illegal site: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, NULL);
 		}
 		enqueue_site(&site_list, x, y, z);
 		break;
@@ -184,7 +179,6 @@ main (int argc, char **argv)
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
 
     switch (argc - bu_optind)
@@ -200,7 +194,6 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, NULL);
     }
 
     if (BU_LIST_IS_EMPTY(&site_list))

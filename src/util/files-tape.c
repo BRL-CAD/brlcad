@@ -51,9 +51,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -62,10 +59,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 #ifdef HAVE_FCNTL_H
-# include <fcntl.h>
+#  include <fcntl.h>
 #endif
 
 #include "machine.h"
@@ -139,7 +136,7 @@ main(int argc, char **argv)
 		if( (fd = open( argv[bu_optind], 0 )) < 0 )  {
 			perror( argv[bu_optind] );
 			/*
-			 *  It is unclear whether an exit (1),
+			 *  It is unclear whether an exiting,
 			 *  or continuing with the next file
 			 *  is really the right thing here.
 			 *  If the intended size was known,

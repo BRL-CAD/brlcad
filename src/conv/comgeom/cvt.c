@@ -346,7 +346,7 @@ main(int argc, char **argv)
     group_write();
     if(verbose) printf("\n");
 
-    return(0);		/* exit(0) */
+    return(0);
 }
 
 /*

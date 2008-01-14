@@ -27,9 +27,6 @@
  *	18 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -44,12 +41,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "fb.h"
+#include "bu.h"
+
 
 long	bin[256];
 int	verbose = 0;
 FBIO	*fbp;
 
 static char *Usage = "usage: bwhist [-v] [file.bw]\n";
+
 
 int
 main(int argc, char **argv)
@@ -73,8 +73,7 @@ main(int argc, char **argv)
 	/* look for optional input file */
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1],"r")) == 0 ) {
-			fprintf( stderr, "bwhist: can't open '%s'\n", argv[1] );
-			exit(1);
+			bu_exit(1, "bwhist: can't open '%s'\n", argv[1] );
 		}
 		argv++;
 		argc--;
@@ -83,8 +82,7 @@ main(int argc, char **argv)
 
 	/* check usage */
 	if( argc > 1 || isatty(fileno(fp)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+		bu_exit(1, "%s", Usage);
 	}
 
 	for( i = 0; i < 3*512; i++ )
@@ -106,8 +104,7 @@ main(int argc, char **argv)
 	printf( "Full screen = %ld pixels\n", max );
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
-		exit(12);
+		bu_exit(12, "fb_open failed\n");
 	}
 
 	/* Display them */
@@ -120,8 +117,9 @@ main(int argc, char **argv)
 		if( verbose )
 			printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/(float)max );
 	}
+
 	fb_close( fbp );
-	exit(0);
+	return 0;
 }
 
 /*

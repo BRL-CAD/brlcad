@@ -36,9 +36,6 @@
  *	6 Aug 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -50,6 +47,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+
+#include "machine.h"
+#include "bu.h"
 
 
 #define	IBUFSIZE 3*1024		/* Max read size in rgb pixels */
@@ -65,9 +65,23 @@ struct	{
 	long	sum, partial_sum;
 } r, g, b;
 
-void	show_hist(void);
 
-static char *Usage = "usage: pixstat [-v] [file.pix]\n";
+/*
+ * Display the histogram values.
+ */
+void
+show_hist(void)
+{
+	int	i;
+
+	printf( "Histogram:\n" );
+
+	for( i = 0; i < 256; i++ ) {
+		printf( "%3d: %10ld %10ld %10ld\n",
+			i, r.bin[i], g.bin[i], b.bin[i] );
+	}
+}
+
 
 int
 main(int argc, char **argv)
@@ -88,8 +102,7 @@ main(int argc, char **argv)
 	/* check for optional input file */
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1],"r")) == 0 ) {
-			fprintf( stderr, "pixstat: can't open \"%s\"\n", argv[1] );
-			exit( 1 );
+			bu_exit(1, "pixstat: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;
 		argc--;
@@ -98,8 +111,7 @@ main(int argc, char **argv)
 
 	/* check usage */
 	if( argc > 1 || isatty(fileno(fp)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+		bu_exit( 1, "usage: pixstat [-v] [file.pix]\n" );
 	}
 
 	/*
@@ -209,22 +221,6 @@ main(int argc, char **argv)
 	if( verbose )
 		show_hist();
 	return 0;
-}
-
-/*
- * Display the histogram values.
- */
-void
-show_hist(void)
-{
-	int	i;
-
-	printf( "Histogram:\n" );
-
-	for( i = 0; i < 256; i++ ) {
-		printf( "%3d: %10ld %10ld %10ld\n",
-			i, r.bin[i], g.bin[i], b.bin[i] );
-	}
 }
 
 /*

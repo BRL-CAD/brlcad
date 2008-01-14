@@ -25,9 +25,6 @@
  *	Phillip Dykstra
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -44,6 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "dm.h" /* for dm_applicationfocus() */
+#include "bu.h"
 
 
 #define	TBAD	0	/* no such command */
@@ -140,8 +138,6 @@ double	sp[6];			/* space command */
 char	strarg[512];		/* string buffer */
 int	width, height;
 
-static const char usage[] = "\
-Usage: pl-X [-v] < unix_plot\n";
 
 Display	*dpy;
 Window	win;
@@ -300,8 +296,7 @@ xsetup(int argc, char **argv)
 		xsh.x, xsh.y, xsh.width, xsh.height,
 		bw, bd, bg );
 	if( win == 0 ) {
-		fprintf( stderr, "pl-X: Can't create window\n" );
-		exit( 3 );
+		bu_exit(3, "pl-X: Can't create window\n" );
 	}
 
 	/* Set standard properties for Window Managers */
@@ -357,7 +352,7 @@ main(int argc, char **argv)
 		argv++;
 	}
 	if( isatty(fileno(stdin)) ) {
-		bu_exit(1, "%s", usage );
+		bu_exit(1, "Usage: pl-X [-v] < unix_plot\n");
 	}
 	xsetup( argc, argv );
 
@@ -374,7 +369,7 @@ main(int argc, char **argv)
 		}
 
 		if( up->targ == TBAD ) {
-			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
+			bu_log("Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
 

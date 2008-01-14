@@ -26,9 +26,6 @@
  *	2 Oct 1985
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -36,12 +33,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 int	xnum, ynum;		/* Number of pixels in new map */
 int	xorig, yorig;		/* Bottom left corner to extract from */
 int	linelen;
 char	*buf;			/* output scanline buffer, malloc'd */
+
 
 int
 main(int argc, char **argv)
@@ -51,16 +50,13 @@ main(int argc, char **argv)
 	long	offset;
 
 	if (argc < 3) {
-		printf("usage: bwrect infile outfile (I prompt!)\n");
-		exit( 1 );
+		bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
 	}
 	if ((ifp = fopen(argv[1], "r")) == NULL) {
-		printf("pixrect: can't open %s\n", argv[1]);
-		exit( 2 );
+		bu_exit(2, "pixrect: can't open %s\n", argv[1]);
 	}
 	if ((ofp = fopen(argv[2], "w")) == NULL) {
-		printf("pixrect: can't open %s\n", argv[1]);
-		exit( 3 );
+		bu_exit(3, "pixrect: can't open %s\n", argv[1]);
 	}
 
 	/* Get info */
@@ -71,7 +67,7 @@ main(int argc, char **argv)
 	printf( "Scan line length of input file " );
 	scanf( "%d", &linelen );
 
-	buf = (char *)malloc( xnum );
+	buf = (char *)bu_malloc( xnum, "buffer" );
 
 	/* Move all points */
 	for (row = 0+yorig; row < ynum+yorig; row++) {
@@ -80,6 +76,8 @@ main(int argc, char **argv)
 		fread(buf, sizeof(*buf), xnum, ifp);
 		fwrite(buf, sizeof(*buf), xnum, ofp);
 	}
+
+	bu_free(buf, "buffer");
 	return 0;
 }
 

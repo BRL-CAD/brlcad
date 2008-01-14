@@ -22,7 +22,6 @@
  * Author -
  *   Justin Shumaker
  *
- * $Id$
  */
 
 #ifdef HAVE_CONFIG_H
@@ -34,15 +33,15 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
-
-#include <bu.h>
-
-#include "bench.h"
-
-
 #ifdef HAVE_GETOPT_H
-# include <getopt.h>
+#  include <getopt.h>
 #endif
+
+#include "machine.h"
+#include "bu.h"
+
+#include "./bench.h"
+
 
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] =
@@ -57,8 +56,7 @@ static char shortopts[] = "cdh";
 
 
 static void finish(int sig) {
-  printf("Collected signal %d, aborting!\n", sig);
-  exit(EXIT_FAILURE);
+  bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
 

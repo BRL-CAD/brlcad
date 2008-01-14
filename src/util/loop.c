@@ -27,24 +27,21 @@
  *	"infinite" loops.
  *
  *  Authors -
- *	John Grosh, Phil Dykstra, and Michael John Muuss
+ *	John Grosh
+ *	Phil Dykstra
+ *	Michael John Muuss
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
-#include <stdlib.h> /* for atof() */
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 #define	INTEGER 0
@@ -62,8 +59,7 @@ main(int argc, char **argv)
 	register double	dstart, dfinish,dincr;
 
 	if (argc < 3 || argc > 4) {
-		fprintf(stderr, "Usage:  loop start finish [incr]\n");
-		exit(9);
+		bu_exit(9, "Usage:  loop start finish [incr]\n");
 	}
 
 	/* determine if any arguments are real */
@@ -163,7 +159,8 @@ main(int argc, char **argv)
 			for (i = start; i >= finish; i += incr)
 				printf(fmt_string, i);
 	}
-	exit(0);
+
+	return 0;
 }
 
 /*

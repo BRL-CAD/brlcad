@@ -27,9 +27,15 @@
  *
  *  Mike Muuss, BRL, 05/05/84.
  *
- *  $Revision$
  */
+
+#include "common.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 extern int ikfd;
 extern int ikhires;
@@ -50,7 +56,6 @@ static char o2[MAX_LINE*4];
 
 static int pix_line;		/* Number of pixels/line */
 
-char usage[] = "Usage: pix-both-ik [-h] file.pix [width] [fr_offset] [fr_count]\n";
 
 int
 main(int argc, char **argv)
@@ -61,8 +66,7 @@ main(int argc, char **argv)
 	static int frame_count;
 
 	if( argc < 2 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+		bu_exit(1, "Usage: pix-both-ik [-h] file.pix [width] [fr_offset] [fr_count]\n");
 	}
 
 	nlines = 512;
@@ -104,15 +108,19 @@ main(int argc, char **argv)
 		a2 = avg2;
 		l2 = out2;
 
-		if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
-			exit(0);
+		if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
+			perror("read");
+			exit(1);
+		}
 		/* avg1 is same as l1 to prime things */
 		doline( a1 );
 		doline( l1 );
 
 		for( y=nlines; y > 0; y-- )  {
-			if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
-				exit(0);
+		    if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
+			perror("read");
+			exit(1);
+		    }
 			doline( l2 );
 			avgline( a2, l1, l2 );
 
@@ -136,6 +144,8 @@ main(int argc, char **argv)
 			}
 		}
 	}
+
+	return 0;
 }
 
 doline(register unsigned char *out)

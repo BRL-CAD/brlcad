@@ -35,17 +35,21 @@
  *	24 Sep 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
+
+#include "common.h"
 
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 
-extern int	bu_getopt(int, char *const *, const char *);
-extern char	*bu_optarg;
-extern int	bu_optind;
+#include "machine.h"
+#include "bu.h"
+
+
+static const char usage[] = "\
+Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
+	[-w width] [-n height] [file.pix] > file.pix\n";
+
 
 /* 4 times bigger than typ. screen */
 /*#define	MAXBUFBYTES	(1280*1024*3*4) */
@@ -63,10 +67,6 @@ int	nyin = 512;
 int	yin, xout, yout;
 int	plus90, minus90, reverse, invert;
 int	pixbytes = 3;
-
-static	char usage[] = "\
-Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]\n\
-	[-w width] [-n height] [file.pix] > file.pix\n";
 
 void	fill_buffer(void);
 void    reverse_buffer(void);
@@ -132,15 +132,13 @@ get_args(int argc, register char **argv)
 	} else {
 		file_name = argv[bu_optind];
 		if( (ifp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"pixrot: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
+		    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name );
+		    return(0);
 		}
 	}
 
 	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "pixrot: excess argument(s) ignored\n" );
+		bu_log("pixrot: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
 }
@@ -152,8 +150,7 @@ main(int argc, char **argv)
 	long	outbyte, outplace;
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
+	    bu_exit(1, "%s", usage);
 	}
 
 	ofp = stdout;
@@ -161,15 +158,13 @@ main(int argc, char **argv)
 	scanbytes = nxin * pixbytes;
 	buflines = MAXBUFBYTES / scanbytes;
 	if( buflines <= 0 ) {
-		fprintf( stderr, "pixrot: I'm not compiled to do a scanline that long!\n" );
-		exit( 2 );
+		bu_exit(2, "pixrot: I'm not compiled to do a scanline that long!\n" );
 	}
 	if( buflines > nyin ) buflines = nyin;
 	buffer = malloc( buflines * scanbytes );
 	obuf = (nyin > nxin) ? malloc( nyin * pixbytes ) : malloc( nxin * pixbytes );
 	if( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
-		fprintf( stderr, "pixrot: malloc failed\n" );
-		exit( 3 );
+		bu_exit(3, "pixrot: malloc failed\n" );
 	}
 
 	/*
@@ -199,8 +194,7 @@ main(int argc, char **argv)
 				outbyte = ((yout * nyin) + xout) * pixbytes;
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
-						fprintf( stderr, "pixrot: Can't seek on output, yet I need to!\n" );
-						exit( 3 );
+						bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
 					}
 					outplace = outbyte;
 				}
@@ -221,8 +215,7 @@ main(int argc, char **argv)
 				outbyte = ((yout * nyin) + xout) * pixbytes;
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
-						fprintf( stderr, "pixrot: Can't seek on output, yet I need to!\n" );
-						exit( 3 );
+						bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
 					}
 					outplace = outbyte;
 				}
@@ -235,8 +228,7 @@ main(int argc, char **argv)
 				outbyte = yout * scanbytes;
 				if( outplace != outbyte ) {
 					if( fseek( ofp, outbyte, 0 ) < 0 ) {
-						fprintf( stderr, "pixrot: Can't seek on output, yet I need to!\n" );
-						exit( 3 );
+						bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n" );
 					}
 					outplace = outbyte;
 				}

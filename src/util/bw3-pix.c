@@ -27,9 +27,6 @@
  *	13 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -40,13 +37,30 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 
 #include "machine.h"
+#include "bu.h"
+
 
 unsigned char	obuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
 
-void	open_file(FILE **fp, char *name);
 
-char *Usage = "usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n";
+void
+open_file(FILE **fp, char *name)
+{
+	/* check for special names */
+	if( strcmp( name, "-" ) == 0 ) {
+		*fp = stdin;
+		return;
+	} else if( strcmp( name, "." ) == 0 ) {
+		*fp = fopen( "/dev/null", "r" );
+		return;
+	}
+
+	if( (*fp = fopen( name, "r" )) == NULL ) {
+		bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name );
+	}
+}
+
 
 int
 main(int argc, char **argv)
@@ -57,8 +71,7 @@ main(int argc, char **argv)
 	FILE	*rfp, *bfp, *gfp;
 
 	if( argc != 4 || isatty(fileno(stdout)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+		bu_exit( 1, "usage: bw3-pix redin greenin bluein > file.pix (- stdin, . skip)\n" );
 	}
 
 	open_file( &rfp, argv[1] );
@@ -91,24 +104,6 @@ main(int argc, char **argv)
 		fwrite( obuf, sizeof( char ), num*3, stdout );
 	}
 	return 0;
-}
-
-void
-open_file(FILE **fp, char *name)
-{
-	/* check for special names */
-	if( strcmp( name, "-" ) == 0 ) {
-		*fp = stdin;
-		return;
-	} else if( strcmp( name, "." ) == 0 ) {
-		*fp = fopen( "/dev/null", "r" );
-		return;
-	}
-
-	if( (*fp = fopen( name, "r" )) == NULL ) {
-		fprintf( stderr, "bw3-pix: Can't open \"%s\"\n", name );
-		exit( 2 );
-	}
 }
 
 /*

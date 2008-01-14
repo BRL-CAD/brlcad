@@ -21,9 +21,15 @@
  *
  */
 
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 int
 main(int argc, char **argv)
@@ -34,11 +40,11 @@ main(int argc, char **argv)
 
 	if( argc != 4 && argc != 7 )
 	{
-		fprintf( stderr , "Usage:\n" );
-		fprintf( stderr , "\t%s [R_in G_in B_in] R_out G_out B_out  < pix_in > pix_out\n", argv[0] );
-		fprintf( stderr , "\t\tRGB_in is changed to RGB_out\n" );
-		fprintf( stderr , "\t\tif RGB_in is not provided, the first pixel input is used\n" );
-		exit( 1 );
+		bu_log( "Usage:\n" );
+		bu_log( "\t%s [R_in G_in B_in] R_out G_out B_out  < pix_in > pix_out\n", argv[0] );
+		bu_log( "\t\tRGB_in is changed to RGB_out\n" );
+		bu_log( "\t\tif RGB_in is not provided, the first pixel input is used\n" );
+		bu_exit( 1, NULL );
 	}
 
 	if( argc == 7 )
@@ -62,8 +68,7 @@ main(int argc, char **argv)
 	{
 		if( (npixels=fread( pixin , sizeof( unsigned char ) , 3 , stdin ) ) != 3 )
 		{
-			fprintf( stderr, "Unexpected end of input!!!\n" );
-			exit( 1 );
+			bu_exit(1, "Unexpected end of input\n" );
 		}
 		fwrite( pixout , sizeof( unsigned char ) , npixels , stdout );
 	}

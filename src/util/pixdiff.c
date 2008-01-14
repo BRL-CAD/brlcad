@@ -30,14 +30,7 @@
  *  Author -
  *	Michael John Muuss
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -54,7 +47,6 @@ long	matching;
 long	off1;
 long	offmany;
 
-char usage[] = "Usage: pixdiff f1.pix f2.pix >file.pix\n";
 
 int
 main(int argc, char **argv)
@@ -62,21 +54,20 @@ main(int argc, char **argv)
 	register FILE *f1, *f2;
 
 	if( argc != 3 || isatty(fileno(stdout)) )  {
-		fprintf(stderr, "%s", usage);
-		exit(0);
+		bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
 	}
 
 	if( strcmp( argv[1], "-" ) == 0 )
 		f1 = stdin;
 	else if( (f1 = fopen( argv[1], "r" ) ) == NULL )  {
 		perror( argv[1] );
-		exit(1);
+		return 1;
 	}
 	if( strcmp( argv[2], "-" ) == 0 )
 		f2 = stdin;
 	else if( (f2 = fopen( argv[2], "r" ) ) == NULL )  {
 		perror( argv[2] );
-		exit(1);
+		return 1;
 	}
 	while(1)  {
 		register int r1, g1, b1;
@@ -148,7 +139,8 @@ main(int argc, char **argv)
 	fprintf(stderr,
 		"pixdiff bytes: %7ld matching, %7ld off by 1, %7ld off by many\n",
 		matching, off1, offmany );
-	exit(0);
+
+	return 0;
 }
 
 /*

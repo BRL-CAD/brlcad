@@ -20,9 +20,6 @@
  *  supporting documentation. It is not allowed to sell this software in
  *  any way. This software is not public domain.
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -32,6 +29,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 
 
 /* define DEBUG for some debugging informations, just remove the x from xDEBUG */
@@ -152,81 +150,81 @@ static void error(enum ERRORS e)
 	case E_NONE:
 		return;
 	case E_IMP:
-		fprintf(stderr,"Sorry, Not yet implemented.\n");
+		bu_log("Sorry, Not yet implemented.\n");
 		break;
 	case E_READ:
-		fprintf(stderr,"Error while reading.\n");
+		bu_log("Error while reading.\n");
 		break;
 	case E_WRITE:
-		fprintf(stderr,"Error while writing.\n");
+		bu_log("Error while writing.\n");
 		break;
 	case E_INTERN:
-		fprintf(stderr,"Internal error.\n");
+		bu_log("Internal error.\n");
 		break;
 	case E_ARG:
-		fprintf(stderr,"Usage: pcd-pix [options] file.pcd\n");
-		fprintf(stderr,"Options:	(file name may be just frame number)\n");
-		fprintf(stderr,"     -x Overskip mode (tries to improve color quality.)\n");
-		fprintf(stderr,"     -i Give some information from fileheader\n");
-		fprintf(stderr,"     -b write .bw file instead of .pix\n");
-		fprintf(stderr,"     -0 Extract thumbnails from Overview file\n");
-		fprintf(stderr,"     -1 Extract  -w192  -n128 from Image file [Base/16]\n");
-		fprintf(stderr,"     -2 Extract  -w384  -n256 from Image file [Base/4]\n");
-		fprintf(stderr,"     -3 Extract  -w768  -n512 from Image file [Base].  Default size.\n");
-		fprintf(stderr,"     -4 Extract -w1536 -n1024 from Image file [4Base]\n");
-		fprintf(stderr,"     -5 Extract -w3072 -n2048 from Image file [16Base]\n");
-		fprintf(stderr,"     -p Pipe output to pix-fb automaticly\n");
-		fprintf(stderr,"     -l # Multiply luminance value by # (brighten dark photos) default=1\n");
-		fprintf(stderr,"     -h Just print header dimensions\n");
+		bu_log("Usage: pcd-pix [options] file.pcd\n");
+		bu_log("Options:	(file name may be just frame number)\n");
+		bu_log("     -x Overskip mode (tries to improve color quality.)\n");
+		bu_log("     -i Give some information from fileheader\n");
+		bu_log("     -b write .bw file instead of .pix\n");
+		bu_log("     -0 Extract thumbnails from Overview file\n");
+		bu_log("     -1 Extract  -w192  -n128 from Image file [Base/16]\n");
+		bu_log("     -2 Extract  -w384  -n256 from Image file [Base/4]\n");
+		bu_log("     -3 Extract  -w768  -n512 from Image file [Base].  Default size.\n");
+		bu_log("     -4 Extract -w1536 -n1024 from Image file [4Base]\n");
+		bu_log("     -5 Extract -w3072 -n2048 from Image file [16Base]\n");
+		bu_log("     -p Pipe output to pix-fb automaticly\n");
+		bu_log("     -l # Multiply luminance value by # (brighten dark photos) default=1\n");
+		bu_log("     -h Just print header dimensions\n");
 		break;
 	case E_OPT:
-		fprintf(stderr,"These Options are not allowed together.\n");
+		bu_log("These Options are not allowed together.\n");
 		break;
 	case E_MEM:
-		fprintf(stderr,"Not enough memory !\n");
+		bu_log("Not enough memory !\n");
 		break;
 	case E_HUFF:
-		fprintf(stderr,"Error in Huffman-Code-Table\n");
+		bu_log("Error in Huffman-Code-Table\n");
 		break;
 	case E_SEQ:
-		fprintf(stderr,"Error in Huffman-Sequence\n");
+		bu_log("Error in Huffman-Sequence\n");
 		break;
 	case E_SEQ1:
-		fprintf(stderr,"Error1 in Huffman-Sequence\n");
+		bu_log("Error1 in Huffman-Sequence\n");
 		break;
 	case E_SEQ2:
-		fprintf(stderr,"Error2 in Huffman-Sequence\n");
+		bu_log("Error2 in Huffman-Sequence\n");
 		break;
 	case E_SEQ3:
-		fprintf(stderr,"Error3 in Huffman-Sequence\n");
+		bu_log("Error3 in Huffman-Sequence\n");
 		break;
 	case E_SEQ4:
-		fprintf(stderr,"Error4 in Huffman-Sequence\n");
+		bu_log("Error4 in Huffman-Sequence\n");
 		break;
 	case E_SEQ5:
-		fprintf(stderr,"Error5 in Huffman-Sequence\n");
+		bu_log("Error5 in Huffman-Sequence\n");
 		break;
 	case E_SEQ6:
-		fprintf(stderr,"Error6 in Huffman-Sequence\n");
+		bu_log("Error6 in Huffman-Sequence\n");
 		break;
 	case E_SEQ7:
-		fprintf(stderr,"Error7 in Huffman-Sequence\n");
+		bu_log("Error7 in Huffman-Sequence\n");
 		break;
 	case E_POS:
-		fprintf(stderr,"Error in file-position\n");
+		bu_log("Error in file-position\n");
 		break;
 	case E_OVSKIP:
-		fprintf(stderr,"Can't read this resolution in overskip-mode\n");
+		bu_log("Can't read this resolution in overskip-mode\n");
 		break;
 	case E_TAUTO:
-		fprintf(stderr,"Can't determine the orientation in overview mode\n");
+		bu_log("Can't determine the orientation in overview mode\n");
 		break;
 	case E_TCANT:
-		fprintf(stderr,"Sorry, can't determine orientation for this file.\n");
-		fprintf(stderr,"Please give orientation parameters. \n");
+		bu_log("Sorry, can't determine orientation for this file.\n");
+		bu_log("Please give orientation parameters. \n");
 		break;
 	default:
-		fprintf(stderr,"Unknown error %d ???\n",e);
+		bu_log("Unknown error %d ???\n",e);
 		break;
 	}
 	if(fin) fclose(fin);
@@ -360,7 +358,7 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		fprintf(stderr,"Unknown option: -%s\n",opt);
+		bu_log("Unknown option: -%s\n",opt);
 		error(E_ARG);
 	}
 
@@ -669,7 +667,7 @@ main(int argc, char **argv)
 	if( do_pixfb )  pclose(fout);
 
 	if( clipped_low || clipped_high )  {
-		fprintf(stderr, "pcd-pix: %d clipped low, %d clipped high\n",
+		bu_log( "pcd-pix: %d clipped low, %d clipped high\n",
 			clipped_low, clipped_high );
 	}
 
@@ -947,11 +945,11 @@ static void druckeid(void)
 #define dr(feld,kennung)   \
      strncpy(ss,feld,sizeof(feld));\
      ss[sizeof(feld)]=0;\
-     fprintf(stderr,"%s: %s \n",kennung,ss);
+     bu_log("%s: %s \n",kennung,ss);
 
-#define db(feld) fprintf(stderr,"--%d\n",sizeof(feld)); for(i=0;i<sizeof(feld);i+=2) \
-  fprintf(stderr,"%4d %6d\n",i,(signed int)((((unsigned int)feld[i])<<8)|feld[i+1]));\
-  fprintf(stderr,"\n");
+#define db(feld) bu_log("--%d\n",sizeof(feld)); for(i=0;i<sizeof(feld);i+=2) \
+  bu_log("%4d %6d\n",i,(signed int)((((unsigned int)feld[i])<<8)|feld[i+1]));\
+  bu_log("\n");
 
 	dr(d->id1,"Id1")
 	    dr(d->id2,"Id2")
@@ -1032,7 +1030,7 @@ static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
 		help->key = sub->key;
 
 #ifdef DEBUGhuff
-		fprintf(stderr," Anz: %d A1: %08x  A2: %08x X:%02x %02x %02x %02x Seq:  %08x   Laenge:  %d %d\n",
+		bu_log(" Anz: %d A1: %08x  A2: %08x X:%02x %02x %02x %02x Seq:  %08x   Laenge:  %d %d\n",
 		    *anzahl,sbuffer,sub,((uBYTE *)sub)[0],((uBYTE *)sub)[1],((uBYTE *)sub)[2],((uBYTE *)sub)[3],
 		    help->seq,help->len,sizeof(uBYTE));
 #endif
@@ -1046,7 +1044,7 @@ static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
 	for(i=0;i<*anzahl;i++)
 	{
 		help=ziel+i;
-		fprintf(stderr,"H: %3d  %08lx & %08lx (%2d) = %02x = %5d  %8x\n",
+		bu_log("H: %3d  %08lx & %08lx (%2d) = %02x = %5d  %8x\n",
 		    i, help->seq,help->mask,help->len,help->key,(signed char)help->key,
 		    help->seq & (~help->mask));
 	}
@@ -1135,7 +1133,7 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 			segment=ident>>14;
 
 #ifdef DEBUG
-			fprintf(stderr,"Ident %4x Zeile:  %6d  Segment %3d Pixels bisher: %5d   Position: %8lx\n",
+			bu_log("Ident %4x Zeile:  %6d  Segment %3d Pixels bisher: %5d   Position: %8lx\n",
 			    ident,zeile,segment,n,bufpos);
 #endif
 

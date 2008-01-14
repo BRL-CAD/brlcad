@@ -30,15 +30,16 @@
  *	August 1985
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 extern int	fd;
 extern char	cmd;
@@ -57,8 +58,7 @@ main(int argc, char **argv)
 	dunnopen();
 
 	if(!ready(5)) {
-		printf("dunncolor:  camera not ready\n");
-		exit(50);
+		bu_exit(50, "dunncolor:  camera not ready\n");
 	}
 
 	if( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
@@ -68,14 +68,12 @@ main(int argc, char **argv)
 	}
 	getexposure("old");
 	if(!ready(5)) {
-		printf("dunncolor:  camera not ready\n");
-		exit(50);
+		bu_exit(50, "dunncolor:  camera not ready\n");
 	}
 
 	/* check argument */
 	if ( argc != 5 && argc != 6 ) {
-		printf("usage: dunncolor [-p] baseval redval greenval blueval\n");
-		exit(25);
+		bu_exit(25, "usage: dunncolor [-p] baseval redval greenval blueval\n");
 	}
 
 	dunnsend('A',atoi(*++argv));
@@ -86,9 +84,9 @@ main(int argc, char **argv)
 	getexposure("new");
 
 	if(!ready(5)) {
-		printf("dunncolor:  camera not ready\n");
-		exit(50);
+		bu_exit(50, "dunncolor:  camera not ready\n");
 	}
+
 	return 0;
 }
 

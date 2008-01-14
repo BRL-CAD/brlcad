@@ -27,9 +27,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -37,27 +34,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
-
 #ifdef HAVE_FCNTL_H
-# include <fcntl.h>
+#  include <fcntl.h>
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
-static int scanbytes;			/* # of bytes of scanline */
-
+int infd;
 unsigned char *in1;
 
+static int scanbytes;			/* # of bytes of scanline */
 static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
 
-char usage[] =
-"Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n";
-
-int infd;
 
 int
 main(int argc, char **argv)
@@ -68,8 +61,7 @@ main(int argc, char **argv)
 	char name[128];
 
 	if( argc < 3 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+		bu_exit(1, "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 	}
 
 	base_name = argv[1];
@@ -112,7 +104,8 @@ main(int argc, char **argv)
 		(void)close(fd);
 		printf("wrote %s\n", name);
 	}
-	exit(0);
+
+	return 0;
 }
 
 /*

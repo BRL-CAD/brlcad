@@ -1,31 +1,25 @@
 /*
  *  tie_kdtree.c
  *
- *  RCSid:          $Id$
 */
 
-#ifdef HAVE_CONFIG_H
-# include "common.h"
-#endif
-
 #include "tie_kdtree.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "common.h"
-
-#include <machine.h>
-#include <bu.h>
-#include <vmath.h>
-#include <rtgeom.h>
-#include <raytrace.h>
-
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
 #endif
+
+#include "machine.h"
+#include "bu.h"
+#include "vmath.h"
+#include "rtgeom.h"
+#include "raytrace.h"
+
 
 tfloat TIE_PREC;
 

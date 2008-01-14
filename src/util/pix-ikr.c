@@ -24,9 +24,15 @@
  *
  *  Mike Muuss, BRL.
  *
- *  $Revision$
  */
+
+#include "common.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 extern int ikfd;
 extern int ikhires;
@@ -37,7 +43,8 @@ static int scanbytes;			/* # of bytes of scanline */
 
 static char outline[MAX_LINE*4+4];	/* Ikonas pixels */
 
-char usage[] = "Usage: pix-ikr [-h] file.pix [width] [fr_offset] [fr_count]\n";
+static const char usage[] = "Usage: pix-ikr [-h] file.pix [width] [fr_offset] [fr_count]\n";
+
 
 int
 main(int argc, char **argv)
@@ -49,8 +56,7 @@ main(int argc, char **argv)
 	static int frame_count;
 
 	if( argc < 2 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+		bu_exit(1, "%s", usage);
 	}
 
 	nlines = 512;
@@ -61,7 +67,7 @@ main(int argc, char **argv)
 	}
 	if( (infd = open( argv[1], 0 )) < 0 )  {
 		perror( argv[1] );
-		exit(3);
+		return 3;
 	}
 	if( argc >= 3 )
 		nlines = atoi(argv[2] );
@@ -88,7 +94,8 @@ main(int argc, char **argv)
 			register char *in, *out;
 
 			if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
-			    exit(0);
+			    perror("read");
+			    return 1;
 			}
 
 			in = scanline;
@@ -103,7 +110,8 @@ main(int argc, char **argv)
 			clustwrite( outline, y, nlines );
 		}
 	}
-	exit(0);
+
+	return 0;
 }
 
 /*

@@ -31,17 +31,19 @@
 #include <ctype.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
+#include "bu.h"
 
 
 char *progname = "(noname)";
+
+
 void usage(void)
 {
-	(void) fprintf(stderr, "Usage: %s [ -v ] < ALIASpixfile >BRLpixfile\n", progname);
-	exit(1);
+	bu_exit(1, "Usage: %s [ -v ] < ALIASpixfile >BRLpixfile\n", progname);
 }
 
 struct aliashead {
@@ -97,7 +99,7 @@ main(int ac, char **av)
 		(void) fprintf(stderr,
 			"X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n",
 			hdr.x, hdr.y, hdr.xoff, hdr.yoff, hdr.bitplanes);
-		exit(-1);
+		bu_exit(-1, "ERROR: unexpected image file\n");
 	}
 
 	if (verbose) {
@@ -107,11 +109,7 @@ main(int ac, char **av)
 	}
 
 
-	if ( (image=(char *)malloc(hdr.x*hdr.y*3)) == (char *)NULL) {
-		(void) fprintf(stderr, "%s: insufficient memory for %d * %d image\n",
-			progname, hdr.x, hdr.y);
-		exit(-1);
-	}
+	image=(char *)bu_malloc(hdr.x*hdr.y*3, "image buffer");
 
 	/* read and "unpack" the image */
 	p = image;
@@ -126,14 +124,14 @@ main(int ac, char **av)
 
 	/* write out the image scanlines, correcting for different origin */
 
-	for(i=hdr.y-1 ; i >= 0 ; --i)
+	for(i=hdr.y-1 ; i >= 0 ; --i) {
 		if (fwrite(&image[i*hdr.x*3], hdr.x*3, 1, stdout) != 1) {
-			(void) fprintf(stderr, "%s: Error writing image\n", *av);
-			exit(-1);
+			bu_exit(-1, "%s: Error writing image\n", *av);
 		}
+	}
 
 
-	free(image);
+	bu_free(image, "image buffer");
 	return(0);
 }
 

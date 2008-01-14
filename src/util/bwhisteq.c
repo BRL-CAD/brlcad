@@ -27,9 +27,6 @@
  *	2 Sept 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -37,12 +34,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
+#include "bu.h"
+
 
 long bin[256];
 unsigned char new[256];
@@ -51,7 +49,7 @@ unsigned char new[256];
 
 FILE *fp;
 
-char usage[] = "Usage: bwhisteq [-v] file.bw > file.equalized\n";
+static const char usage[] = "Usage: bwhisteq [-v] file.bw > file.equalized\n";
 
 int	verbose = 0;
 
@@ -73,13 +71,11 @@ main(int argc, char **argv)
 	}
 
 	if( argc != 2 || isatty(fileno(stdout)) ) {
-		fputs( usage, stderr );
-		exit( 1 );
+		bu_exit(1, "%s", usage);
 	}
 
 	if( (fp = fopen( argv[1], "r" )) == NULL ) {
-		fprintf( stderr, "bwhisteq: Can't open \"%s\"\n", argv[1] );
-		exit( 2 );
+		bu_exit(2, "bwhisteq: Can't open \"%s\"\n", argv[1] );
 	}
 
 	/* Tally up the intensities */

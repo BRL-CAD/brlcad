@@ -38,9 +38,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <unistd.h>
 #include <string.h>
 
+#include "machine.h"
+#include "bu.h"
+
+
 unsigned char	ibuf[1024], obuf[3*1024];
 
-static char usage[] = "Usage: bw-pix [in.bw] [out.pix]\n";
 
 int
 main(int argc, char **argv)
@@ -51,8 +54,7 @@ main(int argc, char **argv)
 	/* check for input file */
 	if( argc > 1 ) {
 		if( (finp = fopen( argv[1], "r" )) == NULL ) {
-			fprintf( stderr, "bw-pix: can't open \"%s\"\n", argv[1] );
-			exit( 1 );
+			bu_exit(1, "bw-pix: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		finp = stdin;
@@ -60,15 +62,13 @@ main(int argc, char **argv)
 	/* check for output file */
 	if( argc > 2 ) {
 		if( (foutp = fopen( argv[2], "w" )) == NULL ) {
-			fprintf( stderr, "bw-pix: can't open \"%s\"\n", argv[2] );
-			exit( 2 );
+			bu_exit(2, "bw-pix: can't open \"%s\"\n", argv[2] );
 		}
 	} else
 		foutp = stdout;
 
 	if( argc > 3 || isatty(fileno(finp)) || isatty(fileno(foutp)) ) {
-		fputs( usage, stderr );
-		exit( 3 );
+		bu_exit( 3, "Usage: bw-pix [in.bw] [out.pix]\n" );
 	}
 
 	while( (num = fread( ibuf, sizeof( char ), 1024, finp )) > 0 ) {

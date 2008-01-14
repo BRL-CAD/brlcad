@@ -42,9 +42,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -83,7 +80,7 @@ static long		true_cnt = 0;
 static long		false_cnt = 0;
 
 
-static char usage_msg[] = "\
+static const char usage_msg[] = "\
 Usage: pixmatte [-w bytes_wide] {-g -l -e -n -a}\n\
 	in1 in2 true_out false_out > output\n\
 \n\
@@ -92,13 +89,13 @@ form =r/g/b with each byte specified in decimal, or '-' for stdin.\n\
 The default width is 3 bytes, suitable for processing .pix files.\n\
 ";
 
+
 void
 usage(char *s, int n)
 {
 	if (s && *s) (void)fputs(s, stderr);
 
-	(void)fputs(usage_msg, stderr);
-	exit(n);
+	bu_exit(n, "%s", usage_msg);
 }
 
 /*
@@ -133,16 +130,13 @@ open_file(int i, char *name)
 		/* XXX No checking for multiple uses of stdin */
 	}  else if( (fp[i] = fopen(name, "r")) == NULL )  {
 		perror(name);
-		(void)fprintf( stderr,
-			"pixmatte: cannot open \"%s\" for reading\n",
-			name );
+		bu_log("pixmatte: cannot open \"%s\" for reading\n", name );
 		return(-1);		/* FAIL */
 	}
 
 	/* Obtain buffer */
 	if( (buf[i] = (char *)malloc( width*CHUNK )) == (char *)0 )  {
-		fprintf(stderr, "pixmatte:  input buffer malloc failure\n");
-		bu_exit (3, NULL);
+		bu_exit (3, "pixmatte:  input buffer malloc failure\n");
 	}
 
 	return(0);			/* OK */
@@ -207,7 +201,7 @@ get_args(int argc, register char **argv)
 	}
 
 	if ( argc > bu_optind )
-		(void)fprintf( stderr, "pixmatte: excess argument(s) ignored\n" );
+		bu_log("pixmatte: excess argument(s) ignored\n" );
 
 }
 
@@ -221,7 +215,7 @@ main(int argc, char **argv)
 		usage( "Cannot write image to tty\n", 1);
 
 
-	fprintf(stderr, "pixmatte:\tif( %s ", file_name[0] );
+	bu_log("pixmatte:\tif( %s ", file_name[0] );
 	if( wanted & LT )  {
 		if( wanted & EQ )
 			fputs( "<=", stderr );
@@ -241,13 +235,12 @@ main(int argc, char **argv)
 		if( wanted & EQ )  fputs( "==", stderr );
 		if( wanted & NE )  fputs( "!=", stderr );
 	}
-	fprintf(stderr, " %s )\n", file_name[1] );
-	fprintf(stderr, "pixmatte:\t\tthen output %s\n", file_name[2] );
-	fprintf(stderr, "pixmatte:\t\telse output %s\n", file_name[3] );
+	bu_log(" %s )\n", file_name[1] );
+	bu_log("pixmatte:\t\tthen output %s\n", file_name[2] );
+	bu_log("pixmatte:\t\telse output %s\n", file_name[3] );
 
 	if( (obuf = (char *)malloc( width*CHUNK )) == (char *)0 ) {
-		fprintf(stderr, "pixmatte:  obuf malloc failure\n");
-		bu_exit (3, NULL);
+		bu_exit (3, "pixmatte:  obuf malloc failure\n");
 	}
 
 	while(1)  {
@@ -356,13 +349,14 @@ fail:
 		}
 		if( fwrite( obuf, width, len, stdout ) != len )  {
 			perror("fwrite");
-			fprintf( stderr, "pixmatte:  write error\n");
-			bu_exit (1, NULL);
+			bu_exit (1, "pixmatte:  write error\n");
 		}
 	}
-	fprintf( stderr, "pixmatte: %ld element comparisons true, %ld false (width=%d)\n",
-		true_cnt, false_cnt, width );
-	return(0);
+
+	bu_log("pixmatte: %ld element comparisons true, %ld false (width=%d)\n",
+	       true_cnt, false_cnt, width );
+
+	return 0;
 }
 
 /*

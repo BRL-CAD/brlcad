@@ -18,20 +18,14 @@
  * information.
  */
 /** @file fftc.c
+ *
  *	Split Radix Decimation in Time
  *	FFT C code generator.
  *
  *  Author -
  *	Phil Dykstra
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -52,15 +46,15 @@ main(int argc, char **argv)
 
 	if( argc != 2 ) {
 		fprintf( stderr, "Usage: fftc length > fftlength.c\n" );
-		exit(1);
+		return 1;
 	}
 
 	n = atoi(argv[1]);
 	m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
 	splitdit( x, n, m );
-	(void)fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
-	return(0);
+	fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
+	return 0;
 }
 
 /*

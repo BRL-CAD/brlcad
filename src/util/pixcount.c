@@ -24,13 +24,7 @@
  *  Author -
  *	Paul J. Tanenbaum
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -60,14 +54,15 @@ struct pixel {
 int		pixel_size = 3;		/* Bytes/pixel */
 FILE		*outfp = NULL;		/* output file */
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: 'pixcount [-# bytes_per_pixel]\n\
 		 [infile.pix [outfile]]'\n";
 #define OPT_STRING	"#:?"
 
+
 static void print_usage (void)
 {
-    (void) bu_log("%s", usage);
+    bu_exit(1, "%s", usage);
 }
 
 /*
@@ -185,7 +180,7 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 	    pp = qpp;
 	    break;
 	default:
-	    bu_exit (1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
+	    bu_exit(1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
     return (pp);
@@ -216,13 +211,11 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel size: '%s'\n", bu_optarg);
 		    print_usage();
-		    bu_exit (1, NULL);
 		}
 		break;
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
     switch (argc - bu_optind)
     {
@@ -238,7 +231,6 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, NULL);
     }
 
     /*
@@ -248,12 +240,12 @@ main (int argc, char **argv)
     {
 	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
-	    bu_exit (1, "Cannot open input file '%s'\n", inf_name);
+	    bu_exit(1, "Cannot open input file '%s'\n", inf_name);
 	if (outfp == NULL)
 	{
 	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
-		bu_exit (1, "Cannot open output file '%s'\n", outf_name);
+		bu_exit(1, "Cannot open output file '%s'\n", outf_name);
 	}
     }
 
@@ -266,7 +258,6 @@ main (int argc, char **argv)
 	{
 	    bu_log("FATAL: pixcount reads only from file or pipe\n");
 	    print_usage();
-	    bu_exit (1, NULL);
 	}
     }
 

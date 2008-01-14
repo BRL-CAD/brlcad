@@ -25,9 +25,6 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Id$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -39,10 +36,11 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #  include <unistd.h>
 #endif
 
-#include "machine.h"
-#include "bu.h"
-#include "fb.h"
 #include "rle.h"
+
+#include "machine.h"
+#include "fb.h"
+#include "bu.h"
 
 
 static FILE	*infp;
@@ -144,7 +142,7 @@ get_args(int argc, register char **argv)
 		}
 	}
 	if( argc > ++bu_optind )
-		(void) fprintf( stderr, "rle-pix:  excess arguments ignored\n" );
+		bu_log("rle-pix:  excess arguments ignored\n" );
 
 	if( isatty(fileno(infp)) )
 		return(0);
@@ -169,27 +167,25 @@ main(int argc, char **argv)
 	infp = stdin;
 	outfp = stdout;
 	if( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
+		bu_exit( 1, "%s", usage );
 	}
 
 	rle_dflt_hdr.rle_file = infp;
 	if( rle_get_setup( &rle_dflt_hdr ) < 0 )  {
-		fprintf(stderr, "rle-pix: Error reading setup information\n");
-		exit(1);
+		bu_exit(1, "rle-pix: Error reading setup information\n");
 	}
 
 	if (r_debug)  {
-		fprintf( stderr,"Image bounds\n\tmin %d %d\n\tmax %d %d\n",
-			rle_dflt_hdr.xmin, rle_dflt_hdr.ymin,
-			rle_dflt_hdr.xmax, rle_dflt_hdr.ymax );
-		fprintf(stderr, "%d color channels\n", rle_dflt_hdr.ncolors);
-		fprintf(stderr,"%d color map channels\n", rle_dflt_hdr.ncmap);
+		bu_log("Image bounds\n\tmin %d %d\n\tmax %d %d\n",
+		       rle_dflt_hdr.xmin, rle_dflt_hdr.ymin,
+		       rle_dflt_hdr.xmax, rle_dflt_hdr.ymax );
+		bu_log("%d color channels\n", rle_dflt_hdr.ncolors);
+		bu_log("%d color map channels\n", rle_dflt_hdr.ncmap);
 		if ( rle_dflt_hdr.alpha )
-			fprintf( stderr, "Alpha Channel present in input, ignored.\n");
+			bu_log("Alpha Channel present in input, ignored.\n");
 		for( i=0; i < rle_dflt_hdr.ncolors; i++ )
-			fprintf(stderr,"Background channel %d = %d\n",
-				i, rle_dflt_hdr.bg_color[i] );
+			bu_log("Background channel %d = %d\n",
+			       i, rle_dflt_hdr.bg_color[i] );
 		rle_debug(1);
 	}
 
@@ -222,7 +218,7 @@ main(int argc, char **argv)
 	if( hflag )  {
 		printf("-w%d -n%d\n",
 			screen_width, screen_height );
-		exit(0);
+		return 0;
 	}
 
 	/* Discard any scanlines which exceed screen height */
@@ -242,20 +238,17 @@ main(int argc, char **argv)
 	if( screen_xbase + screen_xlen > screen_width )
 		screen_xlen = screen_width - screen_xbase;
 
-	if( screen_xlen <= 0 ||
-	    rle_dflt_hdr.ymin > screen_height ||
-	    rle_dflt_hdr.ymax < 0 )  {
-		fprintf(stderr,
-		"rle-pix:  Warning:  RLE image rectangle entirely off screen\n");
-		goto done;
+	if( screen_xlen <= 0 || rle_dflt_hdr.ymin > screen_height || rle_dflt_hdr.ymax < 0 )  {
+	    bu_log("rle-pix:  Warning:  RLE image rectangle entirely off screen\n");
+	    goto done;
 	}
 
 	/* NOTE:  This code can't do repositioning very well.
 	 * background flooding on the edges is needed, at a minimum.
 	 */
 
-	scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
-	bg_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * screen_width );
+	scan_buf = (RGBpixel *)bu_malloc( sizeof(RGBpixel) * screen_width, "scan_buf" );
+	bg_buf = (RGBpixel *)bu_malloc( sizeof(RGBpixel) * screen_width, "bg_buf" );
 
 	/* Fill in background buffer */
 	if (!rle_dflt_hdr.bg_color) {
@@ -269,7 +262,7 @@ main(int argc, char **argv)
 	}
 
 	for( i=0; i < ncolors; i++ )
-		rows[i] = (unsigned char *)malloc((size_t)file_width);
+		rows[i] = (unsigned char *)bu_malloc((size_t)file_width, "row[]");
 	for( ; i < 3; i++ )
 		rows[i] = rows[0];	/* handle monochrome images */
 
@@ -298,8 +291,7 @@ main(int argc, char **argv)
 				cmap.cm_green[i] <<= 8;
 				cmap.cm_blue[i] <<= 8;
 			}
-			fprintf(stderr,
-				"rle-pix: correcting for old style colormap\n");
+			bu_log("rle-pix: correcting for old style colormap\n");
 		}
 	}
 
@@ -337,12 +329,19 @@ main(int argc, char **argv)
 		fwrite( (char *)scan_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp );
 	}
 
+
 	/* Background-fill any lines above ymax, below screen_height */
 	for( ; i < screen_height; i++ )
 		fwrite( (char *)bg_buf, sizeof(RGBpixel), (size_t)screen_xlen, outfp );
 done:
+
+	for( i=0; i < ncolors; i++ )
+	    bu_free(rows[i], "row[]");
+	bu_free(scan_buf, "scan_buf");
+	bu_free(bg_buf, "bg_buf");
+
 	fclose( outfp );
-	exit(0);
+	return 0;
 }
 
 /*

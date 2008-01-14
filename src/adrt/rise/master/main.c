@@ -22,29 +22,26 @@
  *  Author -
  *      Justin L. Shumaker
  *
- * $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-# include "common.h"
-#endif
+#include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#ifdef HAVE_GETOPT_H
+#  include <getopt.h>
+#endif
 
-#include <bu.h>
+#include "machine.h"
+#include "bu.h"
 
 #include "rise.h"
 #include "master.h"
 #include "tienet.h"
 
-
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
 
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] =
@@ -63,8 +60,7 @@ static char shortopts[] = "e:i:hvl:p:";
 
 
 static void finish(int sig) {
-  printf("Collected signal %d, aborting!\n", sig);
-  exit(EXIT_FAILURE);
+  bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
 

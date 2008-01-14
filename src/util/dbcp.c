@@ -31,11 +31,13 @@
  *	Chase Manhattan Building
  *	New York, NY
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <signal.h>
+#include <errno.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -46,11 +48,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <signal.h>
-#include <errno.h>
 
 #include "machine.h"
 #include "bu.h"
@@ -100,14 +97,12 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    default:
-		(void)fputs(usage, stderr);
-		bu_exit(1, NULL);
+		bu_exit(1, "%s", usage);
 	}
     }
 
-    if( bu_optind >= argc )  {
-	(void)fputs(usage, stderr);
-	bu_exit(2,NULL);
+    if (bu_optind >= argc) {
+	bu_exit(2, "%s", usage);
     }
     size = 512 * atoi(argv[bu_optind]);
 
@@ -115,8 +110,8 @@ main(int argc, char **argv)
     if ((buffer = (char *)malloc(size)) == NULL)
 	bu_exit(88, "dbcp: Insufficient buffer memory\n");
     if (pipe (par2chld) < 0 || pipe (chld2par) < 0) {
-	perror ("dbcp: Can't pipe");
-	bu_exit ( 89, NULL );
+	perror("pipe");
+	bu_exit(89, "dbcp: Can't pipe\n");
     }
 
     /*
@@ -127,8 +122,8 @@ main(int argc, char **argv)
 
     switch (pid = fork()) {
 	case -1:
-	    perror ("dbcp: Can't fork");
-	    bu_exit ( 99, NULL );
+	    perror("fork");
+	    bu_exit(99, "dbcp: Can't fork\n");
 
 	case 0:
 	    /*  Child  */
@@ -156,28 +151,28 @@ main(int argc, char **argv)
 	    msgchar = STOP;
 	} else
 	    msgchar = GO;
-	if(write (wfd, &msgchar, 1) != 1) {
-	    perror("dbcp: message send");
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "Can't send READ message\n");
+	if (write (wfd, &msgchar, 1) != 1) {
+	    perror("dbcp write:");
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("Can't send READ message\n");
 	}
 	if ((int)nread == (-1)) {
 	    errno = saverrno;
-	    perror ("input read");
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "read error on input\n");
+	    perror("dbcp input read:");
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("read error on input\n");
 	    break;
 	}
-	if(nread == 0) {
+	if (nread == 0) {
 	    if(verbose) {
-		fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-		fprintf(stderr, "EOF on input\n");
+		bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+		bu_log("EOF on input\n");
 	    }
 	    break;
 	}
-	if(nread != size) {
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "partial read (nread = %u)\n", nread);
+	if (nread != size) {
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("partial read (nread = %u)\n", nread);
 	}
 	if (read(rfd, &msgchar, 1) != 1) {
 	    perror("dbcp: WRITE message error");
@@ -185,39 +180,39 @@ main(int argc, char **argv)
 	    break;
 	}
 	if (msgchar == STOP) {
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "Got STOP WRITE with %u left\n", nread);
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("Got STOP WRITE with %u left\n", nread);
 	    break;
 	} else if (msgchar != GO) {
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "Got bad WRITE message 0%o\n", msgchar&0377);
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("Got bad WRITE message 0%o\n", msgchar&0377);
 	    exitval = 19;
 	    break;
 	}
 	if (write(1, buffer, nread) != nread) {
-	    perror("output write");
+	    perror("dbcp output write:");
 	    msgchar = STOP;
 	} else {
 	    count++;
 	    msgchar = GO;
 	}
-	if(verbose>1) {
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "wrote %d\n", nread);
+	if (verbose>1) {
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("wrote %d\n", nread);
 	}
 	if (nread != size) {
 	    break;
 	}
     childstart:
 	if (write (wfd, &msgchar, 1) != 1) {
-	    perror("dbcp: message send");
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "Can't send WRITE message\n");
+	    perror("dbcp message send:");
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("Can't send WRITE message\n");
 	    break;
 	}
 	if (msgchar == STOP) {
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "write error on output\n");
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("write error on output\n");
 	    break;
 	}
 	if (read(rfd, &msgchar, 1) != 1) {
@@ -227,28 +222,28 @@ main(int argc, char **argv)
 	}
 	if (msgchar == STOP) {
 	    if (verbose) {
-		fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-		fprintf(stderr, "Got STOP READ\n");
+		bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+		bu_log("Got STOP READ\n");
 	    }
 	    break;
 	} else if (msgchar != GO) {
-	    fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	    fprintf(stderr, "Got bad READ message 0%o\n", msgchar&0377);
+	    bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	    bu_log("Got bad READ message 0%o\n", msgchar&0377);
 	    exitval = 39;
 	    break;
 	}
-	fflush(stderr);
     }
 
-    if(verbose) {
-	fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
-	fprintf(stderr, "%ld records copied\n", count);
+    if (verbose) {
+	bu_log("dbcp: (%s) ", pid ? "PARENT" : "CHILD");
+	bu_log("%ld records copied\n", count);
     }
-    if(pid) {
+    if (pid) {
 	while (wait(&waitcode) > 0)
 	    ;
     }
-    exit(exitval);
+
+    return exitval;
 }
 
 

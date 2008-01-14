@@ -30,9 +30,6 @@
  *	Paul Tanenbaum
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -40,7 +37,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 #include <string.h>
 
+#include "machine.h"
+#include "bu.h"
+
+
 #define		USAGE		"Usage: 'bwthresh val ...'\n"
+
 
 int
 main (int argc, char **argv)
@@ -51,43 +53,27 @@ main (int argc, char **argv)
     int			i;
     unsigned char	*bin_color = (unsigned char *)0;/* resultant pixel values */
 
-    if ((nm_threshs = argc - 1) < 1)
-    {
-	(void) fputs(USAGE, stderr);
-	exit (1);
+    if ((nm_threshs = argc - 1) < 1) {
+	bu_exit(1, "%s", USAGE);
     }
-    if (nm_threshs > 255)
-    {
-	(void) fputs("Too many thresholds!\n", stderr);
-	exit (1);
+    if (nm_threshs > 255) {
+	bu_exit(1, "Too many thresholds!\n");
     }
-    if (((thresh_val = (int *)
-	    malloc((unsigned) (nm_threshs * sizeof(int)))) == NULL) ||
-	((bin_color = (unsigned char *)
-	    malloc((unsigned) ((nm_threshs + 1) * sizeof(int)))) == NULL))
-    {
-	(void) fputs("bwthresh: Ran out of memory\n", stderr);
-	exit (1);
-    }
-    for (i = 0; i < nm_threshs; ++i)
-    {
-	if (sscanf(*++argv, "%d", thresh_val + i) != 1)
-	{
-	    (void) fprintf(stderr, "Illegal threshold value: '%s'\n", *argv);
-	    (void) fputs(USAGE, stderr);
-	    exit (1);
+    thresh_val = (int *)bu_malloc((unsigned) (nm_threshs * sizeof(int)), "thresh_val");
+    bin_color = (unsigned char *)bu_malloc((unsigned) ((nm_threshs + 1) * sizeof(int)), "bin_color");
+
+    for (i = 0; i < nm_threshs; ++i) {
+	if (sscanf(*++argv, "%d", thresh_val + i) != 1) {
+	    bu_log("Illegal threshold value: '%s'\n", *argv);
+	    bu_exit(1, "%s", USAGE);
 	}
-	if ((unsigned char) thresh_val[i] != thresh_val[i])
-	{
-	    (void) fprintf(stderr,
-		"Threshold[%d] value %d out of range.  Need 0 <= v <= 255\n",
-		i, thresh_val[i]);
-	    exit (1);
+	if ((unsigned char) thresh_val[i] != thresh_val[i]) {
+	    bu_exit(1, "Threshold[%d] value %d out of range.  Need 0 <= v <= 255\n",
+		    i, thresh_val[i]);
 	}
 	if ((i > 0) && (thresh_val[i] <= thresh_val[i - 1]))
 	{
-	    (void) fputs("Threshold values not strictly increasing\n", stderr);
-	    exit (1);
+	    bu_exit(1, "Threshold values not strictly increasing\n");
 	}
 	bin_color[i] = 256 * i / nm_threshs;
     }
@@ -100,6 +86,9 @@ main (int argc, char **argv)
 		break;
 	(void) putchar(bin_color[i]);
     }
+
+    bu_free(thresh_val, "thresh_val");
+    bu_free(bin_color, "bin_color");
     return 0;
 }
 

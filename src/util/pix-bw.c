@@ -32,9 +32,6 @@
  *	13 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -47,6 +44,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  include <unistd.h>
 #endif
 
+#include "machine.h"
+#include "bu.h"
+
+
 unsigned char	ibuf[3*1024], obuf[1024];
 
 /* flags */
@@ -57,7 +58,7 @@ double	rweight = 0.0;
 double	gweight = 0.0;
 double	bweight = 0.0;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] [in.pix] > out.bw\n";
 
 int
@@ -100,8 +101,7 @@ main(int argc, char **argv)
 				break;
 			default:
 				fprintf( stderr, "pix-bw: bad flag \"%s\"\n", argv[1] );
-				fputs( usage, stderr );
-				exit( 1 );
+				bu_exit(1, "%s", usage);
 		}
 		argc--;
 		argv++;
@@ -109,8 +109,7 @@ main(int argc, char **argv)
 
 	if( argc > 1 ) {
 		if( (finp = fopen(argv[1], "r")) == NULL ) {
-			fprintf( stderr, "pix-bw: can't open \"%s\"\n", argv[1] );
-			exit( 2 );
+			bu_exit(2, "pix-bw: can't open \"%s\"\n", argv[1] );
 		}
 	} else
 		finp = stdin;
@@ -118,8 +117,7 @@ main(int argc, char **argv)
 	foutp = stdout;
 
 	if( isatty(fileno(finp)) || isatty(fileno(foutp)) ) {
-		fputs( usage, stderr );
-		exit( 2 );
+		bu_exit(2, "%s", usage);
 	}
 
 	/* Hack for multiple color planes */

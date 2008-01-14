@@ -18,22 +18,14 @@
  * information.
  */
 /** @file binfo.c
- *		G 2 A S C . C
  *
- *
- *  Usage:  binfo
+ *  provides information about the version of libraries in use
  *
  *  Author -
  *  	Charles M Kennedy
  *	Christopher Sean Morrison
  *
- *  Source -
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header";
-#endif
 
 #include "common.h"
 
@@ -41,33 +33,30 @@ static const char RCSid[] = "@(#)$Header";
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
-#include "vmath.h"
-#include "db.h"
-#include "raytrace.h"
-#include "wdb.h"
-#include "rtgeom.h"
 #include "tcl.h"
 
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"
+#include "bu.h"
+#include "db.h"
 
-static char usage[] = "\
-Usage: binfo \
- returns information about the BRL-CAD runtime environment characteristics\n\
-";
 
 int
 main(int argc, char *argv[])
 {
   if (argc > 0) {
-    printf("%s", usage);
+      bu_log("Usage: binfo\n\treturns information about the BRL-CAD runtime environment characteristics\n");
   }
 
-  printf("bu_version=[%s]\n", bu_version());
-  printf("bn_version=[%s]\n", bn_version());
-  printf("rt_version=[%s]\n", rt_version());
-  printf("fb_version=[%s]\n", fb_version());
+  bu_log("bu_version=[%s]\n", bu_version());
+  bu_log("bn_version=[%s]\n", bn_version());
+  bu_log("rt_version=[%s]\n", rt_version());
+  bu_log("fb_version=[%s]\n", fb_version());
 
-  exit(0);
+  return 0;
 }
 
 

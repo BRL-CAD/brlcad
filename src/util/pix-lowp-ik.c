@@ -27,9 +27,15 @@
  *
  *  Mike Muuss, BRL, 05/05/84.
  *
- *  $Revision$
  */
+
+#include "common.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "bu.h"
+
 
 extern int ikfd;
 extern int ikhires;
@@ -59,8 +65,7 @@ main(int argc, char **argv)
 	static int infd;
 
 	if( argc < 2 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+		bu_exit(1, "%s", usage);
 	}
 
 	nlines = 512;
@@ -71,7 +76,7 @@ main(int argc, char **argv)
 	}
 	if( (infd = open( argv[1], 0 )) < 0 )  {
 		perror( argv[1] );
-		exit(3);
+		return 3;
 	}
 	if( argc == 3 )
 		nlines = atoi(argv[2] );
@@ -95,7 +100,8 @@ main(int argc, char **argv)
 		l2 = out2;
 
 		if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
-		    exit(0);
+		    perror("read");
+		    return 1;
 		}
 
 		/* avg1 is same as l1 to prime things */
@@ -104,7 +110,8 @@ main(int argc, char **argv)
 
 		for( y=nlines; y > 0; y-- )  {
 		    if( read( infd, (char *)scanline, scanbytes ) != scanbytes ) {
-			exit(0);
+			perror("read");
+			return 1;
 		    }
 
 			doline( l2 );
@@ -127,6 +134,8 @@ main(int argc, char **argv)
 			}
 		}
 	}
+
+	return 0;
 }
 
 doline(register unsigned char *out)

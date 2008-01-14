@@ -48,7 +48,7 @@ main(void)
 		putc( map[pix[2]&0xF], stdout );
 		putc( '\n', stdout );
 	}
-	exit(0);
+	return 0;
 }
 
 /*

@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 			    ;
 		    }
 		    if (ch == EOF)
-			exit (0);
+			bu_exit(0, NULL);
 		    else
 			ungetc(ch, stdin);
 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 			fwrite( &d, sizeof(d), 1, stdout );
 		    }
 		    else if (feof(stdin))
-			exit (0);
+			bu_exit(0, NULL);
 		    else {
 			bu_exit(1, "Error in input stream\n");
 		    }

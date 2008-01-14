@@ -24,13 +24,7 @@
  *  Author -
  *	Paul J. Tanenbaum
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -52,15 +46,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 
 
+#define OPT_STRING	"c:d:#:?"
 #define	made_it()	bu_log("%s:%d\n", __FILE__, __LINE__);
 
 void print_usage (void)
 {
-#define OPT_STRING	"c:d:#:?"
-
-    bu_log("Usage: 'pixdsplit %s'\n",
-	"[-c file.pix] [-d file.d] [-# n.m] [file.pixd]");
+    bu_exit(1, "Usage: 'pixdsplit %s'\n",
+	    "[-c file.pix] [-d file.d] [-# n.m] [file.pixd]");
 }
+
 
 int
 main (int argc, char *argv[])
@@ -114,13 +108,11 @@ main (int argc, char *argv[])
 		    bu_log("Invalid pixel-size specification: '%s'\n",
 			bu_optarg);
 		    print_usage();
-		    return 1;
 		}
 		break;
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
 
 	if (c_per_p <= 0)
@@ -147,13 +139,12 @@ main (int argc, char *argv[])
 	    inf_name = argv[bu_optind++];
 	    if ((infd = open(inf_name, O_RDONLY)) == -1)
 	    {
-		bu_log ("Cannot open file '%s'\n", inf_name);
+		bu_log("Cannot open file '%s'\n", inf_name);
 		return 1;
 	    }
 	    break;
 	default:
 	    print_usage();
-	    return 1;
     }
     /*
      *	Establish the output stream for chars
@@ -169,7 +160,7 @@ main (int argc, char *argv[])
     }
     else if ((cfd = open(cf_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
-	bu_log ("Cannot open file '%s'\n", cf_name);
+	bu_log("Cannot open file '%s'\n", cf_name);
 	return 1;
     }
     /*
@@ -186,7 +177,7 @@ main (int argc, char *argv[])
     }
     else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
-	bu_log ("Cannot open file '%s'\n", df_name);
+	bu_log("Cannot open file '%s'\n", df_name);
 	return 1;
     }
 

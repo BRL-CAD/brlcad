@@ -27,9 +27,6 @@
  *	16 June 1986
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -44,6 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "fb.h"
 
+
 #define	IBUFSIZE 3*2048		/* Max read size in rgb pixels */
 unsigned char ibuf[IBUFSIZE];	/* Input buffer */
 
@@ -54,12 +52,11 @@ int	verbose = 0;
 
 FBIO	*fbp;
 
-static char *Usage = "usage: pixhist [-v] [file.pix]\n";
-
 static long	max;
 static double	scalefactor;
 static unsigned char	line[512*3];
 static FILE	*fp;
+
 
 int
 main(int argc, char **argv)
@@ -76,8 +73,7 @@ main(int argc, char **argv)
 	/* look for optional input file */
 	if( argc > 1 ) {
 		if( (fp = fopen(argv[1],"r")) == 0 ) {
-			fprintf( stderr, "pixhist: can't open \"%s\"\n", argv[1] );
-			exit( 1 );
+			bu_exit(1, "pixhist: can't open \"%s\"\n", argv[1] );
 		}
 		argv++;
 		argc--;
@@ -86,8 +82,7 @@ main(int argc, char **argv)
 
 	/* check usage */
 	if( argc > 1 || isatty(fileno(fp)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+		bu_exit( 1, "usage: pixhist [-v] [file.pix]\n" );
 	}
 
 	while( (i = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
@@ -112,11 +107,10 @@ main(int argc, char **argv)
 	scalefactor = 511.0 / ((double)max);
 
 	/* Display the max? */
-	printf("Max bin count=%ld.  %g count/pixel\n", max, scalefactor );
+	bu_log("Max bin count=%ld.  %g count/pixel\n", max, scalefactor );
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
-		exit(12);
+		bu_exit(12, "fb_open failed\n");
 	}
 
 	/* Display them */
@@ -146,7 +140,7 @@ main(int argc, char **argv)
 		fb_write( fbp, 0, 2*i, line, npix );
 		fb_write( fbp, 0, 2*i+1, line, npix );
 		if( verbose )
-			printf( "%3d: %10ld %10ld %10ld  (%ld)\n",
+			bu_log( "%3d: %10ld %10ld %10ld  (%ld)\n",
 				i, bin_r[i], bin_g[i], bin_b[i], npix );
 	}
 	fb_close( fbp );

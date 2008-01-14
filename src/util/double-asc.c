@@ -25,9 +25,6 @@
  *	Paul Tanenbaum
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -41,10 +38,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "bu.h"
 #include "vmath.h"
+#include "bu.h"
 #include "bn.h"
 #include "fb.h"
+
+
+#define OPT_STRING	"acf:hs:n:w#:?"
 
 
 static char	*file_name;
@@ -60,14 +60,14 @@ static long int	file_height = 512L;	/* default input height */
 static int	make_cells = 0;		/* Insert cell coords in output? */
 static int	d_per_l = 1;		/* doubles per line of output */
 
+
 void print_usage (void)
 {
-#define OPT_STRING	"acf:hs:n:w#:?"
-
-    bu_log("Usage: 'double-asc %s\n%s [file.d]'\n",
-	"[-{ah}] [-s squaresize] [-w width] [-n height]",
-	   "                   [-c] [-f format] [-# depth]");
+    bu_exit(1, "Usage: 'double-asc %s\n%s [file.d]'\n",
+	    "[-{ah}] [-s squaresize] [-w width] [-n height]",
+	    "                   [-c] [-f format] [-# depth]");
 }
+
 
 int
 get_args(int argc, register char **argv)
@@ -121,8 +121,6 @@ get_args(int argc, register char **argv)
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
-		return(0);
 	}
     }
     if (format == 0)
@@ -145,13 +143,11 @@ get_args(int argc, register char **argv)
 	    break;
 	default:
 	    print_usage();
-	    bu_exit (1, NULL);
     }
 
     if (argc > ++bu_optind)
     {
 	print_usage();
-	bu_exit (1, NULL);
     }
 
     return(1);		/* OK */
@@ -173,7 +169,6 @@ main (int argc, char **argv)
     if (!get_args( argc, argv))
     {
 	print_usage();
-	bu_exit (1, NULL);
     }
 
     /* autosize input? */

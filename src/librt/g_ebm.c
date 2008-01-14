@@ -1616,6 +1616,7 @@ struct resource		resource;
 mat_t			Tmat;
 struct application	Tappl;
 
+int
 main( int argc, char * *argv )
 {
 	point_t	pt1;
@@ -1795,7 +1796,7 @@ main( int argc, char * *argv )
 	}
 #endif
 
-	exit(0);
+	return 0;
 }
 
 trial(p1, p2)

@@ -48,9 +48,6 @@
  *	Paul J. Tanenbaum
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -60,19 +57,61 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
+#include "vmath.h"
 #include "bu.h"
 
 
-#define		DEG2RAD		0.01745329	/* Convert degrees to radians */
 #define		OPT_STRING	"a:c:e:ipr?"	/* For bu_getopt(3) */
 #define		fpeek(f)	ungetc(fgetc(f), f)
 
-void	PrintUsage(void);
-void	GetCoord(FILE *Whence, double *Coord, char Label, int LineNm, char *FileName);
+
+/* ======================================================================== */
+void
+PrintUsage (void)
+{
+    bu_exit(1, "Usage:  'azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]'\n");
+}
+
+
+/* ======================================================================== */
+void
+GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
+
+			/* File from which to read */
+			/* Where to store coordinate */
+			/* Name of coordinate */
+			/* How far in input? */
+			/* What input stream? */
+
+{
+    int     Ch;
+
+/* Skip leading white space */
+    while (((Ch = fgetc(Whence)) == ' ') || (Ch == '\t'))
+	;
+
+    if (ungetc(Ch, Whence) == EOF)
+    {
+	bu_exit(1, "azel:  Premature end-of-file, file %s\n",
+		FileName);
+    }
+    if (Ch == '\n')
+    {
+	bu_exit(1, "azel:  Premature end-of-line on line %d, file %s\n",
+		LineNm, FileName);
+    }
+
+    if (fscanf(Whence, "%lf", Coord) != 1)
+    {
+	bu_exit(1, "azel:  Bad %c-coordinate at line %d, file %s\n",
+		Label, LineNm, FileName);
+    }
+}
+
 
 int
 main (int argc, char **argv)
@@ -124,7 +163,6 @@ main (int argc, char **argv)
 		    (void) fprintf(stderr,
 			"Bad azimuth specification: '%s'\n", bu_optarg);
 		    PrintUsage();
-		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'c':
@@ -133,7 +171,6 @@ main (int argc, char **argv)
 		    (void) fprintf(stderr,
 			"Bad cell-size specification: '%s'\n", bu_optarg);
 		    PrintUsage();
-		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'e':
@@ -142,7 +179,6 @@ main (int argc, char **argv)
 		    (void) fprintf(stderr,
 			"Bad elevation specification: '%s'\n", bu_optarg);
 		    PrintUsage();
-		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'i':
@@ -158,14 +194,12 @@ main (int argc, char **argv)
 		fprintf(stderr, "Bad option '-%c'\n", Ch);
 	    case '?':
 		PrintUsage();
-		exit (Ch != '?');
 	}
 
     if (PlanarProj && Invert)
     {
 	fputs("Incompatible options: -i and -p\n", stderr);
 	PrintUsage();
-	bu_exit (1, NULL);
     }
 
     /* Determine source and destination */
@@ -174,22 +208,19 @@ main (int argc, char **argv)
 	inFname = argv[bu_optind];
 	if ((inPtr = fopen(inFname, "r")) == NULL)
 	{
-	    fprintf(stderr, "azel:  Cannot open file '%s'\n", inFname);
-	    bu_exit (1, NULL);
+	    bu_exit(1, "azel:  Cannot open file '%s'\n", inFname);
 	}
 	if (argc - bu_optind > 1)
 	{
 	    outFname = argv[bu_optind + 1];
 	    if ((outPtr = fopen(outFname, "w")) == NULL)
 	    {
-		fprintf(stderr, "azel:  Cannot create file '%s'\n", outFname);
-		bu_exit (1, NULL);
+		bu_exit(1, "azel:  Cannot create file '%s'\n", outFname);
 	    }
 	}
 	if (argc - bu_optind > 2)
 	{
 	    PrintUsage();
-	    bu_exit (1, NULL);
 	}
     }
 
@@ -263,49 +294,6 @@ main (int argc, char **argv)
 	LineNm++;
     }
     bu_exit (0, NULL);
-}
-/* ======================================================================== */
-void
-PrintUsage (void)
-{
-    fputs("Usage:  'azel [-a azim] [-e elev] [-c celsiz] [-{ip}r] [infile [outfile]]'\n", stderr);
-}
-/* ======================================================================== */
-void
-GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
-
-			/* File from which to read */
-			/* Where to store coordinate */
-			/* Name of coordinate */
-			/* How far in input? */
-			/* What input stream? */
-
-{
-    int     Ch;
-
-/* Skip leading white space */
-    while (((Ch = fgetc(Whence)) == ' ') || (Ch == '\t'))
-	;
-
-    if (ungetc(Ch, Whence) == EOF)
-    {
-	fprintf(stderr, "azel:  Premature end-of-file, file %s\n",
-		FileName);
-	bu_exit (1, NULL);
-    }
-    if (Ch == '\n')
-    {
-	fprintf(stderr, "azel:  Premature end-of-line on line %d, file %s\n",
-		LineNm, FileName);
-	bu_exit (1, NULL);
-    }
-
-    if (fscanf(Whence, "%lf", Coord) != 1)
-    {
-	fprintf(stderr, "azel:  Bad %c-coordinate at line %d, file %s\n",
-		Label, LineNm, FileName);
-	bu_exit (1, NULL);
-    }
 }
 
 /*

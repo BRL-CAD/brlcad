@@ -31,9 +31,6 @@
  *	S. Muuss, J.D., Feb 04, 1990.
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -41,18 +38,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #ifdef HAVE_FCNTL_H
-# include <fcntl.h>
+#  include <fcntl.h>
 #endif
 
 #include "machine.h"
+#include "bu.h"
+
 
 #define NUM	(1024 * 16)	/* Note the powers of 2 -- v. efficient */
 static double		doub[NUM];
 static unsigned char	cha[NUM];
+
 
 int
 main(int argc, char **argv)
@@ -66,8 +66,7 @@ main(int argc, char **argv)
 	double		b;			/* intercept */
 
 	if( argc < 2 )  {
-		fprintf(stderr, "Usage: dpix-pix file.dpix > file.pix\n");
-		exit(1);
+		bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
 	}
 
 	if( (fd = open(argv[1], 0)) < 0 )  {
@@ -76,8 +75,7 @@ main(int argc, char **argv)
 	}
 
 	if( isatty(fileno(stdout)) )  {
-		fprintf(stderr, "dpix-pix:  binary output directed to terminal, aborting\n");
-		exit(2);
+		bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
 	}
 
 	/* Note that the minimum is set to 1.0e20, the computer's working
@@ -120,8 +118,7 @@ main(int argc, char **argv)
 		 */
 		fprintf(stderr, "min=%f, max=%f\n", min, max);
 		if (max < min)  {
-			printf("MINMAX: max less than min!\n");
-			exit(1);
+			bu_exit(1, "MINMAX: max less than min!\n");
 		}
 
 		m = (255 - 0)/(max - min);
@@ -158,7 +155,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	exit(0);
+	return 0;
 }
 
 /*
