@@ -218,7 +218,7 @@ int mged_bomb_hook(genptr_t clientData, genptr_t str);
 void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
 #ifdef USE_PROTOTYPES
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
 #else
@@ -255,7 +255,7 @@ main(int argc, char **argv)
     int	c;
     int	read_only_flag=0;
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     pid_t	pid;
 #endif
     int	parent_pipe[2];
@@ -283,7 +283,7 @@ main(int argc, char **argv)
 			break;
 		    case 'n':		/* "not new" == "classic" */
 		    case 'c':
-#ifndef _WIN32
+#ifdef _WIN32
 			classic_mged = 1;
 #else
 			MessageBox(NULL,"-c OPTION NOT AVAILABLE","NOT SUPPORTED",MB_OK);
@@ -324,7 +324,7 @@ main(int argc, char **argv)
 #ifndef COMMAND_LINE_EDITING
 #  define COMMAND_LINE_EDITING 1
 #endif
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 		/* Set up for character-at-a-time terminal IO. */
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
@@ -625,8 +625,8 @@ main(int argc, char **argv)
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(interp));
 		classic_mged=1;
-#ifndef _WIN32
 		cbreak_mode = COMMAND_LINE_EDITING;
+#if !defined(_WIN32) || defined(__CYGWIN__)
 		save_Tty(fileno(stdin));
 #endif
 		get_attached();
@@ -684,17 +684,20 @@ main(int argc, char **argv)
 	/* NOTREACHED */
     }
 
-#ifndef _WIN32
     if(classic_mged || !interactive){
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	ClientData stdin_file = STDIN_FILENO;
 #else
 	ClientData stdin_file = GetStdHandle(STD_INPUT_HANDLE);
 #endif
 
 	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan,TCL_READABLE, stdin_input, stdin_file);
+#if !defined(_WIN32) || defined(__CYGWIN__)
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, stdin_file);
+#else
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, chan);
+#endif
 
 #ifdef SIGINT
 	(void)signal( SIGINT, SIG_IGN );
@@ -703,16 +706,13 @@ main(int argc, char **argv)
 	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	pr_prompt();
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	if (cbreak_mode) {
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
 	}
 #endif
     } else {
-#else
-    {
-#endif
 	ClientData out, err;
 	struct bu_vls vls;
 
@@ -721,7 +721,7 @@ main(int argc, char **argv)
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	out = (ClientData)(size_t)pipe_out[0];
 	err = (ClientData)(size_t)pipe_err[0];
 #else
@@ -783,17 +783,17 @@ pr_beep(void)
  * (or an entire line if the terminal is not in cbreak mode.)
  */
 
-#ifndef _WIN32
 void
 stdin_input(ClientData clientData, int mask)
 {
     int count;
     char ch;
     struct bu_vls temp;
-#ifndef _WIN32
-    long fd = (long)clientData;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel chan = (Tcl_Channel)clientData;
+    Tcl_DString ds;
 #else
-    HANDLE fd = (HANDLE)clientData;
+    long fd = (long)clientData;
 #endif
 
     /* When not in cbreak mode, just process an entire line of input, and
@@ -802,10 +802,21 @@ stdin_input(ClientData clientData, int mask)
     if (!cbreak_mode) {
 	bu_vls_init(&temp);
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	Tcl_DStringInit(&ds);
+	count = Tcl_Gets(chan, &ds);
+
+	if (count < 0)
+	    quit();
+
+	bu_vls_strcat(&input_str, Tcl_DStringValue(&ds));
+	Tcl_DStringFree(&ds);
+#else
 	/* Get line from stdin */
 	if( bu_vls_gets(&temp, stdin) < 0 )
 	    quit();				/* does not return */
 	bu_vls_vlscat(&input_str, &temp);
+#endif
 
 	/* If there are any characters already in the command string (left
 	   over from a CMD_MORE), then prepend them to the new input. */
@@ -855,6 +866,7 @@ stdin_input(ClientData clientData, int mask)
 	    /* Allow the user to hit ^C. */
 	    (void)signal( SIGINT, sig2 );
 	}
+
 	bu_vls_free(&temp);
 	return;
     }
@@ -867,7 +879,7 @@ stdin_input(ClientData clientData, int mask)
 	char buf[4096];
 	int index;
 #  ifdef _WIN32
-	ReadFile(fd, buf, 4096, &count, NULL);
+	count = Tcl_Read(chan, buf, 4096);
 #  else
 	count = read((int)fd, (void *)buf, 4096);
 #  endif
@@ -1029,6 +1041,9 @@ mged_process_char(char ch)
 	    /* If this forms a complete command (as far as the Tcl parser is
 	       concerned) then execute it. */
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    /*XXX Nothing yet */
+#else
 	    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
 		if(curr_cmd_list->cl_tie)
@@ -1071,6 +1086,7 @@ mged_process_char(char ch)
 		/* Allow the user to hit ^C */
 		(void)signal( SIGINT, sig2 );
 	    }
+#endif
 	    pr_prompt(); /* Print prompt for more input */
 	    input_str_index = 0;
 	    freshline = 1;
@@ -1414,7 +1430,6 @@ mged_insert_char(char ch)
 	bu_vls_free(&temp);
     }
 }
-#endif
 
 
 /* Stuff a string to stdout while leaving the current command-line alone */
@@ -1448,10 +1463,11 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 void
 std_out_or_err(ClientData clientData, int mask)
 {
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 #else
-    HANDLE fd = clientData;
+    Tcl_Channel chan = (Tcl_Channel)clientData;
+    Tcl_DString ds;
 #endif
     int count;
     struct bu_vls vls;
@@ -1460,10 +1476,13 @@ std_out_or_err(ClientData clientData, int mask)
 
     /* Get data from stdout or stderr */
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     count = read((int)fd, line, RT_MAXLINE);
 #else
-    ReadFile(fd, line, RT_MAXLINE, &count, 0);
+    Tcl_DStringInit(&ds);
+    count = Tcl_Gets(chan, &ds);
+    strncpy(line, Tcl_DStringValue(&ds), count);
+    line[count] = '\0';
 #endif
 
     if(count <= 0) {
@@ -2112,7 +2131,6 @@ mged_finish(int exitcode)
 #endif
 
     /* XXX should deallocate libbu semaphores */
-
     pkg_terminate();
 
     mged_global_variable_teardown(interp);
@@ -2120,7 +2138,7 @@ mged_finish(int exitcode)
     /* 8.5 seems to have some bugs in their reference counting */
     /* Tcl_DeleteInterp(interp); */
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     if (cbreak_mode > 0)
 	reset_Tty(fileno(stdin));
 #endif
