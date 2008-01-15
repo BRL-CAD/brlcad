@@ -684,12 +684,13 @@ main(int argc, char **argv)
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	ClientData stdin_file = STDIN_FILENO;
-#else
-	ClientData stdin_file = GetStdHandle(STD_INPUT_HANDLE);
-#endif
-
 	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, stdin_file);
+#else
+	ClientData stdin_file = GetStdHandle(STD_INPUT_HANDLE);
+	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, chan);
+#endif
 
 #ifdef SIGINT
 	(void)signal( SIGINT, SIG_IGN );
