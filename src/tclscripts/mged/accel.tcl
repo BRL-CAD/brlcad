@@ -83,7 +83,7 @@ proc rcc-cap {args} {
     set ellheight [vscale $uhv $height]
     set vertex [db get $rccname V]
     if {$end == "t"} {
-	set vertex [vadd2 {$vertex} $hv]
+	set vertex [vadd2 $vertex $hv]
 	set vec1 C
 	set vec2 D
     } else {
