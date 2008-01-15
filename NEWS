@@ -11,6 +11,7 @@ entire history of the project is available through CVS.
 --- 2007-11-XX  Release 7.11.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed Windows-specific ray-tracer rendering delays - Bob Parker
 * new tracker tool for extracting NEWS tracker data - Sean Morrison
 * converted source repository from CVS to Subversion - Sean Morrison
 * new 'dir2ae' mged command for getting az/el from dir - Sean Morrison
