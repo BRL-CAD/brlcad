@@ -40,7 +40,7 @@
 #include "./iges_extern.h"
 
 void
-Readcnv( inum , id )
+Readcnv( inum, id )
 char *id;
 fastf_t *inum;
 {
@@ -82,7 +82,7 @@ fastf_t *inum;
 	num[++i] = '\0';
 	*inum = atof( num ) * conv_factor;
 	if( *id != '\0' )
-		bu_log( "%s%g\n" , id , *inum );
+		bu_log( "%s%g\n", id, *inum );
 }
 
 

@@ -221,7 +221,7 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
 int
 bitx(register char *bitstring, register int posn)
 {
-#if 0 /* Was #ifdef vax , but doesn't work on 4.3BSD */
+#if 0 /* Was #ifdef vax, but doesn't work on 4.3BSD */
 	register field;
 
 	asm("extzv	r10,$1,(r11), r8");

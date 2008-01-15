@@ -61,8 +61,8 @@ Makedir()
 
 		if( entcount%100 == 0 )
 		{
-			sprintf( str , "\t%d%c" , entcount , CR );
-			write( 1 , str , strlen( str ) );
+			sprintf( str, "\t%d%c", entcount, CR );
+			write( 1, str, strlen( str ) );
 		}
 
 		/* save the directory record number for this entity */
@@ -74,10 +74,10 @@ Makedir()
 		/* set record number to read for next entity */
 		saverec = currec + 2;
 
-		Readcols( str , 8 );	/* read entity type */
+		Readcols( str, 8 );	/* read entity type */
 		dir[entcount]->type = atoi( str );
 
-		Readcols( str , 8 );	/* read pointer to parameter entry */
+		Readcols( str, 8 );	/* read pointer to parameter entry */
 
 		/* convert it to a file record number */
 		paramptr = atoi( str );
@@ -95,7 +95,7 @@ Makedir()
 		if( dir[entcount]->type == 422 )
 		{
 			/* This is an attribute instance, so get the definition */
-			Readcols( str , 8 );
+			Readcols( str, 8 );
 			dir[entcount]->referenced = (-atoi(str));
 		}
 		else
@@ -103,10 +103,10 @@ Makedir()
 
 		counter += 16;	/* skip 16 columns */
 
-		Readcols( str , 8 );    /* read pointer to view entity */
+		Readcols( str, 8 );    /* read pointer to view entity */
 		dir[entcount]->view = atoi( str );
 
-		Readcols( str , 8 );	/* read pointer to transformation entity */
+		Readcols( str, 8 );	/* read pointer to transformation entity */
 
 		/* convert it to a "dir" index
 		 * Use (DE + 1)/2 - 1 rather than (DE-1)/2 to get
@@ -117,23 +117,23 @@ Makedir()
 		/* skip next field */
 		counter += 8;
 
-		Readcols( str , 8 );	/* read status entry */
+		Readcols( str, 8 );	/* read status entry */
 		dir[entcount]->status = atoi( str );
 
 		Readrec( currec + 1 );	/* read next record into buffer */
 		counter += 16;		/* skip first two fields */
 
-		Readcols( str , 8 );	/* read pointer to color entity */
+		Readcols( str, 8 );	/* read pointer to color entity */
 		/* if pointer is negative, convert to a 'dir' index */
 		dir[entcount]->colorp = atoi( str );
 		if( dir[entcount]->colorp < 0 )
 			dir[entcount]->colorp = (dir[entcount]->colorp + 1)/2;
 
-		Readcols( str , 8 );	/* read parameter line count */
+		Readcols( str, 8 );	/* read parameter line count */
 		dir[entcount]->paramlines = atoi( str );
 		if( dir[entcount]->paramlines == 0 )
 			dir[entcount]->paramlines = 1;
-		Readcols( str , 8 );	/* read form number */
+		Readcols( str, 8 );	/* read form number */
 		dir[entcount]->form = atoi( str );
 
 		/* Look for entity type in list and incrememt that count */
@@ -162,13 +162,13 @@ Makedir()
 			if( dir[entcount]->param <= pstart )
 			{
 				bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-						dir[entcount]->direct , dir[entcount]->name );
+						dir[entcount]->direct, dir[entcount]->name );
 				dir[entcount]->rot = NULL;
 			}
 			else
 			{
-				dir[entcount]->rot = (mat_t *)bu_malloc( sizeof( mat_t ) , "Makedir:matrix" );
-				Readmatrix( dir[entcount]->param , *dir[entcount]->rot );
+				dir[entcount]->rot = (mat_t *)bu_malloc( sizeof( mat_t ), "Makedir:matrix" );
+				Readmatrix( dir[entcount]->param, *dir[entcount]->rot );
 			}
 		}
 		else /* set to NULL */
@@ -178,7 +178,7 @@ Makedir()
 	}
 
 out:
-	bu_log( "\t%d\n\n" , entcount+1 );
+	bu_log( "\t%d\n\n", entcount+1 );
 	if( paramguess )
 		bu_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
 }

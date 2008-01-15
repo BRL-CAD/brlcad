@@ -431,7 +431,7 @@ use_air(char *buffer, com_table *ctp)
 	    return;
 	}
 	bu_log("Building the directory...");
-	if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL) {
+	if ((rtip = rt_dirbuild( db_name, db_title, TITLE_LEN )) == RTI_NULL) {
 	    bu_log("Could not load file %s\n", db_name);
 	    printusage();
 	    bu_exit(1, NULL);

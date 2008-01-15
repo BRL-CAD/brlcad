@@ -859,16 +859,16 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		if (inIsHost != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
-				(void) bu_cv_ntohss((short *)t1, bufsize , from, work_count);
+				(void) bu_cv_ntohss((short *)t1, bufsize, from, work_count);
 				break;
 			case CV_16:
-				(void) bu_cv_ntohus((unsigned short *)t1, bufsize , from, work_count);
+				(void) bu_cv_ntohus((unsigned short *)t1, bufsize, from, work_count);
 				break;
 			case CV_SIGNED_MASK | CV_32:
-				(void) bu_cv_ntohsl((long *)t1, bufsize , from, work_count);
+				(void) bu_cv_ntohsl((long *)t1, bufsize, from, work_count);
 				break;
 			case CV_32:
-				(void) bu_cv_ntohul((unsigned long *)t1, bufsize , from, work_count);
+				(void) bu_cv_ntohul((unsigned long *)t1, bufsize, from, work_count);
 				break;
 			case CV_D:
 				(void) ntohd((unsigned char *)t1, (unsigned char *)from, work_count);

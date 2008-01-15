@@ -60,8 +60,8 @@ Print_tree(union tree *tree)
 	str = (char *)rt_pr_tree_str( tree );
 	if( str != NULL )
 	{
-		printf( "%s\n" , str );
-		bu_free( str , "Print_tree" );
+		printf( "%s\n", str );
+		bu_free( str, "Print_tree" );
 	}
 	else
 		printf( "NULL Tree\n" );
@@ -82,16 +82,16 @@ main(int argc, char *argv[])
 
 	if( argc < 3 )
 	{
-		fprintf( stderr , "Usage:\n\t%s db_file object1 object2 ...\n" , argv[0] );
+		fprintf( stderr, "Usage:\n\t%s db_file object1 object2 ...\n", argv[0] );
 		return 1;
 	}
 
 	MAT_IDN( identity_mat );
 	bu_vls_init( &file );
 
-	if( (dbip = db_open( argv[1] , "r" ) ) == NULL )
+	if( (dbip = db_open( argv[1], "r" ) ) == NULL )
 	{
-		fprintf( stderr , "Cannot open %s\n" , argv[1] );
+		fprintf( stderr, "Cannot open %s\n", argv[1] );
 		perror( "test" );
 		return 1;
 	}
@@ -103,9 +103,9 @@ main(int argc, char *argv[])
 
 	for( i=2 ; i<argc ; i++ )
 	{
-		printf( "%s\n" , argv[i] );
+		printf( "%s\n", argv[i] );
 
-		dp = db_lookup( dbip , argv[i] , 1 );
+		dp = db_lookup( dbip, argv[i], 1 );
 		if (!dp) {
 		    bu_log("WARNING: Unable to locate %s in %s, skipping\n", argv[i], argv[1]);
 		    continue;
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 
 		if( ip.idb_type != ID_COMBINATION )
 		{
-			bu_log( "idb_type = %d\n" , ip.idb_type );
+			bu_log( "idb_type = %d\n", ip.idb_type );
 			rt_db_free_internal( &ip, &rt_uniresource );
 			continue;
 		}
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 			bu_log( "\tRegion id = %d, aircode = %d GIFTmater = %d, los = %d\n",
 				comb->region_id, comb->aircode, comb->GIFTmater, comb->los );
 		}
-		bu_log( "\trgb_valid = %d, color = %d/%d/%d\n" , comb->rgb_valid , V3ARGS( comb->rgb ) );
+		bu_log( "\trgb_valid = %d, color = %d/%d/%d\n", comb->rgb_valid, V3ARGS( comb->rgb ) );
 		bu_log( "\tshader = %s (%s)\n" ,
 				bu_vls_addr( &comb->shader ),
 				bu_vls_addr( &comb->material )

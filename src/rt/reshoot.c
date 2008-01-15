@@ -31,7 +31,7 @@
 
 	/Pnt/ { START=index($0, "(") + 1
 	       STR=substr($0, START, index($0, ")") - START)
-	       gsub(  ", "  , "," , STR)
+	       gsub(  ", ", ",", STR)
 	       printf "Pnt=%s\n", STR
 
 	       }
@@ -39,7 +39,7 @@
 
 	/Dir/ { START=index($0, "(") + 1
 	       STR=substr($0, START, index($0, ")") - START)
-	       gsub(  ", "  , "," , STR)
+	       gsub(  ", ", ",", STR)
 	       printf "Dir=%s\n", STR
 	       }
 	/PT/  { PARTIN=$3

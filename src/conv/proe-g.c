@@ -187,8 +187,8 @@ Build_unique_name(char *name)
 	ptr = name_root;
 	while( ptr )
 	{
-		if( !strcmp( bu_vls_addr( &ret_name ) , ptr->brlcad_name ) ||
-		    (ptr->solid_name && !strcmp( bu_vls_addr( &ret_name ) , ptr->solid_name ) ) )
+		if( !strcmp( bu_vls_addr( &ret_name ), ptr->brlcad_name ) ||
+		    (ptr->solid_name && !strcmp( bu_vls_addr( &ret_name ), ptr->solid_name ) ) )
 		{
 			/* this name already exists, build a new one */
 			++tries;
@@ -219,7 +219,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 
 	/* Add a new name */
-	ptr = (struct name_conv_list *)bu_calloc( 1, sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
+	ptr = (struct name_conv_list *)bu_calloc( 1, sizeof( struct name_conv_list ), "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
 	ptr->brlcad_name = bu_strdup( name );
 	ptr->obj = obj;
@@ -263,7 +263,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 		bu_vls_init( &vls );
 
-		bu_vls_strcpy( &vls , "s." );
+		bu_vls_strcpy( &vls, "s." );
 		bu_vls_strcat( &vls, ptr->brlcad_name );
 
 		ptr->solid_name = bu_vls_strgrab( &vls );
@@ -274,7 +274,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
 		bu_vls_init( &vls );
 
-		bu_vls_strcpy( &vls , "s." );
+		bu_vls_strcpy( &vls, "s." );
 		bu_vls_strcat( &vls, ptr->brlcad_name );
 
 		ptr->solid_name = bu_vls_strgrab( &vls );
@@ -293,7 +293,7 @@ Get_unique_name(char *name, unsigned int obj, int type)
 	if( name_root == (struct name_conv_list *)NULL )
 	{
 		/* start new list */
-		name_root = Add_new_name( name , obj , type );
+		name_root = Add_new_name( name, obj, type );
 		ptr = name_root;
 	}
 	else
@@ -315,7 +315,7 @@ Get_unique_name(char *name, unsigned int obj, int type)
 
 		if( !found )
 		{
-			prev->next = Add_new_name( name , obj , type );
+			prev->next = Add_new_name( name, obj, type );
 			ptr = prev->next;
 		}
 	}
@@ -334,7 +334,7 @@ Get_solid_name(char *name, unsigned int obj)
 		ptr = ptr->next;
 
 	if( !ptr )
-		ptr = Add_new_name( name , 0 , PART_TYPE );
+		ptr = Add_new_name( name, 0, PART_TYPE );
 
 	return( ptr->solid_name );
 }
@@ -367,9 +367,9 @@ Convert_assy(char *line)
 	start = (-1);
 	/* skip leading blanks */
 	while( isspace( line[++start] ) && line[start] != '\0' );
-	if( strncmp( &line[start] , "assembly" , 8 ) && strncmp( &line[start] , "ASSEMBLY" , 8 ) )
+	if( strncmp( &line[start], "assembly", 8 ) && strncmp( &line[start], "ASSEMBLY", 8 ) )
 	{
-		bu_log( "PROE-G: Convert_assy called for non-assembly:\n%s\n" , line );
+		bu_log( "PROE-G: Convert_assy called for non-assembly:\n%s\n", line );
 		return;
 	}
 
@@ -385,12 +385,12 @@ Convert_assy(char *line)
 	name[++i] = '\0';
 
 	/* get object pointer */
-	sscanf( &line[start] , "%x %f" , &obj, &junk );
+	sscanf( &line[start], "%x %f", &obj, &junk );
 
-	bu_log( "Converting Assembly: %s\n" , name );
+	bu_log( "Converting Assembly: %s\n", name );
 
 	if( debug )
-		bu_log( "Convert_assy: %s x%x\n" , name , obj );
+		bu_log( "Convert_assy: %s x%x\n", name, obj );
 
 	while( bu_fgets( line1, MAX_LINE_LEN, fd_in ) )
 	{
@@ -398,26 +398,26 @@ Convert_assy(char *line)
 		start = (-1);
 		while( isspace( line1[++start] ) && line[start] != '\0' );
 
-		if( !strncmp( &line1[start] , "endassembly" , 11 ) || !strncmp( &line1[start] , "ENDASSEMBLY" , 11 ) )
+		if( !strncmp( &line1[start], "endassembly", 11 ) || !strncmp( &line1[start], "ENDASSEMBLY", 11 ) )
 		{
 
-			brlcad_name = Get_unique_name( name , obj , ASSEMBLY_TYPE );
+			brlcad_name = Get_unique_name( name, obj, ASSEMBLY_TYPE );
 			if( debug )
 			{
 				struct wmember *wp;
 
-				bu_log( "\tmake assembly ( %s)\n" , brlcad_name );
+				bu_log( "\tmake assembly ( %s)\n", brlcad_name );
 				for( BU_LIST_FOR( wp, wmember, &head.l ) )
 					bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 			}
 			else
 				bu_log( "\tUsing name: %s\n", brlcad_name );
 
-			mk_lcomb( fd_out , brlcad_name , &head , 0 ,
-			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
+			mk_lcomb( fd_out, brlcad_name, &head, 0 ,
+			(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 			break;
 		}
-		else if( !strncmp( &line1[start] , "member" , 6 ) || !strncmp( &line1[start] , "MEMBER" , 6 ) )
+		else if( !strncmp( &line1[start], "member", 6 ) || !strncmp( &line1[start], "MEMBER", 6 ) )
 		{
 			start += 5;
 			while( isspace( line1[++start] ) && line1[start] != '\0' );
@@ -428,14 +428,14 @@ Convert_assy(char *line)
 			memb_name[++i] = '\0';
 
 
-			sscanf( &line1[start] , "%x" , &memb_obj );
+			sscanf( &line1[start], "%x", &memb_obj );
 
-			brlcad_name = Get_unique_name( memb_name , memb_obj , PART_TYPE );
+			brlcad_name = Get_unique_name( memb_name, memb_obj, PART_TYPE );
 			if( debug )
-				bu_log( "\tmember (%s)\n" , brlcad_name );
-			wmem = mk_addmember( brlcad_name , &head.l , NULL, WMOP_UNION );
+				bu_log( "\tmember (%s)\n", brlcad_name );
+			wmem = mk_addmember( brlcad_name, &head.l, NULL, WMOP_UNION );
 		}
-		else if( !strncmp( &line1[start] , "matrix" , 6 ) || !strncmp( &line1[start] , "MATRIX" , 6 ) )
+		else if( !strncmp( &line1[start], "matrix", 6 ) || !strncmp( &line1[start], "MATRIX", 6 ) )
 		{
 			int i, j;
 			double scale, inv_scale;
@@ -443,7 +443,7 @@ Convert_assy(char *line)
 			for( j=0 ; j<4 ; j++ )
 			{
 				bu_fgets( line1, MAX_LINE_LEN, fd_in );
-				sscanf( line1 , "%f %f %f %f" , &mat_col[0] , &mat_col[1] , &mat_col[2] , &mat_col[3] );
+				sscanf( line1, "%f %f %f %f", &mat_col[0], &mat_col[1], &mat_col[2], &mat_col[3] );
 				for( i=0 ; i<4 ; i++ )
 					wmem->wm_mat[4*i+j] = mat_col[i];
 			}
@@ -497,7 +497,7 @@ Convert_assy(char *line)
 		}
 		else
 		{
-			bu_log( "Unrecognized line in assembly (%s)\n%s\n" , name , line1 );
+			bu_log( "Unrecognized line in assembly (%s)\n%s\n", name, line1 );
 		}
 	}
 
@@ -706,9 +706,9 @@ Convert_part(char *line)
 	start = (-1);
 	/* skip leading blanks */
 	while( isspace( line[++start] ) && line[start] != '\0' );
-	if( strncmp( &line[start] , "solid" , 5 ) && strncmp( &line[start] , "SOLID" , 5 ) )
+	if( strncmp( &line[start], "solid", 5 ) && strncmp( &line[start], "SOLID", 5 ) )
 	{
-		bu_log( "Convert_part: Called for non-part\n%s\n" , line );
+		bu_log( "Convert_part: Called for non-part\n%s\n", line );
 		return;
 	}
 
@@ -725,7 +725,7 @@ Convert_part(char *line)
 		name[++i] = '\0';
 
 		/* get object id */
-		sscanf( &line[start] , "%x" , &obj );
+		sscanf( &line[start], "%x", &obj );
 	} else if( stl_format && forced_name ) {
 		strncpy( name, forced_name, MAX_LINE_LEN-1 );
 	} else if( stl_format ) {
@@ -773,15 +773,15 @@ Convert_part(char *line)
 		strncpy( name, "noname", MAX_LINE_LEN-1 );
 	}
 
-	bu_log( "Converting Part: %s\n" , name );
+	bu_log( "Converting Part: %s\n", name );
 
 	if( debug )
-		bu_log( "Conv_part %s x%x\n" , name , obj );
+		bu_log( "Conv_part %s x%x\n", name, obj );
 
 	solid_count++;
-	solid_name = Get_solid_name( name , obj );
+	solid_name = Get_solid_name( name, obj );
 
-	bu_log( "\tUsing solid name: %s\n" , solid_name );
+	bu_log( "\tUsing solid name: %s\n", solid_name );
 
 	if( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part()" );
@@ -790,42 +790,42 @@ Convert_part(char *line)
 	{
 		start = (-1);
 		while( isspace( line1[++start] ) );
-		if( !strncmp( &line1[start] , "endsolid" , 8 ) || !strncmp( &line1[start] , "ENDSOLID" , 8 ) )
+		if( !strncmp( &line1[start], "endsolid", 8 ) || !strncmp( &line1[start], "ENDSOLID", 8 ) )
 			break;
-		else if( !strncmp( &line1[start] , "color" , 5 ) || !strncmp( &line1[start] , "COLOR" , 5 ) )
+		else if( !strncmp( &line1[start], "color", 5 ) || !strncmp( &line1[start], "COLOR", 5 ) )
 		{
-			sscanf( &line1[start+5] , "%f%f%f" , &colr[0] , &colr[1] , &colr[2] );
+			sscanf( &line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2] );
 			for( i=0 ; i<3 ; i++ )
 				color[i] = (int)(colr[i] * 255.0);
 		}
-		else if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
+		else if( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
 		{
 			float x, y, z;
 
 			start += 6;
-			sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
-			VSET( normal , x , y , z );
+			sscanf( &line1[start], "%f%f%f", &x, &y, &z );
+			VSET( normal, x, y, z );
 		}
-		else if( !strncmp( &line1[start] , "facet" , 5 ) || !strncmp( &line1[start] , "FACET" , 5 ) )
+		else if( !strncmp( &line1[start], "facet", 5 ) || !strncmp( &line1[start], "FACET", 5 ) )
 		{
-			VSET( normal , 0.0 , 0.0 , 0.0 );
+			VSET( normal, 0.0, 0.0, 0.0 );
 
 			start += 4;
 			while( line1[++start] && isspace( line1[start] ) );
 
 			if( line1[start] )
 			{
-				if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
+				if( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
 				{
 					float x, y, z;
 
 					start += 6;
-					sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
-					VSET( normal , x , y , z );
+					sscanf( &line1[start], "%f%f%f", &x, &y, &z );
+					VSET( normal, x, y, z );
 				}
 			}
 		}
-		else if( !strncmp( &line1[start] , "outer loop" , 10 ) || !strncmp( &line1[start] , "OUTER LOOP" , 10 ) )
+		else if( !strncmp( &line1[start], "outer loop", 10 ) || !strncmp( &line1[start], "OUTER LOOP", 10 ) )
 		{
 			int endloop=0;
 			int vert_no=0;
@@ -839,13 +839,13 @@ Convert_part(char *line)
 				start = (-1);
 				while( isspace( line1[++start] ) );
 
-				if( !strncmp( &line1[start] , "endloop" , 7 ) || !strncmp( &line1[start] , "ENDLOOP" , 7 ) )
+				if( !strncmp( &line1[start], "endloop", 7 ) || !strncmp( &line1[start], "ENDLOOP", 7 ) )
 					endloop = 1;
-				else if ( !strncmp( &line1[start] , "vertex" , 6 ) || !strncmp( &line1[start] , "VERTEX" , 6 ) )
+				else if ( !strncmp( &line1[start], "vertex", 6 ) || !strncmp( &line1[start], "VERTEX", 6 ) )
 				{
 					double x, y, z;
 
-					sscanf( &line1[start+6] , "%lf%lf%lf" , &x , &y , &z );
+					sscanf( &line1[start+6], "%lf%lf%lf", &x, &y, &z );
 					if( top_level )
 					{
 						x *= conv_factor;
@@ -906,7 +906,7 @@ Convert_part(char *line)
 		{
 			if( face_count )
 			{
-				wmem = mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
+				wmem = mk_addmember( solid_name, &head.l, NULL, WMOP_UNION );
 				if( top_level && do_reorient )
 				{
 					/* apply re_orient transformation here */
@@ -928,12 +928,12 @@ Convert_part(char *line)
 	{
 		char *save_name;
 
-		bu_log( "\t%s has no solid parts, ignoring\n" , name );
+		bu_log( "\t%s has no solid parts, ignoring\n", name );
 		if( degenerate_count )
 			bu_log( "\t%d faces were degenerate\n", degenerate_count );
 		if( small_count )
 			bu_log( "\t%d faces were too small\n", small_count );
-		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
+		brlcad_name = Get_unique_name( name, obj, PART_TYPE );
 		save_name = bu_strdup( brlcad_name );
 		bu_ptbl_ins( &null_parts, (long *)save_name );
 		return;
@@ -951,7 +951,7 @@ Convert_part(char *line)
 
 	if( face_count && !solid_in_region )
 	{
-		wmem = mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
+		wmem = mk_addmember( solid_name, &head.l, NULL, WMOP_UNION );
 		if( top_level && do_reorient )
 		{
 			/* apply re_orient transformation here */
@@ -963,11 +963,11 @@ Convert_part(char *line)
 			bn_mat_mul2( re_orient, wmem->wm_mat );
 		}
 	}
-	brlcad_name = Get_unique_name( name , obj , PART_TYPE );
+	brlcad_name = Get_unique_name( name, obj, PART_TYPE );
 
 	if( do_air )
 	{
-		bu_log( "\tMaking air region (%s)\n" , brlcad_name );
+		bu_log( "\tMaking air region (%s)\n", brlcad_name );
 
 		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 		color, 0, air_no, 0, 100, 0 );
@@ -975,7 +975,7 @@ Convert_part(char *line)
 	}
 	else
 	{
-		bu_log( "\tMaking region (%s)\n" , brlcad_name );
+		bu_log( "\tMaking region (%s)\n", brlcad_name );
 
 		if( const_id >= 0 )
 		{
@@ -1024,12 +1024,12 @@ Convert_input(void)
 
 	while( bu_fgets( line, MAX_LINE_LEN, fd_in ) != NULL )
 	{
-		if( !strncmp( line , "assembly" , 8 ) || !strncmp( line , "ASSEMBLY" , 8 ) )
+		if( !strncmp( line, "assembly", 8 ) || !strncmp( line, "ASSEMBLY", 8 ) )
 			Convert_assy( line );
-		else if( !strncmp( line , "solid" , 5 ) || !strncmp( line , "SOLID" , 5 ) )
+		else if( !strncmp( line, "solid", 5 ) || !strncmp( line, "SOLID", 5 ) )
 			Convert_part( line );
 		else
-			bu_log( "Unrecognized line:\n%s\n" , line );
+			bu_log( "Unrecognized line:\n%s\n", line );
 	}
 }
 
@@ -1050,7 +1050,7 @@ Rm_nulls(void)
 			char *save_name;
 
 			save_name = (char *)BU_PTBL_GET( &null_parts, i );
-			bu_log( "\t%s\n" , save_name );
+			bu_log( "\t%s\n", save_name );
 		}
 	}
 
@@ -1079,7 +1079,7 @@ Rm_nulls(void)
 		RT_CK_COMB( comb );
 		if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
-			db_non_union_push( comb->tree , &rt_uniresource);
+			db_non_union_push( comb->tree, &rt_uniresource);
 			if( db_ck_v4gift_tree( comb->tree ) < 0 )
 			{
 				bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
@@ -1123,7 +1123,7 @@ Rm_nulls(void)
 					bu_log( "Deleting reference to null part (%s) from combination %s\n",
 						tree_list[j].tl_tree->tr_l.tl_name, dp->d_namep );
 
-				db_free_tree( tree_list[j].tl_tree , &rt_uniresource);
+				db_free_tree( tree_list[j].tl_tree, &rt_uniresource);
 
 				for( k=j+1 ; k<actual_count ; k++ )
 					tree_list[k-1] = tree_list[k]; /* struct copy */
@@ -1144,7 +1144,7 @@ Rm_nulls(void)
 			if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
 			{
 				bu_log( "Unable to write modified combination '%s' to database\n", dp->d_namep );
-				rt_comb_ifree( &intern , &rt_uniresource);
+				rt_comb_ifree( &intern, &rt_uniresource);
 				continue;
 			}
 		}
@@ -1277,7 +1277,7 @@ main(int argc, char **argv)
 	input_file = argv[bu_optind];
 	if( (fd_in=fopen( input_file, "r")) == NULL )
 	{
-		bu_log( "Cannot open input file (%s)\n" , input_file );
+		bu_log( "Cannot open input file (%s)\n", input_file );
 		perror( argv[0] );
 		bu_exit( 1, NULL );
 	}
@@ -1285,15 +1285,15 @@ main(int argc, char **argv)
 	brlcad_file = argv[bu_optind];
 	if( (fd_out=wdb_fopen( brlcad_file)) == NULL )
 	{
-		bu_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
+		bu_log( "Cannot open BRL-CAD file (%s)\n", brlcad_file );
 		perror( argv[0] );
 		bu_exit( 1, NULL );
 	}
 
 	if( stl_format )
-		mk_id_units( fd_out , "Conversion from Stereolithography format" , "mm" );
+		mk_id_units( fd_out, "Conversion from Stereolithography format", "mm" );
 	else
-		mk_id_units( fd_out , "Conversion from Pro/Engineer" , "in" );
+		mk_id_units( fd_out, "Conversion from Pro/Engineer", "in" );
 
 	/* Create re-orient matrix */
 	bn_mat_angles( re_orient, 0.0, 90.0, 90.0 );

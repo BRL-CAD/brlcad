@@ -1866,7 +1866,7 @@ get_thru_faces_length( tag_t feat_tag,
 	DO_INDENT;
 	bu_log( "\tface1 = %d, face2 = %d\n", face1, face2 );
 	DO_INDENT;
-	bu_log( "\tface1 bb = (%g %g %g) <-> (%g %g %g)\n", V3ARGS( bb ) , V3ARGS( &bb[3] ) );
+	bu_log( "\tface1 bb = (%g %g %g) <-> (%g %g %g)\n", V3ARGS( bb ), V3ARGS( &bb[3] ) );
 
 	/* calculate length needed to reach furthest point of bounding box */
 	min_len = MAX_FASTF;
@@ -4410,7 +4410,7 @@ convert_a_feature( tag_t feat_tag,
 
 				/* we need to build a combination */
 				comb_name = create_unique_brlcad_combination_name();
-				(void)mk_comb( wdb_fd, comb_name, &mirror_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0 , 0 );
+				(void)mk_comb( wdb_fd, comb_name, &mirror_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 				add_to_obj_list( comb_name );
 				(void)mk_addmember( comb_name, &head->l, NULL, brlcad_op );
 			}
@@ -4635,7 +4635,7 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
 			char *comb_name;
 
 			comb_name = create_unique_brlcad_combination_name();
-			(void)mk_comb( wdb_fd, comb_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0 , 0 );
+			(void)mk_comb( wdb_fd, comb_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 
 			return( comb_name );
 		}
@@ -5125,8 +5125,8 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 		assy_name = create_unique_brlcad_name( &name_vls );
 		bu_vls_free( &name_vls );
 
-		mk_lcomb( wdb_fd , assy_name , &head , 0 ,
-			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
+		mk_lcomb( wdb_fd, assy_name, &head, 0 ,
+			(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 	}
 
 	return( assy_name );
@@ -5330,8 +5330,8 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 		assy_name = create_unique_brlcad_name( &name_vls );
 		bu_vls_free( &name_vls );
 
-		mk_lcomb( wdb_fd , assy_name , &head , 0 ,
-			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
+		mk_lcomb( wdb_fd, assy_name, &head, 0 ,
+			(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 	}
 
 	return( assy_name );

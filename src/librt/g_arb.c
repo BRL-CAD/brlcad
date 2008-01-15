@@ -2074,7 +2074,7 @@ rt_arb_edit(Tcl_Interp			*interp,
     /* do the arb editing */
     if (edit_class == RT_ARB_EDIT_POINT) {
 	/* moving a point - not an edge */
-	VMOVE(arb->pt[edit_type] , pos_model);
+	VMOVE(arb->pt[edit_type], pos_model);
 	edptr += 4;
     } else if (edit_class == RT_ARB_EDIT_EDGE) {
 	vect_t	edge_dir;
@@ -2179,7 +2179,7 @@ rt_arb_edit(Tcl_Interp			*interp,
 	    VMOVE(arb->pt[i], arb->pt[4]);
 	break;
     case ARB4:
-	VMOVE(arb->pt[3] , arb->pt[0]);
+	VMOVE(arb->pt[3], arb->pt[0]);
 	for(i=5; i<8; i++)
 	    VMOVE(arb->pt[i], arb->pt[4])
 		break;

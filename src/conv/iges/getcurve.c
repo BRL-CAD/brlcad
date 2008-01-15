@@ -37,13 +37,13 @@ extern void Knot();
 extern void B_spline();
 
 mat_t idn={
-	1.0 , 0.0 , 0.0 , 0.0 ,
-	0.0 , 1.0 , 0.0 , 0.0 ,
-	0.0 , 0.0 , 1.0 , 0.0 ,
-	0.0 , 0.0 , 0.0 , 1.0 };
+	1.0, 0.0, 0.0, 0.0 ,
+	0.0, 1.0, 0.0, 0.0 ,
+	0.0, 0.0, 1.0, 0.0 ,
+	0.0, 0.0, 0.0, 1.0 };
 
 
-int Getcurve( curve , curv_pts )
+int Getcurve( curve, curv_pts )
 int curve;
 struct ptlist **curv_pts;
 {
@@ -53,7 +53,7 @@ struct ptlist **curv_pts;
 	double pi;
 	struct ptlist *ptr,*prev;
 
-	pi = atan2( 0.0 , -1.0 );
+	pi = atan2( 0.0, -1.0 );
 
 	(*curv_pts) = NULL;
 	prev = NULL;
@@ -65,11 +65,11 @@ struct ptlist **curv_pts;
 			point_t pt1;
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				npts = 0;
 				break;
 			}
@@ -79,8 +79,8 @@ struct ptlist **curv_pts;
 
 			/* Read first point */
 			for( i=0 ; i<3 ; i++ )
-				Readcnv( &pt1[i] , "" );
-			MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
+				Readcnv( &pt1[i], "" );
+			MAT4X3PNT( ptr->pt, *dir[curve]->rot, pt1 );
 
 			ptr->prev = NULL;
 			prev = ptr;
@@ -90,8 +90,8 @@ struct ptlist **curv_pts;
 
 			/* Read second point */
 			for( i=0 ; i<3 ; i++ )
-				Readcnv( &pt1[i] , "" );
-			MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
+				Readcnv( &pt1[i], "" );
+			MAT4X3PNT( ptr->pt, *dir[curve]->rot, pt1 );
 			ptr->next = NULL;
 			ptr->prev = prev;
 
@@ -107,35 +107,35 @@ struct ptlist **curv_pts;
 			delta = (2.0*pi)/ARCSEGS;
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				npts = 0;
 				break;
 			}
 
 			/* Read common Z coordinate */
-			Readcnv( &common_z , "" );
+			Readcnv( &common_z, "" );
 
 			/* Read center point */
-			Readcnv( &center[X] , "" );
-			Readcnv( &center[Y] , "" );
+			Readcnv( &center[X], "" );
+			Readcnv( &center[Y], "" );
 			center[Z] = common_z;
 
 			/* Read start point */
-			Readcnv( &start[X] , "" );
-			Readcnv( &start[Y] , "" );
+			Readcnv( &start[X], "" );
+			Readcnv( &start[Y], "" );
 			start[Z] = common_z;
 
 			/* Read stop point */
-			Readcnv( &stop[X] , "" );
-			Readcnv( &stop[Y] , "" );
+			Readcnv( &stop[X], "" );
+			Readcnv( &stop[Y], "" );
 			stop[Z] = common_z;
 
-			ang1 = atan2( start[Y] - center[Y] , start[X] - center[X] );
-			ang2 = atan2( stop[Y] - center[Y] , stop[X] - center[X] );
+			ang1 = atan2( start[Y] - center[Y], start[X] - center[X] );
+			ang2 = atan2( stop[Y] - center[Y], stop[X] - center[X] );
 			while( ang2 <= ang1 )
 				ang2 += (2.0*pi);
 
@@ -153,7 +153,7 @@ struct ptlist **curv_pts;
 			ptr = (*curv_pts);
 			prev = NULL;
 
-			MAT4X3PNT( ptr->pt , *dir[curve]->rot , start );
+			MAT4X3PNT( ptr->pt, *dir[curve]->rot, start );
 
 			ptr->prev = prev;
 			prev = ptr;
@@ -161,14 +161,14 @@ struct ptlist **curv_pts;
 					"Getcurve: ptr->next" );
 			ptr = ptr->next;
 			ptr->prev = prev;
-			VMOVE( tmp , start );
+			VMOVE( tmp, start );
 			for( i=1 ; i<npts ; i++ )
 			{
 				rx = tmp[X] - center[X];
 				ry = tmp[Y] - center[Y];
 				tmp[X] = center[X] + rx*cosdel - ry*sindel;
 				tmp[Y] = center[Y] + rx*sindel + ry*cosdel;
-				MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
+				MAT4X3PNT( ptr->pt, *dir[curve]->rot, tmp );
 				prev = ptr;
 				ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
 						"Getcurve: ptr->next" );
@@ -191,17 +191,17 @@ struct ptlist **curv_pts;
 			point_t	pt1;		/* temporary storage for incoming point */
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				npts = 0;
 				break;
 			}
 
-			Readint( &interpflag , "" );
-			Readint( &ntuples , "" );
+			Readint( &interpflag, "" );
+			Readint( &ntuples, "" );
 
 			switch( dir[curve]->form )
 			{
@@ -213,21 +213,21 @@ struct ptlist **curv_pts;
 					if( interpflag != 1 )
 					{
 						bu_log( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 1\n",
-							dir[curve]->direct , interpflag );
+							dir[curve]->direct, interpflag );
 						npts = 0;
 						break;
 					}
-					Readcnv( &common_z , "" );
+					Readcnv( &common_z, "" );
 					(*curv_pts) = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
 						"Getcurve: curv_pts" );
 					ptr = (*curv_pts);
 					ptr->prev = NULL;
 					for( i=0 ; i<ntuples ; i++ )
 					{
-						Readcnv( &pt1[X] , "" );
-						Readcnv( &pt1[Y] , "" );
+						Readcnv( &pt1[X], "" );
+						Readcnv( &pt1[Y], "" );
 						pt1[Z] = common_z;
-						MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
+						MAT4X3PNT( ptr->pt, *dir[curve]->rot, pt1 );
 						prev = ptr;
 						ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
 							"Getcurve: ptr->next" );
@@ -247,7 +247,7 @@ struct ptlist **curv_pts;
 					if( interpflag != 2 )
 					{
 						bu_log( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 2\n",
-							dir[curve]->direct , interpflag );
+							dir[curve]->direct, interpflag );
 						npts = 0;
 						break;
 					}
@@ -257,10 +257,10 @@ struct ptlist **curv_pts;
 					ptr->prev = NULL;
 					for( i=0 ; i<ntuples ; i++ )
 					{
-						Readcnv( &pt1[X] , "" );
-						Readcnv( &pt1[Y] , "" );
-						Readcnv( &pt1[Z] , "" );
-						MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
+						Readcnv( &pt1[X], "" );
+						Readcnv( &pt1[Y], "" );
+						Readcnv( &pt1[Z], "" );
+						MAT4X3PNT( ptr->pt, *dir[curve]->rot, pt1 );
 						prev = ptr;
 						ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
 							"Getcurve: ptr->next" );
@@ -280,21 +280,21 @@ struct ptlist **curv_pts;
 					if( interpflag != 1 )
 					{
 						bu_log( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 1\n",
-							dir[curve]->direct , interpflag );
+							dir[curve]->direct, interpflag );
 						npts = 0;
 						break;
 					}
-					Readcnv( &common_z , "" );
+					Readcnv( &common_z, "" );
 					(*curv_pts) = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
 						"Getcurve: curv_pts" );
 					ptr = (*curv_pts);
 					ptr->prev = NULL;
 					for( i=0 ; i<ntuples ; i += 2 )
 					{
-						Readcnv( &pt1[X] , "" );
-						Readcnv( &pt1[Y] , "" );
+						Readcnv( &pt1[X], "" );
+						Readcnv( &pt1[Y], "" );
 						pt1[Z] = common_z;
-						MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
+						MAT4X3PNT( ptr->pt, *dir[curve]->rot, pt1 );
 						prev = ptr;
 						ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
 							"Getcurve: ptr->next" );
@@ -312,7 +312,7 @@ struct ptlist **curv_pts;
 				default:
 				{
 					bu_log( "Error in Getcurve for copius data entity D%07d, form %d is not a legal choice\n",
-						dir[curve]->direct , dir[curve]->form );
+						dir[curve]->direct, dir[curve]->form );
 					npts = 0;
 					break;
 				}
@@ -327,22 +327,22 @@ struct ptlist **curv_pts;
 			fastf_t a;
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				npts = 0;
 				break;
 			}
-			Readint( &i , "" );	/* Skip over type */
-			Readint( &i , "" );	/* Skip over continuity */
+			Readint( &i, "" );	/* Skip over type */
+			Readint( &i, "" );	/* Skip over continuity */
 			splroot = (struct spline *)bu_malloc( sizeof( struct spline ),
 					"Getcurve: splroot" );
 			splroot->start = NULL;
-			Readint( &splroot->ndim , "" ); /* 2->planar, 3->3d */
-			Readint( &splroot->nsegs , "" ); /* Number of segments */
-			Readdbl( &a , "" );	/* first breakpoint */
+			Readint( &splroot->ndim, "" ); /* 2->planar, 3->3d */
+			Readint( &splroot->nsegs, "" ); /* Number of segments */
+			Readdbl( &a, "" );	/* first breakpoint */
 
 			/* start a linked list of segments */
 			seg = splroot->start;
@@ -363,7 +363,7 @@ struct ptlist **curv_pts;
 				seg->segno = i+1;
 				seg->next = NULL;
 				seg->tmin = a; /* set minimum T for this segment */
-				Readflt( &seg->tmax , "" ); /* get maximum T for segment */
+				Readflt( &seg->tmax, "" ); /* get maximum T for segment */
 				a = seg->tmax;
 			}
 
@@ -372,11 +372,11 @@ struct ptlist **curv_pts;
 			for( i=0 ; i<splroot->nsegs ; i++ )
 			{
 				for( j=0 ; j<4 ; j++ )
-					Readflt( &seg->cx[j] , "" ); /* x coeff's */
+					Readflt( &seg->cx[j], "" ); /* x coeff's */
 				for( j=0 ; j<4 ; j++ )
-					Readflt( &seg->cy[j] , "" ); /* y coeff's */
+					Readflt( &seg->cy[j], "" ); /* y coeff's */
 				for( j=0 ; j<4 ; j++ )
-					Readflt( &seg->cz[j] , "" ); /* z coeff's */
+					Readflt( &seg->cz[j], "" ); /* z coeff's */
 				seg = seg->next;
 			}
 
@@ -397,13 +397,13 @@ struct ptlist **curv_pts;
 				for( i=0 ; i<9 ; i++ )
 				{
 					a = (fastf_t)i/(8.0)*(seg->tmax-seg->tmin );
-					tmp[0] = splinef( seg->cx , a );
-					tmp[1] = splinef( seg->cy , a );
+					tmp[0] = splinef( seg->cx, a );
+					tmp[1] = splinef( seg->cy, a );
 					if( splroot->ndim == 3 )
-						tmp[2] = splinef( seg->cz , a );
+						tmp[2] = splinef( seg->cz, a );
 					else
 						tmp[2] = seg->cz[0];
-					MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
+					MAT4X3PNT( ptr->pt, *dir[curve]->rot, tmp );
 					for( j=0 ; j<3 ; j++ )
 						ptr->pt[j] *= conv_factor;
 					npts++;
@@ -442,34 +442,34 @@ struct ptlist **curv_pts;
 			int num_points;
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				npts = 0;
 				break;
 			}
 
 			/* read coefficients */
-			Readdbl( &A , "" );
-			Readdbl( &B , "" );
-			Readdbl( &C , "" );
-			Readdbl( &D , "" );
-			Readdbl( &E , "" );
-			Readdbl( &F , "" );
+			Readdbl( &A, "" );
+			Readdbl( &B, "" );
+			Readdbl( &C, "" );
+			Readdbl( &D, "" );
+			Readdbl( &E, "" );
+			Readdbl( &F, "" );
 
 			/* read common z-coordinate */
-			Readflt( &v1[2] , "" );
+			Readflt( &v1[2], "" );
 			v2[2]=v1[2];
 
 			/* read start point */
-			Readflt( &v1[0] , "" );
-			Readflt( &v1[1] , "" );
+			Readflt( &v1[0], "" );
+			Readflt( &v1[1], "" );
 
 			/* read terminate point */
-			Readflt( &v2[0] , "" );
-			Readflt( &v2[1] , "" );
+			Readflt( &v2[0], "" );
+			Readflt( &v2[1], "" );
 
 			type = 0;
 			if( dir[curve]->form == 1 ) /* Ellipse */
@@ -484,7 +484,7 @@ struct ptlist **curv_pts;
 				if( B == 0.0 && D == 0.0 && E == 0.0 )
 					type = 1;
 				else
-					bu_log( "Entity #%d is an incorrectly formatted ellipse\n" , curve );
+					bu_log( "Entity #%d is an incorrectly formatted ellipse\n", curve );
 			}
 
 			/* make coeff of X**2 equal to 1.0 */
@@ -512,7 +512,7 @@ struct ptlist **curv_pts;
 				I = A+C;
 				if( del == 0.0 ) /* not a conic */
 				{
-					bu_log( "Entity #%d, claims to be conic arc, but isn't\n" , curve );
+					bu_log( "Entity #%d, claims to be conic arc, but isn't\n", curve );
 					break;
 				}
 				else if( a > 0.0 && del*I < 0.0)
@@ -549,13 +549,13 @@ struct ptlist **curv_pts;
 
 				/* theta is the angle that the parabola axis is rotated
 					about the origin from the x-axis */
-				theta = 0.5*atan2( B , C-A );
+				theta = 0.5*atan2( B, C-A );
 
 				/* p is the distance from vertex to directrix */
 				p = (-E*sin(theta) - D*cos(theta))/4.0;
 				if( fabs( p ) < TOL )
 				{
-					bu_log( "Cannot plot entity %d, p=%g\n" , curve , p );
+					bu_log( "Cannot plot entity %d, p=%g\n", curve, p );
 					break;
 				}
 
@@ -570,7 +570,7 @@ struct ptlist **curv_pts;
 				c = ((v1[1]-v2[1])*cos(theta) - (v1[0]-v2[0])*sin(theta));
 				if( fabs( c ) < TOL*TOL )
 				{
-					bu_log( "Cannot plot entity %d\n" , curve );
+					bu_log( "Cannot plot entity %d\n", curve );
 					break;
 				}
 				b = b/c;
@@ -593,8 +593,8 @@ struct ptlist **curv_pts;
 
 				/* start point */
 				VSET( tmp, xc, yc, v1[2] );
-				MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
-				VSCALE( ptr->pt , ptr->pt , conv_factor );
+				MAT4X3PNT( ptr->pt, *dir[curve]->rot, tmp );
+				VSCALE( ptr->pt, ptr->pt, conv_factor );
 				npts++;
 				prev = ptr;
 				ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
@@ -611,8 +611,8 @@ struct ptlist **curv_pts;
 					r1 = t1 + dpi*i;
 					tmp[0] = xc + a*r1*r1*b - r1*c;
 					tmp[1] = yc + a*r1*r1*c + r1*b;
-					MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
-					VSCALE( ptr->pt , ptr->pt , conv_factor );
+					MAT4X3PNT( ptr->pt, *dir[curve]->rot, tmp );
+					VSCALE( ptr->pt, ptr->pt, conv_factor );
 					npts++;
 					prev = ptr;
 					ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
@@ -624,7 +624,7 @@ struct ptlist **curv_pts;
 				/* plot terminate point */
 				tmp[0] = v2[0];
 				tmp[1] = v2[1];
-				MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
+				MAT4X3PNT( ptr->pt, *dir[curve]->rot, tmp );
 				for( j=0 ; j<3 ; j++ )
 					ptr->pt[j] *= conv_factor;
 				npts++;
@@ -645,7 +645,7 @@ struct ptlist **curv_pts;
 				/* theta is angle that the curve axis is rotated about
 					the origin from the x-axis */
 				if( B != 0.0 )
-					theta = 0.5*atan2( B , A-C );
+					theta = 0.5*atan2( B, A-C );
 				else
 					theta = 0.0;
 
@@ -665,21 +665,21 @@ struct ptlist **curv_pts;
 
 				for( i=0 ; i<16 ; i++ )
 					rot1[i] = idn[i];
-				MAT_DELTAS( rot1 , -xc , -yc , 0.0 );
-				MAT4X3PNT( tmp , rot1 , v1 );
-				VMOVE( v1 , tmp );
-				MAT4X3PNT( tmp , rot1 , v2 );
-				VMOVE( v2 , tmp );
-				MAT_DELTAS( rot1 , 0.0 , 0.0 , 0.0 );
+				MAT_DELTAS( rot1, -xc, -yc, 0.0 );
+				MAT4X3PNT( tmp, rot1, v1 );
+				VMOVE( v1, tmp );
+				MAT4X3PNT( tmp, rot1, v2 );
+				VMOVE( v2, tmp );
+				MAT_DELTAS( rot1, 0.0, 0.0, 0.0 );
 				rot1[0] = cos( theta );
 				rot1[1] = sin( theta );
 				rot1[4] = (-rot1[1]);
 				rot1[5] = rot1[0];
-				MAT4X3PNT( tmp , rot1 , v1 );
-				VMOVE( v1 , tmp );
-				MAT4X3PNT( tmp , rot1 , v2 );
-				VMOVE( v2 , tmp );
-				MAT_DELTAS( rot1 , 0.0 , 0.0 , 0.0 );
+				MAT4X3PNT( tmp, rot1, v1 );
+				VMOVE( v1, tmp );
+				MAT4X3PNT( tmp, rot1, v2 );
+				VMOVE( v2, tmp );
+				MAT_DELTAS( rot1, 0.0, 0.0, 0.0 );
 
 				/* calculate:
 					alpha = start angle
@@ -696,10 +696,10 @@ struct ptlist **curv_pts;
 
 				if( type == 1 ) /* ellipse */
 				{
-					alpha = atan2( a*v1[1] , b*v1[0] );
+					alpha = atan2( a*v1[1], b*v1[0] );
 					if( beta == 0.0 )
 					{
-						beta = atan2( a*v2[1] , b*v2[0] );
+						beta = atan2( a*v2[1], b*v2[0] );
 						beta = beta - alpha;
 					}
 				}
@@ -717,10 +717,10 @@ struct ptlist **curv_pts;
 					the simpler curve back to the original
 					position */
 
-				MAT_DELTAS( rot1 , xc , yc , 0.0 );
+				MAT_DELTAS( rot1, xc, yc, 0.0 );
 				rot1[1] = (-rot1[1]);
 				rot1[4] = (-rot1[4]);
-				Matmult( *(dir[curve]->rot) , rot1 , rot2 );
+				Matmult( *(dir[curve]->rot), rot1, rot2 );
 
 				/* calculate start point */
 				(*curv_pts) = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
@@ -729,8 +729,8 @@ struct ptlist **curv_pts;
 				prev = NULL;
 				ptr->prev = NULL;
 				npts = 0;
-				VSCALE( v3 , v1 , conv_factor );
-				MAT4X3PNT( ptr->pt , rot2 , v3 );
+				VSCALE( v3, v1, conv_factor );
+				MAT4X3PNT( ptr->pt, rot2, v3 );
 				npts++;
 				prev = ptr;
 				ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
@@ -752,8 +752,8 @@ struct ptlist **curv_pts;
 						tmp2[0] = a*cos(theta);
 						tmp2[1] = b*sin(theta);
 					}
-					VSCALE( tmp2 , tmp2 , conv_factor );
-					MAT4X3PNT( ptr->pt , rot2 , tmp2 );
+					VSCALE( tmp2, tmp2, conv_factor );
+					MAT4X3PNT( ptr->pt, rot2, tmp2 );
 					npts++;
 					prev = ptr;
 					ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
@@ -763,8 +763,8 @@ struct ptlist **curv_pts;
 				}
 
 				/* terminate point */
-				VSCALE( v2 , v2 , conv_factor );
-				MAT4X3PNT( ptr->pt , rot2 , v2 );
+				VSCALE( v2, v2, conv_factor );
+				MAT4X3PNT( ptr->pt, rot2, v2 );
 				npts++;
 				ptr->next = NULL;
 				break;
@@ -779,20 +779,20 @@ struct ptlist **curv_pts;
 			struct ptlist *tmp_ptr;
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				npts = 0;
 				break;
 			}
 
-			Readint( &ncurves , "" );
-			curvptr = (int *)bu_calloc( ncurves , sizeof( int ), "Getcurve: curvptr" );
+			Readint( &ncurves, "" );
+			curvptr = (int *)bu_calloc( ncurves, sizeof( int ), "Getcurve: curvptr" );
 			for( i=0 ; i<ncurves ; i++ )
 			{
-				Readint( &curvptr[i] , "" );
+				Readint( &curvptr[i], "" );
 				curvptr[i] = (curvptr[i]-1)/2;
 			}
 
@@ -800,7 +800,7 @@ struct ptlist **curv_pts;
 			(*curv_pts) = NULL;
 			for( i=0 ; i<ncurves ; i++ )
 			{
-				npts += Getcurve( curvptr[i] , &tmp_ptr );
+				npts += Getcurve( curvptr[i], &tmp_ptr );
 				if( (*curv_pts) == NULL )
 					(*curv_pts) = tmp_ptr;
 				else
@@ -810,9 +810,9 @@ struct ptlist **curv_pts;
 						ptr = ptr->next;
 					ptr->next = tmp_ptr;
 					ptr->next->prev = ptr;
-					if( EQUAL( ptr->pt[X] , tmp_ptr->pt[X] ) &&
-					    EQUAL( ptr->pt[Y] , tmp_ptr->pt[Y] ) &&
-					    EQUAL( ptr->pt[Z] , tmp_ptr->pt[Z] ) )
+					if( EQUAL( ptr->pt[X], tmp_ptr->pt[X] ) &&
+					    EQUAL( ptr->pt[Y], tmp_ptr->pt[Y] ) &&
+					    EQUAL( ptr->pt[Z], tmp_ptr->pt[Z] ) )
 					{
 						ptr->next = ptr->next->next;
 						if( ptr->next != NULL )
@@ -835,48 +835,48 @@ struct ptlist **curv_pts;
 			fastf_t delv;	/* parameter increment */
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				npts = 0;
 				break;
 			}
 
-			Readint( &k , "" );
-			Readint( &m , "" );
-			Readint( &prop1 , "" );
-			Readint( &prop2 , "" );
-			Readint( &prop3 , "" );
-			Readint( &prop4 , "" );
+			Readint( &k, "" );
+			Readint( &m, "" );
+			Readint( &prop1, "" );
+			Readint( &prop2, "" );
+			Readint( &prop3, "" );
+			Readint( &prop4, "" );
 
 			n = k-m+1;
 			a = n+2*m;
 
-			t = (fastf_t *)bu_calloc( a+1 , sizeof( fastf_t ) , "Getcurve: spline t" );
+			t = (fastf_t *)bu_calloc( a+1, sizeof( fastf_t ), "Getcurve: spline t" );
 			for( i=0 ; i<a+1 ; i++ )
-				Readflt( &t[i] , "" );
-			Knot( a+1 , t );
+				Readflt( &t[i], "" );
+			Knot( a+1, t );
 
-			w = (fastf_t *)bu_calloc( k+1 , sizeof( fastf_t ) , "Getcurve: spline w" );
+			w = (fastf_t *)bu_calloc( k+1, sizeof( fastf_t ), "Getcurve: spline w" );
 			for( i=0 ; i<k+1 ; i++ )
-				Readflt( &w[i] , "" );
+				Readflt( &w[i], "" );
 
-			cntrl_pts = (point_t *)bu_calloc( k+1 , sizeof( point_t ) , "Getcurve: spline cntrl_pts" );
+			cntrl_pts = (point_t *)bu_calloc( k+1, sizeof( point_t ), "Getcurve: spline cntrl_pts" );
 			for( i=0 ; i<k+1 ; i++ )
 			{
 				fastf_t tmp;
 
 				for( j=0 ; j<3 ; j++ )
 				{
-					Readcnv( &tmp , "" );
+					Readcnv( &tmp, "" );
 					cntrl_pts[i][j] = tmp;
 				}
 			}
 
-			Readflt( &v0 , "" );
-			Readflt( &v1 , "" );
+			Readflt( &v0, "" );
+			Readflt( &v1, "" );
 
 			delv = (v1 - v0)/((fastf_t)(3*k));
 
@@ -893,8 +893,8 @@ struct ptlist **curv_pts;
 			{
 				point_t tmp;
 
-				B_spline( v , k , m+1 , cntrl_pts , w , tmp );
-				MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
+				B_spline( v, k, m+1, cntrl_pts, w, tmp );
+				MAT4X3PNT( ptr->pt, *dir[curve]->rot, tmp );
 				npts++;
 				prev = ptr;
 				ptr->next = (struct ptlist *)bu_malloc( sizeof( struct ptlist ),
@@ -904,13 +904,13 @@ struct ptlist **curv_pts;
 
 				v += delv;
 			}
-			VMOVE( ptr->pt , cntrl_pts[k] );
+			VMOVE( ptr->pt, cntrl_pts[k] );
 			npts++;
 			ptr->next = NULL;
 
 			/* Free memory */
 			Freeknots();
-			bu_free( (char *)cntrl_pts , "Getcurve: spline cntrl_pts" );
+			bu_free( (char *)cntrl_pts, "Getcurve: spline cntrl_pts" );
 			bu_free( (char *)w, "Getcurve: spline w" );
 			bu_free( (char *)t, "Getcurve: spline t" );
 

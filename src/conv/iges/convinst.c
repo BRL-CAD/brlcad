@@ -55,33 +55,33 @@ Convinst()
 		if( dir[i]->param <= pstart )
 		{
 			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-					dir[i]->direct , dir[i]->name );
+					dir[i]->direct, dir[i]->name );
 			continue;
 		}
 		Readrec( dir[i]->param );
-		Readint( &type , "" );
-		Readint( &pointer , "" );
+		Readint( &type, "" );
+		Readint( &pointer, "" );
 
 		/* convert pointer to a "dir" index */
 		pointer = (pointer - 1)/2;
 		if( pointer < 0 || pointer >= totentities )
 		{
 			bu_log( "Primitive instance D%07d (%s) does not point to a legal primitive\n",
-				dir[i]->direct , dir[i]->name );
+				dir[i]->direct, dir[i]->name );
 			continue;
 		}
 
 		/* skip over the associativities */
-		Readint( &no_of_assoc , "" );
+		Readint( &no_of_assoc, "" );
 		for( k=0 ; k<no_of_assoc ; k++ )
-			Readint( &j , "" );
+			Readint( &j, "" );
 
 		/* get property entity DE's */
 		att_de = 0;
-		Readint( &no_of_props , "" );
+		Readint( &no_of_props, "" );
 		for( k=0 ; k<no_of_props ; k++ )
 		{
-			Readint( &j , "" );
+			Readint( &j, "" );
 			if( dir[(j-1)/2]->type == 422 &&
 				 dir[(j-1)/2]->referenced == brlcad_att_de )
 			{
@@ -91,7 +91,7 @@ Convinst()
 		}
 
 		memset(&brl_att, 0, sizeof( struct brlcad_att ));
-		Read_att( att_de , &brl_att );
+		Read_att( att_de, &brl_att );
 
 		if( att_de )
 		{
@@ -100,7 +100,7 @@ Convinst()
 			struct wmember head;
 
 			BU_LIST_INIT( &head.l );
-			(void)mk_addmember( dir[pointer]->name , &head.l , NULL, WMOP_INTERSECT );
+			(void)mk_addmember( dir[pointer]->name, &head.l, NULL, WMOP_INTERSECT );
 
 			/* Make the object */
 			if( dir[i]->colorp != 0 )
@@ -149,14 +149,14 @@ Convinst()
 				   these matrices need to be combined */
 
 				rot = (mat_t *)bu_malloc( sizeof( mat_t ), "Convinst: rot" );
-				Matmult( *(dir[i]->rot) , *(dir[pointer]->rot) , *rot );
+				Matmult( *(dir[i]->rot), *(dir[pointer]->rot), *rot );
 				dir[i]->rot = rot;
 			}
 		}
 		conv++;
 	}
 
-	bu_log( "\nConverted %d solid instances out of %d total instances\n" , conv , totinst );
+	bu_log( "\nConverted %d solid instances out of %d total instances\n", conv, totinst );
 }
 
 /*

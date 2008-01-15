@@ -599,7 +599,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	    draw = 1;
 	}
 	if( draw || match_count == attr_count ) {
-	    bu_ptbl_ins( tbl , (long *)dp );
+	    bu_ptbl_ins( tbl, (long *)dp );
 	}
     } FOR_ALL_DIRECTORY_END;
 

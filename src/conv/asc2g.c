@@ -642,13 +642,13 @@ nmgbld(void)
 	bu_exit(-1, "Unexpected EOF while reading NMG %s data, line 2\n", name );
 
     /* Second, process counts for each kind of structure */
-    cp = strtok( buf , " " );
+    cp = strtok( buf, " " );
     for( j=0 ; j<26 ; j++ )
 	{
 	    struct_count[j] = atol( cp );
 	    bu_plong( ((unsigned char *)ext.ext_buf)+
 		      SIZEOF_NETWORK_LONG*(j+1), struct_count[j] );
-	    cp = strtok( (char *)NULL , " " );
+	    cp = strtok( (char *)NULL, " " );
 	}
 
     /* Remaining lines have 32 bytes per line, in hex */
@@ -663,7 +663,7 @@ nmgbld(void)
 
 	for( k=0 ; k<32 ; k++ )
 	    {
-		sscanf( &buf[k*2] , "%2x" , &cp_i );
+		sscanf( &buf[k*2], "%2x", &cp_i );
 		*cp++ = cp_i;
 	    }
     }
@@ -1664,7 +1664,7 @@ pipebld(void)
 
     BU_LIST_INIT( &head );
     bu_fgets( buf, BUFSIZE, ifp);
-    while( strncmp (buf , "END_PIPE", 8 ) )
+    while( strncmp (buf, "END_PIPE", 8 ) )
 	{
 	    double id, od, x, y, z, bendradius;
 

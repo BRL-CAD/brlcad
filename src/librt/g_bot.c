@@ -2507,7 +2507,7 @@ rt_bot_vertex_fuse( struct rt_bot_internal *bot )
 				count++;
 				bot->num_vertices--;
 				for( k=j ; k<bot->num_vertices ; k++ )
-					VMOVE( &bot->vertices[k*3] , &bot->vertices[(k+1)*3] );
+					VMOVE( &bot->vertices[k*3], &bot->vertices[(k+1)*3] );
 				for( k=0 ; k<bot->num_faces*3 ; k++ )
 				{
 					if( bot->faces[k] == j )
@@ -2754,7 +2754,7 @@ find_closest_face( fastf_t **centers, int *piece, int *old_faces, int num_faces,
 			v0 = &vertices[old_faces[i*3]*3];
 			v1 = &vertices[old_faces[i*3+1]*3];
 			v2 = &vertices[old_faces[i*3+2]*3];
-			VADD3( center, v0 , v1, v2 );
+			VADD3( center, v0, v1, v2 );
 			VSCALE( &(*centers)[i*3], center, one_third );
 		}
 	}
@@ -3771,7 +3771,7 @@ rt_bot_smooth( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, f
 	bot->num_face_normals = 0;
 
 	/* build an array of surface normals */
-	normals = (vect_t *)bu_calloc( bot->num_faces , sizeof( vect_t ), "normals" );
+	normals = (vect_t *)bu_calloc( bot->num_faces, sizeof( vect_t ), "normals" );
 
 	if( bot->orientation == RT_BOT_UNORIENTED ) {
 		/* need to do raytracing, do prepping */

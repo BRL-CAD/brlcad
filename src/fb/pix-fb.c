@@ -329,7 +329,7 @@ main(int argc, char **argv)
 		for( y = scr_yoff; y < scr_yoff + yout; y++ )  {
 			if( y < 0 || y > scr_height )
 			{
-				skipbytes( infd , (off_t)file_width*sizeof(RGBpixel) );
+				skipbytes( infd, (off_t)file_width*sizeof(RGBpixel) );
 				continue;
 			}
 			if( file_xoff+xskip != 0 )
@@ -352,7 +352,7 @@ main(int argc, char **argv)
 		for( y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y-- )  {
 			if( y < 0 || y >= scr_height )
 			{
-				skipbytes( infd , (off_t)file_width*sizeof(RGBpixel) );
+				skipbytes( infd, (off_t)file_width*sizeof(RGBpixel) );
 				continue;
 			}
 			if( file_xoff+xskip != 0 )

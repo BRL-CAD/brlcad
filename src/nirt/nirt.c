@@ -499,7 +499,7 @@ main (int argc, char **argv)
 	printf("Database file:  '%s'\n", db_name);
 	printf("Building the directory...");
     }
-    if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL) {
+    if ((rtip = rt_dirbuild( db_name, db_title, TITLE_LEN )) == RTI_NULL) {
 	fflush(stdout);
 	fprintf(stderr, "Could not load file %s\n", db_name);
 	return 1;

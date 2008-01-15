@@ -38,7 +38,7 @@ Summary()
 	for( i=0 ; i<=ntypes ; i++ )
 	{
 		if( typecount[i].count != 0 )
-			bu_log( "%10d %s (type %d)\n", typecount[i].count , typecount[i].name , typecount[i].type );
+			bu_log( "%10d %s (type %d)\n", typecount[i].count, typecount[i].name, typecount[i].type );
 	}
 
 	for( i=0 ; i<totentities ; i++ )
@@ -49,7 +49,7 @@ Summary()
 		if( !subord )
 			indep_entities++;
 	}
-	bu_log( "%d Independent entities\n" , indep_entities );
+	bu_log( "%d Independent entities\n", indep_entities );
 }
 
 void

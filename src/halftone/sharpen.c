@@ -158,7 +158,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  *	J     [n] = J[n] - Beta*Laplacian_filter[n]*J[n]
  *	 sharp
  *
- * J, J     , Laplacian_filter[n] are all in the range 0.0 to 1.0
+ * J, J, Laplacian_filter[n] are all in the range 0.0 to 1.0
  *     sharp
  *
  * The folowing is done in mostly interger mode, there is only one

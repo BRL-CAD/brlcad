@@ -48,7 +48,7 @@
  *	to handle the application data.  bu_rb_free() traverses tree's lists
  *	of nodes and packages, freeing each one in turn, and then frees tree
  *	itself.  If free_data is non-NULL, then bu_rb_free() calls it just
- *	before freeing each package , passing it the package's rbp_data
+ *	before freeing each package, passing it the package's rbp_data
  *	member.  Otherwise, the application data is left untouched.
  */
 void bu_rb_free (bu_rb_tree *tree, void (*free_data) (/* ??? */))

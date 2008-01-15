@@ -409,7 +409,7 @@ rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, s
  *			R T _ T G C _ S H E A R
  *
  *  To shear the H vector to the Z axis, every point must be shifted
- *  in the X direction by  -(Hx/Hz)*z , and in the Y direction by
+ *  in the X direction by  -(Hx/Hz)*z, and in the Y direction by
  *  -(Hy/Hz)*z .  This operation makes the equation for the standard
  *  cone much easier to work with.
  *
@@ -710,7 +710,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		    (Rsqr.cf[2] * Qsqr.cf[2]);
 
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
-		nroots = rt_poly_roots( &C , val, stp->st_dp->d_namep );
+		nroots = rt_poly_roots( &C, val, stp->st_dp->d_namep );
 
 		/* bn_pr_roots("roots", val, nroots); */
 
@@ -1112,7 +1112,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 			register int nroots;
 
 			/*  The equation is 4th order, so we expect 0 to 4 roots */
-			nroots = rt_poly_roots( &C[ix] , val, (*stp)->st_dp->d_namep );
+			nroots = rt_poly_roots( &C[ix], val, (*stp)->st_dp->d_namep );
 
 			/*  Only real roots indicate an intersection in real space.
 		 *
@@ -1955,7 +1955,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if( ttol->abs > 0.0 && ttol->abs < tol->dist )
 	{
 	    bu_log( "WARNING: tesselation tolerance is %fmm while calculational tolerance is %fmm\n",
-		    ttol->abs , tol->dist );
+		    ttol->abs, tol->dist );
 	    bu_log( "Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n" );
 	    abs_tol = tol->dist;
 	} else {
@@ -2125,8 +2125,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		VMOVE( B[top_ell], tip->d );
 
 		/* make sure that AxB points in the general direction of H */
-		VCROSS( vtmp , A[0] , B[0] );
-		if( VDOT( vtmp , tip->h ) < 0.0 )
+		VCROSS( vtmp, A[0], B[0] );
+		if( VDOT( vtmp, tip->h ) < 0.0 )
 		{
 			VMOVE( A[bot_ell], tip->b );
 			VMOVE( A[top_ell], tip->d );
@@ -2294,9 +2294,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* get memory for points */
-	pts = (struct tgc_pts **)bu_calloc( nells , sizeof( struct tgc_pts *) , "rt_tgc_tess: pts" );
+	pts = (struct tgc_pts **)bu_calloc( nells, sizeof( struct tgc_pts *), "rt_tgc_tess: pts" );
 	for( i=0 ; i<nells ; i++ )
-		pts[i] = (struct tgc_pts *)bu_calloc( nsegs , sizeof( struct tgc_pts ) , "rt_tgc_tess: pts" );
+		pts[i] = (struct tgc_pts *)bu_calloc( nsegs, sizeof( struct tgc_pts ), "rt_tgc_tess: pts" );
 
 	/* calculate geometry for points */
 	for( i=0 ; i<nells ; i++ )
@@ -2316,11 +2316,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 			/* vertex geometry */
 			if( i == 0 && a == 0.0 && b == 0.0 )
-				VMOVE( pts[i][j].pt , tip->v )
+				VMOVE( pts[i][j].pt, tip->v )
 			else if( i == nells-1 && c == 0.0 && d == 0.0 )
 				VADD2( pts[i][j].pt, tip->v, tip->h )
 			else
-				VJOIN3( pts[i][j].pt , tip->v , h_factor , tip->h , cos_alpha , A[i] , sin_alpha , B[i] )
+				VJOIN3( pts[i][j].pt, tip->v, h_factor, tip->h, cos_alpha, A[i], sin_alpha, B[i] )
 
 			/* Storing the tangent here while sines and cosines are available */
 			if( i == 0 && a == 0.0 && b == 0.0 )
@@ -2328,7 +2328,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			else if( i == nells-1 && c == 0.0 && d == 0.0 )
 				VCOMB2( pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b )
 			else
-				VCOMB2( pts[i][j].tan_axb , -sin_alpha , A[i] , cos_alpha , B[i] )
+				VCOMB2( pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i] )
 		}
 	}
 
@@ -2365,21 +2365,21 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	*r = nmg_mrsv( m );
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-	bu_ptbl_init( &verts , 64, " &verts ");
-	bu_ptbl_init( &faces , 64, " &faces ");
+	bu_ptbl_init( &verts, 64, " &verts ");
+	bu_ptbl_init( &faces, 64, " &faces ");
 	/* Make bottom face */
 	if( a > 0.0 && b > 0.0 )
 	{
 		for( i=nsegs-1 ; i>=0 ; i-- ) /* reverse order to get outward normal */
 		{
 			if( !pts[0][i].dont_use )
-				bu_ptbl_ins( &verts , (long *)&pts[0][i].v );
+				bu_ptbl_ins( &verts, (long *)&pts[0][i].v );
 		}
 
 		if( BU_PTBL_END( &verts ) > 2 )
 		{
-			fu_base = nmg_cmface( s , (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
-			bu_ptbl_ins( &faces , (long *)fu_base );
+			fu_base = nmg_cmface( s, (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
+			bu_ptbl_ins( &faces, (long *)fu_base );
 		}
 		else
 			fu_base = (struct faceuse *)NULL;
@@ -2395,13 +2395,13 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		for( i=0 ; i<nsegs ; i++ )
 		{
 			if( !pts[nells-1][i].dont_use )
-				bu_ptbl_ins( &verts , (long *)&pts[nells-1][i].v );
+				bu_ptbl_ins( &verts, (long *)&pts[nells-1][i].v );
 		}
 
 		if( BU_PTBL_END( &verts ) > 2 )
 		{
-			fu_top = nmg_cmface( s , (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
-			bu_ptbl_ins( &faces , (long *)fu_top );
+			fu_top = nmg_cmface( s, (struct vertex ***)BU_PTBL_BASEADDR( &verts ), BU_PTBL_END( &verts ) );
+			bu_ptbl_ins( &faces, (long *)fu_top );
 		}
 		else
 			fu_top = (struct faceuse *)NULL;
@@ -2438,8 +2438,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 						v[2] = &pts[i+1][0].v;
 					else
 						v[2] = curr_top;
-					fu = nmg_cmface( s , v , 3 );
-					bu_ptbl_ins( &faces , (long *)fu );
+					fu = nmg_cmface( s, v, 3 );
+					bu_ptbl_ins( &faces, (long *)fu );
 					curr_bot = &pts[i][k].v;
 				}
 			}
@@ -2454,8 +2454,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 						v[2] = &pts[i][0].v;
 					else
 						v[2] = curr_bot;
-					fu = nmg_cmface( s , v , 3 );
-					bu_ptbl_ins( &faces , (long *)fu );
+					fu = nmg_cmface( s, v, 3 );
+					bu_ptbl_ins( &faces, (long *)fu );
 					curr_top = &pts[i+1][k].v;
 				}
 			}
@@ -2488,11 +2488,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				if( j == 0 )
 				{
 					VADD2( pt_geom, tip->v, tip->h );
-					nmg_vertex_gv( pts[i][0].v , pt_geom );
+					nmg_vertex_gv( pts[i][0].v, pt_geom );
 				}
 			}
 			else if( pts[i][j].v )
-				nmg_vertex_gv( pts[i][j].v , pts[i][j].pt );
+				nmg_vertex_gv( pts[i][j].v, pts[i][j].pt );
 
 			/* Storing the tangent here while sines and cosines are available */
 			if( i == 0 && a == 0.0 && b == 0.0 )
@@ -2500,14 +2500,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			else if( i == nells-1 && c == 0.0 && d == 0.0 )
 				VCOMB2( pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b )
 			else
-				VCOMB2( pts[i][j].tan_axb , -sin_alpha , A[i] , cos_alpha , B[i] )
+				VCOMB2( pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i] )
 		}
 	}
 
 	/* Associate face plane equations */
 	for( i=0 ; i<BU_PTBL_END( &faces ) ; i++ )
 	{
-		fu = (struct faceuse *)BU_PTBL_GET( &faces , i );
+		fu = (struct faceuse *)BU_PTBL_GET( &faces, i );
 		NMG_CK_FACEUSE( fu );
 
 		if( nmg_calc_face_g( fu ) )
@@ -2537,37 +2537,37 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			if( i == nells - 1 )
 			{
 				if( c == 0.0 && d == 0.0 )
-					VSUB2( tan_h , pts[i][0].pt , pts[k][j].pt )
+					VSUB2( tan_h, pts[i][0].pt, pts[k][j].pt )
 				else if( k == 0 && c == 0.0 && d == 0.0 )
-					VSUB2( tan_h , pts[i][j].pt , pts[k][0].pt )
+					VSUB2( tan_h, pts[i][j].pt, pts[k][0].pt )
 				else
-					VSUB2( tan_h , pts[i][j].pt , pts[k][j].pt )
+					VSUB2( tan_h, pts[i][j].pt, pts[k][j].pt )
 			}
 			else if( i == 0 )
 			{
 				if( a == 0.0 && b == 0.0 )
-					VSUB2( tan_h , pts[k][j].pt , pts[i][0].pt )
+					VSUB2( tan_h, pts[k][j].pt, pts[i][0].pt )
 				else if( k == nells-1 && c == 0.0 && d == 0.0 )
-					VSUB2( tan_h , pts[k][0].pt , pts[i][j].pt )
+					VSUB2( tan_h, pts[k][0].pt, pts[i][j].pt )
 				else
-					VSUB2( tan_h , pts[k][j].pt , pts[i][j].pt )
+					VSUB2( tan_h, pts[k][j].pt, pts[i][j].pt )
 			}
 			else if( k == 0 && a == 0.0 && b == 0.0 )
-				VSUB2( tan_h , pts[k][0].pt , pts[i][j].pt )
+				VSUB2( tan_h, pts[k][0].pt, pts[i][j].pt )
 			else if( k == nells-1 && c == 0.0 && d == 0.0 )
-				VSUB2( tan_h , pts[k][0].pt , pts[i][j].pt )
+				VSUB2( tan_h, pts[k][0].pt, pts[i][j].pt )
 			else
-				VSUB2( tan_h , pts[k][j].pt , pts[i][j].pt )
+				VSUB2( tan_h, pts[k][j].pt, pts[i][j].pt )
 
-			VCROSS( normal , pts[i][j].tan_axb , tan_h );
+			VCROSS( normal, pts[i][j].tan_axb, tan_h );
 			VUNITIZE( normal );
-			VREVERSE( rev_norm , normal );
+			VREVERSE( rev_norm, normal );
 
 			if( !(i == 0 && a == 0.0 && b == 0.0) &&
 			    !(i == nells-1 && c == 0.0 && d == 0.0 ) &&
 			      pts[i][j].v )
 			{
-				for( BU_LIST_FOR( vu , vertexuse , &pts[i][j].v->vu_hd ) )
+				for( BU_LIST_FOR( vu, vertexuse, &pts[i][j].v->vu_hd ) )
 				{
 					NMG_CK_VERTEXUSE( vu );
 
@@ -2580,9 +2580,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 						continue;
 
 					if( fu->orientation == OT_SAME )
-						nmg_vertexuse_nv( vu , normal );
+						nmg_vertexuse_nv( vu, normal );
 					else if( fu->orientation == OT_OPPOSITE )
-						nmg_vertexuse_nv( vu , rev_norm );
+						nmg_vertexuse_nv( vu, rev_norm );
 				}
 			}
 		}
@@ -2590,11 +2590,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* Finished with storage, so free it */
 	bu_free( (char *)factors, "rt_tgc_tess: factors" );
-	bu_free( (char *)A , "rt_tgc_tess: A" );
-	bu_free( (char *)B , "rt_tgc_tess: B" );
+	bu_free( (char *)A, "rt_tgc_tess: A" );
+	bu_free( (char *)B, "rt_tgc_tess: B" );
 	for( i=0 ; i<nells ; i++ )
-		bu_free( (char *)pts[i] , "rt_tgc_tess: pts[i]" );
-	bu_free( (char *)pts , "rt_tgc_tess: pts" );
+		bu_free( (char *)pts[i], "rt_tgc_tess: pts[i]" );
+	bu_free( (char *)pts, "rt_tgc_tess: pts" );
 
 	/* mark real edges for top and bottom faces */
 	for( i=0 ; i<2 ; i++ )
@@ -2611,7 +2611,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		NMG_CK_FACEUSE( fu );
 
-		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
 
@@ -2620,7 +2620,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				struct edge *e;
 
@@ -2632,10 +2632,10 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	}
 
-	nmg_region_a( *r , tol );
+	nmg_region_a( *r, tol );
 
 	/* glue faces together */
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), tol );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), tol );
 	bu_ptbl_free( &faces );
 
 	return( 0 );

@@ -39,7 +39,7 @@
 #include "./iges_extern.h"
 
 void
-Readint( inum , id )
+Readint( inum, id )
 char *id;
 int *inum;
 {
@@ -78,7 +78,7 @@ int *inum;
 	num[++i] = '\0';
 	*inum = atoi( num );
 	if( *id != '\0' )
-		bu_log( "%s%d\n" , id , *inum );
+		bu_log( "%s%d\n", id, *inum );
 }
 
 

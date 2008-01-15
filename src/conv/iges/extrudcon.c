@@ -32,7 +32,7 @@
 #include "./iges_extern.h"
 
 int
-Extrudcon( entityno , curve , evect )
+Extrudcon( entityno, curve, evect )
 int entityno;	/* extrusion entity number */
 int curve;	/* elliptical arc entity number */
 vect_t evect;	/* extrusion vector */
@@ -55,31 +55,31 @@ vect_t evect;	/* extrusion vector */
 	if( dir[curve]->form > 1 )
 	{
 		bu_log( "Conic arc for extrusion is not closed:\n" );
-		bu_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 			dir[entityno]->name );
-		bu_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
 		return( 0 );
 	}
 
 	if( dir[curve]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[curve]->direct , dir[curve]->name );
+				dir[curve]->direct, dir[curve]->name );
 		return(0);
 	}
 	Readrec( dir[curve]->param );
-	Readint( &sol_num , "" );
-	Readflt( &a , "" );
-	Readflt( &b , "" );
-	Readflt( &c , "" );
-	Readflt( &d , "" );
-	Readflt( &e , "" );
-	Readflt( &f , "" );
-	Readcnv( &start[Z] , "" );
-	Readcnv( &start[X] , "" );
-	Readcnv( &start[Y] , "" );
-	Readcnv( &stop[X] , "" );
-	Readcnv( &stop[Y] , "" );
+	Readint( &sol_num, "" );
+	Readflt( &a, "" );
+	Readflt( &b, "" );
+	Readflt( &c, "" );
+	Readflt( &d, "" );
+	Readflt( &e, "" );
+	Readflt( &f, "" );
+	Readcnv( &start[Z], "" );
+	Readcnv( &start[X], "" );
+	Readcnv( &start[Y], "" );
+	Readcnv( &stop[X], "" );
+	Readcnv( &stop[Y], "" );
 	stop[Z] = start[Z];
 
 	/* Convert coefficients to "mm" units */
@@ -110,9 +110,9 @@ vect_t evect;	/* extrusion vector */
 	if( start[X] != stop[X] || start[Y] != stop[Y] )
 	{
 		bu_log( "Conic arc for extrusion is not closed:\n" );
-		bu_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 			dir[entityno]->name );
-		bu_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
 		return( 0 );
 	}
 
@@ -133,9 +133,9 @@ vect_t evect;	/* extrusion vector */
 	if( !ellipse )
 	{
 		bu_log( "Conic arc for extrusion is not an elipse:\n" );
-		bu_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 			dir[entityno]->name );
-		bu_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
 		return( 0 );
 	}
 
@@ -149,7 +149,7 @@ vect_t evect;	/* extrusion vector */
 	if( b == 0.0 )
 		theta = 0.0;
 	else
-		theta = 0.5*atan2( b , a-c );
+		theta = 0.5*atan2( b, a-c );
 
 	/* calculate coefficients for same ellipse, but translated to
 	   origin, and rotated to align with axes */
@@ -171,7 +171,7 @@ vect_t evect;	/* extrusion vector */
 	r2[Z] = 0.0;
 
 	/* Construct solid */
-	mk_tgc( fdout , dir[entityno]->name , center , evect , r1 , r2 , r1 , r2 );
+	mk_tgc( fdout, dir[entityno]->name, center, evect, r1, r2, r1, r2 );
 
 	return( 1 );
 }

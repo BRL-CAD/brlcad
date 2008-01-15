@@ -36,7 +36,7 @@
 #define	CR	'\015'
 
 void
-Readmatrix( xform , rot )
+Readmatrix( xform, rot )
 int xform;
 mat_t rot;
 {
@@ -45,10 +45,10 @@ mat_t rot;
 	/* read the actual transformation matrix and store */
 
 	Readrec( xform );
-	Readint( &i , "" );
+	Readint( &i, "" );
 	if( i != 124 && i != 700  )
 	{
-		bu_log( "Error in transformation parameter data at P%d\n" , xform );
+		bu_log( "Error in transformation parameter data at P%d\n", xform );
 		for( j=0 ; j<16 ; j++ )
 			rot[j] = (*identity)[j];
 		return;
@@ -58,9 +58,9 @@ mat_t rot;
 		for( i=0 ; i<12 ; i++ )
 		{
 			if( !((i+1)%4) ) /* convert translation */
-				Readcnv( &rot[i] , "" );
+				Readcnv( &rot[i], "" );
 			else	/* Don't convert rotations */
-				Readflt( &rot[i] , "" );
+				Readflt( &rot[i], "" );
 		}
 		for( i=12 ; i<15 ; i++ )
 			rot[i] = 0.0;
@@ -72,11 +72,11 @@ mat_t rot;
 		for( i=0 ; i<15 ; i++ )
 		{
 			if( !((i+1)%4) ) /* convert translation */
-				Readcnv( &rot[i] , "" );
+				Readcnv( &rot[i], "" );
 			else	/* Don't convert rotations */
-				Readflt( &rot[i] , "" );
+				Readflt( &rot[i], "" );
 		}
-		Readflt( &rot[15] , "" ); /* Don't convert the scale */
+		Readflt( &rot[15], "" ); /* Don't convert the scale */
 	}
 }
 

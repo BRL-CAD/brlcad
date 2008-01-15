@@ -39,7 +39,7 @@
 #include "./iges_extern.h"
 
 void
-Readflt( inum , id )
+Readflt( inum, id )
 char *id;
 fastf_t *inum;
 {
@@ -81,7 +81,7 @@ fastf_t *inum;
 	num[i] = '\0';
 	*inum = atof( num );
 	if( *id != '\0' )
-		bu_log( "%s%g\n" , id , *inum );
+		bu_log( "%s%g\n", id, *inum );
 }
 
 

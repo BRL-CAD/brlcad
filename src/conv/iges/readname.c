@@ -39,7 +39,7 @@
 #include "./iges_extern.h"
 
 void
-Readname( ptr , id )
+Readname( ptr, id )
 char *id,**ptr;
 {
 	int i=(-1), length=0, done=0, lencard;
@@ -67,7 +67,7 @@ char *id,**ptr;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		bu_log( "%s" , id );
+		bu_log( "%s", id );
 
 	while( !done )
 	{
@@ -80,7 +80,7 @@ char *id,**ptr;
 	}
 	num[++i] = '\0';
 	length = atoi( num );
-	*ptr = (char *)bu_malloc( (length + 1)*sizeof( char ) , "Readname: name" );
+	*ptr = (char *)bu_malloc( (length + 1)*sizeof( char ), "Readname: name" );
 	ch = *ptr;
 	for( i=0 ; i<length ; i++ )
 	{

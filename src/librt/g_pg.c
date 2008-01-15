@@ -619,7 +619,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	/* Polysolids are often built with incorrect face normals.
 	 * Don't depend on them here.
 	 */
-	nmg_fix_normals( s , tol );
+	nmg_fix_normals( s, tol );
 #if 0
 	/* mark edges as real */
 	(void)nmg_mark_edges_real( &s->l );

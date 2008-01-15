@@ -47,9 +47,9 @@ int entityno;
 	int		sol_num;		/* IGES solid type number */
 
 	/* Default values */
-	VSET( v , 0.0 , 0.0 , 0.0 );
-	VSET( xdir , 1.0 , 0.0 , 0.0 );
-	VSET( zdir , 0.0 , 0.0 , 1.0 );
+	VSET( v, 0.0, 0.0, 0.0 );
+	VSET( xdir, 1.0, 0.0, 0.0 );
+	VSET( zdir, 0.0, 0.0, 1.0 );
 
 
 	/* Acquiring Data */
@@ -57,28 +57,28 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	Readcnv( &xscale , "" );
-	Readcnv( &yscale , "" );
-	Readcnv( &zscale , "" );
-	Readcnv( &v[X] , "" );
-	Readcnv( &v[Y] , "" );
-	Readcnv( &v[Z] , "" );
-	Readflt( &xdir[X] , "" );
-	Readflt( &xdir[Y] , "" );
-	Readflt( &xdir[Z] , "" );
-	Readflt( &zdir[X] , "" );
-	Readflt( &zdir[Y] , "" );
-	Readflt( &zdir[Z] , "" );
+	Readint( &sol_num, "" );
+	Readcnv( &xscale, "" );
+	Readcnv( &yscale, "" );
+	Readcnv( &zscale, "" );
+	Readcnv( &v[X], "" );
+	Readcnv( &v[Y], "" );
+	Readcnv( &v[Z], "" );
+	Readflt( &xdir[X], "" );
+	Readflt( &xdir[Y], "" );
+	Readflt( &xdir[Z], "" );
+	Readflt( &zdir[X], "" );
+	Readflt( &zdir[Y], "" );
+	Readflt( &zdir[Z], "" );
 
 	if( xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 
@@ -101,7 +101,7 @@ int entityno;
 
 	/* Now the information is handed off to mk_ell(). */
 
-	mk_ell(fdout, dir[entityno]->name, v , xvec , yvec , zvec );
+	mk_ell(fdout, dir[entityno]->name, v, xvec, yvec, zvec );
 
 	return( 1 );
 

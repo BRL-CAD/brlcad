@@ -425,7 +425,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 
 	/* build matrix */
 	MAT_ZERO( matrix );
-	VSET( vsum , 0.0 , 0.0 , 0.0 );
+	VSET( vsum, 0.0, 0.0, 0.0 );
 
 	one_over_vertex_count = 1.0/(double)(srf->s_size[0]*srf->s_size[1]);
 	coords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
@@ -456,25 +456,25 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	/* Check that we don't have a singular matrix */
 	det = bn_mat_determinant( matrix );
 
-	if( !NEAR_ZERO( det , SMALL_FASTF ) )
+	if( !NEAR_ZERO( det, SMALL_FASTF ) )
 	{
 		fastf_t inv_len_pl;
 
 		/* invert matrix */
-		bn_mat_inv( inverse , matrix );
+		bn_mat_inv( inverse, matrix );
 
 		/* get normal vector */
-		MAT4X3PNT( pl , inverse , vsum );
+		MAT4X3PNT( pl, inverse, vsum );
 
 		/* unitize direction vector */
 		inv_len_pl = 1.0/(MAGNITUDE( pl ));
-		HSCALE( pl , pl , inv_len_pl );
+		HSCALE( pl, pl, inv_len_pl );
 
 		/* get average vertex coordinates */
 		VSCALE( vsum, vsum, one_over_vertex_count );
 
 		/* get distance from plane to orgin */
-		pl[H] = VDOT( pl , vsum );
+		pl[H] = VDOT( pl, vsum );
 
 	}
 	else
@@ -501,15 +501,15 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 
 		if( x_same )
 		{
-			VSET( pl , 1.0 , 0.0 , 0.0 );
+			VSET( pl, 1.0, 0.0, 0.0 );
 		}
 		else if( y_same )
 		{
-			VSET( pl , 0.0 , 1.0 , 0.0 );
+			VSET( pl, 0.0, 1.0, 0.0 );
 		}
 		else if( z_same )
 		{
-			VSET( pl , 0.0 , 0.0 , 1.0 );
+			VSET( pl, 0.0, 0.0, 1.0 );
 		}
 
 		if( x_same || y_same || z_same )
@@ -518,12 +518,12 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 			VSCALE( vsum, vsum, one_over_vertex_count );
 
 			/* get distance from plane to orgin */
-			pl[H] = VDOT( pl , vsum );
+			pl[H] = VDOT( pl, vsum );
 
 		}
 		else
 		{
-			bu_log( "nmg_snurb_is_plana: Cannot calculate plane for snurb x%x\n" , srf );
+			bu_log( "nmg_snurb_is_plana: Cannot calculate plane for snurb x%x\n", srf );
 			rt_nurb_s_print( "", srf );
 			bu_bomb( "nmg_snurb_is_plana: Cannot calculate plane for snurb\n" );
 		}
@@ -1164,7 +1164,7 @@ again:
 
 		if( !eu1->g.magic_p )
 		{
-			bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has no geometry\n" , eu1 );
+			bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has no geometry\n", eu1 );
 			continue;
 		}
 
@@ -1179,7 +1179,7 @@ again:
 		else
 
 		{
-			bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n" , eu1 );
+			bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n", eu1 );
 			continue;
 		}
 
@@ -1208,7 +1208,7 @@ again:
 
 			if( !eu2->g.magic_p )
 			{
-				bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has no geometry\n" , eu2 );
+				bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has no geometry\n", eu2 );
 				continue;
 			}
 
@@ -1220,7 +1220,7 @@ again:
 				continue;
 			else
 			{
-				bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n" , eu2 );
+				bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n", eu2 );
 				continue;
 			}
 
@@ -1498,14 +1498,14 @@ nmg_ck_fg_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 	fg1 = fu1->f_p->g.plane_p;
 	NMG_CK_FACE_G_PLANE( fg1 );
 
-	for( BU_LIST_FOR( f , face , &fg1->f_hd ) )
+	for( BU_LIST_FOR( f, face, &fg1->f_hd ) )
 	{
 		NMG_CK_FACE( f );
 
 		fu = f->fu_p;
 		NMG_CK_FACEUSE( fu );
 
-		count += nmg_ck_fu_verts( fu , f2 , tol );
+		count += nmg_ck_fu_verts( fu, f2, tol );
 	}
 
 	return( count );
@@ -2294,7 +2294,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 		rmax->ang * bn_radtodeg, rmax->eu );
 
 		for( BU_LIST_FOR( next, nmg_radial, hd ) )
-			bu_log( "%x: eu=%x, fu=%x, ang=%g\n" , next, next->eu, next->fu, next->ang );
+			bu_log( "%x: eu=%x, fu=%x, ang=%g\n", next, next->eu, next->fu, next->ang );
 	}
 
 	/* Skip to extremal repeated max&min.  Ignore wires */
@@ -2471,7 +2471,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 		NMG_CK_FACEUSE( fu );
 		NMG_GET_FU_PLANE( pl, fu );
 		dist = DIST_PT_PLANE( midpt, pl );
-		VJOIN1( midpt, midpt , -dist, pl )
+		VJOIN1( midpt, midpt, -dist, pl )
 		dist = fabs( DIST_PT_PLANE( midpt, pl ) );
 		if( dist > SMALL_FASTF )
 		{
@@ -3403,7 +3403,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 	if (rt_g.NMG_debug & DEBUG_MESH_EU )
 	{
 		bu_log( "Before nmg_do_radial_join():\n" );
-		bu_log( "xvec=(%g %g %g), yvec=(%g %g %g), zvec=(%g %g %g)\n" , V3ARGS( xvec ), V3ARGS( yvec ), V3ARGS( zvec ) );
+		bu_log( "xvec=(%g %g %g), yvec=(%g %g %g), zvec=(%g %g %g)\n", V3ARGS( xvec ), V3ARGS( yvec ), V3ARGS( zvec ) );
 		nmg_pr_fu_around_eu_vecs( eu2ref, xvec, yvec, zvec, tol );
 	}
 	nmg_do_radial_join( &list1, eu1ref, xvec, yvec, zvec, tol );

@@ -219,17 +219,17 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal" );
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
 	for(i=0; i<8; i++) {
-		VSET( aip->pt[i] , 0.0 , 0.0 , 0.0 );
+		VSET( aip->pt[i], 0.0, 0.0, 0.0 );
 	}
 
 	for(i=0; i<3; i++) {
 		/* the three given vertices */
-		VSET( aip->pt[i] , atof( argv[i*3+2] )*local2base , atof( argv[i*3+3] )*local2base , atof( argv[i*3+4] )*local2base );
+		VSET( aip->pt[i], atof( argv[i*3+2] )*local2base, atof( argv[i*3+3] )*local2base, atof( argv[i*3+4] )*local2base );
 	}
 
 	thick *= local2base;
@@ -275,7 +275,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* calculate the remaining 4 vertices */
 	for(i=0; i<4; i++) {
-		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
+		VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
 	}
 
 	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
@@ -475,15 +475,15 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
-	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal" );
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
 	for(i=0; i<8; i++) {
-		VSET( aip->pt[i] , 0.0 , 0.0 , 0.0 );
+		VSET( aip->pt[i], 0.0, 0.0, 0.0 );
 	}
 
-	VSET( aip->pt[0] , atof(argv[2])*local2base , atof(argv[3])*local2base , atof(argv[4])*local2base );
+	VSET( aip->pt[0], atof(argv[2])*local2base, atof(argv[3])*local2base, atof(argv[4])*local2base );
 
 	ndotv = VDOT( aip->pt[0], norm );
 
@@ -525,7 +525,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* calculate the remaining 4 vertices */
 	for(i=0; i<4; i++) {
-		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
+		VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
 	}
 
 	/* no interuprts */

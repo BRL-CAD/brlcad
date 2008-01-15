@@ -45,7 +45,7 @@ char *options = "h";
 extern char *bu_optarg;
 extern int bu_optind, bu_opterr;
 
-/* , bu_getopt(int, char *const *, const char *);*/
+/*, bu_getopt(int, char *const *, const char *);*/
 
 char *progname = "(noname)";
 

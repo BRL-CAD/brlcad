@@ -104,7 +104,7 @@ main(int argc, char **argv) 			/* really has no arguments */
 	NMG_CK_MODEL( m );
 	r = nmg_mrsv( m );
 	NMG_CK_REGION( r );
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 	NMG_CK_SHELL( s );
 
 	/* Step through each patch and create a NMG TNURB face
@@ -117,24 +117,24 @@ main(int argc, char **argv) 			/* really has no arguments */
 	}
 
 	/* Connect up the coincident vertexuses and edges */
-	(void)nmg_model_fuse( m , &tol );
+	(void)nmg_model_fuse( m, &tol );
 
 	/* write NMG to output file */
-	(void)mk_nmg( outfp , tea_name , m );
+	(void)mk_nmg( outfp, tea_name, m );
 	wdb_close(outfp);
 
 	/* Make a vlist drawing of the model */
 	BU_LIST_INIT( &vhead );
-	nmg_m_to_vlist( &vhead , m , 0 );
+	nmg_m_to_vlist( &vhead, m, 0 );
 
 	/* Make a UNIX plot file from this vlist */
-	if( (fp=fopen( uplot_name , "w" )) == NULL )
+	if( (fp=fopen( uplot_name, "w" )) == NULL )
 	{
-		bu_log( "Cannot open plot file: %s\n" , uplot_name );
+		bu_log( "Cannot open plot file: %s\n", uplot_name );
 		perror( "teapot_nmg" );
 	}
 	else
-		rt_vlist_to_uplot( fp , &vhead );
+		rt_vlist_to_uplot( fp, &vhead );
 
 	return(0);
 }
@@ -165,7 +165,7 @@ dump_patch(int (*patch)[4])
 	for( i=0 ; i<4 ; i++ )
 		verts[i] = (struct vertex *)NULL;
 
-	fu = nmg_cface( s , verts , 4 );
+	fu = nmg_cface( s, verts, 4 );
 	NMG_CK_FACEUSE( fu );
 
 	for( i=0 ; i<4 ; i++ )
@@ -179,22 +179,22 @@ dump_patch(int (*patch)[4])
 		{
 			default:
 			case 0:
-				VSET( uvw , 0.0 , 0.0 , 0.0 );
+				VSET( uvw, 0.0, 0.0, 0.0 );
 				k = 0;
 				j = 0;
 				break;
 			case 1:
-				VSET( uvw , 1.0 , 0.0 , 0.0 );
+				VSET( uvw, 1.0, 0.0, 0.0 );
 				k = 0;
 				j = 3;
 				break;
 			case 2:
-				VSET( uvw , 1.0 , 1.0 , 0.0 );
+				VSET( uvw, 1.0, 1.0, 0.0 );
 				k = 3;
 				j = 3;
 				break;
 			case 3:
-				VSET( uvw , 0.0 , 1.0 , 0.0 );
+				VSET( uvw, 0.0, 1.0, 0.0 );
 				k = 3;
 				j = 0;
 				break;
@@ -204,15 +204,15 @@ dump_patch(int (*patch)[4])
 			ducks[patch[k][j]-1].x * 1000 ,
 			ducks[patch[k][j]-1].y * 1000 ,
 			ducks[patch[k][j]-1].z * 1000 );
-		nmg_vertex_gv( verts[i] , pnt );
+		nmg_vertex_gv( verts[i], pnt );
 
-		for( BU_LIST_FOR( vu , vertexuse , &verts[i]->vu_hd ) )
-			nmg_vertexuse_a_cnurb( vu , uvw );
+		for( BU_LIST_FOR( vu, vertexuse, &verts[i]->vu_hd ) )
+			nmg_vertexuse_a_cnurb( vu, uvw );
 	}
 
 	pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, 0); /* see nurb.h for details */
 
-	nmg_face_g_snurb( fu , 4 , 4 , 8 , 8 , ukv , vkv , 4 , 4 , pt_type , mesh );
+	nmg_face_g_snurb( fu, 4, 4, 8, 8, ukv, vkv, 4, 4, pt_type, mesh );
 
 	NMG_CK_FACE( fu->f_p );
 	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
@@ -246,18 +246,18 @@ dump_patch(int (*patch)[4])
 
 	/* set eu geometry */
 	pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, 0); /* see nurb.h for details */
-	lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	NMG_CK_LOOPUSE( lu );
-	for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 #if 0
-		nmg_edge_g_cnurb( eu , 2 , 0 , (fastf_t *)NULL , 2 ,
-			pt_type , (fastf_t *)NULL );
+		nmg_edge_g_cnurb( eu, 2, 0, (fastf_t *)NULL, 2 ,
+			pt_type, (fastf_t *)NULL );
 #else
 		nmg_edge_g_cnurb_plinear( eu );
 #endif
 	}
-	nmg_face_bb( fu->f_p , &tol );
+	nmg_face_bb( fu->f_p, &tol );
 }
 
 /*

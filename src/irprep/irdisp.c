@@ -134,19 +134,19 @@ main(void)
 	/*  Call the program ir-X or ir-sgi so that a file that has been raytraced  */
 	/*  may be displayed.  */
 	choice[0] = '\0';
-	while( strcmp( choice , "sgi" ) && strcmp( choice , "X" ) && strcmp( choice , "x" ) )
+	while( strcmp( choice, "sgi" ) && strcmp( choice, "X" ) && strcmp( choice, "x" ) )
 	{
 		(void)printf("\nSelect display ('X' or 'sgi') -> " );
 		(void)fflush(stdout);
 		(void)scanf( "%80s", choice );
 	}
-	if( !strcmp( choice , "X" ) || !strcmp( choice , "x" ) )
+	if( !strcmp( choice, "X" ) || !strcmp( choice, "x" ) )
 		X_or_SGI = irX;
-	else if( !strcmp( choice , "sgi" ) )
+	else if( !strcmp( choice, "sgi" ) )
 		X_or_SGI = irsgi;
 	else
 	{
-		bu_exit(1, "Bad choice for display (%s)\n" , choice );
+		bu_exit(1, "Bad choice for display (%s)\n", choice );
 	}
 	(void)printf("\nThe program %s in now being run.  If option\n", X_or_SGI);
 	(void)printf("0 or 1 was used when the name of a file is asked\n");

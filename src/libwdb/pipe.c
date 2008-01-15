@@ -90,7 +90,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 
 	if( rt_pipe_ck( headp ) )
 	{
-		bu_log( "mk_pipe: BAD PIPE SOLID (%s)\n" , name );
+		bu_log( "mk_pipe: BAD PIPE SOLID (%s)\n", name );
 		return( 1 );
 	}
 

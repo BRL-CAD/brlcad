@@ -560,7 +560,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	bu_vls_strcpy( &str, rp->ss.ss_args );
 	if( bu_struct_parse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
 		bu_vls_free( &str );
-		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		bu_free( (char *)eip, "rt_ebm_import: eip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
@@ -573,7 +573,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    eip->tallness <= 0.0 )  {
 		bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
 			(char *)eip );
-		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		bu_free( (char *)eip, "rt_ebm_import: eip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -1;
@@ -587,7 +587,7 @@ rt_ebm_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	/* Get bit map from .bw(5) file */
 	if( !(mp = bu_open_mapped_file_with_path( dbip->dbi_filepath, eip->file, "ebm" )) )  {
 		bu_log("rt_ebm_import() unable to open '%s'\n", eip->file);
-		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		bu_free( (char *)eip, "rt_ebm_import: eip" );
 fail:
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
@@ -703,7 +703,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_vls_strcpy( &str, ep->ext_buf );
 	if( bu_struct_parse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
 		bu_vls_free( &str );
-		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		bu_free( (char *)eip, "rt_ebm_import: eip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
@@ -716,7 +716,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    eip->tallness <= 0.0 )  {
 		bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
 			(char *)eip );
-		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		bu_free( (char *)eip, "rt_ebm_import: eip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -1;
@@ -730,7 +730,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* Get bit map from .bw(5) file */
 	if( !(mp = bu_open_mapped_file_with_path( dbip->dbi_filepath, eip->file, "ebm" )) )  {
 		bu_log("rt_ebm_import() unable to open '%s'\n", eip->file);
-		bu_free( (char *)eip , "rt_ebm_import: eip" );
+		bu_free( (char *)eip, "rt_ebm_import: eip" );
 fail:
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
@@ -803,7 +803,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	ep->ext_nbytes = bu_vls_strlen( &str ) + 1;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ebm external");
 
-	strncpy( ep->ext_buf , bu_vls_addr(&str), ep->ext_nbytes-1 );
+	strncpy( ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes-1 );
 	bu_vls_free( &str );
 
 	return(0);
@@ -910,7 +910,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	bn_mat_inv( ebmp->ebm_mat, eip->mat );
 
 	/* Pre-compute the necessary normals.  Rotate only. */
-	VSET( norm, 1, 0 , 0 );
+	VSET( norm, 1, 0, 0 );
 	MAT3X3VEC( ebmp->ebm_xnorm, eip->mat, norm );
 	VSET( norm, 0, 1, 0 );
 	MAT3X3VEC( ebmp->ebm_ynorm, eip->mat, norm );
@@ -1205,7 +1205,7 @@ rt_ebm_edge(int x1, int y1, int x2, int y2, int left, struct ebm_edge *edges)
 {
 	struct ebm_edge *new_edge;
 
-	new_edge = (struct ebm_edge *)bu_malloc( sizeof( struct ebm_edge ) , "rt_ebm_tess: new_edge" );
+	new_edge = (struct ebm_edge *)bu_malloc( sizeof( struct ebm_edge ), "rt_ebm_tess: new_edge" );
 
 	/* make all edges go from lower values to larger */
 	if( y1 < y2 || x1 < x2 )
@@ -1225,7 +1225,7 @@ rt_ebm_edge(int x1, int y1, int x2, int y2, int left, struct ebm_edge *edges)
 		new_edge->left = (!left);
 	}
 	new_edge->v = (struct vertex *)NULL;
-	BU_LIST_APPEND( &edges->l , &new_edge->l );
+	BU_LIST_APPEND( &edges->l, &new_edge->l );
 }
 
 static int
@@ -1248,12 +1248,12 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 
 		/* look for a vertical edge starting in lower left (smallest x and y ) */
 		start = (struct ebm_edge *)NULL;
-		next = BU_LIST_FIRST( ebm_edge , &edges->l );
-		while( BU_LIST_NOT_HEAD( &next->l , &edges->l ) )
+		next = BU_LIST_FIRST( ebm_edge, &edges->l );
+		while( BU_LIST_NOT_HEAD( &next->l, &edges->l ) )
 		{
 			if( next->x1 != next->x2 )
 			{
-				next = BU_LIST_PNEXT( ebm_edge , &next->l );
+				next = BU_LIST_PNEXT( ebm_edge, &next->l );
 				continue;	/* not a vertical edge */
 			}
 
@@ -1262,7 +1262,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 			else if( next->x1 < start->x1 || next->y1 < start->y1 )
 				start = next;
 
-			next = BU_LIST_PNEXT( ebm_edge , &next->l );
+			next = BU_LIST_PNEXT( ebm_edge, &next->l );
 		}
 
 		if( !start )
@@ -1270,7 +1270,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 
 		/* put starting edge on the loop list */
 		BU_LIST_DEQUEUE( &start->l );
-		BU_LIST_INSERT( &loops.l , &start->l );
+		BU_LIST_INSERT( &loops.l, &start->l );
 
 		next = (struct ebm_edge *)NULL;
 		vertical = 0; 	/* look for horizontal edge */
@@ -1289,7 +1289,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 
 			/* now find an edge that starts where this one stops (at to_x, to_y) */
 			poss = 0;
-			for( BU_LIST_FOR( e , ebm_edge , &edges->l ) )
+			for( BU_LIST_FOR( e, ebm_edge, &edges->l ) )
 			{
 				if( (vertical && e->y1 == e->y2) ||
 				   (!vertical && e->x1 == e->x2) )
@@ -1363,7 +1363,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 			loop_length++;
 
 			BU_LIST_DEQUEUE( &next->l );
-			BU_LIST_INSERT( &loops.l , &next->l );
+			BU_LIST_INSERT( &loops.l, &next->l );
 
 			if( to_x == start_x && to_y == start_y )
 			{
@@ -1380,7 +1380,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 	}
 
 	/* move sorted list back to "edges" */
-	BU_LIST_INSERT_LIST( &edges->l , &loops.l );
+	BU_LIST_INSERT_LIST( &edges->l, &loops.l );
 
 	return( max_loop_length );
 }
@@ -1419,17 +1419,17 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		y = 0;
 		while( y <= eip->ydim )
 		{
-			if( (BIT( eip , x-1 , y ) == 0 ) != (BIT( eip , x , y ) == 0 ) )
+			if( (BIT( eip, x-1, y ) == 0 ) != (BIT( eip, x, y ) == 0 ) )
 			{
 				/* a vertical edge starts here */
 				start = y;
-				left = (BIT( eip , x , y ) != 0 );
+				left = (BIT( eip, x, y ) != 0 );
 
 				/* find other end */
-				while( (BIT( eip , x-1 , y ) == 0 ) != (BIT( eip , x , y ) == 0 ) &&
-					(BIT( eip , x , y ) != 0 ) == left )
+				while( (BIT( eip, x-1, y ) == 0 ) != (BIT( eip, x, y ) == 0 ) &&
+					(BIT( eip, x, y ) != 0 ) == left )
 						y++;
-				rt_ebm_edge( x , start , x , y , left , &edges );
+				rt_ebm_edge( x, start, x, y, left, &edges );
 			}
 			else
 				y++;
@@ -1447,13 +1447,13 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			{
 				/* a horizontal edge starts here */
 				start = x;
-				left = (BIT( eip , x , y-1 ) != 0 );
+				left = (BIT( eip, x, y-1 ) != 0 );
 
 				/* find other end */
 				while( (BIT( eip, x, y-1 )==0) != (BIT( eip, x, y )==0) &&
-					(BIT( eip , x , y-1 ) != 0 ) == left )
+					(BIT( eip, x, y-1 ) != 0 ) == left )
 						x++;
-				rt_ebm_edge( start , y , x , y , left , &edges );
+				rt_ebm_edge( start, y, x, y, left, &edges );
 			}
 			else
 				x++;
@@ -1471,20 +1471,20 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 
-	vertp = (struct vertex ***)bu_calloc( max_loop_length , sizeof( struct vertex **) ,
+	vertp = (struct vertex ***)bu_calloc( max_loop_length, sizeof( struct vertex **) ,
 		"rt_ebm_tess: vertp" );
-	loop_verts = (struct vertex **)bu_calloc( max_loop_length , sizeof( struct vertex *),
+	loop_verts = (struct vertex **)bu_calloc( max_loop_length, sizeof( struct vertex *),
 		"rt_ebm_tess: loop_verts" );
 
-	e = BU_LIST_FIRST( ebm_edge , &edges.l );
-	while( BU_LIST_NOT_HEAD( &e->l , &edges.l ) )
+	e = BU_LIST_FIRST( ebm_edge, &edges.l );
+	while( BU_LIST_NOT_HEAD( &e->l, &edges.l ) )
 	{
 		start_loop = e;
 		loop_length = 0;
 		vertp[loop_length++] = &start_loop->v;
 
-		e = BU_LIST_PNEXT( ebm_edge , &start_loop->l );
-		while( BU_LIST_NOT_HEAD( &e->l , &edges.l ) )
+		e = BU_LIST_PNEXT( ebm_edge, &start_loop->l );
+		while( BU_LIST_NOT_HEAD( &e->l, &edges.l ) )
 		{
 			vertp[loop_length++] = &e->v;
 			if( e->x2 == start_loop->x1 && e->y2 == start_loop->y1 )
@@ -1497,7 +1497,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				if( e->left )
 				{
 					/* make a face */
-					fu1 = nmg_cmface( s , vertp , loop_length );
+					fu1 = nmg_cmface( s, vertp, loop_length );
 					NMG_CK_FACEUSE( fu1 );
 
 					/* assign geometry to the vertices used in this face */
@@ -1506,18 +1506,18 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					{
 						if( e1->v )
 						{
-							VSET( pt_ebm , e1->x1 , e1->y1 , 0.0 );
-							MAT4X3PNT( pt_model , eip->mat , pt_ebm );
-							nmg_vertex_gv( e1->v , pt_model );
+							VSET( pt_ebm, e1->x1, e1->y1, 0.0 );
+							MAT4X3PNT( pt_model, eip->mat, pt_ebm );
+							nmg_vertex_gv( e1->v, pt_model );
 						}
 						if( e1 == e )
 							done = 1;
 						else
-							e1 = BU_LIST_PNEXT( ebm_edge , &e1->l );
+							e1 = BU_LIST_PNEXT( ebm_edge, &e1->l );
 					}
 
 					/* assign face geometry */
-					if( nmg_fu_planeeqn( fu1 , tol ) )
+					if( nmg_fu_planeeqn( fu1, tol ) )
 						goto fail;
 
 					if( !fu )
@@ -1534,8 +1534,8 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 							loop_verts[i] = (struct vertex *)NULL;
 					}
 
-					(void) nmg_add_loop_to_face( s , fu , loop_verts ,
-							loop_length , OT_OPPOSITE );
+					(void) nmg_add_loop_to_face( s, fu, loop_verts ,
+							loop_length, OT_OPPOSITE );
 
 					/* Assign geometry to new vertices */
 					done = 0;
@@ -1545,60 +1545,60 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					{
 						if( !loop_verts[i]->vg_p )
 						{
-							VSET( pt_ebm , e1->x1 , e1->y1 , 0.0 );
-							MAT4X3PNT( pt_model , eip->mat , pt_ebm );
-							nmg_vertex_gv( loop_verts[i] , pt_model );
+							VSET( pt_ebm, e1->x1, e1->y1, 0.0 );
+							MAT4X3PNT( pt_model, eip->mat, pt_ebm );
+							nmg_vertex_gv( loop_verts[i], pt_model );
 							e1->v = loop_verts[i];
 						}
 						if( e1 == e )
 							done = 1;
 						else
 						{
-							e1 = BU_LIST_PNEXT( ebm_edge , &e1->l );
+							e1 = BU_LIST_PNEXT( ebm_edge, &e1->l );
 							i--;
 						}
 					}
 				}
 				break;
 			}
-			e = BU_LIST_PNEXT( ebm_edge , &e->l );
+			e = BU_LIST_PNEXT( ebm_edge, &e->l );
 		}
-		e = BU_LIST_PNEXT( ebm_edge , &e->l );
+		e = BU_LIST_PNEXT( ebm_edge, &e->l );
 	}
 
 	/* all faces should merge into one */
-	nmg_shell_coplanar_face_merge( s , tol , 1 );
+	nmg_shell_coplanar_face_merge( s, tol, 1 );
 
-	fu = BU_LIST_FIRST( faceuse , &s->fu_hd );
+	fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
 	NMG_CK_FACEUSE( fu );
 
-	VSET( h , 0.0 , 0.0 , eip->tallness );
-	MAT4X3VEC( height , eip->mat , h );
+	VSET( h, 0.0, 0.0, eip->tallness );
+	MAT4X3VEC( height, eip->mat, h );
 
-	nmg_extrude_face( fu , height , tol );
+	nmg_extrude_face( fu, height, tol );
 
-	nmg_region_a( *r , tol );
+	nmg_region_a( *r, tol );
 
 	(void)nmg_mark_edges_real( &s->l.magic );
 
-	bu_free( (char *)vertp , "rt_ebm_tess: vertp" );
-	bu_free( (char *)loop_verts , "rt_ebm_tess: loop_verts" );
+	bu_free( (char *)vertp, "rt_ebm_tess: vertp" );
+	bu_free( (char *)loop_verts, "rt_ebm_tess: loop_verts" );
 	while( BU_LIST_NON_EMPTY( &edges.l ) )
 	{
-		e = BU_LIST_FIRST( ebm_edge , &edges.l );
+		e = BU_LIST_FIRST( ebm_edge, &edges.l );
 		BU_LIST_DEQUEUE( &e->l );
-		bu_free( (char *)e , "rt_ebm_tess: e" );
+		bu_free( (char *)e, "rt_ebm_tess: e" );
 	}
 	return( 0 );
 
 fail:
-	bu_free( (char *)vertp , "rt_ebm_tess: vertp" );
-	bu_free( (char *)loop_verts , "rt_ebm_tess: loop_verts" );
+	bu_free( (char *)vertp, "rt_ebm_tess: vertp" );
+	bu_free( (char *)loop_verts, "rt_ebm_tess: loop_verts" );
 	while( BU_LIST_NON_EMPTY( &edges.l ) )
 	{
-		e = BU_LIST_FIRST( ebm_edge , &edges.l );
+		e = BU_LIST_FIRST( ebm_edge, &edges.l );
 		BU_LIST_DEQUEUE( &e->l );
-		bu_free( (char *)e , "rt_ebm_tess: e" );
+		bu_free( (char *)e, "rt_ebm_tess: e" );
 	}
 
 	return(-1);

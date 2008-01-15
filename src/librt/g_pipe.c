@@ -353,7 +353,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	if( BU_LIST_IS_HEAD( &pp2->l, &(pip->pipe_segs_head) ) )
 		return( 0 );
 	pp3 = BU_LIST_NEXT( wdb_pipept, &pp2->l );
-	if( BU_LIST_IS_HEAD( &pp3->l ,  &(pip->pipe_segs_head) ) )
+	if( BU_LIST_IS_HEAD( &pp3->l, &(pip->pipe_segs_head) ) )
 		pp3 = (struct wdb_pipept *)NULL;
 
 	VMOVE( curr_pt, pp1->pp_coord );
@@ -428,7 +428,7 @@ next_pt:
 		pp1 = pp2;
 		pp2 = pp3;
 		pp3 = BU_LIST_NEXT( wdb_pipept, &pp3->l );
-		if( BU_LIST_IS_HEAD( &pp3->l ,  &(pip->pipe_segs_head) ) )
+		if( BU_LIST_IS_HEAD( &pp3->l, &(pip->pipe_segs_head) ) )
 			pp3 = (struct wdb_pipept *)NULL;
 	}
 
@@ -1506,7 +1506,7 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 	/* calculate hit points and normals */
 	for( BU_LIST_FOR( hitp, hit_list, &hit_head.l ) ) {
-		rt_pipe_norm( hitp->hitp, stp , rp );
+		rt_pipe_norm( hitp->hitp, stp, rp );
 	}
 
 	rt_pipe_hitsort( &hit_head, &total_hits, rp, stp );
@@ -1522,9 +1522,9 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		{
 			point_t hit_pt;
 
-			bu_log( "#%d, dist = %g, surfno=%d\n" , ++i, hitp->hitp->hit_dist, hitp->hitp->hit_surfno );
+			bu_log( "#%d, dist = %g, surfno=%d\n", ++i, hitp->hitp->hit_dist, hitp->hitp->hit_surfno );
 			VJOIN1( hit_pt, rp->r_pt, hitp->hitp->hit_dist,  rp->r_dir );
-			bu_log( "\t( %g %g %g )\n" , V3ARGS( hit_pt ) );
+			bu_log( "\t( %g %g %g )\n", V3ARGS( hit_pt ) );
 		}
 
 		/* free the list of hits */
@@ -1852,7 +1852,7 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	curp = BU_LIST_NEXT( wdb_pipept, &prevp->l );
 	nextp = BU_LIST_NEXT( wdb_pipept, &curp->l );
 
-	if( BU_LIST_IS_HEAD( &curp->l , &pip->pipe_segs_head ) )
+	if( BU_LIST_IS_HEAD( &curp->l, &pip->pipe_segs_head ) )
 		return( 0 );	/* nothing to plot */
 
 	VMOVE( current_point, prevp->pp_coord );
@@ -2187,7 +2187,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 						else
 						{
 							bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-							bu_log( "\ti=%d, arc_segs=%d, fu_prev = x%x\n" , i, arc_segs, fu_prev );
+							bu_log( "\ti=%d, arc_segs=%d, fu_prev = x%x\n", i, arc_segs, fu_prev );
 						}
 					}
 				}
@@ -2257,7 +2257,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, arc_segs=%d, fu = x%x\n" , i, arc_segs, fu );
+						bu_log( "\ti=%d, arc_segs=%d, fu = x%x\n", i, arc_segs, fu );
 					}
 				}
 			}
@@ -2360,7 +2360,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -2461,7 +2461,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -2556,7 +2556,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 						else
 						{
 							bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-							bu_log( "\ti=%d, arc_segs=%d, fu_prev = x%x\n" , i, arc_segs, fu_prev );
+							bu_log( "\ti=%d, arc_segs=%d, fu_prev = x%x\n", i, arc_segs, fu_prev );
 						}
 					}
 				}
@@ -2626,7 +2626,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, arc_segs=%d, fu = x%x\n" , i, arc_segs, fu );
+						bu_log( "\ti=%d, arc_segs=%d, fu = x%x\n", i, arc_segs, fu );
 					}
 				}
 			}
@@ -2736,7 +2736,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -2836,7 +2836,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -3014,7 +3014,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -3084,7 +3084,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -3194,7 +3194,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -3264,7 +3264,7 @@ shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 					else
 					{
 						bu_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i, j, arc_segs, fu );
+						bu_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu );
 					}
 				}
 			}
@@ -3453,7 +3453,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	if( BU_LIST_IS_HEAD( &pp2->l, &(pip->pipe_segs_head) ) )
 		return( 0 );
 	pp3 = BU_LIST_NEXT( wdb_pipept, &pp2->l );
-	if( BU_LIST_IS_HEAD( &pp3->l ,  &(pip->pipe_segs_head) ) )
+	if( BU_LIST_IS_HEAD( &pp3->l, &(pip->pipe_segs_head) ) )
 		pp3 = (struct wdb_pipept *)NULL;
 
 	VMOVE( curr_pt, pp1->pp_coord );
@@ -3526,7 +3526,7 @@ next_pt:
 		pp1 = pp2;
 		pp2 = pp3;
 		pp3 = BU_LIST_NEXT( wdb_pipept, &pp3->l );
-		if( BU_LIST_IS_HEAD( &pp3->l ,  &(pip->pipe_segs_head) ) )
+		if( BU_LIST_IS_HEAD( &pp3->l, &(pip->pipe_segs_head) ) )
 			pp3 = (struct wdb_pipept *)NULL;
 	}
 

@@ -728,7 +728,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 
 		if ((dp=db_diradd(wdbp->dbip, comb_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 			Tcl_AppendResult(interp, "Failed to add ", comb_name,
-					 " to directory, aborting\n" , (char *)NULL);
+					 " to directory, aborting\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 

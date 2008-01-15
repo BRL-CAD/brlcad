@@ -60,7 +60,7 @@ struct node *root;
 				ptr2 = (struct node *)bu_malloc( sizeof( struct node ), "Arrange: ptr2" );
 				ptr->left = ptr2;
 				ptr1->left = ptra;
-				ptr2->left = Copytree( ptra , ptr2 );
+				ptr2->left = Copytree( ptra, ptr2 );
 				ptr2->right = ptrb;
 				ptr->op = Union;
 				if( ptr1->op == Intersect )

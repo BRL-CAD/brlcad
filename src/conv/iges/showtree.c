@@ -54,7 +54,7 @@ struct node *root;
 	struct node *ptr;
 	char *opa,*opb,*tmp, oper[4];
 
-	strcpy( oper , "   " );
+	strcpy( oper, "   " );
 
 	/* initialize both stacks */
 	Initastack();
@@ -92,15 +92,15 @@ struct node *root;
 			/* construct the character string (opa ptr->op opb) */
 			tmp = (char *)bu_malloc( size, "Showtree: tmp" );
 			if( ptr->parent )
-				strcpy( tmp , "(" );
+				strcpy( tmp, "(" );
 			else
 				*tmp = '\0';
-			strncat( tmp , opa, size - strlen(tmp) - 1 );
+			strncat( tmp, opa, size - strlen(tmp) - 1 );
 			oper[1] = operator[ptr->op];
-			strncat( tmp , oper, size - strlen(tmp) - 1 );
-			strncat( tmp , opb, size - strlen(tmp) - 1 );
+			strncat( tmp, oper, size - strlen(tmp) - 1 );
+			strncat( tmp, opb, size - strlen(tmp) - 1 );
 			if( ptr->parent )
-				strcat( tmp , ")" );
+				strcat( tmp, ")" );
 			tmp[size-1] = '\0'; /* sanity */
 
 			/* push the character string representing the result */
@@ -109,7 +109,7 @@ struct node *root;
 
 		if( ptr == root )	/* done! */
 		{
-			bu_log( "%s\n" , Apop() ); /* print the result */
+			bu_log( "%s\n", Apop() ); /* print the result */
 
 			/* free some memory */
 			Afreestack();
@@ -156,7 +156,7 @@ char *ptr;
 	if( jtop == stklen )
 	{
 		stklen += STKBLK;
-		stk = (char **)bu_realloc( (char *)stk , stklen*sizeof( char *), "Apush: stk" );
+		stk = (char **)bu_realloc( (char *)stk, stklen*sizeof( char *), "Apush: stk" );
 		if( stk == NULL )
 		{
 			bu_log( "Cannot reallocate stack space\n" );
@@ -228,7 +228,7 @@ struct node *ptr;
 	if( sjtop == sstklen )
 	{
 		sstklen += STKBLK;
-		sstk_p = (struct node **)bu_realloc( (char *)sstk_p , sstklen*sizeof( struct node *), "Spush: sstk_p" );
+		sstk_p = (struct node **)bu_realloc( (char *)sstk_p, sstklen*sizeof( struct node *), "Spush: sstk_p" );
 		if( sstk_p == NULL )
 		{
 			bu_log( "Cannot reallocate stack space\n" );

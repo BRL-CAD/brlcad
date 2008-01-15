@@ -37,18 +37,18 @@ mat_t *matp;
 	union tree *ptr,*Pop();
 	matp_t new_mat;
 
-	Readint( &i , "" );
+	Readint( &i, "" );
 	if( i != 180 )
 	{
-		bu_log( "Expecting a Boolean Tree, found type %d\n" , i );
+		bu_log( "Expecting a Boolean Tree, found type %d\n", i );
 		return( (union tree *)NULL );
 	}
 
 	Freestack();
-	Readint( &length , "" );
+	Readint( &length, "" );
 	for( i=0 ; i<length ; i++ )
 	{
-		Readint( &op , "" );
+		Readint( &op, "" );
 		if( op < 0 )	/* This is an operand */
 		{
 			ptr = (union tree *)bu_malloc( sizeof( union tree ),

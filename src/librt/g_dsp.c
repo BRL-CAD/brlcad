@@ -203,7 +203,7 @@ struct isect_stuff {
     struct bbox_isect	minbox;
 
     int			num_segs;
-    int			dmin, dmax;	/* for dsp_in_rpp , {X, Y, Z}MIN/MAX */
+    int			dmin, dmax;	/* for dsp_in_rpp, {X, Y, Z}MIN/MAX */
 };
 
 
@@ -3595,7 +3595,7 @@ rt_dsp_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 #define IMPORT_FAIL(_s) \
 	bu_log("rt_dsp_import(%d) '%s' %s\n", __LINE__, \
 	       bu_vls_addr(&dsp_ip->dsp_name), _s);\
-	bu_free( (char *)dsp_ip , "rt_dsp_import: dsp_ip" ); \
+	bu_free( (char *)dsp_ip, "rt_dsp_import: dsp_ip" ); \
 	ip->idb_type = ID_NULL; \
 	ip->idb_ptr = (genptr_t)NULL; \
 	return -2

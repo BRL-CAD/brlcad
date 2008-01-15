@@ -982,7 +982,7 @@ main (int argc, char **argv)
     /* Read in the geometry model */
     bu_log("Database file:  '%s'\n", argv[bu_optind]);
     bu_log("Building the directory... ");
-    if ((rtip = rt_dirbuild(argv[bu_optind] , db_title, TITLE_LEN)) == RTI_NULL)
+    if ((rtip = rt_dirbuild(argv[bu_optind], db_title, TITLE_LEN)) == RTI_NULL)
 	bu_exit (1, "Could not build directory for file '%s'\n", argv[bu_optind]);
     rtip -> useair = use_air;
     bu_log("\nPreprocessing the geometry... ");

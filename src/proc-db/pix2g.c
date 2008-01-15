@@ -142,7 +142,7 @@ void computeScanline( int pid, genptr_t arg ) {
 			g = *(value+(i*width*3)+(j*3)+1);
 			b = *(value+(i*width*3)+(j*3)+2);
 			VSET(rgb, r, g, b);
-			/* VSET(rgb, 200 , 200, 200); */
+			/* VSET(rgb, 200, 200, 200); */
 
 			sprintf(scratch, "%dx%d.r", i+1, j+1);
 			MAT_IDN(matrix);

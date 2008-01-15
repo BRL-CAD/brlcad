@@ -34,7 +34,7 @@
 #include "./iges_extern.h"
 
 void
-Readcols( id , cols )
+Readcols( id, cols )
 char *id;
 int cols;
 {

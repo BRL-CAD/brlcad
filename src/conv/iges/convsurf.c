@@ -64,12 +64,12 @@ Convsurfs()
 	if( totsurfs )
 	{
 		if( curr_file->obj_name )
-			mk_bspline( fdout , curr_file->obj_name , surfs );
+			mk_bspline( fdout, curr_file->obj_name, surfs );
 		else
-			mk_bspline( fdout , "nurb.s" , surfs );
+			mk_bspline( fdout, "nurb.s", surfs );
 	}
 
-	bu_log( "Converted %d NURBS successfully out of %d total NURBS\n" , convsurf , totsurfs );
+	bu_log( "Converted %d NURBS successfully out of %d total NURBS\n", convsurf, totsurfs );
 	if( convsurf )
 		bu_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
 }

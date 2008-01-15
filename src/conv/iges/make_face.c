@@ -32,7 +32,7 @@
 #include "./iges_extern.h"
 
 struct faceuse *
-Make_planar_face( s , entityno , face_orient )
+Make_planar_face( s, entityno, face_orient )
 struct shell *s;
 int entityno;
 int face_orient;
@@ -55,26 +55,26 @@ int face_orient;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 	if( sol_num != 508 )
 	{
-		bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n" , entityno , iges_type(sol_num) );
+		bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n", entityno, iges_type(sol_num) );
 	}
 
-	Readint( &no_of_edges , "" );
-	edge_list = (struct iges_edge_use *)bu_calloc( no_of_edges , sizeof( struct iges_edge_use ) ,
+	Readint( &no_of_edges, "" );
+	edge_list = (struct iges_edge_use *)bu_calloc( no_of_edges, sizeof( struct iges_edge_use ) ,
 			"Make_face (edge_list)" );
 	for( i=0 ; i<no_of_edges ; i++ )
 	{
-		Readint( &edge_list[i].edge_is_vertex , "" );
-		Readint( &edge_list[i].edge_de , "" );
-		Readint( &edge_list[i].index , "" );
-		Readint( &edge_list[i].orient , "" );
+		Readint( &edge_list[i].edge_is_vertex, "" );
+		Readint( &edge_list[i].edge_de, "" );
+		Readint( &edge_list[i].index, "" );
+		Readint( &edge_list[i].orient, "" );
 		if( !face_orient ) /* need opposite orientation of edge */
 		{
 			if( edge_list[i].orient )
@@ -83,13 +83,13 @@ int face_orient;
 				edge_list[i].orient = 1;
 		}
 		edge_list[i].root = (struct iges_param_curve *)NULL;
-		Readint( &no_of_param_curves , "" );
+		Readint( &no_of_param_curves, "" );
 		for( j=0 ; j<no_of_param_curves ; j++ )
 		{
 			struct iges_param_curve *new_crv;
 			struct iges_param_curve *crv;
 
-			Readint( &k , "" );	/* ignore iso-parametric flag */
+			Readint( &k, "" );	/* ignore iso-parametric flag */
 			new_crv = (struct iges_param_curve *)bu_malloc( sizeof( struct iges_param_curve ),
 				"Make_planar_face: new_crv" );
 			if( edge_list[i].root == (struct iges_param_curve *)NULL )
@@ -106,7 +106,7 @@ int face_orient;
 		}
 	}
 
-	verts = (struct vertex ***)bu_calloc( no_of_edges , sizeof( struct vertex **) ,
+	verts = (struct vertex ***)bu_calloc( no_of_edges, sizeof( struct vertex **) ,
 		"Make_face: vertex_list **" );
 
 	for( i=0 ; i<no_of_edges ; i++ )
@@ -166,10 +166,10 @@ int face_orient;
 			v_list = v_list->next;
 		}
 
-		lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 		NMG_CK_LOOPUSE( lu );
 
-		area = nmg_loop_plane_area( lu , pl );
+		area = nmg_loop_plane_area( lu, pl );
 		if( area < 0.0 )
 		{
 			bu_log( "Could not calculate area for face (entityno = %d)\n", entityno );
@@ -179,18 +179,18 @@ int face_orient;
 			goto err;
 		}
 
-		nmg_face_g( fu , pl );
-		nmg_face_bb( fu->f_p , &tol );
+		nmg_face_g( fu, pl );
+		nmg_face_bb( fu->f_p, &tol );
 
 		/* find a point that is surely outside the loop */
-		VSUB2( min2max , fu->f_p->max_pt , fu->f_p->min_pt );
-		VADD2( outside_pt , fu->f_p->max_pt , min2max );
+		VSUB2( min2max, fu->f_p->max_pt, fu->f_p->min_pt );
+		VADD2( outside_pt, fu->f_p->max_pt, min2max );
 
 		/* move it to the plane of the face */
-		dist = DIST_PT_PLANE( outside_pt , pl );
-		VJOIN1( outside_pt , outside_pt , -dist , pl );
+		dist = DIST_PT_PLANE( outside_pt, pl );
+		VJOIN1( outside_pt, outside_pt, -dist, pl );
 
-		if( nmg_class_pt_lu_except( outside_pt , lu, (struct edge *)NULL , &tol ) != NMG_CLASS_AoutB )
+		if( nmg_class_pt_lu_except( outside_pt, lu, (struct edge *)NULL, &tol ) != NMG_CLASS_AoutB )
 		{
 			nmg_reverse_face( fu );
 			if( fu->orientation != OT_SAME )
@@ -205,8 +205,8 @@ int face_orient;
 		bu_log( "No edges left!\n" );
 
   err:
-	bu_free( (char *)edge_list , "Make_face (edge_list)" );
-	bu_free( (char *)verts , "Make_face (vertexlist)" );
+	bu_free( (char *)edge_list, "Make_face (edge_list)" );
+	bu_free( (char *)verts, "Make_face (vertexlist)" );
 	return( fu );
 }
 

@@ -1042,8 +1042,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VMOVE(    Au, xip->epa_Au );
 	VCROSS(   Bu, Au, Hu );
 
-	VSCALE( A_orig , Au , xip->epa_r1 );
-	VSCALE( B_orig , Bu , xip->epa_r2 );
+	VSCALE( A_orig, Au, xip->epa_r1 );
+	VSCALE( B_orig, Bu, xip->epa_r2 );
 
 	/* Compute R and Rinv matrices */
 	MAT_IDN( R );
@@ -1167,7 +1167,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* I don't understand this pts_dbl, so here is an array containing the length of
 	 * each ellipses array
 	 */
-	segs_per_ell = (int *)bu_calloc( nell , sizeof( int ) , "rt_epa_tess: segs_per_ell" );
+	segs_per_ell = (int *)bu_calloc( nell, sizeof( int ), "rt_epa_tess: segs_per_ell" );
 
 	/* and an array of normals */
 	normals = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t normals[]");
@@ -1372,8 +1372,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	{
 		for( j=0 ; j<segs_per_ell[i] ; j++ )
 		{
-			VREVERSE( rev_norm , &normals[i][j*3] );
-			for( BU_LIST_FOR( vu , vertexuse , &vells[i][j]->vu_hd ) )
+			VREVERSE( rev_norm, &normals[i][j*3] );
+			for( BU_LIST_FOR( vu, vertexuse, &vells[i][j]->vu_hd ) )
 			{
 
 				fu = nmg_find_fu_of_vu( vu );
@@ -1383,25 +1383,25 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					continue;	/* don't assign normals to top faceuse (flat) */
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , &normals[i][j*3] );
+					nmg_vertexuse_nv( vu, &normals[i][j*3] );
 				else if( fu->orientation == OT_OPPOSITE )
-					nmg_vertexuse_nv( vu , rev_norm );
+					nmg_vertexuse_nv( vu, rev_norm );
 			}
 		}
 	}
 	/* and don't forget the apex */
-	VMOVE( apex_norm , xip->epa_H );
+	VMOVE( apex_norm, xip->epa_H );
 	VUNITIZE( apex_norm );
-	VREVERSE( rev_norm , apex_norm );
-	for( BU_LIST_FOR( vu , vertexuse , &apex_v->vu_hd ) )
+	VREVERSE( rev_norm, apex_norm );
+	for( BU_LIST_FOR( vu, vertexuse, &apex_v->vu_hd ) )
 	{
 		NMG_CK_VERTEXUSE( vu );
 		fu = nmg_find_fu_of_vu( vu );
 		NMG_CK_FACEUSE( fu );
 		if( fu->orientation == OT_SAME )
-			nmg_vertexuse_nv( vu , apex_norm );
+			nmg_vertexuse_nv( vu, apex_norm );
 		else if( fu->orientation == OT_OPPOSITE )
-			nmg_vertexuse_nv( vu , rev_norm );
+			nmg_vertexuse_nv( vu, rev_norm );
 	}
 
 	/* Glue the edges of different outward pointing face uses together */
@@ -1478,7 +1478,7 @@ rt_epa_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 
 	if( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
 		bu_log( "rt_epa_import: r1 or r2 are zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_epa_import: ip->idb_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_epa_import: ip->idb_ptr" );
 		return( -1 );
 	}
 
@@ -1583,7 +1583,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	if( xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF ) {
 		bu_log( "rt_epa_import: r1 or r2 are zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_epa_import: ip->idb_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_epa_import: ip->idb_ptr" );
 		return( -1 );
 	}
 

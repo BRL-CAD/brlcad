@@ -534,15 +534,15 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 	/* Allocate memory for the vertices */
 	nverts = aip->neqn * (aip->neqn-1) * (aip->neqn-2) / 6;
-	pts = (struct arbn_pts *)bu_calloc( nverts , sizeof( struct arbn_pts ) , "rt_arbn_tess: pts" );
+	pts = (struct arbn_pts *)bu_calloc( nverts, sizeof( struct arbn_pts ), "rt_arbn_tess: pts" );
 
 	/* Allocate memory for arbn_edges */
-	edges = (struct arbn_edges *)bu_calloc( aip->neqn*aip->neqn , sizeof( struct arbn_edges ) ,
+	edges = (struct arbn_edges *)bu_calloc( aip->neqn*aip->neqn, sizeof( struct arbn_edges ) ,
 			"rt_arbn_tess: edges" );
-	edge_count = (int *)bu_calloc( aip->neqn , sizeof( int ) , "rt_arbn_tess: edge_count" );
+	edge_count = (int *)bu_calloc( aip->neqn, sizeof( int ), "rt_arbn_tess: edge_count" );
 
 	/* Allocate memory for faceuses */
-	fu = (struct faceuse **)bu_calloc( aip->neqn , sizeof( struct faceuse *) , "rt_arbn_tess: fu" );
+	fu = (struct faceuse **)bu_calloc( aip->neqn, sizeof( struct faceuse *), "rt_arbn_tess: fu" );
 
 	/* Calculate all vertices */
 	for( i=0 ; i<aip->neqn ; i++ )
@@ -560,7 +560,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 				{
 					if( l == i || l == j || l == k )
 						continue;
-					if( DIST_PT_PLANE( pts[point_count].pt , aip->eqn[l] ) > tol->dist )
+					if( DIST_PT_PLANE( pts[point_count].pt, aip->eqn[l] ) > tol->dist )
 					{
 						keep_point = 0;
 						break;
@@ -578,7 +578,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	}
 
 	/* Allocate memory for the NMG vertex pointers */
-	verts = (struct vertex **)bu_calloc( point_count , sizeof( struct vertex *) ,
+	verts = (struct vertex **)bu_calloc( point_count, sizeof( struct vertex *) ,
 			"rt_arbn_tess: verts" );
 
 	/* Associate points with vertices */
@@ -592,7 +592,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		{
 			vect_t dist;
 
-			VSUB2( dist , pts[i].pt , pts[j].pt )
+			VSUB2( dist, pts[i].pt, pts[j].pt )
 			if( MAGSQ( dist ) < tol->dist_sq )
 			{
 				/* These two points should point to the same vertex */
@@ -684,15 +684,15 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 					bu_log( "Too many edges found for one face\n" );
 					goto fail;
 				}
-				edges[LOC( i , edge_count[i] )].v1_no = pt1;
-				edges[LOC( i , edge_count[i] )].v2_no = pt2;
+				edges[LOC( i, edge_count[i] )].v1_no = pt1;
+				edges[LOC( i, edge_count[i] )].v2_no = pt2;
 				edge_count[i]++;
 			}
 		}
 	}
 
 	/* for each face, sort the list of edges into a loop */
-	Sort_edges( edges , edge_count , aip );
+	Sort_edges( edges, edge_count, aip );
 
 	/* Get max number of edges for any face */
 	max_edge_count = 0;
@@ -701,7 +701,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 			max_edge_count = edge_count[i];
 
 	/* Allocate memory for array to pass to nmg_cmface */
-	loop_verts = (struct vertex ***) bu_calloc( max_edge_count , sizeof( struct vertex **) ,
+	loop_verts = (struct vertex ***) bu_calloc( max_edge_count, sizeof( struct vertex **) ,
 				"rt_arbn_tess: loop_verts" );
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
@@ -725,7 +725,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 		/* Make the face if there is are least 3 vertices */
 		if( loop_length > 2 )
-			fu[face_count++] = nmg_cmface( s , loop_verts , loop_length );
+			fu[face_count++] = nmg_cmface( s, loop_verts, loop_length );
 	}
 
 	/* Associate vertex geometry */
@@ -737,31 +737,31 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		if( (*pts[i].vp)->vg_p )
 			continue;
 
-		nmg_vertex_gv( *pts[i].vp , pts[i].pt );
+		nmg_vertex_gv( *pts[i].vp, pts[i].pt );
 	}
 
-	bu_free( (char *)pts , "rt_arbn_tess: pts" );
-	bu_free( (char *)edges , "rt_arbn_tess: edges" );
-	bu_free( (char *)edge_count , "rt_arbn_tess: edge_count" );
-	bu_free( (char *)verts , "rt_arbn_tess: verts" );
-	bu_free( (char *)loop_verts , "rt_arbn_tess: loop_verts" );
+	bu_free( (char *)pts, "rt_arbn_tess: pts" );
+	bu_free( (char *)edges, "rt_arbn_tess: edges" );
+	bu_free( (char *)edge_count, "rt_arbn_tess: edge_count" );
+	bu_free( (char *)verts, "rt_arbn_tess: verts" );
+	bu_free( (char *)loop_verts, "rt_arbn_tess: loop_verts" );
 
 	/* Associate face geometry */
 	for( i=0 ; i<face_count ; i++ )
 	{
-		if( nmg_fu_planeeqn( fu[i] , tol ) )
+		if( nmg_fu_planeeqn( fu[i], tol ) )
 		{
 			bu_log( "Failed to calculate face plane equation\n" );
-			bu_free( (char *)fu , "rt_arbn_tess: fu" );
+			bu_free( (char *)fu, "rt_arbn_tess: fu" );
 			nmg_kr( *r );
 			*r = (struct nmgregion *)NULL;
 			return( -1 );
 		}
 	}
 
-	bu_free( (char *)fu , "rt_arbn_tess: fu" );
+	bu_free( (char *)fu, "rt_arbn_tess: fu" );
 
-	nmg_fix_normals( s , tol );
+	nmg_fix_normals( s, tol );
 
 	(void)nmg_mark_edges_real( &s->l.magic );
 
@@ -771,10 +771,10 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	return( 0 );
 
 fail:
-	bu_free( (char *)pts , "rt_arbn_tess: pts" );
-	bu_free( (char *)edges , "rt_arbn_tess: edges" );
-	bu_free( (char *)edge_count , "rt_arbn_tess: edge_count" );
-	bu_free( (char *)verts , "rt_arbn_tess: verts" );
+	bu_free( (char *)pts, "rt_arbn_tess: pts" );
+	bu_free( (char *)edges, "rt_arbn_tess: edges" );
+	bu_free( (char *)edge_count, "rt_arbn_tess: edge_count" );
+	bu_free( (char *)verts, "rt_arbn_tess: verts" );
 	return( -1 );
 }
 

@@ -72,19 +72,19 @@ Convassem()
 		if( dir[i]->param <= pstart )
 		{
 			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-					dir[i]->direct , dir[i]->name );
+					dir[i]->direct, dir[i]->name );
 			continue;
 		}
 		Readrec( dir[i]->param ); /* read first record into buffer */
 
-		Readint( &j , "" );	/* read entity type */
+		Readint( &j, "" );	/* read entity type */
 		if( j != 184 )
 		{
-			bu_log( "Incorrect entity type in Parameter section for entity %d\n" , i );
+			bu_log( "Incorrect entity type in Parameter section for entity %d\n", i );
 			return;
 		}
 
-		Readint( &comblen , "" );	/* read number of members in group */
+		Readint( &comblen, "" );	/* read number of members in group */
 
 		/* Read pointers to group members */
 		for( j=0 ; j<comblen ; j++ )
@@ -104,7 +104,7 @@ Convassem()
 			ptr->next = NULL;
 
 			/* Read pointer to an object */
-			Readint( &ptr->item , "" );
+			Readint( &ptr->item, "" );
 			if( ptr->item < 0 )
 				ptr->item = (-ptr->item);
 
@@ -125,7 +125,7 @@ Convassem()
 			ptr->matrix = 0;
 
 			/* Read pointer to a transformation */
-			Readint( &ptr->matrix , "" );
+			Readint( &ptr->matrix, "" );
 
 			if( ptr->matrix < 0 )
 				ptr->matrix = (-ptr->matrix);
@@ -140,15 +140,15 @@ Convassem()
 		}
 
 		/* skip over the associativities */
-		Readint( &no_of_assoc , "" );
+		Readint( &no_of_assoc, "" );
 		for( k=0 ; k<no_of_assoc ; k++ )
-			Readint( &j , "" );
+			Readint( &j, "" );
 
 		/* get property entity DE's */
-		Readint( &no_of_props , "" );
+		Readint( &no_of_props, "" );
 		for( k=0 ; k<no_of_props ; k++ )
 		{
-			Readint( &j , "" );
+			Readint( &j, "" );
 			if( dir[(j-1)/2]->type == 422 &&
 				 dir[(j-1)/2]->referenced == brlcad_att_de )
 			{
@@ -157,7 +157,7 @@ Convassem()
 			}
 		}
 
-		Read_att( att_de , &brl_att );
+		Read_att( att_de, &brl_att );
 
 		/* Make the members */
 		ptr = root;
@@ -169,9 +169,9 @@ Convassem()
 
 			/* Apply any matrix indicated for this group member */
 			if( ptr->matrix > (-1) )
-				Matmult( ptr->rot , *(dir[ptr->matrix]->rot)  , ptr->rot );
+				Matmult( ptr->rot, *(dir[ptr->matrix]->rot), ptr->rot );
 
-			wmem = mk_addmember( ptr->name , &head.l, NULL, operator[Union] );
+			wmem = mk_addmember( ptr->name, &head.l, NULL, operator[Union] );
 			flt = (fastf_t *)ptr->rot;
 			for( j=0 ; j<16 ; j++ )
 			{
@@ -212,7 +212,7 @@ Convassem()
 			ptr = ptr->next;
 		}
 	}
-	bu_log( "Converted %d solid assemblies successfully out of %d total assemblies\n" , conv , totass );
+	bu_log( "Converted %d solid assemblies successfully out of %d total assemblies\n", conv, totass );
 }
 
 /*

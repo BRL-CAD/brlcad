@@ -1061,7 +1061,7 @@ dgo_autoview(struct dg_obj	*dgop,
 
 	/* make sure it's not too small */
 	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-		VSETALL(radial , 1.0);
+		VSETALL(radial, 1.0);
 
 	MAT_IDN(vop->vo_center);
 	MAT_DELTAS_VEC_NEG(vop->vo_center, center);
@@ -1217,8 +1217,8 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 		VSUB2(radial, max, center);
 	}
 
-	if (VNEAR_ZERO(radial , SQRT_SMALL_FASTF))
-		VSETALL(radial , 1.0);
+	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
+		VSETALL(radial, 1.0);
 
 	VSCALE(center, center, dgop->dgo_wdbp->dbip->dbi_base2local);
 	radial[X] *= dgop->dgo_wdbp->dbip->dbi_base2local;

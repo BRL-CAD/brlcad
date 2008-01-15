@@ -187,7 +187,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 	struct faceuse *fu_next;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		bu_log( "nmg_kill_non_common_cracks( s=%x and %x )\n" , sA, sB );
+		bu_log( "nmg_kill_non_common_cracks( s=%x and %x )\n", sA, sB );
 
 	NMG_CK_SHELL( sA );
 	NMG_CK_SHELL( sB );
@@ -762,7 +762,7 @@ nmg_s_radial_check( sB, tol );
 
 	(void)nmg_model_break_e_on_v( m, tol );
 
-	(void)nmg_model_edge_fuse( m , tol );
+	(void)nmg_model_edge_fuse( m, tol );
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 #if 0
@@ -961,9 +961,9 @@ nmg_s_radial_check( sB, tol );
 	if( rt_g.NMG_debug & DEBUG_BOOL )
 	{
 		bu_log( "Just before nmg_evaluate_boolean:\nShell A:\n" );
-		nmg_pr_s_briefly( sA , 0 );
+		nmg_pr_s_briefly( sA, 0 );
 		bu_log( "Shell B:\n" );
-		nmg_pr_s_briefly( sB , 0 );
+		nmg_pr_s_briefly( sB, 0 );
 	}
 #endif
 nmg_s_radial_check( sA, tol );
@@ -974,9 +974,9 @@ nmg_s_radial_check( sB, tol );
 	if( rt_g.NMG_debug & DEBUG_BOOL )
 	{
 		bu_log( "Just after nmg_evaluate_boolean:\nShell A:\n" );
-		nmg_pr_s_briefly( sA , 0 );
+		nmg_pr_s_briefly( sA, 0 );
 		bu_log( "Shell B:\n" );
-		nmg_pr_s_briefly( sB , 0 );
+		nmg_pr_s_briefly( sB, 0 );
 	}
 #endif
 
@@ -1030,9 +1030,9 @@ nmg_s_radial_check( sA, tol );
 	if( rt_g.NMG_debug & DEBUG_BOOL )
 	{
 		bu_log( "Just after nmg_simplify_shell:\nShell A:\n" );
-		nmg_pr_s_briefly( sA , 0 );
+		nmg_pr_s_briefly( sA, 0 );
 		bu_log( "Shell B:\n" );
-		nmg_pr_s_briefly( sB , 0 );
+		nmg_pr_s_briefly( sB, 0 );
 	}
 #endif
 		/* Bounding boxes may have changed */

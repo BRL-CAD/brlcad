@@ -738,12 +738,12 @@ static point_t	octa_verts[6] = {
  * } octahedron[8] = {
  *     { XPLUS, ZPLUS, YPLUS },
  *     { YPLUS, ZPLUS, XMIN  },
- *     { XMIN , ZPLUS, YMIN  },
- *     { YMIN , ZPLUS, XPLUS },
+ *     { XMIN, ZPLUS, YMIN  },
+ *     { YMIN, ZPLUS, XPLUS },
  *     { XPLUS, YPLUS, ZMIN  },
- *     { YPLUS, XMIN , ZMIN  },
- *     { XMIN , YMIN , ZMIN  },
- *     { YMIN , XPLUS, ZMIN  }
+ *     { YPLUS, XMIN, ZMIN  },
+ *     { XMIN, YMIN, ZMIN  },
+ *     { YMIN, XPLUS, ZMIN  }
  * };
  */
 struct superell_state {

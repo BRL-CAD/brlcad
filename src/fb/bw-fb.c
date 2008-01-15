@@ -304,7 +304,7 @@ general:
 	for( y = scr_yoff; y < scr_yoff + yout; y++ ) {
 		if( y < 0 || y >= scr_height )
 		{
-			skipbytes( infd , file_width );
+			skipbytes( infd, file_width );
 			continue;
 		}
 		if( file_xoff+xskip != 0 )

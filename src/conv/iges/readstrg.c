@@ -63,7 +63,7 @@ char *id;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		bu_log( "%s" , id );
+		bu_log( "%s", id );
 
 	while( !done )
 	{

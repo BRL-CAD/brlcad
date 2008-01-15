@@ -66,12 +66,12 @@ Do_subfigs()
 		if( dir[i]->param <= pstart )
 		{
 			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-					dir[i]->direct , dir[i]->name );
+					dir[i]->direct, dir[i]->name );
 			continue;
 		}
 
 		Readrec( dir[i]->param );
-		Readint( &entity_type , "" );
+		Readint( &entity_type, "" );
 		if( entity_type != 408 )
 		{
 			bu_log( "Expected Singular Subfigure Instance Entity, found %s\n",
@@ -98,11 +98,11 @@ Do_subfigs()
 		if( dir[subfigdef_index]->param <= pstart )
 		{
 			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-					dir[subfigdef_index]->direct , dir[subfigdef_index]->name );
+					dir[subfigdef_index]->direct, dir[subfigdef_index]->name );
 			continue;
 		}
 		Readrec( dir[subfigdef_index]->param );
-		Readint( &entity_type , "" );
+		Readint( &entity_type, "" );
 		if( entity_type != 308 )
 		{
 			bu_log( "Expected Subfigure Definition Entity, found %s\n",
@@ -168,7 +168,7 @@ Do_subfigs()
 			if( dir[index]->param <= pstart )
 			{
 				bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-						dir[index]->direct , dir[index]->name );
+						dir[index]->direct, dir[index]->name );
 				continue;
 			}
 

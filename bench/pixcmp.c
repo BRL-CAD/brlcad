@@ -231,7 +231,7 @@ main(int argc, char *argv[])
     /* iterate over the pixels/bytes in the files */
     while ((!feof(f1) && !feof(f2)) &&
 	   (!ferror(f1) && !ferror(f2))) {
-	register int r1 , r2, g1, g2, b1, b2;
+	register int r1, r2, g1, g2, b1, b2;
 	r1 = r2 = g1 = g2 = b1 = b2 = -1;
 
 	r1 = fgetc( f1 );

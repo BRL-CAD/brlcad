@@ -44,7 +44,7 @@ static int numknots=0;
 
 /* Set the knot values */
 void
-Knot( n , values )
+Knot( n, values )
 int n;		/* number of values in knot sequence */
 fastf_t values[];	/* knot values */
 {
@@ -52,14 +52,14 @@ fastf_t values[];	/* knot values */
 
 	if( n < 2 )
 	{
-		bu_log( "Knot: ERROR %d knot values\n" , n );
+		bu_log( "Knot: ERROR %d knot values\n", n );
 		bu_exit(1, "Knot: cannot have less than 2 knot values\n" );
 	}
 
 	if( numknots )
-		bu_free( (char *)knots , "Knot: knots" );
+		bu_free( (char *)knots, "Knot: knots" );
 
-	knots = (fastf_t *)bu_calloc( n , sizeof( fastf_t ) , "Knot: knots" );
+	knots = (fastf_t *)bu_calloc( n, sizeof( fastf_t ), "Knot: knots" );
 
 	numknots = n;
 
@@ -71,14 +71,14 @@ fastf_t values[];	/* knot values */
 void
 Freeknots()
 {
-	bu_free( (char *)knots , "Freeknots: knots" );
+	bu_free( (char *)knots, "Freeknots: knots" );
 	numknots = 0;
 }
 
 
 /* Evaluate the Basis functions */
 fastf_t
-Basis( i , k , t )
+Basis( i, k, t )
 fastf_t t;	/* parameter value */
 int i;		/* interval number ( 0 through k ) */
 int k;		/* degree of basis function */
@@ -88,7 +88,7 @@ int k;		/* degree of basis function */
 	if( (i+1) > (numknots-1) )
 	{
 		bu_log( "Error in evaluation of a B-spline Curve\n" );
-		bu_log( "attempt to access knots out of range: numknots=%d i=%d, k=%d\n" , numknots , i , k );
+		bu_log( "attempt to access knots out of range: numknots=%d i=%d, k=%d\n", numknots, i, k );
 		return( 0.0 );
 	}
 
@@ -105,10 +105,10 @@ int k;		/* degree of basis function */
 		denom2 = knots[i+k] - knots[i+1];
 
 		if(denom1 != 0.0 )
-			retval += (t - knots[i])*Basis( i , k-1 , t )/denom1;
+			retval += (t - knots[i])*Basis( i, k-1, t )/denom1;
 
 		if( denom2 != 0.0 )
-			retval += (knots[i+k] - t)*Basis( i+1 , k-1 , t )/denom2;
+			retval += (knots[i+k] - t)*Basis( i+1, k-1, t )/denom2;
 
 		return( retval );
 	}
@@ -116,7 +116,7 @@ int k;		/* degree of basis function */
 
 /* Evaluate a B-Spline curve */
 void
-B_spline( t , m , k , P , W , pt )
+B_spline( t, m, k, P, W, pt )
 fastf_t t;	/* parameter value */
 int k;		/* order */
 int m;		/* upper limit of sum (number of control points - 1) */
@@ -133,7 +133,7 @@ point_t pt;	/* Evaluated point on spline */
 
 	for( i=0 ; i<=m ; i++ )
 	{
-		tmp = W[i]*Basis( i , k , t );
+		tmp = W[i]*Basis( i, k, t );
 		denom += tmp;
 		for( j=0 ; j<3 ; j++ )
 			numer[j] += P[i][j]*tmp;

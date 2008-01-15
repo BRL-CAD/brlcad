@@ -48,7 +48,7 @@ Findp()
 
 	saverec = currec;	/* save current record number */
 
-	if( fseek( fd , 0L , 2 ) )	/* go to end of file */
+	if( fseek( fd, 0L, 2 ) )	/* go to end of file */
 	{
 		bu_log( "Cannot seek to end of file\n" );
 		perror( "Findp" );
@@ -62,7 +62,7 @@ Findp()
 	for( i=0 ; i<3 ; i++ )
 	{
 		counter++;	/* skip the single letter section ID */
-		Readcols( str , 7 );	/* read the number of records in the section */
+		Readcols( str, 7 );	/* read the number of records in the section */
 		pstart += atoi( str );	/* increment pstart */
 		if( i == 1 )	/* Global section */
 		{
@@ -85,7 +85,7 @@ Findp()
 
 		for( i=0 ; i<totentities ; i++ )
 		{
-			dir[i] = (struct iges_directory *)bu_malloc( sizeof( struct iges_directory ) , "IGES directory" );
+			dir[i] = (struct iges_directory *)bu_malloc( sizeof( struct iges_directory ), "IGES directory" );
 			dir[i]->name = (char *)NULL;
 			dir[i]->trans = (-1);
 		}

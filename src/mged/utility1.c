@@ -348,7 +348,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
   }
 
-  while(bu_fgets( line , LINELEN, fp ) != NULL){
+  while(bu_fgets( line, LINELEN, fp ) != NULL){
 	  int changed;
 
     if(sscanf(line, "%d%d%d%d%256s", &item, &air, &mat, &los, name) != 5)
@@ -977,7 +977,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int
 				if( rt_functab[sol_intern.idb_type].ft_describe( &tmp_vls, &sol_intern, 1, base2local, &rt_uniresource, dbip ) < 0 )
 				{
 					Tcl_AppendResult(interp, tree_list[i].tl_tree->tr_l.tl_name,
-						"describe error\n" , (char *)NULL );
+						"describe error\n", (char *)NULL );
 				}
 				fprintf( tabptr, "%s", bu_vls_addr(&tmp_vls));
 				bu_vls_free( &tmp_vls );

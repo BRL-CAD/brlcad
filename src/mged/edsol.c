@@ -425,7 +425,7 @@ struct menu_item  nmg_menu[] = {
 	{ "Next EU", nmg_ed, ECMD_NMG_FORW },
 	{ "Prev EU", nmg_ed, ECMD_NMG_BACK },
 	{ "Radial EU", nmg_ed, ECMD_NMG_RADIAL },
-	{ "Extrude Loop", nmg_ed , ECMD_NMG_LEXTRU },
+	{ "Extrude Loop", nmg_ed, ECMD_NMG_LEXTRU },
 	{ "Eebug Edge", nmg_ed, ECMD_NMG_EDEBUG },
 	{ "", (void (*)())NULL, 0 }
 };
@@ -455,8 +455,8 @@ struct menu_item mv6_menu[] = {
 	{ "Move Face 1234", arb6_mv_face, 1 },
 	{ "Move Face 2365", arb6_mv_face, 2 },
 	{ "Move Face 1564", arb6_mv_face, 3 },
-	{ "Move Face 125" , arb6_mv_face, 4 },
-	{ "Move Face 346" , arb6_mv_face, 5 },
+	{ "Move Face 125", arb6_mv_face, 4 },
+	{ "Move Face 346", arb6_mv_face, 5 },
 	{ "RETURN",         arb6_mv_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
@@ -464,20 +464,20 @@ struct menu_item mv6_menu[] = {
 struct menu_item mv5_menu[] = {
 	{ "ARB5 FACES", (void (*)())NULL, 0 },
 	{ "Move Face 1234", arb5_mv_face, 1 },
-	{ "Move Face 125" , arb5_mv_face, 2 },
-	{ "Move Face 235" , arb5_mv_face, 3 },
-	{ "Move Face 345" , arb5_mv_face, 4 },
-	{ "Move Face 145" , arb5_mv_face, 5 },
+	{ "Move Face 125", arb5_mv_face, 2 },
+	{ "Move Face 235", arb5_mv_face, 3 },
+	{ "Move Face 345", arb5_mv_face, 4 },
+	{ "Move Face 145", arb5_mv_face, 5 },
 	{ "RETURN",         arb5_mv_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item mv4_menu[] = {
 	{ "ARB4 FACES", (void (*)())NULL, 0 },
-	{ "Move Face 123" , arb4_mv_face, 1 },
-	{ "Move Face 124" , arb4_mv_face, 2 },
-	{ "Move Face 234" , arb4_mv_face, 3 },
-	{ "Move Face 134" , arb4_mv_face, 4 },
+	{ "Move Face 123", arb4_mv_face, 1 },
+	{ "Move Face 124", arb4_mv_face, 2 },
+	{ "Move Face 234", arb4_mv_face, 3 },
+	{ "Move Face 134", arb4_mv_face, 4 },
 	{ "RETURN",         arb4_mv_face, 5 },
 	{ "", (void (*)())NULL, 0 }
 };
@@ -497,8 +497,8 @@ struct menu_item rot8_menu[] = {
 struct menu_item rot7_menu[] = {
 	{ "ARB7 FACES", (void (*)())NULL, 0 },
 	{ "Rotate Face 1234", arb7_rot_face, 1 },
-	{ "Rotate Face 567" , arb7_rot_face, 2 },
-	{ "Rotate Face 145" , arb7_rot_face, 3 },
+	{ "Rotate Face 567", arb7_rot_face, 2 },
+	{ "Rotate Face 145", arb7_rot_face, 3 },
 	{ "Rotate Face 2376", arb7_rot_face, 4 },
 	{ "Rotate Face 1265", arb7_rot_face, 5 },
 	{ "Rotate Face 4375", arb7_rot_face, 6 },
@@ -511,8 +511,8 @@ struct menu_item rot6_menu[] = {
 	{ "Rotate Face 1234", arb6_rot_face, 1 },
 	{ "Rotate Face 2365", arb6_rot_face, 2 },
 	{ "Rotate Face 1564", arb6_rot_face, 3 },
-	{ "Rotate Face 125" , arb6_rot_face, 4 },
-	{ "Rotate Face 346" , arb6_rot_face, 5 },
+	{ "Rotate Face 125", arb6_rot_face, 4 },
+	{ "Rotate Face 346", arb6_rot_face, 5 },
 	{ "RETURN",         arb6_rot_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
@@ -520,20 +520,20 @@ struct menu_item rot6_menu[] = {
 struct menu_item rot5_menu[] = {
 	{ "ARB5 FACES", (void (*)())NULL, 0 },
 	{ "Rotate Face 1234", arb5_rot_face, 1 },
-	{ "Rotate Face 125" , arb5_rot_face, 2 },
-	{ "Rotate Face 235" , arb5_rot_face, 3 },
-	{ "Rotate Face 345" , arb5_rot_face, 4 },
-	{ "Rotate Face 145" , arb5_rot_face, 5 },
+	{ "Rotate Face 125", arb5_rot_face, 2 },
+	{ "Rotate Face 235", arb5_rot_face, 3 },
+	{ "Rotate Face 345", arb5_rot_face, 4 },
+	{ "Rotate Face 145", arb5_rot_face, 5 },
 	{ "RETURN",         arb5_rot_face, 6 },
 	{ "", (void (*)())NULL, 0 }
 };
 
 struct menu_item rot4_menu[] = {
 	{ "ARB4 FACES", (void (*)())NULL, 0 },
-	{ "Rotate Face 123" , arb4_rot_face, 1 },
-	{ "Rotate Face 124" , arb4_rot_face, 2 },
-	{ "Rotate Face 234" , arb4_rot_face, 3 },
-	{ "Rotate Face 134" , arb4_rot_face, 4 },
+	{ "Rotate Face 123", arb4_rot_face, 1 },
+	{ "Rotate Face 124", arb4_rot_face, 2 },
+	{ "Rotate Face 234", arb4_rot_face, 3 },
+	{ "Rotate Face 134", arb4_rot_face, 4 },
 	{ "RETURN",         arb4_rot_face, 5 },
 	{ "", (void (*)())NULL, 0 }
 };
@@ -1454,15 +1454,15 @@ nmg_ed(int arg)
 			NMG_CK_MODEL( m );
 
 			/* look for wire loops */
-			for( BU_LIST_FOR( r , nmgregion , &m->r_hd ) )
+			for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 			{
 				NMG_CK_REGION( r );
-				for( BU_LIST_FOR( s , shell , &r->s_hd ) )
+				for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 				{
 					if( BU_LIST_IS_EMPTY( &s->lu_hd ) )
 						continue;
 
-					for( BU_LIST_FOR( lu_tmp , loopuse , &s->lu_hd ) )
+					for( BU_LIST_FOR( lu_tmp, loopuse, &s->lu_hd ) )
 					{
 						if( !lu )
 							lu = lu_tmp;
@@ -1494,7 +1494,7 @@ nmg_ed(int arg)
 			}
 
 			/* Make sure loop is not a crack */
-			area = nmg_loop_plane_area( lu , lu_pl );
+			area = nmg_loop_plane_area( lu, lu_pl );
 
 			if( area < 0.0 )
 			{
@@ -1504,7 +1504,7 @@ nmg_ed(int arg)
 			}
 
 			/* Check if loop crosses itself */
-			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				struct edgeuse *eu2;
 				struct vertex *v1;
@@ -1516,7 +1516,7 @@ nmg_ed(int arg)
 				NMG_CK_VERTEX( v1 );
 				VSUB2( edge1, eu->eumate_p->vu_p->v_p->vg_p->coord, v1->vg_p->coord );
 
-				for( eu2 = BU_LIST_PNEXT( edgeuse , &eu->l ) ; BU_LIST_NOT_HEAD( eu2 , &lu->down_hd ) ; eu2=BU_LIST_PNEXT( edgeuse, &eu2->l) )
+				for( eu2 = BU_LIST_PNEXT( edgeuse, &eu->l ) ; BU_LIST_NOT_HEAD( eu2, &lu->down_hd ) ; eu2=BU_LIST_PNEXT( edgeuse, &eu2->l) )
 				{
 					struct vertex *v2;
 					vect_t edge2;
@@ -1574,8 +1574,8 @@ nmg_ed(int arg)
 			/* Create a temporary model to store the basis loop */
 			m_tmp = nmg_mm();
 			r_tmp = nmg_mrsv( m_tmp );
-			s_tmp = BU_LIST_FIRST( shell , &r_tmp->s_hd );
-			lu_copy = nmg_dup_loop( lu , &s_tmp->l.magic , (long **)0 );
+			s_tmp = BU_LIST_FIRST( shell, &r_tmp->s_hd );
+			lu_copy = nmg_dup_loop( lu, &s_tmp->l.magic, (long **)0 );
 			if( !lu_copy )
 			{
 			  Tcl_AppendResult(interp, "Failed to make copy of loop\n", (char *)NULL);
@@ -1585,7 +1585,7 @@ nmg_ed(int arg)
 
 			/* Get the first vertex in the loop as the basis for extrusion */
 			eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
-			VMOVE( lu_keypoint , eu->vu_p->v_p->vg_p->coord );
+			VMOVE( lu_keypoint, eu->vu_p->v_p->vg_p->coord );
 
 			s = lu->up.s_p;
 
@@ -1593,7 +1593,7 @@ nmg_ed(int arg)
 			{
 				/* make a new shell to hold the extruded solid */
 
-				r = BU_LIST_FIRST( nmgregion , &m->r_hd );
+				r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 				NMG_CK_REGION( r );
 				es_s = nmg_msv( r );
 			}
@@ -1661,19 +1661,19 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_PART_CK_MAGIC( part );
 
-			if( !strcmp( cp , "V" ) )
+			if( !strcmp( cp, "V" ) )
 			{
-				VMOVE( mpt , part->part_V );
+				VMOVE( mpt, part->part_V );
 				*strp = "V";
 			}
-			else if( !strcmp( cp , "H" ) )
+			else if( !strcmp( cp, "H" ) )
 			{
-				VADD2( mpt , part->part_V , part->part_H );
+				VADD2( mpt, part->part_V, part->part_H );
 				*strp = "H";
 			}
 			else	/* default */
 			{
-				VMOVE( mpt , part->part_V );
+				VMOVE( mpt, part->part_V );
 				*strp = "V";
 			}
 			break;
@@ -1687,10 +1687,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if (es_pipept == (struct wdb_pipept *)NULL) {
-			  pipe_seg = BU_LIST_FIRST( wdb_pipept , &pipe->pipe_segs_head );
-			  VMOVE( mpt , pipe_seg->pp_coord );
+			  pipe_seg = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
+			  VMOVE( mpt, pipe_seg->pp_coord );
 			} else {
-			  VMOVE( mpt , es_pipept->pp_coord );
+			  VMOVE( mpt, es_pipept->pp_coord );
 			}
 			*strp = "V";
 			break;
@@ -1707,7 +1707,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			if( es_metaballpt==NULL )
 			    snprintf(buf, BUFSIZ, "no point selected");
 			else {
-			    VMOVE( mpt , es_metaballpt->coord );
+			    VMOVE( mpt, es_metaballpt->coord );
 			    snprintf(buf, BUFSIZ, "V %f", es_metaballpt->fldstr);
 			}
 			*strp = buf;
@@ -1727,7 +1727,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				{
 					for( k=j+1 ; k<arbn->neqn ; k++ )
 					{
-						if( !bn_mkpoint_3planes( mpt , arbn->eqn[i] , arbn->eqn[j] , arbn->eqn[k] ) )
+						if( !bn_mkpoint_3planes( mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k] ) )
 						{
 							int l;
 
@@ -1737,7 +1737,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 								if( l == i || l == j || l == k )
 									continue;
 
-								if( DIST_PT_PLANE( mpt , arbn->eqn[l] ) > mged_tol.dist )
+								if( DIST_PT_PLANE( mpt, arbn->eqn[l] ) > mged_tol.dist )
 								{
 									good_vert = 0;
 									break;
@@ -1768,8 +1768,8 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_EBM_CK_MAGIC( ebm );
 
-			VSETALL( pt , 0.0 );
-			MAT4X3PNT( mpt , ebm->mat , pt );
+			VSETALL( pt, 0.0 );
+			MAT4X3PNT( mpt, ebm->mat, pt );
 			*strp = "V";
 			break;
 		}
@@ -1793,8 +1793,8 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_DSP_CK_MAGIC( dsp );
 
-			VSETALL( pt , 0.0 );
-			MAT4X3PNT( mpt , dsp->dsp_stom , pt );
+			VSETALL( pt, 0.0 );
+			MAT4X3PNT( mpt, dsp->dsp_stom, pt );
 			*strp = "V";
 			break;
 		}
@@ -1817,8 +1817,8 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 
 			RT_VOL_CK_MAGIC( vol );
 
-			VSETALL( pt , 0.0 );
-			MAT4X3PNT( mpt , vol->mat , pt );
+			VSETALL( pt, 0.0 );
+			MAT4X3PNT( mpt, vol->mat, pt );
 			*strp = "V";
 			break;
 		}
@@ -1828,7 +1828,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_half_internal *)ip->idb_ptr;
 			RT_HALF_CK_MAGIC( haf );
 
-			VSCALE( mpt , haf->eqn , haf->eqn[H] );
+			VSCALE( mpt, haf->eqn, haf->eqn[H] );
 			*strp = "V";
 			break;
 		}
@@ -1846,14 +1846,14 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				vertex_number = (*ptr) - '0';
 				if( vertex_number < 1 || vertex_number > 8 )
 					vertex_number = 1;
-				VMOVE( mpt , arb->pt[vertex_number-1] );
+				VMOVE( mpt, arb->pt[vertex_number-1] );
 				sprintf( buf, "V%d", vertex_number );
 				*strp = buf;
 				break;
 			}
 
 			/* Default */
-			VMOVE( mpt , arb->pt[0] );
+			VMOVE( mpt, arb->pt[0] );
 			*strp = "V1";
 
 			break;
@@ -1871,17 +1871,17 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				break;
 			}
 			if( strcmp( cp, "A" ) == 0 )  {
-				VADD2( mpt , ell->v , ell->a );
+				VADD2( mpt, ell->v, ell->a );
 				*strp = "A";
 				break;
 			}
 			if( strcmp( cp, "B" ) == 0 )  {
-				VADD2( mpt , ell->v , ell->b );
+				VADD2( mpt, ell->v, ell->b );
 				*strp = "B";
 				break;
 			}
 			if( strcmp( cp, "C" ) == 0 )  {
-				VADD2( mpt , ell->v , ell->c );
+				VADD2( mpt, ell->v, ell->c );
 				*strp = "C";
 				break;
 			}
@@ -1902,17 +1902,17 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				break;
 			}
 			if( strcmp( cp, "A" ) == 0 )  {
-				VADD2( mpt , superell->v , superell->a );
+				VADD2( mpt, superell->v, superell->a );
 				*strp = "A";
 				break;
 			}
 			if( strcmp( cp, "B" ) == 0 )  {
-				VADD2( mpt , superell->v , superell->b );
+				VADD2( mpt, superell->v, superell->b );
 				*strp = "B";
 				break;
 			}
 			if( strcmp( cp, "C" ) == 0 )  {
-				VADD2( mpt , superell->v , superell->c );
+				VADD2( mpt, superell->v, superell->c );
 				*strp = "C";
 				break;
 			}
@@ -2026,7 +2026,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_rpc_internal *)ip->idb_ptr;
 			RT_RPC_CK_MAGIC( rpc );
 
-			VMOVE( mpt , rpc->rpc_V );
+			VMOVE( mpt, rpc->rpc_V );
 			*strp = "V";
 			break;
 		}
@@ -2036,7 +2036,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_rhc_internal *)ip->idb_ptr;
 			RT_RHC_CK_MAGIC( rhc );
 
-			VMOVE( mpt , rhc->rhc_V );
+			VMOVE( mpt, rhc->rhc_V );
 			*strp = "V";
 			break;
 		}
@@ -2046,7 +2046,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_epa_internal *)ip->idb_ptr;
 			RT_EPA_CK_MAGIC( epa );
 
-			VMOVE( mpt , epa->epa_V );
+			VMOVE( mpt, epa->epa_V );
 			*strp = "V";
 			break;
 		}
@@ -2056,7 +2056,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_ehy_internal *)ip->idb_ptr;
 			RT_EHY_CK_MAGIC( ehy );
 
-			VMOVE( mpt , ehy->ehy_V );
+			VMOVE( mpt, ehy->ehy_V );
 			*strp = "V";
 			break;
 		}
@@ -2066,7 +2066,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				(struct rt_eto_internal *)ip->idb_ptr;
 			RT_ETO_CK_MAGIC( eto );
 
-			VMOVE( mpt , eto->eto_V );
+			VMOVE( mpt, eto->eto_V );
 			*strp = "V";
 			break;
 		}
@@ -2078,7 +2078,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			RT_PG_CK_MAGIC( pg );
 
 			_poly = pg->poly;
-			VMOVE( mpt , _poly->verts );
+			VMOVE( mpt, _poly->verts );
 			*strp = "V";
 			break;
 		}
@@ -2142,7 +2142,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			if( BU_LIST_IS_EMPTY( &m->r_hd ) )
 				break;
 
-			r = BU_LIST_FIRST( nmgregion , &m->r_hd );
+			r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 			if( !r )
 				break;
 			NMG_CK_REGION( r );
@@ -2150,7 +2150,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			if( BU_LIST_IS_EMPTY( &r->s_hd ) )
 				break;
 
-			s = BU_LIST_FIRST( shell , &r->s_hd );
+			s = BU_LIST_FIRST( shell, &r->s_hd );
 			if( !s )
 				break;
 			NMG_CK_SHELL( s );
@@ -2158,63 +2158,63 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			if( BU_LIST_IS_EMPTY( &s->fu_hd ) )
 				fu = (struct faceuse *)NULL;
 			else
-				fu = BU_LIST_FIRST( faceuse , &s->fu_hd );
+				fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
 			if( fu )
 			{
 				NMG_CK_FACEUSE( fu );
-				lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+				lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 				NMG_CK_LOOPUSE( lu );
 				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
 				{
-					eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
+					eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 					NMG_CK_EDGEUSE( eu );
 					NMG_CK_VERTEXUSE( eu->vu_p );
 					v = eu->vu_p->v_p;
 				}
 				else
 				{
-					vu = BU_LIST_FIRST( vertexuse , &lu->down_hd );
+					vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE( vu );
 					v = vu->v_p;
 				}
 				NMG_CK_VERTEX( v );
 				if( !v->vg_p )
 					break;
-				VMOVE( mpt , v->vg_p->coord );
+				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
 				break;
 			}
 			if( BU_LIST_IS_EMPTY( &s->lu_hd ) )
 				lu = (struct loopuse *)NULL;
 			else
-				lu = BU_LIST_FIRST( loopuse , &s->lu_hd );
+				lu = BU_LIST_FIRST( loopuse, &s->lu_hd );
 			if( lu )
 			{
 				NMG_CK_LOOPUSE( lu );
 				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
 				{
-					eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
+					eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 					NMG_CK_EDGEUSE( eu );
 					NMG_CK_VERTEXUSE( eu->vu_p );
 					v = eu->vu_p->v_p;
 				}
 				else
 				{
-					vu = BU_LIST_FIRST( vertexuse , &lu->down_hd );
+					vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
 					NMG_CK_VERTEXUSE( vu );
 					v = vu->v_p;
 				}
 				NMG_CK_VERTEX( v );
 				if( !v->vg_p )
 					break;
-				VMOVE( mpt , v->vg_p->coord );
+				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
 				break;
 			}
 			if( BU_LIST_IS_EMPTY( &s->eu_hd ) )
 				eu = (struct edgeuse *)NULL;
 			else
-				eu = BU_LIST_FIRST( edgeuse , &s->eu_hd );
+				eu = BU_LIST_FIRST( edgeuse, &s->eu_hd );
 			if( eu )
 			{
 				NMG_CK_EDGEUSE( eu );
@@ -2223,7 +2223,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				NMG_CK_VERTEX( v );
 				if( !v->vg_p )
 					break;
-				VMOVE( mpt , v->vg_p->coord );
+				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
 				break;
 			}
@@ -2235,7 +2235,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				NMG_CK_VERTEX( v );
 				if( !v->vg_p )
 					break;
-				VMOVE( mpt , v->vg_p->coord );
+				VMOVE( mpt, v->vg_p->coord );
 				*strp = "V";
 				break;
 			}
@@ -2481,7 +2481,7 @@ init_sedit(void)
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
 		RT_ARB_CK_MAGIC( arb );
 
-		type = rt_arb_std_type( &es_int , &mged_tol );
+		type = rt_arb_std_type( &es_int, &mged_tol );
 		es_type = type;
 
 		if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
@@ -3680,7 +3680,7 @@ sedit(void)
 			/* change D of planar equation */
 			es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], work);
 			/* find new vertices, put in record in vector notation */
-			(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+			(void)rt_arb_calc_points( arb, es_type, es_peqn, &mged_tol );
 		}
 		break;
 
@@ -3851,7 +3851,7 @@ sedit(void)
 			es_peqn[es_menu][3]=VDOT(eqp,tempvec);
 		}
 
-		(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+		(void)rt_arb_calc_points( arb, es_type, es_peqn, &mged_tol );
 		MAT_IDN( incr_change );
 
 		/* no need to calc_planes again */
@@ -4522,7 +4522,7 @@ sedit(void)
 			NMG_CK_EDGEUSE( es_eu );
 
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
@@ -4532,7 +4532,7 @@ sedit(void)
 			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para );
+				VMOVE( new_pt, es_para );
 #endif
 			}else if( inpara && inpara != 3 )
 			{
@@ -4557,7 +4557,7 @@ sedit(void)
 				NMG_CK_LOOPUSE( lu );
 
 				/* get plane equation for loop */
-				area = nmg_loop_plane_area( lu , pl );
+				area = nmg_loop_plane_area( lu, pl );
 				if( area > 0.0 )
 				{
 					vect_t view_z_dir;
@@ -4566,17 +4566,17 @@ sedit(void)
 
 					/* Get view direction vector */
 					VSET( view_z_dir, 0.0, 0.0, 1.0 );
-					MAT4X3VEC(view_dir , view_state->vs_vop->vo_view2model , view_z_dir);
+					MAT4X3VEC(view_dir, view_state->vs_vop->vo_view2model, view_z_dir);
 
 					/* intersect line through new_pt with plane of loop */
-					if( bn_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
+					if( bn_isect_line3_plane( &dist, new_pt, view_dir, pl, &mged_tol ) < 1)
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
 					  mged_print_result( TCL_ERROR );
 						break;
 					}
-					VJOIN1( new_pt , new_pt , dist , view_dir );
+					VJOIN1( new_pt, new_pt, dist, view_dir );
 				}
 			}
 
@@ -4618,7 +4618,7 @@ sedit(void)
 				  break;
 				}
 
-				prev_eu = BU_LIST_PPREV_CIRC( edgeuse , &es_eu->l );
+				prev_eu = BU_LIST_PPREV_CIRC( edgeuse, &es_eu->l );
 				NMG_CK_EDGEUSE( prev_eu );
 
 				if( prev_eu == es_eu )
@@ -4636,26 +4636,26 @@ sedit(void)
 						break;
 					}
 					NMG_CK_EDGEUSE( es_eu->eumate_p );
-					nmg_movevu( es_eu->eumate_p->vu_p , es_eu->vu_p->v_p );
+					nmg_movevu( es_eu->eumate_p->vu_p, es_eu->vu_p->v_p );
 					break;
 				}
 
-				next_eu = BU_LIST_PNEXT_CIRC( edgeuse , &es_eu->l );
+				next_eu = BU_LIST_PNEXT_CIRC( edgeuse, &es_eu->l );
 				NMG_CK_EDGEUSE( next_eu );
 
-				nmg_movevu( next_eu->vu_p , es_eu->vu_p->v_p );
+				nmg_movevu( next_eu->vu_p, es_eu->vu_p->v_p );
 				if( nmg_keu( es_eu ) )
 				{
 					/* Should never happen! */
 					bu_exit(EXIT_FAILURE,  "sedit(): killed edge and emptied loop!\n" );
 				}
 				es_eu = prev_eu;
-				nmg_rebound( m , &mged_tol );
+				nmg_rebound( m, &mged_tol );
 
 				/* fix edge geometry for modified edge (next_eu ) */
 				eg = next_eu->g.lseg_p;
 				NMG_CK_EDGE_G_LSEG( eg );
-				VMOVE( eg->e_pt , next_eu->vu_p->v_p->vg_p->coord );
+				VMOVE( eg->e_pt, next_eu->vu_p->v_p->vg_p->coord );
 				VSUB2( eg->e_dir, next_eu->eumate_p->vu_p->v_p->vg_p->coord, next_eu->vu_p->v_p->vg_p->coord );
 
 				break;
@@ -4665,7 +4665,7 @@ sedit(void)
 				/* wire edge, just kill it */
 				(void)nmg_keu( es_eu );
 				es_eu = (struct edgeuse *)NULL;
-				nmg_rebound( m , &mged_tol );
+				nmg_rebound( m, &mged_tol );
 			}
 		}
 
@@ -4688,17 +4688,17 @@ sedit(void)
 			m = nmg_find_model( &es_eu->l.magic );
 			NMG_CK_MODEL( m );
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-			  VMOVE( new_pt , es_para );
+			  VMOVE( new_pt, es_para );
 #endif
 			}else if( inpara && inpara != 3 )
 			{
@@ -4727,7 +4727,7 @@ sedit(void)
 				}
 
 				/* get plane equation for loop */
-				area = nmg_loop_plane_area( lu , pl );
+				area = nmg_loop_plane_area( lu, pl );
 				if( area > 0.0 )
 				{
 					vect_t view_z_dir;
@@ -4739,23 +4739,23 @@ sedit(void)
 					MAT4X3VEC(view_dir, view_state->vs_vop->vo_view2model, view_z_dir);
 
 					/* intersect line through new_pt with plane of loop */
-					if( bn_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
+					if( bn_isect_line3_plane( &dist, new_pt, view_dir, pl, &mged_tol ) < 1)
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
 						mged_print_result( TCL_ERROR );
 						break;
 					}
-					VJOIN1( new_pt , new_pt , dist , view_dir );
+					VJOIN1( new_pt, new_pt, dist, view_dir );
 				}
 			}
-			es_eu = nmg_esplit( v , es_eu , 0 );
-			nmg_vertex_gv( es_eu->vu_p->v_p , new_pt );
-			nmg_rebound( m , &mged_tol );
+			es_eu = nmg_esplit( v, es_eu, 0 );
+			nmg_vertex_gv( es_eu->vu_p->v_p, new_pt );
+			nmg_rebound( m, &mged_tol );
 			eg = es_eu->g.lseg_p;
 			NMG_CK_EDGE_G_LSEG( eg );
-			VMOVE( eg->e_pt , new_pt );
-			VSUB2( eg->e_dir , es_eu->eumate_p->vu_p->v_p->vg_p->coord , new_pt );
+			VMOVE( eg->e_pt, new_pt );
+			VSUB2( eg->e_dir, es_eu->eumate_p->vu_p->v_p->vg_p->coord, new_pt );
 		}
 		break;
 	case ECMD_NMG_LEXTRU:
@@ -4770,17 +4770,17 @@ sedit(void)
 			fastf_t area;
 
 			if( es_mvalid )
-				VMOVE( to_pt , es_mparam )
+				VMOVE( to_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( to_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( to_pt , es_para );
+			    VMOVE( to_pt, es_para );
 			  }
 #else
-				VMOVE( to_pt , es_para )
+				VMOVE( to_pt, es_para )
 #endif
 			}
 			else if( inpara == 1 )
@@ -4794,9 +4794,9 @@ sedit(void)
 			else if( !es_mvalid && !inpara )
 				break;
 
-			VSUB2( extrude_vec , to_pt , lu_keypoint );
+			VSUB2( extrude_vec, to_pt, lu_keypoint );
 
-			if( bn_isect_line3_plane( &dist , to_pt , extrude_vec , lu_pl , &mged_tol ) < 1 )
+			if( bn_isect_line3_plane( &dist, to_pt, extrude_vec, lu_pl, &mged_tol ) < 1 )
 			{
 			  Tcl_AppendResult(interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
 			  mged_print_result( TCL_ERROR );
@@ -4812,8 +4812,8 @@ sedit(void)
 				es_s = nmg_msv( r );
 			}
 
-			new_lu = nmg_dup_loop( lu_copy , &es_s->l.magic , (long **)0 );
-			area = nmg_loop_plane_area( new_lu , new_lu_pl );
+			new_lu = nmg_dup_loop( lu_copy, &es_s->l.magic, (long **)0 );
+			area = nmg_loop_plane_area( new_lu, new_lu_pl );
 			if( area < 0.0 )
 			{
 			  Tcl_AppendResult(interp, "loop to be extruded as no area!\n", (char *)NULL);
@@ -4821,29 +4821,29 @@ sedit(void)
 			  return;
 			}
 
-			if( VDOT( extrude_vec , new_lu_pl ) > 0.0 )
+			if( VDOT( extrude_vec, new_lu_pl ) > 0.0 )
 			{
 				plane_t tmp_pl;
 
 				fu = nmg_mf( new_lu->lumate_p );
 				NMG_CK_FACEUSE( fu );
-				HREVERSE( tmp_pl , new_lu_pl );
-				nmg_face_g( fu , tmp_pl );
+				HREVERSE( tmp_pl, new_lu_pl );
+				nmg_face_g( fu, tmp_pl );
 			}
 			else
 			{
 				fu = nmg_mf( new_lu );
 				NMG_CK_FACEUSE( fu );
-				nmg_face_g( fu , new_lu_pl );
+				nmg_face_g( fu, new_lu_pl );
 			}
 
-			(void)nmg_extrude_face( fu , extrude_vec , &mged_tol );
+			(void)nmg_extrude_face( fu, extrude_vec, &mged_tol );
 
-			nmg_fix_normals( fu->s_p , &mged_tol );
+			nmg_fix_normals( fu->s_p, &mged_tol );
 
 			m = nmg_find_model( &fu->l.magic );
-			nmg_rebound( m , &mged_tol );
-			(void)nmg_ck_geometry( m , &mged_tol );
+			nmg_rebound( m, &mged_tol );
+			(void)nmg_ck_geometry( m, &mged_tol );
 
 			es_eu = (struct edgeuse *)NULL;
 
@@ -4860,17 +4860,17 @@ sedit(void)
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if( es_mvalid )
-			  VMOVE( new_pt , es_mparam )
+			  VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-			  VMOVE( new_pt , es_para )
+			  VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -4901,17 +4901,17 @@ sedit(void)
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if( es_mvalid )
-			  VMOVE( new_pt , es_mparam )
+			  VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -4942,17 +4942,17 @@ sedit(void)
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -4983,17 +4983,17 @@ sedit(void)
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5017,17 +5017,17 @@ sedit(void)
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5102,7 +5102,7 @@ sedit(void)
 
 			/* Get view direction vector */
 			VSET( z_dir, 0.0, 0.0, 1.0 );
-			MAT4X3VEC(view_dir , view_state->vs_vop->vo_view2model , z_dir);
+			MAT4X3VEC(view_dir, view_state->vs_vop->vo_view2model, z_dir);
 			find_nearest_ars_pt( &es_ars_crv, &es_ars_col, ars, pick_pt, view_dir );
 			VMOVE( es_pt, &ars->curves[es_ars_crv][es_ars_col*3] );
 			VSCALE( selected_pt, es_pt, base2local );
@@ -5457,10 +5457,10 @@ sedit(void)
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5519,10 +5519,10 @@ sedit(void)
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5580,10 +5580,10 @@ sedit(void)
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5595,7 +5595,7 @@ sedit(void)
 			else if( !es_mvalid && !inpara )
 				break;
 
-			VMOVE( &ars->curves[es_ars_crv][es_ars_col*3] , new_pt );
+			VMOVE( &ars->curves[es_ars_crv][es_ars_col*3], new_pt );
 		}
 		break;
 	case ECMD_BOT_MOVEV:
@@ -5626,17 +5626,17 @@ sedit(void)
 
 			vert = bot_verts[0];
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5648,7 +5648,7 @@ sedit(void)
 			else if( !es_mvalid && !inpara )
 				break;
 
-			VMOVE( &bot->vertices[vert*3] , new_pt );
+			VMOVE( &bot->vertices[vert*3], new_pt );
 		}
 		break;
 	case ECMD_BOT_MOVEE:
@@ -5675,17 +5675,17 @@ sedit(void)
 			v1 = bot_verts[0];
 			v2 = bot_verts[1];
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5699,7 +5699,7 @@ sedit(void)
 
 
 			VSUB2( diff, new_pt, &bot->vertices[v1*3] );
-			VMOVE( &bot->vertices[v1*3] , new_pt );
+			VMOVE( &bot->vertices[v1*3], new_pt );
 			VADD2( &bot->vertices[v2*3], &bot->vertices[v2*3], diff );
 		}
 		break;
@@ -5725,17 +5725,17 @@ sedit(void)
 			v3 = bot_verts[2];
 
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
+				VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
 			  if(mged_variables->mv_context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
-			    VMOVE( new_pt , es_para );
+			    VMOVE( new_pt, es_para );
 			  }
 #else
-				VMOVE( new_pt , es_para )
+				VMOVE( new_pt, es_para )
 #endif
 			}
 			else if( inpara && inpara != 3 )
@@ -5748,7 +5748,7 @@ sedit(void)
 				break;
 
 			VSUB2( diff, new_pt, &bot->vertices[v1*3] );
-			VMOVE( &bot->vertices[v1*3] , new_pt );
+			VMOVE( &bot->vertices[v1*3], new_pt );
 			VADD2( &bot->vertices[v2*3], &bot->vertices[v2*3], diff );
 			VADD2( &bot->vertices[v3*3], &bot->vertices[v3*3], diff );
 		}
@@ -5772,9 +5772,9 @@ sedit(void)
 			RT_METABALL_CK_MAGIC( metaball );
 
 			if( es_mvalid )
-			  VMOVE( new_pt , es_mparam )
+			  VMOVE( new_pt, es_mparam )
 			else if( inpara == 3 ){
-			  VMOVE( new_pt , es_para )
+			  VMOVE( new_pt, es_para )
 			}
 			else if( inpara && inpara != 3 )
 			{
@@ -5852,7 +5852,7 @@ sedit(void)
 
 		    if ( inpara != 3 ) { bu_log("Must provide x y z"); break; }
 
-		    es_metaballpt = BU_LIST_FIRST( wdb_metaballpt , &metaball->metaball_ctrl_head );
+		    es_metaballpt = BU_LIST_FIRST( wdb_metaballpt, &metaball->metaball_ctrl_head );
 		    VMOVE( n->coord, es_para );
 		    n->l.magic = WDB_METABALLPT_MAGIC;
 		    n->fldstr = 1.0;
@@ -6093,7 +6093,7 @@ sedit_mouse( const vect_t mousevec )
 	(struct rt_arb_internal *)es_int.idb_ptr;
 
       RT_ARB_CK_MAGIC( arb );
-      (void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+      (void)rt_arb_calc_points( arb, es_type, es_peqn, &mged_tol );
     }
 
     break;
@@ -6428,7 +6428,7 @@ sedit_trans(fastf_t *tvec)
 	(struct rt_arb_internal *)es_int.idb_ptr;
       RT_ARB_CK_MAGIC( arb );
 
-      VMOVE( temp , arb->pt[es_menu] );
+      VMOVE( temp, arb->pt[es_menu] );
     }
 
     MAT4X3PNT(temp, view_state->vs_vop->vo_view2model, tvec);
@@ -6460,7 +6460,7 @@ sedit_trans(fastf_t *tvec)
 	(struct rt_arb_internal *)es_int.idb_ptr;
 
       RT_ARB_CK_MAGIC( arb );
-      (void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+      (void)rt_arb_calc_points( arb, es_type, es_peqn, &mged_tol );
     }
 
     break;
@@ -7830,7 +7830,7 @@ init_oedit_guts(void)
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
 
-		es_type = rt_arb_std_type(&es_int , &mged_tol);
+		es_type = rt_arb_std_type(&es_int, &mged_tol);
 	}
 
 	/* Save aggregate path matrix */
@@ -8039,9 +8039,9 @@ f_eqn(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		es_peqn[es_menu][i]= atof(argv[i+1]);
 	VUNITIZE( &es_peqn[es_menu][0] );
 
-	VMOVE( tempvec , arb->pt[fixv] );
+	VMOVE( tempvec, arb->pt[fixv] );
 	es_peqn[es_menu][3]=VDOT( es_peqn[es_menu], tempvec );
-	if( rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol ) )
+	if( rt_arb_calc_points( arb, es_type, es_peqn, &mged_tol ) )
 		return CMD_BAD;
 
 	/* draw the new version of the solid */

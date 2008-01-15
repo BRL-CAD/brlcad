@@ -58,24 +58,24 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	Readcnv( &scale_height , "" );
-	Readcnv( &radius , "" );
-	Readcnv( &x1 , "" );
-	Readcnv( &y1 , "" );
-	Readcnv( &z1 , "" );
-	Readcnv( &x2 , "" );
-	Readcnv( &y2 , "" );
-	Readcnv( &z2 , "" );
+	Readint( &sol_num, "" );
+	Readcnv( &scale_height, "" );
+	Readcnv( &radius, "" );
+	Readcnv( &x1, "" );
+	Readcnv( &y1, "" );
+	Readcnv( &z1, "" );
+	Readcnv( &x2, "" );
+	Readcnv( &y2, "" );
+	Readcnv( &z2, "" );
 
 	if( radius <= 0.0 || scale_height <= 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		if( radius == 0.0 )
 		{
 			bu_log( "\tradius of cylinder is zero!!!\n" );
@@ -122,7 +122,7 @@ int entityno;
 
 	if( mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0 )  {
 		bu_log("Unable to write entity D%07d (%s)\n" ,
-			dir[entityno]->direct , dir[entityno]->name );
+			dir[entityno]->direct, dir[entityno]->name );
 		return( 0 );
 	}
 	return( 1 );

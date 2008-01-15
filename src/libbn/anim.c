@@ -417,7 +417,7 @@ void anim_ypr2mat(mat_t m, const vect_t a)
 }
 
 /** ANIM_YPR2VMAT
- * @brief Create a post-multiplication rotation matrix , which could
+ * @brief Create a post-multiplication rotation matrix, which could
  * be used to move the virtual camera to the given yaw, pitch,
  * and roll,  which are stored in radians in the given vector a. The
  * following are equivalent sets of commands:

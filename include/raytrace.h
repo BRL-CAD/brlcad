@@ -911,7 +911,7 @@ struct rt_comb_internal  {
 	char		inherit;
 };
 #define RT_COMB_MAGIC	0x436f6d49	/**< @brief "ComI" */
-#define RT_CHECK_COMB(_p)		BU_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
+#define RT_CHECK_COMB(_p)		BU_CKMAG( _p, RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
 #define RT_CHECK_COMB_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p, RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB_TCL(_interp,_p)	RT_CHECK_COMB_TCL(_interp,_p)
@@ -940,7 +940,7 @@ struct rt_binunif_internal {
 	}		u;
 };
 #define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55	/* "BinU" */
-#define RT_CHECK_BINUNIF(_p)		BU_CKMAG( _p , RT_BINUNIF_INTERNAL_MAGIC , "rt_binunif_internal" )
+#define RT_CHECK_BINUNIF(_p)		BU_CKMAG( _p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal" )
 #define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
 #define RT_CHECK_BINUNIF_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
 #define RT_CK_BINUNIF_TCL(_interp,_p)	RT_CHECK_BINUNIF_TCL(_interp,_p)

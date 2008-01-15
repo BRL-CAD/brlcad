@@ -144,7 +144,7 @@ editarb( vect_t pos_model )
 
 	if( es_edflag == PTARB ) {
 		/* moving a point - not an edge */
-		VMOVE( arb->pt[es_menu] , pos_model );
+		VMOVE( arb->pt[es_menu], pos_model );
 		edptr += 4;
 	} else if( es_edflag == EARB ) {
 		vect_t	edge_dir;
@@ -252,23 +252,23 @@ bu_log("redo plane 2 == 5, 6, 7 for ARB7\n");
 		break;
 
 		case ARB7:
-			VMOVE( arb->pt[7] , arb->pt[4] )
+			VMOVE( arb->pt[7], arb->pt[4] )
 			break;
 
 		case ARB6:
-			VMOVE( arb->pt[5] , arb->pt[4] );
-			VMOVE( arb->pt[7] , arb->pt[6] );
+			VMOVE( arb->pt[5], arb->pt[4] );
+			VMOVE( arb->pt[7], arb->pt[6] );
 			break;
 
 		case ARB5:
 			for( i=5 ; i<8 ; i++ )
-				VMOVE( arb->pt[i] , arb->pt[4] )
+				VMOVE( arb->pt[i], arb->pt[4] )
 			break;
 
 		case ARB4:
-			VMOVE( arb->pt[3] , arb->pt[0] );
+			VMOVE( arb->pt[3], arb->pt[0] );
 			for( i=5 ; i<8 ; i++ )
-				VMOVE( arb->pt[i] , arb->pt[4] )
+				VMOVE( arb->pt[i], arb->pt[4] )
 		break;
 	}
 
@@ -317,8 +317,8 @@ mv_edge(
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
 
-	VJOIN1( arb->pt[end1] , thru, t1, dir );
-	VJOIN1( arb->pt[end2] , thru, t2, dir );
+	VJOIN1( arb->pt[end1], thru, t1, dir );
+	VJOIN1( arb->pt[end2], thru, t2, dir );
 
 	return( 0 );
 }
@@ -374,7 +374,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* convert from the local unit (as input) to the base unit */
 	dist = dist * es_mat[15] * local2base;
 
-	memcpy((char *)&larb , (char *)es_int.idb_ptr , sizeof( struct rt_arb_internal ));
+	memcpy((char *)&larb, (char *)es_int.idb_ptr, sizeof( struct rt_arb_internal ));
 
 	if( (es_type == ARB6 || es_type == ARB4) && face < 1000 ) {
 		/* 3 point face */
@@ -451,7 +451,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VADD2( larb.pt[j] , larb.pt[i] , es_peqn[6] );
+			VADD2( larb.pt[j], larb.pt[i], es_peqn[6] );
 		}
 		break;
 
@@ -467,38 +467,38 @@ a4toa6:
 	case 1680:   /* protrude face 5678 */
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VADD2( larb.pt[i] , larb.pt[j] , es_peqn[6] );
+			VADD2( larb.pt[i], larb.pt[j], es_peqn[6] );
 		}
 		break;
 
 	case 60:   /* protrude face 1256 */
 	case 10:   /* extrude face 125 of ARB6 */
-		VADD2( larb.pt[3] , larb.pt[0] , es_peqn[6] );
-		VADD2( larb.pt[2] , larb.pt[1] , es_peqn[6] );
-		VADD2( larb.pt[7] , larb.pt[4] , es_peqn[6] );
-		VADD2( larb.pt[6] , larb.pt[5] , es_peqn[6] );
+		VADD2( larb.pt[3], larb.pt[0], es_peqn[6] );
+		VADD2( larb.pt[2], larb.pt[1], es_peqn[6] );
+		VADD2( larb.pt[7], larb.pt[4], es_peqn[6] );
+		VADD2( larb.pt[6], larb.pt[5], es_peqn[6] );
 		break;
 
 	case 672:   /* protrude face 4378 */
 	case 72:	/* extrude face 346 of ARB6 */
-		VADD2( larb.pt[0] , larb.pt[3] , es_peqn[6] );
-		VADD2( larb.pt[1] , larb.pt[2] , es_peqn[6] );
-		VADD2( larb.pt[5] , larb.pt[6] , es_peqn[6] );
-		VADD2( larb.pt[4] , larb.pt[7] , es_peqn[6] );
+		VADD2( larb.pt[0], larb.pt[3], es_peqn[6] );
+		VADD2( larb.pt[1], larb.pt[2], es_peqn[6] );
+		VADD2( larb.pt[5], larb.pt[6], es_peqn[6] );
+		VADD2( larb.pt[4], larb.pt[7], es_peqn[6] );
 		break;
 
 	case 252:   /* protrude face 2367 */
-		VADD2( larb.pt[0] , larb.pt[1] , es_peqn[6] );
-		VADD2( larb.pt[3] , larb.pt[2] , es_peqn[6] );
-		VADD2( larb.pt[4] , larb.pt[5] , es_peqn[6] );
-		VADD2( larb.pt[7] , larb.pt[6] , es_peqn[6] );
+		VADD2( larb.pt[0], larb.pt[1], es_peqn[6] );
+		VADD2( larb.pt[3], larb.pt[2], es_peqn[6] );
+		VADD2( larb.pt[4], larb.pt[5], es_peqn[6] );
+		VADD2( larb.pt[7], larb.pt[6], es_peqn[6] );
 		break;
 
 	case 160:   /* protrude face 1548 */
-		VADD2( larb.pt[1] , larb.pt[0] , es_peqn[6] );
-		VADD2( larb.pt[5] , larb.pt[4] , es_peqn[6] );
-		VADD2( larb.pt[2] , larb.pt[3] , es_peqn[6] );
-		VADD2( larb.pt[6] , larb.pt[7] , es_peqn[6] );
+		VADD2( larb.pt[1], larb.pt[0], es_peqn[6] );
+		VADD2( larb.pt[5], larb.pt[4], es_peqn[6] );
+		VADD2( larb.pt[2], larb.pt[3], es_peqn[6] );
+		VADD2( larb.pt[6], larb.pt[7], es_peqn[6] );
 		break;
 
 	case 120:
@@ -521,7 +521,7 @@ a4toa6:
 	}
 
 	/* copy local copy back to original */
-	memcpy((char *)es_int.idb_ptr , (char *)&larb , sizeof( struct rt_arb_internal ));
+	memcpy((char *)es_int.idb_ptr, (char *)&larb, sizeof( struct rt_arb_internal ));
 
 	/* draw the updated solid */
 	replot_editing_solid();
@@ -555,7 +555,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	if( db_lookup( dbip,  argv[1] , LOOKUP_QUIET ) != DIR_NULL )  {
+	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 	  aexists( argv[1] );
 	  return TCL_ERROR;
 	}
@@ -588,20 +588,20 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		if( fabs(norm1[i]) < fabs(norm1[j]) )
 			j = i;
 	}
-	VSET( norm2 , 0.0 , 0.0 , 0.0 );
+	VSET( norm2, 0.0, 0.0, 0.0 );
 	norm2[j] = 1.0;
-	VCROSS( norm3 , norm2 , norm1 );
-	VCROSS( norm2 , norm3 , norm1 );
+	VCROSS( norm3, norm2, norm1 );
+	VCROSS( norm2, norm3, norm1 );
 
 	/* create new rpp 20x20x2 */
 	/* the 20x20 faces are in rot, fb plane */
 	VUNITIZE( norm2 );
 	VUNITIZE( norm3 );
-	VJOIN1( arb->pt[1] , arb->pt[0] , 508.0 , norm2 );
-	VJOIN1( arb->pt[3] , arb->pt[0] , -508.0 , norm3 );
-	VJOIN2( arb->pt[2] , arb->pt[0] , 508.0 , norm2 , -508.0 , norm3 );
+	VJOIN1( arb->pt[1], arb->pt[0], 508.0, norm2 );
+	VJOIN1( arb->pt[3], arb->pt[0], -508.0, norm3 );
+	VJOIN2( arb->pt[2], arb->pt[0], 508.0, norm2, -508.0, norm3 );
 	for( i=0 ; i<4 ; i++ )
-		VJOIN1( arb->pt[i+4] , arb->pt[i] , -50.8 , norm1 );
+		VJOIN1( arb->pt[i+4], arb->pt[i], -50.8, norm1 );
 
 	/* no interrupts */
 	(void)signal( SIGINT, SIG_IGN );
@@ -698,7 +698,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	work[k] = -1.0;
 
 	/* make local copy of arb */
-	memcpy((char *)&larb , (char *)arb , sizeof( struct rt_arb_internal ));
+	memcpy((char *)&larb, (char *)arb, sizeof( struct rt_arb_internal ));
 
 	if(es_type == ARB6 && face < 1000) { 	/* 3 point face */
 		pt[0] = face / 100;
@@ -749,45 +749,45 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		}
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VELMUL( larb.pt[j] , larb.pt[i] , work );
+			VELMUL( larb.pt[j], larb.pt[i], work );
 		}
 		break;
 
 	case 1680:   /* mirror face 5678 */
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
-			VELMUL( larb.pt[i] , larb.pt[j] , work );
+			VELMUL( larb.pt[i], larb.pt[j], work );
 		}
 		break;
 
 	case 60:   /* mirror face 1256 */
 	case 10:	/* mirror face 125 of ARB6 */
-		VELMUL( larb.pt[3] , larb.pt[0] , work );
-		VELMUL( larb.pt[2] , larb.pt[1] , work );
-		VELMUL( larb.pt[7] , larb.pt[4] , work );
-		VELMUL( larb.pt[6] , larb.pt[5] , work );
+		VELMUL( larb.pt[3], larb.pt[0], work );
+		VELMUL( larb.pt[2], larb.pt[1], work );
+		VELMUL( larb.pt[7], larb.pt[4], work );
+		VELMUL( larb.pt[6], larb.pt[5], work );
 		break;
 
 	case 672:   /* mirror face 4378 */
 	case 72:	/* mirror face 346 of ARB6 */
-		VELMUL( larb.pt[0] , larb.pt[3] , work );
-		VELMUL( larb.pt[1] , larb.pt[2] , work );
-		VELMUL( larb.pt[5] , larb.pt[6] , work );
-		VELMUL( larb.pt[4] , larb.pt[7] , work );
+		VELMUL( larb.pt[0], larb.pt[3], work );
+		VELMUL( larb.pt[1], larb.pt[2], work );
+		VELMUL( larb.pt[5], larb.pt[6], work );
+		VELMUL( larb.pt[4], larb.pt[7], work );
 		break;
 
 	case 252:   /* mirror face 2367 */
-		VELMUL( larb.pt[0] , larb.pt[1] , work );
-		VELMUL( larb.pt[3] , larb.pt[2] , work );
-		VELMUL( larb.pt[4] , larb.pt[5] , work );
-		VELMUL( larb.pt[7] , larb.pt[6] , work );
+		VELMUL( larb.pt[0], larb.pt[1], work );
+		VELMUL( larb.pt[3], larb.pt[2], work );
+		VELMUL( larb.pt[4], larb.pt[5], work );
+		VELMUL( larb.pt[7], larb.pt[6], work );
 		break;
 
 	case 160:   /* mirror face 1548 */
-		VELMUL( larb.pt[1] , larb.pt[0] , work );
-		VELMUL( larb.pt[5] , larb.pt[4] , work );
-		VELMUL( larb.pt[2] , larb.pt[3] , work );
-		VELMUL( larb.pt[6] , larb.pt[7] , work );
+		VELMUL( larb.pt[1], larb.pt[0], work );
+		VELMUL( larb.pt[5], larb.pt[4], work );
+		VELMUL( larb.pt[2], larb.pt[3], work );
+		VELMUL( larb.pt[6], larb.pt[7], work );
 		break;
 
 	case 120:
@@ -805,7 +805,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 
 	/* copy to original */
-	memcpy((char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ));
+	memcpy((char *)arb, (char *)&larb, sizeof( struct rt_arb_internal ));
 
 	/* draw the updated solid */
 	replot_editing_solid();
@@ -1200,7 +1200,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* copy back to original arb */
-    memcpy((char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ));
+    memcpy((char *)arb, (char *)&larb, sizeof( struct rt_arb_internal ));
 
     /* draw the updated solid */
     replot_editing_solid();

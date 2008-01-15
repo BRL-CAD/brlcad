@@ -562,8 +562,8 @@ size_reset()
   VADD2SCALE( center, max, min, 0.5 );
   VSUB2( radial, max, center );
 
-  if( VNEAR_ZERO( radial , SQRT_SMALL_FASTF ) )
-    VSETALL( radial , 1.0 );
+  if( VNEAR_ZERO( radial, SQRT_SMALL_FASTF ) )
+    VSETALL( radial, 1.0 );
 
   MAT_IDN( toViewcenter );
   MAT_DELTAS_VEC_NEG( toViewcenter, center);

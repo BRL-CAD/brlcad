@@ -68,7 +68,7 @@ Makegroup()
 				if( !(dir[i]->referenced) )
 				{
 					/* Make the BRL-CAD member record */
-					wmem = mk_addmember( dir[i]->name , &head.l, NULL, operator[Union] );
+					wmem = mk_addmember( dir[i]->name, &head.l, NULL, operator[Union] );
 					flt = (fastf_t *)dir[i]->rot;
 					for( j=0 ; j<16 ; j++ )
 					{
@@ -80,11 +80,11 @@ Makegroup()
 		}
 		if( nurbs )
 		{
-			wmem = mk_addmember( "nurb.s" , &head.l, NULL, operator[Union] );
+			wmem = mk_addmember( "nurb.s", &head.l, NULL, operator[Union] );
 		}
 		/* Make the group named "all" */
-		mk_lcomb( fdout , "all" , &head , 0 ,
-			(char *)0 , (char *)0 , (unsigned char *)0 , 0 );
+		mk_lcomb( fdout, "all", &head, 0 ,
+			(char *)0, (char *)0, (unsigned char *)0, 0 );
 	}
 }
 

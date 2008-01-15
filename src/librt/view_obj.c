@@ -523,7 +523,7 @@ vo_rmat_cmd(struct view_obj	*vop,
 			return TCL_ERROR;
 
 		MAT_COPY(vop->vo_rotation, rotation);
-		vo_update(vop, interp , 1);
+		vo_update(vop, interp, 1);
 
 		return TCL_OK;
 	}
@@ -2848,9 +2848,9 @@ vo_update(struct view_obj	*vop,
 
 	/* Find current azimuth, elevation, and twist angles */
 	VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
-	MAT4X3VEC(temp , vop->vo_view2model , work);
-	VSET(work1 , 1.0, 0.0, 0.0);      /* view x-direction */
-	MAT4X3VEC(temp1 , vop->vo_view2model , work1);
+	MAT4X3VEC(temp, vop->vo_view2model, work);
+	VSET(work1, 1.0, 0.0, 0.0);      /* view x-direction */
+	MAT4X3VEC(temp1, vop->vo_view2model, work1);
 
 	/* calculate angles using accuracy of 0.005, since display
 	 * shows 2 digits right of decimal point */

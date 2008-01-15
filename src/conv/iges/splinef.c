@@ -34,7 +34,7 @@
 #include "machine.h"
 
 fastf_t
-splinef( c , s )
+splinef( c, s )
 fastf_t c[4], s;
 {
 	int i;

@@ -182,7 +182,7 @@ count_nodes(char *line)
     if (line == NULL)
 	return 0;
 
-    ptr = strtok(line , delims);
+    ptr = strtok(line, delims);
 
     while (ptr) {
 	/* First non-white is the relation operator */
@@ -192,7 +192,7 @@ count_nodes(char *line)
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
+	    bu_vls_printf(&tmp_vls, " %c is not a legal operator\n", relation );
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	    return( -1 );
@@ -399,7 +399,7 @@ put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *ol
 		name[i] = '\0';
 
 	    /* Check for existence of member */
-	    if ((db_lookup(dbip , name , LOOKUP_QUIET)) == DIR_NULL)
+	    if ((db_lookup(dbip, name, LOOKUP_QUIET)) == DIR_NULL)
 		bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
 	    /* get matrix */
@@ -499,7 +499,7 @@ cmd_get_comb(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-    dp = db_lookup(dbip , argv[1] , LOOKUP_QUIET);
+    dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
 
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
@@ -594,7 +594,7 @@ cmd_get_comb(ClientData	clientData,
 		    return TCL_ERROR;
 	    }
 
-	    bu_vls_printf(&vls, " %c %s\t" , op , rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    bu_vls_printf(&vls, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    vls_print_matrix(&vls, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	    bu_vls_printf(&vls, "\n");
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
@@ -644,7 +644,7 @@ writecomb( const struct rt_comb_internal *comb, const char *name )
 	RT_CK_COMB( comb );
 
     /* open the file */
-    if( (fp=fopen( red_tmpfil , "w" )) == NULL ) {
+    if( (fp=fopen( red_tmpfil, "w" )) == NULL ) {
 	perror( "MGED" );
 	Tcl_AppendResult(interp, "Cannot open temporary file for writing\n", (char *)NULL);
 	return(1);
@@ -735,7 +735,7 @@ writecomb( const struct rt_comb_internal *comb, const char *name )
 		fclose( fp );
 		return( 1 );
 	}
-	if( fprintf( fp , " %c %s" , op , rt_tree_array[i].tl_tree->tr_l.tl_name ) <= 0 ) {
+	if( fprintf( fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name ) <= 0 ) {
 	    Tcl_AppendResult(interp, "Cannot write to temporary file (", red_tmpfil, "). Aborting edit\n", (char *)NULL );
 	    fclose( fp );
 	    return( 1 );
@@ -768,7 +768,7 @@ checkcomb(void)
     int id=0, air=0;
     int rgb_valid;
 
-    if( (fp=fopen( red_tmpfil , "r" )) == NULL ) {
+    if( (fp=fopen( red_tmpfil, "r" )) == NULL ) {
 	perror( "MGED" );
 	Tcl_AppendResult(interp, "Cannot open temporary file for reading\n", (char *)NULL);
 	return(-1);
@@ -902,7 +902,7 @@ checkcomb(void)
 
 	done2=0;
 	first=1;
-	ptr = strtok( line , delims );
+	ptr = strtok( line, delims );
 
 	while (!done2) {
 	    if( name_v5 ) {
@@ -930,7 +930,7 @@ checkcomb(void)
 	    name = NULL;
 	    if( ptr != NULL && *ptr != '\0' ) {
 		if( dbip->dbi_version < 5 ) {
-		    strncpy( name_v4 , ptr , NAMESIZE );
+		    strncpy( name_v4, ptr, NAMESIZE );
 		    name_v4[NAMESIZE] = '\0';
 
 		    /* Eliminate trailing white space from name */
@@ -956,7 +956,7 @@ checkcomb(void)
 		struct bu_vls tmp_vls;
 
 		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, " %c is not a legal operator\n" , relation );
+		bu_vls_printf(&tmp_vls, " %c is not a legal operator\n", relation );
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), lineCopy,
 				 "\n", (char *)NULL);
 		bu_vls_free(&tmp_vls);
@@ -1051,7 +1051,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 	RT_CK_DIR( dp );
     }
 
-    if( (fp=fopen( red_tmpfil , "r" )) == NULL ) {
+    if( (fp=fopen( red_tmpfil, "r" )) == NULL ) {
 	Tcl_AppendResult(interp, " Cannot open edited file: ", red_tmpfil, "\n", (char *)NULL);
 	return( 1 );
     }
@@ -1071,7 +1071,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 
     /* build tree list */
     if( node_count )
-	rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "tree list" );
+	rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count, sizeof( struct rt_tree_array ), "tree list" );
     else
 	rt_tree_array = (struct rt_tree_array *)NULL;
 
@@ -1224,7 +1224,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 	    /* Next must be the member name */
 	    ptr = strtok( (char *)NULL, delims );
 	    if( dbip->dbi_version < 5 ) {
-		strncpy( name_v4 , ptr, NAMESIZE );
+		strncpy( name_v4, ptr, NAMESIZE );
 		name_v4[NAMESIZE] = '\0';
 		name = name_v4;
 	    } else {
@@ -1242,7 +1242,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 		name[i] = '\0';
 
 	    /* Check for existence of member */
-	    if( (db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
+	    if( (db_lookup( dbip, name, LOOKUP_QUIET )) == DIR_NULL )
 		Tcl_AppendResult(interp, "\tWARNING: '", name, "' does not exist\n", (char *)NULL);
 	    /* get matrix */
 	    ptr = strtok( (char *)NULL, delims );
@@ -1347,8 +1347,8 @@ mktemp_comb(char *str)
     counter = 1;
     done = 0;
     while( !done && counter < 99999 ) {
-	sprintf( ptr , "%d" , counter );
-	if( db_lookup( dbip , str , LOOKUP_QUIET ) == DIR_NULL )
+	sprintf( ptr, "%d", counter );
+	if( db_lookup( dbip, str, LOOKUP_QUIET ) == DIR_NULL )
 	    done = 1;
 	else
 	    counter++;
@@ -1441,7 +1441,7 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
-    dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
+    dp = db_lookup( dbip, argv[1], LOOKUP_QUIET );
     if(dp != DIR_NULL){
 	if( !(dp->d_flags & DIR_COMB) ){
 	    Tcl_AppendResult(interp, argv[1],
@@ -1578,7 +1578,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     strncpy(red_tmpcomb, red_tmpcomb_init, 17-1);
 
-    dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
+    dp = db_lookup( dbip, argv[1], LOOKUP_QUIET );
 
     if( dp != DIR_NULL ) {
 	if( !(dp->d_flags & DIR_COMB ) ) {

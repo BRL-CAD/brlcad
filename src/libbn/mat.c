@@ -524,32 +524,32 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 	vect_t z_dir;
 
 	/* Get az and el as usual */
-	bn_ae_vec( az , el , vec_ae );
+	bn_ae_vec( az, el, vec_ae );
 
 	/* stabilize fluctuation bewteen 0 and 360
 	 * change azimuth near 360 to 0 */
-	if( NEAR_ZERO( *az - 360.0 , accuracy ) )
+	if( NEAR_ZERO( *az - 360.0, accuracy ) )
 		*az = 0.0;
 
 	/* if elevation is +/-90 set twist to zero and calculate azimuth */
-	if( NEAR_ZERO( *el - 90.0 , accuracy ) || NEAR_ZERO( *el + 90.0 , accuracy ) )
+	if( NEAR_ZERO( *el - 90.0, accuracy ) || NEAR_ZERO( *el + 90.0, accuracy ) )
 	{
 		*twist = 0.0;
-		*az = bn_atan2( -vec_twist[X] , vec_twist[Y] ) * bn_radtodeg;
+		*az = bn_atan2( -vec_twist[X], vec_twist[Y] ) * bn_radtodeg;
 	}
 	else
 	{
 		/* Calculate twist from vec_twist */
-		VSET( z_dir , 0 , 0 , 1 );
-		VCROSS( zero_twist , z_dir , vec_ae );
+		VSET( z_dir, 0, 0, 1 );
+		VCROSS( zero_twist, z_dir, vec_ae );
 		VUNITIZE( zero_twist );
-		VCROSS( ninety_twist , vec_ae , zero_twist );
+		VCROSS( ninety_twist, vec_ae, zero_twist );
 		VUNITIZE( ninety_twist );
 
-		*twist = bn_atan2( VDOT( vec_twist , ninety_twist ) , VDOT( vec_twist , zero_twist ) ) * bn_radtodeg;
+		*twist = bn_atan2( VDOT( vec_twist, ninety_twist ), VDOT( vec_twist, zero_twist ) ) * bn_radtodeg;
 
 		/* stabilize flutter between +/- 180 */
-		if( NEAR_ZERO( *twist + 180.0 , accuracy ) )
+		if( NEAR_ZERO( *twist + 180.0, accuracy ) )
 			*twist = 180.0;
 	}
 }

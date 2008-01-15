@@ -166,9 +166,9 @@ char line[MAX_LINE_LEN];
 	start = (-1);
 	/* skip leading blanks */
 	while( isspace( line[++start] ) && line[start] != '\0' );
-	if( strncmp( &line[start] , "solid" , 5 ) && strncmp( &line[start] , "SOLID" , 5 ) )
+	if( strncmp( &line[start], "solid", 5 ) && strncmp( &line[start], "SOLID", 5 ) )
 	{
-		bu_log( "Convert_part_ascii: Called for non-part\n%s\n" , line );
+		bu_log( "Convert_part_ascii: Called for non-part\n%s\n", line );
 		return;
 	}
 
@@ -219,7 +219,7 @@ char line[MAX_LINE_LEN];
 	}
 
 	mk_unique_brlcad_name( &region_name );
-	bu_log( "Converting Part: %s\n" , bu_vls_addr( &region_name ) );
+	bu_log( "Converting Part: %s\n", bu_vls_addr( &region_name ) );
 
 	solid_count++;
 	bu_vls_init( &solid_name );
@@ -227,7 +227,7 @@ char line[MAX_LINE_LEN];
 	bu_vls_vlscat( &solid_name, &region_name );
 	mk_unique_brlcad_name( &solid_name );
 
-	bu_log( "\tUsing solid name: %s\n" , bu_vls_addr( &solid_name ) );
+	bu_log( "\tUsing solid name: %s\n", bu_vls_addr( &solid_name ) );
 
 	if( RT_G_DEBUG & DEBUG_MEM || RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_prmem( "At start of Convert_part_ascii()" );
@@ -236,42 +236,42 @@ char line[MAX_LINE_LEN];
 	{
 		start = (-1);
 		while( isspace( line1[++start] ) );
-		if( !strncmp( &line1[start] , "endsolid" , 8 ) || !strncmp( &line1[start] , "ENDSOLID" , 8 ) )
+		if( !strncmp( &line1[start], "endsolid", 8 ) || !strncmp( &line1[start], "ENDSOLID", 8 ) )
 			break;
-		else if( !strncmp( &line1[start] , "color" , 5 ) || !strncmp( &line1[start] , "COLOR" , 5 ) )
+		else if( !strncmp( &line1[start], "color", 5 ) || !strncmp( &line1[start], "COLOR", 5 ) )
 		{
-			sscanf( &line1[start+5] , "%f%f%f" , &colr[0] , &colr[1] , &colr[2] );
+			sscanf( &line1[start+5], "%f%f%f", &colr[0], &colr[1], &colr[2] );
 			for( i=0 ; i<3 ; i++ )
 				color[i] = (int)(colr[i] * 255.0);
 		}
-		else if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
+		else if( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
 		{
 			float x, y, z;
 
 			start += 6;
-			sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
-			VSET( normal , x , y , z );
+			sscanf( &line1[start], "%f%f%f", &x, &y, &z );
+			VSET( normal, x, y, z );
 		}
-		else if( !strncmp( &line1[start] , "facet" , 5 ) || !strncmp( &line1[start] , "FACET" , 5 ) )
+		else if( !strncmp( &line1[start], "facet", 5 ) || !strncmp( &line1[start], "FACET", 5 ) )
 		{
-			VSET( normal , 0.0 , 0.0 , 0.0 );
+			VSET( normal, 0.0, 0.0, 0.0 );
 
 			start += 4;
 			while( line1[++start] && isspace( line1[start] ) );
 
 			if( line1[start] )
 			{
-				if( !strncmp( &line1[start] , "normal" , 6 ) || !strncmp( &line1[start] , "NORMAL" , 6 ) )
+				if( !strncmp( &line1[start], "normal", 6 ) || !strncmp( &line1[start], "NORMAL", 6 ) )
 				{
 					float x, y, z;
 
 					start += 6;
-					sscanf( &line1[start] , "%f%f%f" , &x , &y , &z );
-					VSET( normal , x , y , z );
+					sscanf( &line1[start], "%f%f%f", &x, &y, &z );
+					VSET( normal, x, y, z );
 				}
 			}
 		}
-		else if( !strncmp( &line1[start] , "outer loop" , 10 ) || !strncmp( &line1[start] , "OUTER LOOP" , 10 ) )
+		else if( !strncmp( &line1[start], "outer loop", 10 ) || !strncmp( &line1[start], "OUTER LOOP", 10 ) )
 		{
 			int endloop=0;
 			int vert_no=0;
@@ -285,13 +285,13 @@ char line[MAX_LINE_LEN];
 				start = (-1);
 				while( isspace( line1[++start] ) );
 
-				if( !strncmp( &line1[start] , "endloop" , 7 ) || !strncmp( &line1[start] , "ENDLOOP" , 7 ) )
+				if( !strncmp( &line1[start], "endloop", 7 ) || !strncmp( &line1[start], "ENDLOOP", 7 ) )
 					endloop = 1;
-				else if ( !strncmp( &line1[start] , "vertex" , 6 ) || !strncmp( &line1[start] , "VERTEX" , 6 ) )
+				else if ( !strncmp( &line1[start], "vertex", 6 ) || !strncmp( &line1[start], "VERTEX", 6 ) )
 				{
 					double x, y, z;
 
-					sscanf( &line1[start+6] , "%lf%lf%lf" , &x , &y , &z );
+					sscanf( &line1[start+6], "%lf%lf%lf", &x, &y, &z );
 
 					if( vert_no > 2 )
 					{
@@ -349,7 +349,7 @@ char line[MAX_LINE_LEN];
 	/* Check if this part has any solid parts */
 	if( face_count == 0 )
 	{
-		bu_log( "\t%s has no solid parts, ignoring\n" , bu_vls_addr( &region_name ) );
+		bu_log( "\t%s has no solid parts, ignoring\n", bu_vls_addr( &region_name ) );
 		if( degenerate_count )
 			bu_log( "\t%d faces were degenerate\n", degenerate_count );
 		if( small_count )
@@ -373,10 +373,10 @@ char line[MAX_LINE_LEN];
 
 	if( face_count && !solid_in_region )
 	{
-		(void)mk_addmember( bu_vls_addr( &solid_name ) , &head.l , NULL, WMOP_UNION );
+		(void)mk_addmember( bu_vls_addr( &solid_name ), &head.l, NULL, WMOP_UNION );
 	}
 
-	bu_log( "\tMaking region (%s)\n" , bu_vls_addr( &region_name ) );
+	bu_log( "\tMaking region (%s)\n", bu_vls_addr( &region_name ) );
 
 	if( const_id >= 0 ) {
 		mk_lrcomb( fd_out, bu_vls_addr( &region_name ), &head, 1, (char *)NULL,
@@ -443,7 +443,7 @@ Convert_part_binary()
 		bu_vls_strcat( &solid_name, "s.stl" );
 		bu_vls_strcat( &region_name, "r.stl" );
 	}
-	bu_log( "\tUsing solid name: %s\n" , bu_vls_addr( &solid_name ) );
+	bu_log( "\tUsing solid name: %s\n", bu_vls_addr( &solid_name ) );
 
 
 	fread( buf, 4, 1, fd_in );
@@ -532,7 +532,7 @@ Convert_part_binary()
 	BU_LIST_INIT( &head.l );
 	if( face_count )
 	{
-		(void)mk_addmember( bu_vls_addr( &solid_name ) , &head.l , NULL, WMOP_UNION );
+		(void)mk_addmember( bu_vls_addr( &solid_name ), &head.l, NULL, WMOP_UNION );
 	}
 	bu_log( "\tMaking region (%s)\n", bu_vls_addr( &region_name ) );
 
@@ -587,10 +587,10 @@ Convert_input()
 		    while( line[start] != '\0' && isspace( line[start] ) ) {
 			start++;
 		    }
-			if( !strncmp( &line[start] , "solid" , 5 ) || !strncmp( &line[start] , "SOLID" , 5 ) )
+			if( !strncmp( &line[start], "solid", 5 ) || !strncmp( &line[start], "SOLID", 5 ) )
 				Convert_part_ascii( line );
 			else
-				bu_log( "Unrecognized line:\n%s\n" , line );
+				bu_log( "Unrecognized line:\n%s\n", line );
 		}
 	}
 }
@@ -690,7 +690,7 @@ char	*argv[];
 	input_file = argv[bu_optind];
 	if( (fd_in=fopen( input_file, "rb")) == NULL )
 	{
-		bu_log( "Cannot open input file (%s)\n" , input_file );
+		bu_log( "Cannot open input file (%s)\n", input_file );
 		perror( argv[0] );
 		bu_exit( 1, NULL );
 	}
@@ -698,12 +698,12 @@ char	*argv[];
 	brlcad_file = argv[bu_optind];
 	if( (fd_out=wdb_fopen( brlcad_file)) == NULL )
 	{
-		bu_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
+		bu_log( "Cannot open BRL-CAD file (%s)\n", brlcad_file );
 		perror( argv[0] );
 		bu_exit( 1, NULL );
 	}
 
-	mk_id_units( fd_out , "Conversion from Stereolithography format" , "mm" );
+	mk_id_units( fd_out, "Conversion from Stereolithography format", "mm" );
 
 	BU_LIST_INIT( &all_head.l );
 

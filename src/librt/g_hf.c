@@ -1975,7 +1975,7 @@ rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register c
 	if( bu_struct_parse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
 		bu_vls_free( &str );
 err1:
-		bu_free( (char *)xip , "rt_hf_import: xip" );
+		bu_free( (char *)xip, "rt_hf_import: xip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;

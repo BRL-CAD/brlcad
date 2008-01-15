@@ -59,23 +59,23 @@ int *linear;
 			point_t start_pt, end_pt;
 
 			Readrec( dir[curve]->param );
-			Readint( &type , "" );
+			Readint( &type, "" );
 			if( type != dir[curve]->type )
 			{
 				bu_log( "Error in Get_cnurb_curve, looking for curve type %d, found %d\n" ,
-					dir[curve]->type , type );
+					dir[curve]->type, type );
 				return( (struct edge_g_cnurb *)NULL );
 
 			}
 			/* Read first point */
 			for( i=0 ; i<3 ; i++ )
-				Readcnv( &pt1[i] , "" );
-			MAT4X3PNT( start_pt , *dir[curve]->rot , pt1 );
+				Readcnv( &pt1[i], "" );
+			MAT4X3PNT( start_pt, *dir[curve]->rot, pt1 );
 
 			/* Read second point */
 			for( i=0 ; i<3 ; i++ )
-				Readcnv( &pt1[i] , "" );
-			MAT4X3PNT( end_pt , *dir[curve]->rot , pt1 );
+				Readcnv( &pt1[i], "" );
+			MAT4X3PNT( end_pt, *dir[curve]->rot, pt1 );
 
 			/* pt_type for rational UVW coords */
 			pt_type = RT_NURB_MAKE_PT_TYPE( 3, 3, 1 );

@@ -51,15 +51,15 @@ Get_att()
 				continue;
 
 			Readrec( dir[i]->param );
-			Readint( &j , "" );
+			Readint( &j, "" );
 			if( j != 322 )
 			{
-				bu_log( "Parameters at sequence %d are not for entity at DE%d\n" , dir[i]->param , (2*i+1) );
+				bu_log( "Parameters at sequence %d are not for entity at DE%d\n", dir[i]->param, (2*i+1) );
 				continue;
 			}
 
-			Readname( &str , "" );
-			if( !strncmp(str , "BRLCAD" , 6) || !strncmp(str, "BRL-CAD", 7) )
+			Readname( &str, "" );
+			if( !strncmp(str, "BRLCAD", 6) || !strncmp(str, "BRL-CAD", 7) )
 			{
 				/* this is what we have been looking for */
 				brlcad_att_de = 2*i+1;

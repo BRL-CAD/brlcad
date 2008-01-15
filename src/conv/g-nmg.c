@@ -216,12 +216,12 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		if( !empty_region && !empty_model ) {
 			/* Write the nmgregion to the output file */
 			nmg_count++;
-			sprintf( nmg_name , "nmg.%d" , nmg_count );
+			sprintf( nmg_name, "nmg.%d", nmg_count );
 
 			if( do_bots ) {
 				wdb_export( fp_out, nmg_name, (genptr_t)bot, ID_BOT, 1.0 );
 			} else {
-				mk_nmg( fp_out , nmg_name , r->m_p );
+				mk_nmg( fp_out, nmg_name, r->m_p );
 			}
 		}
 
@@ -236,13 +236,13 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 			color = (unsigned char *)NULL;
 
 		BU_LIST_INIT( &headp.l );
-		(void)mk_addmember( nmg_name , &headp.l , NULL, WMOP_UNION );
+		(void)mk_addmember( nmg_name, &headp.l, NULL, WMOP_UNION );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
 		    shader, bu_vls_addr( &shader_params ), color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) ) {
-			bu_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
+			bu_log( "G-nmg: error in making region (%s)\n", pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
 	} else {
 		BU_LIST_INIT( &headp.l );
@@ -251,7 +251,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 		    shader, bu_vls_addr( &shader_params ), color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) ) {
-			bu_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
+			bu_log( "G-nmg: error in making region (%s)\n", pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
 	}
 
@@ -335,7 +335,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	RT_CK_COMB( comb );
 
 	if( verbose )
-		bu_log( "Combination - %s\n" , dp->d_namep );
+		bu_log( "Combination - %s\n", dp->d_namep );
 
 	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )	{
 		db_non_union_push( comb->tree, &rt_uniresource );
@@ -358,9 +358,9 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	}
 
 	if( actual_count < 1 ) {
-		bu_log( "Warning: empty combination (%s)\n" , dp->d_namep );
+		bu_log( "Warning: empty combination (%s)\n", dp->d_namep );
 		dp->d_uses = 0;
-		rt_db_free_internal( &intern , &rt_uniresource);
+		rt_db_free_internal( &intern, &rt_uniresource);
 		return;
 	}
 
@@ -382,10 +382,10 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 			default:
 				bu_log( "Unrecognized Boolean operator in combination (%s)\n", dp->d_namep );
 				bu_free( (char *)tree_list, "tree_list" );
-				rt_db_free_internal( &intern , &rt_uniresource);
+				rt_db_free_internal( &intern, &rt_uniresource);
 				return;
 		}
-		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name , &headp.l, NULL , op );
+		wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name, &headp.l, NULL, op );
 		if( tree_list[i].tl_tree->tr_l.tl_mat )
 			MAT_COPY( wm->wm_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 	}
@@ -412,7 +412,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	    color, comb->region_id,
 	    comb->aircode, comb->GIFTmater, comb->los,
 	    comb->inherit ) ) {
-	    bu_log( "G-nmg: error in making region (%s)\n" , dp->d_namep );
+	    bu_log( "G-nmg: error in making region (%s)\n", dp->d_namep );
 	}
 }
 
@@ -499,9 +499,9 @@ main(int argc, char **argv)
 	}
 
 	/* Open BRL-CAD database */
-	if ((dbip = db_open( argv[bu_optind] , "r")) == DBI_NULL) {
+	if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL) {
 		perror(argv[0]);
-		bu_exit(1, "Cannot open %s\n" , argv[bu_optind]);
+		bu_exit(1, "Cannot open %s\n", argv[bu_optind]);
 	}
 	if( db_dirbuild( dbip ) ) {
 	    bu_exit(1, "db_dirbuild failed\n");
@@ -509,23 +509,23 @@ main(int argc, char **argv)
 
 	if ((fp_out = wdb_fopen( out_file )) == NULL) {
 		perror( out_file );
-		bu_exit(2, "ERROR: Cannot open %s for reading\n" , out_file );
+		bu_exit(2, "ERROR: Cannot open %s for reading\n", out_file );
 	}
 
 	bu_optind++;
 
-	mk_id_editunits( fp_out , dbip->dbi_title , dbip->dbi_local2base );
+	mk_id_editunits( fp_out, dbip->dbi_title, dbip->dbi_local2base );
 
 	/* Walk the trees outputting regions and combinations */
 	for( i=bu_optind ; i<argc ; i++ ) {
 		struct directory *dp;
 
-		dp = db_lookup( dbip , argv[i] , 0 );
+		dp = db_lookup( dbip, argv[i], 0 );
 		if( dp == DIR_NULL ) {
 			bu_log( "WARNING: Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
-		db_functree( dbip , dp , csg_comb_func , 0 , &rt_uniresource , NULL );
+		db_functree( dbip, dp, csg_comb_func, 0, &rt_uniresource, NULL );
 	}
 
 	/* write the current color table */

@@ -55,21 +55,21 @@ struct face_g_snurb **b_patch;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	Readint( &k1 , "" );
-	Readint( &k2 , "" );
-	Readint( &m1 , "" );
-	Readint( &m2 , "" );
-	Readint( &prop1 , "" );
-	Readint( &prop2 , "" );
-	Readint( &prop3 , "" );
-	Readint( &prop4 , "" );
-	Readint( &prop5 , "" );
+	Readint( &sol_num, "" );
+	Readint( &k1, "" );
+	Readint( &k2, "" );
+	Readint( &m1, "" );
+	Readint( &m2, "" );
+	Readint( &prop1, "" );
+	Readint( &prop2, "" );
+	Readint( &prop3, "" );
+	Readint( &prop4, "" );
+	Readint( &prop5, "" );
 
 	n1 = k1 - m1 + 1;
 	n2 = k2 - m2 + 1;
@@ -86,13 +86,13 @@ struct face_g_snurb **b_patch;
 	(*b_patch) = rt_nurb_new_snurb(
 		m1+1, m2+1,
 		n1+2*m1+1, n2+2*m2+1,
-		k2+1, k1+1, RT_NURB_MAKE_PT_TYPE( 4 , 2 , 0 ), (struct resource *)NULL );
+		k2+1, k1+1, RT_NURB_MAKE_PT_TYPE( 4, 2, 0 ), (struct resource *)NULL );
 
 	/* U knot vector */
 	min_knot = 0.0;
 	for (i = 0; i <= n1+2*m1; i++)
 	{
-		Readdbl( &(*b_patch)->u.knots[i] , "" );
+		Readdbl( &(*b_patch)->u.knots[i], "" );
 		if( (*b_patch)->u.knots[i] < min_knot )
 			min_knot = (*b_patch)->u.knots[i];
 	}
@@ -109,7 +109,7 @@ struct face_g_snurb **b_patch;
 	/* V knot vector */
 	for (i = 0; i <= n2+2*m2; i++)
 	{
-		Readdbl( &(*b_patch)->v.knots[i] , "" );
+		Readdbl( &(*b_patch)->v.knots[i], "" );
 		if( (*b_patch)->v.knots[i] < min_knot )
 			min_knot = (*b_patch)->v.knots[i];
 	}
@@ -129,7 +129,7 @@ struct face_g_snurb **b_patch;
 	{
 		for( j=0 ; j<= k1 ; j++ )
 		{
-			Readdbl( &(*b_patch)->ctl_points[ count*4 + 3 ] , "" );
+			Readdbl( &(*b_patch)->ctl_points[ count*4 + 3 ], "" );
 			if( (*b_patch)->ctl_points[ count*4 + 3 ] > max_wt )
 				max_wt = (*b_patch)->ctl_points[ count*4 + 3 ];
 			count++;
@@ -142,9 +142,9 @@ struct face_g_snurb **b_patch;
 	{
 		for (j = 0; j <= k1; j++)
 		{
-			Readcnv( &(*b_patch)->ctl_points[ count*4 ] , "" );
-			Readcnv( &(*b_patch)->ctl_points[ count*4 + 1 ] , "" );
-			Readcnv( &(*b_patch)->ctl_points[ count*4 + 2 ] , "" );
+			Readcnv( &(*b_patch)->ctl_points[ count*4 ], "" );
+			Readcnv( &(*b_patch)->ctl_points[ count*4 + 1 ], "" );
+			Readcnv( &(*b_patch)->ctl_points[ count*4 + 2 ], "" );
 			count++;
 		}
 	}

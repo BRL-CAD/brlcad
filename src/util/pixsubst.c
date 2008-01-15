@@ -66,19 +66,19 @@ main(int argc, char **argv)
 
 	if( argc == 4 )
 	{
-		if( (npixels=fread( pixin , sizeof( unsigned char ) , 3 , stdin ) ) != 3 )
+		if( (npixels=fread( pixin, sizeof( unsigned char ), 3, stdin ) ) != 3 )
 		{
 			bu_exit(1, "Unexpected end of input\n" );
 		}
-		fwrite( pixout , sizeof( unsigned char ) , npixels , stdout );
+		fwrite( pixout, sizeof( unsigned char ), npixels, stdout );
 	}
 
-	while( (npixels=fread( pix , sizeof( unsigned char ) , 3 , stdin ) ) == 3 )
+	while( (npixels=fread( pix, sizeof( unsigned char ), 3, stdin ) ) == 3 )
 	{
 		if( pix[0] == pixin[0] && pix[1] == pixin[1] && pix[2] == pixin[2] )
-			fwrite( pixout , sizeof( unsigned char ) , npixels , stdout );
+			fwrite( pixout, sizeof( unsigned char ), npixels, stdout );
 		else
-			fwrite( pix , sizeof( unsigned char ) , npixels , stdout );
+			fwrite( pix, sizeof( unsigned char ), npixels, stdout );
 	}
 	return 0;
 }

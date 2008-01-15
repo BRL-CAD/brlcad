@@ -222,8 +222,8 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 	} else {
 	    len = strlen(prefix)+strlen(obj)+1;
 	    comb_leaf->tr_l.tl_name = (char *)bu_malloc( len, "Adding prefix" );
-	    strncpy( comb_leaf->tr_l.tl_name , prefix, len-1);
-	    strncat( comb_leaf->tr_l.tl_name , obj, len-strlen(prefix)-1 );
+	    strncpy( comb_leaf->tr_l.tl_name, prefix, len-1);
+	    strncat( comb_leaf->tr_l.tl_name, obj, len-strlen(prefix)-1 );
 	    comb_leaf->tr_l.tl_name[len-1] = '\0'; /* sanity */
 	}
 }

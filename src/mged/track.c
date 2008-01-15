@@ -357,7 +357,7 @@ tryagain:	/* sent here to try next set of names */
 	trcurve(iw, tr);
 	crname(solname, 2, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj( solname , DIR_SOLID ) )
+	if( wrobj( solname, DIR_SOLID ) )
 	  return TCL_ERROR;
 	solname[8] = '\0';
 	/* idler dummy rcc */
@@ -367,7 +367,7 @@ tryagain:	/* sent here to try next set of names */
 	VMOVE(&sol.s_values[15], &sol.s_values[9]);
 	crname(solname, 3, 12);
 	strncpy(sol.s_name, solname, NAMESIZE-1);
-	if( wrobj( solname , DIR_SOLID ) )
+	if( wrobj( solname, DIR_SOLID ) )
 		return TCL_ERROR;
 	solname[8] = '\0';
 
@@ -788,7 +788,7 @@ crdummy(fastf_t *w, fastf_t *t, int flag)
 	sol.s_values[0] = w[0];
 	sol.s_values[1] = t[0] -1.0;
 	sol.s_values[2] = w[1];
-	VMOVE(&sol.s_values[3] , vec);
+	VMOVE(&sol.s_values[3], vec);
 	vec[2] = w[2] + t[2] + 1.0;
 	VMOVE(&sol.s_values[6], vec);
 	vec[0] = 0.0;

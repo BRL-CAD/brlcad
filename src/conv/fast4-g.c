@@ -63,7 +63,7 @@
 
 
 /* convenient macro for building regions */
-#define	MK_REGION( fp , headp , name , r_id, rgb ) {\
+#define	MK_REGION( fp, headp, name, r_id, rgb ) {\
     if( mode == 1 ) {\
 	if( !quiet )\
 	    bu_log( "Making region: %s (PLATE)\n", name ); \
@@ -78,22 +78,22 @@
     }\
 }
 
-#define	PUSH( ptr )	bu_ptbl_ins( &stack , (long *)ptr )
-#define POP( structure , ptr ) { \
+#define	PUSH( ptr )	bu_ptbl_ins( &stack, (long *)ptr )
+#define POP( structure, ptr ) { \
     if( BU_PTBL_END( &stack ) == 0 ) \
 	ptr = (struct structure *)NULL; \
     else { \
-	ptr = (struct structure *)BU_PTBL_GET( &stack , BU_PTBL_END( &stack )-1 ); \
-	bu_ptbl_rm( &stack , (long *)ptr ); \
+	ptr = (struct structure *)BU_PTBL_GET( &stack, BU_PTBL_END( &stack )-1 ); \
+	bu_ptbl_rm( &stack, (long *)ptr ); \
     } \
 }
-#define	PUSH2( ptr )	bu_ptbl_ins( &stack2 , (long *)ptr )
-#define POP2( structure , ptr )	{ \
+#define	PUSH2( ptr )	bu_ptbl_ins( &stack2, (long *)ptr )
+#define POP2( structure, ptr )	{ \
     if( BU_PTBL_END( &stack2 ) == 0 ) \
 	ptr = (struct structure *)NULL; \
     else { \
-	ptr = (struct structure *)BU_PTBL_GET( &stack2 , BU_PTBL_END( &stack2 )-1 ); \
-	bu_ptbl_rm( &stack2 , (long *)ptr ); \
+	ptr = (struct structure *)BU_PTBL_GET( &stack2, BU_PTBL_END( &stack2 )-1 ); \
+	bu_ptbl_rm( &stack2, (long *)ptr ); \
     } \
 }
 
@@ -186,18 +186,18 @@ struct holes {
 
 
 int hex_faces[12][3]={
-    { 0 , 1 , 4 }, /* 1 */
-    { 1 , 5 , 4 }, /* 2 */
-    { 1 , 2 , 5 }, /* 3 */
-    { 2 , 6 , 5 }, /* 4 */
-    { 2 , 3 , 6 }, /* 5 */
-    { 3 , 7 , 6 }, /* 6 */
-    { 3 , 0 , 7 }, /* 7 */
-    { 0 , 4 , 7 }, /* 8 */
-    { 4 , 6 , 7 }, /* 9 */
-    { 4 , 5 , 6 }, /* 10 */
-    { 0 , 1 , 2 }, /* 11 */
-    { 0 , 2 , 3 }  /* 12 */
+    { 0, 1, 4 }, /* 1 */
+    { 1, 5, 4 }, /* 2 */
+    { 1, 2, 5 }, /* 3 */
+    { 2, 6, 5 }, /* 4 */
+    { 2, 3, 6 }, /* 5 */
+    { 3, 7, 6 }, /* 6 */
+    { 3, 0, 7 }, /* 7 */
+    { 0, 4, 7 }, /* 8 */
+    { 4, 6, 7 }, /* 9 */
+    { 4, 5, 6 }, /* 10 */
+    { 0, 1, 2 }, /* 11 */
+    { 0, 2, 3 }  /* 12 */
 };
 
 struct fast4_color HeadColor;
@@ -263,7 +263,7 @@ get_line(void)
 
     memset((void *)line, 0, LINELEN);
 
-    if( bu_fgets( line , LINELEN , fdin ) == (char *)NULL )
+    if( bu_fgets( line, LINELEN, fdin ) == (char *)NULL )
 	return( 0 );
 
     len = strlen( line );
@@ -323,8 +323,8 @@ is_a_hole(int id)
 static void
 add_to_holes(char *name, int reg_id)
 {
-    if( mk_addmember( name , &hole_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
-	bu_log( "add_to_holes: mk_addmember failed for region %s\n" , name );
+    if( mk_addmember( name, &hole_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
+	bu_log( "add_to_holes: mk_addmember failed for region %s\n", name );
 }
 
 static void
@@ -356,7 +356,7 @@ Check_names(void)
 		    PUSH( ptr );
 		    ptr = ptr->rleft;
 		}
-	    POP( name_tree , ptr );
+	    POP( name_tree, ptr );
 	    if( !ptr )
 		break;
 
@@ -374,7 +374,7 @@ Check_names(void)
 		    PUSH( ptr );
 		    ptr = ptr->nleft;
 		}
-	    POP( name_tree , ptr );
+	    POP( name_tree, ptr );
 	    if( !ptr )
 		break;
 
@@ -400,7 +400,7 @@ Search_names(struct name_tree *root, char *name, int *found)
 	{
 	    int diff;
 
-	    diff = strcmp( name , ptr->name );
+	    diff = strcmp( name, ptr->name );
 	    if( diff == 0 )
 		{
 		    *found = 1;
@@ -480,14 +480,14 @@ List_names(void)
 		    PUSH( ptr );
 		    ptr = ptr->rleft;
 		}
-	    POP( name_tree , ptr );
+	    POP( name_tree, ptr );
 	    if( !ptr )
 		break;
 
 	    if( ptr->in_comp_group )
-		bu_log( "%s %d %d (in a comp group)\n" , ptr->name , ptr->region_id , ptr->inner );
+		bu_log( "%s %d %d (in a comp group)\n", ptr->name, ptr->region_id, ptr->inner );
 	    else
-		bu_log( "%s %d %d (not in a comp group)\n" , ptr->name , ptr->region_id , ptr->inner );
+		bu_log( "%s %d %d (not in a comp group)\n", ptr->name, ptr->region_id, ptr->inner );
 	    ptr = ptr->rright;
 	}
 
@@ -500,11 +500,11 @@ List_names(void)
 		    PUSH( ptr );
 		    ptr = ptr->nleft;
 		}
-	    POP( name_tree , ptr );
+	    POP( name_tree, ptr );
 	    if( !ptr )
 		break;
 
-	    bu_log( "%s %d %d\n" , ptr->name, ptr->region_id , ptr->inner );
+	    bu_log( "%s %d %d\n", ptr->name, ptr->region_id, ptr->inner );
 	    ptr = ptr->nright;
 	}
 }
@@ -519,10 +519,10 @@ Insert_region_name(char *name, int reg_id)
     int diff;
 
     if( debug )
-	bu_log( "Insert_region_name( name=%s, reg_id=%d\n" , name, reg_id );
+	bu_log( "Insert_region_name( name=%s, reg_id=%d\n", name, reg_id );
 
-    rptr_model = Search_ident( name_root , reg_id , &foundr );
-    nptr_model = Search_names( name_root , name , &foundn );
+    rptr_model = Search_ident( name_root, reg_id, &foundr );
+    nptr_model = Search_names( name_root, name, &foundn );
 
     if( foundn && foundr )
 	return;
@@ -536,7 +536,7 @@ Insert_region_name(char *name, int reg_id)
 	}
 
     /* Add to tree for entire model */
-    new_ptr = (struct name_tree *)bu_malloc( sizeof( struct name_tree ) , "Insert_region_name: new_ptr" );
+    new_ptr = (struct name_tree *)bu_malloc( sizeof( struct name_tree ), "Insert_region_name: new_ptr" );
     new_ptr->rleft = (struct name_tree *)NULL;
     new_ptr->rright = (struct name_tree *)NULL;
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -552,7 +552,7 @@ Insert_region_name(char *name, int reg_id)
 	name_root = new_ptr;
     else
 	{
-	    diff = strcmp( name , nptr_model->name );
+	    diff = strcmp( name, nptr_model->name );
 
 	    if( diff > 0 )
 		{
@@ -611,9 +611,9 @@ find_region_name(int g_id, int c_id)
     reg_id = g_id * 1000 + c_id;
 
     if( debug )
-	bu_log( "find_region_name( g_id=%d, c_id=%d ), reg_id=%d\n" , g_id, c_id, reg_id );
+	bu_log( "find_region_name( g_id=%d, c_id=%d ), reg_id=%d\n", g_id, c_id, reg_id );
 
-    ptr = Search_ident( name_root , reg_id , &found );
+    ptr = Search_ident( name_root, reg_id, &found );
 
     if( found )
 	return( ptr->name );
@@ -630,7 +630,7 @@ make_unique_name(char *name)
 
     /* make a unique name from what we got off the $NAME card */
 
-    (void)Search_names( name_root , name , &found );
+    (void)Search_names( name_root, name, &found );
     if( !found )
 	return( bu_strdup( name ) );
 
@@ -640,7 +640,7 @@ make_unique_name(char *name)
 	{
 	    bu_vls_trunc( &vls, 0 );
 	    bu_vls_printf( &vls, "%s_%d", name, name_count );
-	    (void)Search_names( name_root , bu_vls_addr( &vls ) , &found );
+	    (void)Search_names( name_root, bu_vls_addr( &vls ), &found );
 	}
     if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 	bu_log( "ERROR: bu_mem_barriercheck failed in make_unique_name\n" );
@@ -659,19 +659,19 @@ make_region_name(int g_id, int c_id)
     r_id = g_id * 1000 + c_id;
 
     if( debug )
-	bu_log( "make_region_name( g_id=%d, c_id=%d )\n" , g_id, c_id );
+	bu_log( "make_region_name( g_id=%d, c_id=%d )\n", g_id, c_id );
 
-    tmp_name = find_region_name( g_id , c_id );
+    tmp_name = find_region_name( g_id, c_id );
     if( tmp_name )
 	return;
 
     /* create a new name */
     name = (char *)bu_malloc( LINELEN, "make_region_name" );
-    snprintf( name , LINELEN, "comp_%04d.r" , r_id );
+    snprintf( name, LINELEN, "comp_%04d.r", r_id );
 
     make_unique_name( name );
 
-    Insert_region_name( name , r_id );
+    Insert_region_name( name, r_id );
 }
 
 static char *
@@ -683,7 +683,7 @@ get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
     reg_id = g_id * 1000 + c_id;
 
     bu_vls_init( &vls );
-    bu_vls_printf( &vls , "%d.%d.%c%d" , reg_id , element_id , type , inner );
+    bu_vls_printf( &vls, "%d.%d.%c%d", reg_id, element_id, type, inner );
 
     return( bu_vls_strgrab( &vls ) );
 }
@@ -697,15 +697,15 @@ Insert_name(struct name_tree **root, char *name, int inner)
     int found;
     int diff;
 
-    ptr = Search_names( *root , name , &found );
+    ptr = Search_names( *root, name, &found );
 
     if( found )
 	{
-	    bu_log( "Insert_name: %s already in name tree\n" , name );
+	    bu_log( "Insert_name: %s already in name tree\n", name );
 	    return;
 	}
 
-    new_ptr = (struct name_tree *)bu_malloc( sizeof( struct name_tree ) , "Insert_name: new_ptr" );
+    new_ptr = (struct name_tree *)bu_malloc( sizeof( struct name_tree ), "Insert_name: new_ptr" );
 
     new_ptr->name = bu_strdup( name );
     new_ptr->nleft = (struct name_tree *)NULL;
@@ -723,7 +723,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	    return;
 	}
 
-    diff = strcmp( name , ptr->name );
+    diff = strcmp( name, ptr->name );
     if( diff > 0 )
 	{
 	    if( ptr->nright )
@@ -752,9 +752,9 @@ make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 {
     char *name;
 
-    name = get_solid_name( type , element_id , c_id , g_id , inner );
+    name = get_solid_name( type, element_id, c_id, g_id, inner );
 
-    Insert_name( &name_root , name, inner );
+    Insert_name( &name_root, name, inner );
 
     return( name );
 }
@@ -774,9 +774,9 @@ insert_int(int in)
     if( int_list_count == int_list_length )
 	{
 	    if( int_list_length == 0 )
-		int_list = (int *)bu_malloc( INT_LIST_BLOCK*sizeof( int ) , "insert_id: int_list" );
+		int_list = (int *)bu_malloc( INT_LIST_BLOCK*sizeof( int ), "insert_id: int_list" );
 	    else
-		int_list = (int *)bu_realloc( (char *)int_list , (int_list_length + INT_LIST_BLOCK)*sizeof( int ) , "insert_id: int_list" );
+		int_list = (int *)bu_realloc( (char *)int_list, (int_list_length + INT_LIST_BLOCK)*sizeof( int ), "insert_id: int_list" );
 	    int_list_length += INT_LIST_BLOCK;
 	}
 
@@ -795,7 +795,7 @@ Subtract_holes(struct wmember *head, int comp_id, int group_id)
     struct hole_list *list_ptr;
 
     if( debug )
-	bu_log( "Subtract_holes( comp_id=%d, group_id=%d )\n" , comp_id , group_id );
+	bu_log( "Subtract_holes( comp_id=%d, group_id=%d )\n", comp_id, group_id );
 
     hole_ptr = hole_root;
     while( hole_ptr )
@@ -831,14 +831,14 @@ Subtract_holes(struct wmember *head, int comp_id, int group_id)
 					    PUSH( ptr );
 					    ptr = ptr->rleft;
 					}
-				    POP( name_tree , ptr );
+				    POP( name_tree, ptr );
 				    if( !ptr ||  ptr->region_id != reg_id )
 					break;
 
 				    if( debug )
 					bu_log( "\tSubtracting %s\n", ptr->name );
 
-				    if( mk_addmember( ptr->name , &(head->l), NULL , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+				    if( mk_addmember( ptr->name, &(head->l), NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					bu_exit(1, "Subtract_holes: mk_addmember failed\n");
 
 				    ptr = ptr->rright;
@@ -906,11 +906,11 @@ List_holes(void)
 
     while( hole_ptr )
 	{
-	    bu_log( "Holes for Group %d, Component %d:\n" , hole_ptr->group, hole_ptr->component );
+	    bu_log( "Holes for Group %d, Component %d:\n", hole_ptr->group, hole_ptr->component );
 	    list_ptr = hole_ptr->holes;
 	    while( list_ptr )
 		{
-		    bu_log( "\tgroup %d component %d\n" , list_ptr->group, list_ptr->component );
+		    bu_log( "\tgroup %d component %d\n", list_ptr->group, list_ptr->component );
 		    list_ptr = list_ptr->next;
 		}
 	    hole_ptr = hole_ptr->next;
@@ -933,7 +933,7 @@ Delete_name(struct name_tree **root, char *name)
 
     while( 1 )
 	{
-	    diff = strcmp( name , ptr->name );
+	    diff = strcmp( name, ptr->name );
 	    if( diff == 0 )
 		{
 		    found = 1;
@@ -998,7 +998,7 @@ Delete_name(struct name_tree **root, char *name)
 		    /* This was the only name in the tree */
 		    *root = (struct name_tree *)NULL;
 		}
-	    bu_free( (char *)ptr , "Delete_name: ptr" );
+	    bu_free( (char *)ptr, "Delete_name: ptr" );
 	    if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed in Delete_name\n" );
 	    return;
@@ -1072,12 +1072,12 @@ Delete_name(struct name_tree **root, char *name)
 
     if( !found )
 	{
-	    bu_exit(1, "ERROR: name (%s) deleted from name tree, but not found in ident tree!\n" , name);
+	    bu_exit(1, "ERROR: name (%s) deleted from name tree, but not found in ident tree!\n", name);
 	}
 
     if( !parent )
 	{
-	    bu_exit(1, "ERROR: name (%s) is root of ident tree, but not name tree!\n" , name );
+	    bu_exit(1, "ERROR: name (%s) is root of ident tree, but not name tree!\n", name );
 	}
 
 
@@ -1107,7 +1107,7 @@ Delete_name(struct name_tree **root, char *name)
 	    else
 		parent->rleft = ptr->rleft;
 	}
-    bu_free( (char *)ptr , "Delete_name: ptr" );
+    bu_free( (char *)ptr, "Delete_name: ptr" );
     if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 	bu_log( "ERROR: bu_mem_barriercheck failed in Delete_name\n" );
     Check_names();
@@ -1120,12 +1120,12 @@ add_to_series(char *name, int reg_id)
     if( group_id < 0 || group_id > 10 )
 	{
 	    bu_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n" ,
-		    name , group_id , reg_id );
+		    name, group_id, reg_id );
 	    return;
 	}
 
-    if( mk_addmember( name , &group_head[group_id].l, NULL , WMOP_UNION ) == (struct wmember *)NULL )
-	bu_log( "add_to_series: mk_addmember failed for region %s\n" , name );
+    if( mk_addmember( name, &group_head[group_id].l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
+	bu_log( "add_to_series: mk_addmember failed for region %s\n", name );
 }
 
 
@@ -1150,15 +1150,15 @@ make_comp_group(void)
 		    PUSH( ptr );
 		    ptr = ptr->nleft;
 		}
-	    POP( name_tree , ptr );
+	    POP( name_tree, ptr );
 	    if( !ptr )
 		break;
 
 	    if(ptr->region_id == region_id && !ptr->inner && !ptr->in_comp_group )
 		{
-		    if( mk_addmember( ptr->name , &g_head.l , NULL , WMOP_UNION ) == (struct wmember *)NULL )
+		    if( mk_addmember( ptr->name, &g_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			{
-			    bu_log( "make_comp_group: Could not add %s to group for ident %d\n" , ptr->name , ptr->region_id );
+			    bu_log( "make_comp_group: Could not add %s to group for ident %d\n", ptr->name, ptr->region_id );
 			    break;
 			}
 		    ptr->in_comp_group = 1;
@@ -1171,21 +1171,21 @@ make_comp_group(void)
 	    char *name;
 	    struct bu_vls vls;
 
-	    if( !(name=find_region_name( group_id , comp_id )) )
+	    if( !(name=find_region_name( group_id, comp_id )) )
 		{
 		    bu_vls_init( &vls );
-		    bu_vls_printf( &vls , "comp_%d" , region_id );
+		    bu_vls_printf( &vls, "comp_%d", region_id );
 		    name = make_unique_name( bu_vls_addr( &vls ) );
 		    bu_vls_free( &vls );
 		    if( warnings )
 			bu_log( "Creating default name (%s) for group %d component %d\n",
-				name , group_id , comp_id );
-		    Insert_name( &name_root , name, 1 );
+				name, group_id, comp_id );
+		    Insert_name( &name_root, name, 1 );
 		}
 
-	    mk_lfcomb( fdout , name , &g_head , 0 );
+	    mk_lfcomb( fdout, name, &g_head, 0 );
 	    if( !is_a_hole( region_id ) )
-		add_to_series( name , region_id );
+		add_to_series( name, region_id );
 	    else
 		add_to_holes( name, region_id );
 
@@ -1247,18 +1247,18 @@ f4_do_groups(void)
 	    if( BU_LIST_IS_EMPTY( &group_head[group_no].l ) )
 		continue;
 
-	    snprintf( name , LINELEN, "%dxxx_series" , group_no );
-	    mk_lfcomb( fdout , name , &group_head[group_no] , 0 );
+	    snprintf( name, LINELEN, "%dxxx_series", group_no );
+	    mk_lfcomb( fdout, name, &group_head[group_no], 0 );
 
-	    if( mk_addmember( name , &head_all.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
-		bu_log( "f4_do_groups: mk_addmember failed to add %s to group all\n" , name );
+	    if( mk_addmember( name, &head_all.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
+		bu_log( "f4_do_groups: mk_addmember failed to add %s to group all\n", name );
 	}
 
     if( BU_LIST_NON_EMPTY( &head_all.l ) )
-	mk_lfcomb( fdout , "all" , &head_all , 0 );
+	mk_lfcomb( fdout, "all", &head_all, 0 );
 
     if( BU_LIST_NON_EMPTY( &hole_head.l ) )
-	mk_lfcomb( fdout , "holes" , &hole_head , 0 );
+	mk_lfcomb( fdout, "holes", &hole_head, 0 );
 }
 
 
@@ -1275,25 +1275,25 @@ f4_do_name(void)
 	return;
 
     if( debug )
-	bu_log( "f4_do_name: %s\n" , line );
+	bu_log( "f4_do_name: %s\n", line );
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     g_id = atoi( field );
 
     if( g_id != group_id )
 	{
-	    bu_log( "$NAME card for group %d in section for group %d ignored\n" , g_id , group_id );
-	    bu_log( "%s\n" , line );
+	    bu_log( "$NAME card for group %d in section for group %d ignored\n", g_id, group_id );
+	    bu_log( "%s\n", line );
 	    return;
 	}
 
-    strncpy( field , &line[16] , 8 );
+    strncpy( field, &line[16], 8 );
     c_id = atoi( field );
 
     if( c_id != comp_id )
 	{
-	    bu_log( "$NAME card for component %d in section for component %d ignored\n" , c_id , comp_id );
-	    bu_log( "%s\n" , line );
+	    bu_log( "$NAME card for component %d in section for component %d ignored\n", c_id, comp_id );
+	    bu_log( "%s\n", line );
 	    return;
 	}
 
@@ -1304,7 +1304,7 @@ f4_do_name(void)
     if( i == 80 )
 	return;
 
-    strncpy( comp_name , &line[i] , 80 - i );
+    strncpy( comp_name, &line[i], 80 - i );
 
     /* eliminate trailing blanks */
     i = 80 - i;
@@ -1330,7 +1330,7 @@ f4_do_name(void)
 
     /* reserve this name for group name */
     make_unique_name( tmp_name );
-    Insert_region_name( tmp_name , region_id );
+    Insert_region_name( tmp_name, region_id );
 
     name_count = 0;
     if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
@@ -1350,30 +1350,30 @@ f4_do_grid(void)
     if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 	bu_log( "ERROR: bu_mem_barriercheck failed at start of f4_do_grid\n" );
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     grid_no = atoi( field );
 
     if( grid_no < 1 )
 	{
-	    bu_exit(1, "ERROR: bad grid id number = %d\n" , grid_no);
+	    bu_exit(1, "ERROR: bad grid id number = %d\n", grid_no);
 	}
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     x = atof( field );
 
-    strncpy( field , &line[32] , 8 );
+    strncpy( field, &line[32], 8 );
     y = atof( field );
 
-    strncpy( field , &line[40] , 8 );
+    strncpy( field, &line[40], 8 );
     z = atof( field );
 
     while( grid_no > grid_size - 1 )
 	{
 	    grid_size += GRID_BLOCK;
-	    grid_points = (point_t *)bu_realloc( (char *)grid_points , grid_size * sizeof( point_t ) , "fast4-g: grid_points" );
+	    grid_points = (point_t *)bu_realloc( (char *)grid_points, grid_size * sizeof( point_t ), "fast4-g: grid_points" );
 	}
 
-    VSET( grid_points[grid_no] , x*25.4 , y*25.4 , z*25.4 );
+    VSET( grid_points[grid_no], x*25.4, y*25.4, z*25.4 );
 
     if( grid_no > max_grid_no )
 	max_grid_no = grid_no;
@@ -1395,32 +1395,32 @@ f4_do_sphere(void)
 
     if( !pass )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	    return;
 	}
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     center_pt = atoi( field );
 
-    strncpy( field , &line[56] , 8 );
+    strncpy( field, &line[56], 8 );
     thick = atof( field ) * 25.4;
 
-    strncpy( field , &line[64] , 8 );
+    strncpy( field, &line[64], 8 );
     radius = atof( field ) * 25.4;
     if( radius <= 0.0 )
 	{
-	    bu_log( "f4_do_sphere: illegal radius (%f), skipping sphere\n" , radius );
-	    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+	    bu_log( "f4_do_sphere: illegal radius (%f), skipping sphere\n", radius );
+	    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 	    return;
 	}
 
     if( center_pt < 1 || center_pt > max_grid_no )
 	{
-	    bu_log( "f4_do_sphere: illegal grid number for center point %d, skipping sphere\n" , center_pt );
-	    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+	    bu_log( "f4_do_sphere: illegal grid number for center point %d, skipping sphere\n", center_pt );
+	    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 	    return;
 	}
 
@@ -1428,41 +1428,41 @@ f4_do_sphere(void)
 
     if( mode == VOLUME_MODE )
 	{
-	    name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 0 );
-	    mk_sph( fdout , name , grid_points[center_pt] , radius );
+	    name = make_solid_name( CSPHERE, element_id, comp_id, group_id, 0 );
+	    mk_sph( fdout, name, grid_points[center_pt], radius );
 	    bu_free( name, "solid_name" );
 	}
     else if( mode == PLATE_MODE )
 	{
-	    name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 1 );
-	    mk_sph( fdout , name , grid_points[center_pt] , radius );
+	    name = make_solid_name( CSPHERE, element_id, comp_id, group_id, 1 );
+	    mk_sph( fdout, name, grid_points[center_pt], radius );
 
 	    BU_LIST_INIT( &sphere_group.l );
 
-	    if( mk_addmember( name ,  &sphere_group.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
+	    if( mk_addmember( name, &sphere_group.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		{
-		    bu_exit(1, "f4_do_sphere: Error in adding %s to sphere group\n" , name);
+		    bu_exit(1, "f4_do_sphere: Error in adding %s to sphere group\n", name);
 		}
 	    bu_free( name, "solid_name" );
 
 	    inner_radius = radius - thick;
 	    if( thick > 0.0 && inner_radius <= 0.0 )
 		{
-		    bu_log( "f4_do_sphere: illegal thickness (%f), skipping inner sphere\n" , thick );
-		    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		    bu_log( "f4_do_sphere: illegal thickness (%f), skipping inner sphere\n", thick );
+		    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 		    return;
 		}
 
-	    name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 2 );
-	    mk_sph( fdout , name , grid_points[center_pt] , inner_radius );
+	    name = make_solid_name( CSPHERE, element_id, comp_id, group_id, 2 );
+	    mk_sph( fdout, name, grid_points[center_pt], inner_radius );
 
-	    if( mk_addmember( name , &sphere_group.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+	    if( mk_addmember( name, &sphere_group.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 		{
-		    bu_exit(1, "f4_do_sphere: Error in subtracting %s from sphere region\n" , name);
+		    bu_exit(1, "f4_do_sphere: Error in subtracting %s from sphere region\n", name);
 		}
 	    bu_free( name, "solid_name" );
 
-	    name = make_solid_name( CSPHERE , element_id , comp_id , group_id , 0 );
+	    name = make_solid_name( CSPHERE, element_id, comp_id, group_id, 0 );
 	    mk_comb( fdout, name, &sphere_group.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
 	    bu_free( name, "solid_name" );
 	}
@@ -1475,8 +1475,8 @@ f4_do_vehicle(void)
     if( pass )
 	return;
 
-    strncpy( vehicle , &line[8] , 16 ); /* why 16? */
-    mk_id_units( fdout , vehicle , "in" );
+    strncpy( vehicle, &line[8], 16 ); /* why 16? */
+    mk_id_units( fdout, vehicle, "in" );
 }
 
 
@@ -1491,52 +1491,52 @@ f4_do_cline(void)
     char *name;
 
     if( debug )
-	bu_log( "f4_do_cline: %s\n" , line );
+	bu_log( "f4_do_cline: %s\n", line );
 
     if( !pass )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	    return;
 	}
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     pt1 = atoi( field );
     if( pass && (pt1 < 1 || pt1 > max_grid_no) )
 	{
 	    bu_log( "Illegal grid point (%d) in CLINE, skipping\n", pt1 );
-	    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+	    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 	    return;
 	}
 
-    strncpy( field , &line[32] , 8 );
+    strncpy( field, &line[32], 8 );
     pt2 = atoi( field );
     if( pass && (pt2 < 1 || pt2 > max_grid_no) )
 	{
 	    bu_log( "Illegal grid point in CLINE (%d), skipping\n", pt2 );
-	    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+	    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 	    return;
 	}
 
     if( pt1 == pt2 )
 	{
-	    bu_log( "Ilegal grid points in CLINE ( %d and %d ), skipping\n", pt1 , pt2 );
-	    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+	    bu_log( "Ilegal grid points in CLINE ( %d and %d ), skipping\n", pt1, pt2 );
+	    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 	    return;
 	}
 
-    strncpy( field , &line[56] , 8 );
+    strncpy( field, &line[56], 8 );
     thick = atof( field ) * 25.4;
 
-    strncpy( field , &line[64] , 8 );
+    strncpy( field, &line[64], 8 );
     radius = atof( field ) * 25.4;
 
-    VSUB2( height , grid_points[pt2] , grid_points[pt1] );
+    VSUB2( height, grid_points[pt2], grid_points[pt1] );
 
-    name = make_solid_name( CLINE , element_id , comp_id , group_id , 0 );
-    mk_cline( fdout , name , grid_points[pt1] , height , radius, thick );
+    name = make_solid_name( CLINE, element_id, comp_id, group_id, 0 );
+    mk_cline( fdout, name, grid_points[pt1], height, radius, thick );
     bu_free( name, "solid_name" );
 }
 
@@ -1556,12 +1556,12 @@ f4_do_ccone1(void)
     char *name = (char *)NULL;
     struct wmember r_head;
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
     if( !pass )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	    if( !get_line() )
 		{
 		    bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
@@ -1572,51 +1572,51 @@ f4_do_ccone1(void)
 	    return;
 	}
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     pt1 = atoi( field );
 
-    strncpy( field , &line[32] , 8 );
+    strncpy( field, &line[32], 8 );
     pt2 = atoi( field );
 
-    strncpy( field , &line[56] , 8 );
+    strncpy( field, &line[56], 8 );
     thick = atof( field ) * 25.4;
 
-    strncpy( field , &line[64] , 8 );
+    strncpy( field, &line[64], 8 );
     r1 = atof( field ) * 25.4;
 
-    strncpy( field , &line[72] , 8 );
+    strncpy( field, &line[72], 8 );
     c1 = atoi( field );
 
     if( !get_line() )
 	{
 	    bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		    group_id, comp_id, element_id , c1 );
+		    group_id, comp_id, element_id, c1 );
 	    bu_exit(1, "ERROR: unexpected end-of-file");
 	}
 
-    strncpy( field , line , 8 );
+    strncpy( field, line, 8 );
     c2 = atoi( field );
 
     if( c1 != c2 )
 	{
-	    bu_log( "WARNING: CCONE1 continuation flags disagree, %d vs %d\n" , c1 , c2 );
+	    bu_log( "WARNING: CCONE1 continuation flags disagree, %d vs %d\n", c1, c2 );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	}
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     r2 = atof( field ) * 25.4;
 
-    strncpy( field , &line[16] , 8 );
+    strncpy( field, &line[16], 8 );
     end1 = atoi( field );
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     end2 = atoi( field );
 
     if( r1 < 0.0 || r2 < 0.0 )
 	{
-	    bu_log( "ERROR: CCONE1 has illegal radii, %f and %f\n" , r1/25.4 , r2/25.4 );
+	    bu_log( "ERROR: CCONE1 has illegal radii, %f and %f\n", r1/25.4, r2/25.4 );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	    bu_log( "\tCCONE1 solid ignored\n" );
@@ -1627,7 +1627,7 @@ f4_do_ccone1(void)
 	{
 	    if( thick <= 0.0 )
 		{
-		    bu_log( "ERROR: Plate mode CCONE1 has illegal thickness (%f)\n" , thick/25.4 );
+		    bu_log( "ERROR: Plate mode CCONE1 has illegal thickness (%f)\n", thick/25.4 );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
 		    bu_log( "\tCCONE1 solid ignored\n" );
@@ -1636,7 +1636,7 @@ f4_do_ccone1(void)
 
 	    if( r1-thick < min_radius && r2-thick < min_radius )
 		{
-		    bu_log( "ERROR: Plate mode CCONE1 has too large thickness (%f)\n" , thick/25.4 );
+		    bu_log( "ERROR: Plate mode CCONE1 has too large thickness (%f)\n", thick/25.4 );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
 		    bu_log( "\tCCONE1 solid ignored\n" );
@@ -1646,7 +1646,7 @@ f4_do_ccone1(void)
 
     if( pt1 < 1 || pt1 > max_grid_no || pt2 < 1 || pt2 > max_grid_no || pt1 == pt2 )
 	{
-	    bu_log( "ERROR: CCONE1 has illegal grid points ( %d and %d)\n" , pt1 , pt2 );
+	    bu_log( "ERROR: CCONE1 has illegal grid points ( %d and %d)\n", pt1, pt2 );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	    bu_log( "\tCCONE1 solid ignored\n" );
@@ -1659,12 +1659,12 @@ f4_do_ccone1(void)
     if( r2 < min_radius )
 	r2 = min_radius;
 
-    VSUB2( height , grid_points[pt2] , grid_points[pt1] );
+    VSUB2( height, grid_points[pt2], grid_points[pt1] );
 
     if( mode == VOLUME_MODE )
 	{
-	    outer_name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 0 );
-	    mk_trc_h( fdout , outer_name , grid_points[pt1] , height , r1 , r2 );
+	    outer_name = make_solid_name( CCONE1, element_id, comp_id, group_id, 0 );
+	    mk_trc_h( fdout, outer_name, grid_points[pt1], height, r1, r2 );
 	    bu_free( outer_name, "solid_name" );
 	}
     else if( mode == PLATE_MODE )
@@ -1682,16 +1682,16 @@ f4_do_ccone1(void)
 	    vect_t height_dir;
 
 	    /* make outside TGC */
-	    outer_name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 1 );
-	    mk_trc_h( fdout , outer_name , grid_points[pt1] , height , r1 , r2 );
+	    outer_name = make_solid_name( CCONE1, element_id, comp_id, group_id, 1 );
+	    mk_trc_h( fdout, outer_name, grid_points[pt1], height, r1, r2 );
 
 	    BU_LIST_INIT( &r_head.l );
-	    if( mk_addmember( outer_name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
+	    if( mk_addmember( outer_name, &r_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		bu_exit(1, "CCONE1: mk_addmember failed\n");
 	    bu_free( outer_name, "solid_name" );
 
 	    length = MAGNITUDE( height );
-	    VSCALE( height_dir , height , 1.0/length );
+	    VSCALE( height_dir, height, 1.0/length );
 	    slant_len = sqrt( length*length + (r2 - r1)*(r2 - r1) );
 
 	    sin_ang = length/slant_len;
@@ -1700,13 +1700,13 @@ f4_do_ccone1(void)
 		{
 		    r1a = r1;
 		    inner_r1 = r1 - thick/sin_ang;
-		    VMOVE( base , grid_points[pt1] );
+		    VMOVE( base, grid_points[pt1] );
 		}
 	    else
 		{
 		    r1a = r1 + (r2 - r1)*thick/length;
 		    inner_r1 = r1a - thick/sin_ang;
-		    VJOIN1( base , grid_points[pt1] , thick , height_dir );
+		    VJOIN1( base, grid_points[pt1], thick, height_dir );
 		}
 
 	    if( inner_r1 < 0.0 )
@@ -1715,7 +1715,7 @@ f4_do_ccone1(void)
 
 		    dist_to_new_base = inner_r1 * length/(r1 - r2 );
 		    inner_r1 = min_radius;
-		    VJOIN1( base , base , dist_to_new_base , height_dir );
+		    VJOIN1( base, base, dist_to_new_base, height_dir );
 		}
 	    else if( inner_r1 < min_radius )
 		inner_r1 = min_radius;
@@ -1724,13 +1724,13 @@ f4_do_ccone1(void)
 		{
 		    r2a = r2;
 		    inner_r2 = r2 - thick/sin_ang;
-		    VMOVE( top , grid_points[pt2] );
+		    VMOVE( top, grid_points[pt2] );
 		}
 	    else
 		{
 		    r2a = r2 + (r1 - r2)*thick/length;
 		    inner_r2 = r2a - thick/sin_ang;
-		    VJOIN1( top , grid_points[pt2] , -thick , height_dir );
+		    VJOIN1( top, grid_points[pt2], -thick, height_dir );
 		}
 
 	    if( inner_r2 < 0.0 )
@@ -1739,15 +1739,15 @@ f4_do_ccone1(void)
 
 		    dist_to_new_top = inner_r2 * length/(r2 - r1 );
 		    inner_r2 = min_radius;
-		    VJOIN1( top , top , -dist_to_new_top , height_dir );
+		    VJOIN1( top, top, -dist_to_new_top, height_dir );
 		}
 	    else if( inner_r2 < min_radius )
 		inner_r2 = min_radius;
 
-	    VSUB2( inner_height , top , base );
-	    if( VDOT( inner_height , height ) <= 0.0 )
+	    VSUB2( inner_height, top, base );
+	    if( VDOT( inner_height, height ) <= 0.0 )
 		{
-		    bu_log( "ERROR: CCONE1 height (%f) too small for thickness (%f)\n" , length/25.4 , thick/25.4 );
+		    bu_log( "ERROR: CCONE1 height (%f) too small for thickness (%f)\n", length/25.4, thick/25.4 );
 		    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			    group_id, comp_id, element_id );
 		    bu_log( "\tCCONE1 inner solid ignored\n" );
@@ -1756,15 +1756,15 @@ f4_do_ccone1(void)
 		{
 		    /* make inner tgc */
 
-		    inner_name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 2 );
-		    mk_trc_h( fdout , inner_name , base , inner_height , inner_r1 , inner_r2 );
+		    inner_name = make_solid_name( CCONE1, element_id, comp_id, group_id, 2 );
+		    mk_trc_h( fdout, inner_name, base, inner_height, inner_r1, inner_r2 );
 
-		    if( mk_addmember( inner_name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+		    if( mk_addmember( inner_name, &r_head.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 			bu_exit(1, "CCONE1: mk_addmember failed\n");
 		    bu_free( inner_name, "solid_name" );
 		}
 
-	    name = make_solid_name( CCONE1 , element_id , comp_id , group_id , 0 );
+	    name = make_solid_name( CCONE1, element_id, comp_id, group_id, 0 );
 	    mk_comb( fdout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
 	    bu_free( name, "solid_name" );
 	}
@@ -1783,12 +1783,12 @@ f4_do_ccone2(void)
     char *name = (char *)NULL;
     struct wmember r_head;
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
     if( !pass )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	    if( !get_line() )
 		{
 		    bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
@@ -1799,43 +1799,43 @@ f4_do_ccone2(void)
 	    return;
 	}
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     pt1 = atoi( field );
 
-    strncpy( field , &line[32] , 8 );
+    strncpy( field, &line[32], 8 );
     pt2 = atoi( field );
 
-    strncpy( field , &line[64] , 8 );
+    strncpy( field, &line[64], 8 );
     ro1 = atof( field ) * 25.4;
 
-    strncpy( field , &line[72] , 8 );
+    strncpy( field, &line[72], 8 );
     c1 = atoi( field );
 
     if( !get_line() )
 	{
 	    bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		    group_id, comp_id, element_id , c1 );
+		    group_id, comp_id, element_id, c1 );
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n" );
 	}
 
-    strncpy( field , line , 8 );
+    strncpy( field, line, 8 );
     c2 = atoi( field );
 
     if( c1 != c2 )
 	{
-	    bu_log( "WARNING: CCONE2 continuation flags disagree, %d vs %d\n" , c1 , c2 );
+	    bu_log( "WARNING: CCONE2 continuation flags disagree, %d vs %d\n", c1, c2 );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	}
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     ro2 = atof( field ) * 25.4;
 
-    strncpy( field , &line[16] , 8 );
+    strncpy( field, &line[16], 8 );
     ri1 = atof( field ) * 25.4;
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     ri2 = atof( field ) * 25.4;
 
     if( pt1 == pt2 )
@@ -1848,7 +1848,7 @@ f4_do_ccone2(void)
 
     if( ro1 < 0.0 || ro2 < 0.0 || ri1 < 0.0 || ri2 < 0.0 )
 	{
-	    bu_log( "ERROR: CCONE2 has illegal radii %f %f %f %f\n" , ro1, ro2, ri1, ri2 );
+	    bu_log( "ERROR: CCONE2 has illegal radii %f %f %f %f\n", ro1, ro2, ri1, ri2 );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	    return;
@@ -1862,20 +1862,20 @@ f4_do_ccone2(void)
 
     BU_LIST_INIT( &r_head.l );
 
-    VSUB2( height , grid_points[pt2] , grid_points[pt1] );
+    VSUB2( height, grid_points[pt2], grid_points[pt1] );
 
     if( ri1 <= 0.0 && ri2 <= 0.0 )
 	{
-	    name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 0 );
-	    mk_trc_h( fdout , name , grid_points[pt1] , height , ro1 , ro2 );
+	    name = make_solid_name( CCONE2, element_id, comp_id, group_id, 0 );
+	    mk_trc_h( fdout, name, grid_points[pt1], height, ro1, ro2 );
 	    bu_free( name, "solid_name" );
 	}
     else
 	{
-	    name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 1 );
-	    mk_trc_h( fdout , name , grid_points[pt1] , height , ro1 , ro2 );
+	    name = make_solid_name( CCONE2, element_id, comp_id, group_id, 1 );
+	    mk_trc_h( fdout, name, grid_points[pt1], height, ro1, ro2 );
 
-	    if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
+	    if( mk_addmember( name, &r_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		bu_exit(1, "mk_addmember failed!\n");
 	    bu_free( name, "solid_name" );
 
@@ -1885,14 +1885,14 @@ f4_do_ccone2(void)
 	    if( ri2 < min_radius )
 		ri2 = min_radius;
 
-	    name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 2 );
-	    mk_trc_h( fdout , name , grid_points[pt1] , height , ri1 , ri2 );
+	    name = make_solid_name( CCONE2, element_id, comp_id, group_id, 2 );
+	    mk_trc_h( fdout, name, grid_points[pt1], height, ri1, ri2 );
 
-	    if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+	    if( mk_addmember( name, &r_head.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 		bu_exit(1, "mk_addmember failed!\n");
 	    bu_free( name, "solid_name" );
 
-	    name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 0 );
+	    name = make_solid_name( CCONE2, element_id, comp_id, group_id, 0 );
 	    mk_comb( fdout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
 	    bu_free( name, "solid_name" );
 	}
@@ -1909,12 +1909,12 @@ f4_do_ccone3(void)
     vect_t diff, diff2, diff3, diff4;
     struct wmember r_head;
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
     if( !pass )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	    if( !get_line() )
 		{
 		    bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
@@ -1925,16 +1925,16 @@ f4_do_ccone3(void)
 	    return;
 	}
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     pt1 = atoi( field );
 
-    strncpy( field , &line[32] , 8 );
+    strncpy( field, &line[32], 8 );
     pt2 = atoi( field );
 
-    strncpy( field , &line[40] , 8 );
+    strncpy( field, &line[40], 8 );
     pt3 = atoi( field );
 
-    strncpy( field , &line[48] , 8 );
+    strncpy( field, &line[48], 8 );
     pt4 = atoi( field );
 
     strncpy( field, &line[72], 8 );
@@ -1943,13 +1943,13 @@ f4_do_ccone3(void)
 	{
 	    bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %8.8s\n",
-		    group_id, comp_id, element_id , field );
+		    group_id, comp_id, element_id, field );
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n" );
 	}
 
     if( strncmp( field, line, 8 ) )
 	{
-	    bu_log( "WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n" , field , line );
+	    bu_log( "WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n", field, line );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	}
@@ -2060,7 +2060,7 @@ f4_do_ccone3(void)
 		{
 		    name = make_solid_name( CCONE3, element_id, comp_id, group_id, 1 );
 		    mk_trc_h( fdout, name, grid_points[pt1], diff, ro[0], ro[1] );
-		    if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
+		    if( mk_addmember( name, &r_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			bu_exit(1, "mk_addmember failed!\n");
 		    bu_free( name, "solid_name" );
 
@@ -2069,7 +2069,7 @@ f4_do_ccone3(void)
 			{
 			    name = make_solid_name( CCONE3, element_id, comp_id, group_id, 11 );
 			    mk_trc_h( fdout, name, grid_points[pt1], diff, ri[0], ri[1] );
-			    if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+			    if( mk_addmember( name, &r_head.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				bu_exit(1, "mk_addmember failed!\n");
 			    bu_free( name, "solid_name" );
 			}
@@ -2085,7 +2085,7 @@ f4_do_ccone3(void)
 		{
 		    name = make_solid_name( CCONE3, element_id, comp_id, group_id, 2 );
 		    mk_trc_h( fdout, name, grid_points[pt2], diff, ro[1], ro[2] );
-		    if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
+		    if( mk_addmember( name, &r_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			bu_exit(1, "mk_addmember failed!\n");
 		    bu_free( name, "solid_name" );
 
@@ -2094,7 +2094,7 @@ f4_do_ccone3(void)
 			{
 			    name = make_solid_name( CCONE3, element_id, comp_id, group_id, 22 );
 			    mk_trc_h( fdout, name, grid_points[pt2], diff, ri[1], ri[2] );
-			    if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+			    if( mk_addmember( name, &r_head.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				bu_exit(1, "mk_addmember failed!\n");
 			    bu_free( name, "solid_name" );
 			}
@@ -2110,7 +2110,7 @@ f4_do_ccone3(void)
 		{
 		    name = make_solid_name( CCONE3, element_id, comp_id, group_id, 3 );
 		    mk_trc_h( fdout, name, grid_points[pt3], diff, ro[2], ro[3] );
-		    if( mk_addmember( name , &r_head.l , NULL, WMOP_UNION ) == (struct wmember *)NULL )
+		    if( mk_addmember( name, &r_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 			bu_exit(1, "mk_addmember failed!\n");
 		    bu_free( name, "solid_name" );
 
@@ -2119,14 +2119,14 @@ f4_do_ccone3(void)
 			{
 			    name = make_solid_name( CCONE3, element_id, comp_id, group_id, 33 );
 			    mk_trc_h( fdout, name, grid_points[pt3], diff, ri[2], ri[3] );
-			    if( mk_addmember( name , &r_head.l , NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
+			    if( mk_addmember( name, &r_head.l, NULL, WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				bu_exit(1, "mk_addmember failed!\n");
 			    bu_free( name, "solid_name" );
 			}
 		}
 	}
 
-    name = make_solid_name( CCONE3 , element_id , comp_id , group_id , 0 );
+    name = make_solid_name( CCONE3, element_id, comp_id, group_id, 0 );
     mk_comb( fdout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1 );
     bu_free( name, "solid_name" );
 }
@@ -2195,7 +2195,7 @@ Add_holes( int type, int gr, int comp, struct hole_list *ptr )
 
     if( !hole_root )
 	{
-	    hole_root = (struct holes *)bu_malloc( sizeof( struct holes ) , "Add_holes: hole_root" );
+	    hole_root = (struct holes *)bu_malloc( sizeof( struct holes ), "Add_holes: hole_root" );
 	    hole_root->group = gr;
 	    hole_root->component = comp;
 	    hole_root->type = type;
@@ -2232,7 +2232,7 @@ Add_holes( int type, int gr, int comp, struct hole_list *ptr )
 	}
     else
 	{
-	    prev->next = (struct holes *)bu_malloc( sizeof( struct holes ) , "Add_holes: hole_ptr->next" );
+	    prev->next = (struct holes *)bu_malloc( sizeof( struct holes ), "Add_holes: hole_ptr->next" );
 	    hole_ptr = prev->next;
 	    hole_ptr->group = gr;
 	    hole_ptr->component = comp;
@@ -2254,7 +2254,7 @@ f4_do_hole_wall(int type)
     int col;
 
     if( debug )
-	bu_log( "f4_do_hole_wall: %s\n" , line );
+	bu_log( "f4_do_hole_wall: %s\n", line );
 
     if( pass )
 	return;
@@ -2272,10 +2272,10 @@ f4_do_hole_wall(int type)
     if( s_len > 80 )
 	s_len = 80;
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     group = atoi( field );
 
-    strncpy( field , &line[16] , 8 );
+    strncpy( field, &line[16], 8 );
     comp = atoi( field );
 
     list_start = (struct hole_list *)NULL;
@@ -2284,14 +2284,14 @@ f4_do_hole_wall(int type)
 
     while( col < s_len )
 	{
-	    strncpy( field , &line[col] , 8 );
+	    strncpy( field, &line[col], 8 );
 	    igrp = atoi( field );
 
 	    col += 8;
 	    if( col >= s_len )
 		break;
 
-	    strncpy( field , &line[col] , 8 );
+	    strncpy( field, &line[col], 8 );
 	    icmp = atoi( field );
 
 	    if( igrp >= 0 && icmp > 0 )
@@ -2302,12 +2302,12 @@ f4_do_hole_wall(int type)
 			{
 			    if( list_ptr )
 				{
-				    list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "f4_do_hole_wall: list_ptr" );
+				    list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ), "f4_do_hole_wall: list_ptr" );
 				    list_ptr = list_ptr->next;
 				}
 			    else
 				{
-				    list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "f4_do_hole_wall: list_ptr" );
+				    list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ), "f4_do_hole_wall: list_ptr" );
 				    list_start = list_ptr;
 				}
 
@@ -2320,7 +2320,7 @@ f4_do_hole_wall(int type)
 	    col += 8;
 	}
 
-    Add_holes( type, group , comp , list_start );
+    Add_holes( type, group, comp, list_start );
 }
 
 
@@ -2341,7 +2341,7 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	{
 	    if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-		    bu_log( "f4_Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n" , pos, group_id, comp_id );
+		    bu_log( "f4_Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id );
 		    return;
 		}
 	}
@@ -2389,9 +2389,9 @@ f4_do_tri(void)
     int pos;
 
     if( debug )
-	bu_log( "f4_do_tri: %s\n" , line );
+	bu_log( "f4_do_tri: %s\n", line );
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
     if( !bot )
@@ -2410,16 +2410,16 @@ f4_do_tri(void)
 	    face_size = GRID_BLOCK;
 	    face_count = 0;
 	    if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
-		bu_log( "memory corrupted after malloc of faces , thickness, and facemode\n" );
+		bu_log( "memory corrupted after malloc of faces, thickness, and facemode\n" );
 	}
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     pt1 = atoi( field );
 
-    strncpy( field , &line[32] , 8 );
+    strncpy( field, &line[32], 8 );
     pt2 = atoi( field );
 
-    strncpy( field , &line[40] , 8 );
+    strncpy( field, &line[40], 8 );
     pt3 = atoi( field );
 
     thick = 0.0;
@@ -2427,16 +2427,16 @@ f4_do_tri(void)
 
     if( mode == PLATE_MODE )
 	{
-	    strncpy( field , &line[56] , 8 );
+	    strncpy( field, &line[56], 8 );
 	    thick = atof( field ) * 25.4;
 
-	    strncpy( field , &line[64] , 8 );
+	    strncpy( field, &line[64], 8 );
 	    pos = atoi( field );
 	    if( pos == 0 )
 		pos = POS_FRONT;
 
 	    if( debug )
-		bu_log( "\tplate mode: thickness = %f\n" , thick );
+		bu_log( "\tplate mode: thickness = %f\n", thick );
 
 	}
 
@@ -2461,11 +2461,11 @@ f4_do_quad(void)
     fastf_t thick = 0.0;
     int pos = 0;
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
     if( debug )
-	bu_log( "f4_do_quad: %s\n" , line );
+	bu_log( "f4_do_quad: %s\n", line );
 
     if( !bot )
 	bot = element_id;
@@ -2482,24 +2482,24 @@ f4_do_quad(void)
 	    face_count = 0;
 	}
 
-    strncpy( field , &line[24] , 8 );
+    strncpy( field, &line[24], 8 );
     pt1 = atoi( field );
 
-    strncpy( field , &line[32] , 8 );
+    strncpy( field, &line[32], 8 );
     pt2 = atoi( field );
 
-    strncpy( field , &line[40] , 8 );
+    strncpy( field, &line[40], 8 );
     pt3 = atoi( field );
 
-    strncpy( field , &line[48] , 8 );
+    strncpy( field, &line[48], 8 );
     pt4 = atoi( field );
 
     if( mode == PLATE_MODE )
 	{
-	    strncpy( field , &line[56] , 8 );
+	    strncpy( field, &line[56], 8 );
 	    thick = atof( field ) * 25.4;
 
-	    strncpy( field , &line[64] , 8 );
+	    strncpy( field, &line[64], 8 );
 	    pos = atoi( field );
 
 	    if( pos == 0 )	/* use default */
@@ -2507,8 +2507,8 @@ f4_do_quad(void)
 
 	    if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-		    bu_log( "f4_do_quad: illegal postion parameter (%d), must be one or two\n" , pos );
-		    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		    bu_log( "f4_do_quad: illegal postion parameter (%d), must be one or two\n", pos );
+		    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 		    return;
 		}
 	}
@@ -2534,7 +2534,7 @@ make_bot_object(void)
 
     if( !pass )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	    return;
 	}
 
@@ -2594,7 +2594,7 @@ make_bot_object(void)
     if( count )
 	bu_log( "WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id );
 
-    name = make_solid_name( BOT , element_id , comp_id , group_id , 0 );
+    name = make_solid_name( BOT, element_id, comp_id, group_id, 0 );
     mk_bot( fdout, name, bot_mode, RT_BOT_UNORIENTED, 0, bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
 	    bot_ip.faces, bot_ip.thickness, bot_ip.face_mode );
     bu_free( name, "solid_name" );
@@ -2619,7 +2619,7 @@ skip_section(void)
     section_start = ftell( fdin );
     if( get_line() )
 	{
-	    while( line[0] && strncmp( line, "SECTION" , 7 ) &&
+	    while( line[0] && strncmp( line, "SECTION", 7 ) &&
 		   strncmp( line, "HOLE", 4 ) &&
 		   strncmp( line, "WALL", 4 ) &&
 		   strncmp( line, "VEHICLE", 7 ) )
@@ -2644,7 +2644,7 @@ f4_do_section(int final)
     struct name_tree *nm_ptr;
 
     if( debug )
-	bu_log( "f4_do_section(%d): %s\n", final , line );
+	bu_log( "f4_do_section(%d): %s\n", final, line );
 
     if( pass )	/* doing geometry */
 	{
@@ -2660,15 +2660,15 @@ f4_do_section(int final)
 	}
     else if( bot )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	}
 
     if( !final )
 	{
-	    strncpy( field , &line[8] , 8 );
+	    strncpy( field, &line[8], 8 );
 	    group_id = atoi( field );
 
-	    strncpy( field , &line[16] , 8 );
+	    strncpy( field, &line[16], 8 );
 	    comp_id = atoi( field );
 
 	    region_id = group_id * 1000 + comp_id;
@@ -2681,11 +2681,11 @@ f4_do_section(int final)
 
 	    if( comp_id > 999 )
 		{
-		    bu_log( "Illegal component id number %d, changed to 999\n" , comp_id );
+		    bu_log( "Illegal component id number %d, changed to 999\n", comp_id );
 		    comp_id = 999;
 		}
 
-	    strncpy( field , &line[24] , 8 );
+	    strncpy( field, &line[24], 8 );
 	    mode = atoi( field );
 	    if( mode != 1 && mode != 2 )
 		{
@@ -2719,7 +2719,7 @@ f4_do_hex1(void)
     int i;
     int cont1, cont2;
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
     if( !bot )
@@ -2748,50 +2748,50 @@ f4_do_hex1(void)
 
     for( i=0 ; i<6 ; i++ )
 	{
-	    strncpy( field , &line[24 + i*8] , 8 );
+	    strncpy( field, &line[24 + i*8], 8 );
 	    pts[i] = atoi( field );
 	}
 
-    strncpy( field , &line[72] , 8 );
+    strncpy( field, &line[72], 8 );
     cont1 = atoi( field );
 
     if( !get_line() )
 	{
 	    bu_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		    group_id, comp_id, element_id , cont1 );
+		    group_id, comp_id, element_id, cont1 );
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 
-    strncpy( field , line , 8 );
+    strncpy( field, line, 8 );
     cont2 = atoi( field );
 
     if( cont1 != cont2 )
 	{
-	    bu_log( "Continuation card numbers do not match for CHEX1 element (%d vs %d)\n", cont1 , cont2 );
+	    bu_log( "Continuation card numbers do not match for CHEX1 element (%d vs %d)\n", cont1, cont2 );
 	    bu_log( "\tskipping CHEX1 element: group_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	    return;
 	}
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     pts[6] = atoi( field );
 
-    strncpy( field , &line[16] , 8 );
+    strncpy( field, &line[16], 8 );
     pts[7] = atoi( field );
 
     if( mode == PLATE_MODE )
 	{
-	    strncpy( field , &line[56] , 8 );
+	    strncpy( field, &line[56], 8 );
 	    thick = atof( field ) * 25.4;
 	    if( thick <= 0.0 )
 		{
-		    bu_log( "f4_do_hex1: illegal thickness (%f), skipping CHEX1 element\n" , thick );
-		    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		    bu_log( "f4_do_hex1: illegal thickness (%f), skipping CHEX1 element\n", thick );
+		    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 		    return;
 		}
 
-	    strncpy( field , &line[64] , 8 );
+	    strncpy( field, &line[64], 8 );
 	    pos = atoi( field );
 
 	    if( pos == 0 )	/* use default */
@@ -2799,8 +2799,8 @@ f4_do_hex1(void)
 
 	    if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-		    bu_log( "f4_do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n" , pos );
-		    bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		    bu_log( "f4_do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n", pos );
+		    bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 		    return;
 		}
 	}
@@ -2825,12 +2825,12 @@ f4_do_hex2(void)
     point_t points[8];
     char *name = (char *)NULL;
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     element_id = atoi( field );
 
     if( !pass )
 	{
-	    make_region_name( group_id , comp_id );
+	    make_region_name( group_id, comp_id );
 	    if( !get_line() )
 		{
 		    bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
@@ -2843,43 +2843,43 @@ f4_do_hex2(void)
 
     for( i=0 ; i<6 ; i++ )
 	{
-	    strncpy( field , &line[24 + i*8] , 8 );
+	    strncpy( field, &line[24 + i*8], 8 );
 	    pts[i] = atoi( field );
 	}
 
-    strncpy( field , &line[72] , 8 );
+    strncpy( field, &line[72], 8 );
     cont1 = atoi( field );
 
     if( !get_line() )
 	{
 	    bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
 	    bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		    group_id, comp_id, element_id , cont1 );
+		    group_id, comp_id, element_id, cont1 );
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 
-    strncpy( field , line , 8 );
+    strncpy( field, line, 8 );
     cont2 = atoi( field );
 
     if( cont1 != cont2 )
 	{
-	    bu_log( "Continuation card numbers do not match for CHEX2 element (%d vs %d)\n", cont1 , cont2 );
+	    bu_log( "Continuation card numbers do not match for CHEX2 element (%d vs %d)\n", cont1, cont2 );
 	    bu_log( "\tskipping CHEX2 element: group_id = %d, comp_id = %d, element_id = %d\n",
 		    group_id, comp_id, element_id );
 	    return;
 	}
 
-    strncpy( field , &line[8] , 8 );
+    strncpy( field, &line[8], 8 );
     pts[6] = atoi( field );
 
-    strncpy( field , &line[16] , 8 );
+    strncpy( field, &line[16], 8 );
     pts[7] = atoi( field );
 
     for( i=0 ; i<8 ; i++ )
-	VMOVE( points[i] , grid_points[pts[i]] );
+	VMOVE( points[i], grid_points[pts[i]] );
 
-    name = make_solid_name( CHEX2 , element_id , comp_id , group_id , 0 );
-    mk_arb8( fdout , name , &points[0][X] );
+    name = make_solid_name( CHEX2, element_id, comp_id, group_id, 0 );
+    mk_arb8( fdout, name, &points[0][X] );
     bu_free( name, "solid_name" );
 
 }
@@ -2896,15 +2896,15 @@ Process_hole_wall(void)
     rewind( fdin );
     while( 1 )
 	{
-	    if( !strncmp( line , "HOLE" , 4 ) )
+	    if( !strncmp( line, "HOLE", 4 ) )
 		f4_do_hole_wall( HOLE );
-	    else if( !strncmp( line , "WALL" , 4 ) )
+	    else if( !strncmp( line, "WALL", 4 ) )
 		f4_do_hole_wall( WALL );
-	    else if( !strncmp( line , "COMPSPLT", 8 ) )
+	    else if( !strncmp( line, "COMPSPLT", 8 ) )
 		f4_do_compsplt();
 	    else if( !strncmp( line, "SECTION", 7 ) )
 		{
-		    strncpy( field , &line[24] , 8 );
+		    strncpy( field, &line[24], 8 );
 		    mode = atoi( field );
 		    if( mode != 1 && mode != 2 )
 			{
@@ -2913,7 +2913,7 @@ Process_hole_wall(void)
 			    mode = 2;
 			}
 		}
-	    else if( !strncmp( line , "ENDDATA" , 7 ) )
+	    else if( !strncmp( line, "ENDDATA", 7 ) )
 		break;
 
 	    if( !get_line() || !line[0] )
@@ -2984,13 +2984,13 @@ Process_input(int pass_number)
 {
 
     if( debug )
-	bu_log( "\n\nProcess_input( pass = %d )\n" , pass_number );
+	bu_log( "\n\nProcess_input( pass = %d )\n", pass_number );
     if( bu_debug & BU_DEBUG_MEM_CHECK )
 	bu_prmem( "At start of Process_input:" );
 
     if( pass_number != 0 && pass_number != 1 )
 	{
-	    bu_exit(1, "Process_input: illegal pass number %d\n" , pass_number);
+	    bu_exit(1, "Process_input: illegal pass number %d\n", pass_number);
 	}
 
     region_id = 0;
@@ -2999,51 +2999,51 @@ Process_input(int pass_number)
 	strcpy( line, "ENDDATA" );
     while( 1 )
 	{
-	    if( !strncmp( line , "VEHICLE" , 7 ) )
+	    if( !strncmp( line, "VEHICLE", 7 ) )
 		f4_do_vehicle();
-	    else if( !strncmp( line , "HOLE" , 4 ) )
+	    else if( !strncmp( line, "HOLE", 4 ) )
 		;
-	    else if( !strncmp( line , "WALL" , 4 ) )
+	    else if( !strncmp( line, "WALL", 4 ) )
 		;
-	    else if( !strncmp( line , "COMPSPLT", 8 ) )
+	    else if( !strncmp( line, "COMPSPLT", 8 ) )
 		;
 	    else if( !strncmp( line, "CBACKING", 8 ) )
 		f4_do_cbacking();
 	    else if( !strncmp( line, "CHGCOMP", 7 ) )
 		f4_do_chgcomp();
-	    else if( !strncmp( line , "SECTION" , 7 ) )
+	    else if( !strncmp( line, "SECTION", 7 ) )
 		f4_do_section( 0 );
-	    else if( !strncmp( line , "$NAME" , 5 ) )
+	    else if( !strncmp( line, "$NAME", 5 ) )
 		f4_do_name();
-	    else if( !strncmp( line , "$COMMENT" , 8 ) )
+	    else if( !strncmp( line, "$COMMENT", 8 ) )
 		;
-	    else if( !strncmp( line , "GRID" , 4 ) )
+	    else if( !strncmp( line, "GRID", 4 ) )
 		f4_do_grid();
-	    else if( !strncmp( line , "CLINE" , 5 ) )
+	    else if( !strncmp( line, "CLINE", 5 ) )
 		f4_do_cline();
-	    else if( !strncmp( line , "CHEX1" , 5 ) )
+	    else if( !strncmp( line, "CHEX1", 5 ) )
 		f4_do_hex1();
-	    else if( !strncmp( line , "CHEX2" , 5 ) )
+	    else if( !strncmp( line, "CHEX2", 5 ) )
 		f4_do_hex2();
-	    else if( !strncmp( line , "CTRI" , 4 ) )
+	    else if( !strncmp( line, "CTRI", 4 ) )
 		f4_do_tri();
-	    else if( !strncmp( line , "CQUAD" , 5 ) )
+	    else if( !strncmp( line, "CQUAD", 5 ) )
 		f4_do_quad();
-	    else if( !strncmp( line , "CCONE1" , 6 ) )
+	    else if( !strncmp( line, "CCONE1", 6 ) )
 		f4_do_ccone1();
-	    else if( !strncmp( line , "CCONE2" , 6 ) )
+	    else if( !strncmp( line, "CCONE2", 6 ) )
 		f4_do_ccone2();
-	    else if( !strncmp( line , "CCONE3" , 6 ) )
+	    else if( !strncmp( line, "CCONE3", 6 ) )
 		f4_do_ccone3();
-	    else if( !strncmp( line , "CSPHERE" , 7 ) )
+	    else if( !strncmp( line, "CSPHERE", 7 ) )
 		f4_do_sphere();
-	    else if( !strncmp( line , "ENDDATA" , 7 ) )
+	    else if( !strncmp( line, "ENDDATA", 7 ) )
 		{
 		    f4_do_section( 1 );
 		    break;
 		}
 	    else
-		bu_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
+		bu_log( "ERROR: skipping unrecognized data type\n%s\n", line );
 
 	    if( !get_line() || !line[0] )
 		strcpy( line, "ENDDATA" );
@@ -3051,7 +3051,7 @@ Process_input(int pass_number)
 
     if( debug )
 	{
-	    bu_log( "At pass %d:\n" , pass );
+	    bu_log( "At pass %d:\n", pass );
 	    List_names();
 	}
 
@@ -3099,7 +3099,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
     if( tree->tr_op != MKOP(12) )
 	{
-	    rt_db_free_internal( &internal , &rt_uniresource);
+	    rt_db_free_internal( &internal, &rt_uniresource);
 	    return;
 	}
 
@@ -3108,7 +3108,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     if( (dp2=db_lookup( dbip, tree->tr_l.tl_name, 0 )) == DIR_NULL )
 	{
 	    bu_log( "Could not find %s\n", tree->tr_l.tl_name );
-	    rt_db_free_internal( &internal , &rt_uniresource);
+	    rt_db_free_internal( &internal, &rt_uniresource);
 	    return;
 	}
 
@@ -3119,8 +3119,8 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
     if( internal2.idb_type != ID_COMBINATION )
 	{
-	    rt_db_free_internal( &internal , &rt_uniresource);
-	    rt_db_free_internal( &internal2 , &rt_uniresource);
+	    rt_db_free_internal( &internal, &rt_uniresource);
+	    rt_db_free_internal( &internal2, &rt_uniresource);
 	    return;
 	}
 
@@ -3142,7 +3142,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     db_delete( dbip, dp2 );
     db_dirdelete( dbip, dp2 );
 
-    db_free_tree( tree , &rt_uniresource);
+    db_free_tree( tree, &rt_uniresource);
 
 }
 
@@ -3155,7 +3155,7 @@ Post_process(char *output_file)
 
     bu_log( "Cleaning up please wait.....\n" );
 
-    if ((dbip = db_open( output_file , "rw")) == DBI_NULL)
+    if ((dbip = db_open( output_file, "rw")) == DBI_NULL)
 	{
 	    bu_log( "Cannot open %s, post processing not completed\n", output_file );
 	    return;
@@ -3456,7 +3456,7 @@ main(int argc, char **argv)
     char *plot_file=NULL;
     char *color_file=NULL;
 
-    while( (c=bu_getopt( argc , argv , "qm:o:c:dwx:b:X:C:" ) ) != EOF )
+    while( (c=bu_getopt( argc, argv, "qm:o:c:dwx:b:X:C:" ) ) != EOF )
 	{
 	    switch( c )
 		{
@@ -3509,16 +3509,16 @@ main(int argc, char **argv)
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    if( (fdin=fopen( argv[bu_optind] , "r" )) == (FILE *)NULL )
+    if( (fdin=fopen( argv[bu_optind], "r" )) == (FILE *)NULL )
 	{
 	    perror( "fast4-g" );
-	    bu_exit(1, "Cannot open FASTGEN4 file (%s)\n" , argv[bu_optind]);
+	    bu_exit(1, "Cannot open FASTGEN4 file (%s)\n", argv[bu_optind]);
 	}
 
     if( (fdout=wdb_fopen( argv[bu_optind+1] )) == NULL )
 	{
 	    perror( "fast4-g" );
-	    bu_exit(1, "Cannot open file for output (%s)\n" , argv[bu_optind+1]);
+	    bu_exit(1, "Cannot open file for output (%s)\n", argv[bu_optind+1]);
 	}
 
     if( plot_file )
@@ -3546,7 +3546,7 @@ main(int argc, char **argv)
 	read_fast4_colors(color_file);
 
     grid_size = GRID_BLOCK;
-    grid_points = (point_t *)bu_malloc( grid_size * sizeof( point_t ) , "fast4-g: grid_points" );
+    grid_points = (point_t *)bu_malloc( grid_size * sizeof( point_t ), "fast4-g: grid_points" );
 
     cline_root = (struct cline *)NULL;
 
@@ -3562,8 +3562,8 @@ main(int argc, char **argv)
 
     vehicle[0] = '\0';
 
-    bu_ptbl_init( &stack , 64, " &stack ");
-    bu_ptbl_init( &stack2 , 64, " &stack2 ");
+    bu_ptbl_init( &stack, 64, " &stack ");
+    bu_ptbl_init( &stack2, 64, " &stack2 ");
 
     for( i=0 ; i<11 ; i++ )
 	BU_LIST_INIT( &group_head[i].l );
@@ -3586,7 +3586,7 @@ main(int argc, char **argv)
 
     /* Make an ID record if no vehicle card was found */
     if( !vehicle[0] )
-	mk_id_units( fdout , argv[bu_optind] , "in" );
+	mk_id_units( fdout, argv[bu_optind], "in" );
 
     if( !quiet )
 	bu_log( "Building components....\n" );

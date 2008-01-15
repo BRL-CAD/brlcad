@@ -32,7 +32,7 @@
 #include "machine.h"
 #include "vmath.h"
 
-void Matmult( a , b , c )
+void Matmult( a, b, c )
 mat_t a, b, c;
 {
 	mat_t tmp;

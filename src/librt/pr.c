@@ -522,23 +522,23 @@ rt_pr_tree_str(const union tree *tree)
 				break;
 		}
 		return_length = strlen( left ) + strlen( right ) + 8;
-		return_str = (char *)bu_malloc( return_length , "rt_pr_tree_str: return string" );
+		return_str = (char *)bu_malloc( return_length, "rt_pr_tree_str: return string" );
 
-		blankl = strchr( left , ' ' );
-		blankr = strchr( right , ' ' );
+		blankl = strchr( left, ' ' );
+		blankr = strchr( right, ' ' );
 		if( blankl && blankr )
-			snprintf( return_str, return_length, "(%s) %c (%s)" , left , op , right );
+			snprintf( return_str, return_length, "(%s) %c (%s)", left, op, right );
 		else if( blankl && !blankr )
-			snprintf( return_str, return_length, "(%s) %c %s" , left , op , right );
+			snprintf( return_str, return_length, "(%s) %c %s", left, op, right );
 		else if( !blankl && blankr )
-			snprintf( return_str, return_length, "%s %c (%s)" , left , op , right );
+			snprintf( return_str, return_length, "%s %c (%s)", left, op, right );
 		else
-			snprintf( return_str, return_length, "%s %c %s" , left , op , right );
+			snprintf( return_str, return_length, "%s %c %s", left, op, right );
 
 		if( tree->tr_b.tb_left->tr_op != OP_DB_LEAF )
-			bu_free( (genptr_t)left , "rt_pr_tree_str: left string" );
+			bu_free( (genptr_t)left, "rt_pr_tree_str: left string" );
 		if( tree->tr_b.tb_right->tr_op != OP_DB_LEAF )
-			bu_free( (genptr_t)right , "rt_pr_tree_str: right string" );
+			bu_free( (genptr_t)right, "rt_pr_tree_str: right string" );
 		return  return_str;
 	}
 	else if( tree->tr_op == OP_DB_LEAF )

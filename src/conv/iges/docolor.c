@@ -33,15 +33,15 @@
 #include "./iges_extern.h"
 
 unsigned char colortab[9][4]={
-	{ 0 , 217 , 217 , 217 },
-	{ 1 ,   0 ,   0 ,   0 },
-	{ 2 , 255 ,   0 ,   0 },
-	{ 3 ,   0 , 255 ,   0 },
-	{ 4 ,   0 ,   0 , 255 },
-	{ 5 , 255 , 255 ,   0 },
-	{ 6 , 255 ,   0 , 255 },
-	{ 7 ,   0 , 255 , 255 },
-	{ 8 , 255 , 255 , 255 }};
+	{ 0, 217, 217, 217 },
+	{ 1, 0, 0, 0 },
+	{ 2, 255, 0, 0 },
+	{ 3, 0, 255, 0 },
+	{ 4, 0, 0, 255 },
+	{ 5, 255, 255, 0 },
+	{ 6, 255, 0, 255 },
+	{ 7, 0, 255, 255 },
+	{ 8, 255, 255, 255 }};
 
 void
 Docolor()
@@ -65,18 +65,18 @@ Docolor()
 			{
 				/* Use color definition entity */
 				Readrec( dir[-dir[i]->colorp]->param );
-				Readint( &j , "" );
+				Readint( &j, "" );
 				if( j != 314 )
 				{
-					bu_log( "Incorrect color parameters for entity %d\n" , i );
-					bu_log( "\tcolor entity is #%d\n" , -dir[i]->colorp );
+					bu_log( "Incorrect color parameters for entity %d\n", i );
+					bu_log( "\tcolor entity is #%d\n", -dir[i]->colorp );
 					continue;
 				}
-				Readflt( &a , "" );
+				Readflt( &a, "" );
 				dir[i]->rgb[0] = 2.55 * a + 0.5;
-				Readflt( &a , "" );
+				Readflt( &a, "" );
 				dir[i]->rgb[1] = 2.55 * a + 0.5;
-				Readflt( &a , "" );
+				Readflt( &a, "" );
 				dir[i]->rgb[2] = 2.55 * a + 0.5;
 			}
 		}

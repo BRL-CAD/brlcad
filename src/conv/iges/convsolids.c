@@ -87,7 +87,7 @@ Convsolids()
 				break;
 		}
 	}
-	bu_log( "Converted %d solids successfully out of %d total solids\n" , conv , totsolids );
+	bu_log( "Converted %d solids successfully out of %d total solids\n", conv, totsolids );
 }
 
 /*

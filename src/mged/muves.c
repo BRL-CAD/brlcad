@@ -642,7 +642,7 @@ f_e_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	if( e_argc > 1 )
-		return( edit_com( e_argc, e_argv, 1 , 0 ) );
+		return( edit_com( e_argc, e_argv, 1, 0 ) );
 
 	bu_free( (char *)e_argv, "e_argv" );
 

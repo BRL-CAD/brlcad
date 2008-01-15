@@ -1005,7 +1005,7 @@ f_Rd_Macros_From_File(char *buf)
 	for( ; nread > 0 ; )
 		{
 		room = MACROBUFSZ - strlen( cread_buf );
-		nread = fread( cptr, (int) sizeof(char), room , macro_fp );
+		nread = fread( cptr, (int) sizeof(char), room, macro_fp );
 		cread_buf[nread] = NUL;
 		for( cptr = cread_buf; *cptr != NUL; )
 			do_Key_Cmd( (int) *cptr++, 1 );

@@ -359,7 +359,7 @@ rat_write(FBIO *ifp, int x, int y, RGBpixel (*pixelp), int count)
 		y += nrows;
 		if( ! movabs( 0, y-1 ) )
 			return	-1;
-		for(	j = nrows , bytes = 0; j > 0; j-- )
+		for(	j = nrows, bytes = 0; j > 0; j-- )
 		    {
 		   p1 = p + ( (j-1)*_fbsize*3 );
 		   for(	i = _fbsize; i > 0;

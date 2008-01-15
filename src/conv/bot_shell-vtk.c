@@ -511,7 +511,7 @@ char *argv[];
 					/* shoot a ray */
 					if( debug ) {
 						bu_log( "Shooting a ray from (%g %g %g) in direction (%g %g %g)\n",
-							V3ARGS( ap.a_ray.r_pt ) , V3ARGS( ap.a_ray.r_dir ) );
+							V3ARGS( ap.a_ray.r_pt ), V3ARGS( ap.a_ray.r_dir ) );
 					}
 					(void)rt_shootray( &ap );
 					ap.a_ray.r_pt[grid_dir2] += cell_size;
@@ -559,9 +559,9 @@ char *argv[];
 					VADD2( B, tri->tri_A, tri->tri_BA );
 					VADD2( C, tri->tri_A, tri->tri_CA );
 					bu_log( "Shooting a ray from (%g %g %g) in direction (%g %g %g)\n",
-						V3ARGS( ap.a_ray.r_pt ) , V3ARGS( ap.a_ray.r_dir ) );
+						V3ARGS( ap.a_ray.r_pt ), V3ARGS( ap.a_ray.r_dir ) );
 					bu_log( "\tAt triangle ( %g %g %g ) ( %g %g %g ) ( %g %g %g )\n",
-						 V3ARGS( tri->tri_A ), V3ARGS( B ) , V3ARGS( C ) );
+						 V3ARGS( tri->tri_A ), V3ARGS( B ), V3ARGS( C ) );
 				}
 				(void)rt_shootray( &ap );
 				tri = tri->tri_forw;

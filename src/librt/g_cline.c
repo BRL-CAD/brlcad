@@ -640,7 +640,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 		}
 	}
 
-	bu_ptbl_init( &faces , 64, "faces");
+	bu_ptbl_init( &faces, 64, "faces");
 	/* build outer faces */
 	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
 	{
@@ -657,14 +657,14 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 		verts[0] = &base_outer[seg_no].v;
 
 		fu = nmg_cmface( s, verts, 3 );
-		bu_ptbl_ins( &faces , (long *)fu );
+		bu_ptbl_ins( &faces, (long *)fu );
 
 		verts[2] = &base_outer[seg_no].v;
 		verts[1] = &top_outer[next_seg].v;
 		verts[0] = &base_outer[next_seg].v;
 
 		fu = nmg_cmface( s, verts, 3 );
-		bu_ptbl_ins( &faces , (long *)fu );
+		bu_ptbl_ins( &faces, (long *)fu );
 	}
 
 	/* build inner faces */
@@ -685,14 +685,14 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 			verts[2] = &base_inner[seg_no].v;
 
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 
 			verts[0] = &base_inner[seg_no].v;
 			verts[1] = &top_inner[next_seg].v;
 			verts[2] = &base_inner[next_seg].v;
 
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 		}
 	}
 
@@ -715,13 +715,13 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 			verts[1] = &top_inner[seg_no].v;
 			verts[0] = &top_inner[next_seg].v;
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 
 			verts[2] = &top_inner[next_seg].v;
 			verts[1] = &top_outer[next_seg].v;
 			verts[0] = &top_outer[seg_no].v;
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 		}
 		else
 		{
@@ -729,7 +729,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 			verts[1] = &top_center.v;
 			verts[0] = &top_outer[next_seg].v;
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 		}
 	}
 
@@ -752,13 +752,13 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 			verts[1] = &base_inner[seg_no].v;
 			verts[2] = &base_inner[next_seg].v;
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 
 			verts[0] = &base_inner[next_seg].v;
 			verts[1] = &base_outer[next_seg].v;
 			verts[2] = &base_outer[seg_no].v;
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 		}
 		else
 		{
@@ -766,7 +766,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 			verts[1] = &base_center.v;
 			verts[2] = &base_outer[next_seg].v;
 			fu = nmg_cmface( s, verts, 3 );
-			bu_ptbl_ins( &faces , (long *)fu );
+			bu_ptbl_ins( &faces, (long *)fu );
 		}
 	}
 
@@ -804,7 +804,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	{
 		struct faceuse *fu;
 
-		fu = (struct faceuse *)BU_PTBL_GET( &faces , i );
+		fu = (struct faceuse *)BU_PTBL_GET( &faces, i );
 		NMG_CK_FACEUSE( fu );
 
 		if( nmg_calc_face_g( fu ) )
@@ -815,7 +815,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 		}
 	}
 
-	nmg_region_a( *r , tol );
+	nmg_region_a( *r, tol );
 	bu_ptbl_free( &faces );
 
 	return(0);

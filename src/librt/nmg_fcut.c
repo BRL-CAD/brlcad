@@ -2006,30 +2006,30 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 		bu_log( "\tvertexuses in fu that are on lintersect line:\n" );
 		for( i=0 ; i<BU_PTBL_END( b ) ; i++ )
 		{
-			vu = (struct vertexuse *)BU_PTBL_GET( b , i );
-			nmg_pr_vu_briefly( vu , "\t  " );
+			vu = (struct vertexuse *)BU_PTBL_GET( b, i );
+			nmg_pr_vu_briefly( vu, "\t  " );
 		}
-		bu_log( "\tLoopuse in fu (x%x):\n" , fu1 );
-		for( BU_LIST_FOR( lu , loopuse , &fu1->lu_hd ) )
+		bu_log( "\tLoopuse in fu (x%x):\n", fu1 );
+		for( BU_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )
 		{
-			bu_log( "\tLOOPUSE x%x:\n" , lu );
+			bu_log( "\tLOOPUSE x%x:\n", lu );
 			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 			{
 				vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
-				nmg_pr_vu_briefly( vu , "\tVertex Loop: " );
+				nmg_pr_vu_briefly( vu, "\tVertex Loop: " );
 			}
 			else
 			{
-				for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				{
 					struct edgeuse *eu_next;
 					vect_t eu_dir;
 					fastf_t eu_len;
 					double inv_len;
 
-					nmg_pr_eu_briefly( eu , "\t\t" );
-					eu_next = BU_LIST_PNEXT_CIRC( edgeuse , eu );
-					VSUB2( eu_dir , eu_next->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
+					nmg_pr_eu_briefly( eu, "\t\t" );
+					eu_next = BU_LIST_PNEXT_CIRC( edgeuse, eu );
+					VSUB2( eu_dir, eu_next->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
 					eu_len = MAGNITUDE( eu_dir );
 					if( eu_len < VDIVIDE_TOL )
 						inv_len = 0.0;
@@ -2037,7 +2037,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 						inv_len = 1.0/eu_len;
 					for( i=0 ; i<3 ; i++ )
 						eu_dir[i] = eu_dir[i] * inv_len;
-					bu_log( "\t\t\teu_dir = ( %g , %g , %g ), length = %g\n", V3ARGS( eu_dir ) , eu_len );
+					bu_log( "\t\t\teu_dir = ( %g, %g, %g ), length = %g\n", V3ARGS( eu_dir ), eu_len );
 				}
 			}
 		}
@@ -2297,7 +2297,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 						match_lu = next_lu;
 						for( k=0 ; k<BU_PTBL_END( cuts ) ; k++ )
 						{
-							lcut = (struct loop_cuts *)BU_PTBL_GET( cuts , k );
+							lcut = (struct loop_cuts *)BU_PTBL_GET( cuts, k );
 							if( lcut->lu == match_lu )
 							{
 								found = 1;
@@ -2702,8 +2702,8 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 			class = nmg_classify_lu_lu( lu, best_lu, rs->tol );
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 			{
-				bu_log( "lu x%x is %s\n", lu , nmg_orientation( lu->orientation ) );
-				bu_log( "best_lu x%x is %s\n", best_lu , nmg_orientation( best_lu->orientation ) );
+				bu_log( "lu x%x is %s\n", lu, nmg_orientation( lu->orientation ) );
+				bu_log( "best_lu x%x is %s\n", best_lu, nmg_orientation( best_lu->orientation ) );
 				bu_log( "lu x%x is %s w.r.t lu x%x\n",
 					lu, nmg_class_name( class ), best_lu );
 			}
@@ -3632,7 +3632,7 @@ top:
 		for( i=0 ; i<BU_PTBL_END( b1 ) ; i++ )
 		{
 			tmp_found = 0;
-			vu = (struct vertexuse *)BU_PTBL_GET( b1 , i );
+			vu = (struct vertexuse *)BU_PTBL_GET( b1, i );
 			fu = nmg_find_fu_of_vu(vu);
 			if( fu == fu1 )
 				tmp_found = 1;
@@ -3649,7 +3649,7 @@ top:
 		for( i=0 ; i<BU_PTBL_END( b2 ) ; i++ )
 		{
 			tmp_found = 0;
-			vu = (struct vertexuse *)BU_PTBL_GET( b2 , i );
+			vu = (struct vertexuse *)BU_PTBL_GET( b2, i );
 			fu = nmg_find_fu_of_vu(vu);
 			if( fu == fu2 )
 				tmp_found = 1;
@@ -3887,41 +3887,41 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
 	BN_CK_TOL( tol );
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)
-		bu_log( "nmg_insert_vu_if_on_edge: vu1=x%x, vu2=x%x\n" , vu1 , vu2 );
+		bu_log( "nmg_insert_vu_if_on_edge: vu1=x%x, vu2=x%x\n", vu1, vu2 );
 
-	eu_from = BU_LIST_PNEXT_CIRC( edgeuse , vu2->up.eu_p );
-	eu_to = BU_LIST_PPREV_CIRC( edgeuse , vu2->up.eu_p );
-	if( bn_3pts_collinear( vu1->v_p->vg_p->coord , vu2->v_p->vg_p->coord , eu_from->vu_p->v_p->vg_p->coord , tol ))
+	eu_from = BU_LIST_PNEXT_CIRC( edgeuse, vu2->up.eu_p );
+	eu_to = BU_LIST_PPREV_CIRC( edgeuse, vu2->up.eu_p );
+	if( bn_3pts_collinear( vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord, eu_from->vu_p->v_p->vg_p->coord, tol ))
 	{
 		if(rt_g.NMG_debug&DEBUG_FCUT)
-			bu_log( "\t points are collinear with vu2's eu ( %g , %g , %g ) -> ( %g , %g , %g )\n",
+			bu_log( "\t points are collinear with vu2's eu ( %g, %g, %g ) -> ( %g, %g, %g )\n",
 				V3ARGS( vu2->v_p->vg_p->coord ),
 				V3ARGS( eu_from->vu_p->v_p->vg_p->coord ) );
-		VSUB2( eu_vect , eu_from->vu_p->v_p->vg_p->coord , vu2->v_p->vg_p->coord );
-		VSUB2( vect_to_loop , vu1->v_p->vg_p->coord , vu2->v_p->vg_p->coord );
-		if( VDOT( eu_vect , vect_to_loop ) > 0.0 )
+		VSUB2( eu_vect, eu_from->vu_p->v_p->vg_p->coord, vu2->v_p->vg_p->coord );
+		VSUB2( vect_to_loop, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord );
+		if( VDOT( eu_vect, vect_to_loop ) > 0.0 )
 		{
 			eu_len_sq = MAGSQ( eu_vect );
 			dist_to_loop_sq = MAGSQ( vect_to_loop );
 			if( dist_to_loop_sq < eu_len_sq )
 			{
 				if(rt_g.NMG_debug&DEBUG_FCUT)
-					bu_log( "\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				(void) nmg_ebreaker( vu1->v_p , vu2->up.eu_p, tol );
+					bu_log( "\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n", dist_to_loop_sq, tol->dist_sq );
+				(void) nmg_ebreaker( vu1->v_p, vu2->up.eu_p, tol );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}
 		}
 	}
-	if( bn_3pts_collinear( vu1->v_p->vg_p->coord , vu2->v_p->vg_p->coord , eu_to->vu_p->v_p->vg_p->coord , tol ))
+	if( bn_3pts_collinear( vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord, eu_to->vu_p->v_p->vg_p->coord, tol ))
 	{
 		if(rt_g.NMG_debug&DEBUG_FCUT)
-			bu_log( "\t points are collinear with eu that ends at vu2 ( %g , %g , %g ) -> ( %g , %g , %g )\n",
+			bu_log( "\t points are collinear with eu that ends at vu2 ( %g, %g, %g ) -> ( %g, %g, %g )\n",
 				V3ARGS( eu_to->vu_p->v_p->vg_p->coord ),
 				V3ARGS( vu2->v_p->vg_p->coord ) );
-		VSUB2( eu_vect , vu2->v_p->vg_p->coord , eu_to->vu_p->v_p->vg_p->coord );
-		VSUB2( vect_to_loop , vu1->v_p->vg_p->coord , eu_to->vu_p->v_p->vg_p->coord );
-		if( VDOT( eu_vect , vect_to_loop ) > 0.0 )
+		VSUB2( eu_vect, vu2->v_p->vg_p->coord, eu_to->vu_p->v_p->vg_p->coord );
+		VSUB2( vect_to_loop, vu1->v_p->vg_p->coord, eu_to->vu_p->v_p->vg_p->coord );
+		if( VDOT( eu_vect, vect_to_loop ) > 0.0 )
 		{
 			eu_len_sq = MAGSQ( eu_vect );
 			dist_to_loop_sq = MAGSQ( vect_to_loop );
@@ -3929,8 +3929,8 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
 			{
 
 				if(rt_g.NMG_debug&DEBUG_FCUT)
-					bu_log( "\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				(void) nmg_ebreaker( vu1->v_p , eu_to, tol );
+					bu_log( "\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n", dist_to_loop_sq, tol->dist_sq );
+				(void) nmg_ebreaker( vu1->v_p, eu_to, tol );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}

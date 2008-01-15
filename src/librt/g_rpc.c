@@ -1009,7 +1009,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* get mem for arrays */
 	front = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
 	back  = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
-	norms = (vect_t *)bu_calloc( n , sizeof( vect_t ) , "rt_rpc_tess: norms" );
+	norms = (vect_t *)bu_calloc( n, sizeof( vect_t ), "rt_rpc_tess: norms" );
 	vfront = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vback = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vtemp = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
@@ -1023,8 +1023,8 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	while (pos) {
 		vect_t tmp_norm;
 
-		VSET( tmp_norm , 0.0 , 2.0 * pos->p[Y] , -r_sq_over_b );
-		MAT4X3VEC( norms[j] , invR , tmp_norm );
+		VSET( tmp_norm, 0.0, 2.0 * pos->p[Y], -r_sq_over_b );
+		MAT4X3VEC( norms[j], invR, tmp_norm );
 		VUNITIZE( norms[j] );
 		/* rotate back to original position */
 		MAT4X3VEC( &front[i], invR, pos->p );
@@ -1112,11 +1112,11 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		struct faceuse *fu;
 		vect_t rev_norm;
 
-		VREVERSE( rev_norm , norms[i] );
+		VREVERSE( rev_norm, norms[i] );
 
 		/* do "front" vertices */
 		NMG_CK_VERTEX( vfront[i] );
-		for( BU_LIST_FOR( vu , vertexuse , &vfront[i]->vu_hd ) )
+		for( BU_LIST_FOR( vu, vertexuse, &vfront[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
@@ -1127,14 +1127,14 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					continue;	/* skip flat faces */
 
 			if( fu->orientation == OT_SAME )
-				nmg_vertexuse_nv( vu , norms[i] );
+				nmg_vertexuse_nv( vu, norms[i] );
 			else if( fu->orientation == OT_OPPOSITE )
-				nmg_vertexuse_nv( vu , rev_norm );
+				nmg_vertexuse_nv( vu, rev_norm );
 		}
 
 		/* and "back" vertices */
 		NMG_CK_VERTEX( vback[i] );
-		for( BU_LIST_FOR( vu , vertexuse , &vback[i]->vu_hd ) )
+		for( BU_LIST_FOR( vu, vertexuse, &vback[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
@@ -1145,9 +1145,9 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					continue;	/* skip flat faces */
 
 			if( fu->orientation == OT_SAME )
-				nmg_vertexuse_nv( vu , norms[i] );
+				nmg_vertexuse_nv( vu, norms[i] );
 			else if( fu->orientation == OT_OPPOSITE )
-				nmg_vertexuse_nv( vu , rev_norm );
+				nmg_vertexuse_nv( vu, rev_norm );
 		}
 	}
 
@@ -1205,7 +1205,7 @@ rt_rpc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 
 	if( xip->rpc_r <= SMALL_FASTF ) {
 		bu_log( "rt_rpc_import: r is zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_rpc_import: ip->idp_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_rpc_import: ip->idp_ptr" );
 		return( -1 );
 	}
 
@@ -1246,7 +1246,7 @@ rt_rpc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	}
 
 	f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h );
-	if ( !NEAR_ZERO( f , RT_DOT_TOL) ) {
+	if ( !NEAR_ZERO( f, RT_DOT_TOL) ) {
 		bu_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n", f );
 		return(-1);
 	}
@@ -1297,7 +1297,7 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	if( xip->rpc_r <= SMALL_FASTF ) {
 		bu_log( "rt_rpc_import: r is zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_rpc_import: ip->idp_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_rpc_import: ip->idp_ptr" );
 		return( -1 );
 	}
 
@@ -1334,7 +1334,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	}
 
 	f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h );
-	if ( !NEAR_ZERO( f , RT_DOT_TOL) ) {
+	if ( !NEAR_ZERO( f, RT_DOT_TOL) ) {
 		bu_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n", f );
 		return(-1);
 	}

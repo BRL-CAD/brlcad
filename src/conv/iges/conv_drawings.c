@@ -45,7 +45,7 @@ static char *default_drawing_name="iges_drawing";
 struct bu_list free_hd;
 
 void
-Getstrg( str , id )
+Getstrg( str, id )
 char **str;
 char *id;
 {
@@ -69,7 +69,7 @@ char *id;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		bu_log( "%s" , id );
+		bu_log( "%s", id );
 
 	while( !done )
 	{
@@ -117,7 +117,7 @@ char *id;
 }
 
 void
-Note_to_vlist( entno , vhead )
+Note_to_vlist( entno, vhead )
 int entno;
 struct bu_list *vhead;
 {
@@ -128,14 +128,14 @@ struct bu_list *vhead;
 	if(BU_LIST_UNINITIALIZED(&free_hd)) BU_LIST_INIT(&free_hd);
 
 	Readrec( dir[entno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 212 )
 	{
-		bu_log( "Expected General Note entity data at P%07d, got type %d\n" , dir[entno]->param , entity_type );
+		bu_log( "Expected General Note entity data at P%07d, got type %d\n", dir[entno]->param, entity_type );
 		return;
 	}
 
-	Readint( &nstrings , "" );
+	Readint( &nstrings, "" );
 	for( i=0 ; i<nstrings ; i++ )
 	{
 		int str_len=0;
@@ -150,22 +150,22 @@ struct bu_list *vhead;
 		point_t loc, tmp;
 		char *str;
 
-		Readint( &str_len , "" );
-		Readcnv( &width , "" );
-		Readcnv( &height , "" );
-		Readint( &font_code , "" );	/* not currently used */
+		Readint( &str_len, "" );
+		Readcnv( &width, "" );
+		Readcnv( &height, "" );
+		Readint( &font_code, "" );	/* not currently used */
 		slant_ang = bn_halfpi;
-		Readflt( &slant_ang , "" );	/* not currently used */
-		Readflt( &rot_ang , "" );
-		Readint( &mirror , "" );	/* not currently used */
-		Readint( &internal_rot , "" );
-		Readcnv( &tmp[X] , "" );
-		Readcnv( &tmp[Y] , "" );
-		Readcnv( &tmp[Z] , "" );
-		Getstrg( &str , "" );
+		Readflt( &slant_ang, "" );	/* not currently used */
+		Readflt( &rot_ang, "" );
+		Readint( &mirror, "" );	/* not currently used */
+		Readint( &internal_rot, "" );
+		Readcnv( &tmp[X], "" );
+		Readcnv( &tmp[Y], "" );
+		Readcnv( &tmp[Z], "" );
+		Getstrg( &str, "" );
 
 		/* apply any tranform */
-		MAT4X3PNT( loc , *dir[entno]->rot , tmp );
+		MAT4X3PNT( loc, *dir[entno]->rot, tmp );
 
 
 		local_scale = width/str_len;
@@ -198,14 +198,14 @@ struct bu_list *vhead;
 				tmp_y -= ydel;
 				one_char[0] = str[j];
 
-				bn_vlist_2string( vhead , &free_hd , one_char ,
-					tmp_x , tmp_y , local_scale,
+				bn_vlist_2string( vhead, &free_hd, one_char ,
+					tmp_x, tmp_y, local_scale,
 					(double)(rot_ang*180.0*bn_invpi) );
 			}
 		}
 		else
-			bn_vlist_2string( vhead, &free_hd , str ,
-				(double)loc[X] , (double)loc[Y] , local_scale,
+			bn_vlist_2string( vhead, &free_hd, str ,
+				(double)loc[X], (double)loc[Y], local_scale,
 				(double)(rot_ang*180.0*bn_invpi) );
 
 		bu_free( str, "Note_to_vlist: str" );
@@ -213,7 +213,7 @@ struct bu_list *vhead;
 }
 
 void
-Get_plane( pl , entno )
+Get_plane( pl, entno )
 plane_t pl;
 int entno;
 {
@@ -221,19 +221,19 @@ int entno;
 	int i;
 
 	Readrec( dir[entno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 108 )
 	{
-		bu_log( "Expected Plane entity data at P%07d, got type %d\n" , dir[entno]->param , entity_type );
+		bu_log( "Expected Plane entity data at P%07d, got type %d\n", dir[entno]->param, entity_type );
 		return;
 	}
 
 	for( i=0 ; i<4 ; i++ )
-		Readflt( &pl[i] , "" );
+		Readflt( &pl[i], "" );
 }
 
 void
-Curve_to_vlist( vhead , ptlist )
+Curve_to_vlist( vhead, ptlist )
 struct bu_list *vhead;
 struct ptlist *ptlist;
 {
@@ -247,18 +247,18 @@ struct ptlist *ptlist;
 
 	ptr = ptlist;
 
-	RT_ADD_VLIST( vhead , ptr->pt , BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, ptr->pt, BN_VLIST_LINE_MOVE );
 
 	ptr = ptr->next;
 	while( ptr != NULL )
 	{
-		RT_ADD_VLIST( vhead , ptr->pt , BN_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, ptr->pt, BN_VLIST_LINE_DRAW );
 		ptr = ptr->next;
 	}
 }
 
 void
-Leader_to_vlist( entno , vhead )
+Leader_to_vlist( entno, vhead )
 int entno;
 struct bu_list *vhead;
 {
@@ -269,41 +269,41 @@ struct bu_list *vhead;
 	fastf_t a, b, c;
 
 	Readrec( dir[entno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 214 )
 	{
-		bu_log( "Expected Leader (Arrow) entity data at P%07d, got type %d\n" , dir[entno]->param , entity_type );
+		bu_log( "Expected Leader (Arrow) entity data at P%07d, got type %d\n", dir[entno]->param, entity_type );
 		return;
 	}
 
-	Readint( &npts , "" );
-	Readcnv( &a , "" );
-	Readcnv( &b , "" );
-	Readcnv( &v1[2] , "" );
-	Readcnv( &v1[0] , "" );
-	Readcnv( &v1[1] , "" );
+	Readint( &npts, "" );
+	Readcnv( &a, "" );
+	Readcnv( &b, "" );
+	Readcnv( &v1[2], "" );
+	Readcnv( &v1[0], "" );
+	Readcnv( &v1[1], "" );
 	v2[2] = v1[2];
-	Readcnv( &v2[0] , "" );
-	Readcnv( &v2[1] , "" );
-	VMOVE( center , v1 );
+	Readcnv( &v2[0], "" );
+	Readcnv( &v2[1], "" );
+	VMOVE( center, v1 );
 	if( dir[entno]->form == 5 || dir[entno]->form == 6 )
 	{
 		/* need to move v1 towards v2 by distance "a" */
-		VSUB2( v3 , v2 , v1 );
+		VSUB2( v3, v2, v1 );
 		VUNITIZE( v3 );
-		VJOIN1( v1 , v1 , a , v3 );
+		VJOIN1( v1, v1, a, v3 );
 	}
-	MAT4X3PNT( tmp2 , *dir[entno]->rot , v1 );
-	RT_ADD_VLIST( vhead , tmp2 , BN_VLIST_LINE_MOVE );
-	MAT4X3PNT( tmp , *dir[entno]->rot , v2 );
-	RT_ADD_VLIST( vhead , tmp , BN_VLIST_LINE_DRAW );
+	MAT4X3PNT( tmp2, *dir[entno]->rot, v1 );
+	RT_ADD_VLIST( vhead, tmp2, BN_VLIST_LINE_MOVE );
+	MAT4X3PNT( tmp, *dir[entno]->rot, v2 );
+	RT_ADD_VLIST( vhead, tmp, BN_VLIST_LINE_DRAW );
 
 	for( i=1 ; i<npts ; i++ )
 	{
-		Readcnv( &v3[0] , "" );
-		Readcnv( &v3[1] , "" );
-		MAT4X3PNT( tmp , *dir[entno]->rot , v3 );
-		RT_ADD_VLIST( vhead , tmp , BN_VLIST_LINE_DRAW );
+		Readcnv( &v3[0], "" );
+		Readcnv( &v3[1], "" );
+		MAT4X3PNT( tmp, *dir[entno]->rot, v3 );
+		RT_ADD_VLIST( vhead, tmp, BN_VLIST_LINE_DRAW );
 	}
 	switch( dir[entno]->form )
 	{
@@ -319,19 +319,19 @@ struct bu_list *vhead;
 		VUNITIZE( v3 );
 
 		/* Draw one side of arrow head */
-		RT_ADD_VLIST( vhead , tmp2 , BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, tmp2, BN_VLIST_LINE_MOVE );
 		v2[0] = v1[0] + a*v3[0] - b*v3[1];
 		v2[1] = v1[1] + a*v3[1] + b*v3[0];
 		v2[2] = v1[2];
-		MAT4X3PNT( tmp , *dir[entno]->rot , v2 );
-		RT_ADD_VLIST( vhead , tmp , BN_VLIST_LINE_DRAW );
+		MAT4X3PNT( tmp, *dir[entno]->rot, v2 );
+		RT_ADD_VLIST( vhead, tmp, BN_VLIST_LINE_DRAW );
 
 		/* Now draw other side of arrow head */
-		RT_ADD_VLIST( vhead , tmp2 , BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, tmp2, BN_VLIST_LINE_MOVE );
 		v2[0] = v1[0] + a*v3[0] + b*v3[1];
 		v2[1] = v1[1] + a*v3[1] - b*v3[0];
-		MAT4X3PNT( tmp , *dir[entno]->rot , v2 );
-		RT_ADD_VLIST( vhead , tmp , BN_VLIST_LINE_DRAW );
+		MAT4X3PNT( tmp, *dir[entno]->rot, v2 );
+		RT_ADD_VLIST( vhead, tmp, BN_VLIST_LINE_DRAW );
 		break;
 	  case 4:
 		break;
@@ -343,16 +343,16 @@ struct bu_list *vhead;
 			delta = bn_pi/10.0;
 			cosdel = cos( delta );
 			sindel = sin( delta );
-			RT_ADD_VLIST( vhead , tmp2 , BN_VLIST_LINE_MOVE );
-			VMOVE( tmp , v1 );
+			RT_ADD_VLIST( vhead, tmp2, BN_VLIST_LINE_MOVE );
+			VMOVE( tmp, v1 );
 			for( i=0 ; i<20 ; i++ )
 			{
 				rx = tmp[X] - center[X];
 				ry = tmp[Y] - center[Y];
 				tmp[X] = center[X] + rx*cosdel - ry*sindel;
 				tmp[Y] = center[Y] + rx*sindel + ry*cosdel;
-				MAT4X3PNT( tmp2 , *dir[entno]->rot , tmp );
-				RT_ADD_VLIST( vhead , tmp2 , BN_VLIST_LINE_DRAW );
+				MAT4X3PNT( tmp2, *dir[entno]->rot, tmp );
+				RT_ADD_VLIST( vhead, tmp2, BN_VLIST_LINE_DRAW );
 			}
 		}
 		break;
@@ -368,25 +368,25 @@ struct bu_list *vhead;
 		/* Create unit vector perp. to leader */
 		v2[0] = v3[1];
 		v2[1] = (-v3[0]);
-		RT_ADD_VLIST( vhead , tmp2 , BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, tmp2, BN_VLIST_LINE_MOVE );
 		tmp[0] = v1[0] + v2[0]*b/2.0;
 		tmp[1] = v1[1] + v2[1]*b/2.0;
 		tmp[2] = v1[2];
-		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
-		RT_ADD_VLIST( vhead , tmp3 , BN_VLIST_LINE_DRAW );
+		MAT4X3PNT( tmp3, *dir[entno]->rot, tmp );
+		RT_ADD_VLIST( vhead, tmp3, BN_VLIST_LINE_DRAW );
 		tmp[0] += v3[0]*a;
 		tmp[1] += v3[1]*a;
-		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
-		RT_ADD_VLIST( vhead , tmp3 , BN_VLIST_LINE_DRAW );
+		MAT4X3PNT( tmp3, *dir[entno]->rot, tmp );
+		RT_ADD_VLIST( vhead, tmp3, BN_VLIST_LINE_DRAW );
 		tmp[0] -= v2[0]*b;
 		tmp[1] -= v2[1]*b;
-		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
-		RT_ADD_VLIST( vhead , tmp3 , BN_VLIST_LINE_DRAW );
+		MAT4X3PNT( tmp3, *dir[entno]->rot, tmp );
+		RT_ADD_VLIST( vhead, tmp3, BN_VLIST_LINE_DRAW );
 		tmp[0] -= v3[0]*a;
 		tmp[1] -= v3[1]*a;
-		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
-		RT_ADD_VLIST( vhead , tmp3 , BN_VLIST_LINE_DRAW );
-		RT_ADD_VLIST( vhead , tmp2 , BN_VLIST_LINE_DRAW );
+		MAT4X3PNT( tmp3, *dir[entno]->rot, tmp );
+		RT_ADD_VLIST( vhead, tmp3, BN_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead, tmp2, BN_VLIST_LINE_DRAW );
 		break;
 	  case 9:
 	  case 10:
@@ -403,23 +403,23 @@ struct bu_list *vhead;
 		tmp[0] = v1[0] + v2[0]*b/2.0 + v3[0]*a/2.0;
 		tmp[1] = v1[1] + v2[1]*b/2.0 + v3[1]*a/2.0;
 		tmp[2] = v1[2];
-		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
-		RT_ADD_VLIST( vhead , tmp3 , BN_VLIST_LINE_MOVE );
+		MAT4X3PNT( tmp3, *dir[entno]->rot, tmp );
+		RT_ADD_VLIST( vhead, tmp3, BN_VLIST_LINE_MOVE );
 		tmp[0] -= v3[0]*a + v2[0]*b;
 		tmp[1] -= v3[1]*a + v2[1]*b;
-		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
-		RT_ADD_VLIST( vhead , tmp3 , BN_VLIST_LINE_DRAW );
+		MAT4X3PNT( tmp3, *dir[entno]->rot, tmp );
+		RT_ADD_VLIST( vhead, tmp3, BN_VLIST_LINE_DRAW );
 		break;
 	}
 }
 
 void
-Draw_entities( m , view_number , de_list , no_of_des , x , y , ang , local_scale , clip , xform )
+Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, local_scale, clip, xform )
 struct model *m;
 int view_number;
 int de_list[];
 int no_of_des;
-fastf_t x , y , local_scale , ang;
+fastf_t x, y, local_scale, ang;
 plane_t clip[6];
 mat_t *xform;
 {
@@ -436,7 +436,7 @@ mat_t *xform;
 	NMG_CK_MODEL( m );
 
 	r = nmg_mrsv( m );
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 
 	BU_LIST_INIT( &vhead );
 	BU_LIST_INIT( &rt_g.rtg_vlfree );
@@ -475,15 +475,15 @@ mat_t *xform;
 		switch( dir[entno]->type )
 		{
 			case 212:   /* "general note" entity (text) */
-				Note_to_vlist( entno , &vhead );
+				Note_to_vlist( entno, &vhead );
 				break;
 			case 214:	/* leader (arrow) */
-				Leader_to_vlist( entno , &vhead );
+				Leader_to_vlist( entno, &vhead );
 				break;
 			default:
-				npts = Getcurve( entno , &pts );
+				npts = Getcurve( entno, &pts );
 				if( npts > 1 )
-					Curve_to_vlist( &vhead , pts );
+					Curve_to_vlist( &vhead, pts );
 
 				/* free list of points */
 				ptr = pts;
@@ -499,7 +499,7 @@ mat_t *xform;
 		}
 
 		/* rotate, scale, clip, etc, ect, etc... */
-		for( BU_LIST_FOR( vp , bn_vlist , &vhead ) )
+		for( BU_LIST_FOR( vp, bn_vlist, &vhead ) )
 		{
 			register int nused = vp->nused;
 
@@ -509,9 +509,9 @@ mat_t *xform;
 
 				/* Model to view transform */
 				if( xform )
-					MAT4X3PNT( tmp_pt , *xform , vp->pt[i] )
+					MAT4X3PNT( tmp_pt, *xform, vp->pt[i] )
 				else
-					VMOVE( tmp_pt , vp->pt[i] );
+					VMOVE( tmp_pt, vp->pt[i] );
 
 				/* XXXX should do clipping here */
 
@@ -538,7 +538,7 @@ mat_t *xform;
 		}
 
 		/* Convert to BRL-CAD wire edges */
-		nmg_vlist_to_wire_edges( s , &vhead );
+		nmg_vlist_to_wire_edges( s, &vhead );
 		RT_FREE_VLIST( &vhead );
 	}
 }
@@ -560,35 +560,35 @@ int entno;
 	}
 
 	Readrec( dir[entno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 402 )
 	{
-		bu_log( "Expected Views Visible entity data at P%07d, got type %d\n" , dir[entno]->param , entity_type );
+		bu_log( "Expected Views Visible entity data at P%07d, got type %d\n", dir[entno]->param, entity_type );
 		return( (struct views_visible *)NULL );
 	}
 
-	Readint( &no_of_views , "" );
-	Readint( &no_of_entities , "" );
-	vv = (struct views_visible *)bu_malloc( sizeof( struct views_visible ) , "Get_views_visible: vv" );
+	Readint( &no_of_views, "" );
+	Readint( &no_of_entities, "" );
+	vv = (struct views_visible *)bu_malloc( sizeof( struct views_visible ), "Get_views_visible: vv" );
 	vv->de = entno * 2 + 1;
 	vv->no_of_views = no_of_views;
-	vv->view_de = (int *)bu_calloc( no_of_views , sizeof( int ) , "Get_views_visible: vv->view_de" );
+	vv->view_de = (int *)bu_calloc( no_of_views, sizeof( int ), "Get_views_visible: vv->view_de" );
 	for( i=0 ; i<no_of_views ; i++ )
 	{
-		Readint( &vv->view_de[i] , "" );
+		Readint( &vv->view_de[i], "" );
 		if( dir[entno]->form == 3 )
 			continue;
 
 		/* skip extra stuff in form 4 */
 		for( j=0 ; j<4 ; j++ )
-			Readint( &junk , "" );
+			Readint( &junk, "" );
 	}
 
 	return( vv );
 }
 
 void
-Do_view( m , view_vis_list , entno , x , y , ang )
+Do_view( m, view_vis_list, entno, x, y, ang )
 struct model *m;
 struct bu_ptbl *view_vis_list;
 int entno;
@@ -610,20 +610,20 @@ fastf_t x, y, ang;
 	view_de = entno * 2 + 1;
 
 	Readrec( dir[entno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 410 )
 	{
-		bu_log( "Expected View entity data at P%07d, got type %d\n" , dir[entno]->param , entity_type );
+		bu_log( "Expected View entity data at P%07d, got type %d\n", dir[entno]->param, entity_type );
 		return;
 	}
 
-	Readint( &view_number , "\tView number: " );
-	Readflt( &local_scale , "" );
+	Readint( &view_number, "\tView number: " );
+	Readflt( &local_scale, "" );
 
 	for( i=0 ; i<6 ; i++ )
 	{
 		clip_de[i] = 0;
-		Readint( &clip_de[i] , "" );
+		Readint( &clip_de[i], "" );
 		clip_de[i] = (clip_de[i] - 1)/2;
 	}
 
@@ -638,7 +638,7 @@ fastf_t x, y, ang;
 	for( i=0 ; i<6 ; i++ )
 	{
 		if( clip_de[i] )
-			Get_plane( clip[i] , clip_de[i] );
+			Get_plane( clip[i], clip_de[i] );
 		else
 		{
 			clip[i][3] = MAX_FASTF;
@@ -668,7 +668,7 @@ fastf_t x, y, ang;
 
 	for( i=0 ; i<BU_PTBL_END( view_vis_list ) ; i++ )
 	{
-		vv = (struct views_visible *)BU_PTBL_GET( view_vis_list , i );
+		vv = (struct views_visible *)BU_PTBL_GET( view_vis_list, i );
 		for( j=0 ; j<vv->no_of_views ; j++ )
 		{
 			if( vv->view_de[j] == view_de )
@@ -680,12 +680,12 @@ fastf_t x, y, ang;
 	}
 
 	no_of_des = vv_count + 1;
-	de_list = (int *)bu_calloc( no_of_des , sizeof( int ) , "Do_view: de_list" );
+	de_list = (int *)bu_calloc( no_of_des, sizeof( int ), "Do_view: de_list" );
 	de_list[0] = view_de;
 	vv_count=0;
 	for( i=0 ; i<BU_PTBL_END( view_vis_list ) ; i++ )
 	{
-		vv = (struct views_visible *)BU_PTBL_GET( view_vis_list , i );
+		vv = (struct views_visible *)BU_PTBL_GET( view_vis_list, i );
 		for( j=0 ; j<vv->no_of_views ; j++ )
 		{
 			if( vv->view_de[j] == view_de )
@@ -697,13 +697,13 @@ fastf_t x, y, ang;
 		}
 	}
 
-	Draw_entities( m , view_number , de_list , no_of_des , x , y , ang , (fastf_t)local_scale , clip , xform );
+	Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, clip, xform );
 
-	bu_free( (char *)de_list , "Do_view: de_list" );
+	bu_free( (char *)de_list, "Do_view: de_list" );
 }
 
 void
-Get_drawing( entno , view_vis_list )
+Get_drawing( entno, view_vis_list )
 int entno;
 struct bu_ptbl *view_vis_list;
 {
@@ -717,25 +717,25 @@ struct bu_ptbl *view_vis_list;
 	BU_LIST_INIT( &headp.l );
 
 	Readrec( dir[entno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 404 )
 	{
-		bu_log( "Expected Drawing entity data at P%07d, got type %d\n" , dir[entno]->param , entity_type );
+		bu_log( "Expected Drawing entity data at P%07d, got type %d\n", dir[entno]->param, entity_type );
 		return;
 	}
-	Readint( &no_of_views , "" );
-	view_entno = (int *)bu_calloc( no_of_views , sizeof( int ) , "Get_drawing: view_entno" );
-	x = (fastf_t *)bu_calloc( no_of_views , sizeof( fastf_t ) , "Get_drawing: x" );
-	y = (fastf_t *)bu_calloc( no_of_views , sizeof( fastf_t ) , "Get_drawing: y" );
-	ang = (fastf_t *)bu_calloc( no_of_views , sizeof( fastf_t ) , "Get_drawing: ang" );
+	Readint( &no_of_views, "" );
+	view_entno = (int *)bu_calloc( no_of_views, sizeof( int ), "Get_drawing: view_entno" );
+	x = (fastf_t *)bu_calloc( no_of_views, sizeof( fastf_t ), "Get_drawing: x" );
+	y = (fastf_t *)bu_calloc( no_of_views, sizeof( fastf_t ), "Get_drawing: y" );
+	ang = (fastf_t *)bu_calloc( no_of_views, sizeof( fastf_t ), "Get_drawing: ang" );
 	for( i=0 ; i<no_of_views ; i++ )
 	{
-		Readint( &view_entno[i] , "" );
+		Readint( &view_entno[i], "" );
 		view_entno[i] = (view_entno[i] - 1)/2;
-		Readflt( &x[i] , "" );
-		Readflt( &y[i] , "" );
+		Readflt( &x[i], "" );
+		Readflt( &y[i], "" );
 		if( dir[i]->form == 1 )
-			Readflt( &ang[i] , "" );
+			Readflt( &ang[i], "" );
 		else
 			ang[i] = 0.0;
 	}
@@ -748,35 +748,35 @@ struct bu_ptbl *view_vis_list;
 
 		m = nmg_mm();
 
-		Do_view( m , view_vis_list , view_entno[i] , (fastf_t)x[i] , (fastf_t)y[i] , (fastf_t)ang[i] );
+		Do_view( m, view_vis_list, view_entno[i], (fastf_t)x[i], (fastf_t)y[i], (fastf_t)ang[i] );
 
 		/* write the view to the BRL-CAD file if the model is not empty */
 		NMG_CK_MODEL( m );
-		r = BU_LIST_FIRST( nmgregion , &m->r_hd );
-		if( BU_LIST_NOT_HEAD( &r->l , &m->r_hd ) )
+		r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+		if( BU_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
 		{
 			NMG_CK_REGION( r );
-			s = BU_LIST_FIRST( shell , &r->s_hd );
-			if( BU_LIST_NOT_HEAD( &s->l , &r->s_hd ) )
+			s = BU_LIST_FIRST( shell, &r->s_hd );
+			if( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 			{
 				if( BU_LIST_NON_EMPTY( &s->eu_hd ) )
 				{
-					nmg_rebound( m , &tol );
-					mk_nmg( fdout , dir[view_entno[i]]->name , m );
-					(void)mk_addmember( dir[view_entno[i]]->name , &headp.l , NULL, WMOP_UNION );
+					nmg_rebound( m, &tol );
+					mk_nmg( fdout, dir[view_entno[i]]->name, m );
+					(void)mk_addmember( dir[view_entno[i]]->name, &headp.l, NULL, WMOP_UNION );
 				}
 			}
 		}
 	}
 
-	(void)mk_lfcomb( fdout , dir[entno]->name , &headp , 0 )
+	(void)mk_lfcomb( fdout, dir[entno]->name, &headp, 0 )
 
 /*	if( no_of_views )
 	{
-		bu_free( (char *)view_entno , "Get_drawing: view_entno" );
-		bu_free( (char *)x , "Get_drawing: x" );
-		bu_free( (char *)y , "Get_drawing: y" );
-		bu_free( (char *)ang , "Get_drawing: ang" );
+		bu_free( (char *)view_entno, "Get_drawing: view_entno" );
+		bu_free( (char *)x, "Get_drawing: x" );
+		bu_free( (char *)y, "Get_drawing: y" );
+		bu_free( (char *)ang, "Get_drawing: ang" );
 	}
 */
 }
@@ -795,7 +795,7 @@ Conv_drawings()
 
 	bu_log( "\n\nConverting drawing entities:\n" );
 
-	bu_ptbl_init( &view_vis_list , 64, " &view_vis_list ");
+	bu_ptbl_init( &view_vis_list, 64, " &view_vis_list ");
 
 	for( i=0 ; i<totentities ; i++ )
 	{
@@ -807,7 +807,7 @@ Conv_drawings()
 
 		vv = Get_views_visible( i );
 		if( vv )
-			bu_ptbl_ins( &view_vis_list , (long *)vv );
+			bu_ptbl_ins( &view_vis_list, (long *)vv );
 
 	}
 
@@ -823,15 +823,15 @@ Conv_drawings()
 		for( i=0 ; i<totentities ; i++ )
 		{
 			if( dir[i]->type == 404 )
-				Get_drawing( i , &view_vis_list );
+				Get_drawing( i, &view_vis_list );
 		}
 
 		/* free views visible list */
 		for( i=0 ; i<BU_PTBL_END( &view_vis_list ) ; i++ )
 		{
-			vv = (struct views_visible *)BU_PTBL_GET( &view_vis_list , i );
-			bu_free( (char *)vv->view_de , "Conv_drawings: vv->view_de" );
-			bu_free( (char *)vv , "Conv_drawings: vv" );
+			vv = (struct views_visible *)BU_PTBL_GET( &view_vis_list, i );
+			bu_free( (char *)vv->view_de, "Conv_drawings: vv->view_de" );
+			bu_free( (char *)vv, "Conv_drawings: vv" );
 		}
 		bu_ptbl_free( &view_vis_list );
 		return;
@@ -857,34 +857,34 @@ Conv_drawings()
 			{
 				m = nmg_mm();
 
-				Do_view( m , &view_vis_list , i , 0.0 , 0.0 , 0.0 );
+				Do_view( m, &view_vis_list, i, 0.0, 0.0, 0.0 );
 
 				/* write the drawing to the BRL-CAD file if the model is not empty */
-				r = BU_LIST_FIRST( nmgregion , &m->r_hd );
-				if( BU_LIST_NOT_HEAD( &r->l , &m->r_hd ) )
+				r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+				if( BU_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
 				{
 					NMG_CK_REGION( r );
-					s = BU_LIST_FIRST( shell , &r->s_hd );
-					if( BU_LIST_NOT_HEAD( &s->l , &r->s_hd ) )
+					s = BU_LIST_FIRST( shell, &r->s_hd );
+					if( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 					{
 						if( BU_LIST_NON_EMPTY( &s->eu_hd ) )
 						{
-							nmg_rebound( m , &tol );
-							mk_nmg( fdout , dir[i]->name , m );
-							(void)mk_addmember( dir[i]->name , &headp.l , NULL, WMOP_UNION );
+							nmg_rebound( m, &tol );
+							mk_nmg( fdout, dir[i]->name, m );
+							(void)mk_addmember( dir[i]->name, &headp.l, NULL, WMOP_UNION );
 						}
 					}
 				}
 			}
 		}
-		(void)mk_lfcomb( fdout , default_drawing_name , &headp , 0 )
+		(void)mk_lfcomb( fdout, default_drawing_name, &headp, 0 )
 
 		/* free views visible list */
 		for( i=0 ; i<BU_PTBL_END( &view_vis_list ) ; i++ )
 		{
-			vv = (struct views_visible *)BU_PTBL_GET( &view_vis_list , i );
-			bu_free( (char *)vv->view_de , "Conv_drawings: vv->view_de" );
-			bu_free( (char *)vv , "Conv_drawings: vv" );
+			vv = (struct views_visible *)BU_PTBL_GET( &view_vis_list, i );
+			bu_free( (char *)vv->view_de, "Conv_drawings: vv->view_de" );
+			bu_free( (char *)vv, "Conv_drawings: vv" );
 		}
 		bu_ptbl_free( &view_vis_list );
 
@@ -895,20 +895,20 @@ Conv_drawings()
 	/* no drawings or views, just convert all independent lines, arcs, etc */
 	m = nmg_mm();
 
-	Draw_entities( m , 0 , (int *)NULL , 0 , 0.0 , 0.0 , 0.0 , 1.0 , (plane_t *)NULL , (mat_t *)NULL );
+	Draw_entities( m, 0, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (plane_t *)NULL, (mat_t *)NULL );
 
 	/* write the drawing to the BRL-CAD file if the model is not empty */
-	r = BU_LIST_FIRST( nmgregion , &m->r_hd );
-	if( BU_LIST_NOT_HEAD( &r->l , &m->r_hd ) )
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+	if( BU_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
 	{
 		NMG_CK_REGION( r );
-		s = BU_LIST_FIRST( shell , &r->s_hd );
-		if( BU_LIST_NOT_HEAD( &s->l , &r->s_hd ) )
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		if( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			if( BU_LIST_NON_EMPTY( &s->eu_hd ) )
 			{
-				nmg_rebound( m , &tol );
-				mk_nmg( fdout , default_drawing_name , m );
+				nmg_rebound( m, &tol );
+				mk_nmg( fdout, default_drawing_name, m );
 			}
 		}
 	}
@@ -916,9 +916,9 @@ Conv_drawings()
 	/* free views visible list */
 	for( i=0 ; i<BU_PTBL_END( &view_vis_list ) ; i++ )
 	{
-		vv = (struct views_visible *)BU_PTBL_GET( &view_vis_list , i );
-		bu_free( (char *)vv->view_de , "Conv_drawings: vv->view_de" );
-		bu_free( (char *)vv , "Conv_drawings: vv" );
+		vv = (struct views_visible *)BU_PTBL_GET( &view_vis_list, i );
+		bu_free( (char *)vv->view_de, "Conv_drawings: vv->view_de" );
+		bu_free( (char *)vv, "Conv_drawings: vv" );
 	}
 	bu_ptbl_free( &view_vis_list );
 }

@@ -142,15 +142,15 @@ bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
 	{
 		default:
 		case 1:
-			cos_b = (-VDOT( ab , bc ))/(mag_ab * mag_bc );
+			cos_b = (-VDOT( ab, bc ))/(mag_ab * mag_bc );
 			dist_sq = mag_bc*mag_bc*( 1.0 - cos_b*cos_b);
 			break;
 		case 2:
-			cos_c = (-VDOT( bc , ca ))/(mag_bc * mag_ca );
+			cos_c = (-VDOT( bc, ca ))/(mag_bc * mag_ca );
 			dist_sq = mag_ca*mag_ca*(1.0 - cos_c*cos_c);
 			break;
 		case 3:
-			cos_a = (-VDOT( ca , ab ))/(mag_ca * mag_ab );
+			cos_a = (-VDOT( ca, ab ))/(mag_ca * mag_ab );
 			dist_sq = mag_ab*mag_ab*(1.0 - cos_a*cos_a);
 			break;
 	}
@@ -1276,15 +1276,15 @@ bn_isect_line3_line3(fastf_t *t,
 		return(-1);		/* No intersection */
 	}
 
-	if( NEAR_ZERO( MAGSQ( n ) , SMALL_FASTF ) )
+	if( NEAR_ZERO( MAGSQ( n ), SMALL_FASTF ) )
 	{
 		vect_t a_to_p;
 
 		/* lines are parallel, must find another way to get normal vector */
-		VSUB2( a_to_p , p , a );
-		VCROSS( n , a_to_p , d );
+		VSUB2( a_to_p, p, a );
+		VCROSS( n, a_to_p, d );
 
-		if( NEAR_ZERO( MAGSQ( n ) , SMALL_FASTF ) )
+		if( NEAR_ZERO( MAGSQ( n ), SMALL_FASTF ) )
 			bn_vec_ortho( n, d );
 	}
 
@@ -2724,12 +2724,12 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const int pl_count)
 		bu_log( "bn_isect_planes:\n" );
 		for( i=0 ; i<pl_count ; i++ )
 		{
-			bu_log( "Plane #%d (%f %f %f %f)\n" , i , V4ARGS( planes[i] ) );
+			bu_log( "Plane #%d (%f %f %f %f)\n", i, V4ARGS( planes[i] ) );
 		}
 	}
 
 	MAT_ZERO( matrix );
-	VSET( hpq , 0.0 , 0.0 , 0.0 );
+	VSET( hpq, 0.0, 0.0, 0.0 );
 
 	for( i=0 ; i<pl_count ; i++ )
 	{
@@ -2751,12 +2751,12 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const int pl_count)
 
 	/* Check that we don't have a singular matrix */
 	det = bn_mat_determinant( matrix );
-	if( NEAR_ZERO( det , SMALL_FASTF ) )
+	if( NEAR_ZERO( det, SMALL_FASTF ) )
 		return( 1 );
 
-	bn_mat_inv( inverse , matrix );
+	bn_mat_inv( inverse, matrix );
 
-	MAT4X3PNT( pt , inverse , hpq );
+	MAT4X3PNT( pt, inverse, hpq );
 
 	return( 0 );
 

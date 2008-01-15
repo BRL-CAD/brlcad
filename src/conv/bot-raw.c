@@ -63,7 +63,7 @@ void write_bot(struct rt_bot_internal *bot, FILE *fh, char *name)
     for (i = 0; i < num_vertices; i++)
       for (n = 0; n < 3; n++) {
 	v = (float)vertices[3*i+n] * 0.001;
-	fwrite ( &v , sizeof(float), 1, fh);
+	fwrite ( &v, sizeof(float), 1, fh);
       }
 
     /* Faces */

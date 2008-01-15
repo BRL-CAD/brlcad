@@ -109,7 +109,7 @@ main(int ac, char *av[])
 	  BU_LIST_INIT(&wm_hd.l);
 
 	  sprintf(solidName, "air.%d.s", counter);
-	  mk_sph(db_fp, solidName , p1, currentSize);
+	  mk_sph(db_fp, solidName, p1, currentSize);
 	  mk_addmember(solidName, &wm_hd.l, NULL, WMOP_UNION);
 	  mk_addmember(prevSolid, &wm_hd.l, NULL, WMOP_SUBTRACT);
 

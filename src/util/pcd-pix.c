@@ -451,7 +451,7 @@ main(int argc, char **argv)
 
 		if(!do_overskip)
 		{
-			planealloc(&Luma   , w, h);
+			planealloc(&Luma, w, h);
 			planealloc(&Chroma1, w, h);
 			planealloc(&Chroma2, w, h);
 			SEEK(L_Head+1);
@@ -461,7 +461,7 @@ main(int argc, char **argv)
 		}
 		else
 		{
-			planealloc(&Luma   , w, h);
+			planealloc(&Luma, w, h);
 			planealloc(&Chroma1, 2*w, 2*h);
 			planealloc(&Chroma2, 2*w, 2*h);
 			SEEK(L_Head+1);
@@ -479,7 +479,7 @@ main(int argc, char **argv)
 
 		if(!do_overskip)
 		{
-			planealloc(&Luma   , w, h);
+			planealloc(&Luma, w, h);
 			planealloc(&Chroma1, w, h);
 			planealloc(&Chroma2, w, h);
 			SEEK(L_Head+L_Base16+1);
@@ -489,7 +489,7 @@ main(int argc, char **argv)
 		}
 		else
 		{
-			planealloc(&Luma   , w, h);
+			planealloc(&Luma, w, h);
 			planealloc(&Chroma1, 2*w, 2*h);
 			planealloc(&Chroma2, 2*w, 2*h);
 			SEEK(L_Head+L_Base16+1);
@@ -507,7 +507,7 @@ main(int argc, char **argv)
 
 		if(!do_overskip)
 		{
-			planealloc(&Luma   , w, h);
+			planealloc(&Luma, w, h);
 			planealloc(&Chroma1, w, h);
 			planealloc(&Chroma2, w, h);
 			SEEK(L_Head+L_Base16+L_Base4+1);
@@ -517,7 +517,7 @@ main(int argc, char **argv)
 		}
 		else
 		{
-			planealloc(&Luma   ,  w,  h);
+			planealloc(&Luma, w,  h);
 			planealloc(&Chroma1, 2*w, 2*h);
 			planealloc(&Chroma2, 2*w, 2*h);
 			SEEK(L_Head+L_Base16+L_Base4+1);
@@ -640,7 +640,7 @@ main(int argc, char **argv)
 		w=BaseW/4;
 		h=BaseH/4;
 
-		planealloc(&Luma   , w, h);
+		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, w, h);
 		planealloc(&Chroma2, w, h);
 

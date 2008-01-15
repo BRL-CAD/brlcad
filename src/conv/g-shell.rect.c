@@ -1312,8 +1312,8 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 		}
 	}
 
-	(void) nmg_split_loops_into_faces( &ref_data->fu1->l.magic , &tol );
-	(void) nmg_split_loops_into_faces( &ref_data->fu2->l.magic , &tol );
+	(void) nmg_split_loops_into_faces( &ref_data->fu1->l.magic, &tol );
+	(void) nmg_split_loops_into_faces( &ref_data->fu2->l.magic, &tol );
 
 	for( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
 	{

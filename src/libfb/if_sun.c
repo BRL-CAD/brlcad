@@ -1265,7 +1265,7 @@ FBIO	*ifp;
 int     xcenter, ycenter;
 int	xzoom, yzoom;
 {
-	/*fb_log( "sun_window_set(0x%x,%d,%d)\n", ifp, xcenter , ycenter );*/
+	/*fb_log( "sun_window_set(0x%x,%d,%d)\n", ifp, xcenter, ycenter );*/
 	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	 && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
 		return	0;

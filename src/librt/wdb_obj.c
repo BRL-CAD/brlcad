@@ -2947,7 +2947,7 @@ wdb_copy_cmd(struct rt_wdb	*wdbp,
 	    return TCL_ERROR;
 	}
 
-	if (db_get_external(&external , proto , wdbp->dbip)) {
+	if (db_get_external(&external, proto, wdbp->dbip)) {
 	    if (interp) {
 		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 	    } else {
@@ -3440,7 +3440,7 @@ copy_object(
 		}
 	}
 
-	new_name = get_new_name(input_dp->d_namep, curr_dbip, name_tbl, used_names_tbl , cc_data );
+	new_name = get_new_name(input_dp->d_namep, curr_dbip, name_tbl, used_names_tbl, cc_data );
 	if( !new_name ) {
 		new_name = input_dp->d_namep;
 	}
@@ -4555,7 +4555,7 @@ wdb_facetize_cmd(struct rt_wdb	*wdbp,
 			nmg_model = (struct model *)NULL;
 			return TCL_ERROR;
 		}
-		nmg_triangulate_model( nmg_model , &wdbp->wdb_tol );
+		nmg_triangulate_model( nmg_model, &wdbp->wdb_tol );
 		BU_UNSETJUMP;
 	}
 

@@ -58,7 +58,7 @@ union tree *ptr;
 	if( jtop == stklen )
 	{
 		stklen += STKBLK;
-		stk = (union tree **)bu_realloc( (char *)stk , stklen*sizeof( union tree *),
+		stk = (union tree **)bu_realloc( (char *)stk, stklen*sizeof( union tree *),
 			"Push: stk" );
 		if( stk == NULL )
 		{

@@ -768,8 +768,8 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     /*  GetEstimate(C1, pt, normal, ScaleFactor/10.0, PMap[PM_GLOBAL]->StoredPhotons / 100, PM_GLOBAL, 5, 1);*/
     /*  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 10.0*log(PMap[PM_GLOBAL]->StoredPhotons), PM_GLOBAL, ScaleFactor/5.0, 1);*/
     GetEstimate(C1, pt, normal, ScaleFactor/1024.0, 128, PM_GLOBAL, ScaleFactor/8.0, 1, 15);
-    /*  GetEstimate(C2 , pt, normal, (int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC]->MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC]->MaxPhotons / 50, PM_CAUSTIC, 0, 0);*/
-    GetEstimate(C2 , pt, normal, ScaleFactor/1024.0, PMap[PM_CAUSTIC]->MaxPhotons / 100, PM_CAUSTIC, ScaleFactor/256.0, 1, 15);
+    /*  GetEstimate(C2, pt, normal, (int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC]->MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC]->MaxPhotons / 50, PM_CAUSTIC, 0, 0);*/
+    GetEstimate(C2, pt, normal, ScaleFactor/1024.0, PMap[PM_CAUSTIC]->MaxPhotons / 100, PM_CAUSTIC, ScaleFactor/256.0, 1, 15);
     /*    GetEstimate(IMColor2, pt, normal, (int)(ScaleFactor/100.0), PMap[PM_CAUSTIC]->MaxPhotons/50, PM_CAUSTIC, 1, 0);*/
 
     (*(vect_t*)ap->a_purpose)[0]+= C1[0] + C2[0];

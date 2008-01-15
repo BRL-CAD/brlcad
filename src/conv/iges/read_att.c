@@ -36,7 +36,7 @@
 #include "./iges_extern.h"
 
 void
-Read_att( att_de , att )
+Read_att( att_de, att )
 int att_de;
 struct brlcad_att *att;
 {
@@ -65,27 +65,27 @@ struct brlcad_att *att;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &i , "" );
+	Readint( &i, "" );
 	if( i != 422 )
 	{
-		bu_log( "Read_att: Expecting attribute instance, found type %d\n" , i );
+		bu_log( "Read_att: Expecting attribute instance, found type %d\n", i );
 		return;
 	}
 
-	Readname( &att->material_name , "" );
-	Readname( &att->material_params , "" );
-	Readint( &att->region_flag , "" );
-	Readint( &att->ident , "" );
-	Readint( &att->air_code , "" );
-	Readint( &att->material_code , "" );
-	Readint( &att->los_density , "" );
-	Readint( &att->inherit , "" );
-	Readint( &att->color_defined , "" );
+	Readname( &att->material_name, "" );
+	Readname( &att->material_params, "" );
+	Readint( &att->region_flag, "" );
+	Readint( &att->ident, "" );
+	Readint( &att->air_code, "" );
+	Readint( &att->material_code, "" );
+	Readint( &att->los_density, "" );
+	Readint( &att->inherit, "" );
+	Readint( &att->color_defined, "" );
 }
 
 /*

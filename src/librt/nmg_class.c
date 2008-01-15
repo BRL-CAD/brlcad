@@ -2257,7 +2257,7 @@ bu_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does n
 	closest.p.eu = (struct edgeuse *)NULL;
 	closest.class = NMG_CLASS_AoutB;	/* default return */
 
-	nmg_class_pt_l( &closest , pt , lu , tol );
+	nmg_class_pt_l( &closest, pt, lu, tol );
 
 	return( closest.class );
 }
@@ -2397,7 +2397,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 	BN_CK_TOL( tol );
 
 	if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-		bu_log( "nmg_classify_lu_lu( lu1=x%x , lu2=x%x )\n", lu1, lu2 );
+		bu_log( "nmg_classify_lu_lu( lu1=x%x, lu2=x%x )\n", lu1, lu2 );
 
 	if( lu1 == lu2 || lu1 == lu2->lumate_p )
 		return( NMG_CLASS_AonBshared );
@@ -2441,18 +2441,18 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 			lu2_eu_count++;
 
 		share_edges = 1;
-		eu1_start = BU_LIST_FIRST( edgeuse , &lu1->down_hd );
+		eu1_start = BU_LIST_FIRST( edgeuse, &lu1->down_hd );
 		NMG_CK_EDGEUSE( eu1_start );
-		eu2_start = BU_LIST_FIRST( edgeuse , &lu2->down_hd );
+		eu2_start = BU_LIST_FIRST( edgeuse, &lu2->down_hd );
 		NMG_CK_EDGEUSE( eu2_start );
-		while( BU_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) &&
+		while( BU_LIST_NOT_HEAD( eu2_start, &lu2->down_hd ) &&
 			eu2_start->e_p != eu1_start->e_p )
 		{
 			NMG_CK_EDGEUSE( eu2_start );
-			eu2_start = BU_LIST_PNEXT( edgeuse , &eu2_start->l );
+			eu2_start = BU_LIST_PNEXT( edgeuse, &eu2_start->l );
 		}
 
-		if( BU_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) &&
+		if( BU_LIST_NOT_HEAD( eu2_start, &lu2->down_hd ) &&
 			eu1_start->e_p == eu2_start->e_p )
 		{
 			/* check the rest of the loop */
@@ -2466,8 +2466,8 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 					share_edges = 0;
 					break;
 				}
-				eu1 = BU_LIST_PNEXT_CIRC( edgeuse , &eu1->l );
-				eu2 = BU_LIST_PNEXT_CIRC( edgeuse , &eu2->l );
+				eu1 = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+				eu2 = BU_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
 			} while( eu1 != eu1_start );
 
 			if( !share_edges )
@@ -2483,8 +2483,8 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 						share_edges = 0;
 						break;
 					}
-					eu1 = BU_LIST_PNEXT_CIRC( edgeuse , &eu1->l );
-					eu2 = BU_LIST_PPREV_CIRC( edgeuse , &eu2->l );
+					eu1 = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+					eu2 = BU_LIST_PPREV_CIRC( edgeuse, &eu2->l );
 				} while( eu1 != eu1_start );
 			}
 
@@ -2502,7 +2502,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 				 * try to fnd a vertex in lu1
 				 * that is not in lu2
 				 */
-				for( BU_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
+				for( BU_LIST_FOR( eu, edgeuse, &lu1->down_hd ) )
 				{
 					struct vertex_g *vg;
 					int class;
@@ -2563,7 +2563,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 		else
 		{
 			/* no matching edges, classify by vertices */
-			for( BU_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
+			for( BU_LIST_FOR( eu, edgeuse, &lu1->down_hd ) )
 			{
 				struct vertex_g *vg;
 				int class;
@@ -2606,7 +2606,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 			/* if we get here, all vertices are shared,
 			 * but no edges are!!!!! Check the midpoint of edges.
 			 */
-			for( BU_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
+			for( BU_LIST_FOR( eu, edgeuse, &lu1->down_hd ) )
 			{
 				struct vertex_g *vg1,*vg2;
 				int class;
@@ -2656,8 +2656,8 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 	{
 		struct vertexuse *vu1,*vu2;
 
-		vu1 = BU_LIST_FIRST( vertexuse , &lu1->down_hd );
-		vu2 = BU_LIST_FIRST( vertexuse , &lu2->down_hd );
+		vu1 = BU_LIST_FIRST( vertexuse, &lu1->down_hd );
+		vu2 = BU_LIST_FIRST( vertexuse, &lu2->down_hd );
 
 		if( vu1->v_p == vu2->v_p )
 		{
@@ -2679,7 +2679,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 		struct vertex_g *vg;
 		int class;
 
-		vu = BU_LIST_FIRST( vertexuse , &lu1->down_hd );
+		vu = BU_LIST_FIRST( vertexuse, &lu1->down_hd );
 		NMG_CK_VERTEXUSE( vu );
 		vg = vu->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );

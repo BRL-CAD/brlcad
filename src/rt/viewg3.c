@@ -392,11 +392,11 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 #if 0
 	/* This code is to note any occurances of negative distances. */
 		if( PartHeadp->pt_forw->pt_inhit->hit_dist < 0)  {
-			bu_log("ERROR: dfirst=%g at partition x%x\n", dfirst , PartHeadp->pt_forw );
-			bu_log("\tdcorrection = %f\n" , dcorrection );
-			bu_log("\tray start point is ( %f %f %f ) in direction ( %f %f %f )\n" , V3ARGS( ap->a_ray.r_pt ) , V3ARGS( ap->a_ray.r_dir ) );
-			VJOIN1( PartHeadp->pt_forw->pt_inhit->hit_point , ap->a_ray.r_pt , PartHeadp->pt_forw->pt_inhit->hit_dist , ap->a_ray.r_dir );
-			VJOIN1( PartHeadp->pt_back->pt_outhit->hit_point , ap->a_ray.r_pt , PartHeadp->pt_forw->pt_outhit->hit_dist , ap->a_ray.r_dir );
+			bu_log("ERROR: dfirst=%g at partition x%x\n", dfirst, PartHeadp->pt_forw );
+			bu_log("\tdcorrection = %f\n", dcorrection );
+			bu_log("\tray start point is ( %f %f %f ) in direction ( %f %f %f )\n", V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ) );
+			VJOIN1( PartHeadp->pt_forw->pt_inhit->hit_point, ap->a_ray.r_pt, PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir );
+			VJOIN1( PartHeadp->pt_back->pt_outhit->hit_point, ap->a_ray.r_pt, PartHeadp->pt_forw->pt_outhit->hit_dist, ap->a_ray.r_dir );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
 	/* End of bug trap. */
@@ -486,10 +486,10 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		 */
 #if 0
 		if( comp_thickness <= 0 )  {
-			VJOIN1( pp->pt_inhit->hit_point , ap->a_ray.r_pt , pp->pt_inhit->hit_dist , ap->a_ray.r_dir );
-			VJOIN1( pp->pt_outhit->hit_point , ap->a_ray.r_pt , pp->pt_outhit->hit_dist , ap->a_ray.r_dir );
+			VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
+			VJOIN1( pp->pt_outhit->hit_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
 			bu_log("ERROR: comp_thickness=%g for region id = %d at h=%g, v=%g (x=%d, y=%d), partition at x%x\n",
-				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y , pp );
+				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y, pp );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 			bu_log("Send this output to the BRL-CAD Developers (devs@brlcad.org)\n");
 			if ( ! (RT_G_DEBUG & DEBUG_ARB8)) {

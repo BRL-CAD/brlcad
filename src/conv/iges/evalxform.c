@@ -86,7 +86,7 @@ Evalxform()
 			{
 				if( !dir[ptr->index]->referenced )
 				{
-					Matmult( rot , *dir[ptr->index]->rot , rot );
+					Matmult( rot, *dir[ptr->index]->rot, rot );
 					for( j=0 ; j<16 ; j++ )
 						(*dir[ptr->index]->rot)[j] = rot[j];
 					dir[ptr->index]->referenced++;

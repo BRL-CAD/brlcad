@@ -302,7 +302,7 @@ nmg_mmr(void)
 	BU_LIST_APPEND( &m->r_hd, &r->l );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_mmr() returns model x%x with region x%x\n", m , r );
+		bu_log("nmg_mmr() returns model x%x with region x%x\n", m, r );
 	}
 
 	return(m);
@@ -343,7 +343,7 @@ nmg_mrsv(struct model *m)
 	BU_LIST_APPEND( &m->r_hd, &r->l );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_mrsv(m=x%x) returns r=x%x\n" , m , r );
+		bu_log("nmg_mrsv(m=x%x) returns r=x%x\n", m, r );
 	}
 
 	return(r);
@@ -388,7 +388,7 @@ nmg_msv(struct nmgregion *r)
 	s->vu_p = vu;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_msv(r=x%x) returns s=x%x, vu=x%x\n" , r , s , s->vu_p );
+		bu_log("nmg_msv(r=x%x) returns s=x%x, vu=x%x\n", r, s, s->vu_p );
 	}
 
 	return(s);
@@ -468,7 +468,7 @@ nmg_mf(struct loopuse *lu1)
 	BU_LIST_APPEND( &fu1->l, &fu2->l );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_mf(lu1=x%x) returns fu=x%x\n" , lu1 , fu1 );
+		bu_log("nmg_mf(lu1=x%x) returns fu=x%x\n", lu1, fu1 );
 	}
 
 	return(fu1);
@@ -683,7 +683,7 @@ nmg_mvvu(long int *upptr, struct model *m)
 	ret_vu = nmg_mvu(v, upptr, m);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_mvvu(upptr=x%x, m=x%x) returns vu=x%x\n" , upptr , m , ret_vu );
+		bu_log("nmg_mvvu(upptr=x%x, m=x%x) returns vu=x%x\n", upptr, m, ret_vu );
 	}
 
 	return( ret_vu );
@@ -795,7 +795,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 	BU_LIST_APPEND( &eu1->l, &eu2->l );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_me(v1=x%x, v2=x%x, s=x%x) returns eu=x%x\n" , v1 , v2 , s , eu1 );
+		bu_log("nmg_me(v1=x%x, v2=x%x, s=x%x) returns eu=x%x\n", v1, v2, s, eu1 );
 	}
 
 	return(eu1);
@@ -918,7 +918,7 @@ nmg_meonvu(struct vertexuse *vu)
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_meonvu(vu=x%x) returns eu=x%x\n" , vu , eu1 );
+		bu_log("nmg_meonvu(vu=x%x) returns eu=x%x\n", vu, eu1 );
 	}
 
 	return(eu1);
@@ -962,7 +962,7 @@ nmg_ml(struct shell *s)
 		/* (void) nmg_kvu(s->vu_p); */
 
 		if (rt_g.NMG_debug & DEBUG_BASIC)  {
-			bu_log("nmg_ml(s=x%x) returns lu of single vertex=x%x\n" , s , lu1 );
+			bu_log("nmg_ml(s=x%x) returns lu of single vertex=x%x\n", s, lu1 );
 		}
 
 		return lu1;
@@ -1058,7 +1058,7 @@ nmg_ml(struct shell *s)
 	BU_LIST_APPEND( &s->lu_hd, &lu1->l );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_ml(s=x%x) returns lu=x%x\n" , s , lu1 );
+		bu_log("nmg_ml(s=x%x) returns lu=x%x\n", s, lu1 );
 	}
 
 	return(lu1);
@@ -1662,7 +1662,7 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
 	VMOVE( vg->coord, pt );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_vertex_gv(v=x%x, pt=(%g %g %g))\n", v , V3ARGS( pt ));
+		bu_log("nmg_vertex_gv(v=x%x, pt=(%g %g %g))\n", v, V3ARGS( pt ));
 	}
 }
 
@@ -1682,7 +1682,7 @@ nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
 	pt[2] = z;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_vertex_g(v=x%x, pt=(%g %g %g))\n", v , x , y , z );
+		bu_log("nmg_vertex_g(v=x%x, pt=(%g %g %g))\n", v, x, y, z );
 	}
 
 	nmg_vertex_gv(v, pt);
@@ -1702,7 +1702,7 @@ nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
 	if( !vu->a.magic_p )  {
 		struct vertexuse_a_plane *vua;
 		m = nmg_find_model( &vu->l.magic );
-		GET_VERTEXUSE_A_PLANE( vua , m );
+		GET_VERTEXUSE_A_PLANE( vua, m );
 		vua->magic = NMG_VERTEXUSE_A_PLANE_MAGIC;
 		vu->a.plane_p = vua;
 	}  else if( *vu->a.magic_p == NMG_VERTEXUSE_A_CNURB_MAGIC )  {
@@ -1712,10 +1712,10 @@ nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
 		NMG_CK_VERTEXUSE_A_PLANE( vu->a.plane_p );
 	}
 
-	VMOVE( vu->a.plane_p->N , norm );
+	VMOVE( vu->a.plane_p->N, norm );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_vertexuse_nv(vu=x%x, norm=(%g %g %g))\n", vu , V3ARGS( norm ));
+		bu_log("nmg_vertexuse_nv(vu=x%x, norm=(%g %g %g))\n", vu, V3ARGS( norm ));
 	}
 }
 
@@ -1744,7 +1744,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 	if( vu->up.eu_p->g.magic_p) NMG_CK_EDGE_G_CNURB( vu->up.eu_p->g.cnurb_p );
 
 	m = nmg_find_model( &vu->l.magic );
-	GET_VERTEXUSE_A_CNURB( vua , m );
+	GET_VERTEXUSE_A_CNURB( vua, m );
 	VMOVE( vua->param, uvw );
 	vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
 
@@ -1752,7 +1752,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		bu_log("nmg_vertexuse_a_cnurb(vu=x%x, param=(%g %g %g)) vua=x%x\n",
-			vu , V3ARGS( uvw ), vua);
+			vu, V3ARGS( uvw ), vua);
 	}
 }
 
@@ -2229,7 +2229,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 	lg->max_pt[Z] += thickening;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_loop_g(l=x%x, tol=x%x)\n", l , tol);
+		bu_log("nmg_loop_g(l=x%x, tol=x%x)\n", l, tol);
 	}
 
 }
@@ -2278,7 +2278,7 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_face_g(fu=x%x, p=(%g %g %g %g))\n", fu , V4ARGS( p ));
+		bu_log("nmg_face_g(fu=x%x, p=(%g %g %g %g))\n", fu, V4ARGS( p ));
 	}
 }
 
@@ -2340,7 +2340,7 @@ nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
 	HMOVE( fg->N, pl );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_face_new_g(fu=x%x, pl=(%g %g %g %g))\n", fu , V4ARGS( pl ));
+		bu_log("nmg_face_new_g(fu=x%x, pl=(%g %g %g %g))\n", fu, V4ARGS( pl ));
 	}
 }
 
@@ -2475,7 +2475,7 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_face_bb(f=x%x, tol=x%x)\n", f , tol);
+		bu_log("nmg_face_bb(f=x%x, tol=x%x)\n", f, tol);
 	}
 }
 
@@ -2506,8 +2506,8 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 	}
 	sa = s->sa_p;
 
-	VSETALL( sa->max_pt , -MAX_FASTF);
-	VSETALL( sa->min_pt , MAX_FASTF);
+	VSETALL( sa->max_pt, -MAX_FASTF);
+	VSETALL( sa->min_pt, MAX_FASTF);
 
 	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		struct face	*f;
@@ -2559,7 +2559,7 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_shell_a(s=x%x, tol=x%x)\n", s , tol);
+		bu_log("nmg_shell_a(s=x%x, tol=x%x)\n", s, tol);
 	}
 }
 
@@ -2597,7 +2597,7 @@ nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_region_a(r=x%x, tol=x%x)\n", r , tol);
+		bu_log("nmg_region_a(r=x%x, tol=x%x)\n", r, tol);
 	}
 }
 
@@ -2671,7 +2671,7 @@ nmg_demote_lu(struct loopuse *lu1)
 	ret_val = nmg_klu(lu1);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_demote_lu(lu=x%x) returns %d\n", lu1 , ret_val);
+		bu_log("nmg_demote_lu(lu=x%x) returns %d\n", lu1, ret_val);
 	}
 
 	return( ret_val );
@@ -2713,7 +2713,7 @@ nmg_demote_eu(struct edgeuse *eu)
 	ret_val = nmg_shell_is_empty(s);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_demote_eu(eu=x%x) returns %d\n", eu , ret_val);
+		bu_log("nmg_demote_eu(eu=x%x) returns %d\n", eu, ret_val);
 	}
 
 	return( ret_val );
@@ -2757,7 +2757,7 @@ nmg_movevu(struct vertexuse *vu, struct vertex *v)
 	vu->v_p = v;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_movevu(vu=x%x, v=x%x)\n", vu , v);
+		bu_log("nmg_movevu(vu=x%x, v=x%x)\n", vu, v);
 	}
 }
 
@@ -2841,7 +2841,7 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 	eudst->radial_p = eusrc;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_je(eudst=x%x, eusrc=x%x)\n", eudst , eusrc);
+		bu_log("nmg_je(eudst=x%x, eusrc=x%x)\n", eudst, eusrc);
 	}
 }
 
@@ -2950,7 +2950,7 @@ nmg_jv(register struct vertex *v1, register struct vertex *v2)
 	FREE_VERTEX(v2);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_jv(v1=x%x, v2=x%x)\n", v1 , v2);
+		bu_log("nmg_jv(v1=x%x, v2=x%x)\n", v1, v2);
 	}
 }
 
@@ -2982,7 +2982,7 @@ nmg_jfg(struct face *f1, struct face *f2)
 		BU_LIST_INSERT( &fg2->f_hd, &f1->l );
 
 		if (rt_g.NMG_debug & DEBUG_BASIC)  {
-			bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1 , f2);
+			bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1, f2);
 		}
 		return;
 	}
@@ -2994,7 +2994,7 @@ nmg_jfg(struct face *f1, struct face *f2)
 		BU_LIST_INSERT( &fg1->f_hd, &f2->l );
 
 		if (rt_g.NMG_debug & DEBUG_BASIC)  {
-			bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1 , f2);
+			bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1, f2);
 		}
 		return;
 	}
@@ -3005,7 +3005,7 @@ nmg_jfg(struct face *f1, struct face *f2)
 	if( fg1 == fg2 )
 	{
 		if (rt_g.NMG_debug & DEBUG_BASIC)  {
-			bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1 , f2);
+			bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1, f2);
 		}
 		return;
 	}
@@ -3024,7 +3024,7 @@ nmg_jfg(struct face *f1, struct face *f2)
 	FREE_FACE_G_PLANE(fg2);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1 , f2);
+		bu_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1, f2);
 	}
 }
 

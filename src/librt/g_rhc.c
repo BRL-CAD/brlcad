@@ -1003,7 +1003,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* get mem for arrays */
 	front = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
 	back  = (fastf_t *)bu_malloc(3*n * sizeof(fastf_t), "fastf_t");
-	norms = (vect_t *)bu_calloc( n , sizeof( vect_t ) , "rt_rhc_tess: norms" );
+	norms = (vect_t *)bu_calloc( n, sizeof( vect_t ), "rt_rhc_tess: norms" );
 	vfront = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vback = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vtemp = (struct vertex **)bu_malloc((n+1) * sizeof(struct vertex *), "vertex *");
@@ -1025,8 +1025,8 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		vect_t tmp_norm;
 
 		/* calculate normal for 2D hyperbola */
-		VSET( tmp_norm , 0.0 , pos->p[Y]*bb_plus_2bc , (-r_sq*(pos->p[Z]+b_plus_c)) );
-		MAT4X3VEC( norms[j] , invR , tmp_norm );
+		VSET( tmp_norm, 0.0, pos->p[Y]*bb_plus_2bc, (-r_sq*(pos->p[Z]+b_plus_c)) );
+		MAT4X3VEC( norms[j], invR, tmp_norm );
 		VUNITIZE( norms[j] );
 		/* rotate back to original position */
 		MAT4X3VEC( &front[i], invR, pos->p );
@@ -1106,11 +1106,11 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		struct faceuse *fu;
 		vect_t rev_norm;
 
-		VREVERSE( rev_norm , norms[i] );
+		VREVERSE( rev_norm, norms[i] );
 
 		/* do "front" vertices */
 		NMG_CK_VERTEX( vfront[i] );
-		for( BU_LIST_FOR( vu , vertexuse , &vfront[i]->vu_hd ) )
+		for( BU_LIST_FOR( vu, vertexuse, &vfront[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
@@ -1121,14 +1121,14 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					continue;	/* skip flat faces */
 
 			if( fu->orientation == OT_SAME )
-				nmg_vertexuse_nv( vu , norms[i] );
+				nmg_vertexuse_nv( vu, norms[i] );
 			else if( fu->orientation == OT_OPPOSITE )
-				nmg_vertexuse_nv( vu , rev_norm );
+				nmg_vertexuse_nv( vu, rev_norm );
 		}
 
 		/* and "back" vertices */
 		NMG_CK_VERTEX( vback[i] );
-		for( BU_LIST_FOR( vu , vertexuse , &vback[i]->vu_hd ) )
+		for( BU_LIST_FOR( vu, vertexuse, &vback[i]->vu_hd ) )
 		{
 			NMG_CK_VERTEXUSE( vu );
 			fu = nmg_find_fu_of_vu( vu );
@@ -1139,9 +1139,9 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 					continue;	/* skip flat faces */
 
 			if( fu->orientation == OT_SAME )
-				nmg_vertexuse_nv( vu , norms[i] );
+				nmg_vertexuse_nv( vu, norms[i] );
 			else if( fu->orientation == OT_OPPOSITE )
-				nmg_vertexuse_nv( vu , rev_norm );
+				nmg_vertexuse_nv( vu, rev_norm );
 		}
 	}
 
@@ -1158,7 +1158,7 @@ fail:
 	bu_free( (char*)vfront, "vertex *");
 	bu_free( (char*)vback, "vertex *");
 	bu_free( (char*)vtemp, "vertex *");
-	bu_free( (char *)norms , "rt_rhc_tess: norms" );
+	bu_free( (char *)norms, "rt_rhc_tess: norms" );
 	bu_free( (char*)outfaceuses, "faceuse *");
 
 	return( failure );
@@ -1202,7 +1202,7 @@ rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 
 	if( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
 		bu_log( "rt_rhc_import: r or c are zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_rhc_import: ip->idb_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_rhc_import: ip->idb_ptr" );
 		return( -1 );
 	}
 
@@ -1302,7 +1302,7 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	if( xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF ) {
 		bu_log( "rt_rhc_import: r or c are zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_rhc_import: ip->idb_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_rhc_import: ip->idb_ptr" );
 		return( -1 );
 	}
 

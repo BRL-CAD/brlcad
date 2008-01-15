@@ -251,7 +251,7 @@ main (int argc, char **argv)
     /* Read in the geometry model */
     bu_log("Database file:  '%s'\n", *++argv);
     bu_log("Building the directory... ");
-    if ((rtip = rt_dirbuild(*argv , db_title, TITLE_LEN)) == RTI_NULL)
+    if ((rtip = rt_dirbuild(*argv, db_title, TITLE_LEN)) == RTI_NULL)
     {
 	bu_log("Could not build directory for file '%s'\n", *argv);
 	return 1;

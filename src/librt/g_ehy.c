@@ -1184,13 +1184,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fu_top = outfaceuses[0];
 
 	/* Mark edges of this face as real, this is the only real edge */
-	for( BU_LIST_FOR( lu , loopuse , &outfaceuses[0]->lu_hd ) )
+	for( BU_LIST_FOR( lu, loopuse, &outfaceuses[0]->lu_hd ) )
 	{
 		NMG_CK_LOOPUSE( lu );
 
 		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
-		for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 		{
 			struct edge *e;
 
@@ -1342,7 +1342,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free( (char *)vells, "vertex [][]");
 
 	/* Assign vertexuse normals */
-	nmg_vertex_tabulate( &vert_tab , &s->l.magic );
+	nmg_vertex_tabulate( &vert_tab, &s->l.magic );
 	for( i=0 ; i<BU_PTBL_END( &vert_tab ) ; i++ )
 	{
 		point_t pt_prime, tmp_pt;
@@ -1351,19 +1351,19 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		struct vertex *v;
 		struct vertexuse *vu;
 
-		v = (struct vertex *)BU_PTBL_GET( &vert_tab , i );
+		v = (struct vertex *)BU_PTBL_GET( &vert_tab, i );
 		NMG_CK_VERTEX( v );
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G( vg );
 
-		VSUB2( tmp_pt , vg->coord , xip->ehy_V );
-		MAT4X3VEC( pt_prime , SoR , tmp_pt );
-		VSET( tmp_vect , pt_prime[X]*(2*cprime+1), pt_prime[Y]*(2*cprime+1), -(pt_prime[Z]+cprime+1) );
-		MAT4X3VEC( norm , invRoS , tmp_vect );
+		VSUB2( tmp_pt, vg->coord, xip->ehy_V );
+		MAT4X3VEC( pt_prime, SoR, tmp_pt );
+		VSET( tmp_vect, pt_prime[X]*(2*cprime+1), pt_prime[Y]*(2*cprime+1), -(pt_prime[Z]+cprime+1) );
+		MAT4X3VEC( norm, invRoS, tmp_vect );
 		VUNITIZE( norm );
-		VREVERSE( rev_norm , norm );
+		VREVERSE( rev_norm, norm );
 
-		for( BU_LIST_FOR( vu , vertexuse , &v->vu_hd ) )
+		for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
 		{
 			struct faceuse *fu;
 
@@ -1376,9 +1376,9 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 			NMG_CK_FACEUSE( fu );
 			if( fu->orientation == OT_SAME )
-				nmg_vertexuse_nv( vu , norm );
+				nmg_vertexuse_nv( vu, norm );
 			else if( fu->orientation == OT_OPPOSITE )
-				nmg_vertexuse_nv( vu , rev_norm );
+				nmg_vertexuse_nv( vu, rev_norm );
 		}
 	}
 
@@ -1438,7 +1438,7 @@ rt_ehy_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 
 	if( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
 		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_ehy_import: ip->idb_ptr" );
 		return( -1 );
 	}
 
@@ -1544,7 +1544,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 	if( xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF ) {
 		bu_log( "rt_ehy_import: r1, r2, or c are zero\n" );
-		bu_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
+		bu_free( (char *)ip->idb_ptr, "rt_ehy_import: ip->idb_ptr" );
 		return( -1 );
 	}
 

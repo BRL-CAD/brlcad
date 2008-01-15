@@ -47,7 +47,7 @@ Readstart()
 			break;
 		}
 		card[72] = '\0';
-		bu_log( "%s\n" , card );
+		bu_log( "%s\n", card );
 	}
 	bu_log( "%c", '\n' );
 }

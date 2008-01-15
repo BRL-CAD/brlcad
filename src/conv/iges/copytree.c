@@ -32,7 +32,7 @@
 
 #include "./iges_struct.h"
 
-struct node *Copytree( root , parent )
+struct node *Copytree( root, parent )
 struct node *root,*parent;
 {
 
@@ -48,10 +48,10 @@ struct node *root,*parent;
 	ptr->parent = parent;
 
 	if( root->left != NULL )
-		ptr->left = Copytree( root->left , ptr );
+		ptr->left = Copytree( root->left, ptr );
 
 	if( root->right != NULL )
-		ptr->right = Copytree( root->right , ptr );
+		ptr->right = Copytree( root->right, ptr );
 
 	return( ptr );
 }

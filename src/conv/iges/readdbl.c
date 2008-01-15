@@ -39,7 +39,7 @@
 #include "./iges_extern.h"
 
 void
-Readdbl( inum , id )
+Readdbl( inum, id )
 char *id;
 double *inum;
 {
@@ -81,7 +81,7 @@ double *inum;
 	num[++i] = '\0';
 	*inum = atof( num );
 	if( *id != '\0' )
-		bu_log( "%s%g\n" , id , *inum );
+		bu_log( "%s%g\n", id, *inum );
 }
 
 

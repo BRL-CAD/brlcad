@@ -797,7 +797,7 @@ int main(int argc, char **argv)
 	      (void)fprintf(fp3, "\t  (format is PRISM %d.0)\n", prmrel);
 	    }
 	  if(typeout == 1) (void)fprintf(fp3, "\tgeneric file created:  %s\n"
-					 , genfile);
+					, genfile);
 	  (void)fprintf(fp3, "\tconductivity table file created:  %s\n",
 			tblfile);
 	  (void)fprintf(fp3, "\terror file created:  %s\n\n\n", fileerr);

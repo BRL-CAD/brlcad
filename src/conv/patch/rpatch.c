@@ -60,9 +60,9 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 	ptr = format;
 	if( *ptr != 'F' && *ptr != 'f' && *ptr != 'E' && *ptr != 'e' && *ptr != 'D' && *ptr != 'd' )
 	{
-		fprintf( stderr , "Get_ftn_float( str=%s\n, start_col=%d, format=%s )\n",
+		fprintf( stderr, "Get_ftn_float( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
-		fprintf( stderr , "\tformat must be F, E, or D type\n" );
+		fprintf( stderr, "\tformat must be F, E, or D type\n" );
 		bu_exit( 1, NULL );
 	}
 
@@ -77,10 +77,10 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 	/* make sure input string will fit in tmp_str (minus trailing NULL and a decimal point) */
 	if( width > MAXLINELEN-2 )
 	{
-		fprintf( stderr , "Get_ftn_float( str=%s\n, start_col=%d, format=%s )\n",
+		fprintf( stderr, "Get_ftn_float( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
-		fprintf( stderr , "\tfield width (%d) in format is too large. Max allowed is %d\n",
-				width , MAXLINELEN-2 );
+		fprintf( stderr, "\tfield width (%d) in format is too large. Max allowed is %d\n",
+				width, MAXLINELEN-2 );
 		bu_exit( 1, NULL );
 	}
 
@@ -110,7 +110,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 	tmp_str[width] = '\0';
 
 	/* get precision from format spec */
-	ptr = strchr( ptr , '.' );
+	ptr = strchr( ptr, '.' );
 	if( ptr )
 		precision = atoi( ++ptr );
 	else
@@ -118,7 +118,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 
 
 	/* if there is a decimal point, let atof handle the rest (including exponent) */
-	if( !strchr( tmp_str , '.' ) && precision > 0 )
+	if( !strchr( tmp_str, '.' ) && precision > 0 )
 	{
 		/* insert a decimal point where needed */
 		for( i=0 ; i<precision ; i++ )
@@ -145,9 +145,9 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 	ptr = format;
 	if( *ptr != 'I' && *ptr != 'i' )
 	{
-		fprintf( stderr , "Get_ftn_int( str=%s\n, start_col=%d, format=%s )\n",
+		fprintf( stderr, "Get_ftn_int( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
-		fprintf( stderr , "\tformat must be I type\n" );
+		fprintf( stderr, "\tformat must be I type\n" );
 		bu_exit( 1, NULL );
 	}
 
@@ -162,10 +162,10 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 	/* make sure input string will fit in tmp_str */
 	if( width > MAXLINELEN-1 )
 	{
-		fprintf( stderr , "Get_ftn_int( str=%s\n, start_col=%d, format=%s )\n",
+		fprintf( stderr, "Get_ftn_int( str=%s\n, start_col=%d, format=%s )\n",
 				str, start_col, ptr );
-		fprintf( stderr , "\tfield width (%d) in format is too large. Max allowed is %d\n",
-				width , MAXLINELEN-1 );
+		fprintf( stderr, "\tfield width (%d) in format is too large. Max allowed is %d\n",
+				width, MAXLINELEN-1 );
 		bu_exit( 1, NULL );
 	}
 
@@ -234,33 +234,33 @@ main(int argc, char **argv)
 
 		if( fast3 )
 		{
-			x = get_ftn_float( line , 0 , "f10.3" );
-			y = get_ftn_float( line , 10 , "f10.3" );
-			z = get_ftn_float( line , 20 , "f10.3" );
-			tmp = get_ftn_int( line , 30 , "i6" );
-			cc = get_ftn_int( line , 36 , "i4" );
-			isq[0] = get_ftn_int( line , 40 , "i10" );
+			x = get_ftn_float( line, 0, "f10.3" );
+			y = get_ftn_float( line, 10, "f10.3" );
+			z = get_ftn_float( line, 20, "f10.3" );
+			tmp = get_ftn_int( line, 30, "i6" );
+			cc = get_ftn_int( line, 36, "i4" );
+			isq[0] = get_ftn_int( line, 40, "i10" );
 
 			for( i=1 ; i<8 ; i++ )
-				isq[i] = get_ftn_int( line , 50 + (i-1)*4 , "i4" );
+				isq[i] = get_ftn_int( line, 50 + (i-1)*4, "i4" );
 
-			m = get_ftn_int( line , 74 , "i3" );
-			n = get_ftn_int( line , 77 , "i3" );
+			m = get_ftn_int( line, 74, "i3" );
+			n = get_ftn_int( line, 77, "i3" );
 		}
 		else
 		{
-			x = get_ftn_float( line , 0 , "f8.3" );
-			y = get_ftn_float( line , 8 , "f8.3" );
-			z = get_ftn_float( line , 16 , "f9.3" );
-			tmp = get_ftn_int( line , 25 , "i6" );
-			cc = get_ftn_int( line , 31 , "i4" );
-			isq[0] = get_ftn_int( line , 35 , "i11" );
+			x = get_ftn_float( line, 0, "f8.3" );
+			y = get_ftn_float( line, 8, "f8.3" );
+			z = get_ftn_float( line, 16, "f9.3" );
+			tmp = get_ftn_int( line, 25, "i6" );
+			cc = get_ftn_int( line, 31, "i4" );
+			isq[0] = get_ftn_int( line, 35, "i11" );
 
 			for( i=1 ; i<8 ; i++ )
-				isq[i] = get_ftn_int( line , 46 + (i-1)*4 , "i4" );
+				isq[i] = get_ftn_int( line, 46 + (i-1)*4, "i4" );
 
-			m = get_ftn_int( line , 74 , "i3" );
-			n = get_ftn_int( line , 77 , "i3" );
+			m = get_ftn_int( line, 74, "i3" );
+			n = get_ftn_int( line, 77, "i3" );
 		}
 
 		/* get plate mode flag */
@@ -295,8 +295,8 @@ main(int argc, char **argv)
 		printf( "%8.3f %8.3f %9.3f %c %2d %2d %1d %4d %11d ",
 			x, y, z, minus, ity, ico, ity1, cc, isq[0] );
 		for( i=1 ; i<8 ; i++ )
-			printf( "%5d" , isq[i] );
-		printf( " %3d %3d\n" , m , n );
+			printf( "%5d", isq[i] );
+		printf( " %3d %3d\n", m, n );
 
 	}
 	return 0;

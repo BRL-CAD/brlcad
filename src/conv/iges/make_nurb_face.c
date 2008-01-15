@@ -32,7 +32,7 @@
 #include "./iges_extern.h"
 
 int
-Add_nurb_loop_to_face( s, fu, loop_entityno , face_orient )
+Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 struct shell *s;
 struct faceuse *fu;
 int loop_entityno;
@@ -61,41 +61,41 @@ int face_orient;
 	if( dir[loop_entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
-				dir[loop_entityno]->direct , dir[loop_entityno]->name );
+				dir[loop_entityno]->direct, dir[loop_entityno]->name );
 		return( 0 );
 	}
 
 	if( dir[loop_entityno]->type != 508 )
 	{
-		bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n" , loop_entityno , iges_type(dir[loop_entityno]->type) );
+		bu_exit(1, "ERROR: Entity #%d is not a loop (it's a %s)\n", loop_entityno, iges_type(dir[loop_entityno]->type) );
 	}
 
 	Readrec( dir[loop_entityno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 508 )
 	{
 		bu_exit(1, "Add_nurb_loop_to_face ERROR: Entity #%d is not a loop (it's a %s)\n",
-				loop_entityno , iges_type(entity_type) );
+				loop_entityno, iges_type(entity_type) );
 	}
 
-	Readint( &no_of_edges , "" );
+	Readint( &no_of_edges, "" );
 
-	edge_uses = (struct iges_edge_use *)bu_calloc( no_of_edges , sizeof( struct iges_edge_use ) ,
+	edge_uses = (struct iges_edge_use *)bu_calloc( no_of_edges, sizeof( struct iges_edge_use ) ,
 			"Add_nurb_loop_to_face (edge_uses)" );
 	for( i=0 ; i<no_of_edges ; i++ )
 	{
-		Readint( &edge_uses[i].edge_is_vertex , "" );
-		Readint( &edge_uses[i].edge_de , "" );
-		Readint( &edge_uses[i].index , "" );
-		Readint( &edge_uses[i].orient , "" );
+		Readint( &edge_uses[i].edge_is_vertex, "" );
+		Readint( &edge_uses[i].edge_de, "" );
+		Readint( &edge_uses[i].index, "" );
+		Readint( &edge_uses[i].orient, "" );
 		edge_uses[i].root = (struct iges_param_curve *)NULL;
-		Readint( &no_of_param_curves , "" );
+		Readint( &no_of_param_curves, "" );
 		for( j=0 ; j<no_of_param_curves ; j++ )
 		{
 			struct iges_param_curve *new_crv;
 			struct iges_param_curve *crv;
 
-			Readint( &k , "" );	/* ignore iso-parametric flag */
+			Readint( &k, "" );	/* ignore iso-parametric flag */
 			new_crv = (struct iges_param_curve *)bu_malloc( sizeof( struct iges_param_curve ),
 				"Add_nurb_loop_to_face: new_crv" );
 			if( edge_uses[i].root == (struct iges_param_curve *)NULL )
@@ -112,7 +112,7 @@ int face_orient;
 		}
 	}
 
-	verts = (struct vertex **)bu_calloc( no_of_edges , sizeof( struct vertex *) ,
+	verts = (struct vertex **)bu_calloc( no_of_edges, sizeof( struct vertex *) ,
 		"Add_nurb_loop_to_face: vertex_list **" );
 
 	for( i=0 ; i<no_of_edges ; i++ )
@@ -168,7 +168,7 @@ int face_orient;
 		ivert = Get_iges_vertex( verts[vert_no] );
 		if( !ivert )
 		{
-			bu_exit(1, "ERROR: Can't get geometry, vertex x%x not in vertex list\n" , verts[vert_no] );
+			bu_exit(1, "ERROR: Can't get geometry, vertex x%x not in vertex list\n", verts[vert_no] );
 		}
 		nmg_vertex_gv( ivert->v, ivert->pt );
 	}

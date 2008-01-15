@@ -1269,7 +1269,7 @@ static float mat_shinybrass[] = {
 
 static float mat_pewter[] = {
 	AMBIENT, 0.0, 0.0,  0.0,
-	DIFFUSE, 0.6, 0.55 , 0.65,
+	DIFFUSE, 0.6, 0.55, 0.65,
 	SPECULAR, 0.9, 0.9, 0.95,
 	SHININESS, 10.0,
 	LMNULL   };

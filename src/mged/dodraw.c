@@ -1464,7 +1464,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			mged_nmg_model = (struct model *)NULL;
 			return TCL_ERROR;
 		}
-		nmg_triangulate_model( mged_nmg_model , &mged_tol );
+		nmg_triangulate_model( mged_nmg_model, &mged_tol );
 		BU_UNSETJUMP;
 	}
 
@@ -1682,7 +1682,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				    struct bu_vls tmp_vls;
 
 				    bu_vls_init(&tmp_vls);
-				    bu_vls_printf(&tmp_vls, "Unrecognized operator: (%c)\n" , op );
+				    bu_vls_printf(&tmp_vls, "Unrecognized operator: (%c)\n", op );
 				    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls),
 						     "Aborting\n", (char *)NULL);
 				    bu_vls_free(&tmp_vls);
@@ -1767,7 +1767,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			mged_nmg_model = (struct model *)NULL;
 			return TCL_ERROR;
 		}
-		nmg_triangulate_model( mged_nmg_model , &mged_tol );
+		nmg_triangulate_model( mged_nmg_model, &mged_tol );
 		BU_UNSETJUMP;
 	}
 

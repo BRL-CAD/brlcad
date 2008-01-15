@@ -217,7 +217,7 @@ Skip_field()
 }
 
 void
-Get_name( entityno , skip )
+Get_name( entityno, skip )
 int entityno;
 int skip;
 {
@@ -231,26 +231,26 @@ int skip;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 	for( i=0 ; i<skip ; i++ )
 		Skip_field();
 
 	/* skip over the associativities */
-	Readint( &no_of_assoc , "" );
+	Readint( &no_of_assoc, "" );
 	for( k=0 ; k<no_of_assoc ; k++ )
-		Readint( &j , "" );
+		Readint( &j, "" );
 
 	/* get property entity DE's */
-	Readint( &no_of_props , "" );
+	Readint( &no_of_props, "" );
 	for( k=0 ; k<no_of_props ; k++ )
 	{
 		j = 0;
-		Readint( &j , "" );
+		Readint( &j, "" );
 		if( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
@@ -264,22 +264,22 @@ int skip;
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 	if( sol_num != 406 )
 	{
 		/* this is not a property entity */
-		bu_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Check_names: entity at DE %d is not a property entity\n", name_de );
 		return;
 	}
 
-	Readint( &i , "" );
+	Readint( &i, "" );
 	if( i != 1 )
 	{
-		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
 	}
 
-	Readname( &name , "" );
+	Readname( &name, "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
 	bu_free( (char *)name, "Get_name: name" );
 
@@ -301,39 +301,39 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 404 )
 	{
-		bu_log( "Get_drawing_name: entity at P%07d (type %d) is not a drawing entity\n" , dir[entityno]->param , entity_type );
+		bu_log( "Get_drawing_name: entity at P%07d (type %d) is not a drawing entity\n", dir[entityno]->param, entity_type );
 		return;
 	}
 
-	Readint( &no_of_views , "" );
+	Readint( &no_of_views, "" );
 	for( i=0 ; i<no_of_views ; i++ )
 	{
 		for( j=0 ; j<3 ; j++ )
 			Skip_field();
 	}
 
-	Readint( &no_of_annot , "" );
+	Readint( &no_of_annot, "" );
 	for( i=0 ; i<no_of_annot ; i++ )
 		Skip_field();
 	/* skip over the associativities */
-	Readint( &no_of_assoc , "" );
+	Readint( &no_of_assoc, "" );
 	for( k=0 ; k<no_of_assoc ; k++ )
-		Readint( &j , "" );
+		Readint( &j, "" );
 
 	/* get property entity DE's */
-	Readint( &no_of_props , "" );
+	Readint( &no_of_props, "" );
 	for( k=0 ; k<no_of_props ; k++ )
 	{
 		j = 0;
-		Readint( &j , "" );
+		Readint( &j, "" );
 		if( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
@@ -347,22 +347,22 @@ int entityno;
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 406 )
 	{
 		/* this is not a property entity */
-		bu_log( "Get_drawing_name: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Get_drawing_name: entity at DE %d is not a property entity\n", name_de );
 		return;
 	}
 
-	Readint( &i , "" );
+	Readint( &i, "" );
 	if( i != 1 )
 	{
-		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
 	}
 
-	Readname( &name , "" );
+	Readname( &name, "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
 	bu_free( (char *)name, "Get_name: name" );
 }
@@ -383,20 +383,20 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	Readint( &num , "" );
+	Readint( &sol_num, "" );
+	Readint( &num, "" );
 	if( sol_num == 180 )
 		skip = num;
 	else if( sol_num == 184 )
 		skip = 2*num;
 	else
 	{
-		bu_log( "Get_csg_name: entity (type %d), not a CSG\n" , sol_num );
+		bu_log( "Get_csg_name: entity (type %d), not a CSG\n", sol_num );
 		return;
 	}
 
@@ -404,16 +404,16 @@ int entityno;
 		Skip_field();
 
 	/* skip over the associativities */
-	Readint( &no_of_assoc , "" );
+	Readint( &no_of_assoc, "" );
 	for( k=0 ; k<no_of_assoc ; k++ )
-		Readint( &j , "" );
+		Readint( &j, "" );
 
 	/* get property entity DE's */
-	Readint( &no_of_props , "" );
+	Readint( &no_of_props, "" );
 	for( k=0 ; k<no_of_props ; k++ )
 	{
 		j = 0;
-		Readint( &j , "" );
+		Readint( &j, "" );
 		if( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
@@ -427,22 +427,22 @@ int entityno;
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 	if( sol_num != 406 )
 	{
 		/* this is not a property entity */
-		bu_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Check_names: entity at DE %d is not a property entity\n", name_de );
 		return;
 	}
 
-	Readint( &i , "" );
+	Readint( &i, "" );
 	if( i != 1 )
 	{
-		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
 	}
 
-	Readname( &name , "" );
+	Readname( &name, "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
 	bu_free( (char *)name, "Get_name: name" );
 }
@@ -464,36 +464,36 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 	if( sol_num != 186 )
 	{
-		bu_log( "Get_brep_name: Entity (type %d) is not a BREP\n" , sol_num );
+		bu_log( "Get_brep_name: Entity (type %d) is not a BREP\n", sol_num );
 		return;
 	}
 	Skip_field();
 	Skip_field();
-	Readint( &num , "" );
+	Readint( &num, "" );
 	skip = 2*num;
 
 	for( i=0 ; i<skip ; i++ )
 		Skip_field();
 
 	/* skip over the associativities */
-	Readint( &no_of_assoc , "" );
+	Readint( &no_of_assoc, "" );
 	for( k=0 ; k<no_of_assoc ; k++ )
-		Readint( &j , "" );
+		Readint( &j, "" );
 
 	/* get property entity DE's */
-	Readint( &no_of_props , "" );
+	Readint( &no_of_props, "" );
 	for( k=0 ; k<no_of_props ; k++ )
 	{
 		j = 0;
-		Readint( &j , "" );
+		Readint( &j, "" );
 		if( dir[(j-1)/2]->type == 406 &&
 		    dir[(j-1)/2]->form == 15 )
 		{
@@ -507,22 +507,22 @@ int entityno;
 		return;
 
 	Readrec( dir[(name_de-1)/2]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 	if( sol_num != 406 )
 	{
 		/* this is not a property entity */
-		bu_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Check_names: entity at DE %d is not a property entity\n", name_de );
 		return;
 	}
 
-	Readint( &i , "" );
+	Readint( &i, "" );
 	if( i != 1 )
 	{
-		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n", i );
 		return;
 	}
 
-	Readname( &name , "" );
+	Readname( &name, "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
 	bu_free( (char *)name, "Get_name: name" );
 }
@@ -547,7 +547,7 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_exit(1, "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 	}
 
 	Readrec( dir[entityno]->param );
@@ -578,25 +578,25 @@ Check_names()
 		switch( dir[i]->type )
 		{
 			case 152:
-				Get_name( i , 13 );
+				Get_name( i, 13 );
 				break;
 			case 150:
 			case 168:
-				Get_name( i , 12 );
+				Get_name( i, 12 );
 				break;
 			case 156:
-				Get_name( i , 9 );
+				Get_name( i, 9 );
 				break;
 			case 154:
 			case 160:
 			case 162:
-				Get_name( i , 8 );
+				Get_name( i, 8 );
 				break;
 			case 164:
-				Get_name( i , 5 );
+				Get_name( i, 5 );
 				break;
 			case 158:
-				Get_name( i , 4 );
+				Get_name( i, 4 );
 				break;
 			case 180:
 			case 184:
@@ -613,12 +613,12 @@ Check_names()
 				break;
 			case 410:
 				if( dir[i]->form == 0 )
-					Get_name( i , 8 );
+					Get_name( i, 8 );
 				else if( dir[i]->form == 1 )
-					Get_name( i , 22 );
+					Get_name( i, 22 );
 				break;
 			case 430:
-				Get_name( i , 1 );
+				Get_name( i, 1 );
 				break;
 			default:
 				break;
@@ -635,63 +635,63 @@ Check_names()
 			switch( dir[i]->type )
 			{
 				case 150:
-					sprintf( tmp_name , "block.%d" , i );
+					sprintf( tmp_name, "block.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 152:
-					sprintf( tmp_name , "wedge.%d" , i );
+					sprintf( tmp_name, "wedge.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 154:
-					sprintf( tmp_name , "cyl.%d" , i );
+					sprintf( tmp_name, "cyl.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 156:
-					sprintf( tmp_name , "cone.%d" , i );
+					sprintf( tmp_name, "cone.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 158:
-					sprintf( tmp_name , "sphere.%d" , i );
+					sprintf( tmp_name, "sphere.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 160:
-					sprintf( tmp_name , "torus.%d" , i );
+					sprintf( tmp_name, "torus.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 162:
-					sprintf( tmp_name , "revolution.%d" , i );
+					sprintf( tmp_name, "revolution.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 164:
-					sprintf( tmp_name , "extrusion.%d" , i );
+					sprintf( tmp_name, "extrusion.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 168:
-					sprintf( tmp_name , "ell.%d" , i );
+					sprintf( tmp_name, "ell.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 180:
-					sprintf( tmp_name , "region.%d" , i );
+					sprintf( tmp_name, "region.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 184:
-					sprintf( tmp_name , "group.%d" , i );
+					sprintf( tmp_name, "group.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 186:
-					sprintf( tmp_name , "brep.%d" , i );
+					sprintf( tmp_name, "brep.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 404:
-					sprintf( tmp_name , "drawing.%d" , i );
+					sprintf( tmp_name, "drawing.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 410:
-					sprintf( tmp_name , "view.%d" , i );
+					sprintf( tmp_name, "view.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 430:
-					sprintf( tmp_name , "inst.%d" , i );
+					sprintf( tmp_name, "inst.%d", i );
 					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 			}

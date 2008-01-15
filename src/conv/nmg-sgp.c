@@ -188,7 +188,7 @@ char	*argv[];
 	if( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
 	{
 		perror(argv[0]);
-		bu_exit(1, "Cannot open %s\n" , argv[bu_optind] );
+		bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
 	}
 
 	if( db_dirbuild( dbip ) ) {
@@ -199,10 +199,10 @@ char	*argv[];
 		fp_out = stdout;
 	else
 	{
-		if ((fp_out = fopen( out_file , "w")) == NULL)
+		if ((fp_out = fopen( out_file, "w")) == NULL)
 		{
 			perror( argv[0] );
-			bu_exit(1, "Cannot open %s\n" , out_file );
+			bu_exit(1, "Cannot open %s\n", out_file );
 		}
 	}
 

@@ -570,7 +570,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *norm, const struct bn_t
 
 out:
 	if (rt_g.NMG_debug & DEBUG_BASIC)
-		bu_log( "nmg_loop_is_ccw(lu=x%x) ret=%d\n" , lu, ret );
+		bu_log( "nmg_loop_is_ccw(lu=x%x) ret=%d\n", lu, ret );
 
 	return( ret );
 }

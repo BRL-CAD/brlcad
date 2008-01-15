@@ -232,31 +232,31 @@ do_grid(char *line)
 	if( RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed at start of do_grid\n" );
 
-	strncpy( field , &line[8] , 8 );
+	strncpy( field, &line[8], 8 );
 	grid_no = atoi( field );
 
 	if( grid_no < 1 )
 	{
-		bu_log( "ERROR: grid id number = %d\n" , grid_no );
+		bu_log( "ERROR: grid id number = %d\n", grid_no );
 		bu_bomb( "BAD GRID ID NUMBER\n" );
 	}
 
-	strncpy( field , &line[24] , 8 );
+	strncpy( field, &line[24], 8 );
 	x = atof( field );
 
-	strncpy( field , &line[32] , 8 );
+	strncpy( field, &line[32], 8 );
 	y = atof( field );
 
-	strncpy( field , &line[40] , 8 );
+	strncpy( field, &line[40], 8 );
 	z = atof( field );
 
 	while( grid_no > grid_size - 1 )
 	{
 		grid_size += GRID_BLOCK;
-		grid_pts = (point_t *)bu_realloc( (char *)grid_pts , grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
+		grid_pts = (point_t *)bu_realloc( (char *)grid_pts, grid_size * sizeof( point_t ), "fast4-g: grid_pts" );
 	}
 
-	VSET( grid_pts[grid_no] , x*25.4 , y*25.4 , z*25.4 );
+	VSET( grid_pts[grid_no], x*25.4, y*25.4, z*25.4 );
 
 	if( grid_no > max_grid_no )
 		max_grid_no = grid_no;
@@ -281,7 +281,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	{
 		if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-			bu_log( "Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n" , pos, group_id, comp_id );
+			bu_log( "Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id );
 			return;
 		}
 	}
@@ -328,9 +328,9 @@ do_tri(char *line)
 	int pos;
 
 	if( debug )
-		bu_log( "do_tri: %s\n" , line );
+		bu_log( "do_tri: %s\n", line );
 
-	strncpy( field , &line[8] , 8 );
+	strncpy( field, &line[8], 8 );
 	element_id = atoi( field );
 
 	if( !bot )
@@ -346,16 +346,16 @@ do_tri(char *line)
 		face_size = GRID_BLOCK;
 		face_count = 0;
 		if(bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck() )
-			bu_log( "memory corrupted after malloc of faces , thickness, and facemode\n" );
+			bu_log( "memory corrupted after malloc of faces, thickness, and facemode\n" );
 	}
 
-	strncpy( field , &line[24] , 8 );
+	strncpy( field, &line[24], 8 );
 	pt1 = atoi( field );
 
-	strncpy( field , &line[32] , 8 );
+	strncpy( field, &line[32], 8 );
 	pt2 = atoi( field );
 
-	strncpy( field , &line[40] , 8 );
+	strncpy( field, &line[40], 8 );
 	pt3 = atoi( field );
 
 	thick = 0.0;
@@ -363,16 +363,16 @@ do_tri(char *line)
 
 	if( mode == PLATE_MODE )
 	{
-		strncpy( field , &line[56] , 8 );
+		strncpy( field, &line[56], 8 );
 		thick = atof( field ) * 25.4;
 
-		strncpy( field , &line[64] , 8 );
+		strncpy( field, &line[64], 8 );
 		pos = atoi( field );
 		if( pos == 0 )
 			pos = POS_FRONT;
 
 		if( debug )
-			bu_log( "\tplate mode: thickness = %f\n" , thick );
+			bu_log( "\tplate mode: thickness = %f\n", thick );
 
 	}
 
@@ -393,11 +393,11 @@ do_quad(char *line)
 	fastf_t thick = 0.0;
 	int pos = 0;
 
-	strncpy( field , &line[8] , 8 );
+	strncpy( field, &line[8], 8 );
 	element_id = atoi( field );
 
 	if( debug )
-		bu_log( "do_quad: %s\n" , line );
+		bu_log( "do_quad: %s\n", line );
 
 	if( !bot )
 		bot = element_id;
@@ -411,24 +411,24 @@ do_quad(char *line)
 		face_count = 0;
 	}
 
-	strncpy( field , &line[24] , 8 );
+	strncpy( field, &line[24], 8 );
 	pt1 = atoi( field );
 
-	strncpy( field , &line[32] , 8 );
+	strncpy( field, &line[32], 8 );
 	pt2 = atoi( field );
 
-	strncpy( field , &line[40] , 8 );
+	strncpy( field, &line[40], 8 );
 	pt3 = atoi( field );
 
-	strncpy( field , &line[48] , 8 );
+	strncpy( field, &line[48], 8 );
 	pt4 = atoi( field );
 
 	if( mode == PLATE_MODE )
 	{
-		strncpy( field , &line[56] , 8 );
+		strncpy( field, &line[56], 8 );
 		thick = atof( field ) * 25.4;
 
-		strncpy( field , &line[64] , 8 );
+		strncpy( field, &line[64], 8 );
 		pos = atoi( field );
 
 		if( pos == 0 )	/* use default */
@@ -436,8 +436,8 @@ do_quad(char *line)
 
 		if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-			bu_log( "do_quad: illegal postion parameter (%d), must be one or two\n" , pos );
-			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_quad: illegal postion parameter (%d), must be one or two\n", pos );
+			bu_log( "\telement %d, component %d, group %d\n", element_id, comp_id, group_id );
 			return;
 		}
 	}
@@ -580,7 +580,7 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
     region_id = group_id * 1000 + comp_id;
 
     if (comp_id > 999) {
-	bu_log( "Illegal component id number %d, changed to 999\n" , comp_id );
+	bu_log( "Illegal component id number %d, changed to 999\n", comp_id );
 	comp_id = 999;
     }
 
@@ -597,11 +597,11 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 	line = cp;
 	FIND_NEWLINE(cp, eosFlag);
 
-	if (!strncmp(line , "GRID" , 4))
+	if (!strncmp(line, "GRID", 4))
 	    do_grid(line);
-	else if (!strncmp(line , "CTRI" , 4))
+	else if (!strncmp(line, "CTRI", 4))
 	    do_tri(line);
-	else if (!strncmp(line , "CQUAD" , 4))
+	else if (!strncmp(line, "CQUAD", 4))
 	    do_quad(line);
     }
 

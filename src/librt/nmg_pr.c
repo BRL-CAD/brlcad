@@ -551,7 +551,7 @@ nmg_pr_eg(const long int *eg_magic_p, char *h)
 			int i, j, l;
 			int ncoords;
 
-			bu_log( "%sEDGE_G_CNURB %8x\n" , h , eg_c );
+			bu_log( "%sEDGE_G_CNURB %8x\n", h, eg_c );
 			bu_log( "%s  order=%d, %d ctl pts, pt_type=%d\n",
 				h, eg_c->order, eg_c->c_size, eg_c->pt_type );
 			bu_log( "%s  knot vector (len=%d):", h, eg_c->k.k_size );
@@ -896,7 +896,7 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 		vu = vup[i];
 		if( vu->l.magic != NMG_VERTEXUSE_MAGIC )
 		{
-			bu_log( "\tWARNING: vertexuse #%d has bad MAGIC (%x)\n" , i, vu->l.magic );
+			bu_log( "\tWARNING: vertexuse #%d has bad MAGIC (%x)\n", i, vu->l.magic );
 			continue;
 		}
 		NMG_CK_VERTEXUSE(vu);
@@ -918,7 +918,7 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 		} else {
 			bu_log("vu up UNKNOWN");
 		}
-		bu_log("\tv=x%x, vu=x%x, dist=%g\n", v , vu, mag[i] );
+		bu_log("\tv=x%x, vu=x%x, dist=%g\n", v, vu, mag[i] );
 	}
 }
 
@@ -1033,9 +1033,9 @@ nmg_pr_fu_around_eu(const struct edgeuse *eu, const struct bn_tol *tol)
 
 	if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p || *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
 	{
-		VSET( xvec , 1 , 0 , 0 );
-		VSET( yvec , 0 , 1 , 0 );
-		VSET( zvec , 0 , 0 , 1 );
+		VSET( xvec, 1, 0, 0 );
+		VSET( yvec, 0, 1, 0 );
+		VSET( zvec, 0, 0, 1 );
 	}
 	else
 	{

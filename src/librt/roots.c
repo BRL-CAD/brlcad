@@ -140,7 +140,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 
 	/* Calculate the next iteration for Laguerre's method.
 	 * Test to see whether addition or subtraction gives the
-	 * larger denominator for the next 'Z' , and use the
+	 * larger denominator for the next 'Z', and use the
 	 * appropriate value in the formula.
 	 */
 	bn_cx_sqrt( &cH, &cH );

@@ -64,7 +64,7 @@ Convtree()
 
 		if( dir[i]->param <= pstart )	/* Illegal parameter address */
 		{
-			bu_log( "Entity number %d (Boolean Tree) does not have a legal parameter pointer\n" , i );
+			bu_log( "Entity number %d (Boolean Tree) does not have a legal parameter pointer\n", i );
 			continue;
 		}
 
@@ -83,15 +83,15 @@ Convtree()
 		}
 
 		/* skip over the associativities */
-		Readint( &no_of_assoc , "" );
+		Readint( &no_of_assoc, "" );
 		for( k=0 ; k<no_of_assoc ; k++ )
-			Readint( &j , "" );
+			Readint( &j, "" );
 
 		/* get property entity DE's */
-		Readint( &no_of_props , "" );
+		Readint( &no_of_props, "" );
 		for( k=0 ; k<no_of_props ; k++ )
 		{
-			Readint( &j , "" );
+			Readint( &j, "" );
 			if( dir[(j-1)/2]->type == 422 &&
 				 dir[(j-1)/2]->referenced == brlcad_att_de )
 			{
@@ -100,7 +100,7 @@ Convtree()
 			}
 		}
 
-		Read_att( att_de , &brl_att );
+		Read_att( att_de, &brl_att );
 		/* Read_att will supply defaults if att_de is 0 */
 		if( att_de == 0 )
 			brl_att.region_flag = 1;
@@ -147,7 +147,7 @@ Convtree()
 		MEMCHECK
 	}
 
-	bu_log( "Converted %d trees successfully out of %d total trees\n", conv , tottrees );
+	bu_log( "Converted %d trees successfully out of %d total trees\n", conv, tottrees );
 	MEMCHECK
 }
 

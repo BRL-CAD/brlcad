@@ -1092,7 +1092,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	/* get memory for nells ellipses */
 	eto_ells = (fastf_t *)bu_malloc(nells * npts * sizeof(point_t), "ells[]");
-	norms = (vect_t *)bu_calloc( nells*npts , sizeof( vect_t ) , "rt_eto_tess: norms" );
+	norms = (vect_t *)bu_calloc( nells*npts, sizeof( vect_t ), "rt_eto_tess: norms" );
 
 	/* place each ellipse properly to make eto */
 	for (i = 0, ang = 0.; i < nells; i++, ang += theta) {
@@ -1111,7 +1111,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			VJOIN2( ETO_PTA(i, j),
 				Ell_V, ell[j][X], Dp, ell[j][Y], Cp );
 			VBLEND2( ETO_NMA(i, j),
-				a*a*ell[j][X], Dp , b*b*ell[j][Y], Cp );
+				a*a*ell[j][X], Dp, b*b*ell[j][Y], Cp );
 			VUNITIZE( ETO_NMA(i, j) );
 		}
 	}
@@ -1164,11 +1164,11 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
-			VREVERSE( rev_norm , ETO_NMA(i, j) );
+			VREVERSE( rev_norm, ETO_NMA(i, j) );
 
 			NMG_CK_VERTEX( verts[ETO_PT(i, j)] );
 
-			for( BU_LIST_FOR( vu , vertexuse , &verts[ETO_PT(i, j)]->vu_hd ) )
+			for( BU_LIST_FOR( vu, vertexuse, &verts[ETO_PT(i, j)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1178,9 +1178,9 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , ETO_NMA(i, j) );
+					nmg_vertexuse_nv( vu, ETO_NMA(i, j) );
 				else if( fu->orientation == OT_OPPOSITE )
-					nmg_vertexuse_nv( vu , rev_norm );
+					nmg_vertexuse_nv( vu, rev_norm );
 			}
 		}
 	}

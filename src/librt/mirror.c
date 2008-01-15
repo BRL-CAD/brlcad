@@ -268,7 +268,7 @@ rt_mirror(struct db_i *dbip, const char *from, const char *to, int axis, struct 
 		    }
 
 		    /* free old mesh */
-		    bu_free( (char *)nurb->srfs[i]->ctl_points , "rt_mirror: ctl points" );
+		    bu_free( (char *)nurb->srfs[i]->ctl_points, "rt_mirror: ctl points" );
 
 		    /* put new mesh in place */
 		    nurb->srfs[i]->ctl_points = ptr;

@@ -2986,8 +2986,8 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox(JNIEnv *env, jobjec
 void
 get_model_extents( int sessionid, point_t min, point_t max )
 {
-	VMOVE( min , rts_geometry[sessionid]->rts_mdl_min );
-	VMOVE( max , rts_geometry[sessionid]->rts_mdl_max );
+	VMOVE( min, rts_geometry[sessionid]->rts_mdl_min );
+	VMOVE( max, rts_geometry[sessionid]->rts_mdl_max );
 }
 
 #ifdef TESTING

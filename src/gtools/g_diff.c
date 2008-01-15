@@ -836,7 +836,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	obj2 = Tcl_NewListObj( 0, NULL );
 	Tcl_AppendObjToObj( obj2, Tcl_GetObjResult( interp ) );
 
-	bu_vls_strcpy( &s2_tcl , Tcl_GetStringResult( interp ) );
+	bu_vls_strcpy( &s2_tcl, Tcl_GetStringResult( interp ) );
 	str2 = bu_vls_addr( &s2_tcl );
 	Tcl_ResetResult( interp );
 

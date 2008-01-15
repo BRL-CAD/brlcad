@@ -67,29 +67,29 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	Readcnv( &xscale , "" );
-	Readcnv( &yscale , "" );
-	Readcnv( &zscale , "" );
-	Readcnv( &x1 , "" );
-	Readcnv( &y1 , "" );
-	Readcnv( &z1 , "" );
-	Readflt( &x2 , "" );
-	Readflt( &y2 , "" );
-	Readflt( &z2 , "" );
-	Readflt( &x3 , "" );
-	Readflt( &y3 , "" );
-	Readflt( &z3 , "" );
+	Readint( &sol_num, "" );
+	Readcnv( &xscale, "" );
+	Readcnv( &yscale, "" );
+	Readcnv( &zscale, "" );
+	Readcnv( &x1, "" );
+	Readcnv( &y1, "" );
+	Readcnv( &z1, "" );
+	Readflt( &x2, "" );
+	Readflt( &y2, "" );
+	Readflt( &z2, "" );
+	Readflt( &x3, "" );
+	Readflt( &y3, "" );
+	Readflt( &z3, "" );
 
 	if( xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 

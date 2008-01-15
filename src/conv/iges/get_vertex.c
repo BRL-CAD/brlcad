@@ -83,7 +83,7 @@ struct iges_edge_use *edge;
 
 	if( !el )
 	{
-		bu_exit(1, "Cannot find an edge list with edge_de = %d\n" , edge->edge_de );
+		bu_exit(1, "Cannot find an edge list with edge_de = %d\n", edge->edge_de );
 	}
 
 	if( edge->orient )

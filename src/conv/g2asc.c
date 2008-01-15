@@ -449,7 +449,7 @@ nmg_dump(void)
 	/* just in case someone changes the record size */
 	if( sizeof( union record )%32 )
 	{
-		fprintf( stderr , "g2asc: nmg_dump cannot work with records not multiple of 32\n" );
+		fprintf( stderr, "g2asc: nmg_dump cannot work with records not multiple of 32\n" );
 		bu_exit( -1, NULL );
 	}
 
@@ -469,7 +469,7 @@ nmg_dump(void)
 
 	/* output the structure counts */
 	for( j=0 ; j<26 ; j++ )
-		(void)fprintf(ofp,  " %ld" , struct_count[j] );
+		(void)fprintf(ofp,  " %ld", struct_count[j] );
 	(void)fputc( '\n', ofp );
 
 	/* dump the reminder in hex format */
@@ -479,7 +479,7 @@ nmg_dump(void)
 		/* Read the record */
 		if( !fread( (char *)&rec, sizeof record, 1, ifp ) )
 		{
-			(void)fprintf(stderr , "Error reading nmg granules\n" );
+			(void)fprintf(stderr, "Error reading nmg granules\n" );
 			bu_exit( -1, NULL );
 		}
 		cp = (char *)&rec;
@@ -488,7 +488,7 @@ nmg_dump(void)
 		for( k=0 ; k<sizeof( union record)/32 ; k++ )
 		{
 			for( j=0 ; j<32 ; j++ )
-				fprintf(ofp,  "%02x" , (0xff & (*cp++)) );	 /* two hex digits per byte */
+				fprintf(ofp,  "%02x", (0xff & (*cp++)) );	 /* two hex digits per byte */
 			fputc( '\n', ofp );
 		}
 	}
@@ -506,7 +506,7 @@ strsol_dump(void)	/* print out strsol solid info */
 	/* read the rest from ifp */
 	if( !fread( (char *)&rec[1], sizeof record, DB_SS_NGRAN-1, ifp ) )
 	{
-		(void)fprintf(stderr , "Error reading strsol granules\n" );
+		(void)fprintf(stderr, "Error reading strsol granules\n" );
 		bu_exit( -1, NULL );
 	}
 

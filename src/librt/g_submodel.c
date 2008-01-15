@@ -828,7 +828,7 @@ bu_log("rt_submodel_import: '%s'\n", rp->ss.ss_args);
 	if( bu_struct_parse( &str, rt_submodel_parse, (char *)sip ) < 0 )  {
 		bu_vls_free( &str );
 fail:
-		bu_free( (char *)sip , "rt_submodel_import: sip" );
+		bu_free( (char *)sip, "rt_submodel_import: sip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
@@ -926,7 +926,7 @@ bu_log("rt_submodel_import: '%s'\n", rp->ss.ss_args);
 	if( bu_struct_parse( &str, rt_submodel_parse, (char *)sip ) < 0 )  {
 		bu_vls_free( &str );
 fail:
-		bu_free( (char *)sip , "rt_submodel_import: sip" );
+		bu_free( (char *)sip, "rt_submodel_import: sip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;

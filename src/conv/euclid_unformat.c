@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 		{
 			if( i >= MAX_PTS )
 			{
-				fprintf( stderr , "Too many points, MAX is %d\n" , MAX_PTS );
+				fprintf( stderr, "Too many points, MAX is %d\n", MAX_PTS );
 				return 1;
 			}
 			if( !bu_fgets( str, sizeof(str), stdin ) )

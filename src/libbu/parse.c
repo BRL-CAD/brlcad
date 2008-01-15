@@ -459,7 +459,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	ext->ext_buf = (genptr_t) bu_realloc((char *) ext->ext_buf, len,
 	    "bu_struct_get full buffer");
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	i=fread((char *) ext->ext_buf + 6, 1 , len-6, fp);	/* res_syscall */
+	i=fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	if (i != len-6) {
 		bu_log("ERROR: bu_struct_get bad fread (%d), file %s, line %d\n",

@@ -102,7 +102,7 @@ main(int argc, char **argv)
 {
     fastf_t *l, *x, *y, *z;
     fastf_t temp0, temp1, temp2, start=0.0, end, v0, v1;
-    int i, j , num, plen;
+    int i, j, num, plen;
 
 
     fastf_t time, dist, slope, a, b, c;

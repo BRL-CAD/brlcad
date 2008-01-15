@@ -44,7 +44,7 @@ int entityno;
 	int		i;
 
 	/* Default values */
-	VSET( edir , 0.0 , 0.0 , 1.0 );
+	VSET( edir, 0.0, 0.0, 1.0 );
 
 
 	/* Acquiring Data */
@@ -52,29 +52,29 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 
 	/* Read pointer to directory entry for curve to be extruded */
 
-	Readint( &curve , "" );
+	Readint( &curve, "" );
 
 	/* Convert this to a "dir" index */
 
 	curve = (curve-1)/2;
 
-	Readcnv( &length , "" );
-	Readflt( &edir[X] , "" );
-	Readflt( &edir[Y] , "" );
-	Readflt( &edir[Z] , "" );
+	Readcnv( &length, "" );
+	Readflt( &edir[X], "" );
+	Readflt( &edir[Y], "" );
+	Readflt( &edir[Z], "" );
 
 	if( length <= 0.0 )
 	{
 		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 
@@ -86,16 +86,16 @@ int entityno;
 
 	/* Scale vector */
 
-	VSCALE(evect , edir, length);
+	VSCALE(evect, edir, length);
 
 	/* Switch based on type of curve to be extruded */
 
 	switch( dir[curve]->type )
 	{
 		case 100:	/* circular arc */
-			return( Extrudcirc( entityno , curve , evect ) );
+			return( Extrudcirc( entityno, curve, evect ) );
 		case 104:	/* conic arc */
-			return( Extrudcon( entityno , curve , evect ) );
+			return( Extrudcon( entityno, curve, evect ) );
 		case 102:	/* composite curve */
 		case 106:	/* copius data */
 		case 112:	/* parametric spline */
@@ -110,7 +110,7 @@ int entityno;
 			struct edgeuse *eu;
 			struct ptlist *pt_ptr;
 
-			npts = Getcurve( curve , &curv_pts );
+			npts = Getcurve( curve, &curv_pts );
 			if( npts < 3 )
 				return( 0 );
 
@@ -139,7 +139,7 @@ int entityno;
 				return( 0 );
 			}
 
-			if( nmg_extrude_face( fu, evect , &tol ) )
+			if( nmg_extrude_face( fu, evect, &tol ) )
 			{
 				bu_log( "Extrude: extrusion failed\n" );
 				nmg_km( m );
@@ -156,7 +156,7 @@ int entityno;
 		default:
 			i = (-1);
 			while( dir[curve]->type != typecount[++i].type && i < ntypes );
-			bu_log( "Extrusions of %s are not allowed\n" , typecount[i].name );
+			bu_log( "Extrusions of %s are not allowed\n", typecount[i].name );
 			break;
 	}
 	return( 0 );

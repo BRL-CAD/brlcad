@@ -1199,7 +1199,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	dist_to_rim = tip->r_h/tip->r_a;
 	pts = (fastf_t *)bu_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_tess pts[]" );
-	norms = (fastf_t *)bu_malloc( nw * nlen * sizeof( vect_t ) , "rt_tor_tess: norms[]" );
+	norms = (fastf_t *)bu_malloc( nw * nlen * sizeof( vect_t ), "rt_tor_tess: norms[]" );
 
 	for( len = 0; len < nlen; len++ )  {
 		beta = bn_twopi * len / nlen;
@@ -1216,7 +1216,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
 			VADD3( TOR_PTA(w, len), tip->v, edge, radius );
 
-			VMOVE( TOR_NORM_A(w, len) , edge );
+			VMOVE( TOR_NORM_A(w, len), edge );
 			VUNITIZE( TOR_NORM_A(w, len) );
 		}
 	}
@@ -1267,9 +1267,9 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
-			VREVERSE( rev_norm , TOR_NORM_A(w, len) );
+			VREVERSE( rev_norm, TOR_NORM_A(w, len) );
 
-			for( BU_LIST_FOR( vu , vertexuse , &verts[TOR_PT(w, len)]->vu_hd ) )
+			for( BU_LIST_FOR( vu, vertexuse, &verts[TOR_PT(w, len)]->vu_hd ) )
 			{
 				struct faceuse *fu;
 
@@ -1279,9 +1279,9 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , TOR_NORM_A(w, len) );
+					nmg_vertexuse_nv( vu, TOR_NORM_A(w, len) );
 				else if( fu->orientation == OT_OPPOSITE )
-					nmg_vertexuse_nv( vu , rev_norm );
+					nmg_vertexuse_nv( vu, rev_norm );
 			}
 		}
 	}
@@ -1292,7 +1292,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free( (char *)pts, "rt_tor_tess pts[]" );
 	bu_free( (char *)verts, "rt_tor_tess *verts[]" );
 	bu_free( (char *)faces, "rt_tor_tess *faces[]" );
-	bu_free( (char *)norms , "rt_tor_tess norms[]" );
+	bu_free( (char *)norms, "rt_tor_tess norms[]" );
 	return(0);
 }
 

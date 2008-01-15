@@ -44,21 +44,21 @@ int entityno;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
+	Readint( &sol_num, "" );
 	if( sol_num != 128 )
 	{
-		bu_log( "entity at D%07d is not a B-spline surface\n" , entityno*2 + 1 );
+		bu_log( "entity at D%07d is not a B-spline surface\n", entityno*2 + 1 );
 		return( 0 );
 	}
-	Readint( &k1 , "" );
-	Readint( &k2 , "" );
-	Readint( &m1 , "" );
-	Readint( &m2 , "" );
+	Readint( &k1, "" );
+	Readint( &k2, "" );
+	Readint( &m1, "" );
+	Readint( &m2, "" );
 
 	if( m1 == 1 && m2 == 1 )
 		return( 1 );

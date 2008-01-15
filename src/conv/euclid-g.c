@@ -225,7 +225,7 @@ main(int argc, char **argv)
 	mk_id( fpout, title );
 
 	for( i=0 ; i<11 ; i++ )
-		bu_ptbl_init( &groups[i] , 64, " &groups[i] ");
+		bu_ptbl_init( &groups[i], 64, " &groups[i] ");
 
 	euclid_to_brlcad(fpin, fpout);
 
@@ -251,8 +251,8 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 
 	BU_LIST_INIT( &head.l );
 
-	r = BU_LIST_FIRST( nmgregion , &m->r_hd );
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 
 	sprintf(id, "%d", reg_id);
 	rname = bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
@@ -260,7 +260,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 
 	snprintf(sname, 80, "%s.s", id);
 	if( polysolids )
-		mk_bot_from_nmg( fpout , sname , s );
+		mk_bot_from_nmg( fpout, sname, s );
 	else
 	{
 		int something_left=1;
@@ -294,18 +294,18 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 
 	if( mk_addmember( sname, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 	{
-		bu_exit(1, "add_nmg_to_db: mk_addmember failed for solid %s\n" , sname);
+		bu_exit(1, "add_nmg_to_db: mk_addmember failed for solid %s\n", sname);
 	}
 
 	if( mk_lrcomb( fpout, rname, &head, 1, (char *)NULL, (char *)NULL,
 	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
 	{
-		bu_exit(1, "add_nmg_to_db: mk_rlcomb failed for region %s\n" , rname);
+		bu_exit(1, "add_nmg_to_db: mk_rlcomb failed for region %s\n", rname);
 	}
 
-	bu_ptbl_ins( &groups[group_id] , (long *)rname );
+	bu_ptbl_ins( &groups[group_id], (long *)rname );
 
-	bu_free( (char *)sname , "euclid-g: solid name" );
+	bu_free( (char *)sname, "euclid-g: solid name" );
 }
 
 static void
@@ -329,31 +329,31 @@ build_groups(struct rt_wdb *fpout)
 		{
 			char *region_name;
 
-			region_name = (char *)BU_PTBL_GET( &groups[i] , j );
-			if( mk_addmember( region_name , &head.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
+			region_name = (char *)BU_PTBL_GET( &groups[i], j );
+			if( mk_addmember( region_name, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 			{
-				bu_exit(1, "build_groups: mk_addmember failed for region %s\n" , region_name);
+				bu_exit(1, "build_groups: mk_addmember failed for region %s\n", region_name);
 			}
 		}
 
 		if( i < 10 )
-			sprintf( group_name , "%dxxx_series" , i );
+			sprintf( group_name, "%dxxx_series", i );
 		else
-			sprintf( group_name , "ids_over_9999" );
+			sprintf( group_name, "ids_over_9999" );
 
-		j = mk_lfcomb( fpout , group_name , &head , 0 )
+		j = mk_lfcomb( fpout, group_name, &head, 0 )
 		if( j )
 		{
-			bu_exit(1, "build_groups: mk_lcomb failed for group %s\n" , group_name);
+			bu_exit(1, "build_groups: mk_lcomb failed for group %s\n", group_name);
 		}
 
-		if( mk_addmember( group_name , &head_all.l , NULL, WMOP_UNION ) == WMEMBER_NULL )
+		if( mk_addmember( group_name, &head_all.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
-			bu_exit(1, "build_groups: mk_addmember failed for group %s\n" , group_name);
+			bu_exit(1, "build_groups: mk_addmember failed for group %s\n", group_name);
 		}
 	}
 
-	j = mk_lfcomb( fpout , "all" , &head_all , 0 )
+	j = mk_lfcomb( fpout, "all", &head_all, 0 )
 	if( j )
 		bu_exit(1, "build_groups: mk_lcomb failed for group 'all'\n");
 }
@@ -397,7 +397,7 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 	int	reg_id;
 
 	/* skip first string in file (what is it??) */
-	if( fscanf( fpin , "%80s" , str ) == EOF )
+	if( fscanf( fpin, "%80s", str ) == EOF )
 		bu_exit(1, "Failed on first attempt to read input" );
 
 	/* Id of first region. */
@@ -407,7 +407,7 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 
 	/* Convert each region to an individual nmg. */
 	do {
-		fprintf( stderr , "Converting region %d...\n", reg_id);
+		fprintf( stderr, "Converting region %d...\n", reg_id);
 		reg_id = cvt_euclid_region(fpin, fpout, reg_id);
 	} while (reg_id != -1);
 
@@ -444,11 +444,11 @@ int reg_id;
 			m = nmg_find_model( &shells[shell_no]->l.magic );
 
 		solid_no++;
-		sprintf( sol_name , "%d.%d.s", reg_id, solid_no );
+		sprintf( sol_name, "%d.%d.s", reg_id, solid_no );
 
 		if( mk_addmember( sol_name, &head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 		{
-			bu_exit(1, "add_shells_to_db: mk_addmember failed for solid %s\n" , sol_name);
+			bu_exit(1, "add_shells_to_db: mk_addmember failed for solid %s\n", sol_name);
 		}
 
 		if( polysolids )
@@ -461,23 +461,23 @@ int reg_id;
 
 			/* Move this shell to a seperate model and write to .g file */
 			m_tmp = nmg_mmr();
-			r_tmp = BU_LIST_FIRST( nmgregion , &m_tmp->r_hd );
+			r_tmp = BU_LIST_FIRST( nmgregion, &m_tmp->r_hd );
 			BU_LIST_DEQUEUE( &s->l );
 			s->r_p = r_tmp;
 			BU_LIST_APPEND( &r_tmp->s_hd, &s->l )
 
-			nmg_m_reindex( m_tmp , 0 );
+			nmg_m_reindex( m_tmp, 0 );
 
 			nmg_rebound( m_tmp, &tol );
 
-			mk_nmg( fpout , sol_name, m_tmp );
+			mk_nmg( fpout, sol_name, m_tmp );
 
 			nmg_km( m_tmp );
 
 		}
 	}
 
-	nmg_m_reindex( m , 0 );
+	nmg_m_reindex( m, 0 );
 
 	gift_ident = reg_id % 100000;
 	group_id = gift_ident/1000;
@@ -489,10 +489,10 @@ int reg_id;
 	if( mk_lrcomb( fpout, reg_name, &head, 1, (char *)NULL, (char *)NULL,
 	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
 	{
-		bu_exit(1, "add_nmg_to_db: mk_rlcomb failed for region %s\n" , reg_name);
+		bu_exit(1, "add_nmg_to_db: mk_rlcomb failed for region %s\n", reg_name);
 	}
 
-	bu_ptbl_ins( &groups[group_id] , (long *)reg_name );
+	bu_ptbl_ins( &groups[group_id], (long *)reg_name );
 }
 #endif
 
@@ -539,7 +539,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 				{
 					bu_log( "Making simple face:\n" );
 					for( i=0; i<np; i++ )
-						bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						bu_log( "\t( %g %g %g )\n", V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				face++;
@@ -550,7 +550,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 				{
 					bu_log( "Making a hole:\n" );
 					for( i=0; i<np; i++ )
-						bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						bu_log( "\t( %g %g %g )\n", V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				nmg_add_loop_to_face(s, outfaceuses[hole_face],
 					vertlist, np, OT_OPPOSITE);
@@ -561,7 +561,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 				{
 					bu_log( "Making face which will get a hole:\n" );
 					for( i=0; i<np; i++ )
-						bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						bu_log( "\t( %g %g %g )\n", V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				hole_face = face;
@@ -594,7 +594,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 		if (vert.vt[i])
 		{
 			if( debug )
-				bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[3*i] ) );
+				bu_log( "\t( %g %g %g )\n", V3ARGS( &vert.pt[3*i] ) );
 			nmg_vertex_gv(vert.vt[i], &vert.pt[3*i]);
 		}
 	}
@@ -617,7 +617,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	}
 
 	/* kill cracks */
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -654,7 +654,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	/* Compute "geometry" for model, region, and shell */
 	if( debug )
 		bu_log( "Rebound\n" );
-	nmg_rebound( m , &tol );
+	nmg_rebound( m, &tol );
 
 #if 0
 	/* Break edges on vertices */
@@ -663,7 +663,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	(void)nmg_model_break_e_on_v( m, &tol );
 
 	/* kill cracks */
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -697,7 +697,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	/* Compute "geometry" for model, region, and shell */
 	if( debug )
 		bu_log( "Rebound\n" );
-	nmg_rebound( m , &tol );
+	nmg_rebound( m, &tol );
 
 	/* fix the normals */
 	if( debug )
@@ -712,7 +712,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	nmg_s_join_touchingloops( s, &tol );
 
 	/* kill cracks */
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -731,7 +731,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	nmg_s_split_touchingloops( s, &tol);
 
 	/* kill cracks */
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -811,7 +811,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	}
 
 	if( debug )
-		bu_log( "%d vertices out of tolerance after fixing out of tolerance faces\n" , nmg_ck_geometry( m , &tol ) );
+		bu_log( "%d vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry( m, &tol ) );
 #if 0
 	/* Fuse */
 	if( debug )
@@ -821,7 +821,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	}
 	i = nmg_model_fuse( m, &tol );
 	if( debug )
-		bu_log( "\t%d objects fused\n" , i );
+		bu_log( "\t%d objects fused\n", i );
 #endif
 
 	nmg_s_join_touchingloops( s, &tol );
@@ -834,7 +834,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	 *
 	 * first decompose the shell into maximally connected shells
 	 */
-	if( (shell_count = nmg_decompose_shell( s , &tol )) > 1 )
+	if( (shell_count = nmg_decompose_shell( s, &tol )) > 1 )
 	{
 		/* This shell has more than one part */
 		struct shell **shells;
@@ -844,9 +844,9 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 		short *shell_inout;
 
 		shell_inout = (short *)bu_calloc( shell_count, sizeof( short ), "shell_inout" );
-		in_out = (short *)bu_calloc( shell_count * shell_count , sizeof( short ) , "in_out" );
+		in_out = (short *)bu_calloc( shell_count * shell_count, sizeof( short ), "in_out" );
 
-		bu_ptbl_init( &verts , 64, " &verts ");
+		bu_ptbl_init( &verts, 64, " &verts ");
 
 		shells = (struct shell **)bu_calloc( shell_count, sizeof( struct shell *), "shells" );
 
@@ -863,24 +863,24 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 		 * and that all the shells are closed.
 		 */
 		shell1_no = (-1);
-		for( BU_LIST_FOR( s , shell , &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			shells[++shell1_no] = s;
 			if( !s->sa_p )
-				nmg_shell_a( s , &tol );
+				nmg_shell_a( s, &tol );
 
-			if( nmg_check_closed_shell( s , &tol ) )
+			if( nmg_check_closed_shell( s, &tol ) )
 			{
-				bu_log( "Warning: Region %d is not a closed surface\n" , reg_id );
+				bu_log( "Warning: Region %d is not a closed surface\n", reg_id );
 				bu_log( "\tCreating new faces to close region\n" );
-				nmg_close_shell( s , &tol );
-				if( nmg_check_closed_shell( s , &tol ) )
+				nmg_close_shell( s, &tol );
+				if( nmg_check_closed_shell( s, &tol ) )
 					bu_exit(1, "Cannot close shell\n" );
 			}
 		}
 
 		shell1_no = (-1);
-		for( BU_LIST_FOR( s, shell , &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			struct shell *s2;
 			int outside=0;
@@ -891,7 +891,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 			nmg_vertex_tabulate( &verts, &s->l.magic );
 
 			shell2_no = (-1);
-			for( BU_LIST_FOR( s2 , shell , &r->s_hd ) )
+			for( BU_LIST_FOR( s2, shell, &r->s_hd ) )
 			{
 				int j;
 				int in=0;
@@ -907,7 +907,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 				{
 					struct vertex *v;
 
-					v = (struct vertex *)BU_PTBL_GET( &verts , j );
+					v = (struct vertex *)BU_PTBL_GET( &verts, j );
 					NMG_CK_VERTEX( v );
 
 					if( nmg_find_v_in_shell( v, s2, 1 ) )
@@ -1084,10 +1084,10 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
 		{
 			lst[i] = store_vert(vert, nv, x, y, z);
 			if( debug )
-				bu_log( "\t\tStoring vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
+				bu_log( "\t\tStoring vertex ( %g %g %g ) at index %d\n", x, y, z, lst[i] );
 		}
 		else if( debug )
-			bu_log( "\t\tFound vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
+			bu_log( "\t\tFound vertex ( %g %g %g ) at index %d\n", x, y, z, lst[i] );
 	}
 
 	/* Read in plane equation. */

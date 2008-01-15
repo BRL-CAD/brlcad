@@ -1093,10 +1093,10 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
 	NMG_CK_EDGE_G_LSEG( eg );
 	BN_CK_TOL( tol );
 
-	VMOVE( e_dir , eg->e_dir );
+	VMOVE( e_dir, eg->e_dir );
 	VUNITIZE( e_dir );
 
-	for( BU_LIST_FOR( eu2 , bu_list , &eg->eu_hd2 ) )
+	for( BU_LIST_FOR( eu2, bu_list, &eg->eu_hd2 ) )
 	{
 		struct edgeuse *eu;
 		struct vertex *v1,*v2;
@@ -1118,8 +1118,8 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
 		vg2 = v2->vg_p;
 		NMG_CK_VERTEX_G( vg2 );
 
-		VSUB2( pt_to_vert , vg1->coord , eg->e_pt );
-		VJOIN1( eg_to_vert , pt_to_vert , -VDOT( e_dir , pt_to_vert ) , e_dir );
+		VSUB2( pt_to_vert, vg1->coord, eg->e_pt );
+		VJOIN1( eg_to_vert, pt_to_vert, -VDOT( e_dir, pt_to_vert ), e_dir );
 		if( MAGSQ( eg_to_vert ) > tol->dist_sq )
 		{
 			count++;
@@ -1150,22 +1150,22 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 	NMG_CK_MODEL( m );
 	BN_CK_TOL( tol );
 
-	bu_ptbl_init( &g_tbl , 64, " &g_tbl ");
+	bu_ptbl_init( &g_tbl, 64, " &g_tbl ");
 
-	nmg_edge_g_tabulate( &g_tbl , &m->magic );
+	nmg_edge_g_tabulate( &g_tbl, &m->magic );
 
 	for( i=0 ; i<BU_PTBL_END( &g_tbl ) ; i++ )
 	{
 		long *ep;
 		struct edge_g_lseg *eg;
 
-		ep = BU_PTBL_GET( &g_tbl , i );
+		ep = BU_PTBL_GET( &g_tbl, i );
 		switch( *ep )
 		{
 			case NMG_EDGE_G_LSEG_MAGIC:
 				eg = (struct edge_g_lseg *)ep;
 				NMG_CK_EDGE_G_LSEG( eg );
-				count += nmg_ck_eg_verts( eg , tol );
+				count += nmg_ck_eg_verts( eg, tol );
 				break;
 			case NMG_EDGE_G_CNURB_MAGIC:
 				/* XXX any checking for vertices on CNURB geometry?? */
@@ -1175,16 +1175,16 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
 	bu_ptbl_reset( &g_tbl );
 
-	nmg_face_tabulate( &g_tbl , &m->magic );
+	nmg_face_tabulate( &g_tbl, &m->magic );
 
 	for( i=0 ; i<BU_PTBL_END( &g_tbl ) ; i++ )
 	{
 		struct face *f;
 
-		f = (struct face *)BU_PTBL_GET( &g_tbl , i );
+		f = (struct face *)BU_PTBL_GET( &g_tbl, i );
 		NMG_CK_FACE( f );
 
-		count += nmg_ck_fg_verts( f->fu_p , f , tol );
+		count += nmg_ck_fg_verts( f->fu_p, f, tol );
 	}
 
 	bu_ptbl_free( &g_tbl );
@@ -1646,7 +1646,7 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	BN_CK_TOL( tol );
 
 	/* topology check */
-	for( BU_LIST_FOR( vu , vertexuse , &vp->vu_hd ) )
+	for( BU_LIST_FOR( vu, vertexuse, &vp->vu_hd ) )
 	{
 		fu = nmg_find_fu_of_vu( vu );
 		if( fu == fu1 )
@@ -1660,29 +1660,29 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 	if( !found1 || !found2 )
 	{
 		bu_vls_init( &str );
-		bu_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%lx not used in" , (long)vp );
+		bu_vls_printf( &str, "nmg_ck_v_in_2fus: vertex x%lx not used in", (long)vp );
 		if( !found1 )
-			bu_vls_printf( &str , " faceuse x%lx" , (long)fu1 );
+			bu_vls_printf( &str, " faceuse x%lx", (long)fu1 );
 		if( !found2 )
-			bu_vls_printf( &str , " faceuse x%lx" , (long)fu2 );
+			bu_vls_printf( &str, " faceuse x%lx", (long)fu2 );
 		bu_bomb( bu_vls_addr( &str ) );
 	}
 
 	/* geometry check */
 	NMG_GET_FU_PLANE(n1, fu1);
 	NMG_GET_FU_PLANE(n2, fu2);
-	dist1 = DIST_PT_PLANE( vp->vg_p->coord , n1 );
-	dist2 = DIST_PT_PLANE( vp->vg_p->coord , n2 );
+	dist1 = DIST_PT_PLANE( vp->vg_p->coord, n1 );
+	dist2 = DIST_PT_PLANE( vp->vg_p->coord, n2 );
 
-	if( !NEAR_ZERO( dist1 , tol->dist ) || !NEAR_ZERO( dist2 , tol->dist ) )
+	if( !NEAR_ZERO( dist1, tol->dist ) || !NEAR_ZERO( dist2, tol->dist ) )
 	{
 		bu_vls_init( &str );
-		bu_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%lx ( %g %g %g ) not in plane of" ,
-				(long)vp , V3ARGS( vp->vg_p->coord ) );
-		if( !NEAR_ZERO( dist1 , tol->dist ) )
-			bu_vls_printf( &str , " faceuse x%lx (off by %g)" , (long)fu1 , dist1 );
-		if( !NEAR_ZERO( dist2 , tol->dist ) )
-			bu_vls_printf( &str , " faceuse x%lx (off by %g)" , (long)fu2 , dist2 );
+		bu_vls_printf( &str, "nmg_ck_v_in_2fus: vertex x%lx ( %g %g %g ) not in plane of" ,
+				(long)vp, V3ARGS( vp->vg_p->coord ) );
+		if( !NEAR_ZERO( dist1, tol->dist ) )
+			bu_vls_printf( &str, " faceuse x%lx (off by %g)", (long)fu1, dist1 );
+		if( !NEAR_ZERO( dist2, tol->dist ) )
+			bu_vls_printf( &str, " faceuse x%lx (off by %g)", (long)fu2, dist2 );
 		bu_bomb( bu_vls_addr( &str ) );
 	}
 
@@ -1714,7 +1714,7 @@ nmg_ck_v_in_fus(long int *vp, genptr_t state, int first)
 		struct vertexuse *vu;
 		struct faceuse *fu;
 
-		for( BU_LIST_FOR( vu , vertexuse , &v->vu_hd ) )
+		for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
 		{
 			fastf_t dist;
 
@@ -1731,11 +1731,11 @@ nmg_ck_v_in_fus(long int *vp, genptr_t state, int first)
 				else if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
 				{
 					NMG_GET_FU_PLANE( n, fu );
-					dist = DIST_PT_PLANE( v->vg_p->coord , n );
-					if( !NEAR_ZERO( dist , sp->tol->dist ) )
+					dist = DIST_PT_PLANE( v->vg_p->coord, n );
+					if( !NEAR_ZERO( dist, sp->tol->dist ) )
 					{
 						bu_log( "ERROR - nmg_ck_vs_in_region: vertex x%x ( %g %g %g ) is %g from faceuse x%x\n" ,
-							v , V3ARGS( v->vg_p->coord ) , dist , fu );
+							v, V3ARGS( v->vg_p->coord ), dist, fu );
 					}
 				}
 				/* else if( *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC ) XXXX */

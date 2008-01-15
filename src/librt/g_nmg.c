@@ -113,7 +113,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		VMINMAX(stp->st_min, stp->st_max, rp->ra_p->min_pt);
 		VMINMAX(stp->st_min, stp->st_max, rp->ra_p->max_pt);
 
-		nmg_ck_vs_in_region( rp , &rtip->rti_tol );
+		nmg_ck_vs_in_region( rp, &rtip->rti_tol );
 
 	}
 

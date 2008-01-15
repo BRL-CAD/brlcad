@@ -61,9 +61,9 @@ main(int argc, char **argv)
     vect_t temp, point, zero;
     mat_t mat;
 
-    VSETALL( temp , 0.0 );
-    VSETALL( point , 0.0 );
-    VSETALL( zero , 0.0 );
+    VSETALL( temp, 0.0 );
+    VSETALL( point, 0.0 );
+    VSETALL( zero, 0.0 );
 
     (void) get_args(argc, argv);
 

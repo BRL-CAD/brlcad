@@ -34,7 +34,7 @@
 #include "./iges_extern.h"
 
 void
-Makemembers( root , head )
+Makemembers( root, head )
 struct node *root;
 struct wmember *head;
 {
@@ -62,7 +62,7 @@ struct wmember *head;
 			entno = (-(1+ptr->op)/2); /* entity number */
 
 			/* make the member record */
-			wmem = mk_addmember( dir[entno]->name , &(head->l), NULL, operator[op] );
+			wmem = mk_addmember( dir[entno]->name, &(head->l), NULL, operator[op] );
 			flt = (fastf_t *)dir[entno]->rot;
 			for( i=0 ; i<16 ; i++ )
 			{

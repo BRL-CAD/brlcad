@@ -191,12 +191,12 @@ main(int argc, char **argv)
 
 			case 'x':  /* librt debug flags */
 
-				sscanf( bu_optarg , "%x" , (unsigned int *)&rt_g.debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 				break;
 
 			case 'X':  /* librt NMG debug flags */
 
-				sscanf( bu_optarg , "%x" , (unsigned int *)&rt_g.NMG_debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				break;
 
 			case 'p':  /* polysolid output */
@@ -259,7 +259,7 @@ main(int argc, char **argv)
 				sscanf( bu_optarg, "%lf %lf %lf",
 				    &Centroid[0],&Centroid[1],&Centroid[2]);
 
-				bu_log( "Centroid = ( %f %f %f )\n" , V3ARGS( Centroid ) );
+				bu_log( "Centroid = ( %f %f %f )\n", V3ARGS( Centroid ) );
 				VSCALE( Centroid, Centroid, mmtin );
 				break;
 
@@ -282,7 +282,7 @@ main(int argc, char **argv)
 	}
 
 	if( debug )
-		bu_log( "debug level = %d\n" , debug );
+		bu_log( "debug level = %d\n", debug );
 
 	if( RT_G_DEBUG )
 	{
@@ -292,7 +292,7 @@ main(int argc, char **argv)
 
 	if( rt_g.NMG_debug )
 	{
-		bu_log( "librt rt_g.NMG_debug = x%x\n" , rt_g.NMG_debug );
+		bu_log( "librt rt_g.NMG_debug = x%x\n", rt_g.NMG_debug );
 	}
 
 	/*     This section opens input files - the data file defaults to standard
@@ -446,7 +446,7 @@ main(int argc, char **argv)
 		    ((in[i].surf_type > 3 || in[i-1].surf_type > 3) &&
 		    (in[i].surf_type != in[i-1].surf_type)) ) {
 
-			bu_log( "component code #%d\n" , in[i-1].cc );
+			bu_log( "component code #%d\n", in[i-1].cc );
 
 			if( debug > 2 ) {
 				for( j=0; j<i; j++ )
@@ -552,9 +552,9 @@ main(int argc, char **argv)
 		struct wmember *wp;
 
 		bu_log( "list head not empty: \n" );
-		for( BU_LIST_FOR( wp , wmember , &head.l ) )
+		for( BU_LIST_FOR( wp, wmember, &head.l ) )
 		{
-			bu_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+			bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 		}
 	}
 
@@ -564,9 +564,9 @@ main(int argc, char **argv)
 		struct wmember *wp;
 
 		bu_log( "list heada not empty: \n" );
-		for( BU_LIST_FOR( wp , wmember , &heada.l ) )
+		for( BU_LIST_FOR( wp, wmember, &heada.l ) )
 		{
-			bu_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+			bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 		}
 	}
 
@@ -576,9 +576,9 @@ main(int argc, char **argv)
 		struct wmember *wp;
 
 		bu_log( "list headb not empty: \n" );
-		for( BU_LIST_FOR( wp , wmember , &headb.l ) )
+		for( BU_LIST_FOR( wp, wmember, &headb.l ) )
 		{
-			bu_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+			bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 		}
 	}
 
@@ -588,9 +588,9 @@ main(int argc, char **argv)
 		struct wmember *wp;
 
 		bu_log( "list headc not empty: \n" );
-		for( BU_LIST_FOR( wp , wmember , &headc.l ) )
+		for( BU_LIST_FOR( wp, wmember, &headc.l ) )
 		{
-			bu_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+			bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 		}
 	}
 
@@ -600,9 +600,9 @@ main(int argc, char **argv)
 		struct wmember *wp;
 
 		bu_log( "list headd not empty: \n" );
-		for( BU_LIST_FOR( wp , wmember , &headd.l ) )
+		for( BU_LIST_FOR( wp, wmember, &headd.l ) )
 		{
-			bu_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+			bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 		}
 	}
 
@@ -612,9 +612,9 @@ main(int argc, char **argv)
 		struct wmember *wp;
 
 		bu_log( "list heade not empty: \n" );
-		for( BU_LIST_FOR( wp , wmember , &heade.l ) )
+		for( BU_LIST_FOR( wp, wmember, &heade.l ) )
 		{
-			bu_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+			bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 		}
 	}
 
@@ -624,9 +624,9 @@ main(int argc, char **argv)
 		struct wmember *wp;
 
 		bu_log( "list headf not empty: \n" );
-		for( BU_LIST_FOR( wp , wmember , &headf.l ) )
+		for( BU_LIST_FOR( wp, wmember, &headf.l ) )
 		{
-			bu_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+			bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 		}
 	}
 
@@ -719,7 +719,7 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
 			/* adjust height (move top towards base) */
 			magh = magh * (*new_rbase) / (*new_rbase - *new_rtop);
 			VJOIN1( new_top, new_base, magh, unit_h )
-			VSUB2( new_h, new_top , new_base )
+			VSUB2( new_h, new_top, new_base )
 
 			/* set new top radius to approximate zero */
 			*new_rtop = 0.00001;
@@ -854,7 +854,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		if( p_faces[face1_no].fu != fu1 &&
 			p_faces[face1_no].fu != fu1 )
 		{
-			bu_log( "nmg_patch_coplanar_face_merge: Can't find entry for faceuse x%x in p_faces\n" , fu1 );
+			bu_log( "nmg_patch_coplanar_face_merge: Can't find entry for faceuse x%x in p_faces\n", fu1 );
 			continue;
 		}
 
@@ -902,7 +902,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 			if( p_faces[face2_no].fu != fu2 &&
 				p_faces[face2_no].fu != fu2 )
 			{
-				bu_log( "nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse x%x in p_faces\n" , fu2 );
+				bu_log( "nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse x%x in p_faces\n", fu2 );
 				continue;
 			}
 
@@ -984,14 +984,14 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	long **copy_tbl;
 
 	if( debug )
-		bu_log( "%s\n" , name );
+		bu_log( "%s\n", name );
 
 	/* Make an array of patch_verts to hold the vertices and coordinates */
-	verts = (struct patch_verts *)bu_calloc( l , sizeof( struct patch_verts ) , "patch-g: verts array" );
+	verts = (struct patch_verts *)bu_calloc( l, sizeof( struct patch_verts ), "patch-g: verts array" );
 	for( k=1 ; k<l ; k++ )
 	{
 		verts[k].vp = (struct vertex *)NULL;
-		VSET( verts[k].coord , x[k] , y[k] , z[k] );
+		VSET( verts[k].coord, x[k], y[k], z[k] );
 	}
 
 	if( arb6 && plate_mode )
@@ -1005,13 +1005,13 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
 		for (k=1 ; k<l-3 ; k++ )
 		{
-			if( !bn_3pts_distinct ( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+			if( !bn_3pts_distinct ( verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol ) )
 			{
 
 				;	/* do nothing */
 				/* bu_log( "Repeated Vertice, no face made\n"); */
 			}
-			else if( bn_3pts_collinear( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+			else if( bn_3pts_collinear( verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol ) )
 			{
 
 				;	/* do nothing */
@@ -1061,14 +1061,14 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	/* make a model, region and shell to hold the component */
 	m = nmg_mm();
 	r = nmg_mrsv( m );
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 	os = s;
 
 	/* initialize the list of faces, for later use by nmg_gluefaces */
-	bu_ptbl( &faces , BU_PTBL_INIT , NULL );
+	bu_ptbl( &faces, BU_PTBL_INIT, NULL );
 
 	/* make an array of patch_faces to hold faceuses and the desired thickness of each face */
-	p_faces = (struct patch_faces *)bu_calloc( 2*l , sizeof( struct patch_faces ) , "build_solid: patch_faces" );
+	p_faces = (struct patch_faces *)bu_calloc( 2*l, sizeof( struct patch_faces ), "build_solid: patch_faces" );
 
 	/* loop through all the vertices, making faces as we go */
 	face_count = 0;
@@ -1078,13 +1078,13 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		if( plate_mode && thk[k+2] != thickness )
 			continue;
 
-		if( !bn_3pts_distinct ( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+		if( !bn_3pts_distinct ( verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol ) )
 		{
 
 			;	/* do nothing */
 			/* bu_log( "Repeated Vertice, no face made\n"); */
 		}
-		else if( bn_3pts_collinear( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+		else if( bn_3pts_collinear( verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol ) )
 		{
 
 			;	/* do nothing */
@@ -1102,11 +1102,11 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 				int j;
 
 				found_verts = 0;
-				fu = (struct faceuse *)BU_PTBL_GET( &faces , i );
+				fu = (struct faceuse *)BU_PTBL_GET( &faces, i );
 				NMG_CK_FACEUSE( fu );
-				lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+				lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 				NMG_CK_LOOPUSE( lu );
-				for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				{
 					NMG_CK_EDGEUSE( eu );
 					for( j=0 ; j<3 ; j++ )
@@ -1122,13 +1122,13 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			{
 				point_t tmp_pt;
 
-				bu_log( "Component #%d:\n\tduplicate faces:\n" , in[0].cc );
+				bu_log( "Component #%d:\n\tduplicate faces:\n", in[0].cc );
 				VSCALE( tmp_pt, verts[k].coord, conv_mm2in );
-				bu_log( "\t\t (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				bu_log( "\t\t (%g, %g, %g)", V3ARGS( tmp_pt ) );
 				VSCALE( tmp_pt, verts[k+1].coord, conv_mm2in );
-				bu_log( " (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				bu_log( " (%g, %g, %g)", V3ARGS( tmp_pt ) );
 				VSCALE( tmp_pt, verts[k+2].coord, conv_mm2in );
-				bu_log( " (%g , %g , %g)\n", V3ARGS( tmp_pt ) );
+				bu_log( " (%g, %g, %g)\n", V3ARGS( tmp_pt ) );
 
 				continue;
 			}
@@ -1139,11 +1139,11 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
 				bu_log( "Make face: " );
 				VSCALE( tmp_pt, verts[k].coord, conv_mm2in );
-				bu_log( "\t\t (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				bu_log( "\t\t (%g, %g, %g)", V3ARGS( tmp_pt ) );
 				VSCALE( tmp_pt, verts[k+1].coord, conv_mm2in );
-				bu_log( " (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				bu_log( " (%g, %g, %g)", V3ARGS( tmp_pt ) );
 				VSCALE( tmp_pt, verts[k+2].coord, conv_mm2in );
-				bu_log( " (%g , %g , %g)\n", V3ARGS( tmp_pt ) );
+				bu_log( " (%g, %g, %g)\n", V3ARGS( tmp_pt ) );
 			}
 
 			/* Assign the three vertices for this face */
@@ -1159,20 +1159,20 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 				{
 					if( !verts[vert2].vp )
 						continue;
-					if( VEQUAL( verts[vert1].coord , verts[vert2].coord ) )
+					if( VEQUAL( verts[vert1].coord, verts[vert2].coord ) )
 						verts[vert1].vp = verts[vert2].vp;
 				}
 			}
 
 			/* make a face */
-			fu = nmg_cmface( os , vert_p , 3 );
+			fu = nmg_cmface( os, vert_p, 3 );
 			NMG_CK_FACEUSE( fu );
 
 			if( debug > 2 )
-				bu_log( "\tMade faceuse x%x\n" , fu );
+				bu_log( "\tMade faceuse x%x\n", fu );
 
 			/* add it to the list */
-			bu_ptbl( &faces , BU_PTBL_INS , (long *)fu );
+			bu_ptbl( &faces, BU_PTBL_INS, (long *)fu );
 
 			/* remember this face and its thickness */
 			p_faces[face_count].fu = fu;
@@ -1182,14 +1182,14 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			face_count++;
 			if( face_count >= 2*l )
 			{
-				bu_exit(1, "Face count = %d, only allowed for %d\n" , face_count , 2*l );
+				bu_exit(1, "Face count = %d, only allowed for %d\n", face_count, 2*l );
 			}
 
 			/* Assign geometry */
 			for( i=0 ; i<3 ; i++ )
 			{
 				if( verts[k+i].vp != NULL && verts[k+i].vp->vg_p == NULL )
-					nmg_vertex_gv( verts[k+i].vp , verts[k+i].coord );
+					nmg_vertex_gv( verts[k+i].vp, verts[k+i].coord );
 			}
 
 			/* phantom armor */
@@ -1210,17 +1210,17 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		NMG_CK_FACEUSE( fu );
 		if( fu->orientation == OT_SAME )
 		{
-			if( nmg_fu_planeeqn( fu , tol ) )
+			if( nmg_fu_planeeqn( fu, tol ) )
 			{
-				bu_log( "Build_solid: Failed to calculate plane eqn for outside fu x%x:\n" , fu );
-				nmg_pr_fu_briefly( fu , (char *)NULL );
+				bu_log( "Build_solid: Failed to calculate plane eqn for outside fu x%x:\n", fu );
+				nmg_pr_fu_briefly( fu, (char *)NULL );
 			}
 		}
 	    }
 	}
 
 	/* don't need the verts array any more */
-	bu_free( (char *)verts , "build_solid: verts" );
+	bu_free( (char *)verts, "build_solid: verts" );
 
 	/* fuse vertices */
 	(void)nmg_model_vertex_fuse( m, tol );
@@ -1228,45 +1228,45 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	/* FASTGEN targets may have vertices that should be part of
 	 * an adjoining edge. Use nmg_break_long_edges to fix this
 	 */
-	i = nmg_break_edges( &m->magic , tol );
+	i = nmg_break_edges( &m->magic, tol );
 	if( debug > 2 )
-		bu_log( "nmg_break_edges broke %d edges\n" , i );
+		bu_log( "nmg_break_edges broke %d edges\n", i );
 
 	/* glue all the faces together */
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), tol );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), tol );
 
-	for( BU_LIST_FOR( s , shell , &r->s_hd ) )
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		nmg_make_faces_within_tol( s, tol );
 
 	if( !plate_mode )
 	{
 		/* make sure the normals are correct */
-		for( BU_LIST_FOR( s , shell , &r->s_hd ) )
-			nmg_fix_normals( s , tol );
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+			nmg_fix_normals( s, tol );
 
 		/* make sure we are dealing with closed shells */
-		for( BU_LIST_FOR( s , shell , &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			nmg_close_shell( s, tol );
 
 		/* free the memory for the face list */
-		bu_ptbl( &faces , BU_PTBL_FREE , NULL );
+		bu_ptbl( &faces, BU_PTBL_FREE, NULL );
 
 		/* don't need the p_faces array any more */
-		bu_free( (char *)p_faces , "build_solid: p_faces" );
+		bu_free( (char *)p_faces, "build_solid: p_faces" );
 
 		/* Calculate bounding boxes */
-		nmg_region_a( r , tol );
+		nmg_region_a( r, tol );
 
 		/* Write solid to BRL-CAD DB */
-		s = BU_LIST_FIRST( shell , &r->s_hd );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
 
 		if( polysolid )
-			write_shell_as_polysolid( outfp , name , s );
+			write_shell_as_polysolid( outfp, name, s );
 		else
 		{
-			nmg_shell_coplanar_face_merge( s , tol , 0 );
+			nmg_shell_coplanar_face_merge( s, tol, 0 );
 			if( !nmg_simplify_shell( s ) )
-				mk_nmg( outfp , name , m );
+				mk_nmg( outfp, name, m );
 		}
 
 		/* if this solid is mirrored, don't go through the entire process again */
@@ -1275,9 +1275,9 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			nmg_mirror_model( m );
 
 			if( polysolid )
-				write_shell_as_polysolid( outfp , mirror_name , s );
+				write_shell_as_polysolid( outfp, mirror_name, s );
 			else
-				mk_nmg( outfp , mirror_name , m );
+				mk_nmg( outfp, mirror_name, m );
 		}
 
 		/* Kill the model */
@@ -1290,8 +1290,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	 * Can't use nmg_fix_normals, because shell may not be closed */
 
 	/* get the shell and the first face from our list */
-	s = BU_LIST_FIRST( shell , &r->s_hd );
-	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	s = BU_LIST_FIRST( shell, &r->s_hd );
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		struct faceuse *fu1;
 
@@ -1299,8 +1299,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		NMG_GET_FU_NORMAL( norm , fu );
-		for( BU_LIST_FOR( fu1 , faceuse , &s->fu_hd ) )
+		NMG_GET_FU_NORMAL( norm, fu );
+		for( BU_LIST_FOR( fu1, faceuse, &s->fu_hd ) )
 		{
 			vect_t norm1;
 			fastf_t dot;
@@ -1311,7 +1311,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			if( fu == fu1 )
 				continue;
 
-			NMG_GET_FU_NORMAL( norm1 , fu1 );
+			NMG_GET_FU_NORMAL( norm1, fu1 );
 			dot = VDOT( norm, norm1 );
 			if( dot < 0.0 )
 				dot = (-dot );
@@ -1323,14 +1323,14 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	if( min_dot > 0.8 )
 		planar = 1;
 
-	fu = (struct faceuse *)BU_PTBL_GET( &faces , 0 );
+	fu = (struct faceuse *)BU_PTBL_GET( &faces, 0 );
 	NMG_CK_FACEUSE( fu );
 
 	/* free the memory for the face list */
-	bu_ptbl( &faces , BU_PTBL_RST , NULL );
+	bu_ptbl( &faces, BU_PTBL_RST, NULL );
 
 	/* Create a flags array for the model to make sure each face gets its orientation set */
-	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+	flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "patch-g: flags" );
 
 	/* loop to catch all faces */
 	missed_faces = 1;
@@ -1344,24 +1344,24 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 			fu = fu->fumate_p;
 		if( fu->orientation != OT_SAME )
 			bu_exit(1, "Neither faceuse nor mate have an OT_SAME side\n" );
-		NMG_GET_FU_NORMAL( normal , fu );
+		NMG_GET_FU_NORMAL( normal, fu );
 
 		if( !planar )
 		{
 			/* calculate "out" direction, from centroid to face */
-			lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
-			eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
-			VSUB2( out , eu->vu_p->v_p->vg_p->coord , centroid );
+			lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+			eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
+			VSUB2( out, eu->vu_p->v_p->vg_p->coord, centroid );
 			VUNITIZE( out );
 
 			/* if "normal" and "out" disagree, reverse normal */
-			outdot = VDOT( out , normal );
+			outdot = VDOT( out, normal );
 			if( outdot <= 0.001 &&  outdot >= -0.001 )
 			{
 				/* try model centroid */
-				VSUB2( out , eu->vu_p->v_p->vg_p->coord , Centroid );
+				VSUB2( out, eu->vu_p->v_p->vg_p->coord, Centroid );
 				VUNITIZE( out );
-				outdot = VDOT( out , normal );
+				outdot = VDOT( out, normal );
 			}
 		}
 		else
@@ -1370,22 +1370,22 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		}
 
 		if( outdot < 0.0 )
-			nmg_reverse_face_and_radials( fu , tol );
+			nmg_reverse_face_and_radials( fu, tol );
 
 		if( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
 
 		/* propagate this normal direction throughout the shell */
-		nmg_propagate_normals( fu , flags , tol );
+		nmg_propagate_normals( fu, flags, tol );
 
 		/* check if all the faces have been processed */
 		missed_faces = 0;
-		for( BU_LIST_FOR( fu1 , faceuse , &s->fu_hd ) )
+		for( BU_LIST_FOR( fu1, faceuse, &s->fu_hd ) )
 		{
 			NMG_CK_FACEUSE( fu1 );
 			if( fu1->orientation == OT_SAME )
 			{
-				if( !NMG_INDEX_TEST( flags , fu1->f_p ) )
+				if( !NMG_INDEX_TEST( flags, fu1->f_p ) )
 				{
 					fu = fu1;
 					missed_faces++;
@@ -1395,38 +1395,38 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		}
 	}
 
-	nmg_patch_coplanar_face_merge( s , &face_count , p_faces , tol , 0 );
+	nmg_patch_coplanar_face_merge( s, &face_count, p_faces, tol, 0 );
 
 	if( nmg_simplify_shell( s ) )
 		return( 1 );
 
 	/* Calculate bounding boxes */
-	nmg_region_a( r , tol );
+	nmg_region_a( r, tol );
 
 	if( debug > 4 )
 	{
 		char tmp_name[NAMESIZE+1];
 
-		snprintf( tmp_name , NAMESIZE, "out.%s" , name );
-		mk_nmg( outfp , tmp_name , m );
+		snprintf( tmp_name, NAMESIZE, "out.%s", name );
+		mk_nmg( outfp, tmp_name, m );
 	}
 
 	/* Duplicate shell */
-	is = nmg_dup_shell( s , &copy_tbl, tol );
+	is = nmg_dup_shell( s, &copy_tbl, tol );
 
 	/* make a new flags array */
-	bu_free( (char *)flags , "build_solid: flags" );
-	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+	bu_free( (char *)flags, "build_solid: flags" );
+	flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "patch-g: flags" );
 
 	/* Move faces planes */
 	for( i=0 ; i<face_count ; i++ )
 	{
 		struct face_g_plane *fg_p;
 
-		fu = NMG_INDEX_GETP( faceuse , copy_tbl , p_faces[i].fu );
+		fu = NMG_INDEX_GETP( faceuse, copy_tbl, p_faces[i].fu );
 		if( !fu )
 		{
-			bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (x%x) in original\n" , i , p_faces[i].fu );
+			bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (x%x) in original\n", i, p_faces[i].fu );
 		}
 
 		NMG_CK_FACEUSE( fu );
@@ -1442,7 +1442,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		NMG_CK_FACE_G_PLANE( fg_p );
 
 		/* move the faces by the distance "thick" */
-		if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )
+		if( NMG_INDEX_TEST_AND_SET( flags, fg_p ) )
 		{
 			if( fu->f_p->flip )
 				fg_p->N[3] += p_faces[i].thick;
@@ -1452,39 +1452,39 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	}
 
 	/* don't need the p_faces array any more */
-	bu_free( (char *)p_faces , "build_solid: p_faces" );
+	bu_free( (char *)p_faces, "build_solid: p_faces" );
 
 	/* Reverse the normals of all the new faces */
-	for( BU_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	for( BU_LIST_FOR( fu, faceuse, &is->fu_hd ) )
 	{
-		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
+		if( NMG_INDEX_TEST_AND_SET( flags, fu->f_p ) )
 			nmg_reverse_face( fu );
 	}
 
 	/* glue all the faces of the new shell together */
-	for( BU_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	for( BU_LIST_FOR( fu, faceuse, &is->fu_hd ) )
 	{
 		if( fu->orientation == OT_SAME )
-			bu_ptbl( &faces , BU_PTBL_INS , (long *)fu );
+			bu_ptbl( &faces, BU_PTBL_INS, (long *)fu );
 	}
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), tol );
-	bu_ptbl( &faces , BU_PTBL_RST , NULL );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), tol );
+	bu_ptbl( &faces, BU_PTBL_RST, NULL );
 
-	nmg_shell_coplanar_face_merge( is , tol , 0 );
-	nmg_shell_a( is , tol );
+	nmg_shell_coplanar_face_merge( is, tol, 0 );
+	nmg_shell_a( is, tol );
 
 	/* make yet another version of the flags array */
-	bu_free( (char *)flags , "build_solid: flags" );
-	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+	bu_free( (char *)flags, "build_solid: flags" );
+	flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "patch-g: flags" );
 
 	/* make a list of the vertices to be moved */
-	bu_ptbl( &verts_to_move , BU_PTBL_INIT , (long *)NULL );
-	for( BU_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	bu_ptbl( &verts_to_move, BU_PTBL_INIT, (long *)NULL );
+	for( BU_LIST_FOR( fu, faceuse, &is->fu_hd ) )
 	{
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
 			NMG_CK_LOOPUSE( lu );
 			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
@@ -1495,7 +1495,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 				continue;
 			}
 
-			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				struct vertexuse *vu;
 
@@ -1503,10 +1503,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 				vu = eu->vu_p;
 				NMG_CK_VERTEXUSE( vu );
 				NMG_CK_VERTEX( vu->v_p )
-				if( NMG_INDEX_TEST_AND_SET( flags , vu->v_p ) )
+				if( NMG_INDEX_TEST_AND_SET( flags, vu->v_p ) )
 				{
 					/* move this vertex */
-					bu_ptbl( &verts_to_move , BU_PTBL_INS , (long *)vu->v_p );
+					bu_ptbl( &verts_to_move, BU_PTBL_INS, (long *)vu->v_p );
 				}
 			}
 		}
@@ -1518,44 +1518,44 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		struct vertex *new_v;
 
 		/* get the vertexuse from the table */
-		new_v = (struct vertex *)BU_PTBL_GET( &verts_to_move , i );
+		new_v = (struct vertex *)BU_PTBL_GET( &verts_to_move, i );
 		NMG_CK_VERTEX( new_v );
 
 		/* Adjust the vertices of new_v */
 		if( debug > 2 )
-			bu_log( "Moving ( %f %f %f )" , V3ARGS( new_v->vg_p->coord ) );
-		if( nmg_in_vert( new_v , 1 , tol ) )
+			bu_log( "Moving ( %f %f %f )", V3ARGS( new_v->vg_p->coord ) );
+		if( nmg_in_vert( new_v, 1, tol ) )
 		{
 			/* FAILURE, kill the model and shell and return a failure notification */
-			bu_log( "nmg_in_vert failed on %s!\n" , name );
+			bu_log( "nmg_in_vert failed on %s!\n", name );
 			if( !nmg_ks( is ) )
 			{
 				/* debugging: write an NMG of the outer shell named "name.BAD" */
 				char bad[NAMESIZE+5];
 
 				snprintf(bad, NAMESIZE+5, "%s.BAD", name);
-				mk_nmg( outfp , bad , m );
-				bu_log( "BAD shell written as %s\n" , bad );
+				mk_nmg( outfp, bad, m );
+				bu_log( "BAD shell written as %s\n", bad );
 			}
 			nmg_km( m );
-			bu_free( (char *)flags , "build_solid: flags" );
-			bu_free( (char *)copy_tbl , "build_solid: copy_tbl" );
-			bu_ptbl( &verts_to_move , BU_PTBL_FREE , (long *)NULL );
+			bu_free( (char *)flags, "build_solid: flags" );
+			bu_free( (char *)copy_tbl, "build_solid: copy_tbl" );
+			bu_ptbl( &verts_to_move, BU_PTBL_FREE, (long *)NULL );
 			return( 1 );
 		}
 		if( debug > 2 )
-			bu_log( " to ( %f %f %f )\n" , V3ARGS( new_v->vg_p->coord ) );
+			bu_log( " to ( %f %f %f )\n", V3ARGS( new_v->vg_p->coord ) );
 	}
 
 	/* done moving, get rid of table */
-	bu_ptbl( &verts_to_move , BU_PTBL_FREE , (long *)NULL );
+	bu_ptbl( &verts_to_move, BU_PTBL_FREE, (long *)NULL );
 
 	if( debug > 4 )
 	{
 		char tmp_name[NAMESIZE+6];
 
-		snprintf( tmp_name , NAMESIZE+6, "open.%s" , name );
-		mk_nmg( outfp , tmp_name , m );
+		snprintf( tmp_name, NAMESIZE+6, "open.%s", name );
+		mk_nmg( outfp, tmp_name, m );
 	}
 
 	nmg_make_faces_within_tol( is, tol );
@@ -1563,48 +1563,48 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	/* Close shell */
 	if( debug )
 		bu_log( "Close shell\n" );
-	if( nmg_open_shells_connect( s , is , (const long **)copy_tbl , tol ) )
+	if( nmg_open_shells_connect( s, is, (const long **)copy_tbl, tol ) )
 	{
 		/* debugging: write an NMG of the outer shell named "name.BAD" */
 		char bad[NAMESIZE+5];
 
 		snprintf(bad, NAMESIZE+5, "%s.BAD", name);
-		mk_nmg( outfp , bad , m );
-		bu_log( "BAD shell written as %s\n" , bad );
+		mk_nmg( outfp, bad, m );
+		bu_log( "BAD shell written as %s\n", bad );
 		nmg_km( m );
-		bu_free( (char *)flags , "Build_solid: flags" );
-		bu_free( (char *)copy_tbl , "Build_solid: copy_tbl" );
+		bu_free( (char *)flags, "Build_solid: flags" );
+		bu_free( (char *)copy_tbl, "Build_solid: copy_tbl" );
 		return( 1 );
 	}
 
-	bu_free( (char *)flags , "Build_solid: flags" );
-	bu_free( (char *)copy_tbl , "Build_solid: copy_tbl" );
+	bu_free( (char *)flags, "Build_solid: flags" );
+	bu_free( (char *)copy_tbl, "Build_solid: copy_tbl" );
 
 #if 0
 	if( debug )
 		bu_log( "Recalculate plane equations\n" );
 	/* recalculate plane equations, since some of the vertices we calculated
 	 * may not be exactly on the plane */
-	for( BU_LIST_FOR( s , shell , &r->s_hd ) )
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
-		for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 			if( fu->orientation == OT_SAME )
 			{
 plane_t pl1, pl2;
 
-NMG_GET_FU_PLANE( pl1 , fu );
-				if( nmg_fu_planeeqn( fu , tol ) )
+NMG_GET_FU_PLANE( pl1, fu );
+				if( nmg_fu_planeeqn( fu, tol ) )
 				{
-NMG_GET_FU_PLANE( pl2 , fu );
-					bu_log( "Build_solid: Failed to re-calculate plane eqn for fu x%x:\n" , fu );
-					nmg_pr_fu_briefly( fu , (char *)NULL );
+NMG_GET_FU_PLANE( pl2, fu );
+					bu_log( "Build_solid: Failed to re-calculate plane eqn for fu x%x:\n", fu );
+					nmg_pr_fu_briefly( fu, (char *)NULL );
 					rt_g.NMG_debug |= DEBUG_MESH;
-					nmg_ck_fu_verts( fu , fu->f_p , tol );
-bu_log( "Old plane was ( %f %f %f %f )\n" , V4ARGS( pl1 ) );
-bu_log( "New plane is ( %f %f %f %f )\n" , V4ARGS( pl2 ) );
-nmg_face_g( fu , pl1 );
-					nmg_ck_fu_verts( fu , fu->f_p , tol );
+					nmg_ck_fu_verts( fu, fu->f_p, tol );
+bu_log( "Old plane was ( %f %f %f %f )\n", V4ARGS( pl1 ) );
+bu_log( "New plane is ( %f %f %f %f )\n", V4ARGS( pl2 ) );
+nmg_face_g( fu, pl1 );
+					nmg_ck_fu_verts( fu, fu->f_p, tol );
 					rt_g.NMG_debug &= ~DEBUG_MESH;
 				}
 			}
@@ -1612,41 +1612,41 @@ nmg_face_g( fu , pl1 );
 	}
 #endif
 
-	bu_ptbl( &faces , BU_PTBL_RST , NULL );
+	bu_ptbl( &faces, BU_PTBL_RST, NULL );
 
 	/* glue all the faces of the new shell together */
-	s = BU_LIST_FIRST( shell , &r->s_hd );
-	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	s = BU_LIST_FIRST( shell, &r->s_hd );
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		if( !fu )
 			continue;
 		NMG_CK_FACEUSE( fu );
 		if( fu->orientation == OT_SAME )
-			bu_ptbl( &faces , BU_PTBL_INS , (long *)fu );
+			bu_ptbl( &faces, BU_PTBL_INS, (long *)fu );
 	}
 	if( debug )
 		bu_log( "Re-glue faces\n" );
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), tol );
-	bu_ptbl( &faces , BU_PTBL_FREE , NULL );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), tol );
+	bu_ptbl( &faces, BU_PTBL_FREE, NULL );
 
 	/* Calculate bounding boxes */
 	if( debug )
-		bu_log( "nmg_region_a( r = x%x )\n" , r );
-	nmg_region_a( r , tol );
+		bu_log( "nmg_region_a( r = x%x )\n", r );
+	nmg_region_a( r, tol );
 
 	if( debug )
-		bu_log( "writing %s to BRL-CAD DB\n" , name );
+		bu_log( "writing %s to BRL-CAD DB\n", name );
 
 	/* Write solid to BRL-CAD DB */
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 
 	if( polysolid )
-		write_shell_as_polysolid( outfp , name , s );
+		write_shell_as_polysolid( outfp, name, s );
 	else
 	{
-		nmg_shell_coplanar_face_merge( s , tol , 0 );
+		nmg_shell_coplanar_face_merge( s, tol, 0 );
 		if( !nmg_simplify_shell( s ) )
-			mk_nmg( outfp , name , m );
+			mk_nmg( outfp, name, m );
 	}
 
 	/* if this solid is mirrored, don't go through the entire process again */
@@ -1657,12 +1657,12 @@ nmg_face_g( fu , pl1 );
 		nmg_mirror_model( m );
 
 		if( debug )
-			bu_log( "writing  %s (mirrored) to BRL-CAD DB\n" , mirror_name );
+			bu_log( "writing  %s (mirrored) to BRL-CAD DB\n", mirror_name );
 
 		if( polysolid )
-			write_shell_as_polysolid( outfp , mirror_name , s );
+			write_shell_as_polysolid( outfp, mirror_name, s );
 		else
-			mk_nmg( outfp , mirror_name , m );
+			mk_nmg( outfp, mirror_name, m );
 	}
 
 	/* Kill the model */
@@ -1694,7 +1694,7 @@ proc_region(char *name1)
 	if( BU_LIST_IS_EMPTY( &head.l ) )
 		return;
 
-	strncpy( tmpname , name1, NAMESIZE*2 );
+	strncpy( tmpname, name1, NAMESIZE*2 );
 
 	chkroot = 0;
 	while( tmpname[chkroot++] != '.' );
@@ -1804,7 +1804,7 @@ proc_triangle(int cnt)
 	}
 
 	VSET( last, MAX_FASTF, MAX_FASTF, MAX_FASTF );
-	VSET( centroid , 0.0 , 0.0 , 0.0 );
+	VSET( centroid, 0.0, 0.0, 0.0 );
 	for ( cpts=0, k=1; k<l; k++ ) {
 		point_t tmp;
 
@@ -1863,9 +1863,9 @@ proc_triangle(int cnt)
 
 	if( debug )
 	{
-		bu_log( "\tFinished %s\n" , name );
+		bu_log( "\tFinished %s\n", name );
 		if( mirror_name[0] )
-			bu_log( "\tand %s\n" , mirror_name );
+			bu_log( "\tand %s\n", mirror_name );
 	}
 
 	last_cc = in[cnt-1].cc;
@@ -1883,7 +1883,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 
 	/* build matrix */
 	MAT_ZERO( matrix );
-	VSET( vsum , 0.0 , 0.0 , 0.0 );
+	VSET( vsum, 0.0, 0.0, 0.0 );
 
 	one_over_vertex_count = 1.0/(double)(num_pts);
 
@@ -1910,25 +1910,25 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 	/* Check that we don't have a singular matrix */
 	det = bn_mat_determinant( matrix );
 
-	if( !NEAR_ZERO( det , SMALL_FASTF ) )
+	if( !NEAR_ZERO( det, SMALL_FASTF ) )
 	{
 		fastf_t inv_len_pl;
 
 		/* invert matrix */
-		bn_mat_inv( inverse , matrix );
+		bn_mat_inv( inverse, matrix );
 
 		/* get normal vector */
-		MAT4X3PNT( pl , inverse , vsum );
+		MAT4X3PNT( pl, inverse, vsum );
 
 		/* unitize direction vector */
 		inv_len_pl = 1.0/(MAGNITUDE( pl ));
-		HSCALE( pl , pl , inv_len_pl );
+		HSCALE( pl, pl, inv_len_pl );
 
 		/* get average vertex coordinates */
 		VSCALE( vsum, vsum, one_over_vertex_count );
 
 		/* get distance from plane to orgin */
-		pl[H] = VDOT( pl , vsum );
+		pl[H] = VDOT( pl, vsum );
 
 		if( ABS( pl[0] ) > ABS( pl[1] ) )
 		{
@@ -1985,15 +1985,15 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 
 		if( x_same )
 		{
-			VSET( pl , 1.0 , 0.0 , 0.0 );
+			VSET( pl, 1.0, 0.0, 0.0 );
 		}
 		else if( y_same )
 		{
-			VSET( pl , 0.0 , 1.0 , 0.0 );
+			VSET( pl, 0.0, 1.0, 0.0 );
 		}
 		else if( z_same )
 		{
-			VSET( pl , 0.0 , 0.0 , 1.0 );
+			VSET( pl, 0.0, 0.0, 1.0 );
 		}
 
 		if( x_same || y_same || z_same )
@@ -2002,7 +2002,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 			VSCALE( vsum, vsum, one_over_vertex_count );
 
 			/* get distance from plane to orgin */
-			pl[H] = VDOT( pl , vsum );
+			pl[H] = VDOT( pl, vsum );
 
 		}
 		else
@@ -2050,7 +2050,7 @@ proc_plate(int cnt)
 					list[index].z = in[k].z;
 					if( in[k].rsurf_thick < tol.dist )
 					{
-						bu_log( "Warning: thickness of component #%d at sequence #%d is %g inches\n" , in[0].cc , index , in[k].rsurf_thick*conv_mm2in );
+						bu_log( "Warning: thickness of component #%d at sequence #%d is %g inches\n", in[0].cc, index, in[k].rsurf_thick*conv_mm2in );
 						bu_log( "\tsetting thickness to %g inches\n", 3.0*tol.dist*conv_mm2in );
 						list[index].thick = 3.0*tol.dist;
 					}
@@ -2129,13 +2129,13 @@ proc_plate(int cnt)
 				bu_log( "Compressed: %f %f %f\n", x[k], y[k], z[k]);
 			bu_log( "%d unique plate thicknesses:\n", nthicks );
 			for( thick_no=0 ; thick_no < nthicks ; thick_no++ )
-				bu_log( "\t%g inches\n" , thicks[thick_no]*conv_mm2in );
+				bu_log( "\t%g inches\n", thicks[thick_no]*conv_mm2in );
 		}
 
 		Get_ave_plane( pl, l, x, y, z );
 
 		VSET( last, MAX_FASTF, MAX_FASTF, MAX_FASTF );
-		VSET( centroid , 0.0 , 0.0 , 0.0 );
+		VSET( centroid, 0.0, 0.0, 0.0 );
 		for ( cpts=0, k=1; k<l; k++ ) {
 			point_t tmp;
 
@@ -2194,9 +2194,9 @@ proc_plate(int cnt)
 
 			if( debug )
 			{
-				bu_log( "\tFinished %s\n" , name );
+				bu_log( "\tFinished %s\n", name );
 					if( mirror_name[0] )
-					bu_log( "\tand %s\n" , mirror_name );
+					bu_log( "\tand %s\n", mirror_name );
 			}
 		}
 		proc_region( name );
@@ -2216,7 +2216,7 @@ proc_wedge(int cnt)
 	point_t	pt8[8];
 	point_t inpt8[8];
 	int i, k;
-	vect_t	ab, ac , ad;
+	vect_t	ab, ac, ad;
 	plane_t planes[5];
 	static int count=0;
 	static int mir_count=0;
@@ -2591,7 +2591,7 @@ proc_box(int cnt)
 {
 	point_t	pt8[8];
 	int k;
-	vect_t	ab, ac , ad, abi, aci, adi;
+	vect_t	ab, ac, ad, abi, aci, adi;
 	fastf_t len, leni;			/* box edge lengths */
 	int valid;				/* valid inside box? */
 	char    shflg='\0', mrflg, ctflg;
@@ -4328,7 +4328,7 @@ get_subtract(int cnt)
 	for( next=slist ; next; ){
 		slist = next;
 		next = slist->next;
-		bu_free( (char *)slist , "get_subtract: slist" );
+		bu_free( (char *)slist, "get_subtract: slist" );
 	}
 
 	slist = (struct subtract_list *)NULL;
@@ -4353,7 +4353,7 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 {
 
 	if( slist == NULL ){
-		slist = (struct subtract_list *)bu_malloc(sizeof(struct subtract_list) , "add_to_list: slist" );
+		slist = (struct subtract_list *)bu_malloc(sizeof(struct subtract_list), "add_to_list: slist" );
 		slist->outsolid = outsolid;
 		slist->insolid = insolid;
 		slist->inmirror = inmirror;

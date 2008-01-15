@@ -76,34 +76,34 @@ struct model *m;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return( (struct face_g_snurb *)NULL );
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 128 )
 	{
 		bu_log( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
 		return( (struct face_g_snurb *)NULL );
 	}
-	Readint( &i , "" );
+	Readint( &i, "" );
 	n_cols = i+1;
-	Readint( &i , "" );
+	Readint( &i, "" );
 	n_rows = i+1;
-	Readint( &i , "" );
+	Readint( &i, "" );
 	u_order = i+1;
-	Readint ( &i , "" );
+	Readint ( &i, "" );
 	v_order = i+1;
-	Readint( &i , "" );
-	Readint( &i , "" );
-	Readint( &i , "" );
+	Readint( &i, "" );
+	Readint( &i, "" );
+	Readint( &i, "" );
 	rational = !i;
 
 	ncoords = 3+rational;
-	pt_type = RT_NURB_MAKE_PT_TYPE( ncoords , RT_NURB_PT_XYZ , rational );
-	Readint( &i , "" );
-	Readint( &i , "" );
+	pt_type = RT_NURB_MAKE_PT_TYPE( ncoords, RT_NURB_PT_XYZ, rational );
+	Readint( &i, "" );
+	Readint( &i, "" );
 
 	n_u = n_cols+u_order;
 	n_v = n_rows+v_order;
@@ -143,12 +143,12 @@ struct model *m;
 	/* Read knot vectors */
 	for( i=0 ; i<n_u ; i++ )
 	{
-		Readdbl( &a , "" );
+		Readdbl( &a, "" );
 		srf->u.knots[i] = a;
 	}
 	for( i=0 ; i<n_v ; i++ )
 	{
-		Readdbl( &a , "" );
+		Readdbl( &a, "" );
 		srf->v.knots[i] = a;
 	}
 
@@ -174,7 +174,7 @@ struct model *m;
 	/* Read weights */
 	for( i=0 ; i<n_cols*n_rows ; i++ )
 	{
-		Readdbl( &a , "" );
+		Readdbl( &a, "" );
 		if( rational )
 			srf->ctl_points[i*ncoords + 3] = a;
 	}
@@ -182,17 +182,17 @@ struct model *m;
 	/* Read control points */
 	for( i=0 ; i<n_cols*n_rows ; i++ )
 	{
-			Readcnv( &a , "" );
+			Readcnv( &a, "" );
 			if( rational )
 				pt[X] = a*srf->ctl_points[i*ncoords+3];
 			else
 				pt[X] = a;
-			Readcnv( &a , "" );
+			Readcnv( &a, "" );
 			if( rational )
 				pt[Y] = a*srf->ctl_points[i*ncoords+3];
 			else
 				pt[Y] = a;
-			Readcnv( &a , "" );
+			Readcnv( &a, "" );
 			if( rational )
 				pt[Z] = a*srf->ctl_points[i*ncoords+3];
 			else
@@ -202,10 +202,10 @@ struct model *m;
 			MAT4X3PNT( &srf->ctl_points[i*ncoords], *dir[entityno]->rot, pt );
 	}
 
-	Readdbl( &a , "" );
-	Readdbl( &a , "" );
-	Readdbl( &a , "" );
-	Readdbl( &a , "" );
+	Readdbl( &a, "" );
+	Readdbl( &a, "" );
+	Readdbl( &a, "" );
+	Readdbl( &a, "" );
 
 	return( srf );
 }
@@ -261,25 +261,25 @@ int entity_no;
 	if( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entity_no]->direct , dir[entity_no]->name );
+				dir[entity_no]->direct, dir[entity_no]->name );
 		return( (struct edge_g_cnurb *)NULL );
 	}
 
 	Readrec( dir[entity_no]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 
 	if( entity_type != 126 )
 	{
-		bu_log( "Get_cnurb: Was expecting spline curve, got type %d\n" , entity_type );
+		bu_log( "Get_cnurb: Was expecting spline curve, got type %d\n", entity_type );
 		return( (struct edge_g_cnurb *)NULL );
 	}
 
-	Readint( &i , "" );
+	Readint( &i, "" );
 	num_pts = i+1;
-	Readint( &degree , "" );
+	Readint( &degree, "" );
 
 	/* properties */
-	Readint( &planar , "" );
+	Readint( &planar, "" );
 	Readint( &i, "" );	/* open or closed */
 	Readint( &i, "" );	/* polynomial */
 	rational = !i;
@@ -300,14 +300,14 @@ int entity_no;
 	/* knot vector */
 	for( i=0 ; i<num_pts+degree+1 ; i++ )
 	{
-		Readdbl( &a , "" );
+		Readdbl( &a, "" );
 		crv->k.knots[i] = a;
 	}
 
 	/* weights */
 	for( i=0 ; i<num_pts ; i++ )
 	{
-		Readdbl( &a , "" );
+		Readdbl( &a, "" );
 		if( rational )
 			crv->ctl_points[i*ncoords+2] = a;
 	}
@@ -317,15 +317,15 @@ int entity_no;
 	{
 		if( dir[entity_no]->status & 500 )
 		{
-			Readdbl( &x , "" );
-			Readdbl( &y , "" );
-			Readdbl( &z , "" );
+			Readdbl( &x, "" );
+			Readdbl( &y, "" );
+			Readdbl( &z, "" );
 		}
 		else
 		{
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			Readcnv( &z , "" );
+			Readcnv( &x, "" );
+			Readcnv( &y, "" );
+			Readcnv( &z, "" );
 		}
 		if( rational )
 		{
@@ -428,12 +428,12 @@ struct face_g_snurb *srf;
 	if( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entity_no]->direct , dir[entity_no]->name );
+				dir[entity_no]->direct, dir[entity_no]->name );
 		return;
 	}
 
 	Readrec( dir[entity_no]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 
 	switch( entity_type )
 	{
@@ -442,24 +442,24 @@ struct face_g_snurb *srf;
 				int curve_count;
 				int *curve_list;
 
-				Readint( &curve_count , "" );
-				curve_list = (int *)bu_calloc( curve_count , sizeof( int ),
+				Readint( &curve_count, "" );
+				curve_list = (int *)bu_calloc( curve_count, sizeof( int ),
 						"Add_trim_curve: curve_list" );
 
 				for( i=0 ; i<curve_count ; i++ )
-					Readint( &curve_list[i] , "" );
+					Readint( &curve_list[i], "" );
 
 				for( i=0 ; i<curve_count ; i++ )
 					Add_trim_curve( (curve_list[i]-1)/2, lu, srf );
 
-				bu_free( (char *)curve_list , "Add_trim_curve: curve_list" );
+				bu_free( (char *)curve_list, "Add_trim_curve: curve_list" );
 			}
 			break;
 		case 110:	/* line */
 			/* get start point */
-			Readdbl( &x , "" );
-			Readdbl( &y , "" );
-			Readdbl( &z , "" );
+			Readdbl( &x, "" );
+			Readdbl( &y, "" );
+			Readdbl( &z, "" );
 			VSET( pt, x + u_translation, y + v_translation, z )
 
 			/* apply transformation */
@@ -475,9 +475,9 @@ struct face_g_snurb *srf;
 				Assign_vu_geom( eu->vu_p, pt2[X], pt2[Y], srf );
 
 			/* read terminate point */
-			Readdbl( &x , "" );
-			Readdbl( &y , "" );
-			Readdbl( &z , "" );
+			Readdbl( &x, "" );
+			Readdbl( &y, "" );
+			Readdbl( &z, "" );
 			VSET( pt, x + u_translation, y + v_translation, z )
 
 			/* apply transformation */
@@ -494,17 +494,17 @@ struct face_g_snurb *srf;
 				point_t center, start, end;
 
 				/* read Arc center start and end points */
-				Readcnv( &z , "" );	/* common Z-coord */
-				Readcnv( &x , "" );	/* center */
-				Readcnv( &y , "" );	/* center */
+				Readcnv( &z, "" );	/* common Z-coord */
+				Readcnv( &x, "" );	/* center */
+				Readcnv( &y, "" );	/* center */
 				VSET( center, y+u_translation, x+v_translation, z )
 
-				Readcnv( &x , "" );	/* start */
-				Readcnv( &y , "" );	/* start */
+				Readcnv( &x, "" );	/* start */
+				Readcnv( &y, "" );	/* start */
 				VSET( start, y+u_translation, x+v_translation, z )
 
-				Readcnv( &x , "" );	/* end */
-				Readcnv( &y , "" );	/* end */
+				Readcnv( &x, "" );	/* end */
+				Readcnv( &y, "" );	/* end */
 				VSET( end, y+u_translation, x+v_translation, z )
 
 				/* build edge_g_cnurb arc */
@@ -603,12 +603,12 @@ struct faceuse *fu;
 	if( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entity_no]->direct , dir[entity_no]->name );
+				dir[entity_no]->direct, dir[entity_no]->name );
 		return( (struct loopuse *)NULL );
 	}
 
 	Readrec( dir[entity_no]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 
 	lu = nmg_mlv( &fu->l.magic, (struct vertex *)NULL, orientation );
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
@@ -621,17 +621,17 @@ struct faceuse *fu;
 				int curve_count;
 				int *curve_list;
 
-				Readint( &curve_count , "" );
-				curve_list = (int *)bu_calloc( curve_count , sizeof( int ),
+				Readint( &curve_count, "" );
+				curve_list = (int *)bu_calloc( curve_count, sizeof( int ),
 						"Make_trim_loop: curve_list" );
 
 				for( i=0 ; i<curve_count ; i++ )
-					Readint( &curve_list[i] , "" );
+					Readint( &curve_list[i], "" );
 
 				for( i=0 ; i<curve_count ; i++ )
 					Add_trim_curve( (curve_list[i]-1)/2, lu, srf );
 
-				bu_free( (char *)curve_list , "Make_trim_loop: curve_list" );
+				bu_free( (char *)curve_list, "Make_trim_loop: curve_list" );
 
 				/* if last EU is zero length, kill it */
 				eu = BU_LIST_LAST( edgeuse, &lu->down_hd );
@@ -654,17 +654,17 @@ struct faceuse *fu;
 				struct bu_list curv_hd;
 
 				/* read Arc center start and end points */
-				Readcnv( &z , "" );	/* common Z-coord */
-				Readcnv( &x , "" );	/* center */
-				Readcnv( &y , "" );	/* center */
+				Readcnv( &z, "" );	/* common Z-coord */
+				Readcnv( &x, "" );	/* center */
+				Readcnv( &y, "" );	/* center */
 				VSET( center, x+u_translation, y+v_translation, z )
 
-				Readcnv( &x , "" );	/* start */
-				Readcnv( &y , "" );	/* start */
+				Readcnv( &x, "" );	/* start */
+				Readcnv( &y, "" );	/* start */
 				VSET( start, x+u_translation, y+v_translation, z )
 
-				Readcnv( &x , "" );	/* end */
-				Readcnv( &y , "" );	/* end */
+				Readcnv( &x, "" );	/* end */
+				Readcnv( &y, "" );	/* end */
 				VSET( end, x+u_translation, y+v_translation, z )
 
 				/* build edge_g_cnurb circle */
@@ -803,24 +803,24 @@ struct faceuse *fu;
 	if( dir[entity_no]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entity_no]->direct , dir[entity_no]->name );
+				dir[entity_no]->direct, dir[entity_no]->name );
 		return(0);
 	}
 
 	Readrec( dir[entity_no]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 142 )
 	{
-		bu_log( "Expected Curve on a Parametric Surface, found %s\n" , iges_type( entity_type ) );
+		bu_log( "Expected Curve on a Parametric Surface, found %s\n", iges_type( entity_type ) );
 		return( 0 );
 	}
-	Readint( &i , "" );
-	Readint( &surf_de , "" );
+	Readint( &i, "" );
+	Readint( &surf_de, "" );
 	if( surf_de != on_surf_de )
 		bu_log( "Curve is on surface at DE %d, should be on surface at DE %d\n", surf_de, on_surf_de );
 
-	Readint( &param_curve_de , "" );
-	Readint( &model_curve_de , "" );
+	Readint( &param_curve_de, "" );
+	Readint( &model_curve_de, "" );
 
 	lu = Make_trim_loop( (param_curve_de-1)/2, orientation, srf, fu );
 
@@ -977,7 +977,7 @@ struct face_g_snurb *srf;
 }
 
 struct faceuse *
-trim_surf( entityno , s )
+trim_surf( entityno, s )
 int entityno;
 struct shell *s;
 {
@@ -1009,32 +1009,32 @@ struct shell *s;
 	if( dir[entityno]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
+				dir[entityno]->direct, dir[entityno]->name );
 		return(0);
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
+	Readint( &entity_type, "" );
 	if( entity_type != 144 )
 	{
 		bu_log( "Expected Trimmed Surface Entity found type %d\n" );
 		return( (struct faceuse *)NULL );
 	}
-	Readint( &surf_de , "" );
-	Readint( &has_outer_boundary , "" );
-	Readint( &inner_loop_count , "" );
-	Readint( &outer_loop , "" );
+	Readint( &surf_de, "" );
+	Readint( &has_outer_boundary, "" );
+	Readint( &inner_loop_count, "" );
+	Readint( &outer_loop, "" );
 	if( inner_loop_count )
 	{
-		inner_loop = (int *)bu_calloc( inner_loop_count , sizeof( int ) , "trim_surf: innerloop" );
+		inner_loop = (int *)bu_calloc( inner_loop_count, sizeof( int ), "trim_surf: innerloop" );
 		for( i=0 ; i<inner_loop_count ; i++ )
-			Readint( &inner_loop[i] , "" );
+			Readint( &inner_loop[i], "" );
 	}
 
 	if( (srf=Get_nurb_surf( (surf_de-1)/2, m )) == (struct face_g_snurb *)NULL )
 	{
 		if( inner_loop_count )
-			bu_free( (char *)inner_loop , "trim_surf: inner_loop" );
+			bu_free( (char *)inner_loop, "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );
 	}
 
@@ -1121,14 +1121,14 @@ struct shell *s;
 		/* loop is in wrong direction, exchange lu and lu_mate */
 		BU_LIST_DEQUEUE( &lu->l );
 		BU_LIST_DEQUEUE( &lu->lumate_p->l );
-		BU_LIST_APPEND( &fu->lu_hd , &lu->lumate_p->l );
+		BU_LIST_APPEND( &fu->lu_hd, &lu->lumate_p->l );
 		lu->lumate_p->up.fu_p = fu;
-		BU_LIST_APPEND( &fu->fumate_p->lu_hd , &lu->l );
+		BU_LIST_APPEND( &fu->fumate_p->lu_hd, &lu->l );
 		lu->up.fu_p = fu->fumate_p;
 	}
 
 	if( inner_loop_count )
-		bu_free( (char *)inner_loop , "trim_surf: inner_loop" );
+		bu_free( (char *)inner_loop, "trim_surf: inner_loop" );
 
 	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 
@@ -1505,7 +1505,7 @@ Convtrimsurfs()
 
 	m = nmg_mm();
 	r = nmg_mrsv( m );
-	s = BU_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 
 	for( i=0 ; i<totentities ; i++ )
 	{
@@ -1515,10 +1515,10 @@ Convtrimsurfs()
 				bu_mem_barriercheck();
 
 			totsurfs++;
-			fu = trim_surf( i , s );
+			fu = trim_surf( i, s );
 			if( fu )
 			{
-				nmg_face_bb( fu->f_p , &tol );
+				nmg_face_bb( fu->f_p, &tol );
 				convsurf++;
 			}
 			if( RT_G_DEBUG & DEBUG_MEM_FULL )
@@ -1575,7 +1575,7 @@ Convtrimsurfs()
 
 	}
 
-	bu_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
+	bu_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n", convsurf, totsurfs );
 
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();
@@ -1585,9 +1585,9 @@ Convtrimsurfs()
 		(void)nmg_model_vertex_fuse( m, &tol );
 
 		if( curr_file->obj_name )
-			mk_nmg( fdout , curr_file->obj_name , m );
+			mk_nmg( fdout, curr_file->obj_name, m );
 		else
-			mk_nmg( fdout , "Trimmed_surf" , m );
+			mk_nmg( fdout, "Trimmed_surf", m );
 	}
 	if( RT_G_DEBUG & DEBUG_MEM_FULL )
 		bu_mem_barriercheck();

@@ -71,7 +71,7 @@ main(int argc, char **argv)
 
     /* initialize variables */
     VSETALL(zero, 0.0);
-    VSETALL( v , 0.0 );
+    VSETALL( v, 0.0 );
     VSETALL( point, 0.0 );
     VSETALL( front, 0.0 );
     VSETALL( back, 0.0 );

@@ -39,7 +39,7 @@ struct loop_list
 static struct loop_list *loop_root;
 
 void
-Find_inner_loops( fu , lptr )
+Find_inner_loops( fu, lptr )
 struct faceuse *fu;
 struct loop_list *lptr;
 {
@@ -47,12 +47,12 @@ struct loop_list *lptr;
 	struct loopuse *lu;
 
 	/* find all loops contained in lptr->lu */
-	for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		if( lu == lptr->lu )
 			continue;
 
-		if( nmg_classify_lu_lu( lu , lptr->lu , &tol ) == NMG_CLASS_AinB )
+		if( nmg_classify_lu_lu( lu, lptr->lu, &tol ) == NMG_CLASS_AinB )
 		{
 
 			if( lptr->inner_loops == (struct loop_list *)NULL )
@@ -90,7 +90,7 @@ struct loop_list *lptr;
 		{
 			if( inner->lu != inner1->lu )
 			{
-				if( nmg_classify_lu_lu( inner1->lu , inner->lu , &tol ) == NMG_CLASS_AinB )
+				if( nmg_classify_lu_lu( inner1->lu, inner->lu, &tol ) == NMG_CLASS_AinB )
 				{
 					struct loop_list *tmp;
 
@@ -104,7 +104,7 @@ struct loop_list *lptr;
 						lptr->inner_loops = inner1->next;
 
 					inner1 = inner1->next;
-					bu_free( (char *)tmp , "Find_inner_loops: tmp" );
+					bu_free( (char *)tmp, "Find_inner_loops: tmp" );
 					deleted = 1;
 				}
 			}
@@ -121,7 +121,7 @@ struct loop_list *lptr;
 	inner = lptr->inner_loops;
 	while( inner )
 	{
-		Find_inner_loops( fu , inner );
+		Find_inner_loops( fu, inner );
 		inner = inner->next;
 	}
 }
@@ -141,25 +141,25 @@ struct faceuse *fu;
 	if( fu->orientation != OT_SAME )
 	{
 		bu_log( "Orient_face_loops: fu x%x has orient %s and mate (x%x) has orient %s (no OT_SAME)\n",
-			fu , nmg_orientation(fu->orientation) , fu->fumate_p , nmg_orientation( fu->fumate_p->orientation ) );
+			fu, nmg_orientation(fu->orientation), fu->fumate_p, nmg_orientation( fu->fumate_p->orientation ) );
 		bu_exit(1, "Face with no OT_SAME use\n" );
 	}
 
 	loop_root = (struct loop_list *)NULL;
 
-	nmg_face_bb( fu->f_p , &tol );
-	for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	nmg_face_bb( fu->f_p, &tol );
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		int outer;
 		struct loopuse *lu1;
 
 		/* check if there are any other loops containing this loop */
 		outer = 1;
-		for( BU_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu1, loopuse, &fu->lu_hd ) )
 		{
 			if( lu1 == lu )
 				continue;
-			if( nmg_classify_lu_lu( lu , lu1 , &tol ) == NMG_CLASS_AinB )
+			if( nmg_classify_lu_lu( lu, lu1, &tol ) == NMG_CLASS_AinB )
 			{
 				outer = 0;
 				break;
@@ -173,13 +173,13 @@ struct faceuse *fu;
 		}
 	}
 
-	loop_root = (struct loop_list *)bu_malloc( sizeof( struct loop_list ) , "Orient_face_loops: loop_root" );
+	loop_root = (struct loop_list *)bu_malloc( sizeof( struct loop_list ), "Orient_face_loops: loop_root" );
 	loop_root->lu = lu_outer;
 	loop_root->next = (struct loop_list *)NULL;
 	loop_root->inner_loops = (struct loop_list *)NULL;
 
 	/* now look for loops contained in other loops */
-	Find_inner_loops( fu , loop_root );
+	Find_inner_loops( fu, loop_root );
 
 	/* All the loops in the face are now in the loop_list
 	 * structure from outermost working inward.
@@ -199,9 +199,9 @@ struct faceuse *fu;
 				/* exchange lu and lu_mate */
 				BU_LIST_DEQUEUE( &lptr1->lu->l );
 				BU_LIST_DEQUEUE( &lptr1->lu->lumate_p->l );
-				BU_LIST_APPEND( &fu->lu_hd , &lptr1->lu->lumate_p->l );
+				BU_LIST_APPEND( &fu->lu_hd, &lptr1->lu->lumate_p->l );
 				lptr1->lu->lumate_p->up.fu_p = fu;
-				BU_LIST_APPEND( &fu->fumate_p->lu_hd , &lptr1->lu->l );
+				BU_LIST_APPEND( &fu->fumate_p->lu_hd, &lptr1->lu->l );
 				lptr1->lu->up.fu_p = fu->fumate_p;
 				lptr1->lu->orientation = orient;
 				lptr1->lu->lumate_p->orientation = orient;
@@ -283,13 +283,13 @@ struct nmgregion *r;
 
 	NMG_CK_REGION( r );
 
-	for( BU_LIST_FOR( s , shell , &r->s_hd ) )
+	for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
 		NMG_CK_SHELL( s );
 
-		for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 			struct face *f;
 

@@ -3528,22 +3528,22 @@ main( int argc, char *argv[] )
 		bu_exit( 1, "Cannot open BRL-CAD geometry file (%s)\n", output_file );
 	}
 
-	ptr1 = strrchr( dxf_file , '/' );
+	ptr1 = strrchr( dxf_file, '/' );
 	if( ptr1 == NULL )
 		ptr1 = dxf_file;
 	else
 		ptr1++;
-	ptr2 = strchr( ptr1 , '.' );
+	ptr2 = strchr( ptr1, '.' );
 
 	if( ptr2 == NULL )
 		name_len = strlen( ptr1 );
 	else
 		name_len = ptr2 - ptr1;
 
-	base_name = (char *)bu_calloc( name_len + 1, 1 , "base_name" );
-	strncpy( base_name , ptr1 , name_len );
+	base_name = (char *)bu_calloc( name_len + 1, 1, "base_name" );
+	strncpy( base_name, ptr1, name_len );
 
-	mk_id( out_fp , base_name );
+	mk_id( out_fp, base_name );
 
 	BU_LIST_INIT( &block_head );
 	BU_LIST_INIT( &free_hd );

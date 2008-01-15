@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	}
     }
 
-    bu_ptbl( &faces , BU_PTBL_INIT , (long *)NULL );
+    bu_ptbl( &faces, BU_PTBL_INIT, (long *)NULL );
     m = nmg_mmr();
     r = BU_LIST_FIRST( nmgregion, &m->r_hd );
     while (1) {
@@ -154,9 +154,9 @@ main(int argc, char *argv[])
 		}
 	    }
 	    nmg_rebound( m, &tol );
-	    (void)nmg_break_long_edges( s , &tol );
+	    (void)nmg_break_long_edges( s, &tol );
 	    (void)nmg_model_vertex_fuse( m, &tol );
-	    nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), &tol );
+	    nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), &tol );
 	    nmg_fix_normals( s, &tol );
 
 	    // write_shell_as_polysolid( stdout, rec.p.p_name, s );
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 	    break;
 	}
     }
-    bu_ptbl( &faces , BU_PTBL_FREE , (long *)NULL );
+    bu_ptbl( &faces, BU_PTBL_FREE, (long *)NULL );
 }
 
 /*

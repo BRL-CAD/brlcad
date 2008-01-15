@@ -216,7 +216,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 
 	/* translate to end of "original" cylinder */
-	VADD2( tgc_ip->v , tgc_ip->v , tgc_ip->h );
+	VADD2( tgc_ip->v, tgc_ip->v, tgc_ip->h );
 
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );

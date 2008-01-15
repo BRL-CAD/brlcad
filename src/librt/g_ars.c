@@ -255,7 +255,7 @@ rt_ars_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 			for( el=0; el < lim; el++ )  {
 				vect_t	diff;
 				if( cur==0 && npts==0 && el==0 )
-					VSCALE( diff , fp , local2mm )
+					VSCALE( diff, fp, local2mm )
 				else
 					VSUB2SCALE( diff, fp, base_pt, local2mm )
 				/* NOTE: also type converts to dbfloat_t */
@@ -1160,7 +1160,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* ARS solids are often built with incorrect face normals.
 	 * Don't depend on them to be correct.
 	 */
-	nmg_fix_normals( s , tol );
+	nmg_fix_normals( s, tol );
 
 	/* set edge's is_real flag */
 	nmg_mark_edges_real( &s->l.magic );

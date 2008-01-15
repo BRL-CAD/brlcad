@@ -31,7 +31,7 @@
 
 
 int
-Extrudcirc( entityno , curve , evect )
+Extrudcirc( entityno, curve, evect )
 int entityno;	/* extrusion entity number */
 int curve;	/* circular arc entity number */
 vect_t evect;	/* extrusion vector */
@@ -47,27 +47,27 @@ vect_t evect;	/* extrusion vector */
 	if( dir[curve]->param <= pstart )
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[curve]->direct , dir[curve]->name );
+				dir[curve]->direct, dir[curve]->name );
 		return(0);
 	}
 	Readrec( dir[curve]->param );
-	Readint( &sol_num , "" );
-	Readcnv( &base[Z] , "" );
-	Readcnv( &base[X] , "" );
-	Readcnv( &base[Y] , "" );
-	Readcnv( &x1 , "" );
-	Readcnv( &y1 , "" );
-	Readcnv( &x2 , "" );
-	Readcnv( &y2 , "" );
+	Readint( &sol_num, "" );
+	Readcnv( &base[Z], "" );
+	Readcnv( &base[X], "" );
+	Readcnv( &base[Y], "" );
+	Readcnv( &x1, "" );
+	Readcnv( &y1, "" );
+	Readcnv( &x2, "" );
+	Readcnv( &y2, "" );
 
 	/* Check for closure */
 
 	if( x1 != x2 || y1 != y2 )
 	{
 		bu_log( "Circular arc for extrusion is not closed:\n" );
-		bu_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 			dir[entityno]->name );
-		bu_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
 		return( 0 );
 	}
 
@@ -76,7 +76,7 @@ vect_t evect;	/* extrusion vector */
 
 	/* Make an rcc */
 
-	mk_rcc( fdout , dir[entityno]->name , base , evect , radius );
+	mk_rcc( fdout, dir[entityno]->name, base, evect, radius );
 
 	return( 1 );
 }

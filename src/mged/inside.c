@@ -247,7 +247,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  /* find the comgeom arb type, & reorganize */
 	  int uvec[8], svec[11];
 
-	  if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &mged_tol , uvec , svec ) == 0 ) {
+	  if( rt_arb_get_cgtype( &cgtype, intern.idb_ptr, &mged_tol, uvec, svec ) == 0 ) {
 	    Tcl_AppendResult(interp, outdp->d_namep, ": BAD ARB\n", (char *)NULL);
 	    status = TCL_ERROR;
 	    goto end;
@@ -511,7 +511,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  }
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
-	  if( nmgin( &intern , thick[0] ) ){
+	  if( nmgin( &intern, thick[0] ) ){
 	    status = TCL_ERROR;
 	    goto end;
 	  }
@@ -610,58 +610,58 @@ arbin(
 	  bu_vls_init(&tmp_vls);
 
 	  /* calculate the four possible intersect points */
-	  if( bn_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
+	  if( bn_mkpoint_3planes( pt[0], planes[1], planes[2], planes[3] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 0:\n" );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[1] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[2] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[3] ) );
 	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( bn_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
+	  if( bn_mkpoint_3planes( pt[1], planes[2], planes[3], planes[4] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 1:\n" );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[2] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[3] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[4] ) );
 	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( bn_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
+	  if( bn_mkpoint_3planes( pt[2], planes[3], planes[4], planes[1] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 2:\n" );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[3] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[4] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[1] ) );
 	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( bn_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
+	  if( bn_mkpoint_3planes( pt[3], planes[4], planes[1], planes[2] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 3:\n" );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
-	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[4] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[1] ) );
+	      bu_vls_printf(&tmp_vls, "\t%f %f %f %f\n", V4ARGS( planes[2] ) );
 	      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
 
-		if( bn_pt3_pt3_equal( pt[0] , pt[1] , &mged_tol ) )
+		if( bn_pt3_pt3_equal( pt[0], pt[1], &mged_tol ) )
 		{
 			/* if any two of the calculates intersection points are equal,
 			 * then all four must be equal
 			 */
 			for( i=4 ; i<8 ; i++ )
-				VMOVE( arb->pt[i] , pt[0] );
+				VMOVE( arb->pt[i], pt[0] );
 
 			return( 0 );
 		}
@@ -674,27 +674,27 @@ arbin(
 		 * one we want
 		 */
 
-		dist0 = DIST_PT_PLANE( pt[0] , planes[0] );
+		dist0 = DIST_PT_PLANE( pt[0], planes[0] );
 		if( dist0 < 0.0 )
 			dist0 = (-dist0);
 
-		dist1 = DIST_PT_PLANE( pt[1] , planes[0] );
+		dist1 = DIST_PT_PLANE( pt[1], planes[0] );
 		if( dist1 < 0.0 )
 			dist1 = (-dist1);
 
 		if( dist0 < dist1 )
 		{
-			VMOVE( arb->pt[5] , pt[0] );
-			VMOVE( arb->pt[6] , pt[0] );
-			VMOVE( arb->pt[4] , pt[2] );
-			VMOVE( arb->pt[7] , pt[2] );
+			VMOVE( arb->pt[5], pt[0] );
+			VMOVE( arb->pt[6], pt[0] );
+			VMOVE( arb->pt[4], pt[2] );
+			VMOVE( arb->pt[7], pt[2] );
 		}
 		else
 		{
-			VMOVE( arb->pt[4] , pt[3] );
-			VMOVE( arb->pt[5] , pt[3] );
-			VMOVE( arb->pt[6] , pt[1] );
-			VMOVE( arb->pt[7] , pt[1] );
+			VMOVE( arb->pt[4], pt[3] );
+			VMOVE( arb->pt[5], pt[3] );
+			VMOVE( arb->pt[6], pt[1] );
+			VMOVE( arb->pt[7], pt[1] );
 		}
 	}
 	else if( cgtype == 7 )
@@ -716,7 +716,7 @@ arbin(
 		m = nmg_mm();
 
 		/* get an NMG version of this arb7 */
-		if( rt_functab[ip->idb_type].ft_tessellate( &r , m , ip , &ttol , &mged_tol ) )
+		if( rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &mged_tol ) )
 		{
 		  Tcl_AppendResult(interp, "Cannot tessellate arb7\n", (char *)NULL);
 		  rt_db_free_internal( ip, &rt_uniresource );
@@ -729,8 +729,8 @@ arbin(
 			int found=0;
 
 			/* look for the face plane with the same geometry as the arb7 planes */
-			s = BU_LIST_FIRST( shell , &r->s_hd );
-			for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			s = BU_LIST_FIRST( shell, &r->s_hd );
+			for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 			{
 				struct face_g_plane *fg;
 				plane_t pl;
@@ -739,8 +739,8 @@ arbin(
 				if( fu->orientation != OT_SAME )
 					continue;
 
-				NMG_GET_FU_PLANE( pl , fu );
-				if( bn_coplanar( planes[i] , pl , &mged_tol ) > 0 )
+				NMG_GET_FU_PLANE( pl, fu );
+				if( bn_coplanar( planes[i], pl, &mged_tol ) > 0 )
 				{
 					/* found the NMG face geometry that matches arb face i */
 					found = 1;
@@ -773,30 +773,30 @@ arbin(
 		/* solve for new vertex geometry
 		 * This does all the vertices
 		 */
-		bu_ptbl( &vert_tab , BU_PTBL_INIT , (long *)NULL );
-		nmg_vertex_tabulate( &vert_tab , &m->magic );
+		bu_ptbl( &vert_tab, BU_PTBL_INIT, (long *)NULL );
+		nmg_vertex_tabulate( &vert_tab, &m->magic );
 		for( i=0 ; i<BU_PTBL_END( &vert_tab ) ; i++ )
 		{
 			struct vertex *v;
 
-			v = (struct vertex *)BU_PTBL_GET( &vert_tab , i );
+			v = (struct vertex *)BU_PTBL_GET( &vert_tab, i );
 			NMG_CK_VERTEX( v );
 
-			if( nmg_in_vert( v , 0 , &mged_tol ) )
+			if( nmg_in_vert( v, 0, &mged_tol ) )
 			{
 			  Tcl_AppendResult(interp, "Could not find coordinates for inside arb7\n",
 					   (char *)NULL);
 			  nmg_km( m );
-			  bu_ptbl( &vert_tab , BU_PTBL_FREE , (long *)NULL );
+			  bu_ptbl( &vert_tab, BU_PTBL_FREE, (long *)NULL );
 			  return( 1 );
 			}
 		}
-		bu_ptbl( &vert_tab , BU_PTBL_FREE , (long *)NULL );
+		bu_ptbl( &vert_tab, BU_PTBL_FREE, (long *)NULL );
 
 		/* rebound model */
-		nmg_rebound( m , &mged_tol );
+		nmg_rebound( m, &mged_tol );
 
-		nmg_extrude_cleanup( s , 0 , &mged_tol );
+		nmg_extrude_cleanup( s, 0, &mged_tol );
 
 		/* free old ip pointer */
 		rt_db_free_internal( ip, &rt_uniresource );
@@ -1333,26 +1333,26 @@ nmgin( struct rt_db_internal *ip, fastf_t thick )
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL( m );
 
-	r = BU_LIST_FIRST( nmgregion ,  &m->r_hd );
-	while( BU_LIST_NOT_HEAD( r , &m->r_hd ) )
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+	while( BU_LIST_NOT_HEAD( r, &m->r_hd ) )
 	{
 		struct nmgregion *next_r;
 		struct shell *s;
 
 		NMG_CK_REGION( r );
 
-		next_r = BU_LIST_PNEXT( nmgregion , &r->l );
+		next_r = BU_LIST_PNEXT( nmgregion, &r->l );
 
-		s = BU_LIST_FIRST( shell , &r->s_hd );
-		while( BU_LIST_NOT_HEAD( s , &r->s_hd ) )
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		while( BU_LIST_NOT_HEAD( s, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = BU_LIST_PNEXT( shell , &s->l );
+			next_s = BU_LIST_PNEXT( shell, &s->l );
 
 			nmg_shell_coplanar_face_merge( s, &mged_tol, 1 );
 			if( !nmg_kill_cracks( s ) )
-				(void)nmg_extrude_shell( s , thick , 0 , 0 , &mged_tol );
+				(void)nmg_extrude_shell( s, thick, 0, 0, &mged_tol );
 
 			s = next_s;
 		}

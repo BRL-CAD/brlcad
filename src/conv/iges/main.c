@@ -124,20 +124,20 @@ Suggestions()
 	}
 
 	if( (csg || brep) && (do_splines || do_drawings || trimmed_surf ) )
-		bu_log( msg1 , iges_file );
+		bu_log( msg1, iges_file );
 
 	if( drawing && csg == 0 && brep == 0 && !do_drawings )
-		bu_log( msg2 , iges_file );
+		bu_log( msg2, iges_file );
 
 	if( splines && csg == 0 && brep == 0 && !do_splines )
-		bu_log( msg3 , iges_file );
+		bu_log( msg3, iges_file );
 
 	if( tsurfs && csg == 0 && brep == 0 && !trimmed_surf )
-		bu_log( msg4 , iges_file );
+		bu_log( msg4, iges_file );
 }
 
 int
-main( argc , argv )
+main( argc, argv )
 int argc;
 char *argv[];
 {
@@ -147,7 +147,7 @@ char *argv[];
 	char *output_file=(char *)NULL;
 
 
-	while( (c=bu_getopt( argc , argv , "3dntpo:x:X:N:" )) != EOF )
+	while( (c=bu_getopt( argc, argv, "3dntpo:x:X:N:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -229,12 +229,12 @@ char *argv[];
 
 	if( (fdout = wdb_fopen( output_file )) == NULL )
 	{
-		bu_log( "Cannot open %s\n" , output_file );
+		bu_log( "Cannot open %s\n", output_file );
 		perror( "iges-g" );
 		usage();
 		bu_exit( 1, NULL );
 	}
-	strncpy( brlcad_file ,  output_file, 256 );
+	strncpy( brlcad_file, output_file, 256 );
 
 	argc -= bu_optind;
 	argv += bu_optind;
@@ -258,10 +258,10 @@ char *argv[];
 		curr_file = BU_LIST_FIRST( file_list, &iges_list.l );
 		iges_file = curr_file->file_name;
 
-		fd = fopen( iges_file , "rb" );	/* open IGES file */
+		fd = fopen( iges_file, "rb" );	/* open IGES file */
 		if( fd == NULL )
 		{
-			bu_log( "Cannot open %s\n" , iges_file );
+			bu_log( "Cannot open %s\n", iges_file );
 			perror( "iges-g" );
 			usage();
 			bu_exit( 1, NULL );

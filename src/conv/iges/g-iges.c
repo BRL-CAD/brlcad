@@ -63,7 +63,7 @@ static const char RCSrev[] = "$Revision$";
 #define	CP_BUF_SIZE	4096	/* size of buffer for file copy */
 #define SUFFIX_LEN	10	/* max size of suffix for 'part' files (-m option) */
 
-BU_EXTERN( union tree *do_nmg_region_end , (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN( union tree *do_nmg_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 void w_start_global(
 	FILE *fp_dir,
 	FILE *fp_param,
@@ -72,20 +72,20 @@ void w_start_global(
 	const char *output_file,
 	const char *id,
 	const char *version);
-BU_EXTERN( void w_terminate , (FILE *fp) );
-BU_EXTERN( void write_edge_list , (struct nmgregion *r , int vert_de , struct bu_ptbl *etab , struct bu_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
-BU_EXTERN( void write_vertex_list , ( struct nmgregion *r , struct bu_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
-BU_EXTERN( void nmg_region_edge_list , ( struct bu_ptbl *tab , struct nmgregion *r ) );
-BU_EXTERN( int nmgregion_to_iges , ( char *name , struct nmgregion *r , int dependent , FILE *fp_dir , FILE *fp_param ) );
-BU_EXTERN( int write_shell_face_loop , ( struct nmgregion *r , int edge_de , struct bu_ptbl *etab , int vert_de , struct bu_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
-BU_EXTERN( void csg_comb_func , ( struct db_i *dbip , struct directory *dp , genptr_t ptr ) );
-BU_EXTERN( void csg_leaf_func , ( struct db_i *dbip , struct directory *dp , genptr_t ptr ) );
-BU_EXTERN( void set_iges_tolerances , ( struct bn_tol *set_tol , struct rt_tess_tol *set_ttol ) );
-BU_EXTERN( void count_refs , ( struct db_i *dbip , struct directory *dp , genptr_t ptr ) );
-BU_EXTERN( int nmgregion_to_tsurf , ( char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param ) );
-BU_EXTERN( int write_solid_instance , ( int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param ) );
-BU_EXTERN( void get_props , ( struct iges_properties *props, struct rt_comb_internal *comb ) );
-BU_EXTERN( int comb_to_iges , ( struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param ) );
+BU_EXTERN( void w_terminate, (FILE *fp) );
+BU_EXTERN( void write_edge_list, (struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param ) );
+BU_EXTERN( void write_vertex_list, ( struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param ) );
+BU_EXTERN( void nmg_region_edge_list, ( struct bu_ptbl *tab, struct nmgregion *r ) );
+BU_EXTERN( int nmgregion_to_iges, ( char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param ) );
+BU_EXTERN( int write_shell_face_loop, ( struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param ) );
+BU_EXTERN( void csg_comb_func, ( struct db_i *dbip, struct directory *dp, genptr_t ptr ) );
+BU_EXTERN( void csg_leaf_func, ( struct db_i *dbip, struct directory *dp, genptr_t ptr ) );
+BU_EXTERN( void set_iges_tolerances, ( struct bn_tol *set_tol, struct rt_tess_tol *set_ttol ) );
+BU_EXTERN( void count_refs, ( struct db_i *dbip, struct directory *dp, genptr_t ptr ) );
+BU_EXTERN( int nmgregion_to_tsurf, ( char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param ) );
+BU_EXTERN( int write_solid_instance, ( int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param ) );
+BU_EXTERN( void get_props, ( struct iges_properties *props, struct rt_comb_internal *comb ) );
+BU_EXTERN( int comb_to_iges, ( struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param ) );
 
 static char usage[] = "Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-o output_file] brlcad_db.g object(s)\n\
 	options:\n\
@@ -125,19 +125,19 @@ struct db_i		*dbip;
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
 /* function table for converting solids to iges */
-BU_EXTERN( int null_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
-BU_EXTERN( int arb_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
-BU_EXTERN( int ell_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
-BU_EXTERN( int sph_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
-BU_EXTERN( int tor_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
-BU_EXTERN( int tgc_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
-BU_EXTERN( int nmg_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
-BU_EXTERN( void iges_init , ( struct bn_tol *set_tol, struct rt_tess_tol *set_ttol, int set_verbose, struct db_i *dbip_set ) );
-BU_EXTERN( void Print_stats , ( FILE *fp ) );
+BU_EXTERN( int null_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( int arb_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( int ell_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( int sph_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( int tor_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( int tgc_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( int nmg_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( void iges_init, ( struct bn_tol *set_tol, struct rt_tess_tol *set_ttol, int set_verbose, struct db_i *dbip_set ) );
+BU_EXTERN( void Print_stats, ( FILE *fp ) );
 
 struct iges_functab
 {
-	int (*do_iges_write) BU_ARGS(( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));
+	int (*do_iges_write) BU_ARGS(( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
 };
 
 struct iges_functab iges_write[ID_MAXIMUM+1]={
@@ -300,15 +300,15 @@ main(int argc, char *argv[])
 	if( !multi_file )
 	{
 		/* let the IGES routines know the selected tolerances and the database pointer */
-		iges_init( &tol , &ttol , verbose , dbip );
+		iges_init( &tol, &ttol, verbose, dbip );
 
 		/* Open the output file */
 		if( output_file == NULL )
 			fp_dir = stdout;
 		else {
-			if( (fp_dir=fopen( output_file , "wb" )) == NULL ) {
+			if( (fp_dir=fopen( output_file, "wb" )) == NULL ) {
 				perror( output_file );
-				bu_exit(1, "Cannot open output file: %s\n" , output_file );
+				bu_exit(1, "Cannot open output file: %s\n", output_file );
 			}
 		}
 
@@ -319,7 +319,7 @@ main(int argc, char *argv[])
 		}
 
 		/* Write start and global sections of the IGES file */
-		w_start_global( fp_dir , fp_param , argv[0] , prog_name , output_file , RCSid , RCSrev );
+		w_start_global( fp_dir, fp_param, argv[0], prog_name, output_file, RCSid, RCSrev );
 	}
 	else
 	{
@@ -340,8 +340,8 @@ main(int argc, char *argv[])
 	/* Count object references */
 /*	for( i=1 ; i<argc ; i++ )
 	{
-		dp = db_lookup( dbip , argv[i] , 1 );
-		db_functree( dbip , dp , count_refs , 0 , NULL );
+		dp = db_lookup( dbip, argv[i], 1 );
+		db_functree( dbip, dp, count_refs, 0, NULL );
 	}	*/
 
 	/* tree tops must have independent status, so we need to remember them */
@@ -377,12 +377,12 @@ main(int argc, char *argv[])
 				} else {
 					ptr = argv[i];
 				}
-				dp = db_lookup( dbip , ptr , 1 );
+				dp = db_lookup( dbip, ptr, 1 );
 				if (!dp) {
 				    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", ptr, db_name);
 				    continue;
 				}
-				db_functree( dbip , dp , csg_comb_func , 0 , &rt_uniresource , NULL );
+				db_functree( dbip, dp, csg_comb_func, 0, &rt_uniresource, NULL );
 			}
 		}
 	}
@@ -394,12 +394,12 @@ main(int argc, char *argv[])
 
 		for( i=1 ; i<argc ; i++ )
 		{
-			dp = db_lookup( dbip , argv[i] , 1 );
+			dp = db_lookup( dbip, argv[i], 1 );
 			if (!dp) {
 			    bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", argv[i], db_name);
 			    continue;
 			}
-			db_functree( dbip , dp , csg_comb_func , csg_leaf_func , &rt_uniresource , NULL );
+			db_functree( dbip, dp, csg_comb_func, csg_leaf_func, &rt_uniresource, NULL );
 		}
 	}
 	else if( mode == TRIMMED_SURF_MODE )
@@ -423,15 +423,15 @@ main(int argc, char *argv[])
 	if( !multi_file )
 	{
 		/* Copy the parameter section from the temporary file to the output file */
-		if( (fseek( fp_param , (long) 0 , 0 )) ) {
+		if( (fseek( fp_param, (long) 0, 0 )) ) {
 			perror( "g-iges" );
 			bu_exit(1, "Cannot seek to start of temporary file\n" );
 		}
 
-		while( (i=fread( copy_buffer , 1 , CP_BUF_SIZE , fp_param )) )
-			if( fwrite( copy_buffer , 1 , i , fp_dir ) != i ) {
+		while( (i=fread( copy_buffer, 1, CP_BUF_SIZE, fp_param )) )
+			if( fwrite( copy_buffer, 1, i, fp_dir ) != i ) {
 				perror( "g-iges" );
-				bu_exit(1, "Error in copying parameter data to %s\n" , output_file );
+				bu_exit(1, "Error in copying parameter data to %s\n", output_file );
 			}
 
 		/* Write the terminate section */
@@ -454,11 +454,11 @@ main(int argc, char *argv[])
 	if( scale_error || solid_error || comb_error )
 		bu_log( "WARNING: the IGES file produced has errors:\n" );
 	if( scale_error )
-		bu_log( "\t%d scaled objects found, written to IGES file without being scaled\n" , scale_error );
+		bu_log( "\t%d scaled objects found, written to IGES file without being scaled\n", scale_error );
 	if( solid_error )
-		bu_log( "\t%d solids were not converted to IGES format\n" , solid_error );
+		bu_log( "\t%d solids were not converted to IGES format\n", solid_error );
 	if( comb_error )
-		bu_log( "\t%d combinations were not converted to IGES format\n" , comb_error );
+		bu_log( "\t%d combinations were not converted to IGES format\n", comb_error );
 
 	return( 0 );
 }
@@ -600,9 +600,9 @@ genptr_t		client_data;
 					}
 					snprintf(multi_name, len, "%s/%s%s.igs", output_file, dp->d_namep, suffix);
 				}
-				if( (fp_dir=fopen( multi_name , "wb" )) == NULL ) {
+				if( (fp_dir=fopen( multi_name, "wb" )) == NULL ) {
 					perror( "g-iges" );
-					bu_exit(1, "Cannot open output file: %s\n" , multi_name );
+					bu_exit(1, "Cannot open output file: %s\n", multi_name );
 				}
 			}
 
@@ -613,10 +613,10 @@ genptr_t		client_data;
 			}
 
 			/* let the IGES routines know the selected tolerances and the database pointer */
-			iges_init( &tol , &ttol , verbose , dbip );
+			iges_init( &tol, &ttol, verbose, dbip );
 
 			/* Write start and global sections of the IGES file */
-			w_start_global( fp_dir , fp_param , db_name , prog_name , output_file , RCSid , RCSrev );
+			w_start_global( fp_dir, fp_param, db_name, prog_name, output_file, RCSid, RCSrev );
 		}
 
 		if( mode == FACET_MODE )
@@ -624,17 +624,17 @@ genptr_t		client_data;
 			dependent = 1;
 			for( i=0 ; i<no_of_indeps ; i++ )
 			{
-				if( !strncmp( dp->d_namep , independent[i] , NAMESIZE ) )
+				if( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
 				{
 					dependent = 0;
 					break;
 				}
 			}
 
-			dp->d_uses = (-nmgregion_to_iges( dp->d_namep , r , dependent , fp_dir , fp_param ));
+			dp->d_uses = (-nmgregion_to_iges( dp->d_namep, r, dependent, fp_dir, fp_param ));
 		}
 		else if( mode == TRIMMED_SURF_MODE )
-			dp->d_uses = (-nmgregion_to_tsurf( dp->d_namep , r , fp_dir , fp_param ));
+			dp->d_uses = (-nmgregion_to_tsurf( dp->d_namep, r, fp_dir, fp_param ));
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);
@@ -644,15 +644,15 @@ genptr_t		client_data;
 			char copy_buffer[CP_BUF_SIZE] = {0};
 
 			/* Copy the parameter section from the temporary file to the output file */
-			if( (fseek( fp_param , (long) 0 , 0 )) ) {
+			if( (fseek( fp_param, (long) 0, 0 )) ) {
 				perror( "g-iges" );
 				bu_exit(1, "Cannot seek to start of temporary file\n" );
 			}
 
-			while( (i=fread( copy_buffer , 1 , CP_BUF_SIZE , fp_param )) )
-				if( fwrite( copy_buffer , 1 , i , fp_dir ) != i ) {
+			while( (i=fread( copy_buffer, 1, CP_BUF_SIZE, fp_param )) )
+				if( fwrite( copy_buffer, 1, i, fp_dir ) != i ) {
 					perror( "g-iges" );
-					bu_exit(1, "Error in copying parameter data to %s\n" , output_file );
+					bu_exit(1, "Error in copying parameter data to %s\n", output_file );
 				}
 
 			/* Write the terminate section */
@@ -701,13 +701,13 @@ int *de_pointers;
 		{
 			struct directory *dp_M;
 
-			dp_M = db_lookup( dbip , tp->tr_l.tl_name , LOOKUP_NOISY );
+			dp_M = db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
 			if( dp_M == DIR_NULL )
 				return( 1 );
 
 			if( dp_M->d_uses >= 0 )
 			{
-				bu_log( "g-iges: member (%s) in combination (%s) has not been written to iges file\n" , dp_M->d_namep , dp->d_namep );
+				bu_log( "g-iges: member (%s) in combination (%s) has not been written to iges file\n", dp_M->d_namep, dp->d_namep );
 				de_pointers[de_pointer_number++] = 0;
 				return( 1 );
 			}
@@ -717,15 +717,15 @@ int *de_pointers;
 				/* write a solid instance entity for this member
 					with a pointer to the new matrix */
 
-				if( !NEAR_ZERO( tp->tr_l.tl_mat[15] - 1.0 , tol.dist ) )
+				if( !NEAR_ZERO( tp->tr_l.tl_mat[15] - 1.0, tol.dist ) )
 				{
 					/* scale factor is not 1.0, IGES can't handle it.
 					   go ahead and write the solid instance anyway,
 					   but warn the user twice */
-					bu_log( "g-iges WARNING: member (%s) of combination (%s) is scaled, IGES cannot handle this\n" , dp_M->d_namep , dp->d_namep );
+					bu_log( "g-iges WARNING: member (%s) of combination (%s) is scaled, IGES cannot handle this\n", dp_M->d_namep, dp->d_namep );
 					scale_error++;
 				}
-				de_pointers[de_pointer_number++] = write_solid_instance( -dp_M->d_uses , tp->tr_l.tl_mat , fp_dir , fp_param );
+				de_pointers[de_pointer_number++] = write_solid_instance( -dp_M->d_uses, tp->tr_l.tl_mat, fp_dir, fp_param );
 			}
 			else
 				de_pointers[de_pointer_number++] = (-dp_M->d_uses);
@@ -741,7 +741,7 @@ int *de_pointers;
 }
 
 void
-csg_comb_func( dbip , dp , ptr )
+csg_comb_func( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
 genptr_t	ptr;
@@ -765,14 +765,14 @@ genptr_t	ptr;
 
 	for( i=0 ; i<no_of_indeps ; i++ )
 	{
-		if( !strncmp( dp->d_namep , independent[i] , NAMESIZE ) )
+		if( !strncmp( dp->d_namep, independent[i], NAMESIZE ) )
 		{
 			dependent = 0;
 			break;
 		}
 	}
 
-	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL , &rt_uniresource);
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
 	if( id < 0 )
 		return;
 	if( id != ID_COMBINATION )
@@ -785,16 +785,16 @@ genptr_t	ptr;
 	RT_CK_COMB( comb );
 
 	if( verbose )
-		bu_log( "Combination - %s\n" , dp->d_namep );
+		bu_log( "Combination - %s\n", dp->d_namep );
 
 	if( !comb->tree )
 	{
-		bu_log( "Warning: empty combination (%s)\n" , dp->d_namep );
+		bu_log( "Warning: empty combination (%s)\n", dp->d_namep );
 		dp->d_uses = 0;
 		return;
 	}
 	comb_len = db_tree_nleaves( comb->tree );
-	de_pointers = (int *)bu_calloc( comb_len , sizeof( int ) , "csg_comb_func" );
+	de_pointers = (int *)bu_calloc( comb_len, sizeof( int ), "csg_comb_func" );
 
 	comb_form = 0;
 
@@ -802,8 +802,8 @@ genptr_t	ptr;
 	if( get_de_pointers( comb->tree, dp, comb_len, de_pointers ) )
 	{
 		bu_log( "Error in combination %s\n", dp->d_namep );
-		bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
-		rt_db_free_internal( &intern , &rt_uniresource);
+		bu_free( (char *)de_pointers, "csg_comb_func de_pointers" );
+		rt_db_free_internal( &intern, &rt_uniresource);
 		return;
 	}
 
@@ -818,23 +818,23 @@ genptr_t	ptr;
 	props.color[0] = 0;
 	props.color[1] = 0;
 	props.color[2] = 0;
-	get_props( &props , comb );
+	get_props( &props, comb );
 
-	dp->d_uses = (-comb_to_iges( comb , comb_len , dependent , &props , de_pointers , fp_dir , fp_param ) );
+	dp->d_uses = (-comb_to_iges( comb, comb_len, dependent, &props, de_pointers, fp_dir, fp_param ) );
 
 	if( !dp->d_uses )
 	{
 		comb_error++;
-		bu_log( "g-iges: combination (%s) not written to iges file\n" , dp->d_namep );
+		bu_log( "g-iges: combination (%s) not written to iges file\n", dp->d_namep );
 	}
 
-	rt_db_free_internal( &intern , &rt_uniresource);
-	bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
+	rt_db_free_internal( &intern, &rt_uniresource);
+	bu_free( (char *)de_pointers, "csg_comb_func de_pointers" );
 
 }
 
 void
-csg_leaf_func( dbip , dp , ptr )
+csg_leaf_func( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
 genptr_t ptr;
@@ -846,17 +846,17 @@ genptr_t ptr;
 		return;
 
 	if( verbose )
-		bu_log( "solid - %s\n" , dp->d_namep );
+		bu_log( "solid - %s\n", dp->d_namep );
 
 	if( rt_db_get_internal( &ip, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		bu_log( "Error in import" );
 
 	solid_is_brep = 0;
-	dp->d_uses = (-iges_write[ip.idb_type].do_iges_write( &ip , dp->d_namep , fp_dir , fp_param ));
+	dp->d_uses = (-iges_write[ip.idb_type].do_iges_write( &ip, dp->d_namep, fp_dir, fp_param ));
 
 	if( !dp->d_uses )
 	{
-		bu_log( "g-iges: failed to translate %s to IGES format\n" , dp->d_namep );
+		bu_log( "g-iges: failed to translate %s to IGES format\n", dp->d_namep );
 		solid_error++;
 	}
 
@@ -888,7 +888,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 }
 
 void
-count_refs( dbip , dp , ptr )
+count_refs( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
 genptr_t ptr;
@@ -900,7 +900,7 @@ genptr_t ptr;
 	if( !(dp->d_flags & DIR_COMB) )
 		return;
 
-	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL , &rt_uniresource);
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
 	if( id < 0 )
 	{
 		bu_log( "Cannot get internal form of %s\n", dp->d_namep );
@@ -912,7 +912,7 @@ genptr_t ptr;
 
 	if( !comb->tree )
 	{
-		bu_log( "Warning: empty combination (%s)\n" , dp->d_namep );
+		bu_log( "Warning: empty combination (%s)\n", dp->d_namep );
 		dp->d_uses = 0;
 		return;
 	}

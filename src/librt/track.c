@@ -408,7 +408,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   trcurve(iw, tr);
   crname(interp, solname, 1, len);
   strncpy(sol.s_name, solname, len-1);
-  if (wrobj(wdbp, interp, solname , DIR_SOLID ) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID ) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
   /* idler dummy rcc */
@@ -419,7 +419,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
   /* solid 2 */
   crname(interp, solname, 2, len);
   strncpy(sol.s_name, solname, len-1);
-  if (wrobj(wdbp, interp, solname , DIR_SOLID ) )
+  if (wrobj(wdbp, interp, solname, DIR_SOLID ) )
     return TCL_ERROR;
   solname[grpname_len + extraTypeChars] = '\0';
 
@@ -836,7 +836,7 @@ int	flag;
 	sol.s_values[0] = w[0];
 	sol.s_values[1] = t[0] -1.0;
 	sol.s_values[2] = w[1];
-	VMOVE(&sol.s_values[3] , vec);
+	VMOVE(&sol.s_values[3], vec);
 	vec[2] = w[2] + t[2] + 1.0;
 	VMOVE(&sol.s_values[6], vec);
 	vec[0] = 0.0;

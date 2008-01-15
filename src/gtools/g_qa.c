@@ -548,7 +548,7 @@ parse_args(int ac, char *av[])
 
 
 		/* find out if we have two or one args
-		 * user can separate them with , or - delimiter
+		 * user can separate them with, or - delimiter
 		 */
 		if (p = strchr(bu_optarg, ','))  	 *p++ = '\0';
 		else if (p = strchr(bu_optarg, '-')) *p++ = '\0';
@@ -1396,7 +1396,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, char *av[])
     reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
-    for( i=0 , BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) , i++)  {
+    for( i=0, BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ), i++)  {
 	regp->reg_udata = &reg_tbl[i];
 
 	reg_tbl[i].r_lenDensity = bu_calloc(sizeof(double), num_views, "r_lenDensity");

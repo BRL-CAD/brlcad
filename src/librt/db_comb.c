@@ -222,7 +222,7 @@ rt_comb_import4(
 	node_count = ep->ext_nbytes/sizeof( union record ) - 1;
 
 	if( node_count )
-		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count, sizeof( struct rt_tree_array ), "rt_tree_array" );
 	else
 		rt_tree_array = (struct rt_tree_array *)NULL;
 
@@ -230,7 +230,7 @@ rt_comb_import4(
 	{
 		if( rp[j+1].u_id != ID_MEMB )
 		{
-			bu_free( (genptr_t)rt_tree_array , "rt_comb_import4: rt_tree_array" );
+			bu_free( (genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array" );
 			bu_log( "rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id );
 			return( -1 );
 		}
@@ -311,7 +311,7 @@ rt_comb_import4(
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_COMBINATION;
 	ip->idb_meth = &rt_functab[ID_COMBINATION];
-	comb = (struct rt_comb_internal *)bu_malloc( sizeof( struct rt_comb_internal ) , "rt_comb_import4: rt_comb_internal" );
+	comb = (struct rt_comb_internal *)bu_malloc( sizeof( struct rt_comb_internal ), "rt_comb_import4: rt_comb_internal" );
 	ip->idb_ptr = (genptr_t)comb;
 	comb->magic = RT_COMB_MAGIC;
 	bu_vls_init( &comb->shader );
@@ -441,7 +441,7 @@ rt_comb_export4(
 	/* Count # leaves in tree -- that's how many Member records needed. */
 	node_count = db_tree_nleaves( comb->tree );
 	if( node_count > 0 )  {
-		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count, sizeof( struct rt_tree_array ), "rt_tree_array" );
 
 		/* Convert tree into array form */
 		actual_count = db_flatten_tree( rt_tree_array, comb->tree,
@@ -626,7 +626,7 @@ db_tree_flatten_describe(
 	RT_CK_TREE(ntp);
 
 	node_count = db_tree_nleaves( ntp );
-	rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
+	rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count, sizeof( struct rt_tree_array ), "rt_tree_array" );
 
 	/*
 	 * free=0 means that the tree won't have any leaf nodes freed.

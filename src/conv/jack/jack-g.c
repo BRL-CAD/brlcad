@@ -278,14 +278,14 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 		struct loopuse *lu;
 		plane_t pl;
 
-		lu = BU_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd );
-		if( nmg_loop_plane_area( lu , pl ) < 0.0 )
+		lu = BU_LIST_FIRST( loopuse, &outfaceuses[i]->lu_hd );
+		if( nmg_loop_plane_area( lu, pl ) < 0.0 )
 		{
 			fail = 1;
 			nmg_kfu( outfaceuses[i] );
 		}
 		else
-			nmg_face_g( outfaceuses[i] , pl );
+			nmg_face_g( outfaceuses[i], pl );
 	}
 	if (fail)
 		return(-1);

@@ -770,7 +770,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	bn_mat_inv( volp->vol_mat, vip->mat );
 
 	/* Pre-compute the necessary normals.  Rotate only. */
-	VSET( norm, 1, 0 , 0 );
+	VSET( norm, 1, 0, 0 );
 	MAT3X3VEC( volp->vol_xnorm, vip->mat, norm );
 	VSET( norm, 0, 1, 0 );
 	MAT3X3VEC( volp->vol_ynorm, vip->mat, norm );
@@ -1071,198 +1071,198 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 				point_t pt, pt1;
 
 				/* skip empty cells */
-				if( !OK( vip , VOL( vip , x , y , z ) ) )
+				if( !OK( vip, VOL( vip, x, y, z ) ) )
 					continue;
 
 				/* check neighboring cells, make a face where needed */
 
 				/* check z+1 */
-				if( !OK( vip , VOL( vip , x , y , z+1 ) ) )
+				if( !OK( vip, VOL( vip, x, y, z+1 ) ) )
 				{
 					for( i=0 ; i<4 ; i++ )
 						verts[i] = (struct vertex *)NULL;
 
-					fu = nmg_cface( s , verts , 4 );
+					fu = nmg_cface( s, verts, 4 );
 
-					VSET( pt , x+.5 , y-.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[0] , pt );
-					VSET( pt , x+.5 , y+.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[1] , pt );
-					VSET( pt , x-.5 , y+.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[2] , pt );
-					VSET( pt , x-.5 , y-.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[3] , pt );
+					VSET( pt, x+.5, y-.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[0], pt );
+					VSET( pt, x+.5, y+.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[1], pt );
+					VSET( pt, x-.5, y+.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[2], pt );
+					VSET( pt, x-.5, y-.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[3], pt );
 
-					if( nmg_fu_planeeqn( fu , tol ) )
+					if( nmg_fu_planeeqn( fu, tol ) )
 						goto fail;
 				}
 
 				/* check z-1 */
-				if( !OK( vip , VOL( vip , x , y , z-1 ) ) )
+				if( !OK( vip, VOL( vip, x, y, z-1 ) ) )
 				{
 					for( i=0 ; i<4 ; i++ )
 						verts[i] = (struct vertex *)NULL;
 
-					fu = nmg_cface( s , verts , 4 );
+					fu = nmg_cface( s, verts, 4 );
 
-					VSET( pt , x+.5 , y-.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[3] , pt );
-					VSET( pt , x+.5 , y+.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[2] , pt );
-					VSET( pt , x-.5 , y+.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[1] , pt );
-					VSET( pt , x-.5 , y-.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[0] , pt );
+					VSET( pt, x+.5, y-.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[3], pt );
+					VSET( pt, x+.5, y+.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[2], pt );
+					VSET( pt, x-.5, y+.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[1], pt );
+					VSET( pt, x-.5, y-.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[0], pt );
 
-					if( nmg_fu_planeeqn( fu , tol ) )
+					if( nmg_fu_planeeqn( fu, tol ) )
 						goto fail;
 				}
 
 				/* check y+1 */
-				if( !OK( vip , VOL( vip , x , y+1 , z ) ) )
+				if( !OK( vip, VOL( vip, x, y+1, z ) ) )
 				{
 					for( i=0 ; i<4 ; i++ )
 						verts[i] = (struct vertex *)NULL;
 
-					fu = nmg_cface( s , verts , 4 );
+					fu = nmg_cface( s, verts, 4 );
 
-					VSET( pt , x+.5 , y+.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[0] , pt );
-					VSET( pt , x+.5 , y+.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[1] , pt );
-					VSET( pt , x-.5 , y+.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[2] , pt );
-					VSET( pt , x-.5 , y+.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[3] , pt );
+					VSET( pt, x+.5, y+.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[0], pt );
+					VSET( pt, x+.5, y+.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[1], pt );
+					VSET( pt, x-.5, y+.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[2], pt );
+					VSET( pt, x-.5, y+.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[3], pt );
 
-					if( nmg_fu_planeeqn( fu , tol ) )
+					if( nmg_fu_planeeqn( fu, tol ) )
 						goto fail;
 				}
 
 				/* check y-1 */
-				if( !OK( vip , VOL( vip , x , y-1 , z ) ) )
+				if( !OK( vip, VOL( vip, x, y-1, z ) ) )
 				{
 					for( i=0 ; i<4 ; i++ )
 						verts[i] = (struct vertex *)NULL;
 
-					fu = nmg_cface( s , verts , 4 );
+					fu = nmg_cface( s, verts, 4 );
 
-					VSET( pt , x+.5 , y-.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[3] , pt );
-					VSET( pt , x+.5 , y-.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[2] , pt );
-					VSET( pt , x-.5 , y-.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[1] , pt );
-					VSET( pt , x-.5 , y-.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[0] , pt );
+					VSET( pt, x+.5, y-.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[3], pt );
+					VSET( pt, x+.5, y-.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[2], pt );
+					VSET( pt, x-.5, y-.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[1], pt );
+					VSET( pt, x-.5, y-.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[0], pt );
 
-					if( nmg_fu_planeeqn( fu , tol ) )
+					if( nmg_fu_planeeqn( fu, tol ) )
 						goto fail;
 				}
 
 				/* check x+1 */
-				if( !OK( vip , VOL( vip , x+1 , y , z ) ) )
+				if( !OK( vip, VOL( vip, x+1, y, z ) ) )
 				{
 					for( i=0 ; i<4 ; i++ )
 						verts[i] = (struct vertex *)NULL;
 
-					fu = nmg_cface( s , verts , 4 );
+					fu = nmg_cface( s, verts, 4 );
 
-					VSET( pt , x+.5 , y-.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[0] , pt );
-					VSET( pt , x+.5 , y+.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[1] , pt );
-					VSET( pt , x+.5 , y+.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[2] , pt );
-					VSET( pt , x+.5 , y-.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[3] , pt );
+					VSET( pt, x+.5, y-.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[0], pt );
+					VSET( pt, x+.5, y+.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[1], pt );
+					VSET( pt, x+.5, y+.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[2], pt );
+					VSET( pt, x+.5, y-.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[3], pt );
 
-					if( nmg_fu_planeeqn( fu , tol ) )
+					if( nmg_fu_planeeqn( fu, tol ) )
 						goto fail;
 				}
 
 				/* check x-1 */
-				if( !OK( vip , VOL( vip , x-1 , y , z ) ) )
+				if( !OK( vip, VOL( vip, x-1, y, z ) ) )
 				{
 					for( i=0 ; i<4 ; i++ )
 						verts[i] = (struct vertex *)NULL;
 
-					fu = nmg_cface( s , verts , 4 );
+					fu = nmg_cface( s, verts, 4 );
 
-					VSET( pt , x-.5 , y-.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[3] , pt );
-					VSET( pt , x-.5 , y+.5 , z-.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[2] , pt );
-					VSET( pt , x-.5 , y+.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[1] , pt );
-					VSET( pt , x-.5 , y-.5 , z+.5 );
-					VELMUL( pt1 , vip->cellsize , pt );
-					MAT4X3PNT( pt , vip->mat , pt1 );
-					nmg_vertex_gv( verts[0] , pt );
+					VSET( pt, x-.5, y-.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[3], pt );
+					VSET( pt, x-.5, y+.5, z-.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[2], pt );
+					VSET( pt, x-.5, y+.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[1], pt );
+					VSET( pt, x-.5, y-.5, z+.5 );
+					VELMUL( pt1, vip->cellsize, pt );
+					MAT4X3PNT( pt, vip->mat, pt1 );
+					nmg_vertex_gv( verts[0], pt );
 
-					if( nmg_fu_planeeqn( fu , tol ) )
+					if( nmg_fu_planeeqn( fu, tol ) )
 						goto fail;
 				}
 			}
 		}
 	}
 
-	nmg_region_a( r_tmp , tol );
+	nmg_region_a( r_tmp, tol );
 
 	/* fuse model */
-	nmg_model_fuse( m_tmp , tol );
+	nmg_model_fuse( m_tmp, tol );
 
 	/* simplify shell */
 	nmg_shell_coplanar_face_merge( s, tol, 1 );
 
 	/* kill snakes */
-	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		struct loopuse *lu;
 
@@ -1271,7 +1271,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 			(void)nmg_kill_snakes( lu );
 	}
 
@@ -1279,7 +1279,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	(void)nmg_mark_edges_real( (long *)&s->l );
 
-	nmg_merge_models( m , m_tmp );
+	nmg_merge_models( m, m_tmp );
 	*r = r_tmp;
 
 	return( 0 );

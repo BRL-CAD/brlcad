@@ -1131,7 +1131,7 @@ bu_tcl_key_eq_to_key_val(ClientData	clientData,
 		}
 
 		if( i < argc - 1 )
-			Tcl_AppendResult(interp, bu_vls_addr( &vls ) , " ", NULL );
+			Tcl_AppendResult(interp, bu_vls_addr( &vls ), " ", NULL );
 		else
 			Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
 
