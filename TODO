@@ -30,21 +30,41 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
+* fix mged I/O (puts/gets stdout/stdin fail)
+
+* fix mged text flood hang (e.g. large rtarea report)
+
+* add mged background option, disable auto-background
+
+* fix compilation problems with tclConfig.sh
+
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
+* test whether pix-fb -p works or not
+
+* verify/finish clone mirror support
+
+* verify dbconcat with a prefix works
+
+* try push on a primitive
+
 * address the TODO items in src/mged/clone.c
 
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
-
-* modify the new tree traversal code to be generic
 
 * implement graphical crash reporter tool (bombardier)
 
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* windows smp support
+
+* modify the new tree traversal code to be generic
+
+* expose nmg_fix_normals through a set of mesh repair routines
 
 * investigate rt_shootray/nirt backing out
 
