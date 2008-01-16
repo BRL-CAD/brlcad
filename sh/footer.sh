@@ -106,14 +106,14 @@ case $FILE in
     *.c )
 	echo "$FILE is a C source file"
 	mode="C"
-	mode_vars="c-basic-offset"
+	mode_vars=""
 	wrap=1
 	commentchar="*"
 	;;
     *.h )
 	echo "$FILE is a C header"
 	mode="C"
-	mode_vars="c-basic-offset"
+	mode_vars=""
 	wrap=0
 	commentchar="//"
 	;;
@@ -148,14 +148,14 @@ case $FILE in
     *.l )
 	echo "$FILE is a Lex/Flex lexer source file"
 	mode="C"
-	mode_vars="c-basic-offset"
+	mode_vars=""
 	wrap=1
 	commentchar="*"
 	;;
     *.y )
 	echo "$FILE is a Yacc parser source file"
 	mode="C"
-	mode_vars="c-basic-offset"
+	mode_vars=""
 	wrap=1
 	commentchar="*"
 	;;
@@ -337,6 +337,10 @@ for mv in $mode_vars ; do
 done
 variables=( ${variables[@]} indent-tabs-mode )
 values=( ${values[@]} t )
+if [ "x$mode" = "xC" ] ; then
+    variables=( ${variables[@]} c-file-style )
+    values=( ${values[@]} "\"stroustrup\"" )
+fi
 
 
 ##############################
