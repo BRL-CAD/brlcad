@@ -491,8 +491,8 @@ file:
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-file-style: "stroustrup"
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
