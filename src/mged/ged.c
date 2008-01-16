@@ -716,17 +716,44 @@ main(int argc, char **argv)
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 	out = (ClientData)(size_t)pipe_out[0];
-	err = (ClientData)(size_t)pipe_err[0];
-#else
-	out = (ClientData)GetStdHandle(STD_OUTPUT_HANDLE);
-	err = (ClientData)GetStdHandle(STD_ERROR_HANDLE);
-#endif
-
 	chan = Tcl_MakeFileChannel(out, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
+	err = (ClientData)(size_t)pipe_err[0];
 	chan = Tcl_MakeFileChannel(err, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, err);
+#else
+	{
+	    HANDLE handle[2];
+	    SECURITY_ATTRIBUTES saAttr;
+
+	    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+	    saAttr.bInheritHandle = FALSE; 
+	    saAttr.lpSecurityDescriptor = NULL;
+
+	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
+		chan = Tcl_GetStdChannel(TCL_STDOUT);
+		Tcl_UnregisterChannel(interp, chan);
+		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
+		Tcl_RegisterChannel(interp, chan);
+		Tcl_SetChannelOption(interp, chan, "-blocking", "false");
+		Tcl_SetChannelOption(interp, chan, "-buffering", "line");
+		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
+	    }
+
+	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
+		chan = Tcl_GetStdChannel(TCL_STDERR);
+		Tcl_UnregisterChannel(interp, chan);
+		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
+		Tcl_RegisterChannel(interp, chan);
+		Tcl_SetChannelOption(interp, chan, "-blocking", "false");
+		Tcl_SetChannelOption(interp, chan, "-buffering", "line");
+		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
+	    }
+	}
     }
+#endif
 
     mged_init_flag = 0;	/* all done with initialization */
 
