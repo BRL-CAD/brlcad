@@ -142,7 +142,7 @@ Wgl_fb_open()
 
 	*fbp = wgl_interface; /* struct copy */
 	fbp->if_name = bu_malloc((unsigned)strlen(wgl_name) + 1, "if_name");
-	strncpy(fbp->if_name, wgl_name, strlen(wgl_name));
+	strncpy(fbp->if_name, wgl_name, strlen(wgl_name)+1);
 
 	/* Mark OK by filling in magic number */
 	fbp->if_magic = FB_MAGIC;
