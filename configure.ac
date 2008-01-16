@@ -649,14 +649,6 @@ BC_ARG_WITH_ALIAS([with_python], [libpython])
 dnl automatically scan /usr/local (e.g. BSD uses /usr/local for ports)
 BC_SEARCH_DIRECTORY([/usr/local])
 
-dnl find tclConfig.sh, add --with-tcl option, don't cache result for AC_CONFIG_SUBDIRS
-SC_PATH_TCLCONFIG
-unset ac_cv_c_tclconfig
-
-dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
-SC_PATH_TKCONFIG
-unset ac_cv_c_tkconfig
-
 
 ###
 # argument sanity checks and meta-argument settings
@@ -2602,6 +2594,11 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 else
     AC_MSG_RESULT(no)
 
+    dnl find tclConfig.sh, add --with-tcl option, don't cache result for AC_CONFIG_SUBDIRS
+    SC_PATH_TCLCONFIG
+    # keep TCL_BIN_DIR, don't keep ac_cv_c_tclconfig
+    unset ac_cv_c_tclconfig
+
     dnl If we're using the system Tcl, then we need to load
     dnl tclConfig.sh to get the TCL_VERSION and other vars.
     SC_LOAD_TCLCONFIG
@@ -2711,6 +2708,11 @@ if test "x$build_brlcad_tk" = "xyes" ; then
     fi
 else
     AC_MSG_RESULT(no)
+
+    dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
+    SC_PATH_TKCONFIG
+    # keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
+    unset ac_cv_c_tkconfig
 
     dnl If we're using the system Tk, then we need to load
     dnl tkConfig.sh to get the TK_VERSION and other vars.
