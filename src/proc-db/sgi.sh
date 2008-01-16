@@ -15,7 +15,7 @@ SGI="`basename $0`"
 rm -f $SGI.*
 
 # cube dimensions
-i=1000 ; j=700 ; radius=125
+i=1000 ; j=800 ; radius=100
 
 # starting position
 x=0 ; y=0 ; z=0
@@ -89,8 +89,9 @@ echo "Rendering the cube..."
 
 cat <<EOF | mged -c $SGI.g
 B cube.r
-ae 135 -40 180
-zoom 1.5
+ae 135 -35 180
+set perspective 20
+zoom .25
 saveview $SGI.rt
 EOF
 
@@ -98,6 +99,7 @@ EOF
 pix-png -s1024 < $SGI.rt.pix > $SGI.png
 png-fb $SGI.png
 mv $SGI.g sgi.g
+mv $SGI.png sgi.png
 rm -f $SGI.*
 
 echo "The SGI cube is in the sgi.g BRL-CAD geometry database file."
