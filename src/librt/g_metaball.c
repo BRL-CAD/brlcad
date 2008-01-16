@@ -28,6 +28,7 @@
  *
  * Authors -
  *	Erik Greenwald <erikg@arl.army.mil>
+ *	Edwin O. Davisson  - corrections to normal routine.
  *
  * Source -
  *	ARL/SLAD/SDB Bldg 238
@@ -343,16 +344,23 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	struct rt_metaball_internal *mb = stp->st_specific;
 	struct wdb_metaballpt *mbpt;
 	vect_t v;
-	fastf_t f, a;
+	fastf_t a;
 
-	VSETALL(hitp->hit_normal, 0);
-	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
-		VSUB2(v, hitp->hit_point, mbpt->coord);
-		f = mbpt->fldstr * mbpt->fldstr;	/* f^2 */
-		a = MAGNITUDE(v);
-		f /= (a*a*a);				/* f^2 / r^3 */
-		VUNITIZE(v);
-		VJOIN1(hitp->hit_normal, hitp->hit_normal, f, v);
+	VSETALL(hitp->hit_normal, 0.0);
+
+	switch(mb->method) {
+	case METABALL_METABALL: bu_log("strict metaballs not implemented yet\n");
+		break;
+	case METABALL_ISOPOTENTIAL:
+		for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)){
+			VSUB2(v, hitp->hit_point, mbpt->coord);
+			a = MAGSQ(v);
+			VJOIN1(hitp->hit_normal, hitp->hit_normal, mbpt->fldstr / (a*a), v);	/* f/r^4 */
+		}
+		break;
+	case METABALL_BLOB: bu_log("blobs not implemented yet\n");
+		break;
+	default: bu_log("unknown metaball method\n"); break;
 	}
 	VUNITIZE(hitp->hit_normal);
 	return;
