@@ -54,15 +54,49 @@
 #include "wdb.h"
 #include "./debug.h"
 
+/*
+ *  Algorithm:
+ *	completely punted at the moment :D
+ *
+ * The heart of it is the set of point evaluation functions. These are different
+ * for each "type" of blobby object (metaballs, blinn blobs, and iso-potential
+ * contours). All are simple summation formulas at the moment.
+ *
+ * Plot merely draws sphere type objects around the control points, with size
+ * related to each points 'strength' and the primitives threshold.
+ *
+ * Ray-tracing is incredibly hackish. The ray is walked in a fairly coarse
+ * matter until the point evaluation crosses the threshold value, then a basic
+ * binary search is done to refine the approximated hit point.
+ */
+
 /* these three defines are used with the method field */
 #define METABALL_METABALL	0
 #define METABALL_ISOPOTENTIAL	1
 #define METABALL_BLOB		2
 
-/*
- *  Algorithm:
- *	completely punted at the moment :D
- */
+const char *metaballnames[] =
+{
+    "Metaball",
+    "Isopotential",
+    "Blob",
+    NULL
+};
+
+int rt_metaball_lookup_type_id(const char *name)
+{
+    int i = 0;
+    while(metaballnames[i++])
+	if(!strncmp(metaballnames[i], name, 4))
+	    return i;
+    return -1;
+}
+
+const char *rt_metaball_lookup_type_name(const int id)
+{
+    printf("Going to return \"%s\" for id %d\n", metaballnames[id], id);
+    return metaballnames[id];
+}
 
 /* compute the bounding sphere for a metaball cluster. center is filled, and the
  * radius is returned. */
@@ -175,7 +209,9 @@ rt_metaball_print(register const struct soltab *stp)
 	mb = (struct rt_metaball_internal *)stp->st_specific;
 	RT_METABALL_CK_MAGIC(mb);
 	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
-	bu_log("Metaball with %d points and a threshold of %g (method %d)\n", metaball_count, mb->threshold, mb->method);
+	bu_log( "Metaball with %d points and a threshold of %g (%s rendering", metaball_count, mb->threshold );
+	if( mb->method != METABALL_ISOPOTENTIAL ) bu_log(", blobbyness factor of %g", mb->goo);
+	bu_log(")\n");
 	metaball_count=0;
 	for( BU_LIST_FOR( mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 		bu_log("\t%d: %g field strength at (%g, %g, %g)\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord));
@@ -198,12 +234,14 @@ rt_metaballpt_print( const struct wdb_metaballpt *metaball, double mm2local )
 }
 
 fastf_t
-rt_metaball_point_value_metaball(point_t *p, struct bu_list *points) {
+rt_metaball_point_value_metaball(point_t *p, struct bu_list *points)
+{
     bu_exit(1, "rt_metaball_point_value_metaball() No implemented");
 }
 
 fastf_t
-rt_metaball_point_value_iso(point_t *p, struct bu_list *points) {
+rt_metaball_point_value_iso(point_t *p, struct bu_list *points)
+{
 	struct wdb_metaballpt *mbpt;
 	fastf_t ret = 0.0;
 	point_t v;
@@ -216,7 +254,8 @@ rt_metaball_point_value_iso(point_t *p, struct bu_list *points) {
 }
 
 fastf_t
-rt_metaball_point_value_blob(point_t *p, struct bu_list *points) {
+rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
+{
     bu_exit(1,"rt_metaball_point_value_blob() No implemented");
 }
 
@@ -331,7 +370,6 @@ rt_metaball_curve(register struct curvature *cvp, register struct hit *hitp, str
 	return;
 }
 
-
 /**
  *  			R T _ M E T A B A L L _ U V
  *
@@ -358,14 +396,12 @@ rt_metaball_free(register struct soltab *stp)
 	return;
 }
 
-
 /* I have no clue what this function is supposed to do */
 int
 rt_metaball_class(void)
 {
 	return RT_CLASSIFY_UNIMPLEMENTED;	/* "assume the worst" */
 }
-
 
 void
 rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
@@ -535,7 +571,7 @@ int
 rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	int metaball_count = 0;
-	char buf[BUFSIZ];
+	char buf[BUFSIZ], buf2[BUFSIZ];
 	struct rt_metaball_internal *mb;
 	struct wdb_metaballpt *mbpt;
 
@@ -544,7 +580,12 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	RT_METABALL_CK_MAGIC(mb);
 	for(BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) metaball_count++;
 
-	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g (method %d)\n", metaball_count, mb->threshold, mb->method);
+	if( mb->method == METABALL_ISOPOTENTIAL )
+	    *buf2 = '\0';
+	else
+	    snprintf( buf2, BUFSIZ, ", blobbyness of %g", mb->goo);
+
+	snprintf(buf, BUFSIZ, "Metaball with %d points and a threshold of %g (%s rendering%s)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method), buf2);
 	bu_vls_strcat(str, buf);
 	if(!verbose)return 0;
 	metaball_count=0;
