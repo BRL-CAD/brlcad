@@ -550,8 +550,8 @@ qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *headp, fastf_t 
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

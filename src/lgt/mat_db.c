@@ -371,8 +371,8 @@ put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

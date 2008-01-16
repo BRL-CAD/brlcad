@@ -476,8 +476,8 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

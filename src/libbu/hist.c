@@ -203,8 +203,8 @@ bu_hist_pr(register const struct bu_hist *histp, const char *title)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -611,8 +611,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -745,8 +745,8 @@ pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

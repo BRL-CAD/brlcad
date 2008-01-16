@@ -148,8 +148,8 @@ bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

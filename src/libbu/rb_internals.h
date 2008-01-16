@@ -172,8 +172,8 @@ BU_EXTERN(void bu_rb_free_package,	(struct bu_rb_package *package));
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

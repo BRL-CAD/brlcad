@@ -322,8 +322,8 @@ ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

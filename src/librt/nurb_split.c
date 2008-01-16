@@ -344,8 +344,8 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

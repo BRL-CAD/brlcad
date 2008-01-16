@@ -281,8 +281,8 @@ printf("CP:A:%s\n", mysql_error(&slave_load_mysql_db));
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -496,8 +496,8 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

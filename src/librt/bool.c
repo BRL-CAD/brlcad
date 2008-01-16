@@ -2352,8 +2352,8 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

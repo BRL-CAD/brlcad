@@ -933,8 +933,8 @@ rr_refract( vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2 )
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

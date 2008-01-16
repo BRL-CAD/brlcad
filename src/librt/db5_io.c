@@ -1708,8 +1708,8 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

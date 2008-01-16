@@ -351,8 +351,8 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

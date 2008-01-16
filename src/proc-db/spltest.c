@@ -130,8 +130,8 @@ make_face(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, int order)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

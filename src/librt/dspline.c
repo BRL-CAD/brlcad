@@ -272,8 +272,8 @@ rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

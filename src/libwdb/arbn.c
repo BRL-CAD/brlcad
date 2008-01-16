@@ -66,8 +66,8 @@ mk_arbn(struct rt_wdb *filep, const char *name, int neqn, plane_t (*eqn))
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

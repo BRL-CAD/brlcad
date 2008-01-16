@@ -237,8 +237,8 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

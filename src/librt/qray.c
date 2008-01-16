@@ -543,8 +543,8 @@ dgo_qray_data_to_vlist(struct dg_obj		*dgop,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -168,8 +168,8 @@ bu_crashreport(const char *filename)
  * Local Variables:
  * tab-width: 8
  * mode: C
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

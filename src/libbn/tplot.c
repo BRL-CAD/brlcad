@@ -460,8 +460,8 @@ PL_FORTRAN(fplot, FPLOT)(FILE **fp, int *xp, int *yp, int *xl, int *yl, char *xt
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

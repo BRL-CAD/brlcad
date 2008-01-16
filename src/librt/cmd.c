@@ -225,8 +225,8 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

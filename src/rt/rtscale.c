@@ -545,8 +545,8 @@ make_bounding_rpp(FILE *outfp, fastf_t *v2mod)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

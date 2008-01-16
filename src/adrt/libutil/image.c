@@ -162,8 +162,8 @@ void util_image_convert_32to24(void *image24, void *image32, int w, int h, int e
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

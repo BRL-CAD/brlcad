@@ -5082,8 +5082,8 @@ nmg_mv_vu_between_shells(struct shell *dest, register struct shell *src, registe
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

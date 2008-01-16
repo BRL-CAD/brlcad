@@ -65,8 +65,8 @@ mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *t
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

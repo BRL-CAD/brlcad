@@ -2073,8 +2073,8 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

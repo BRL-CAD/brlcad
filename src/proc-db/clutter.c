@@ -501,8 +501,8 @@ do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

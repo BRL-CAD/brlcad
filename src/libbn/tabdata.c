@@ -1583,8 +1583,8 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

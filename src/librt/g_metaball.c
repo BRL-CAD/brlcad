@@ -595,8 +595,8 @@ rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

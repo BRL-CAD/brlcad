@@ -37,8 +37,8 @@ extern void master_init(int port, int obs_port, char *list, char *exec, char *co
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

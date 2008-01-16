@@ -613,8 +613,8 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

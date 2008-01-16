@@ -188,8 +188,8 @@ rt_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

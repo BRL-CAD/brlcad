@@ -99,8 +99,8 @@ bu_printb(const char *s, register long unsigned int v, register const char *bits
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
