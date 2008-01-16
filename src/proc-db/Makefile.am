@@ -56,13 +56,8 @@ brep_simple_LDADD = \
 	${OPENNURBS}
 
 brickwall_SOURCES = brickwall.c
-brickwall_LDADD = ${WDB}
-
 clutter_SOURCES = clutter.c common.c
-
 contours_SOURCES = contours.c
-contours_LDADD = ${WDB}
-
 fence_SOURCES = fence.c
 globe_SOURCES = globe.c
 kurt_SOURCES = kurt.c
@@ -96,7 +91,9 @@ noinst_HEADERS = \
 
 man_MANS = picket_fence.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = \
+	$(man_MANS) \
+	sgi.sh
 
 include $(top_srcdir)/misc/Makefile.defs
 
