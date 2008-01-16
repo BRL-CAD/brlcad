@@ -20,7 +20,7 @@ i=1000 ; j=700 ; radius=125
 # starting position
 x=0 ; y=0 ; z=0
 
-# functions to create geometry for each direction of the cube's path
+# functions to create geometry for each direction of the cube
 right ( ) {
     old=$x
     x=$((old + $2))
@@ -90,11 +90,23 @@ echo "Rendering the cube..."
 cat <<EOF | mged -c $SGI.g
 B cube.r
 ae 135 -40 180
+zoom 1.5
 saveview $SGI.rt
 EOF
 
 ./$SGI.rt -s1024
-pix-fb -s1024 $SGI.rt.pix
+pix-png -s1024 < $SGI.rt.pix > $SGI.png
+png-fb $SGI.png
+mv $SGI.g sgi.g
+rm -f $SGI.*
 
-rm -f $SGI.rt* && mv $SGI.g sgi.g
 echo "The SGI cube is in the sgi.g BRL-CAD geometry database file."
+
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
