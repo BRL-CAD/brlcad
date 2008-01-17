@@ -3564,7 +3564,7 @@ AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
 # FIXME: this needs to be actually set up above
-AM_CONDITIONAL(WITH_OPENNURBS, [test "x$build_against_opennurbs" != "x"])
+AM_CONDITIONAL(WITH_OPENNURBS, [test "x$build_against_opennurbs" != "xno"])
 
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
