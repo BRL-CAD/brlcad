@@ -74,10 +74,11 @@ _bu_close_files()
 		bu_vls_free(&popped->fn);
 	    }
 	    if (popped->fp) {
+		/* fclose closes the associated file descriptor */
 		fclose(popped->fp);
 		popped->fp = NULL;
-	    }
-	    if (popped->fd != -1) {
+		popped->fd = -1;
+	    } else if (popped->fd != -1) {
 		close(popped->fd);
 		popped->fd = -1;
 	    }
@@ -92,10 +93,11 @@ _bu_close_files()
 	    bu_vls_free(&_bu_tf->fn);
 	}
 	if (_bu_tf->fp) {
+	    /* fclose closes the associated file descriptor */
 	    fclose(_bu_tf->fp);
 	    _bu_tf->fp = NULL;
-	}
-	if (_bu_tf->fd != -1) {
+	    _bu_tf->fd = -1;
+	} else if (_bu_tf->fd != -1) {
 	    close(_bu_tf->fd);
 	    _bu_tf->fd = -1;
 	}
