@@ -301,7 +301,7 @@ compare_values( int type, Tcl_Obj *val1, Tcl_Obj *val2 )
 		return 1;
 	    }
 	} else {
-	    if( !strcmp( str1, str2 ) ) {
+	    if( strcmp( str1, str2 ) ) {
 		return 1;
 	    }
 	}
@@ -843,7 +843,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	/* got TCL versions of both */
 	if( (dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID) ) {
 	    /* both are solids */
-	    compare_tcl_solids( str1, obj1, dp1, str2, obj2, dp2 );
+	    has_diff += compare_tcl_solids( str1, obj1, dp1, str2, obj2, dp2 );
 	    if( pre_5_vers != 2 ) {
 		has_diff += compare_attrs( dp1, dp2 );
 	    }
@@ -853,7 +853,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	if( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) ) {
 	    /* both are combinations */
 	    int len;
-	    compare_tcl_combs( obj1, dp1, obj2, dp2 );
+	    has_diff += compare_tcl_combs( obj1, dp1, obj2, dp2 );
 	    if( pre_5_vers != 2 ) {
 		has_diff += compare_attrs( dp1, dp2 );
 	    }
