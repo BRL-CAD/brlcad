@@ -68,7 +68,7 @@
 #define V4BASE2LOCAL( _pt )	(_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local
 
 /* editors to test, in order of discovery preference (EDITOR overrides) */
-#define WIN_EDITOR "notepad"
+#define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad"
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define	EMACS_EDITOR "/usr/bin/emacs"
 #define	VIM_EDITOR "/usr/bin/vim"
@@ -119,6 +119,11 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
+	if (fp) {
+	    fclose(fp);
+	    fp = NULL;
+	}
+
 	if (editit(tmpfil)) {
 		if (readsolid()) {
 		  (void)unlink(tmpfil);
@@ -131,10 +136,6 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "done\n", (char *)NULL);
 	}
 
-	if (fp) {
-	    fclose(fp);
-	    fp = NULL;
-	}
 	unlink(tmpfil);
 
 	return TCL_OK;
@@ -146,7 +147,11 @@ writesolid(void)
 {
 	register int i;
 	FILE *fp;
-
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	char *eol = "\r\n";
+#else
+	char *eol = "\n";
+#endif
 	CHECK_DBI_NULL;
 
 	fp = fopen(tmpfil, "w");
@@ -174,98 +179,98 @@ writesolid(void)
 		  return( 1 );
 		case ID_TOR:
 			tor = (struct rt_tor_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( tor->v ) );
-			(void)fprintf( fp, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL( tor->h ) );
-			(void)fprintf( fp, "radius_1: %.9f\n", tor->r_a*base2local );
-			(void)fprintf( fp, "radius_2: %.9f\n", tor->r_h*base2local );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( tor->v ), eol);
+			(void)fprintf( fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL( tor->h ), eol);
+			(void)fprintf( fp, "radius_1: %.9f%s", tor->r_a*base2local, eol);
+			(void)fprintf( fp, "radius_2: %.9f%s", tor->r_h*base2local, eol);
 			break;
 		case ID_TGC:
 		case ID_REC:
 			tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( tgc->v ) );
-			(void)fprintf( fp, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL( tgc->h ) );
-			(void)fprintf( fp, "A: %.9f %.9f %.9f\n", V3BASE2LOCAL( tgc->a ) );
-			(void)fprintf( fp, "B: %.9f %.9f %.9f\n", V3BASE2LOCAL( tgc->b ) );
-			(void)fprintf( fp, "C: %.9f %.9f %.9f\n", V3BASE2LOCAL( tgc->c ) );
-			(void)fprintf( fp, "D: %.9f %.9f %.9f\n", V3BASE2LOCAL( tgc->d ) );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( tgc->v ), eol);
+			(void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( tgc->h ), eol);
+			(void)fprintf( fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL( tgc->a ), eol);
+			(void)fprintf( fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL( tgc->b ), eol);
+			(void)fprintf( fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL( tgc->c ), eol);
+			(void)fprintf( fp, "D: %.9f %.9f %.9f%s", V3BASE2LOCAL( tgc->d ), eol);
 			break;
 		case ID_ELL:
 		case ID_SPH:
 			ell = (struct rt_ell_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( ell->v ) );
-			(void)fprintf( fp, "A: %.9f %.9f %.9f\n", V3BASE2LOCAL( ell->a ) );
-			(void)fprintf( fp, "B: %.9f %.9f %.9f\n", V3BASE2LOCAL( ell->b ) );
-			(void)fprintf( fp, "C: %.9f %.9f %.9f\n", V3BASE2LOCAL( ell->c ) );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( ell->v ), eol);
+			(void)fprintf( fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL( ell->a ), eol);
+			(void)fprintf( fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL( ell->b ), eol);
+			(void)fprintf( fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL( ell->c ), eol);
 			break;
 		case ID_ARB8:
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
 			for( i=0 ; i<8 ; i++ )
-				(void)fprintf( fp, "pt[%d]: %.9f %.9f %.9f\n", i+1, V3BASE2LOCAL( arb->pt[i] ) );
+				(void)fprintf( fp, "pt[%d]: %.9f %.9f %.9f%s", i+1, V3BASE2LOCAL( arb->pt[i] ), eol);
 			break;
 		case ID_HALF:
 			haf = (struct rt_half_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Plane: %.9f %.9f %.9f %.9f\n", V4BASE2LOCAL( haf->eqn ) );
+			(void)fprintf( fp, "Plane: %.9f %.9f %.9f %.9f%s", V4BASE2LOCAL( haf->eqn ), eol);
 			break;
 		case ID_GRIP:
 			grip = (struct rt_grip_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Center: %.9f %.9f %.9f\n", V3BASE2LOCAL( grip->center ) );
-			(void)fprintf( fp, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL( grip->normal ) );
-			(void)fprintf( fp, "Magnitude: %.9f\n", grip->mag*base2local );
+			(void)fprintf( fp, "Center: %.9f %.9f %.9f%s", V3BASE2LOCAL( grip->center ), eol);
+			(void)fprintf( fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL( grip->normal ), eol);
+			(void)fprintf( fp, "Magnitude: %.9f%s", grip->mag*base2local, eol);
 			break;
 		case ID_PARTICLE:
 			part = (struct rt_part_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( part->part_V ) );
-			(void)fprintf( fp, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL( part->part_H ) );
-			(void)fprintf( fp, "v radius: %.9f\n", part->part_vrad * base2local );
-			(void)fprintf( fp, "h radius: %.9f\n", part->part_hrad * base2local );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( part->part_V ), eol);
+			(void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( part->part_H ), eol);
+			(void)fprintf( fp, "v radius: %.9f%s", part->part_vrad * base2local, eol);
+			(void)fprintf( fp, "h radius: %.9f%s", part->part_hrad * base2local, eol);
 			break;
 		case ID_RPC:
 			rpc = (struct rt_rpc_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( rpc->rpc_V ) );
-			(void)fprintf( fp, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL( rpc->rpc_H ) );
-			(void)fprintf( fp, "Breadth: %.9f %.9f %.9f\n", V3BASE2LOCAL( rpc->rpc_B ) );
-			(void)fprintf( fp, "Half-width: %.9f\n", rpc->rpc_r * base2local );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( rpc->rpc_V ), eol);
+			(void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( rpc->rpc_H ), eol);
+			(void)fprintf( fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL( rpc->rpc_B ), eol);
+			(void)fprintf( fp, "Half-width: %.9f%s", rpc->rpc_r * base2local, eol);
 			break;
 		case ID_RHC:
 			rhc = (struct rt_rhc_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( rhc->rhc_V ) );
-			(void)fprintf( fp, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL( rhc->rhc_H ) );
-			(void)fprintf( fp, "Breadth: %.9f %.9f %.9f\n", V3BASE2LOCAL( rhc->rhc_B ) );
-			(void)fprintf( fp, "Half-width: %.9f\n", rhc->rhc_r * base2local );
-			(void)fprintf( fp, "Dist_to_asymptotes: %.9f\n", rhc->rhc_c * base2local );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( rhc->rhc_V ), eol);
+			(void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( rhc->rhc_H ), eol);
+			(void)fprintf( fp, "Breadth: %.9f %.9f %.9f%s", V3BASE2LOCAL( rhc->rhc_B ), eol);
+			(void)fprintf( fp, "Half-width: %.9f%s", rhc->rhc_r * base2local, eol);
+			(void)fprintf( fp, "Dist_to_asymptotes: %.9f%s", rhc->rhc_c * base2local, eol);
 			break;
 		case ID_EPA:
 			epa = (struct rt_epa_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( epa->epa_V ) );
-			(void)fprintf( fp, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL( epa->epa_H ) );
-			(void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f\n", V3ARGS( epa->epa_Au ) );
-			(void)fprintf( fp, "Semi-major length: %.9f\n", epa->epa_r1 * base2local );
-			(void)fprintf( fp, "Semi-minor length: %.9f\n", epa->epa_r2 * base2local );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( epa->epa_V ), eol);
+			(void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( epa->epa_H ), eol);
+			(void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS( epa->epa_Au ), eol);
+			(void)fprintf( fp, "Semi-major length: %.9f%s", epa->epa_r1 * base2local, eol);
+			(void)fprintf( fp, "Semi-minor length: %.9f%s", epa->epa_r2 * base2local, eol);
 			break;
 		case ID_EHY:
 			ehy = (struct rt_ehy_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( ehy->ehy_V ) );
-			(void)fprintf( fp, "Height: %.9f %.9f %.9f\n", V3BASE2LOCAL( ehy->ehy_H ) );
-			(void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f\n", V3ARGS( ehy->ehy_Au ) );
-			(void)fprintf( fp, "Semi-major length: %.9f\n", ehy->ehy_r1 * base2local );
-			(void)fprintf( fp, "Semi-minor length: %.9f\n", ehy->ehy_r2 * base2local );
-			(void)fprintf( fp, "Dist to asymptotes: %.9f\n", ehy->ehy_c * base2local );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( ehy->ehy_V ), eol);
+			(void)fprintf( fp, "Height: %.9f %.9f %.9f%s", V3BASE2LOCAL( ehy->ehy_H ), eol);
+			(void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f%s", V3ARGS( ehy->ehy_Au ), eol);
+			(void)fprintf( fp, "Semi-major length: %.9f%s", ehy->ehy_r1 * base2local, eol);
+			(void)fprintf( fp, "Semi-minor length: %.9f%s", ehy->ehy_r2 * base2local, eol);
+			(void)fprintf( fp, "Dist to asymptotes: %.9f%s", ehy->ehy_c * base2local, eol);
 			break;
 		case ID_ETO:
 			eto = (struct rt_eto_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( eto->eto_V ) );
-			(void)fprintf( fp, "Normal: %.9f %.9f %.9f\n", V3BASE2LOCAL( eto->eto_N ) );
-			(void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f\n", V3BASE2LOCAL( eto->eto_C ) );
-			(void)fprintf( fp, "Semi-minor length: %.9f\n", eto->eto_rd * base2local );
-			(void)fprintf( fp, "Radius of roation: %.9f\n", eto->eto_r * base2local );
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( eto->eto_V ), eol);
+			(void)fprintf( fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL( eto->eto_N ), eol);
+			(void)fprintf( fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL( eto->eto_C ), eol);
+			(void)fprintf( fp, "Semi-minor length: %.9f%s", eto->eto_rd * base2local, eol);
+			(void)fprintf( fp, "Radius of roation: %.9f%s", eto->eto_r * base2local, eol);
 			break;
 		case ID_SUPERELL:
 			superell = (struct rt_superell_internal *)es_int.idb_ptr;
-			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->v ) );
-			(void)fprintf( fp, "A: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->a ) );
-			(void)fprintf( fp, "B: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->b ) );
-			(void)fprintf( fp, "C: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->c ) );
-			(void)fprintf( fp, "<n, e>: <%.9f, %.9f>\n", superell->n, superell->e);
+			(void)fprintf( fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL( superell->v ), eol);
+			(void)fprintf( fp, "A: %.9f %.9f %.9f%s", V3BASE2LOCAL( superell->a ), eol);
+			(void)fprintf( fp, "B: %.9f %.9f %.9f%s", V3BASE2LOCAL( superell->b ), eol);
+			(void)fprintf( fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL( superell->c ), eol);
+			(void)fprintf( fp, "<n, e>: <%.9f, %.9f>%s", superell->n, superell->e, eol);
 			break;
 	}
 
@@ -960,7 +965,7 @@ editit(const char *file)
 
 		    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 		    WaitForSingleObject( pi.hProcess, INFINITE );
-		    return 0;
+		    return 1;
 #else /* !DM_WGL */
 
 #  if defined(DM_X) || defined(DM_OGL)
