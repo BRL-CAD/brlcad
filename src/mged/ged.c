@@ -752,8 +752,8 @@ main(int argc, char **argv)
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 	}
-    }
 #endif
+    }
 
     mged_init_flag = 0;	/* all done with initialization */
 
