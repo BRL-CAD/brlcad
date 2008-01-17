@@ -56,10 +56,8 @@ depends=('libpng' 'zlib' 'libgl' 'jove' 'tk-devel')
 #depends=('libpng' 'zlib' 'libgl' 'jove' 'tk' 'blt' 'itcl' )
 
 options=('!libtool')
-source=(http://dl.sourceforge.net/sourceforge/$pkgname/$pkgname-$pkgver.tar.bz2 brlcad.sh brlcad.install)
-md5sums=('6bc9ae0a10a3b2f9ede0d79a58f623dd'
-         '6e46ccfca93dd363d931c25ab21ac512'
-         '836f44805340102f9feec82958102ff8')
+source=(brlcad.sh)
+md5sums=('6e46ccfca93dd363d931c25ab21ac512')
 
 build() {
     cd $startdir/src/$pkgname-$pkgver
