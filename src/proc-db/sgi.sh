@@ -1,7 +1,9 @@
 #!/bin/sh
 #                          s g i . s h
 #
-# Create and render the SGI cube (tm) logo as BRL-CAD geometry.
+# This is an example script for creating and rendering the SGI Cube
+# logo as BRL-CAD geometry.
+#
 # The SGI cube is a registered trademark of SGI.
 #
 # Author -
@@ -80,13 +82,19 @@ up	115 $i
 back	116 $j
 right	117 $i
 
+# combine all the primitives together via unions
 mged -c $SGI.g g cube.c rcc.* sph.*
+
+# create a region from that combination (make it occupy physical space)
 mged -c $SGI.g r cube.r u cube.c
+
+# assign some material properties using a cook-torrence shader
 mged -c $SGI.g mater cube.r \"cook re=.8 di=1 sp=1 ri=10\" 250 250 250 0
 
 ###########################
 echo "Rendering the cube..."
 
+# pipe in mged commands for setting up and saving the view to a render script
 cat <<EOF | mged -c $SGI.g
 B cube.r
 ae 135 -35 180
@@ -95,11 +103,20 @@ zoom .25
 saveview $SGI.rt
 EOF
 
+# render the view we saved as a 1024x1024 image
 ./$SGI.rt -s1024
+
+# convert from raw pix image format to png format
 pix-png -s1024 < $SGI.rt.pix > $SGI.png
+
+# display the png image in a framebuffer window
 png-fb $SGI.png
+
+# keep the geometry database as sgi.g and the rendering as sgi.png
 mv $SGI.g sgi.g
 mv $SGI.png sgi.png
+
+# clean up after ourselves
 rm -f $SGI.*
 
 echo "The SGI cube is in the sgi.g BRL-CAD geometry database file."
