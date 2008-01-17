@@ -303,8 +303,8 @@ MakeTwistedCubeFaces(ON_Brep& brep)
     // thingie. maybe.  since the edge "directions" are arbitrary
     // (e.g. AD instead of DA (which would be more appropriate)) one
     // must indicate that the direction with relation to the trimming
-    // curve (which only goes in ONE direction) - 1="in the same
-    // direction" and -1="in the opposite direction"
+    // curve (which only goes in ONE direction): 
+    // 1="in the same direction" and -1="in the opposite direction"
 
     MakeTwistedCubeFace(brep,
 			EFGH, // index of surface geometry
@@ -385,7 +385,7 @@ MakeTwistedCube(ON_TextLog& error_log)
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[F], point[A])); // FA
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[D], point[G])); // DG
 
-    // create the 12 edges the connect the corners
+    // create the 12 edges that connect the corners
     MakeTwistedCubeEdges( *brep );
 
     // create the 3d surface geometry. the orientations are arbitrary so
@@ -436,22 +436,23 @@ main(int argc, char** argv)
 
     ON::Begin();
 
-    if (argc > 1) {
-	printf("Writing a twisted cube b-rep...\n");
-	outfp = wdb_fopen("brep_simple.g");
-	mk_id(outfp, id_name);
-	brep = MakeTwistedCube(error_log);
-	mk_brep(outfp, geom_name, brep);
+    printf("Writing a twisted cube b-rep...\n");
+    outfp = wdb_fopen("brep_simple.g");
+    mk_id(outfp, id_name);
 
-	//mk_comb1(outfp, "cube.r", geom_name, 1);
-	unsigned char rgb[] = {255,255,255};
-	mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
-
-	wdb_close(outfp);
-    }
+    brep = MakeTwistedCube(error_log);
+    mk_brep(outfp, geom_name, brep);
+    
+    unsigned char rgb[] = {255,255,255};
+    mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
+    
+    wdb_close(outfp);
 
     printf("Reading a twisted cube b-rep...\n");
     struct db_i* dbip = db_open("brep_simple.g", "r");
+    if (!dbip) {
+	bu_exit(1, "Unable to open brep_simple.g\n");
+    }
     db_dirbuild(dbip);
     struct directory* dirp;
     if ((dirp = db_lookup(dbip, "cube.s", 0)) != DIR_NULL) {
