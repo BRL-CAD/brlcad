@@ -21,6 +21,12 @@
 /** @{ */
 /** @file g_brep.cpp
  *
+ * Implementation of a generalized Boundary Representation (BREP)
+ * primitive using the openNURBS library.
+ *
+ * Authors -
+ *   Jason Owens
+ *
  */
 
 #include "common.h"
