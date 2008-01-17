@@ -49,6 +49,6 @@
 int
 mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
 {
-  bu_log("mk_brep() requires BRL-CAD to be built with openNURBS");
+  bu_log("mk_brep() requires BRL-CAD to be built with openNURBS\n");
   return -1;
 }
