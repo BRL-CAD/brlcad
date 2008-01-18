@@ -1339,9 +1339,10 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	bi->brep->Dump(log);
 
     ON_String onstr = ON_String(wonstr);
+    bu_vls_strcat(str, "Boundary Representation (BREP) object\n");
     bu_vls_strcat(str, onstr.Array());
 
-    return 1;
+    return 0;
 }
 
 /**
