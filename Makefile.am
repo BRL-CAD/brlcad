@@ -298,6 +298,7 @@ package:
 
 # delete files that should not be in the distribution
 dist-hook:
+	echo "This is probably busted horribly.  FIXME to use SVN entries."
 	files="`find . -name Entries -exec grep -v '^D' {} /dev/null \; | sed 's/:\(\/[^\/]*\)\/.*/\1/g' | sed 's/\/CVS\/Entries//g' | grep -v 'brlcad-' | grep -v .cvsignore`" ; \
 	missing=0 ; \
 	for file in $$files ; do \
