@@ -236,9 +236,6 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 	}
 
 	ON_BrepTrim& trim = brep.NewTrim(brep.m_E[ei], bRev3d, loop, c2i);
-	// not sure these two lines are needed!
-	q = c2->PointAtStart();
-	q = c2->PointAtEnd();
 	trim.m_iso = iso;
 
 	// the type gives metadata on the trim type in this case, "mated"
@@ -288,7 +285,7 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			AB, +1, // south edge, orientation w.r.t. trimming curve?
 			BC, +1, // east edge, orientation w.r.t. trimming curve?
 			CD, +1,
-			DA, +1); // XXX ????
+			DA, +1);
 
     MakeTwistedCubeFace(brep,
 			BEHC, // index of surface geometry
@@ -297,7 +294,7 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			BE, +1, // south edge, orientation w.r.t. trimming curve?
 			EH, +1, // east edge, orientation w.r.t. trimming curve?
 			HC, +1,
-			BC, -1); // XXX ????
+			BC, -1);
 
     // ok, i think I understand the trimming curve orientation
     // thingie. maybe.  since the edge "directions" are arbitrary
@@ -313,7 +310,7 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			EF, +1, // south edge, orientation w.r.t. trimming curve?
 			FG, +1, // east edge, orientation w.r.t. trimming curve?
 			GH, +1,
-			EH, -1); // XXX ????
+			EH, -1);
 
     MakeTwistedCubeFace(brep,
 			FADG, // index of surface geometry
@@ -322,7 +319,7 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			FA, +1, // south edge, orientation w.r.t. trimming curve?
 			DA, -1, // east edge, orientation w.r.t. trimming curve?
 			DG, +1,
-			FG, -1); // XXX ????
+			FG, -1);
 
     MakeTwistedCubeFace(brep,
 			FEBA, // index of surface geometry
@@ -331,7 +328,7 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			EF, -1, // south edge, orientation w.r.t. trimming curve?
 			BE, -1, // east edge, orientation w.r.t. trimming curve?
 			AB, -1,
-			FA, -1); // XXX ????
+			FA, -1);
 
     MakeTwistedCubeFace(brep,
 			DCHG, // index of surface geometry
@@ -340,7 +337,7 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			CD, -1, // south edge, orientation w.r.t. trimming curve?
 			HC, -1, // east edge, orientation w.r.t. trimming curve?
 			GH, -1,
-			DG, -1); // XXX ????
+			DG, -1);
 
 }
 
@@ -450,6 +447,7 @@ main(int argc, char** argv)
     mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
     
     wdb_close(outfp);
+    delete brep;
 
     printf("Reading a twisted cube b-rep...\n");
     struct db_i* dbip = db_open("brep_simple.g", "r");
