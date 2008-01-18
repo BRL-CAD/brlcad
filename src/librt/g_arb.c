@@ -168,10 +168,13 @@ const int rt_arb_faces[5][24] = {
  *		(Number of entries in uvec array)
  *
  *  Implicit returns -
- *	*cgtype		Comgeom type (number range 4..8;  ARB4 .. ARB8).
- *	uvec[8]
- *	svec[11]
- *			Entries [0] and [1] are special
+ *	*cgtype - Comgeom type (number range 4..8;  ARB4 .. ARB8).
+ *	uvec[8] - indices of unique vertices (return value is the number of valid entries)
+ *	svec[11] - Entries [0] and [1] are special (they are the counts of duplicates)
+ *                 entries 2-10 are 2 lists of duplicate vertices
+ *                 entry[0] gives length of first list (starts at entry[2])
+ *                 entry[1] gives length of second list (starts at entry[2+entry[0]])
+ *                 
  */
 int
 rt_arb_get_cgtype(
