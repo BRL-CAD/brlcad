@@ -1247,7 +1247,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     mo.m_object = bi->brep;
     mo.m_attributes.m_layer_index = 0;
     mo.m_attributes.m_name = "brep";
-    fprintf(stderr, "m_object_table count: %d\n", model.m_object_table.Count());
+    mo.m_attributes.m_uuid = ON_opennurbs4_id;
 
     model.m_properties.m_RevisionHistory.NewRevision();
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
@@ -1326,7 +1326,22 @@ rt_brep_ifree(struct rt_db_internal *ip)
 int
 rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    return 0;
+    BU_CK_VLS(str);
+    RT_CK_DB_INTERNAL(ip);
+
+    ON_wString wonstr;
+    ON_TextLog log(wonstr);
+    
+    struct rt_brep_internal* bi;
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+    if (bi->brep != NULL)
+	bi->brep->Dump(log);
+
+    ON_String onstr = ON_String(wonstr);
+    bu_vls_strcat(str, onstr.Array());
+
+    return 1;
 }
 
 /**
