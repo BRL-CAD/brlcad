@@ -70,9 +70,10 @@ if [ ! -r "$bir_dir/$bir" ] ; then
 fi
 
 # generate a list of files to check, excluding directories that are
-# not BRL-CAD sources, CVS, or start with a dot among other files.
-# have to take care if including shell scripts; look for mistakes in
-# here/now documents.  this is, if no file arguments were provided.
+# not BRL-CAD sources, revision control files, or start with a dot
+# among other files.  have to take care if including shell scripts;
+# look for mistakes in here/now documents.  this is, if no file
+# arguments were provided.
 if [ "x$files" = "x" ] ; then
     files="`find . -type f -and \( \
 	    -name '*.c' -or \
@@ -102,6 +103,7 @@ if [ "x$files" = "x" ] ; then
 	    \) | \
 	    grep -v '/other/' | \
 	    grep -v '/doc/' | \
+	    grep -v '/\.svn' | \
 	    grep -v '/CVS' | \
 	    grep -v '/misc/enigma/' | \
 	    grep -v '/misc/vfont/' | \

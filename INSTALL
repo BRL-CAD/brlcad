@@ -124,17 +124,17 @@ INSTALLING FROM SOURCE
 There are a couple means to obtain the BRL-CAD sources, usually via
 one of the following starting points:
 
-  1) from a CVS checkout/export, or
+  1) from a SVN checkout/export, or
   2) from a source distribution tarball
 
-Using the latest CVS sources is recommended where possible, since it
+Using the latest SVN sources is recommended where possible, since it
 will have the latest changes.  See the corresponding section below for
 details on how to install from either starting point.
 
 
-Starting From a CVS Checkout/Export:
+Starting From a SVN Checkout/Export:
 
-If you have obtained the BRL-CAD sources from the CVS revision control
+If you have obtained the BRL-CAD sources from the SVN revision control
 system, you will need to prepare the build for configuration:
 
   sh autogen.sh

@@ -120,9 +120,10 @@ fi
 
 
 # generate a list of files to check, excluding directories that are
-# not BRL-CAD sources, CVS, or start with a dot among other files.
-# have to take care if including shell scripts; look for mistakes in
-# here/now documents.  this is, if no file arguments were provided.
+# not BRL-CAD sources, revision control files, or start with a dot
+# among other files.  have to take care if including shell scripts;
+# look for mistakes in here/now documents.  this is, if no file
+# arguments were provided.
 if [ "x$files" = "x" ] ; then
     files="`find . -type f -and \( \
 	    -name '*.[0-9n]' -or \
@@ -161,8 +162,9 @@ if [ "x$files" = "x" ] ; then
 	    \) | \
 	    grep -v '/other/' | \
 	    grep -v '/CVS/' | \
-	    grep -v '/.deps/' | \
-	    grep -v '/.libs/' | \
+	    grep -v '/\.svn/' | \
+	    grep -v '/\.deps/' | \
+	    grep -v '/\.libs/' | \
 	    grep -v 'autom4te.cache' | \
 	    grep -v 'aclocal.m4' | \
 	    grep -v '.ws.bak' | \

@@ -109,11 +109,11 @@ elif [ ! -w "$FILE" ] ; then
     exit 2
 fi
 
-# set up permissions to something reasonable for CVS
+# set up permissions to something reasonable for revision control
 chmod ug+rw "$FILE"
 case "x$FILE" in
     x*.sh)
-	# shell scripts need execute bit when being added to CVS
+	# shell scripts should have execute bit set
 	chmod ug+x "$FILE"
 	;;
 esac
