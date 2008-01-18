@@ -48,7 +48,7 @@ generate_brep(int count, ON_3dPoint *points)
     // VERTICES
 
     for (int i=0; i<count; i++) {
-	brep->NewVertex(points[i], VDIVIDE_TOL);
+	brep->NewVertex(points[i], SMALL_FASTF);
     }
 
     // LEFT SEGMENTS
@@ -187,20 +187,20 @@ generate_brep(int count, ON_3dPoint *points)
 
     // EDGES
 
-    brep->NewEdge(brep->m_V[0], brep->m_V[1], 0, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[1], brep->m_V[2], 1, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[2], brep->m_V[3], 2, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[3], brep->m_V[0], 3, NULL, VDIVIDE_TOL);
+    brep->NewEdge(brep->m_V[0], brep->m_V[1], 0, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[1], brep->m_V[2], 1, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[2], brep->m_V[3], 2, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[3], brep->m_V[0], 3, NULL, SMALL_FASTF);
 
-    brep->NewEdge(brep->m_V[4], brep->m_V[7], 7, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[7], brep->m_V[6], 6, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[6], brep->m_V[5], 5, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[5], brep->m_V[4], 4, NULL, VDIVIDE_TOL);
+    brep->NewEdge(brep->m_V[4], brep->m_V[7], 7, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[7], brep->m_V[6], 6, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[6], brep->m_V[5], 5, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[5], brep->m_V[4], 4, NULL, SMALL_FASTF);
 
-    brep->NewEdge(brep->m_V[5], brep->m_V[1], 9, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[0], brep->m_V[4], 8, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[2], brep->m_V[6], 10, NULL, VDIVIDE_TOL);
-    brep->NewEdge(brep->m_V[7], brep->m_V[3], 11, NULL, VDIVIDE_TOL);
+    brep->NewEdge(brep->m_V[5], brep->m_V[1], 9, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[0], brep->m_V[4], 8, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[2], brep->m_V[6], 10, NULL, SMALL_FASTF);
+    brep->NewEdge(brep->m_V[7], brep->m_V[3], 11, NULL, SMALL_FASTF);
 
 
 
