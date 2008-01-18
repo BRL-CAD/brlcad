@@ -3,12 +3,13 @@
 proc_db_libs = ${WDB}
 
 LDADD = ${proc_db_libs}
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} -Wall
 
 bin_PROGRAMS = \
 	bottest \
-	brep_simple \
 	brep_cube \
+	brep_simple \
+	breplicator \
 	brickwall \
 	clutter \
 	contours \
@@ -40,18 +41,24 @@ bottest_SOURCES = bottest.c
 
 brep_cube_SOURCES = brep_cube.cpp
 brep_simple_SOURCES = brep_simple.cpp
+breplicator_SOURCES = breplicator.cpp
 # per-target CPPFLAGS not available until automake 1.7+
 if BUILD_OPENNURBS
 brep_cube_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 brep_simple_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
+breplicator_CXXFLAGS = -DOBJ_BREP=1 ${OPENNURBS_CPPFLAGS}
 else !BUILD_OPENNURBS
 brep_cube_CXXFLAGS =
 brep_simple_CXXFLAGS =
+breplicator_CXXFLAGS =
 endif
 brep_cube_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
 brep_simple_LDADD = \
+	${proc_db_libs} \
+	${OPENNURBS}
+breplicator_LDADD = \
 	${proc_db_libs} \
 	${OPENNURBS}
 
@@ -101,6 +108,7 @@ FAST_OBJECTS = \
 	$(bottest_OBJECTS) \
 	$(brep_simple_OBJECTS) \
 	$(brep_cube_OBJECTS) \
+	$(breplicator_OBJECTS) \
 	$(brickwall_OBJECTS) \
 	$(clutter_OBJECTS) \
 	$(contours_OBJECTS) \
