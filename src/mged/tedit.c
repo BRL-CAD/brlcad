@@ -80,8 +80,17 @@
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
+extern struct bn_tol		mged_tol;	/* from ged.c */
 
 static char	tmpfil[MAXPATHLEN] = {0};
+
+/* used in handling different arb types */
+static int numUnique = 0;
+static int cgtype = 8;
+static int uvec[8];
+static int svec[11];
+static int j;
+			
 
 int writesolid(void), readsolid(void);
 int editit(const char *file);
@@ -139,6 +148,27 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	unlink(tmpfil);
 
 	return TCL_OK;
+}
+
+/*
+ * given the index of a vertex of the arb currently being edited,
+ * return 1 if this vertex should appear in the editor
+ * return 0 if this vertex is a duplicate of one of the above
+ */
+static int
+useThisVertex( int index )
+{
+    int i;
+
+    for( i=0 ; i<8 && uvec[i] != -1 ; i++ ) {
+	if( uvec[i] == index ) return 1;
+    }
+
+    if( svec[0] != 0 && index == svec[2] ) return 1;
+
+    if( svec[1] != 0 && index == svec[2+svec[0]] ) return 1;
+
+    return 0;
 }
 
 /* Write numerical parameters of a solid into a file */
@@ -203,9 +233,17 @@ writesolid(void)
 			(void)fprintf( fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL( ell->c ), eol);
 			break;
 		case ID_ARB8:
+			for( j=0 ; j<8 ; j++ ) uvec[j] = -1;
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
-			for( i=0 ; i<8 ; i++ )
-				(void)fprintf( fp, "pt[%d]: %.9f %.9f %.9f%s", i+1, V3BASE2LOCAL( arb->pt[i] ), eol);
+			numUnique = rt_arb_get_cgtype( &cgtype, arb, &mged_tol, uvec, svec );
+			j = 0;
+			for( i=0 ; i<8 ; i++ ) {
+			    if( useThisVertex( i ) ) {
+				j++;
+				(void)fprintf( fp, "pt[%d]: %.9f %.9f %.9f\n",
+					       j, V3BASE2LOCAL( arb->pt[i] ) );
+			    }
+			}
 			break;
 		case ID_HALF:
 			haf = (struct rt_half_internal *)es_int.idb_ptr;
@@ -477,6 +515,8 @@ readsolid(void)
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
 			for( i=0 ; i<8 ; i++ )
 			{
+			    /* only read vertices that we wrote */
+			    if( useThisVertex( i ) ) {
 				if( (str=Get_next_line( fp )) == NULL )
 				{
 					ret_val = 1;
@@ -485,6 +525,22 @@ readsolid(void)
 				(void)sscanf( str, "%lf %lf %lf", &a, &b, &c );
 				VSET( arb->pt[i], a, b, c );
 				VSCALE( arb->pt[i], arb->pt[i], local2base );
+			    }
+			}
+			/* fill in the duplicate vertices
+			 * (based on rt_arb_get_cgtype called in writesolid)
+			 */
+			if( svec[0] != -1 ) {
+			    for( i=1 ; i<svec[0] ; i++ ) {
+				int start = 2;
+				VMOVE( arb->pt[svec[start+i]], arb->pt[svec[start]] );
+			    }
+			}
+			if( svec[1] != -1 ) {
+			    int start = 2 + svec[0];
+			    for( i=1 ; i<svec[1] ; i++ ) {
+				VMOVE( arb->pt[svec[start+i]], arb->pt[svec[start]] );
+			    }
 			}
 			break;
 		case ID_HALF:
