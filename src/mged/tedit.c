@@ -240,8 +240,8 @@ writesolid(void)
 			for( i=0 ; i<8 ; i++ ) {
 			    if( useThisVertex( i ) ) {
 				j++;
-				(void)fprintf( fp, "pt[%d]: %.9f %.9f %.9f\n",
-					       j, V3BASE2LOCAL( arb->pt[i] ) );
+				(void)fprintf( fp, "pt[%d]: %.9f %.9f %.9f%s",
+					       j, V3BASE2LOCAL( arb->pt[i] ), eol);
 			    }
 			}
 			break;
