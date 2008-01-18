@@ -54,6 +54,9 @@ mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
   BU_ASSERT(brep != NULL);
   BU_GETSTRUCT(bi, rt_brep_internal);
   bi->magic = RT_BREP_INTERNAL_MAGIC;
-  bi->brep = brep;
+  bi->brep = new ON_Brep(*brep); /* copy the users' brep */
+  if (!bi->brep) {
+    bu_log("mk_brep: Unable to copy BREP\n");
+  }
   return wdb_export(file, name, (genptr_t)bi, ID_BREP, mk_conv2mm);
 }
