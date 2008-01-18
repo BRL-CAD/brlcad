@@ -606,7 +606,7 @@ DOCUMENTATION
 BRL-CAD has extensive documentation in various formats and presently
 maintained in various locations.  It is an on-going desire and goal of
 the project to have all documentation located along with the source
-code in CVS.
+code in our Subversion (SVN) repository.
 
 In line with that goal and where beneficial, a large portion of the
 tutorial documentation is being converted to the Docbook XML format.
@@ -675,34 +675,32 @@ PATCH SUBMISSION GUIDELINES
 
 To contribute to BRL-CAD, begin by submitting modifications to the
 patches section at http://sf.net/projects/brlcad/.  Patches in the
-universal diff format (diff -u) are generally preferred when modifying
+unified diff format (diff -u) are generally preferred when modifying
 existing source or other text files.  Otherwise, contributors are
 welcome to submit their changes in full to the patches tracker as
 compressed file attachments.
 
 All text patches should be submitted in the unified diff format where
-it's feasible to create one either using CVS or using the unmodified
+it's feasible to create one either using SVN or using the unmodified
 original file.  This is generally the "-u" option to diff, and is also
-supported by the CVS diff command:
+supported by the SVN diff command:
 
-cvs diff -u > my_patch.diff
+svn diff > mychanges.patch
 
-Where possible, diffs should be generated against the latest CVS
-version available to make it easier to review and patch the changes
-in.  If a modification involves the addition or removal of files,
-those files should be provided separately with instructions on where
-they belong (or what should be removed).  If CVS cannot be used,
-please provide the complete release and build number of the files you
-worked with.
+Where possible, patch files should be generated against the latest
+sources available to make it easier to review and apply the changes.
+If a modification involves the addition or removal of files, those
+files can be provided separately with instructions on where they
+belong (or what should be removed).  If SVN cannot be used, please
+provide the complete release and build number of the files you worked
+with.
 
 ANY MODIFICATIONS THAT ARE PROVIDED MUST NOT MODIFY OR CONFLICT WITH
 THE EXISTING "COPYING" FILE DISTRIBUTION REQUIREMENTS.  This means
-that library modifications must be LGPL-compatible and changes to
-applications must be GPL-compatible.  Similarly, GPL libraries may NOT
-be used or otherwised linked against BRL-CAD.  Contributors are asked
-to only provide patches that may legally be incorporated into BRL-CAD
-under the existing distribution provisions described in the COPYING
-file.
+that most modifications must be LGPL-compatible.  Contributors are
+asked to only provide patches that may legally be incorporated into
+BRL-CAD under the existing distribution provisions described in the
+COPYING file.
 
 Patches that are difficult to apply are difficult to accept.
 
@@ -730,21 +728,20 @@ only.
 COMMIT ACCESS
 -------------
 
-Details on the particulars of how to interact with CVS are described
-in the doc/cvspolicy.txt document.  In brief, BRL-CAD has a STABLE
-branch in CVS that should always compile and run with expected
-behavior on all supported platforms.  On the contrary, while the CVS
-HEAD is generally always expected to compile, more flexibility is
-allowed for resolution of cross-platform build issues and on-going
-development.  Read the aforementioned CVS policy document for more
-details.
+BRL-CAD has a STABLE branch in SVN that should always compile and run
+with expected behavior on all supported platforms.  Contrary to
+STABLE, the SVN trunk is generally expected to compile but more
+flexibility is allowed for resolution of cross-platform build issues
+and on-going development.
 
 Commit access is evaluated on a person-to-person basis at the
-discretion of existing contributors.  If you would like to have commit
-access, there is usually no need to ask.  Getting involved with the
-other contributors and making patches will generally result in
-automatic consideration for commit access.  If you have to ask for it,
-you probably won't get it.
+discretion of existing contributors, but generally readily granted so
+long as there is an existing developer with commit access willing to
+mentor the new developer.  If you would like to have commit access,
+there is usually no need to ask -- they will ask you.  Getting
+involved with the other contributors and making patches will generally
+result in automatic consideration for commit access.  If you have to
+ask for it, you probably won't get it.
 
 Those with commit access have a responsibility to ensure that other
 developers are following the guidelines that have been described in
@@ -843,10 +840,7 @@ The MINOR_VERSION is updated more frequently and serves the dual role
 as previously mentioned of easily identifying a build as a public
 release.  A minor version update is generally issued after significant
 development activity (generally several months of activity) has been
-tested and deemed sufficiently stable.  When a stable release is made,
-it may (but not necessarily) be tagged as a maintenance branch in CVS
-(see doc/cvspolicy.txt) with patch releases being performed on that
-branch.
+tested and deemed sufficiently stable.
 
 The PATCH_VERSION may and should be updated as frequently as is
 necessary.  Every public maintenance release should increment the
@@ -879,7 +873,7 @@ major or minor version of BRL-CAD is going to be updated, it is very
 important to follow and ensure that the following steps have been
 successfully performed:
 
-0) All code is committed to CVS.
+0) All code is committed to SVN.
 
 1) Verify that the NEWS file includes a comment for all relevant and
 significant items added since the previous release.
@@ -904,15 +898,16 @@ proper source distribution tarball may be generated and that a build
 should compile properly regardless of the existence of the GNU Build
 System tools (autoconf, automake, etc).
 
-7) Tag the release using the format "rel-MAJOR-MINOR-PATCH".  See the
-doc/cvspolicy.txt document for details.  e.g. cvs tag rel-7-2-4
+7) Tag the release using "rel-MAJOR-MINOR-PATCH" format.  See the
+doc/cvspolicy.txt file for details.  e.g. svn cp trunk tags/rel-7-2-4
 
-8) Export a tagged version of the sources (required so that RCS ids
-are correct):  cvs export -r rel-MAJOR-MINOR-PATCH brlcad
+8) Checkout a tagged version of the sources (required so that the
+source distribution is correct):
+svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
 
-9) Perform another "make distcheck" on the exported/updated sources
-(preferably on Mac OS X) to generate the distributable compressed
-source tarballs.
+9) Perform another "make distcheck" on the exported/updated sources on
+a system with the latest GNU Autotools installed to generate the
+distributable compressed source tarballs.
 
 10) Verify that the source distribution tarballs may be expanded; and
 that they build, run, and that the file permissions are correct.
@@ -924,7 +919,7 @@ platform-specific builds.  Test the build:  make test && make bench
 SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
 directory and select them on the sf.net File Release System).
 
-13) Increment and commit the next BRL-CAD release numbers to CVS;
+13) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
 immediately to an odd-numbered minor version or a new patch developer
 version (e.g. 7.11.0 or 7.4.1).  Update the README version to next
