@@ -1144,7 +1144,7 @@ rt_nurb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	int			surf;
 
 	RT_NURB_CK_MAGIC(sip);
-	bu_vls_strcat( str, "Non Uniform Rational B-Spline solid (NURB)\n");
+	bu_vls_strcat( str, "Non-Uniform Rational B-Spline (NURBS) solid\n");
 
 	bu_vls_printf( str, "\t%d surfaces\n", sip->nsrf);
 	if( verbose < 2 )  return 0;
