@@ -406,7 +406,7 @@ Description:
   the ON_Curve virtual member functions.
 
   Note well that the domains and orientations of the curve
-  m_C2[trim.m_c2i] and the trin as a curve may not
+  m_C2[trim.m_c2i] and the trim as a curve may not
   agree.
 */
 class ON_CLASS ON_BrepTrim : public  ON_CurveProxy
