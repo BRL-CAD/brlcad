@@ -317,7 +317,7 @@ cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
 int
 bu_cv_optimize(register int cookie)
 {
-	static int Indian = IND_NOTSET;
+	static int Endian = END_NOTSET;
 	int	fmt;
 
 	if( cookie & CV_HOST_MASK )
@@ -327,7 +327,7 @@ bu_cv_optimize(register int cookie)
 	fmt  =  cookie & CV_TYPE_MASK;
 
 	/* Run time check:  which kind of integers does this machine have? */
-	if (Indian == IND_NOTSET) {
+	if (Endian == END_NOTSET) {
 		size_t soli = sizeof(long int);
 		unsigned long int	testval = 0;
 		register int		i;
@@ -336,20 +336,20 @@ bu_cv_optimize(register int cookie)
 		}
 
 		if (soli == 8) {
-			Indian = IND_CRAY;	/* is this good enough? */
+			Endian = END_CRAY;	/* is this good enough? */
 			if ( ( (testval >> 31) >> 1 ) == 0x01020304) {
-				Indian = IND_BIG; /* XXX 64bit */
+				Endian = END_BIG; /* XXX 64bit */
 			} else if (testval == 0x04030201) {
-				Indian = IND_LITTLE;	/* 64 bit */
+				Endian = END_LITTLE;	/* 64 bit */
 			} else {
-				bu_bomb("bu_cv_optimize: can not tell indian of host.\n");
+				bu_bomb("bu_cv_optimize: can not tell endian of host.\n");
 			}
 		} else if (testval == 0x01020304) {
-			Indian = IND_BIG;
+			Endian = END_BIG;
 		} else if (testval == 0x04030201) {
-			Indian = IND_LITTLE;
+			Endian = END_LITTLE;
 		} else if (testval == 0x02010403) {
-			Indian = IND_ILL;
+			Endian = END_ILL;
 		}
 	}
 
@@ -365,7 +365,7 @@ bu_cv_optimize(register int cookie)
 	case CV_32:
 	case CV_64:
 		/* host is big-endian, so is network */
-		if( Indian == IND_BIG )
+		if( Endian == END_BIG )
 			cookie |= CV_HOST_MASK;
 		return cookie;
 	}
@@ -619,7 +619,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
 @code
  *	HOSTDBL defined as true or false
  *	if ! hostother then
- *		hostother = (Indian == IND_BIG) ? SAME : DIFFERENT;
+ *		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
  *	fi
  *	if (infmt == double) then
  *		if (HOSTDBL == SAME) {
