@@ -524,7 +524,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
 
 	regions_tried++;
 
-	/* Begin bu_bomb() protection */
+	/* Begin bomb protection */
 	if( ncpu == 1 ) {
 		if( BU_SETJUMP )  {
 			/* Error, bail out */

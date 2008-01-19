@@ -361,6 +361,10 @@ bn_2line3_colinear(const fastf_t *p1,
 
 	BN_CK_TOL(tol);
 
+	if (!p1 || !d1 || !p2 || !d2) {
+	    goto fail;
+	}
+
 	if( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag1 zero\n");
 	if( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  bu_bomb("bn_2line3_colinear() mag2 zero\n");
 
@@ -914,8 +918,8 @@ bu_log("b=(%g, %g), b_dist_sq=%g\n", V2ARGS(b), ctol);
 			V2PRINT("a", a);
 			V2PRINT("hit", hit_pt);
 			V2PRINT("b", b);
-bu_log("bn_isect_pt2_lseg2() hit2d=(%g,%g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
-bu_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
+			bu_log("bn_isect_pt2_lseg2() hit2d=(%g,%g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
+			bu_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
 		}
 		if( ret <= 0 )  {
 			if( ab_dist < 0 )  {
@@ -2316,7 +2320,9 @@ bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 			ang -= bn_twopi;
 		} while( ang > bn_twopi );
 	}
-	if( ang < 0 || ang > bn_twopi )  bu_bomb("bn_angle_measure() angle out of range\n");
+	if( ang < 0 || ang > bn_twopi )
+	    bu_bomb("bn_angle_measure() angle out of range\n");
+
 	return ang;
 }
 
@@ -2641,12 +2647,12 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
 
 	len_e = MAGNITUDE( e_in );
 	if( NEAR_ZERO( len_e, SMALL_FASTF ) )
-		bu_bomb( "bn_distsq_line3_line3() called with zero length vector!!!\n");
+		bu_bomb( "bn_distsq_line3_line3() called with zero length vector\n");
 	inv_len_e = 1.0 / len_e;
 
 	len_d = MAGNITUDE( d_in );
 	if( NEAR_ZERO( len_d, SMALL_FASTF ) )
-		bu_bomb( "bn_distsq_line3_line3() called with zero length vector!!!\n");
+		bu_bomb( "bn_distsq_line3_line3() called with zero length vector\n");
 	inv_len_d = 1.0 / len_d;
 
 	VSCALE( e, e_in, inv_len_e );

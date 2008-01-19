@@ -187,7 +187,7 @@ void bu_rb_delete (bu_rb_tree *tree, int order)
 
     if (tree -> rbt_nm_nodes <= 0)
     {
-	bu_log("Error: Attempt to delete from tree with %d nodes\n",
+	bu_log("ERROR: Attempt to delete from tree with %d nodes\n",
 		tree -> rbt_nm_nodes);
 	bu_bomb("");
     }

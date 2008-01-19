@@ -192,13 +192,13 @@ void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
 			(bu_rb_root(tree, order), order, visit, 0);
 		    break;
 		default:
-		    bu_log("FATAL: _rb_walk(): Illegal visitation object: %d\n",
+		    bu_log("ERROR: _rb_walk(): Illegal visitation object: %d\n",
 			what_to_visit);
 		    bu_bomb("");
 	    }
 	    break;
 	default:
-	    bu_log("FATAL: _rb_walk(): Illegal traversal type: %d\n",
+	    bu_log("ERROR: _rb_walk(): Illegal traversal type: %d\n",
 		trav_type);
 	    bu_bomb("");
     }

@@ -504,7 +504,7 @@ genptr_t		client_data;
 
 	regions_tried++;
 
-	/* Begin bu_bomb() protection */
+	/* Begin bomb protection */
 	if( BU_SETJUMP )  {
 		char *sofar;
 

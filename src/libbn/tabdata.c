@@ -104,7 +104,8 @@ bn_ck_table(const struct bn_table *tabp)
 
 	BN_CK_TABLE(tabp);
 
-	if( tabp->nx < 2 ) bu_bomb("bn_ck_table() less than 2 wavelengths\n");
+	if( tabp->nx < 2 )
+	    bu_bomb("bn_ck_table() less than 2 wavelengths\n");
 
 	for( i=0; i < tabp->nx; i++ )  {
 		if( tabp->x[i] >= tabp->x[i+1] )

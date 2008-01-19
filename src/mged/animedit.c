@@ -2216,7 +2216,6 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 		  Tcl_AppendResult(interp, "hold_eval: Lost joint!  ",
 				   hp->arc.arc[hp->arc.arc_last],
 				   " not found!\n", (char *)NULL);
-		  /* bu_bomb(); */
 		  return 0;
 		}
 		VMOVE(hp->point, jp->location);

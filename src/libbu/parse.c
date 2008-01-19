@@ -1145,7 +1145,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			}
 			break;
 		default:
-			bu_log( " bu_struct_print: Unknown format: %s=%s??\n",
+			bu_log( " bu_struct_print: Unknown format: %s=%s ??\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
@@ -1349,7 +1349,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 				(double *)loc);
 			break;
 		default:
-			bu_log( " %s=%s??\n", sdp->sp_name, sdp->sp_fmt );
+			bu_log( " %s=%s ??\n", sdp->sp_name, sdp->sp_fmt );
 			bu_bomb("unexpected case encountered in bu_vls_struct_print\n");
 			break;
 		}
@@ -1494,7 +1494,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			}
 			break;
 		default:
-			bu_vls_printf(vls_out, " bu_vls_struct_print2: Unknown format: %s=%s??\n",
+			bu_vls_printf(vls_out, " bu_vls_struct_print2: Unknown format: %s=%s ??\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}

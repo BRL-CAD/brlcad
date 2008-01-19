@@ -162,9 +162,7 @@ again:
 	} else {
 		size_t	old_len = bu_memdebug_len;
 		bu_memdebug_len *= 16;
-		bu_memdebug = (struct memdebug *)realloc(
-			(char *)bu_memdebug,
-			sizeof(struct memdebug) * bu_memdebug_len );
+		bu_memdebug = (struct memdebug *)realloc((char *)bu_memdebug, sizeof(struct memdebug) * bu_memdebug_len);
 		if( bu_memdebug == (struct memdebug *)0 )
 			bu_bomb("bu_memdebug_add() malloc failure\n");
 		memset((char *)&bu_memdebug[old_len], 0,

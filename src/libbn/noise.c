@@ -514,10 +514,10 @@ find_spec_wgt(double h, double l, double o)
 
 
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
-		if (ep->magic != MAGIC_fbm_spec_wgt) bu_bomb("find_spec_wgt");
-		if (ep->lacunarity == l && ep->h_val == h &&
-			ep->octaves >= o )
-				return ep;
+		if (ep->magic != MAGIC_fbm_spec_wgt)
+		    bu_bomb("find_spec_wgt");
+		if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
+		    return ep;
 	}
 
 	/* we didn't find the table we wanted so we've got to semaphore on
@@ -530,10 +530,10 @@ find_spec_wgt(double h, double l, double o)
 	 * hold the semaphore just created the table we were about to add
 	 */
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
-		if (ep->magic != MAGIC_fbm_spec_wgt) bu_bomb("find_spec_wgt");
-		if (ep->lacunarity == l && ep->h_val == h &&
-			ep->octaves >= o )
-				break;
+		if (ep->magic != MAGIC_fbm_spec_wgt)
+		    bu_bomb("find_spec_wgt");
+		if (ep->lacunarity == l && ep->h_val == h && ep->octaves >= o)
+		    break;
 	}
 
 	if (i >= etbl_next) ep = build_spec_tbl(h, l, o);

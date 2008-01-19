@@ -877,7 +877,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 
     regions_tried++;
 
-    /* Begin bu_bomb() protection */
+    /* Begin bomb protection */
     if( ncpu == 1 ) {
 	if( BU_SETJUMP )  {
 	    /* Error, bail out */

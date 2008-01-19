@@ -401,8 +401,7 @@ again:				t0 = ssp->tv[out_axis];
 			cutp = curcut;
 			break;
 		default:
-			bu_bomb(
-		       "rt_advance_to_next_cell: unknown high-level cutnode" );
+			bu_bomb("rt_advance_to_next_cell: unknown high-level cutnode");
 		}
 
 		if( cutp==CUTTER_NULL ) {
@@ -487,8 +486,7 @@ pop_space_stack:
 			    PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz )
 			) {
 				/* This cell is old news. */
-				bu_log(
-	  "rt_advance_to_next_cell(): point not in cell, advancing\n   pt (%.20e,%.20e,%.20e)\n",
+				bu_log("rt_advance_to_next_cell(): point not in cell, advancing\n   pt (%.20e,%.20e,%.20e)\n",
 					px, py, pz );
 				bu_log(	"  min (%.20e,%.20e,%.20e)\n",
 					V3ARGS(cutp->bn.bn_min) );
@@ -651,7 +649,6 @@ done_return_cutp:	ssp->lastcut = cutp;
 		/* Continue with the current space partitioning algorithm. */
 	}
 	/* NOTREACHED */
-	/*	bu_bomb("rt_advance_to_next_cell: escaped for(;;) loop: impossible!"); */
 
 	/*
 	 *  If ray has escaped from model RPP, and there are infinite solids
@@ -1550,7 +1547,6 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
 			bu_bomb("rt_cell_n_on_ray:  zero length dir vector\n");
-			return CUTTER_NULL;
 		}
 		diff = f - 1;
 		if( !NEAR_ZERO( diff, 0.0001 ) )  {

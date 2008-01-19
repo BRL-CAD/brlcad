@@ -98,7 +98,7 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
 
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
     {
-	bu_log("FATAL: bu_rb_extreme(): invalid sense %d, file %s, line %s\n",
+	bu_log("ERROR: bu_rb_extreme(): invalid sense %d, file %s, line %s\n",
 	    sense, __FILE__, __LINE__);
 	bu_bomb("");
     }
@@ -174,7 +174,7 @@ void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
 
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
     {
-	bu_log("FATAL: bu_rb_neighbor(): invalid sense %d, file %s, line %s\n",
+	bu_log("ERROR: bu_rb_neighbor(): invalid sense %d, file %s, line %s\n",
 	    sense, __FILE__, __LINE__);
 	bu_bomb("");
     }
