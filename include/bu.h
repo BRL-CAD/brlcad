@@ -401,9 +401,6 @@ BU_EXPORT BU_EXTERN(int bu_cv_htonul,
 		     unsigned long *,
 		     int));
 
-/*
- * Theses should be moved to a header file soon.
- */
 #define CV_CHANNEL_MASK	0x00ff
 #define CV_HOST_MASK	0x0100
 #define CV_SIGNED_MASK	0x0200
@@ -423,11 +420,19 @@ BU_EXPORT BU_EXTERN(int bu_cv_htonul,
 #define CV_NORMAL	0x2000
 #define CV_LIT		0x4000
 
+#define	END_NOTSET	0
+#define END_BIG		1	/* PowerPC/MIPS */
+#define END_LITTLE	2	/* Intel */
+#define END_ILL		3	/* PDP-11 */
+#define END_CRAY	4	/* Old Cray */
+
+/** deprecated */
 #define	IND_NOTSET	0
 #define IND_BIG		1
 #define IND_LITTLE	2
-#define IND_ILL		3		/* PDP-11 */
+#define IND_ILL		3
 #define IND_CRAY	4
+
 /**@}*/
 
 /*----------------------------------------------------------------------*/
