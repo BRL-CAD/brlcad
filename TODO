@@ -34,8 +34,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * add mged background option, disable auto-background
 
-* fix compilation problems with tclConfig.sh
-
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
